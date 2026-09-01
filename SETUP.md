@@ -60,6 +60,10 @@ En Google Cloud Console:
      *Usuarios de prueba*. Conviene además darle *Publicar app*: en modo prueba
      los tokens de refresco caducan a los 7 días. Como el único scope es no
      sensible, se publica sin revisión de Google.
+     Si el consentimiento falla con **Error 403: org_internal**, es que el tipo
+     de usuario quedó en *Interno*, que solo admite cuentas de la organización
+     dueña del proyecto. Se corrige en esta misma pantalla con *Cambiar a
+     externo*.
    - **Acceso a los datos:** *Agregar o quitar permisos* y buscar
      `https://www.googleapis.com/auth/drive.file`. Tiene que quedar como el
      único, y aparece listado como **no sensible**.

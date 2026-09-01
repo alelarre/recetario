@@ -78,6 +78,7 @@
   <pre></pre>
 </div>
 
+<script src="config.local.js" onerror="void 0"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
 <script>
@@ -87,7 +88,7 @@ const S = { token: null, recetario: null, created: [] };
 const $ = (s, r = document) => r.querySelector(s);
 const cfg = k => $('#' + k).value.trim();
 for (const k of ['clientId', 'apiKey']) {
-  $('#' + k).value = localStorage.getItem(k) || '';
+  $('#' + k).value = localStorage.getItem(k) || (window.SPIKE_CFG && window.SPIKE_CFG[k]) || '';
   $('#' + k).addEventListener('input', e => localStorage.setItem(k, e.target.value.trim()));
 }
 

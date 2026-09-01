@@ -3,3 +3,6 @@ dist/
 .DS_Store
 *.local
 .superpowers/
+
+# credenciales locales del spike
+spike/config.local.js
