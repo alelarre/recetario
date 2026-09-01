@@ -71,6 +71,12 @@ Recetario/
   tags. Un L2 futuro es una subcarpeta; algo que cruza categorías es un tag.
   Van a tags y no a carpetas: origen, dieta, técnica, ocasión, estación y
   equipamiento.
+- **El nombre del archivo sale del título, una sola vez.** Al crear una receta,
+  la app la nombra con el título en minúsculas, sin acentos y con guiones
+  (`milanesas-napolitanas.md`); si ya existe ese nombre en la carpeta, agrega un
+  sufijo numérico. Cambiar el título después **no** renombra el archivo: el
+  nombre es una etiqueta estable y el índice guarda los dos valores por separado
+  (§4.3). Un `.md` que escribió un agente conserva el nombre que le puso.
 - **Convención `_`.** Todo nombre que empieza con guión bajo es de la app y no
   es una categoría. Protege `_indice` y `_fotos/`.
 
@@ -431,6 +437,12 @@ Formulario en una sola pantalla que scrollea:
   del archivo:** si se preservaran en silencio, no habría forma de arreglarlos
   desde la app.
 
+**Crear una receta** es el mismo editor con el archivo vacío: la app escribe el
+frontmatter con `titulo` y el tag `incompleto`, en la carpeta que se elija —la
+raíz por defecto, que es la bandeja de entrada del §3.1— y abre el formulario.
+No hay un flujo de alta aparte. Existe para anotar algo en el momento sin
+depender de tener un agente a mano, no para componer recetas largas.
+
 **No hay vista de bandeja ni de triage.** Lo que falta archivar se ve en el tile
 "Sin categorizar" del home, y lo que falta terminar se lista filtrando por el tag
 `incompleto`. Corregir se hace entrando a la receta puntual.
@@ -551,29 +563,32 @@ categoría, y marcarlo con el tag `incompleto` si algo quedó a medias.
 
 Dentro:
 
+- Autenticarse con Google y descubrir la carpeta y sus categorías.
+- Construir, sincronizar y reconstruir el índice (§5).
 - Buscar y filtrar por categoría, tags e ingredientes.
 - Ver la receta con los pasos marcables (§7.2).
-- Editar recetas y subir fotos (§7.2).
-- Planificador semanal y lista de compras.
-- Reconstruir índice.
+- Editar recetas —incluido moverlas de categoría— y subir fotos (§7.2).
+- Crear una receta nueva, mínima: frontmatter y tag `incompleto` (§7.2).
+- Borrar una receta, con la limpieza de fotos huérfanas del §3.3.
 - Offline según §6.
 
-Fuera:
+Fuera, inventariado, cada uno con lo que le falta para entrar:
 
-- Escalado de porciones (el parser de ingredientes queda listo; falta la UI).
-- Importar desde URL dentro de la app: lo cubre Claude (§10).
-- OCR de fotos de libros.
-- Compartir con otras personas.
-- Botón de "bajar todo para offline".
+- **Planificador semanal y lista de compras.** Es lo próximo. Falta diseñar sus
+  vistas y la barra de navegación inferior que hoy el §7.2 no tiene justamente
+  porque esto no existe. No modifica nada del núcleo: se apoya en el índice.
+- **Escalado de porciones.** El parseo de la línea de ingrediente ya queda hecho
+  en `recipe.js`; falta decidir la interfaz.
+- **Importar desde una URL dentro de la app.** No se va a hacer: una PWA no puede
+  descargar una página ajena por CORS, y un proxy sería infraestructura. Lo
+  cubre Claude (§10).
+- **OCR de fotos de libros.** Trabajo de agente, no de la app.
+- **Compartir con otras personas.** Cambia el modelo de permisos entero.
+- **Bajar todo para offline.** Cuando cocinar sin señal deje de ser hipotético.
 
-El alcance de v1 tiene un corte natural en dos hitos, y conviene ejecutarlo
-así: **núcleo** (autenticación, índice, buscar, filtrar, leer la receta, editar,
-reconstruir) y **planificación** (planificador semanal y lista
-de compras), que depende del núcleo y no lo modifica. El segundo hito se puede
-posponer sin dejar nada a medias.
+Cerrado, no vuelve a evaluarse:
 
-Decisiones diferidas con su umbral:
+- **Journal de deltas y partición del índice.** Existían para evitar reescribir
+  el índice completo en cada edición, que es un problema que la planilla no
+  tiene: la escritura por fila quedó verificada contra la API real.
 
-- **Journal de deltas y partición del índice:** eliminados por la decisión de
-  §4.2. Solo reaparecen si el plan B del riesgo 3 se activa.
-- **Cache offline completo:** cuando cocinar sin señal deje de ser hipotético.

@@ -47,6 +47,7 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | Journal de deltas o partición del índice | Existían solo para evitar el full rewrite, que la planilla ya resuelve. |
 | Cooklang para el cuerpo de la receta | Da parsing exacto, pero ensucia el `.md`, que es justamente lo que se eligió proteger. |
 | `schema.org/Recipe` como modelo de datos | Está diseñado para publicar a buscadores: nutrición, rating, autor, video. Sirve como checklist, no como modelo. |
+| Reabrir el alcance de v1 | Se revisó entero el 2026-09-01: el planificador salió, y crear una receta mínima entró (§11). |
 | Una vista de bandeja o triage | Lo que falta archivar se ve en el tile "Sin categorizar" del home; lo que falta terminar se lista filtrando por el tag `incompleto`. |
 | Campos `ultima_vez`, `veces`, `puntaje`, `porciones` numérico, `foto:` | El esquema del frontmatter es cerrado y son seis claves (§3.2). |
 | AppSheet, Apps Script, apps nativas, Artifact de Claude | Evaluadas como plataforma y descartadas (§2). |
@@ -58,7 +59,9 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
    próximo paso: el spec ya no tiene condicionales abiertos ni decisiones
    visuales pendientes.
 2. **GitHub Pages** (`SETUP.md` §4), y agregar ese origen al cliente OAuth.
-3. El planificador semanal y la lista de compras (hito 2), sin diseñar.
+3. El planificador semanal y la lista de compras: fuera de v1 y sin diseñar.
+   Es lo próximo después del núcleo; necesita sus vistas y la barra de
+   navegación inferior.
 4. **Migrar el contenido existente:** en la carpeta `recetas` de Drive hay un Doc
    de ~7,3 MB y varios documentos temáticos (fondues, pan, macarons,
    fermentación, un PDF de pescados). Es trabajo de agente, no de la app.
