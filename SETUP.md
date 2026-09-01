@@ -47,18 +47,30 @@ sobre la carpeta alcance para verla.
 
 En Google Cloud Console:
 
-1. Crear un proyecto.
-2. Habilitar **Google Drive API**, **Google Sheets API** y **Google Picker API**.
-3. Configurar la pantalla de consentimiento con el único scope
-   `https://www.googleapis.com/auth/drive.file`, que es no-sensible y no requiere
-   verificación de Google. Tipo de usuario externo, y agregarse a uno mismo como
-   usuario de prueba.
-4. Crear credenciales de tipo **OAuth client ID → Web application**. En orígenes
-   autorizados de JavaScript, poner los dos:
+1. Crear un proyecto en <https://console.cloud.google.com>.
+2. En **APIs y servicios → Biblioteca**, habilitar **Google Drive API**,
+   **Google Sheets API** y **Google Picker API**.
+3. Configurar el consentimiento. Lo que antes era "pantalla de consentimiento
+   OAuth" hoy es una sección aparte: **Google Auth Platform**,
+   <https://console.cloud.google.com/auth/overview>. La primera vez hay un botón
+   *Comenzar* con un formulario corto; después queda repartido en el menú
+   izquierdo:
+   - **Personalización de marca:** nombre de la app y correo de asistencia.
+   - **Público:** tipo de usuario **Externo**, y agregarse a uno mismo en
+     *Usuarios de prueba*. Conviene además darle *Publicar app*: en modo prueba
+     los tokens de refresco caducan a los 7 días. Como el único scope es no
+     sensible, se publica sin revisión de Google.
+   - **Acceso a los datos:** *Agregar o quitar permisos* y buscar
+     `https://www.googleapis.com/auth/drive.file`. Tiene que quedar como el
+     único, y aparece listado como **no sensible**.
+4. En **Google Auth Platform → Clientes** (o el viejo *APIs y servicios →
+   Credenciales*, es el mismo objeto), crear un **ID de cliente de OAuth →
+   Aplicación web**. En orígenes autorizados de JavaScript, poner los dos:
    - `http://localhost:8000` — para el spike y para desarrollo local.
    - el origen de GitHub Pages, cuando exista (paso 4).
-5. Crear además una **API key** en el mismo proyecto. El Google Picker la exige
-   aparte del token OAuth. Conviene restringirla a la Picker API.
+5. En **APIs y servicios → Credenciales → Crear credenciales → Clave de API**,
+   crear además una **API key**. El Google Picker la exige aparte del token
+   OAuth. Conviene restringirla a la Picker API.
 6. Anotar el client ID y la API key. No hay client secret: el flujo corre entero
    en el navegador, y ninguno de los dos valores va al repositorio.
 
