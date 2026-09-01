@@ -76,7 +76,7 @@ Recetario/
 
 ### 3.2 Formato de receta
 
-Un archivo `.md` por receta, con frontmatter YAML y cuerpo libre:
+Un archivo `.md` por receta: frontmatter YAML y cuerpo Markdown.
 
 ```markdown
 ---
@@ -113,46 +113,63 @@ Cambiar la salsa y la muzzarella por salsa blanca y gruyere.
 - El horno de casa calienta de más: bajar a 180 °C.
 ```
 
-**Cada campo es un impuesto a la captura, así que todo es opcional menos el
-título.** La app tiene que renderizar bien una receta que es solo un título y un
-texto pegado de cualquier lado; los campos se llenan después, o nunca.
+**Cada campo es un impuesto a la captura, así que `titulo` es el único
+obligatorio.** La app tiene que renderizar bien una receta que es solo un título
+y un texto pegado de cualquier lado; el resto se llena después, o nunca.
 
 #### Frontmatter
 
-| campo | notas |
-|-------|-------|
-| `titulo` | Obligatorio. Es lo que muestra la app. Sin él, la receta no se indexa. |
-| `tags` | Clasificación múltiple: origen, dieta, técnica, ocasión, estación, equipamiento. |
-| `rinde` | Texto libre. No todo rinde porciones: una tarta rinde "1 tarta de 24 cm". |
-| `tiempo` | Texto libre. |
-| `dificultad` | Tres valores fijos: `fácil`, `media`, `difícil`. |
-| `fuente` | De dónde salió: URL, libro y página, o persona. |
+Lista exhaustiva de claves reconocidas. La app no interpreta ninguna otra.
 
-- **El nombre del archivo tiene que ser representativo de la receta** y es cómo
-  se navega en Drive. Cuando la app crea o renombra una receta mantiene
-  alineados el título y el nombre del archivo. Si divergen por una edición
-  manual, gana `titulo` para mostrar y la app ofrece renombrar el archivo.
-- **`titulo` es el único campo obligatorio.** Un `.md` sin título se descarta:
-  no entra al índice y la app no lo muestra. El archivo queda intacto en Drive,
-  y la reconstrucción reporta cuántos se ignoraron por esta razón, para que no
-  desaparezcan en silencio.
-- **`dificultad` se normaliza al leer** (minúsculas, sin tildes). Un valor
+| clave | tipo | obligatorio | valores |
+|---|---|---|---|
+| `titulo` | texto | **sí** | libre |
+| `tags` | lista de texto | no | vocabulario libre |
+| `rinde` | texto | no | libre |
+| `tiempo` | texto | no | libre |
+| `dificultad` | enumerado | no | `fácil` · `media` · `difícil` |
+| `fuente` | texto | no | libre |
+
+- **Sin `titulo` la receta no se indexa** y la app no la muestra. El archivo
+  queda intacto en Drive y la reconstrucción reporta cuántos se ignoraron por
+  esta razón, para que no desaparezcan en silencio.
+- **`rinde` es texto libre y no un número de porciones**, porque no todo rinde
+  porciones: una tarta rinde "1 tarta de 24 cm".
+- **`dificultad` se compara normalizando** (minúsculas, sin tildes). Un valor
   escrito a mano que no matchee cae en "sin definir" en vez de romper el filtro.
   La app lo edita con selector, no con texto libre.
-- **Los tags son de vocabulario libre** por ahora. La app no los valida ni los
-  restringe a una lista.
+- **`tags` es vocabulario libre**, sin validación ni lista cerrada. Tiene un
+  único valor con significado especial: **`incompleto`**, que hace que la receta
+  se dibuje marcada en las listas y en el detalle, y que se pueda listar lo que
+  falta terminar filtrando por él. No es un campo aparte: es un tag común con
+  render distinto.
+- **Las claves desconocidas se preservan** en toda escritura de la app, aunque
+  las ignore. Un agente puede dejar metadata propia sin que la app se la borre.
 
 #### Cuerpo
 
-- **La descripción es el texto entre el frontmatter y el primer `##`.** Sin
-  campo ni encabezado: se lee natural en Drive y capturar es pegar un párrafo.
-  Se muestra solo en el detalle de la receta, nunca en las listas, así que no va
-  al índice: se lee del `.md` al abrir la receta.
-- **`## Ingredientes` y `## Preparación` admiten subsecciones `###`** ("Para la
-  masa", "Día 2"). El parser no puede asumir listas planas.
-- **`## Variaciones` y `## Notas` son secciones distintas**, y la regla de corte
-  es: si lo escrito cambia el plato que sale, es variación; si es un consejo
-  para que este plato salga bien, es nota. Cada variación lleva su `###`.
+Las secciones se reconocen por encabezado `##`, comparando normalizado
+(minúsculas, sin tildes). Este es el orden canónico en el que la app serializa:
+
+| sección | encabezado | notas |
+|---|---|---|
+| descripción | *(ninguno)* | Todo el texto entre el frontmatter y el primer `##`. |
+| ingredientes | `## Ingredientes` | Admite subsecciones `###` ("Para la masa"). |
+| preparación | `## Preparación` | Admite subsecciones `###` ("Día 2"). |
+| variaciones | `## Variaciones` | Cada variación con su `###`. |
+| notas | `## Notas` | |
+
+- **Ninguna sección es obligatoria.** Pueden faltar todas.
+- **Las secciones no reconocidas se preservan textualmente** y se serializan
+  después de `## Notas`. La app nunca descarta contenido que no entiende: un
+  agente puede escribir `## Maridaje` y sobrevive a cualquier edición.
+- **La descripción se muestra solo en el detalle de la receta**, nunca en las
+  listas, así que no va al índice: se lee del `.md` al abrir la receta.
+- **La regla de corte entre notas y variaciones:** si lo escrito cambia el plato
+  que sale, es variación; si es un consejo para que este plato salga bien, es
+  nota.
+- **Las imágenes se escriben como `![](url)`** en cualquier punto del cuerpo.
+  Ver §3.3.
 - **Los ingredientes se parsean con heurística** (`- 200 g de muzzarella` →
   cantidad, unidad, item). Las líneas que no matchean se muestran tal cual. Es
   best-effort a propósito: la prioridad es poder escribir libre, no llenar un
@@ -160,6 +177,13 @@ texto pegado de cualquier lado; los campos se llenan después, o nunca.
 - **La normalización del ingrediente para el índice es solo pasar a
   minúsculas.** Nada de tildes, plurales ni sinónimos por ahora; queda para
   cuando la búsqueda por ingrediente muestre dónde falla de verdad.
+
+#### Nombre del archivo
+
+**Tiene que ser representativo de la receta** y es cómo se navega en Drive.
+Cuando la app crea o renombra una receta mantiene alineados el título y el
+nombre del archivo. Si divergen por una edición manual, gana `titulo` para
+mostrar y la app ofrece renombrar el archivo.
 
 ### 3.3 Fotos
 
@@ -176,8 +200,15 @@ la ruta, renombrar o mover la receta o la foto no lo rompe.
 - **Mostrar una foto de Drive requiere trabajo:** `<img src>` no puede mandar el
   token, así que la app extrae el id, hace fetch autenticado y arma un object
   URL. Se cachea en IndexedDB, lo que de paso resuelve las fotos offline.
-- **Las grillas usan `thumbnailLink`**, que Drive devuelve en la metadata del
-  archivo. Bajar cientos de fotos completas para pintar una lista no es viable.
+- **Las miniaturas de las listas salen del índice más una sola llamada.** La
+  columna `foto` guarda la URL de la portada, así que la lista sabe qué imagen
+  corresponde a cada receta sin abrir ninguna. Para no bajar la foto completa de
+  cada una, se usa `thumbnailLink`, que Drive devuelve en la metadata — pero
+  pedirlo archivo por archivo sería una llamada por receta. Se resuelve listando
+  `_fotos/` una vez con `fields=files(id,thumbnailLink)`: **una llamada paginada
+  devuelve el mapa id → miniatura de todas las fotos.** Se cachea en IndexedDB y
+  se refresca cuando un link caduca, porque son de vida corta. Las fotos
+  externas no tienen miniatura: se cargan directo y las escala el navegador.
 - **Se redimensiona antes de subir** a ~1600 px y JPEG, en canvas. Una foto de
   celular son 4 MB y miles de recetas comerían la cuota de Drive sin necesidad.
 - **Nombres dentro de `_fotos/`:** la app sube nombrando por receta
@@ -315,7 +346,9 @@ abrieron (LRU), no todas. Service worker para el código de la app.
 - **Offline solo si ya se abrió:** el detalle completo de una receta.
 - Un botón explícito de "bajar todo" queda fuera de v1.
 
-## 7. Componentes
+## 7. Componentes e interfaz
+
+### 7.1 Módulos
 
 Seis piezas, cada una con un solo trabajo:
 
@@ -334,7 +367,62 @@ Seis piezas, cada una con un solo trabajo:
 - **`store.js`** — el único que combina los anteriores con IndexedDB, y la única
   cara que ve la UI: `sync()`, `buscar()`, `get()`, `guardar()`.
 
-Más `ui/` con cuatro vistas y `sw.js` para el app shell.
+Más `ui/` con las vistas de §7.2 y `sw.js` para el app shell.
+
+### 7.2 Vistas
+
+**Un solo diseño, pensado para el celular.** La Mac usa la misma interfaz en una
+ventana más ancha; no hay dos diseños que mantener.
+
+**Home — categorías.** Grilla de tiles, uno por subcarpeta, con el conteo de
+recetas de cada una. Buscador en el encabezado. La raíz aparece como un tile
+más, "Sin categorizar", que es donde quedan las capturas que un agente dejó sin
+archivar. En el hito 1 no hay barra de navegación inferior —el planificador es
+hito 2—: la navegación es un stack hacia adentro.
+
+**Categoría — y resultados del buscador.** Las dos usan la misma vista: lista
+compacta de una columna, con miniatura chica, título y la meta en una línea
+(`rinde` · `tiempo` · `dificultad`). Entran seis o siete por pantalla y aguanta
+cientos de recetas sin cambiar de forma. Una receta sin foto muestra el cuadro
+vacío y no se ve rota, que importa porque con captura por agentes desde PDFs no
+tener foto va a ser lo normal. Arriba, chips que filtran por tag dentro de la
+categoría. Las recetas con el tag `incompleto` llevan un punto ámbar.
+
+**Detalle.** Portada arriba: la primera imagen del documento, que por eso no se
+repite en el cuerpo. Debajo, título y meta (`rinde` · `tiempo` · `dificultad`),
+y tres pestañas:
+
+- **Ingredientes**
+- **Preparación**
+- **Notas**, que agrupa `## Notas` y `## Variaciones`
+
+La pestaña Notas muestra el conteo —"Notas · 2"— y queda apagada cuando la
+receta no tiene ninguna, para que se vea que hay algo ahí sin tener que abrirla.
+
+Las imágenes que no son portada se dibujan donde el Markdown las puso, dentro de
+la pestaña que les toca según su sección. Tocar cualquier foto abre un visor a
+pantalla completa con zoom y swipe entre todas las de la receta: **la galería es
+un visor, no una sección.**
+
+**Editor.** No es para escribir recetas, es para corregir lo que quedó mal.
+Formulario en una sola pantalla que scrollea:
+
+- *Frontmatter:* `titulo`, `rinde`, `tiempo` y `fuente` como campos de texto;
+  `tags` con autocompletado sobre los ya usados; **carpeta y `dificultad` como
+  selectores**, que son los dos únicos lugares donde un error rompe algo — y la
+  carpeta ni siquiera es un campo del archivo, es una operación de Drive.
+- *Cuerpo:* un textarea por sección (descripción, ingredientes, preparación,
+  variaciones, notas), en monoespaciada, con el Markdown crudo adentro,
+  subsecciones `###` incluidas. Sin texto enriquecido, sin barra de formato y
+  sin insertor de imágenes: un `![](…)` se ve y se edita como texto.
+- *"Otras secciones":* bloque que aparece solo cuando el archivo trae
+  encabezados que la app no reconoce (§3.2). **El editor nunca esconde contenido
+  del archivo:** si se preservaran en silencio, no habría forma de arreglarlos
+  desde la app.
+
+**No hay vista de bandeja ni de triage.** Lo que falta archivar se ve en el tile
+"Sin categorizar" del home, y lo que falta terminar se lista filtrando por el tag
+`incompleto`. Corregir se hace entrando a la receta puntual.
 
 ## 8. Manejo de errores
 
