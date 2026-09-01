@@ -493,13 +493,25 @@ proxy implicaría infraestructura. Pedirle a Claude que convierta una URL en una
 receta guardada en Drive es el camino sin infra, y el índice se entera por la
 Changes API en el próximo arranque.
 
+**El input principal del recetario son estas sesiones, no el editor de la app.**
+La forma esperada de sumar contenido es pasarle una fuente a un agente —un PDF,
+la foto de un libro, un video, un sitio— y pedirle que extraiga la receta y la
+guarde en la carpeta. Por eso el `.md` es el formato: es lo bastante flexible
+para que lo escriba cualquier cosa. El editor de la app (§7.2) existe para
+corregir lo que quedó mal, no para componer.
+
+Falta definir el skill que hace ese trabajo: su validador, su corrector y el
+contrato con la app. El contrato mínimo ya se puede anticipar — escribir un
+`.md` que cumpla el esquema del §3.2, dejarlo en la raíz si no se decide la
+categoría, y marcarlo con el tag `incompleto` si algo quedó a medias.
+
 ## 12. Alcance de v1
 
 Dentro:
 
 - Buscar y filtrar por categoría, tags e ingredientes.
-- Ver receta en modo cocina: texto grande, pasos marcables.
-- Crear y editar recetas, con foto.
+- Ver la receta con los pasos marcables (§7.2).
+- Editar recetas y subir fotos (§7.2).
 - Planificador semanal y lista de compras.
 - Reconstruir índice.
 - Offline según §6.
@@ -513,8 +525,8 @@ Fuera:
 - Botón de "bajar todo para offline".
 
 El alcance de v1 tiene un corte natural en dos hitos, y conviene ejecutarlo
-así: **núcleo** (autenticación, índice, buscar, filtrar, leer en modo cocina,
-crear y editar, reconstruir) y **planificación** (planificador semanal y lista
+así: **núcleo** (autenticación, índice, buscar, filtrar, leer la receta, editar,
+reconstruir) y **planificación** (planificador semanal y lista
 de compras), que depende del núcleo y no lo modifica. El segundo hito se puede
 posponer sin dejar nada a medias.
 
