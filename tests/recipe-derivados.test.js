@@ -76,6 +76,14 @@ describe('ingredientesIndexables', () => {
       expect(ingredientesIndexables(undefined)).toEqual([]);
     });
 
+    it('tolera receta que es un número', () => {
+      expect(ingredientesIndexables(42)).toEqual([]);
+    });
+
+    it('tolera receta que es un objeto vacío', () => {
+      expect(ingredientesIndexables({})).toEqual([]);
+    });
+
     it('tolera una receta sin el campo ingredientes', () => {
       const r = { titulo: 'Test' };
       expect(ingredientesIndexables(r)).toEqual([]);
@@ -118,6 +126,14 @@ describe('primeraImagen', () => {
       expect(primeraImagen(undefined)).toBeNull();
     });
 
+    it('tolera receta que es un número', () => {
+      expect(primeraImagen(42)).toBeNull();
+    });
+
+    it('tolera receta que es un objeto vacío', () => {
+      expect(primeraImagen({})).toBeNull();
+    });
+
     it('tolera una receta sin campos de cuerpo', () => {
       const r = { titulo: 'Test' };
       expect(primeraImagen(r)).toBeNull();
@@ -126,6 +142,22 @@ describe('primeraImagen', () => {
     it('tolera bloques null o undefined', () => {
       const r = { titulo: 'Test', descripcion: null, ingredientes: undefined, preparacion: null };
       expect(primeraImagen(r)).toBeNull();
+    });
+
+    it('tolera otras que es un string sin lanzar', () => {
+      expect(primeraImagen({ otras: 'x' })).toBeNull();
+    });
+
+    it('tolera otras que es un número sin lanzar', () => {
+      expect(primeraImagen({ otras: 42 })).toBeNull();
+    });
+
+    it('tolera otras que es un array con null adentro', () => {
+      expect(primeraImagen({ otras: [null] })).toBeNull();
+    });
+
+    it('tolera otras que es un array con undefined adentro', () => {
+      expect(primeraImagen({ otras: [undefined] })).toBeNull();
     });
   });
 });
@@ -178,6 +210,18 @@ describe('slugArchivo', () => {
 
     it('tolera existentes que contiene undefined', () => {
       expect(slugArchivo('Pan', ['pan.md', undefined])).toBe('pan-2.md');
+    });
+
+    it('tolera existentes que es un string sin lanzar', () => {
+      expect(slugArchivo('Pan', 'pan.md')).toBe('pan.md');
+    });
+
+    it('tolera existentes que es un número sin lanzar', () => {
+      expect(slugArchivo('Pan', 42)).toBe('pan.md');
+    });
+
+    it('tolera existentes que es un objeto sin lanzar', () => {
+      expect(slugArchivo('Pan', {})).toBe('pan.md');
     });
   });
 });

@@ -167,6 +167,7 @@ const UNIDADES = ['g', 'kg', 'mg', 'ml', 'l', 'cc', 'taza', 'tazas', 'cda', 'cda
 
 /** Best-effort a propósito (§3.2): lo que no matchea se muestra tal cual. */
 export function parseIngrediente(linea) {
+  // Solo strings: un número o un objeto suelto no es un ingrediente válido
   if (typeof linea !== 'string') return null;
   const crudo = linea;
   const limpia = crudo.replace(/^\s*[-*]\s+/, '').trim();
@@ -201,7 +202,7 @@ export function primeraImagen(receta) {
   const bloques = [
     receta.descripcion, receta.ingredientes, receta.preparacion,
     receta.variaciones, receta.notas,
-    ...(receta.otras ?? []).map(o => o.cuerpo)
+    ...(Array.isArray(receta.otras) ? receta.otras : []).map(o => o?.cuerpo)
   ];
   for (const bloque of bloques) {
     const m = String(bloque ?? '').match(/!\[[^\]]*\]\(([^)\s]+)/);
@@ -218,7 +219,7 @@ export function slugArchivo(titulo, existentes = []) {
   const base = normalizar(titulo)
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'sin-titulo';
-  const tomados = new Set((existentes ?? []).map(n => String(n ?? '').toLowerCase()));
+  const tomados = new Set((Array.isArray(existentes) ? existentes : []).map(n => String(n ?? '').toLowerCase()));
   if (!tomados.has(`${base}.md`)) return `${base}.md`;
   let n = 2;
   while (tomados.has(`${base}-${n}.md`)) n++;
