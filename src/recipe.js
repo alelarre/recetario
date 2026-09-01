@@ -81,7 +81,37 @@ export function parse(texto) {
   return receta;
 }
 
-// Implementada en la tarea siguiente; por ahora todo el cuerpo es descripción.
+const SECCIONES = {
+  ingredientes: 'ingredientes',
+  preparacion: 'preparacion',
+  variaciones: 'variaciones',
+  notas: 'notas'
+};
+
 function parsearCuerpo(cuerpo, receta) {
-  receta.descripcion = cuerpo.trim();
+  const lineas = String(cuerpo).split('\n');
+  let destino = 'descripcion';
+  let encabezadoOtra = null;
+  let buffer = [];
+
+  const volcar = () => {
+    const texto = buffer.join('\n').trim();
+    buffer = [];
+    if (!texto) { encabezadoOtra = null; return; }
+    if (destino === 'otra') receta.otras.push({ encabezado: encabezadoOtra, cuerpo: texto });
+    else receta[destino] = texto;
+    encabezadoOtra = null;
+  };
+
+  for (const linea of lineas) {
+    const m = linea.match(/^##\s+(.+?)\s*$/);
+    if (m && !linea.startsWith('###')) {
+      volcar();
+      const clave = SECCIONES[normalizar(m[1])];
+      if (clave) { destino = clave; } else { destino = 'otra'; encabezadoOtra = m[1]; }
+      continue;
+    }
+    buffer.push(linea);
+  }
+  volcar();
 }
