@@ -1172,7 +1172,7 @@ git commit -m "catalogo.js: el diff, con movidas y renombres que no bajan el arc
 **Interfaces:**
 - Consumes: `CLIENT_ID`, `SCOPE` de `config.js`.
 - Produces:
-  - `auth.js`: `crearAuth() → {conectar(), token(), alReconectar(cb)}`. `token()` devuelve un token válido, renovándolo en silencio con `prompt: ''` si venció; lanza `ErrorDeAuth` si hace falta intervención.
+  - `auth.js`: `crearAuth() → {conectar(), token(), olvidar()}`. `token()` devuelve un token válido, renovándolo en silencio con `prompt: ''` si venció; lanza `ErrorDeAuth` si hace falta intervención.
   - `drive.js`: `crearDrive(obtenerToken) → cliente` con `buscarPorNombre(nombre, {padre})`, `listarHijos(carpetaId, {campos})`, `leerTexto(id)`, `crear({nombre, contenido, padre, mime})`, `actualizar(id, contenido)`, `renombrar(id, nombre)`, `mover(id, {de, a})`, `borrar(id)`, `subirFoto(blob, {nombre, padre})`, `metadatos(id, campos)`, `tokenInicialDeCambios()`, `cambios(token)`.
   - Ambos exportan además las funciones puras que arman consultas: `q.hijosDe(id)`, `q.porNombre(nombre, padre)`, que son lo único que se testea (§9: los clientes se verifican a mano).
 
