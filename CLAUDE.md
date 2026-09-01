@@ -52,12 +52,15 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 
 ## Pendientes, en orden
 
-1. **Cliente OAuth** en Google Cloud Console (`SETUP.md` §3). Lo tiene que hacer
-   el usuario. Bloquea el spike.
-2. **El spike del §10:** cuatro verificaciones contra las APIs reales — Picker
-   con `drive.file`, Changes API, Sheets con `drive.file`, y `thumbnailLink`.
-   Bloquea escribir código, porque sus resultados pueden cambiar el §5 entero.
-3. Actualizar el spec con esos resultados y eliminar los condicionales del §10.
+1. **Cliente OAuth y API key** en Google Cloud Console (`SETUP.md` §3). Lo tiene
+   que hacer el usuario. Es lo único que bloquea el spike.
+2. **Correr el spike del §10:** ya está construido en `spike/` — cuatro
+   verificaciones contra las APIs reales (Picker con `drive.file`, Changes API,
+   Sheets con `drive.file`, `thumbnailLink`), con su plan B enunciado en cada
+   una. Bloquea escribir código, porque sus resultados pueden cambiar el §5
+   entero. Ver `spike/README.md` para correrlo.
+3. Actualizar el spec con esos resultados, eliminar los condicionales del §10 y
+   borrar `spike/`.
 4. Plan de implementación, con el skill `superpowers:writing-plans`.
 5. **Dirección visual:** tipografía, color, densidad. Sin decidir — los mockups
    usaron colores de relleno, no son una decisión de diseño.
@@ -67,6 +70,12 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
    fermentación, un PDF de pescados). Es trabajo de agente, no de la app.
 8. **El skill del agente:** validador, corrector y contrato con la app. El
    contrato mínimo está anticipado en el §11.
+
+## En Drive, además de las carpetas
+
+`Carnes/milanesas-napolitanas.md` es un fixture, no contenido real: lo escribió
+un agente por fuera de la app para que la prueba 1 del spike tenga un `.md` que
+la app no creó. Sirve también como ejemplo canónico del esquema del §3.2.
 
 ## Mockups de la sesión de diseño
 

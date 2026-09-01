@@ -48,14 +48,22 @@ sobre la carpeta alcance para verla.
 En Google Cloud Console:
 
 1. Crear un proyecto.
-2. Habilitar Google Drive API y Google Sheets API.
+2. Habilitar **Google Drive API**, **Google Sheets API** y **Google Picker API**.
 3. Configurar la pantalla de consentimiento con el único scope
    `https://www.googleapis.com/auth/drive.file`, que es no-sensible y no requiere
-   verificación de Google.
-4. Crear credenciales de tipo **OAuth client ID → Web application**, con el
-   origen de GitHub Pages autorizado.
-5. Anotar el client ID en la configuración de la app. No hay client secret: el
-   flujo corre entero en el navegador.
+   verificación de Google. Tipo de usuario externo, y agregarse a uno mismo como
+   usuario de prueba.
+4. Crear credenciales de tipo **OAuth client ID → Web application**. En orígenes
+   autorizados de JavaScript, poner los dos:
+   - `http://localhost:8000` — para el spike y para desarrollo local.
+   - el origen de GitHub Pages, cuando exista (paso 4).
+5. Crear además una **API key** en el mismo proyecto. El Google Picker la exige
+   aparte del token OAuth. Conviene restringirla a la Picker API.
+6. Anotar el client ID y la API key. No hay client secret: el flujo corre entero
+   en el navegador, y ninguno de los dos valores va al repositorio.
+
+Con esos dos valores ya se puede correr el spike del §10 (ver `spike/README.md`),
+que es lo que destraba escribir la app.
 
 ## 4. GitHub Pages — pendiente
 
