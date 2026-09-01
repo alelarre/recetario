@@ -74,9 +74,10 @@ Recetario/
 - **El nombre del archivo sale del título, una sola vez.** Al crear una receta,
   la app la nombra con el título en minúsculas, sin acentos y con guiones
   (`milanesas-napolitanas.md`); si ya existe ese nombre en la carpeta, agrega un
-  sufijo numérico. Cambiar el título después **no** renombra el archivo: el
-  nombre es una etiqueta estable y el índice guarda los dos valores por separado
-  (§4.3). Un `.md` que escribió un agente conserva el nombre que le puso.
+  sufijo numérico. Si después el título cambia, la app **ofrece** renombrar el
+  archivo, nunca lo hace en silencio (§3.2); el índice guarda los dos valores
+  por separado (§4.3). Un `.md` que escribió un agente conserva su nombre hasta
+  que alguien acepte renombrarlo.
 - **Convención `_`.** Todo nombre que empieza con guión bajo es de la app y no
   es una categoría. Protege `_indice` y `_fotos/`.
 
