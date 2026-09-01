@@ -99,7 +99,14 @@ function parsearCuerpo(cuerpo, receta) {
     buffer = [];
     if (!texto) { encabezadoOtra = null; return; }
     if (destino === 'otra') receta.otras.push({ encabezado: encabezadoOtra, cuerpo: texto });
-    else receta[destino] = texto;
+    else {
+      if (receta[destino]) {
+        receta[destino] = receta[destino] + '\n\n' + texto;
+        receta.avisos.push('seccion-duplicada');
+      } else {
+        receta[destino] = texto;
+      }
+    }
     encabezadoOtra = null;
   };
 
@@ -107,8 +114,13 @@ function parsearCuerpo(cuerpo, receta) {
     const m = linea.match(/^##\s+(.+?)\s*$/);
     if (m && !linea.startsWith('###')) {
       volcar();
-      const clave = SECCIONES[normalizar(m[1])];
-      if (clave) { destino = clave; } else { destino = 'otra'; encabezadoOtra = m[1]; }
+      const encabezadoTrimado = m[1].trim();
+      if (!encabezadoTrimado) {
+        buffer.push(linea);
+        continue;
+      }
+      const clave = SECCIONES[normalizar(encabezadoTrimado)];
+      if (clave) { destino = clave; } else { destino = 'otra'; encabezadoOtra = encabezadoTrimado; }
       continue;
     }
     buffer.push(linea);

@@ -64,4 +64,16 @@ describe('parse — cuerpo', () => {
     expect(r.ingredientes).toBe('');
     expect(r.otras).toEqual([]);
   });
+
+  it('acumula secciones duplicadas y avisa', () => {
+    const r = parse(`---\ntitulo: X\n---\n\n## Notas\nPrimera nota.\n\n## Ingredientes\n- sal\n\n## Notas\nSegunda nota.\n`);
+    expect(r.notas).toBe('Primera nota.\n\nSegunda nota.');
+    expect(r.avisos).toContain('seccion-duplicada');
+  });
+
+  it('una sección que aparece una sola vez no dispara aviso de duplicada', () => {
+    const r = parse(`---\ntitulo: X\n---\n\n## Notas\nUnica nota.\n`);
+    expect(r.notas).toBe('Unica nota.');
+    expect(r.avisos).not.toContain('seccion-duplicada');
+  });
 });
