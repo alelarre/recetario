@@ -55,17 +55,16 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 
 ## Pendientes, en orden
 
-1. **Plan de implementación**, con el skill `superpowers:writing-plans`. Es el
-   próximo paso: el spec ya no tiene condicionales abiertos ni decisiones
-   visuales pendientes.
-2. **GitHub Pages** (`SETUP.md` §4), y agregar ese origen al cliente OAuth.
-3. El planificador semanal y la lista de compras: fuera de v1 y sin diseñar.
+1. **Ejecutar el plan**: `docs/superpowers/plans/2026-09-01-recetario-v1.md`, 22
+   tareas con TDD. La 22 publica en GitHub Pages, así que absorbe el pendiente
+   que antes estaba suelto.
+2. El planificador semanal y la lista de compras: fuera de v1 y sin diseñar.
    Es lo próximo después del núcleo; necesita sus vistas y la barra de
    navegación inferior.
-4. **Migrar el contenido existente:** en la carpeta `recetas` de Drive hay un Doc
+3. **Migrar el contenido existente:** en la carpeta `recetas` de Drive hay un Doc
    de ~7,3 MB y varios documentos temáticos (fondues, pan, macarons,
    fermentación, un PDF de pescados). Es trabajo de agente, no de la app.
-5. **El skill del agente:** validador, corrector y contrato con la app. El
+4. **El skill del agente:** validador, corrector y contrato con la app. El
    contrato mínimo está anticipado en el §10.
 
 ## El spike del §10, ya corrido
