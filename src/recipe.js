@@ -2,7 +2,7 @@ const CLAVES = ['titulo', 'tags', 'rinde', 'tiempo', 'dificultad', 'fuente'];
 
 /** Minúsculas y sin tildes. Es la única normalización del sistema (§3.2). */
 export function normalizar(texto) {
-  return (texto ?? '')
+  return String(texto ?? '')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')  // marcas de combinación
     .toLowerCase()
@@ -36,13 +36,21 @@ function parsearLista(valor, resto) {
 
 function parsearFrontmatter(bloque, receta) {
   const lineas = bloque.split('\n');
+  let ultimaClave = null;
   for (let i = 0; i < lineas.length; i++) {
     const linea = lineas[i];
     if (!linea.trim()) continue;
-    if (/^\s*-\s+/.test(linea)) continue; // ya consumida por una lista
+    if (/^\s*-\s+/.test(linea)) {
+      // Si no es tags, es ilegible
+      if (ultimaClave !== 'tags') {
+        receta.avisos.push('frontmatter-ilegible');
+      }
+      continue; // ya consumida por una lista
+    }
     const m = linea.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(.*)$/);
     if (!m) { receta.avisos.push('frontmatter-ilegible'); continue; }
     const [, clave, valor] = m;
+    ultimaClave = clave;
     if (clave === 'tags') {
       receta.tags = parsearLista(valor.trim(), lineas.slice(i + 1));
     } else if (CLAVES.includes(clave)) {

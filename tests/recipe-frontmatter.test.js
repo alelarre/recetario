@@ -63,11 +63,23 @@ describe('parse — frontmatter', () => {
     expect(r.avisos).toContain('frontmatter-ilegible');
     expect(r.descripcion).toBe('Cuerpo.');
   });
+
+  it('lista bajo una clave que no es tags marca frontmatter-ilegible', () => {
+    const r = parse(`---\ntitulo: X\nrinde:\n  - 4 porciones\n  - 6 porciones\n---\n`);
+    expect(r.titulo).toBe('X');
+    expect(r.rinde).toBeNull();
+    expect(r.avisos).toContain('frontmatter-ilegible');
+  });
 });
 
 describe('normalizar', () => {
   it('baja a minúsculas y saca tildes', () => {
     expect(normalizar('Fácil')).toBe('facil');
     expect(normalizar('PREPARACIÓN')).toBe('preparacion');
+  });
+
+  it('coerciona números, objetos y otros tipos sin lanzar', () => {
+    expect(normalizar(42)).toBe('42');
+    expect(normalizar({ foo: 'bar' })).toBe('[object object]');
   });
 });
