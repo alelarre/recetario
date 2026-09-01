@@ -136,6 +136,7 @@ const ORDEN_CUERPO = [
 ];
 
 export function serialize(receta) {
+  receta = receta ?? {};
   const fm = [];
   if (receta.titulo) fm.push(`titulo: ${receta.titulo}`);
   if (receta.tags?.length) fm.push(`tags: [${receta.tags.join(', ')}]`);

@@ -58,4 +58,16 @@ describe('serialize', () => {
     const una = serialize(parse(ORIGINAL));
     expect(serialize(parse(una))).toBe(una);
   });
+
+  it('no lanza con null ni undefined', () => {
+    expect(() => serialize(null)).not.toThrow();
+    expect(() => serialize(undefined)).not.toThrow();
+    expect(typeof serialize(null)).toBe('string');
+    expect(typeof serialize(undefined)).toBe('string');
+  });
+
+  it('maneja el objeto vacío sin lanzar', () => {
+    expect(() => serialize({})).not.toThrow();
+    expect(serialize({})).toBe('');
+  });
 });
