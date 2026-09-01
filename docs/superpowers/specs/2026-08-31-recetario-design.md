@@ -435,6 +435,61 @@ Formulario en una sola pantalla que scrollea:
 "Sin categorizar" del home, y lo que falta terminar se lista filtrando por el tag
 `incompleto`. Corregir se hace entrando a la receta puntual.
 
+### 7.3 Lenguaje visual
+
+**La app no compite con el contenido.** Tipografía del sistema, escala de grises
+y un solo acento funcional: lo que tiene color en la pantalla es una foto o una
+receta a medio terminar.
+
+**Tipografía.** La pila del sistema (`system-ui`), sin descargar ninguna fuente:
+una petición menos en el arranque y nada que cachear para offline. La
+monoespaciada del sistema se usa solo en los textareas del editor.
+
+Todas las medidas van en `rem`, nunca en píxeles fijos. Así la app hereda el
+tamaño de letra configurado en Android: agrandarlo desde el sistema es lo que
+resuelve leer la receta de lejos mientras se cocina, sin una vista aparte ni una
+segunda escala que mantener.
+
+| uso | tamaño | peso |
+|---|---|---|
+| Título de receta (detalle) | 1.375rem | 680 |
+| Encabezado `##` del cuerpo | 1.125rem | 650 |
+| Cuerpo: pasos, ingredientes, notas | 1.0625rem / interlineado 1.62 | 400 |
+| Título de fila en lista | 1rem | 550 |
+| Pestañas y chips | 0.875rem | 500 |
+| Meta (`rinde` · `tiempo` · `dificultad`) | 0.8125rem | 400 |
+
+**Color.** Dos paletas, elegidas por `prefers-color-scheme`. No hay selector de
+tema en la app: manda el sistema, y así no hay preferencia que guardar ni
+sincronizar.
+
+| token | claro | oscuro |
+|---|---|---|
+| fondo | `#ffffff` | `#1c1c1e` |
+| superficie (chip, miniatura vacía) | `#f2f2f7` | `#2c2c2e` |
+| texto | `#1c1c1e` | `#f2f2f7` |
+| texto secundario | `#6e6e73` | `#98989d` |
+| separador | `#e5e5ea` | `#38383a` |
+| acento | `#0a5fd0` | `#5aa9ff` |
+| ámbar de `incompleto` | `#b06f00` | `#e0a94a` |
+
+El acento marca lo tocable —chip activo, pestaña seleccionada, paso marcado— y
+nada más. Los dos valores están elegidos por contraste, no por gusto: el azul
+del sistema (`#0a84ff`) da 3.1:1 sobre blanco y no alcanza para texto chico.
+
+**Densidad.** Espaciado en múltiplos de 4 px. Márgenes laterales de 16 px, filas
+de lista con 12 px arriba y abajo —seis o siete por pantalla, como pide el
+§7.2—, y 14 px entre pasos de la preparación. Radios de 8 px en miniaturas y
+portada, `999px` en los chips.
+
+**Área táctil mínima de 44 px** en todo lo que se toca, aunque el elemento
+dibujado sea más chico. El caso que manda es marcar un paso con el dorso del
+dedo, con las manos sucias.
+
+Los tokens de esta sección viven en un único archivo de variables CSS que
+consumen las vistas de `ui/`. Ningún componente escribe un color literal: si un
+valor aparece dos veces, es un token que falta.
+
 ## 8. Manejo de errores
 
 - **Un `.md` malformado nunca puede romper la app.** Requisito duro, no caso

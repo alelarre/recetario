@@ -55,15 +55,14 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 ## Pendientes, en orden
 
 1. **Plan de implementación**, con el skill `superpowers:writing-plans`. Es el
-   próximo paso: el spec ya no tiene condicionales abiertos.
-2. **Dirección visual:** tipografía, color, densidad. Sin decidir — los mockups
-   usaron colores de relleno, no son una decisión de diseño.
-3. **GitHub Pages** (`SETUP.md` §4), y agregar ese origen al cliente OAuth.
-4. El planificador semanal y la lista de compras (hito 2), sin diseñar.
-5. **Migrar el contenido existente:** en la carpeta `recetas` de Drive hay un Doc
+   próximo paso: el spec ya no tiene condicionales abiertos ni decisiones
+   visuales pendientes.
+2. **GitHub Pages** (`SETUP.md` §4), y agregar ese origen al cliente OAuth.
+3. El planificador semanal y la lista de compras (hito 2), sin diseñar.
+4. **Migrar el contenido existente:** en la carpeta `recetas` de Drive hay un Doc
    de ~7,3 MB y varios documentos temáticos (fondues, pan, macarons,
    fermentación, un PDF de pescados). Es trabajo de agente, no de la app.
-6. **El skill del agente:** validador, corrector y contrato con la app. El
+5. **El skill del agente:** validador, corrector y contrato con la app. El
    contrato mínimo está anticipado en el §10.
 
 ## El spike del §10, ya corrido
@@ -81,9 +80,10 @@ la punta) por si Google cambia algo y hay que volver a medir.
 un agente por fuera de la app para que la prueba 1 del spike tenga un `.md` que
 la app no creó. Sirve también como ejemplo canónico del esquema del §3.2.
 
-## Mockups de la sesión de diseño
+## Mockups de las sesiones de diseño
 
-Quedaron en `.superpowers/brainstorm/*/content/` (fuera de git): `home`,
-`cocina`, `secciones`, `fotos`, `bandeja`, `editor`, `editor-v2`, `categoria`.
-Sirven para recordar qué se comparó, no como especificación — lo que se decidió
-está en el §7.2 del spec.
+Quedaron en `.superpowers/brainstorm/*/content/` (fuera de git). De la sesión de
+layout: `home`, `cocina`, `secciones`, `fotos`, `bandeja`, `editor`, `editor-v2`,
+`categoria`. De la sesión visual: `neutro-y-acento`, `densidad`. Sirven para
+recordar qué se comparó, no como especificación — lo decidido está en el §7.2 y
+el §7.3 del spec.
