@@ -49,28 +49,29 @@ En este orden. Ninguna sección es obligatoria.
 
 ```markdown
 ---
-titulo: Torta de ricota y limón
-tags: [horno, limón]
-rinde: 1 tarta de 24 cm
-tiempo: 1 h 15
-fuente: https://sitio.com/torta-de-ricota
+titulo: Milanesas napolitanas
+tags: [horno, rápido]
+rinde: 4 porciones
+tiempo: 40 min
+dificultad: fácil
+fuente: Cuaderno de mamá, p. 12
 ---
 
 La descripción va acá, sin encabezado: entre el frontmatter y el primer `##`.
 
 ## Ingredientes
-### Para la masa
-- 200 g de harina 0000
+### Para la milanesa
+- 4 milanesas de nalga
 
 ## Preparación
-1. Precalentar el horno a 180 °C.
+1. Precalentar el horno a 200 °C.
 
 ## Variaciones
-### Con dulce de leche
-Una capa en la base antes del relleno.
+### A la suiza
+Salsa blanca y gruyere en lugar de la salsa de tomate.
 
 ## Notas
-- La ricota tiene que ser bien seca.
+- El horno de casa calienta de más: bajar a 180 °C.
 ```
 
 - **Nota vs. variación:** si cambia el plato que sale, es variación; si es un consejo
@@ -83,7 +84,7 @@ Una capa en la base antes del relleno.
 
 ### Nombre del archivo
 
-El título en minúsculas, sin tildes, con guiones: `torta-de-ricota-y-limon.md`.
+El título en minúsculas, sin tildes, con guiones: `milanesas-napolitanas.md`.
 Completo, no abreviado. Si ya existe uno igual en la carpeta, sufijo numérico.
 
 ## Decisiones que la fuente no resuelve
@@ -99,6 +100,7 @@ Completo, no abreviado. Si ya existe uno igual en la carpeta, sufijo numérico.
 | El sitio trae navegación, publicidad, rating, "recetas relacionadas" | Nada de eso entra al archivo. |
 | La receta ya existe en el recetario | No crear un duplicado: abrir la existente y completarla, o guardarla como `## Variaciones` de aquella. |
 | Los tags | Antes de inventar uno, mirar los que ya usan otras recetas de esa carpeta y reusarlos. Un tag nuevo por receta no sirve para filtrar. |
+| La fuente trae la anécdota personal del autor ("me la pasó mi abuela", "para el cumple de mi hija") | La descripción se condensa en tercera persona, o se omite. Esa abuela no es la de quien lee el recetario. Lo que sí se conserva literal son los pasos y las cantidades. |
 
 ## Errores comunes
 
@@ -109,5 +111,5 @@ Completo, no abreviado. Si ya existe uno igual en la carpeta, sufijo numérico.
 | Formatos de `tiempo` distintos en cada receta | `1 hora 15 minutos (más heladera)` y `1 h 15` no se ordenan juntos. El tiempo activo va en una nota. |
 | Agregar claves nuevas al frontmatter | Se preservan, pero ninguna app las mira. Lo que no entra en las seis claves va al cuerpo. |
 | Subir el archivo como documento de Google | Deja de ser un `.md` legible y editable por fuera, que es el punto de todo esto. |
-| Reescribir la receta "mejorándola" | Se guarda lo que dice la fuente. La voz del autor original se respeta. |
+| Reescribir los pasos o las cantidades "mejorándolos" | Los ingredientes y la preparación se transcriben tal como los dice la fuente. Corregir de memoria es cómo una receta que funcionaba deja de funcionar. |
 | Traducir las cantidades a otro sistema | `1 cup` se deja como está, o se convierte y se aclara en una nota. |
