@@ -282,7 +282,8 @@ Si un mapa desactualizado hiciera escribir sobre la fila equivocada, se detecta
 al leer —aparecen dos filas con el mismo `id_archivo`— y lo arregla la
 reconstrucción.
 
-Hoja `meta`: `schemaVersion`, `changesPageToken`, `ultima_reconstruccion`.
+Hoja `meta`: `schemaVersion`, `changesPageToken`, `ultima_reconstruccion` y
+`reconstruccion_en_curso`.
 
 **`schemaVersion`** existe porque la metadata todavía está por definirse. Si la
 app espera una versión más nueva que la de la planilla, dispara la
@@ -313,6 +314,24 @@ en el primer arranque.
 
 Objetivo: **costo constante, independiente del tamaño del recetario.** Nada de
 recorrer subcarpetas ni de leer `.md` en el arranque.
+
+**Arranque en frío.** Sin nada en IndexedDB, la app tiene que ubicar dos cosas
+por nombre, porque no hardcodea ningún id:
+
+1. **La carpeta.** Buscar `Recetario/`. Si no aparece ninguna, la app **no la
+   crea**: falla con un mensaje que apunta al `SETUP.md`, porque la estructura
+   de Drive es un prerrequisito. Si aparece más de una, preguntar cuál.
+2. **La planilla.** Buscar `_indice` dentro de esa carpeta. Una, se usa;
+   ninguna, se crea y se reconstruye (§5.3); más de una, se usa la de
+   `modifiedTime` más reciente y se avisa, porque es el rastro de que alguna vez
+   se creó una duplicada.
+
+**La planilla se crea solo cuando la búsqueda respondió y vino vacía.** Si la
+búsqueda falla —sin red, 429, token caído—, "no la encontré" no es "no existe":
+la app arranca en solo lectura con el índice cacheado y no crea nada. Crear una
+segunda `_indice` es el peor error posible del arranque, porque no tiene
+síntoma: cada dispositivo escribe en la suya y las ediciones dejan de verse del
+otro lado.
 
 1. Render inmediato desde el índice cacheado en IndexedDB, sin esperar red.
 2. En paralelo, dos llamadas:
@@ -352,6 +371,18 @@ la planilla con `values.append` en lotes de cientos de filas —unas seis llamad
 para 3.000 recetas— y resetear el `changesPageToken`. El cuello de botella es
 leer los `.md`, que es irreducible: estimo alrededor de un minuto para 3.000
 recetas con requests en paralelo.
+
+**Antes de empezar se descarta la cola de escrituras del §5.2.** Cada entrada de
+la cola es una fila derivada de un `.md` que ya está en Drive, así que la
+reconstrucción la vuelve a generar leyendo el archivo. Si no se descartara, la
+cola volcaría filas viejas sobre la planilla recién reconstruida.
+
+**Una reconstrucción interrumpida se detecta.** `reconstruccion_en_curso` se
+marca en la hoja `meta` al empezar y se limpia al terminar, junto con
+`ultima_reconstruccion`. Si al arrancar está marcado, el índice quedó a medias
+—se cerró la pestaña, se cayó la red— y la app reconstruye de nuevo en lugar de
+confiar en él. Sin esa marca, un índice truncado se ve exactamente igual que uno
+completo: el `schemaVersion` es correcto y el `changesPageToken` también.
 
 ## 6. Offline y cache local
 
@@ -396,6 +427,12 @@ recetas de cada una. Buscador en el encabezado. La raíz aparece como un tile
 más, "Sin categorizar", que es donde quedan las capturas que un agente dejó sin
 archivar. En el hito 1 no hay barra de navegación inferior —el planificador es
 hito 2—: la navegación es un stack hacia adentro.
+
+En el encabezado del home hay un menú de overflow con las dos únicas acciones
+que no pertenecen a ninguna receta: **reconstruir el índice** —con la fecha de
+la última reconstrucción, que sale de la hoja `meta`— y **reconectar la cuenta**,
+que es la salida del token caído del §8. No hay pantalla de ajustes: no hay nada
+que ajustar.
 
 **Categoría — y resultados del buscador.** Las dos usan la misma vista: lista
 compacta de una columna, con miniatura chica, título y la meta en una línea
@@ -514,7 +551,10 @@ valor aparece dos veces, es un token que falta.
 - **Conflicto de edición:** antes de escribir un `.md` se compara su
   `modifiedTime` con el que se tenía. Si cambió, no se pisa: se muestran las dos
   versiones.
-- **Índice corrupto o `schemaVersion` viejo:** reconstrucción con progreso.
+- **Índice corrupto, `schemaVersion` viejo o `reconstruccion_en_curso` marcado:**
+  reconstrucción con progreso (§5.3).
+- **Dos planillas `_indice`:** se usa la más reciente y se avisa. La app nunca
+  crea una si la búsqueda falló (§5.1).
 - **429 de Drive o Sheets:** backoff exponencial, sobre todo durante una
   reconstrucción.
 - **Concurrencia entre dispositivos:** Drive v3 no tiene ETags para escritura
