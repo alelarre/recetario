@@ -70,7 +70,14 @@ En Google Cloud Console:
    - el origen de GitHub Pages, cuando exista (paso 4).
 5. En **APIs y servicios → Credenciales → Crear credenciales → Clave de API**,
    crear además una **API key**. El Google Picker la exige aparte del token
-   OAuth. Conviene restringirla a la Picker API.
+   OAuth; el resto de la app no la usa, porque las llamadas a Drive y Sheets van
+   con el token en el header `Authorization`. Restringirla:
+   - *Restricciones de API:* **solo Google Picker API**. Si no figura en la
+     lista, falta habilitarla en el paso 2 — el selector solo muestra las APIs
+     habilitadas en el proyecto.
+   - *Restricciones de aplicación:* **Sitios web**, con `http://localhost:8000/*`
+     y el origen de GitHub Pages cuando exista. Si el Picker llegara a fallar con
+     un error de clave, esto es lo primero que hay que aflojar.
 6. Anotar el client ID y la API key. No hay client secret: el flujo corre entero
    en el navegador, y ninguno de los dos valores va al repositorio.
 
