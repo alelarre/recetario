@@ -16,20 +16,27 @@ describe('rangos A1', () => {
   });
 
   describe('defensa de parámetros en rangoDeFila', () => {
-    it('null o undefined retorna fila 1 (encabezados)', () => {
-      expect(rangoDeFila(null)).toBe('recetas!A1:M1');
-      expect(rangoDeFila(undefined)).toBe('recetas!A1:M1');
+    it('null lanza error de programación', () => {
+      expect(() => rangoDeFila(null)).toThrow();
     });
 
-    it('un número negativo retorna fila 1 (encabezados)', () => {
-      expect(rangoDeFila(-5)).toBe('recetas!A1:M1');
+    it('undefined lanza error de programación', () => {
+      expect(() => rangoDeFila(undefined)).toThrow();
     });
 
-    it('un string retorna fila 1 (encabezados)', () => {
-      expect(rangoDeFila('algo')).toBe('recetas!A1:M1');
+    it('un número negativo lanza error de programación', () => {
+      expect(() => rangoDeFila(-5)).toThrow();
     });
 
-    it('un número positivo retorna la fila correcta', () => {
+    it('un string lanza error de programación', () => {
+      expect(() => rangoDeFila('algo')).toThrow();
+    });
+
+    it('un flotante lanza error de programación', () => {
+      expect(() => rangoDeFila(1.5)).toThrow();
+    });
+
+    it('un número positivo entero retorna la fila correcta', () => {
       expect(rangoDeFila(1)).toBe('recetas!A1:M1');
       expect(rangoDeFila(10)).toBe('recetas!A10:M10');
       expect(rangoDeFila(100)).toBe('recetas!A100:M100');

@@ -8,14 +8,14 @@ const letra = (i) => String.fromCharCode(65 + i);
 
 /**
  * Genera un rango A1 para una fila entera (de A a la última columna).
- * Defiende los parámetros: null, undefined, string o número negativo retorna fila 1 (encabezados).
- * Esto previene errores silenciosos de índice cuando la capa superior pasa datos inválidos.
+ * Lanza si fila no es un entero >= 1: la fila 1 son los encabezados y no hay fallback seguro.
+ * Un rango mal calculado es un error de programación, no un dato malo del usuario.
  */
 export const rangoDeFila = (fila) => {
-  // Defenderse: solo aceptar números positivos (>= 1)
-  // null, undefined, string, o negativo cae a fila 1 (encabezados)
-  const f = typeof fila === 'number' && fila > 0 ? fila : 1;
-  return `${HOJA_RECETAS}!A${f}:${letra(COLUMNAS.length - 1)}${f}`;
+  if (!Number.isInteger(fila) || fila < 1) {
+    throw new Error(`La fila tiene que ser un entero mayor o igual a 1; recibí ${JSON.stringify(fila)}`);
+  }
+  return `${HOJA_RECETAS}!A${fila}:${letra(COLUMNAS.length - 1)}${fila}`;
 };
 
 export function rangoDeCelda(columna, fila) {
