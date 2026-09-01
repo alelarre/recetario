@@ -195,7 +195,7 @@ la ruta, renombrar o mover la receta o la foto no lo rompe.
   arriba del detalle. Sin campo en el frontmatter.
 - **Se aceptan URLs externas.** Renderizan directo, sin auth. La app no puede
   copiarlas a Drive porque CORS le impide leer sus bytes; eso lo hace Claude
-  (§11). El service worker cachea respuestas opacas, así que una foto externa ya
+  (§10). El service worker cachea respuestas opacas, así que una foto externa ya
   vista sigue apareciendo sin señal.
 - **Mostrar una foto de Drive requiere trabajo:** `<img src>` no puede mandar el
   token, así que la app extrae el id, hace fetch autenticado y arma un object
@@ -284,11 +284,22 @@ reconstrucción sola. Agregar campos no requiere migraciones a mano.
 
 ### 4.4 Permisos
 
-Todo el sistema usa un único scope: **`drive.file`**, que es no-sensible y
-permite publicar la app sin verificación de Google ni pantalla de advertencia.
-La API de Sheets lo acepta y Google lo recomienda explícitamente por sobre el
-scope `spreadsheets`, que es sensible. Usar una planilla no cuesta permisos
+Todo el sistema usa un único scope: **`https://www.googleapis.com/auth/drive`**.
+La misma credencial cubre Drive y Sheets: usar una planilla no cuesta permisos
 extra.
+
+El scope es amplio porque `drive.file` no alcanza. `drive.file` es estrictamente
+por archivo: da acceso a lo que la app crea y a lo que el usuario elige a mano en
+el Picker, y elegir una carpeta da la carpeta, no su contenido. Con la carpeta
+`Recetario/` seleccionada, la app no ve ninguna de las 16 subcarpetas ni ningún
+`.md` que no haya escrito ella. Como el input principal son agentes que escriben
+los `.md` por fuera (§10), la app quedaría ciega justo frente al contenido que
+tiene que mostrar.
+
+El costo es la pantalla **"Google no verificó esta app"** la primera vez que se
+entra. Para un solo usuario es aceptable, y a cambio desaparece el Google Picker:
+la app ubica `Recetario/` buscándola por nombre, sin API key ni paso de selección
+en el primer arranque.
 
 ## 5. Sincronización
 
@@ -309,8 +320,8 @@ recorrer subcarpetas ni de leer `.md` en el arranque.
 3. Si algo cambió, re-render.
 
 La Changes API es lo que evita que el índice se desincronice cuando se edita una
-receta desde Drive o desde Claude. Si no estuviera disponible, el diseño
-degrada a que el usuario dispare la reconstrucción a mano (ver §10).
+receta desde Drive o desde Claude. Una edición externa aparece en la primera
+llamada posterior, con un `pageToken` que avanza de a uno.
 
 ### 5.2 Escritura
 
@@ -456,31 +467,7 @@ Formulario en una sola pantalla que scrollea:
   con un tercero: se verifican a mano una vez.
 - Vitest como runner. Sin automatización de navegador en v1.
 
-## 10. Riesgos a despejar antes de construir (paso 0)
-
-Cuatro preguntas sobre el mismo tema, resueltas en un spike de una tarde antes
-de escribir la app:
-
-1. **¿`drive.file` + Google Picker sobre la carpeta `Recetario/` da acceso a los
-   `.md` que ya están adentro?** `drive.file` solo alcanza archivos que la app
-   creó o que se eligieron explícitamente.
-   *Plan B:* un scope más amplio, que funciona igual pero muestra una pantalla
-   de "app no verificada" al entrar. Aceptable para uso propio.
-2. **¿La Changes API funciona con `drive.file`?**
-   *Plan B:* el índice se valida solo cuando el usuario dispara la
-   reconstrucción. El resto del diseño no cambia.
-3. **¿La API de Sheets lee y escribe con `drive.file` una planilla creada por la
-   app?** La documentación dice que sí; conviene confirmarlo en la práctica.
-   *Plan B:* volver al índice JSON con escritura diferida, journal de deltas y
-   partición por categoría (ver §4.2).
-4. **¿`thumbnailLink` sirve desde el navegador con `drive.file`?** Es lo que
-   hace viable pintar una grilla sin bajar las fotos completas.
-   *Plan B:* generar miniaturas propias al subir y guardarlas en `_fotos/`.
-
-Ninguno de los planes B invalida el modelo de datos. El riesgo está acotado a
-cómo se sincroniza el índice, no a cómo se guardan las recetas.
-
-## 11. Interfaz conversacional
+## 10. Interfaz conversacional
 
 **No hay que construir nada.** Al ser las recetas archivos `.md` en Drive, el
 conector de Google Drive de Claude las lee tal cual desde la app de Android, y
@@ -505,7 +492,7 @@ contrato con la app. El contrato mínimo ya se puede anticipar — escribir un
 `.md` que cumpla el esquema del §3.2, dejarlo en la raíz si no se decide la
 categoría, y marcarlo con el tag `incompleto` si algo quedó a medias.
 
-## 12. Alcance de v1
+## 11. Alcance de v1
 
 Dentro:
 
@@ -519,7 +506,7 @@ Dentro:
 Fuera:
 
 - Escalado de porciones (el parser de ingredientes queda listo; falta la UI).
-- Importar desde URL dentro de la app: lo cubre Claude (§11).
+- Importar desde URL dentro de la app: lo cubre Claude (§10).
 - OCR de fotos de libros.
 - Compartir con otras personas.
 - Botón de "bajar todo para offline".

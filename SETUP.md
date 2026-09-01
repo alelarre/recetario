@@ -39,17 +39,18 @@ Para agregar una categoría más adelante: crear la subcarpeta en Drive. Nada m�
 No se crea a mano. La app la genera en su primer arranque, junto con los
 encabezados y la hoja `meta`, y después dispara una reconstrucción completa.
 
-La razón es el scope `drive.file`: la app tiene acceso garantizado a los archivos
-que ella misma crea. Una planilla creada por fuera depende de que el permiso
-sobre la carpeta alcance para verla.
+La razón es que el índice es un cache derivado y no un dato: la app lo crea con
+sus encabezados, su hoja `meta` y su `schemaVersion`, y sabe rehacerlo entero
+desde los `.md` cuando falta o quedó viejo. Hacerlo a mano no aporta nada y
+puede quedar desalineado del esquema.
 
-## 3. Cliente OAuth — pendiente
+## 3. Cliente OAuth — hecho (2026-09-01)
 
 En Google Cloud Console:
 
 1. Crear un proyecto en <https://console.cloud.google.com>.
-2. En **APIs y servicios → Biblioteca**, habilitar **Google Drive API**,
-   **Google Sheets API** y **Google Picker API**.
+2. En **APIs y servicios → Biblioteca**, habilitar **Google Drive API** y
+   **Google Sheets API**.
 3. Configurar el consentimiento. Lo que antes era "pantalla de consentimiento
    OAuth" hoy es una sección aparte: **Google Auth Platform**,
    <https://console.cloud.google.com/auth/overview>. La primera vez hay un botón
@@ -57,36 +58,35 @@ En Google Cloud Console:
    izquierdo:
    - **Personalización de marca:** nombre de la app y correo de asistencia.
    - **Público:** tipo de usuario **Externo**, y agregarse a uno mismo en
-     *Usuarios de prueba*. Conviene además darle *Publicar app*: en modo prueba
-     los tokens de refresco caducan a los 7 días. Como el único scope es no
-     sensible, se publica sin revisión de Google.
+     *Usuarios de prueba*.
      Si el consentimiento falla con **Error 403: org_internal**, es que el tipo
      de usuario quedó en *Interno*, que solo admite cuentas de la organización
      dueña del proyecto. Se corrige en esta misma pantalla con *Cambiar a
      externo*.
-   - **Acceso a los datos:** *Agregar o quitar permisos* y buscar
-     `https://www.googleapis.com/auth/drive.file`. Tiene que quedar como el
-     único, y aparece listado como **no sensible**.
+   - **Acceso a los datos:** *Agregar o quitar permisos* y agregar
+     `https://www.googleapis.com/auth/drive`. Google lo marca como
+     **restringido**: es el precio de que la app pueda ver los `.md` que
+     escriben los agentes, y está fundamentado en el §4.4 del spec.
 4. En **Google Auth Platform → Clientes** (o el viejo *APIs y servicios →
    Credenciales*, es el mismo objeto), crear un **ID de cliente de OAuth →
    Aplicación web**. En orígenes autorizados de JavaScript, poner los dos:
-   - `http://localhost:8000` — para el spike y para desarrollo local.
+   - `http://localhost:8000` — para desarrollo local.
    - el origen de GitHub Pages, cuando exista (paso 4).
-5. En **APIs y servicios → Credenciales → Crear credenciales → Clave de API**,
-   crear además una **API key**. El Google Picker la exige aparte del token
-   OAuth; el resto de la app no la usa, porque las llamadas a Drive y Sheets van
-   con el token en el header `Authorization`. Restringirla:
-   - *Restricciones de API:* **solo Google Picker API**. Si no figura en la
-     lista, falta habilitarla en el paso 2 — el selector solo muestra las APIs
-     habilitadas en el proyecto.
-   - *Restricciones de aplicación:* **Sitios web**, con `http://localhost:8000/*`
-     y el origen de GitHub Pages cuando exista. Si el Picker llegara a fallar con
-     un error de clave, esto es lo primero que hay que aflojar.
-6. Anotar el client ID y la API key. No hay client secret: el flujo corre entero
-   en el navegador, y ninguno de los dos valores va al repositorio.
+5. Anotar el client ID:
 
-Con esos dos valores ya se puede correr el spike del §10 (ver `spike/README.md`),
-que es lo que destraba escribir la app.
+   ```
+   670194416271-psq474ahahgia41v9frctqaom4to7cio.apps.googleusercontent.com
+   ```
+
+   **No hace falta API key**: la necesitaba el Google
+   Picker, que se cayó del diseño junto con `drive.file`. Tampoco se usa el
+   client secret: el flujo corre entero en el navegador, y el client ID no es un
+   secreto — viaja en el frontend.
+
+Al entrar por primera vez, Google muestra **"Google no verificó esta app"**. Se
+pasa con *Configuración avanzada → Ir a…*. Es consecuencia del scope restringido
+y no se puede evitar sin someter la app a verificación, que para un solo usuario
+no tiene sentido.
 
 ## 4. GitHub Pages — pendiente
 
@@ -95,5 +95,6 @@ paso 3.
 
 ## 5. Primer arranque
 
-La app pide elegir la carpeta `Recetario/` con el Google Picker. Ese permiso es
-lo que le da acceso al contenido; conviene hacerlo una sola vez y no revocarlo.
+No hay nada que hacer. La app ubica `Recetario/` buscándola por nombre y
+descubre las categorías listando sus subcarpetas; después crea la planilla
+`_indice` y hace la primera reconstrucción.
