@@ -139,11 +139,11 @@ export function serialize(receta) {
   receta = receta ?? {};
   const fm = [];
   if (receta.titulo) fm.push(`titulo: ${receta.titulo}`);
-  if (receta.tags?.length) fm.push(`tags: [${receta.tags.join(', ')}]`);
+  if (Array.isArray(receta.tags) && receta.tags.length) fm.push(`tags: [${receta.tags.join(', ')}]`);
   for (const clave of ['rinde', 'tiempo', 'dificultad', 'fuente']) {
     if (receta[clave]) fm.push(`${clave}: ${receta[clave]}`);
   }
-  for (const [clave, valor] of Object.entries(receta.extras ?? {})) {
+  for (const [clave, valor] of Object.entries(typeof receta.extras === 'object' && receta.extras !== null ? receta.extras : {})) {
     fm.push(`${clave}: ${valor}`);
   }
 
@@ -152,7 +152,8 @@ export function serialize(receta) {
   for (const [clave, encabezado] of ORDEN_CUERPO) {
     if (receta[clave]) partes.push(`## ${encabezado}\n${receta[clave]}`);
   }
-  for (const otra of receta.otras ?? []) {
+  for (const otra of Array.isArray(receta.otras) ? receta.otras : []) {
+    if (!otra?.encabezado || typeof otra.encabezado !== 'string') continue;
     partes.push(`## ${otra.encabezado}\n${otra.cuerpo}`);
   }
 

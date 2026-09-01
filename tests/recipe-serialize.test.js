@@ -70,4 +70,29 @@ describe('serialize', () => {
     expect(() => serialize({})).not.toThrow();
     expect(serialize({})).toBe('');
   });
+
+  it('tolera receta.otras no-array sin lanzar ni escribir undefined', () => {
+    expect(() => serialize({otras: 'x'})).not.toThrow();
+    expect(serialize({otras: 'x'})).not.toContain('undefined');
+    expect(() => serialize({otras: 42})).not.toThrow();
+    expect(serialize({otras: 42})).not.toContain('undefined');
+    expect(() => serialize({otras: {}})).not.toThrow();
+    expect(serialize({otras: {}})).not.toContain('undefined');
+  });
+
+  it('maneja receta.otras con elementos nulos o inválidos, emitiendo solo los válidos', () => {
+    const r = serialize({otras: [null, {encabezado: 'Maridaje', cuerpo: 'Malbec.'}]});
+    expect(() => r).not.toThrow();
+    expect(r).toContain('## Maridaje');
+    expect(r).toContain('Malbec.');
+    expect(r).not.toContain('undefined');
+  });
+
+  it('serializa dos secciones desconocidas sin cambiar', () => {
+    const input = `---\ntitulo: X\n---\n\n## Maridaje\nMalbec.\n\n## Técnica\nTruco.`;
+    const r = parse(input);
+    const texto = serialize(r);
+    expect(texto).toContain('## Maridaje');
+    expect(texto).toContain('## Técnica');
+  });
 });
