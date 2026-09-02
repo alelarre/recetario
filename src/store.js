@@ -1,7 +1,7 @@
 import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_FOTOS, SCHEMA_VERSION } from './config.js';
 import { COLUMNAS, entradaDesdeFila, diffCambios, filaDesde } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, rangoDeFila } from './sheets.js';
-import { parse, serialize, slugArchivo } from './recipe.js';
+import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 
 const CATEGORIA_RAIZ = 'Sin categorizar';
 
@@ -343,5 +343,45 @@ export function crearStore({ drive, sheets, cache }) {
     return { indexadas: entradas.length, ignoradasSinTitulo };
   }
 
-  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, guardar, crear, borrar, fotosDe, flush, reconstruir, _ctx: ctx };
+  function buscar({ texto = '', categoria = '', tags = [], dificultad = '' } = {}) {
+    const t = normalizar(texto);
+    return entradas.filter(e => {
+      if (categoria && e.categoria !== categoria) return false;
+      if (dificultad && e.dificultad !== dificultad) return false;
+      if (tags.length && !tags.every(tag => e.tags.includes(tag))) return false;
+      if (!t) return true;
+      return normalizar(e.titulo).includes(t) || e.ingredientes.some(i => normalizar(i).includes(t));
+    });
+  }
+
+  function categoriasConConteo() {
+    const cuenta = new Map();
+    for (const e of entradas) cuenta.set(e.categoria, (cuenta.get(e.categoria) ?? 0) + 1);
+    const lista = ctx.categorias.map(c => ({ id: c.id, nombre: c.nombre, cantidad: cuenta.get(c.nombre) ?? 0 }));
+    const sueltas = cuenta.get(CATEGORIA_RAIZ) ?? 0;
+    if (sueltas > 0) lista.unshift({ id: ctx.raizId, nombre: CATEGORIA_RAIZ, cantidad: sueltas });
+    return lista;
+  }
+
+  function tagsDe(categoria) {
+    const cuenta = new Map();
+    for (const e of entradas) {
+      if (categoria && e.categoria !== categoria) continue;
+      for (const tag of e.tags) cuenta.set(tag, (cuenta.get(tag) ?? 0) + 1);
+    }
+    return [...cuenta].map(([tag, cantidad]) => ({ tag, cantidad }))
+      .sort((a, b) => b.cantidad - a.cantidad);
+  }
+
+  async function receta(id) {
+    const entrada = entradas.find(e => e.id_archivo === id) ?? null;
+    let texto = await cache.leerCuerpo(id);
+    if (texto === null) {
+      texto = await drive.leerTexto(id);
+      await cache.guardarCuerpo(id, texto);
+    }
+    return { entrada, receta: parse(texto), texto };
+  }
+
+  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, guardar, crear, borrar, fotosDe, flush, reconstruir, buscar, categoriasConConteo, tagsDe, receta, _ctx: ctx };
 }
