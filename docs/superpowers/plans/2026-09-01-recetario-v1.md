@@ -2714,7 +2714,8 @@ describe('categoriasConConteo', () => {
 
 describe('tagsDe', () => {
   it('devuelve los tags de una categoría ordenados por frecuencia', () => {
-    expect(store.tagsDe('Carnes').map(t => t.tag)).toEqual(['horno', 'rápido', 'parrilla']);
+    // A igual frecuencia el orden es alfabético: es estable entre reconstrucciones.
+    expect(store.tagsDe('Carnes').map(t => t.tag)).toEqual(['horno', 'parrilla', 'rápido']);
   });
 });
 ```
