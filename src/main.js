@@ -113,8 +113,7 @@ async function render(ruta = parsearHash(location.hash)) {
   }
   vistaActual = ruta;
   if (ruta.vista === 'home') {
-    const ultimaReconstruccion = await store.ultimaReconstruccion();
-    return pintar(renderHome({ categorias: store.categoriasConConteo(), ultimaReconstruccion }));
+    return pintar(renderHome({ categorias: store.categoriasConConteo(), ultimaReconstruccion: store.ultimaReconstruccion() }));
   }
   if (ruta.vista === 'categoria') {
     const entradas = store.buscar({ categoria: ruta.params.nombre, tags: tagsActivos });

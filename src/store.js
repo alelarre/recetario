@@ -7,7 +7,7 @@ const CATEGORIA_RAIZ = 'Sin categorizar';
 const ULTIMA_COLUMNA = String.fromCharCode(64 + COLUMNAS.length);
 
 export function crearStore({ drive, sheets, cache }) {
-  const ctx = { raizId: null, indiceId: null, categorias: [], carpetas: new Map(), soloLectura: false };
+  const ctx = { raizId: null, indiceId: null, categorias: [], carpetas: new Map(), soloLectura: false, ultimaReconstruccionEnMemoria: '' };
   let entradas = [];
   let filas = new Map();
 
@@ -81,6 +81,7 @@ export function crearStore({ drive, sheets, cache }) {
       const meta = await leerMeta();
       if (Number(meta.schemaVersion) !== SCHEMA_VERSION) reconstruir = true;
       if (meta.reconstruccion_en_curso) reconstruir = true;
+      ctx.ultimaReconstruccionEnMemoria = meta.ultima_reconstruccion || '';
     }
 
     return {
@@ -89,10 +90,9 @@ export function crearStore({ drive, sheets, cache }) {
     };
   }
 
-  /** Cuándo se reconstruyó el índice por última vez, para el menú del home (§7.2). */
-  async function ultimaReconstruccion() {
-    const meta = await leerMeta();
-    return meta.ultima_reconstruccion || '';
+  /** Cuándo se reconstruyó el índice por última vez, para el menú del home (§7.2). Retorna el valor en caché sin red. */
+  function ultimaReconstruccion() {
+    return ctx.ultimaReconstruccionEnMemoria;
   }
 
   async function guardarMeta(clave, valor) {
@@ -326,7 +326,9 @@ export function crearStore({ drive, sheets, cache }) {
     await cache.guardarMapaFilas(filas);
 
     await guardarMeta('changesPageToken', await drive.tokenInicialDeCambios());
-    await guardarMeta('ultima_reconstruccion', new Date().toISOString());
+    const ahora = new Date().toISOString();
+    await guardarMeta('ultima_reconstruccion', ahora);
+    ctx.ultimaReconstruccionEnMemoria = ahora;
     await guardarMeta('reconstruccion_en_curso', '');
 
     return { indexadas: entradas.length, ignoradasSinTitulo };

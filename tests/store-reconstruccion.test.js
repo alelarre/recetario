@@ -79,10 +79,36 @@ describe('reconstruir', () => {
   });
 
   it('la fecha queda disponible para el home a través de ultimaReconstruccion()', async () => {
-    expect(await store.ultimaReconstruccion()).toBe('');  // todavía no reconstruyó
+    expect(store.ultimaReconstruccion()).toBe('');  // todavía no reconstruyó
     await store.reconstruir();
-    const fecha = await store.ultimaReconstruccion();
+    const fecha = store.ultimaReconstruccion();
     expect(fecha).toBeTruthy();
     expect(new Date(fecha).toString()).not.toBe('Invalid Date');
+  });
+
+  it('después de reconstruir, el valor en memoria es el nuevo y no el viejo', async () => {
+    // Verificar que comienza vacío
+    expect(store.ultimaReconstruccion()).toBe('');
+
+    // Reconstruir una vez
+    const antes = Date.now();
+    await store.reconstruir();
+    const despues = Date.now();
+    const fecha1 = store.ultimaReconstruccion();
+
+    // Verificar que la fecha está en el rango esperado
+    expect(fecha1).toBeTruthy();
+    const timestamp1 = Date.parse(fecha1);
+    expect(timestamp1).toBeGreaterThanOrEqual(antes);
+    expect(timestamp1).toBeLessThanOrEqual(despues);
+
+    // Esperar un poco y reconstruir de nuevo
+    await new Promise(resolve => setTimeout(resolve, 10));
+    await store.reconstruir();
+    const fecha2 = store.ultimaReconstruccion();
+
+    // Verificar que la segunda fecha es más reciente que la primera
+    expect(fecha2).toBeTruthy();
+    expect(Date.parse(fecha2)).toBeGreaterThan(Date.parse(fecha1));
   });
 });
