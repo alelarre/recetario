@@ -1,0 +1,39 @@
+:root {
+  color-scheme: light dark;
+
+  --fondo: #ffffff;
+  --superficie: #f2f2f7;
+  --texto: #1c1c1e;
+  --texto-2: #6e6e73;
+  --separador: #e5e5ea;
+  --acento: #0a5fd0;
+  --ambar: #b06f00;
+
+  --tipo: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --t-titulo: 1.375rem;
+  --t-seccion: 1.125rem;
+  --t-cuerpo: 1.0625rem;
+  --t-fila: 1rem;
+  --t-chip: 0.875rem;
+  --t-meta: 0.8125rem;
+
+  --interlineado: 1.62;
+  --gap: 0.25rem;       /* la grilla de 4 px */
+  --margen: 1rem;
+  --radio: 0.5rem;
+  --tactil: 2.75rem;    /* 44 px */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #1c1c1e;
+    --superficie: #2c2c2e;
+    --texto: #f2f2f7;
+    --texto-2: #98989d;
+    --separador: #38383a;
+    --acento: #5aa9ff;
+    --ambar: #e0a94a;
+  }
+}
