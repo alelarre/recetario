@@ -1,0 +1,148 @@
+// tests/vista-detalle.test.js
+import { describe, it, expect } from 'vitest';
+import { parse } from '../src/recipe.js';
+import { renderDetalle } from '../src/ui/detalle.js';
+import { renderVisor } from '../src/ui/visor.js';
+
+const RECETA = parse(`---
+titulo: Milanesas napolitanas
+rinde: 4 porciones
+tiempo: 40 min
+dificultad: fácil
+tags: [horno]
+---
+
+![](https://a/portada)
+
+Un clásico.
+
+## Ingredientes
+- 200 g de muzzarella
+
+## Preparación
+1. Precalentar.
+2. Hornear.
+
+## Variaciones
+### A la suiza
+Gruyere.
+
+## Notas
+- Ojo con el horno.
+`);
+
+const ENTRADA = { id_archivo: 'r1', titulo: 'Milanesas napolitanas', tags: ['horno'] };
+
+describe('renderDetalle', () => {
+  it('pone la portada arriba y no la repite en el cuerpo', () => {
+    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'ingredientes' });
+    expect(html).toContain('class="portada" src="https://a/portada"');
+    expect(html.split('https://a/portada')).toHaveLength(2);
+  });
+
+  it('muestra la meta junta', () => {
+    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'ingredientes' });
+    expect(html).toContain('4 porciones · 40 min · fácil');
+  });
+
+  it('la pestaña Notas cuenta notas y variaciones juntas', () => {
+    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'ingredientes' });
+    expect(html).toContain('Notas · 2');
+  });
+
+  it('la pestaña Notas queda apagada cuando no hay ninguna', () => {
+    const r = parse(`---\ntitulo: X\n---\n\n## Ingredientes\n- sal\n`);
+    const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'ingredientes' });
+    expect(html).toMatch(/data-pestana="notas"[^>]*disabled/);
+  });
+
+  it('los pasos de Preparación son marcables', () => {
+    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'preparacion' });
+    expect(html).toContain('class="paso"');
+  });
+
+  it('la descripción se muestra en el detalle', () => {
+    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'ingredientes' });
+    expect(html).toContain('Un clásico.');
+  });
+
+  it('las secciones desconocidas se muestran en Notas y no se pierden', () => {
+    const r = parse(`---\ntitulo: X\n---\n\n## Maridaje\nMalbec.\n`);
+    const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'notas' });
+    expect(html).toContain('Maridaje');
+    expect(html).toContain('Malbec.');
+  });
+
+  it('una receta incompleta se ve marcada también en el detalle', () => {
+    const html = renderDetalle({ entrada: { ...ENTRADA, tags: ['incompleto'] }, receta: RECETA, pestana: 'ingredientes' });
+    expect(html).toContain('incompleto');
+  });
+
+  // Tests de defensa
+  it('sin argumentos no lanza', () => {
+    expect(() => renderDetalle()).not.toThrow();
+    const html = renderDetalle();
+    expect(html).toBeTruthy();
+    expect(typeof html).toBe('string');
+  });
+
+  it('con null no lanza', () => {
+    expect(() => renderDetalle(null)).not.toThrow();
+  });
+
+  it('con una receta vacía no lanza', () => {
+    expect(() => renderDetalle({ entrada: {}, receta: {}, pestana: 'ingredientes' })).not.toThrow();
+    const html = renderDetalle({ entrada: {}, receta: {}, pestana: 'ingredientes' });
+    expect(html).toBeTruthy();
+  });
+
+  it('escapa un script en el título', () => {
+    const r = parse(`---\ntitulo: <script>alert(1)</script>\n---\n`);
+    const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'ingredientes' });
+    expect(html).not.toContain('<script>');
+    expect(html).toContain('&lt;script&gt;');
+  });
+
+  it('escapa un script en una sección desconocida', () => {
+    const r = parse(`---\ntitulo: X\n---\n\n## <script>alert(1)</script>\nContenido.\n`);
+    const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'notas' });
+    expect(html).not.toContain('<script>');
+    expect(html).toContain('&lt;script&gt;');
+  });
+});
+
+describe('renderVisor', () => {
+  it('muestra la foto pedida y cuántas hay', () => {
+    const html = renderVisor({ fotos: ['https://a/1', 'https://a/2'], indice: 1 });
+    expect(html).toContain('https://a/2');
+    expect(html).toContain('2 / 2');
+  });
+
+  // Tests de defensa
+  it('con la lista de fotos vacía no lanza', () => {
+    expect(() => renderVisor({ fotos: [], indice: 0 })).not.toThrow();
+    const html = renderVisor({ fotos: [], indice: 0 });
+    expect(html).toBe('');
+  });
+
+  it('con null no lanza', () => {
+    expect(() => renderVisor(null)).not.toThrow();
+    const html = renderVisor(null);
+    expect(typeof html).toBe('string');
+  });
+
+  it('con un índice negativo no produce undefined', () => {
+    const html = renderVisor({ fotos: ['https://a/1', 'https://a/2'], indice: -1 });
+    expect(html).not.toContain('undefined');
+  });
+
+  it('con un índice fuera de rango no produce undefined', () => {
+    const html = renderVisor({ fotos: ['https://a/1', 'https://a/2'], indice: 10 });
+    expect(html).not.toContain('undefined');
+  });
+
+  it('escapa URLs en el src', () => {
+    const html = renderVisor({ fotos: ['https://a/"><script>alert(1)</script>'], indice: 0 });
+    expect(html).not.toContain('<script>');
+  });
+});
