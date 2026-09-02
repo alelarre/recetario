@@ -34,14 +34,18 @@ confía en tu criterio, ni que tengas apuro.
 ## Procedimiento
 
 1. Leé la fuente entera, según su tipo (ver más abajo).
-2. Elegí la carpeta. Listá las subcarpetas de `Recetario/` en Drive y elegí entre
+2. Buscá si la receta ya está en `Recetario/`, por título y por ingredientes
+   principales. Si aparece una parecida, mostrasela al usuario y preguntá antes de
+   seguir: puede querer completar la que está, guardarla como `## Variaciones` de
+   esa, o crear una nueva igual.
+3. Elegí la carpeta. Listá las subcarpetas de `Recetario/` en Drive y elegí entre
    esas, nunca de memoria. Si ninguna corresponde, dejá el archivo en la raíz de
    `Recetario/`, que es la bandeja de entrada.
-3. Escribí el `.md` con el esquema de abajo.
-4. Mostralo y esperá aprobación.
-5. Subilo como `text/markdown`, no como documento de Google. Si la herramienta
+4. Escribí el `.md` con el esquema de abajo.
+5. Mostralo y esperá aprobación.
+6. Subilo como `text/markdown`, no como documento de Google. Si la herramienta
    convierte a formato nativo por defecto, desactivá esa conversión.
-6. Confirmá dónde quedó: carpeta y nombre del archivo.
+7. Confirmá dónde quedó: carpeta y nombre del archivo.
 
 ## El esquema
 
@@ -193,7 +197,6 @@ Además:
 - Si cambia el título, ofrecé renombrar el archivo. No lo renombres por tu cuenta.
 - Si el cambio es una versión alternativa del plato, va como `## Variaciones` de la
   receta existente, no como receta nueva.
-- Si ya existe una receta igual, no crees un duplicado: completá la que está.
 
 ## Errores comunes
 
