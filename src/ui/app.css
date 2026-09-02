@@ -30,7 +30,8 @@ button { background: none; border: 0; cursor: pointer; min-height: var(--tactil)
 .contenido img { max-width: 100%; border-radius: var(--radio); }
 
 .paso { display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 0.875rem; list-style: none; }
-.paso .check { flex: none; width: 1.5rem; height: 1.5rem; min-width: 0; min-height: 0; border: 2px solid var(--texto-2); border-radius: 50%; }
+.paso .check { flex: none; width: 1.5rem; height: 1.5rem; border: 2px solid var(--texto-2); border-radius: 50%; position: relative; }
+.paso .check::after { content: ""; position: absolute; inset: -0.625rem; }
 .paso .check[aria-pressed="true"] { background: var(--acento); border-color: var(--acento); }
 .paso .check[aria-pressed="true"] + span { color: var(--texto-2); text-decoration: line-through; }
 ol:has(.paso) { padding: 0; }
@@ -40,3 +41,8 @@ ol:has(.paso) { padding: 0; }
 .campo input, .campo select, .campo textarea { width: 100%; padding: 0.5rem; border: 1px solid var(--separador); border-radius: var(--radio); background: var(--fondo); color: var(--texto); }
 .campo textarea { font-family: var(--mono); font-size: 0.9375rem; min-height: 8rem; }
 .otras { border: 1px dashed var(--ambar); border-radius: var(--radio); padding: 0.75rem; }
+
+.visor { position: fixed; inset: 0; background: var(--fondo-visor); z-index: 999; display: flex; align-items: center; justify-content: center; }
+.visor img { max-width: 90%; max-height: 90%; object-fit: contain; }
+.visor button { color: var(--fondo); }
+.visor-contador { position: fixed; bottom: var(--margen); left: 50%; transform: translateX(-50%); color: var(--fondo); font-size: var(--t-meta); }

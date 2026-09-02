@@ -8,6 +8,7 @@
   --separador: #e5e5ea;
   --acento: #0a5fd0;
   --ambar: #b06f00;
+  --fondo-visor: #000000;
 
   --tipo: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -35,5 +36,6 @@
     --separador: #38383a;
     --acento: #5aa9ff;
     --ambar: #e0a94a;
+    --fondo-visor: #000000;
   }
 }
