@@ -1,7 +1,7 @@
 import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_FOTOS, SCHEMA_VERSION } from './config.js';
 import { COLUMNAS, entradaDesdeFila, diffCambios, filaDesde } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, rangoDeFila } from './sheets.js';
-import { parse } from './recipe.js';
+import { parse, serialize, slugArchivo } from './recipe.js';
 
 const CATEGORIA_RAIZ = 'Sin categorizar';
 
@@ -175,5 +175,101 @@ export function crearStore({ drive, sheets, cache }) {
     return { releidos: plan.releer.length - ignoradosSinTitulo, parcheados: plan.parchear.length, borrados: plan.borrar.length, ignoradosSinTitulo };
   }
 
-  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, _ctx: ctx };
+  /** Los ids de Drive que aparecen en las URLs de las imágenes del .md (§3.3). */
+  function idsDeFotos(texto) {
+    const ids = [];
+    const re = /!\[[^\]]*\]\((?:https?:\/\/[^)]*?\/d\/([A-Za-z0-9_-]+)[^)]*|[^)]*)\)/g;
+    let m;
+    while ((m = re.exec(texto)) !== null) if (m[1]) ids.push(m[1]);
+    return [...new Set(ids)];
+  }
+
+  async function guardar(id, receta, { carpetaDestino } = {}) {
+    const entrada = entradas.find(e => e.id_archivo === id);
+    const meta = await drive.metadatos(id);
+    const remoto = Date.parse(meta.modifiedTime) || 0;
+
+    // No se pisa lo que cambió afuera: Drive no tiene escritura condicional (§8).
+    if (entrada && remoto && entrada.mtime && remoto !== entrada.mtime) {
+      return { ok: false, conflicto: { remoto, local: entrada.mtime } };
+    }
+
+    const texto = serialize(receta);
+    const actualizado = await drive.actualizar(id, texto);
+    await cache.guardarCuerpo(id, texto);
+
+    let carpeta_id = entrada?.carpeta_id ?? ctx.raizId;
+    if (carpetaDestino && carpetaDestino !== carpeta_id) {
+      await drive.mover(id, { de: carpeta_id, a: carpetaDestino });
+      carpeta_id = carpetaDestino;
+    }
+
+    const ubicacion = {
+      id,
+      nombre_archivo: entrada?.nombre_archivo ?? meta.name,
+      categoria: ctx.carpetas.get(carpeta_id) ?? CATEGORIA_RAIZ,
+      carpeta_id,
+      mtime: Date.parse(actualizado.modifiedTime) || Date.now()
+    };
+
+    const nueva = entradaDesdeFila(filaDesde(receta, ubicacion));
+    entradas = [...entradas.filter(e => e.id_archivo !== id), nueva];
+    await cache.guardarIndice(entradas);
+    await cache.encolar({ tipo: 'fila', id, fila: filaDesde(receta, ubicacion) });
+    return { ok: true };
+  }
+
+  async function crear({ titulo, carpetaId }) {
+    const padre = carpetaId ?? ctx.raizId;
+    const hermanos = (await drive.listarHijos(padre)).map(a => a.name);
+    const nombre = slugArchivo(titulo, hermanos);
+    const receta = { ...parse(''), titulo, tags: ['incompleto'] };
+    const texto = serialize(receta);
+    const archivo = await drive.crear({ nombre, contenido: texto, padre });
+
+    const ubicacion = {
+      id: archivo.id, nombre_archivo: nombre,
+      categoria: ctx.carpetas.get(padre) ?? CATEGORIA_RAIZ,
+      carpeta_id: padre, mtime: Date.parse(archivo.modifiedTime) || Date.now()
+    };
+    entradas = [...entradas, entradaDesdeFila(filaDesde(receta, ubicacion))];
+    await cache.guardarCuerpo(archivo.id, texto);
+    await cache.guardarIndice(entradas);
+    await cache.encolar({ tipo: 'fila', id: archivo.id, fila: filaDesde(receta, ubicacion) });
+    return { id: archivo.id, nombre_archivo: nombre };
+  }
+
+  async function fotosDe(id) {
+    const texto = (await cache.leerCuerpo(id)) ?? (await drive.leerTexto(id));
+    return idsDeFotos(texto);
+  }
+
+  async function borrar(id, { borrarFotos = false } = {}) {
+    const fotos = borrarFotos ? await fotosDe(id) : [];
+    await drive.borrar(id);
+    await borrarDelIndice(id);
+    const fotosBorradas = [];
+    for (const foto of fotos) {
+      try { await drive.borrar(foto); fotosBorradas.push(foto); } catch { /* ya no estaba */ }
+    }
+    await cache.guardarIndice(entradas);
+    return { fotosBorradas };
+  }
+
+  async function flush() {
+    const cola = await cache.leerCola();
+    for (const op of cola) {
+      if (op.tipo !== 'fila') continue;
+      const nro = filas.get(op.id);
+      if (nro) await sheets.escribir(ctx.indiceId, rangoDeFila(nro), [op.fila]);
+      else {
+        await sheets.append(ctx.indiceId, HOJA_RECETAS, [op.fila]);
+        filas.set(op.id, filas.size + 2);
+      }
+    }
+    await cache.vaciarCola();
+    await cache.guardarMapaFilas(filas);
+  }
+
+  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, guardar, crear, borrar, fotosDe, flush, _ctx: ctx };
 }
