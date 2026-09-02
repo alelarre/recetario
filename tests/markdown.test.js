@@ -117,4 +117,49 @@ describe('aHtml', () => {
       expect(html).not.toContain('<style>');
     });
   });
+
+  describe('validación de esquemas en imágenes', () => {
+    it('rechaza ![](javascript:alert(1)) — no emite <img>', () => {
+      const html = aHtml('![](javascript:alert(1))');
+      expect(html).not.toContain('<img');
+      expect(html).toContain('![](javascript:alert(1))');
+    });
+
+    it('rechaza ![](JavaScript:alert(1)) case-insensitive', () => {
+      const html = aHtml('![](JavaScript:alert(1))');
+      expect(html).not.toContain('<img');
+      expect(html).toContain('![](JavaScript:alert(1))');
+    });
+
+    it('rechaza ![](data:text/html,<script>)', () => {
+      const html = aHtml('![](data:text/html,<script>)');
+      expect(html).not.toContain('<img');
+      expect(html).toContain('![](data:text/html,&lt;script&gt;)');
+    });
+
+    it('aceptan https://', () => {
+      const html = aHtml('![](https://drive.google.com/file/d/ABC/view)');
+      expect(html).toContain('<img src="https://drive.google.com/file/d/ABC/view"');
+    });
+
+    it('aceptan http://', () => {
+      const html = aHtml('![](http://example.com/foto.jpg)');
+      expect(html).toContain('<img src="http://example.com/foto.jpg"');
+    });
+
+    it('aceptan rutas relativas /fotos/x.jpg', () => {
+      const html = aHtml('![](./fotos/receta.jpg)');
+      expect(html).toContain('<img src="./fotos/receta.jpg"');
+    });
+
+    it('aceptan rutas con /', () => {
+      const html = aHtml('![](/fotos/receta.jpg)');
+      expect(html).toContain('<img src="/fotos/receta.jpg"');
+    });
+
+    it('aceptan rutas relativas ../', () => {
+      const html = aHtml('![](../fotos/receta.jpg)');
+      expect(html).toContain('<img src="../fotos/receta.jpg"');
+    });
+  });
 });

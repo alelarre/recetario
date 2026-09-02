@@ -5,8 +5,14 @@ export function escapar(texto) {
 }
 
 function enLinea(texto) {
-  return escapar(texto)
-    .replace(/!\[[^\]]*\]\(([^)\s]+)\)/g, (_, url) => `<img src="${url}" alt="" loading="lazy">`)
+  const escapado = escapar(texto);
+  // Validar esquemas: solo http:, https: y rutas relativas. Todo lo demás no se emite.
+  // Nota: URLs con paréntesis anidados (ej: alert(1)) se truncan en el primer ), limitación conocida.
+  return escapado
+    .replace(/!\[[^\]]*\]\(([^)\s]+)\)/g, (_, url) => {
+      const esSeguro = /^(https?:\/\/|\/|\.\.?\/)/i.test(url);
+      return esSeguro ? `<img src="${url}" alt="" loading="lazy">` : `![](${url})`;
+    })
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>');
 }
