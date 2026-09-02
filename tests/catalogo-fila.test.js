@@ -38,6 +38,22 @@ describe('filaDesde', () => {
     expect(f[COLUMNAS.indexOf('ingredientes')]).toBe('muzzarella|milanesas de nalga');
   });
 
+  it('un tag con barra vertical no rompe la celda al releer', () => {
+    const receta = { ...RECETA, tags: ['sin|gluten', 'horno'] };
+    const f = filaDesde(receta, UBICACION);
+    expect(f[COLUMNAS.indexOf('tags')]).toBe('singluten|horno');
+    const e = entradaDesdeFila(f);
+    expect(e.tags).toEqual(['singluten', 'horno']);  // dos tags, no tres tras el split
+  });
+
+  it('un ingrediente con barra vertical no rompe la celda al releer', () => {
+    const receta = { ...RECETA, ingredientes: '- queso|crema\n- 200 g de sal' };
+    const f = filaDesde(receta, UBICACION);
+    expect(f[COLUMNAS.indexOf('ingredientes')]).toBe('quesocrema|sal');
+    const e = entradaDesdeFila(f);
+    expect(e.ingredientes).toEqual(['quesocrema', 'sal']);  // dos ingredientes, no tres tras el split
+  });
+
   it('escribe cadena vacía y nunca null para lo que falta', () => {
     const f = filaDesde(parse(`---\ntitulo: X\n---\n`), UBICACION);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);

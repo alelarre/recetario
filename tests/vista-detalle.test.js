@@ -70,6 +70,45 @@ describe('renderDetalle', () => {
     expect(html).toContain('incompleto');
   });
 
+  describe('avisos de parseo (§8: un .md malformado se muestra con un aviso)', () => {
+    it('una receta sin problemas no muestra ningún aviso', () => {
+      const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'ingredientes' });
+      expect(html).not.toContain('class="aviso"');
+    });
+
+    it('el frontmatter ilegible se traduce a texto legible, sin el código interno', () => {
+      const r = parse(`---\ntitulo: X\nesto no es valido\n---\n\n## Ingredientes\n- sal\n`);
+      expect(r.avisos).toContain('frontmatter-ilegible');
+      const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'ingredientes' });
+      expect(html).toContain('el frontmatter no se pudo leer');
+      expect(html).not.toContain('frontmatter-ilegible');
+    });
+
+    it('sin frontmatter ni título, avisa las dos cosas en texto legible', () => {
+      const r = parse('Solo un párrafo suelto, sin frontmatter.');
+      expect(r.avisos).toEqual(expect.arrayContaining(['sin-frontmatter', 'sin-titulo']));
+      const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'ingredientes' });
+      expect(html).toContain('el frontmatter no se pudo leer');
+      expect(html).toContain('esta receta no tiene título');
+      expect(html).not.toContain('sin-frontmatter');
+      expect(html).not.toContain('sin-titulo');
+    });
+
+    it('una sección repetida avisa en texto legible', () => {
+      const r = parse(`---\ntitulo: X\n---\n\n## Ingredientes\n- sal\n\n## Ingredientes\n- pimienta\n`);
+      expect(r.avisos).toContain('seccion-duplicada');
+      const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'ingredientes' });
+      expect(html).toContain('hay una sección repetida');
+      expect(html).not.toContain('seccion-duplicada');
+    });
+
+    it('con avisos inválidos o ausentes no lanza y no muestra nada', () => {
+      expect(() => renderDetalle({ entrada: ENTRADA, receta: { ...RECETA, avisos: null }, pestana: 'ingredientes' })).not.toThrow();
+      const html = renderDetalle({ entrada: ENTRADA, receta: { ...RECETA, avisos: ['codigo-inventado'] }, pestana: 'ingredientes' });
+      expect(html).not.toContain('class="aviso"');
+    });
+  });
+
   // Tests de defensa
   it('sin argumentos no lanza', () => {
     expect(() => renderDetalle()).not.toThrow();

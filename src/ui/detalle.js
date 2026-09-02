@@ -1,5 +1,23 @@
 import { aHtml, escapar } from './markdown.js';
 
+// Traduce los códigos internos de recipe.js (§8: "se indexa con lo que se
+// pueda rescatar y se muestra como texto plano con un aviso") a un texto que
+// el usuario entienda, sin exponer el código interno. 'frontmatter-ilegible'
+// y 'sin-frontmatter' comparten mensaje: son mutuamente excluyentes (parse()
+// nunca empuja los dos juntos) y para quien lee la receta el problema
+// práctico es el mismo — no se pudo leer el frontmatter.
+const AVISOS_LEGIBLES = {
+  'frontmatter-ilegible': 'el frontmatter no se pudo leer',
+  'sin-frontmatter': 'el frontmatter no se pudo leer',
+  'sin-titulo': 'esta receta no tiene título',
+  'seccion-duplicada': 'hay una sección repetida'
+};
+
+function avisosLegibles(avisos) {
+  const lista = Array.isArray(avisos) ? avisos : [];
+  return [...new Set(lista.map(a => AVISOS_LEGIBLES[a]).filter(Boolean))];
+}
+
 export function renderDetalle(args = {}) {
   const { entrada = {}, receta = {}, pestana = 'ingredientes' } = args || {};
 
@@ -11,6 +29,7 @@ export function renderDetalle(args = {}) {
   const variaciones = (recetaNorm.variaciones ? recetaNorm.variaciones.split(/^###\s+/m).filter(Boolean).length : 0);
   const notas = (recetaNorm.notas ? 1 : 0) + variaciones + (recetaNorm.otras?.length ?? 0);
   const incompleto = entradaNorm?.tags?.includes('incompleto');
+  const avisos = avisosLegibles(recetaNorm.avisos);
 
   const cuerpos = {
     ingredientes: aHtml(recetaNorm.ingredientes),
@@ -45,6 +64,7 @@ export function renderDetalle(args = {}) {
     </header>
     <div class="contenido">
       <h1 class="${incompleto ? 'incompleto' : ''}">${escapar(recetaNorm.titulo ?? entradaNorm?.titulo ?? '')}</h1>
+      ${avisos.length ? `<p class="aviso">⚠ ${avisos.map(escapar).join(' · ')}</p>` : ''}
       ${meta ? `<p class="meta">${escapar(meta)}</p>` : ''}
       ${recetaNorm.descripcion ? aHtml(recetaNorm.descripcion) : ''}
     </div>

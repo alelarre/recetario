@@ -89,6 +89,12 @@ export function crearStore({ drive, sheets, cache }) {
     };
   }
 
+  /** Cuándo se reconstruyó el índice por última vez, para el menú del home (§7.2). */
+  async function ultimaReconstruccion() {
+    const meta = await leerMeta();
+    return meta.ultima_reconstruccion || '';
+  }
+
   async function guardarMeta(clave, valor) {
     const meta = await sheets.leer(ctx.indiceId, `${HOJA_META}!A1:B20`);
     const i = meta.findIndex(f => f[0] === clave);
@@ -138,6 +144,9 @@ export function crearStore({ drive, sheets, cache }) {
     for (const op of filtrada) {
       await cache.encolar(op);
     }
+
+    // Como todas las demás mutaciones del mapa de filas, persistirlo.
+    await cache.guardarMapaFilas(filas);
   }
 
   async function sync() {
@@ -380,5 +389,5 @@ export function crearStore({ drive, sheets, cache }) {
     return { entrada, receta: parse(texto), texto };
   }
 
-  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, guardar, crear, borrar, flush, reconstruir, buscar, categoriasConConteo, tagsDe, receta, _ctx: ctx };
+  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, ultimaReconstruccion, guardar, crear, borrar, flush, reconstruir, buscar, categoriasConConteo, tagsDe, receta, _ctx: ctx };
 }

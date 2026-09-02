@@ -129,4 +129,15 @@ describe('borrar', () => {
     const filas = await sheets.leer('i1', 'recetas!A1:L10');
     expect(filas).toHaveLength(1);  // solo el encabezado
   });
+
+  it('borrar persiste el mapa de filas en la cache, no solo en memoria', async () => {
+    const otra = await store.crear({ titulo: 'Otra' });
+    await store.flush();  // le da a "otra" una fila real: r1=2, otra=3
+
+    await store.borrar('r1');
+
+    const mapa = await cache.leerMapaFilas();
+    expect(mapa.has('r1')).toBe(false);
+    expect(mapa.get(otra.id)).toBe(2);  // corrida un lugar tras borrar la fila 2
+  });
 });

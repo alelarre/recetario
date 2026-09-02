@@ -77,4 +77,12 @@ describe('reconstruir', () => {
     const filas = await sheets.leer('i1', 'recetas!A1:L100');
     expect(filas.length).toBe(4);  // encabezado + tres recetas
   });
+
+  it('la fecha queda disponible para el home a través de ultimaReconstruccion()', async () => {
+    expect(await store.ultimaReconstruccion()).toBe('');  // todavía no reconstruyó
+    await store.reconstruir();
+    const fecha = await store.ultimaReconstruccion();
+    expect(fecha).toBeTruthy();
+    expect(new Date(fecha).toString()).not.toBe('Invalid Date');
+  });
 });

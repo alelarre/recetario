@@ -54,6 +54,12 @@ describe('arranque en frío', () => {
     expect(creada).toBeDefined();
   });
 
+  it('con una planilla recién creada, ultimaReconstruccion no rompe y da vacío', async () => {
+    const { store } = armar(conRecetario());
+    await store.arrancar();
+    await expect(store.ultimaReconstruccion()).resolves.toBe('');
+  });
+
   it('con dos planillas usa la más reciente y avisa', async () => {
     const drive = conRecetario([
       { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'], modifiedTime: '2026-01-01T00:00:00.000Z' },

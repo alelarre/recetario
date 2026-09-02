@@ -63,7 +63,16 @@ document.addEventListener('visibilitychange', () => {
 
 async function arrancar() {
   pintar('<p class="contenido">Conectando…</p>');
-  await auth.conectar();
+  try {
+    // Vía silenciosa primero: es la misma que usa auth.token() para renovar
+    // (pedir('') con la sesión en frío). Para una app que se abre a diario,
+    // pedir el consentimiento explícito en cada arranque es un popup por
+    // apertura; solo corresponde mostrarlo si la vía silenciosa falla —sin
+    // sesión previa, o con el permiso revocado.
+    await auth.token();
+  } catch {
+    await auth.conectar();
+  }
   store = crearStore({ drive, sheets, cache: await abrirCache() });
   estadoArranque = await store.arrancar();
 
@@ -104,7 +113,8 @@ async function render(ruta = parsearHash(location.hash)) {
   }
   vistaActual = ruta;
   if (ruta.vista === 'home') {
-    return pintar(renderHome({ categorias: store.categoriasConConteo() }));
+    const ultimaReconstruccion = await store.ultimaReconstruccion();
+    return pintar(renderHome({ categorias: store.categoriasConConteo(), ultimaReconstruccion }));
   }
   if (ruta.vista === 'categoria') {
     const entradas = store.buscar({ categoria: ruta.params.nombre, tags: tagsActivos });
@@ -127,7 +137,10 @@ async function render(ruta = parsearHash(location.hash)) {
     try {
       const { id } = await store.crear({ titulo });
       programarFlush();
-      return location.hash = `#/r/${id}`;
+      // §7.2: crear es el mismo editor con el archivo vacío, así que abre
+      // directo el formulario en vez del detalle (que para algo recién
+      // creado está casi vacío y obliga a tocar "Editar" a mano).
+      return location.hash = `#/r/${id}/editar`;
     } catch (err) {
       console.error(err);
       alert(`No se pudo crear la receta en Drive: ${err.message}. Probá de nuevo.`);
