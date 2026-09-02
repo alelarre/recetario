@@ -283,5 +283,65 @@ export function crearStore({ drive, sheets, cache }) {
     await cache.guardarMapaFilas(filas);
   }
 
-  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, guardar, crear, borrar, fotosDe, flush, _ctx: ctx };
+  async function reconstruir(alProgresar = () => {}) {
+    // Defender el parámetro: si no es función, ignorar.
+    if (typeof alProgresar !== 'function') alProgresar = () => {};
+
+    await guardarMeta('reconstruccion_en_curso', 'si');
+    await cache.vaciarCola();   // cada op es redundante: el .md ya está en Drive (§5.3)
+
+    const lugares = [
+      { id: ctx.raizId, categoria: CATEGORIA_RAIZ },
+      ...ctx.categorias.map(c => ({ id: c.id, categoria: c.nombre }))
+    ];
+
+    const pendientes = [];
+    for (const lugar of lugares) {
+      const hijos = await drive.listarHijos(lugar.id);
+      for (const archivo of hijos) {
+        if (archivo.mimeType === 'application/vnd.google-apps.folder') continue;
+        if (!/\.md$/i.test(archivo.name)) continue;
+        pendientes.push({ archivo, lugar });
+      }
+    }
+
+    const nuevas = [];
+    let ignoradasSinTitulo = 0;
+    let leidas = 0;
+    for (const { archivo, lugar } of pendientes) {
+      const texto = await drive.leerTexto(archivo.id);
+      leidas++;
+      alProgresar({ leidas, total: pendientes.length });
+      const receta = parse(texto);
+      if (!receta.titulo) { ignoradasSinTitulo++; continue; }
+      nuevas.push(filaDesde(receta, {
+        id: archivo.id, nombre_archivo: archivo.name,
+        categoria: lugar.categoria, carpeta_id: lugar.id,
+        mtime: Date.parse(archivo.modifiedTime) || 0
+      }));
+    }
+
+    const hojas = await sheets.hojas(ctx.indiceId);
+    const hojaId = hojas.find(h => h.title === HOJA_RECETAS)?.sheetId ?? 0;
+    const previas = await sheets.leer(ctx.indiceId, `${HOJA_RECETAS}!A1:M100000`);
+    for (let fila = previas.length; fila >= 2; fila--) {
+      await sheets.borrarFila(ctx.indiceId, hojaId, fila);
+    }
+    for (let i = 0; i < nuevas.length; i += 500) {
+      await sheets.append(ctx.indiceId, HOJA_RECETAS, nuevas.slice(i, i + 500));
+    }
+
+    entradas = nuevas.map(entradaDesdeFila);
+    filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
+    await cache.guardarIndice(entradas);
+    await cache.guardarMapaFilas(filas);
+
+    await guardarMeta('changesPageToken', await drive.tokenInicialDeCambios());
+    await guardarMeta('ultima_reconstruccion', new Date().toISOString());
+    await guardarMeta('reconstruccion_en_curso', '');
+
+    return { indexadas: entradas.length, ignoradasSinTitulo };
+  }
+
+  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, guardar, crear, borrar, fotosDe, flush, reconstruir, _ctx: ctx };
 }
