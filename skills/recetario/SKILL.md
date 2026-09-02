@@ -101,8 +101,10 @@ Salsa blanca y gruyere en lugar de la salsa de tomate.
 
 - **Nota vs. variación:** si cambia el plato que sale, es variación; si es un consejo
   para que este plato salga bien, es nota.
-- **Fotos:** `![](url)` en cualquier punto del cuerpo. La primera imagen del documento
-  es la portada.
+- **Imágenes:** `![](url)` en cualquier punto del cuerpo, solo con URL externa
+  (`http:` o `https:`). La app no guarda fotos propias: no subas nada a Drive ni
+  referencies archivos de Drive, no se ven. Ninguna imagen es portada: se
+  dibujan donde estén.
 - **`incompleto`:** si algo quedó a medias —faltan cantidades, la foto no se leía, el
   video no decía el horno—, agregar el tag `incompleto` y una nota diciendo qué falta.
   Es preferible a completar con lo que uno supone.

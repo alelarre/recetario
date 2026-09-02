@@ -8,10 +8,13 @@ un mensaje que apunta a este documento.
 
 Carpeta raíz `Recetario/`, creada dentro de la carpeta `recetas` del usuario.
 
+Quedó también una carpeta `_fotos/` de un diseño anterior. **La app ya no la usa
+ni la mira** —las imágenes van por URL externa (§3.3)— y se puede borrar de
+Drive cuando se quiera; mientras esté, la app la ignora por empezar con `_`.
+
 | carpeta | id |
 |---|---|
 | `Recetario/` | `1B2nNmy0qOAuZT9lomrSdompYta7uuJ7B` |
-| `_fotos/` | `1sOYwDUPrNBxj1rvNPPYC8_pRz8wcwNv0` |
 | `Entradas y picadas/` | `1ioT1u_pqn4EiiFLXBY6Px-XLTYZvoZOO` |
 | `Sopas y caldos/` | `1MN77Oj7Sg836b7rEWcgM5WGAk_htrerY` |
 | `Ensaladas/` | `10szFByXSWQ6QGkTnDrd36whmRhipi--e` |
