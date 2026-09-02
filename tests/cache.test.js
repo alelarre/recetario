@@ -30,4 +30,25 @@ describe('cache en memoria', () => {
     expect(await c.leerCuerpo('a')).toBe('# hola');
     expect(await c.leerCuerpo('b')).toBeNull();
   });
+
+  it('guardarMapaFilas no se ve afectado por mutaciones posteriores del original', async () => {
+    const c = crearCacheMemoria();
+    const mapa = new Map([['a', 1]]);
+    await c.guardarMapaFilas(mapa);
+    mapa.set('a', 999);  // mutar el original
+    mapa.set('b', 2);    // agregar una entrada nueva
+    const guardado = await c.leerMapaFilas();
+    expect(guardado.get('a')).toBe(1);  // debe tener el valor original
+    expect(guardado.has('b')).toBe(false);  // no debe tener la entrada nueva
+  });
+
+  it('guardarIndice no se ve afectado por mutaciones posteriores del original', async () => {
+    const c = crearCacheMemoria();
+    const entradas = [{ id_archivo: 'a' }];
+    await c.guardarIndice(entradas);
+    entradas.push({ id_archivo: 'b' });  // agregar al array original
+    const guardado = await c.leerIndice();
+    expect(guardado.length).toBe(1);  // no debe tener la entrada nueva
+    expect(guardado[0].id_archivo).toBe('a');
+  });
 });

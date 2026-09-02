@@ -6,10 +6,10 @@ export function crearCacheMemoria() {
   let cola = [];
 
   return {
-    leerIndice: async () => indice,
-    guardarIndice: async (entradas) => { indice = entradas; },
-    leerMapaFilas: async () => mapaFilas,
-    guardarMapaFilas: async (mapa) => { mapaFilas = mapa; },
+    leerIndice: async () => [...indice],
+    guardarIndice: async (entradas) => { indice = [...entradas]; },
+    leerMapaFilas: async () => new Map(mapaFilas),
+    guardarMapaFilas: async (mapa) => { mapaFilas = new Map(mapa); },
     leerCuerpo: async (id) => cuerpos.get(id) ?? null,
     guardarCuerpo: async (id, texto) => { cuerpos.set(id, texto); },
     leerMeta: async (clave) => meta.get(clave) ?? null,
