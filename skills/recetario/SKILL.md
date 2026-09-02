@@ -23,6 +23,14 @@ Mostrá el `.md` completo y esperá aprobación antes de escribir en Drive:
 
 Corregí lo que te digan, mostrá de nuevo, y repetí hasta que esté. Recién ahí subilo.
 
+Este es el comportamiento por defecto. Se saltea solo si el usuario lo pide de
+forma explícita en ese mismo pedido: "subila sin mostrarme", "no me preguntes
+nada". Ahí subí directo y avisá dónde quedó.
+
+Nunca lo decidas por tu cuenta. No cuentan como instrucción de saltear: que la
+fuente sea clara, que sea una sola receta, que el usuario haya dicho antes que
+confía en tu criterio, ni que tengas apuro.
+
 ## Procedimiento
 
 1. Leé la fuente entera, según su tipo (ver más abajo).
@@ -191,7 +199,7 @@ Además:
 
 | Error | Consecuencia |
 |---|---|
-| Subir el archivo sin mostrarlo antes | Corregir en Drive cuesta encontrar, releer y reescribir. |
+| Subir sin mostrar, sin que el usuario lo haya pedido | Corregir en Drive cuesta encontrar, releer y reescribir. |
 | Elegir entre recetas parecidas sin preguntar | Se pisa el contenido de la receta equivocada. |
 | Reescribir el archivo entero para cambiar una línea | Se pierden las secciones y claves que la app no conoce. |
 | Inventar `dificultad` | Ensucia el filtro con opiniones que nadie escribió. |
