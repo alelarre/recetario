@@ -3,7 +3,9 @@
 App personal de recetas. Los datos viven en Google Drive como archivos `.md` y
 sobreviven a la app. Un solo usuario.
 
-**Estado: diseño cerrado y verificado contra las APIs reales. Todavía sin código.**
+**Estado: v1 implementada y revisada, sin publicar.** El código vive en la rama
+`v1`; `main` todavía tiene solo el diseño. 298 tests, `npm run build` genera
+`dist/`. Falta la verificación manual contra el Drive real y publicar.
 
 - Fuente de verdad: `docs/superpowers/specs/2026-08-31-recetario-design.md`
 - Pasos manuales de instalación: `SETUP.md`
@@ -57,17 +59,41 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 
 ## Pendientes, en orden
 
-1. **Ejecutar el plan**: `docs/superpowers/plans/2026-09-01-recetario-v1.md`, 22
-   tareas con TDD. La 22 publica en GitHub Pages, así que absorbe el pendiente
-   que antes estaba suelto.
-2. El planificador semanal y la lista de compras: fuera de v1 y sin diseñar.
-   Es lo próximo después del núcleo; necesita sus vistas y la barra de
-   navegación inferior.
+1. **Verificar a mano contra el Drive real.** Es lo único que separa a v1 de
+   estar terminada, y no lo cubre ningún test: la app nunca corrió contra Google.
+   Los cuatro puntos que dejó la revisión final:
+   - Cerrar la ventana de consentimiento de Google a mitad del primer login: la
+     app tiene que mostrar un mensaje con botón, no quedarse en "Conectando…".
+   - Cortar la red durante un "Guardar" o un "Borrar": tiene que avisar, no
+     quedarse muda.
+   - Guardar varias recetas seguidas y cambiar de app cerca de los 30 segundos
+     del debounce; después mirar `_indice` y confirmar que ninguna receta quedó
+     con dos filas.
+   - Publicar dos veces sin tocar `sw.js` y confirmar que la app instalada ve la
+     versión nueva.
+2. **Mergear `v1` a `main` y publicar.** El workflow ya está (`.github/workflows/pages.yml`)
+   y Pages está configurado en modo GitHub Actions; el entorno solo publica desde
+   `main`. Después hay que agregar `https://alelarre.github.io` a los orígenes
+   autorizados del cliente OAuth.
 3. **Migrar el contenido existente:** en la carpeta `recetas` de Drive hay un Doc
    de ~7,3 MB y varios documentos temáticos (fondues, pan, macarons,
-   fermentación, un PDF de pescados). Es trabajo de agente, no de la app.
-4. **El skill del agente:** validador, corrector y contrato con la app. El
-   contrato mínimo está anticipado en el §10.
+   fermentación, un PDF de pescados). Es trabajo de agente, con el skill de
+   `skills/recetario/`. Antes de migrar miles de recetas, mirar el punto de
+   abajo sobre la reconstrucción.
+4. El planificador semanal y la lista de compras: fuera de v1 y sin diseñar.
+   Es lo próximo después del núcleo; necesita sus vistas y la barra de
+   navegación inferior.
+
+## Lo que quedó sabido y no arreglado
+
+- **La reconstrucción del índice no escala.** Lee los `.md` de a uno y borra las
+  filas viejas una por una, sin reintento ante un 429. Con una receta no se nota;
+  con las miles que va a traer la migración, tarda mucho más que el minuto que
+  estima el §5.3 y puede fallar a mitad. Arreglarlo antes de migrar.
+- **El plan `docs/superpowers/plans/2026-09-01-recetario-v1.md` quedó viejo.**
+  Describe la funcionalidad de fotos que después se eliminó. Sirve como registro
+  de cómo se construyó, no como runbook: si se vuelve a usar, hay que leerlo
+  contra el spec.
 
 ## El spike del §10, ya corrido
 

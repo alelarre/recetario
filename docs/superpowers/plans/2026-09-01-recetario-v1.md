@@ -1,5 +1,15 @@
 # Recetario v1 — Plan de implementación
 
+> **Este plan está ejecutado y en parte desactualizado.** Se completó entero
+> entre el 2026-09-01 y el 2026-09-02. Después de terminarlo, el usuario decidió
+> eliminar el manejo de fotos propias (subida a Drive, miniaturas, imagen de
+> portada) y sacar el funcionamiento sin conexión del alcance de v1, así que
+> varias tareas describen código que ya no existe: la columna `foto` del índice,
+> `primeraImagen`, `subirFoto`, `miniaturas` y la carpeta `_fotos/`.
+>
+> Sirve como registro de cómo se construyó el proyecto, no como runbook. Ante
+> cualquier diferencia, manda el spec.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Una PWA de archivos estáticos que lee y escribe recetas `.md` en Google Drive, indexadas en una planilla, usable desde el celular y sin backend.
