@@ -29,7 +29,7 @@ button { background: none; border: 0; cursor: pointer; min-height: var(--tactil)
 .contenido h3 { font-size: var(--t-seccion); }
 .contenido img { max-width: 100%; border-radius: var(--radio); }
 
-.paso { display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 0.875rem; list-style: none; }
+.paso { display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 1.25rem; list-style: none; } /* margen = 2 × extensión del área táctil (0.625rem) para evitar solape */
 .paso .check { flex: none; width: 1.5rem; height: 1.5rem; min-width: 0; min-height: 0; border: 2px solid var(--texto-2); border-radius: 50%; position: relative; }
 .paso .check::after { content: ""; position: absolute; inset: -0.625rem; }
 .paso .check[aria-pressed="true"] { background: var(--acento); border-color: var(--acento); }
