@@ -1,4 +1,4 @@
-import { normalizar, ingredientesIndexables, primeraImagen } from './recipe.js';
+import { normalizar, ingredientesIndexables } from './recipe.js';
 
 export const COLUMNAS = [
   'id_archivo',
@@ -12,7 +12,6 @@ export const COLUMNAS = [
   'fuente',
   'tags',
   'ingredientes',
-  'foto',
   'mtime'
 ];
 
@@ -51,10 +50,6 @@ export function filaDesde(receta, ubicacion) {
       .join('|')
     : '';
 
-  // Defender foto
-  const foto = primeraImagen(r);
-  const fotoStr = typeof foto === 'string' ? foto : '';
-
   // Construir celdas
   const celdas = {
     id_archivo: typeof u.id === 'string' ? u.id : '',
@@ -68,7 +63,6 @@ export function filaDesde(receta, ubicacion) {
     fuente: typeof r.fuente === 'string' ? r.fuente : '',
     tags: tagsStr,
     ingredientes: ingredientesStr,
-    foto: fotoStr,
     mtime: String(typeof u.mtime === 'number' ? u.mtime : 0)
   };
 

@@ -70,16 +70,6 @@ export function crearDrive(obtenerToken) {
     mover: (id, { de, a }) => pedir(`/files/${id}?addParents=${a}&removeParents=${de}&fields=id,parents`, { method: 'PATCH' }),
     borrar: (id) => pedir(`/files/${id}`, { method: 'DELETE' }),
 
-    subirFoto: (blob, { nombre, padre }) => {
-      const fd = new FormData();
-      fd.append('metadata', new Blob([JSON.stringify({ name: nombre, parents: [padre] })], { type: 'application/json' }));
-      fd.append('file', blob);
-      return pedir('/files?uploadType=multipart&fields=id,name', { method: 'POST', body: fd }, SUBIDA);
-    },
-
-    /** Una sola llamada devuelve el mapa id→miniatura de todas las fotos (§3.3). */
-    miniaturas: (carpetaFotos) => listar(q.hijosDe(carpetaFotos), 'files(id,thumbnailLink)'),
-
     tokenInicialDeCambios: async () => (await pedir('/changes/startPageToken')).startPageToken,
     cambios: (pageToken) => pedir(`/changes?pageToken=${pageToken}&pageSize=200` +
       '&fields=newStartPageToken,nextPageToken,changes(fileId,removed,file(id,name,mimeType,parents,modifiedTime,trashed))')

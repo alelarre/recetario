@@ -13,17 +13,15 @@ dificultad: fácil
 fuente: Cuaderno
 ---
 
-![](https://a/portada)
-
 ## Ingredientes
 - 200 g de muzzarella
 - 4 milanesas de nalga
 `);
 
 describe('filaDesde', () => {
-  it('tiene exactamente las trece columnas del §4.3, en orden', () => {
-    expect(COLUMNAS).toHaveLength(13);
-    expect(filaDesde(RECETA, UBICACION)).toHaveLength(13);
+  it('tiene exactamente las doce columnas del §4.3, en orden', () => {
+    expect(COLUMNAS).toHaveLength(12);
+    expect(filaDesde(RECETA, UBICACION)).toHaveLength(12);
   });
 
   it('mapea cada campo a su columna', () => {
@@ -31,7 +29,6 @@ describe('filaDesde', () => {
     expect(f[COLUMNAS.indexOf('id_archivo')]).toBe('id1');
     expect(f[COLUMNAS.indexOf('titulo')]).toBe('Milanesas napolitanas');
     expect(f[COLUMNAS.indexOf('categoria')]).toBe('Carnes');
-    expect(f[COLUMNAS.indexOf('foto')]).toBe('https://a/portada');
     expect(f[COLUMNAS.indexOf('mtime')]).toBe('1700000000000');
   });
 
@@ -54,37 +51,37 @@ describe('filaDesde', () => {
   // Tests de defensa
   it('tolera receta null', () => {
     const f = filaDesde(null, UBICACION);
-    expect(f).toHaveLength(13);
+    expect(f).toHaveLength(12);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera receta como número', () => {
     const f = filaDesde(42, UBICACION);
-    expect(f).toHaveLength(13);
+    expect(f).toHaveLength(12);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera receta como objeto incompleto', () => {
     const f = filaDesde({ titulo: 'X' }, UBICACION);
-    expect(f).toHaveLength(13);
+    expect(f).toHaveLength(12);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera ubicacion null', () => {
     const f = filaDesde(RECETA, null);
-    expect(f).toHaveLength(13);
+    expect(f).toHaveLength(12);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera ubicacion como número', () => {
     const f = filaDesde(RECETA, 42);
-    expect(f).toHaveLength(13);
+    expect(f).toHaveLength(12);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera ubicacion como objeto incompleto', () => {
     const f = filaDesde(RECETA, { id: 'id1' });
-    expect(f).toHaveLength(13);
+    expect(f).toHaveLength(12);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 });
@@ -120,7 +117,7 @@ describe('entradaDesdeFila', () => {
     expect(e.mtime).toBe(0);
   });
 
-  it('tolera fila más larga que 13 elementos', () => {
+  it('tolera fila más larga que 12 elementos', () => {
     const fila = Array(20).fill('valor');
     const e = entradaDesdeFila(fila);
     expect(Array.isArray(e.tags)).toBe(true);

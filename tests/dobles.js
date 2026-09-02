@@ -50,7 +50,6 @@ export function driveFalso(archivos = []) {
       return a;
     },
     async borrar(id) { store.delete(id); },
-    async miniaturas() { return []; },
     async tokenInicialDeCambios() { return '100'; },
     async cambios(token) { return { changes: [], newStartPageToken: String(Number(token) + 1) }; }
   };

@@ -7,7 +7,7 @@ import { COLUMNAS } from '../src/catalogo.js';
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
 const fila = (id, titulo, categoria, carpeta, tags, ingredientes, dificultad = '') =>
-  [id, `${id}.md`, titulo, categoria, carpeta, '', '', dificultad, '', tags, ingredientes, '', '1000'];
+  [id, `${id}.md`, titulo, categoria, carpeta, '', '', dificultad, '', tags, ingredientes, '1000'];
 
 let store, sheets;
 
@@ -20,7 +20,7 @@ beforeEach(async () => {
   ]);
   sheets = sheetsFalso();
   sheets.crearPlanilla('i1');
-  await sheets.escribir('i1', 'recetas!A1:M1', [COLUMNAS]);
+  await sheets.escribir('i1', 'recetas!A1:L1', [COLUMNAS]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
   await sheets.append('i1', 'recetas', [
     fila('r1', 'Milanesas napolitanas', 'Carnes', 'c1', 'horno|rápido', 'muzzarella|nalga', 'fácil'),

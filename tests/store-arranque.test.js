@@ -11,7 +11,7 @@ function conRecetario(extra = []) {
     { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'c2', name: 'Postres', mimeType: CARPETA, parents: ['raiz'] },
-    { id: 'fotos', name: '_fotos', mimeType: CARPETA, parents: ['raiz'] },
+    { id: 'privada', name: '_privada', mimeType: CARPETA, parents: ['raiz'] },
     ...extra
   ]);
 }

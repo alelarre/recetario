@@ -155,10 +155,9 @@ app.addEventListener('click', async (e) => {
   }
 
   if (boton.tagName === 'IMG') {
-    // La portada y las fotos del cuerpo son "fotos de la receta"; una miniatura
-    // de una lista no matchea este selector y no abre nada (§7.2: tocar
-    // cualquier foto del detalle abre el visor).
-    const fotos = [...document.querySelectorAll('#app .portada, #app [data-cuerpo] img')];
+    // Las imágenes del cuerpo son las únicas fotos de la receta: tocar
+    // cualquiera abre el visor (§7.2).
+    const fotos = [...document.querySelectorAll('#app [data-cuerpo] img')];
     const indice = fotos.indexOf(boton);
     if (indice === -1) return;
     return abrirVisor(fotos.map(img => img.src), indice);
@@ -207,9 +206,7 @@ app.addEventListener('click', async (e) => {
   if (accion === 'borrar') {
     if (!confirm('¿Borrar esta receta?')) return;
     try {
-      const fotos = await store.fotosDe(vistaActual.params.id);
-      const tambien = fotos.length ? confirm(`Tiene ${fotos.length} foto(s) en Drive. ¿Borrarlas también?`) : false;
-      await store.borrar(vistaActual.params.id, { borrarFotos: tambien });
+      await store.borrar(vistaActual.params.id);
       programarFlush();
       return location.hash = '#/';
     } catch (err) {

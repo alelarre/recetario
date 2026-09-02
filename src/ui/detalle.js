@@ -1,11 +1,4 @@
 import { aHtml, escapar } from './markdown.js';
-import { primeraImagen } from '../recipe.js';
-
-/** Saca del texto la imagen que ya se muestra como portada, para no repetirla. */
-function sinPortada(texto, portada) {
-  if (!portada) return texto;
-  return String(texto).replace(new RegExp(`!\\[[^\\]]*\\]\\(${portada.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`), '').trim();
-}
 
 export function renderDetalle(args = {}) {
   const { entrada = {}, receta = {}, pestana = 'ingredientes' } = args || {};
@@ -14,15 +7,14 @@ export function renderDetalle(args = {}) {
   const recetaNorm = receta ?? {};
   const entradaNorm = entrada ?? {};
 
-  const portada = primeraImagen(recetaNorm);
   const meta = [recetaNorm.rinde, recetaNorm.tiempo, recetaNorm.dificultad].filter(Boolean).join(' · ');
   const variaciones = (recetaNorm.variaciones ? recetaNorm.variaciones.split(/^###\s+/m).filter(Boolean).length : 0);
   const notas = (recetaNorm.notas ? 1 : 0) + variaciones + (recetaNorm.otras?.length ?? 0);
   const incompleto = entradaNorm?.tags?.includes('incompleto');
 
   const cuerpos = {
-    ingredientes: aHtml(sinPortada(recetaNorm.ingredientes, portada)),
-    preparacion: aHtml(sinPortada(recetaNorm.preparacion, portada), { pasos: true }),
+    ingredientes: aHtml(recetaNorm.ingredientes),
+    preparacion: aHtml(recetaNorm.preparacion, { pasos: true }),
     notas: [
       recetaNorm.notas ? aHtml(recetaNorm.notas) : '',
       recetaNorm.variaciones ? `<h2>Variaciones</h2>${aHtml(recetaNorm.variaciones)}` : '',
@@ -51,11 +43,10 @@ export function renderDetalle(args = {}) {
       <button data-accion="atras" aria-label="Volver">‹</button>
       <button data-accion="editar" aria-label="Editar">Editar</button>
     </header>
-    ${portada ? `<img class="portada" src="${escapar(portada)}" alt="" data-accion="ver-foto">` : ''}
     <div class="contenido">
       <h1 class="${incompleto ? 'incompleto' : ''}">${escapar(recetaNorm.titulo ?? entradaNorm?.titulo ?? '')}</h1>
       ${meta ? `<p class="meta">${escapar(meta)}</p>` : ''}
-      ${recetaNorm.descripcion ? aHtml(sinPortada(recetaNorm.descripcion, portada)) : ''}
+      ${recetaNorm.descripcion ? aHtml(recetaNorm.descripcion) : ''}
     </div>
     <nav class="pestanas">${pestanas}</nav>
     <section class="contenido" data-cuerpo>${cuerpos[pestanaActiva] ?? ''}</section>`;

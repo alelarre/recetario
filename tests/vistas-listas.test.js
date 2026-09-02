@@ -4,8 +4,8 @@ import { renderHome } from '../src/ui/home.js';
 import { renderLista } from '../src/ui/lista.js';
 
 const ENTRADAS = [
-  { id_archivo: 'r1', titulo: 'Milanesas napolitanas', rinde: '4 porciones', tiempo: '40 min', dificultad: 'fácil', tags: ['horno'], foto: 'https://drive.google.com/file/d/1/view' },
-  { id_archivo: 'r2', titulo: 'Matambre a la pizza', rinde: '', tiempo: '', dificultad: '', tags: ['incompleto'], foto: '' }
+  { id_archivo: 'r1', titulo: 'Milanesas napolitanas', rinde: '4 porciones', tiempo: '40 min', dificultad: 'fácil', tags: ['horno'] },
+  { id_archivo: 'r2', titulo: 'Matambre a la pizza', rinde: '', tiempo: '', dificultad: '', tags: ['incompleto'] }
 ];
 
 describe('renderHome', () => {
@@ -44,17 +44,6 @@ describe('renderLista', () => {
     const filas = html.split('class="fila');
     expect(filas[1]).not.toContain('incompleto');
     expect(filas[2]).toContain('incompleto');
-  });
-
-  it('una receta sin foto usa el cuadro vacío y no una imagen rota', () => {
-    const html = renderLista({ titulo: 'Carnes', entradas: [ENTRADAS[1]] });
-    expect(html).toContain('<div class="miniatura"');
-    expect(html).not.toContain('<img class="miniatura" src=""');
-  });
-
-  it('usa la miniatura de Drive cuando la hay', () => {
-    const html = renderLista({ titulo: 'Carnes', entradas: ENTRADAS, miniaturas: new Map([['1', 'https://mini/1']]) });
-    expect(html).toContain('https://mini/1');
   });
 
   it('dibuja los chips y marca los activos', () => {

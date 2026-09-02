@@ -12,8 +12,6 @@ dificultad: fácil
 tags: [horno]
 ---
 
-![](https://a/portada)
-
 Un clásico.
 
 ## Ingredientes
@@ -34,12 +32,6 @@ Gruyere.
 const ENTRADA = { id_archivo: 'r1', titulo: 'Milanesas napolitanas', tags: ['horno'] };
 
 describe('renderDetalle', () => {
-  it('pone la portada arriba y no la repite en el cuerpo', () => {
-    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'ingredientes' });
-    expect(html).toContain('class="portada" src="https://a/portada"');
-    expect(html.split('https://a/portada')).toHaveLength(2);
-  });
-
   it('muestra la meta junta', () => {
     const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'ingredientes' });
     expect(html).toContain('4 porciones · 40 min · fácil');

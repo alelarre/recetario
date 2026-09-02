@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CLIENT_ID, SCOPE, NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_FOTOS, SCHEMA_VERSION } from '../src/config.js';
+import { CLIENT_ID, SCOPE, NOMBRE_RAIZ, NOMBRE_INDICE, SCHEMA_VERSION } from '../src/config.js';
 
 describe('config', () => {
   it('usa el scope amplio de Drive, no drive.file', () => {
@@ -9,7 +9,6 @@ describe('config', () => {
   it('no hardcodea ids de Drive, solo nombres', () => {
     expect(NOMBRE_RAIZ).toBe('Recetario');
     expect(NOMBRE_INDICE).toBe('_indice');
-    expect(NOMBRE_FOTOS).toBe('_fotos');
   });
 
   it('tiene un client ID de Google', () => {
