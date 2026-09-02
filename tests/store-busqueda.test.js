@@ -81,7 +81,24 @@ describe('categoriasConConteo', () => {
 });
 
 describe('tagsDe', () => {
-  it('devuelve los tags de una categoría ordenados por frecuencia', () => {
-    expect(store.tagsDe('Carnes').map(t => t.tag)).toEqual(['horno', 'rápido', 'parrilla']);
+  it('ordena por frecuencia descendente, y a igual frecuencia, alfabéticamente', () => {
+    // Carnes tiene horno, rápido, parrilla todos con frecuencia 1, así que el orden es alfabético
+    expect(store.tagsDe('Carnes').map(t => t.tag)).toEqual(['horno', 'parrilla', 'rápido']);
+  });
+
+  it('prioriza frecuencia sobre orden alfabético', async () => {
+    // Agregar recetas: zapallo en tres, asado en una
+    // Así zapallo (3 veces) viene antes que horno (1 vez) a pesar de que 'h' < 'z'
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'Ensalada de zapallo', 'Carnes', 'c1', 'zapallo', 'zapallo', 'fácil'),
+      fila('r5', 'Zapallo relleno', 'Carnes', 'c1', 'zapallo', 'zapallo', 'media'),
+      fila('r6', 'Zapallo gratinado', 'Carnes', 'c1', 'zapallo', 'zapallo', 'media'),
+      fila('r7', 'Asado', 'Carnes', 'c1', 'asado', 'carne', 'media')
+    ]);
+    await store.cargarIndice();
+    const tags = store.tagsDe('Carnes');
+    // zapallo aparece 3 veces, es el primero aunque alfabéticamente viene después que 'horno'
+    expect(tags[0].tag).toBe('zapallo');
+    expect(tags[0].cantidad).toBe(3);
   });
 });

@@ -370,7 +370,7 @@ export function crearStore({ drive, sheets, cache }) {
       for (const tag of e.tags) cuenta.set(tag, (cuenta.get(tag) ?? 0) + 1);
     }
     return [...cuenta].map(([tag, cantidad]) => ({ tag, cantidad }))
-      .sort((a, b) => b.cantidad - a.cantidad);
+      .sort((a, b) => b.cantidad - a.cantidad || a.tag.localeCompare(b.tag));
   }
 
   async function receta(id) {
