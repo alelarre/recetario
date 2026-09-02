@@ -21,6 +21,16 @@ export function crearStore({ drive, sheets, cache }) {
       nombre: NOMBRE_INDICE, padre: ctx.raizId,
       mime: 'application/vnd.google-apps.spreadsheet'
     });
+
+    // Google crea una planilla con una hoja por defecto cuyo nombre depende del idioma.
+    // Necesitamos renombrarla a 'recetas' antes de escribir, porque todo el resto del
+    // código usa rangos como 'recetas!A1:M1'.
+    const hojas = await sheets.hojas(archivo.id);
+    const hojaPorDefecto = hojas[0];
+    if (hojaPorDefecto.title !== HOJA_RECETAS) {
+      await sheets.renombrarHoja(archivo.id, hojaPorDefecto.sheetId, HOJA_RECETAS);
+    }
+
     await sheets.escribir(archivo.id, `${HOJA_RECETAS}!A1:${ULTIMA_COLUMNA}1`, [COLUMNAS]);
     await sheets.agregarHoja(archivo.id, HOJA_META);
     await sheets.escribir(archivo.id, `${HOJA_META}!A1:B3`, [

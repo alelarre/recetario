@@ -54,6 +54,18 @@ describe('arranque en frío', () => {
     expect(creada).toBeDefined();
   });
 
+  it('al crear la planilla, renombra la hoja por defecto a "recetas" y no queda ninguna hoja con nombre por defecto', async () => {
+    const { store, sheets } = armar(conRecetario());
+    await store.arrancar();
+    // La planilla se creó y debe tener una hoja llamada 'recetas'
+    // (no 'Sheet1' o el nombre por defecto que Google habría puesto)
+    const hojas = await sheets.hojas(store._ctx.indiceId);
+    const titulos = hojas.map(h => h.title);
+    expect(titulos).toContain('recetas');
+    expect(titulos).toContain('meta');
+    expect(titulos).not.toContain('Sheet1');
+  });
+
   it('con una planilla recién creada, ultimaReconstruccion no rompe y da vacío', async () => {
     const { store } = armar(conRecetario());
     await store.arrancar();
