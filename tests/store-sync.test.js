@@ -94,4 +94,28 @@ describe('sync', () => {
     expect(r.ignoradosSinTitulo).toBe(1);
     expect(store.entradas()).toHaveLength(0);
   });
+
+  it('dos borrados en el mismo sync corren las filas siguientes sin mezclar', async () => {
+    await sheets.append('i1', 'recetas', [
+      ['r1', 'a.md', 'A', 'Carnes', 'c1', '', '', '', '', '', '', '', '1'],
+      ['r2', 'b.md', 'B', 'Carnes', 'c1', '', '', '', '', '', '', '', '2'],
+      ['r3', 'c.md', 'C', 'Carnes', 'c1', '', '', '', '', '', '', '', '3']
+    ]);
+    await store.cargarIndice();
+    drive.cambios = async () => ({
+      changes: [
+        { fileId: 'r1', removed: true },
+        { fileId: 'r2', removed: true }
+      ],
+      newStartPageToken: '101'
+    });
+    await store.sync();
+    const mapa = await cache.leerMapaFilas();
+    expect(mapa.has('r1')).toBe(false);
+    expect(mapa.has('r2')).toBe(false);
+    expect(mapa.get('r3')).toBe(2);  // era 4, se corrió dos veces
+    const entradas = store.entradas();
+    expect(entradas).toHaveLength(1);
+    expect(entradas[0].id_archivo).toBe('r3');
+  });
 });
