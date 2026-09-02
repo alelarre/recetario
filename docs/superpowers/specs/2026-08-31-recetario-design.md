@@ -21,8 +21,7 @@ Restricciones dadas:
 **PWA de archivos estáticos**, publicada una vez en GitHub Pages, que habla
 directo con las APIs de Google desde el navegador.
 
-Se instala en el celular y en la Mac, arranca al instante, funciona sin señal y
-se actualiza sola. El navegador se autentica contra Google con
+Se instala en el celular y en la Mac y se actualiza sola. El navegador se autentica contra Google con
 la cuenta del usuario y escribe en su propio Drive. La única configuración es
 crear una vez un cliente OAuth en Google Cloud Console.
 
@@ -33,7 +32,6 @@ crear una vez un cliente OAuth en Google Cloud Console.
 ```
 Recetario/
 ├── _indice                      (Google Sheet)
-├── _fotos/
 ├── Entradas y picadas/
 ├── Sopas y caldos/
 ├── Ensaladas/
@@ -79,7 +77,7 @@ Recetario/
   por separado (§4.3). Un `.md` que escribió un agente conserva su nombre hasta
   que alguien acepte renombrarlo.
 - **Convención `_`.** Todo nombre que empieza con guión bajo es de la app y no
-  es una categoría. Protege `_indice` y `_fotos/`.
+  es una categoría. Protege `_indice`.
 
 ### 3.2 Formato de receta
 
@@ -192,41 +190,30 @@ Cuando la app crea o renombra una receta mantiene alineados el título y el
 nombre del archivo. Si divergen por una edición manual, gana `titulo` para
 mostrar y la app ofrece renombrar el archivo.
 
-### 3.3 Fotos
+### 3.3 Imágenes
 
-Los archivos se guardan en `_fotos/` y el `.md` los referencia **por URL**, en
-forma `https://drive.google.com/file/d/<ID>/view`. Como el vínculo es el id y no
-la ruta, renombrar o mover la receta o la foto no lo rompe.
+**Las recetas no guardan fotos propias.** Las imágenes se referencian por URL
+externa con la sintaxis normal de Markdown, `![](https://…)`, en cualquier punto
+del cuerpo. Renderizan directo, sin autenticación.
 
-- **La primera imagen del documento es la principal**: la que va en la grilla y
-  arriba del detalle. Sin campo en el frontmatter.
-- **Se aceptan URLs externas.** Renderizan directo, sin auth. La app no puede
-  copiarlas a Drive porque CORS le impide leer sus bytes; eso lo hace Claude
-  (§10). El service worker cachea respuestas opacas, así que una foto externa ya
-  vista sigue apareciendo sin señal.
-- **Mostrar una foto de Drive requiere trabajo:** `<img src>` no puede mandar el
-  token, así que la app extrae el id, hace fetch autenticado y arma un object
-  URL. Se cachea en IndexedDB, lo que de paso resuelve las fotos offline.
-- **Las miniaturas de las listas salen del índice más una sola llamada.** La
-  columna `foto` guarda la URL de la portada, así que la lista sabe qué imagen
-  corresponde a cada receta sin abrir ninguna. Para no bajar la foto completa de
-  cada una, se usa `thumbnailLink`, que Drive devuelve en la metadata — pero
-  pedirlo archivo por archivo sería una llamada por receta. Se resuelve listando
-  `_fotos/` una vez con `fields=files(id,thumbnailLink)`: **una llamada paginada
-  devuelve el mapa id → miniatura de todas las fotos.** Se cachea en IndexedDB y
-  se refresca cuando un link caduca, porque son de vida corta. Las fotos
-  externas no tienen miniatura: se cargan directo y las escala el navegador.
-- **Se redimensiona antes de subir** a ~1600 px y JPEG, en canvas. Una foto de
-  celular son 4 MB y miles de recetas comerían la cuota de Drive sin necesidad.
-- **Nombres dentro de `_fotos/`:** la app sube nombrando por receta
-  (`Milanesas napolitanas.jpg`, `Milanesas napolitanas-2.jpg`), que al ordenar
-  alfabéticamente agrupa las fotos de cada plato. El id manda, el nombre es
-  cortesía. Si algún día miles de archivos en una sola carpeta molestan, se
-  parte `_fotos/` sin tocar ningún `.md`.
-- **Huérfanas:** al borrar una receta, la app parsea las URLs de su `.md` y
-  ofrece borrar también esos archivos. Como la reconstrucción ya lee todos los
-  `.md` (§5.3), puede comparar los ids referenciados contra el contenido de
-  `_fotos/` y reportar las huérfanas sin costo adicional.
+La app no sube fotos, no las guarda en Drive y no tiene carpeta de fotos. La
+razón es el costo desproporcionado: mostrar una imagen guardada en Drive obliga
+a extraer su id, pedirla con el token y armar un object URL, porque un `<img
+src>` no puede autenticarse; y sostener miniaturas para las listas obliga además
+a mantener un mapa de `thumbnailLink` que caduca. Todo eso para un recetario
+donde la mayoría de las recetas —capturadas de PDFs, libros y videos— no va a
+tener ninguna imagen.
+
+- **Se dibujan donde el Markdown las puso**, dentro de la sección que les toca.
+  No hay imagen de portada ni destacada: ninguna imagen tiene un rol especial.
+- **Las listas no muestran imágenes.** Ni la de una categoría ni los resultados
+  de la búsqueda: son listas de texto.
+- **Tocar una imagen la abre a pantalla completa**, con paso de una a otra si la
+  receta tiene varias.
+- **Solo se aceptan `http:` y `https:`** y rutas relativas. Cualquier otro
+  esquema se deja como texto a la vista, sin dibujar la imagen (§7.3).
+- Una imagen externa que dejó de estar disponible se ve rota; el `.md` no se
+  toca. El texto de la receta nunca depende de una imagen.
 
 ## 4. Índice
 
@@ -263,8 +250,7 @@ Hoja `recetas`, una fila por receta:
 | I | `fuente` | |
 | J | `tags` | separados por barra vertical |
 | K | `ingredientes` | nombres en minúsculas, separados por barra vertical |
-| L | `foto` | URL de la primera imagen del documento |
-| M | `mtime` | epoch |
+| L | `mtime` | epoch |
 
 Los ingredientes van como celda delimitada y no como hoja aparte, para que **una
 receta sea exactamente una fila y editarla sea exactamente una llamada**. Una
@@ -385,15 +371,21 @@ marca en la hoja `meta` al empezar y se limpia al terminar, junto con
 confiar en él. Sin esa marca, un índice truncado se ve exactamente igual que uno
 completo: el `schemaVersion` es correcto y el `changesPageToken` también.
 
-## 6. Offline y cache local
+## 6. Cache local
 
-IndexedDB guarda una copia del índice y los cuerpos de las recetas que se
-abrieron (LRU), no todas. Service worker para el código de la app.
+IndexedDB guarda el índice, el mapa de filas, los cuerpos de las recetas que se
+abrieron y la cola de escrituras pendientes. Service worker para el código de la
+app, con red primero para la navegación —así una versión nueva se ve aunque la
+app esté instalada— y cache primero para los archivos con hash en el nombre.
 
-- **Siempre offline:** buscar, filtrar y navegar el recetario entero, porque
-  sale del índice cacheado.
-- **Offline solo si ya se abrió:** el detalle completo de una receta.
-- Un botón explícito de "bajar todo" queda fuera de v1.
+**La app necesita conexión para arrancar.** Usar el índice cacheado para
+renderizar antes de hablar con Drive es una optimización que v1 no hace: el
+arranque lee la planilla y recién entonces dibuja. Cocinar sin señal no es el
+caso de uso que se está resolviendo; si alguna vez lo es, el índice ya está en
+IndexedDB y lo que falta es solo decidir usarlo.
+
+**El índice se puede reconstruir a mano cuando se quiera** (§5.3), desde el menú
+del home. Es lo que se usa después de editar recetas por fuera de la app.
 
 ## 7. Componentes e interfaz
 
@@ -403,7 +395,7 @@ Seis piezas, cada una con un solo trabajo:
 
 - **`auth.js`** — obtener y renovar el token de Google.
 - **`drive.js`** — cliente crudo de la API de Drive: listar carpeta, leer,
-  escribir, crear, mover, renombrar, subir foto, Changes API. No sabe qué es una
+  escribir, crear, mover, renombrar, Changes API. No sabe qué es una
   receta.
 - **`sheets.js`** — cliente crudo de la API de Sheets: leer rango, actualizar
   fila, append en lote.
@@ -436,15 +428,13 @@ que es la salida del token caído del §8. No hay pantalla de ajustes: no hay na
 que ajustar.
 
 **Categoría — y resultados del buscador.** Las dos usan la misma vista: lista
-compacta de una columna, con miniatura chica, título y la meta en una línea
+compacta de una columna, con título y la meta en una línea
 (`rinde` · `tiempo` · `dificultad`). Entran seis o siete por pantalla y aguanta
-cientos de recetas sin cambiar de forma. Una receta sin foto muestra el cuadro
-vacío y no se ve rota, que importa porque con captura por agentes desde PDFs no
-tener foto va a ser lo normal. Arriba, chips que filtran por tag dentro de la
+cientos de recetas sin cambiar de forma. Es una lista de texto: las imágenes,
+cuando las hay, se ven al abrir la receta. Arriba, chips que filtran por tag dentro de la
 categoría. Las recetas con el tag `incompleto` llevan un punto ámbar.
 
-**Detalle.** Portada arriba: la primera imagen del documento, que por eso no se
-repite en el cuerpo. Debajo, título y meta (`rinde` · `tiempo` · `dificultad`),
+**Detalle.** Título y meta (`rinde` · `tiempo` · `dificultad`),
 y tres pestañas:
 
 - **Ingredientes**
@@ -454,8 +444,8 @@ y tres pestañas:
 La pestaña Notas muestra el conteo —"Notas · 2"— y queda apagada cuando la
 receta no tiene ninguna, para que se vea que hay algo ahí sin tener que abrirla.
 
-Las imágenes que no son portada se dibujan donde el Markdown las puso, dentro de
-la pestaña que les toca según su sección. Tocar cualquier foto abre un visor a
+Las imágenes se dibujan donde el Markdown las puso, dentro de la pestaña que les
+toca según su sección. Tocar cualquier foto abre un visor a
 pantalla completa con zoom y swipe entre todas las de la receta: **la galería es
 un visor, no una sección.**
 
@@ -492,7 +482,7 @@ y un solo acento funcional: lo que tiene color en la pantalla es una foto o una
 receta a medio terminar.
 
 **Tipografía.** La pila del sistema (`system-ui`), sin descargar ninguna fuente:
-una petición menos en el arranque y nada que cachear para offline. La
+una petición menos en el arranque y nada que cachear. La
 monoespaciada del sistema se usa solo en los textareas del editor.
 
 Todas las medidas van en `rem`, nunca en píxeles fijos. Así la app hereda el
@@ -516,7 +506,7 @@ sincronizar.
 | token | claro | oscuro |
 |---|---|---|
 | fondo | `#ffffff` | `#1c1c1e` |
-| superficie (chip, miniatura vacía) | `#f2f2f7` | `#2c2c2e` |
+| superficie (chip) | `#f2f2f7` | `#2c2c2e` |
 | texto | `#1c1c1e` | `#f2f2f7` |
 | texto secundario | `#6e6e73` | `#98989d` |
 | separador | `#e5e5ea` | `#38383a` |
@@ -529,8 +519,8 @@ del sistema (`#0a84ff`) da 3.1:1 sobre blanco y no alcanza para texto chico.
 
 **Densidad.** Espaciado en múltiplos de 4 px. Márgenes laterales de 16 px, filas
 de lista con 12 px arriba y abajo —seis o siete por pantalla, como pide el
-§7.2—, y 14 px entre pasos de la preparación. Radios de 8 px en miniaturas y
-portada, `999px` en los chips.
+§7.2—, y 14 px entre pasos de la preparación. Radios de 8 px en las imágenes del cuerpo,
+`999px` en los chips.
 
 **Área táctil mínima de 44 px** en todo lo que se toca, aunque el elemento
 dibujado sea más chico. El caso que manda es marcar un paso con el dorso del
@@ -546,7 +536,8 @@ valor aparece dos veces, es un token que falta.
   borde: las recetas se editan desde Drive y desde Claude. Si el frontmatter no
   parsea, la receta se indexa con lo que se pueda rescatar y se muestra como
   texto plano con un aviso.
-- **Sin red:** banner, navegación completa desde cache, escrituras encoladas.
+- **Sin red:** las escrituras quedan encoladas y se reintentan; el arranque
+  falla con un mensaje y un botón para reintentar.
 - **Token caído:** renovación silenciosa; si falla, el índice sigue navegable en
   solo lectura y se ofrece re-login.
 - **Conflicto de edición:** antes de escribir un `.md` se compara su
@@ -608,10 +599,10 @@ Dentro:
 - Construir, sincronizar y reconstruir el índice (§5).
 - Buscar y filtrar por categoría, tags e ingredientes.
 - Ver la receta con los pasos marcables (§7.2).
-- Editar recetas —incluido moverlas de categoría— y subir fotos (§7.2).
+- Editar recetas, incluido moverlas de categoría (§7.2).
 - Crear una receta nueva, mínima: frontmatter y tag `incompleto` (§7.2).
-- Borrar una receta, con la limpieza de fotos huérfanas del §3.3.
-- Offline según §6.
+- Borrar una receta.
+- Reconstruir el índice a mano después de editar por fuera (§5.3).
 
 Fuera, inventariado, cada uno con lo que le falta para entrar:
 
@@ -625,7 +616,9 @@ Fuera, inventariado, cada uno con lo que le falta para entrar:
   cubre Claude (§10).
 - **OCR de fotos de libros.** Trabajo de agente, no de la app.
 - **Compartir con otras personas.** Cambia el modelo de permisos entero.
-- **Bajar todo para offline.** Cuando cocinar sin señal deje de ser hipotético.
+- **Funcionar sin conexión.** El índice ya se guarda en IndexedDB; falta usarlo
+  para renderizar antes de la red, y decidir qué hacer con las recetas que no se
+  abrieron nunca. Cuando cocinar sin señal deje de ser hipotético.
 
 Cerrado, no vuelve a evaluarse:
 
