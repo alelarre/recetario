@@ -54,7 +54,7 @@ Recetario/
   lleva `categoria`. Mover un archivo de carpeta desde la app de Drive *es*
   recategorizarlo.
 - **El eje de las carpetas es el curso**, porque es el único donde toda receta
-  tiene exactamente una respuesta obvia. Estructura plana de quince carpetas,
+  tiene exactamente una respuesta obvia. Estructura plana de dieciséis carpetas,
   siguiendo el patrón de los recetarios impresos: curso arriba, con los platos
   principales ya abiertos por ingrediente. Son suficientes para que ninguna se
   vuelva inmanejable con miles de recetas, y pocas para nombrarlas de memoria.

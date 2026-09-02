@@ -30,7 +30,7 @@ Todo en español rioplatense: spec, comentarios, UI y nombres de carpetas.
 ## Ubicación en Drive
 
 `Recetario/` → `1B2nNmy0qOAuZT9lomrSdompYta7uuJ7B`, dentro de la carpeta
-`recetas` del usuario. Las 15 categorías ya están creadas; los ids
+`recetas` del usuario. Las 16 categorías ya están creadas; los ids
 de cada una están en `SETUP.md`.
 
 **La app no hardcodea ninguno de esos ids:** descubre las categorías listando las

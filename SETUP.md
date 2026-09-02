@@ -30,6 +30,7 @@ Drive cuando se quiera; mientras esté, la app la ignora por empezar con `_`.
 | `Salsas y aderezos/` | `11aR96I-jPPms43LMBo9AkJWQ-KPv5zcr` |
 | `Desayunos y meriendas/` | `1mAFhFqD84rSHttawmCp8J77k-3FA_p5j` |
 | `Bebidas/` | `1o9wvgO8sKpij53hYfcAX3PO7WxizjJmB` |
+| `Otros/` | `1hJspooBXMmzPj-bsIodSz7qKYdMWrtA4` |
 
 Los ids están acá solo para depurar. La app **no** los hardcodea: descubre las
 categorías listando las subcarpetas de `Recetario/`, así que agregar o renombrar
