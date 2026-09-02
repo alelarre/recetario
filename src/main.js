@@ -11,9 +11,6 @@ import { renderHome } from './ui/home.js';
 import { renderLista } from './ui/lista.js';
 import { renderDetalle } from './ui/detalle.js';
 import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
-// TODO: el visor de fotos (renderVisor) todavía no está cableado a ninguna acción
-// (ver "ver-foto" en detalle.js y "cerrar-visor"/"foto-anterior"/"foto-siguiente"
-// en visor.js). Se deja importado, sin usar, para la próxima tarea que lo conecte.
 import { renderVisor } from './ui/visor.js';
 
 const app = document.querySelector('#app');
@@ -23,8 +20,32 @@ const sheets = crearSheets(() => auth.token());
 
 let store, estadoArranque, pestana = 'ingredientes', vistaActual = null;
 let pendienteFlush = null;
+let tagsActivos = [];       // filtro de la vista de categoría; se limpia al cambiar de vista
+let fotosVisor = null;      // fotos de la receta abierta en el visor; null = visor cerrado
+let indiceVisor = 0;
 
 const pintar = (html) => { app.innerHTML = html; };
+
+/** Agrega o saca el visor del final de #app, sin tocar el resto del contenido (§7.2: no pierde el scroll del detalle). */
+function pintarVisor() {
+  document.querySelector('.visor')?.remove();
+  if (fotosVisor) app.insertAdjacentHTML('beforeend', renderVisor({ fotos: fotosVisor, indice: indiceVisor }));
+}
+
+function abrirVisor(fotos, indice) {
+  fotosVisor = fotos;
+  indiceVisor = indice;
+  pintarVisor();
+}
+
+function cerrarVisor() {
+  fotosVisor = null;
+  pintarVisor();
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && fotosVisor) cerrarVisor();
+});
 
 function programarFlush() {
   clearTimeout(pendienteFlush);
@@ -68,13 +89,20 @@ async function reconstruir() {
 }
 
 async function render(ruta = parsearHash(location.hash)) {
+  // Cambiar de categoría o de vista limpia el filtro de tags y cierra el visor:
+  // si no, se entra a otra categoría y no se ve nada porque quedó filtrando
+  // por un tag que ahí no existe, sin forma de darse cuenta.
+  if (!vistaActual || ruta.vista !== vistaActual.vista || ruta.params.nombre !== vistaActual.params.nombre) {
+    tagsActivos = [];
+    fotosVisor = null;
+  }
   vistaActual = ruta;
   if (ruta.vista === 'home') {
     return pintar(renderHome({ categorias: store.categoriasConConteo() }));
   }
   if (ruta.vista === 'categoria') {
-    const entradas = store.buscar({ categoria: ruta.params.nombre });
-    return pintar(renderLista({ titulo: ruta.params.nombre, entradas, tags: store.tagsDe(ruta.params.nombre) }));
+    const entradas = store.buscar({ categoria: ruta.params.nombre, tags: tagsActivos });
+    return pintar(renderLista({ titulo: ruta.params.nombre, entradas, tags: store.tagsDe(ruta.params.nombre), tagsActivos }));
   }
   if (ruta.vista === 'buscar') {
     return pintar(renderLista({ titulo: `"${ruta.params.q}"`, entradas: store.buscar({ texto: ruta.params.q }) }));
@@ -99,13 +127,29 @@ async function render(ruta = parsearHash(location.hash)) {
 const router = crearRouter(render);
 
 app.addEventListener('click', async (e) => {
-  const boton = e.target.closest('[data-accion], [data-pestana], .check');
+  const boton = e.target.closest('[data-accion], [data-pestana], .check, [data-tag], img');
   if (!boton) return;
 
   if (boton.classList.contains('check')) {
     const marcado = boton.getAttribute('aria-pressed') === 'true';
     boton.setAttribute('aria-pressed', String(!marcado));
     return;
+  }
+
+  if (boton.dataset.tag) {
+    const tag = boton.dataset.tag;
+    tagsActivos = tagsActivos.includes(tag) ? tagsActivos.filter(t => t !== tag) : [...tagsActivos, tag];
+    return render();
+  }
+
+  if (boton.tagName === 'IMG') {
+    // La portada y las fotos del cuerpo son "fotos de la receta"; una miniatura
+    // de una lista no matchea este selector y no abre nada (§7.2: tocar
+    // cualquier foto del detalle abre el visor).
+    const fotos = [...document.querySelectorAll('#app .portada, #app [data-cuerpo] img')];
+    const indice = fotos.indexOf(boton);
+    if (indice === -1) return;
+    return abrirVisor(fotos.map(img => img.src), indice);
   }
 
   const accion = boton.dataset.accion;
@@ -123,6 +167,9 @@ app.addEventListener('click', async (e) => {
     return render();
   }
   if (accion === 'menu') return document.querySelector('.menu')?.toggleAttribute('hidden');
+  if (accion === 'cerrar-visor') return cerrarVisor();
+  if (accion === 'foto-anterior') { indiceVisor = Math.max(0, indiceVisor - 1); return pintarVisor(); }
+  if (accion === 'foto-siguiente') { indiceVisor = Math.min((fotosVisor?.length ?? 1) - 1, indiceVisor + 1); return pintarVisor(); }
 
   if (accion === 'guardar') {
     const form = document.querySelector('[data-formulario]');
