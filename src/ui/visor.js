@@ -12,7 +12,7 @@ export function renderVisor(args = {}) {
     <div class="visor" role="dialog" aria-label="Foto">
       <button data-accion="cerrar-visor" aria-label="Cerrar">✕</button>
       <img src="${escapar(fotos[idx])}" alt="">
-      <p class="meta">${idx + 1} / ${fotos.length}</p>
+      <p class="visor-contador">${idx + 1} / ${fotos.length}</p>
       <button data-accion="foto-anterior" aria-label="Anterior">‹</button>
       <button data-accion="foto-siguiente" aria-label="Siguiente">›</button>
     </div>`;

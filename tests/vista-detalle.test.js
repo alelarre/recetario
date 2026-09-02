@@ -109,6 +109,24 @@ describe('renderDetalle', () => {
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;');
   });
+
+  it('con receta null no lanza', () => {
+    expect(() => renderDetalle({ entrada: ENTRADA, receta: null })).not.toThrow();
+    const html = renderDetalle({ entrada: ENTRADA, receta: null });
+    expect(html).toBeTruthy();
+  });
+
+  it('con entrada null y receta null no lanza', () => {
+    expect(() => renderDetalle({ entrada: null, receta: null })).not.toThrow();
+    const html = renderDetalle({ entrada: null, receta: null });
+    expect(html).toBeTruthy();
+  });
+
+  it('con una pestaña inexistente, exactamente una pestaña queda seleccionada', () => {
+    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'inventada' });
+    const matches = html.match(/aria-selected="true"/g);
+    expect(matches).toHaveLength(1);
+  });
 });
 
 describe('renderVisor', () => {
@@ -116,6 +134,12 @@ describe('renderVisor', () => {
     const html = renderVisor({ fotos: ['https://a/1', 'https://a/2'], indice: 1 });
     expect(html).toContain('https://a/2');
     expect(html).toContain('2 / 2');
+  });
+
+  it('emite visor-contador y no meta', () => {
+    const html = renderVisor({ fotos: ['https://a/1', 'https://a/2'], indice: 0 });
+    expect(html).toContain('class="visor-contador"');
+    expect(html).not.toContain('class="meta"');
   });
 
   // Tests de defensa
