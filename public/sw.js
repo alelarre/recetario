@@ -17,7 +17,10 @@ self.addEventListener('activate', (e) => {
 function cachePrimero(request) {
   return caches.match(request).then(hit => hit ?? fetch(request).then(resp => {
     const copia = resp.clone();
-    caches.open(CACHE).then(c => c.put(request, copia));
+    // Guardar solo si la respuesta es exitosa; una respuesta de error cacheada sobrevive a la recarga y rompe la app.
+    if (resp.ok) {
+      caches.open(CACHE).then(c => c.put(request, copia));
+    }
     return resp;
   }));
 }
@@ -26,7 +29,10 @@ function cachePrimero(request) {
 function redPrimero(request) {
   return fetch(request).then(resp => {
     const copia = resp.clone();
-    caches.open(CACHE).then(c => c.put(request, copia));
+    // Guardar solo si la respuesta es exitosa; una respuesta de error cacheada sobrevive a la recarga y rompe la app.
+    if (resp.ok) {
+      caches.open(CACHE).then(c => c.put(request, copia));
+    }
     return resp;
   }).catch(() => caches.match(request).then(hit => hit ?? caches.match('./index.html')));
 }
