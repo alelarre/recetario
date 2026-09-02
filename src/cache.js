@@ -6,16 +6,16 @@ export function crearCacheMemoria() {
   let cola = [];
 
   return {
-    leerIndice: async () => [...indice],
-    guardarIndice: async (entradas) => { indice = [...entradas]; },
-    leerMapaFilas: async () => new Map(mapaFilas),
-    guardarMapaFilas: async (mapa) => { mapaFilas = new Map(mapa); },
+    leerIndice: async () => structuredClone(indice),
+    guardarIndice: async (entradas) => { indice = structuredClone(entradas); },
+    leerMapaFilas: async () => structuredClone(mapaFilas),
+    guardarMapaFilas: async (mapa) => { mapaFilas = structuredClone(mapa); },
     leerCuerpo: async (id) => cuerpos.get(id) ?? null,
     guardarCuerpo: async (id, texto) => { cuerpos.set(id, texto); },
     leerMeta: async (clave) => meta.get(clave) ?? null,
     guardarMeta: async (clave, valor) => { meta.set(clave, valor); },
-    encolar: async (op) => { cola.push(op); },
-    leerCola: async () => [...cola],
+    encolar: async (op) => { cola.push(structuredClone(op)); },
+    leerCola: async () => structuredClone(cola),
     vaciarCola: async () => { cola = []; }
   };
 }
