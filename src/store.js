@@ -117,15 +117,27 @@ export function crearStore({ drive, sheets, cache }) {
   }
 
   async function borrarDelIndice(id) {
-    const nro = filas.get(id);
-    if (!nro) return;
-    const hojas = await sheets.hojas(ctx.indiceId);
-    const hojaId = hojas.find(h => h.title === HOJA_RECETAS)?.sheetId ?? 0;
-    await sheets.borrarFila(ctx.indiceId, hojaId, nro);
-    filas.delete(id);
-    // El corrimiento es determinístico: no hace falta releer nada (§4.3).
-    for (const [otroId, otraFila] of filas) if (otraFila > nro) filas.set(otroId, otraFila - 1);
+    // Sacar la entrada siempre, tenga fila o no.
     entradas = entradas.filter(e => e.id_archivo !== id);
+
+    // Borrar la fila y hacer el corrimiento solo si tenía fila.
+    const nro = filas.get(id);
+    if (nro) {
+      const hojas = await sheets.hojas(ctx.indiceId);
+      const hojaId = hojas.find(h => h.title === HOJA_RECETAS)?.sheetId ?? 0;
+      await sheets.borrarFila(ctx.indiceId, hojaId, nro);
+      filas.delete(id);
+      // El corrimiento es determinístico: no hace falta releer nada (§4.3).
+      for (const [otroId, otraFila] of filas) if (otraFila > nro) filas.set(otroId, otraFila - 1);
+    }
+
+    // Sacar de la cola cualquier operación pendiente de este id.
+    const cola = await cache.leerCola();
+    const filtrada = cola.filter(op => op.id !== id);
+    await cache.vaciarCola();
+    for (const op of filtrada) {
+      await cache.encolar(op);
+    }
   }
 
   async function sync() {

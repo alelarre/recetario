@@ -118,4 +118,31 @@ describe('borrar', () => {
     await store.borrar('r1', { borrarFotos: false });
     expect(drive._store.has('f1')).toBe(true);
   });
+
+  it('crear y borrar sin flush: no deja entrada huérfana', async () => {
+    const r = await store.crear({ titulo: 'Nueva' });
+    expect(store.entradas()).toHaveLength(2);  // r1 + nueva
+    await store.borrar(r.id, { borrarFotos: false });
+    expect(drive._store.has(r.id)).toBe(false);
+    expect(store.entradas()).toHaveLength(1);  // solo r1
+    const cola = await cache.leerCola();
+    expect(cola.filter(op => op.id === r.id)).toHaveLength(0);  // no hay ops pendientes de la borrada
+  });
+
+  it('flush después de crear y borrar sin flush: no crea fila fantasma', async () => {
+    const r = await store.crear({ titulo: 'Fantasma' });
+    await store.borrar(r.id, { borrarFotos: false });
+    await store.flush();
+    const filas = await sheets.leer('i1', 'recetas!A1:M10');
+    const titulos = filas.slice(1).map(f => f[2]);
+    expect(titulos).toEqual(['Milanesas']);  // solo la que existía
+  });
+
+  it('borrar una receta con fila sigue funcionando', async () => {
+    await store.borrar('r1', { borrarFotos: false });
+    expect(drive._store.has('r1')).toBe(false);
+    expect(store.entradas()).toHaveLength(0);
+    const filas = await sheets.leer('i1', 'recetas!A1:M10');
+    expect(filas).toHaveLength(1);  // solo el encabezado
+  });
 });
