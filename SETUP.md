@@ -73,7 +73,8 @@ En Google Cloud Console:
 4. En **Google Auth Platform → Clientes** (o el viejo *APIs y servicios →
    Credenciales*, es el mismo objeto), crear un **ID de cliente de OAuth →
    Aplicación web**. En orígenes autorizados de JavaScript, poner los dos:
-   - `http://localhost:8000` — para desarrollo local.
+   - `http://localhost:8080` — para desarrollo local, que es el puerto que usa
+     `npm run dev` (fijado en `vite.config.js`).
    - el origen de GitHub Pages, cuando exista (paso 4).
 5. Anotar el client ID:
 
