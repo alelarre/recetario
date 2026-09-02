@@ -1,11 +1,13 @@
 import { escapar } from './markdown.js';
 
-export function renderHome({ categorias = [], ultimaReconstruccion = '' } = {}) {
+export function renderHome(arg = {}) {
+  const { categorias = [], ultimaReconstruccion = '' } = arg ?? {};
+  const cats = Array.isArray(categorias) ? categorias : [];
   const fecha = ultimaReconstruccion
     ? new Date(ultimaReconstruccion).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
     : 'nunca';
 
-  const tiles = categorias.map(c => `
+  const tiles = cats.map(c => `
     <a class="tile" href="#/c/${encodeURIComponent(c.nombre)}">
       ${escapar(c.nombre)}
       <span class="cuenta">${c.cantidad}</span>

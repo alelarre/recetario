@@ -10,11 +10,16 @@ function miniatura(entrada, miniaturas) {
   return '<div class="miniatura"></div>';
 }
 
-export function renderLista({ titulo, entradas = [], tags = [], tagsActivos = [], miniaturas } = {}) {
-  const chips = tags.map(t => `
-    <button class="chip" data-tag="${escapar(t.tag)}" aria-pressed="${tagsActivos.includes(t.tag)}">${escapar(t.tag)}</button>`).join('');
+export function renderLista(arg = {}) {
+  const { titulo = '', entradas = [], tags = [], tagsActivos = [], miniaturas } = arg ?? {};
+  const ents = Array.isArray(entradas) ? entradas : [];
+  const tagsList = Array.isArray(tags) ? tags : [];
+  const activos = Array.isArray(tagsActivos) ? tagsActivos : [];
 
-  const filas = entradas.map(e => {
+  const chips = tagsList.map(t => `
+    <button class="chip" data-tag="${escapar(t.tag)}" aria-pressed="${activos.includes(t.tag)}">${escapar(t.tag)}</button>`).join('');
+
+  const filas = ents.map(e => {
     const meta = [e.rinde, e.tiempo, e.dificultad].filter(Boolean).join(' · ');
     const incompleto = e.tags?.includes('incompleto');
     return `
@@ -31,8 +36,8 @@ export function renderLista({ titulo, entradas = [], tags = [], tagsActivos = []
     <header class="encabezado">
       <button data-accion="atras" aria-label="Volver">‹</button>
       <h1>${escapar(titulo)}</h1>
-      <span class="cuenta">${entradas.length}</span>
+      <span class="cuenta">${ents.length}</span>
     </header>
-    ${tags.length ? `<div class="chips">${chips}</div>` : ''}
+    ${tagsList.length ? `<div class="chips">${chips}</div>` : ''}
     <div class="listado">${filas || '<p class="contenido">Todavía no hay recetas acá.</p>'}</div>`;
 }
