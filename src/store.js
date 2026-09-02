@@ -43,7 +43,13 @@ export function crearStore({ drive, sheets, cache }) {
     if (raices.length > 1) return { estado: 'elegir-carpeta', candidatas: raices, avisos };
     ctx.raizId = raices[0].id;
 
-    const subcarpetas = await drive.listarCarpetas(ctx.raizId);
+    let subcarpetas;
+    try {
+      subcarpetas = await drive.listarCarpetas(ctx.raizId);
+    } catch (e) {
+      ctx.soloLectura = true;
+      return { estado: 'solo-lectura', motivo: e.message, avisos };
+    }
     ctx.categorias = subcarpetas
       .filter(c => !c.name.startsWith('_'))
       .map(c => ({ id: c.id, nombre: c.name }));

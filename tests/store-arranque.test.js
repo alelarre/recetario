@@ -91,4 +91,37 @@ describe('arranque en frío', () => {
     await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '0']]);
     expect((await store.arrancar()).reconstruir).toBe(true);
   });
+
+  it('si falla listarCarpetas arranca en solo lectura sin lanzar', async () => {
+    const drive = conRecetario();
+    const { store } = armar(drive);
+
+    // Envolvé listarCarpetas para lanzar
+    const listarOriginal = drive.listarCarpetas;
+    drive.listarCarpetas = async function() {
+      throw Object.assign(new Error('sin red'), { status: 0 });
+    };
+
+    const r = await store.arrancar();
+    expect(r.estado).toBe('solo-lectura');
+    expect([...drive._store.values()].some(a => a.name === '_indice')).toBe(false);
+  });
+
+  it('si falla buscarPorNombre de planilla arranca en solo lectura y NO crea _indice', async () => {
+    const drive = conRecetario();
+    const { store } = armar(drive);
+
+    // Guardá la original, reemplazá para fallar solo en la segunda llamada
+    const buscarOriginal = drive.buscarPorNombre;
+    let callCount = 0;
+    drive.buscarPorNombre = async function(nombre, padre) {
+      callCount++;
+      if (callCount === 2) throw Object.assign(new Error('sin red'), { status: 0 });
+      return buscarOriginal.call(drive, nombre, padre);
+    };
+
+    const r = await store.arrancar();
+    expect(r.estado).toBe('solo-lectura');
+    expect([...drive._store.values()].some(a => a.name === '_indice')).toBe(false);
+  });
 });
