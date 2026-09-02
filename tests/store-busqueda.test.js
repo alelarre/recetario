@@ -66,6 +66,24 @@ describe('buscar', () => {
   it('lista lo que falta terminar filtrando por incompleto', () => {
     expect(store.buscar({ tags: ['incompleto'] }).map(e => e.id_archivo)).toEqual(['r3']);
   });
+
+  it('no lanza con argumentos inválidos', () => {
+    // buscar(null), buscar(42), buscar('texto') devuelven el índice entero sin lanzar
+    expect(store.buscar(null)).toHaveLength(3);
+    expect(store.buscar(42)).toHaveLength(3);
+    expect(store.buscar('texto')).toHaveLength(3);
+  });
+
+  it('no lanza si tags es un string en vez de array', () => {
+    // Si tags viene como string (por error de interfaz), lo trata como array vacío y devuelve todo
+    expect(store.buscar({ tags: 'horno' })).toHaveLength(3);
+  });
+
+  it('no lanza si los valores son null o undefined', () => {
+    // Todos los valores null devuelven el índice entero
+    expect(store.buscar({ texto: null, categoria: null, dificultad: null })).toHaveLength(3);
+    expect(store.buscar({ texto: undefined, categoria: undefined })).toHaveLength(3);
+  });
 });
 
 describe('categoriasConConteo', () => {

@@ -343,12 +343,26 @@ export function crearStore({ drive, sheets, cache }) {
     return { indexadas: entradas.length, ignoradasSinTitulo };
   }
 
-  function buscar({ texto = '', categoria = '', tags = [], dificultad = '' } = {}) {
-    const t = normalizar(texto);
+  function buscar(filtros) {
+    // Normalizar el argumento: si no es un objeto plano, tratarlo como {}
+    const filtrosValidos = (filtros && typeof filtros === 'object' && !Array.isArray(filtros)) ? filtros : {};
+    const {
+      texto = '',
+      categoria = '',
+      tags = [],
+      dificultad = ''
+    } = filtrosValidos;
+
+    // Defender cada campo por tipo
+    const t = normalizar(String(texto ?? ''));
+    const cat = String(categoria ?? '');
+    const diff = String(dificultad ?? '');
+    const tagList = Array.isArray(tags) ? tags : [];
+
     return entradas.filter(e => {
-      if (categoria && e.categoria !== categoria) return false;
-      if (dificultad && e.dificultad !== dificultad) return false;
-      if (tags.length && !tags.every(tag => e.tags.includes(tag))) return false;
+      if (cat && e.categoria !== cat) return false;
+      if (diff && e.dificultad !== diff) return false;
+      if (tagList.length && !tagList.every(tag => e.tags.includes(tag))) return false;
       if (!t) return true;
       return normalizar(e.titulo).includes(t) || e.ingredientes.some(i => normalizar(i).includes(t));
     });
@@ -364,9 +378,12 @@ export function crearStore({ drive, sheets, cache }) {
   }
 
   function tagsDe(categoria) {
+    // Defender el parámetro: convertir a string válido
+    const cat = typeof categoria === 'string' ? categoria : '';
+
     const cuenta = new Map();
     for (const e of entradas) {
-      if (categoria && e.categoria !== categoria) continue;
+      if (cat && e.categoria !== cat) continue;
       for (const tag of e.tags) cuenta.set(tag, (cuenta.get(tag) ?? 0) + 1);
     }
     return [...cuenta].map(([tag, cantidad]) => ({ tag, cantidad }))
