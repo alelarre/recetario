@@ -42,6 +42,17 @@ describe('renderEditor', () => {
     expect(html).toMatch(/class="chip [^"]*incompleto[^"]*"[^>]*>incompleto/);
   });
 
+  it('normaliza dificultad inválida antes de comparar', () => {
+    const recetaInvalida = parse('---\ntitulo: X\ndificultad: imposible\n---\n');
+    const html = renderEditor({ receta: recetaInvalida, entrada: ENTRADA, categorias: CATEGORIAS });
+    // La opción vacía ("sin definir") debe tener selected
+    expect(html).toContain('<option value="" selected>sin definir</option>');
+    // Ninguna otra opción debe tener selected
+    expect(html).not.toMatch(/<option value="fácil"[^>]*selected/);
+    expect(html).not.toMatch(/<option value="media"[^>]*selected/);
+    expect(html).not.toMatch(/<option value="difícil"[^>]*selected/);
+  });
+
   it('ofrece borrar la receta', () => {
     expect(renderEditor({ receta: RECETA, entrada: ENTRADA, categorias: CATEGORIAS })).toContain('data-accion="borrar"');
   });

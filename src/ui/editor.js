@@ -19,8 +19,9 @@ export function renderEditor(opts = {}) {
 
   const opcionesCarpeta = categorias.map(c =>
     `<option value="${escapar(c.id)}"${c.id === entrada?.carpeta_id ? ' selected' : ''}>${escapar(c.nombre)}</option>`).join('');
+  const dificultadActual = dificultadValida(receta.dificultad);
   const opcionesDificultad = ['', ...DIFICULTADES].map(d =>
-    `<option value="${escapar(d)}"${d === (receta.dificultad ?? '') ? ' selected' : ''}>${escapar(d || 'sin definir')}</option>`).join('');
+    `<option value="${escapar(d)}"${d === dificultadActual ? ' selected' : ''}>${escapar(d || 'sin definir')}</option>`).join('');
 
   const chipsTags = (receta.tags ?? []).map(t =>
     `<span class="chip${t === 'incompleto' ? ' incompleto' : ''}">${escapar(t)}</span>`).join('');
