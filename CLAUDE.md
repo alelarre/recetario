@@ -58,6 +58,7 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | Funcionar sin conexión | Salió de v1 el 2026-09-02. El índice ya se guarda en IndexedDB; usarlo para dibujar antes de la red quedó inventariado en el §11. |
 | AppSheet, Apps Script, apps nativas, Artifact de Claude | Evaluadas como plataforma y descartadas (§2). |
 | `drive.file` como scope, y el Google Picker | Medido el 2026-09-01: es estrictamente por archivo. Con `Recetario/` elegida en el Picker, la app no veía ninguna de las 16 subcarpetas ni un solo `.md` ajeno — y los `.md` los escriben agentes por fuera. |
+| Detectar y reparar la planilla del índice corrupta o incompleta | Decidido el 2026-09-03. Siempre que el índice esté corrupto o incompleto, la recuperación es borrar el archivo `_indice` en Drive y dejar que la app lo cree de nuevo (arranca en el caso "falta-estructura" de `store.js`, que llama a `crearPlanilla()` y reconstruye solo). Diagnosticar cada tipo de daño posible para repararlo in situ es más trabajo y más riesgo que recrear desde los `.md`, que son la fuente de verdad. |
 
 ## Pendientes, en orden
 
@@ -83,13 +84,13 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 
 ## Lo que quedó sabido y no arreglado
 
-- **Si la creación de la planilla del índice se corta a mitad, la app no se
-  recupera sola.** Pasó de verdad el 2026-09-02: quedó un archivo de Drive a
-  medio crear y la app no arrancaba más (`Unable to parse range: meta!A1:B20`,
-  porque la hoja `meta` nunca llegó a escribirse). La recuperación manual: (1)
-  ubicar ese archivo en Drive y (2) **borrarlo directamente, y reconstruirlo
-  luego** — recargar la app, que al no encontrar la planilla la crea de cero.
-  No hay una forma automática de detectar y limpiar ese estado a medio hacer.
+- **La app no detecta sola una planilla del índice corrupta o incompleta.**
+  Pasó de verdad el 2026-09-02: la creación se cortó a mitad, quedó un archivo
+  a medio crear en Drive y la app no arrancaba más (`Unable to parse range:
+  meta!A1:B20`, porque la hoja `meta` nunca llegó a escribirse) — el mensaje
+  crudo del error, sin ninguna salida ofrecida. La recuperación es manual y es
+  política, no un parche pendiente: ver la fila del índice en "Decisiones
+  cerradas".
 - **El plan `docs/superpowers/plans/2026-09-01-recetario-v1.md` quedó viejo.**
   Describe la funcionalidad de fotos que después se eliminó. Sirve como registro
   de cómo se construyó, no como runbook: si se vuelve a usar, hay que leerlo
