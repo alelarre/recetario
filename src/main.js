@@ -246,6 +246,6 @@ app.addEventListener('change', (e) => {
 
 arrancar().catch(err => pintar(`<p class="contenido">No pude arrancar: ${escapar(err.message)} <button data-accion="reconectar">Reintentar</button></p>`));
 
-if ('serviceWorker' in navigator) {
+if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
 }
