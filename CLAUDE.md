@@ -73,16 +73,12 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
      con dos filas.
    - Publicar dos veces sin tocar `sw.js` y confirmar que la app instalada ve la
      versión nueva.
-2. **Agregar `https://alelarre.github.io` a los orígenes autorizados del
-   cliente OAuth**, en la consola de Google Cloud. Paso manual, no lo puede
-   hacer un agente: sin esto el login falla en la app publicada aunque el
-   sitio ya esté arriba.
-3. **Migrar el contenido existente:** ya se migraron ~60 recetas del recetario
+2. **Migrar el contenido existente:** ya se migraron ~60 recetas del recetario
    original y del PDF de pescados a `Recetario/`, con el skill de
    `skills/recetario/`. Falta el resto: los documentos temáticos (fondues,
    pan, macarons, fermentación) y el Doc de ~7,3 MB. Antes de migrar miles de
    recetas más, mirar el punto de abajo sobre la reconstrucción.
-4. El planificador semanal y la lista de compras: fuera de v1 y sin diseñar.
+3. El planificador semanal y la lista de compras: fuera de v1 y sin diseñar.
    Es lo próximo después del núcleo; necesita sus vistas y la barra de
    navegación inferior.
 
