@@ -57,6 +57,18 @@ describe('renderEditor', () => {
     expect(renderEditor({ receta: RECETA, entrada: ENTRADA, categorias: CATEGORIAS })).toContain('data-accion="borrar"');
   });
 
+  it('sin entrada es el alta: dice "Nueva receta" y no ofrece borrar', () => {
+    const html = renderEditor({ receta: parse(''), entrada: null, categorias: CATEGORIAS });
+    expect(html).toContain('Nueva receta');
+    expect(html).not.toContain('Editar receta');
+    expect(html).not.toContain('data-accion="borrar"');
+  });
+
+  it('con entrada es la edición: dice "Editar receta"', () => {
+    const html = renderEditor({ receta: RECETA, entrada: ENTRADA, categorias: CATEGORIAS });
+    expect(html).toContain('Editar receta');
+  });
+
   it('defendé: sin argumentos no lanza', () => {
     expect(() => renderEditor()).not.toThrow();
   });
@@ -98,5 +110,17 @@ describe('recetaDesdeFormulario', () => {
 
   it('defendé: receta original null no lanza', () => {
     expect(() => recetaDesdeFormulario({}, null)).not.toThrow();
+  });
+
+  it('partiendo de una receta vacía (el alta), sin título en el formulario queda sin título', () => {
+    // Es la validación que usa main.js antes de llamar a store.crear(): si
+    // esto da falsy, no se crea nada y se avisa en vez de escribir "sin-titulo.md".
+    const r = recetaDesdeFormulario({ titulo: '  ' }, parse(''));
+    expect(r.titulo).toBeFalsy();
+  });
+
+  it('partiendo de una receta vacía, con título en el formulario lo toma', () => {
+    const r = recetaDesdeFormulario({ titulo: 'Guiso de lentejas' }, parse(''));
+    expect(r.titulo).toBe('Guiso de lentejas');
   });
 });

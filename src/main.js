@@ -5,6 +5,7 @@ import { crearDrive } from './drive.js';
 import { crearSheets } from './sheets.js';
 import { abrirCache } from './cache.js';
 import { crearStore } from './store.js';
+import { parse } from './recipe.js';
 import { crearRouter, parsearHash } from './ui/router.js';
 import { escapar } from './ui/markdown.js';
 import { renderHome } from './ui/home.js';
@@ -136,28 +137,10 @@ async function render(ruta = parsearHash(location.hash)) {
     return pintar(renderEditor({ entrada, receta, categorias: estadoArranque.categorias, tagsConocidos: store.tagsDe().map(t => t.tag) }));
   }
   if (ruta.vista === 'nueva') {
-    // "Nueva receta" es una acción, no una pantalla propia: reemplaza el
-    // historial en vez de agregar una entrada. Si no, un "atrás" posterior
-    // desde el editor recién abierto vuelve a caer en "#/nueva" y repite el
-    // prompt del título en vez de saltarlo.
-    const irSinHistorial = (hash) => {
-      history.replaceState(null, '', location.pathname + location.search + hash);
-      return render(parsearHash(hash));
-    };
-    const titulo = prompt('Título de la receta');
-    if (!titulo) return irSinHistorial('#/');
-    try {
-      const { id } = await store.crear({ titulo });
-      programarFlush();
-      // §7.2: crear es el mismo editor con el archivo vacío, así que abre
-      // directo el formulario en vez del detalle (que para algo recién
-      // creado está casi vacío y obliga a tocar "Editar" a mano).
-      return irSinHistorial(`#/r/${id}/editar`);
-    } catch (err) {
-      console.error(err);
-      alert(`No se pudo crear la receta en Drive: ${err.message}. Probá de nuevo.`);
-      return irSinHistorial('#/');
-    }
+    // El mismo formulario que editar, sin entrada (todavía no hay archivo
+    // en Drive) y con una receta vacía en vez de una leída. Guardar es lo
+    // que de verdad la crea (§11: "crear una receta mínima").
+    return pintar(renderEditor({ entrada: null, receta: parse(''), categorias: estadoArranque.categorias, tagsConocidos: store.tagsDe().map(t => t.tag) }));
   }
 }
 
@@ -220,9 +203,23 @@ app.addEventListener('click', async (e) => {
   if (accion === 'foto-siguiente') { indiceVisor = Math.min((fotosVisor?.length ?? 1) - 1, indiceVisor + 1); return pintarVisor(); }
 
   if (accion === 'guardar') {
+    const form = document.querySelector('[data-formulario]');
+    const datos = Object.fromEntries(new FormData(form));
+
+    if (vistaActual.vista === 'nueva') {
+      const nueva = recetaDesdeFormulario(datos, parse(''));
+      if (!nueva.titulo) return alert('Ponele un título a la receta antes de guardar.');
+      try {
+        await store.crear(nueva, { carpetaId: datos.carpeta || undefined });
+        programarFlush();
+        return history.back();
+      } catch (err) {
+        console.error(err);
+        return alert(`No se pudo crear la receta en Drive: ${err.message}. Probá de nuevo.`);
+      }
+    }
+
     try {
-      const form = document.querySelector('[data-formulario]');
-      const datos = Object.fromEntries(new FormData(form));
       const { receta } = await store.receta(vistaActual.params.id);
       const nueva = recetaDesdeFormulario(datos, receta);
       const r = await store.guardar(vistaActual.params.id, nueva, { carpetaDestino: datos.carpeta });

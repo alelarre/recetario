@@ -30,10 +30,14 @@ export function renderEditor(opts = {}) {
     <label class="campo"><span>## ${escapar(o.encabezado)}</span>
       <textarea name="otra-${i}">${escapar(o.cuerpo)}</textarea></label>`).join('');
 
+  // Sin entrada todavía no hay archivo en Drive: es el formulario de alta,
+  // no el de edición. No tiene sentido ofrecer "Borrar" algo que no existe.
+  const esNueva = !entrada;
+
   return `
     <header class="encabezado">
       <button data-accion="cancelar">Cancelar</button>
-      <h1>Editar receta</h1>
+      <h1>${esNueva ? 'Nueva receta' : 'Editar receta'}</h1>
       <button data-accion="guardar">Guardar</button>
     </header>
     <form class="contenido" data-formulario>
@@ -57,7 +61,7 @@ export function renderEditor(opts = {}) {
       ${campoArea('notas', 'Notas', receta.notas)}
       ${otras ? `<div class="otras"><span>Otras secciones · ${receta.otras.length}</span>${otras}
         <p class="meta">Secciones que la app no reconoce. Se guardan igual, al final del archivo.</p></div>` : ''}
-      <button data-accion="borrar" type="button">Borrar receta</button>
+      ${esNueva ? '' : `<button data-accion="borrar" type="button">Borrar receta</button>`}
     </form>`;
 }
 

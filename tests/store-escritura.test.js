@@ -76,12 +76,13 @@ describe('guardar', () => {
 });
 
 describe('crear', () => {
-  it('escribe un .md con titulo, el tag incompleto y nombre derivado del título', async () => {
-    const r = await store.crear({ titulo: 'Ñoquis del 29', carpetaId: 'c1' });
+  it('escribe un .md con lo que le pasen, y nombre derivado del título', async () => {
+    // No fuerza ningún tag: eso ahora lo decide quien llama (el formulario).
+    const r = await store.crear({ titulo: 'Ñoquis del 29', tags: ['rico'] }, { carpetaId: 'c1' });
     expect(r.nombre_archivo).toBe('noquis-del-29.md');
     const contenido = drive._store.get(r.id).contenido;
     expect(contenido).toContain('titulo: Ñoquis del 29');
-    expect(contenido).toContain('incompleto');
+    expect(contenido).toContain('rico');
   });
 
   it('sin carpeta cae en la raíz, que es la bandeja de entrada', async () => {
@@ -91,7 +92,7 @@ describe('crear', () => {
   });
 
   it('no pisa un nombre existente', async () => {
-    const r = await store.crear({ titulo: 'Milanesas', carpetaId: 'c1' });
+    const r = await store.crear({ titulo: 'Milanesas' }, { carpetaId: 'c1' });
     expect(r.nombre_archivo).toBe('milanesas-2.md');
   });
 });

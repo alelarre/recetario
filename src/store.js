@@ -251,11 +251,10 @@ export function crearStore({ drive, sheets, cache }) {
     return { ok: true };
   }
 
-  async function crear({ titulo, carpetaId }) {
+  async function crear(receta, { carpetaId } = {}) {
     const padre = carpetaId ?? ctx.raizId;
     const hermanos = (await drive.listarHijos(padre)).map(a => a.name);
-    const nombre = slugArchivo(titulo, hermanos);
-    const receta = { ...parse(''), titulo, tags: ['incompleto'] };
+    const nombre = slugArchivo(receta.titulo, hermanos);
     const texto = serialize(receta);
     const archivo = await drive.crear({ nombre, contenido: texto, padre });
 
