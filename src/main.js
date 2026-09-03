@@ -44,7 +44,8 @@ function cerrarVisor() {
 }
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && fotosVisor) cerrarVisor();
+  if (e.key === 'Escape' && fotosVisor) return cerrarVisor();
+  if (e.key === 'Escape') { const m = document.querySelector('.menu'); if (m) m.hidden = true; }
 });
 
 function programarFlush() {
@@ -152,6 +153,13 @@ const router = crearRouter(render);
 
 app.addEventListener('click', async (e) => {
   const boton = e.target.closest('[data-accion], [data-pestana], .check, [data-tag], img');
+
+  // El menú del home se cierra al tocar cualquier otra cosa, como cualquier
+  // desplegable. Sin esto solo se cerraba volviendo a tocar el ⋯.
+  const menu = document.querySelector('.menu');
+  if (menu && !menu.hidden && !e.target.closest('.menu') && boton?.dataset.accion !== 'menu') {
+    menu.hidden = true;
+  }
   if (!boton) return;
 
   if (boton.classList.contains('check')) {
