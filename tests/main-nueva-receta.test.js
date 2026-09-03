@@ -42,19 +42,35 @@ describe('main.js: crear una receta', () => {
     delete global.document;
     delete global.window;
     delete global.location;
+    delete global.history;
     delete global.prompt;
   });
 
-  it('después de crear, navega directo al editor y no al detalle', async () => {
+  function montar() {
     const listeners = {};
     global.document = {
       querySelector: () => ({ innerHTML: '', insertAdjacentHTML: () => {}, addEventListener: () => {} }),
       addEventListener: () => {}
     };
     global.window = { google: {}, addEventListener: (ev, fn) => { listeners[ev] = fn; } };
-    global.location = { hash: '' };
+    global.location = { hash: '', pathname: '/recetario/', search: '' };
+    // Simula lo que hace un navegador real con replaceState: no agrega una
+    // entrada al historial, solo actualiza la URL actual.
+    global.history = {
+      back: () => {},
+      replaceState: vi.fn((state, title, url) => {
+        const i = url.indexOf('#');
+        global.location.hash = i === -1 ? '' : url.slice(i);
+      })
+    };
+    return listeners;
+  }
+
+  it('después de crear, navega directo al editor y no al detalle', async () => {
+    const listeners = montar();
     global.prompt = () => 'Receta nueva';
 
+    vi.resetModules();  // cada test necesita que main.js vuelva a evaluarse contra sus propios globals
     await import('../src/main.js');
     await esperarMicrotareas();  // deja terminar el arranque fire-and-forget
 
@@ -63,5 +79,24 @@ describe('main.js: crear una receta', () => {
     await esperarMicrotareas();
 
     expect(global.location.hash).toBe('#/r/nuevo-id/editar');
+  });
+
+  it('cancelar el título no deja "#/nueva" como una entrada propia del historial', async () => {
+    // Si quedara como entrada propia (con location.hash = ...), un "atrás"
+    // posterior desde donde sea que termine el usuario cae de nuevo en
+    // "#/nueva" y repite el prompt del título.
+    const listeners = montar();
+    global.prompt = () => null;  // el usuario cancela
+
+    vi.resetModules();  // cada test necesita que main.js vuelva a evaluarse contra sus propios globals
+    await import('../src/main.js');
+    await esperarMicrotareas();
+
+    global.location.hash = '#/nueva';
+    listeners.hashchange();
+    await esperarMicrotareas();
+
+    expect(global.location.hash).toBe('#/');
+    expect(global.history.replaceState).toHaveBeenCalledTimes(1);
   });
 });

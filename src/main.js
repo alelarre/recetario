@@ -136,19 +136,27 @@ async function render(ruta = parsearHash(location.hash)) {
     return pintar(renderEditor({ entrada, receta, categorias: estadoArranque.categorias, tagsConocidos: store.tagsDe().map(t => t.tag) }));
   }
   if (ruta.vista === 'nueva') {
+    // "Nueva receta" es una acción, no una pantalla propia: reemplaza el
+    // historial en vez de agregar una entrada. Si no, un "atrás" posterior
+    // desde el editor recién abierto vuelve a caer en "#/nueva" y repite el
+    // prompt del título en vez de saltarlo.
+    const irSinHistorial = (hash) => {
+      history.replaceState(null, '', location.pathname + location.search + hash);
+      return render(parsearHash(hash));
+    };
     const titulo = prompt('Título de la receta');
-    if (!titulo) return location.hash = '#/';
+    if (!titulo) return irSinHistorial('#/');
     try {
       const { id } = await store.crear({ titulo });
       programarFlush();
       // §7.2: crear es el mismo editor con el archivo vacío, así que abre
       // directo el formulario en vez del detalle (que para algo recién
       // creado está casi vacío y obliga a tocar "Editar" a mano).
-      return location.hash = `#/r/${id}/editar`;
+      return irSinHistorial(`#/r/${id}/editar`);
     } catch (err) {
       console.error(err);
       alert(`No se pudo crear la receta en Drive: ${err.message}. Probá de nuevo.`);
-      return location.hash = '#/';
+      return irSinHistorial('#/');
     }
   }
 }
