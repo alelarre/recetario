@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { crearStore } from '../src/store.js';
 import { crearCacheMemoria } from '../src/cache.js';
 import { driveFalso, sheetsFalso } from './dobles.js';
@@ -76,6 +76,17 @@ describe('reconstruir', () => {
     await store.reconstruir();
     const filas = await sheets.leer('i1', 'recetas!A1:L100');
     expect(filas.length).toBe(4);  // encabezado + tres recetas
+  });
+
+  it('borra las filas viejas en una sola llamada, no una por fila', async () => {
+    // De a una, la cuota de escrituras por minuto de Sheets se agota apenas
+    // hay unas pocas decenas de recetas: pasó en la práctica con 60 reales.
+    await store.reconstruir();  // dos filas más el encabezado, para tener algo que borrar
+    const espiaBorrarFilas = vi.spyOn(sheets, 'borrarFilas');
+    const espiaBorrarFila = vi.spyOn(sheets, 'borrarFila');
+    await store.reconstruir();
+    expect(espiaBorrarFilas).toHaveBeenCalledTimes(1);
+    expect(espiaBorrarFila).not.toHaveBeenCalled();
   });
 
   it('la fecha queda disponible para el home a través de ultimaReconstruccion()', async () => {

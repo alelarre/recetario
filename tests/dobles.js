@@ -116,6 +116,13 @@ export function sheetsFalso() {
       planillas.get(id).recetas.splice(fila - 1, 1);
     },
 
+    async borrarFilas(id, _hojaId, filas) {
+      const recetas = planillas.get(id).recetas;
+      // Mismo contrato que la API real: de mayor a menor, para que cada
+      // índice siga siendo válido según se van sacando filas.
+      for (const fila of filas) recetas.splice(fila - 1, 1);
+    },
+
     async hojas(id) {
       asegurar(id);  // Asegurar que la planilla existe en metadatos
       return hojasMetadatos.get(id) ?? [];

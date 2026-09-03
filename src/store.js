@@ -323,8 +323,13 @@ export function crearStore({ drive, sheets, cache }) {
     const hojas = await sheets.hojas(ctx.indiceId);
     const hojaId = hojas.find(h => h.title === HOJA_RECETAS)?.sheetId ?? 0;
     const previas = await sheets.leer(ctx.indiceId, `${HOJA_RECETAS}!A1:${ULTIMA_COLUMNA}100000`);
-    for (let fila = previas.length; fila >= 2; fila--) {
-      await sheets.borrarFila(ctx.indiceId, hojaId, fila);
+    if (previas.length >= 2) {
+      // Todas juntas en una sola llamada: de a una, la cuota de escritura de
+      // Sheets (60/min) se agota apenas la cantidad de recetas pasa un
+      // puñado — pasó en la práctica con 60 recetas reales.
+      const filasABorrar = [];
+      for (let fila = previas.length; fila >= 2; fila--) filasABorrar.push(fila);
+      await sheets.borrarFilas(ctx.indiceId, hojaId, filasABorrar);
     }
     for (let i = 0; i < nuevas.length; i += 500) {
       await sheets.append(ctx.indiceId, HOJA_RECETAS, nuevas.slice(i, i + 500));

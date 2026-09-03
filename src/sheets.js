@@ -61,6 +61,22 @@ export function crearSheets(obtenerToken) {
       })
     }),
 
+    /**
+     * Borra varias filas en una sola llamada, una escritura de cuota en vez
+     * de una por fila. `filas` tiene que venir de mayor a menor: un
+     * `deleteDimension` corre las filas de abajo hacia arriba, así que borrar
+     * primero una fila de más arriba invalidaría el índice de las que
+     * todavía faltan (§4.3, mismo corrimiento que `borrarFila`).
+     */
+    borrarFilas: (id, hojaId, filas) => pedir(`/${id}:batchUpdate`, {
+      method: 'POST',
+      body: JSON.stringify({
+        requests: filas.map(fila => (
+          { deleteDimension: { range: { sheetId: hojaId, dimension: 'ROWS', startIndex: fila - 1, endIndex: fila } } }
+        ))
+      })
+    }),
+
     hojas: async (id) => (await pedir(`/${id}?fields=sheets(properties(sheetId,title))`)).sheets
       .map(s => s.properties),
 
