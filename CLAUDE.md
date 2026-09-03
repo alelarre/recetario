@@ -3,9 +3,10 @@
 App personal de recetas. Los datos viven en Google Drive como archivos `.md` y
 sobreviven a la app. Un solo usuario.
 
-**Estado: v1 implementada y revisada, sin publicar.** El código vive en la rama
-`v1`; `main` todavía tiene solo el diseño. 298 tests, `npm run build` genera
-`dist/`. Falta la verificación manual contra el Drive real y publicar.
+**Estado: v1 mergeada a `main` y publicada en GitHub Pages.** 305 tests,
+`npm run build` genera `dist/`. Falta la verificación manual contra el Drive
+real (ver más abajo) y agregar `https://alelarre.github.io` a los orígenes
+autorizados del cliente OAuth.
 
 - Fuente de verdad: `docs/superpowers/specs/2026-08-31-recetario-design.md`
 - Pasos manuales de instalación: `SETUP.md`
@@ -72,15 +73,15 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
      con dos filas.
    - Publicar dos veces sin tocar `sw.js` y confirmar que la app instalada ve la
      versión nueva.
-2. **Mergear `v1` a `main` y publicar.** El workflow ya está (`.github/workflows/pages.yml`)
-   y Pages está configurado en modo GitHub Actions; el entorno solo publica desde
-   `main`. Después hay que agregar `https://alelarre.github.io` a los orígenes
-   autorizados del cliente OAuth.
-3. **Migrar el contenido existente:** en la carpeta `recetas` de Drive hay un Doc
-   de ~7,3 MB y varios documentos temáticos (fondues, pan, macarons,
-   fermentación, un PDF de pescados). Es trabajo de agente, con el skill de
-   `skills/recetario/`. Antes de migrar miles de recetas, mirar el punto de
-   abajo sobre la reconstrucción.
+2. **Agregar `https://alelarre.github.io` a los orígenes autorizados del
+   cliente OAuth**, en la consola de Google Cloud. Paso manual, no lo puede
+   hacer un agente: sin esto el login falla en la app publicada aunque el
+   sitio ya esté arriba.
+3. **Migrar el contenido existente:** ya se migraron ~60 recetas del recetario
+   original y del PDF de pescados a `Recetario/`, con el skill de
+   `skills/recetario/`. Falta el resto: los documentos temáticos (fondues,
+   pan, macarons, fermentación) y el Doc de ~7,3 MB. Antes de migrar miles de
+   recetas más, mirar el punto de abajo sobre la reconstrucción.
 4. El planificador semanal y la lista de compras: fuera de v1 y sin diseñar.
    Es lo próximo después del núcleo; necesita sus vistas y la barra de
    navegación inferior.
