@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parse, parseIngrediente, ingredientesIndexables, primeraImagen, slugArchivo } from '../src/recipe.js';
+import { parse, parseIngrediente, ingredientesIndexables, slugArchivo } from '../src/recipe.js';
 
 describe('parseIngrediente', () => {
   it('separa cantidad, unidad e item', () => {
@@ -97,67 +97,6 @@ describe('ingredientesIndexables', () => {
     it('tolera ingredientes con solo líneas vacías', () => {
       const r = { titulo: 'Test', ingredientes: '\n\n' };
       expect(ingredientesIndexables(r)).toEqual([]);
-    });
-  });
-});
-
-describe('primeraImagen', () => {
-  it('toma la primera del documento en orden de serialización', () => {
-    const r = parse(`---\ntitulo: X\n---\n\n![](https://a/1)\n\n## Preparación\n![](https://a/2)\n`);
-    expect(primeraImagen(r)).toBe('https://a/1');
-  });
-
-  it('la encuentra aunque esté en una sección y no en la descripción', () => {
-    const r = parse(`---\ntitulo: X\n---\n\n## Preparación\n![](https://a/2)\n`);
-    expect(primeraImagen(r)).toBe('https://a/2');
-  });
-
-  it('devuelve null si no hay ninguna', () => {
-    expect(primeraImagen(parse(`---\ntitulo: X\n---\n`))).toBeNull();
-  });
-
-  // Tests de defensa
-  describe('guards defensivos', () => {
-    it('tolera null', () => {
-      expect(primeraImagen(null)).toBeNull();
-    });
-
-    it('tolera undefined', () => {
-      expect(primeraImagen(undefined)).toBeNull();
-    });
-
-    it('tolera receta que es un número', () => {
-      expect(primeraImagen(42)).toBeNull();
-    });
-
-    it('tolera receta que es un objeto vacío', () => {
-      expect(primeraImagen({})).toBeNull();
-    });
-
-    it('tolera una receta sin campos de cuerpo', () => {
-      const r = { titulo: 'Test' };
-      expect(primeraImagen(r)).toBeNull();
-    });
-
-    it('tolera bloques null o undefined', () => {
-      const r = { titulo: 'Test', descripcion: null, ingredientes: undefined, preparacion: null };
-      expect(primeraImagen(r)).toBeNull();
-    });
-
-    it('tolera otras que es un string sin lanzar', () => {
-      expect(primeraImagen({ otras: 'x' })).toBeNull();
-    });
-
-    it('tolera otras que es un número sin lanzar', () => {
-      expect(primeraImagen({ otras: 42 })).toBeNull();
-    });
-
-    it('tolera otras que es un array con null adentro', () => {
-      expect(primeraImagen({ otras: [null] })).toBeNull();
-    });
-
-    it('tolera otras que es un array con undefined adentro', () => {
-      expect(primeraImagen({ otras: [undefined] })).toBeNull();
     });
   });
 });

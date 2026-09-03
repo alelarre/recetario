@@ -50,7 +50,6 @@ export function driveFalso(archivos = []) {
       return a;
     },
     async borrar(id) { store.delete(id); },
-    async miniaturas() { return []; },
     async tokenInicialDeCambios() { return '100'; },
     async cambios(token) { return { changes: [], newStartPageToken: String(Number(token) + 1) }; }
   };
@@ -60,19 +59,37 @@ export function driveFalso(archivos = []) {
 /** Sheets falso: una planilla es un objeto {hojas: {nombre: filas[][]}}. */
 export function sheetsFalso() {
   const planillas = new Map();
+  // Mapeo de id → lista de hojas con sus metadatos {sheetId, title}
+  const hojasMetadatos = new Map();
+
   // La app crea la planilla con drive.crear y después le escribe: el doble tiene
-  // que aceptar una escritura sobre un id que todavía no vio.
+  // que aceptar una escritura sobre un id que todavía no vio. Cuando se crea una
+  // planilla nueva, tiene una hoja por defecto llamada 'Sheet1', no 'recetas'.
   const asegurar = (id) => {
-    if (!planillas.has(id)) planillas.set(id, { recetas: [], meta: [] });
+    if (!planillas.has(id)) {
+      planillas.set(id, { 'Sheet1': [] });
+      hojasMetadatos.set(id, [{ sheetId: 0, title: 'Sheet1' }]);
+    }
     return planillas.get(id);
   };
+
   return {
     _planillas: planillas,
-    crearPlanilla(id) { planillas.set(id, { recetas: [], meta: [] }); },
+    _hojasMetadatos: hojasMetadatos,
+
+    crearPlanilla(id) {
+      planillas.set(id, { recetas: [], meta: [] });
+      hojasMetadatos.set(id, [
+        { sheetId: 0, title: 'recetas' },
+        { sheetId: 1, title: 'meta' }
+      ]);
+    },
+
     async leer(id, rango) {
       const hoja = rango.split('!')[0];
       return (planillas.get(id)?.[hoja] ?? []).map(f => [...f]);
     },
+
     async escribir(id, rango, valores) {
       const [hoja, celdas] = rango.split('!');
       const fila = Number(celdas.match(/\d+/)[0]);
@@ -81,10 +98,43 @@ export function sheetsFalso() {
       while (p[hoja].length < fila) p[hoja].push([]);
       p[hoja][fila - 1] = valores[0];
     },
-    async append(id, hoja, filas) { const p = asegurar(id); p[hoja] = p[hoja] ?? []; p[hoja].push(...filas); },
-    async agregarHoja(id, titulo) { asegurar(id)[titulo] = []; },
-    async borrarFila(id, _hojaId, fila) { planillas.get(id).recetas.splice(fila - 1, 1); },
-    async hojas() { return [{ sheetId: 0, title: 'recetas' }, { sheetId: 1, title: 'meta' }]; }
+
+    async append(id, hoja, filas) {
+      const p = asegurar(id);
+      p[hoja] = p[hoja] ?? [];
+      p[hoja].push(...filas);
+    },
+
+    async agregarHoja(id, titulo) {
+      const p = asegurar(id);
+      p[titulo] = [];
+      const hojas = hojasMetadatos.get(id);
+      hojas.push({ sheetId: hojas.length, title: titulo });
+    },
+
+    async borrarFila(id, _hojaId, fila) {
+      planillas.get(id).recetas.splice(fila - 1, 1);
+    },
+
+    async hojas(id) {
+      asegurar(id);  // Asegurar que la planilla existe en metadatos
+      return hojasMetadatos.get(id) ?? [];
+    },
+
+    async renombrarHoja(id, sheetId, nuevoTitulo) {
+      const p = asegurar(id);
+      const hojas = hojasMetadatos.get(id);
+      const hoja = hojas.find(h => h.sheetId === sheetId);
+      if (hoja) {
+        const nombreAnterior = hoja.title;
+        hoja.title = nuevoTitulo;
+        // Renombrar también en el objeto de datos
+        if (p[nombreAnterior]) {
+          p[nuevoTitulo] = p[nombreAnterior];
+          delete p[nombreAnterior];
+        }
+      }
+    }
   };
 }
 

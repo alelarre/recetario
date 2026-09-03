@@ -20,7 +20,7 @@ beforeEach(async () => {
   ]);
   sheets = sheetsFalso();
   sheets.crearPlanilla('i1');
-  await sheets.escribir('i1', 'recetas!A1:M1', [COLUMNAS]);
+  await sheets.escribir('i1', 'recetas!A1:L1', [COLUMNAS]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
   cache = crearCacheMemoria();
   store = crearStore({ drive, sheets, cache });
@@ -29,7 +29,7 @@ beforeEach(async () => {
 
 describe('cargarIndice', () => {
   it('arma el mapa de filas 1-based salteando el encabezado', async () => {
-    await sheets.append('i1', 'recetas', [['r1', 'milanesas.md', 'Milanesas', 'Carnes', 'c1', '', '', '', '', 'horno', 'muzzarella', '', '1000']]);
+    await sheets.append('i1', 'recetas', [['r1', 'milanesas.md', 'Milanesas', 'Carnes', 'c1', '', '', '', '', 'horno', 'muzzarella', '1000']]);
     await store.cargarIndice();
     expect((await cache.leerMapaFilas()).get('r1')).toBe(2);
     expect(store.entradas()).toHaveLength(1);
@@ -49,7 +49,7 @@ describe('sync', () => {
   });
 
   it('una movida parchea la fila sin descargar el .md', async () => {
-    await sheets.append('i1', 'recetas', [['r1', 'milanesas.md', 'Milanesas', 'Carnes', 'c1', '', '', '', '', '', '', '', String(Date.parse('2026-01-01T00:00:00.000Z'))]]);
+    await sheets.append('i1', 'recetas', [['r1', 'milanesas.md', 'Milanesas', 'Carnes', 'c1', '', '', '', '', '', '', String(Date.parse('2026-01-01T00:00:00.000Z'))]]);
     await store.cargarIndice();
     drive.llamadas.length = 0;
     drive.cambios = async () => ({
@@ -64,8 +64,8 @@ describe('sync', () => {
 
   it('un borrado saca la fila y corre las siguientes en el mapa', async () => {
     await sheets.append('i1', 'recetas', [
-      ['r1', 'a.md', 'A', 'Carnes', 'c1', '', '', '', '', '', '', '', '1'],
-      ['r2', 'b.md', 'B', 'Carnes', 'c1', '', '', '', '', '', '', '', '1']
+      ['r1', 'a.md', 'A', 'Carnes', 'c1', '', '', '', '', '', '', '1'],
+      ['r2', 'b.md', 'B', 'Carnes', 'c1', '', '', '', '', '', '', '1']
     ]);
     await store.cargarIndice();
     drive.cambios = async () => ({ changes: [{ fileId: 'r1', removed: true }], newStartPageToken: '101' });
@@ -97,9 +97,9 @@ describe('sync', () => {
 
   it('dos borrados en el mismo sync corren las filas siguientes sin mezclar', async () => {
     await sheets.append('i1', 'recetas', [
-      ['r1', 'a.md', 'A', 'Carnes', 'c1', '', '', '', '', '', '', '', '1'],
-      ['r2', 'b.md', 'B', 'Carnes', 'c1', '', '', '', '', '', '', '', '2'],
-      ['r3', 'c.md', 'C', 'Carnes', 'c1', '', '', '', '', '', '', '', '3']
+      ['r1', 'a.md', 'A', 'Carnes', 'c1', '', '', '', '', '', '', '1'],
+      ['r2', 'b.md', 'B', 'Carnes', 'c1', '', '', '', '', '', '', '2'],
+      ['r3', 'c.md', 'C', 'Carnes', 'c1', '', '', '', '', '', '', '3']
     ]);
     await store.cargarIndice();
     drive.cambios = async () => ({

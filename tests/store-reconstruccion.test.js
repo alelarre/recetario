@@ -14,17 +14,17 @@ beforeEach(async () => {
   drive = driveFalso([
     { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
-    { id: 'fotos', name: '_fotos', mimeType: CARPETA, parents: ['raiz'] },
+    { id: 'privada', name: '_privada', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },
     { id: 'r1', name: 'a.md', parents: ['c1'], contenido: md('Asado') },
     { id: 'r2', name: 'b.md', parents: ['c1'], contenido: md('Bife') },
     { id: 'r3', name: 'suelta.md', parents: ['raiz'], contenido: md('Suelta') },
     { id: 'x1', name: 'sin-titulo.md', parents: ['c1'], contenido: '---\nrinde: 2\n---\n' },
-    { id: 'f1', name: 'foto.jpg', mimeType: 'image/jpeg', parents: ['fotos'] }
+    { id: 'p1', name: 'nota.txt', mimeType: 'text/plain', parents: ['privada'] }
   ]);
   sheets = sheetsFalso();
   sheets.crearPlanilla('i1');
-  await sheets.escribir('i1', 'recetas!A1:M1', [COLUMNAS]);
+  await sheets.escribir('i1', 'recetas!A1:L1', [COLUMNAS]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
   cache = crearCacheMemoria();
   store = crearStore({ drive, sheets, cache });
@@ -32,7 +32,7 @@ beforeEach(async () => {
 });
 
 describe('reconstruir', () => {
-  it('indexa la raíz y las categorías, y saltea _fotos', async () => {
+  it('indexa la raíz y las categorías, y saltea las carpetas que empiezan con _', async () => {
     const r = await store.reconstruir();
     expect(r.indexadas).toBe(3);
     const titulos = store.entradas().map(e => e.titulo).sort();
@@ -74,7 +74,41 @@ describe('reconstruir', () => {
   it('reemplaza la planilla entera en vez de agregar filas duplicadas', async () => {
     await store.reconstruir();
     await store.reconstruir();
-    const filas = await sheets.leer('i1', 'recetas!A1:M100');
+    const filas = await sheets.leer('i1', 'recetas!A1:L100');
     expect(filas.length).toBe(4);  // encabezado + tres recetas
+  });
+
+  it('la fecha queda disponible para el home a través de ultimaReconstruccion()', async () => {
+    expect(store.ultimaReconstruccion()).toBe('');  // todavía no reconstruyó
+    await store.reconstruir();
+    const fecha = store.ultimaReconstruccion();
+    expect(fecha).toBeTruthy();
+    expect(new Date(fecha).toString()).not.toBe('Invalid Date');
+  });
+
+  it('después de reconstruir, el valor en memoria es el nuevo y no el viejo', async () => {
+    // Verificar que comienza vacío
+    expect(store.ultimaReconstruccion()).toBe('');
+
+    // Reconstruir una vez
+    const antes = Date.now();
+    await store.reconstruir();
+    const despues = Date.now();
+    const fecha1 = store.ultimaReconstruccion();
+
+    // Verificar que la fecha está en el rango esperado
+    expect(fecha1).toBeTruthy();
+    const timestamp1 = Date.parse(fecha1);
+    expect(timestamp1).toBeGreaterThanOrEqual(antes);
+    expect(timestamp1).toBeLessThanOrEqual(despues);
+
+    // Esperar un poco y reconstruir de nuevo
+    await new Promise(resolve => setTimeout(resolve, 10));
+    await store.reconstruir();
+    const fecha2 = store.ultimaReconstruccion();
+
+    // Verificar que la segunda fecha es más reciente que la primera
+    expect(fecha2).toBeTruthy();
+    expect(Date.parse(fecha2)).toBeGreaterThan(Date.parse(fecha1));
   });
 });

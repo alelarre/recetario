@@ -6,7 +6,6 @@ export const SCOPE = 'https://www.googleapis.com/auth/drive';
 
 export const NOMBRE_RAIZ = 'Recetario';
 export const NOMBRE_INDICE = '_indice';
-export const NOMBRE_FOTOS = '_fotos';
 
 // Subir esta versión fuerza una reconstrucción del índice en el próximo arranque.
 export const SCHEMA_VERSION = 1;

@@ -17,15 +17,14 @@ beforeEach(async () => {
     { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'c2', name: 'Postres', mimeType: CARPETA, parents: ['raiz'] },
-    { id: 'fotos', name: '_fotos', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },
     { id: 'r1', name: 'milanesas.md', parents: ['c1'], contenido: MD, modifiedTime: '2026-01-01T00:00:00.000Z' }
   ]);
   sheets = sheetsFalso();
   sheets.crearPlanilla('i1');
-  await sheets.escribir('i1', 'recetas!A1:M1', [COLUMNAS]);
+  await sheets.escribir('i1', 'recetas!A1:L1', [COLUMNAS]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
-  await sheets.append('i1', 'recetas', [['r1', 'milanesas.md', 'Milanesas', 'Carnes', 'c1', '', '', '', '', '', '', '', String(Date.parse('2026-01-01T00:00:00.000Z'))]]);
+  await sheets.append('i1', 'recetas', [['r1', 'milanesas.md', 'Milanesas', 'Carnes', 'c1', '', '', '', '', '', '', String(Date.parse('2026-01-01T00:00:00.000Z'))]]);
   cache = crearCacheMemoria();
   store = crearStore({ drive, sheets, cache });
   await store.arrancar();
@@ -40,7 +39,7 @@ describe('guardar', () => {
     expect(r.ok).toBe(true);
     expect(drive._store.get('r1').contenido).toContain('titulo: Milanesas napolitanas');
     expect(await cache.leerCola()).toHaveLength(1);
-    const filas = await sheets.leer('i1', 'recetas!A1:M10');
+    const filas = await sheets.leer('i1', 'recetas!A1:L10');
     expect(filas[1][2]).toBe('Milanesas');  // la planilla todavía no se tocó
   });
 
@@ -49,7 +48,7 @@ describe('guardar', () => {
     receta.titulo = 'Milanesas napolitanas';
     await store.guardar('r1', receta, {});
     await store.flush();
-    const filas = await sheets.leer('i1', 'recetas!A1:M10');
+    const filas = await sheets.leer('i1', 'recetas!A1:L10');
     expect(filas[1][2]).toBe('Milanesas napolitanas');
     expect(await cache.leerCola()).toHaveLength(0);
   });
@@ -99,30 +98,15 @@ describe('crear', () => {
 
 describe('borrar', () => {
   it('borra el archivo y saca la fila del índice', async () => {
-    await store.borrar('r1', { borrarFotos: false });
+    await store.borrar('r1');
     expect(drive._store.has('r1')).toBe(false);
     expect(store.entradas()).toHaveLength(0);
-  });
-
-  it('con borrarFotos elimina las fotos de Drive que la receta referenciaba', async () => {
-    drive._store.set('f1', { id: 'f1', name: 'foto.jpg', parents: ['fotos'] });
-    drive._store.get('r1').contenido = `---\ntitulo: X\n---\n\n![](https://drive.google.com/file/d/f1/view)\n`;
-    const r = await store.borrar('r1', { borrarFotos: true });
-    expect(r.fotosBorradas).toEqual(['f1']);
-    expect(drive._store.has('f1')).toBe(false);
-  });
-
-  it('sin borrarFotos las deja intactas', async () => {
-    drive._store.set('f1', { id: 'f1', name: 'foto.jpg', parents: ['fotos'] });
-    drive._store.get('r1').contenido = `---\ntitulo: X\n---\n\n![](https://drive.google.com/file/d/f1/view)\n`;
-    await store.borrar('r1', { borrarFotos: false });
-    expect(drive._store.has('f1')).toBe(true);
   });
 
   it('crear y borrar sin flush: no deja entrada huérfana', async () => {
     const r = await store.crear({ titulo: 'Nueva' });
     expect(store.entradas()).toHaveLength(2);  // r1 + nueva
-    await store.borrar(r.id, { borrarFotos: false });
+    await store.borrar(r.id);
     expect(drive._store.has(r.id)).toBe(false);
     expect(store.entradas()).toHaveLength(1);  // solo r1
     const cola = await cache.leerCola();
@@ -131,18 +115,29 @@ describe('borrar', () => {
 
   it('flush después de crear y borrar sin flush: no crea fila fantasma', async () => {
     const r = await store.crear({ titulo: 'Fantasma' });
-    await store.borrar(r.id, { borrarFotos: false });
+    await store.borrar(r.id);
     await store.flush();
-    const filas = await sheets.leer('i1', 'recetas!A1:M10');
+    const filas = await sheets.leer('i1', 'recetas!A1:L10');
     const titulos = filas.slice(1).map(f => f[2]);
     expect(titulos).toEqual(['Milanesas']);  // solo la que existía
   });
 
   it('borrar una receta con fila sigue funcionando', async () => {
-    await store.borrar('r1', { borrarFotos: false });
+    await store.borrar('r1');
     expect(drive._store.has('r1')).toBe(false);
     expect(store.entradas()).toHaveLength(0);
-    const filas = await sheets.leer('i1', 'recetas!A1:M10');
+    const filas = await sheets.leer('i1', 'recetas!A1:L10');
     expect(filas).toHaveLength(1);  // solo el encabezado
+  });
+
+  it('borrar persiste el mapa de filas en la cache, no solo en memoria', async () => {
+    const otra = await store.crear({ titulo: 'Otra' });
+    await store.flush();  // le da a "otra" una fila real: r1=2, otra=3
+
+    await store.borrar('r1');
+
+    const mapa = await cache.leerMapaFilas();
+    expect(mapa.has('r1')).toBe(false);
+    expect(mapa.get(otra.id)).toBe(2);  // corrida un lugar tras borrar la fila 2
   });
 });

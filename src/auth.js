@@ -10,7 +10,9 @@ export function crearAuth() {
   const clienteGis = () => {
     if (cliente) return cliente;
     if (!window.google?.accounts?.oauth2) throw new ErrorDeAuth('Google Identity no cargó');
-    cliente = window.google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPE, callback: () => {} });
+    cliente = window.google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID, scope: SCOPE, callback: () => {}, error_callback: () => {}
+    });
     return cliente;
   };
 
@@ -23,6 +25,10 @@ export function crearAuth() {
       vence = Date.now() + (Number(resp.expires_in) - 60) * 1000;
       resolve(token);
     };
+    // Si el usuario cierra el popup de consentimiento (en vez de tocar algo
+    // adentro), Google no llama a `callback`: sin esto la promesa quedaba
+    // pendiente para siempre y la pantalla se congelaba en "Conectando…".
+    c.error_callback = () => reject(new ErrorDeAuth('No se completó la conexión con Google'));
     c.requestAccessToken({ prompt });
   });
 

@@ -62,6 +62,18 @@ export function crearSheets(obtenerToken) {
     }),
 
     hojas: async (id) => (await pedir(`/${id}?fields=sheets(properties(sheetId,title))`)).sheets
-      .map(s => s.properties)
+      .map(s => s.properties),
+
+    renombrarHoja: (id, sheetId, nuevoTitulo) => pedir(`/${id}:batchUpdate`, {
+      method: 'POST',
+      body: JSON.stringify({
+        requests: [{
+          updateSheetProperties: {
+            properties: { sheetId, title: nuevoTitulo },
+            fields: 'title'
+          }
+        }]
+      })
+    })
   };
 }

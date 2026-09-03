@@ -1,12 +1,13 @@
-import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_FOTOS, SCHEMA_VERSION } from './config.js';
+import { NOMBRE_RAIZ, NOMBRE_INDICE, SCHEMA_VERSION } from './config.js';
 import { COLUMNAS, entradaDesdeFila, diffCambios, filaDesde } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 
 const CATEGORIA_RAIZ = 'Sin categorizar';
+const ULTIMA_COLUMNA = String.fromCharCode(64 + COLUMNAS.length);
 
 export function crearStore({ drive, sheets, cache }) {
-  const ctx = { raizId: null, indiceId: null, fotosId: null, categorias: [], carpetas: new Map(), soloLectura: false };
+  const ctx = { raizId: null, indiceId: null, categorias: [], carpetas: new Map(), soloLectura: false, ultimaReconstruccionEnMemoria: '' };
   let entradas = [];
   let filas = new Map();
 
@@ -20,7 +21,17 @@ export function crearStore({ drive, sheets, cache }) {
       nombre: NOMBRE_INDICE, padre: ctx.raizId,
       mime: 'application/vnd.google-apps.spreadsheet'
     });
-    await sheets.escribir(archivo.id, `${HOJA_RECETAS}!A1:${String.fromCharCode(64 + COLUMNAS.length)}1`, [COLUMNAS]);
+
+    // Google crea una planilla con una hoja por defecto cuyo nombre depende del idioma.
+    // Necesitamos renombrarla a 'recetas' antes de escribir, porque todo el resto del
+    // código usa rangos como 'recetas!A1:M1'.
+    const hojas = await sheets.hojas(archivo.id);
+    const hojaPorDefecto = hojas[0];
+    if (hojaPorDefecto.title !== HOJA_RECETAS) {
+      await sheets.renombrarHoja(archivo.id, hojaPorDefecto.sheetId, HOJA_RECETAS);
+    }
+
+    await sheets.escribir(archivo.id, `${HOJA_RECETAS}!A1:${ULTIMA_COLUMNA}1`, [COLUMNAS]);
     await sheets.agregarHoja(archivo.id, HOJA_META);
     await sheets.escribir(archivo.id, `${HOJA_META}!A1:B3`, [
       ['schemaVersion', String(SCHEMA_VERSION)],
@@ -56,7 +67,6 @@ export function crearStore({ drive, sheets, cache }) {
     ctx.categorias = subcarpetas
       .filter(c => !c.name.startsWith('_'))
       .map(c => ({ id: c.id, nombre: c.name }));
-    ctx.fotosId = subcarpetas.find(c => c.name === NOMBRE_FOTOS)?.id ?? null;
     ctx.carpetas = new Map([
       [ctx.raizId, CATEGORIA_RAIZ],
       ...ctx.categorias.map(c => [c.id, c.nombre])
@@ -81,12 +91,18 @@ export function crearStore({ drive, sheets, cache }) {
       const meta = await leerMeta();
       if (Number(meta.schemaVersion) !== SCHEMA_VERSION) reconstruir = true;
       if (meta.reconstruccion_en_curso) reconstruir = true;
+      ctx.ultimaReconstruccionEnMemoria = meta.ultima_reconstruccion || '';
     }
 
     return {
       estado: 'listo', raizId: ctx.raizId, indiceId: ctx.indiceId,
       categorias: ctx.categorias, reconstruir, avisos
     };
+  }
+
+  /** Cuándo se reconstruyó el índice por última vez, para el menú del home (§7.2). Retorna el valor en caché sin red. */
+  function ultimaReconstruccion() {
+    return ctx.ultimaReconstruccionEnMemoria;
   }
 
   async function guardarMeta(clave, valor) {
@@ -97,7 +113,7 @@ export function crearStore({ drive, sheets, cache }) {
   }
 
   async function cargarIndice() {
-    const crudo = await sheets.leer(ctx.indiceId, `${HOJA_RECETAS}!A1:M100000`);
+    const crudo = await sheets.leer(ctx.indiceId, `${HOJA_RECETAS}!A1:${ULTIMA_COLUMNA}100000`);
     const cuerpo = crudo.slice(1);  // la fila 1 son los encabezados
     entradas = cuerpo.map(entradaDesdeFila).filter(e => e.id_archivo);
     filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
@@ -138,6 +154,9 @@ export function crearStore({ drive, sheets, cache }) {
     for (const op of filtrada) {
       await cache.encolar(op);
     }
+
+    // Como todas las demás mutaciones del mapa de filas, persistirlo.
+    await cache.guardarMapaFilas(filas);
   }
 
   async function sync() {
@@ -185,15 +204,6 @@ export function crearStore({ drive, sheets, cache }) {
     await cache.guardarMapaFilas(filas);
 
     return { releidos: plan.releer.length - ignoradosSinTitulo, parcheados: plan.parchear.length, borrados: plan.borrar.length, ignoradosSinTitulo };
-  }
-
-  /** Los ids de Drive que aparecen en las URLs de las imágenes del .md (§3.3). */
-  function idsDeFotos(texto) {
-    const ids = [];
-    const re = /!\[[^\]]*\]\((?:https?:\/\/[^)]*?\/d\/([A-Za-z0-9_-]+)[^)]*|[^)]*)\)/g;
-    let m;
-    while ((m = re.exec(texto)) !== null) if (m[1]) ids.push(m[1]);
-    return [...new Set(ids)];
   }
 
   async function guardar(id, receta, { carpetaDestino } = {}) {
@@ -251,21 +261,10 @@ export function crearStore({ drive, sheets, cache }) {
     return { id: archivo.id, nombre_archivo: nombre };
   }
 
-  async function fotosDe(id) {
-    const texto = (await cache.leerCuerpo(id)) ?? (await drive.leerTexto(id));
-    return idsDeFotos(texto);
-  }
-
-  async function borrar(id, { borrarFotos = false } = {}) {
-    const fotos = borrarFotos ? await fotosDe(id) : [];
+  async function borrar(id) {
     await drive.borrar(id);
     await borrarDelIndice(id);
-    const fotosBorradas = [];
-    for (const foto of fotos) {
-      try { await drive.borrar(foto); fotosBorradas.push(foto); } catch { /* ya no estaba */ }
-    }
     await cache.guardarIndice(entradas);
-    return { fotosBorradas };
   }
 
   async function flush() {
@@ -323,7 +322,7 @@ export function crearStore({ drive, sheets, cache }) {
 
     const hojas = await sheets.hojas(ctx.indiceId);
     const hojaId = hojas.find(h => h.title === HOJA_RECETAS)?.sheetId ?? 0;
-    const previas = await sheets.leer(ctx.indiceId, `${HOJA_RECETAS}!A1:M100000`);
+    const previas = await sheets.leer(ctx.indiceId, `${HOJA_RECETAS}!A1:${ULTIMA_COLUMNA}100000`);
     for (let fila = previas.length; fila >= 2; fila--) {
       await sheets.borrarFila(ctx.indiceId, hojaId, fila);
     }
@@ -337,7 +336,9 @@ export function crearStore({ drive, sheets, cache }) {
     await cache.guardarMapaFilas(filas);
 
     await guardarMeta('changesPageToken', await drive.tokenInicialDeCambios());
-    await guardarMeta('ultima_reconstruccion', new Date().toISOString());
+    const ahora = new Date().toISOString();
+    await guardarMeta('ultima_reconstruccion', ahora);
+    ctx.ultimaReconstruccionEnMemoria = ahora;
     await guardarMeta('reconstruccion_en_curso', '');
 
     return { indexadas: entradas.length, ignoradasSinTitulo };
@@ -400,5 +401,5 @@ export function crearStore({ drive, sheets, cache }) {
     return { entrada, receta: parse(texto), texto };
   }
 
-  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, guardar, crear, borrar, fotosDe, flush, reconstruir, buscar, categoriasConConteo, tagsDe, receta, _ctx: ctx };
+  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, ultimaReconstruccion, guardar, crear, borrar, flush, reconstruir, buscar, categoriasConConteo, tagsDe, receta, _ctx: ctx };
 }

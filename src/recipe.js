@@ -198,20 +198,6 @@ export function ingredientesIndexables(receta) {
   return [...vistos];
 }
 
-export function primeraImagen(receta) {
-  if (!receta) return null;
-  const bloques = [
-    receta.descripcion, receta.ingredientes, receta.preparacion,
-    receta.variaciones, receta.notas,
-    ...(Array.isArray(receta.otras) ? receta.otras : []).map(o => o?.cuerpo)
-  ];
-  for (const bloque of bloques) {
-    const m = String(bloque ?? '').match(/!\[[^\]]*\]\(([^)\s]+)/);
-    if (m) return m[1];
-  }
-  return null;
-}
-
 export function slugArchivo(titulo, existentes = []) {
   // Aceptar solo strings, números o null/undefined; rechazar objetos
   if (typeof titulo !== 'string' && typeof titulo !== 'number' && titulo !== null && titulo !== undefined) {

@@ -57,6 +57,13 @@ export function crearDrive(obtenerToken) {
 
     crear: ({ nombre, contenido = '', padre, mime = 'text/markdown' }) => {
       const meta = { name: nombre, mimeType: mime, ...(padre ? { parents: [padre] } : {}) };
+
+      // Tipos nativos de Google se crean con solo metadata (sin archivo)
+      if (mime.startsWith('application/vnd.google-apps.')) {
+        return pedir('/files?fields=id,name,modifiedTime', { method: 'POST', body: JSON.stringify(meta) });
+      }
+
+      // Otros archivos usan subida multipart
       const fd = new FormData();
       fd.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
       fd.append('file', new Blob([contenido], { type: mime }));
@@ -69,16 +76,6 @@ export function crearDrive(obtenerToken) {
     renombrar: (id, nombre) => pedir(`/files/${id}?fields=id,name`, { method: 'PATCH', body: JSON.stringify({ name: nombre }) }),
     mover: (id, { de, a }) => pedir(`/files/${id}?addParents=${a}&removeParents=${de}&fields=id,parents`, { method: 'PATCH' }),
     borrar: (id) => pedir(`/files/${id}`, { method: 'DELETE' }),
-
-    subirFoto: (blob, { nombre, padre }) => {
-      const fd = new FormData();
-      fd.append('metadata', new Blob([JSON.stringify({ name: nombre, parents: [padre] })], { type: 'application/json' }));
-      fd.append('file', blob);
-      return pedir('/files?uploadType=multipart&fields=id,name', { method: 'POST', body: fd }, SUBIDA);
-    },
-
-    /** Una sola llamada devuelve el mapa id→miniatura de todas las fotos (§3.3). */
-    miniaturas: (carpetaFotos) => listar(q.hijosDe(carpetaFotos), 'files(id,thumbnailLink)'),
 
     tokenInicialDeCambios: async () => (await pedir('/changes/startPageToken')).startPageToken,
     cambios: (pageToken) => pedir(`/changes?pageToken=${pageToken}&pageSize=200` +

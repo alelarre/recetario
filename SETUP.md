@@ -8,10 +8,13 @@ un mensaje que apunta a este documento.
 
 Carpeta raíz `Recetario/`, creada dentro de la carpeta `recetas` del usuario.
 
+Quedó también una carpeta `_fotos/` de un diseño anterior. **La app ya no la usa
+ni la mira** —las imágenes van por URL externa (§3.3)— y se puede borrar de
+Drive cuando se quiera; mientras esté, la app la ignora por empezar con `_`.
+
 | carpeta | id |
 |---|---|
 | `Recetario/` | `1B2nNmy0qOAuZT9lomrSdompYta7uuJ7B` |
-| `_fotos/` | `1sOYwDUPrNBxj1rvNPPYC8_pRz8wcwNv0` |
 | `Entradas y picadas/` | `1ioT1u_pqn4EiiFLXBY6Px-XLTYZvoZOO` |
 | `Sopas y caldos/` | `1MN77Oj7Sg836b7rEWcgM5WGAk_htrerY` |
 | `Ensaladas/` | `10szFByXSWQ6QGkTnDrd36whmRhipi--e` |
@@ -27,6 +30,7 @@ Carpeta raíz `Recetario/`, creada dentro de la carpeta `recetas` del usuario.
 | `Salsas y aderezos/` | `11aR96I-jPPms43LMBo9AkJWQ-KPv5zcr` |
 | `Desayunos y meriendas/` | `1mAFhFqD84rSHttawmCp8J77k-3FA_p5j` |
 | `Bebidas/` | `1o9wvgO8sKpij53hYfcAX3PO7WxizjJmB` |
+| `Otros/` | `1hJspooBXMmzPj-bsIodSz7qKYdMWrtA4` |
 
 Los ids están acá solo para depurar. La app **no** los hardcodea: descubre las
 categorías listando las subcarpetas de `Recetario/`, así que agregar o renombrar
@@ -70,7 +74,8 @@ En Google Cloud Console:
 4. En **Google Auth Platform → Clientes** (o el viejo *APIs y servicios →
    Credenciales*, es el mismo objeto), crear un **ID de cliente de OAuth →
    Aplicación web**. En orígenes autorizados de JavaScript, poner los dos:
-   - `http://localhost:8000` — para desarrollo local.
+   - `http://localhost:8080` — para desarrollo local, que es el puerto que usa
+     `npm run dev` (fijado en `vite.config.js`).
    - el origen de GitHub Pages, cuando exista (paso 4).
 5. Anotar el client ID:
 

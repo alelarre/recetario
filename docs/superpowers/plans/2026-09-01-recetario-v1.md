@@ -1,5 +1,15 @@
 # Recetario v1 — Plan de implementación
 
+> **Este plan está ejecutado y en parte desactualizado.** Se completó entero
+> entre el 2026-09-01 y el 2026-09-02. Después de terminarlo, el usuario decidió
+> eliminar el manejo de fotos propias (subida a Drive, miniaturas, imagen de
+> portada) y sacar el funcionamiento sin conexión del alcance de v1, así que
+> varias tareas describen código que ya no existe: la columna `foto` del índice,
+> `primeraImagen`, `subirFoto`, `miniaturas` y la carpeta `_fotos/`.
+>
+> Sirve como registro de cómo se construyó el proyecto, no como runbook. Ante
+> cualquier diferencia, manda el spec.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Una PWA de archivos estáticos que lee y escribe recetas `.md` en Google Drive, indexadas en una planilla, usable desde el celular y sin backend.
@@ -44,7 +54,7 @@
 | `src/ui/detalle.js` | portada, pestañas, pasos marcables |
 | `src/ui/visor.js` | visor de fotos a pantalla completa |
 | `src/ui/editor.js` | formulario de edición y alta |
-| `src/sw.js` | service worker del app shell |
+| `public/sw.js` | service worker del app shell (en public/ para que llegue a dist/) |
 | `tests/*.test.js` | unitarios de los módulos puros y del store con dobles |
 
 Los tests viven en `tests/`, uno por módulo. `store.js` recibe sus dependencias por parámetro, así que se testea con un Drive y un Sheets falsos en memoria, sin tocar red ni IndexedDB (§9).
@@ -3683,7 +3693,7 @@ git commit -m "ui: editor crudo por secciones, con Otras secciones visibles"
 
 **Files:**
 - Modify: `src/main.js`, `index.html`
-- Create: `src/sw.js`, `public/manifest.webmanifest`, `public/icono-192.png`, `public/icono-512.png`
+- Create: `public/sw.js`, `public/manifest.webmanifest`, `public/icono-192.png`, `public/icono-512.png`
 - Test: verificación manual (§9: sin automatización de navegador en v1)
 
 **Interfaces:**
@@ -3840,7 +3850,8 @@ if ('serviceWorker' in navigator) {
 ```
 
 ```javascript
-// src/sw.js — solo el app shell; los datos los cachea IndexedDB (§6)
+// public/sw.js — solo el app shell. Va en public/ y no en src/: Vite no
+// empaqueta lo que nadie importa, así que desde src/ nunca llegaría a dist/.; los datos los cachea IndexedDB (§6)
 const CACHE = 'recetario-v1';
 const SHELL = ['./', './index.html', './manifest.webmanifest'];
 

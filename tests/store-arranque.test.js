@@ -11,7 +11,7 @@ function conRecetario(extra = []) {
     { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'c2', name: 'Postres', mimeType: CARPETA, parents: ['raiz'] },
-    { id: 'fotos', name: '_fotos', mimeType: CARPETA, parents: ['raiz'] },
+    { id: 'privada', name: '_privada', mimeType: CARPETA, parents: ['raiz'] },
     ...extra
   ]);
 }
@@ -52,6 +52,61 @@ describe('arranque en frío', () => {
     expect(r.reconstruir).toBe(true);
     const creada = [...drive._store.values()].find(a => a.name === '_indice');
     expect(creada).toBeDefined();
+  });
+
+  it('al crear la planilla, renombra la hoja por defecto a "recetas" y no queda ninguna hoja con nombre por defecto', async () => {
+    const { store, sheets } = armar(conRecetario());
+    await store.arrancar();
+    // La planilla se creó y debe tener una hoja llamada 'recetas'
+    // (no 'Sheet1' o el nombre por defecto que Google habría puesto)
+    const hojas = await sheets.hojas(store._ctx.indiceId);
+    const titulos = hojas.map(h => h.title);
+    expect(titulos).toContain('recetas');
+    expect(titulos).toContain('meta');
+    expect(titulos).not.toContain('Sheet1');
+  });
+
+  it('con una planilla recién creada, ultimaReconstruccion no rompe y da vacío', async () => {
+    const { store } = armar(conRecetario());
+    await store.arrancar();
+    expect(store.ultimaReconstruccion()).toBe('');
+  });
+
+  it('después de arrancar, ultimaReconstruccion devuelve lo que había en meta sin hacer llamadas nuevas a Sheets', async () => {
+    const PLANILLA = 'application/vnd.google-apps.spreadsheet';
+    const drive = conRecetario([{ id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] }]);
+    const sheets = sheetsFalso();
+    sheets.crearPlanilla('i1');
+    const fechaPrueba = '2026-01-15T10:30:00.000Z';
+
+    // Escribir la meta antes de crear el store
+    await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
+    await sheets.escribir('i1', 'meta!A2:B2', [['changesPageToken', '']]);
+    await sheets.escribir('i1', 'meta!A3:B3', [['ultima_reconstruccion', fechaPrueba]]);
+
+    const cache = crearCacheMemoria();
+    const store = crearStore({ drive, sheets, cache });
+
+    // Contar llamadas a sheets.leer durante arranque
+    let llamadosDurante = 0;
+    const leerOriginal = sheets.leer.bind(sheets);
+    sheets.leer = async function(...args) {
+      llamadosDurante++;
+      return leerOriginal(...args);
+    };
+
+    await store.arrancar();
+
+    // Resetear contador después del arranque
+    llamadosDurante = 0;
+
+    // Llamar ultimaReconstruccion múltiples veces después del arranque
+    const resultado1 = store.ultimaReconstruccion();
+    const resultado2 = store.ultimaReconstruccion();
+
+    expect(resultado1).toBe(fechaPrueba);
+    expect(resultado2).toBe(fechaPrueba);
+    expect(llamadosDurante).toBe(0);  // No debe haber nuevas llamadas a sheets.leer
   });
 
   it('con dos planillas usa la más reciente y avisa', async () => {

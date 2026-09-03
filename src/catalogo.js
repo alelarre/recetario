@@ -1,4 +1,4 @@
-import { normalizar, ingredientesIndexables, primeraImagen } from './recipe.js';
+import { normalizar, ingredientesIndexables } from './recipe.js';
 
 export const COLUMNAS = [
   'id_archivo',
@@ -12,7 +12,6 @@ export const COLUMNAS = [
   'fuente',
   'tags',
   'ingredientes',
-  'foto',
   'mtime'
 ];
 
@@ -39,7 +38,11 @@ export function filaDesde(receta, ubicacion) {
   let tagsArray = Array.isArray(r.tags) ? r.tags : [];
   const tagsStr = tagsArray
     .filter(t => typeof t === 'string' && t.trim())
-    .map(t => t.trim())
+    // Sacar el | de cada valor: es el separador de la celda (§4.3), y un tag
+    // que lo trajera partiría mal al releer. Son valores curados, no texto
+    // libre del .md, así que sacarlo no pierde nada real.
+    .map(t => t.trim().replace(/\|/g, ''))
+    .filter(Boolean)
     .join('|');
 
   // Defender ingredientes: debe ser array de strings
@@ -47,13 +50,12 @@ export function filaDesde(receta, ubicacion) {
   const ingredientesStr = Array.isArray(ingredientesArray)
     ? ingredientesArray
       .filter(i => typeof i === 'string' && i.trim())
-      .map(i => i.trim())
+      // Mismo motivo que con tags: el | es el separador de la celda, no un
+      // carácter válido dentro de un valor.
+      .map(i => i.trim().replace(/\|/g, ''))
+      .filter(Boolean)
       .join('|')
     : '';
-
-  // Defender foto
-  const foto = primeraImagen(r);
-  const fotoStr = typeof foto === 'string' ? foto : '';
 
   // Construir celdas
   const celdas = {
@@ -68,7 +70,6 @@ export function filaDesde(receta, ubicacion) {
     fuente: typeof r.fuente === 'string' ? r.fuente : '',
     tags: tagsStr,
     ingredientes: ingredientesStr,
-    foto: fotoStr,
     mtime: String(typeof u.mtime === 'number' ? u.mtime : 0)
   };
 
