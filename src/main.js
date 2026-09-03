@@ -108,9 +108,13 @@ async function render(ruta = parsearHash(location.hash)) {
   // Cambiar de categoría o de vista limpia el filtro de tags y cierra el visor:
   // si no, se entra a otra categoría y no se ve nada porque quedó filtrando
   // por un tag que ahí no existe, sin forma de darse cuenta.
-  if (!vistaActual || ruta.vista !== vistaActual.vista || ruta.params.nombre !== vistaActual.params.nombre) {
+  if (!vistaActual || ruta.vista !== vistaActual.vista || ruta.params.nombre !== vistaActual.params.nombre
+      || ruta.params.id !== vistaActual.params.id) {
     tagsActivos = [];
     fotosVisor = null;
+    // La pestaña elegida vale para la receta que se estaba mirando, no para la
+    // próxima: sin esto se entra a otra receta y se abre en Notas.
+    pestana = 'ingredientes';
   }
   vistaActual = ruta;
   if (ruta.vista === 'home') {
