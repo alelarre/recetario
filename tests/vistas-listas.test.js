@@ -25,6 +25,9 @@ describe('renderHome', () => {
     const html = renderHome({ categorias: [], ultimaReconstruccion: '2026-09-01T10:00:00.000Z' });
     expect(html).toContain('Reconstruir índice');
     expect(html).toContain('2026');
+    // La hora importa: si reconstruyo dos veces el mismo día, sin hora no se
+    // distingue si la última corrida es la mía o la de la mañana.
+    expect(html).toMatch(/\d{2}:\d{2}/);
   });
 
   it('ofrece reconectar la cuenta', () => {

@@ -4,7 +4,10 @@ export function renderHome(arg = {}) {
   const { categorias = [], ultimaReconstruccion = '' } = arg ?? {};
   const cats = Array.isArray(categorias) ? categorias : [];
   const fecha = ultimaReconstruccion
-    ? new Date(ultimaReconstruccion).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
+    ? new Date(ultimaReconstruccion).toLocaleString('es-AR', {
+        day: 'numeric', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: false,
+      })
     : 'nunca';
 
   const tiles = cats.map(c => `
