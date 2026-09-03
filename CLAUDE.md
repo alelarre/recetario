@@ -52,6 +52,7 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | Reabrir el alcance de v1 | Se revisó entero el 2026-09-01: el planificador salió, y crear una receta mínima entró (§11). |
 | Una vista de bandeja o triage | Lo que falta archivar se ve en el tile "Sin categorizar" del home; lo que falta terminar se lista filtrando por el tag `incompleto`. |
 | Campos `ultima_vez`, `veces`, `puntaje`, `porciones` numérico, `foto:` | El esquema del frontmatter es cerrado y son seis claves (§3.2). |
+| Datos nutricionales: calorías, macros, porciones diarias | Decidido el 2026-09-03. Las 24 recetas del libro de pescados vinieron con una nota "Valor calórico según la fuente" y se sacaron todas. No entra en las seis claves del §3.2, y como nota al cuerpo crea un campo paralelo que ninguna otra receta tiene. Si la fuente lo trae, se descarta. |
 | Guardar fotos en Drive, miniaturas, imagen de portada | Decidido el 2026-09-02. Mostrar una foto de Drive obliga a pedirla con el token y armar un object URL; las miniaturas, a mantener un mapa de `thumbnailLink` que caduca. Demasiado para un recetario donde casi ninguna receta va a tener imagen. Solo URLs externas, dibujadas donde estén (§3.3). |
 | Funcionar sin conexión | Salió de v1 el 2026-09-02. El índice ya se guarda en IndexedDB; usarlo para dibujar antes de la red quedó inventariado en el §11. |
 | AppSheet, Apps Script, apps nativas, Artifact de Claude | Evaluadas como plataforma y descartadas (§2). |

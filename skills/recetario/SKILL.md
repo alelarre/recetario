@@ -210,6 +210,7 @@ Además:
 | Escribir tags sin tilde (`clasica`) | `clasica` y `clásica` quedan como dos tags distintos. |
 | Usar formatos de `tiempo` distintos en cada receta | No se ordenan juntos. El tiempo activo va en una nota. |
 | Agregar claves nuevas al frontmatter | Se preservan pero ninguna app las lee. Lo que no entra en las seis claves va al cuerpo. |
+| Copiar los datos nutricionales de la fuente | El recetario no los guarda, ni en el frontmatter ni como nota. Si la fuente los trae, se descartan. |
 | Subir el archivo como documento de Google | Deja de ser un `.md` legible y editable por fuera. |
 | Reescribir pasos o cantidades "mejorándolos" | Una receta que funcionaba deja de funcionar. |
 | Traducir cantidades a otro sistema | `1 cup` se deja como está, o se convierte y se aclara en una nota. |
