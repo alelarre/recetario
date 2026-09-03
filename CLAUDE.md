@@ -76,18 +76,20 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 2. **Migrar el contenido existente:** ya se migraron ~60 recetas del recetario
    original y del PDF de pescados a `Recetario/`, con el skill de
    `skills/recetario/`. Falta el resto: los documentos temáticos (fondues,
-   pan, macarons, fermentación) y el Doc de ~7,3 MB. Antes de migrar miles de
-   recetas más, mirar el punto de abajo sobre la reconstrucción.
+   pan, macarons, fermentación) y el Doc de ~7,3 MB.
 3. El planificador semanal y la lista de compras: fuera de v1 y sin diseñar.
    Es lo próximo después del núcleo; necesita sus vistas y la barra de
    navegación inferior.
 
 ## Lo que quedó sabido y no arreglado
 
-- **La reconstrucción del índice no escala.** Lee los `.md` de a uno y borra las
-  filas viejas una por una, sin reintento ante un 429. Con una receta no se nota;
-  con las miles que va a traer la migración, tarda mucho más que el minuto que
-  estima el §5.3 y puede fallar a mitad. Arreglarlo antes de migrar.
+- **Si la creación de la planilla del índice se corta a mitad, la app no se
+  recupera sola.** Pasó de verdad el 2026-09-02: quedó un archivo de Drive a
+  medio crear y la app no arrancaba más (`Unable to parse range: meta!A1:B20`,
+  porque la hoja `meta` nunca llegó a escribirse). La recuperación manual: (1)
+  ubicar ese archivo en Drive y (2) **borrarlo directamente, y reconstruirlo
+  luego** — recargar la app, que al no encontrar la planilla la crea de cero.
+  No hay una forma automática de detectar y limpiar ese estado a medio hacer.
 - **El plan `docs/superpowers/plans/2026-09-01-recetario-v1.md` quedó viejo.**
   Describe la funcionalidad de fotos que después se eliminó. Sirve como registro
   de cómo se construyó, no como runbook: si se vuelve a usar, hay que leerlo
