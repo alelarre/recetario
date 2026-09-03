@@ -7,16 +7,34 @@ export function crearAuth() {
   let vence = 0;
   let cliente = null;
 
+  // El script de Identity Services va con `async`, así que puede seguir
+  // descargándose cuando este módulo ya corre: sin esperar acá, la carrera
+  // se pierde a veces y la app queda con "Google Identity no cargó" sin
+  // reintento automático. Sondear es más simple que recablear la carga del
+  // script con un <script> armado a mano y su propio evento `load`.
+  const esperarGis = (timeoutMs = 8000) => new Promise((resolve, reject) => {
+    if (window.google?.accounts?.oauth2) return resolve();
+    const inicio = Date.now();
+    const intervalo = setInterval(() => {
+      if (window.google?.accounts?.oauth2) {
+        clearInterval(intervalo);
+        resolve();
+      } else if (Date.now() - inicio > timeoutMs) {
+        clearInterval(intervalo);
+        reject(new ErrorDeAuth('Google Identity no cargó'));
+      }
+    }, 50);
+  });
+
   const clienteGis = () => {
     if (cliente) return cliente;
-    if (!window.google?.accounts?.oauth2) throw new ErrorDeAuth('Google Identity no cargó');
     cliente = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID, scope: SCOPE, callback: () => {}, error_callback: () => {}
     });
     return cliente;
   };
 
-  const pedir = (prompt) => new Promise((resolve, reject) => {
+  const pedir = (prompt) => esperarGis().then(() => new Promise((resolve, reject) => {
     const c = clienteGis();
     c.callback = (resp) => {
       if (resp.error) return reject(new ErrorDeAuth(resp.error));
@@ -30,7 +48,7 @@ export function crearAuth() {
     // pendiente para siempre y la pantalla se congelaba en "Conectando…".
     c.error_callback = () => reject(new ErrorDeAuth('No se completó la conexión con Google'));
     c.requestAccessToken({ prompt });
-  });
+  }));
 
   return {
     conectar: () => pedir('consent'),
