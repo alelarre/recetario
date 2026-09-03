@@ -22,23 +22,33 @@ export function crearStore({ drive, sheets, cache }) {
       mime: 'application/vnd.google-apps.spreadsheet'
     });
 
-    // Google crea una planilla con una hoja por defecto cuyo nombre depende del idioma.
-    // Necesitamos renombrarla a 'recetas' antes de escribir, porque todo el resto del
-    // código usa rangos como 'recetas!A1:M1'.
-    const hojas = await sheets.hojas(archivo.id);
-    const hojaPorDefecto = hojas[0];
-    if (hojaPorDefecto.title !== HOJA_RECETAS) {
-      await sheets.renombrarHoja(archivo.id, hojaPorDefecto.sheetId, HOJA_RECETAS);
-    }
+    try {
+      // Google crea una planilla con una hoja por defecto cuyo nombre depende del idioma.
+      // Necesitamos renombrarla a 'recetas' antes de escribir, porque todo el resto del
+      // código usa rangos como 'recetas!A1:M1'.
+      const hojas = await sheets.hojas(archivo.id);
+      const hojaPorDefecto = hojas[0];
+      if (hojaPorDefecto.title !== HOJA_RECETAS) {
+        await sheets.renombrarHoja(archivo.id, hojaPorDefecto.sheetId, HOJA_RECETAS);
+      }
 
-    await sheets.escribir(archivo.id, `${HOJA_RECETAS}!A1:${ULTIMA_COLUMNA}1`, [COLUMNAS]);
-    await sheets.agregarHoja(archivo.id, HOJA_META);
-    await sheets.escribir(archivo.id, `${HOJA_META}!A1:B3`, [
-      ['schemaVersion', String(SCHEMA_VERSION)],
-      ['changesPageToken', ''],
-      ['ultima_reconstruccion', '']
-    ]);
-    return archivo.id;
+      await sheets.escribir(archivo.id, `${HOJA_RECETAS}!A1:${ULTIMA_COLUMNA}1`, [COLUMNAS]);
+      await sheets.agregarHoja(archivo.id, HOJA_META);
+      await sheets.escribir(archivo.id, `${HOJA_META}!A1:B3`, [
+        ['schemaVersion', String(SCHEMA_VERSION)],
+        ['changesPageToken', ''],
+        ['ultima_reconstruccion', '']
+      ]);
+      return archivo.id;
+    } catch (e) {
+      // Si algo después de crear el archivo falla, no dejar una planilla a
+      // medio hacer: pasó de verdad (§ "Lo que quedó sabido") y la única
+      // recuperación es borrarla a mano. Borrar acá mismo deja que la
+      // próxima carga la vuelva a crear sola, sin que nadie tenga que
+      // encontrar el archivo roto en Drive.
+      await drive.borrar(archivo.id).catch(() => {});
+      throw e;
+    }
   }
 
   async function arrancar() {

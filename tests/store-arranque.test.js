@@ -179,4 +179,17 @@ describe('arranque en frío', () => {
     expect(r.estado).toBe('solo-lectura');
     expect([...drive._store.values()].some(a => a.name === '_indice')).toBe(false);
   });
+
+  it('si falla a mitad de crear la planilla, borra el archivo a medio hacer en vez de dejarlo corrupto', async () => {
+    // Pasó de verdad: la planilla se creó con la hoja "recetas" pero sin
+    // "meta", y el arranque siguiente rompía con "Unable to parse range:
+    // meta!A1:B20" para siempre, sin que nadie supiera por qué.
+    const drive = conRecetario();
+    const { store, sheets } = armar(drive);
+
+    sheets.agregarHoja = async () => { throw new Error('falla de red a mitad de crear'); };
+
+    await expect(store.arrancar()).rejects.toThrow('falla de red a mitad de crear');
+    expect([...drive._store.values()].some(a => a.name === '_indice')).toBe(false);
+  });
 });

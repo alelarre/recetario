@@ -90,7 +90,18 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
   meta!A1:B20`, porque la hoja `meta` nunca llegó a escribirse) — el mensaje
   crudo del error, sin ninguna salida ofrecida. La recuperación es manual y es
   política, no un parche pendiente: ver la fila del índice en "Decisiones
-  cerradas".
+  cerradas". Lo que sí se arregló el 2026-09-03: si `crearPlanilla()` falla a
+  mitad, ahora borra el archivo a medio hacer antes de propagar el error, así
+  que una falla transitoria ya no deja ese archivo corrupto para la próxima
+  vez — la siguiente carga simplemente la vuelve a crear sola.
+- **Reconstruir el índice sigue leyendo los `.md` de a uno.** El 429 al
+  escribir (una llamada por fila borrada) se arregló el 2026-09-03
+  (`sheets.borrarFilas`, ver el commit). Pero la lectura previa —un
+  `drive.leerTexto()` por archivo, sin paralelismo ni loteo— no se tocó. Con
+  una receta no se nota; con las miles que va a traer la migración, va a
+  tardar. La cuota de lectura de Drive es más generosa que la de escritura de
+  Sheets, así que es menos urgente, pero conviene mirarlo antes de migrar en
+  masa.
 - **El plan `docs/superpowers/plans/2026-09-01-recetario-v1.md` quedó viejo.**
   Describe la funcionalidad de fotos que después se eliminó. Sirve como registro
   de cómo se construyó, no como runbook: si se vuelve a usar, hay que leerlo
