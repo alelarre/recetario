@@ -1,43 +1,52 @@
+/**
+ * El idioma visual (§7.3). La app se ve en oscuro: es una app que se abre en
+ * la cocina, muchas veces de noche, y el fondo oscuro deja que las fotos de
+ * categoría sean lo único que ilumina la pantalla.
+ */
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
-  --fondo: #ffffff;
-  --superficie: #f2f2f7;
-  --texto: #1c1c1e;
-  --texto-2: #6e6e73;
-  --separador: #e5e5ea;
-  --acento: #0a5fd0;
-  --ambar: #b06f00;
+  --fondo: #14131A;         /* casi negro con temperatura, no gris de sistema */
+  --superficie: #1E1C26;    /* campos, menú, barras */
+  --texto: #EDEAE4;
+  --texto-2: #8A8598;       /* el mismo tinte violeta que el fondo */
+  --separador: #2C2936;
+  --acento: #EDEAE4;        /* el acento es el propio texto: el color lo ponen las categorías */
   --fondo-visor: #000000;
   --texto-visor: #ffffff;
 
-  --tipo: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Bricolage Grotesque para lo que tiene que tener carácter; Instrument Sans
+     para leer parado a un metro de la mesada; JetBrains Mono para lo que se
+     mira en columna —cantidades, tiempos— y para el markdown crudo del editor. */
+  --tipo: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --display: 'Bricolage Grotesque', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --t-titulo: 1.375rem;
+  --t-titulo: 1.75rem;
   --t-seccion: 1.125rem;
   --t-cuerpo: 1.0625rem;
   --t-fila: 1rem;
   --t-chip: 0.875rem;
   --t-meta: 0.8125rem;
+  --t-rotulo: 0.625rem;     /* los rótulos en versalita de las secciones */
 
-  --interlineado: 1.62;
-  --gap: 0.25rem;       /* la grilla de 4 px */
+  /* El tamaño de los pasos de la preparación: lo sube "Texto grande" (§7.2),
+     que es media parte de lo que resolvería un modo cocina. */
+  --t-paso: 1.0625rem;
+
+  --interlineado: 1.55;
+  --gap: 0.25rem;
   --margen: 1rem;
-  --radio: 0.5rem;
-  --tactil: 2.75rem;    /* 44 px */
+  --radio: 0.75rem;
+  --tactil: 2.75rem;        /* 44 px */
+
+  /* El velo que hace legible el nombre encima de la foto del tile. */
+  --velo: linear-gradient(to top,
+            rgba(8, 7, 12, 0.88) 0%,
+            rgba(8, 7, 12, 0.55) 38%,
+            rgba(8, 7, 12, 0.08) 100%);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fondo: #1c1c1e;
-    --superficie: #2c2c2e;
-    --texto: #f2f2f7;
-    --texto-2: #98989d;
-    --separador: #38383a;
-    --acento: #5aa9ff;
-    --ambar: #e0a94a;
-    --fondo-visor: #000000;
-    --texto-visor: #ffffff;
-  }
+:root.texto-grande {
+  --t-paso: 1.375rem;
 }

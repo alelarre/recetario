@@ -383,6 +383,22 @@ export function crearStore({ drive, sheets, cache }) {
     });
   }
 
+  /**
+   * Busca por texto separando el motivo de la coincidencia. El motor ya
+   * matcheaba título e ingrediente, pero devolvía una lista plana: buscabas
+   * "berenjena" y no sabías por qué había aparecido cada resultado.
+   */
+  function buscarPorTexto(texto) {
+    const t = normalizar(String(texto ?? ''));
+    if (!t) return { porNombre: [], porIngrediente: [] };
+    const porNombre = [], porIngrediente = [];
+    for (const e of entradas) {
+      if (normalizar(e.titulo).includes(t)) porNombre.push(e);
+      else if (e.ingredientes.some(i => normalizar(i).includes(t))) porIngrediente.push(e);
+    }
+    return { porNombre, porIngrediente };
+  }
+
   function categoriasConConteo() {
     const cuenta = new Map();
     for (const e of entradas) cuenta.set(e.categoria, (cuenta.get(e.categoria) ?? 0) + 1);
@@ -415,5 +431,5 @@ export function crearStore({ drive, sheets, cache }) {
     return { entrada, receta: parse(texto), texto };
   }
 
-  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, ultimaReconstruccion, guardar, crear, borrar, flush, reconstruir, buscar, categoriasConConteo, tagsDe, receta, _ctx: ctx };
+  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, ultimaReconstruccion, guardar, crear, borrar, flush, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, _ctx: ctx };
 }

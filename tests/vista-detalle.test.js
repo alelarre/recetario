@@ -33,28 +33,41 @@ const ENTRADA = { id_archivo: 'r1', titulo: 'Milanesas napolitanas', tags: ['hor
 
 describe('renderDetalle', () => {
   it('muestra la meta junta', () => {
-    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'ingredientes' });
+    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA });
     expect(html).toContain('4 porciones · 40 min · fácil');
   });
 
-  it('la pestaña Notas cuenta notas y variaciones juntas', () => {
-    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'ingredientes' });
-    expect(html).toContain('Notas · 2');
+  it('apila las cuatro secciones en una columna, sin pestañas', () => {
+    // Cocinando hacen falta los ingredientes y los pasos a la vez: las
+    // pestañas obligaban a saltar entre las dos cosas con las manos ocupadas.
+    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA });
+    expect(html).not.toContain('data-pestana');
+    for (const s of ['Ingredientes', 'Preparación', 'Variaciones', 'Notas']) {
+      expect(html).toContain(s);
+    }
   });
 
-  it('la pestaña Notas queda apagada cuando no hay ninguna', () => {
+  it('una sección que la receta no trae no se dibuja vacía', () => {
     const r = parse(`---\ntitulo: X\n---\n\n## Ingredientes\n- sal\n`);
-    const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'ingredientes' });
-    expect(html).toMatch(/data-pestana="notas"[^>]*disabled/);
+    const html = renderDetalle({ entrada: ENTRADA, receta: r });
+    expect(html).toContain('Ingredientes');
+    expect(html).not.toContain('Variaciones');
+  });
+
+  it('los ingredientes se pliegan sin perder la barra que los devuelve', () => {
+    const plegado = renderDetalle({ entrada: ENTRADA, receta: RECETA, ingredientesPlegados: true });
+    expect(plegado).toContain('data-accion="ingredientes"');
+    expect(plegado).toContain('aria-expanded="false"');
+    expect(plegado).not.toContain('data-ingredientes');
   });
 
   it('los pasos de Preparación son marcables', () => {
-    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'preparacion' });
+    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA });
     expect(html).toContain('class="paso"');
   });
 
   it('la descripción se muestra en el detalle', () => {
-    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'ingredientes' });
+    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA });
     expect(html).toContain('Un clásico.');
   });
 
@@ -72,7 +85,7 @@ describe('renderDetalle', () => {
 
   describe('avisos de parseo (§8: un .md malformado se muestra con un aviso)', () => {
     it('una receta sin problemas no muestra ningún aviso', () => {
-      const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'ingredientes' });
+      const html = renderDetalle({ entrada: ENTRADA, receta: RECETA });
       expect(html).not.toContain('class="aviso"');
     });
 
@@ -153,10 +166,11 @@ describe('renderDetalle', () => {
     expect(html).toBeTruthy();
   });
 
-  it('con una pestaña inexistente, exactamente una pestaña queda seleccionada', () => {
-    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA, pestana: 'inventada' });
-    const matches = html.match(/aria-selected="true"/g);
-    expect(matches).toHaveLength(1);
+  it('ofrece mantener la pantalla activa y agrandar el texto', () => {
+    // Las dos mitades que resolvería un modo cocina, sin pantalla nueva.
+    const html = renderDetalle({ entrada: ENTRADA, receta: RECETA });
+    expect(html).toContain('data-accion="pantalla"');
+    expect(html).toContain('data-accion="texto-grande"');
   });
 });
 

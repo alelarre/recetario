@@ -19,7 +19,10 @@ const auth = crearAuth();
 const drive = crearDrive(() => auth.token());
 const sheets = crearSheets(() => auth.token());
 
-let store, estadoArranque, pestana = 'ingredientes', vistaActual = null;
+let store, estadoArranque, vistaActual = null;
+let ingredientesPlegados = false;  // la barra pegajosa del detalle
+let vaciasVisibles = false;        // las categorías en cero, plegadas en el home
+let wakeLock = null;               // para que la pantalla no se apague cocinando
 let pendienteFlush = null;
 let tagsActivos = [];       // filtro de la vista de categoría; se limpia al cambiar de vista
 let fotosVisor = null;      // fotos de la receta abierta en el visor; null = visor cerrado
@@ -49,11 +52,41 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { const m = document.querySelector('.menu'); if (m) m.hidden = true; }
 });
 
+/**
+ * Que la pantalla no se apague mientras se cocina: es la fricción más real de
+ * seguir una receta con las manos sucias. El bloqueo se pierde solo cuando la
+ * app pasa a segundo plano, así que hay que volver a pedirlo al volver — sin
+ * eso, alcanza con atender un mensaje para que la pantalla se apague de nuevo.
+ */
+async function mantenerPantalla() {
+  if (!navigator.wakeLock) return false;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+    return true;
+  } catch {
+    wakeLock = null;
+    return false;
+  }
+}
+
+async function soltarPantalla() {
+  try { await wakeLock?.release(); } catch { /* ya soltado */ }
+  wakeLock = null;
+}
+
 function programarFlush() {
   clearTimeout(pendienteFlush);
   pendienteFlush = setTimeout(() => store.flush().catch(console.error), 30000);
 }
 document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    // Si el botón sigue activo, el usuario nunca lo apagó: el bloqueo se
+    // perdió al irse a segundo plano y hay que volver a pedirlo.
+    const b = document.querySelector('[data-accion="pantalla"][aria-pressed="true"]');
+    if (b && !wakeLock) mantenerPantalla().then(ok => b.setAttribute('aria-pressed', String(ok)));
+    return;
+  }
   if (document.visibilityState !== 'hidden') return;
   // Cancelar el debounce antes del flush forzado: si no, y el timer de 30s
   // vencía justo mientras este flush estaba en vuelo, corrían los dos en
@@ -113,24 +146,31 @@ async function render(ruta = parsearHash(location.hash)) {
       || ruta.params.id !== vistaActual.params.id) {
     tagsActivos = [];
     fotosVisor = null;
-    // La pestaña elegida vale para la receta que se estaba mirando, no para la
-    // próxima: sin esto se entra a otra receta y se abre en Notas.
-    pestana = 'ingredientes';
+    // Lo que se plegó vale para la receta que se estaba mirando, no para la
+    // próxima: sin esto se entra a otra receta y los ingredientes ya vienen
+    // cerrados sin que nadie los haya cerrado.
+    ingredientesPlegados = false;
   }
   vistaActual = ruta;
   if (ruta.vista === 'home') {
-    return pintar(renderHome({ categorias: store.categoriasConConteo(), ultimaReconstruccion: store.ultimaReconstruccion() }));
+    return pintar(renderHome({ categorias: store.categoriasConConteo(), ultimaReconstruccion: store.ultimaReconstruccion(), vaciasVisibles }));
   }
   if (ruta.vista === 'categoria') {
     const entradas = store.buscar({ categoria: ruta.params.nombre, tags: tagsActivos });
-    return pintar(renderLista({ titulo: ruta.params.nombre, entradas, tags: store.tagsDe(ruta.params.nombre), tagsActivos }));
+    const vacio = tagsActivos.length
+      ? { titulo: 'Ninguna receta con esos tags', detalle: 'Probá sacando alguno de los filtros de arriba.' }
+      : { titulo: 'Todavía no hay nada acá',
+          detalle: `Las recetas entran como archivos .md en la carpeta ${ruta.params.nombre} de Drive, casi siempre escritas por un agente desde un PDF, una foto o un video.` };
+    return pintar(renderLista({ titulo: ruta.params.nombre, entradas, tags: store.tagsDe(ruta.params.nombre), tagsActivos, vacio }));
   }
   if (ruta.vista === 'buscar') {
-    return pintar(renderLista({ titulo: `"${ruta.params.q}"`, entradas: store.buscar({ texto: ruta.params.q }) }));
+    const grupos = store.buscarPorTexto(ruta.params.q);
+    return pintar(renderLista({ titulo: `"${ruta.params.q}"`, grupos,
+      vacio: { titulo: 'Sin resultados', detalle: 'Se busca por título y por ingrediente.' } }));
   }
   if (ruta.vista === 'detalle') {
     const { entrada, receta } = await store.receta(ruta.params.id);
-    return pintar(renderDetalle({ entrada, receta, pestana }));
+    return pintar(renderDetalle({ entrada, receta, ingredientesPlegados }));
   }
   if (ruta.vista === 'editar') {
     const { entrada, receta } = await store.receta(ruta.params.id);
@@ -147,7 +187,7 @@ async function render(ruta = parsearHash(location.hash)) {
 const router = crearRouter(render);
 
 app.addEventListener('click', async (e) => {
-  const boton = e.target.closest('[data-accion], [data-pestana], .check, [data-tag], img');
+  const boton = e.target.closest('[data-accion], .check, [data-tag], img');
 
   // El menú del home se cierra al tocar cualquier otra cosa, como cualquier
   // desplegable. Sin esto solo se cerraba volviendo a tocar el ⋯.
@@ -179,7 +219,24 @@ app.addEventListener('click', async (e) => {
   }
 
   const accion = boton.dataset.accion;
-  if (boton.dataset.pestana) { pestana = boton.dataset.pestana; return render(); }
+  if (accion === 'ingredientes') { ingredientesPlegados = !ingredientesPlegados; return render(); }
+  if (accion === 'vacias') { vaciasVisibles = !vaciasVisibles; return render(); }
+
+  // Las dos mitades que resolvería un modo cocina, sin pantalla nueva (§7.2).
+  if (accion === 'texto-grande') {
+    const activo = document.documentElement.classList.toggle('texto-grande');
+    boton.setAttribute('aria-pressed', String(activo));
+    return;
+  }
+  if (accion === 'pantalla') {
+    const activo = boton.getAttribute('aria-pressed') === 'true';
+    if (activo) { await soltarPantalla(); boton.setAttribute('aria-pressed', 'false'); return; }
+    const ok = await mantenerPantalla();
+    boton.setAttribute('aria-pressed', String(ok));
+    if (!ok) alert('Este navegador no deja mantener la pantalla encendida.');
+    return;
+  }
+
   if (accion === 'atras') return history.back();
   if (accion === 'editar') return location.hash = `#/r/${vistaActual.params.id}/editar`;
   if (accion === 'cancelar') return history.back();

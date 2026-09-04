@@ -1,4 +1,5 @@
 import { aHtml, escapar } from './markdown.js';
+import { colorCategoria } from './categorias.js';
 
 // Traduce los códigos internos de recipe.js (§8: "se indexa con lo que se
 // pueda rescatar y se muestra como texto plano con un aviso") a un texto que
@@ -18,56 +19,70 @@ function avisosLegibles(avisos) {
   return [...new Set(lista.map(a => AVISOS_LEGIBLES[a]).filter(Boolean))];
 }
 
+/** Cuenta los ítems de una lista markdown, para el número del rótulo. */
+function cuentaItems(md) {
+  return String(md ?? '').split('\n').filter(l => /^\s*[-*]\s+\S/.test(l)).length;
+}
+
+/**
+ * Una sola columna, sin pestañas: cocinando hacen falta los ingredientes y los
+ * pasos a la vez, y las pestañas obligaban a saltar entre las dos cosas con
+ * las manos ocupadas. Las secciones se apilan en el orden del §3.2, y los
+ * ingredientes quedan a un toque en la barra pegajosa mientras se lee la
+ * preparación.
+ */
 export function renderDetalle(args = {}) {
-  const { entrada = {}, receta = {}, pestana = 'ingredientes' } = args || {};
+  const { entrada = {}, receta = {}, ingredientesPlegados = false } = args || {};
 
-  // Normalizar con ?? para manejar null
-  const recetaNorm = receta ?? {};
-  const entradaNorm = entrada ?? {};
+  const r = receta ?? {};
+  const e = entrada ?? {};
 
-  const meta = [recetaNorm.rinde, recetaNorm.tiempo, recetaNorm.dificultad].filter(Boolean).join(' · ');
-  const variaciones = (recetaNorm.variaciones ? recetaNorm.variaciones.split(/^###\s+/m).filter(Boolean).length : 0);
-  const notas = (recetaNorm.notas ? 1 : 0) + variaciones + (recetaNorm.otras?.length ?? 0);
-  const incompleto = entradaNorm?.tags?.includes('incompleto');
-  const avisos = avisosLegibles(recetaNorm.avisos);
+  const meta = [r.rinde, r.tiempo, r.dificultad].filter(Boolean).join(' · ');
+  const incompleto = e?.tags?.includes('incompleto');
+  const avisos = avisosLegibles(r.avisos);
+  const categoria = e?.categoria ?? '';
 
-  const cuerpos = {
-    ingredientes: aHtml(recetaNorm.ingredientes),
-    preparacion: aHtml(recetaNorm.preparacion, { pasos: true }),
-    notas: [
-      recetaNorm.notas ? aHtml(recetaNorm.notas) : '',
-      recetaNorm.variaciones ? `<h2>Variaciones</h2>${aHtml(recetaNorm.variaciones)}` : '',
-      ...(recetaNorm.otras ?? []).map(o => `<h2>${escapar(o.encabezado)}</h2>${aHtml(o.cuerpo)}`)
-    ].filter(Boolean).join('')
-  };
-
-  const pestanasInfo = [
-    ['ingredientes', 'Ingredientes', !!recetaNorm.ingredientes],
-    ['preparacion', 'Preparación', !!recetaNorm.preparacion],
-    ['notas', notas ? `Notas · ${notas}` : 'Notas', notas > 0]
-  ];
-
-  // Si la pestaña solicitada no existe o está deshabilitada, caer a la primera con contenido
-  let pestanaActiva = pestana;
-  if (!pestanasInfo.some(p => p[0] === pestana && p[2])) {
-    const primera = pestanasInfo.find(p => p[2]);
-    pestanaActiva = primera ? primera[0] : 'ingredientes';
-  }
-
-  const pestanas = pestanasInfo.map(([clave, texto, activa]) => `
-    <button class="pestana" data-pestana="${clave}" aria-selected="${clave === pestanaActiva}"${activa ? '' : ' disabled'}>${escapar(texto)}</button>`).join('');
+  const otras = (r.otras ?? []).map(o =>
+    seccion(escapar(o.encabezado), '', `<div class="cuerpo-seccion">${aHtml(o.cuerpo)}</div>`)).join('');
 
   return `
-    <header class="encabezado">
-      <button data-accion="atras" aria-label="Volver">‹</button>
-      <button data-accion="editar" aria-label="Editar">Editar</button>
-    </header>
-    <div class="contenido">
-      <h1 class="${incompleto ? 'incompleto' : ''}">${escapar(recetaNorm.titulo ?? entradaNorm?.titulo ?? '')}</h1>
-      ${avisos.length ? `<p class="aviso">⚠ ${avisos.map(escapar).join(' · ')}</p>` : ''}
-      ${meta ? `<p class="meta">${escapar(meta)}</p>` : ''}
-      ${recetaNorm.descripcion ? aHtml(recetaNorm.descripcion) : ''}
+    <div class="banda" style="--cat:${colorCategoria(categoria)}"></div>
+    <nav class="nav-detalle">
+      <button data-accion="atras">‹ ${escapar(categoria || 'Volver')}</button>
+      <button data-accion="editar">Editar</button>
+    </nav>
+    <h1 class="titulo-receta${incompleto ? ' incompleto' : ''}">${escapar(r.titulo ?? e?.titulo ?? '')}</h1>
+    ${meta ? `<p class="meta-receta">${escapar(meta)}</p>` : ''}
+    ${avisos.length ? `<p class="meta-receta aviso">⚠ ${avisos.map(escapar).join(' · ')}</p>` : ''}
+    ${r.descripcion ? `<div class="cuerpo-seccion">${aHtml(r.descripcion)}</div>` : ''}
+
+    <div class="acciones">
+      <button data-accion="pantalla" aria-pressed="false">Pantalla activa</button>
+      <button data-accion="texto-grande" aria-pressed="false">Texto grande</button>
     </div>
-    <nav class="pestanas">${pestanas}</nav>
-    <section class="contenido" data-cuerpo>${cuerpos[pestanaActiva] ?? ''}</section>`;
+
+    ${r.ingredientes ? `
+      <button class="plegable" data-accion="ingredientes" aria-expanded="${!ingredientesPlegados}">
+        <span>Ingredientes</span>
+        <span class="cuenta">${cuentaItems(r.ingredientes)} ${ingredientesPlegados ? '⌄' : '⌃'}</span>
+      </button>
+      ${ingredientesPlegados ? '' : `<div class="cuerpo-seccion" data-ingredientes>${aHtml(r.ingredientes)}</div>`}` : ''}
+
+    ${r.preparacion ? seccion('Preparación', '',
+      `<div style="--cat:${colorCategoria(categoria)}">${aHtml(r.preparacion, { pasos: true })}</div>`) : ''}
+    ${r.variaciones ? seccion('Variaciones', cuentaSecciones(r.variaciones),
+      `<div class="cuerpo-seccion">${aHtml(r.variaciones)}</div>`) : ''}
+    ${r.notas ? seccion('Notas', cuentaItems(r.notas),
+      `<div class="cuerpo-seccion">${aHtml(r.notas)}</div>`) : ''}
+    ${otras}`;
+}
+
+function cuentaSecciones(md) {
+  return String(md ?? '').split(/^###\s+/m).filter(Boolean).length;
+}
+
+function seccion(rotulo, cuenta, cuerpo) {
+  return `
+    <div class="seccion"><span>${rotulo}</span><span>${cuenta === '' ? '' : cuenta}</span></div>
+    ${cuerpo}`;
 }

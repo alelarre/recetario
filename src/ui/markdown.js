@@ -46,7 +46,9 @@ export function aHtml(texto, { pasos = false } = {}) {
 
     if (num) {
       cerrarParrafo();
-      if (lista !== 'ol') { cerrarLista(); salida.push('<ol>'); lista = 'ol'; }
+      // La clase va acá y no en quien llama: con `pasos` esta misma <ol> es la
+      // lista de pasos tildables del detalle, y el CSS la necesita para numerar.
+      if (lista !== 'ol') { cerrarLista(); salida.push(pasos ? '<ol class="pasos">' : '<ol>'); lista = 'ol'; }
       salida.push(pasos
         ? `<li class="paso"><button class="check" aria-pressed="false" aria-label="Marcar paso"></button><span>${enLinea(num[1])}</span></li>`
         : `<li>${enLinea(num[1])}</li>`);

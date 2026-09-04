@@ -35,6 +35,38 @@ describe('renderHome', () => {
   });
 });
 
+  it('ordena las categorías alfabéticamente, no por cantidad', () => {
+    // Por cantidad, la grilla se reacomodaría entera cada vez que se agrega
+    // una receta y se perdería la posición aprendida.
+    const html = renderHome({ categorias: [
+      { nombre: 'Postres', cantidad: 7 },
+      { nombre: 'Arroces y legumbres', cantidad: 3 },
+      { nombre: 'Carnes', cantidad: 4 },
+    ] });
+    expect(html.indexOf('Arroces y legumbres')).toBeLessThan(html.indexOf('Carnes'));
+    expect(html.indexOf('Carnes')).toBeLessThan(html.indexOf('Postres'));
+  });
+
+  it('pliega las categorías vacías sin hacerlas desaparecer', () => {
+    // Crear una carpeta en Drive tiene que seguir siendo evidente.
+    const cats = [{ nombre: 'Carnes', cantidad: 4 }, { nombre: 'Pastas', cantidad: 0 }];
+    const plegado = renderHome({ categorias: cats });
+    expect(plegado).toContain('1 categoría vacía');
+    expect(plegado).not.toContain('#/c/Pastas');
+
+    const abierto = renderHome({ categorias: cats, vaciasVisibles: true });
+    expect(abierto).toContain('#/c/Pastas');
+  });
+
+  it('«Nueva receta» sale del menú de mantenimiento', () => {
+    // Convivía con Reconstruir índice y Reconectar cuenta: una acción de todos
+    // los días mezclada con lo que se usa una vez por mes.
+    const html = renderHome({ categorias: [] });
+    const menu = html.slice(html.indexOf('class="menu"'));
+    expect(menu).not.toContain('#/nueva');
+    expect(html).toContain('class="alta" href="#/nueva"');
+  });
+
 describe('renderLista', () => {
   it('dibuja una fila por receta con la meta en una línea', () => {
     const html = renderLista({ titulo: 'Carnes', entradas: ENTRADAS });
@@ -54,7 +86,32 @@ describe('renderLista', () => {
     expect(html).toContain('aria-pressed="true"');
   });
 
-  it('una categoría vacía dice que está vacía en vez de quedar en blanco', () => {
-    expect(renderLista({ titulo: 'Carnes', entradas: [] })).toContain('Todavía no hay recetas');
+  it('una categoría vacía dice qué hacer, no queda en blanco', () => {
+    const html = renderLista({ titulo: 'Carnes', entradas: [],
+      vacio: { titulo: 'Todavía no hay nada acá', detalle: 'Las recetas entran como .md en Drive.' } });
+    expect(html).toContain('Todavía no hay nada acá');
+    expect(html).toContain('Las recetas entran como .md en Drive.');
+  });
+
+  it('la búsqueda separa las coincidencias por nombre de las de ingrediente', () => {
+    // El motor ya matcheaba las dos cosas, pero devolvía una lista plana:
+    // buscabas "berenjena" y no sabías por qué había aparecido cada resultado.
+    const html = renderLista({ titulo: '"berenjena"', grupos: {
+      porNombre: [{ id_archivo: 'a', titulo: 'Escabeche de berenjenas', categoria: 'Entradas y picadas', tags: [] }],
+      porIngrediente: [{ id_archivo: 'b', titulo: 'Baba ganush', categoria: 'Entradas y picadas', tags: [] }],
+    } });
+    expect(html).toContain('Por nombre · 1');
+    expect(html).toContain('Por ingrediente · 1');
+    expect(html).toContain('<span class="cuenta">2</span>');
+  });
+
+  it('el chip de color aparece en la búsqueda y no dentro de una categoría', () => {
+    // Vienen categorías mezcladas: ahí el color informa. Dentro de una
+    // categoría serían veinte cuadraditos iguales que no dicen nada.
+    const entrada = { id_archivo: 'a', titulo: 'X', categoria: 'Carnes', tags: [] };
+    const busqueda = renderLista({ titulo: '"x"', grupos: { porNombre: [entrada], porIngrediente: [] } });
+    const categoria = renderLista({ titulo: 'Carnes', entradas: [entrada] });
+    expect(busqueda).toContain('class="marca"');
+    expect(categoria).not.toContain('class="marca"');
   });
 });

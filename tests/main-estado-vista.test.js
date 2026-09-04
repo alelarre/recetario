@@ -1,10 +1,11 @@
-// tests/main-pestana.test.js
+// tests/main-estado-vista.test.js
 //
-// `pestana` vive en el módulo de main.js, no en la ruta: es la única pieza de
-// estado de la vista de detalle que sobrevive a un render. Por eso hay que
-// probar acá que se resetea al cambiar de receta, igual que main-nueva-receta:
-// simulando el entorno global y mirando con qué pestaña se llama a
-// renderDetalle.
+// El estado de la vista de detalle vive en el módulo de main.js, no en la
+// ruta, así que sobrevive a un render y hay que resetearlo a mano al cambiar
+// de receta. Antes el que se arrastraba era la pestaña abierta; ahora que las
+// pestañas se fueron, el que queda es el plegado de los ingredientes — mismo
+// bug, otro mecanismo. Se prueba simulando el entorno global y mirando con
+// qué argumentos se llama a renderDetalle.
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
@@ -41,7 +42,7 @@ async function esperarMicrotareas(vueltas = 5) {
   for (let i = 0; i < vueltas; i++) await new Promise(r => setTimeout(r, 0));
 }
 
-describe('main.js: la pestaña del detalle', () => {
+describe('main.js: el estado de la vista de detalle', () => {
   afterEach(() => {
     delete global.document;
     delete global.window;
@@ -49,7 +50,7 @@ describe('main.js: la pestaña del detalle', () => {
     delete global.history;
   });
 
-  it('vuelve a Ingredientes al abrir otra receta', async () => {
+  it('el plegado de ingredientes no se arrastra a la receta siguiente', async () => {
     const hashListeners = {};
     const clickListeners = [];
     const app = {
@@ -64,27 +65,27 @@ describe('main.js: la pestaña del detalle', () => {
     await import('../src/main.js');
     await esperarMicrotareas();
 
-    // Receta A: arranca en ingredientes
+    // Receta A: los ingredientes arrancan a la vista
     global.location.hash = '#/r/A';
     hashListeners.hashchange();
     await esperarMicrotareas();
-    expect(detalleSpy.mock.lastCall[0].pestana).toBe('ingredientes');
+    expect(detalleSpy.mock.lastCall[0].ingredientesPlegados).toBe(false);
 
-    // El usuario toca "Notas" en A
-    const botonNotas = {
-      dataset: { pestana: 'notas' }, classList: { contains: () => false },
+    // El usuario pliega los ingredientes en A
+    const boton = {
+      dataset: { accion: 'ingredientes' }, classList: { contains: () => false },
       closest: () => null, tagName: 'BUTTON'
     };
     for (const fn of clickListeners) {
-      await fn({ target: { closest: (sel) => (sel.includes('data-pestana') ? botonNotas : null) } });
+      await fn({ target: { closest: (sel) => (sel.includes('data-accion') ? boton : null) } });
     }
     await esperarMicrotareas();
-    expect(detalleSpy.mock.lastCall[0].pestana).toBe('notas');
+    expect(detalleSpy.mock.lastCall[0].ingredientesPlegados).toBe(true);
 
-    // Receta B: tiene que volver al default, no heredar "notas"
+    // Receta B: tiene que abrir con los ingredientes a la vista
     global.location.hash = '#/r/B';
     hashListeners.hashchange();
     await esperarMicrotareas();
-    expect(detalleSpy.mock.lastCall[0].pestana).toBe('ingredientes');
+    expect(detalleSpy.mock.lastCall[0].ingredientesPlegados).toBe(false);
   });
 });

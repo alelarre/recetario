@@ -1,11 +1,17 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--fondo); color: var(--texto); font-family: var(--tipo); font-size: var(--t-cuerpo); line-height: var(--interlineado); }
 a, button { font: inherit; color: inherit; }
+a { text-decoration: none; }
 button { background: none; border: 0; cursor: pointer; min-height: var(--tactil); min-width: var(--tactil); }
+:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
 
-.encabezado { display: flex; align-items: center; gap: var(--margen); padding: var(--margen); border-bottom: 1px solid var(--separador); }
-.encabezado h1 { font-size: var(--t-titulo); margin: 0; flex: 1; }
-.buscador { width: 100%; padding: 0.75rem; border: 1px solid var(--separador); border-radius: var(--radio); background: var(--superficie); color: var(--texto); }
+.encabezado { display: flex; align-items: center; gap: var(--margen); padding: var(--margen); }
+.encabezado h1 { font-family: var(--display); font-variation-settings: 'wdth' 90; font-weight: 700; font-size: var(--t-titulo); letter-spacing: -0.02em; margin: 0; flex: 1; }
+.encabezado button { min-width: 0; }
+
+.buscador { width: 100%; padding: 0.8125rem 0.875rem; border: 1px solid var(--separador); border-radius: var(--radio); background: var(--superficie); color: var(--texto); }
+.buscador::placeholder { color: var(--texto-2); }
+.busca { padding: 0 var(--margen) 0.75rem; }
 
 /* Menú de acciones del home. Se muestra y oculta con el atributo `hidden`, y va
    anclado bajo el botón ⋯ del encabezado: sin esto aparecía al final de la
@@ -14,48 +20,142 @@ button { background: none; border: 0; cursor: pointer; min-height: var(--tactil)
   display: flex; flex-direction: column; gap: var(--gap); padding: 0.5rem;
   min-width: 15rem; background: var(--superficie);
   border: 1px solid var(--separador); border-radius: var(--radio); }
-.menu button, .menu .tile { text-align: left; padding: 0.5rem 0.75rem;
+.menu button { text-align: left; padding: 0.5rem 0.75rem;
   background: none; min-height: var(--tactil); border-radius: var(--radio); }
 .menu .cuenta { display: block; color: var(--texto-2); font-size: var(--t-meta); }
 /* `display: flex` de arriba le gana a la regla `[hidden] { display: none }` del
    navegador, que es de user-agent. Sin esta línea el menú no se oculta nunca. */
 .menu[hidden] { display: none; }
 
-.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: var(--margen); }
-.tile { text-align: left; padding: 1rem; border-radius: var(--radio); background: var(--superficie); min-height: 4.5rem; }
-.tile .cuenta { display: block; color: var(--texto-2); font-size: var(--t-meta); }
+/* La acción de todos los días vive fuera del menú, que queda para el
+   mantenimiento que se usa una vez por mes. */
+.alta { display: block; margin: 0 var(--margen) 1.25rem; padding: 0.875rem;
+  text-align: center; font-weight: 600; border-radius: var(--radio);
+  border: 1px solid var(--separador); background: var(--superficie); width: calc(100% - 2 * var(--margen)); }
+
+/* --- Tiles de categoría: la foto identifica, el color hilvana ------------- */
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; padding: 0 var(--margen) var(--margen); }
+.tile { position: relative; display: flex; flex-direction: column; justify-content: flex-end;
+  min-height: 6.5rem; padding: 0; overflow: hidden; border-radius: var(--radio);
+  background: var(--cat, var(--superficie)); border-bottom: 3px solid var(--cat, var(--separador)); }
+.tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tile .velo { position: absolute; inset: 0; background: var(--velo); }
+/* Sin foto el velo sobra: taparía el color, que es lo único que queda. */
+.tile:not(:has(img)) .velo { background: linear-gradient(to top, rgba(8, 7, 12, 0.5), transparent 60%); }
+.tile .pie { position: relative; display: flex; justify-content: space-between; align-items: flex-end; gap: 0.5rem; padding: 0.625rem 0.6875rem; }
+.tile .nombre { font-size: 0.8125rem; font-weight: 600; line-height: 1.18; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+.tile .cuenta { font-family: var(--mono); font-size: 1rem; font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+
+/* Las categorías vacías no desaparecen —crear una carpeta en Drive tiene que
+   seguir siendo evidente— pero dejan de competir por la pantalla. */
+.vacias { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
+  margin: 0 var(--margen) 1.25rem; padding: 0.8125rem 0.9375rem; width: calc(100% - 2 * var(--margen));
+  color: var(--texto-2); font-size: var(--t-chip); text-align: left;
+  border: 1px dashed var(--separador); border-radius: var(--radio); }
+.vacias[aria-expanded="true"] { margin-bottom: 0.5rem; }
 
 .chips { display: flex; gap: var(--gap); overflow-x: auto; padding: 0.5rem var(--margen); }
-.chip { padding: 0.375rem 0.75rem; border-radius: 999px; background: var(--superficie); font-size: var(--t-chip); white-space: nowrap; }
+.chip { padding: 0.375rem 0.75rem; border-radius: 999px; background: var(--superficie); font-size: var(--t-chip); white-space: nowrap; min-height: 0; }
 .chip[aria-pressed="true"] { background: var(--acento); color: var(--fondo); }
 
-.fila { display: flex; gap: 0.75rem; align-items: center; padding: 0.75rem var(--margen); border-bottom: 1px solid var(--separador); width: 100%; text-align: left; }
+/* --- Listas -------------------------------------------------------------- */
+.rotulo { font-family: var(--mono); font-size: var(--t-rotulo); letter-spacing: 0.13em;
+  text-transform: uppercase; color: var(--texto-2); padding: 1rem var(--margen) 0.375rem; }
+.fila { display: flex; gap: 0.75rem; align-items: center; padding: 0.6875rem var(--margen); border-bottom: 1px solid var(--separador); width: 100%; text-align: left; }
 .fila .titulo { font-size: var(--t-fila); font-weight: 550; }
-.fila .meta { font-size: var(--t-meta); color: var(--texto-2); }
-.aviso { font-size: var(--t-meta); color: var(--ambar); }
-.incompleto::after { content: ""; display: inline-block; width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--ambar); margin-left: 0.375rem; vertical-align: middle; }
+.fila .meta { display: block; font-size: var(--t-meta); color: var(--texto-2); }
+/* El chip de color sólo aparece donde vienen categorías mezcladas: dentro de
+   una categoría serían veinte cuadraditos iguales que no dicen nada. */
+.fila .marca { flex: none; width: 2.375rem; height: 2.375rem; border-radius: 0.5625rem; background: var(--cat); overflow: hidden; }
+.fila .marca img { width: 100%; height: 100%; object-fit: cover; }
 
-.pestanas { display: flex; gap: 1rem; padding: 0 var(--margen); border-bottom: 1px solid var(--separador); }
-.pestana[aria-selected="true"] { color: var(--acento); box-shadow: inset 0 -2px 0 var(--acento); font-weight: 600; }
-.pestana[disabled] { color: var(--texto-2); opacity: 0.5; }
+/* `incompleto` deja de ser un punto ámbar: con 16 colores de categoría en
+   juego se confundiría con uno de ellos. Estado y categoría dejan de pelear
+   por el mismo canal. */
+.fila.incompleto { border-left: 2px solid var(--texto); padding-left: calc(var(--margen) - 2px); }
+.fila.incompleto .titulo { font-style: italic; }
+.aviso { font-size: var(--t-meta); color: var(--texto-2); }
+
+.vacio { padding: 2.5rem var(--margen); text-align: center; color: var(--texto-2); }
+.vacio strong { display: block; font-family: var(--display); font-weight: 700; color: var(--texto); font-size: var(--t-seccion); margin-bottom: 0.375rem; }
+
+/* --- Detalle ------------------------------------------------------------- */
+/* La banda es el lugar reservado para la foto de la receta (§3.3): hoy lleva
+   sólo el color de su categoría, y el día que haya imagen se expande sin que
+   el título se mueva, porque el título nunca vivió adentro. */
+.banda { height: 5rem; background: var(--cat, var(--superficie)); }
+.nav-detalle { display: flex; justify-content: space-between; gap: var(--margen); padding: 0.75rem var(--margen) 0; }
+.nav-detalle button { min-height: 0; color: var(--texto-2); font-size: var(--t-chip); }
+.titulo-receta { font-family: var(--display); font-variation-settings: 'wdth' 86; font-weight: 700;
+  font-size: var(--t-titulo); line-height: 1.06; letter-spacing: -0.02em; text-wrap: balance;
+  margin: 0.5rem 0 0.25rem; padding: 0 var(--margen); }
+.meta-receta { padding: 0 var(--margen) 0.875rem; color: var(--texto-2); font-size: var(--t-meta); }
+
+.acciones { display: flex; gap: 0.5rem; padding: 0 var(--margen) 1rem; }
+.acciones button { min-height: 0; padding: 0.625rem 0.875rem; font-size: var(--t-chip); font-weight: 600;
+  border: 1px solid var(--separador); border-radius: 0.625rem; background: var(--superficie); }
+.acciones button[aria-pressed="true"] { background: var(--acento); color: var(--fondo); border-color: var(--acento); }
+
+.seccion { display: flex; justify-content: space-between; gap: var(--margen);
+  font-family: var(--mono); font-size: var(--t-rotulo); letter-spacing: 0.13em;
+  text-transform: uppercase; color: var(--texto-2);
+  padding: 1rem var(--margen) 0.5rem; border-top: 1px solid var(--separador); }
+
+/* Los ingredientes se pliegan en una barra pegajosa al bajar a la preparación:
+   cocinando hacen falta las dos cosas, y las pestañas obligaban a saltar. */
+.plegable { position: sticky; top: 0; z-index: 2; width: 100%; min-height: 0;
+  display: flex; justify-content: space-between; align-items: center; gap: var(--margen);
+  padding: 0.6875rem var(--margen); text-align: left; font-size: var(--t-chip);
+  background: var(--superficie); border-bottom: 1px solid var(--separador); }
+.plegable .cuenta { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+.ingredientes { list-style: none; margin: 0; padding: 0 var(--margen) 0.75rem; }
+.ingredientes li { display: grid; grid-template-columns: 4.875rem 1fr; gap: 0.625rem; padding: 0.1875rem 0; font-size: var(--t-paso); }
+/* La monoespaciada alinea las cantidades en columna: se escanean los números
+   sin leer el renglón entero. */
+.ingredientes .cant { font-family: var(--mono); font-size: 0.84em; color: var(--texto-2);
+  font-variant-numeric: tabular-nums; text-align: right; padding-top: 0.15em; }
+
 .contenido { padding: var(--margen); }
-.contenido h3 { font-size: var(--t-seccion); }
+.contenido h3 { font-family: var(--display); font-size: var(--t-seccion); }
 .contenido img { max-width: 100%; border-radius: var(--radio); }
+.cuerpo-seccion { padding: 0 var(--margen) 1rem; font-size: var(--t-paso); }
+.cuerpo-seccion img { max-width: 100%; border-radius: var(--radio); }
 
-.paso { display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 1.25rem; list-style: none; } /* margen = 2 × extensión del área táctil (0.625rem) para evitar solape */
-.paso .check { flex: none; width: 1.5rem; height: 1.5rem; min-width: 0; min-height: 0; border: 2px solid var(--texto-2); border-radius: 50%; position: relative; }
+.pasos { list-style: none; margin: 0; padding: 0.25rem var(--margen) 1.75rem; counter-reset: paso; }
+.paso { display: grid; grid-template-columns: 1.625rem 1fr; gap: 0.75rem; align-items: start;
+  padding: 0.625rem 0; font-size: var(--t-paso); line-height: 1.5; }
+.paso .check { counter-increment: paso; position: relative; flex: none;
+  width: 1.5rem; height: 1.5rem; min-width: 0; min-height: 0; padding: 0;
+  display: grid; place-items: center; font-family: var(--mono); font-size: 0.8em; font-weight: 500;
+  color: var(--texto-2); border: 1px solid var(--separador); border-radius: 0.4375rem; }
+.paso .check::before { content: counter(paso); }
+/* El área táctil se extiende más allá del círculo; el margen de 0.625rem
+   arriba y abajo evita que dos pasos seguidos se pisen. */
 .paso .check::after { content: ""; position: absolute; inset: -0.625rem; }
-.paso .check[aria-pressed="true"] { background: var(--acento); border-color: var(--acento); }
-.paso .check[aria-pressed="true"] + span { color: var(--texto-2); text-decoration: line-through; }
-ol:has(.paso) { padding: 0; }
+.paso .check[aria-pressed="true"] { background: var(--cat, var(--acento)); border-color: transparent; color: var(--fondo); }
+.paso .check[aria-pressed="true"]::before { content: "✓"; }
+.paso .check[aria-pressed="true"] + span { color: var(--texto-2); }
 
+.notas { margin: 0; padding: 0 var(--margen) 1.25rem 2rem; }
+.notas li { font-size: var(--t-paso); line-height: 1.5; padding: 0.1875rem 0; }
+
+/* --- Editor -------------------------------------------------------------- */
 .campo { display: block; margin-bottom: 0.75rem; }
-.campo span { display: block; font-size: var(--t-meta); color: var(--texto-2); text-transform: uppercase; letter-spacing: 0.05em; }
-.campo input, .campo select, .campo textarea { width: 100%; padding: 0.5rem; border: 1px solid var(--separador); border-radius: var(--radio); background: var(--fondo); color: var(--texto); }
-.campo textarea { font-family: var(--mono); font-size: 0.9375rem; min-height: 8rem; }
-.otras { border: 1px dashed var(--ambar); border-radius: var(--radio); padding: 0.75rem; }
+.campo span { display: block; font-family: var(--mono); font-size: var(--t-rotulo); color: var(--texto-2); text-transform: uppercase; letter-spacing: 0.11em; margin-bottom: 0.25rem; }
+.campo input, .campo select, .campo textarea { width: 100%; padding: 0.625rem; border: 1px solid var(--separador); border-radius: 0.625rem; background: var(--superficie); color: var(--texto); }
+/* El editor muestra markdown crudo a propósito (§7.2: existe para corregir, no
+   para componer). La monoespaciada lo vuelve legible y dice la verdad sobre el
+   dato: esto es un archivo de texto. */
+.campo textarea { font-family: var(--mono); font-size: 0.9375rem; line-height: 1.5; min-height: 8rem; }
+.otras { border: 1px dashed var(--separador); border-radius: var(--radio); padding: 0.75rem; }
 
+/* --- Visor de fotos ------------------------------------------------------ */
 .visor { position: fixed; inset: 0; background: var(--fondo-visor); z-index: 999; display: flex; align-items: center; justify-content: center; }
 .visor img { max-width: 90%; max-height: 90%; object-fit: contain; }
 .visor button { color: var(--texto-visor); }
 .visor-contador { position: fixed; bottom: var(--margen); left: 50%; transform: translateX(-50%); color: var(--texto-visor); font-size: var(--t-meta); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .paso .check, .acciones button { transition: background-color .15s ease, color .15s ease; }
+}
