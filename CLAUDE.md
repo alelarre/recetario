@@ -57,6 +57,12 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | Guardar fotos en Drive, miniaturas, imagen de portada | Decidido el 2026-09-02. Mostrar una foto de Drive obliga a pedirla con el token y armar un object URL; las miniaturas, a mantener un mapa de `thumbnailLink` que caduca. Demasiado para un recetario donde casi ninguna receta va a tener imagen. Solo URLs externas, dibujadas donde estén (§3.3). |
 | Funcionar sin conexión | Salió de v1 el 2026-09-02. El índice ya se guarda en IndexedDB; usarlo para dibujar antes de la red quedó inventariado en el §11. |
 | AppSheet, Apps Script, apps nativas, Artifact de Claude | Evaluadas como plataforma y descartadas (§2). |
+| Pestañas en el detalle | Costaban cuatro toques para leer una receta entera y escondían las notas y las variaciones justo cuando se cocina. Reemplazadas el 2026-09-04 por una columna sola con los ingredientes en barra pegajosa. |
+| Derivar el color de categoría de un hash del nombre | Medido: con 16 categorías siempre agrupa. `Pescados y mariscos` y `Ensaladas` caían en el mismo matiz exacto. La paleta es una lista escrita a mano, con 14° de separación mínima. |
+| Identificar las categorías por una abreviación de 3 letras | Hay que aprenderlas. La foto se reconoce sin memorizar nada, y el nombre completo está escrito al lado igual. |
+| Las fotos de categoría en `public/` o en Drive | `sw.js` sirve caché-primero solo `/assets/`; en `public/` serían 16 pedidos de red por apertura. Desde Drive haría falta el token y un object URL, que es lo que hizo descartar las fotos de receta. Van en `src/categorias/`, importadas con `import.meta.glob`. |
+| Ordenar el home por cantidad de recetas | Reacomoda la grilla cada vez que entra una receta, y la posición de la categoría es justo lo que se aprende. Alfabético. |
+| Una paleta clara, o `prefers-color-scheme` | La app se abre en la cocina, de noche. Un solo tema oscuro es un solo juego de tokens, y deja que las fotos sean lo único con color. |
 | `drive.file` como scope, y el Google Picker | Medido el 2026-09-01: es estrictamente por archivo. Con `Recetario/` elegida en el Picker, la app no veía ninguna de las 16 subcarpetas ni un solo `.md` ajeno — y los `.md` los escriben agentes por fuera. |
 | Detectar y reparar la planilla del índice corrupta o incompleta | Decidido el 2026-09-03. Siempre que el índice esté corrupto o incompleto, la recuperación es borrar el archivo `_indice` en Drive y dejar que la app lo cree de nuevo (arranca en el caso "falta-estructura" de `store.js`, que llama a `crearPlanilla()` y reconstruye solo). Diagnosticar cada tipo de daño posible para repararlo in situ es más trabajo y más riesgo que recrear desde los `.md`, que son la fuente de verdad. |
 
@@ -128,4 +134,12 @@ Quedaron en `.superpowers/brainstorm/*/content/` (fuera de git). De la sesión d
 layout: `home`, `cocina`, `secciones`, `fotos`, `bandeja`, `editor`, `editor-v2`,
 `categoria`. De la sesión visual: `neutro-y-acento`, `densidad`. Sirven para
 recordar qué se comparó, no como especificación — lo decidido está en el §7.2 y
-el §7.3 del spec.
+el §7.3 del spec, reescritos enteros el 2026-09-04 con el rediseño.
+
+## Las fotos de las categorías
+
+Los 16 `.webp` de `src/categorias/` son recortes de una sola imagen generada por
+un agente (una grilla de 5×3), salvo `otros.webp`, que es pixel art compuesto
+sobre el color de la categoría. El nombre del archivo es el slug de la carpeta:
+así se agrega una foto nueva sin tocar código. Una categoría sin foto se dibuja
+con su color plano y no rompe nada.

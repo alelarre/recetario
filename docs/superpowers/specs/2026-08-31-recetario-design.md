@@ -415,39 +415,75 @@ Más `ui/` con las vistas de §7.2 y `sw.js` para el app shell.
 **Un solo diseño, pensado para el celular.** La Mac usa la misma interfaz en una
 ventana más ancha; no hay dos diseños que mantener.
 
-**Home — categorías.** Grilla de tiles, uno por subcarpeta, con el conteo de
-recetas de cada una. Buscador en el encabezado. La raíz aparece como un tile
-más, "Sin categorizar", que es donde quedan las capturas que un agente dejó sin
-archivar. En el hito 1 no hay barra de navegación inferior —el planificador es
-hito 2—: la navegación es un stack hacia adentro.
+**Home — categorías.** Buscador arriba de todo, y debajo una grilla de tiles,
+uno por subcarpeta, con el conteo de recetas de cada una. **Cada tile lleva la
+foto de su categoría**, con un velo que sostiene el nombre y un filo de 3 px con
+el color de la categoría (§7.3): eso es lo que se reconoce de un vistazo, sin
+leer las dieciséis. La raíz aparece como un tile más, "Sin categorizar", que es
+donde quedan las capturas que un agente dejó sin archivar.
+
+**Los tiles van en orden alfabético**, no por cantidad: ordenar por conteo
+reacomoda la grilla cada vez que entra una receta, y la posición de una
+categoría es justamente lo que se aprende. **Las categorías vacías se pliegan**
+detrás de una fila —"3 categorías vacías"— que las despliega: existen en Drive y
+tienen que poder abrirse, pero no ganan un tile hasta tener contenido.
+
+Al pie, **"Nueva receta"** como acción propia, no escondida en un menú: es la
+única forma de anotar algo sin un agente a mano (§11). En el hito 1 no hay barra
+de navegación inferior —el planificador es hito 2—: la navegación es un stack
+hacia adentro.
 
 En el encabezado del home hay un menú de overflow con las dos únicas acciones
-que no pertenecen a ninguna receta: **reconstruir el índice** —con la fecha de
-la última reconstrucción, que sale de la hoja `meta`— y **reconectar la cuenta**,
-que es la salida del token caído del §8. No hay pantalla de ajustes: no hay nada
-que ajustar.
+que no pertenecen a ninguna receta: **reconstruir el índice** —con la fecha y
+hora de la última reconstrucción, que sale de la hoja `meta`— y **reconectar la
+cuenta**, que es la salida del token caído del §8. No hay pantalla de ajustes:
+no hay nada que ajustar.
 
-**Categoría — y resultados del buscador.** Las dos usan la misma vista: lista
-compacta de una columna, con título y la meta en una línea
+**Categoría — y resultados del buscador.** Las dos usan la misma lista compacta
+de una columna, con título y la meta en una línea
 (`rinde` · `tiempo` · `dificultad`). Entran seis o siete por pantalla y aguanta
 cientos de recetas sin cambiar de forma. Es una lista de texto: las imágenes,
-cuando las hay, se ven al abrir la receta. Arriba, chips que filtran por tag dentro de la
-categoría. Las recetas con el tag `incompleto` llevan un punto ámbar.
+cuando las hay, se ven al abrir la receta. Arriba, chips que filtran por tag
+dentro de la categoría. Las recetas con el tag `incompleto` se dibujan en
+itálica con una barra del color de la categoría al costado: se leen distinto sin
+depender de que se vea un punto de color.
 
-**Detalle.** Título y meta (`rinde` · `tiempo` · `dificultad`),
-y tres pestañas:
+**El buscador agrupa por dónde coincidió**, con dos bloques rotulados: *por
+nombre* y *por ingrediente*. Son dos coincidencias de peso muy distinto y en una
+sola lista se mezclaban. Como los resultados cruzan categorías, cada fila lleva
+la foto de la suya como marca; en la vista de una categoría, donde todas son
+iguales, no lleva ninguna.
 
-- **Ingredientes**
-- **Preparación**
-- **Notas**, que agrupa `## Notas` y `## Variaciones`
+Una categoría sin recetas no muestra una lista vacía: dice qué falta y dónde
+—las recetas entran como `.md` en esa carpeta de Drive—, que es la única acción
+posible desde ahí.
 
-La pestaña Notas muestra el conteo —"Notas · 2"— y queda apagada cuando la
-receta no tiene ninguna, para que se vea que hay algo ahí sin tener que abrirla.
+**Detalle.** Una sola columna, sin pestañas. Las pestañas costaban cuatro toques
+para leer una receta entera y escondían las notas y las variaciones justo cuando
+se está cocinando; en una receta —que es texto corto— el scroll alcanza.
 
-Las imágenes se dibujan donde el Markdown las puso, dentro de la pestaña que les
-toca según su sección. Tocar cualquier foto abre un visor a
-pantalla completa con zoom y swipe entre todas las de la receta: **la galería es
-un visor, no una sección.**
+Arriba, una banda del color de la categoría: es el lugar reservado para una foto
+de portada si alguna vez las hay (§3.3), y mientras tanto ubica la receta en su
+categoría. Debajo, la vuelta a la categoría y "Editar"; después el título, la
+meta y las secciones en el orden en que se cocina: **Ingredientes**,
+**Preparación**, **Variaciones**, **Notas**, y al final las secciones que la app
+no reconoce.
+
+**Los ingredientes van en una barra pegajosa que se pliega.** Se consultan una y
+otra vez mientras se ejecutan los pasos, así que quedan siempre a la vista al
+tope; plegarlos —la barra muestra el conteo— devuelve la pantalla a la
+preparación. Los pasos van numerados; tocar uno lo marca con el color de la
+categoría.
+
+Dos acciones de cocina, que es donde se usa la app con las manos ocupadas:
+**"Pantalla activa"** toma un *wake lock* para que el celular no se apague a
+mitad de una receta, y **"Texto grande"** sube el tamaño de los pasos para leer
+de lejos. El wake lock se vuelve a pedir al volver a la app, porque el navegador
+lo suelta al pasar a segundo plano.
+
+Las imágenes se dibujan donde el Markdown las puso. Tocar cualquier foto abre un
+visor a pantalla completa con zoom y swipe entre todas las de la receta: **la
+galería es un visor, no una sección.**
 
 **Editor.** No es para escribir recetas, es para corregir lo que quedó mal.
 Formulario en una sola pantalla que scrollea:
@@ -477,50 +513,75 @@ depender de tener un agente a mano, no para componer recetas largas.
 
 ### 7.3 Lenguaje visual
 
-**La app no compite con el contenido.** Tipografía del sistema, escala de grises
-y un solo acento funcional: lo que tiene color en la pantalla es una foto o una
-receta a medio terminar.
+**El color lo ponen las categorías; la app no.** La interfaz es un fondo oscuro
+y un texto claro, y lo único que tiene color en la pantalla es una foto de
+categoría o el filo que la identifica. No hay un acento de marca compitiendo con
+eso.
 
-**Tipografía.** La pila del sistema (`system-ui`), sin descargar ninguna fuente:
-una petición menos en el arranque y nada que cachear. La
-monoespaciada del sistema se usa solo en los textareas del editor.
+**Oscuro, siempre.** No hay paleta clara ni `prefers-color-scheme`: la app se
+abre en la cocina, muchas veces de noche, y el fondo oscuro deja que las fotos
+sean lo único que ilumina. Un solo tema es también un solo juego de tokens que
+mantener.
 
-Todas las medidas van en `rem`, nunca en píxeles fijos. Así la app hereda el
-tamaño de letra configurado en Android: agrandarlo desde el sistema es lo que
-resuelve leer la receta de lejos mientras se cocina, sin una vista aparte ni una
-segunda escala que mantener.
+| token | valor |
+|---|---|
+| fondo | `#14131A` |
+| superficie (campos, menú, barras) | `#1E1C26` |
+| texto | `#EDEAE4` |
+| texto secundario | `#8A8598` |
+| separador | `#2C2936` |
+
+Los neutros no son grises de sistema: llevan el mismo tinte violeta, que es lo
+que los hace leer como elegidos y no como el default del navegador.
+
+**Un color por categoría.** Dieciséis matices repartidos a propósito, con 14° de
+separación mínima entre vecinos, todos con contraste AA. **No salen de un hash
+del nombre:** se midió, y con dieciséis categorías el hash agrupaba —`Pescados y
+mariscos` y `Ensaladas` caían en el mismo matiz exacto—. El color se resuelve
+desde el nombre de la carpeta, que es la única verdad del modelo (§3.1); una
+categoría nueva que nadie mapeó cae en un neutro y no rompe nada.
+
+El color hilvana la categoría a través de las vistas: el filo del tile en el
+home, la barra de una receta `incompleto`, el chip de los resultados de búsqueda
+y la banda del detalle.
+
+**Las fotos de categoría viven en el repo**, no en Drive: son dieciséis archivos
+que no cambian nunca, y pedirlos con el token en cada arranque sería la misma
+maquinaria que hizo descartar las fotos de receta (§3.3). Se importan desde
+`src/` —no desde `public/`— para que el build les ponga hash y caigan bajo
+`/assets/`, la única ruta que el service worker sirve caché-primero (§6).
+
+**Tipografía: tres roles, no una fuente de sistema.** La pila del sistema se
+veía como un documento sin diseñar, y el arranque ya depende de la red.
+
+| rol | fuente | uso |
+|---|---|---|
+| display | Bricolage Grotesque | títulos de pantalla y de receta |
+| texto | Instrument Sans | todo el cuerpo |
+| mono | JetBrains Mono | rótulos de sección, conteos, y el Markdown crudo del editor |
+
+Los rótulos en mono, en versalita y con tracking, son los que marcan la
+estructura de la receta sin usar peso ni color.
 
 | uso | tamaño | peso |
 |---|---|---|
-| Título de receta (detalle) | 1.375rem | 680 |
-| Encabezado `##` del cuerpo | 1.125rem | 650 |
-| Cuerpo: pasos, ingredientes, notas | 1.0625rem / interlineado 1.62 | 400 |
+| Título de pantalla y de receta | 1.75rem | 700 |
+| Encabezado `##` del cuerpo | 1.125rem | 600 |
+| Cuerpo: ingredientes, notas | 1.0625rem / interlineado 1.55 | 400 |
+| Paso de la preparación | 1.0625rem, o 1.375rem con "Texto grande" | 400 |
 | Título de fila en lista | 1rem | 550 |
-| Pestañas y chips | 0.875rem | 500 |
+| Chips | 0.875rem | 500 |
 | Meta (`rinde` · `tiempo` · `dificultad`) | 0.8125rem | 400 |
+| Rótulo de sección (mono, versalita) | 0.625rem | 500 |
 
-**Color.** Dos paletas, elegidas por `prefers-color-scheme`. No hay selector de
-tema en la app: manda el sistema, y así no hay preferencia que guardar ni
-sincronizar.
-
-| token | claro | oscuro |
-|---|---|---|
-| fondo | `#ffffff` | `#1c1c1e` |
-| superficie (chip) | `#f2f2f7` | `#2c2c2e` |
-| texto | `#1c1c1e` | `#f2f2f7` |
-| texto secundario | `#6e6e73` | `#98989d` |
-| separador | `#e5e5ea` | `#38383a` |
-| acento | `#0a5fd0` | `#5aa9ff` |
-| ámbar de `incompleto` | `#b06f00` | `#e0a94a` |
-
-El acento marca lo tocable —chip activo, pestaña seleccionada, paso marcado— y
-nada más. Los dos valores están elegidos por contraste, no por gusto: el azul
-del sistema (`#0a84ff`) da 3.1:1 sobre blanco y no alcanza para texto chico.
+Todas las medidas van en `rem`, nunca en píxeles fijos, así la app hereda el
+tamaño de letra del sistema. "Texto grande" del §7.2 no reemplaza eso: sube solo
+los pasos, que es lo que se lee de lejos, sin reacomodar el resto de la pantalla.
 
 **Densidad.** Espaciado en múltiplos de 4 px. Márgenes laterales de 16 px, filas
 de lista con 12 px arriba y abajo —seis o siete por pantalla, como pide el
-§7.2—, y 14 px entre pasos de la preparación. Radios de 8 px en las imágenes del cuerpo,
-`999px` en los chips.
+§7.2—, y 14 px entre pasos de la preparación. Radio de 12 px en tiles y
+superficies, `999px` en los chips.
 
 **Área táctil mínima de 44 px** en todo lo que se toca, aunque el elemento
 dibujado sea más chico. El caso que manda es marcar un paso con el dorso del
