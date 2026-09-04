@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from '../src/recipe.js';
 import { renderDetalle } from '../src/ui/detalle.js';
+import { invalido } from './aserciones.js';
 import { renderVisor } from '../src/ui/visor.js';
 
 const RECETA = parse(`---
@@ -73,13 +74,13 @@ describe('renderDetalle', () => {
 
   it('las secciones desconocidas se muestran en Notas y no se pierden', () => {
     const r = parse(`---\ntitulo: X\n---\n\n## Maridaje\nMalbec.\n`);
-    const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'notas' });
+    const html = renderDetalle({ entrada: ENTRADA, receta: r });
     expect(html).toContain('Maridaje');
     expect(html).toContain('Malbec.');
   });
 
   it('una receta incompleta se ve marcada también en el detalle', () => {
-    const html = renderDetalle({ entrada: { ...ENTRADA, tags: ['incompleto'] }, receta: RECETA, pestana: 'ingredientes' });
+    const html = renderDetalle({ entrada: { ...ENTRADA, tags: ['incompleto'] }, receta: RECETA });
     expect(html).toContain('incompleto');
   });
 
@@ -92,7 +93,7 @@ describe('renderDetalle', () => {
     it('el frontmatter ilegible se traduce a texto legible, sin el código interno', () => {
       const r = parse(`---\ntitulo: X\nesto no es valido\n---\n\n## Ingredientes\n- sal\n`);
       expect(r.avisos).toContain('frontmatter-ilegible');
-      const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'ingredientes' });
+      const html = renderDetalle({ entrada: ENTRADA, receta: r });
       expect(html).toContain('el frontmatter no se pudo leer');
       expect(html).not.toContain('frontmatter-ilegible');
     });
@@ -100,7 +101,7 @@ describe('renderDetalle', () => {
     it('sin frontmatter ni título, avisa las dos cosas en texto legible', () => {
       const r = parse('Solo un párrafo suelto, sin frontmatter.');
       expect(r.avisos).toEqual(expect.arrayContaining(['sin-frontmatter', 'sin-titulo']));
-      const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'ingredientes' });
+      const html = renderDetalle({ entrada: ENTRADA, receta: r });
       expect(html).toContain('el frontmatter no se pudo leer');
       expect(html).toContain('esta receta no tiene título');
       expect(html).not.toContain('sin-frontmatter');
@@ -110,14 +111,14 @@ describe('renderDetalle', () => {
     it('una sección repetida avisa en texto legible', () => {
       const r = parse(`---\ntitulo: X\n---\n\n## Ingredientes\n- sal\n\n## Ingredientes\n- pimienta\n`);
       expect(r.avisos).toContain('seccion-duplicada');
-      const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'ingredientes' });
+      const html = renderDetalle({ entrada: ENTRADA, receta: r });
       expect(html).toContain('hay una sección repetida');
       expect(html).not.toContain('seccion-duplicada');
     });
 
     it('con avisos inválidos o ausentes no lanza y no muestra nada', () => {
-      expect(() => renderDetalle({ entrada: ENTRADA, receta: { ...RECETA, avisos: null }, pestana: 'ingredientes' })).not.toThrow();
-      const html = renderDetalle({ entrada: ENTRADA, receta: { ...RECETA, avisos: ['codigo-inventado'] }, pestana: 'ingredientes' });
+      expect(() => renderDetalle({ entrada: ENTRADA, receta: { ...RECETA, avisos: invalido(null) } })).not.toThrow();
+      const html = renderDetalle({ entrada: ENTRADA, receta: { ...RECETA, avisos: [invalido('codigo-inventado')] } });
       expect(html).not.toContain('class="aviso"');
     });
   });
@@ -131,25 +132,25 @@ describe('renderDetalle', () => {
   });
 
   it('con null no lanza', () => {
-    expect(() => renderDetalle(null)).not.toThrow();
+    expect(() => renderDetalle(invalido(null))).not.toThrow();
   });
 
   it('con una receta vacía no lanza', () => {
-    expect(() => renderDetalle({ entrada: {}, receta: {}, pestana: 'ingredientes' })).not.toThrow();
-    const html = renderDetalle({ entrada: {}, receta: {}, pestana: 'ingredientes' });
+    expect(() => renderDetalle({ entrada: {}, receta: {} })).not.toThrow();
+    const html = renderDetalle({ entrada: {}, receta: {} });
     expect(html).toBeTruthy();
   });
 
   it('escapa un script en el título', () => {
     const r = parse(`---\ntitulo: <script>alert(1)</script>\n---\n`);
-    const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'ingredientes' });
+    const html = renderDetalle({ entrada: ENTRADA, receta: r });
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;');
   });
 
   it('escapa un script en una sección desconocida', () => {
     const r = parse(`---\ntitulo: X\n---\n\n## <script>alert(1)</script>\nContenido.\n`);
-    const html = renderDetalle({ entrada: ENTRADA, receta: r, pestana: 'notas' });
+    const html = renderDetalle({ entrada: ENTRADA, receta: r });
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;');
   });
@@ -195,8 +196,8 @@ describe('renderVisor', () => {
   });
 
   it('con null no lanza', () => {
-    expect(() => renderVisor(null)).not.toThrow();
-    const html = renderVisor(null);
+    expect(() => renderVisor(invalido(null))).not.toThrow();
+    const html = renderVisor(invalido(null));
     expect(typeof html).toBe('string');
   });
 

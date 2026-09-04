@@ -3,6 +3,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { crearStore } from '../src/store.js';
 import { crearCacheMemoria } from '../src/cache.js';
 import { driveFalso, sheetsFalso } from './dobles.js';
+import { recetaFalsa } from './dobles.js';
+import type { DriveFalso, SheetsFalso } from './dobles.js';
+import type { Cache } from '../src/cache.js';
 import { parse } from '../src/recipe.js';
 import { COLUMNAS } from '../src/catalogo.js';
 
@@ -10,7 +13,10 @@ const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
 const MD = `---\ntitulo: Milanesas\n---\n\n## Notas\n- ojo\n`;
 
-let drive, sheets, cache, store;
+let drive: DriveFalso;
+let sheets: SheetsFalso;
+let cache: Cache;
+let store: ReturnType<typeof crearStore>;
 
 beforeEach(async () => {
   drive = driveFalso([
@@ -22,7 +28,7 @@ beforeEach(async () => {
   ]);
   sheets = sheetsFalso();
   sheets.crearPlanilla('i1');
-  await sheets.escribir('i1', 'recetas!A1:L1', [COLUMNAS]);
+  await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
   await sheets.append('i1', 'recetas', [['r1', 'milanesas.md', 'Milanesas', 'Carnes', 'c1', '', '', '', '', '', '', String(Date.parse('2026-01-01T00:00:00.000Z'))]]);
   cache = crearCacheMemoria();
@@ -37,7 +43,7 @@ describe('guardar', () => {
     receta.titulo = 'Milanesas napolitanas';
     const r = await store.guardar('r1', receta, {});
     expect(r.ok).toBe(true);
-    expect(drive._store.get('r1').contenido).toContain('titulo: Milanesas napolitanas');
+    expect(drive._store.get('r1')!.contenido).toContain('titulo: Milanesas napolitanas');
     expect(await cache.leerCola()).toHaveLength(1);
     const filas = await sheets.leer('i1', 'recetas!A1:L10');
     expect(filas[1][2]).toBe('Milanesas');  // la planilla todavía no se tocó
@@ -62,37 +68,39 @@ describe('guardar', () => {
 
   it('mover de carpeta cambia la categoría y llama a mover en Drive', async () => {
     await store.guardar('r1', parse(MD), { carpetaDestino: 'c2' });
-    expect(drive._store.get('r1').parents).toEqual(['c2']);
+    expect(drive._store.get('r1')!.parents).toEqual(['c2']);
     expect(store.entradas()[0].categoria).toBe('Postres');
   });
 
   it('si el archivo cambió en Drive no lo pisa', async () => {
-    drive._store.get('r1').modifiedTime = '2026-06-01T00:00:00.000Z';
+    drive._store.get('r1')!.modifiedTime = '2026-06-01T00:00:00.000Z';
     const r = await store.guardar('r1', parse(MD), {});
     expect(r.ok).toBe(false);
+    // El conflicto sólo existe en la rama ok:false de la unión.
+    if (r.ok) throw new Error('se esperaba un conflicto y guardó igual');
     expect(r.conflicto).toBeDefined();
-    expect(drive._store.get('r1').contenido).toBe(MD);
+    expect(drive._store.get('r1')!.contenido).toBe(MD);
   });
 });
 
 describe('crear', () => {
   it('escribe un .md con lo que le pasen, y nombre derivado del título', async () => {
     // No fuerza ningún tag: eso ahora lo decide quien llama (el formulario).
-    const r = await store.crear({ titulo: 'Ñoquis del 29', tags: ['rico'] }, { carpetaId: 'c1' });
+    const r = await store.crear(recetaFalsa({ titulo: 'Ñoquis del 29', tags: ['rico'] }), { carpetaId: 'c1' });
     expect(r.nombre_archivo).toBe('noquis-del-29.md');
-    const contenido = drive._store.get(r.id).contenido;
+    const contenido = drive._store.get(r.id)!.contenido;
     expect(contenido).toContain('titulo: Ñoquis del 29');
     expect(contenido).toContain('rico');
   });
 
   it('sin carpeta cae en la raíz, que es la bandeja de entrada', async () => {
-    const r = await store.crear({ titulo: 'Suelta' });
-    expect(drive._store.get(r.id).parents).toEqual(['raiz']);
-    expect(store.entradas().find(e => e.id_archivo === r.id).categoria).toBe('Sin categorizar');
+    const r = await store.crear(recetaFalsa({ titulo: 'Suelta' }));
+    expect(drive._store.get(r.id)!.parents).toEqual(['raiz']);
+    expect(store.entradas().find(e => e.id_archivo === r.id)!.categoria).toBe('Sin categorizar');
   });
 
   it('no pisa un nombre existente', async () => {
-    const r = await store.crear({ titulo: 'Milanesas' }, { carpetaId: 'c1' });
+    const r = await store.crear(recetaFalsa({ titulo: 'Milanesas' }), { carpetaId: 'c1' });
     expect(r.nombre_archivo).toBe('milanesas-2.md');
   });
 });
@@ -105,7 +113,7 @@ describe('borrar', () => {
   });
 
   it('crear y borrar sin flush: no deja entrada huérfana', async () => {
-    const r = await store.crear({ titulo: 'Nueva' });
+    const r = await store.crear(recetaFalsa({ titulo: 'Nueva' }));
     expect(store.entradas()).toHaveLength(2);  // r1 + nueva
     await store.borrar(r.id);
     expect(drive._store.has(r.id)).toBe(false);
@@ -115,7 +123,7 @@ describe('borrar', () => {
   });
 
   it('flush después de crear y borrar sin flush: no crea fila fantasma', async () => {
-    const r = await store.crear({ titulo: 'Fantasma' });
+    const r = await store.crear(recetaFalsa({ titulo: 'Fantasma' }));
     await store.borrar(r.id);
     await store.flush();
     const filas = await sheets.leer('i1', 'recetas!A1:L10');
@@ -132,7 +140,7 @@ describe('borrar', () => {
   });
 
   it('borrar persiste el mapa de filas en la cache, no solo en memoria', async () => {
-    const otra = await store.crear({ titulo: 'Otra' });
+    const otra = await store.crear(recetaFalsa({ titulo: 'Otra' }));
     await store.flush();  // le da a "otra" una fila real: r1=2, otra=3
 
     await store.borrar('r1');

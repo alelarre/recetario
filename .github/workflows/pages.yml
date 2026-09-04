@@ -26,7 +26,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      # Los tests son la puerta: si fallan, no se publica.
+      # Las dos puertas: si alguna falla, no se publica. El typecheck va
+      # primero porque Vite borra los tipos sin verificarlos — sin este paso,
+      # un error de tipos llega a producción igual.
+      - run: npm run typecheck
       - run: npm test
       - run: npm run build
       - uses: actions/configure-pages@v5

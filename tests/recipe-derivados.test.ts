@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { parse, parseIngrediente, ingredientesIndexables, slugArchivo } from '../src/recipe.js';
+import { invalido } from './aserciones.js';
+import type { Receta } from '../src/tipos.js';
 
 describe('parseIngrediente', () => {
   it('separa cantidad, unidad e item', () => {
@@ -9,18 +11,18 @@ describe('parseIngrediente', () => {
   });
 
   it('acepta cantidad sin unidad', () => {
-    const r = parseIngrediente('- 4 milanesas de nalga');
+    const r = parseIngrediente('- 4 milanesas de nalga')!;
     expect(r.cantidad).toBe('4');
     expect(r.item).toBe('milanesas de nalga');
   });
 
   it('acepta fracciones y decimales', () => {
-    expect(parseIngrediente('- 1/2 taza de leche').cantidad).toBe('1/2');
-    expect(parseIngrediente('- 1,5 kg de papas').cantidad).toBe('1,5');
+    expect(parseIngrediente('- 1/2 taza de leche')!.cantidad).toBe('1/2');
+    expect(parseIngrediente('- 1,5 kg de papas')!.cantidad).toBe('1,5');
   });
 
   it('lo que no matchea se devuelve entero como item, sin perder nada', () => {
-    const r = parseIngrediente('- sal y pimienta a gusto');
+    const r = parseIngrediente('- sal y pimienta a gusto')!;
     expect(r.cantidad).toBeNull();
     expect(r.unidad).toBeNull();
     expect(r.item).toBe('sal y pimienta a gusto');
@@ -41,12 +43,12 @@ describe('parseIngrediente', () => {
     });
 
     it('tolera un número', () => {
-      const r = parseIngrediente(42);
+      const r = parseIngrediente(42)!;
       expect(r).toBeNull();
     });
 
     it('tolera un objeto', () => {
-      const r = parseIngrediente({ foo: 'bar' });
+      const r = parseIngrediente({ foo: 'bar' })!;
       expect(r).toBeNull();
     });
 
@@ -77,7 +79,7 @@ describe('ingredientesIndexables', () => {
     });
 
     it('tolera receta que es un número', () => {
-      expect(ingredientesIndexables(42)).toEqual([]);
+      expect(ingredientesIndexables(invalido(42))).toEqual([]);
     });
 
     it('tolera receta que es un objeto vacío', () => {
@@ -90,7 +92,7 @@ describe('ingredientesIndexables', () => {
     });
 
     it('tolera ingredientes null', () => {
-      const r = { titulo: 'Test', ingredientes: null };
+      const r = invalido<Partial<Receta>>({ titulo: 'Test', ingredientes: null });
       expect(ingredientesIndexables(r)).toEqual([]);
     });
 
@@ -140,7 +142,7 @@ describe('slugArchivo', () => {
     });
 
     it('tolera existentes null', () => {
-      expect(slugArchivo('Pan', null)).toBe('pan.md');
+      expect(slugArchivo('Pan', invalido(null))).toBe('pan.md');
     });
 
     it('tolera existentes undefined', () => {
@@ -152,15 +154,15 @@ describe('slugArchivo', () => {
     });
 
     it('tolera existentes que es un string sin lanzar', () => {
-      expect(slugArchivo('Pan', 'pan.md')).toBe('pan.md');
+      expect(slugArchivo('Pan', invalido('pan.md'))).toBe('pan.md');
     });
 
     it('tolera existentes que es un número sin lanzar', () => {
-      expect(slugArchivo('Pan', 42)).toBe('pan.md');
+      expect(slugArchivo('Pan', invalido(42))).toBe('pan.md');
     });
 
     it('tolera existentes que es un objeto sin lanzar', () => {
-      expect(slugArchivo('Pan', {})).toBe('pan.md');
+      expect(slugArchivo('Pan', invalido({}))).toBe('pan.md');
     });
   });
 });

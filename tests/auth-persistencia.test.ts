@@ -6,46 +6,44 @@
 // recarga. Estas pruebas verifican que ahora sobrevive en localStorage.
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { crearAuth } from '../src/auth.js';
+import { comoGlobal, windowConGis } from './dom-falso.js';
 
 function localStorageFalso() {
-  const datos = new Map();
+  const datos = new Map<string, string>();
   return {
-    getItem: (k) => (datos.has(k) ? datos.get(k) : null),
-    setItem: (k, v) => { datos.set(k, String(v)); },
-    removeItem: (k) => { datos.delete(k); },
+    getItem: (k: string) => (datos.has(k) ? datos.get(k)! : null),
+    setItem: (k: string, v: unknown) => { datos.set(k, String(v)); },
+    removeItem: (k: string) => { datos.delete(k); },
     _datos: datos
   };
 }
 
-function clienteGisFalso() {
-  const c = {};
-  c.requestAccessToken = () => c.callback({ access_token: 'tok-123', expires_in: 3600 });
-  return c;
-}
-
 describe('auth.js: persistencia del token entre aperturas', () => {
   beforeEach(() => {
-    global.window = { google: { accounts: { oauth2: { initTokenClient: () => clienteGisFalso() } } } };
+    global.window = windowConGis();
   });
 
   afterEach(() => {
-    delete global.window;
-    delete global.localStorage;
+    const g = global as unknown as Record<string, unknown>;
+    delete g['window'];
+    delete g['localStorage'];
   });
 
   it('con un token guardado y todavía vigente, no vuelve a pedirle nada a Google', async () => {
-    global.localStorage = localStorageFalso();
+    global.localStorage = comoGlobal<Storage>(localStorageFalso());
     global.localStorage.setItem('recetario-auth', JSON.stringify({ token: 'guardado', vence: Date.now() + 60000 }));
 
     // Si volviera a pedir, explotaría acá: no hay cliente de GIS configurado para responder.
-    global.window.google.accounts.oauth2.initTokenClient = () => { throw new Error('no debería llamar a Google'); };
+    global.window.google!.accounts!.oauth2!.initTokenClient = () => {
+      throw new Error('no debería llamar a Google');
+    };
 
     const auth = crearAuth();
     expect(await auth.token()).toBe('guardado');
   });
 
   it('con un token guardado pero vencido, pide uno nuevo', async () => {
-    global.localStorage = localStorageFalso();
+    global.localStorage = comoGlobal<Storage>(localStorageFalso());
     global.localStorage.setItem('recetario-auth', JSON.stringify({ token: 'viejo', vence: Date.now() - 1000 }));
 
     const auth = crearAuth();
@@ -53,17 +51,17 @@ describe('auth.js: persistencia del token entre aperturas', () => {
   });
 
   it('después de conseguir un token nuevo, lo deja guardado para la próxima apertura', async () => {
-    global.localStorage = localStorageFalso();
+    global.localStorage = comoGlobal<Storage>(localStorageFalso());
     const auth = crearAuth();
     await auth.token();
 
-    const guardado = JSON.parse(global.localStorage.getItem('recetario-auth'));
+    const guardado = JSON.parse(global.localStorage.getItem('recetario-auth') ?? 'null');
     expect(guardado.token).toBe('tok-123');
     expect(guardado.vence).toBeGreaterThan(Date.now());
   });
 
   it('olvidar() borra lo guardado, no solo lo que hay en memoria', async () => {
-    global.localStorage = localStorageFalso();
+    global.localStorage = comoGlobal<Storage>(localStorageFalso());
     const auth = crearAuth();
     await auth.token();
     auth.olvidar();

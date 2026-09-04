@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { crearCacheMemoria } from '../src/cache.js';
+import { entradaFalsa } from './dobles.js';
+import type { OperacionPendiente } from '../src/cache.js';
 
 describe('cache en memoria', () => {
   it('guarda y devuelve el índice', async () => {
     const c = crearCacheMemoria();
     expect(await c.leerIndice()).toEqual([]);
-    await c.guardarIndice([{ id_archivo: 'a' }]);
-    expect(await c.leerIndice()).toEqual([{ id_archivo: 'a' }]);
+    await c.guardarIndice([entradaFalsa({ id_archivo: 'a' })]);
+    expect(await c.leerIndice()).toEqual([entradaFalsa({ id_archivo: 'a' })]);
   });
 
   it('guarda el mapa de filas como Map', async () => {
@@ -17,8 +19,8 @@ describe('cache en memoria', () => {
 
   it('la cola es FIFO y se vacía entera', async () => {
     const c = crearCacheMemoria();
-    await c.encolar({ tipo: 'fila', id: 'a' });
-    await c.encolar({ tipo: 'fila', id: 'b' });
+    await c.encolar({ tipo: 'fila', id: 'a', fila: [] });
+    await c.encolar({ tipo: 'fila', id: 'b', fila: [] });
     expect((await c.leerCola()).map(o => o.id)).toEqual(['a', 'b']);
     await c.vaciarCola();
     expect(await c.leerCola()).toEqual([]);
@@ -44,9 +46,9 @@ describe('cache en memoria', () => {
 
   it('guardarIndice no se ve afectado por mutaciones posteriores del original', async () => {
     const c = crearCacheMemoria();
-    const entradas = [{ id_archivo: 'a' }];
+    const entradas = [entradaFalsa({ id_archivo: 'a' })];
     await c.guardarIndice(entradas);
-    entradas.push({ id_archivo: 'b' });  // agregar al array original
+    entradas.push(entradaFalsa({ id_archivo: 'b' }));  // agregar al array original
     const guardado = await c.leerIndice();
     expect(guardado.length).toBe(1);  // no debe tener la entrada nueva
     expect(guardado[0].id_archivo).toBe('a');
@@ -54,51 +56,53 @@ describe('cache en memoria', () => {
 
   it('guardarIndice con clon profundo: mutación de objeto adentro no afecta lo guardado', async () => {
     const c = crearCacheMemoria();
-    const entradas = [{ id_archivo: 'a', fila: 1 }];
+    const entradas = [entradaFalsa({ id_archivo: 'a', mtime: 1 })];
     await c.guardarIndice(entradas);
-    entradas[0].fila = 999;  // mutar un objeto dentro del array
+    entradas[0].mtime = 999;  // mutar un objeto dentro del array
     const guardado = await c.leerIndice();
-    expect(guardado[0].fila).toBe(1);  // debe tener el valor original
+    expect(guardado[0].mtime).toBe(1);  // debe tener el valor original
   });
 
   it('leerIndice con clon profundo: mutación de objeto leído no afecta lecturas futuras', async () => {
     const c = crearCacheMemoria();
-    await c.guardarIndice([{ id_archivo: 'a', fila: 1 }]);
+    await c.guardarIndice([entradaFalsa({ id_archivo: 'a', mtime: 1 })]);
     const leido = await c.leerIndice();
-    leido[0].fila = 999;  // mutar lo que se leyó
+    leido[0].mtime = 999;  // mutar lo que se leyó
     const reLeido = await c.leerIndice();
-    expect(reLeido[0].fila).toBe(1);  // segunda lectura debe devolver el valor original
+    expect(reLeido[0].mtime).toBe(1);  // segunda lectura debe devolver el valor original
   });
 
   it('encolar con clon profundo: mutación de operación no afecta lo encolado', async () => {
     const c = crearCacheMemoria();
-    const op = { tipo: 'escritura', id: 'a', valor: 1 };
+    // La fila es un arreglo anidado: es lo que hace falta para que el clon
+    // tenga que ser profundo y no una copia del objeto de arriba.
+    const op: OperacionPendiente = { tipo: 'fila', id: 'a', fila: ['uno'] };
     await c.encolar(op);
-    op.valor = 999;  // mutar la operación original
+    op.fila[0] = 'mutado';  // mutar la operación original
     const cola = await c.leerCola();
-    expect(cola[0].valor).toBe(1);  // debe tener el valor original
+    expect(cola[0].fila[0]).toBe('uno');  // debe tener el valor original
   });
 
   it('leerCola con clon profundo: mutación de objeto encolado no afecta lecturas futuras', async () => {
     const c = crearCacheMemoria();
-    await c.encolar({ tipo: 'escritura', id: 'a', valor: 1 });
+    await c.encolar({ tipo: 'fila', id: 'a', fila: ['uno'] });
     const cola1 = await c.leerCola();
-    cola1[0].valor = 999;  // mutar lo que se leyó
+    cola1[0].fila[0] = 'mutado';  // mutar lo que se leyó
     const cola2 = await c.leerCola();
-    expect(cola2[0].valor).toBe(1);  // segunda lectura debe devolver el valor original
+    expect(cola2[0].fila[0]).toBe('uno');  // segunda lectura debe devolver el valor original
   });
 
   it('leerMapaFilas devuelve un Map con .get funcionando', async () => {
     const c = crearCacheMemoria();
-    await c.guardarMapaFilas(new Map([['clave', 'valor']]));
+    await c.guardarMapaFilas(new Map([['clave', 7]]));
     const mapa = await c.leerMapaFilas();
     expect(mapa instanceof Map).toBe(true);
-    expect(mapa.get('clave')).toBe('valor');
+    expect(mapa.get('clave')).toBe(7);
   });
 
   it('leerIndice devuelve un array con métodos de array', async () => {
     const c = crearCacheMemoria();
-    await c.guardarIndice([{ id_archivo: 'a' }, { id_archivo: 'b' }]);
+    await c.guardarIndice([entradaFalsa({ id_archivo: 'a' }), entradaFalsa({ id_archivo: 'b' })]);
     const arr = await c.leerIndice();
     expect(Array.isArray(arr)).toBe(true);
     expect(arr.length).toBe(2);

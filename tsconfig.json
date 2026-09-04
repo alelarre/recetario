@@ -11,7 +11,7 @@
 
     /* `vite/client` es lo que declara import.meta.glob, que usa
        ui/categorias para descubrir las fotos sin listarlas a mano. */
-    "types": ["vite/client"],
+    "types": ["vite/client", "node"],
 
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -24,10 +24,9 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
 
-    /* Los .js que todavía no se migraron siguen resolviéndose; se saca
-       cuando no quede ninguno. */
-    "allowJs": true,
-    "checkJs": false
+    /* Sin allowJs: no queda ningún .js en src ni en tests. Un archivo nuevo
+       tiene que ser .ts o el build no lo resuelve. */
+    "allowJs": false
   },
-  "include": ["src", "tests", "vite.config.ts"]
+  "include": ["src", "vite.config.ts"]
 }

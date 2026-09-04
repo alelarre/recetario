@@ -2,14 +2,18 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { crearStore } from '../src/store.js';
 import { crearCacheMemoria } from '../src/cache.js';
 import { driveFalso, sheetsFalso } from './dobles.js';
+import type { DriveFalso, SheetsFalso } from './dobles.js';
+import type { Cache } from '../src/cache.js';
 import { COLUMNAS } from '../src/catalogo.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
-const fila = (id, titulo, categoria, carpeta, tags, ingredientes, dificultad = '') =>
+const fila = (id: string, titulo: string, categoria: string, carpeta: string,
+              tags: string, ingredientes: string, dificultad = ''): string[] =>
   [id, `${id}.md`, titulo, categoria, carpeta, '', '', dificultad, '', tags, ingredientes, '1000'];
 
-let store, sheets;
+let store: ReturnType<typeof crearStore>;
+let sheets: SheetsFalso;
 
 beforeEach(async () => {
   const drive = driveFalso([
@@ -20,7 +24,7 @@ beforeEach(async () => {
   ]);
   sheets = sheetsFalso();
   sheets.crearPlanilla('i1');
-  await sheets.escribir('i1', 'recetas!A1:L1', [COLUMNAS]);
+  await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
   await sheets.append('i1', 'recetas', [
     fila('r1', 'Milanesas napolitanas', 'Carnes', 'c1', 'horno|rápido', 'muzzarella|nalga', 'fácil'),
@@ -89,8 +93,8 @@ describe('buscar', () => {
 describe('categoriasConConteo', () => {
   it('cuenta las recetas de cada categoría', () => {
     const c = store.categoriasConConteo();
-    expect(c.find(x => x.nombre === 'Carnes').cantidad).toBe(2);
-    expect(c.find(x => x.nombre === 'Postres').cantidad).toBe(1);
+    expect(c.find(x => x.nombre === 'Carnes')!.cantidad).toBe(2);
+    expect(c.find(x => x.nombre === 'Postres')!.cantidad).toBe(1);
   });
 
   it('no muestra Sin categorizar cuando la raíz está vacía', () => {

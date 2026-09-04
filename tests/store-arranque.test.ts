@@ -2,11 +2,18 @@ import { describe, it, expect } from 'vitest';
 import { crearStore } from '../src/store.js';
 import { crearCacheMemoria } from '../src/cache.js';
 import { driveFalso, sheetsFalso } from './dobles.js';
+import type { DriveFalso } from './dobles.js';
+import { arranqueListo, arranqueEligiendo } from './aserciones.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
 
-function conRecetario(extra = []) {
+interface ArchivoDelFixture {
+  id: string; name: string; mimeType?: string; parents: string[];
+  modifiedTime?: string; contenido?: string;
+}
+
+function conRecetario(extra: ArchivoDelFixture[] = []) {
   return driveFalso([
     { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
@@ -16,7 +23,7 @@ function conRecetario(extra = []) {
   ]);
 }
 
-const armar = (drive) => {
+const armar = (drive: DriveFalso) => {
   const sheets = sheetsFalso();
   const cache = crearCacheMemoria();
   return { store: crearStore({ drive, sheets, cache }), sheets, cache, drive };
@@ -36,20 +43,18 @@ describe('arranque en frío', () => {
       { id: 'r2', name: 'Recetario', mimeType: CARPETA, parents: ['otra'] }
     ]);
     const r = await armar(drive).store.arrancar();
-    expect(r.estado).toBe('elegir-carpeta');
-    expect(r.candidatas).toHaveLength(2);
+    expect(arranqueEligiendo(r).candidatas).toHaveLength(2);
   });
 
   it('descubre las categorías listando subcarpetas, y excluye las que empiezan con _', async () => {
     const r = await armar(conRecetario()).store.arrancar();
-    expect(r.categorias.map(c => c.nombre).sort()).toEqual(['Carnes', 'Postres']);
+    expect(arranqueListo(r).categorias.map(c => c.nombre).sort()).toEqual(['Carnes', 'Postres']);
   });
 
   it('sin planilla la crea con encabezados y pide reconstruir', async () => {
     const { store, drive } = armar(conRecetario());
     const r = await store.arrancar();
-    expect(r.estado).toBe('listo');
-    expect(r.reconstruir).toBe(true);
+    expect(arranqueListo(r).reconstruir).toBe(true);
     const creada = [...drive._store.values()].find(a => a.name === '_indice');
     expect(creada).toBeDefined();
   });
@@ -117,7 +122,7 @@ describe('arranque en frío', () => {
     const { store, sheets } = armar(drive);
     sheets.crearPlanilla('i1'); sheets.crearPlanilla('i2');
     const r = await store.arrancar();
-    expect(r.indiceId).toBe('i2');
+    expect(arranqueListo(r).indiceId).toBe('i2');
     expect(r.avisos).toContain('indice-duplicado');
   });
 
@@ -136,7 +141,7 @@ describe('arranque en frío', () => {
     sheets.crearPlanilla('i1');
     await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
     await sheets.escribir('i1', 'meta!A2:B2', [['reconstruccion_en_curso', 'si']]);
-    expect((await store.arrancar()).reconstruir).toBe(true);
+    expect(arranqueListo(await store.arrancar()).reconstruir).toBe(true);
   });
 
   it('con schemaVersion viejo pide reconstruir', async () => {
@@ -144,7 +149,7 @@ describe('arranque en frío', () => {
     const { store, sheets } = armar(drive);
     sheets.crearPlanilla('i1');
     await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '0']]);
-    expect((await store.arrancar()).reconstruir).toBe(true);
+    expect(arranqueListo(await store.arrancar()).reconstruir).toBe(true);
   });
 
   it('si falla listarCarpetas arranca en solo lectura sin lanzar', async () => {

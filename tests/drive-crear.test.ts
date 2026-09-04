@@ -1,14 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { crearDrive } from '../src/drive.js';
+import type { Drive } from '../src/drive.js';
 
 describe('drive.crear()', () => {
-  let fetchMock;
-  let drive;
+  let fetchMock: ReturnType<typeof vi.fn>;
+  let drive: Drive;
 
   beforeEach(() => {
     // Mock global fetch
     fetchMock = vi.fn();
-    global.fetch = fetchMock;
+    global.fetch = fetchMock as unknown as typeof fetch;
 
     // Crear drive con un token simple
     const obtenerToken = () => Promise.resolve('token-test');

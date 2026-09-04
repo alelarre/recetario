@@ -56,9 +56,24 @@ export interface Progreso {
   total: number;
 }
 
+/**
+ * El store no necesita el cliente entero de Drive ni de Sheets, solo estas
+ * operaciones. Pedir el subconjunto y no la interfaz completa es lo que deja
+ * que un doble de test sea exactamente lo que el store usa, sin tener que
+ * implementar de más para satisfacer al compilador.
+ */
+export type DriveDelStore = Pick<Drive,
+  'buscarPorNombre' | 'listarCarpetas' | 'listarHijos' | 'metadatos' | 'leerTexto' |
+  'crear' | 'actualizar' | 'renombrar' | 'mover' | 'borrar' |
+  'tokenInicialDeCambios' | 'cambios'>;
+
+export type SheetsDelStore = Pick<Sheets,
+  'leer' | 'escribir' | 'append' | 'agregarHoja' | 'borrarFila' | 'borrarFilas' |
+  'hojas' | 'renombrarHoja'>;
+
 export interface Dependencias {
-  drive: Drive;
-  sheets: Sheets;
+  drive: DriveDelStore;
+  sheets: SheetsDelStore;
   cache: Cache;
 }
 

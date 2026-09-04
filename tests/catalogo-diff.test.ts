@@ -1,19 +1,26 @@
 import { describe, it, expect } from 'vitest';
+import { invalido } from './aserciones.js';
+import { entradaFalsa } from './dobles.js';
+import type { Entrada, CambioDrive, ArchivoDrive } from '../src/tipos.js';
+import type { OpcionesDiff } from '../src/catalogo.js';
 import { diffCambios } from '../src/catalogo.js';
 
 const CARPETAS = new Map([['raiz', 'Sin categorizar'], ['c1', 'Carnes'], ['c2', 'Postres']]);
 
-const entrada = (extra = {}) => ({
+const entrada = (extra: Partial<Entrada> = {}): Entrada => entradaFalsa({
   id_archivo: 'id1', nombre_archivo: 'milanesas.md', titulo: 'Milanesas',
-  categoria: 'Carnes', carpeta_id: 'c1', mtime: 1000, tags: [], ingredientes: [], ...extra
+  categoria: 'Carnes', carpeta_id: 'c1', mtime: 1000, ...extra
 });
 
-const cambio = (extra = {}) => ({
+// `extra` sobreescribe el archivo, no el cambio: todos los tests lo usan para
+// variar el nombre, la carpeta o el trashed.
+const cambio = (extra: Partial<ArchivoDrive> = {}): CambioDrive => ({
   fileId: 'id1', removed: false,
   file: { id: 'id1', name: 'milanesas.md', mimeType: 'text/markdown', parents: ['c1'], modifiedTime: '2026-01-01T00:00:00.000Z', trashed: false, ...extra }
 });
 
-const indiceCon = (...entradas) => new Map(entradas.map(e => [e.id_archivo, e]));
+const indiceCon = (...entradas: Entrada[]) =>
+  new Map<string, Entrada>(entradas.map(e => [e.id_archivo, e]));
 
 describe('diffCambios', () => {
   // Tests del brief - camino feliz
@@ -138,19 +145,19 @@ describe('diffCambios', () => {
 
   describe('defensas: indice no es Map', () => {
     it('tolera indice que no es Map (plain object)', () => {
-      const r = diffCambios([cambio()], { indice: {}, carpetas: CARPETAS });
+      const r = diffCambios([cambio()], invalido<OpcionesDiff>({ indice: {}, carpetas: CARPETAS }));
       // Sin .get() devuelve undefined, indice se trata como Map vacío (archivo es nuevo)
       expect(r.releer.length).toBeGreaterThan(0);
     });
 
     it('tolera indice null (se trata como Map vacío)', () => {
-      const r = diffCambios([cambio()], { indice: null, carpetas: CARPETAS });
+      const r = diffCambios([cambio()], invalido<OpcionesDiff>({ indice: null, carpetas: CARPETAS }));
       // indice null se trata como Map vacío, el archivo es nuevo
       expect(r.releer.length).toBeGreaterThan(0);
     });
 
     it('tolera indice undefined (se trata como Map vacío)', () => {
-      const r = diffCambios([cambio()], { indice: undefined, carpetas: CARPETAS });
+      const r = diffCambios([cambio()], invalido<OpcionesDiff>({ indice: undefined, carpetas: CARPETAS }));
       // indice undefined se trata como Map vacío, el archivo es nuevo
       expect(r.releer.length).toBeGreaterThan(0);
     });
@@ -158,18 +165,18 @@ describe('diffCambios', () => {
 
   describe('defensas: carpetas no es Map', () => {
     it('tolera carpetas que no es Map (plain object)', () => {
-      const r = diffCambios([cambio()], { indice: new Map(), carpetas: { c1: 'Carnes' } });
+      const r = diffCambios([cambio()], invalido<OpcionesDiff>({ indice: new Map(), carpetas: { c1: 'Carnes' } }));
       // Sin .get() todo cae en undefined, el archivo se ignora como fuera del recetario
       expect(r.ignorados).toContain('id1');
     });
 
     it('tolera carpetas null', () => {
-      const r = diffCambios([cambio()], { indice: new Map(), carpetas: null });
+      const r = diffCambios([cambio()], invalido<OpcionesDiff>({ indice: new Map(), carpetas: null }));
       expect(r.ignorados).toContain('id1');
     });
 
     it('tolera carpetas undefined', () => {
-      const r = diffCambios([cambio()], { indice: new Map(), carpetas: undefined });
+      const r = diffCambios([cambio()], invalido<OpcionesDiff>({ indice: new Map(), carpetas: undefined }));
       expect(r.ignorados).toContain('id1');
     });
   });

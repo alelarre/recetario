@@ -2,13 +2,18 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { crearStore } from '../src/store.js';
 import { crearCacheMemoria } from '../src/cache.js';
 import { driveFalso, sheetsFalso } from './dobles.js';
+import type { DriveFalso, SheetsFalso } from './dobles.js';
+import type { Cache } from '../src/cache.js';
 import { COLUMNAS } from '../src/catalogo.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
-const md = (titulo) => `---\ntitulo: ${titulo}\n---\n\n## Ingredientes\n- sal\n`;
+const md = (titulo: string): string => `---\ntitulo: ${titulo}\n---\n\n## Ingredientes\n- sal\n`;
 
-let drive, sheets, cache, store;
+let drive: DriveFalso;
+let sheets: SheetsFalso;
+let cache: Cache;
+let store: ReturnType<typeof crearStore>;
 
 beforeEach(async () => {
   drive = driveFalso([
@@ -24,7 +29,7 @@ beforeEach(async () => {
   ]);
   sheets = sheetsFalso();
   sheets.crearPlanilla('i1');
-  await sheets.escribir('i1', 'recetas!A1:L1', [COLUMNAS]);
+  await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
   cache = crearCacheMemoria();
   store = crearStore({ drive, sheets, cache });
@@ -41,7 +46,7 @@ describe('reconstruir', () => {
 
   it('las recetas de la raíz quedan como Sin categorizar', async () => {
     await store.reconstruir();
-    expect(store.entradas().find(e => e.titulo === 'Suelta').categoria).toBe('Sin categorizar');
+    expect(store.entradas().find(e => e.titulo === 'Suelta')!.categoria).toBe('Sin categorizar');
   });
 
   it('cuenta las ignoradas por no tener titulo, sin borrar el archivo', async () => {
@@ -65,7 +70,7 @@ describe('reconstruir', () => {
   });
 
   it('reporta progreso mientras lee', async () => {
-    const vistos = [];
+    const vistos: number[] = [];
     await store.reconstruir(p => vistos.push(p.leidas));
     expect(vistos.length).toBeGreaterThan(0);
     expect(vistos.at(-1)).toBe(4);

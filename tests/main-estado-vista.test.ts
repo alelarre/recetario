@@ -7,6 +7,8 @@
 // bug, otro mecanismo. Se prueba simulando el entorno global y mirando con
 // qué argumentos se llama a renderDetalle.
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import type { ArgsDetalle } from '../src/ui/detalle.js';
+import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
 vi.mock('../src/ui/app.css', () => ({}));
@@ -17,8 +19,17 @@ vi.mock('../src/drive.js', () => ({ crearDrive: () => ({}) }));
 vi.mock('../src/sheets.js', () => ({ crearSheets: () => ({}) }));
 vi.mock('../src/cache.js', () => ({ abrirCache: async () => ({}) }));
 
-const detalleSpy = vi.fn(() => '<div></div>');
-vi.mock('../src/ui/detalle.js', () => ({ renderDetalle: (...args) => detalleSpy(...args) }));
+const detalleSpy = vi.fn((_args?: ArgsDetalle) => '<div></div>');
+vi.mock('../src/ui/detalle.js', () => ({
+  renderDetalle: (args?: ArgsDetalle) => detalleSpy(args)
+}));
+
+/** Los argumentos del último renderDetalle. Si no hubo, el test tiene que fallar acá. */
+const ultimoDetalle = (): ArgsDetalle => {
+  const args = detalleSpy.mock.lastCall;
+  if (!args) throw new Error('renderDetalle no se llamó');
+  return args[0] ?? {};
+};
 
 const storeFake = {
   arrancar: async () => ({ estado: 'listo', reconstruir: false, categorias: [] }),
@@ -28,7 +39,7 @@ const storeFake = {
   ultimaReconstruccion: () => '',
   entradas: () => [],
   categoriasConConteo: () => [],
-  receta: async (id) => ({
+  receta: async (id: string) => ({
     entrada: { id, titulo: id },
     receta: { titulo: id, ingredientes: 'a', preparacion: 'b', notas: 'c' }
   }),
@@ -43,33 +54,34 @@ async function esperarMicrotareas(vueltas = 5) {
 }
 
 describe('main.js: el estado de la vista de detalle', () => {
-  afterEach(() => {
-    delete global.document;
-    delete global.window;
-    delete global.location;
-    delete global.history;
-  });
+  afterEach(limpiarGlobales);
 
   it('el plegado de ingredientes no se arrastra a la receta siguiente', async () => {
-    const hashListeners = {};
-    const clickListeners = [];
+    const hashListeners: Record<string, () => void> = {};
+    const clickListeners: ((e: unknown) => unknown)[] = [];
     const app = {
       innerHTML: '', insertAdjacentHTML: () => {},
-      addEventListener: (ev, fn) => { if (ev === 'click') clickListeners.push(fn); }
+      addEventListener: (ev: string, fn: (e: unknown) => unknown) => {
+        if (ev === 'click') clickListeners.push(fn);
+      }
     };
-    global.document = { querySelector: () => app, querySelectorAll: () => [], addEventListener: () => {} };
-    global.window = { google: {}, addEventListener: (ev, fn) => { hashListeners[ev] = fn; } };
-    global.location = { hash: '' };
-    global.history = { back: () => {} };
+    global.document = comoGlobal<Document>({
+      querySelector: () => app, querySelectorAll: () => [], addEventListener: () => {}
+    });
+    global.window = comoGlobal<Window & typeof globalThis>({
+      google: {}, addEventListener: (ev: string, fn: () => void) => { hashListeners[ev] = fn; }
+    });
+    global.location = comoGlobal<Location>({ hash: '' });
+    global.history = comoGlobal<History>({ back: () => {} });
 
     await import('../src/main.js');
     await esperarMicrotareas();
 
     // Receta A: los ingredientes arrancan a la vista
     global.location.hash = '#/r/A';
-    hashListeners.hashchange();
+    hashListeners['hashchange']?.();
     await esperarMicrotareas();
-    expect(detalleSpy.mock.lastCall[0].ingredientesPlegados).toBe(false);
+    expect(ultimoDetalle().ingredientesPlegados).toBe(false);
 
     // El usuario pliega los ingredientes en A
     const boton = {
@@ -77,15 +89,15 @@ describe('main.js: el estado de la vista de detalle', () => {
       closest: () => null, tagName: 'BUTTON'
     };
     for (const fn of clickListeners) {
-      await fn({ target: { closest: (sel) => (sel.includes('data-accion') ? boton : null) } });
+      await fn({ target: { closest: (sel: string) => (sel.includes('data-accion') ? boton : null) } });
     }
     await esperarMicrotareas();
-    expect(detalleSpy.mock.lastCall[0].ingredientesPlegados).toBe(true);
+    expect(ultimoDetalle().ingredientesPlegados).toBe(true);
 
     // Receta B: tiene que abrir con los ingredientes a la vista
     global.location.hash = '#/r/B';
-    hashListeners.hashchange();
+    hashListeners['hashchange']?.();
     await esperarMicrotareas();
-    expect(detalleSpy.mock.lastCall[0].ingredientesPlegados).toBe(false);
+    expect(ultimoDetalle().ingredientesPlegados).toBe(false);
   });
 });

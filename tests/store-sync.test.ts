@@ -2,13 +2,18 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { crearStore } from '../src/store.js';
 import { crearCacheMemoria } from '../src/cache.js';
 import { driveFalso, sheetsFalso } from './dobles.js';
+import type { DriveFalso, SheetsFalso } from './dobles.js';
+import type { Cache } from '../src/cache.js';
 import { COLUMNAS } from '../src/catalogo.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
 const MD = `---\ntitulo: Milanesas\ntags: [horno]\n---\n\n## Ingredientes\n- 200 g de muzzarella\n`;
 
-let drive, sheets, cache, store;
+let drive: DriveFalso;
+let sheets: SheetsFalso;
+let cache: Cache;
+let store: ReturnType<typeof crearStore>;
 
 beforeEach(async () => {
   drive = driveFalso([
@@ -20,7 +25,7 @@ beforeEach(async () => {
   ]);
   sheets = sheetsFalso();
   sheets.crearPlanilla('i1');
-  await sheets.escribir('i1', 'recetas!A1:L1', [COLUMNAS]);
+  await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
   cache = crearCacheMemoria();
   store = crearStore({ drive, sheets, cache });
@@ -80,11 +85,11 @@ describe('sync', () => {
     drive.cambios = async () => ({ changes: [], newStartPageToken: '999' });
     await store.sync();
     const meta = await sheets.leer('i1', 'meta!A1:B20');
-    expect(meta.find(f => f[0] === 'changesPageToken')[1]).toBe('999');
+    expect(meta.find(f => f[0] === 'changesPageToken')![1]).toBe('999');
   });
 
   it('una receta sin titulo no entra al índice', async () => {
-    drive._store.get('r1').contenido = '---\nrinde: 2\n---\n\nsin título\n';
+    drive._store.get('r1')!.contenido = '---\nrinde: 2\n---\n\nsin título\n';
     await store.cargarIndice();
     drive.cambios = async () => ({
       changes: [{ fileId: 'r1', removed: false, file: { id: 'r1', name: 'milanesas.md', mimeType: 'text/markdown', parents: ['c1'], modifiedTime: '2026-01-01T00:00:00.000Z', trashed: false } }],

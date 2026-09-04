@@ -3,13 +3,40 @@
 App personal de recetas. Los datos viven en Google Drive como archivos `.md` y
 sobreviven a la app. Un solo usuario.
 
-**Estado: v1 mergeada a `main` y publicada en GitHub Pages.** 305 tests,
+**Estado: v1 mergeada a `main` y publicada en GitHub Pages.** 328 tests,
 `npm run build` genera `dist/`. Falta la verificación manual contra el Drive
 real (ver más abajo) y agregar `https://alelarre.github.io` a los orígenes
 autorizados del cliente OAuth.
 
 - Fuente de verdad: `docs/superpowers/specs/2026-08-31-recetario-design.md`
 - Pasos manuales de instalación: `SETUP.md`
+
+## TypeScript
+
+Todo `src/` y `tests/` es TypeScript con `strict`, más
+`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` y
+`verbatimModuleSyntax`. No queda ningún `.js` y `allowJs` está apagado.
+
+- **Vite borra los tipos, no los verifica.** La verificación es
+  `npm run typecheck`, que corre `tsc --noEmit` sobre las dos configs y es una
+  puerta del CI junto con los tests. Sin ese paso un error de tipos se publica
+  igual.
+- **Dos configs.** `tsconfig.json` para `src`; `tsconfig.tests.json` extiende y
+  apaga solo `noUncheckedIndexedAccess`, que en una aserción de test es ruido
+  —`filas[0]` dentro de un `expect` ya falla solo si la fila no está—.
+- **Los tipos del dominio viven en `src/tipos.ts`** y separan dos fronteras: la
+  del `.md`, donde una receta parseada siempre tiene todas sus claves y lo
+  ausente llega como `null`; y la de Google, donde todo campo se declara
+  opcional porque el servidor puede omitirlo.
+- **Los dobles de test se declaran contra el tipo que el store consume**
+  (`DriveDelStore`, `SheetsDelStore`) con `satisfies`: un doble que se aparte de
+  la API real deja de compilar. Los helpers están en `tests/dobles.ts`
+  (`entradaFalsa`, `recetaFalsa`), `tests/dom-falso.ts` (el DOM mínimo y el
+  cliente de GIS) y `tests/aserciones.ts` (`arranqueListo` y compañía, que
+  estrechan la unión de `arrancar()`, y `invalido()`, que marca la entrada
+  deliberadamente mala de los tests de defensa del §8).
+- **Los tipos de Google Identity Services están escritos a mano** en
+  `src/gis.d.ts`: el SDK se carga por `<script>` y no es un paquete npm.
 
 ## Idioma
 

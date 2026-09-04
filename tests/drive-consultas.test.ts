@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { q } from '../src/drive.js';
+import { invalido } from './aserciones.js';
 
 describe('q', () => {
   it('arma la consulta de hijos excluyendo la papelera', () => {
@@ -23,13 +24,13 @@ describe('q', () => {
   });
 
   it('defiende q.hijosDe contra null', () => {
-    expect(() => q.hijosDe(null)).not.toThrow();
-    expect(q.hijosDe(null)).toBe("'' in parents and trashed=false");
+    expect(() => q.hijosDe(invalido(null))).not.toThrow();
+    expect(q.hijosDe(invalido(null))).toBe("'' in parents and trashed=false");
   });
 
   it('defiende q.porNombre contra undefined', () => {
-    expect(() => q.porNombre(undefined)).not.toThrow();
-    expect(q.porNombre(undefined)).toBe("name='' and trashed=false");
+    expect(() => q.porNombre(invalido(undefined))).not.toThrow();
+    expect(q.porNombre(invalido(undefined))).toBe("name='' and trashed=false");
   });
 
   it('defiende q.porNombre contra undefined como padre', () => {

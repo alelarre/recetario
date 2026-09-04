@@ -1,0 +1,17 @@
+{
+  /**
+   * Los tests se verifican con las mismas reglas que `src`, con una excepción:
+   * `noUncheckedIndexedAccess`.
+   *
+   * En `src` esa regla es la que atrapa los grupos de una regex que pueden no
+   * existir y las filas que la planilla puede no traer. En un test, `filas[0]`
+   * aparece dentro de una aserción que justamente comprueba que la fila está:
+   * si no estuviera, el test falla, que es lo que se quiere. Exigir el chequeo
+   * ahí no agrega ninguna garantía y llena las aserciones de `!`.
+   */
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": false
+  },
+  "include": ["tests", "src"]
+}

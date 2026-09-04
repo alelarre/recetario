@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { invalido } from './aserciones.js';
 import { parse } from '../src/recipe.js';
 import { COLUMNAS, filaDesde, entradaDesdeFila, dificultadValida } from '../src/catalogo.js';
 
@@ -72,7 +73,7 @@ describe('filaDesde', () => {
   });
 
   it('tolera receta como número', () => {
-    const f = filaDesde(42, UBICACION);
+    const f = filaDesde(invalido(42), UBICACION);
     expect(f).toHaveLength(12);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
@@ -90,7 +91,7 @@ describe('filaDesde', () => {
   });
 
   it('tolera ubicacion como número', () => {
-    const f = filaDesde(RECETA, 42);
+    const f = filaDesde(RECETA, invalido(42));
     expect(f).toHaveLength(12);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });

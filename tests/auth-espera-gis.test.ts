@@ -8,22 +8,18 @@
 // asumirlo, con timers falsos para no depender de tiempo real.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { crearAuth } from '../src/auth.js';
-
-function clienteGisFalso() {
-  const c = {};
-  c.requestAccessToken = () => c.callback({ access_token: 'tok-123', expires_in: 3600 });
-  return c;
-}
+import { comoGlobal, clienteGisFalso, limpiarGlobales } from './dom-falso.js';
 
 describe('auth.js: espera a que cargue Identity Services', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    global.window = {};
+    // Arranca sin `google`: es justo el estado en que el script todavía baja.
+    global.window = comoGlobal<Window & typeof globalThis>({});
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    delete global.window;
+    limpiarGlobales();
   });
 
   it('si Google Identity termina de cargar después de arrancar, igual conecta', async () => {

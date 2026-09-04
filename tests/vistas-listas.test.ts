@@ -1,11 +1,12 @@
 // tests/vistas-listas.test.js
 import { describe, it, expect } from 'vitest';
+import { entradaFalsa } from './dobles.js';
 import { renderHome } from '../src/ui/home.js';
 import { renderLista } from '../src/ui/lista.js';
 
 const ENTRADAS = [
-  { id_archivo: 'r1', titulo: 'Milanesas napolitanas', rinde: '4 porciones', tiempo: '40 min', dificultad: 'fácil', tags: ['horno'] },
-  { id_archivo: 'r2', titulo: 'Matambre a la pizza', rinde: '', tiempo: '', dificultad: '', tags: ['incompleto'] }
+  entradaFalsa({ id_archivo: 'r1', titulo: 'Milanesas napolitanas', rinde: '4 porciones', tiempo: '40 min', dificultad: 'fácil', tags: ['horno'] }),
+  entradaFalsa({ id_archivo: 'r2', titulo: 'Matambre a la pizza', tags: ['incompleto'] })
 ];
 
 describe('renderHome', () => {
@@ -97,8 +98,8 @@ describe('renderLista', () => {
     // El motor ya matcheaba las dos cosas, pero devolvía una lista plana:
     // buscabas "berenjena" y no sabías por qué había aparecido cada resultado.
     const html = renderLista({ titulo: '"berenjena"', grupos: {
-      porNombre: [{ id_archivo: 'a', titulo: 'Escabeche de berenjenas', categoria: 'Entradas y picadas', tags: [] }],
-      porIngrediente: [{ id_archivo: 'b', titulo: 'Baba ganush', categoria: 'Entradas y picadas', tags: [] }],
+      porNombre: [entradaFalsa({ id_archivo: 'a', titulo: 'Escabeche de berenjenas', categoria: 'Entradas y picadas' })],
+      porIngrediente: [entradaFalsa({ id_archivo: 'b', titulo: 'Baba ganush', categoria: 'Entradas y picadas' })],
     } });
     expect(html).toContain('Por nombre · 1');
     expect(html).toContain('Por ingrediente · 1');
@@ -108,7 +109,7 @@ describe('renderLista', () => {
   it('el chip de color aparece en la búsqueda y no dentro de una categoría', () => {
     // Vienen categorías mezcladas: ahí el color informa. Dentro de una
     // categoría serían veinte cuadraditos iguales que no dicen nada.
-    const entrada = { id_archivo: 'a', titulo: 'X', categoria: 'Carnes', tags: [] };
+    const entrada = entradaFalsa({ id_archivo: 'a', titulo: 'X', categoria: 'Carnes' });
     const busqueda = renderLista({ titulo: '"x"', grupos: { porNombre: [entrada], porIngrediente: [] } });
     const categoria = renderLista({ titulo: 'Carnes', entradas: [entrada] });
     expect(busqueda).toContain('class="marca"');

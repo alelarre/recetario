@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { invalido } from './aserciones.js';
 import { parse } from '../src/recipe.js';
 import { renderEditor, recetaDesdeFormulario } from '../src/ui/editor.js';
 
@@ -74,11 +75,11 @@ describe('renderEditor', () => {
   });
 
   it('defendé: null no lanza', () => {
-    expect(() => renderEditor(null)).not.toThrow();
+    expect(() => renderEditor(invalido(null))).not.toThrow();
   });
 
   it('defendé: receta sin campos no lanza', () => {
-    expect(() => renderEditor({ receta: {}, entrada: ENTRADA, categorias: CATEGORIAS })).not.toThrow();
+    expect(() => renderEditor({ receta: invalido({}), entrada: ENTRADA, categorias: CATEGORIAS })).not.toThrow();
   });
 });
 

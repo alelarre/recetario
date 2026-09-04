@@ -10,6 +10,7 @@
 // (cubierto en vista-editor.test.js) — acá solo importa que no aparezca
 // ningún prompt en el camino.
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
 vi.mock('../src/ui/app.css', () => ({}));
@@ -42,23 +43,22 @@ async function esperarMicrotareas(vueltas = 5) {
 
 describe('main.js: navegar a "nueva receta"', () => {
   afterEach(() => {
-    delete global.document;
-    delete global.window;
-    delete global.location;
-    delete global.history;
-    delete global.prompt;
+    limpiarGlobales();
+    delete (global as unknown as Record<string, unknown>)['prompt'];
   });
 
   it('renderiza el formulario de alta directo, sin ningún prompt', async () => {
     const app = { innerHTML: '', insertAdjacentHTML: () => {}, addEventListener: () => {} };
-    const listeners = {};
-    global.document = {
-      querySelector: (sel) => (sel === '#app' ? app : null),
+    const listeners: Record<string, () => void> = {};
+    global.document = comoGlobal<Document>({
+      querySelector: (sel: string) => (sel === '#app' ? app : null),
       addEventListener: () => {}
-    };
-    global.window = { google: {}, addEventListener: (ev, fn) => { listeners[ev] = fn; } };
-    global.location = { hash: '', pathname: '/recetario/', search: '' };
-    global.history = { back: () => {}, replaceState: () => {} };
+    });
+    global.window = comoGlobal<Window & typeof globalThis>({
+      google: {}, addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; }
+    });
+    global.location = comoGlobal<Location>({ hash: '', pathname: '/recetario/', search: '' });
+    global.history = comoGlobal<History>({ back: () => {}, replaceState: () => {} });
     // Si el código todavía llamara a prompt(), esto lo delata: no hay
     // implementación, así que tirar significa que el popup no se fue del todo.
     global.prompt = () => { throw new Error('no debería llamarse: el popup se sacó del medio'); };
@@ -67,7 +67,7 @@ describe('main.js: navegar a "nueva receta"', () => {
     await esperarMicrotareas();  // deja terminar el arranque fire-and-forget
 
     global.location.hash = '#/nueva';
-    listeners.hashchange();
+    listeners['hashchange']?.();
     await esperarMicrotareas();
 
     expect(app.innerHTML).toContain('Nueva receta');

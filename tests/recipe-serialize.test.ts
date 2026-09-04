@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { invalido } from './aserciones.js';
+import type { Receta } from '../src/tipos.js';
 import { parse, serialize } from '../src/recipe.js';
 
 const ORIGINAL = `---
@@ -72,16 +74,16 @@ describe('serialize', () => {
   });
 
   it('tolera receta.otras no-array sin lanzar ni escribir undefined', () => {
-    expect(() => serialize({otras: 'x'})).not.toThrow();
-    expect(serialize({otras: 'x'})).not.toContain('undefined');
-    expect(() => serialize({otras: 42})).not.toThrow();
-    expect(serialize({otras: 42})).not.toContain('undefined');
-    expect(() => serialize({otras: {}})).not.toThrow();
-    expect(serialize({otras: {}})).not.toContain('undefined');
+    expect(() => serialize(invalido<Partial<Receta>>({otras: 'x'}))).not.toThrow();
+    expect(serialize(invalido<Partial<Receta>>({otras: 'x'}))).not.toContain('undefined');
+    expect(() => serialize(invalido<Partial<Receta>>({otras: 42}))).not.toThrow();
+    expect(serialize(invalido<Partial<Receta>>({otras: 42}))).not.toContain('undefined');
+    expect(() => serialize(invalido<Partial<Receta>>({otras: {}}))).not.toThrow();
+    expect(serialize(invalido<Partial<Receta>>({otras: {}}))).not.toContain('undefined');
   });
 
   it('maneja receta.otras con elementos nulos o inválidos, emitiendo solo los válidos', () => {
-    const r = serialize({otras: [null, {encabezado: 'Maridaje', cuerpo: 'Malbec.'}]});
+    const r = serialize(invalido<Partial<Receta>>({otras: [null, {encabezado: 'Maridaje', cuerpo: 'Malbec.'}]}));
     expect(() => r).not.toThrow();
     expect(r).toContain('## Maridaje');
     expect(r).toContain('Malbec.');
