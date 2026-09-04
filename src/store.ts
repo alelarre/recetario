@@ -299,7 +299,7 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
   async function guardar(
     id: string,
     receta: Receta,
-    { carpetaDestino }: { carpetaDestino?: string } = {}
+    { carpetaDestino }: { carpetaDestino?: string | undefined } = {}
   ): Promise<ResultadoGuardar> {
     const entrada = entradas.find(e => e.id_archivo === id);
     const meta = await drive.metadatos(id);
@@ -337,7 +337,7 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
 
   async function crear(
     receta: Receta,
-    { carpetaId }: { carpetaId?: string } = {}
+    { carpetaId }: { carpetaId?: string | undefined } = {}
   ): Promise<{ id: string; nombre_archivo: string }> {
     const padre = carpetaId ?? ctx.raizId;
     const hermanos = (await drive.listarHijos(padre)).map(a => a.name ?? '');

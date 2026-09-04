@@ -13,30 +13,62 @@ import { renderLista } from './ui/lista.js';
 import { renderDetalle } from './ui/detalle.js';
 import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
 import { renderVisor } from './ui/visor.js';
+import type { Ruta } from './ui/router.js';
+import type { DatosFormulario } from './ui/editor.js';
+import type { Receta } from './tipos.js';
+import type { ResultadoArranque } from './store.js';
+
+type Store = ReturnType<typeof crearStore>;
 
 const app = document.querySelector('#app');
+if (!app) throw new Error('Falta #app en el documento');
 const auth = crearAuth();
 const drive = crearDrive(() => auth.token());
 const sheets = crearSheets(() => auth.token());
 
-let store, estadoArranque, vistaActual = null;
+let store: Store;
+let estadoArranque: ResultadoArranque | undefined;
+let vistaActual: Ruta | null = null;
 let ingredientesPlegados = false;  // la barra pegajosa del detalle
 let vaciasVisibles = false;        // las categorías en cero, plegadas en el home
-let wakeLock = null;               // para que la pantalla no se apague cocinando
-let pendienteFlush = null;
-let tagsActivos = [];       // filtro de la vista de categoría; se limpia al cambiar de vista
-let fotosVisor = null;      // fotos de la receta abierta en el visor; null = visor cerrado
+let wakeLock: WakeLockSentinel | null = null;  // para que la pantalla no se apague cocinando
+let pendienteFlush: ReturnType<typeof setTimeout> | undefined;
+let tagsActivos: string[] = [];   // filtro de la vista de categoría; se limpia al cambiar de vista
+let fotosVisor: string[] | null = null;  // fotos de la receta abierta; null = visor cerrado
 let indiceVisor = 0;
 
-const pintar = (html) => { app.innerHTML = html; };
+/**
+ * Estrecha el destino de un evento a algo con `closest`.
+ *
+ * Va por capacidad y no por `instanceof Element` a propósito: los tests corren
+ * en Node contra un DOM mínimo escrito a mano, donde `Element` no existe como
+ * global. Chequear la clase ataría el código de producción a que el entorno de
+ * test cargue un DOM completo, que es justo lo que este proyecto no hace.
+ */
+const conClosest = (t: EventTarget | null): Element | null =>
+  t && typeof (t as Element).closest === 'function' ? t as Element : null;
+
+/** El mensaje de un error desconocido, sin asumir que es un Error. */
+const mensajeDe = (e: unknown): string => e instanceof Error ? e.message : String(e);
+
+/**
+ * Las categorías sólo existen cuando el arranque llegó a 'listo'. Antes esto
+ * se leía como `estadoArranque.categorias` a secas: en cualquier otro estado
+ * daba undefined y el editor dibujaba un selector de carpeta vacío, sin decir
+ * por qué.
+ */
+const categoriasDelArranque = () =>
+  estadoArranque?.estado === 'listo' ? estadoArranque.categorias : [];
+
+const pintar = (html: string): void => { app.innerHTML = html; };
 
 /** Agrega o saca el visor del final de #app, sin tocar el resto del contenido (§7.2: no pierde el scroll del detalle). */
-function pintarVisor() {
+function pintarVisor(): void {
   document.querySelector('.visor')?.remove();
-  if (fotosVisor) app.insertAdjacentHTML('beforeend', renderVisor({ fotos: fotosVisor, indice: indiceVisor }));
+  if (fotosVisor) app!.insertAdjacentHTML('beforeend', renderVisor({ fotos: fotosVisor, indice: indiceVisor }));
 }
 
-function abrirVisor(fotos, indice) {
+function abrirVisor(fotos: string[], indice: number): void {
   fotosVisor = fotos;
   indiceVisor = indice;
   pintarVisor();
@@ -49,7 +81,7 @@ function cerrarVisor() {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && fotosVisor) return cerrarVisor();
-  if (e.key === 'Escape') { const m = document.querySelector('.menu'); if (m) m.hidden = true; }
+  if (e.key === 'Escape') { const m = document.querySelector<HTMLElement>('.menu'); if (m) m.hidden = true; }
 });
 
 /**
@@ -58,7 +90,7 @@ document.addEventListener('keydown', (e) => {
  * app pasa a segundo plano, así que hay que volver a pedirlo al volver — sin
  * eso, alcanza con atender un mensaje para que la pantalla se apague de nuevo.
  */
-async function mantenerPantalla() {
+async function mantenerPantalla(): Promise<boolean> {
   if (!navigator.wakeLock) return false;
   try {
     wakeLock = await navigator.wakeLock.request('screen');
@@ -70,7 +102,7 @@ async function mantenerPantalla() {
   }
 }
 
-async function soltarPantalla() {
+async function soltarPantalla(): Promise<void> {
   try { await wakeLock?.release(); } catch { /* ya soltado */ }
   wakeLock = null;
 }
@@ -83,7 +115,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     // Si el botón sigue activo, el usuario nunca lo apagó: el bloqueo se
     // perdió al irse a segundo plano y hay que volver a pedirlo.
-    const b = document.querySelector('[data-accion="pantalla"][aria-pressed="true"]');
+    const b = document.querySelector<HTMLElement>('[data-accion="pantalla"][aria-pressed="true"]');
     if (b && !wakeLock) mantenerPantalla().then(ok => b.setAttribute('aria-pressed', String(ok)));
     return;
   }
@@ -124,7 +156,7 @@ async function arrancar() {
 
   await store.cargarIndice();
   if (estadoArranque.reconstruir) await reconstruir();
-  else store.sync().then(render).catch(console.error);
+  else store.sync().then(() => render()).catch(console.error);
 
   router.iniciar();
 }
@@ -138,7 +170,7 @@ async function reconstruir() {
   render();
 }
 
-async function render(ruta = parsearHash(location.hash)) {
+async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   // Cambiar de categoría o de vista limpia el filtro de tags y cierra el visor:
   // si no, se entra a otra categoría y no se ve nada porque quedó filtrando
   // por un tag que ahí no existe, sin forma de darse cuenta.
@@ -156,43 +188,48 @@ async function render(ruta = parsearHash(location.hash)) {
     return pintar(renderHome({ categorias: store.categoriasConConteo(), ultimaReconstruccion: store.ultimaReconstruccion(), vaciasVisibles }));
   }
   if (ruta.vista === 'categoria') {
-    const entradas = store.buscar({ categoria: ruta.params.nombre, tags: tagsActivos });
+    const nombre = ruta.params['nombre'] ?? '';
+    const entradas = store.buscar({ categoria: nombre, tags: tagsActivos });
     const vacio = tagsActivos.length
       ? { titulo: 'Ninguna receta con esos tags', detalle: 'Probá sacando alguno de los filtros de arriba.' }
       : { titulo: 'Todavía no hay nada acá',
-          detalle: `Las recetas entran como archivos .md en la carpeta ${ruta.params.nombre} de Drive, casi siempre escritas por un agente desde un PDF, una foto o un video.` };
-    return pintar(renderLista({ titulo: ruta.params.nombre, entradas, tags: store.tagsDe(ruta.params.nombre), tagsActivos, vacio }));
+          detalle: `Las recetas entran como archivos .md en la carpeta ${nombre} de Drive, casi siempre escritas por un agente desde un PDF, una foto o un video.` };
+    return pintar(renderLista({ titulo: nombre, entradas, tags: store.tagsDe(nombre), tagsActivos, vacio }));
   }
   if (ruta.vista === 'buscar') {
-    const grupos = store.buscarPorTexto(ruta.params.q);
-    return pintar(renderLista({ titulo: `"${ruta.params.q}"`, grupos,
+    const q = ruta.params['q'] ?? '';
+    const grupos = store.buscarPorTexto(q);
+    return pintar(renderLista({ titulo: `"${q}"`, grupos,
       vacio: { titulo: 'Sin resultados', detalle: 'Se busca por título y por ingrediente.' } }));
   }
   if (ruta.vista === 'detalle') {
-    const { entrada, receta } = await store.receta(ruta.params.id);
+    const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
     return pintar(renderDetalle({ entrada, receta, ingredientesPlegados }));
   }
   if (ruta.vista === 'editar') {
-    const { entrada, receta } = await store.receta(ruta.params.id);
-    return pintar(renderEditor({ entrada, receta, categorias: estadoArranque.categorias, tagsConocidos: store.tagsDe().map(t => t.tag) }));
+    const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
+    return pintar(renderEditor({ entrada, receta, categorias: categoriasDelArranque(), tagsConocidos: store.tagsDe().map(t => t.tag) }));
   }
   if (ruta.vista === 'nueva') {
     // El mismo formulario que editar, sin entrada (todavía no hay archivo
     // en Drive) y con una receta vacía en vez de una leída. Guardar es lo
     // que de verdad la crea (§11: "crear una receta mínima").
-    return pintar(renderEditor({ entrada: null, receta: parse(''), categorias: estadoArranque.categorias, tagsConocidos: store.tagsDe().map(t => t.tag) }));
+    return pintar(renderEditor({ entrada: null, receta: parse(''), categorias: categoriasDelArranque(), tagsConocidos: store.tagsDe().map(t => t.tag) }));
   }
 }
 
 const router = crearRouter(render);
 
 app.addEventListener('click', async (e) => {
-  const boton = e.target.closest('[data-accion], .check, [data-tag], img');
+  // Todo el manejo de clicks es delegación desde #app, así que el destino
+  // llega como EventTarget y hay que estrecharlo una sola vez, acá.
+  const destino = conClosest(e.target);
+  const boton = destino?.closest<HTMLElement>('[data-accion], .check, [data-tag], img') ?? null;
 
   // El menú del home se cierra al tocar cualquier otra cosa, como cualquier
   // desplegable. Sin esto solo se cerraba volviendo a tocar el ⋯.
-  const menu = document.querySelector('.menu');
-  if (menu && !menu.hidden && !e.target.closest('.menu') && boton?.dataset.accion !== 'menu') {
+  const menu = document.querySelector<HTMLElement>('.menu');
+  if (menu && !menu.hidden && !destino?.closest('.menu') && boton?.dataset['accion'] !== 'menu') {
     menu.hidden = true;
   }
   if (!boton) return;
@@ -203,8 +240,8 @@ app.addEventListener('click', async (e) => {
     return;
   }
 
-  if (boton.dataset.tag) {
-    const tag = boton.dataset.tag;
+  if (boton.dataset['tag']) {
+    const tag = boton.dataset['tag'];
     tagsActivos = tagsActivos.includes(tag) ? tagsActivos.filter(t => t !== tag) : [...tagsActivos, tag];
     return render();
   }
@@ -212,13 +249,13 @@ app.addEventListener('click', async (e) => {
   if (boton.tagName === 'IMG') {
     // Las imágenes del cuerpo son las únicas fotos de la receta: tocar
     // cualquiera abre el visor (§7.2).
-    const fotos = [...document.querySelectorAll('#app [data-cuerpo] img')];
-    const indice = fotos.indexOf(boton);
+    const fotos = [...document.querySelectorAll<HTMLImageElement>('#app [data-cuerpo] img')];
+    const indice = fotos.indexOf(boton as HTMLImageElement);
     if (indice === -1) return;
     return abrirVisor(fotos.map(img => img.src), indice);
   }
 
-  const accion = boton.dataset.accion;
+  const accion = boton.dataset['accion'];
   if (accion === 'ingredientes') { ingredientesPlegados = !ingredientesPlegados; return render(); }
   if (accion === 'vacias') { vaciasVisibles = !vaciasVisibles; return render(); }
 
@@ -238,7 +275,7 @@ app.addEventListener('click', async (e) => {
   }
 
   if (accion === 'atras') return history.back();
-  if (accion === 'editar') return location.hash = `#/r/${vistaActual.params.id}/editar`;
+  if (accion === 'editar') { location.hash = `#/r/${vistaActual?.params['id'] ?? ''}/editar`; return; }
   if (accion === 'cancelar') return history.back();
   if (accion === 'reconstruir') return reconstruir();
   if (accion === 'reconectar') {
@@ -251,7 +288,7 @@ app.addEventListener('click', async (e) => {
       return render();
     } catch (err) {
       console.error(err);
-      return alert(`No se pudo reconectar con Google: ${err.message}. Probá de nuevo.`);
+      return alert(`No se pudo reconectar con Google: ${mensajeDe(err)}. Probá de nuevo.`);
     }
   }
   if (accion === 'menu') return document.querySelector('.menu')?.toggleAttribute('hidden');
@@ -260,53 +297,65 @@ app.addEventListener('click', async (e) => {
   if (accion === 'foto-siguiente') { indiceVisor = Math.min((fotosVisor?.length ?? 1) - 1, indiceVisor + 1); return pintarVisor(); }
 
   if (accion === 'guardar') {
-    const form = document.querySelector('[data-formulario]');
-    const datos = Object.fromEntries(new FormData(form));
+    const form = document.querySelector<HTMLFormElement>('[data-formulario]');
+    if (!form) return;
+    // FormData da string | File; los campos del editor son todos de texto, y
+    // un File acá sería un campo que alguien agregó sin pasar por el editor.
+    const datos: DatosFormulario = Object.fromEntries(
+      [...new FormData(form)].map(([k, v]) => [k, typeof v === 'string' ? v : undefined])
+    );
 
-    if (vistaActual.vista === 'nueva') {
-      const nueva = recetaDesdeFormulario(datos, parse(''));
+    if (vistaActual?.vista === 'nueva') {
+      const nueva = recetaDesdeFormulario(datos, parse('')) as Receta;
       if (!nueva.titulo) return alert('Ponele un título a la receta antes de guardar.');
       try {
-        await store.crear(nueva, { carpetaId: datos.carpeta || undefined });
+        await store.crear(nueva, { carpetaId: datos['carpeta'] || undefined });
         programarFlush();
         return history.back();
       } catch (err) {
         console.error(err);
-        return alert(`No se pudo crear la receta en Drive: ${err.message}. Probá de nuevo.`);
+        return alert(`No se pudo crear la receta en Drive: ${mensajeDe(err)}. Probá de nuevo.`);
       }
     }
 
+    const id = vistaActual?.params['id'] ?? '';
     try {
-      const { receta } = await store.receta(vistaActual.params.id);
-      const nueva = recetaDesdeFormulario(datos, receta);
-      const r = await store.guardar(vistaActual.params.id, nueva, { carpetaDestino: datos.carpeta });
+      const { receta } = await store.receta(id);
+      const nueva = recetaDesdeFormulario(datos, receta) as Receta;
+      const r = await store.guardar(id, nueva, { carpetaDestino: datos['carpeta'] });
       if (!r.ok) return alert('La receta cambió en Drive desde que la abriste. Recargá antes de guardar.');
       programarFlush();
       return history.back();
     } catch (err) {
       console.error(err);
-      return alert(`No se pudo guardar en Drive: ${err.message}. El cambio puede no haberse guardado — probá de nuevo antes de salir de la receta.`);
+      return alert(`No se pudo guardar en Drive: ${mensajeDe(err)}. El cambio puede no haberse guardado — probá de nuevo antes de salir de la receta.`);
     }
   }
 
   if (accion === 'borrar') {
     if (!confirm('¿Borrar esta receta?')) return;
     try {
-      await store.borrar(vistaActual.params.id);
+      await store.borrar(vistaActual?.params['id'] ?? '');
       programarFlush();
-      return location.hash = '#/';
+      location.hash = '#/';
+      return;
     } catch (err) {
       console.error(err);
-      return alert(`No se pudo borrar en Drive: ${err.message}. La receta puede seguir estando ahí — probá de nuevo.`);
+      return alert(`No se pudo borrar en Drive: ${mensajeDe(err)}. La receta puede seguir estando ahí — probá de nuevo.`);
     }
   }
 });
 
 app.addEventListener('change', (e) => {
-  if (e.target.dataset.accion === 'buscar') location.hash = `#/buscar?q=${encodeURIComponent(e.target.value)}`;
+  // Mismo motivo que en `conClosest`: nada de instanceof contra globales del
+  // navegador, que en los tests no existen.
+  const campo = e.target as HTMLInputElement | null;
+  if (campo?.dataset?.['accion'] === 'buscar') {
+    location.hash = `#/buscar?q=${encodeURIComponent(campo.value)}`;
+  }
 });
 
-arrancar().catch(err => pintar(`<p class="contenido">No pude arrancar: ${escapar(err.message)} <button data-accion="reconectar">Reintentar</button></p>`));
+arrancar().catch(err => pintar(`<p class="contenido">No pude arrancar: ${escapar(mensajeDe(err))} <button data-accion="reconectar">Reintentar</button></p>`));
 
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
