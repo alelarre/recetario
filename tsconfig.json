@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    /* La app corre en el navegador y se compila con Vite, que borra los tipos
+       sin verificarlos. Acá `tsc --noEmit` es la verificación: la puerta del
+       CI, no el compilador que produce dist/. */
+    "noEmit": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+
+    /* `vite/client` es lo que declara import.meta.glob, que usa
+       ui/categorias para descubrir las fotos sin listarlas a mano. */
+    "types": ["vite/client"],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true,
+
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Los .js que todavía no se migraron siguen resolviéndose; se saca
+       cuando no quede ninguno. */
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": ["src", "tests", "vite.config.ts"]
+}

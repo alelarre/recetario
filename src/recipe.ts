@@ -1,7 +1,14 @@
-const CLAVES = ['titulo', 'tags', 'rinde', 'tiempo', 'dificultad', 'fuente'];
+import type { Receta, Ingrediente, Aviso, ClaveSeccion, OtraSeccion } from './tipos.js';
+
+/** Las claves del frontmatter que se escriben tal cual, sin `tags`, que es lista. */
+const CLAVES = ['titulo', 'rinde', 'tiempo', 'dificultad', 'fuente'] as const;
+type ClaveSimple = (typeof CLAVES)[number];
+
+const esClaveSimple = (c: string): c is ClaveSimple =>
+  (CLAVES as readonly string[]).includes(c);
 
 /** Minúsculas y sin tildes. Es la única normalización del sistema (§3.2). */
-export function normalizar(texto) {
+export function normalizar(texto: unknown): string {
   return String(texto ?? '')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')  // marcas de combinación
@@ -9,7 +16,7 @@ export function normalizar(texto) {
     .trim();
 }
 
-function recetaVacia() {
+function recetaVacia(): Receta {
   return {
     titulo: null, tags: [], rinde: null, tiempo: null, dificultad: null, fuente: null,
     extras: {},
@@ -18,28 +25,28 @@ function recetaVacia() {
   };
 }
 
-function parsearLista(valor, resto) {
+function parsearLista(valor: string, resto: string[]): string[] {
   // Formato corto: [a, b, c]
   const corta = valor.match(/^\[(.*)\]$/);
-  if (corta) {
+  if (corta?.[1] !== undefined) {
     return corta[1].split(',').map(s => s.trim()).filter(Boolean);
   }
   // Formato largo: líneas siguientes que empiezan con guión
-  const items = [];
+  const items: string[] = [];
   for (const linea of resto) {
     const m = linea.match(/^\s*-\s+(.*)$/);
-    if (!m) break;
+    if (!m?.[1]) break;
     items.push(m[1].trim());
   }
   return items;
 }
 
-function parsearFrontmatter(bloque, receta) {
+function parsearFrontmatter(bloque: string, receta: Receta): void {
   const lineas = bloque.split('\n');
-  let ultimaClave = null;
+  let ultimaClave: string | null = null;
   for (let i = 0; i < lineas.length; i++) {
     const linea = lineas[i];
-    if (!linea.trim()) continue;
+    if (linea === undefined || !linea.trim()) continue;
     if (/^\s*-\s+/.test(linea)) {
       // Si no es tags, es ilegible
       if (ultimaClave !== 'tags') {
@@ -48,12 +55,16 @@ function parsearFrontmatter(bloque, receta) {
       continue; // ya consumida por una lista
     }
     const m = linea.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(.*)$/);
-    if (!m) { receta.avisos.push('frontmatter-ilegible'); continue; }
-    const [, clave, valor] = m;
+    if (!m || m[1] === undefined || m[2] === undefined) {
+      receta.avisos.push('frontmatter-ilegible');
+      continue;
+    }
+    const clave = m[1];
+    const valor = m[2];
     ultimaClave = clave;
     if (clave === 'tags') {
       receta.tags = parsearLista(valor.trim(), lineas.slice(i + 1));
-    } else if (CLAVES.includes(clave)) {
+    } else if (esClaveSimple(clave)) {
       receta[clave] = valor.trim() === '' ? null : valor.trim();
     } else {
       receta.extras[clave] = valor.trim();
@@ -61,13 +72,13 @@ function parsearFrontmatter(bloque, receta) {
   }
 }
 
-export function parse(texto) {
+export function parse(texto: unknown): Receta {
   const receta = recetaVacia();
   const fuente = String(texto ?? '');
 
   const m = fuente.match(/^---\n([\s\S]*?)\n---\n?/);
   let cuerpo = fuente;
-  if (m) {
+  if (m?.[1] !== undefined) {
     parsearFrontmatter(m[1], receta);
     cuerpo = fuente.slice(m[0].length);
   } else {
@@ -81,24 +92,27 @@ export function parse(texto) {
   return receta;
 }
 
-const SECCIONES = {
+const SECCIONES: Record<string, ClaveSeccion> = {
   ingredientes: 'ingredientes',
   preparacion: 'preparacion',
   variaciones: 'variaciones',
   notas: 'notas'
 };
 
-function parsearCuerpo(cuerpo, receta) {
+/** Dónde se está acumulando texto: una sección conocida, la descripción, o una ajena. */
+type Destino = ClaveSeccion | 'descripcion' | 'otra';
+
+function parsearCuerpo(cuerpo: string, receta: Receta): void {
   const lineas = String(cuerpo).split('\n');
-  let destino = 'descripcion';
-  let encabezadoOtra = null;
-  let buffer = [];
+  let destino: Destino = 'descripcion';
+  let encabezadoOtra: string | null = null;
+  let buffer: string[] = [];
 
   const volcar = () => {
     const texto = buffer.join('\n').trim();
     buffer = [];
     if (!texto) { encabezadoOtra = null; return; }
-    if (destino === 'otra') receta.otras.push({ encabezado: encabezadoOtra, cuerpo: texto });
+    if (destino === 'otra') receta.otras.push({ encabezado: encabezadoOtra ?? '', cuerpo: texto });
     else {
       if (receta[destino]) {
         receta[destino] = receta[destino] + '\n\n' + texto;
@@ -112,7 +126,7 @@ function parsearCuerpo(cuerpo, receta) {
 
   for (const linea of lineas) {
     const m = linea.match(/^##\s+(.+?)\s*$/);
-    if (m && !linea.startsWith('###')) {
+    if (m?.[1] !== undefined && !linea.startsWith('###')) {
       volcar();
       const encabezadoTrimado = m[1].trim();
       if (!encabezadoTrimado) {
@@ -128,31 +142,36 @@ function parsearCuerpo(cuerpo, receta) {
   volcar();
 }
 
-const ORDEN_CUERPO = [
+const ORDEN_CUERPO: ReadonlyArray<readonly [ClaveSeccion, string]> = [
   ['ingredientes', 'Ingredientes'],
   ['preparacion', 'Preparación'],
   ['variaciones', 'Variaciones'],
   ['notas', 'Notas']
 ];
 
-export function serialize(receta) {
-  receta = receta ?? {};
-  const fm = [];
-  if (receta.titulo) fm.push(`titulo: ${receta.titulo}`);
-  if (Array.isArray(receta.tags) && receta.tags.length) fm.push(`tags: [${receta.tags.join(', ')}]`);
-  for (const clave of ['rinde', 'tiempo', 'dificultad', 'fuente']) {
-    if (receta[clave]) fm.push(`${clave}: ${receta[clave]}`);
+/**
+ * Serializa lo que le den, no solo una `Receta` completa: el editor entrega
+ * objetos a medio armar y los tests le pasan basura a propósito. Por eso el
+ * parámetro es parcial y todo se valida adentro.
+ */
+export function serialize(receta?: Partial<Receta> | null): string {
+  const r: Partial<Receta> = receta ?? {};
+  const fm: string[] = [];
+  if (r.titulo) fm.push(`titulo: ${r.titulo}`);
+  if (Array.isArray(r.tags) && r.tags.length) fm.push(`tags: [${r.tags.join(', ')}]`);
+  for (const clave of ['rinde', 'tiempo', 'dificultad', 'fuente'] as const) {
+    if (r[clave]) fm.push(`${clave}: ${r[clave]}`);
   }
-  for (const [clave, valor] of Object.entries(typeof receta.extras === 'object' && receta.extras !== null ? receta.extras : {})) {
+  for (const [clave, valor] of Object.entries(typeof r.extras === 'object' && r.extras !== null ? r.extras : {})) {
     fm.push(`${clave}: ${valor}`);
   }
 
-  const partes = [];
-  if (receta.descripcion) partes.push(receta.descripcion);
+  const partes: string[] = [];
+  if (r.descripcion) partes.push(r.descripcion);
   for (const [clave, encabezado] of ORDEN_CUERPO) {
-    if (receta[clave]) partes.push(`## ${encabezado}\n${receta[clave]}`);
+    if (r[clave]) partes.push(`## ${encabezado}\n${r[clave]}`);
   }
-  for (const otra of Array.isArray(receta.otras) ? receta.otras : []) {
+  for (const otra of Array.isArray(r.otras) ? r.otras : []) {
     if (!otra?.encabezado || typeof otra.encabezado !== 'string') continue;
     partes.push(`## ${otra.encabezado}\n${otra.cuerpo}`);
   }
@@ -167,7 +186,7 @@ const UNIDADES = ['g', 'kg', 'mg', 'ml', 'l', 'cc', 'taza', 'tazas', 'cda', 'cda
   'pizca', 'diente', 'dientes', 'lata', 'latas', 'paquete', 'paquetes'];
 
 /** Best-effort a propósito (§3.2): lo que no matchea se muestra tal cual. */
-export function parseIngrediente(linea) {
+export function parseIngrediente(linea: unknown): Ingrediente | null {
   // Solo strings: un número o un objeto suelto no es un ingrediente válido
   if (typeof linea !== 'string') return null;
   const crudo = linea;
@@ -175,11 +194,14 @@ export function parseIngrediente(linea) {
   if (!limpia || limpia.startsWith('#')) return null;
 
   const m = limpia.match(/^(\d+(?:[.,]\d+)?(?:\/\d+)?)\s+(.*)$/);
-  if (!m) return { cantidad: null, unidad: null, item: limpia, crudo };
+  if (!m || m[1] === undefined || m[2] === undefined) {
+    return { cantidad: null, unidad: null, item: limpia, crudo };
+  }
 
-  let [, cantidad, resto] = m;
-  let unidad = null;
-  const primera = resto.split(/\s+/)[0];
+  const cantidad = m[1];
+  let resto = m[2];
+  let unidad: string | null = null;
+  const primera = resto.split(/\s+/)[0] ?? '';
   if (UNIDADES.includes(normalizar(primera))) {
     unidad = primera;
     resto = resto.slice(primera.length).trim();
@@ -187,9 +209,9 @@ export function parseIngrediente(linea) {
   return { cantidad, unidad, item: resto.replace(/^de\s+/i, '').trim(), crudo };
 }
 
-export function ingredientesIndexables(receta) {
+export function ingredientesIndexables(receta?: Partial<Receta> | null): string[] {
   if (!receta) return [];
-  const vistos = new Set();
+  const vistos = new Set<string>();
   for (const linea of String(receta.ingredientes ?? '').split('\n')) {
     const ing = parseIngrediente(linea);
     if (!ing?.item) continue;
@@ -198,7 +220,7 @@ export function ingredientesIndexables(receta) {
   return [...vistos];
 }
 
-export function slugArchivo(titulo, existentes = []) {
+export function slugArchivo(titulo: unknown, existentes: unknown[] = []): string {
   // Aceptar solo strings, números o null/undefined; rechazar objetos
   if (typeof titulo !== 'string' && typeof titulo !== 'number' && titulo !== null && titulo !== undefined) {
     return 'sin-titulo.md';
@@ -206,7 +228,7 @@ export function slugArchivo(titulo, existentes = []) {
   const base = normalizar(titulo)
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'sin-titulo';
-  const tomados = new Set((Array.isArray(existentes) ? existentes : []).map(n => String(n ?? '').toLowerCase()));
+  const tomados = new Set<string>((Array.isArray(existentes) ? existentes : []).map(n => String(n ?? '').toLowerCase()));
   if (!tomados.has(`${base}.md`)) return `${base}.md`;
   let n = 2;
   while (tomados.has(`${base}-${n}.md`)) n++;
