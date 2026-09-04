@@ -86,6 +86,12 @@ button { background: none; border: 0; cursor: pointer; min-height: var(--tactil)
 .banda { height: 5rem; background: var(--cat, var(--superficie)); }
 .nav-detalle { display: flex; justify-content: space-between; gap: var(--margen); padding: 0.75rem var(--margen) 0; }
 .nav-detalle button { min-height: 0; color: var(--texto-2); font-size: var(--t-chip); }
+
+/* El emoji va en su propio span para que el gap lo separe: dentro de un mismo
+   nodo de texto el navegador colapsa el espacio y queda pegado a la palabra.
+   Va en `em` para que acompañe al tamaño de letra del botón. */
+.nav-detalle [data-accion="editar"],
+[data-accion="borrar"] { display: inline-flex; align-items: center; gap: 0.4em; }
 .titulo-receta { font-family: var(--display); font-variation-settings: 'wdth' 86; font-weight: 700;
   font-size: var(--t-titulo); line-height: 1.06; letter-spacing: -0.02em; text-wrap: balance;
   margin: 0.5rem 0 0.25rem; padding: 0 var(--margen); }

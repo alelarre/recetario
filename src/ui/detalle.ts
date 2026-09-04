@@ -57,7 +57,7 @@ export function renderDetalle(args: ArgsDetalle = {}): string {
     <div class="banda" style="--cat:${colorCategoria(categoria)}"></div>
     <nav class="nav-detalle">
       <button data-accion="atras">‹ ${escapar(categoria || 'Volver')}</button>
-      <button data-accion="editar">Editar</button>
+      <button data-accion="editar"><span aria-hidden="true">✏️</span>Editar</button>
     </nav>
     <h1 class="titulo-receta${incompleto ? ' incompleto' : ''}">${escapar(r.titulo ?? e?.titulo ?? '')}</h1>
     ${meta ? `<p class="meta-receta">${escapar(meta)}</p>` : ''}

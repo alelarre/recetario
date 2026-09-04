@@ -71,7 +71,7 @@ export function renderEditor(opts: ArgsEditor = {}): string {
       ${campoArea('notas', 'Notas', receta.notas)}
       ${otras ? `<div class="otras"><span>Otras secciones · ${(receta.otras ?? []).length}</span>${otras}
         <p class="meta">Secciones que la app no reconoce. Se guardan igual, al final del archivo.</p></div>` : ''}
-      ${esNueva ? '' : `<button data-accion="borrar" type="button">Borrar receta</button>`}
+      ${esNueva ? '' : `<button data-accion="borrar" type="button"><span aria-hidden="true">🗑️</span>Borrar receta</button>`}
     </form>`;
 }
 
