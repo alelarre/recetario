@@ -27,11 +27,30 @@ button { background: none; border: 0; cursor: pointer; min-height: var(--tactil)
    navegador, que es de user-agent. Sin esta línea el menú no se oculta nunca. */
 .menu[hidden] { display: none; }
 
+/* --- Los controles se ven como controles ---------------------------------
+   Todo lo tocable comparte una sola forma: borde visible, superficie propia y
+   texto pleno. Antes cada botón traía lo suyo y varios quedaban en texto gris
+   sobre el fondo, indistinguibles de una etiqueta. */
+.control,
+.alta,
+.encabezado button,
+.nav-detalle button,
+.acciones button,
+[data-accion="borrar"] {
+  padding: 0.5rem 0.75rem;
+  font-size: var(--t-chip);
+  font-weight: 600;
+  color: var(--texto);
+  border: 1px solid var(--borde-control);
+  border-radius: 0.625rem;
+  background: var(--superficie-control);
+  min-height: 0;
+}
+
 /* La acción de todos los días vive fuera del menú, que queda para el
-   mantenimiento que se usa una vez por mes. */
-.alta { display: block; margin: 0 var(--margen) 1.25rem; padding: 0.875rem;
-  text-align: center; font-weight: 600; border-radius: var(--radio);
-  border: 1px solid var(--separador); background: var(--superficie); width: calc(100% - 2 * var(--margen)); }
+   mantenimiento que se usa una vez por mes, y en el encabezado y no al pie:
+   abajo de todo hay que pasar dieciséis tiles para encontrarla. */
+.alta { display: inline-flex; align-items: center; gap: 0.4em; white-space: nowrap; }
 
 /* --- Tiles de categoría: la foto identifica, el color hilvana ------------- */
 .tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; padding: 0 var(--margen) var(--margen); }
@@ -85,7 +104,7 @@ button { background: none; border: 0; cursor: pointer; min-height: var(--tactil)
    el título se mueva, porque el título nunca vivió adentro. */
 .banda { height: 5rem; background: var(--cat, var(--superficie)); }
 .nav-detalle { display: flex; justify-content: space-between; gap: var(--margen); padding: 0.75rem var(--margen) 0; }
-.nav-detalle button { min-height: 0; color: var(--texto-2); font-size: var(--t-chip); }
+.nav-detalle button { min-height: 0; }
 
 /* El emoji va en su propio span para que el gap lo separe: dentro de un mismo
    nodo de texto el navegador colapsa el espacio y queda pegado a la palabra.
@@ -98,8 +117,7 @@ button { background: none; border: 0; cursor: pointer; min-height: var(--tactil)
 .meta-receta { padding: 0 var(--margen) 0.875rem; color: var(--texto-2); font-size: var(--t-meta); }
 
 .acciones { display: flex; gap: 0.5rem; padding: 0 var(--margen) 1rem; }
-.acciones button { min-height: 0; padding: 0.625rem 0.875rem; font-size: var(--t-chip); font-weight: 600;
-  border: 1px solid var(--separador); border-radius: 0.625rem; background: var(--superficie); }
+.acciones button { padding: 0.625rem 0.875rem; }
 .acciones button[aria-pressed="true"] { background: var(--acento); color: var(--fondo); border-color: var(--acento); }
 
 .seccion { display: flex; justify-content: space-between; gap: var(--margen);

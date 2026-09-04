@@ -59,13 +59,23 @@ describe('renderHome', () => {
     expect(abierto).toContain('#/c/Pastas');
   });
 
-  it('«Nueva receta» sale del menú de mantenimiento', () => {
+  it('«Nueva» sale del menú de mantenimiento', () => {
     // Convivía con Reconstruir índice y Reconectar cuenta: una acción de todos
     // los días mezclada con lo que se usa una vez por mes.
     const html = renderHome({ categorias: [] });
     const menu = html.slice(html.indexOf('class="menu"'));
     expect(menu).not.toContain('#/nueva');
     expect(html).toContain('class="alta" href="#/nueva"');
+  });
+
+  it('«Nueva» está en el encabezado, no al pie de los tiles', () => {
+    // Al pie hay que pasar dieciséis tiles para encontrarla, que no es donde
+    // nadie la busca. Se fija el lugar: sin esto, nada impide que vuelva.
+    const html = renderHome({ categorias: [] });
+    const encabezado = html.slice(html.indexOf('<header'), html.indexOf('</header>'));
+    expect(encabezado).toContain('#/nueva');
+    // Y queda antes del ⋯, que es la acción menos frecuente de las dos.
+    expect(encabezado.indexOf('#/nueva')).toBeLessThan(encabezado.indexOf('data-accion="menu"'));
   });
 
 describe('renderLista', () => {

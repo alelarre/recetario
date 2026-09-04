@@ -10,6 +10,11 @@ import { colorCategoria, fotoCategoria } from './categorias.js';
  * la posición aprendida se perdería. Las que están en cero se pliegan al
  * final, sin desaparecer: crear una carpeta en Drive tiene que seguir siendo
  * evidente.
+ *
+ * "Nueva" va en el encabezado, al lado del menú, y no al pie: abajo de todo
+ * hay que scrollear dieciséis tiles para encontrarla, y no es donde nadie la
+ * busca. Arriba está siempre a la vista y junto a la otra acción que no
+ * pertenece a ninguna receta.
  */
 /** Una categoría tal como la dibuja el home: nombre y cuántas recetas tiene. */
 export interface TileCategoria {
@@ -42,6 +47,7 @@ export function renderHome(arg: ArgsHome = {}): string {
   return `
     <header class="encabezado">
       <h1>Recetario</h1>
+      <a class="alta" href="#/nueva"><span aria-hidden="true">📝</span>Nueva</a>
       <button data-accion="menu" aria-label="Más acciones" aria-expanded="false">⋯</button>
     </header>
     <div class="busca"><input class="buscador" data-accion="buscar" type="search" placeholder="Buscar receta o ingrediente"></div>
@@ -52,7 +58,6 @@ export function renderHome(arg: ArgsHome = {}): string {
         <span aria-hidden="true">${vaciasVisibles ? '⌃' : '⌄'}</span>
       </button>
       ${vaciasVisibles ? `<nav class="tiles">${vacias.map(tile).join('')}</nav>` : ''}` : ''}
-    <a class="alta" href="#/nueva">Nueva receta</a>
     <div class="menu" hidden>
       <button data-accion="reconstruir">Reconstruir índice <span class="cuenta">última vez: ${escapar(fecha)}</span></button>
       <button data-accion="reconectar">Reconectar cuenta</button>

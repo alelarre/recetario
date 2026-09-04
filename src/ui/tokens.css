@@ -11,6 +11,13 @@
   --texto: #EDEAE4;
   --texto-2: #8A8598;       /* el mismo tinte violeta que el fondo */
   --separador: #2C2936;
+
+  /* Los controles necesitan más contraste que un separador: el separador
+     divide dos zonas de lectura y conviene que sea discreto, pero un botón
+     tiene que leerse como tocable antes de que nadie lo busque. Por eso son
+     tokens aparte y no el mismo valor. */
+  --superficie-control: #272430;
+  --borde-control: #4A4557;
   --acento: #EDEAE4;        /* el acento es el propio texto: el color lo ponen las categorías */
   --fondo-visor: #000000;
   --texto-visor: #ffffff;
