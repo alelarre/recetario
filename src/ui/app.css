@@ -28,13 +28,19 @@ button { background: none; border: 0; cursor: pointer; min-height: var(--tactil)
 .menu[hidden] { display: none; }
 
 /* --- Los controles se ven como controles ---------------------------------
-   Todo lo tocable comparte una sola forma: borde visible, superficie propia y
+   Las acciones comparten una sola forma: borde visible, superficie propia y
    texto pleno. Antes cada botón traía lo suyo y varios quedaban en texto gris
-   sobre el fondo, indistinguibles de una etiqueta. */
+   sobre el fondo, indistinguibles de una etiqueta.
+
+   Volver queda afuera con :not(): no es una acción sobre la receta, es
+   navegación —dice dónde estoy parado y de dónde vengo—, y meterlo en la
+   misma caja lo pone al mismo peso que Editar, que sí hace algo. Se excluye
+   acá y no con una regla posterior que pise: así no hay dos declaraciones
+   peleándose en la cascada. */
 .control,
 .alta,
-.encabezado button,
-.nav-detalle button,
+.encabezado button:not([data-accion="atras"]),
+.nav-detalle button:not([data-accion="atras"]),
 .acciones button,
 [data-accion="borrar"] {
   padding: 0.5rem 0.75rem;
@@ -104,7 +110,19 @@ button { background: none; border: 0; cursor: pointer; min-height: var(--tactil)
    el título se mueva, porque el título nunca vivió adentro. */
 .banda { height: 5rem; background: var(--cat, var(--superficie)); }
 .nav-detalle { display: flex; justify-content: space-between; gap: var(--margen); padding: 0.75rem var(--margen) 0; }
-.nav-detalle button { min-height: 0; }
+/* Volver: el tercer registro. Ni acción con caja ni gris ilegible —que era el
+   problema de antes—: texto pleno, sin fondo ni borde, con la flecha separada
+   para que se lea como "vengo de acá" y no como un botón más. */
+[data-accion="atras"] {
+  min-height: 0;
+  padding: 0.5rem 0;
+  font-size: var(--t-chip);
+  font-weight: 500;
+  color: var(--texto);
+  background: none;
+  border: 0;
+}
+.nav-detalle [data-accion="atras"] { padding-left: 0; }
 
 /* El emoji va en su propio span para que el gap lo separe: dentro de un mismo
    nodo de texto el navegador colapsa el espacio y queda pegado a la palabra.
