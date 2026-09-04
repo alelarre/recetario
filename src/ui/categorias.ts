@@ -21,12 +21,15 @@ import { slugArchivo } from '../recipe.js';
  * es red-primero, y serían 16 pedidos de red en cada apertura para archivos
  * que no cambian nunca.
  */
-const IMAGENES = import.meta.glob('../categorias/*.webp', {
+const IMAGENES = import.meta.glob<string>('../categorias/*.webp', {
   eager: true, query: '?url', import: 'default'
 });
 
-const porSlug = new Map(
-  Object.entries(IMAGENES).map(([ruta, url]) => [ruta.split('/').pop().replace(/\.webp$/, ''), url])
+const porSlug = new Map<string, string>(
+  Object.entries(IMAGENES).map(([ruta, url]) => [
+    (ruta.split('/').pop() ?? '').replace(/\.webp$/, ''),
+    url
+  ])
 );
 
 /**
@@ -35,7 +38,7 @@ const porSlug = new Map(
  * con 16 categorías siempre agrupaba: `Pescados y mariscos` y `Ensaladas`
  * caían en el mismo matiz exacto.
  */
-const COLORES = {
+const COLORES: Record<string, string> = {
   'carnes': 'hsl(8 62% 58%)',
   'entradas-y-picadas': 'hsl(28 70% 60%)',
   'panes-y-masas': 'hsl(42 68% 55%)',
@@ -58,16 +61,16 @@ const COLORES = {
 const NEUTRO = 'hsl(258 12% 46%)';
 
 /** Del nombre de la carpeta al slug, igual que el nombre del archivo de receta. */
-export function slugCategoria(nombre) {
+export function slugCategoria(nombre: unknown): string {
   return slugArchivo(nombre, []).replace(/\.md$/, '');
 }
 
 /** El color de una categoría. Una desconocida cae en el neutro, sin romper nada. */
-export function colorCategoria(nombre) {
+export function colorCategoria(nombre: unknown): string {
   return COLORES[slugCategoria(nombre)] ?? NEUTRO;
 }
 
 /** La URL de la foto, o null si esa categoría todavía no tiene. */
-export function fotoCategoria(nombre) {
+export function fotoCategoria(nombre: unknown): string | null {
   return porSlug.get(slugCategoria(nombre)) ?? null;
 }

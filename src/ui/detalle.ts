@@ -1,5 +1,6 @@
 import { aHtml, escapar } from './markdown.js';
 import { colorCategoria } from './categorias.js';
+import type { Receta, Entrada, Aviso } from '../tipos.js';
 
 // Traduce los códigos internos de recipe.js (§8: "se indexa con lo que se
 // pueda rescatar y se muestra como texto plano con un aviso") a un texto que
@@ -7,20 +8,20 @@ import { colorCategoria } from './categorias.js';
 // y 'sin-frontmatter' comparten mensaje: son mutuamente excluyentes (parse()
 // nunca empuja los dos juntos) y para quien lee la receta el problema
 // práctico es el mismo — no se pudo leer el frontmatter.
-const AVISOS_LEGIBLES = {
+const AVISOS_LEGIBLES: Record<Aviso, string> = {
   'frontmatter-ilegible': 'el frontmatter no se pudo leer',
   'sin-frontmatter': 'el frontmatter no se pudo leer',
   'sin-titulo': 'esta receta no tiene título',
   'seccion-duplicada': 'hay una sección repetida'
 };
 
-function avisosLegibles(avisos) {
-  const lista = Array.isArray(avisos) ? avisos : [];
+function avisosLegibles(avisos?: Aviso[]): string[] {
+  const lista: Aviso[] = Array.isArray(avisos) ? avisos : [];
   return [...new Set(lista.map(a => AVISOS_LEGIBLES[a]).filter(Boolean))];
 }
 
 /** Cuenta los ítems de una lista markdown, para el número del rótulo. */
-function cuentaItems(md) {
+function cuentaItems(md: unknown): number {
   return String(md ?? '').split('\n').filter(l => /^\s*[-*]\s+\S/.test(l)).length;
 }
 
@@ -31,11 +32,18 @@ function cuentaItems(md) {
  * ingredientes quedan a un toque en la barra pegajosa mientras se lee la
  * preparación.
  */
-export function renderDetalle(args = {}) {
+export interface ArgsDetalle {
+  /** La fila del índice. Falta en una receta recién creada y todavía no indexada. */
+  entrada?: Partial<Entrada> | null;
+  receta?: Partial<Receta> | null;
+  ingredientesPlegados?: boolean;
+}
+
+export function renderDetalle(args: ArgsDetalle = {}): string {
   const { entrada = {}, receta = {}, ingredientesPlegados = false } = args || {};
 
-  const r = receta ?? {};
-  const e = entrada ?? {};
+  const r: Partial<Receta> = receta ?? {};
+  const e: Partial<Entrada> = entrada ?? {};
 
   const meta = [r.rinde, r.tiempo, r.dificultad].filter(Boolean).join(' · ');
   const incompleto = e?.tags?.includes('incompleto');
@@ -77,11 +85,11 @@ export function renderDetalle(args = {}) {
     ${otras}`;
 }
 
-function cuentaSecciones(md) {
+function cuentaSecciones(md: unknown): number {
   return String(md ?? '').split(/^###\s+/m).filter(Boolean).length;
 }
 
-function seccion(rotulo, cuenta, cuerpo) {
+function seccion(rotulo: string, cuenta: number | string, cuerpo: string): string {
   return `
     <div class="seccion"><span>${rotulo}</span><span>${cuenta === '' ? '' : cuenta}</span></div>
     ${cuerpo}`;

@@ -1,15 +1,25 @@
 import { escapar } from './markdown.js';
 import { DIFICULTADES, dificultadValida } from '../catalogo.js';
+import type { Receta, Entrada } from '../tipos.js';
+import type { Categoria } from '../store.js';
 
-const campoTexto = (nombre, etiqueta, valor) => `
+const campoTexto = (nombre: string, etiqueta: string, valor?: string | null): string => `
   <label class="campo"><span>${escapar(etiqueta)}</span>
     <input name="${nombre}" value="${escapar(valor ?? '')}"></label>`;
 
-const campoArea = (nombre, etiqueta, valor) => `
+const campoArea = (nombre: string, etiqueta: string, valor?: string | null): string => `
   <label class="campo"><span>${escapar(etiqueta)}</span>
     <textarea name="${nombre}">${escapar(valor ?? '')}</textarea></label>`;
 
-export function renderEditor(opts = {}) {
+export interface ArgsEditor {
+  receta?: Receta | null;
+  /** Sin entrada es el alta: el archivo todavía no existe en Drive. */
+  entrada?: Partial<Entrada> | null;
+  categorias?: Categoria[];
+  tagsConocidos?: string[];
+}
+
+export function renderEditor(opts: ArgsEditor = {}): string {
   const { receta, entrada, categorias = [], tagsConocidos = [] } = opts ?? {};
 
   // Defensa: si receta es null, undefined o no tiene estructura, devolver string seguro
@@ -20,7 +30,7 @@ export function renderEditor(opts = {}) {
   const opcionesCarpeta = categorias.map(c =>
     `<option value="${escapar(c.id)}"${c.id === entrada?.carpeta_id ? ' selected' : ''}>${escapar(c.nombre)}</option>`).join('');
   const dificultadActual = dificultadValida(receta.dificultad);
-  const opcionesDificultad = ['', ...DIFICULTADES].map(d =>
+  const opcionesDificultad: string = ['', ...DIFICULTADES].map(d =>
     `<option value="${escapar(d)}"${d === dificultadActual ? ' selected' : ''}>${escapar(d || 'sin definir')}</option>`).join('');
 
   const chipsTags = (receta.tags ?? []).map(t =>
@@ -59,13 +69,19 @@ export function renderEditor(opts = {}) {
       ${campoArea('preparacion', 'Preparación', receta.preparacion)}
       ${campoArea('variaciones', 'Variaciones', receta.variaciones)}
       ${campoArea('notas', 'Notas', receta.notas)}
-      ${otras ? `<div class="otras"><span>Otras secciones · ${receta.otras.length}</span>${otras}
+      ${otras ? `<div class="otras"><span>Otras secciones · ${(receta.otras ?? []).length}</span>${otras}
         <p class="meta">Secciones que la app no reconoce. Se guardan igual, al final del archivo.</p></div>` : ''}
       ${esNueva ? '' : `<button data-accion="borrar" type="button">Borrar receta</button>`}
     </form>`;
 }
 
-export function recetaDesdeFormulario(datos, original) {
+/** Los valores crudos del formulario: cada campo es el `name` de su input. */
+export type DatosFormulario = Record<string, string | undefined>;
+
+export function recetaDesdeFormulario(
+  datos?: DatosFormulario | null,
+  original?: Receta | null
+): Receta | Partial<Receta> {
   // Defensa: si datos o original son null, devolver neutro
   if (!datos || !original) {
     return original ?? {};

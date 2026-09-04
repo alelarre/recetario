@@ -1,5 +1,6 @@
 import { escapar } from './markdown.js';
 import { colorCategoria, fotoCategoria } from './categorias.js';
+import type { Entrada, Coincidencias } from '../tipos.js';
 
 /**
  * Una lista de recetas: la de una categoría, o los resultados de una búsqueda.
@@ -9,16 +10,39 @@ import { colorCategoria, fotoCategoria } from './categorias.js';
  * —vienen categorías mezcladas—; dentro de una categoría no aparece, porque
  * serían veinte cuadraditos iguales que cuestan altura de fila y no dicen nada.
  */
-export function renderLista(arg = {}) {
+/** Un tag con cuántas recetas lo llevan, para el chip de filtro. */
+export interface TagConCuenta {
+  tag: string;
+  cantidad: number;
+}
+
+/** Qué decir cuando no hay nada que listar. */
+export interface EstadoVacio {
+  titulo?: string;
+  detalle?: string;
+}
+
+export interface ArgsLista {
+  titulo?: string;
+  /** La lista de una categoría. Se ignora si viene `grupos`. */
+  entradas?: Entrada[];
+  tags?: TagConCuenta[];
+  tagsActivos?: string[];
+  /** Sólo desde la búsqueda: separa las coincidencias por dónde matchearon. */
+  grupos?: Coincidencias | null;
+  vacio?: EstadoVacio | null;
+}
+
+export function renderLista(arg: ArgsLista = {}): string {
   const { titulo = '', entradas = [], tags = [], tagsActivos = [], grupos = null, vacio = null } = arg ?? {};
-  const ents = Array.isArray(entradas) ? entradas : [];
-  const tagsList = Array.isArray(tags) ? tags : [];
-  const activos = Array.isArray(tagsActivos) ? tagsActivos : [];
+  const ents: Entrada[] = Array.isArray(entradas) ? entradas : [];
+  const tagsList: TagConCuenta[] = Array.isArray(tags) ? tags : [];
+  const activos: string[] = Array.isArray(tagsActivos) ? tagsActivos : [];
 
   const chips = tagsList.map(t => `
     <button class="chip" data-tag="${escapar(t.tag)}" aria-pressed="${activos.includes(t.tag)}">${escapar(t.tag)}</button>`).join('');
 
-  let cuerpo, total;
+  let cuerpo: string, total: number;
   if (grupos) {
     const { porNombre = [], porIngrediente = [] } = grupos;
     total = porNombre.length + porIngrediente.length;
@@ -41,13 +65,13 @@ export function renderLista(arg = {}) {
     <div class="listado">${cuerpo || vacioHtml(vacio)}</div>`;
 }
 
-function seccion(rotulo, ents) {
+function seccion(rotulo: string, ents: Entrada[]): string {
   if (!ents.length) return '';
   return `<p class="rotulo">${escapar(rotulo)} · ${ents.length}</p>` +
     ents.map(e => fila(e, { conMarca: true })).join('');
 }
 
-function fila(e, { conMarca }) {
+function fila(e: Entrada, { conMarca }: { conMarca: boolean }): string {
   const meta = conMarca
     ? e.categoria
     : [e.rinde, e.tiempo, e.dificultad].filter(Boolean).join(' · ');
@@ -69,7 +93,7 @@ function fila(e, { conMarca }) {
  * llena con agentes por fuera de la app, el vacío tiene que decir de dónde va
  * a salir el contenido.
  */
-function vacioHtml(vacio) {
+function vacioHtml(vacio: EstadoVacio | null): string {
   const { titulo = 'Todavía no hay nada acá', detalle = '' } = vacio ?? {};
   return `<div class="vacio"><strong>${escapar(titulo)}</strong>${detalle ? `<p>${escapar(detalle)}</p>` : ''}</div>`;
 }

@@ -11,9 +11,23 @@ import { colorCategoria, fotoCategoria } from './categorias.js';
  * final, sin desaparecer: crear una carpeta en Drive tiene que seguir siendo
  * evidente.
  */
-export function renderHome(arg = {}) {
+/** Una categoría tal como la dibuja el home: nombre y cuántas recetas tiene. */
+export interface TileCategoria {
+  id?: string;
+  nombre?: string;
+  cantidad?: number;
+}
+
+export interface ArgsHome {
+  categorias?: TileCategoria[];
+  /** ISO de la última reconstrucción del índice, o '' si nunca se hizo. */
+  ultimaReconstruccion?: string;
+  vaciasVisibles?: boolean;
+}
+
+export function renderHome(arg: ArgsHome = {}): string {
   const { categorias = [], ultimaReconstruccion = '', vaciasVisibles = false } = arg ?? {};
-  const cats = Array.isArray(categorias) ? categorias : [];
+  const cats: TileCategoria[] = Array.isArray(categorias) ? categorias : [];
   const fecha = ultimaReconstruccion
     ? new Date(ultimaReconstruccion).toLocaleString('es-AR', {
         day: 'numeric', month: 'short', year: 'numeric',
@@ -22,8 +36,8 @@ export function renderHome(arg = {}) {
     : 'nunca';
 
   const ordenadas = [...cats].sort((a, b) => String(a?.nombre ?? '').localeCompare(String(b?.nombre ?? ''), 'es'));
-  const conRecetas = ordenadas.filter(c => c?.cantidad > 0);
-  const vacias = ordenadas.filter(c => !(c?.cantidad > 0));
+  const conRecetas = ordenadas.filter(c => (c?.cantidad ?? 0) > 0);
+  const vacias = ordenadas.filter(c => !((c?.cantidad ?? 0) > 0));
 
   return `
     <header class="encabezado">
@@ -45,7 +59,7 @@ export function renderHome(arg = {}) {
     </div>`;
 }
 
-function tile(c) {
+function tile(c: TileCategoria): string {
   const nombre = String(c?.nombre ?? '');
   const foto = fotoCategoria(nombre);
   return `

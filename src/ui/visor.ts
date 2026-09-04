@@ -1,6 +1,11 @@
 import { escapar } from './markdown.js';
 
-export function renderVisor(args = {}) {
+export interface ArgsVisor {
+  fotos?: string[];
+  indice?: number;
+}
+
+export function renderVisor(args: ArgsVisor = {}): string {
   const { fotos = [], indice = 0 } = args || {};
 
   if (!fotos || !fotos.length) return '';

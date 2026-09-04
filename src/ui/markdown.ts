@@ -1,10 +1,10 @@
-export function escapar(texto) {
+export function escapar(texto: unknown): string {
   return String(texto ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
 
-function enLinea(texto) {
+function enLinea(texto: unknown): string {
   const escapado = escapar(texto);
   // Validar esquemas: solo http:, https: y rutas relativas. Todo lo demás no se emite.
   // Nota: URLs con paréntesis anidados (ej: alert(1)) se truncan en el primer ), limitación conocida.
@@ -17,11 +17,12 @@ function enLinea(texto) {
     .replace(/\*(.+?)\*/g, '<em>$1</em>');
 }
 
-export function aHtml(texto, { pasos = false } = {}) {
+/** `pasos` convierte la <ol> en la lista tildable del detalle (§7.2). */
+export function aHtml(texto: unknown, { pasos = false }: { pasos?: boolean } = {}): string {
   const lineas = String(texto ?? '').split('\n');
-  const salida = [];
-  let lista = null;   // 'ul' | 'ol' | null
-  let parrafo = [];
+  const salida: string[] = [];
+  let lista: 'ul' | 'ol' | null = null;
+  let parrafo: string[] = [];
 
   const cerrarParrafo = () => {
     if (!parrafo.length) return;
