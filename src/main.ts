@@ -194,7 +194,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       ? { titulo: 'Ninguna receta con esos tags', detalle: 'Probá sacando alguno de los filtros de arriba.' }
       : { titulo: 'Todavía no hay nada acá',
           detalle: `Las recetas entran como archivos .md en la carpeta ${nombre} de Drive, casi siempre escritas por un agente desde un PDF, una foto o un video.` };
-    return pintar(renderLista({ titulo: nombre, entradas, tags: store.tagsDe(nombre), tagsActivos, vacio }));
+    return pintar(renderLista({ titulo: nombre, categoria: nombre, entradas,
+      tags: store.tagsDe(nombre), tagsActivos, vacio }));
   }
   if (ruta.vista === 'buscar') {
     const q = ruta.params['q'] ?? '';

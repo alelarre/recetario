@@ -109,6 +109,25 @@ button { background: none; border: 0; cursor: pointer; min-height: var(--tactil)
    sólo el color de su categoría, y el día que haya imagen se expande sin que
    el título se mueva, porque el título nunca vivió adentro. */
 .banda { height: 5rem; background: var(--cat, var(--superficie)); }
+
+/* La cabecera de una categoría: la misma foto del tile, ancho completo, con el
+   encabezado encima. El velo es más cargado abajo que el del tile porque acá
+   sostiene un título de 1.75rem, no un nombre de 0.8125rem. */
+.cabecera-cat { position: relative; background: var(--cat); min-height: 8.5rem;
+  display: flex; flex-direction: column; justify-content: flex-end; }
+.cabecera-cat img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cabecera-cat .velo { position: absolute; inset: 0;
+  /* Más cargado que el velo del tile: ahí la foto mide 100 px de alto y no
+     compite con nada, acá ocupa el ancho de la pantalla y el título va encima
+     del centro de la imagen, no de un borde. */
+  background: linear-gradient(to top,
+    rgba(8, 7, 12, 0.94) 0%,
+    rgba(8, 7, 12, 0.72) 45%,
+    rgba(8, 7, 12, 0.42) 100%); }
+.cabecera-cat:not(:has(img)) .velo { background: linear-gradient(to top, rgba(8, 7, 12, 0.5), transparent 60%); }
+.cabecera-cat .encabezado { position: relative; padding-top: 0.5rem; }
+.cabecera-cat h1, .cabecera-cat .cuenta, .cabecera-cat [data-accion="atras"] {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6); }
 .nav-detalle { display: flex; justify-content: space-between; gap: var(--margen); padding: 0.75rem var(--margen) 0; }
 /* Volver: el tercer registro. Ni acción con caja ni gris ilegible —que era el
    problema de antes—: texto pleno, sin fondo ni borde, con la flecha separada

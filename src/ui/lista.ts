@@ -30,11 +30,18 @@ export interface ArgsLista {
   tagsActivos?: string[];
   /** Sólo desde la búsqueda: separa las coincidencias por dónde matchearon. */
   grupos?: Coincidencias | null;
+  /**
+   * El nombre de la categoría que se está mirando, para encabezarla con su
+   * foto. Va explícito y no se deduce de `titulo`: en la búsqueda el título es
+   * el texto buscado, que no tiene ni foto ni color.
+   */
+  categoria?: string | null;
   vacio?: EstadoVacio | null;
 }
 
 export function renderLista(arg: ArgsLista = {}): string {
-  const { titulo = '', entradas = [], tags = [], tagsActivos = [], grupos = null, vacio = null } = arg ?? {};
+  const { titulo = '', entradas = [], tags = [], tagsActivos = [], grupos = null, vacio = null,
+          categoria = null } = arg ?? {};
   const ents: Entrada[] = Array.isArray(entradas) ? entradas : [];
   const tagsList: TagConCuenta[] = Array.isArray(tags) ? tags : [];
   const activos: string[] = Array.isArray(tagsActivos) ? tagsActivos : [];
@@ -55,12 +62,26 @@ export function renderLista(arg: ArgsLista = {}): string {
     cuerpo = ents.map(e => fila(e, { conMarca: false })).join('');
   }
 
-  return `
+  const encabezado = `
     <header class="encabezado">
       <button data-accion="atras" aria-label="Volver">‹</button>
       <h1>${escapar(titulo)}</h1>
       <span class="cuenta">${total}</span>
-    </header>
+    </header>`;
+
+  // La categoría se encabeza con su propia foto: es la misma que el tile que
+  // se acaba de tocar en el home, así que la pantalla que se abre confirma
+  // dónde entraste sin tener que leer el título. Sin foto queda el color
+  // plano, que es el mismo respaldo que usa el tile.
+  const foto = categoria ? fotoCategoria(categoria) : null;
+
+  return `
+    ${categoria ? `
+      <div class="cabecera-cat" style="--cat:${colorCategoria(categoria)}">
+        ${foto ? `<img src="${escapar(foto)}" alt="" loading="lazy">` : ''}
+        <span class="velo"></span>
+        ${encabezado}
+      </div>` : encabezado}
     ${tagsList.length ? `<div class="chips">${chips}</div>` : ''}
     <div class="listado">${cuerpo || vacioHtml(vacio)}</div>`;
 }
