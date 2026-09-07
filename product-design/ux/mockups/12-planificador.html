@@ -1,0 +1,56 @@
+<!doctype html><html lang="es"><meta charset="utf-8">
+<title>Planificador</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .dia { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
+         letter-spacing: .06em; margin: var(--e-4) 0 var(--e-2); }
+  .dia:first-child { margin-top: 0; }
+  .slot { display: flex; align-items: center; gap: var(--e-3); min-height: 48px;
+          padding: var(--e-2) var(--e-3); background: var(--surface);
+          border: 1px solid var(--borde); border-radius: var(--r-medio); margin-bottom: var(--e-2); }
+  .slot .h { font-size: var(--txt-chico); color: var(--fg-3); width: 68px; flex: 0 0 68px; }
+  .slot .r { flex: 1; }
+  .slot.libre .r { color: var(--fg-3); }
+</style>
+<div class="pagina">
+<h1>12 — Planificador <span style="color:var(--fg-3);font-size:var(--txt-chico)">[exploración]</span></h1>
+<p>Existe solo si J9 se construye. Está mockupeada con menos detalle a propósito: el principio 6 pide
+que sacarla cueste borrar una pantalla, no rediseñar el producto.</p>
+
+<div class="fila">
+<figure class="caso">
+<div class="tel">
+  <div class="enc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Semana del 7 al 13</span>
+    <button class="btn sec compacto">Compras</button>
+  </div>
+  <div class="cuerpo denso">
+    <div>
+      <div class="dia">Lunes</div>
+      <div class="slot libre"><span class="h">Mediodía</span><span class="r">+ Agregar</span></div>
+      <div class="slot"><span class="h">Noche</span><span class="r">Rabas</span>
+        <span class="pin" style="background:var(--cat-pescados)"></span></div>
+      <div class="dia">Martes</div>
+      <div class="slot libre"><span class="h">Mediodía</span><span class="r">+ Agregar</span></div>
+      <div class="slot"><span class="h">Noche</span><span class="r">Filet de merluza a la romana</span>
+        <span class="pin" style="background:var(--cat-pescados)"></span></div>
+      <div class="dia">Miércoles</div>
+      <div class="slot libre"><span class="h">Mediodía</span><span class="r">+ Agregar</span></div>
+      <div class="slot libre"><span class="h">Noche</span><span class="r">+ Agregar</span></div>
+      <div class="dia">Jueves</div>
+      <div class="slot libre"><span class="h">Mediodía</span><span class="r">+ Agregar</span></div>
+      <div class="slot"><span class="h">Noche</span><span class="r">Hamburguesas</span>
+        <span class="pin" style="background:var(--cat-carnes)"></span></div>
+      <div class="dia">Viernes</div>
+      <div class="slot libre"><span class="h">Mediodía</span><span class="r">+ Agregar</span></div>
+      <div class="slot libre"><span class="h">Noche</span><span class="r">+ Agregar</span></div>
+    </div>
+  </div>
+</div>
+<figcaption><b>Semana parcial, que es el caso normal.</b> Los huecos no se señalan como falta: no
+llenar la semana es lo esperable. Solo entran recetas del recetario, y el cuadrito de categoría dice
+de dónde viene cada una.</figcaption>
+</figure>
+</div>
+</div>

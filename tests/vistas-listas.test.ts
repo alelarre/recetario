@@ -79,6 +79,27 @@ describe('renderHome', () => {
   });
 
 describe('renderLista', () => {
+  it('la categoría se encabeza con su foto; la búsqueda no', () => {
+    // La foto es la misma del tile que se acaba de tocar: confirma dónde
+    // entraste sin leer el título. En la búsqueda el título es el texto
+    // buscado, que no tiene ni foto ni color, así que ahí no va la cabecera.
+    const cat = renderLista({ titulo: 'Pescados y mariscos', categoria: 'Pescados y mariscos', entradas: ENTRADAS });
+    expect(cat).toContain('cabecera-cat');
+    expect(cat).toContain('<img');
+
+    const busqueda = renderLista({ titulo: '"berenjena"', grupos: { porNombre: [], porIngrediente: [] } });
+    expect(busqueda).not.toContain('cabecera-cat');
+  });
+
+  it('una categoría sin foto se encabeza igual, con su color plano', () => {
+    // "Sin categorizar" es la raíz y no tiene .webp: la cabecera no puede
+    // desaparecer por eso, porque entonces esa pantalla vuelve a quedar sin
+    // encabezado mientras las otras quince lo tienen.
+    const html = renderLista({ titulo: 'Sin categorizar', categoria: 'Sin categorizar', entradas: [] });
+    expect(html).toContain('cabecera-cat');
+    expect(html).not.toContain('<img');
+  });
+
   it('dibuja una fila por receta con la meta en una línea', () => {
     const html = renderLista({ titulo: 'Carnes', entradas: ENTRADAS });
     expect(html).toContain('Milanesas napolitanas');

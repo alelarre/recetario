@@ -1,0 +1,138 @@
+<!doctype html><html lang="es"><meta charset="utf-8">
+<title>Editor</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .par { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-3); }
+  .par .campo { margin-bottom: 0; }
+  .col { max-width: 680px; margin: 0 auto; }
+  .desk .par3 { grid-template-columns: 1fr 1fr 1fr; }
+</style>
+<div class="pagina">
+<h1>6 — Editor</h1>
+<p>La pantalla con más controles distintos, así que es la que más huecos del sistema destapa.
+Cargada con <b>Rabas</b>, real de Drive. Los campos de contenido son texto plano: el frontmatter YAML
+no se ve en ningún momento.</p>
+
+<div class="fila">
+
+<figure class="caso">
+<div class="tel">
+  <div class="enc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Editando</span>
+    <button class="btn prim compacto">Guardar</button>
+  </div>
+  <div class="cuerpo">
+    <div class="ficha">
+      <label class="campo"><span>Título</span><input value="Rabas"></label>
+      <label class="campo"><span>Categoría</span>
+        <select><option>Pescados y mariscos</option></select></label>
+      <div class="campo"><span>Tags</span>
+        <div class="chips"><span class="chip">fritura ✕</span>
+          <button class="chip" style="cursor:pointer">+ agregar</button></div></div>
+      <div class="par" style="margin-bottom:var(--e-4)">
+        <label class="campo"><span>Rinde</span><input value="4 porciones"></label>
+        <label class="campo"><span>Tiempo</span><input placeholder="40 min"></label>
+      </div>
+      <label class="campo"><span>Dificultad</span>
+        <select><option>—</option><option>fácil</option><option>media</option><option>difícil</option></select></label>
+      <label class="campo"><span>Fuente</span><input value="Recetario original"></label>
+      <label class="campo" style="margin-bottom:0"><span>Foto</span>
+        <input placeholder="https://…"></label>
+    </div>
+
+    <div class="ficha">
+      <h2>Contenido</h2>
+      <label class="campo"><span>Descripción</span><textarea placeholder=""></textarea></label>
+      <label class="campo"><span>Ingredientes</span><textarea rows="8">- 500gr de anillos de calamar
+- Leche 250gr (aprox)
+- Provenzal, 1 cucharada (opcional)
+- 2 huevos
+- Harina 0000, 200gr?
+- Sal, pimienta
+- Aceite, para freír</textarea></label>
+      <label class="campo"><span>Preparación</span><textarea rows="6">1. Lavar los trozos de calamar y escurrir bien.
+2. Remojar los calamares en leche tibia durante 30 minutos, para que quede menos dura. Escurrir bien.
+3. Batir los huevos, agregar la provenzal, la sal y la pimienta.</textarea></label>
+      <label class="campo"><span>Variaciones</span><textarea rows="3">- Hacer una tempura en lugar de pasar por el huevo y luego por el harina
+- Pasar por harina directamente, sin usar huevo.</textarea></label>
+      <label class="campo" style="margin-bottom:0"><span>Notas</span><textarea rows="3">- Si se usa calamar entero en lugar de anillos ya limpios, en el original falta indicar el peso total equivalente.</textarea></label>
+    </div>
+
+    <div class="ficha">
+      <label class="check"><input type="checkbox"> Está completa así como está</label>
+    </div>
+  </div>
+</div>
+<figcaption><b>El editor cargado.</b> Los ingredientes son <b>un campo de texto</b>, con los bullets
+del archivo tal cual — el editor no corrige la convención ni avisa que cuatro de los siete no tienen
+separador. La categoría y la casilla de completitud son los dos controles que actúan en vez de editar
+texto.</figcaption>
+</figure>
+
+<figure class="caso">
+<div class="tel" style="height:560px">
+  <div class="enc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Editando</span>
+    <button class="btn prim compacto">Guardar</button>
+  </div>
+  <div class="cuerpo">
+    <div class="aviso">
+      <p>Error al guardar. Sin conexión.</p>
+      <button class="btn sec compacto">Reintentar</button>
+    </div>
+    <div class="ficha">
+      <label class="campo"><span>Título</span><input value="Rabas de calamar patagónico"></label>
+      <label class="campo" style="margin-bottom:0"><span>Fuente</span>
+        <input value="Recetario original, corregido 2026"></label>
+    </div>
+    <div class="ficha">
+      <label class="campo" style="margin-bottom:0"><span>Notas</span><textarea rows="4">- Si se usa calamar entero, pedir que lo limpien en la pescadería.
+- Probado con calamar del sur: queda más tierno.</textarea></label>
+    </div>
+  </div>
+</div>
+<figcaption><b>Error al guardar.</b> El mensaje es telegráfico y no tranquiliza: lo que dice que no
+se perdió nada es que <b>todo lo escrito sigue en pantalla</b>, incluido el título cambiado y las
+notas nuevas. El aviso aparece donde ocurrió el problema y no se cierra solo.</figcaption>
+</figure>
+
+</div>
+
+<h1 style="margin-top:var(--e-7)">6b — Editor en 1280 px</h1>
+<p>El segundo contexto de escritorio: corregir una receta larga con teclado. La columna se mantiene
+en 680 px y los campos cortos se agrupan de a tres.</p>
+<div class="desk">
+  <div class="enc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Editando</span>
+    <button class="btn prim compacto">Guardar</button>
+  </div>
+  <div class="cuerpo col">
+    <div class="ficha">
+      <label class="campo"><span>Título</span><input value="Anchoítas a la plancha con melón y vinagreta ligera de aceitunas verdes y pepinillos"></label>
+      <div class="par par3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--e-3);margin-bottom:var(--e-4)">
+        <label class="campo"><span>Categoría</span><select><option>Pescados y mariscos</option></select></label>
+        <label class="campo"><span>Rinde</span><input value="4 porciones"></label>
+        <label class="campo"><span>Dificultad</span><select><option>—</option></select></label>
+      </div>
+      <label class="campo" style="margin-bottom:0"><span>Fuente</span>
+        <input value="Recetas de Pescados y Mariscos (INIDEP / EHYG / Sociedad de Patrones Pescadores), p. 23"></label>
+    </div>
+    <div class="ficha">
+      <h2>Contenido</h2>
+      <label class="campo" style="margin-bottom:0"><span>Ingredientes</span><textarea rows="10">### Para la anchoíta a la plancha
+- Anchoítas — 18-20 medianas
+- Aceite de oliva — 6 cucharadas
+- Ajo — 2 dientes
+- Ají picante — 2 trocitos
+- Agua fría y sal — c/n
+
+### Para el melón
+- Melón — 1/2 mediano
+- Oporto — 1/2 copa</textarea></label>
+    </div>
+  </div>
+</div>
+</div>

@@ -1,0 +1,85 @@
+<!doctype html><html lang="es"><meta charset="utf-8">
+<title>Resultados</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .cajaenc { display: flex; align-items: center; gap: var(--e-2); padding: var(--e-2);
+             border-bottom: 1px solid var(--borde); }
+  .cajaenc input { flex: 1; min-height: 48px; padding: 0 var(--e-3); background: var(--surface-alta);
+                   border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio);
+                   color: var(--fg); font: 400 var(--txt-base) var(--tipo); }
+  .rot { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
+         letter-spacing: .06em; display: flex; justify-content: space-between; margin-bottom: var(--e-2); }
+  .grupo-res + .grupo-res { margin-top: var(--e-5); }
+  .lista { display: flex; flex-direction: column; gap: var(--e-2); }
+</style>
+<div class="pagina">
+<h1>5 — Resultados</h1>
+<p>La búsqueda con los tres criterios agrupados, y el estado <b>sin resultados</b>, que es uno de los
+dos que se mockupean. Contenido real: <code>merluza</code> aparece en seis títulos de Drive y como
+ingrediente en varios más.</p>
+
+<div class="fila">
+
+<figure class="caso">
+<div class="tel">
+  <div class="cajaenc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <input value="merluza">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="cuerpo denso">
+    <div class="grupo-res">
+      <div class="rot"><span>Por nombre</span><span>5</span></div>
+      <div class="lista">
+        <a class="tarjeta"><span class="ph" style="--c:var(--cat-pescados);--img:url(categorias/pescados-y-mariscos.webp)"></span><span class="txt">
+          <span class="n">Albóndigas de merluza en salsa de tomates</span>
+          <span class="ctx"><span class="pin" style="background:var(--cat-pescados)"></span>Pescados y mariscos</span></span></a>
+        <a class="tarjeta"><span class="ph" style="--c:var(--cat-pescados);--img:url(categorias/pescados-y-mariscos.webp)"></span><span class="txt">
+          <span class="n">Arrollados de merluza a la crema de verdeo y champignones</span>
+          <span class="ctx"><span class="pin" style="background:var(--cat-pescados)"></span>Pescados y mariscos</span></span></a>
+        <a class="tarjeta"><span class="ph" style="--c:var(--cat-pescados);--img:url(categorias/pescados-y-mariscos.webp)"></span><span class="txt">
+          <span class="n">Bastoncitos soufflé de merluza con salsa de atún</span>
+          <span class="ctx"><span class="pin" style="background:var(--cat-pescados)"></span>Pescados y mariscos</span></span></a>
+        <a class="tarjeta"><span class="ph" style="--c:var(--cat-pescados);--img:url(categorias/pescados-y-mariscos.webp)"></span><span class="txt">
+          <span class="n">Filet de merluza a la romana</span>
+          <span class="ctx"><span class="pin" style="background:var(--cat-pescados)"></span>Pescados y mariscos · 4 porciones</span></span></a>
+        <a class="tarjeta"><span class="ph" style="--c:var(--cat-pescados);--img:url(categorias/pescados-y-mariscos.webp)"></span><span class="txt">
+          <span class="n">Terrina de merluza y espinaca con salsa curry</span>
+          <span class="ctx"><span class="pin" style="background:var(--cat-pescados)"></span>Pescados y mariscos</span></span></a>
+      </div>
+    </div>
+    <div class="grupo-res">
+      <div class="rot"><span>Por ingrediente</span><span>2</span></div>
+      <div class="lista">
+        <a class="tarjeta"><span class="ph" style="--c:var(--cat-pescados);--img:url(categorias/pescados-y-mariscos.webp)"></span><span class="txt">
+          <span class="n">Filet de merluza a la romana</span>
+          <span class="ctx"><span class="motivo">tiene Merluza</span></span></span></a>
+        <a class="tarjeta"><span class="ph" style="--c:var(--cat-pescados);--img:url(categorias/pescados-y-mariscos.webp)"></span><span class="txt">
+          <span class="n">Gratin de pescadilla, papas y coliflor</span>
+          <span class="ctx"><span class="motivo">tiene Merluza o pescadilla</span></span></span></a>
+      </div>
+    </div>
+  </div>
+</div>
+<figcaption><b>Los grupos, con el motivo.</b> <code>Filet de merluza a la romana</code> aparece en los
+dos grupos, que es lo que fija C02.3.2. El motivo cita el nombre <b>tal como está escrito</b>, sin
+normalizar: <i>«tiene Merluza o pescadilla»</i>. El grupo <i>Por tag</i> no se dibuja porque no trajo
+nada.</figcaption>
+</figure>
+
+<figure class="caso">
+<div class="tel" style="height:420px">
+  <div class="cajaenc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <input value="berenjena">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="vacio">Ninguna receta se llama, lleva ni tiene <b>berenjena</b>.</div>
+</div>
+<figcaption><b>Sin resultados</b> — uno de los dos estados no felices mockupeados. Una frase y nada
+más: sin ilustración, sin <i>«quisiste decir»</i>, sin sugerencias. Dice los tres criterios que se
+probaron, para que quede claro que no es que buscó mal.</figcaption>
+</figure>
+
+</div>
+</div>

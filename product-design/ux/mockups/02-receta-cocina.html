@@ -1,0 +1,109 @@
+<!doctype html><html lang="es"><meta charset="utf-8">
+<title>Receta — cocina</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .conm { position: sticky; top: 0; z-index: 2; display: flex; background: var(--surface);
+          border-bottom: 1px solid var(--borde); }
+  .conm button { flex: 1; height: 64px; background: none; border: 0; cursor: pointer;
+                 color: var(--fg-2); font: 600 var(--txt-base)/1 var(--tipo);
+                 border-bottom: 3px solid transparent; }
+  .conm button.on { background: var(--surface-alta); color: var(--fg); border-bottom-color: var(--acento); }
+  .coc { padding: var(--e-4); }
+  .coc .grupo { font-size: var(--txt-base); margin-top: var(--e-6); margin-bottom: var(--e-2); }
+  .coc .grupo:first-child { margin-top: 0; }
+  .coc .ing { font-size: var(--txt-cocina); line-height: 1.65; padding: var(--e-cocina) 0; }
+  .coc .pasos li { font-size: var(--txt-cocina); line-height: 1.65; padding: var(--e-cocina) 0;
+                   border-bottom: 1px solid var(--borde); }
+  .coc .pasos li:last-child { border-bottom: 0; }
+  .coc .tramo { font-size: var(--txt-base); color: var(--fg-2); text-transform: uppercase;
+                letter-spacing: .06em; margin: var(--e-6) 0 var(--e-2); }
+  .coc .pasos li.aqui { background: var(--acento-suave); margin: 0 calc(-1 * var(--e-3));
+                        padding-left: var(--e-3); padding-right: var(--e-3);
+                        border-radius: var(--r-medio); border-bottom-color: transparent; }
+  .coc .pasos li.hecho { color: var(--fg-3); }
+  .coc .pasos li.hecho::before { content: '✓'; color: var(--fg-3); }
+  .wake { position: sticky; bottom: 0; background: var(--bg);
+          border-top: 1px solid var(--borde); padding: var(--e-4); }
+  .wake .btn { width: 100%; min-height: 64px; }
+  .encoc { height: 56px; display: flex; align-items: center; padding: 0 var(--e-2);
+           border-bottom: 1px solid var(--borde); }
+  .encoc .tit { flex: 1; font-weight: 600; }
+</style>
+<div class="pagina">
+<h1>2 — Receta, en cocina</h1>
+<p>El modo cocina de <b>Anchoítas a la plancha…</b>, en sus dos posiciones. Escala propia: cuerpo de
+22 px, controles de 64 px y separación de 20 px entre ítems — el espaciado crece más que la letra
+(<code>design-system.md</code> §3.3). El encabezado se va con el scroll y queda pegado solo el conmutador.</p>
+
+<div class="fila">
+
+<figure class="caso">
+<div class="tel">
+  <div class="encoc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Anchoítas a la plancha…</span>
+    <button class="btn sec compacto">Salir</button>
+  </div>
+  <div class="conm">
+    <button class="on">Ingredientes</button><button>Pasos</button>
+  </div>
+  <div class="coc">
+    <div class="grupo">Para la anchoíta a la plancha</div>
+    <div class="ing"><span class="n">Anchoítas</span><span class="c">18-20 medianas</span></div>
+    <div class="ing"><span class="n">Aceite de oliva</span><span class="c">6 cucharadas</span></div>
+    <div class="ing"><span class="n">Ajo</span><span class="c">2 dientes</span></div>
+    <div class="ing"><span class="n">Ají picante</span><span class="c">2 trocitos</span></div>
+    <div class="ing"><span class="n">Agua fría y sal</span><span class="c">c/n</span></div>
+    <div class="grupo">Para el melón</div>
+    <div class="ing"><span class="n">Melón</span><span class="c">1/2 mediano</span></div>
+    <div class="ing"><span class="n">Oporto</span><span class="c">1/2 copa</span></div>
+    <div class="ing"><span class="n">Jugo de 1/2 limón</span></div>
+    <div class="grupo">Para la vinagreta</div>
+    <div class="ing"><span class="n">Aceite de oliva</span><span class="c">50 cc (2 cdas.)</span></div>
+    <div class="ing"><span class="n">Vinagre de manzana</span><span class="c">4 cucharadas</span></div>
+    <div class="ing"><span class="n">Aceitunas verdes</span><span class="c">50 g (1/2 taza)</span></div>
+    <div class="ing"><span class="n">Pepinillos en vinagre</span><span class="c">40 g (1/2 taza)</span></div>
+  </div>
+  <div class="wake"><button class="btn sec">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    Mantener la pantalla encendida</button></div>
+</div>
+<figcaption><b>Posición Ingredientes.</b> Es la que abre: el <i>mise en place</i> va primero.
+Los grupos del <code>.md</code> se conservan, así que la lista de quince ingredientes queda partida en
+cuatro tandas en vez de ser un bloque. El botón de wake lock ocupa 64 px de alto.</figcaption>
+</figure>
+
+<figure class="caso">
+<div class="tel">
+  <div class="conm" style="border-top:1px solid var(--borde)">
+    <button>Ingredientes</button><button class="on">Pasos</button>
+  </div>
+  <div class="coc">
+    <div class="tramo" style="margin-top:0">Para la anchoa a la plancha</div>
+    <ol class="pasos">
+      <li class="hecho">Descabezar, eviscerar y filetear las anchoítas. Lavarlas y secarlas con papel absorbente, salpimentar.</li>
+      <li class="hecho">Calentar el aceite con los ajos cortados en láminas y el ají picante. Cuando los ajos estén dorados, retirar y dejar enfriar el aceite.</li>
+    </ol>
+    <div class="tramo">Para el melón</div>
+    <ol class="pasos">
+      <li class="hecho">Quitar todas las pepitas y la piel del melón, recuperando sus jugos. Cortar en tacos rectangulares del tamaño de los lomos de las anchoítas.</li>
+      <li class="aqui">Mezclar el jugo que haya soltado con el vino de oporto y el zumo de limón. Incorporar los tacos de melón y dejar en maceración al menos media hora.</li>
+      <li>Retirar y grillar en una plancha caliente hasta que estén dorados por ambos lados.</li>
+    </ol>
+    <div class="tramo">Final y presentación</div>
+    <ol class="pasos">
+      <li>Cocinar, vuelta y vuelta, los lomos de las anchoítas, ya alineados, en plancha o sartén antiadherente muy caliente.</li>
+      <li>Colocar, como base en un plato, los tacos de melón hechos a la plancha y sobre ellos los lomos bien calientes.</li>
+    </ol>
+  </div>
+  <div class="wake"><button class="btn prim">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
+    Pantalla encendida</button></div>
+</div>
+<figcaption><b>Posición Pasos, con el encabezado ya scrolleado.</b> Muestra C03.2.4: tres pasos
+marcados con un check y atenuados, el actual realzado en <code>--acento-suave</code>. Nada de eso persiste. Los pasos vuelven a
+numerarse en cada tramo, tal como están escritos en el archivo. El wake lock, activo.</figcaption>
+</figure>
+
+</div>
+</div>

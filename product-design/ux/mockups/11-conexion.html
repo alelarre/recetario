@@ -1,0 +1,48 @@
+<!doctype html><html lang="es"><meta charset="utf-8">
+<title>Conexión</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .arr { min-height: 100%; display: flex; flex-direction: column; justify-content: center;
+         padding: var(--e-6) var(--e-4); gap: var(--e-5); }
+  .arr h1 { font-size: var(--txt-titulo); margin: 0; }
+  .arr p { font-size: var(--txt-lectura); line-height: 1.6; color: var(--fg-2); margin: 0; }
+</style>
+<div class="pagina">
+<h1>11 — Conexión y arranque</h1>
+<p>Explica antes de pedir permiso: el scope <code>drive</code> trae una pantalla de «app no
+verificada» y conviene que no sea la primera explicación que el usuario recibe.</p>
+
+<div class="fila">
+
+<figure class="caso">
+<div class="tel" style="height:440px"><div class="arr">
+  <h1>Recetario</h1>
+  <p>Tus recetas viven en tu Google Drive. Esta app las lee y las escribe ahí.</p>
+  <button class="btn prim" style="width:100%">Conectar con Google</button>
+</div></div>
+<figcaption><b>Primer arranque.</b> El permiso se pide al tocar el botón, nunca al abrir.</figcaption>
+</figure>
+
+<figure class="caso">
+<div class="tel" style="height:440px"><div class="arr">
+  <h1>Recetario</h1>
+  <div class="aviso"><p>No se pudo conectar.</p></div>
+  <button class="btn prim" style="width:100%">Conectar con Google</button>
+</div></div>
+<figcaption><b>Consentimiento cancelado.</b> Tres palabras y el botón otra vez. Nunca se queda en
+«Conectando…».</figcaption>
+</figure>
+
+<figure class="caso">
+<div class="tel" style="height:440px"><div class="arr">
+  <h1>Recetario</h1>
+  <p style="font-variant-numeric:tabular-nums">Creando el índice: 128 de 1.012.</p>
+  <div style="height:8px;background:var(--surface-alta);border-radius:var(--r-chico);overflow:hidden">
+    <i style="display:block;height:100%;background:var(--acento);width:13%"></i></div>
+</div></div>
+<figcaption><b>Creando el índice.</b> Puede tardar minutos: se leen los <code>.md</code> de a uno.
+Por eso hay número y no spinner.</figcaption>
+</figure>
+
+</div>
+</div>

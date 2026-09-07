@@ -1,0 +1,65 @@
+<!doctype html><html lang="es"><meta charset="utf-8">
+<title>Ajustes</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .fila-a { display: flex; align-items: center; gap: var(--e-3); min-height: 48px; }
+  .fila-a .t { flex: 1; }
+  .barra { height: 8px; background: var(--surface-alta); border-radius: var(--r-chico); overflow: hidden; }
+  .barra i { display: block; height: 100%; background: var(--acento); width: 34%; }
+</style>
+<div class="pagina">
+<h1>10 — Ajustes</h1>
+<p>Donde viven los avisos que no interrumpen, y donde está el reindexado — a tres toques, porque es
+raro y caro.</p>
+
+<div class="fila">
+
+<figure class="caso">
+<div class="tel" style="height:560px">
+  <div class="enc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Ajustes</span><span style="width:48px"></span>
+  </div>
+  <div class="cuerpo">
+    <div class="ficha">
+      <h2>Cuenta</h2>
+      <div class="fila-a"><span class="t">alelarre@gmail.com</span>
+        <button class="btn sec compacto">Salir</button></div>
+      <p class="aviso-mudo" style="margin:var(--e-2) 0 0">Salir no borra nada de Drive.</p>
+    </div>
+    <div class="ficha">
+      <h2>Índice</h2>
+      <p class="aviso-mudo" style="margin:0 0 var(--e-3)">Último reindexado: ayer</p>
+      <button class="btn sec" style="width:100%">Reindexar</button>
+    </div>
+    <div class="ficha">
+      <h2>Avisos</h2>
+      <div class="fila-a"><span class="t aviso-mudo">2 archivos ignorados por no tener título.</span>
+        <button class="btn sec compacto">Ver</button></div>
+    </div>
+  </div>
+</div>
+<figcaption><b>Las tres secciones.</b> Los avisos sin acción viven acá y no interrumpen en ningún
+lado: son una línea en <code>--fg-2</code>, sin fondo, sin borde y sin ícono. Que no interrumpan no
+significa que no existan.</figcaption>
+</figure>
+
+<figure class="caso">
+<div class="tel" style="height:400px">
+  <div class="enc"><span class="tit">Ajustes</span></div>
+  <div class="cuerpo">
+    <div class="ficha">
+      <h2>Índice</h2>
+      <p style="margin:0 0 var(--e-3);font-variant-numeric:tabular-nums">Reindexando: 340 de 1.012.</p>
+      <div class="barra"><i></i></div>
+      <p class="aviso-mudo" style="margin:var(--e-3) 0 0">No se puede guardar ni borrar recetas
+      mientras tanto.</p>
+    </div>
+  </div>
+</div>
+<figcaption><b>Reindexando.</b> Con número hay barra, sin número hay spinner. <b>No hay botón de
+cancelar:</b> cortar a mitad deja el índice en el estado que el reindexado existe para reparar.</figcaption>
+</figure>
+
+</div>
+</div>

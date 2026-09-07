@@ -1,0 +1,58 @@
+<!doctype html><html lang="es"><meta charset="utf-8">
+<title>Captura</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .hoja { min-height: 100%; display: flex; flex-direction: column; padding: var(--e-5) var(--e-4); }
+  .hoja h1 { font-size: var(--txt-titulo); margin: 0 0 var(--e-5); }
+  .fnt { font-size: var(--txt-chico); color: var(--fg-2); background: var(--surface);
+         border: 1px solid var(--borde); border-radius: var(--r-medio); padding: var(--e-3);
+         word-break: break-all; margin-bottom: var(--e-5); }
+  .pie2 { margin-top: auto; display: flex; gap: var(--e-2); justify-content: flex-end; padding-top: var(--e-5); }
+</style>
+<div class="pagina">
+<h1>7 — Captura</h1>
+<p>El flujo más crítico del producto y la pantalla más simple: un campo y un botón. Se abre desde la
+hoja de compartir de Android, con la fuente ya cargada y el foco puesto.</p>
+
+<div class="fila">
+
+<figure class="caso">
+<div class="tel" style="height:520px">
+  <div class="hoja">
+    <h1>Guardar en Recetario</h1>
+    <div class="fnt">instagram.com/reel/C8xK2mPtQ4v/</div>
+    <label class="campo"><span>Título</span><input autofocus placeholder="Pasta con berenjenas"></label>
+    <div class="pie2">
+      <button class="btn sec">Cancelar</button>
+      <button class="btn prim" disabled>Guardar</button>
+    </div>
+  </div>
+</div>
+<figcaption><b>Recién abierta.</b> La fuente se muestra y no se edita. El único campo editable es el
+título, con el foco puesto y el teclado abierto. Guardar está deshabilitado hasta que haya título:
+sin él, el borrador es una URL indistinguible de las demás.</figcaption>
+</figure>
+
+<figure class="caso">
+<div class="tel" style="height:520px">
+  <div class="hoja">
+    <h1>Guardar en Recetario</h1>
+    <div class="fnt">instagram.com/reel/C8xK2mPtQ4v/</div>
+    <div class="aviso" style="margin-bottom:var(--e-4)">
+      <p>Sesión vencida.</p>
+      <button class="btn sec compacto">Conectar</button>
+    </div>
+    <label class="campo"><span>Título</span><input value="Pasta con berenjenas y ricota ahumada"></label>
+    <div class="pie2">
+      <button class="btn sec">Cancelar</button>
+      <button class="btn prim">Guardar</button>
+    </div>
+  </div>
+</div>
+<figcaption><b>Sin sesión</b> — el peor caso del flujo más crítico. Dos palabras y un botón. El
+título escrito <b>queda</b>: al volver de reconectar sigue ahí y se reintenta a mano, porque la app
+no reanuda nada sola.</figcaption>
+</figure>
+
+</div>
+</div>

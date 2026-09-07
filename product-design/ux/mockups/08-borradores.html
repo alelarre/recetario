@@ -1,0 +1,87 @@
+<!doctype html><html lang="es"><meta charset="utf-8">
+<title>Borradores</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .bor { display: flex; gap: var(--e-3); align-items: flex-start; padding: var(--e-3);
+         background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha); }
+  .bor .txt { flex: 1; min-width: 0; }
+  .bor .n { font-weight: 600; }
+  .bor .f { font-size: var(--txt-chico); color: var(--fg-2); white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; margin-top: var(--e-1); }
+  .bor .d { font-size: var(--txt-micro); color: var(--fg-3); white-space: nowrap; }
+  .col { max-width: 680px; margin: 0 auto; }
+  .lista { display: flex; flex-direction: column; gap: var(--e-2); }
+</style>
+<div class="pagina">
+<h1>8 — Borradores</h1>
+<p>El otro lugar primario. Cola de trabajo: se lee de una vez y se vacía. El orden es por fecha de
+captura, <b>lo más viejo primero</b>.</p>
+
+<div class="fila">
+
+<figure class="caso">
+<div class="tel" style="height:560px">
+  <div class="enc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Borradores</span>
+    <span style="font-size:var(--txt-chico);color:var(--fg-2);padding-right:var(--e-3)">3</span>
+  </div>
+  <div class="cuerpo denso">
+    <div class="lista">
+      <a class="bor"><span class="txt"><span class="n">Pasta con berenjenas</span>
+        <span class="f">instagram.com/reel/C8xK2mPtQ4v/</span></span><span class="d">hace 9 días</span></a>
+      <a class="bor"><span class="txt"><span class="n">Pan de masa madre del canal</span>
+        <span class="f">youtube.com/watch?v=aQ7pWnLZ3kE</span></span><span class="d">hace 3 días</span></a>
+      <a class="bor"><span class="txt"><span class="n">Ñoquis de la abuela</span>
+        <span class="f">Cuaderno de mamá, p. 44</span></span><span class="d">ayer</span></a>
+    </div>
+    <button class="btn sec" style="width:100%">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Agregar a mano</button>
+  </div>
+</div>
+<figcaption><b>Con tres esperando.</b> La fuente es texto libre: dos son URL y la tercera es
+<i>«Cuaderno de mamá, p. 44»</i>, que es lo que cubre <b>Agregar a mano</b>. La URL larga se corta con
+elipsis en una línea.</figcaption>
+</figure>
+
+<figure class="caso">
+<div class="tel" style="height:340px">
+  <div class="enc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Borradores</span>
+  </div>
+  <div class="cuerpo">
+    <div class="vacio">No hay borradores.</div>
+    <button class="btn sec" style="width:100%">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Agregar a mano</button>
+  </div>
+</div>
+<figcaption><b>Vacío.</b> Una frase, sin ilustración y sin celebración: no hay <i>«¡todo al día!»</i>.
+El control de agregar a mano sigue visible, que es lo único accionable acá.</figcaption>
+</figure>
+
+</div>
+
+<h1 style="margin-top:var(--e-7)">8b — Borradores en 1280 px</h1>
+<p>El tercer contexto de escritorio: mirar el resultado de una sesión con el agente, que ocurre en la
+computadora por definición.</p>
+<div class="desk" style="height:420px">
+  <div class="enc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Borradores</span>
+    <span style="font-size:var(--txt-chico);color:var(--fg-2);padding-right:var(--e-3)">3</span>
+  </div>
+  <div class="cuerpo denso col">
+    <div class="lista">
+      <a class="bor"><span class="txt"><span class="n">Pasta con berenjenas</span>
+        <span class="f">instagram.com/reel/C8xK2mPtQ4v/</span></span><span class="d">hace 9 días</span></a>
+      <a class="bor"><span class="txt"><span class="n">Pan de masa madre del canal</span>
+        <span class="f">youtube.com/watch?v=aQ7pWnLZ3kE</span></span><span class="d">hace 3 días</span></a>
+      <a class="bor"><span class="txt"><span class="n">Ñoquis de la abuela</span>
+        <span class="f">Cuaderno de mamá, p. 44</span></span><span class="d">ayer</span></a>
+    </div>
+    <button class="btn sec" style="width:100%">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Agregar a mano</button>
+  </div>
+</div>
+</div>
