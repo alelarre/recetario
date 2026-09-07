@@ -4,7 +4,6 @@ import { HOJA_RECETAS, HOJA_META, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 import type { Drive } from './drive.js';
 import type { Sheets } from './sheets.js';
-import type { Cache } from './cache.js';
 import type {
   Receta, Ubicacion, Entrada, Filtros, Coincidencias, ArchivoDrive
 } from './tipos.js';
@@ -74,10 +73,9 @@ export type SheetsDelStore = Pick<Sheets,
 export interface Dependencias {
   drive: DriveDelStore;
   sheets: SheetsDelStore;
-  cache: Cache;
 }
 
-export function crearStore({ drive, sheets, cache }: Dependencias) {
+export function crearStore({ drive, sheets }: Dependencias) {
   const ctx: Contexto = {
     raizId: '', indiceId: '', categorias: [], carpetas: new Map(),
     soloLectura: false, ultimaReconstruccionEnMemoria: ''
@@ -205,8 +203,6 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
     const cuerpo = crudo.slice(1);  // la fila 1 son los encabezados
     entradas = cuerpo.map(entradaDesdeFila).filter(e => e.id_archivo);
     filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
-    await cache.guardarIndice(entradas);
-    await cache.guardarMapaFilas(filas);
     return entradas;
   }
 
@@ -234,17 +230,6 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
       // El corrimiento es determinístico: no hace falta releer nada (§4.3).
       for (const [otroId, otraFila] of filas) if (otraFila > nro) filas.set(otroId, otraFila - 1);
     }
-
-    // Sacar de la cola cualquier operación pendiente de este id.
-    const cola = await cache.leerCola();
-    const filtrada = cola.filter(op => op.id !== id);
-    await cache.vaciarCola();
-    for (const op of filtrada) {
-      await cache.encolar(op);
-    }
-
-    // Como todas las demás mutaciones del mapa de filas, persistirlo.
-    await cache.guardarMapaFilas(filas);
   }
 
   async function sync() {
@@ -269,7 +254,9 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
       const texto = await drive.leerTexto(ubicacion.id);
       const receta = parse(texto);
       if (!receta.titulo) { ignoradosSinTitulo++; continue; }
-      await cache.guardarCuerpo(ubicacion.id, texto);
+      // `sync()` no se toca en esta tarea (se borra entera en la próxima):
+      // esto era `cache.guardarCuerpo`, y se saca solo porque el cache ya no
+      // existe como dependencia, no como parte del rediseño de este método.
       await escribirFila(receta, ubicacion);
       const entrada = entradaDesdeFila(filaDesde(receta, ubicacion));
       entradas = [...entradas.filter(e => e.id_archivo !== ubicacion.id), entrada];
@@ -300,34 +287,19 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
     for (const id of plan.borrar) await borrarDelIndice(id);
 
     if (newStartPageToken) await guardarMeta('changesPageToken', newStartPageToken);
-    await cache.guardarIndice(entradas);
-    await cache.guardarMapaFilas(filas);
 
     return { releidos: plan.releer.length - ignoradosSinTitulo, parcheados: plan.parchear.length, borrados: plan.borrar.length, ignoradosSinTitulo };
   }
-
-  /** Lo que devuelve `guardar`: se escribió, o hay conflicto con lo remoto. */
-  type ResultadoGuardar =
-    | { ok: true }
-    | { ok: false; conflicto: { remoto: number; local: number } };
 
   async function guardar(
     id: string,
     receta: Receta,
     { carpetaDestino }: { carpetaDestino?: string | undefined } = {}
-  ): Promise<ResultadoGuardar> {
+  ): Promise<void> {
     const entrada = entradas.find(e => e.id_archivo === id);
-    const meta = await drive.metadatos(id);
-    const remoto = Date.parse(meta.modifiedTime ?? '') || 0;
-
-    // No se pisa lo que cambió afuera: Drive no tiene escritura condicional (§8).
-    if (entrada && remoto && entrada.mtime && remoto !== entrada.mtime) {
-      return { ok: false, conflicto: { remoto, local: entrada.mtime } };
-    }
 
     const texto = serialize(receta);
     const actualizado = await drive.actualizar(id, texto);
-    await cache.guardarCuerpo(id, texto);
 
     let carpeta_id = entrada?.carpeta_id ?? ctx.raizId;
     if (carpetaDestino && carpetaDestino !== carpeta_id) {
@@ -337,7 +309,7 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
 
     const ubicacion: Ubicacion = {
       id,
-      nombre_archivo: entrada?.nombre_archivo ?? meta.name ?? '',
+      nombre_archivo: entrada?.nombre_archivo ?? '',
       categoria: ctx.carpetas.get(carpeta_id) ?? CATEGORIA_RAIZ,
       carpeta_id,
       mtime: Date.parse(actualizado.modifiedTime ?? '') || Date.now()
@@ -345,9 +317,7 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
 
     const nueva = entradaDesdeFila(filaDesde(receta, ubicacion));
     entradas = [...entradas.filter(e => e.id_archivo !== id), nueva];
-    await cache.guardarIndice(entradas);
-    await cache.encolar({ tipo: 'fila', id, fila: filaDesde(receta, ubicacion) });
-    return { ok: true };
+    await escribirFila(receta, ubicacion);
   }
 
   async function crear(
@@ -366,31 +336,13 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
       carpeta_id: padre, mtime: Date.parse(archivo.modifiedTime ?? '') || Date.now()
     };
     entradas = [...entradas, entradaDesdeFila(filaDesde(receta, ubicacion))];
-    await cache.guardarCuerpo(archivo.id, texto);
-    await cache.guardarIndice(entradas);
-    await cache.encolar({ tipo: 'fila', id: archivo.id, fila: filaDesde(receta, ubicacion) });
+    await escribirFila(receta, ubicacion);
     return { id: archivo.id, nombre_archivo: nombre };
   }
 
   async function borrar(id: string): Promise<void> {
     await drive.borrar(id);
     await borrarDelIndice(id);
-    await cache.guardarIndice(entradas);
-  }
-
-  async function flush(): Promise<void> {
-    const cola = await cache.leerCola();
-    for (const op of cola) {
-      if (op.tipo !== 'fila') continue;
-      const nro = filas.get(op.id);
-      if (nro) await sheets.escribir(ctx.indiceId, rangoDeFila(nro), [op.fila]);
-      else {
-        await sheets.append(ctx.indiceId, HOJA_RECETAS, [op.fila]);
-        filas.set(op.id, filas.size + 2);
-      }
-    }
-    await cache.vaciarCola();
-    await cache.guardarMapaFilas(filas);
   }
 
   async function reconstruir(alProgresar: (p: Progreso) => void = () => {}): Promise<{ indexadas: number; ignoradasSinTitulo: number }> {
@@ -398,7 +350,6 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
     if (typeof alProgresar !== 'function') alProgresar = () => {};
 
     await guardarMeta('reconstruccion_en_curso', 'si');
-    await cache.vaciarCola();   // cada op es redundante: el .md ya está en Drive (§5.3)
 
     const lugares = [
       { id: ctx.raizId, categoria: CATEGORIA_RAIZ },
@@ -448,8 +399,6 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
 
     entradas = nuevas.map(entradaDesdeFila);
     filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
-    await cache.guardarIndice(entradas);
-    await cache.guardarMapaFilas(filas);
 
     await guardarMeta('changesPageToken', (await drive.tokenInicialDeCambios()) ?? '');
     const ahora = new Date().toISOString();
@@ -526,13 +475,9 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
 
   async function receta(id: string): Promise<{ entrada: Entrada | null; receta: Receta; texto: string }> {
     const entrada = entradas.find(e => e.id_archivo === id) ?? null;
-    let texto = await cache.leerCuerpo(id);
-    if (texto === null) {
-      texto = await drive.leerTexto(id);
-      await cache.guardarCuerpo(id, texto);
-    }
+    const texto = await drive.leerTexto(id);
     return { entrada, receta: parse(texto), texto };
   }
 
-  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, ultimaReconstruccion, guardar, crear, borrar, flush, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, _ctx: ctx };
+  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, ultimaReconstruccion, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, _ctx: ctx };
 }

@@ -3,7 +3,6 @@ import './ui/app.css';
 import { crearAuth } from './auth.js';
 import { crearDrive } from './drive.js';
 import { crearSheets } from './sheets.js';
-import { abrirCache } from './cache.js';
 import { crearStore } from './store.js';
 import { parse } from './recipe.js';
 import { crearRouter, parsearHash } from './ui/router.js';
@@ -32,7 +31,6 @@ let vistaActual: Ruta | null = null;
 let ingredientesPlegados = false;  // la barra pegajosa del detalle
 let vaciasVisibles = false;        // las categorías en cero, plegadas en el home
 let wakeLock: WakeLockSentinel | null = null;  // para que la pantalla no se apague cocinando
-let pendienteFlush: ReturnType<typeof setTimeout> | undefined;
 let tagsActivos: string[] = [];   // filtro de la vista de categoría; se limpia al cambiar de vista
 let fotosVisor: string[] | null = null;  // fotos de la receta abierta; null = visor cerrado
 let indiceVisor = 0;
@@ -107,25 +105,12 @@ async function soltarPantalla(): Promise<void> {
   wakeLock = null;
 }
 
-function programarFlush() {
-  clearTimeout(pendienteFlush);
-  pendienteFlush = setTimeout(() => store.flush().catch(console.error), 30000);
-}
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    // Si el botón sigue activo, el usuario nunca lo apagó: el bloqueo se
-    // perdió al irse a segundo plano y hay que volver a pedirlo.
-    const b = document.querySelector<HTMLElement>('[data-accion="pantalla"][aria-pressed="true"]');
-    if (b && !wakeLock) mantenerPantalla().then(ok => b.setAttribute('aria-pressed', String(ok)));
-    return;
-  }
-  if (document.visibilityState !== 'hidden') return;
-  // Cancelar el debounce antes del flush forzado: si no, y el timer de 30s
-  // vencía justo mientras este flush estaba en vuelo, corrían los dos en
-  // paralelo y la escritura de fila (que no es atómica) podía duplicar la
-  // fila de la misma receta en el índice.
-  clearTimeout(pendienteFlush);
-  store?.flush().catch(console.error);
+  if (document.visibilityState !== 'visible') return;
+  // Si el botón sigue activo, el usuario nunca lo apagó: el bloqueo se
+  // perdió al irse a segundo plano y hay que volver a pedirlo.
+  const b = document.querySelector<HTMLElement>('[data-accion="pantalla"][aria-pressed="true"]');
+  if (b && !wakeLock) mantenerPantalla().then(ok => b.setAttribute('aria-pressed', String(ok)));
 });
 
 async function arrancar() {
@@ -140,7 +125,7 @@ async function arrancar() {
   } catch {
     await auth.conectar();
   }
-  store = crearStore({ drive, sheets, cache: await abrirCache() });
+  store = crearStore({ drive, sheets });
   estadoArranque = await store.arrancar();
 
   if (estadoArranque.estado === 'falta-estructura') {
@@ -311,7 +296,6 @@ app.addEventListener('click', async (e) => {
       if (!nueva.titulo) return alert('Ponele un título a la receta antes de guardar.');
       try {
         await store.crear(nueva, { carpetaId: datos['carpeta'] || undefined });
-        programarFlush();
         return history.back();
       } catch (err) {
         console.error(err);
@@ -323,9 +307,7 @@ app.addEventListener('click', async (e) => {
     try {
       const { receta } = await store.receta(id);
       const nueva = recetaDesdeFormulario(datos, receta) as Receta;
-      const r = await store.guardar(id, nueva, { carpetaDestino: datos['carpeta'] });
-      if (!r.ok) return alert('La receta cambió en Drive desde que la abriste. Recargá antes de guardar.');
-      programarFlush();
+      await store.guardar(id, nueva, { carpetaDestino: datos['carpeta'] });
       return history.back();
     } catch (err) {
       console.error(err);
@@ -337,7 +319,6 @@ app.addEventListener('click', async (e) => {
     if (!confirm('¿Borrar esta receta?')) return;
     try {
       await store.borrar(vistaActual?.params['id'] ?? '');
-      programarFlush();
       location.hash = '#/';
       return;
     } catch (err) {

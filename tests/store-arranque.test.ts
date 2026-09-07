@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { crearStore } from '../src/store.js';
-import { crearCacheMemoria } from '../src/cache.js';
 import { driveFalso, sheetsFalso } from './dobles.js';
 import type { DriveFalso } from './dobles.js';
 import { arranqueListo, arranqueEligiendo } from './aserciones.js';
@@ -25,8 +24,7 @@ function conRecetario(extra: ArchivoDelFixture[] = []) {
 
 const armar = (drive: DriveFalso) => {
   const sheets = sheetsFalso();
-  const cache = crearCacheMemoria();
-  return { store: crearStore({ drive, sheets, cache }), sheets, cache, drive };
+  return { store: crearStore({ drive, sheets }), sheets, drive };
 };
 
 describe('arranque en frío', () => {
@@ -89,8 +87,7 @@ describe('arranque en frío', () => {
     await sheets.escribir('i1', 'meta!A2:B2', [['changesPageToken', '']]);
     await sheets.escribir('i1', 'meta!A3:B3', [['ultima_reconstruccion', fechaPrueba]]);
 
-    const cache = crearCacheMemoria();
-    const store = crearStore({ drive, sheets, cache });
+    const store = crearStore({ drive, sheets });
 
     // Contar llamadas a sheets.leer durante arranque
     let llamadosDurante = 0;

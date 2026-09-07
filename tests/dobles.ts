@@ -24,12 +24,26 @@ interface ArchivoFalso {
 }
 
 /**
- * Drive falso en memoria. `archivos` es un array de
- * {id, name, mimeType, parents, modifiedTime, contenido}.
+ * El modifiedTime con el que arranca un archivo que el doble auto-crea, en
+ * vez de uno cargado a mano en el fixture.
  */
-export function driveFalso(archivos: ArchivoFalso[] = []) {
+interface OpcionesDriveFalso {
+  modifiedTime?: string;
+}
+
+/**
+ * Drive falso en memoria. `inicial` es o bien un array de
+ * {id, name, mimeType, parents, modifiedTime, contenido} para precargar
+ * archivos, o bien opciones para el archivo que `actualizar` auto-crea la
+ * primera vez que toca un id que el doble todavía no conocía (Tarea 6:
+ * `guardar` ya no pide metadatos antes de escribir, así que no hace falta
+ * que el archivo exista de antemano en el fixture).
+ */
+export function driveFalso(inicial: ArchivoFalso[] | OpcionesDriveFalso = []) {
+  const archivos = Array.isArray(inicial) ? inicial : [];
+  const modifiedTimePorDefecto = (!Array.isArray(inicial) && inicial.modifiedTime) || '2026-01-01T00:00:00.000Z';
   const store = new Map<string, ArchivoFalso>(archivos.map(a => [a.id, {
-    mimeType: 'text/markdown', parents: [], modifiedTime: '2026-01-01T00:00:00.000Z', ...a
+    mimeType: 'text/markdown', parents: [], modifiedTime: modifiedTimePorDefecto, ...a
   }]));
   let siguiente = 1;
   const fallas = new Map<string, unknown>();  // ruta lógica → error a lanzar
@@ -74,7 +88,14 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       return a as ArchivoFalso & { id: string };
     },
     async actualizar(id: string, contenido: string) {
-      const a = exigir(id);
+      // `guardar()` ya no pide metadatos antes de escribir (se sacó el
+      // chequeo de conflicto, Tarea 6): un id que el doble no había visto
+      // todavía se auto-crea acá, en vez de exigir que el test lo precargue.
+      let a = store.get(id);
+      if (!a) {
+        a = { id, mimeType: 'text/markdown', parents: [], modifiedTime: modifiedTimePorDefecto };
+        store.set(id, a);
+      }
       a.contenido = contenido;
       a.modifiedTime = new Date().toISOString();
       return a as ArchivoFalso & { id: string };
@@ -114,11 +135,20 @@ type SheetsUsado = SheetsDelStore;
 /** Las hojas de una planilla falsa: nombre de hoja → filas. */
 type PlanillaFalsa = Record<string, string[][]>;
 
+/** Un envío a la planilla falsa: una llamada a `escribir` o a `append`. */
+export interface EscrituraFalsa {
+  id: string;
+  hoja: string;
+  valores: string[][];
+}
+
 /** Sheets falso: una planilla es un objeto {hojas: {nombre: filas[][]}}. */
 export function sheetsFalso() {
   const planillas = new Map<string, PlanillaFalsa>();
   // Mapeo de id → lista de hojas con sus metadatos {sheetId, title}
   const hojasMetadatos = new Map<string, PropiedadesHoja[]>();
+  const escrituras: EscrituraFalsa[] = [];
+  const appends: EscrituraFalsa[] = [];
 
   // La app crea la planilla con drive.crear y después le escribe: el doble tiene
   // que aceptar una escritura sobre un id que todavía no vio. Cuando se crea una
@@ -140,9 +170,19 @@ export function sheetsFalso() {
     return p;
   };
 
-  return {
+  const api = {
     _planillas: planillas,
     _hojasMetadatos: hojasMetadatos,
+    escrituras,
+    appends,
+    /**
+     * Gancho opcional para simular la confirmación de Sheets: si está,
+     * `escribir` y `append` lo esperan antes de tocar la planilla. Sirve para
+     * probar que `guardar()` no termina hasta que Sheets confirmó (Tarea 6:
+     * la escritura de la fila es sincrónica, sin cola) y que un error acá se
+     * propaga en vez de quedar encolado en algún lado.
+     */
+    alEscribir: undefined as (() => Promise<void>) | undefined,
 
     crearPlanilla(id: string) {
       planillas.set(id, { recetas: [], meta: [] });
@@ -158,7 +198,9 @@ export function sheetsFalso() {
     },
 
     async escribir(id: string, rango: string, valores: string[][]) {
+      if (api.alEscribir) await api.alEscribir();
       const [hoja = '', celdas = ''] = rango.split('!');
+      escrituras.push({ id, hoja, valores });
       const fila = Number(celdas.match(/\d+/)?.[0] ?? 0);
       const p = asegurar(id);
       const destino = p[hoja] ?? (p[hoja] = []);
@@ -167,6 +209,9 @@ export function sheetsFalso() {
     },
 
     async append(id: string, hoja: string, filas: string[][]) {
+      if (api.alEscribir) await api.alEscribir();
+      escrituras.push({ id, hoja, valores: filas });
+      appends.push({ id, hoja, valores: filas });
       const p = asegurar(id);
       (p[hoja] ?? (p[hoja] = [])).push(...filas);
     },
@@ -210,6 +255,8 @@ export function sheetsFalso() {
       }
     }
   } satisfies SheetsUsado & Record<string, unknown>;
+
+  return api;
 }
 
 export const COLUMNAS_ESPERADAS = COLUMNAS;

@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { crearStore } from '../src/store.js';
-import { crearCacheMemoria } from '../src/cache.js';
 import { driveFalso, sheetsFalso } from './dobles.js';
 import type { DriveFalso, SheetsFalso } from './dobles.js';
-import type { Cache } from '../src/cache.js';
 import { COLUMNAS } from '../src/catalogo.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
@@ -12,7 +10,6 @@ const md = (titulo: string): string => `---\ntitulo: ${titulo}\n---\n\n## Ingred
 
 let drive: DriveFalso;
 let sheets: SheetsFalso;
-let cache: Cache;
 let store: ReturnType<typeof crearStore>;
 
 beforeEach(async () => {
@@ -31,8 +28,7 @@ beforeEach(async () => {
   sheets.crearPlanilla('i1');
   await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
-  cache = crearCacheMemoria();
-  store = crearStore({ drive, sheets, cache });
+  store = crearStore({ drive, sheets });
   await store.arrancar();
 });
 
@@ -53,12 +49,6 @@ describe('reconstruir', () => {
     const r = await store.reconstruir();
     expect(r.ignoradasSinTitulo).toBe(1);
     expect(drive._store.has('x1')).toBe(true);
-  });
-
-  it('descarta la cola antes de empezar', async () => {
-    await cache.encolar({ tipo: 'fila', id: 'viejo', fila: ['viejo'] });
-    await store.reconstruir();
-    expect(await cache.leerCola()).toHaveLength(0);
   });
 
   it('deja el flag limpio y la fecha escrita al terminar', async () => {

@@ -19,7 +19,6 @@ vi.mock('../src/auth.js', () => ({
 }));
 vi.mock('../src/drive.js', () => ({ crearDrive: () => ({}) }));
 vi.mock('../src/sheets.js', () => ({ crearSheets: () => ({}) }));
-vi.mock('../src/cache.js', () => ({ abrirCache: async () => ({}) }));
 
 const storeFake = {
   arrancar: async () => ({ estado: 'listo', reconstruir: false, categorias: [{ id: 'c1', nombre: 'Carnes' }] }),
@@ -31,7 +30,6 @@ const storeFake = {
   entradas: () => [],
   categoriasConConteo: () => [],
   receta: async () => ({ entrada: null, receta: null }),
-  flush: async () => {},
   buscar: () => [],
   tagsDe: () => []
 };

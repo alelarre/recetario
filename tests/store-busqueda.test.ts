@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { crearStore } from '../src/store.js';
-import { crearCacheMemoria } from '../src/cache.js';
 import { driveFalso, sheetsFalso } from './dobles.js';
-import type { DriveFalso, SheetsFalso } from './dobles.js';
-import type { Cache } from '../src/cache.js';
+import type { SheetsFalso } from './dobles.js';
 import { COLUMNAS } from '../src/catalogo.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
@@ -31,7 +29,7 @@ beforeEach(async () => {
     fila('r2', 'Bife de chorizo', 'Carnes', 'c1', 'parrilla', 'bife', 'fácil'),
     fila('r3', 'Flan casero', 'Postres', 'c2', 'incompleto', 'huevo|leche', 'media')
   ]);
-  store = crearStore({ drive, sheets, cache: crearCacheMemoria() });
+  store = crearStore({ drive, sheets });
   await store.arrancar();
   await store.cargarIndice();
 });

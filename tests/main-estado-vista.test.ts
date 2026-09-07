@@ -17,7 +17,6 @@ vi.mock('../src/auth.js', () => ({
 }));
 vi.mock('../src/drive.js', () => ({ crearDrive: () => ({}) }));
 vi.mock('../src/sheets.js', () => ({ crearSheets: () => ({}) }));
-vi.mock('../src/cache.js', () => ({ abrirCache: async () => ({}) }));
 
 const detalleSpy = vi.fn((_args?: ArgsDetalle) => '<div></div>');
 vi.mock('../src/ui/detalle.js', () => ({
@@ -43,7 +42,6 @@ const storeFake = {
     entrada: { id, titulo: id },
     receta: { titulo: id, ingredientes: 'a', preparacion: 'b', notas: 'c' }
   }),
-  flush: async () => {},
   buscar: () => [],
   tagsDe: () => []
 };
