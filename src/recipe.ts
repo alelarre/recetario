@@ -278,6 +278,24 @@ export function variacionesDe(variaciones: string): { lista: string[]; secciones
   };
 }
 
+/**
+ * Estado derivado, calculado al leer y nunca persistido en el `.md` (C05.3.1).
+ * `completa: true` es la salida manual del usuario y gana sobre el cálculo.
+ *
+ * El parámetro es parcial porque la va a llamar `filaDesde()` de `catalogo.ts`
+ * con lo que venga del índice, no con una `Receta` garantizada (ver el
+ * comentario de cabecera de esa función): acá se defiende cada campo, igual
+ * que en `serialize` e `ingredientesIndexables`.
+ */
+export function estaCompleta(receta?: Partial<Receta> | null): boolean {
+  if (!receta) return false;
+  if (receta.completa) return true;
+  if (!receta.titulo) return false;
+  const hayIngrediente = gruposDe(String(receta.ingredientes ?? '')).some(g => g.items.length > 0);
+  const hayPaso = tramosDe(String(receta.preparacion ?? '')).some(t => t.pasos.length > 0);
+  return hayIngrediente && hayPaso;
+}
+
 /** Los nombres, tal como están escritos: sin normalizar (C05.4b.1). */
 export function ingredientesIndexables(receta?: Partial<Receta> | null): string[] {
   if (!receta) return [];
