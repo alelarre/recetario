@@ -1,4 +1,4 @@
-import { normalizar, ingredientesIndexables } from './recipe.js';
+import { normalizar, ingredientesIndexables, estaCompleta } from './recipe.js';
 import type {
   Receta, Ubicacion, Entrada, ArchivoDrive, CambioDrive, Diff
 } from './tipos.js';
@@ -20,7 +20,9 @@ export const COLUMNAS = [
   'fuente',
   'tags',
   'ingredientes',
-  'mtime'
+  'mtime',
+  'foto',
+  'completa'
 ] as const satisfies ReadonlyArray<keyof Entrada>;
 
 export const DIFICULTADES = ['fácil', 'media', 'difícil'] as const;
@@ -83,7 +85,10 @@ export function filaDesde(receta?: Partial<Receta> | null, ubicacion?: Partial<U
     fuente: typeof r.fuente === 'string' ? r.fuente : '',
     tags: tagsStr,
     ingredientes: ingredientesStr,
-    mtime: String(typeof u.mtime === 'number' ? u.mtime : 0)
+    mtime: String(typeof u.mtime === 'number' ? u.mtime : 0),
+    foto: typeof r.foto === 'string' ? r.foto : '',
+    // 'si' y no 'true': la celda la puede leer una persona en la planilla.
+    completa: r.titulo && estaCompleta(r) ? 'si' : ''
   };
 
   return COLUMNAS.map(c => String(celdas[c] ?? ''));
@@ -118,7 +123,9 @@ export function entradaDesdeFila(fila?: unknown): Entrada {
     fuente: texto.fuente,
     tags: partir(texto.tags),
     ingredientes: partir(texto.ingredientes),
-    mtime: isNaN(mtimeNum) || mtimeNum < 0 ? 0 : mtimeNum
+    mtime: isNaN(mtimeNum) || mtimeNum < 0 ? 0 : mtimeNum,
+    foto: texto.foto,
+    completa: texto.completa === 'si'
   };
 }
 

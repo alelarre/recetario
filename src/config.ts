@@ -7,5 +7,6 @@ export const SCOPE = 'https://www.googleapis.com/auth/drive';
 export const NOMBRE_RAIZ = 'Recetario';
 export const NOMBRE_INDICE = '_indice';
 
-// Subir esta versión fuerza una reconstrucción del índice en el próximo arranque.
-export const SCHEMA_VERSION = 1;
+// Subir esta versión fuerza una reconstrucción del índice en el próximo
+// arranque. Va a 2 con el rediseño: la fila suma `foto` y `completa`.
+export const SCHEMA_VERSION = 2;

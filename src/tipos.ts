@@ -123,6 +123,10 @@ export interface Entrada {
   tags: string[];
   ingredientes: string[];
   mtime: number;
+  /** URL externa, o cadena vacía. Se dibuja donde esté (IA §1.7). */
+  foto: string;
+  /** Derivada al leer el `.md` (C05.3.1). Es cache: el archivo gana (R4). */
+  completa: boolean;
 }
 
 /** Los filtros de la vista de categoría. Todos opcionales y combinables. */
