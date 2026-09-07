@@ -57,12 +57,15 @@ export interface Receta {
   avisos: Aviso[];
 }
 
-/** Un ingrediente parseado. Best-effort a propósito (§3.2). */
+/**
+ * Un ingrediente parseado: nombre primero, cantidad después del separador
+ * (C05.1.3). La cantidad es texto libre y no se normaliza nunca.
+ */
 export interface Ingrediente {
+  nombre: string;
+  /** `null` cuando el ítem no traía separador: es un ingrediente sin cantidad. */
   cantidad: string | null;
-  unidad: string | null;
-  item: string;
-  /** La línea tal como vino. Es lo que se dibuja: el parseo es para indexar. */
+  /** La línea tal como vino. */
   crudo: string;
 }
 

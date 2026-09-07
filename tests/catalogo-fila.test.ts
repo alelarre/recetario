@@ -36,7 +36,7 @@ describe('filaDesde', () => {
   it('junta tags e ingredientes con barra vertical', () => {
     const f = filaDesde(RECETA, UBICACION);
     expect(f[COLUMNAS.indexOf('tags')]).toBe('italiana|horno');
-    expect(f[COLUMNAS.indexOf('ingredientes')]).toBe('muzzarella|milanesas de nalga');
+    expect(f[COLUMNAS.indexOf('ingredientes')]).toBe('200 g de muzzarella|4 milanesas de nalga');
   });
 
   it('un tag con barra vertical no rompe la celda al releer', () => {
@@ -50,9 +50,9 @@ describe('filaDesde', () => {
   it('un ingrediente con barra vertical no rompe la celda al releer', () => {
     const receta = { ...RECETA, ingredientes: '- queso|crema\n- 200 g de sal' };
     const f = filaDesde(receta, UBICACION);
-    expect(f[COLUMNAS.indexOf('ingredientes')]).toBe('quesocrema|sal');
+    expect(f[COLUMNAS.indexOf('ingredientes')]).toBe('queso|200 g de sal');
     const e = entradaDesdeFila(f);
-    expect(e.ingredientes).toEqual(['quesocrema', 'sal']);  // dos ingredientes, no tres tras el split
+    expect(e.ingredientes).toEqual(['queso', '200 g de sal']);  // dos ingredientes, no tres tras el split
   });
 
   it('escribe cadena vacía y nunca null para lo que falta', () => {
@@ -108,7 +108,7 @@ describe('entradaDesdeFila', () => {
     const e = entradaDesdeFila(filaDesde(RECETA, UBICACION));
     expect(e.id_archivo).toBe('id1');
     expect(e.tags).toEqual(['italiana', 'horno']);
-    expect(e.ingredientes).toEqual(['muzzarella', 'milanesas de nalga']);
+    expect(e.ingredientes).toEqual(['200 g de muzzarella', '4 milanesas de nalga']);
     expect(e.mtime).toBe(1700000000000);
   });
 

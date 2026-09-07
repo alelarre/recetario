@@ -181,41 +181,43 @@ export function serialize(receta?: Partial<Receta> | null): string {
   return cabecera + cuerpo;
 }
 
-const UNIDADES = ['g', 'kg', 'mg', 'ml', 'l', 'cc', 'taza', 'tazas', 'cda', 'cdas',
-  'cdta', 'cdtas', 'cucharada', 'cucharadas', 'cucharadita', 'cucharaditas',
-  'pizca', 'diente', 'dientes', 'lata', 'latas', 'paquete', 'paquetes'];
+/**
+ * Nombre + separador + cantidad (C05.1.3). Manda el primer separador que
+ * aparece, salvo la coma, que solo separa si le sigue un dígito: sin esa
+ * regla `Sal, pimienta` daría el ingrediente "Sal" con cantidad "pimienta".
+ */
+const SEPARADORES = ['-', '—', ';', ',', '|'] as const;
 
-/** Best-effort a propósito (§3.2): lo que no matchea se muestra tal cual. */
 export function parseIngrediente(linea: unknown): Ingrediente | null {
-  // Solo strings: un número o un objeto suelto no es un ingrediente válido
   if (typeof linea !== 'string') return null;
   const crudo = linea;
   const limpia = crudo.replace(/^\s*[-*]\s+/, '').trim();
   if (!limpia || limpia.startsWith('#')) return null;
 
-  const m = limpia.match(/^(\d+(?:[.,]\d+)?(?:\/\d+)?)\s+(.*)$/);
-  if (!m || m[1] === undefined || m[2] === undefined) {
-    return { cantidad: null, unidad: null, item: limpia, crudo };
+  let corte = -1;
+  for (let i = 0; i < limpia.length; i++) {
+    const c = limpia[i];
+    if (!c || !(SEPARADORES as readonly string[]).includes(c)) continue;
+    // La coma pide un dígito después, salteando espacios.
+    if (c === ',' && !/^\s*\d/.test(limpia.slice(i + 1))) continue;
+    corte = i;
+    break;
   }
 
-  const cantidad = m[1];
-  let resto = m[2];
-  let unidad: string | null = null;
-  const primera = resto.split(/\s+/)[0] ?? '';
-  if (UNIDADES.includes(normalizar(primera))) {
-    unidad = primera;
-    resto = resto.slice(primera.length).trim();
-  }
-  return { cantidad, unidad, item: resto.replace(/^de\s+/i, '').trim(), crudo };
+  if (corte === -1) return { nombre: limpia, cantidad: null, crudo };
+  const nombre = limpia.slice(0, corte).trim();
+  const cantidad = limpia.slice(corte + 1).trim();
+  return { nombre, cantidad: cantidad || null, crudo };
 }
 
+/** Los nombres, tal como están escritos: sin normalizar (C05.4b.1). */
 export function ingredientesIndexables(receta?: Partial<Receta> | null): string[] {
   if (!receta) return [];
   const vistos = new Set<string>();
   for (const linea of String(receta.ingredientes ?? '').split('\n')) {
     const ing = parseIngrediente(linea);
-    if (!ing?.item) continue;
-    vistos.add(ing.item.toLowerCase());  // solo minúsculas, nada de sinónimos (§3.2)
+    if (!ing?.nombre) continue;
+    vistos.add(ing.nombre);
   }
   return [...vistos];
 }
