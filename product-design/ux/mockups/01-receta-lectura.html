@@ -1,0 +1,174 @@
+<!doctype html><html lang="es"><meta charset="utf-8">
+<title>Receta — lectura</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .rec-tit { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0 0 var(--e-2); }
+  .rec-ctx { font-size: var(--txt-chico); color: var(--fg-2); display: flex; align-items: center;
+             gap: var(--e-2); flex-wrap: wrap; margin-bottom: var(--e-1); }
+  .rec-fuente { font-size: var(--txt-chico); color: var(--fg-3); }
+  .rec-foto { width: 100%; aspect-ratio: 16/9; max-height: 200px; object-fit: cover;
+              border-radius: var(--r-foto); display: block; margin-bottom: var(--e-4); }
+  .var { padding: var(--e-3) 0; border-bottom: 1px solid var(--borde); }
+  .var:last-child { border-bottom: 0; }
+  .var h3 { font-size: var(--txt-base); font-weight: 600; margin: 0 0 var(--e-1); }
+  .var .f { font-size: var(--txt-chico); color: var(--fg-3); font-style: italic; }
+  .var p { margin: var(--e-1) 0 0; font-size: var(--txt-lectura); line-height: 1.6; }
+  .tramo { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
+           letter-spacing: .06em; margin: var(--e-4) 0 var(--e-1); }
+  .tramo:first-child { margin-top: 0; }
+  .pie { position: sticky; bottom: 0; background: var(--bg);
+         border-top: 1px solid var(--borde); padding: var(--e-4); }
+</style>
+<div class="pagina">
+<h1>1 — Receta, en lectura</h1>
+<p><i>[decidido en el Hito 11]</i> <b>El layout es una pila de fichas, y la foto va dentro de la primera
+cuando existe</b>. Las dos de abajo son ese mismo layout con dos contenidos distintos, no dos
+propuestas a elegir. Contenido real de Drive:
+<b>Anchoítas a la plancha…</b> (<code>Pescados y mariscos</code>, título de 86 caracteres, cuatro grupos de
+ingredientes, preparación en cuatro tramos) y <b>Rabas</b> (variaciones como lista, notas, sin foto).
+Los ingredientes se muestran con la convención nueva: nombre, separador, cantidad.</p>
+
+<div class="fila">
+
+<figure class="caso">
+<div class="tel">
+  <div class="enc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Anchoítas a la plancha…</span>
+    <button class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+  </div>
+  <div class="cuerpo">
+
+    <div class="ficha">
+      <h1 class="rec-tit">Anchoítas a la plancha con melón y vinagreta ligera de aceitunas verdes y pepinillos</h1>
+      <div class="rec-ctx"><span class="pin" style="background:var(--cat-pescados)"></span>
+        Pescados y mariscos · 4 porciones</div>
+      <div class="rec-fuente">Recetas de Pescados y Mariscos (INIDEP / EHYG / Sociedad de Patrones Pescadores), p. 23</div>
+      <div class="chips" style="margin-top:var(--e-3)"><span class="chip">plancha</span></div>
+    </div>
+
+    <div class="ficha">
+      <h2>Ingredientes</h2>
+      <div class="grupo">Para la anchoíta a la plancha</div>
+      <div class="ing"><span class="n">Anchoítas</span><span class="c">18-20 medianas</span></div>
+      <div class="ing"><span class="n">Aceite de oliva</span><span class="c">6 cucharadas</span></div>
+      <div class="ing"><span class="n">Ajo</span><span class="c">2 dientes</span></div>
+      <div class="ing"><span class="n">Ají picante</span><span class="c">2 trocitos</span></div>
+      <div class="ing"><span class="n">Agua fría y sal</span><span class="c">c/n</span></div>
+      <div class="grupo">Para el melón</div>
+      <div class="ing"><span class="n">Melón</span><span class="c">1/2 mediano</span></div>
+      <div class="ing"><span class="n">Oporto</span><span class="c">1/2 copa</span></div>
+      <div class="ing"><span class="n">Jugo de 1/2 limón</span></div>
+      <div class="grupo">Para la vinagreta</div>
+      <div class="ing"><span class="n">Aceite de oliva</span><span class="c">50 cc (2 cdas.)</span></div>
+      <div class="ing"><span class="n">Vinagre de manzana</span><span class="c">4 cucharadas</span></div>
+      <div class="ing"><span class="n">Aceitunas verdes</span><span class="c">50 g (1/2 taza)</span></div>
+      <div class="ing"><span class="n">Pepinillos en vinagre</span><span class="c">40 g (1/2 taza)</span></div>
+      <div class="ing"><span class="n">Cebolla de verdeo</span><span class="c">2 cucharadas</span></div>
+      <div class="ing"><span class="n">Hojas de hinojo fresco</span><span class="c">1 cucharada</span></div>
+      <div class="grupo">Para decorar</div>
+      <div class="ing"><span class="n">Ramitas de hinojo fresco</span></div>
+    </div>
+
+    <div class="ficha">
+      <h2>Preparación</h2>
+      <div class="tramo">Para la anchoa a la plancha</div>
+      <ol class="pasos">
+        <li>Descabezar, eviscerar y filetear las anchoítas. Lavarlas y secarlas con papel absorbente, salpimentar.</li>
+        <li>Calentar el aceite con los ajos cortados en láminas y el ají picante. Cuando los ajos estén dorados, retirar y dejar enfriar el aceite. Acondicionar los filets con este aceite y dejarlos unos minutos en reposo.</li>
+      </ol>
+      <div class="tramo">Para el melón</div>
+      <ol class="pasos">
+        <li>Quitar todas las pepitas y la piel del melón, recuperando sus jugos. Cortar en tacos rectangulares del tamaño de los lomos de las anchoítas.</li>
+        <li>Mezclar el jugo que haya soltado con el vino de oporto y el zumo de limón. Incorporar los tacos de melón y dejar en maceración al menos media hora.</li>
+        <li>Retirar y grillar en una plancha caliente hasta que estén dorados por ambos lados.</li>
+      </ol>
+      <div class="tramo">Final y presentación</div>
+      <ol class="pasos">
+        <li>Cocinar, vuelta y vuelta, los lomos de las anchoítas, ya alineados, en plancha o sartén antiadherente muy caliente.</li>
+        <li>Colocar, como base en un plato, los tacos de melón hechos a la plancha y sobre ellos los lomos de las anchoítas bien calientes.</li>
+        <li>Salsear con la vinagreta tibia y decorar con una ramita de hinojo en cada plato.</li>
+      </ol>
+    </div>
+
+  </div>
+  <div class="pie"><div class="acciones">
+    <button class="btn prim">Cocinar</button>
+    <button class="btn sec"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>Editar</button>
+  </div></div>
+</div>
+<figcaption><b>Sin foto: la receta empieza por el título.</b>
+El título de 86 caracteres ocupa tres renglones y no rompe nada. La preparación en cuatro tramos
+usa los <code>###</code> que el esquema no contemplaba y que el contenido real trae.
+La columna de cantidades queda alineada a la derecha aunque los valores sean texto libre
+(<i>«18-20 medianas»</i>, <i>«50 g (1/2 taza)»</i>).</figcaption>
+</figure>
+
+<figure class="caso">
+<div class="tel">
+  <div class="enc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Rabas</span>
+    <button class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+  </div>
+  <div class="cuerpo">
+    <div class="ficha">
+      <img class="rec-foto" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='180'><rect width='320' height='180' fill='%23473b2a'/><circle cx='90' cy='95' r='34' fill='none' stroke='%23c9a86e' stroke-width='9'/><circle cx='160' cy='80' r='26' fill='none' stroke='%23d8bb84' stroke-width='9'/><circle cx='225' cy='105' r='30' fill='none' stroke='%23c9a86e' stroke-width='9'/></svg>">
+      <h1 class="rec-tit">Rabas</h1>
+      <div class="rec-ctx"><span class="pin" style="background:var(--cat-pescados)"></span>
+        Pescados y mariscos · 4 porciones</div>
+      <div class="rec-fuente">Recetario original</div>
+      <div class="chips" style="margin-top:var(--e-3)"><span class="chip">fritura</span></div>
+    </div>
+
+    <div class="ficha">
+      <h2>Ingredientes</h2>
+      <div class="ing"><span class="n">500gr de anillos de calamar</span></div>
+      <div class="ing"><span class="n">Leche 250gr (aprox)</span></div>
+      <div class="ing"><span class="n">Provenzal</span><span class="c">1 cucharada (opcional)</span></div>
+      <div class="ing"><span class="n">2 huevos</span></div>
+      <div class="ing"><span class="n">Harina 0000</span><span class="c">200gr?</span></div>
+      <div class="ing"><span class="n">Sal, pimienta</span></div>
+      <div class="ing"><span class="n">Aceite</span><span class="c">para freír</span></div>
+    </div>
+
+    <div class="ficha">
+      <h2>Preparación</h2>
+      <ol class="pasos">
+        <li>Lavar los trozos de calamar y escurrir bien.</li>
+        <li>Remojar los calamares en leche tibia durante 30 minutos, para que quede menos dura. Escurrir bien.</li>
+        <li>Batir los huevos, agregar la provenzal, la sal y la pimienta.</li>
+        <li>Pasar los calamares por el huevo y luego rebozar por el harina.</li>
+        <li>Poner sobre un tamiz o colador y sacar el exceso de harina.</li>
+        <li>Pasar al aceite caliente (180º) de a tandas chicas para que no baje la temperatura.</li>
+        <li>Debería estar listo un momento luego de que floten, no más de 2 minutos.</li>
+        <li>Sacar y poner en un bowl con una servilleta absorbente.</li>
+      </ol>
+    </div>
+
+    <div class="ficha">
+      <h2>Variaciones</h2>
+      <div class="var"><p>Hacer una tempura en lugar de pasar por el huevo y luego por el harina —
+        <span class="f">directoalpaladar.com</span></p></div>
+      <div class="var"><p>Pasar por harina directamente, sin usar huevo.</p></div>
+    </div>
+
+    <div class="ficha">
+      <h2>Notas</h2>
+      <p class="lee" style="margin:0">Si se usa calamar entero en lugar de anillos ya limpios, en el original
+      falta indicar el peso total equivalente y agregar los pasos para limpiarlo.</p>
+    </div>
+  </div>
+  <div class="pie"><div class="acciones">
+    <button class="btn prim">Cocinar</button>
+    <button class="btn sec"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>Editar</button>
+  </div></div>
+</div>
+<figcaption><b>Con foto, y con las secciones que la otra no tiene.</b>
+Prueba dos cosas más: la foto de 16:9 dentro de la primera ficha, y los ingredientes
+del recetario original, donde <b>cuatro de siete no tienen separador</b> y ocupan el ancho entero.
+<i>«Sal, pimienta»</i> queda sin cantidad porque después de la coma no hay dígito.</figcaption>
+</figure>
+
+</div>
+</div>

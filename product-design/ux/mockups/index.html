@@ -1,0 +1,77 @@
+<!doctype html><html lang="es"><meta charset="utf-8">
+<title>Recetario — Mockups</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .cat { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+         gap: var(--e-3); max-width: 960px; }
+  .cat a { display: block; padding: var(--e-4); background: var(--surface);
+           border: 1px solid var(--borde); border-radius: var(--r-ficha);
+           text-decoration: none; color: var(--fg); }
+  .cat a:hover { background: var(--surface-alta); border-color: var(--borde-fuerte); }
+  .cat .n { font-weight: 600; }
+  .cat .d { font-size: var(--txt-chico); color: var(--fg-2); margin-top: var(--e-1); line-height: 1.5; }
+  .cat .m { font-size: var(--txt-micro); color: var(--fg-3); margin-top: var(--e-2); }
+  h2 { font-size: var(--txt-titulo-s); margin: var(--e-6) 0 var(--e-3); }
+</style>
+<div class="pagina">
+<h1>Recetario — Mockups Hi-Fi</h1>
+<p><b>Versión 2.0 — Hito 11.</b> Las variantes están resueltas: queda una sola versión de cada
+pantalla, que es la que se implementa.</p>
+<p>Hito 9. Cada pantalla usa <b>los tokens de <code>ux/design-system.md</code> literalmente</b>, en
+<code>tokens.css</code>: si un mockup necesita un valor que no está ahí, es un hueco del sistema y se
+arregla en el sistema, no en la pantalla. El contenido es <b>real, leído del Drive</b> — con sus
+imperfecciones, que es de donde salieron los hallazgos.</p>
+
+<h2>Prioritarias</h2>
+<div class="cat">
+  <a href="01-receta-lectura.html"><div class="n">1 — Receta, en lectura</div>
+    <div class="d">Anchoítas (título de 86 caracteres, cuatro grupos) y Rabas (con foto, variaciones como lista).</div>
+    <div class="m">390 px</div></a>
+  <a href="02-receta-cocina.html"><div class="n">2 — Receta, en cocina</div>
+    <div class="d">Las dos posiciones del conmutador, con la escala propia y el paso realzado.</div>
+    <div class="m">390 px</div></a>
+  <a href="03-recetario.html"><div class="n">3 — Recetario</div>
+    <div class="d">Las 16 categorías reales con la paleta nueva. Incluye el índice dañado.</div>
+    <div class="m">390 y 1280 px</div></a>
+  <a href="04-categoria.html"><div class="n">4 — Lista de categoría</div>
+    <div class="d">Pescados y mariscos, sus 20 recetas, ninguna con foto.</div>
+    <div class="m">390 px</div></a>
+  <a href="05-resultados.html"><div class="n">5 — Resultados</div>
+    <div class="d">Los grupos por criterio, con motivo. Incluye sin resultados.</div>
+    <div class="m">390 px</div></a>
+  <a href="06-editor.html"><div class="n">6 — Editor</div>
+    <div class="d">La pantalla con más controles. Incluye error al guardar.</div>
+    <div class="m">390 y 1280 px</div></a>
+  <a href="07-captura.html"><div class="n">7 — Captura</div>
+    <div class="d">Un campo y un botón. Incluye sin sesión.</div>
+    <div class="m">390 px</div></a>
+  <a href="08-borradores.html"><div class="n">8 — Borradores</div>
+    <div class="d">La cola de trabajo. Incluye vacío.</div>
+    <div class="m">390 y 1280 px</div></a>
+</div>
+
+<h2>El resto</h2>
+<div class="cat">
+  <a href="09-borrador.html"><div class="n">9 — Borrador</div>
+    <div class="d">Crear la receta, ir a la fuente, editar título. Incluye la confirmación de descarte.</div>
+    <div class="m">390 px</div></a>
+  <a href="10-ajustes.html"><div class="n">10 — Ajustes</div>
+    <div class="d">Cuenta, índice y avisos. Incluye reindexando con barra.</div>
+    <div class="m">390 px</div></a>
+  <a href="11-conexion.html"><div class="n">11 — Conexión</div>
+    <div class="d">Primer arranque, consentimiento cancelado, creando el índice.</div>
+    <div class="m">390 px</div></a>
+  <a href="12-planificador.html"><div class="n">12 — Planificador</div>
+    <div class="d">Semana parcial. Exploración: menos detalle a propósito.</div>
+    <div class="m">390 px</div></a>
+  <a href="13-lista-compras.html"><div class="n">13 — Lista de compras</div>
+    <div class="d">Los dos bloques, sin tildes. Exploración.</div>
+    <div class="m">390 px</div></a>
+</div>
+
+<h2>El sistema</h2>
+<div class="cat">
+  <a href="tokens.css"><div class="n">tokens.css</div>
+    <div class="d">Los 31 tokens y los 14 componentes, como CSS. Es la traducción literal del design system.</div></a>
+</div>
+</div>

@@ -3,13 +3,75 @@
 App personal de recetas. Los datos viven en Google Drive como archivos `.md` y
 sobreviven a la app. Un solo usuario.
 
-**Estado: v1 mergeada a `main` y publicada en GitHub Pages.** 328 tests,
-`npm run build` genera `dist/`. Falta la verificación manual contra el Drive
-real (ver más abajo) y agregar `https://alelarre.github.io` a los orígenes
-autorizados del cliente OAuth.
+**Estado: v1 mergeada a `main`, publicada en GitHub Pages y probada contra el
+Drive real.** 331 tests, `npm run build` genera `dist/`.
 
-- Fuente de verdad: `docs/superpowers/specs/2026-08-31-recetario-design.md`
+**Lo próximo es implementar el rediseño de `product-design/`** (ver la sección
+siguiente), no seguir con los pendientes de v1.
+
+- Especificación funcional y visual: **`product-design/`** ← lo vigente
+- Spec técnico de v1: `docs/superpowers/specs/2026-08-31-recetario-design.md`
 - Pasos manuales de instalación: `SETUP.md`
+
+---
+
+## El rediseño: `product-design/`
+
+`product-design/` es un proyecto de diseño de producto **terminado** (once hitos,
+2026-09-04 al 09-07) que escribió desde cero la capa que la app nunca tuvo:
+personas, jobs, principios, arquitectura de información, flujos, specs, sistema
+visual y mockups.
+
+**Es la especificación vigente del producto.** Cuando contradiga a lo
+implementado o a este archivo, gana `product-design/`: la contradicción es
+deliberada y está registrada.
+
+### Por dónde se empieza a implementar
+
+**`product-design/plan/delta-implementacion.md`.** Tiene las ocho decisiones que
+hay que entender antes de escribir la primera línea, y después el delta archivo
+por archivo contra este código: qué se mantiene, qué cambia, qué se elimina y qué
+es nuevo. **El rediseño se implementa de una sola vez, no por fases.**
+
+Después, según lo que necesites:
+
+| Para saber | Leé |
+|---|---|
+| Qué tiene que hacer cada cosa | `product-design/product/specs/` — 91 capacidades con criterios de aceptación y edge cases. Las **reglas transversales** están en `E05-Cimientos.md` §Reglas. |
+| Cómo se ve | `product-design/ux/design-system.md`, y `ux/mockups/index.html` para verlo funcionando |
+| Cómo habla la app | `product-design/ux/brand-identity.md` §3 y §4 |
+| Por qué algo es así | `product-design/plan/decision-log.md` — 89 decisiones con lo descartado |
+| Qué quedó afuera a propósito | `product-design/plan/BACKLOG.md` |
+
+### Lo que cambia de este código
+
+Resumido; el detalle está en el delta.
+
+| | |
+|---|---|
+| **Se mantiene** | El stack: TypeScript estricto + Vite, sin framework. `auth.ts`, `drive.ts`, `sheets.ts` y las fotos de `src/categorias/`. |
+| **Cambia** | `recipe.ts` (parser de ingredientes nuevo), `store.ts` (se elimina la cola de escrituras), `cache.ts` (se reduce o desaparece), `catalogo.ts` (columna de ingredientes), y `src/ui/` entero. |
+| **Se elimina** | `app.css` y el `tokens.css` actual, las tres familias tipográficas, el tag manual `incompleto`, la clase `texto-grande`, la cola y el cache local del índice. |
+| **Es nuevo** | La captura y los borradores —hoy no existe nada—, la búsqueda por ingrediente y por tag, el modo cocina y Ajustes. |
+
+**Todo el producto sigue viviendo en `src/`.** Nada del código apunta a
+`product-design/`: los documentos son especificación, no dependencia. Los tokens
+se **copian** de `product-design/ux/mockups/tokens.css` a `src/ui/tokens.css`.
+
+### Lo que el rediseño dio vuelta de la tabla de abajo
+
+La tabla "Decisiones cerradas — no reabrir" mezcla dos cosas. **Las
+restricciones de plataforma siguen valiendo enteras.** Las decisiones de producto
+y UX las reabrió `product-design/`, que era su mandato:
+
+| Acá dice | El rediseño decidió |
+|---|---|
+| Pestañas en el detalle, descartadas | El conmutador vuelve, **solo dentro del modo cocina** — donde notas y variaciones no se usan, que era el argumento del veto |
+| El home es la grilla de categorías | La búsqueda va arriba; las categorías, abajo, en dos columnas |
+| La paleta a mano con 14° de separación | Se rehace: 15 colores, 18° entre sí y 20° respecto del acento, `Otros` sin color |
+| El índice se escribe con debounce | Sincrónico y **sin cola** |
+| Un solo tema oscuro | Se mantiene, ahora con su costo escrito |
+| Las fotos de categoría en `src/categorias/` | Se mantiene, y el placeholder de receta las reutiliza |
 
 ## TypeScript
 
@@ -93,27 +155,23 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | `drive.file` como scope, y el Google Picker | Medido el 2026-09-01: es estrictamente por archivo. Con `Recetario/` elegida en el Picker, la app no veía ninguna de las 16 subcarpetas ni un solo `.md` ajeno — y los `.md` los escriben agentes por fuera. |
 | Detectar y reparar la planilla del índice corrupta o incompleta | Decidido el 2026-09-03. Siempre que el índice esté corrupto o incompleto, la recuperación es borrar el archivo `_indice` en Drive y dejar que la app lo cree de nuevo (arranca en el caso "falta-estructura" de `store.js`, que llama a `crearPlanilla()` y reconstruye solo). Diagnosticar cada tipo de daño posible para repararlo in situ es más trabajo y más riesgo que recrear desde los `.md`, que son la fuente de verdad. |
 
-## Pendientes, en orden
+## Pendientes de v1
 
-1. **Verificar a mano contra el Drive real.** Es lo único que separa a v1 de
-   estar terminada, y no lo cubre ningún test: la app nunca corrió contra Google.
-   Los cuatro puntos que dejó la revisión final:
-   - Cerrar la ventana de consentimiento de Google a mitad del primer login: la
-     app tiene que mostrar un mensaje con botón, no quedarse en "Conectando…".
-   - Cortar la red durante un "Guardar" o un "Borrar": tiene que avisar, no
-     quedarse muda.
-   - Guardar varias recetas seguidas y cambiar de app cerca de los 30 segundos
-     del debounce; después mirar `_indice` y confirmar que ninguna receta quedó
-     con dos filas.
-   - Publicar dos veces sin tocar `sw.js` y confirmar que la app instalada ve la
-     versión nueva.
-2. **Migrar el contenido existente:** ya se migraron ~60 recetas del recetario
-   original y del PDF de pescados a `Recetario/`, con el skill de
-   `skills/recetario/`. Falta el resto: los documentos temáticos (fondues,
-   pan, macarons, fermentación) y el Doc de ~7,3 MB.
-3. El planificador semanal y la lista de compras: fuera de v1 y sin diseñar.
-   Es lo próximo después del núcleo; necesita sus vistas y la barra de
-   navegación inferior.
+**Ojo con esta sección: es anterior al rediseño.** El planificador ya está
+diseñado y queda fuera de la primera implementación
+(`product-design/plan/BACKLOG.md`). Lo que queda es una sola cosa.
+
+**Migrar el contenido existente:** ya se migraron ~60 recetas del recetario
+original y del PDF de pescados a `Recetario/`, con el skill de
+`skills/recetario/`. Falta el resto: los documentos temáticos (fondues, pan,
+macarons, fermentación) y el Doc de ~7,3 MB.
+
+Lo que ya no está pendiente:
+
+- **La app corrió contra el Drive real y funciona.** La verificación manual se
+  hizo y salió bien: era lo único que separaba a v1 de estar terminada.
+- **El origen `https://alelarre.github.io` ya está autorizado** en el cliente
+  OAuth de Google Cloud Console.
 
 ## Lo que quedó sabido y no arreglado
 
@@ -156,6 +214,9 @@ un agente por fuera de la app para que la prueba 1 del spike tenga un `.md` que
 la app no creó. Sirve también como ejemplo canónico del esquema del §3.2.
 
 ## Mockups de las sesiones de diseño
+
+**Estos son de 2026-09-04 y quedaron viejos:** los mockups vigentes son los trece
+de `product-design/ux/mockups/`, con el design system aplicado.
 
 Quedaron en `.superpowers/brainstorm/*/content/` (fuera de git). De la sesión de
 layout: `home`, `cocina`, `secciones`, `fotos`, `bandeja`, `editor`, `editor-v2`,

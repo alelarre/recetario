@@ -1,0 +1,143 @@
+<!doctype html><html lang="es"><meta charset="utf-8">
+<title>Recetario</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .buscar { display: flex; align-items: center; gap: var(--e-2); min-height: 48px;
+            padding: 0 var(--e-3); background: var(--surface-alta);
+            border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio); }
+  .buscar svg { width: var(--ico); height: var(--ico); stroke: var(--fg-3); fill: none; stroke-width: 1.5; }
+  .buscar input { flex: 1; background: none; border: 0; color: var(--fg);
+                  font: 400 var(--txt-base) var(--tipo); }
+  .buscar input:focus { outline: none; }
+  .rot { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
+         letter-spacing: .06em; margin-bottom: var(--e-3); }
+  .grilla { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--e-3); }
+  .desk .grilla { grid-template-columns: repeat(4, 1fr); }
+  .tile { position: relative; aspect-ratio: 4/3; border-radius: var(--r-ficha); overflow: hidden;
+          border: 1px solid var(--c); background: var(--surface); display: block;
+          text-decoration: none; color: var(--fg); }
+  .tile .im { position: absolute; inset: 0; background: var(--c); opacity: 1;
+              background-size: cover; background-position: center; }
+  .tile .im::after { content: ''; position: absolute; inset: 0; background: var(--c);
+                     opacity: .28; mix-blend-mode: overlay; }
+  .tile .im.trama { background:
+      repeating-linear-gradient(135deg, var(--c) 0 6px, transparent 6px 14px); opacity: .22; }
+  .tile .nm { position: absolute; inset: auto 0 0 0; padding: var(--e-6) var(--e-2) var(--e-2);
+              font-size: var(--txt-chico); font-weight: 600; color: var(--fg);
+              background: linear-gradient(to top,
+                          color-mix(in srgb, var(--velo) 96%, transparent) 0%,
+                          color-mix(in srgb, var(--velo) 88%, transparent) 40%,
+                          transparent 100%); }
+  .col { max-width: 680px; margin: 0 auto; }
+</style>
+<div class="pagina">
+<h1>3 — Recetario</h1>
+<p>El punto de entrada. Las dieciséis categorías son las reales de
+Drive, con la paleta de <code>design-system.md</code> §2.3 y la grilla de dos columnas. El bloque de
+color hace de foto: los <code>.webp</code> viven en <code>src/categorias/</code>.</p>
+
+<div class="fila">
+
+<figure class="caso">
+<div class="tel">
+  <div class="enc">
+    <span class="tit izq" style="font-size:var(--txt-titulo)">Recetario</span>
+    <button class="ico cuenta"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span class="n">3</span></button>
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg></button>
+  </div>
+  <div class="cuerpo">
+    <div class="buscar">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input placeholder="Buscar receta o ingrediente">
+    </div>
+    <div>
+      <div class="rot">Categorías</div>
+      <div class="grilla">
+        <a class="tile" style="--c:var(--cat-arroces)"><span class="im" style="background-image:url(categorias/arroces-y-legumbres.webp)"></span><span class="nm">Arroces y legumbres</span></a>
+        <a class="tile" style="--c:var(--cat-aves)"><span class="im" style="background-image:url(categorias/aves.webp)"></span><span class="nm">Aves</span></a>
+        <a class="tile" style="--c:var(--cat-bebidas)"><span class="im" style="background-image:url(categorias/bebidas.webp)"></span><span class="nm">Bebidas</span></a>
+        <a class="tile" style="--c:var(--cat-carnes)"><span class="im" style="background-image:url(categorias/carnes.webp)"></span><span class="nm">Carnes</span></a>
+        <a class="tile" style="--c:var(--cat-desayunos)"><span class="im" style="background-image:url(categorias/desayunos-y-meriendas.webp)"></span><span class="nm">Desayunos y meriendas</span></a>
+        <a class="tile" style="--c:var(--cat-ensaladas)"><span class="im" style="background-image:url(categorias/ensaladas.webp)"></span><span class="nm">Ensaladas</span></a>
+        <a class="tile" style="--c:var(--cat-entradas)"><span class="im" style="background-image:url(categorias/entradas-y-picadas.webp)"></span><span class="nm">Entradas y picadas</span></a>
+        <a class="tile" style="--c:var(--cat-otros)"><span class="im trama"></span><span class="nm">Otros</span></a>
+        <a class="tile" style="--c:var(--cat-panes)"><span class="im" style="background-image:url(categorias/panes-y-masas.webp)"></span><span class="nm">Panes y masas</span></a>
+        <a class="tile" style="--c:var(--cat-pastas)"><span class="im" style="background-image:url(categorias/pastas.webp)"></span><span class="nm">Pastas</span></a>
+        <a class="tile" style="--c:var(--cat-pescados)"><span class="im" style="background-image:url(categorias/pescados-y-mariscos.webp)"></span><span class="nm">Pescados y mariscos</span></a>
+        <a class="tile" style="--c:var(--cat-postres)"><span class="im" style="background-image:url(categorias/postres.webp)"></span><span class="nm">Postres</span></a>
+        <a class="tile" style="--c:var(--cat-salsas)"><span class="im" style="background-image:url(categorias/salsas-y-aderezos.webp)"></span><span class="nm">Salsas y aderezos</span></a>
+        <a class="tile" style="--c:var(--cat-sopas)"><span class="im" style="background-image:url(categorias/sopas-y-caldos.webp)"></span><span class="nm">Sopas y caldos</span></a>
+        <a class="tile" style="--c:var(--cat-tartas)"><span class="im" style="background-image:url(categorias/tartas-y-empanadas.webp)"></span><span class="nm">Tartas y empanadas</span></a>
+        <a class="tile" style="--c:var(--cat-verduras)"><span class="im" style="background-image:url(categorias/verduras-y-guarniciones.webp)"></span><span class="nm">Verduras y guarniciones</span></a>
+      </div>
+    </div>
+    <button class="btn sec" style="width:100%">Planificar la semana</button>
+  </div>
+</div>
+<figcaption><b>Búsqueda, categorías, planificador.</b> <i>[elegida en el Hito 11]</i> La jerarquía de los
+wireframes, contra una variante que subía los borradores a un bloque propio. Las dieciséis categorías
+ocupan ocho filas: hay que scrollear para llegar al planificador, y está aceptado — el planificador
+es exploración y la búsqueda, que es el job frecuente, está arriba de todo.</figcaption>
+</figure>
+
+</div>
+
+<h1 style="margin-top:var(--e-7)">3b — Recetario en 1280 px</h1>
+<p>Uno de los tres contextos de escritorio: elegir qué cocinar, sentado. Misma app, más ancha —
+columna de 680 px centrada y la grilla pasa a cuatro columnas.</p>
+<div class="desk">
+  <div class="enc">
+    <span class="tit izq" style="font-size:var(--txt-titulo)">Recetario</span>
+    <button class="ico cuenta"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span class="n">3</span></button>
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg></button>
+  </div>
+  <div class="cuerpo col">
+    <div class="buscar">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input placeholder="Buscar receta o ingrediente">
+    </div>
+    <div>
+      <div class="rot">Categorías</div>
+      <div class="grilla" style="grid-template-columns:repeat(4,1fr)">
+        <a class="tile" style="--c:var(--cat-arroces)"><span class="im" style="background-image:url(categorias/arroces-y-legumbres.webp)"></span><span class="nm">Arroces y legumbres</span></a>
+        <a class="tile" style="--c:var(--cat-aves)"><span class="im" style="background-image:url(categorias/aves.webp)"></span><span class="nm">Aves</span></a>
+        <a class="tile" style="--c:var(--cat-bebidas)"><span class="im" style="background-image:url(categorias/bebidas.webp)"></span><span class="nm">Bebidas</span></a>
+        <a class="tile" style="--c:var(--cat-carnes)"><span class="im" style="background-image:url(categorias/carnes.webp)"></span><span class="nm">Carnes</span></a>
+        <a class="tile" style="--c:var(--cat-desayunos)"><span class="im" style="background-image:url(categorias/desayunos-y-meriendas.webp)"></span><span class="nm">Desayunos y meriendas</span></a>
+        <a class="tile" style="--c:var(--cat-ensaladas)"><span class="im" style="background-image:url(categorias/ensaladas.webp)"></span><span class="nm">Ensaladas</span></a>
+        <a class="tile" style="--c:var(--cat-entradas)"><span class="im" style="background-image:url(categorias/entradas-y-picadas.webp)"></span><span class="nm">Entradas y picadas</span></a>
+        <a class="tile" style="--c:var(--cat-otros)"><span class="im trama"></span><span class="nm">Otros</span></a>
+        <a class="tile" style="--c:var(--cat-panes)"><span class="im" style="background-image:url(categorias/panes-y-masas.webp)"></span><span class="nm">Panes y masas</span></a>
+        <a class="tile" style="--c:var(--cat-pastas)"><span class="im" style="background-image:url(categorias/pastas.webp)"></span><span class="nm">Pastas</span></a>
+        <a class="tile" style="--c:var(--cat-pescados)"><span class="im" style="background-image:url(categorias/pescados-y-mariscos.webp)"></span><span class="nm">Pescados y mariscos</span></a>
+        <a class="tile" style="--c:var(--cat-postres)"><span class="im" style="background-image:url(categorias/postres.webp)"></span><span class="nm">Postres</span></a>
+        <a class="tile" style="--c:var(--cat-salsas)"><span class="im" style="background-image:url(categorias/salsas-y-aderezos.webp)"></span><span class="nm">Salsas y aderezos</span></a>
+        <a class="tile" style="--c:var(--cat-sopas)"><span class="im" style="background-image:url(categorias/sopas-y-caldos.webp)"></span><span class="nm">Sopas y caldos</span></a>
+        <a class="tile" style="--c:var(--cat-tartas)"><span class="im" style="background-image:url(categorias/tartas-y-empanadas.webp)"></span><span class="nm">Tartas y empanadas</span></a>
+        <a class="tile" style="--c:var(--cat-verduras)"><span class="im" style="background-image:url(categorias/verduras-y-guarniciones.webp)"></span><span class="nm">Verduras y guarniciones</span></a>
+      </div>
+    </div>
+    <button class="btn sec" style="width:100%">Planificar la semana</button>
+  </div>
+</div>
+
+<h1 style="margin-top:var(--e-7)">3c — Estados</h1>
+<div class="fila">
+<figure class="caso">
+<div class="tel" style="height:420px">
+  <div class="enc"><span class="tit izq" style="font-size:var(--txt-titulo)">Recetario</span>
+    <button class="ico cuenta"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button></div>
+  <div class="cuerpo">
+    <div class="ficha" style="text-align:center">
+      <h2 style="border:0;padding:0;margin-bottom:var(--e-3)">El índice está dañado.</h2>
+      <p class="lee" style="color:var(--fg-2)">Tus recetas están bien: lo dañado es el atajo que la
+      app usa para listarlas.</p>
+      <button class="btn prim" style="width:100%;margin-top:var(--e-3)">Reindexar</button>
+    </div>
+  </div>
+</div>
+<figcaption><b>Índice dañado.</b> Reemplaza el contenido entero: no se ofrece ni buscar ni entrar a
+categorías, porque no hay con qué. Se ofrece, no se hace solo.</figcaption>
+</figure>
+</div>
+</div>

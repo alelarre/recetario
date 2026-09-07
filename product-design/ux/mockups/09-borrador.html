@@ -1,0 +1,57 @@
+<!doctype html><html lang="es"><meta charset="utf-8">
+<title>Borrador</title>
+<link rel="stylesheet" href="tokens.css">
+<div class="pagina">
+<h1>9 — Borrador</h1>
+<p>Lo que la app hace acá es poco y a propósito. <b>Crear la receta</b> es la única vía por la que la
+app invoca la conversión (C01.6.3): abre el editor con el título y la fuente cargados y, al guardar,
+borra la fila del borrador en la misma operación.</p>
+
+<div class="fila">
+<figure class="caso">
+<div class="tel" style="height:480px">
+  <div class="enc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Borrador</span>
+    <button class="btn pel compacto">Descartar</button>
+  </div>
+  <div class="cuerpo">
+    <div class="ficha">
+      <div style="font-size:var(--txt-titulo);font-weight:600;line-height:1.25">Pasta con berenjenas</div>
+      <div style="font-size:var(--txt-chico);color:var(--fg-2);margin-top:var(--e-2);word-break:break-all">instagram.com/reel/C8xK2mPtQ4v/</div>
+      <div style="font-size:var(--txt-micro);color:var(--fg-3);margin-top:var(--e-1)">Capturado hace 9 días</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:var(--e-2)">
+      <button class="btn prim">Crear la receta</button>
+      <button class="btn sec">Ir a la fuente</button>
+      <button class="btn sec">Editar título</button>
+    </div>
+  </div>
+</div>
+<figcaption><b>Las tres acciones.</b> Ninguna llama a un agente: la conversión desde el video ocurre
+afuera. La fuente no se edita — si vino mal, se descarta y se captura de nuevo.</figcaption>
+</figure>
+
+<figure class="caso">
+<div class="tel" style="height:480px">
+  <div class="enc">
+    <button class="ico"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="tit">Borrador</span>
+    <button class="btn pel compacto">Descartar</button>
+  </div>
+  <div class="cuerpo">
+    <div class="ficha" style="border-color:var(--error)">
+      <p class="lee" style="margin:0 0 var(--e-4)">¿Descartar <b>Pasta con berenjenas</b>?</p>
+      <div class="acciones">
+        <button class="btn sec">Cancelar</button>
+        <button class="btn pel">Descartar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<figcaption><b>Confirmación de descarte.</b> Nombra el borrador: es destructivo y no hay papelera.
+El botón de peligro es el único lugar donde <code>--error</code> aparece fuera de una operación
+fallida — y es porque la operación <i>es</i> destructiva.</figcaption>
+</figure>
+</div>
+</div>
