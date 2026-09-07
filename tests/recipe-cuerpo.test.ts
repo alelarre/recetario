@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parse } from '../src/recipe.js';
+import { parse, gruposDe, tramosDe, variacionesDe } from '../src/recipe.js';
 
 const RECETA = `---
 titulo: Milanesas napolitanas
@@ -75,5 +75,59 @@ describe('parse — cuerpo', () => {
     const r = parse(`---\ntitulo: X\n---\n\n## Notas\nUnica nota.\n`);
     expect(r.notas).toBe('Unica nota.');
     expect(r.avisos).not.toContain('seccion-duplicada');
+  });
+});
+
+describe('gruposDe', () => {
+  it('parte los ingredientes por los ### del archivo', () => {
+    expect(gruposDe('### Para la milanesa\n- Nalga — 4\n### Para el melón\n- Melón — 1/2'))
+      .toEqual([
+        { nombre: 'Para la milanesa', items: [{ nombre: 'Nalga', cantidad: '4', crudo: '- Nalga — 4' }] },
+        { nombre: 'Para el melón', items: [{ nombre: 'Melón', cantidad: '1/2', crudo: '- Melón — 1/2' }] }
+      ]);
+  });
+
+  it('sin ### hay un solo grupo sin nombre', () => {
+    const [grupo] = gruposDe('- Sal\n- Pimienta');
+    expect(grupo?.nombre).toBe('');
+    expect(grupo?.items).toHaveLength(2);
+  });
+});
+
+describe('tramosDe', () => {
+  it('parte la preparación por los ###, y la numeración vuelve a empezar', () => {
+    const tramos = tramosDe('### Para la anchoa\n1. Descabezar.\n2. Lavar.\n### Final\n1. Servir.');
+    expect(tramos).toEqual([
+      { nombre: 'Para la anchoa', pasos: ['Descabezar.', 'Lavar.'] },
+      { nombre: 'Final', pasos: ['Servir.'] }
+    ]);
+  });
+
+  it('acepta pasos con bullets además de numerados', () => {
+    expect(tramosDe('- Batir.\n- Hornear.')).toEqual([{ nombre: '', pasos: ['Batir.', 'Hornear.'] }]);
+  });
+
+  it('sin ### hay un solo tramo sin nombre', () => {
+    expect(tramosDe('1. Precalentar.')).toEqual([{ nombre: '', pasos: ['Precalentar.'] }]);
+  });
+});
+
+describe('variacionesDe', () => {
+  it('una lista de bullets se devuelve como lista', () => {
+    expect(variacionesDe('- Pasar por harina directamente, sin usar huevo.\n- Con panko.'))
+      .toEqual({ lista: ['Pasar por harina directamente, sin usar huevo.', 'Con panko.'], secciones: [] });
+  });
+
+  it('los ### son variaciones con nombre, y la itálica del principio es su fuente', () => {
+    expect(variacionesDe('### A la suiza\n*fuente: Libro de cocina*\n\nCambiar la salsa.'))
+      .toEqual({
+        lista: [],
+        secciones: [{ nombre: 'A la suiza', fuente: 'Libro de cocina', cuerpo: 'Cambiar la salsa.' }]
+      });
+  });
+
+  it('una sección sin fuente deja la fuente en null', () => {
+    const { secciones } = variacionesDe('### Con panko\nUsar panko en vez de pan rallado.');
+    expect(secciones[0]).toEqual({ nombre: 'Con panko', fuente: null, cuerpo: 'Usar panko en vez de pan rallado.' });
   });
 });

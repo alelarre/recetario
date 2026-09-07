@@ -73,6 +73,25 @@ export interface Ingrediente {
   crudo: string;
 }
 
+/** Un `###` dentro de `## Ingredientes` (C05.1.2). Sin `###`, un grupo sin nombre. */
+export interface GrupoIngredientes {
+  nombre: string;
+  items: Ingrediente[];
+}
+
+/** Un `###` dentro de `## Preparación`. La numeración vuelve a empezar en cada uno. */
+export interface TramoPreparacion {
+  nombre: string;
+  pasos: string[];
+}
+
+/** Un `###` dentro de `## Variaciones`, con su fuente propia si la trae (IA §1.8). */
+export interface Variacion {
+  nombre: string;
+  fuente: string | null;
+  cuerpo: string;
+}
+
 /** Dónde vive un `.md` en Drive. La carpeta es la categoría (§3.1). */
 export interface Ubicacion {
   id: string;

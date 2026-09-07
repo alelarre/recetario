@@ -1,4 +1,7 @@
-import type { Receta, Ingrediente, Aviso, ClaveSeccion, OtraSeccion } from './tipos.js';
+import type {
+  Receta, Ingrediente, Aviso, ClaveSeccion, OtraSeccion,
+  GrupoIngredientes, TramoPreparacion, Variacion
+} from './tipos.js';
 
 /** Las claves del frontmatter que se escriben tal cual, sin `tags`, que es lista. */
 const CLAVES = ['titulo', 'rinde', 'tiempo', 'dificultad', 'fuente', 'foto'] as const;
@@ -214,6 +217,65 @@ export function parseIngrediente(linea: unknown): Ingrediente | null {
   const nombre = limpia.slice(0, corte).trim();
   const cantidad = limpia.slice(corte + 1).trim();
   return { nombre, cantidad: cantidad || null, crudo };
+}
+
+/** Parte un texto de sección por sus `###`. El texto antes del primero es el tramo sin nombre. */
+function porSubsecciones(texto: string): { nombre: string; cuerpo: string }[] {
+  const partes: { nombre: string; cuerpo: string }[] = [];
+  let nombre = '';
+  let buffer: string[] = [];
+  const volcar = () => {
+    const cuerpo = buffer.join('\n').trim();
+    if (cuerpo || nombre) partes.push({ nombre, cuerpo });
+    buffer = [];
+  };
+  for (const linea of String(texto ?? '').split('\n')) {
+    const m = linea.match(/^###\s+(.+?)\s*$/);
+    if (m?.[1]) { volcar(); nombre = m[1].trim(); continue; }
+    buffer.push(linea);
+  }
+  volcar();
+  return partes;
+}
+
+export function gruposDe(ingredientes: string): GrupoIngredientes[] {
+  return porSubsecciones(ingredientes).map(({ nombre, cuerpo }) => ({
+    nombre,
+    items: cuerpo.split('\n').map(parseIngrediente).filter((i): i is Ingrediente => i !== null)
+  }));
+}
+
+/** Un paso es una línea que empieza con `1.` o con un bullet. El número no se conserva: se recuenta al dibujar. */
+export function tramosDe(preparacion: string): TramoPreparacion[] {
+  return porSubsecciones(preparacion).map(({ nombre, cuerpo }) => ({
+    nombre,
+    pasos: cuerpo.split('\n')
+      .map(l => l.replace(/^\s*(?:\d+[.)]|[-*])\s+/, '').trim())
+      .filter(Boolean)
+  }));
+}
+
+export function variacionesDe(variaciones: string): { lista: string[]; secciones: Variacion[] } {
+  const partes = porSubsecciones(variaciones);
+  const conNombre = partes.filter(p => p.nombre);
+  if (conNombre.length === 0) {
+    const lista = String(variaciones ?? '').split('\n')
+      .map(l => l.replace(/^\s*[-*]\s+/, '').trim())
+      .filter(Boolean);
+    return { lista, secciones: [] };
+  }
+  return {
+    lista: [],
+    secciones: conNombre.map(({ nombre, cuerpo }) => {
+      // Una línea en itálica al empezar es la fuente de la variación (IA §1.8).
+      const m = cuerpo.match(/^\*(?:fuente:\s*)?(.+?)\*\s*(?:\n|$)/i);
+      return {
+        nombre,
+        fuente: m?.[1]?.trim() ?? null,
+        cuerpo: (m ? cuerpo.slice(m[0].length) : cuerpo).trim()
+      };
+    })
+  };
 }
 
 /** Los nombres, tal como están escritos: sin normalizar (C05.4b.1). */
