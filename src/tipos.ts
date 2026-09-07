@@ -16,8 +16,9 @@
  *   resuelve en el borde.
  */
 
-/** Las seis claves del frontmatter (§3.2). El esquema es cerrado. */
-export type ClaveFrontmatter = 'titulo' | 'tags' | 'rinde' | 'tiempo' | 'dificultad' | 'fuente';
+/** Las ocho claves del frontmatter (IA §1.5). El esquema es cerrado. */
+export type ClaveFrontmatter =
+  'titulo' | 'tags' | 'rinde' | 'tiempo' | 'dificultad' | 'fuente' | 'foto' | 'completa';
 
 /** Las cuatro secciones que la app entiende; el resto cae en `otras`. */
 export type ClaveSeccion = 'ingredientes' | 'preparacion' | 'variaciones' | 'notas';
@@ -46,7 +47,10 @@ export interface Receta {
   tiempo: string | null;
   dificultad: string | null;
   fuente: string | null;
-  /** Claves del frontmatter que no son las seis. Se preservan al guardar. */
+  foto: string | null;
+  /** Solo se escribe para forzar `true`; la app nunca escribe `false` (C05.3.2). */
+  completa: boolean;
+  /** Claves del frontmatter que no son las ocho. Se preservan al guardar. */
   extras: Record<string, string>;
   descripcion: string;
   ingredientes: string;

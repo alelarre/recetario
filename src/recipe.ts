@@ -1,7 +1,7 @@
 import type { Receta, Ingrediente, Aviso, ClaveSeccion, OtraSeccion } from './tipos.js';
 
 /** Las claves del frontmatter que se escriben tal cual, sin `tags`, que es lista. */
-const CLAVES = ['titulo', 'rinde', 'tiempo', 'dificultad', 'fuente'] as const;
+const CLAVES = ['titulo', 'rinde', 'tiempo', 'dificultad', 'fuente', 'foto'] as const;
 type ClaveSimple = (typeof CLAVES)[number];
 
 const esClaveSimple = (c: string): c is ClaveSimple =>
@@ -19,6 +19,7 @@ export function normalizar(texto: unknown): string {
 function recetaVacia(): Receta {
   return {
     titulo: null, tags: [], rinde: null, tiempo: null, dificultad: null, fuente: null,
+    foto: null, completa: false,
     extras: {},
     descripcion: '', ingredientes: '', preparacion: '', variaciones: '', notas: '',
     otras: [], avisos: []
@@ -64,6 +65,8 @@ function parsearFrontmatter(bloque: string, receta: Receta): void {
     ultimaClave = clave;
     if (clave === 'tags') {
       receta.tags = parsearLista(valor.trim(), lineas.slice(i + 1));
+    } else if (clave === 'completa') {
+      receta.completa = valor.trim().toLowerCase() === 'true';
     } else if (esClaveSimple(clave)) {
       receta[clave] = valor.trim() === '' ? null : valor.trim();
     } else {
@@ -162,6 +165,9 @@ export function serialize(receta?: Partial<Receta> | null): string {
   for (const clave of ['rinde', 'tiempo', 'dificultad', 'fuente'] as const) {
     if (r[clave]) fm.push(`${clave}: ${r[clave]}`);
   }
+  if (r.foto) fm.push(`foto: ${r.foto}`);
+  // Nunca `completa: false`: la clave ausente ya significa eso (C05.3.2).
+  if (r.completa === true) fm.push('completa: true');
   for (const [clave, valor] of Object.entries(typeof r.extras === 'object' && r.extras !== null ? r.extras : {})) {
     fm.push(`${clave}: ${valor}`);
   }
