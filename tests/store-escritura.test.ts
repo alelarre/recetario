@@ -66,8 +66,17 @@ describe('guardar: escritura sincrónica, sin cola', () => {
     const store = crearStore({ drive, sheets });
     await store.arrancar();
     await store.cargarIndice();
+    const mtimeViejo = store.entradas().find(e => e.id_archivo === 'f1')?.mtime;
+    const escriturasAntes = sheets.escrituras.length;  // el fixture ya escribió encabezado, meta y la fila vieja
 
     await expect(store.guardar('f1', recetaFalsa())).resolves.toBeUndefined();
+
+    // No alcanza con que la promesa resuelva: una guarda de conflicto que
+    // corta temprano también resuelve `undefined`, solo que sin escribir
+    // nada. Atar la aserción a un efecto observable es lo que hace que este
+    // test falle si alguien repone el chequeo de conflicto.
+    expect(sheets.escrituras.length).toBe(escriturasAntes + 1);
+    expect(store.entradas().find(e => e.id_archivo === 'f1')?.mtime).not.toBe(mtimeViejo);
   });
 
   it('si falla la escritura de la fila, el error sale y no queda nada encolado', async () => {
