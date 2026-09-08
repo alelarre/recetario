@@ -1,5 +1,5 @@
 import { NOMBRE_RAIZ, NOMBRE_INDICE, SCHEMA_VERSION } from './config.js';
-import { COLUMNAS, entradaDesdeFila, diffCambios, filaDesde } from './catalogo.js';
+import { COLUMNAS, entradaDesdeFila, filaDesde } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 import type { Drive } from './drive.js';
@@ -63,8 +63,7 @@ export interface Progreso {
  */
 export type DriveDelStore = Pick<Drive,
   'buscarPorNombre' | 'listarCarpetas' | 'listarHijos' | 'leerTexto' |
-  'crear' | 'actualizar' | 'renombrar' | 'mover' | 'borrar' |
-  'tokenInicialDeCambios' | 'cambios'>;
+  'crear' | 'actualizar' | 'renombrar' | 'mover' | 'borrar'>;
 
 export type SheetsDelStore = Pick<Sheets,
   'leer' | 'escribir' | 'append' | 'agregarHoja' | 'borrarFila' | 'borrarFilas' |
@@ -107,9 +106,8 @@ export function crearStore({ drive, sheets }: Dependencias) {
 
       await sheets.escribir(archivo.id, `${HOJA_RECETAS}!A1:${ULTIMA_COLUMNA}1`, [[...COLUMNAS]]);
       await sheets.agregarHoja(archivo.id, HOJA_META);
-      await sheets.escribir(archivo.id, `${HOJA_META}!A1:B3`, [
+      await sheets.escribir(archivo.id, `${HOJA_META}!A1:B2`, [
         ['schemaVersion', String(SCHEMA_VERSION)],
-        ['changesPageToken', ''],
         ['ultima_reconstruccion', '']
       ]);
       return archivo.id;
@@ -232,65 +230,6 @@ export function crearStore({ drive, sheets }: Dependencias) {
     }
   }
 
-  async function sync() {
-    const meta = await leerMeta();
-    let pageToken = meta['changesPageToken'] ?? '';
-    if (!pageToken) {
-      // Drive puede no devolverlo. Guardar `undefined` acá dejaba la cadena
-      // "undefined" en la hoja meta, que en el próximo arranque parece un
-      // token válido y hace fallar el primer sync.
-      pageToken = (await drive.tokenInicialDeCambios()) ?? '';
-      if (!pageToken) throw new Error('Drive no devolvió el token inicial de cambios');
-      await guardarMeta('changesPageToken', pageToken);
-    }
-
-    const { changes = [], newStartPageToken } = await drive.cambios(pageToken);
-    const indice = new Map(entradas.map(e => [e.id_archivo, e]));
-    const plan = diffCambios(changes, { indice, carpetas: ctx.carpetas });
-
-    let ignoradosSinTitulo = 0;
-
-    for (const ubicacion of plan.releer) {
-      const texto = await drive.leerTexto(ubicacion.id);
-      const receta = parse(texto);
-      if (!receta.titulo) { ignoradosSinTitulo++; continue; }
-      // `sync()` no se toca en esta tarea (se borra entera en la próxima):
-      // esto era `cache.guardarCuerpo`, y se saca solo porque el cache ya no
-      // existe como dependencia, no como parte del rediseño de este método.
-      await escribirFila(receta, ubicacion);
-      const entrada = entradaDesdeFila(filaDesde(receta, ubicacion));
-      entradas = [...entradas.filter(e => e.id_archivo !== ubicacion.id), entrada];
-    }
-
-    for (const ubicacion of plan.parchear) {
-      const entrada = indice.get(ubicacion.id);
-      // Sin entrada previa no hay nada que parchear: `parchear` significa
-      // "cambió el nombre o la carpeta de algo que ya estaba indexado".
-      if (!entrada) continue;
-      const actualizada: Entrada = {
-        ...entrada,
-        nombre_archivo: ubicacion.nombre_archivo,
-        categoria: ubicacion.categoria,
-        carpeta_id: ubicacion.carpeta_id
-      };
-      entradas = entradas.map(e => e.id_archivo === ubicacion.id ? actualizada : e);
-      const nro = filas.get(ubicacion.id);
-      if (nro) {
-        const fila = COLUMNAS.map(c => {
-          const v = actualizada[c];
-          return Array.isArray(v) ? v.join('|') : String(v ?? '');
-        });
-        await sheets.escribir(ctx.indiceId, rangoDeFila(nro), [fila]);
-      }
-    }
-
-    for (const id of plan.borrar) await borrarDelIndice(id);
-
-    if (newStartPageToken) await guardarMeta('changesPageToken', newStartPageToken);
-
-    return { releidos: plan.releer.length - ignoradosSinTitulo, parcheados: plan.parchear.length, borrados: plan.borrar.length, ignoradosSinTitulo };
-  }
-
   async function guardar(
     id: string,
     receta: Receta,
@@ -400,7 +339,6 @@ export function crearStore({ drive, sheets }: Dependencias) {
     entradas = nuevas.map(entradaDesdeFila);
     filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
 
-    await guardarMeta('changesPageToken', (await drive.tokenInicialDeCambios()) ?? '');
     const ahora = new Date().toISOString();
     await guardarMeta('ultima_reconstruccion', ahora);
     ctx.ultimaReconstruccionEnMemoria = ahora;
@@ -479,5 +417,5 @@ export function crearStore({ drive, sheets }: Dependencias) {
     return { entrada, receta: parse(texto), texto };
   }
 
-  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, ultimaReconstruccion, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, _ctx: ctx };
+  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, _ctx: ctx };
 }

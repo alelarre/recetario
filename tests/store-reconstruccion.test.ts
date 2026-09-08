@@ -56,7 +56,6 @@ describe('reconstruir', () => {
     const meta = Object.fromEntries((await sheets.leer('i1', 'meta!A1:B20')).map(f => [f[0], f[1]]));
     expect(meta.reconstruccion_en_curso).toBeFalsy();
     expect(meta.ultima_reconstruccion).toBeTruthy();
-    expect(meta.changesPageToken).toBeTruthy();
   });
 
   it('reporta progreso mientras lee', async () => {

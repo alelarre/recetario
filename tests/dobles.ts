@@ -1,6 +1,5 @@
 import { COLUMNAS } from '../src/catalogo.js';
 import type { PropiedadesHoja } from '../src/sheets.js';
-import type { RespuestaCambios } from '../src/drive.js';
 import type { Entrada, Receta } from '../src/tipos.js';
 import { parse } from '../src/recipe.js';
 import type { DriveDelStore, SheetsDelStore } from '../src/store.js';
@@ -89,14 +88,7 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       a.parents = [destino, ...(a.parents ?? []).filter(p => p !== de && p !== destino)].slice(0, 1);
       return a;
     },
-    async borrar(id: string) { store.delete(id); return ''; },
-    async tokenInicialDeCambios() { return '100'; },
-    // El tipo de retorno va explícito: sin él TS infiere `changes: never[]`
-    // desde el arreglo vacío, y los tests que reemplazan este método por uno
-    // que sí devuelve cambios dejan de compilar.
-    async cambios(token: string): Promise<RespuestaCambios> {
-      return { changes: [], newStartPageToken: String(Number(token) + 1) };
-    }
+    async borrar(id: string) { store.delete(id); return ''; }
   } satisfies DriveUsado & Record<string, unknown>;
 
   /** Los mutadores del doble asumen que el archivo existe: si no, es un test mal armado. */

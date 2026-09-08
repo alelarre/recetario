@@ -23,7 +23,6 @@ vi.mock('../src/sheets.js', () => ({ crearSheets: () => ({}) }));
 const storeFake = {
   arrancar: async () => ({ estado: 'listo', reconstruir: false, categorias: [{ id: 'c1', nombre: 'Carnes' }] }),
   cargarIndice: async () => [],
-  sync: async () => ({}),
   guardarMeta: async () => {},
   ultimaReconstruccion: () => '',
   crear: async () => ({ id: 'nuevo-id', nombre_archivo: 'x.md' }),

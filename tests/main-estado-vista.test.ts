@@ -33,7 +33,6 @@ const ultimoDetalle = (): ArgsDetalle => {
 const storeFake = {
   arrancar: async () => ({ estado: 'listo', reconstruir: false, categorias: [] }),
   cargarIndice: async () => [],
-  sync: async () => ({}),
   guardarMeta: async () => {},
   ultimaReconstruccion: () => '',
   entradas: () => [],

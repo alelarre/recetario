@@ -1,4 +1,4 @@
-import type { ArchivoDrive, CambioDrive } from './tipos.js';
+import type { ArchivoDrive } from './tipos.js';
 
 const API = 'https://www.googleapis.com/drive/v3';
 const SUBIDA = 'https://www.googleapis.com/upload/drive/v3';
@@ -29,13 +29,6 @@ interface RespuestaListado {
   nextPageToken?: string;
 }
 
-/** Lo que devuelve la Changes API (§4.2). */
-export interface RespuestaCambios {
-  changes?: CambioDrive[];
-  newStartPageToken?: string;
-  nextPageToken?: string;
-}
-
 /** Lo que vuelve al crear o actualizar un archivo. */
 export interface ArchivoCreado {
   id: string;
@@ -54,8 +47,8 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
   /**
    * El tipo de retorno es genérico y sin verificar a propósito: nada de lo que
    * devuelve Drive se valida acá. Quien llama declara qué espera, y los que
-   * consumen esos datos —`diffCambios`, `entradaDesdeFila`— tratan cada campo
-   * como ausente hasta probar lo contrario.
+   * consumen esos datos —`entradaDesdeFila`— tratan cada campo como ausente
+   * hasta probar lo contrario.
    */
   async function pedir<T>(ruta: string, opciones: RequestInit = {}, base = API): Promise<T> {
     const token = await obtenerToken();
@@ -132,13 +125,7 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
     mover: (id: string, { de, a }: { de: string; a: string }) =>
       pedir<ArchivoDrive>(`/files/${id}?addParents=${a}&removeParents=${de}&fields=id,parents`, { method: 'PATCH' }),
 
-    borrar: (id: string) => pedir<string>(`/files/${id}`, { method: 'DELETE' }),
-
-    tokenInicialDeCambios: async (): Promise<string | undefined> =>
-      (await pedir<{ startPageToken?: string }>('/changes/startPageToken')).startPageToken,
-
-    cambios: (pageToken: string) => pedir<RespuestaCambios>(`/changes?pageToken=${pageToken}&pageSize=200` +
-      '&fields=newStartPageToken,nextPageToken,changes(fileId,removed,file(id,name,mimeType,parents,modifiedTime,trashed))')
+    borrar: (id: string) => pedir<string>(`/files/${id}`, { method: 'DELETE' })
   };
 }
 

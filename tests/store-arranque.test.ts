@@ -84,8 +84,7 @@ describe('arranque en frío', () => {
 
     // Escribir la meta antes de crear el store
     await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
-    await sheets.escribir('i1', 'meta!A2:B2', [['changesPageToken', '']]);
-    await sheets.escribir('i1', 'meta!A3:B3', [['ultima_reconstruccion', fechaPrueba]]);
+    await sheets.escribir('i1', 'meta!A2:B2', [['ultima_reconstruccion', fechaPrueba]]);
 
     const store = crearStore({ drive, sheets });
 

@@ -141,7 +141,6 @@ async function arrancar() {
 
   await store.cargarIndice();
   if (estadoArranque.reconstruir) await reconstruir();
-  else store.sync().then(() => render()).catch(console.error);
 
   router.iniciar();
 }

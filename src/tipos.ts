@@ -160,21 +160,3 @@ export interface ArchivoDrive {
   trashed?: boolean;
 }
 
-/** Una entrada de la Changes API (§4.2). */
-export interface CambioDrive {
-  fileId?: string;
-  removed?: boolean;
-  file?: ArchivoDrive;
-}
-
-/** Lo que `diffCambios` decide hacer con un lote de cambios. */
-export interface Diff {
-  /** Cambió el contenido: hay que releer el `.md`. */
-  releer: Ubicacion[];
-  /** Solo se movió o se renombró: alcanza con corregir la fila. */
-  parchear: Ubicacion[];
-  /** Borrado, tirado a la papelera, o sacado del recetario. */
-  borrar: string[];
-  /** No es un `.md`, o no cambió nada real. */
-  ignorados: string[];
-}
