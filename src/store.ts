@@ -62,7 +62,7 @@ export interface Progreso {
  * implementar de más para satisfacer al compilador.
  */
 export type DriveDelStore = Pick<Drive,
-  'buscarPorNombre' | 'listarCarpetas' | 'listarHijos' | 'metadatos' | 'leerTexto' |
+  'buscarPorNombre' | 'listarCarpetas' | 'listarHijos' | 'leerTexto' |
   'crear' | 'actualizar' | 'renombrar' | 'mover' | 'borrar' |
   'tokenInicialDeCambios' | 'cambios'>;
 

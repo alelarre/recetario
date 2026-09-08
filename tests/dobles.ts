@@ -24,26 +24,12 @@ interface ArchivoFalso {
 }
 
 /**
- * El modifiedTime con el que arranca un archivo que el doble auto-crea, en
- * vez de uno cargado a mano en el fixture.
+ * Drive falso en memoria. `archivos` es un array de
+ * {id, name, mimeType, parents, modifiedTime, contenido}.
  */
-interface OpcionesDriveFalso {
-  modifiedTime?: string;
-}
-
-/**
- * Drive falso en memoria. `inicial` es o bien un array de
- * {id, name, mimeType, parents, modifiedTime, contenido} para precargar
- * archivos, o bien opciones para el archivo que `actualizar` auto-crea la
- * primera vez que toca un id que el doble todavía no conocía (Tarea 6:
- * `guardar` ya no pide metadatos antes de escribir, así que no hace falta
- * que el archivo exista de antemano en el fixture).
- */
-export function driveFalso(inicial: ArchivoFalso[] | OpcionesDriveFalso = []) {
-  const archivos = Array.isArray(inicial) ? inicial : [];
-  const modifiedTimePorDefecto = (!Array.isArray(inicial) && inicial.modifiedTime) || '2026-01-01T00:00:00.000Z';
+export function driveFalso(archivos: ArchivoFalso[] = []) {
   const store = new Map<string, ArchivoFalso>(archivos.map(a => [a.id, {
-    mimeType: 'text/markdown', parents: [], modifiedTime: modifiedTimePorDefecto, ...a
+    mimeType: 'text/markdown', parents: [], modifiedTime: '2026-01-01T00:00:00.000Z', ...a
   }]));
   let siguiente = 1;
   const fallas = new Map<string, unknown>();  // ruta lógica → error a lanzar
@@ -88,14 +74,7 @@ export function driveFalso(inicial: ArchivoFalso[] | OpcionesDriveFalso = []) {
       return a as ArchivoFalso & { id: string };
     },
     async actualizar(id: string, contenido: string) {
-      // `guardar()` ya no pide metadatos antes de escribir (se sacó el
-      // chequeo de conflicto, Tarea 6): un id que el doble no había visto
-      // todavía se auto-crea acá, en vez de exigir que el test lo precargue.
-      let a = store.get(id);
-      if (!a) {
-        a = { id, mimeType: 'text/markdown', parents: [], modifiedTime: modifiedTimePorDefecto };
-        store.set(id, a);
-      }
+      const a = exigir(id);
       a.contenido = contenido;
       a.modifiedTime = new Date().toISOString();
       return a as ArchivoFalso & { id: string };
