@@ -15,6 +15,7 @@ import { renderCocina } from './ui/cocina.js';
 import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
 import { crearBorradores } from './borradores.js';
 import { renderBorradores, renderBorrador } from './ui/borradores.js';
+import { renderCaptura } from './ui/captura.js';
 import { convertirBorrador } from './compartido.js';
 import type { Borradores } from './borradores.js';
 import type { Ruta } from './ui/router.js';
@@ -54,6 +55,11 @@ let observadorTramo: IntersectionObserver | null = null;
 let confirmandoDescarte = false;
 /** El título del borrador se corrige en su lugar (C01.6.1). */
 let editandoTitulo = false;
+
+/** La captura: lo escrito sobrevive al error y a la reautenticación (R3). */
+let tituloCaptura = '';
+let guardandoCaptura = false;
+let errorCaptura = '';
 
 let posicionCocina: PosicionCocina = 'ingredientes';
 let pasoAqui: number | null = null;
@@ -195,6 +201,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     visibles = TRAMO;
     confirmandoDescarte = false;
     editandoTitulo = false;
+    if (ruta.vista !== 'capturar') { tituloCaptura = ''; guardandoCaptura = false; errorCaptura = ''; }
     posicionCocina = 'ingredientes';
     pasoAqui = null;
     pasosHechos = [];
@@ -226,6 +233,15 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     const { receta } = await store.receta(ruta.params['id'] ?? '');
     return pintar(renderCocina({
       receta, posicion: posicionCocina, aqui: pasoAqui, hechos: pasosHechos, wakeActivo: !!wakeLock
+    }));
+  }
+  if (ruta.vista === 'capturar') {
+    // La captura no dibuja la app: es una pantalla efímera sobre lo que el
+    // usuario estaba haciendo en otra app (C01.2.2).
+    const fuente = ruta.params['url'] || ruta.params['text'] || '';
+    return pintar(renderCaptura({
+      fuente, titulo: tituloCaptura, guardando: guardandoCaptura,
+      ...(errorCaptura ? { error: errorCaptura } : {})
     }));
   }
   if (ruta.vista === 'borradores') {
@@ -360,6 +376,41 @@ app.addEventListener('click', async (e) => {
     }
   }
   if (accion === 'agregar-borrador') { location.hash = '#/capturar'; return; }
+  if (accion === 'cancelar-captura') {
+    // Cerrar sin escribir nada y sin preguntar: no hay nada que perder todavía.
+    tituloCaptura = '';
+    window.close();
+    return;
+  }
+  if (accion === 'guardar-captura') {
+    const campoTitulo = document.querySelector<HTMLInputElement>('input[name="titulo"]');
+    const campoFuente = document.querySelector<HTMLInputElement>('input[name="fuente"]');
+    tituloCaptura = campoTitulo?.value.trim() ?? '';
+    if (!tituloCaptura) return;
+    const fuente = campoFuente?.value.trim()
+      ?? vistaActual?.params['url'] ?? vistaActual?.params['text'] ?? '';
+
+    guardandoCaptura = true;
+    errorCaptura = '';
+    await render();
+    try {
+      await borradores?.agregar({ titulo: tituloCaptura, fuente });
+    } catch (err) {
+      console.error(err);
+      // Nada queda esperando: el texto sigue en pantalla y se reintenta a mano.
+      guardandoCaptura = false;
+      errorCaptura = 'No se pudo guardar. Revisá la conexión.';
+      return render();
+    }
+    guardandoCaptura = false;
+    tituloCaptura = '';
+    // Volver a donde estabas, con Recetario sin quedar abierto (C01.2.2). Si
+    // la pestaña no la abrió un script, `close()` no hace nada: ahí queda la
+    // lista, que es el lugar donde el borrador nuevo está.
+    window.close();
+    location.hash = '#/borradores';
+    return;
+  }
   if (accion === 'editar-titulo') { editandoTitulo = true; return render(); }
   if (accion === 'cancelar-titulo') { editandoTitulo = false; return render(); }
   if (accion === 'guardar-titulo') {
