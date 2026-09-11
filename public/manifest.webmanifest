@@ -1,12 +1,18 @@
 {
   "name": "Recetario",
   "short_name": "Recetario",
-  "start_url": "./",
+  "start_url": "/recetario/",
+  "scope": "/recetario/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#17140F",
+  "theme_color": "#17140F",
   "icons": [
     { "src": "icono-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icono-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+  ],
+  "share_target": {
+    "action": "/recetario/#/capturar",
+    "method": "GET",
+    "params": { "title": "text", "text": "text", "url": "url" }
+  }
 }

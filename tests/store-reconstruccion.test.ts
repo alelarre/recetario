@@ -1,10 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { crearStore } from '../src/store.js';
-import { crearCacheMemoria } from '../src/cache.js';
 import { driveFalso, sheetsFalso } from './dobles.js';
 import type { DriveFalso, SheetsFalso } from './dobles.js';
-import type { Cache } from '../src/cache.js';
 import { COLUMNAS } from '../src/catalogo.js';
+import { SCHEMA_VERSION } from '../src/config.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
@@ -12,7 +11,6 @@ const md = (titulo: string): string => `---\ntitulo: ${titulo}\n---\n\n## Ingred
 
 let drive: DriveFalso;
 let sheets: SheetsFalso;
-let cache: Cache;
 let store: ReturnType<typeof crearStore>;
 
 beforeEach(async () => {
@@ -31,8 +29,7 @@ beforeEach(async () => {
   sheets.crearPlanilla('i1');
   await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
-  cache = crearCacheMemoria();
-  store = crearStore({ drive, sheets, cache });
+  store = crearStore({ drive, sheets });
   await store.arrancar();
 });
 
@@ -49,16 +46,12 @@ describe('reconstruir', () => {
     expect(store.entradas().find(e => e.titulo === 'Suelta')!.categoria).toBe('Sin categorizar');
   });
 
-  it('cuenta las ignoradas por no tener titulo, sin borrar el archivo', async () => {
+  it('nombra las ignoradas por no tener titulo, sin borrar el archivo', async () => {
+    // Por nombre y no un conteo: así el aviso de Ajustes dice cuál buscar en
+    // Drive (C05.5.2).
     const r = await store.reconstruir();
-    expect(r.ignoradasSinTitulo).toBe(1);
+    expect(r.ignorados).toEqual(['sin-titulo.md']);
     expect(drive._store.has('x1')).toBe(true);
-  });
-
-  it('descarta la cola antes de empezar', async () => {
-    await cache.encolar({ tipo: 'fila', id: 'viejo', fila: ['viejo'] });
-    await store.reconstruir();
-    expect(await cache.leerCola()).toHaveLength(0);
   });
 
   it('deja el flag limpio y la fecha escrita al terminar', async () => {
@@ -66,7 +59,14 @@ describe('reconstruir', () => {
     const meta = Object.fromEntries((await sheets.leer('i1', 'meta!A1:B20')).map(f => [f[0], f[1]]));
     expect(meta.reconstruccion_en_curso).toBeFalsy();
     expect(meta.ultima_reconstruccion).toBeTruthy();
-    expect(meta.changesPageToken).toBeTruthy();
+  });
+
+  it('anota la versión del esquema, para no reconstruir en cada arranque', async () => {
+    // Subir SCHEMA_VERSION es lo que fuerza la reconstrucción; si al terminar
+    // no queda anotada, el arranque siguiente vuelve a reconstruir de nuevo.
+    await store.reconstruir();
+    const meta = Object.fromEntries((await sheets.leer('i1', 'meta!A1:B20')).map(f => [f[0], f[1]]));
+    expect(meta.schemaVersion).toBe(String(SCHEMA_VERSION));
   });
 
   it('reporta progreso mientras lee', async () => {

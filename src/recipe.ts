@@ -1,7 +1,10 @@
-import type { Receta, Ingrediente, Aviso, ClaveSeccion, OtraSeccion } from './tipos.js';
+import type {
+  Receta, Ingrediente, ClaveSeccion,
+  GrupoIngredientes, TramoPreparacion, Variacion
+} from './tipos.js';
 
 /** Las claves del frontmatter que se escriben tal cual, sin `tags`, que es lista. */
-const CLAVES = ['titulo', 'rinde', 'tiempo', 'dificultad', 'fuente'] as const;
+const CLAVES = ['titulo', 'rinde', 'tiempo', 'dificultad', 'fuente', 'foto'] as const;
 type ClaveSimple = (typeof CLAVES)[number];
 
 const esClaveSimple = (c: string): c is ClaveSimple =>
@@ -19,6 +22,7 @@ export function normalizar(texto: unknown): string {
 function recetaVacia(): Receta {
   return {
     titulo: null, tags: [], rinde: null, tiempo: null, dificultad: null, fuente: null,
+    foto: null, completa: false,
     extras: {},
     descripcion: '', ingredientes: '', preparacion: '', variaciones: '', notas: '',
     otras: [], avisos: []
@@ -64,6 +68,8 @@ function parsearFrontmatter(bloque: string, receta: Receta): void {
     ultimaClave = clave;
     if (clave === 'tags') {
       receta.tags = parsearLista(valor.trim(), lineas.slice(i + 1));
+    } else if (clave === 'completa') {
+      receta.completa = valor.trim().toLowerCase() === 'true';
     } else if (esClaveSimple(clave)) {
       receta[clave] = valor.trim() === '' ? null : valor.trim();
     } else {
@@ -162,6 +168,9 @@ export function serialize(receta?: Partial<Receta> | null): string {
   for (const clave of ['rinde', 'tiempo', 'dificultad', 'fuente'] as const) {
     if (r[clave]) fm.push(`${clave}: ${r[clave]}`);
   }
+  if (r.foto) fm.push(`foto: ${r.foto}`);
+  // Nunca `completa: false`: la clave ausente ya significa eso (C05.3.2).
+  if (r.completa === true) fm.push('completa: true');
   for (const [clave, valor] of Object.entries(typeof r.extras === 'object' && r.extras !== null ? r.extras : {})) {
     fm.push(`${clave}: ${valor}`);
   }
@@ -181,41 +190,120 @@ export function serialize(receta?: Partial<Receta> | null): string {
   return cabecera + cuerpo;
 }
 
-const UNIDADES = ['g', 'kg', 'mg', 'ml', 'l', 'cc', 'taza', 'tazas', 'cda', 'cdas',
-  'cdta', 'cdtas', 'cucharada', 'cucharadas', 'cucharadita', 'cucharaditas',
-  'pizca', 'diente', 'dientes', 'lata', 'latas', 'paquete', 'paquetes'];
+/**
+ * Nombre + separador + cantidad (C05.1.3). Manda el primer separador que
+ * aparece, salvo la coma, que solo separa si le sigue un dígito: sin esa
+ * regla `Sal, pimienta` daría el ingrediente "Sal" con cantidad "pimienta".
+ */
+const SEPARADORES = ['-', '—', ';', ',', '|'] as const;
 
-/** Best-effort a propósito (§3.2): lo que no matchea se muestra tal cual. */
 export function parseIngrediente(linea: unknown): Ingrediente | null {
-  // Solo strings: un número o un objeto suelto no es un ingrediente válido
   if (typeof linea !== 'string') return null;
   const crudo = linea;
   const limpia = crudo.replace(/^\s*[-*]\s+/, '').trim();
   if (!limpia || limpia.startsWith('#')) return null;
 
-  const m = limpia.match(/^(\d+(?:[.,]\d+)?(?:\/\d+)?)\s+(.*)$/);
-  if (!m || m[1] === undefined || m[2] === undefined) {
-    return { cantidad: null, unidad: null, item: limpia, crudo };
+  let corte = -1;
+  for (let i = 0; i < limpia.length; i++) {
+    const c = limpia[i];
+    if (!c || !(SEPARADORES as readonly string[]).includes(c)) continue;
+    // La coma pide un dígito después, salteando espacios.
+    if (c === ',' && !/^\s*\d/.test(limpia.slice(i + 1))) continue;
+    corte = i;
+    break;
   }
 
-  const cantidad = m[1];
-  let resto = m[2];
-  let unidad: string | null = null;
-  const primera = resto.split(/\s+/)[0] ?? '';
-  if (UNIDADES.includes(normalizar(primera))) {
-    unidad = primera;
-    resto = resto.slice(primera.length).trim();
-  }
-  return { cantidad, unidad, item: resto.replace(/^de\s+/i, '').trim(), crudo };
+  if (corte === -1) return { nombre: limpia, cantidad: null, crudo };
+  const nombre = limpia.slice(0, corte).trim();
+  const cantidad = limpia.slice(corte + 1).trim();
+  return { nombre, cantidad: cantidad || null, crudo };
 }
 
+/** Parte un texto de sección por sus `###`. El texto antes del primero es el tramo sin nombre. */
+function porSubsecciones(texto: string): { nombre: string; cuerpo: string }[] {
+  const partes: { nombre: string; cuerpo: string }[] = [];
+  let nombre = '';
+  let buffer: string[] = [];
+  const volcar = () => {
+    const cuerpo = buffer.join('\n').trim();
+    if (cuerpo || nombre) partes.push({ nombre, cuerpo });
+    buffer = [];
+  };
+  for (const linea of String(texto ?? '').split('\n')) {
+    const m = linea.match(/^###\s+(.+?)\s*$/);
+    if (m?.[1]) { volcar(); nombre = m[1].trim(); continue; }
+    buffer.push(linea);
+  }
+  volcar();
+  return partes;
+}
+
+export function gruposDe(ingredientes: string): GrupoIngredientes[] {
+  return porSubsecciones(ingredientes).map(({ nombre, cuerpo }) => ({
+    nombre,
+    items: cuerpo.split('\n').map(parseIngrediente).filter((i): i is Ingrediente => i !== null)
+  }));
+}
+
+/** Un paso es una línea que empieza con `1.` o con un bullet. El número no se conserva: se recuenta al dibujar. */
+export function tramosDe(preparacion: string): TramoPreparacion[] {
+  return porSubsecciones(preparacion).map(({ nombre, cuerpo }) => ({
+    nombre,
+    pasos: cuerpo.split('\n')
+      .map(l => l.replace(/^\s*(?:\d+[.)]|[-*])\s+/, '').trim())
+      .filter(Boolean)
+  }));
+}
+
+export function variacionesDe(variaciones: string): { lista: string[]; secciones: Variacion[] } {
+  const partes = porSubsecciones(variaciones);
+  const conNombre = partes.filter(p => p.nombre);
+  if (conNombre.length === 0) {
+    const lista = String(variaciones ?? '').split('\n')
+      .map(l => l.replace(/^\s*[-*]\s+/, '').trim())
+      .filter(Boolean);
+    return { lista, secciones: [] };
+  }
+  return {
+    lista: [],
+    secciones: conNombre.map(({ nombre, cuerpo }) => {
+      // Una línea en itálica al empezar es la fuente de la variación (IA §1.8).
+      const m = cuerpo.match(/^\*(?:fuente:\s*)?(.+?)\*\s*(?:\n|$)/i);
+      return {
+        nombre,
+        fuente: m?.[1]?.trim() ?? null,
+        cuerpo: (m ? cuerpo.slice(m[0].length) : cuerpo).trim()
+      };
+    })
+  };
+}
+
+/**
+ * Estado derivado, calculado al leer y nunca persistido en el `.md` (C05.3.1).
+ * `completa: true` es la salida manual del usuario y gana sobre el cálculo.
+ *
+ * El parámetro es parcial porque la va a llamar `filaDesde()` de `catalogo.ts`
+ * con lo que venga del índice, no con una `Receta` garantizada (ver el
+ * comentario de cabecera de esa función): acá se defiende cada campo, igual
+ * que en `serialize` e `ingredientesIndexables`.
+ */
+export function estaCompleta(receta?: Partial<Receta> | null): boolean {
+  if (!receta) return false;
+  if (receta.completa) return true;
+  if (!receta.titulo) return false;
+  const hayIngrediente = gruposDe(String(receta.ingredientes ?? '')).some(g => g.items.length > 0);
+  const hayPaso = tramosDe(String(receta.preparacion ?? '')).some(t => t.pasos.length > 0);
+  return hayIngrediente && hayPaso;
+}
+
+/** Los nombres, tal como están escritos: sin normalizar (C05.4b.1). */
 export function ingredientesIndexables(receta?: Partial<Receta> | null): string[] {
   if (!receta) return [];
   const vistos = new Set<string>();
   for (const linea of String(receta.ingredientes ?? '').split('\n')) {
     const ing = parseIngrediente(linea);
-    if (!ing?.item) continue;
-    vistos.add(ing.item.toLowerCase());  // solo minúsculas, nada de sinónimos (§3.2)
+    if (!ing?.nombre) continue;
+    vistos.add(ing.nombre);
   }
   return [...vistos];
 }

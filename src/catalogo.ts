@@ -1,6 +1,6 @@
-import { normalizar, ingredientesIndexables } from './recipe.js';
+import { normalizar, ingredientesIndexables, estaCompleta } from './recipe.js';
 import type {
-  Receta, Ubicacion, Entrada, ArchivoDrive, CambioDrive, Diff
+  Receta, Ubicacion, Entrada
 } from './tipos.js';
 
 /**
@@ -20,7 +20,9 @@ export const COLUMNAS = [
   'fuente',
   'tags',
   'ingredientes',
-  'mtime'
+  'mtime',
+  'foto',
+  'completa'
 ] as const satisfies ReadonlyArray<keyof Entrada>;
 
 export const DIFICULTADES = ['fácil', 'media', 'difícil'] as const;
@@ -83,7 +85,10 @@ export function filaDesde(receta?: Partial<Receta> | null, ubicacion?: Partial<U
     fuente: typeof r.fuente === 'string' ? r.fuente : '',
     tags: tagsStr,
     ingredientes: ingredientesStr,
-    mtime: String(typeof u.mtime === 'number' ? u.mtime : 0)
+    mtime: String(typeof u.mtime === 'number' ? u.mtime : 0),
+    foto: typeof r.foto === 'string' ? r.foto : '',
+    // 'si' y no 'true': la celda la puede leer una persona en la planilla.
+    completa: r.titulo && estaCompleta(r) ? 'si' : ''
   };
 
   return COLUMNAS.map(c => String(celdas[c] ?? ''));
@@ -118,105 +123,9 @@ export function entradaDesdeFila(fila?: unknown): Entrada {
     fuente: texto.fuente,
     tags: partir(texto.tags),
     ingredientes: partir(texto.ingredientes),
-    mtime: isNaN(mtimeNum) || mtimeNum < 0 ? 0 : mtimeNum
+    mtime: isNaN(mtimeNum) || mtimeNum < 0 ? 0 : mtimeNum,
+    foto: texto.foto,
+    completa: texto.completa === 'si'
   };
 }
 
-const esMarkdown = (file: unknown): file is ArchivoDrive => {
-  // Defender file: debe ser un object con properties
-  if (typeof file !== 'object' || file === null) return false;
-
-  // Detectar por mimeType o extensión
-  const f = file as ArchivoDrive;
-  return f.mimeType === 'text/markdown' || /\.md$/i.test(f.name ?? '');
-};
-
-/** Las opciones de `diffCambios`: el índice actual y el mapa carpeta → categoría. */
-export interface OpcionesDiff {
-  indice?: Map<string, Entrada> | null;
-  carpetas?: Map<string, string> | null;
-}
-
-/**
- * Clasifica un lote de la Changes API contra lo que el índice ya sabe (§4.2).
- * Nada de lo que llega se asume bien formado: un cambio sin `fileId`, un
- * archivo sin `parents` o un lote que no es arreglo salen por `ignorados`.
- */
-export function diffCambios(cambios?: unknown, opciones?: OpcionesDiff | null): Diff {
-  const salida: Diff = { releer: [], parchear: [], borrar: [], ignorados: [] };
-
-  // Defender cambios: debe ser array
-  const cambiosArray: unknown[] = Array.isArray(cambios) ? cambios : [];
-
-  // Defender opciones: puede faltar, ser null o undefined
-  // Si no hay opciones válidas, no procesamos nada
-  if (typeof opciones !== 'object' || opciones === null) {
-    return salida;
-  }
-
-  // Defender indice: debe tener .get si es Map, si no tratar como vacío
-  const indice: Map<string, Entrada> =
-    opciones.indice && typeof opciones.indice.get === 'function' ? opciones.indice : new Map();
-
-  // Defender carpetas: debe tener .get si es Map, si no tratar como vacío
-  const carpetas: Map<string, string> =
-    opciones.carpetas && typeof opciones.carpetas.get === 'function' ? opciones.carpetas : new Map();
-
-  for (const bruto of cambiosArray) {
-    // Tolera elementos null
-    if (bruto === null || typeof bruto !== 'object') continue;
-    const cambio = bruto as CambioDrive;
-
-    const id = cambio.fileId ?? cambio.file?.id;
-    // Salta si no hay id
-    if (!id) continue;
-
-    const file = cambio.file;
-    const estaba = indice.get(id);
-
-    // Borrar: removed, sin file, o trashed
-    if (cambio.removed || !file || file.trashed) {
-      if (estaba) salida.borrar.push(id); else salida.ignorados.push(id);
-      continue;
-    }
-
-    // Validar que está en una carpeta conocida
-    const carpetaId = (file.parents ?? [])[0] ?? '';
-    const categoria = carpetas.get(carpetaId);
-
-    if (categoria === undefined) {
-      // Se movió fuera del recetario, o nunca estuvo adentro.
-      if (estaba) salida.borrar.push(id); else salida.ignorados.push(id);
-      continue;
-    }
-
-    // Ignorar si no es markdown
-    if (!esMarkdown(file)) { salida.ignorados.push(id); continue; }
-
-    const ubicacion: Ubicacion = {
-      id,
-      nombre_archivo: file.name ?? '',
-      categoria,
-      carpeta_id: carpetaId,
-      mtime: Date.parse(file.modifiedTime ?? '') || 0
-    };
-
-    // Comparar con lo que ya existe
-    if (!estaba || estaba.mtime !== ubicacion.mtime) {
-      // Cambió el contenido o es nuevo
-      salida.releer.push(ubicacion);
-      continue;
-    }
-
-    // Mismo mtime: solo cambió ubicación o nombre
-    if (estaba.nombre_archivo !== ubicacion.nombre_archivo || estaba.carpeta_id !== ubicacion.carpeta_id) {
-      salida.parchear.push(ubicacion);
-      continue;
-    }
-
-    // Sin cambios reales
-    salida.ignorados.push(id);
-  }
-
-  return salida;
-}

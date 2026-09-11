@@ -1,49 +1,49 @@
-// tests/main-estado-vista.test.js
+// tests/main-estado-vista.test.ts
 //
-// El estado de la vista de detalle vive en el módulo de main.js, no en la
-// ruta, así que sobrevive a un render y hay que resetearlo a mano al cambiar
-// de receta. Antes el que se arrastraba era la pestaña abierta; ahora que las
-// pestañas se fueron, el que queda es el plegado de los ingredientes — mismo
-// bug, otro mecanismo. Se prueba simulando el entorno global y mirando con
-// qué argumentos se llama a renderDetalle.
+// El estado de la vista vive en el módulo de main.ts y no en la ruta, así que
+// sobrevive a un render: lo que se prueba acá es que cambiar de receta dibuja
+// la receta nueva y no arrastra nada de la anterior. El plegado de
+// ingredientes, que era el estado que se arrastraba en v1, se fue con la barra
+// pegajosa: la receta se lee de corrido.
+//
+// El cableado entero de main.ts —las once vistas y sus errores— es de la
+// Tarea 22, y sus tests se escriben ahí.
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import type { ArgsDetalle } from '../src/ui/detalle.js';
+import type { OpcionesReceta } from '../src/ui/receta.js';
 import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
-vi.mock('../src/ui/app.css', () => ({}));
+vi.mock('../src/ui/base.css', () => ({}));
 vi.mock('../src/auth.js', () => ({
   crearAuth: () => ({ conectar: async () => {}, token: async () => 'tok', olvidar: () => {} })
 }));
 vi.mock('../src/drive.js', () => ({ crearDrive: () => ({}) }));
 vi.mock('../src/sheets.js', () => ({ crearSheets: () => ({}) }));
-vi.mock('../src/cache.js', () => ({ abrirCache: async () => ({}) }));
 
-const detalleSpy = vi.fn((_args?: ArgsDetalle) => '<div></div>');
-vi.mock('../src/ui/detalle.js', () => ({
-  renderDetalle: (args?: ArgsDetalle) => detalleSpy(args)
+const recetaSpy = vi.fn((_args?: OpcionesReceta) => '<div></div>');
+vi.mock('../src/ui/receta.js', () => ({
+  renderReceta: (args?: OpcionesReceta) => recetaSpy(args)
 }));
 
-/** Los argumentos del último renderDetalle. Si no hubo, el test tiene que fallar acá. */
-const ultimoDetalle = (): ArgsDetalle => {
-  const args = detalleSpy.mock.lastCall;
-  if (!args) throw new Error('renderDetalle no se llamó');
-  return args[0] ?? {};
+/** Los argumentos del último renderReceta. Si no hubo, el test tiene que fallar acá. */
+const ultimaReceta = (): OpcionesReceta => {
+  const args = recetaSpy.mock.lastCall;
+  if (!args) throw new Error('renderReceta no se llamó');
+  if (!args[0]) throw new Error('renderReceta se llamó sin argumentos');
+  return args[0];
 };
 
 const storeFake = {
   arrancar: async () => ({ estado: 'listo', reconstruir: false, categorias: [] }),
   cargarIndice: async () => [],
-  sync: async () => ({}),
   guardarMeta: async () => {},
   ultimaReconstruccion: () => '',
   entradas: () => [],
   categoriasConConteo: () => [],
   receta: async (id: string) => ({
-    entrada: { id, titulo: id },
+    entrada: { id_archivo: id, titulo: id },
     receta: { titulo: id, ingredientes: 'a', preparacion: 'b', notas: 'c' }
   }),
-  flush: async () => {},
   buscar: () => [],
   tagsDe: () => []
 };
@@ -53,10 +53,10 @@ async function esperarMicrotareas(vueltas = 5) {
   for (let i = 0; i < vueltas; i++) await new Promise(r => setTimeout(r, 0));
 }
 
-describe('main.js: el estado de la vista de detalle', () => {
+describe('main.ts: la vista de una receta', () => {
   afterEach(limpiarGlobales);
 
-  it('el plegado de ingredientes no se arrastra a la receta siguiente', async () => {
+  it('cambiar de receta dibuja la receta nueva', async () => {
     const hashListeners: Record<string, () => void> = {};
     const clickListeners: ((e: unknown) => unknown)[] = [];
     const app = {
@@ -77,27 +77,16 @@ describe('main.js: el estado de la vista de detalle', () => {
     await import('../src/main.js');
     await esperarMicrotareas();
 
-    // Receta A: los ingredientes arrancan a la vista
     global.location.hash = '#/r/A';
     hashListeners['hashchange']?.();
     await esperarMicrotareas();
-    expect(ultimoDetalle().ingredientesPlegados).toBe(false);
+    expect(ultimaReceta().entrada?.id_archivo).toBe('A');
 
-    // El usuario pliega los ingredientes en A
-    const boton = {
-      dataset: { accion: 'ingredientes' }, classList: { contains: () => false },
-      closest: () => null, tagName: 'BUTTON'
-    };
-    for (const fn of clickListeners) {
-      await fn({ target: { closest: (sel: string) => (sel.includes('data-accion') ? boton : null) } });
-    }
-    await esperarMicrotareas();
-    expect(ultimoDetalle().ingredientesPlegados).toBe(true);
-
-    // Receta B: tiene que abrir con los ingredientes a la vista
     global.location.hash = '#/r/B';
     hashListeners['hashchange']?.();
     await esperarMicrotareas();
-    expect(ultimoDetalle().ingredientesPlegados).toBe(false);
+    expect(ultimaReceta().entrada?.id_archivo).toBe('B');
+    // Y nada de la anterior sobrevive al cambio.
+    expect(ultimaReceta().receta.titulo).toBe('B');
   });
 });

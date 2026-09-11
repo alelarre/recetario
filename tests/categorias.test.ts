@@ -13,15 +13,20 @@ describe('categorias', () => {
     expect(slugCategoria('Arroces y legumbres')).toBe('arroces-y-legumbres');
   });
 
-  it('cada categoría conocida tiene su color', () => {
-    expect(colorCategoria('Pescados y mariscos')).toBe('hsl(174 58% 50%)');
-    expect(colorCategoria('Carnes')).toBe('hsl(8 62% 58%)');
+  it('cada categoría conocida tiene su token de color', () => {
+    expect(colorCategoria('Pescados y mariscos')).toBe('var(--cat-pescados)');
+    expect(colorCategoria('Carnes')).toBe('var(--cat-carnes)');
+  });
+
+  it('Otros se dibuja con el neutro y sin foto: es la categoría comodín', () => {
+    expect(colorCategoria('Otros')).toBe('var(--cat-otros)');
+    expect(fotoCategoria('Otros')).toBeNull();
   });
 
   it('una categoría desconocida cae en el neutro y no rompe', () => {
     // Agregar una categoría es crear una carpeta en Drive: la app tiene que
     // dibujarla igual, aunque nadie le haya puesto color ni foto.
-    expect(colorCategoria('Fiambres caseros')).toBe('hsl(258 12% 46%)');
+    expect(colorCategoria('Fiambres caseros')).toBe('var(--cat-otros)');
     expect(fotoCategoria('Fiambres caseros')).toBeNull();
   });
 

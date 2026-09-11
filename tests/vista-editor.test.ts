@@ -1,127 +1,141 @@
 import { describe, it, expect } from 'vitest';
-import { invalido } from './aserciones.js';
-import { parse } from '../src/recipe.js';
-import { renderEditor, recetaDesdeFormulario } from '../src/ui/editor.js';
+import { renderEditor, recetaDesdeFormulario, formularioDesde } from '../src/ui/editor.js';
+import { parse, serialize } from '../src/recipe.js';
+import { entradaFalsa } from './dobles.js';
+import type { Categoria } from '../src/store.js';
 
-const CATEGORIAS = [{ id: 'c1', nombre: 'Carnes' }, { id: 'c2', nombre: 'Postres' }];
-const RECETA = parse(`---\ntitulo: Milanesas\ndificultad: fácil\ntags: [horno, incompleto]\nautor_agente: claude\n---\n\n## Ingredientes\n- sal\n\n## Maridaje\nMalbec.\n`);
-const ENTRADA = { id_archivo: 'r1', carpeta_id: 'c1' };
+const categorias: Categoria[] = [
+  { id: 'c1', nombre: 'Carnes' }, { id: 'c2', nombre: 'Pescados y mariscos' }
+];
+
+const MD_REAL = `---
+titulo: Rabas
+tags: [fritura, rápido]
+rinde: 4 porciones
+fuente: Recetario original
+maridaje: tinto
+---
+
+Una entrada clásica.
+
+## Ingredientes
+- Calamar — 500 g
+
+## Preparación
+1. Lavar.
+
+## Maridaje
+Un tinto.
+`;
+
+const cargada = parse(MD_REAL);
+const dibujar = (extra = {}) => renderEditor({ entrada: null, receta: cargada, categorias, ...extra });
 
 describe('renderEditor', () => {
-  it('pone carpeta y dificultad como selectores', () => {
-    const html = renderEditor({ receta: RECETA, entrada: ENTRADA, categorias: CATEGORIAS });
-    expect(html).toContain('<select name="carpeta"');
-    expect(html).toContain('<select name="dificultad"');
-    expect(html).toContain('<option value="c1" selected');
+  it('hay un control por clave del frontmatter y el YAML no se ve', () => {
+    const html = dibujar();
+    for (const c of ['titulo', 'tags', 'rinde', 'tiempo', 'dificultad', 'fuente', 'foto']) {
+      expect(html).toContain(`name="${c}"`);
+    }
+    expect(html).not.toContain('---\ntitulo:');
   });
 
-  it('el resto del frontmatter va como texto', () => {
-    const html = renderEditor({ receta: RECETA, entrada: ENTRADA, categorias: CATEGORIAS });
-    expect(html).toContain('name="titulo"');
-    expect(html).toContain('name="rinde"');
-    expect(html).toContain('name="fuente"');
+  it('dificultad es una elección de tres', () => {
+    const html = dibujar();
+    for (const d of ['fácil', 'media', 'difícil']) expect(html).toContain(d);
   });
 
-  it('un textarea por sección del cuerpo, con el Markdown crudo', () => {
-    const html = renderEditor({ receta: RECETA, entrada: ENTRADA, categorias: CATEGORIAS });
+  it('la categoría son las subcarpetas, y la actual viene elegida', () => {
+    const html = renderEditor({
+      entrada: entradaFalsa({ carpeta_id: 'c2' }), receta: cargada, categorias
+    });
+    expect(html).toContain('Pescados y mariscos');
+    expect(html).toContain('value="c2" selected');
+  });
+
+  it('hay cinco campos de contenido, y los ingredientes son uno más', () => {
+    const html = dibujar();
     for (const s of ['descripcion', 'ingredientes', 'preparacion', 'variaciones', 'notas']) {
       expect(html).toContain(`name="${s}"`);
     }
-    expect(html).toContain('- sal');
+    expect(html.match(/name="ingredientes"/g)).toHaveLength(1);
   });
 
-  it('muestra Otras secciones solo cuando el archivo las trae', () => {
-    const con = renderEditor({ receta: RECETA, entrada: ENTRADA, categorias: CATEGORIAS });
-    expect(con).toContain('Otras secciones · 1');
-    expect(con).toContain('Malbec.');
-    const sin = renderEditor({ receta: parse('---\ntitulo: X\n---\n'), entrada: ENTRADA, categorias: CATEGORIAS });
-    expect(sin).not.toContain('Otras secciones');
+  it('lo que el editor no entiende no se muestra', () => {
+    const html = dibujar();
+    expect(html).not.toContain('maridaje: tinto');
+    expect(html).not.toContain('name="otra-0"');
   });
 
-  it('marca el tag incompleto de forma distinta', () => {
-    const html = renderEditor({ receta: RECETA, entrada: ENTRADA, categorias: CATEGORIAS });
-    expect(html).toMatch(/class="chip [^"]*incompleto[^"]*"[^>]*>incompleto/);
+  it('la casilla de completa está al pie', () => {
+    expect(dibujar()).toContain('Está completa así como está');
   });
 
-  it('normaliza dificultad inválida antes de comparar', () => {
-    const recetaInvalida = parse('---\ntitulo: X\ndificultad: imposible\n---\n');
-    const html = renderEditor({ receta: recetaInvalida, entrada: ENTRADA, categorias: CATEGORIAS });
-    // La opción vacía ("sin definir") debe tener selected
-    expect(html).toContain('<option value="" selected>sin definir</option>');
-    // Ninguna otra opción debe tener selected
-    expect(html).not.toMatch(/<option value="fácil"[^>]*selected/);
-    expect(html).not.toMatch(/<option value="media"[^>]*selected/);
-    expect(html).not.toMatch(/<option value="difícil"[^>]*selected/);
+  it('sin entrada no se ofrece borrar: el archivo todavía no existe', () => {
+    expect(dibujar()).not.toContain('data-accion="borrar"');
+    expect(renderEditor({ entrada: entradaFalsa(), receta: cargada, categorias }))
+      .toContain('data-accion="borrar"');
   });
 
-  it('ofrece borrar la receta', () => {
-    expect(renderEditor({ receta: RECETA, entrada: ENTRADA, categorias: CATEGORIAS })).toContain('data-accion="borrar"');
+  it('borrar pide confirmación y nombra la receta', () => {
+    const html = renderEditor({
+      entrada: entradaFalsa(), receta: cargada, categorias, confirmandoBorrado: true
+    });
+    expect(html).toContain('¿Borrar <b>Rabas</b>?');
+    expect(html).toContain('data-accion="borrar-confirmado"');
   });
 
-  it('sin entrada es el alta: dice "Nueva receta" y no ofrece borrar', () => {
-    const html = renderEditor({ receta: parse(''), entrada: null, categorias: CATEGORIAS });
-    expect(html).toContain('Nueva receta');
-    expect(html).not.toContain('Editar receta');
-    expect(html).not.toContain('data-accion="borrar"');
-  });
-
-  it('con entrada es la edición: dice "Editar receta"', () => {
-    const html = renderEditor({ receta: RECETA, entrada: ENTRADA, categorias: CATEGORIAS });
-    expect(html).toContain('Editar receta');
-  });
-
-  it('defendé: sin argumentos no lanza', () => {
-    expect(() => renderEditor()).not.toThrow();
-  });
-
-  it('defendé: null no lanza', () => {
-    expect(() => renderEditor(invalido(null))).not.toThrow();
-  });
-
-  it('defendé: receta sin campos no lanza', () => {
-    expect(() => renderEditor({ receta: invalido({}), entrada: ENTRADA, categorias: CATEGORIAS })).not.toThrow();
+  it('cuando falla, el aviso aparece y lo escrito sigue en pantalla', () => {
+    const html = dibujar({ error: 'No se pudo guardar.' });
+    expect(html).toContain('No se pudo guardar.');
+    expect(html).toContain(cargada.titulo!);
   });
 });
 
 describe('recetaDesdeFormulario', () => {
-  it('preserva extras y otras secciones que el formulario no toca', () => {
-    const r = recetaDesdeFormulario({ titulo: 'Nuevo', tags: 'horno', ingredientes: '- sal' }, RECETA);
-    expect(r.extras).toEqual({ autor_agente: 'claude' });
-    expect(r.otras).toEqual([{ encabezado: 'Maridaje', cuerpo: 'Malbec.' }]);
-    expect(r.titulo).toBe('Nuevo');
+  it('un campo vacío no escribe su clave', () => {
+    const r = recetaDesdeFormulario({ titulo: 'A', rinde: '', foto: '' }, parse(''));
+    expect(serialize(r)).not.toContain('rinde:');
+    expect(serialize(r)).not.toContain('foto:');
   });
 
-  it('parte los tags por coma y limpia espacios', () => {
-    const r = recetaDesdeFormulario({ titulo: 'X', tags: 'horno,  rápido ,' }, RECETA);
+  it('las claves y secciones desconocidas se conservan', () => {
+    const original = parse('---\ntitulo: A\nmaridaje: tinto\n---\n## Maridaje\nUn tinto.');
+    const nueva = recetaDesdeFormulario({ titulo: 'B' }, original);
+    const md = serialize(nueva);
+    expect(md).toContain('maridaje: tinto');
+    expect(md).toContain('## Maridaje');
+    expect(md).toContain('Un tinto.');
+  });
+
+  it('guardar sin tocar nada produce un archivo equivalente', () => {
+    const original = parse(MD_REAL);
+    expect(serialize(recetaDesdeFormulario(formularioDesde(original), original))).toBe(serialize(original));
+  });
+
+  it('marcar la casilla escribe completa: true', () => {
+    const r = recetaDesdeFormulario({ titulo: 'A', completa: 'on' }, parse('---\ntitulo: A\n---\n'));
+    expect(serialize(r)).toContain('completa: true');
+  });
+
+  it('desmarcar la casilla borra la clave, no escribe completa: false', () => {
+    const r = recetaDesdeFormulario({ titulo: 'A' }, parse('---\ntitulo: A\ncompleta: true\n---\n'));
+    expect(serialize(r)).not.toContain('completa');
+  });
+
+  it('el título vacío no borra el que había: es el único obligatorio', () => {
+    const r = recetaDesdeFormulario({ titulo: '' }, parse('---\ntitulo: A\n---\n'));
+    expect(r.titulo).toBe('A');
+  });
+
+  it('los tags se separan por coma y se limpian', () => {
+    const r = recetaDesdeFormulario({ titulo: 'A', tags: ' horno , , rápido ' }, parse(''));
     expect(r.tags).toEqual(['horno', 'rápido']);
   });
 
-  it('una dificultad inválida no se guarda', () => {
-    const r = recetaDesdeFormulario({ titulo: 'X', dificultad: 'regular' }, RECETA);
-    expect(r.dificultad).toBe('');
-  });
-
-  it('defendé: datos vacíos no lanza', () => {
-    expect(() => recetaDesdeFormulario({}, RECETA)).not.toThrow();
-  });
-
-  it('defendé: null no lanza', () => {
-    expect(() => recetaDesdeFormulario(null, RECETA)).not.toThrow();
-  });
-
-  it('defendé: receta original null no lanza', () => {
-    expect(() => recetaDesdeFormulario({}, null)).not.toThrow();
-  });
-
-  it('partiendo de una receta vacía (el alta), sin título en el formulario queda sin título', () => {
-    // Es la validación que usa main.js antes de llamar a store.crear(): si
-    // esto da falsy, no se crea nada y se avisa en vez de escribir "sin-titulo.md".
-    const r = recetaDesdeFormulario({ titulo: '  ' }, parse(''));
-    expect(r.titulo).toBeFalsy();
-  });
-
-  it('partiendo de una receta vacía, con título en el formulario lo toma', () => {
-    const r = recetaDesdeFormulario({ titulo: 'Guiso de lentejas' }, parse(''));
-    expect(r.titulo).toBe('Guiso de lentejas');
+  it('no corrige la convención de los ingredientes: los guarda tal cual', () => {
+    const texto = '- Sal, pimienta\n-   Aceite para freír';
+    const r = recetaDesdeFormulario({ titulo: 'A', ingredientes: texto }, parse(''));
+    expect(r.ingredientes).toBe(texto);
   });
 });

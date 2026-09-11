@@ -1,12 +1,11 @@
 import { NOMBRE_RAIZ, NOMBRE_INDICE, SCHEMA_VERSION } from './config.js';
-import { COLUMNAS, entradaDesdeFila, diffCambios, filaDesde } from './catalogo.js';
+import { COLUMNAS, entradaDesdeFila, filaDesde } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 import type { Drive } from './drive.js';
 import type { Sheets } from './sheets.js';
-import type { Cache } from './cache.js';
 import type {
-  Receta, Ubicacion, Entrada, Filtros, Coincidencias, ArchivoDrive
+  Receta, Ubicacion, Entrada, Filtros, Coincidencia, Coincidencias, ArchivoDrive
 } from './tipos.js';
 
 const CATEGORIA_RAIZ = 'Sin categorizar';
@@ -63,9 +62,8 @@ export interface Progreso {
  * implementar de más para satisfacer al compilador.
  */
 export type DriveDelStore = Pick<Drive,
-  'buscarPorNombre' | 'listarCarpetas' | 'listarHijos' | 'metadatos' | 'leerTexto' |
-  'crear' | 'actualizar' | 'renombrar' | 'mover' | 'borrar' |
-  'tokenInicialDeCambios' | 'cambios'>;
+  'buscarPorNombre' | 'listarCarpetas' | 'listarHijos' | 'leerTexto' |
+  'crear' | 'actualizar' | 'renombrar' | 'mover' | 'borrar'>;
 
 export type SheetsDelStore = Pick<Sheets,
   'leer' | 'escribir' | 'append' | 'agregarHoja' | 'borrarFila' | 'borrarFilas' |
@@ -74,10 +72,9 @@ export type SheetsDelStore = Pick<Sheets,
 export interface Dependencias {
   drive: DriveDelStore;
   sheets: SheetsDelStore;
-  cache: Cache;
 }
 
-export function crearStore({ drive, sheets, cache }: Dependencias) {
+export function crearStore({ drive, sheets }: Dependencias) {
   const ctx: Contexto = {
     raizId: '', indiceId: '', categorias: [], carpetas: new Map(),
     soloLectura: false, ultimaReconstruccionEnMemoria: ''
@@ -109,9 +106,8 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
 
       await sheets.escribir(archivo.id, `${HOJA_RECETAS}!A1:${ULTIMA_COLUMNA}1`, [[...COLUMNAS]]);
       await sheets.agregarHoja(archivo.id, HOJA_META);
-      await sheets.escribir(archivo.id, `${HOJA_META}!A1:B3`, [
+      await sheets.escribir(archivo.id, `${HOJA_META}!A1:B2`, [
         ['schemaVersion', String(SCHEMA_VERSION)],
-        ['changesPageToken', ''],
         ['ultima_reconstruccion', '']
       ]);
       return archivo.id;
@@ -205,8 +201,6 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
     const cuerpo = crudo.slice(1);  // la fila 1 son los encabezados
     entradas = cuerpo.map(entradaDesdeFila).filter(e => e.id_archivo);
     filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
-    await cache.guardarIndice(entradas);
-    await cache.guardarMapaFilas(filas);
     return entradas;
   }
 
@@ -234,100 +228,17 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
       // El corrimiento es determinístico: no hace falta releer nada (§4.3).
       for (const [otroId, otraFila] of filas) if (otraFila > nro) filas.set(otroId, otraFila - 1);
     }
-
-    // Sacar de la cola cualquier operación pendiente de este id.
-    const cola = await cache.leerCola();
-    const filtrada = cola.filter(op => op.id !== id);
-    await cache.vaciarCola();
-    for (const op of filtrada) {
-      await cache.encolar(op);
-    }
-
-    // Como todas las demás mutaciones del mapa de filas, persistirlo.
-    await cache.guardarMapaFilas(filas);
   }
-
-  async function sync() {
-    const meta = await leerMeta();
-    let pageToken = meta['changesPageToken'] ?? '';
-    if (!pageToken) {
-      // Drive puede no devolverlo. Guardar `undefined` acá dejaba la cadena
-      // "undefined" en la hoja meta, que en el próximo arranque parece un
-      // token válido y hace fallar el primer sync.
-      pageToken = (await drive.tokenInicialDeCambios()) ?? '';
-      if (!pageToken) throw new Error('Drive no devolvió el token inicial de cambios');
-      await guardarMeta('changesPageToken', pageToken);
-    }
-
-    const { changes = [], newStartPageToken } = await drive.cambios(pageToken);
-    const indice = new Map(entradas.map(e => [e.id_archivo, e]));
-    const plan = diffCambios(changes, { indice, carpetas: ctx.carpetas });
-
-    let ignoradosSinTitulo = 0;
-
-    for (const ubicacion of plan.releer) {
-      const texto = await drive.leerTexto(ubicacion.id);
-      const receta = parse(texto);
-      if (!receta.titulo) { ignoradosSinTitulo++; continue; }
-      await cache.guardarCuerpo(ubicacion.id, texto);
-      await escribirFila(receta, ubicacion);
-      const entrada = entradaDesdeFila(filaDesde(receta, ubicacion));
-      entradas = [...entradas.filter(e => e.id_archivo !== ubicacion.id), entrada];
-    }
-
-    for (const ubicacion of plan.parchear) {
-      const entrada = indice.get(ubicacion.id);
-      // Sin entrada previa no hay nada que parchear: `parchear` significa
-      // "cambió el nombre o la carpeta de algo que ya estaba indexado".
-      if (!entrada) continue;
-      const actualizada: Entrada = {
-        ...entrada,
-        nombre_archivo: ubicacion.nombre_archivo,
-        categoria: ubicacion.categoria,
-        carpeta_id: ubicacion.carpeta_id
-      };
-      entradas = entradas.map(e => e.id_archivo === ubicacion.id ? actualizada : e);
-      const nro = filas.get(ubicacion.id);
-      if (nro) {
-        const fila = COLUMNAS.map(c => {
-          const v = actualizada[c];
-          return Array.isArray(v) ? v.join('|') : String(v ?? '');
-        });
-        await sheets.escribir(ctx.indiceId, rangoDeFila(nro), [fila]);
-      }
-    }
-
-    for (const id of plan.borrar) await borrarDelIndice(id);
-
-    if (newStartPageToken) await guardarMeta('changesPageToken', newStartPageToken);
-    await cache.guardarIndice(entradas);
-    await cache.guardarMapaFilas(filas);
-
-    return { releidos: plan.releer.length - ignoradosSinTitulo, parcheados: plan.parchear.length, borrados: plan.borrar.length, ignoradosSinTitulo };
-  }
-
-  /** Lo que devuelve `guardar`: se escribió, o hay conflicto con lo remoto. */
-  type ResultadoGuardar =
-    | { ok: true }
-    | { ok: false; conflicto: { remoto: number; local: number } };
 
   async function guardar(
     id: string,
     receta: Receta,
     { carpetaDestino }: { carpetaDestino?: string | undefined } = {}
-  ): Promise<ResultadoGuardar> {
+  ): Promise<void> {
     const entrada = entradas.find(e => e.id_archivo === id);
-    const meta = await drive.metadatos(id);
-    const remoto = Date.parse(meta.modifiedTime ?? '') || 0;
-
-    // No se pisa lo que cambió afuera: Drive no tiene escritura condicional (§8).
-    if (entrada && remoto && entrada.mtime && remoto !== entrada.mtime) {
-      return { ok: false, conflicto: { remoto, local: entrada.mtime } };
-    }
 
     const texto = serialize(receta);
     const actualizado = await drive.actualizar(id, texto);
-    await cache.guardarCuerpo(id, texto);
 
     let carpeta_id = entrada?.carpeta_id ?? ctx.raizId;
     if (carpetaDestino && carpetaDestino !== carpeta_id) {
@@ -337,7 +248,7 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
 
     const ubicacion: Ubicacion = {
       id,
-      nombre_archivo: entrada?.nombre_archivo ?? meta.name ?? '',
+      nombre_archivo: entrada?.nombre_archivo ?? '',
       categoria: ctx.carpetas.get(carpeta_id) ?? CATEGORIA_RAIZ,
       carpeta_id,
       mtime: Date.parse(actualizado.modifiedTime ?? '') || Date.now()
@@ -345,9 +256,7 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
 
     const nueva = entradaDesdeFila(filaDesde(receta, ubicacion));
     entradas = [...entradas.filter(e => e.id_archivo !== id), nueva];
-    await cache.guardarIndice(entradas);
-    await cache.encolar({ tipo: 'fila', id, fila: filaDesde(receta, ubicacion) });
-    return { ok: true };
+    await escribirFila(receta, ubicacion);
   }
 
   async function crear(
@@ -366,39 +275,20 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
       carpeta_id: padre, mtime: Date.parse(archivo.modifiedTime ?? '') || Date.now()
     };
     entradas = [...entradas, entradaDesdeFila(filaDesde(receta, ubicacion))];
-    await cache.guardarCuerpo(archivo.id, texto);
-    await cache.guardarIndice(entradas);
-    await cache.encolar({ tipo: 'fila', id: archivo.id, fila: filaDesde(receta, ubicacion) });
+    await escribirFila(receta, ubicacion);
     return { id: archivo.id, nombre_archivo: nombre };
   }
 
   async function borrar(id: string): Promise<void> {
     await drive.borrar(id);
     await borrarDelIndice(id);
-    await cache.guardarIndice(entradas);
   }
 
-  async function flush(): Promise<void> {
-    const cola = await cache.leerCola();
-    for (const op of cola) {
-      if (op.tipo !== 'fila') continue;
-      const nro = filas.get(op.id);
-      if (nro) await sheets.escribir(ctx.indiceId, rangoDeFila(nro), [op.fila]);
-      else {
-        await sheets.append(ctx.indiceId, HOJA_RECETAS, [op.fila]);
-        filas.set(op.id, filas.size + 2);
-      }
-    }
-    await cache.vaciarCola();
-    await cache.guardarMapaFilas(filas);
-  }
-
-  async function reconstruir(alProgresar: (p: Progreso) => void = () => {}): Promise<{ indexadas: number; ignoradasSinTitulo: number }> {
+  async function reconstruir(alProgresar: (p: Progreso) => void = () => {}): Promise<{ indexadas: number; ignorados: string[] }> {
     // Defender el parámetro: si no es función, ignorar.
     if (typeof alProgresar !== 'function') alProgresar = () => {};
 
     await guardarMeta('reconstruccion_en_curso', 'si');
-    await cache.vaciarCola();   // cada op es redundante: el .md ya está en Drive (§5.3)
 
     const lugares = [
       { id: ctx.raizId, categoria: CATEGORIA_RAIZ },
@@ -416,14 +306,16 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
     }
 
     const nuevas: string[][] = [];
-    let ignoradasSinTitulo = 0;
+    // Por nombre y no un conteo: un archivo que se salteó hay que poder
+    // encontrarlo en Drive (C05.5.2).
+    const ignorados: string[] = [];
     let leidas = 0;
     for (const { archivo, lugar } of pendientes) {
       const texto = await drive.leerTexto(archivo.id);
       leidas++;
       alProgresar({ leidas, total: pendientes.length });
       const receta = parse(texto);
-      if (!receta.titulo) { ignoradasSinTitulo++; continue; }
+      if (!receta.titulo) { ignorados.push(archivo.name ?? archivo.id); continue; }
       nuevas.push(filaDesde(receta, {
         id: archivo.id, nombre_archivo: archivo.name ?? '',
         categoria: lugar.categoria, carpeta_id: lugar.id,
@@ -448,16 +340,17 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
 
     entradas = nuevas.map(entradaDesdeFila);
     filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
-    await cache.guardarIndice(entradas);
-    await cache.guardarMapaFilas(filas);
 
-    await guardarMeta('changesPageToken', (await drive.tokenInicialDeCambios()) ?? '');
     const ahora = new Date().toISOString();
+    // La versión del esquema se escribe acá y no solo al crear la planilla:
+    // subirla es lo que fuerza la reconstrucción, y si al terminar no queda
+    // anotada, el próximo arranque vuelve a reconstruir para siempre.
+    await guardarMeta('schemaVersion', String(SCHEMA_VERSION));
     await guardarMeta('ultima_reconstruccion', ahora);
     ctx.ultimaReconstruccionEnMemoria = ahora;
     await guardarMeta('reconstruccion_en_curso', '');
 
-    return { indexadas: entradas.length, ignoradasSinTitulo };
+    return { indexadas: entradas.length, ignorados };
   }
 
   function buscar(filtros?: Filtros | unknown): Entrada[] {
@@ -487,19 +380,32 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
   }
 
   /**
-   * Busca por texto separando el motivo de la coincidencia. El motor ya
-   * matcheaba título e ingrediente, pero devolvía una lista plana: buscabas
-   * "berenjena" y no sabías por qué había aparecido cada resultado.
+   * Busca por texto con los tres criterios —título, ingredientes y tags— y
+   * separa por cuál coincidió (C02.3.1). Tres pasadas sin `else`: una receta
+   * que coincide por dos entra en los dos grupos, que es lo que fija C02.3.2.
+   *
+   * El motivo cita el valor **tal como está escrito**: la normalización es de
+   * la comparación, no del texto que se muestra (C02.3.4).
    */
   function buscarPorTexto(texto: unknown): Coincidencias {
     const t = normalizar(String(texto ?? ''));
-    if (!t) return { porNombre: [], porIngrediente: [] };
-    const porNombre: Entrada[] = [], porIngrediente: Entrada[] = [];
+    if (!t) return { porNombre: [], porIngrediente: [], porTag: [] };
+
+    const porNombre: Entrada[] = [];
+    const porIngrediente: Coincidencia[] = [];
+    const porTag: Coincidencia[] = [];
+
     for (const e of entradas) {
       if (normalizar(e.titulo).includes(t)) porNombre.push(e);
-      else if (e.ingredientes.some(i => normalizar(i).includes(t))) porIngrediente.push(e);
+
+      const ingrediente = e.ingredientes.find(i => normalizar(i).includes(t));
+      if (ingrediente) porIngrediente.push({ entrada: e, motivo: `tiene ${ingrediente}` });
+
+      const tag = e.tags.find(x => normalizar(x).includes(t));
+      if (tag) porTag.push({ entrada: e, motivo: `lleva ${tag}` });
     }
-    return { porNombre, porIngrediente };
+
+    return { porNombre, porIngrediente, porTag };
   }
 
   function categoriasConConteo(): { id: string; nombre: string; cantidad: number }[] {
@@ -526,13 +432,12 @@ export function crearStore({ drive, sheets, cache }: Dependencias) {
 
   async function receta(id: string): Promise<{ entrada: Entrada | null; receta: Receta; texto: string }> {
     const entrada = entradas.find(e => e.id_archivo === id) ?? null;
-    let texto = await cache.leerCuerpo(id);
-    if (texto === null) {
-      texto = await drive.leerTexto(id);
-      await cache.guardarCuerpo(id, texto);
-    }
+    const texto = await drive.leerTexto(id);
     return { entrada, receta: parse(texto), texto };
   }
 
-  return { arrancar, cargarIndice, sync, entradas: () => entradas, guardarMeta, ultimaReconstruccion, guardar, crear, borrar, flush, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, _ctx: ctx };
+  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, escribirFila, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, _ctx: ctx };
 }
+
+/** El objeto que devuelve `crearStore`. Lo consumen `compartido`, `main` y los tests. */
+export type Store = ReturnType<typeof crearStore>;

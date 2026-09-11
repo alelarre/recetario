@@ -1,6 +1,5 @@
 import { COLUMNAS } from '../src/catalogo.js';
 import type { PropiedadesHoja } from '../src/sheets.js';
-import type { RespuestaCambios } from '../src/drive.js';
 import type { Entrada, Receta } from '../src/tipos.js';
 import { parse } from '../src/recipe.js';
 import type { DriveDelStore, SheetsDelStore } from '../src/store.js';
@@ -89,14 +88,7 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       a.parents = [destino, ...(a.parents ?? []).filter(p => p !== de && p !== destino)].slice(0, 1);
       return a;
     },
-    async borrar(id: string) { store.delete(id); return ''; },
-    async tokenInicialDeCambios() { return '100'; },
-    // El tipo de retorno va explícito: sin él TS infiere `changes: never[]`
-    // desde el arreglo vacío, y los tests que reemplazan este método por uno
-    // que sí devuelve cambios dejan de compilar.
-    async cambios(token: string): Promise<RespuestaCambios> {
-      return { changes: [], newStartPageToken: String(Number(token) + 1) };
-    }
+    async borrar(id: string) { store.delete(id); return ''; }
   } satisfies DriveUsado & Record<string, unknown>;
 
   /** Los mutadores del doble asumen que el archivo existe: si no, es un test mal armado. */
@@ -114,20 +106,43 @@ type SheetsUsado = SheetsDelStore;
 /** Las hojas de una planilla falsa: nombre de hoja → filas. */
 type PlanillaFalsa = Record<string, string[][]>;
 
+/** Un envío a la planilla falsa: una llamada a `escribir` o a `append`. */
+export interface EscrituraFalsa {
+  id: string;
+  hoja: string;
+  valores: string[][];
+}
+
+/** Una fila que se sacó de la planilla falsa, con la hoja de la que salió. */
+export interface FilaBorrada {
+  id: string;
+  hoja: string;
+  fila: number;
+}
+
 /** Sheets falso: una planilla es un objeto {hojas: {nombre: filas[][]}}. */
 export function sheetsFalso() {
   const planillas = new Map<string, PlanillaFalsa>();
   // Mapeo de id → lista de hojas con sus metadatos {sheetId, title}
   const hojasMetadatos = new Map<string, PropiedadesHoja[]>();
+  const escrituras: EscrituraFalsa[] = [];
+  const appends: EscrituraFalsa[] = [];
+  const filasBorradas: FilaBorrada[] = [];
 
   // La app crea la planilla con drive.crear y después le escribe: el doble tiene
   // que aceptar una escritura sobre un id que todavía no vio. Cuando se crea una
   // planilla nueva, tiene una hoja por defecto llamada 'Sheet1', no 'recetas'.
-  /** Borrar filas de una planilla que no existe es un test mal armado, no un caso real. */
-  const exigirRecetas = (id: string): string[][] => {
-    const recetas = planillas.get(id)?.['recetas'];
-    if (!recetas) throw new Error(`El doble de Sheets no tiene la hoja recetas en ${id}`);
-    return recetas;
+  /**
+   * La hoja que un `sheetId` nombra, igual que en la API real: borrar filas se
+   * pide por id de hoja, no por nombre. Que la planilla o la hoja no existan es
+   * un test mal armado, no un caso real.
+   */
+  const exigirHoja = (id: string, hojaId: number): { titulo: string; filas: string[][] } => {
+    const titulo = (hojasMetadatos.get(id) ?? []).find(h => h.sheetId === hojaId)?.title;
+    if (!titulo) throw new Error(`El doble de Sheets no tiene la hoja ${hojaId} en ${id}`);
+    const filas = planillas.get(id)?.[titulo];
+    if (!filas) throw new Error(`El doble de Sheets no tiene la hoja ${titulo} en ${id}`);
+    return { titulo, filas };
   };
 
   const asegurar = (id: string): PlanillaFalsa => {
@@ -140,16 +155,30 @@ export function sheetsFalso() {
     return p;
   };
 
-  return {
+  const api = {
     _planillas: planillas,
     _hojasMetadatos: hojasMetadatos,
+    escrituras,
+    appends,
+    filasBorradas,
+    /**
+     * Gancho opcional para simular la confirmación de Sheets: si está,
+     * `escribir` y `append` lo esperan antes de tocar la planilla. Sirve para
+     * probar que `guardar()` no termina hasta que Sheets confirmó (Tarea 6:
+     * la escritura de la fila es sincrónica, sin cola) y que un error acá se
+     * propaga en vez de quedar encolado en algún lado.
+     */
+    alEscribir: undefined as (() => Promise<void>) | undefined,
 
-    crearPlanilla(id: string) {
-      planillas.set(id, { recetas: [], meta: [] });
-      hojasMetadatos.set(id, [
-        { sheetId: 0, title: 'recetas' },
-        { sheetId: 1, title: 'meta' }
-      ]);
+    crearPlanilla(id: string, hojas: string[] = ['recetas', 'meta']) {
+      planillas.set(id, Object.fromEntries(hojas.map(h => [h, [] as string[][]])));
+      hojasMetadatos.set(id, hojas.map((title, sheetId) => ({ sheetId, title })));
+    },
+
+    /** Deja filas puestas sin pasar por `escribir`: es fixture, no escritura. */
+    cargar(id: string, hoja: string, filas: string[][]) {
+      const p = asegurar(id);
+      p[hoja] = filas.map(f => [...f]);
     },
 
     async leer(id: string, rango: string) {
@@ -158,7 +187,9 @@ export function sheetsFalso() {
     },
 
     async escribir(id: string, rango: string, valores: string[][]) {
+      if (api.alEscribir) await api.alEscribir();
       const [hoja = '', celdas = ''] = rango.split('!');
+      escrituras.push({ id, hoja, valores });
       const fila = Number(celdas.match(/\d+/)?.[0] ?? 0);
       const p = asegurar(id);
       const destino = p[hoja] ?? (p[hoja] = []);
@@ -167,6 +198,9 @@ export function sheetsFalso() {
     },
 
     async append(id: string, hoja: string, filas: string[][]) {
+      if (api.alEscribir) await api.alEscribir();
+      escrituras.push({ id, hoja, valores: filas });
+      appends.push({ id, hoja, valores: filas });
       const p = asegurar(id);
       (p[hoja] ?? (p[hoja] = [])).push(...filas);
     },
@@ -179,15 +213,20 @@ export function sheetsFalso() {
       hojasMetadatos.set(id, hojas);
     },
 
-    async borrarFila(id: string, _hojaId: number, fila: number) {
-      exigirRecetas(id).splice(fila - 1, 1);
+    async borrarFila(id: string, hojaId: number, fila: number) {
+      const hoja = exigirHoja(id, hojaId);
+      hoja.filas.splice(fila - 1, 1);
+      filasBorradas.push({ id, hoja: hoja.titulo, fila });
     },
 
-    async borrarFilas(id: string, _hojaId: number, filas: number[]) {
-      const recetas = exigirRecetas(id);
+    async borrarFilas(id: string, hojaId: number, filas: number[]) {
+      const hoja = exigirHoja(id, hojaId);
       // Mismo contrato que la API real: de mayor a menor, para que cada
       // índice siga siendo válido según se van sacando filas.
-      for (const fila of filas) recetas.splice(fila - 1, 1);
+      for (const fila of filas) {
+        hoja.filas.splice(fila - 1, 1);
+        filasBorradas.push({ id, hoja: hoja.titulo, fila });
+      }
     },
 
     async hojas(id: string) {
@@ -210,6 +249,8 @@ export function sheetsFalso() {
       }
     }
   } satisfies SheetsUsado & Record<string, unknown>;
+
+  return api;
 }
 
 export const COLUMNAS_ESPERADAS = COLUMNAS;
@@ -230,7 +271,7 @@ export function entradaFalsa(parcial: Partial<Entrada> = {}): Entrada {
   return {
     id_archivo: '', nombre_archivo: '', titulo: '', categoria: '', carpeta_id: '',
     rinde: '', tiempo: '', dificultad: '', fuente: '',
-    tags: [], ingredientes: [], mtime: 0,
+    tags: [], ingredientes: [], mtime: 0, foto: '', completa: false,
     ...parcial
   };
 }

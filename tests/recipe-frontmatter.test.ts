@@ -70,6 +70,44 @@ describe('parse — frontmatter', () => {
     expect(r.rinde).toBeNull();
     expect(r.avisos).toContain('frontmatter-ilegible');
   });
+
+  it('lee las ocho claves', () => {
+    const r = parse(`---
+titulo: Milanesas
+tags: [horno, rápido]
+rinde: 4 porciones
+tiempo: 40 min
+dificultad: fácil
+fuente: Cuaderno de mamá, p. 12
+foto: https://ejemplo/foto.jpg
+completa: true
+---
+`);
+    expect(r).toMatchObject({
+      titulo: 'Milanesas', rinde: '4 porciones', tiempo: '40 min',
+      dificultad: 'fácil', fuente: 'Cuaderno de mamá, p. 12',
+      foto: 'https://ejemplo/foto.jpg', completa: true
+    });
+  });
+
+  it('una clave ausente llega como null, no como cadena vacía', () => {
+    const r = parse('---\ntitulo: Sopa\n---\n');
+    expect(r.foto).toBe(null);
+    expect(r.completa).toBe(false);
+  });
+
+  it('`completa: false` y la clave ausente son lo mismo', () => {
+    expect(parse('---\ntitulo: A\ncompleta: false\n---\n').completa).toBe(false);
+    expect(parse('---\ntitulo: A\n---\n').completa).toBe(false);
+  });
+
+  it('una foto que no es una URL se conserva igual', () => {
+    expect(parse('---\ntitulo: A\nfoto: no-es-url\n---\n').foto).toBe('no-es-url');
+  });
+
+  it('dificultad fuera de las tres se muestra tal cual, sin corregir', () => {
+    expect(parse('---\ntitulo: A\ndificultad: imposible\n---\n').dificultad).toBe('imposible');
+  });
 });
 
 describe('normalizar', () => {

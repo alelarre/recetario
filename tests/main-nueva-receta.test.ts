@@ -13,25 +13,22 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
-vi.mock('../src/ui/app.css', () => ({}));
+vi.mock('../src/ui/base.css', () => ({}));
 vi.mock('../src/auth.js', () => ({
   crearAuth: () => ({ conectar: async () => {}, token: async () => 'tok', olvidar: () => {} })
 }));
 vi.mock('../src/drive.js', () => ({ crearDrive: () => ({}) }));
 vi.mock('../src/sheets.js', () => ({ crearSheets: () => ({}) }));
-vi.mock('../src/cache.js', () => ({ abrirCache: async () => ({}) }));
 
 const storeFake = {
   arrancar: async () => ({ estado: 'listo', reconstruir: false, categorias: [{ id: 'c1', nombre: 'Carnes' }] }),
   cargarIndice: async () => [],
-  sync: async () => ({}),
   guardarMeta: async () => {},
   ultimaReconstruccion: () => '',
   crear: async () => ({ id: 'nuevo-id', nombre_archivo: 'x.md' }),
   entradas: () => [],
   categoriasConConteo: () => [],
   receta: async () => ({ entrada: null, receta: null }),
-  flush: async () => {},
   buscar: () => [],
   tagsDe: () => []
 };

@@ -97,4 +97,20 @@ describe('serialize', () => {
     expect(texto).toContain('## Maridaje');
     expect(texto).toContain('## Técnica');
   });
+
+  it('escribe foto y completa cuando están', () => {
+    const md = serialize({ titulo: 'A', foto: 'https://x/y.jpg', completa: true });
+    expect(md).toContain('foto: https://x/y.jpg');
+    expect(md).toContain('completa: true');
+  });
+
+  it('nunca escribe `completa: false`', () => {
+    expect(serialize({ titulo: 'A', completa: false })).not.toContain('completa');
+  });
+
+  it('un campo vacío no deja la clave en el frontmatter', () => {
+    const md = serialize({ titulo: 'A', foto: null, rinde: '' });
+    expect(md).not.toContain('foto:');
+    expect(md).not.toContain('rinde:');
+  });
 });

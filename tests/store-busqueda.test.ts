@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { crearStore } from '../src/store.js';
-import { crearCacheMemoria } from '../src/cache.js';
 import { driveFalso, sheetsFalso } from './dobles.js';
-import type { DriveFalso, SheetsFalso } from './dobles.js';
-import type { Cache } from '../src/cache.js';
+import type { SheetsFalso } from './dobles.js';
 import { COLUMNAS } from '../src/catalogo.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
@@ -29,9 +27,9 @@ beforeEach(async () => {
   await sheets.append('i1', 'recetas', [
     fila('r1', 'Milanesas napolitanas', 'Carnes', 'c1', 'horno|rápido', 'muzzarella|nalga', 'fácil'),
     fila('r2', 'Bife de chorizo', 'Carnes', 'c1', 'parrilla', 'bife', 'fácil'),
-    fila('r3', 'Flan casero', 'Postres', 'c2', 'incompleto', 'huevo|leche', 'media')
+    fila('r3', 'Flan casero', 'Postres', 'c2', 'dulce', 'huevo|leche', 'media')
   ]);
-  store = crearStore({ drive, sheets, cache: crearCacheMemoria() });
+  store = crearStore({ drive, sheets });
   await store.arrancar();
   await store.cargarIndice();
 });
@@ -67,8 +65,10 @@ describe('buscar', () => {
     expect(store.buscar({ categoria: 'Carnes', tags: ['rápido'] }).map(e => e.id_archivo)).toEqual(['r1']);
   });
 
-  it('lista lo que falta terminar filtrando por incompleto', () => {
-    expect(store.buscar({ tags: ['incompleto'] }).map(e => e.id_archivo)).toEqual(['r3']);
+  it('el filtro por tag no conoce ningún tag en particular', () => {
+    // El tag manual `incompleto` se fue con el rediseño: la completitud se
+    // deriva al leer el .md (C05.3.1) y el filtro es de tags cualesquiera.
+    expect(store.buscar({ tags: ['dulce'] }).map(e => e.id_archivo)).toEqual(['r3']);
   });
 
   it('no lanza con argumentos inválidos', () => {
@@ -87,6 +87,61 @@ describe('buscar', () => {
     // Todos los valores null devuelven el índice entero
     expect(store.buscar({ texto: null, categoria: null, dificultad: null })).toHaveLength(3);
     expect(store.buscar({ texto: undefined, categoria: undefined })).toHaveLength(3);
+  });
+});
+
+describe('buscarPorTexto: los tres criterios', () => {
+  beforeEach(async () => {
+    // Un fixture propio: lo que importa acá es que el mismo texto coincida por
+    // título, por ingrediente y por tag, y en recetas distintas.
+    await sheets.append('i1', 'recetas', [
+      fila('f-filet', 'Filet de merluza a la romana', 'Carnes', 'c1', 'frito', 'Merluza o pescadilla|Pan rallado'),
+      fila('f-gratin', 'Gratin de papas', 'Carnes', 'c1', 'horno', 'Merluza o pescadilla|Papa'),
+      fila('f-caballa', 'Caballa a la sidra', 'Carnes', 'c1', 'merluza', 'Caballa'),
+      fila('f-pure', 'Puré de papas', 'Carnes', 'c1', '', 'Papa|Leche')
+    ]);
+    await store.cargarIndice();
+  });
+
+  it('busca en título, ingredientes y tags, y separa los tres grupos', () => {
+    const g = store.buscarPorTexto('merluza');
+    expect(g.porNombre.map(e => e.titulo)).toEqual(['Filet de merluza a la romana']);
+    expect(g.porIngrediente[0]?.motivo).toBe('tiene Merluza o pescadilla');
+    expect(g.porTag).toHaveLength(1);
+  });
+
+  it('no distingue mayúsculas ni acentos, en los dos sentidos', () => {
+    expect(store.buscarPorTexto('PURE').porNombre.map(e => e.titulo)).toContain('Puré de papas');
+    expect(store.buscarPorTexto('puré').porNombre.map(e => e.titulo)).toContain('Puré de papas');
+  });
+
+  it('una receta que coincide por dos criterios aparece en los dos grupos', () => {
+    const g = store.buscarPorTexto('merluza');
+    const enNombre = g.porNombre.some(e => e.id_archivo === 'f-filet');
+    const enIngrediente = g.porIngrediente.some(r => r.entrada.id_archivo === 'f-filet');
+    expect(enNombre && enIngrediente).toBe(true);
+  });
+
+  it('el motivo cita el ingrediente tal como está escrito', () => {
+    expect(store.buscarPorTexto('merluza').porIngrediente[0]?.motivo).toContain('Merluza o pescadilla');
+  });
+
+  it('el motivo del tag dice que lo lleva', () => {
+    expect(store.buscarPorTexto('merluza').porTag[0]?.motivo).toBe('lleva merluza');
+  });
+
+  it('no busca en la descripción, en los pasos ni en las notas', () => {
+    // Nada de eso está en la fila del índice: buscar mil recetas no lee mil .md.
+    expect(store.buscarPorTexto('domingos').porNombre).toHaveLength(0);
+  });
+
+  it('la caja vacía no devuelve nada', () => {
+    expect(store.buscarPorTexto('')).toEqual({ porNombre: [], porIngrediente: [], porTag: [] });
+  });
+
+  it('no lanza con argumentos inválidos', () => {
+    expect(store.buscarPorTexto(null)).toEqual({ porNombre: [], porIngrediente: [], porTag: [] });
+    expect(() => store.buscarPorTexto(42)).not.toThrow();
   });
 });
 

@@ -16,8 +16,9 @@
  *   resuelve en el borde.
  */
 
-/** Las seis claves del frontmatter (§3.2). El esquema es cerrado. */
-export type ClaveFrontmatter = 'titulo' | 'tags' | 'rinde' | 'tiempo' | 'dificultad' | 'fuente';
+/** Las ocho claves del frontmatter (IA §1.5). El esquema es cerrado. */
+export type ClaveFrontmatter =
+  'titulo' | 'tags' | 'rinde' | 'tiempo' | 'dificultad' | 'fuente' | 'foto' | 'completa';
 
 /** Las cuatro secciones que la app entiende; el resto cae en `otras`. */
 export type ClaveSeccion = 'ingredientes' | 'preparacion' | 'variaciones' | 'notas';
@@ -46,7 +47,10 @@ export interface Receta {
   tiempo: string | null;
   dificultad: string | null;
   fuente: string | null;
-  /** Claves del frontmatter que no son las seis. Se preservan al guardar. */
+  foto: string | null;
+  /** Solo se escribe para forzar `true`; la app nunca escribe `false` (C05.3.2). */
+  completa: boolean;
+  /** Claves del frontmatter que no son las ocho. Se preservan al guardar. */
   extras: Record<string, string>;
   descripcion: string;
   ingredientes: string;
@@ -57,13 +61,35 @@ export interface Receta {
   avisos: Aviso[];
 }
 
-/** Un ingrediente parseado. Best-effort a propósito (§3.2). */
+/**
+ * Un ingrediente parseado: nombre primero, cantidad después del separador
+ * (C05.1.3). La cantidad es texto libre y no se normaliza nunca.
+ */
 export interface Ingrediente {
+  nombre: string;
+  /** `null` cuando el ítem no traía separador: es un ingrediente sin cantidad. */
   cantidad: string | null;
-  unidad: string | null;
-  item: string;
-  /** La línea tal como vino. Es lo que se dibuja: el parseo es para indexar. */
+  /** La línea tal como vino. */
   crudo: string;
+}
+
+/** Un `###` dentro de `## Ingredientes` (C05.1.2). Sin `###`, un grupo sin nombre. */
+export interface GrupoIngredientes {
+  nombre: string;
+  items: Ingrediente[];
+}
+
+/** Un `###` dentro de `## Preparación`. La numeración vuelve a empezar en cada uno. */
+export interface TramoPreparacion {
+  nombre: string;
+  pasos: string[];
+}
+
+/** Un `###` dentro de `## Variaciones`, con su fuente propia si la trae (IA §1.8). */
+export interface Variacion {
+  nombre: string;
+  fuente: string | null;
+  cuerpo: string;
 }
 
 /** Dónde vive un `.md` en Drive. La carpeta es la categoría (§3.1). */
@@ -97,6 +123,23 @@ export interface Entrada {
   tags: string[];
   ingredientes: string[];
   mtime: number;
+  /** URL externa, o cadena vacía. Se dibuja donde esté (IA §1.7). */
+  foto: string;
+  /** Derivada al leer el `.md` (C05.3.1). Es cache: el archivo gana (R4). */
+  completa: boolean;
+}
+
+/**
+ * Una fila de la planilla de Borradores. No entra al índice: es una cola de
+ * trabajo, no un archivo consolidado (IA §2.1).
+ */
+export interface Borrador {
+  id: string;
+  titulo: string;
+  /** Texto libre: una URL o "libro de pescados, pág. 84". No se edita (C01.6.1). */
+  fuente: string;
+  /** ISO. El orden de la lista es por acá, lo más viejo primero. */
+  capturado: string;
 }
 
 /** Los filtros de la vista de categoría. Todos opcionales y combinables. */
@@ -107,13 +150,23 @@ export interface Filtros {
   tags?: string[] | null;
 }
 
+/** Una coincidencia que necesita decir por qué apareció (C02.3.4). */
+export interface Coincidencia {
+  entrada: Entrada;
+  /** «tiene Merluza o pescadilla», «lleva horno». El valor, sin normalizar. */
+  motivo: string;
+}
+
 /**
- * Resultados de búsqueda, separados por dónde coincidió el texto.
- * Son dos coincidencias de peso muy distinto y la vista las rotula aparte (§7.2).
+ * Resultados de búsqueda, separados por los tres criterios: el título, los
+ * ingredientes y los tags (C02.3.1). Son coincidencias de peso distinto y la
+ * vista las rotula aparte; una receta que coincide por dos entra en los dos
+ * grupos (C02.3.2).
  */
 export interface Coincidencias {
   porNombre: Entrada[];
-  porIngrediente: Entrada[];
+  porIngrediente: Coincidencia[];
+  porTag: Coincidencia[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -130,21 +183,3 @@ export interface ArchivoDrive {
   trashed?: boolean;
 }
 
-/** Una entrada de la Changes API (§4.2). */
-export interface CambioDrive {
-  fileId?: string;
-  removed?: boolean;
-  file?: ArchivoDrive;
-}
-
-/** Lo que `diffCambios` decide hacer con un lote de cambios. */
-export interface Diff {
-  /** Cambió el contenido: hay que releer el `.md`. */
-  releer: Ubicacion[];
-  /** Solo se movió o se renombró: alcanza con corregir la fila. */
-  parchear: Ubicacion[];
-  /** Borrado, tirado a la papelera, o sacado del recetario. */
-  borrar: string[];
-  /** No es un `.md`, o no cambió nada real. */
-  ignorados: string[];
-}

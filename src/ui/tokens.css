@@ -1,59 +1,183 @@
-/**
- * El idioma visual (§7.3). La app se ve en oscuro: es una app que se abre en
- * la cocina, muchas veces de noche, y el fondo oscuro deja que las fotos de
- * categoría sean lo único que ilumina la pantalla.
+/* Recetario — los tokens de ux/design-system.md, literales.
+   Copiados de product-design/ux/mockups/tokens.css sin el andamio del catálogo.
+   Si hace falta un valor que no está acá, es un hueco del sistema.
  */
+
 :root {
   color-scheme: dark;
 
-  --fondo: #14131A;         /* casi negro con temperatura, no gris de sistema */
-  --superficie: #1E1C26;    /* campos, menú, barras */
-  --texto: #EDEAE4;
-  --texto-2: #8A8598;       /* el mismo tinte violeta que el fondo */
-  --separador: #2C2936;
+  /* §2.1 Neutros — todos cálidos */
+  --bg: #17140F;
+  --surface: #211D17;
+  --surface-alta: #2B261E;
+  --borde: #3A342B;
+  --borde-fuerte: #544C40;
+  --fg: #F2EBE1;
+  --fg-2: #B3A99B;
+  --fg-3: #948A7A;
+  --velo: #0C0A07;
 
-  /* Los controles necesitan más contraste que un separador: el separador
-     divide dos zonas de lectura y conviene que sea discreto, pero un botón
-     tiene que leerse como tocable antes de que nadie lo busque. Por eso son
-     tokens aparte y no el mismo valor. */
-  --superficie-control: #272430;
-  --borde-control: #4A4557;
-  --acento: #EDEAE4;        /* el acento es el propio texto: el color lo ponen las categorías */
-  --fondo-visor: #000000;
-  --texto-visor: #ffffff;
+  /* §2.2 Acento y semánticos */
+  --acento: #E0663C;
+  --acento-suave: #3A2018;
+  --error: #D95F52;
+  --error-suave: #33191A;
 
-  /* Bricolage Grotesque para lo que tiene que tener carácter; Instrument Sans
-     para leer parado a un metro de la mesada; JetBrains Mono para lo que se
-     mira en columna —cantidades, tiempos— y para el markdown crudo del editor. */
-  --tipo: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --display: 'Bricolage Grotesque', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* §2.3 Categorías */
+  --cat-arroces: #6ECF77;  --cat-aves: #CFC56E;
+  --cat-bebidas: #89A6D2;  --cat-carnes: #CFA86E;
+  --cat-desayunos: #CF6EA8; --cat-ensaladas: #6ECFB1;
+  --cat-entradas: #CF6E8B; --cat-panes: #8FC954;
+  --cat-pastas: #B2C954;   --cat-pescados: #89BCD2;
+  --cat-postres: #CF6EC5;  --cat-salsas: #8990D2;
+  --cat-sopas: #89D2D2;    --cat-tartas: #6CC954;
+  --cat-verduras: #6ECF94; --cat-otros: #99907F;
 
-  --t-titulo: 1.75rem;
-  --t-seccion: 1.125rem;
-  --t-cuerpo: 1.0625rem;
-  --t-fila: 1rem;
-  --t-chip: 0.875rem;
-  --t-meta: 0.8125rem;
-  --t-rotulo: 0.625rem;     /* los rótulos en versalita de las secciones */
+  /* §3.2 Tipografía */
+  --tipo: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --txt-micro: 12px;   --txt-chico: 14px;  --txt-base: 16px;
+  --txt-lectura: 18px; --txt-titulo-s: 20px; --txt-titulo: 24px;
+  --txt-cocina: 22px;  --txt-cocina-titulo: 28px;
 
-  /* El tamaño de los pasos de la preparación: lo sube "Texto grande" (§7.2),
-     que es media parte de lo que resolvería un modo cocina. */
-  --t-paso: 1.0625rem;
+  /* §4.1 Espaciado */
+  --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px;
+  --e-5: 24px; --e-6: 32px; --e-7: 48px;
+  --e-cocina: 20px;          /* §4.1 — solo en modo cocina */
 
-  --interlineado: 1.55;
-  --gap: 0.25rem;
-  --margen: 1rem;
-  --radio: 0.75rem;
-  --tactil: 2.75rem;        /* 44 px */
+  /* §3.4 Iconografía */
+  --ico: 20px; --ico-cocina: 24px;
 
-  /* El velo que hace legible el nombre encima de la foto del tile. */
-  --velo: linear-gradient(to top,
-            rgba(8, 7, 12, 0.88) 0%,
-            rgba(8, 7, 12, 0.55) 38%,
-            rgba(8, 7, 12, 0.08) 100%);
+  /* §4.2 Radios */
+  --r-chico: 4px; --r-medio: 8px; --r-ficha: 12px; --r-foto: 8px;
 }
 
-:root.texto-grande {
-  --t-paso: 1.375rem;
+* { box-sizing: border-box; }
+
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--tipo); font-size: var(--txt-base);
+  -webkit-font-smoothing: antialiased;
 }
+
+/* ---- §6.12 Encabezado ---- */
+.enc { height: 56px; display: flex; align-items: center; gap: var(--e-2);
+       padding: 0 var(--e-2); background: var(--bg); border-bottom: 1px solid var(--borde); }
+.enc .tit { flex: 1; font-size: var(--txt-base); font-weight: 600; text-align: center; }
+.enc .tit.izq { text-align: left; padding-left: var(--e-2); }
+.ico { width: 48px; height: 48px; display: grid; place-items: center; flex: 0 0 48px;
+       color: var(--fg); background: none; border: 0; cursor: pointer; border-radius: var(--r-medio); }
+.ico:hover { background: var(--surface-alta); }
+.ico svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none; stroke-width: 1.5;
+           stroke-linecap: round; stroke-linejoin: round; }
+.cuenta { position: relative; }
+.cuenta .n { position: absolute; top: 6px; right: 4px; min-width: 18px; height: 18px; padding: 0 4px;
+             background: var(--surface-alta); border: 1px solid var(--borde-fuerte); border-radius: 9px;
+             font-size: var(--txt-micro); font-weight: 600; color: var(--fg-2);
+             display: grid; place-items: center; }
+
+/* ---- El cuerpo de una pantalla ---- */
+.cuerpo { padding: var(--e-4); display: flex; flex-direction: column; gap: var(--e-5); }
+.cuerpo.denso { gap: var(--e-3); }
+
+/* ---- §6.6 Ficha ---- */
+.ficha { background: var(--surface); border: 1px solid var(--borde);
+         border-radius: var(--r-ficha); padding: var(--e-4); }
+.ficha > h2 { font-size: var(--txt-titulo-s); font-weight: 600; margin: 0 0 var(--e-3);
+              padding-bottom: var(--e-3); border-bottom: 1px solid var(--borde-fuerte); }
+
+/* ---- §6.7 Botón ---- */
+.btn { min-height: 48px; padding: 0 var(--e-4); border-radius: var(--r-medio);
+       font: 600 var(--txt-base)/1 var(--tipo); display: inline-flex; align-items: center;
+       justify-content: center; gap: var(--e-2); cursor: pointer; border: 1px solid transparent; }
+.btn.prim { background: var(--acento); color: var(--bg); }
+.btn.sec  { background: none; color: var(--fg); border-color: var(--borde-fuerte); }
+.btn.pel  { background: none; color: var(--error); border-color: var(--error); }
+.btn[disabled] { color: var(--fg-3); background: none; border-color: var(--borde); cursor: default; }
+.btn.compacto { min-height: 40px; }   /* §6.7 — solo dentro del encabezado */
+.btn svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none; stroke-width: 1.5;
+           stroke-linecap: round; stroke-linejoin: round; }
+.acciones { display: flex; gap: var(--e-2); }
+.acciones .btn { flex: 1; }
+
+/* ---- §6.1 Tarjeta miniatura ---- */
+.tarjeta { display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
+           background: var(--surface); border: 1px solid var(--borde);
+           border-radius: var(--r-ficha); text-decoration: none; color: inherit; }
+.tarjeta:hover { background: var(--surface-alta); }
+.tarjeta .txt { flex: 1; min-width: 0; }
+.tarjeta .n { font-size: var(--txt-base); font-weight: 600; line-height: 1.3;
+              display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tarjeta .ctx { font-size: var(--txt-chico); color: var(--fg-2); margin-top: var(--e-1);
+                display: flex; align-items: center; gap: var(--e-2); }
+.tarjeta .motivo { color: var(--acento); }
+.pin { width: 8px; height: 8px; border-radius: var(--r-chico); flex: 0 0 8px; background: var(--cat-otros); }
+
+/* ---- §6.2 Placeholder / foto de tarjeta ---- */
+.foto { width: 56px; height: 56px; flex: 0 0 56px; border-radius: var(--r-foto);
+        object-fit: cover; background: var(--surface-alta); }
+.ph { width: 56px; height: 56px; flex: 0 0 56px; border-radius: var(--r-foto);
+      position: relative; overflow: hidden; background: var(--c, var(--cat-otros));
+      background-image: var(--img); background-size: cover; background-position: center; }
+.ph::after { content: ''; position: absolute; inset: 0;
+             background: var(--c, var(--cat-otros)); opacity: .25; mix-blend-mode: multiply; }
+.ph::before { content: ''; position: absolute; inset: 0; background: #000; opacity: .45; }
+
+/* ---- §6.5 Marca de incompleta ---- */
+.inc { width: 12px; height: 12px; border: 1.5px solid var(--fg-3); border-radius: 50%; flex: 0 0 12px; }
+.inc-txt { display: inline-flex; align-items: center; gap: var(--e-2);
+           color: var(--fg-3); font-size: var(--txt-chico); }
+
+/* ---- §6.10 Chip ---- */
+.chip { display: inline-flex; align-items: center; gap: var(--e-1); height: 32px; padding: 0 var(--e-2);
+        background: var(--surface-alta); border: 1px solid var(--borde); border-radius: var(--r-chico);
+        font-size: var(--txt-chico); color: var(--fg); }
+.chip.act { background: var(--acento-suave); border-color: var(--acento); color: var(--acento); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+
+/* ---- §6.9 Campo ---- */
+.campo { display: block; margin-bottom: var(--e-4); }
+.campo > span { display: block; font-size: var(--txt-chico); color: var(--fg-2); margin-bottom: var(--e-1); }
+.campo input, .campo textarea, .campo select {
+  width: 100%; min-height: 48px; padding: var(--e-3); background: var(--surface-alta);
+  border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio);
+  color: var(--fg); font: 400 var(--txt-base)/1.5 var(--tipo); resize: vertical; }
+.campo textarea { min-height: calc(1.5em * 3 + var(--e-3) * 2); }
+.campo input:focus, .campo textarea:focus { outline: none; border: 2px solid var(--acento); }
+.check { display: flex; align-items: center; gap: var(--e-3); min-height: 48px; cursor: pointer; }
+.check input { width: 22px; height: 22px; accent-color: var(--acento); }   /* §6.9 */
+.campo ::placeholder { color: var(--fg-3); }
+
+/* ---- §6.8 Aviso ---- */
+.aviso { display: flex; gap: var(--e-3); align-items: center; flex-wrap: wrap;
+         background: var(--error-suave); border: 1px solid var(--error);
+         border-radius: var(--r-ficha); padding: var(--e-4); }
+.aviso p { margin: 0; flex: 1; min-width: 12ch; }
+.aviso-mudo { font-size: var(--txt-chico); color: var(--fg-2); }
+
+/* ---- §6.11 Ítem de ingrediente ---- */
+.ing { display: flex; gap: var(--e-3); align-items: baseline;
+       padding: var(--e-2) 0; border-bottom: 1px solid var(--borde); }
+.ing:last-child { border-bottom: 0; }
+.ing .n { flex: 1; }
+.ing .c { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
+.grupo { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
+         letter-spacing: .06em; margin-top: var(--e-4); margin-bottom: var(--e-1); }
+.grupo:first-child { margin-top: 0; }
+
+/* ---- Prosa de la receta ---- */
+.lee { font-size: var(--txt-lectura); line-height: 1.6; }
+.lee p { margin: 0 0 var(--e-3); }
+.pasos { list-style: none; margin: 0; padding: 0; counter-reset: p; }
+.pasos li { counter-increment: p; display: flex; gap: var(--e-3); padding: var(--e-2) 0;
+            font-size: var(--txt-lectura); line-height: 1.6; }
+.pasos li::before { content: counter(p) '.'; color: var(--fg-3); font-variant-numeric: tabular-nums;
+                    font-weight: 600; flex: 0 0 1.6em; }
+
+/* ---- §5.1 Spinner ---- */
+.spin { width: 24px; height: 24px; border: 2px solid var(--borde-fuerte);
+        border-top-color: var(--fg-3); border-radius: 50%; animation: g .9s linear infinite; margin: var(--e-6) auto; }
+@keyframes g { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
+/* ---- Estado vacío ---- */
+.vacio { color: var(--fg-2); text-align: center; padding: var(--e-7) var(--e-4); line-height: 1.6; }

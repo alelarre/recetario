@@ -20,9 +20,9 @@ fuente: Cuaderno
 `);
 
 describe('filaDesde', () => {
-  it('tiene exactamente las doce columnas del §4.3, en orden', () => {
-    expect(COLUMNAS).toHaveLength(12);
-    expect(filaDesde(RECETA, UBICACION)).toHaveLength(12);
+  it('tiene exactamente las catorce columnas del §4.3, en orden', () => {
+    expect(COLUMNAS).toHaveLength(14);
+    expect(filaDesde(RECETA, UBICACION)).toHaveLength(14);
   });
 
   it('mapea cada campo a su columna', () => {
@@ -36,7 +36,7 @@ describe('filaDesde', () => {
   it('junta tags e ingredientes con barra vertical', () => {
     const f = filaDesde(RECETA, UBICACION);
     expect(f[COLUMNAS.indexOf('tags')]).toBe('italiana|horno');
-    expect(f[COLUMNAS.indexOf('ingredientes')]).toBe('muzzarella|milanesas de nalga');
+    expect(f[COLUMNAS.indexOf('ingredientes')]).toBe('200 g de muzzarella|4 milanesas de nalga');
   });
 
   it('un tag con barra vertical no rompe la celda al releer', () => {
@@ -50,9 +50,9 @@ describe('filaDesde', () => {
   it('un ingrediente con barra vertical no rompe la celda al releer', () => {
     const receta = { ...RECETA, ingredientes: '- queso|crema\n- 200 g de sal' };
     const f = filaDesde(receta, UBICACION);
-    expect(f[COLUMNAS.indexOf('ingredientes')]).toBe('quesocrema|sal');
+    expect(f[COLUMNAS.indexOf('ingredientes')]).toBe('queso|200 g de sal');
     const e = entradaDesdeFila(f);
-    expect(e.ingredientes).toEqual(['quesocrema', 'sal']);  // dos ingredientes, no tres tras el split
+    expect(e.ingredientes).toEqual(['queso', '200 g de sal']);  // dos ingredientes, no tres tras el split
   });
 
   it('escribe cadena vacía y nunca null para lo que falta', () => {
@@ -65,40 +65,57 @@ describe('filaDesde', () => {
     expect(filaDesde(r, UBICACION).join('|')).not.toContain('descripción larga');
   });
 
+  it('la fila lleva foto y completitud', () => {
+    const receta = parse('---\ntitulo: A\nfoto: https://x/y.jpg\n---\n## Ingredientes\n- Sal\n## Preparación\n1. Salar.');
+    const fila = filaDesde(receta, { id: 'f1', categoria: 'Carnes' });
+    expect(fila[COLUMNAS.indexOf('foto')]).toBe('https://x/y.jpg');
+    expect(fila[COLUMNAS.indexOf('completa')]).toBe('si');
+  });
+
+  it('una receta a la que le falta algo va con la completitud vacía', () => {
+    const fila = filaDesde(parse('---\ntitulo: A\n---\n'), { id: 'f1' });
+    expect(fila[COLUMNAS.indexOf('completa')]).toBe('');
+  });
+
+  it('los ingredientes van tal como están escritos, sin bajar a minúsculas', () => {
+    const receta = parse('---\ntitulo: A\n---\n## Ingredientes\n- Merluza o pescadilla — 1 kg');
+    expect(filaDesde(receta, { id: 'f1' })[COLUMNAS.indexOf('ingredientes')]).toBe('Merluza o pescadilla');
+  });
+
   // Tests de defensa
   it('tolera receta null', () => {
     const f = filaDesde(null, UBICACION);
-    expect(f).toHaveLength(12);
+    expect(f).toHaveLength(14);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera receta como número', () => {
     const f = filaDesde(invalido(42), UBICACION);
-    expect(f).toHaveLength(12);
+    expect(f).toHaveLength(14);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera receta como objeto incompleto', () => {
     const f = filaDesde({ titulo: 'X' }, UBICACION);
-    expect(f).toHaveLength(12);
+    expect(f).toHaveLength(14);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera ubicacion null', () => {
     const f = filaDesde(RECETA, null);
-    expect(f).toHaveLength(12);
+    expect(f).toHaveLength(14);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera ubicacion como número', () => {
     const f = filaDesde(RECETA, invalido(42));
-    expect(f).toHaveLength(12);
+    expect(f).toHaveLength(14);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera ubicacion como objeto incompleto', () => {
     const f = filaDesde(RECETA, { id: 'id1' });
-    expect(f).toHaveLength(12);
+    expect(f).toHaveLength(14);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 });
@@ -108,7 +125,7 @@ describe('entradaDesdeFila', () => {
     const e = entradaDesdeFila(filaDesde(RECETA, UBICACION));
     expect(e.id_archivo).toBe('id1');
     expect(e.tags).toEqual(['italiana', 'horno']);
-    expect(e.ingredientes).toEqual(['muzzarella', 'milanesas de nalga']);
+    expect(e.ingredientes).toEqual(['200 g de muzzarella', '4 milanesas de nalga']);
     expect(e.mtime).toBe(1700000000000);
   });
 
@@ -117,6 +134,12 @@ describe('entradaDesdeFila', () => {
     expect(e.titulo).toBe('X');
     expect(e.tags).toEqual([]);
     expect(e.mtime).toBe(0);
+  });
+
+  it('devuelve la completitud como booleano', () => {
+    const receta = parse('---\ntitulo: A\ncompleta: true\n---\n');
+    expect(entradaDesdeFila(filaDesde(receta, { id: 'f1' })).completa).toBe(true);
+    expect(entradaDesdeFila([]).completa).toBe(false);
   });
 
   // Tests de defensa
@@ -134,7 +157,7 @@ describe('entradaDesdeFila', () => {
     expect(e.mtime).toBe(0);
   });
 
-  it('tolera fila más larga que 12 elementos', () => {
+  it('tolera fila más larga que 14 elementos', () => {
     const fila = Array(20).fill('valor');
     const e = entradaDesdeFila(fila);
     expect(Array.isArray(e.tags)).toBe(true);

@@ -33,32 +33,35 @@ const porSlug = new Map<string, string>(
 );
 
 /**
- * Matices repartidos a propósito, con 14° de separación mínima; todos dan
- * contraste AA con texto oscuro encima. Un hash del nombre repartía al azar y
- * con 16 categorías siempre agrupaba: `Pescados y mariscos` y `Ensaladas`
- * caían en el mismo matiz exacto.
+ * El color de cada categoría es un token de `tokens.css`: quince matices a 18°
+ * entre sí y a 20° del acento (design-system §2.3). Acá vive solo el mapa de
+ * carpeta → token; los valores están en un lugar y son los del sistema visual.
  */
 const COLORES: Record<string, string> = {
-  'carnes': 'hsl(8 62% 58%)',
-  'entradas-y-picadas': 'hsl(28 70% 60%)',
-  'panes-y-masas': 'hsl(42 68% 55%)',
-  'pastas': 'hsl(64 46% 52%)',
-  'verduras-y-guarniciones': 'hsl(92 48% 50%)',
-  'ensaladas': 'hsl(118 44% 48%)',
-  'salsas-y-aderezos': 'hsl(148 46% 46%)',
-  'pescados-y-mariscos': 'hsl(174 58% 50%)',
-  'bebidas': 'hsl(196 58% 54%)',
-  'otros': 'hsl(220 40% 58%)',
-  'desayunos-y-meriendas': 'hsl(244 44% 64%)',
-  'aves': 'hsl(268 44% 64%)',
-  'sopas-y-caldos': 'hsl(292 42% 60%)',
-  'arroces-y-legumbres': 'hsl(316 42% 58%)',
-  'postres': 'hsl(334 58% 64%)',
-  'tartas-y-empanadas': 'hsl(354 54% 60%)',
+  'arroces-y-legumbres': 'var(--cat-arroces)',
+  'aves': 'var(--cat-aves)',
+  'bebidas': 'var(--cat-bebidas)',
+  'carnes': 'var(--cat-carnes)',
+  'desayunos-y-meriendas': 'var(--cat-desayunos)',
+  'ensaladas': 'var(--cat-ensaladas)',
+  'entradas-y-picadas': 'var(--cat-entradas)',
+  'panes-y-masas': 'var(--cat-panes)',
+  'pastas': 'var(--cat-pastas)',
+  'pescados-y-mariscos': 'var(--cat-pescados)',
+  'postres': 'var(--cat-postres)',
+  'salsas-y-aderezos': 'var(--cat-salsas)',
+  'sopas-y-caldos': 'var(--cat-sopas)',
+  'tartas-y-empanadas': 'var(--cat-tartas)',
+  'verduras-y-guarniciones': 'var(--cat-verduras)'
 };
 
-/** El color de respaldo de una carpeta que todavía no está en la lista. */
-const NEUTRO = 'hsl(258 12% 46%)';
+/**
+ * `Otros` no tiene color propio ni foto: es la categoría comodín y lo que dice
+ * es "todavía no sabemos" (design-system §2.3). Se dibuja con el neutro y con
+ * la trama del mockup 03, y ese neutro es también el respaldo de una carpeta
+ * que todavía no está en la lista.
+ */
+const NEUTRO = 'var(--cat-otros)';
 
 /** Del nombre de la carpeta al slug, igual que el nombre del archivo de receta. */
 export function slugCategoria(nombre: unknown): string {
@@ -72,5 +75,7 @@ export function colorCategoria(nombre: unknown): string {
 
 /** La URL de la foto, o null si esa categoría todavía no tiene. */
 export function fotoCategoria(nombre: unknown): string | null {
-  return porSlug.get(slugCategoria(nombre)) ?? null;
+  const slug = slugCategoria(nombre);
+  if (slug === 'otros') return null;   // se dibuja con la trama, no con una foto
+  return porSlug.get(slug) ?? null;
 }

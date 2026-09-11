@@ -1,22 +1,30 @@
 import './ui/tokens.css';
-import './ui/app.css';
+import './ui/base.css';
 import { crearAuth } from './auth.js';
 import { crearDrive } from './drive.js';
 import { crearSheets } from './sheets.js';
-import { abrirCache } from './cache.js';
 import { crearStore } from './store.js';
 import { parse } from './recipe.js';
 import { crearRouter, parsearHash } from './ui/router.js';
 import { escapar } from './ui/markdown.js';
-import { renderHome } from './ui/home.js';
-import { renderLista } from './ui/lista.js';
-import { renderDetalle } from './ui/detalle.js';
+import { renderRecetario } from './ui/recetario.js';
+import { renderCategoria } from './ui/categoria.js';
+import { renderResultados } from './ui/resultados.js';
+import { renderReceta } from './ui/receta.js';
+import { renderCocina } from './ui/cocina.js';
 import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
-import { renderVisor } from './ui/visor.js';
+import { crearBorradores } from './borradores.js';
+import { renderBorradores, renderBorrador } from './ui/borradores.js';
+import { renderCaptura } from './ui/captura.js';
+import { renderAjustes } from './ui/ajustes.js';
+import { renderConexion } from './ui/conexion.js';
+import { aviso } from './ui/componentes.js';
+import { convertirBorrador } from './compartido.js';
+import type { Borradores } from './borradores.js';
 import type { Ruta } from './ui/router.js';
 import type { DatosFormulario } from './ui/editor.js';
-import type { Receta } from './tipos.js';
-import type { ResultadoArranque } from './store.js';
+import type { PosicionCocina } from './ui/cocina.js';
+import type { ResultadoArranque, Progreso } from './store.js';
 
 type Store = ReturnType<typeof crearStore>;
 
@@ -27,15 +35,46 @@ const drive = crearDrive(() => auth.token());
 const sheets = crearSheets(() => auth.token());
 
 let store: Store;
+let borradores: Borradores | null = null;
 let estadoArranque: ResultadoArranque | undefined;
 let vistaActual: Ruta | null = null;
-let ingredientesPlegados = false;  // la barra pegajosa del detalle
-let vaciasVisibles = false;        // las categorías en cero, plegadas en el home
 let wakeLock: WakeLockSentinel | null = null;  // para que la pantalla no se apague cocinando
-let pendienteFlush: ReturnType<typeof setTimeout> | undefined;
 let tagsActivos: string[] = [];   // filtro de la vista de categoría; se limpia al cambiar de vista
-let fotosVisor: string[] | null = null;  // fotos de la receta abierta; null = visor cerrado
-let indiceVisor = 0;
+
+/**
+ * Cuántas tarjetas dibuja la categoría. El tramo no es una lectura de red —el
+ * índice ya está entero en memoria—: es cuántas se dibujan de una vez.
+ */
+const TRAMO = 30;
+let visibles = TRAMO;
+let observadorTramo: IntersectionObserver | null = null;
+
+/**
+ * El estado del modo cocina. Se limpia al entrar: al volver a abrir una receta
+ * no hay ningún paso realzado ni marcado (C03.2.4). No persiste en ningún lado.
+ */
+/** Lo que se está por descartar o borrar pide confirmación antes (C01.6.2, C04.6.1). */
+let confirmandoDescarte = false;
+/** El título del borrador se corrige en su lugar (C01.6.1). */
+let editandoTitulo = false;
+
+/** La captura: lo escrito sobrevive al error y a la reautenticación (R3). */
+/** Lo que el reindexado dejó afuera, para la sección de avisos de Ajustes. */
+let ignorados: string[] = [];
+/** El mail de la cuenta conectada. Se pide una vez, al entrar a Ajustes. */
+let cuenta = '';
+/** El progreso del reindexado en curso, o `null`. Mientras corre no se guarda ni se borra. */
+let reindexando: Progreso | null = null;
+
+let tituloCaptura = '';
+let guardandoCaptura = false;
+let errorCaptura = '';
+
+let posicionCocina: PosicionCocina = 'ingredientes';
+let pasoAqui: number | null = null;
+let pasosHechos: number[] = [];
+/** El scroll de cada lado del conmutador, para no perderlo al conmutar (C03.2.2). */
+const scrollCocina: Record<PosicionCocina, number> = { ingredientes: 0, pasos: 0 };
 
 /**
  * Estrecha el destino de un evento a algo con `closest`.
@@ -62,28 +101,6 @@ const categoriasDelArranque = () =>
 
 const pintar = (html: string): void => { app.innerHTML = html; };
 
-/** Agrega o saca el visor del final de #app, sin tocar el resto del contenido (§7.2: no pierde el scroll del detalle). */
-function pintarVisor(): void {
-  document.querySelector('.visor')?.remove();
-  if (fotosVisor) app!.insertAdjacentHTML('beforeend', renderVisor({ fotos: fotosVisor, indice: indiceVisor }));
-}
-
-function abrirVisor(fotos: string[], indice: number): void {
-  fotosVisor = fotos;
-  indiceVisor = indice;
-  pintarVisor();
-}
-
-function cerrarVisor() {
-  fotosVisor = null;
-  pintarVisor();
-}
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && fotosVisor) return cerrarVisor();
-  if (e.key === 'Escape') { const m = document.querySelector<HTMLElement>('.menu'); if (m) m.hidden = true; }
-});
-
 /**
  * Que la pantalla no se apague mientras se cocina: es la fricción más real de
  * seguir una receta con las manos sucias. El bloqueo se pierde solo cuando la
@@ -107,115 +124,262 @@ async function soltarPantalla(): Promise<void> {
   wakeLock = null;
 }
 
-function programarFlush() {
-  clearTimeout(pendienteFlush);
-  pendienteFlush = setTimeout(() => store.flush().catch(console.error), 30000);
-}
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    // Si el botón sigue activo, el usuario nunca lo apagó: el bloqueo se
-    // perdió al irse a segundo plano y hay que volver a pedirlo.
-    const b = document.querySelector<HTMLElement>('[data-accion="pantalla"][aria-pressed="true"]');
-    if (b && !wakeLock) mantenerPantalla().then(ok => b.setAttribute('aria-pressed', String(ok)));
-    return;
-  }
-  if (document.visibilityState !== 'hidden') return;
-  // Cancelar el debounce antes del flush forzado: si no, y el timer de 30s
-  // vencía justo mientras este flush estaba en vuelo, corrían los dos en
-  // paralelo y la escritura de fila (que no es atómica) podía duplicar la
-  // fila de la misma receta en el índice.
-  clearTimeout(pendienteFlush);
-  store?.flush().catch(console.error);
+  if (document.visibilityState !== 'visible') return;
+  // Si el botón sigue activo, el usuario nunca lo apagó: el bloqueo se
+  // perdió al irse a segundo plano y hay que volver a pedirlo.
+  const b = document.querySelector<HTMLElement>('[data-accion="wake"].prim');
+  if (b && !wakeLock) void mantenerPantalla().then(() => render());
 });
 
-async function arrancar() {
-  pintar('<p class="contenido">Conectando…</p>');
+/**
+ * Arranca la app. `pidiendoPermiso` es el toque del botón: el consentimiento
+ * de Google se pide ahí y nunca al abrir (C05.9.1).
+ */
+async function arrancar({ pidiendoPermiso = false } = {}) {
+  pintar(renderConexion({ estado: 'conectando' }));
   try {
     // Vía silenciosa primero: es la misma que usa auth.token() para renovar
     // (pedir('') con la sesión en frío). Para una app que se abre a diario,
     // pedir el consentimiento explícito en cada arranque es un popup por
-    // apertura; solo corresponde mostrarlo si la vía silenciosa falla —sin
-    // sesión previa, o con el permiso revocado.
+    // apertura.
     await auth.token();
   } catch {
-    await auth.conectar();
+    // Sin sesión previa, o con el permiso revocado: se explica antes de pedir,
+    // porque el scope `drive` trae la pantalla de «app no verificada».
+    if (!pidiendoPermiso) return pintar(renderConexion({ estado: 'inicial' }));
+    try {
+      await auth.conectar();
+    } catch (err) {
+      console.error(err);
+      // Cancelado o denegado: nunca se queda en «Conectando…» (C05.9.2).
+      return pintar(renderConexion({ estado: 'cancelado' }));
+    }
   }
-  store = crearStore({ drive, sheets, cache: await abrirCache() });
+  store = crearStore({ drive, sheets });
   estadoArranque = await store.arrancar();
 
+  // Los tres estados que no llegan a 'listo' avisan en castellano, con su
+  // control: ninguno muestra el mensaje crudo de Google (R1).
   if (estadoArranque.estado === 'falta-estructura') {
-    return pintar('<p class="contenido">No encontré la carpeta <b>Recetario</b> en tu Drive. Ver <code>SETUP.md</code>.</p>');
+    return pintar('<div class="cuerpo">' + aviso({
+      texto: 'No encontré la carpeta Recetario en tu Drive. Está en SETUP.md cómo crearla.',
+      accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
+    }) + '</div>');
   }
   if (estadoArranque.estado === 'elegir-carpeta') {
-    return pintar('<p class="contenido">Hay más de una carpeta llamada Recetario. Dejá una sola y recargá.</p>');
+    return pintar('<div class="cuerpo">' + aviso({
+      texto: 'Hay más de una carpeta llamada Recetario en tu Drive. Dejá una sola y volvé a entrar.',
+      accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
+    }) + '</div>');
   }
   if (estadoArranque.estado === 'solo-lectura') {
-    const motivo = estadoArranque.motivo ? `: ${escapar(estadoArranque.motivo)}` : '.';
-    return pintar(`<p class="contenido">No pude conectar con Drive${motivo} Quedás en modo solo lectura. <button data-accion="reconectar">Reintentar</button></p>`);
+    return pintar('<div class="cuerpo">' + aviso({
+      texto: 'No pude conectar con Drive. Sin esa lectura no hay con qué dibujar.',
+      accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
+    }) + '</div>');
   }
+
+  // Los borradores viven en su propia planilla, al lado del índice, y recién
+  // acá se conoce la carpeta raíz.
+  borradores = crearBorradores({ drive, sheets, raizId: estadoArranque.raizId });
 
   await store.cargarIndice();
   if (estadoArranque.reconstruir) await reconstruir();
-  else store.sync().then(() => render()).catch(console.error);
 
   router.iniciar();
 }
 
-async function reconstruir() {
-  pintar('<p class="contenido">Reconstruyendo el índice… <span data-progreso>0</span></p>');
-  await store.reconstruir(({ leidas, total }) => {
-    const el = document.querySelector('[data-progreso]');
-    if (el) el.textContent = `${leidas} / ${total}`;
-  });
-  render();
+/**
+ * Reindexar lee todos los `.md` y rearma la planilla: es la reparación
+ * universal. No se puede cancelar —cortar a mitad deja el índice en el estado
+ * que el reindexado existe para reparar— y mientras corre no se guarda ni se
+ * borra nada (C05.5.2).
+ */
+async function reconstruir({ enAjustes = false } = {}) {
+  reindexando = { leidas: 0, total: 0 };
+  const dibujar = () => enAjustes
+    ? pintar(renderAjustes({
+        cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados, reindexando
+      }))
+    : pintar(renderConexion({ estado: 'creando-indice', ...(reindexando ? { progreso: reindexando } : {}) }));
+
+  dibujar();
+  try {
+    const r = await store.reconstruir(progreso => { reindexando = progreso; dibujar(); });
+    ignorados = r.ignorados;
+  } finally {
+    reindexando = null;
+  }
+  await render();
 }
 
+/**
+ * El tramo siguiente se dibuja cuando el spinner del final entra en pantalla.
+ * `IntersectionObserver` no existe en Node, donde corren los tests: se
+ * pregunta antes, igual que el resto del código hace con `navigator`.
+ */
+function observarTramo(): void {
+  observadorTramo?.disconnect();
+  observadorTramo = null;
+  if (typeof IntersectionObserver === 'undefined') return;
+  const spin = document.querySelector('#app .spin');
+  if (!spin) return;
+  observadorTramo = new IntersectionObserver(entradas => {
+    if (!entradas.some(e => e.isIntersecting)) return;
+    visibles += TRAMO;
+    void render();
+  });
+  observadorTramo.observe(spin);
+}
+
+/**
+ * Dibuja la pantalla que la ruta pide. Es el único lugar que decide qué se ve.
+ *
+ * Cada rama que lee de red envuelve la lectura y dibuja un aviso si falla,
+ * **sin datos viejos**: sin la lectura no hay con qué dibujar, y esa es la
+ * consecuencia buscada de no tener copia local (C05.8.1). Ningún error muestra
+ * el mensaje crudo de Google (R1).
+ */
 async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
-  // Cambiar de categoría o de vista limpia el filtro de tags y cierra el visor:
-  // si no, se entra a otra categoría y no se ve nada porque quedó filtrando
-  // por un tag que ahí no existe, sin forma de darse cuenta.
+  // Cambiar de categoría o de vista limpia lo que era de la anterior: si no,
+  // se entra a otra categoría y no se ve nada porque quedó filtrando por un
+  // tag que ahí no existe, sin forma de darse cuenta.
   if (!vistaActual || ruta.vista !== vistaActual.vista || ruta.params.nombre !== vistaActual.params.nombre
       || ruta.params.id !== vistaActual.params.id) {
     tagsActivos = [];
-    fotosVisor = null;
-    // Lo que se plegó vale para la receta que se estaba mirando, no para la
-    // próxima: sin esto se entra a otra receta y los ingredientes ya vienen
-    // cerrados sin que nadie los haya cerrado.
-    ingredientesPlegados = false;
+    visibles = TRAMO;
+    confirmandoDescarte = false;
+    editandoTitulo = false;
+    if (ruta.vista !== 'capturar') { tituloCaptura = ''; guardandoCaptura = false; errorCaptura = ''; }
+    posicionCocina = 'ingredientes';
+    pasoAqui = null;
+    pasosHechos = [];
+    scrollCocina.ingredientes = scrollCocina.pasos = 0;
   }
   vistaActual = ruta;
-  if (ruta.vista === 'home') {
-    return pintar(renderHome({ categorias: store.categoriasConConteo(), ultimaReconstruccion: store.ultimaReconstruccion(), vaciasVisibles }));
-  }
-  if (ruta.vista === 'categoria') {
-    const nombre = ruta.params['nombre'] ?? '';
-    const entradas = store.buscar({ categoria: nombre, tags: tagsActivos });
-    const vacio = tagsActivos.length
-      ? { titulo: 'Ninguna receta con esos tags', detalle: 'Probá sacando alguno de los filtros de arriba.' }
-      : { titulo: 'Todavía no hay nada acá',
-          detalle: `Las recetas entran como archivos .md en la carpeta ${nombre} de Drive, casi siempre escritas por un agente desde un PDF, una foto o un video.` };
-    return pintar(renderLista({ titulo: nombre, categoria: nombre, entradas,
-      tags: store.tagsDe(nombre), tagsActivos, vacio }));
-  }
-  if (ruta.vista === 'buscar') {
-    const q = ruta.params['q'] ?? '';
-    const grupos = store.buscarPorTexto(q);
-    return pintar(renderLista({ titulo: `"${q}"`, grupos,
-      vacio: { titulo: 'Sin resultados', detalle: 'Se busca por título y por ingrediente.' } }));
-  }
-  if (ruta.vista === 'detalle') {
-    const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
-    return pintar(renderDetalle({ entrada, receta, ingredientesPlegados }));
-  }
-  if (ruta.vista === 'editar') {
-    const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
-    return pintar(renderEditor({ entrada, receta, categorias: categoriasDelArranque(), tagsConocidos: store.tagsDe().map(t => t.tag) }));
-  }
-  if (ruta.vista === 'nueva') {
-    // El mismo formulario que editar, sin entrada (todavía no hay archivo
-    // en Drive) y con una receta vacía en vez de una leída. Guardar es lo
-    // que de verdad la crea (§11: "crear una receta mínima").
-    return pintar(renderEditor({ entrada: null, receta: parse(''), categorias: categoriasDelArranque(), tagsConocidos: store.tagsDe().map(t => t.tag) }));
+
+  const enPantalla = (texto: string) => pintar('<div class="cuerpo">' + aviso({
+    texto, accion: { etiqueta: 'Reintentar', accion: 'reintentar' }
+  }) + '</div>');
+
+  switch (ruta.vista) {
+    case 'recetario': {
+      // El contador de borradores es una lectura más, y que falle no puede
+      // dejar sin Recetario: se dibuja sin número.
+      const pendientes = await borradores?.listar().catch(() => []) ?? [];
+      return pintar(renderRecetario({
+        categorias: store.categoriasConConteo(), borradores: pendientes.length
+      }));
+    }
+
+    case 'categoria': {
+      const nombre = ruta.params['nombre'] ?? '';
+      const entradas = store.buscar({ categoria: nombre, tags: tagsActivos });
+      pintar(renderCategoria({
+        nombre, entradas: entradas.slice(0, visibles), total: entradas.length,
+        visibles: Math.min(visibles, entradas.length), tagsActivos
+      }));
+      return observarTramo();
+    }
+
+    case 'resultados': {
+      const q = ruta.params['q'] ?? '';
+      return pintar(renderResultados({ consulta: q, grupos: store.buscarPorTexto(q) }));
+    }
+
+    case 'receta':
+      try {
+        const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
+        return pintar(renderReceta({ entrada, receta }));
+      } catch (err) {
+        console.error(err);
+        return enPantalla('No se pudo leer la receta.');
+      }
+
+    case 'cocinar':
+      try {
+        const { receta } = await store.receta(ruta.params['id'] ?? '');
+        return pintar(renderCocina({
+          receta, posicion: posicionCocina, aqui: pasoAqui, hechos: pasosHechos, wakeActivo: !!wakeLock
+        }));
+      } catch (err) {
+        console.error(err);
+        return enPantalla('No se pudo leer la receta.');
+      }
+
+    case 'ajustes':
+      // El mail no lo guarda nadie: se lo pide a Drive una vez. Que falle no
+      // rompe la pantalla, solo deja la línea de la cuenta vacía.
+      if (!cuenta) cuenta = await drive.cuenta().catch(() => '');
+      return pintar(renderAjustes({
+        cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados, reindexando
+      }));
+
+    case 'capturar': {
+      // La captura no dibuja la app: es una pantalla efímera sobre lo que el
+      // usuario estaba haciendo en otra app (C01.2.2).
+      const fuente = ruta.params['url'] || ruta.params['text'] || '';
+      return pintar(renderCaptura({
+        fuente, titulo: tituloCaptura, guardando: guardandoCaptura,
+        ...(errorCaptura ? { error: errorCaptura } : {})
+      }));
+    }
+
+    case 'borradores':
+      try {
+        return pintar(renderBorradores({ borradores: await borradores?.listar() ?? [] }));
+      } catch (err) {
+        console.error(err);
+        return pintar(renderBorradores({ borradores: [], error: 'No se pudieron leer los borradores.' }));
+      }
+
+    case 'borrador':
+      try {
+        const lista = await borradores?.listar() ?? [];
+        const borrador = lista.find(b => b.id === (ruta.params['id'] ?? ''));
+        // Un borrador que ya no está —convertido afuera, descartado— no es un
+        // error: la lista es lo que corresponde mostrar.
+        if (!borrador) return pintar(renderBorradores({ borradores: lista }));
+        return pintar(renderBorrador({ borrador, confirmando: confirmandoDescarte, editando: editandoTitulo }));
+      } catch (err) {
+        console.error(err);
+        return pintar(renderBorradores({ borradores: [], error: 'No se pudo leer el borrador.' }));
+      }
+
+    case 'editar':
+      try {
+        const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
+        return pintar(renderEditor({
+          entrada, receta, categorias: categoriasDelArranque(),
+          tagsConocidos: store.tagsDe().map(t => t.tag),
+          confirmandoBorrado: confirmandoDescarte
+        }));
+      } catch (err) {
+        console.error(err);
+        return enPantalla('No se pudo leer la receta.');
+      }
+
+    case 'nueva': {
+      // El mismo formulario que editar, sin entrada (todavía no hay archivo en
+      // Drive) y con una receta vacía en vez de una leída. Desde un borrador
+      // abre con el título y la fuente cargados (C04.3b.1); guardar es lo que
+      // de verdad la crea, y ahí se borra el borrador (C01.7.1).
+      const receta = parse('');
+      const borradorId = ruta.params['borrador'] ?? '';
+      if (borradorId) {
+        const borrador = (await borradores?.listar().catch(() => []) ?? [])
+          .find(b => b.id === borradorId);
+        if (borrador) {
+          receta.titulo = borrador.titulo;
+          receta.fuente = borrador.fuente || null;
+        }
+      }
+      return pintar(renderEditor({
+        entrada: null, receta, categorias: categoriasDelArranque(),
+        tagsConocidos: store.tagsDe().map(t => t.tag)
+      }));
+    }
   }
 }
 
@@ -225,14 +389,7 @@ app.addEventListener('click', async (e) => {
   // Todo el manejo de clicks es delegación desde #app, así que el destino
   // llega como EventTarget y hay que estrecharlo una sola vez, acá.
   const destino = conClosest(e.target);
-  const boton = destino?.closest<HTMLElement>('[data-accion], .check, [data-tag], img') ?? null;
-
-  // El menú del home se cierra al tocar cualquier otra cosa, como cualquier
-  // desplegable. Sin esto solo se cerraba volviendo a tocar el ⋯.
-  const menu = document.querySelector<HTMLElement>('.menu');
-  if (menu && !menu.hidden && !destino?.closest('.menu') && boton?.dataset['accion'] !== 'menu') {
-    menu.hidden = true;
-  }
+  const boton = destino?.closest<HTMLElement>('[data-accion], .check, [data-tag]') ?? null;
   if (!boton) return;
 
   if (boton.classList.contains('check')) {
@@ -247,55 +404,145 @@ app.addEventListener('click', async (e) => {
     return render();
   }
 
-  if (boton.tagName === 'IMG') {
-    // Las imágenes del cuerpo son las únicas fotos de la receta: tocar
-    // cualquiera abre el visor (§7.2).
-    const fotos = [...document.querySelectorAll<HTMLImageElement>('#app [data-cuerpo] img')];
-    const indice = fotos.indexOf(boton as HTMLImageElement);
-    if (indice === -1) return;
-    return abrirVisor(fotos.map(img => img.src), indice);
-  }
-
   const accion = boton.dataset['accion'];
-  if (accion === 'ingredientes') { ingredientesPlegados = !ingredientesPlegados; return render(); }
-  if (accion === 'vacias') { vaciasVisibles = !vaciasVisibles; return render(); }
 
-  // Las dos mitades que resolvería un modo cocina, sin pantalla nueva (§7.2).
-  if (accion === 'texto-grande') {
-    const activo = document.documentElement.classList.toggle('texto-grande');
-    boton.setAttribute('aria-pressed', String(activo));
+  if (accion === 'cocinar') { location.hash = `#/r/${vistaActual?.params['id'] ?? ''}/cocinar`; return; }
+  if (accion === 'salir-cocina') { await soltarPantalla(); return history.back(); }
+  if (accion === 'conmutar') {
+    const destinoPos = boton.dataset['posicion'] === 'pasos' ? 'pasos' : 'ingredientes';
+    if (destinoPos === posicionCocina) return;
+    scrollCocina[posicionCocina] = window.scrollY;
+    posicionCocina = destinoPos;
+    await render();
+    window.scrollTo(0, scrollCocina[destinoPos]);
     return;
   }
-  if (accion === 'pantalla') {
-    const activo = boton.getAttribute('aria-pressed') === 'true';
-    if (activo) { await soltarPantalla(); boton.setAttribute('aria-pressed', 'false'); return; }
-    const ok = await mantenerPantalla();
-    boton.setAttribute('aria-pressed', String(ok));
-    if (!ok) alert('Este navegador no deja mantener la pantalla encendida.');
+  if (accion === 'paso') {
+    // Tocar un paso marca dónde voy; tocar el que ya estaba realzado lo da por
+    // hecho y el hilo sigue al siguiente.
+    const n = Number(boton.dataset['paso'] ?? -1);
+    if (!Number.isInteger(n) || n < 0) return;
+    if (pasoAqui === n) {
+      pasosHechos = [...pasosHechos.filter(p => p !== n), n];
+      pasoAqui = n + 1;
+    } else {
+      pasoAqui = n;
+      pasosHechos = pasosHechos.filter(p => p !== n);
+    }
+    return render();
+  }
+  if (accion === 'wake') {
+    if (wakeLock) await soltarPantalla();
+    else await mantenerPantalla();
+    return render();
+  }
+
+  if (accion === 'borradores') { location.hash = '#/borradores'; return; }
+  if (accion === 'ajustes') { location.hash = '#/ajustes'; return; }
+  if (accion === 'reindexar') return reconstruir({ enAjustes: true });
+  if (accion === 'conectar') return arrancar({ pidiendoPermiso: true });
+  if (accion === 'salir') {
+    auth.olvidar();
+    cuenta = '';
+    location.hash = '#/';
+    return pintar(renderConexion({ estado: 'inicial' }));
+  }
+  if (accion === 'crear-receta') {
+    location.hash = `#/nueva?borrador=${encodeURIComponent(vistaActual?.params['id'] ?? '')}`;
     return;
+  }
+  if (accion === 'descartar') { confirmandoDescarte = true; return render(); }
+  if (accion === 'cancelar-descarte') { confirmandoDescarte = false; return render(); }
+  if (accion === 'descartar-confirmado') {
+    const id = vistaActual?.params['id'] ?? '';
+    try {
+      await borradores?.descartar(id);
+      location.hash = '#/borradores';
+      return;
+    } catch (err) {
+      console.error(err);
+      const borrador = (await borradores?.listar() ?? []).find(b => b.id === id);
+      if (!borrador) return;
+      return pintar(renderBorrador({ borrador, confirmando: true, error: 'No se pudo descartar.' }));
+    }
+  }
+  if (accion === 'agregar-borrador') { location.hash = '#/capturar'; return; }
+  if (accion === 'cancelar-captura') {
+    // Cerrar sin escribir nada y sin preguntar: no hay nada que perder todavía.
+    tituloCaptura = '';
+    window.close();
+    return;
+  }
+  if (accion === 'guardar-captura') {
+    const campoTitulo = document.querySelector<HTMLInputElement>('input[name="titulo"]');
+    const campoFuente = document.querySelector<HTMLInputElement>('input[name="fuente"]');
+    tituloCaptura = campoTitulo?.value.trim() ?? '';
+    if (!tituloCaptura) return;
+    const fuente = campoFuente?.value.trim()
+      ?? vistaActual?.params['url'] ?? vistaActual?.params['text'] ?? '';
+
+    guardandoCaptura = true;
+    errorCaptura = '';
+    await render();
+    try {
+      await borradores?.agregar({ titulo: tituloCaptura, fuente });
+    } catch (err) {
+      console.error(err);
+      // Nada queda esperando: el texto sigue en pantalla y se reintenta a mano.
+      guardandoCaptura = false;
+      errorCaptura = 'No se pudo guardar. Revisá la conexión.';
+      return render();
+    }
+    guardandoCaptura = false;
+    tituloCaptura = '';
+    // Volver a donde estabas, con Recetario sin quedar abierto (C01.2.2). Si
+    // la pestaña no la abrió un script, `close()` no hace nada: ahí queda la
+    // lista, que es el lugar donde el borrador nuevo está.
+    window.close();
+    location.hash = '#/borradores';
+    return;
+  }
+  if (accion === 'editar-titulo') { editandoTitulo = true; return render(); }
+  if (accion === 'cancelar-titulo') { editandoTitulo = false; return render(); }
+  if (accion === 'guardar-titulo') {
+    const campo = document.querySelector<HTMLInputElement>('input[name="titulo"]');
+    const titulo = campo?.value.trim() ?? '';
+    const id = vistaActual?.params['id'] ?? '';
+    if (!titulo) return;
+    try {
+      await borradores?.editarTitulo(id, titulo);
+      editandoTitulo = false;
+      return render();
+    } catch (err) {
+      console.error(err);
+      const borrador = (await borradores?.listar() ?? []).find(b => b.id === id);
+      if (!borrador) return;
+      return pintar(renderBorrador({
+        borrador: { ...borrador, titulo }, confirmando: false, editando: true,
+        error: 'No se pudo guardar el título.'
+      }));
+    }
   }
 
   if (accion === 'atras') return history.back();
   if (accion === 'editar') { location.hash = `#/r/${vistaActual?.params['id'] ?? ''}/editar`; return; }
   if (accion === 'cancelar') return history.back();
-  if (accion === 'reconstruir') return reconstruir();
   if (accion === 'reconectar') {
     try {
       // Si el arranque nunca llegó a "listo" (solo-lectura), reintentar todo
       // el arranque en vez de solo renovar el token: el store todavía no
       // tiene categorías ni índice cargados.
-      if (estadoArranque?.estado !== 'listo') { await arrancar(); return; }
+      if (estadoArranque?.estado !== 'listo') { await arrancar({ pidiendoPermiso: true }); return; }
       await auth.conectar();
       return render();
     } catch (err) {
       console.error(err);
-      return alert(`No se pudo reconectar con Google: ${mensajeDe(err)}. Probá de nuevo.`);
+      return pintar('<div class="cuerpo">' + aviso({
+        texto: 'No se pudo reconectar con Google.',
+        accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
+      }) + '</div>');
     }
   }
-  if (accion === 'menu') return document.querySelector('.menu')?.toggleAttribute('hidden');
-  if (accion === 'cerrar-visor') return cerrarVisor();
-  if (accion === 'foto-anterior') { indiceVisor = Math.max(0, indiceVisor - 1); return pintarVisor(); }
-  if (accion === 'foto-siguiente') { indiceVisor = Math.min((fotosVisor?.length ?? 1) - 1, indiceVisor + 1); return pintarVisor(); }
 
   if (accion === 'guardar') {
     const form = document.querySelector<HTMLFormElement>('[data-formulario]');
@@ -305,46 +552,67 @@ app.addEventListener('click', async (e) => {
     const datos: DatosFormulario = Object.fromEntries(
       [...new FormData(form)].map(([k, v]) => [k, typeof v === 'string' ? v : undefined])
     );
-
-    if (vistaActual?.vista === 'nueva') {
-      const nueva = recetaDesdeFormulario(datos, parse('')) as Receta;
-      if (!nueva.titulo) return alert('Ponele un título a la receta antes de guardar.');
-      try {
-        await store.crear(nueva, { carpetaId: datos['carpeta'] || undefined });
-        programarFlush();
-        return history.back();
-      } catch (err) {
-        console.error(err);
-        return alert(`No se pudo crear la receta en Drive: ${mensajeDe(err)}. Probá de nuevo.`);
-      }
-    }
-
+    const carpetaId = datos['carpeta'] || '';
+    const esNueva = vistaActual?.vista === 'nueva';
     const id = vistaActual?.params['id'] ?? '';
+    const borradorId = vistaActual?.params['borrador'] ?? '';
+
+    // Mientras trabaja, el botón lo dice y no se puede tocar dos veces (C04.5.1).
+    boton.setAttribute('disabled', '');
+    boton.textContent = 'Guardando…';
+
+    const base = esNueva ? parse('') : (await store.receta(id)).receta;
+    const nueva = recetaDesdeFormulario(datos, base);
+
+    /** El editor otra vez, con lo que el usuario tenía escrito y el aviso (C04.5.2). */
+    const conError = (mensaje: string) => pintar(renderEditor({
+      entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
+      receta: nueva, categorias: categoriasDelArranque(),
+      tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje
+    }));
+
+    if (!nueva.titulo) return conError('Ponele un título antes de guardar.');
+
     try {
-      const { receta } = await store.receta(id);
-      const nueva = recetaDesdeFormulario(datos, receta) as Receta;
-      const r = await store.guardar(id, nueva, { carpetaDestino: datos['carpeta'] });
-      if (!r.ok) return alert('La receta cambió en Drive desde que la abriste. Recargá antes de guardar.');
-      programarFlush();
+      if (esNueva && borradorId && borradores) {
+        // Convertir es una sola operación: el .md, la fila y el borrador (C01.7.1).
+        await convertirBorrador({ store, borradores }, { borradorId, receta: nueva, carpetaId });
+      } else if (esNueva) {
+        await store.crear(nueva, { carpetaId: carpetaId || undefined });
+      } else {
+        await store.guardar(id, nueva, { carpetaDestino: carpetaId });
+      }
+      // Nada confirma el éxito: al terminar, vuelve a la receta.
       return history.back();
     } catch (err) {
       console.error(err);
-      return alert(`No se pudo guardar en Drive: ${mensajeDe(err)}. El cambio puede no haberse guardado — probá de nuevo antes de salir de la receta.`);
+      return conError('No se pudo guardar. Revisá la conexión.');
     }
   }
 
-  if (accion === 'borrar') {
-    if (!confirm('¿Borrar esta receta?')) return;
+  if (accion === 'borrar') { confirmandoDescarte = true; return render(); }
+  if (accion === 'cancelar-borrado') { confirmandoDescarte = false; return render(); }
+  if (accion === 'borrar-confirmado') {
+    const id = vistaActual?.params['id'] ?? '';
     try {
-      await store.borrar(vistaActual?.params['id'] ?? '');
-      programarFlush();
+      await store.borrar(id);
+      confirmandoDescarte = false;
+      // Vuelve a la lista de donde se venía; el archivo queda en la papelera
+      // de Drive, que es la red de seguridad y es del usuario.
       location.hash = '#/';
       return;
     } catch (err) {
       console.error(err);
-      return alert(`No se pudo borrar en Drive: ${mensajeDe(err)}. La receta puede seguir estando ahí — probá de nuevo.`);
+      const { entrada, receta } = await store.receta(id);
+      return pintar(renderEditor({
+        entrada, receta, categorias: categoriasDelArranque(),
+        tagsConocidos: store.tagsDe().map(t => t.tag),
+        error: 'No se pudo borrar. La receta sigue estando.'
+      }));
     }
   }
+
+  if (accion === 'reintentar') return render();
 });
 
 app.addEventListener('change', (e) => {

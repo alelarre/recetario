@@ -1,0 +1,146 @@
+/* Recetario — lo que en los mockups vive en el <style> de cada pantalla.
+   Copiado de product-design/ux/mockups/, sin cambiar valores. Lo que es
+   sistema —encabezado, ficha, botón, tarjeta, chip, campo, aviso— está en
+   tokens.css; acá está lo que es de una pantalla.
+
+   Las reglas que en el catálogo cuelgan de `.desk` acá son media queries: el
+   marco de escritorio era andamio, el ancho es producto. */
+
+/* C05.10.1 — una columna con máximo. La grilla de cuatro columnas está al
+   final del archivo: una media query con la misma especificidad tiene que ir
+   después de `.grilla`, o la pisa la regla de dos columnas. */
+.cuerpo { max-width: 680px; margin: 0 auto; }
+
+/* ---- Recetario (mockup 03) ---- */
+.buscar { display: flex; align-items: center; gap: var(--e-2); min-height: 48px;
+          padding: 0 var(--e-3); background: var(--surface-alta);
+          border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio); }
+.buscar svg { width: var(--ico); height: var(--ico); stroke: var(--fg-3); fill: none; stroke-width: 1.5; }
+.buscar input { flex: 1; background: none; border: 0; color: var(--fg);
+                font: 400 var(--txt-base) var(--tipo); }
+.buscar input:focus { outline: none; }
+.grilla { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--e-3); }
+.tile { position: relative; aspect-ratio: 4/3; border-radius: var(--r-ficha); overflow: hidden;
+        border: 1px solid var(--c); background: var(--surface); display: block;
+        text-decoration: none; color: var(--fg); }
+.tile .im { position: absolute; inset: 0; background: var(--c); opacity: 1;
+            background-size: cover; background-position: center; }
+.tile .im::after { content: ''; position: absolute; inset: 0; background: var(--c);
+                   opacity: .28; mix-blend-mode: overlay; }
+.tile .im.trama { background:
+    repeating-linear-gradient(135deg, var(--c) 0 6px, transparent 6px 14px); opacity: .22; }
+.tile .nm { position: absolute; inset: auto 0 0 0; padding: var(--e-6) var(--e-2) var(--e-2);
+            font-size: var(--txt-chico); font-weight: 600; color: var(--fg);
+            background: linear-gradient(to top,
+                        color-mix(in srgb, var(--velo) 96%, transparent) 0%,
+                        color-mix(in srgb, var(--velo) 88%, transparent) 40%,
+                        transparent 100%); }
+
+/* ---- Rótulo de sección y listas (mockups 03, 04, 05, 08) ---- */
+.rot { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
+       letter-spacing: .06em; display: flex; justify-content: space-between; margin-bottom: var(--e-3); }
+.lista { display: flex; flex-direction: column; gap: var(--e-2); }
+
+/* ---- Categoría (mockup 04) ---- */
+.tot { font-size: var(--txt-chico); color: var(--fg-2); font-variant-numeric: tabular-nums;
+       padding-right: var(--e-3); }
+.compacta .tarjeta { padding: var(--e-2) var(--e-3); }
+.compacta .foto, .compacta .ph { width: 40px; height: 40px; flex-basis: 40px; }
+
+/* ---- Resultados (mockup 05) ---- */
+.cajaenc { display: flex; align-items: center; gap: var(--e-2); padding: var(--e-2);
+           border-bottom: 1px solid var(--borde); }
+.cajaenc input { flex: 1; min-height: 48px; padding: 0 var(--e-3); background: var(--surface-alta);
+                 border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio);
+                 color: var(--fg); font: 400 var(--txt-base) var(--tipo); }
+.grupo-res + .grupo-res { margin-top: var(--e-5); }
+
+/* ---- Receta en lectura (mockup 01) ---- */
+.rec-tit { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0 0 var(--e-2); }
+.rec-ctx { font-size: var(--txt-chico); color: var(--fg-2); display: flex; align-items: center;
+           gap: var(--e-2); flex-wrap: wrap; margin-bottom: var(--e-1); }
+.rec-fuente { font-size: var(--txt-chico); color: var(--fg-3); }
+.rec-foto { width: 100%; aspect-ratio: 16/9; max-height: 200px; object-fit: cover;
+            border-radius: var(--r-foto); display: block; margin-bottom: var(--e-4); }
+.var { padding: var(--e-3) 0; border-bottom: 1px solid var(--borde); }
+.var:last-child { border-bottom: 0; }
+.var h3 { font-size: var(--txt-base); font-weight: 600; margin: 0 0 var(--e-1); }
+.var .f { font-size: var(--txt-chico); color: var(--fg-3); font-style: italic; }
+.var p { margin: var(--e-1) 0 0; font-size: var(--txt-lectura); line-height: 1.6; }
+.tramo { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
+         letter-spacing: .06em; margin: var(--e-4) 0 var(--e-1); }
+.tramo:first-child { margin-top: 0; }
+.pie { position: sticky; bottom: 0; background: var(--bg);
+       border-top: 1px solid var(--borde); padding: var(--e-4); }
+/* El pie sigue el ancho del cuerpo: en pantalla ancha no se va a los bordes. */
+.pie .acciones { max-width: 680px; margin: 0 auto; }
+/* Un paso es una línea, no un párrafo con aire propio: el margen del <p> que
+   deja el markdown desalinea el número de la lista. */
+.pasos li p { margin: 0; }
+
+/* ---- Modo cocina (mockup 02) ---- */
+.encoc { height: 56px; display: flex; align-items: center; padding: 0 var(--e-2);
+         border-bottom: 1px solid var(--borde); }
+.encoc .tit { flex: 1; font-weight: 600; }
+.conm { position: sticky; top: 0; z-index: 2; display: flex; background: var(--surface);
+        border-bottom: 1px solid var(--borde); }
+.conm button { flex: 1; height: 64px; background: none; border: 0; cursor: pointer;
+               color: var(--fg-2); font: 600 var(--txt-base)/1 var(--tipo);
+               border-bottom: 3px solid transparent; }
+.conm button.on { background: var(--surface-alta); color: var(--fg); border-bottom-color: var(--acento); }
+.coc { padding: var(--e-4); }
+.coc .grupo { font-size: var(--txt-base); margin-top: var(--e-6); margin-bottom: var(--e-2); }
+.coc .grupo:first-child { margin-top: 0; }
+.coc .ing { font-size: var(--txt-cocina); line-height: 1.65; padding: var(--e-cocina) 0; }
+.coc .pasos li { font-size: var(--txt-cocina); line-height: 1.65; padding: var(--e-cocina) 0;
+                 border-bottom: 1px solid var(--borde); }
+.coc .pasos li:last-child { border-bottom: 0; }
+.coc .tramo { font-size: var(--txt-base); color: var(--fg-2); text-transform: uppercase;
+              letter-spacing: .06em; margin: var(--e-6) 0 var(--e-2); }
+.coc .pasos li.aqui { background: var(--acento-suave); margin: 0 calc(-1 * var(--e-3));
+                      padding-left: var(--e-3); padding-right: var(--e-3);
+                      border-radius: var(--r-medio); border-bottom-color: transparent; }
+.coc .pasos li.hecho { color: var(--fg-3); }
+.coc .pasos li.hecho::before { content: '✓'; color: var(--fg-3); }
+.wake { position: sticky; bottom: 0; background: var(--bg);
+        border-top: 1px solid var(--borde); padding: var(--e-4); }
+.wake .btn { width: 100%; min-height: 64px; }
+
+/* ---- Editor (mockup 06) ---- */
+.par { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-3); }
+.par .campo { margin-bottom: 0; }
+
+/* ---- Captura (mockup 07) ---- */
+.hoja { min-height: 100%; display: flex; flex-direction: column; padding: var(--e-5) var(--e-4); }
+.hoja h1 { font-size: var(--txt-titulo); margin: 0 0 var(--e-5); }
+.fnt { font-size: var(--txt-chico); color: var(--fg-2); background: var(--surface);
+       border: 1px solid var(--borde); border-radius: var(--r-medio); padding: var(--e-3);
+       word-break: break-all; margin-bottom: var(--e-5); }
+.pie2 { margin-top: auto; display: flex; gap: var(--e-2); justify-content: flex-end; padding-top: var(--e-5); }
+
+/* ---- Borradores (mockup 08) ---- */
+.bor { display: flex; gap: var(--e-3); align-items: flex-start; padding: var(--e-3);
+       background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha); }
+.bor .txt { flex: 1; min-width: 0; }
+.bor .n { font-weight: 600; }
+.bor .f { font-size: var(--txt-chico); color: var(--fg-2); white-space: nowrap;
+          overflow: hidden; text-overflow: ellipsis; margin-top: var(--e-1); }
+.bor .d { font-size: var(--txt-micro); color: var(--fg-3); white-space: nowrap; }
+
+/* ---- Ajustes (mockup 10) ---- */
+.fila-a { display: flex; align-items: center; gap: var(--e-3); min-height: 48px; }
+.fila-a .t { flex: 1; }
+.barra { height: 8px; background: var(--surface-alta); border-radius: var(--r-chico); overflow: hidden; }
+.barra i { display: block; height: 100%; background: var(--acento); }
+
+/* ---- Conexión (mockup 11) ---- */
+.arr { min-height: 100%; display: flex; flex-direction: column; justify-content: center;
+       padding: var(--e-6) var(--e-4); gap: var(--e-5); }
+.arr h1 { font-size: var(--txt-titulo); margin: 0; }
+.arr p { font-size: var(--txt-lectura); line-height: 1.6; color: var(--fg-2); margin: 0; }
+
+/* ---- Pantalla ancha (C05.10.1) ---- */
+@media (min-width: 900px) {
+  .grilla { grid-template-columns: repeat(4, 1fr); }
+  .par3 { grid-template-columns: 1fr 1fr 1fr; }
+}
