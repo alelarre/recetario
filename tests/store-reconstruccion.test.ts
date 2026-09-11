@@ -3,6 +3,7 @@ import { crearStore } from '../src/store.js';
 import { driveFalso, sheetsFalso } from './dobles.js';
 import type { DriveFalso, SheetsFalso } from './dobles.js';
 import { COLUMNAS } from '../src/catalogo.js';
+import { SCHEMA_VERSION } from '../src/config.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
@@ -58,6 +59,14 @@ describe('reconstruir', () => {
     const meta = Object.fromEntries((await sheets.leer('i1', 'meta!A1:B20')).map(f => [f[0], f[1]]));
     expect(meta.reconstruccion_en_curso).toBeFalsy();
     expect(meta.ultima_reconstruccion).toBeTruthy();
+  });
+
+  it('anota la versión del esquema, para no reconstruir en cada arranque', async () => {
+    // Subir SCHEMA_VERSION es lo que fuerza la reconstrucción; si al terminar
+    // no queda anotada, el arranque siguiente vuelve a reconstruir de nuevo.
+    await store.reconstruir();
+    const meta = Object.fromEntries((await sheets.leer('i1', 'meta!A1:B20')).map(f => [f[0], f[1]]));
+    expect(meta.schemaVersion).toBe(String(SCHEMA_VERSION));
   });
 
   it('reporta progreso mientras lee', async () => {

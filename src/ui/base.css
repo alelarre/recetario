@@ -6,9 +6,10 @@
    Las reglas que en el catálogo cuelgan de `.desk` acá son media queries: el
    marco de escritorio era andamio, el ancho es producto. */
 
-/* C05.10.1 — una columna con máximo, y las grillas pasan a cuatro. */
+/* C05.10.1 — una columna con máximo. La grilla de cuatro columnas está al
+   final del archivo: una media query con la misma especificidad tiene que ir
+   después de `.grilla`, o la pisa la regla de dos columnas. */
 .cuerpo { max-width: 680px; margin: 0 auto; }
-@media (min-width: 900px) { .grilla { grid-template-columns: repeat(4, 1fr); } }
 
 /* ---- Recetario (mockup 03) ---- */
 .buscar { display: flex; align-items: center; gap: var(--e-2); min-height: 48px;
@@ -71,6 +72,11 @@
 .tramo:first-child { margin-top: 0; }
 .pie { position: sticky; bottom: 0; background: var(--bg);
        border-top: 1px solid var(--borde); padding: var(--e-4); }
+/* El pie sigue el ancho del cuerpo: en pantalla ancha no se va a los bordes. */
+.pie .acciones { max-width: 680px; margin: 0 auto; }
+/* Un paso es una línea, no un párrafo con aire propio: el margen del <p> que
+   deja el markdown desalinea el número de la lista. */
+.pasos li p { margin: 0; }
 
 /* ---- Modo cocina (mockup 02) ---- */
 .encoc { height: 56px; display: flex; align-items: center; padding: 0 var(--e-2);
@@ -103,7 +109,6 @@
 /* ---- Editor (mockup 06) ---- */
 .par { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-3); }
 .par .campo { margin-bottom: 0; }
-@media (min-width: 900px) { .par3 { grid-template-columns: 1fr 1fr 1fr; } }
 
 /* ---- Captura (mockup 07) ---- */
 .hoja { min-height: 100%; display: flex; flex-direction: column; padding: var(--e-5) var(--e-4); }
@@ -133,3 +138,9 @@
        padding: var(--e-6) var(--e-4); gap: var(--e-5); }
 .arr h1 { font-size: var(--txt-titulo); margin: 0; }
 .arr p { font-size: var(--txt-lectura); line-height: 1.6; color: var(--fg-2); margin: 0; }
+
+/* ---- Pantalla ancha (C05.10.1) ---- */
+@media (min-width: 900px) {
+  .grilla { grid-template-columns: repeat(4, 1fr); }
+  .par3 { grid-template-columns: 1fr 1fr 1fr; }
+}

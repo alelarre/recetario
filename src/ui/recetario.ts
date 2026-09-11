@@ -23,7 +23,13 @@ export function renderRecetario({ categorias, borradores }: OpcionesRecetario): 
     `<button class="ico cuenta" data-accion="borradores" aria-label="Borradores">${ICO.menu}${cuenta}</button>` +
     `<button class="ico" data-accion="ajustes" aria-label="Ajustes">${ICO.ajustes}</button>`;
 
-  const grilla = categorias.map(c => tile(c.nombre)).join('');
+  // Alfabético y no por cantidad: la posición de la categoría en la grilla es
+  // justo lo que se aprende, y reacomodarla cada vez que entra una receta la
+  // vuelve a esconder.
+  const grilla = [...categorias]
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    .map(c => tile(c.nombre))
+    .join('');
 
   return encabezado({ titulo: 'Recetario', grande: true, derecha }) +
     '<div class="cuerpo">' +

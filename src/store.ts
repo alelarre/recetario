@@ -342,6 +342,10 @@ export function crearStore({ drive, sheets }: Dependencias) {
     filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
 
     const ahora = new Date().toISOString();
+    // La versión del esquema se escribe acá y no solo al crear la planilla:
+    // subirla es lo que fuerza la reconstrucción, y si al terminar no queda
+    // anotada, el próximo arranque vuelve a reconstruir para siempre.
+    await guardarMeta('schemaVersion', String(SCHEMA_VERSION));
     await guardarMeta('ultima_reconstruccion', ahora);
     ctx.ultimaReconstruccionEnMemoria = ahora;
     await guardarMeta('reconstruccion_en_curso', '');

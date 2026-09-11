@@ -132,16 +132,22 @@ document.addEventListener('visibilitychange', () => {
   if (b && !wakeLock) void mantenerPantalla().then(() => render());
 });
 
-async function arrancar() {
+/**
+ * Arranca la app. `pidiendoPermiso` es el toque del botón: el consentimiento
+ * de Google se pide ahí y nunca al abrir (C05.9.1).
+ */
+async function arrancar({ pidiendoPermiso = false } = {}) {
   pintar(renderConexion({ estado: 'conectando' }));
   try {
     // Vía silenciosa primero: es la misma que usa auth.token() para renovar
     // (pedir('') con la sesión en frío). Para una app que se abre a diario,
     // pedir el consentimiento explícito en cada arranque es un popup por
-    // apertura; solo corresponde mostrarlo si la vía silenciosa falla —sin
-    // sesión previa, o con el permiso revocado.
+    // apertura.
     await auth.token();
   } catch {
+    // Sin sesión previa, o con el permiso revocado: se explica antes de pedir,
+    // porque el scope `drive` trae la pantalla de «app no verificada».
+    if (!pidiendoPermiso) return pintar(renderConexion({ estado: 'inicial' }));
     try {
       await auth.conectar();
     } catch (err) {
@@ -434,7 +440,7 @@ app.addEventListener('click', async (e) => {
   if (accion === 'borradores') { location.hash = '#/borradores'; return; }
   if (accion === 'ajustes') { location.hash = '#/ajustes'; return; }
   if (accion === 'reindexar') return reconstruir({ enAjustes: true });
-  if (accion === 'conectar') return arrancar();
+  if (accion === 'conectar') return arrancar({ pidiendoPermiso: true });
   if (accion === 'salir') {
     auth.olvidar();
     cuenta = '';
@@ -526,7 +532,7 @@ app.addEventListener('click', async (e) => {
       // Si el arranque nunca llegó a "listo" (solo-lectura), reintentar todo
       // el arranque en vez de solo renovar el token: el store todavía no
       // tiene categorías ni índice cargados.
-      if (estadoArranque?.estado !== 'listo') { await arrancar(); return; }
+      if (estadoArranque?.estado !== 'listo') { await arrancar({ pidiendoPermiso: true }); return; }
       await auth.conectar();
       return render();
     } catch (err) {

@@ -25,6 +25,16 @@ describe('Recetario', () => {
     expect(dibujar()).toContain('href="#/c/Carnes"');
   });
 
+  it('las categorías salen alfabéticas, venga como venga el índice', () => {
+    const html = dibujar({ categorias: [
+      { id: 'c1', nombre: 'Otros', cantidad: 1 },
+      { id: 'c2', nombre: 'Bebidas', cantidad: 1 },
+      { id: 'c3', nombre: 'Aves', cantidad: 1 }
+    ] });
+    expect(html.indexOf('>Aves<')).toBeLessThan(html.indexOf('>Bebidas<'));
+    expect(html.indexOf('>Bebidas<')).toBeLessThan(html.indexOf('>Otros<'));
+  });
+
   it('la entrada a Borradores lleva el contador', () => {
     expect(dibujar()).toContain('>3<');
   });
