@@ -8,7 +8,7 @@ import { parse } from './recipe.js';
 import { crearRouter, parsearHash } from './ui/router.js';
 import { escapar } from './ui/markdown.js';
 import { renderRecetario } from './ui/recetario.js';
-import { renderLista } from './ui/lista.js';
+import { renderCategoria } from './ui/categoria.js';
 import { renderResultados } from './ui/resultados.js';
 import { renderDetalle } from './ui/detalle.js';
 import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
@@ -33,6 +33,14 @@ let ingredientesPlegados = false;  // la barra pegajosa del detalle
 let vaciasVisibles = false;        // las categorías en cero, plegadas en el home
 let wakeLock: WakeLockSentinel | null = null;  // para que la pantalla no se apague cocinando
 let tagsActivos: string[] = [];   // filtro de la vista de categoría; se limpia al cambiar de vista
+
+/**
+ * Cuántas tarjetas dibuja la categoría. El tramo no es una lectura de red —el
+ * índice ya está entero en memoria—: es cuántas se dibujan de una vez.
+ */
+const TRAMO = 30;
+let visibles = TRAMO;
+let observadorTramo: IntersectionObserver | null = null;
 let fotosVisor: string[] | null = null;  // fotos de la receta abierta; null = visor cerrado
 let indiceVisor = 0;
 
@@ -155,6 +163,25 @@ async function reconstruir() {
   render();
 }
 
+/**
+ * El tramo siguiente se dibuja cuando el spinner del final entra en pantalla.
+ * `IntersectionObserver` no existe en Node, donde corren los tests: se
+ * pregunta antes, igual que el resto del código hace con `navigator`.
+ */
+function observarTramo(): void {
+  observadorTramo?.disconnect();
+  observadorTramo = null;
+  if (typeof IntersectionObserver === 'undefined') return;
+  const spin = document.querySelector('#app .spin');
+  if (!spin) return;
+  observadorTramo = new IntersectionObserver(entradas => {
+    if (!entradas.some(e => e.isIntersecting)) return;
+    visibles += TRAMO;
+    void render();
+  });
+  observadorTramo.observe(spin);
+}
+
 async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   // Cambiar de categoría o de vista limpia el filtro de tags y cierra el visor:
   // si no, se entra a otra categoría y no se ve nada porque quedó filtrando
@@ -163,6 +190,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       || ruta.params.id !== vistaActual.params.id) {
     tagsActivos = [];
     fotosVisor = null;
+    visibles = TRAMO;
     // Lo que se plegó vale para la receta que se estaba mirando, no para la
     // próxima: sin esto se entra a otra receta y los ingredientes ya vienen
     // cerrados sin que nadie los haya cerrado.
@@ -176,12 +204,11 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   if (ruta.vista === 'categoria') {
     const nombre = ruta.params['nombre'] ?? '';
     const entradas = store.buscar({ categoria: nombre, tags: tagsActivos });
-    const vacio = tagsActivos.length
-      ? { titulo: 'Ninguna receta con esos tags', detalle: 'Probá sacando alguno de los filtros de arriba.' }
-      : { titulo: 'Todavía no hay nada acá',
-          detalle: `Las recetas entran como archivos .md en la carpeta ${nombre} de Drive, casi siempre escritas por un agente desde un PDF, una foto o un video.` };
-    return pintar(renderLista({ titulo: nombre, categoria: nombre, entradas,
-      tags: store.tagsDe(nombre), tagsActivos, vacio }));
+    pintar(renderCategoria({
+      nombre, entradas: entradas.slice(0, visibles), total: entradas.length,
+      visibles: Math.min(visibles, entradas.length), tagsActivos
+    }));
+    return observarTramo();
   }
   if (ruta.vista === 'resultados') {
     const q = ruta.params['q'] ?? '';
