@@ -98,12 +98,13 @@ export function vacio(texto: string): string {
 }
 
 /** El tile de una categoría en la grilla del Recetario (mockup 03). */
-export function tile(nombre: string): string {
+export function tile(nombre: string, cantidad?: number): string {
   const imagen = fotoCategoria(nombre);
   const fondo = imagen
     ? `<span class="im" style="background-image:url(${imagen})"></span>`
-    : '<span class="im trama"></span>';   // `Otros` y las que no tienen foto
+    : '<span class="im trama"></span>';   // las que no tienen foto
+  const cuenta = cantidad ? `<span class="cu">${cantidad}</span>` : '';
   return `<a class="tile" style="--c:${colorCategoria(nombre)}" ` +
     `href="#/c/${encodeURIComponent(nombre)}" data-slug="${escapar(slugCategoria(nombre))}">` +
-    `${fondo}<span class="nm">${escapar(nombre)}</span></a>`;
+    `${fondo}${cuenta}<span class="nm">${escapar(nombre)}</span></a>`;
 }

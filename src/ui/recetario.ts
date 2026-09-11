@@ -28,7 +28,7 @@ export function renderRecetario({ categorias, borradores }: OpcionesRecetario): 
   // vuelve a esconder.
   const grilla = [...categorias]
     .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
-    .map(c => tile(c.nombre))
+    .map(c => tile(c.nombre, c.cantidad))
     .join('');
 
   return encabezado({ titulo: 'Recetario', grande: true, derecha }) +

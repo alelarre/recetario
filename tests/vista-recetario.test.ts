@@ -18,7 +18,11 @@ describe('Recetario', () => {
   });
 
   it('una categoría sin recetas se muestra igual', () => {
-    expect(dibujar()).toContain('Postres');
+    const html = dibujar();
+    expect(html).toContain('Postres');
+    // Y sin un 0 encima: el contador sólo aparece cuando hay algo que contar.
+    expect(html).toContain('<span class="cu">4</span>');
+    expect(html.match(/class="cu"/g)).toHaveLength(1);
   });
 
   it('cada categoría lleva a su lista', () => {

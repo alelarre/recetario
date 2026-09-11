@@ -56,10 +56,10 @@ const COLORES: Record<string, string> = {
 };
 
 /**
- * `Otros` no tiene color propio ni foto: es la categoría comodín y lo que dice
- * es "todavía no sabemos" (design-system §2.3). Se dibuja con el neutro y con
- * la trama del mockup 03, y ese neutro es también el respaldo de una carpeta
- * que todavía no está en la lista.
+ * `Otros` no tiene color propio: es la categoría comodín y lo que dice es
+ * "todavía no sabemos" (design-system §2.3). Sí tiene foto —el pixel art
+ * compuesto sobre su color—, y el neutro es también el respaldo de una carpeta
+ * que todavía no está en la lista; sin foto, el tile cae en la trama.
  */
 const NEUTRO = 'var(--cat-otros)';
 
@@ -75,7 +75,5 @@ export function colorCategoria(nombre: unknown): string {
 
 /** La URL de la foto, o null si esa categoría todavía no tiene. */
 export function fotoCategoria(nombre: unknown): string | null {
-  const slug = slugCategoria(nombre);
-  if (slug === 'otros') return null;   // se dibuja con la trama, no con una foto
-  return porSlug.get(slug) ?? null;
+  return porSlug.get(slugCategoria(nombre)) ?? null;
 }

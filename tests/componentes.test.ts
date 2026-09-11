@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { tarjeta, placeholder, aviso, encabezado, chips, vacio } from '../src/ui/componentes.js';
+import { tarjeta, placeholder, aviso, encabezado, chips, vacio, tile } from '../src/ui/componentes.js';
 import { entradaFalsa } from './dobles.js';
 
 describe('tarjeta', () => {
@@ -98,5 +98,27 @@ describe('vacio', () => {
     const html = vacio('Ninguna receta se llama así.');
     expect(html).toContain('Ninguna receta se llama así.');
     expect(html).not.toContain('<button');
+  });
+});
+
+describe('tile', () => {
+  it('lleva la foto de la categoría y su color', () => {
+    const html = tile('Pescados y mariscos');
+    expect(html).toContain('--c:var(--cat-pescados)');
+    expect(html).toContain('background-image:url(');
+    expect(html).toContain('href="#/c/Pescados%20y%20mariscos"');
+  });
+
+  it('una categoría sin foto cae en la trama, no en un hueco', () => {
+    expect(tile('Fiambres caseros')).toContain('class="im trama"');
+  });
+
+  it('el contador aparece cuando la categoría tiene recetas', () => {
+    expect(tile('Carnes', 20)).toContain('<span class="cu">20</span>');
+  });
+
+  it('en cero no se dibuja: una categoría vacía se muestra igual, sin un 0 encima', () => {
+    expect(tile('Carnes', 0)).not.toContain('class="cu"');
+    expect(tile('Carnes')).not.toContain('class="cu"');
   });
 });

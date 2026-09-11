@@ -27,6 +27,12 @@
             background-size: cover; background-position: center; }
 .tile .im::after { content: ''; position: absolute; inset: 0; background: var(--c);
                    opacity: .28; mix-blend-mode: overlay; }
+.tile .cu { position: absolute; top: var(--e-2); right: var(--e-2); z-index: 1;
+            min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
+            background: color-mix(in srgb, var(--velo) 80%, transparent);
+            border: 1px solid var(--borde-fuerte);
+            font-size: var(--txt-micro); font-weight: 600; color: var(--fg-2);
+            display: grid; place-items: center; font-variant-numeric: tabular-nums; }
 .tile .im.trama { background:
     repeating-linear-gradient(135deg, var(--c) 0 6px, transparent 6px 14px); opacity: .22; }
 .tile .nm { position: absolute; inset: auto 0 0 0; padding: var(--e-6) var(--e-2) var(--e-2);

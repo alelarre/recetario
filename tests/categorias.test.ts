@@ -18,9 +18,9 @@ describe('categorias', () => {
     expect(colorCategoria('Carnes')).toBe('var(--cat-carnes)');
   });
 
-  it('Otros se dibuja con el neutro y sin foto: es la categoría comodín', () => {
+  it('Otros lleva el neutro, y su foto como cualquier otra', () => {
     expect(colorCategoria('Otros')).toBe('var(--cat-otros)');
-    expect(fotoCategoria('Otros')).toBeNull();
+    expect(fotoCategoria('Otros')).not.toBeNull();
   });
 
   it('una categoría desconocida cae en el neutro y no rompe', () => {
