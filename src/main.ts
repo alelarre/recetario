@@ -10,9 +10,8 @@ import { escapar } from './ui/markdown.js';
 import { renderRecetario } from './ui/recetario.js';
 import { renderCategoria } from './ui/categoria.js';
 import { renderResultados } from './ui/resultados.js';
-import { renderDetalle } from './ui/detalle.js';
+import { renderReceta } from './ui/receta.js';
 import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
-import { renderVisor } from './ui/visor.js';
 import type { Ruta } from './ui/router.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { Receta } from './tipos.js';
@@ -29,7 +28,6 @@ const sheets = crearSheets(() => auth.token());
 let store: Store;
 let estadoArranque: ResultadoArranque | undefined;
 let vistaActual: Ruta | null = null;
-let ingredientesPlegados = false;  // la barra pegajosa del detalle
 let vaciasVisibles = false;        // las categorías en cero, plegadas en el home
 let wakeLock: WakeLockSentinel | null = null;  // para que la pantalla no se apague cocinando
 let tagsActivos: string[] = [];   // filtro de la vista de categoría; se limpia al cambiar de vista
@@ -41,8 +39,6 @@ let tagsActivos: string[] = [];   // filtro de la vista de categoría; se limpia
 const TRAMO = 30;
 let visibles = TRAMO;
 let observadorTramo: IntersectionObserver | null = null;
-let fotosVisor: string[] | null = null;  // fotos de la receta abierta; null = visor cerrado
-let indiceVisor = 0;
 
 /**
  * Estrecha el destino de un evento a algo con `closest`.
@@ -69,25 +65,7 @@ const categoriasDelArranque = () =>
 
 const pintar = (html: string): void => { app.innerHTML = html; };
 
-/** Agrega o saca el visor del final de #app, sin tocar el resto del contenido (§7.2: no pierde el scroll del detalle). */
-function pintarVisor(): void {
-  document.querySelector('.visor')?.remove();
-  if (fotosVisor) app!.insertAdjacentHTML('beforeend', renderVisor({ fotos: fotosVisor, indice: indiceVisor }));
-}
-
-function abrirVisor(fotos: string[], indice: number): void {
-  fotosVisor = fotos;
-  indiceVisor = indice;
-  pintarVisor();
-}
-
-function cerrarVisor() {
-  fotosVisor = null;
-  pintarVisor();
-}
-
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && fotosVisor) return cerrarVisor();
   if (e.key === 'Escape') { const m = document.querySelector<HTMLElement>('.menu'); if (m) m.hidden = true; }
 });
 
@@ -183,18 +161,13 @@ function observarTramo(): void {
 }
 
 async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
-  // Cambiar de categoría o de vista limpia el filtro de tags y cierra el visor:
+  // Cambiar de categoría o de vista limpia el filtro de tags:
   // si no, se entra a otra categoría y no se ve nada porque quedó filtrando
   // por un tag que ahí no existe, sin forma de darse cuenta.
   if (!vistaActual || ruta.vista !== vistaActual.vista || ruta.params.nombre !== vistaActual.params.nombre
       || ruta.params.id !== vistaActual.params.id) {
     tagsActivos = [];
-    fotosVisor = null;
     visibles = TRAMO;
-    // Lo que se plegó vale para la receta que se estaba mirando, no para la
-    // próxima: sin esto se entra a otra receta y los ingredientes ya vienen
-    // cerrados sin que nadie los haya cerrado.
-    ingredientesPlegados = false;
   }
   vistaActual = ruta;
   if (ruta.vista === 'recetario') {
@@ -216,7 +189,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   }
   if (ruta.vista === 'receta') {
     const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
-    return pintar(renderDetalle({ entrada, receta, ingredientesPlegados }));
+    return pintar(renderReceta({ entrada, receta }));
   }
   if (ruta.vista === 'editar') {
     const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
@@ -236,7 +209,7 @@ app.addEventListener('click', async (e) => {
   // Todo el manejo de clicks es delegación desde #app, así que el destino
   // llega como EventTarget y hay que estrecharlo una sola vez, acá.
   const destino = conClosest(e.target);
-  const boton = destino?.closest<HTMLElement>('[data-accion], .check, [data-tag], img') ?? null;
+  const boton = destino?.closest<HTMLElement>('[data-accion], .check, [data-tag]') ?? null;
 
   // El menú del home se cierra al tocar cualquier otra cosa, como cualquier
   // desplegable. Sin esto solo se cerraba volviendo a tocar el ⋯.
@@ -258,17 +231,7 @@ app.addEventListener('click', async (e) => {
     return render();
   }
 
-  if (boton.tagName === 'IMG') {
-    // Las imágenes del cuerpo son las únicas fotos de la receta: tocar
-    // cualquiera abre el visor (§7.2).
-    const fotos = [...document.querySelectorAll<HTMLImageElement>('#app [data-cuerpo] img')];
-    const indice = fotos.indexOf(boton as HTMLImageElement);
-    if (indice === -1) return;
-    return abrirVisor(fotos.map(img => img.src), indice);
-  }
-
   const accion = boton.dataset['accion'];
-  if (accion === 'ingredientes') { ingredientesPlegados = !ingredientesPlegados; return render(); }
   if (accion === 'vacias') { vaciasVisibles = !vaciasVisibles; return render(); }
 
   // Las dos mitades que resolvería un modo cocina, sin pantalla nueva (§7.2).
@@ -304,9 +267,6 @@ app.addEventListener('click', async (e) => {
     }
   }
   if (accion === 'menu') return document.querySelector('.menu')?.toggleAttribute('hidden');
-  if (accion === 'cerrar-visor') return cerrarVisor();
-  if (accion === 'foto-anterior') { indiceVisor = Math.max(0, indiceVisor - 1); return pintarVisor(); }
-  if (accion === 'foto-siguiente') { indiceVisor = Math.min((fotosVisor?.length ?? 1) - 1, indiceVisor + 1); return pintarVisor(); }
 
   if (accion === 'guardar') {
     const form = document.querySelector<HTMLFormElement>('[data-formulario]');
