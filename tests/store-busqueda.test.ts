@@ -88,6 +88,61 @@ describe('buscar', () => {
   });
 });
 
+describe('buscarPorTexto: los tres criterios', () => {
+  beforeEach(async () => {
+    // Un fixture propio: lo que importa acá es que el mismo texto coincida por
+    // título, por ingrediente y por tag, y en recetas distintas.
+    await sheets.append('i1', 'recetas', [
+      fila('f-filet', 'Filet de merluza a la romana', 'Carnes', 'c1', 'frito', 'Merluza o pescadilla|Pan rallado'),
+      fila('f-gratin', 'Gratin de papas', 'Carnes', 'c1', 'horno', 'Merluza o pescadilla|Papa'),
+      fila('f-caballa', 'Caballa a la sidra', 'Carnes', 'c1', 'merluza', 'Caballa'),
+      fila('f-pure', 'Puré de papas', 'Carnes', 'c1', '', 'Papa|Leche')
+    ]);
+    await store.cargarIndice();
+  });
+
+  it('busca en título, ingredientes y tags, y separa los tres grupos', () => {
+    const g = store.buscarPorTexto('merluza');
+    expect(g.porNombre.map(e => e.titulo)).toEqual(['Filet de merluza a la romana']);
+    expect(g.porIngrediente[0]?.motivo).toBe('tiene Merluza o pescadilla');
+    expect(g.porTag).toHaveLength(1);
+  });
+
+  it('no distingue mayúsculas ni acentos, en los dos sentidos', () => {
+    expect(store.buscarPorTexto('PURE').porNombre.map(e => e.titulo)).toContain('Puré de papas');
+    expect(store.buscarPorTexto('puré').porNombre.map(e => e.titulo)).toContain('Puré de papas');
+  });
+
+  it('una receta que coincide por dos criterios aparece en los dos grupos', () => {
+    const g = store.buscarPorTexto('merluza');
+    const enNombre = g.porNombre.some(e => e.id_archivo === 'f-filet');
+    const enIngrediente = g.porIngrediente.some(r => r.entrada.id_archivo === 'f-filet');
+    expect(enNombre && enIngrediente).toBe(true);
+  });
+
+  it('el motivo cita el ingrediente tal como está escrito', () => {
+    expect(store.buscarPorTexto('merluza').porIngrediente[0]?.motivo).toContain('Merluza o pescadilla');
+  });
+
+  it('el motivo del tag dice que lo lleva', () => {
+    expect(store.buscarPorTexto('merluza').porTag[0]?.motivo).toBe('lleva merluza');
+  });
+
+  it('no busca en la descripción, en los pasos ni en las notas', () => {
+    // Nada de eso está en la fila del índice: buscar mil recetas no lee mil .md.
+    expect(store.buscarPorTexto('domingos').porNombre).toHaveLength(0);
+  });
+
+  it('la caja vacía no devuelve nada', () => {
+    expect(store.buscarPorTexto('')).toEqual({ porNombre: [], porIngrediente: [], porTag: [] });
+  });
+
+  it('no lanza con argumentos inválidos', () => {
+    expect(store.buscarPorTexto(null)).toEqual({ porNombre: [], porIngrediente: [], porTag: [] });
+    expect(() => store.buscarPorTexto(42)).not.toThrow();
+  });
+});
+
 describe('categoriasConConteo', () => {
   it('cuenta las recetas de cada categoría', () => {
     const c = store.categoriasConConteo();

@@ -9,6 +9,7 @@ import { crearRouter, parsearHash } from './ui/router.js';
 import { escapar } from './ui/markdown.js';
 import { renderRecetario } from './ui/recetario.js';
 import { renderLista } from './ui/lista.js';
+import { renderResultados } from './ui/resultados.js';
 import { renderDetalle } from './ui/detalle.js';
 import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
 import { renderVisor } from './ui/visor.js';
@@ -184,9 +185,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   }
   if (ruta.vista === 'resultados') {
     const q = ruta.params['q'] ?? '';
-    const grupos = store.buscarPorTexto(q);
-    return pintar(renderLista({ titulo: `"${q}"`, grupos,
-      vacio: { titulo: 'Sin resultados', detalle: 'Se busca por título y por ingrediente.' } }));
+    return pintar(renderResultados({ consulta: q, grupos: store.buscarPorTexto(q) }));
   }
   if (ruta.vista === 'receta') {
     const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');

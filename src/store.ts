@@ -5,7 +5,7 @@ import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 import type { Drive } from './drive.js';
 import type { Sheets } from './sheets.js';
 import type {
-  Receta, Ubicacion, Entrada, Filtros, Coincidencias, ArchivoDrive
+  Receta, Ubicacion, Entrada, Filtros, Coincidencia, Coincidencias, ArchivoDrive
 } from './tipos.js';
 
 const CATEGORIA_RAIZ = 'Sin categorizar';
@@ -374,19 +374,32 @@ export function crearStore({ drive, sheets }: Dependencias) {
   }
 
   /**
-   * Busca por texto separando el motivo de la coincidencia. El motor ya
-   * matcheaba título e ingrediente, pero devolvía una lista plana: buscabas
-   * "berenjena" y no sabías por qué había aparecido cada resultado.
+   * Busca por texto con los tres criterios —título, ingredientes y tags— y
+   * separa por cuál coincidió (C02.3.1). Tres pasadas sin `else`: una receta
+   * que coincide por dos entra en los dos grupos, que es lo que fija C02.3.2.
+   *
+   * El motivo cita el valor **tal como está escrito**: la normalización es de
+   * la comparación, no del texto que se muestra (C02.3.4).
    */
   function buscarPorTexto(texto: unknown): Coincidencias {
     const t = normalizar(String(texto ?? ''));
-    if (!t) return { porNombre: [], porIngrediente: [] };
-    const porNombre: Entrada[] = [], porIngrediente: Entrada[] = [];
+    if (!t) return { porNombre: [], porIngrediente: [], porTag: [] };
+
+    const porNombre: Entrada[] = [];
+    const porIngrediente: Coincidencia[] = [];
+    const porTag: Coincidencia[] = [];
+
     for (const e of entradas) {
       if (normalizar(e.titulo).includes(t)) porNombre.push(e);
-      else if (e.ingredientes.some(i => normalizar(i).includes(t))) porIngrediente.push(e);
+
+      const ingrediente = e.ingredientes.find(i => normalizar(i).includes(t));
+      if (ingrediente) porIngrediente.push({ entrada: e, motivo: `tiene ${ingrediente}` });
+
+      const tag = e.tags.find(x => normalizar(x).includes(t));
+      if (tag) porTag.push({ entrada: e, motivo: `lleva ${tag}` });
     }
-    return { porNombre, porIngrediente };
+
+    return { porNombre, porIngrediente, porTag };
   }
 
   function categoriasConConteo(): { id: string; nombre: string; cantidad: number }[] {

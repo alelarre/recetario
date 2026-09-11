@@ -1,14 +1,10 @@
 import { escapar } from './markdown.js';
 import { colorCategoria, fotoCategoria } from './categorias.js';
-import type { Entrada, Coincidencias } from '../tipos.js';
+import type { Entrada } from '../tipos.js';
 
 /**
- * Una lista de recetas: la de una categoría, o los resultados de una búsqueda.
- *
- * `grupos` llega sólo desde la búsqueda, que separa las coincidencias por
- * título de las coincidencias por ingrediente. Ahí el chip de color sí informa
- * —vienen categorías mezcladas—; dentro de una categoría no aparece, porque
- * serían veinte cuadraditos iguales que cuestan altura de fila y no dicen nada.
+ * La lista de una categoría. Los resultados de búsqueda se fueron a
+ * `resultados.ts`, que separa los tres criterios con su motivo.
  */
 /** Un tag con cuántas recetas lo llevan, para el chip de filtro. */
 export interface TagConCuenta {
@@ -24,12 +20,9 @@ export interface EstadoVacio {
 
 export interface ArgsLista {
   titulo?: string;
-  /** La lista de una categoría. Se ignora si viene `grupos`. */
   entradas?: Entrada[];
   tags?: TagConCuenta[];
   tagsActivos?: string[];
-  /** Sólo desde la búsqueda: separa las coincidencias por dónde matchearon. */
-  grupos?: Coincidencias | null;
   /**
    * El nombre de la categoría que se está mirando, para encabezarla con su
    * foto. Va explícito y no se deduce de `titulo`: en la búsqueda el título es
@@ -40,7 +33,7 @@ export interface ArgsLista {
 }
 
 export function renderLista(arg: ArgsLista = {}): string {
-  const { titulo = '', entradas = [], tags = [], tagsActivos = [], grupos = null, vacio = null,
+  const { titulo = '', entradas = [], tags = [], tagsActivos = [], vacio = null,
           categoria = null } = arg ?? {};
   const ents: Entrada[] = Array.isArray(entradas) ? entradas : [];
   const tagsList: TagConCuenta[] = Array.isArray(tags) ? tags : [];
@@ -49,18 +42,8 @@ export function renderLista(arg: ArgsLista = {}): string {
   const chips = tagsList.map(t => `
     <button class="chip" data-tag="${escapar(t.tag)}" aria-pressed="${activos.includes(t.tag)}">${escapar(t.tag)}</button>`).join('');
 
-  let cuerpo: string, total: number;
-  if (grupos) {
-    const { porNombre = [], porIngrediente = [] } = grupos;
-    total = porNombre.length + porIngrediente.length;
-    cuerpo = [
-      seccion('Por nombre', porNombre),
-      seccion('Por ingrediente', porIngrediente),
-    ].join('');
-  } else {
-    total = ents.length;
-    cuerpo = ents.map(e => fila(e, { conMarca: false })).join('');
-  }
+  const total = ents.length;
+  const cuerpo = ents.map(e => fila(e, { conMarca: false })).join('');
 
   const encabezado = `
     <header class="encabezado">
@@ -84,12 +67,6 @@ export function renderLista(arg: ArgsLista = {}): string {
       </div>` : encabezado}
     ${tagsList.length ? `<div class="chips">${chips}</div>` : ''}
     <div class="listado">${cuerpo || vacioHtml(vacio)}</div>`;
-}
-
-function seccion(rotulo: string, ents: Entrada[]): string {
-  if (!ents.length) return '';
-  return `<p class="rotulo">${escapar(rotulo)} · ${ents.length}</p>` +
-    ents.map(e => fila(e, { conMarca: true })).join('');
 }
 
 function fila(e: Entrada, { conMarca }: { conMarca: boolean }): string {

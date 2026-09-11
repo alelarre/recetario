@@ -12,16 +12,12 @@ const ENTRADAS = [
 // tests/vista-recetario.test.ts. Lo que queda acá es la lista de v1, que se
 // va entera con la Tarea 15.
 describe('renderLista', () => {
-  it('la categoría se encabeza con su foto; la búsqueda no', () => {
+  it('la categoría se encabeza con su foto', () => {
     // La foto es la misma del tile que se acaba de tocar: confirma dónde
-    // entraste sin leer el título. En la búsqueda el título es el texto
-    // buscado, que no tiene ni foto ni color, así que ahí no va la cabecera.
+    // entraste sin leer el título.
     const cat = renderLista({ titulo: 'Pescados y mariscos', categoria: 'Pescados y mariscos', entradas: ENTRADAS });
     expect(cat).toContain('cabecera-cat');
     expect(cat).toContain('<img');
-
-    const busqueda = renderLista({ titulo: '"berenjena"', grupos: { porNombre: [], porIngrediente: [] } });
-    expect(busqueda).not.toContain('cabecera-cat');
   });
 
   it('una categoría sin foto se encabeza igual, con su color plano', () => {
@@ -58,25 +54,6 @@ describe('renderLista', () => {
     expect(html).toContain('Las recetas entran como .md en Drive.');
   });
 
-  it('la búsqueda separa las coincidencias por nombre de las de ingrediente', () => {
-    // El motor ya matcheaba las dos cosas, pero devolvía una lista plana:
-    // buscabas "berenjena" y no sabías por qué había aparecido cada resultado.
-    const html = renderLista({ titulo: '"berenjena"', grupos: {
-      porNombre: [entradaFalsa({ id_archivo: 'a', titulo: 'Escabeche de berenjenas', categoria: 'Entradas y picadas' })],
-      porIngrediente: [entradaFalsa({ id_archivo: 'b', titulo: 'Baba ganush', categoria: 'Entradas y picadas' })],
-    } });
-    expect(html).toContain('Por nombre · 1');
-    expect(html).toContain('Por ingrediente · 1');
-    expect(html).toContain('<span class="cuenta">2</span>');
-  });
-
-  it('el chip de color aparece en la búsqueda y no dentro de una categoría', () => {
-    // Vienen categorías mezcladas: ahí el color informa. Dentro de una
-    // categoría serían veinte cuadraditos iguales que no dicen nada.
-    const entrada = entradaFalsa({ id_archivo: 'a', titulo: 'X', categoria: 'Carnes' });
-    const busqueda = renderLista({ titulo: '"x"', grupos: { porNombre: [entrada], porIngrediente: [] } });
-    const categoria = renderLista({ titulo: 'Carnes', entradas: [entrada] });
-    expect(busqueda).toContain('class="marca"');
-    expect(categoria).not.toContain('class="marca"');
-  });
+  // La búsqueda se fue a resultados.ts, con los tres criterios y su motivo:
+  // sus tests son tests/vista-resultados.test.ts.
 });
