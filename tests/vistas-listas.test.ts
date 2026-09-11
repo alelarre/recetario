@@ -1,7 +1,6 @@
 // tests/vistas-listas.test.js
 import { describe, it, expect } from 'vitest';
 import { entradaFalsa } from './dobles.js';
-import { renderHome } from '../src/ui/home.js';
 import { renderLista } from '../src/ui/lista.js';
 
 const ENTRADAS = [
@@ -9,75 +8,9 @@ const ENTRADAS = [
   entradaFalsa({ id_archivo: 'r2', titulo: 'Matambre a la pizza', tags: ['incompleto'] })
 ];
 
-describe('renderHome', () => {
-  it('dibuja un tile por categoría con su conteo', () => {
-    const html = renderHome({ categorias: [{ id: 'c1', nombre: 'Carnes', cantidad: 33 }] });
-    expect(html).toContain('Carnes');
-    expect(html).toContain('33');
-    expect(html).toContain('href="#/c/Carnes"');
-  });
-
-  it('escapa los nombres de categoría', () => {
-    const html = renderHome({ categorias: [{ id: 'c1', nombre: '<b>x</b>', cantidad: 1 }] });
-    expect(html).not.toContain('<b>x</b>');
-  });
-
-  it('ofrece reconstruir con la fecha de la última reconstrucción', () => {
-    const html = renderHome({ categorias: [], ultimaReconstruccion: '2026-09-01T10:00:00.000Z' });
-    expect(html).toContain('Reconstruir índice');
-    expect(html).toContain('2026');
-    // La hora importa: si reconstruyo dos veces el mismo día, sin hora no se
-    // distingue si la última corrida es la mía o la de la mañana.
-    expect(html).toMatch(/\d{2}:\d{2}/);
-  });
-
-  it('ofrece reconectar la cuenta', () => {
-    expect(renderHome({ categorias: [] })).toContain('Reconectar cuenta');
-  });
-});
-
-  it('ordena las categorías alfabéticamente, no por cantidad', () => {
-    // Por cantidad, la grilla se reacomodaría entera cada vez que se agrega
-    // una receta y se perdería la posición aprendida.
-    const html = renderHome({ categorias: [
-      { nombre: 'Postres', cantidad: 7 },
-      { nombre: 'Arroces y legumbres', cantidad: 3 },
-      { nombre: 'Carnes', cantidad: 4 },
-    ] });
-    expect(html.indexOf('Arroces y legumbres')).toBeLessThan(html.indexOf('Carnes'));
-    expect(html.indexOf('Carnes')).toBeLessThan(html.indexOf('Postres'));
-  });
-
-  it('pliega las categorías vacías sin hacerlas desaparecer', () => {
-    // Crear una carpeta en Drive tiene que seguir siendo evidente.
-    const cats = [{ nombre: 'Carnes', cantidad: 4 }, { nombre: 'Pastas', cantidad: 0 }];
-    const plegado = renderHome({ categorias: cats });
-    expect(plegado).toContain('1 categoría vacía');
-    expect(plegado).not.toContain('#/c/Pastas');
-
-    const abierto = renderHome({ categorias: cats, vaciasVisibles: true });
-    expect(abierto).toContain('#/c/Pastas');
-  });
-
-  it('«Nueva» sale del menú de mantenimiento', () => {
-    // Convivía con Reconstruir índice y Reconectar cuenta: una acción de todos
-    // los días mezclada con lo que se usa una vez por mes.
-    const html = renderHome({ categorias: [] });
-    const menu = html.slice(html.indexOf('class="menu"'));
-    expect(menu).not.toContain('#/nueva');
-    expect(html).toContain('class="alta" href="#/nueva"');
-  });
-
-  it('«Nueva» está en el encabezado, no al pie de los tiles', () => {
-    // Al pie hay que pasar dieciséis tiles para encontrarla, que no es donde
-    // nadie la busca. Se fija el lugar: sin esto, nada impide que vuelva.
-    const html = renderHome({ categorias: [] });
-    const encabezado = html.slice(html.indexOf('<header'), html.indexOf('</header>'));
-    expect(encabezado).toContain('#/nueva');
-    // Y queda antes del ⋯, que es la acción menos frecuente de las dos.
-    expect(encabezado.indexOf('#/nueva')).toBeLessThan(encabezado.indexOf('data-accion="menu"'));
-  });
-
+// El home se fue: lo reemplaza el Recetario y sus tests son
+// tests/vista-recetario.test.ts. Lo que queda acá es la lista de v1, que se
+// va entera con la Tarea 15.
 describe('renderLista', () => {
   it('la categoría se encabeza con su foto; la búsqueda no', () => {
     // La foto es la misma del tile que se acaba de tocar: confirma dónde

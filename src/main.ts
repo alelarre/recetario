@@ -7,7 +7,7 @@ import { crearStore } from './store.js';
 import { parse } from './recipe.js';
 import { crearRouter, parsearHash } from './ui/router.js';
 import { escapar } from './ui/markdown.js';
-import { renderHome } from './ui/home.js';
+import { renderRecetario } from './ui/recetario.js';
 import { renderLista } from './ui/lista.js';
 import { renderDetalle } from './ui/detalle.js';
 import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
@@ -169,7 +169,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   }
   vistaActual = ruta;
   if (ruta.vista === 'recetario') {
-    return pintar(renderHome({ categorias: store.categoriasConConteo(), ultimaReconstruccion: store.ultimaReconstruccion(), vaciasVisibles }));
+    // El cableado entero de main es de la Tarea 22; acá solo se cambia la vista.
+    return pintar(renderRecetario({ categorias: store.categoriasConConteo(), borradores: 0 }));
   }
   if (ruta.vista === 'categoria') {
     const nombre = ruta.params['nombre'] ?? '';
