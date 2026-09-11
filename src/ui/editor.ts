@@ -13,7 +13,9 @@
  */
 import { escapar } from './markdown.js';
 import { encabezado, aviso } from './componentes.js';
+import { ICO } from './iconos.js';
 import { DIFICULTADES, dificultadValida } from '../catalogo.js';
+import { estaCompleta } from '../recipe.js';
 import type { Receta, Entrada } from '../tipos.js';
 import type { Categoria } from '../store.js';
 
@@ -33,6 +35,15 @@ const campo = (nombre: string, etiqueta: string, valor?: string | null, ph = '')
   `<label class="campo"><span>${escapar(etiqueta)}</span>` +
   `<input name="${nombre}" value="${escapar(valor ?? '')}"${ph ? ` placeholder="${escapar(ph)}"` : ''}></label>`;
 
+/**
+ * Un tag del editor: una pill con su propia cruz. Se exporta porque `main`
+ * agrega una sin redibujar el formulario entero —redibujarlo perdería lo que
+ * el usuario venía escribiendo en los demás campos—.
+ */
+export const pillTag = (tag: string): string =>
+  `<button type="button" class="chip" data-accion="tag-quitar" data-valor="${escapar(tag)}">` +
+  `${escapar(tag)}${ICO.cerrar}</button>`;
+
 const area = (nombre: string, etiqueta: string, valor?: string | null, filas = 4): string =>
   `<label class="campo"><span>${escapar(etiqueta)}</span>` +
   `<textarea name="${nombre}" rows="${filas}">${escapar(valor ?? '')}</textarea></label>`;
@@ -49,19 +60,22 @@ export function renderEditor(
     `<option value="${escapar(d)}"${d === actual ? ' selected' : ''}>${escapar(d || '—')}</option>`).join('');
 
   const tags = receta.tags ?? [];
-  const chipsTags = tags.map(t => `<span class="chip">${escapar(t)}</span>`).join('');
 
   const datos = '<div class="ficha">' +
     campo('titulo', 'Título', receta.titulo) +
     `<label class="campo"><span>Categoría</span><select name="carpeta">${opcionesCarpeta}</select></label>` +
-    '<div class="campo"><span>Tags</span>' +
-      `<div class="chips">${chipsTags}</div>` +
-      `<input name="tags" value="${escapar(tags.join(', '))}" list="tags-conocidos" placeholder="separados por coma">` +
+    // Los tags son pills que se sacan de a una, y un campo aparte para sumar.
+    // El valor que viaja en el formulario es el `hidden`: el campo de agregar
+    // no se llama `tags` justamente para que lo a medio escribir no se guarde.
+    '<div class="campo" data-tags><span>Tags</span>' +
+      `<div class="chips" data-pills>${tags.map(pillTag).join('')}</div>` +
+      `<input type="hidden" name="tags" value="${escapar(tags.join(', '))}">` +
+      '<input data-tag-nuevo list="tags-conocidos" placeholder="Agregar un tag y Enter">' +
       `<datalist id="tags-conocidos">${tagsConocidos.map(t => `<option value="${escapar(t)}">`).join('')}</datalist>` +
     '</div>' +
     '<div class="par" style="margin-bottom:var(--e-4)">' +
-      campo('rinde', 'Rinde', receta.rinde, '4 porciones') +
-      campo('tiempo', 'Tiempo', receta.tiempo, '40 min') +
+      campo('rinde', 'Rinde', receta.rinde) +
+      campo('tiempo', 'Tiempo', receta.tiempo) +
     '</div>' +
     `<label class="campo"><span>Dificultad</span><select name="dificultad">${opcionesDificultad}</select></label>` +
     campo('fuente', 'Fuente', receta.fuente) +
@@ -76,9 +90,20 @@ export function renderEditor(
     area('notas', 'Notas', receta.notas, 3) +
   '</div>';
 
+  // La casilla es la declaración del usuario, no el cálculo: una receta con
+  // ingredientes y pasos ya cuenta como completa sin tildar nada (C05.3.1), y
+  // la clave `completa: true` existe para las que igual están terminadas
+  // aunque les falte algo. Sin decirlo, la casilla desmarcada se lee como si
+  // la receta estuviera incompleta.
+  const derivada = estaCompleta({ ...receta, completa: false });
+  const nota = derivada
+    ? 'Ya cuenta como completa: tiene título, ingredientes y pasos.'
+    : 'Le falta algún ingrediente o paso. Marcala si igual está terminada así.';
   const completa = '<div class="ficha"><label class="check">' +
     `<input type="checkbox" name="completa"${receta.completa ? ' checked' : ''}> Está completa así como está` +
-  '</label></div>';
+    '</label>' +
+    `<p class="aviso-mudo" style="margin:var(--e-2) 0 0">${nota}</p>` +
+  '</div>';
 
   const borrar = !entrada ? ''
     : confirmandoBorrado

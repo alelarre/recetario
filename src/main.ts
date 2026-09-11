@@ -12,7 +12,7 @@ import { renderCategoria } from './ui/categoria.js';
 import { renderResultados } from './ui/resultados.js';
 import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
-import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
+import { renderEditor, recetaDesdeFormulario, pillTag } from './ui/editor.js';
 import { crearBorradores } from './borradores.js';
 import { renderBorradores, renderBorrador } from './ui/borradores.js';
 import { renderCaptura } from './ui/captura.js';
@@ -383,6 +383,25 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   }
 }
 
+/** Los tags que quedaron dibujados, en el `hidden` que viaja en el formulario. */
+function sincronizarTags(): void {
+  const pills = [...document.querySelectorAll<HTMLElement>('[data-pills] [data-valor]')];
+  const oculto = document.querySelector<HTMLInputElement>('input[name="tags"]');
+  if (oculto) oculto.value = pills.map(p => p.dataset['valor'] ?? '').filter(Boolean).join(', ');
+}
+
+/** Agrega el tag escrito, si no estaba ya. Devuelve si lo agregó. */
+function agregarTag(valor: string): boolean {
+  const tag = valor.trim().replace(/,+$/, '').trim();
+  const contenedor = document.querySelector('[data-pills]');
+  if (!tag || !contenedor) return false;
+  const yaEsta = [...contenedor.querySelectorAll<HTMLElement>('[data-valor]')]
+    .some(p => (p.dataset['valor'] ?? '').toLowerCase() === tag.toLowerCase());
+  if (!yaEsta) contenedor.insertAdjacentHTML('beforeend', pillTag(tag));
+  sincronizarTags();
+  return !yaEsta;
+}
+
 const router = crearRouter(render);
 
 app.addEventListener('click', async (e) => {
@@ -407,7 +426,6 @@ app.addEventListener('click', async (e) => {
   const accion = boton.dataset['accion'];
 
   if (accion === 'cocinar') { location.hash = `#/r/${vistaActual?.params['id'] ?? ''}/cocinar`; return; }
-  if (accion === 'salir-cocina') { await soltarPantalla(); return history.back(); }
   if (accion === 'conmutar') {
     const destinoPos = boton.dataset['posicion'] === 'pasos' ? 'pasos' : 'ingredientes';
     if (destinoPos === posicionCocina) return;
@@ -524,7 +542,23 @@ app.addEventListener('click', async (e) => {
     }
   }
 
-  if (accion === 'atras') return history.back();
+  if (accion === 'tag-quitar') {
+    const tag = boton.dataset['valor'] ?? '';
+    boton.remove();
+    sincronizarTags();
+    if (tag) document.querySelector<HTMLInputElement>('[data-tag-nuevo]')?.focus();
+    return;
+  }
+
+  if (accion === 'volver' || accion === 'atras' || accion === 'salir-cocina') {
+    // Salir del modo cocina suelta el bloqueo de pantalla, se vaya por el
+    // botón Salir o por el chevron: son la misma salida.
+    if (vistaActual?.vista === 'cocinar') await soltarPantalla();
+    // Entrar por un link directo deja el historial vacío: ahí volver es ir al
+    // Recetario, no salirse de la app.
+    if (history.length <= 1) { location.hash = '#/'; return; }
+    return history.back();
+  }
   if (accion === 'editar') { location.hash = `#/r/${vistaActual?.params['id'] ?? ''}/editar`; return; }
   if (accion === 'cancelar') return history.back();
   if (accion === 'reconectar') {
@@ -613,6 +647,25 @@ app.addEventListener('click', async (e) => {
   }
 
   if (accion === 'reintentar') return render();
+});
+
+app.addEventListener('keydown', (e) => {
+  const campo = (e.target as HTMLInputElement | null);
+  if (!campo?.dataset || !('tagNuevo' in campo.dataset)) return;
+  const tecla = (e as KeyboardEvent).key;
+  if (tecla !== 'Enter' && tecla !== ',') return;
+  // Enter dentro de un formulario lo manda: acá el Enter es «agregá el tag».
+  e.preventDefault();
+  agregarTag(campo.value);
+  campo.value = '';
+});
+
+// Salir del campo con algo escrito lo agrega igual: no se pierde por
+// distraerse y tocar Guardar.
+app.addEventListener('focusout', (e) => {
+  const campo = (e.target as HTMLInputElement | null);
+  if (!campo?.dataset || !('tagNuevo' in campo.dataset)) return;
+  if (agregarTag(campo.value)) campo.value = '';
 });
 
 app.addEventListener('change', (e) => {

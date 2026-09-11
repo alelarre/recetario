@@ -57,8 +57,13 @@ describe('main.ts: las rutas', () => {
   afterEach(() => { limpiarGlobales(); estado.falla = false; vi.resetModules(); });
 
   const montar = async () => {
-    const app = { innerHTML: '', insertAdjacentHTML: () => {}, addEventListener: () => {} };
+    const clicks: ((e: unknown) => unknown)[] = [];
+    const app = {
+      innerHTML: '', insertAdjacentHTML: () => {},
+      addEventListener: (ev: string, fn: (e: unknown) => unknown) => { if (ev === 'click') clicks.push(fn); }
+    };
     const listeners: Record<string, () => void> = {};
+    const vueltasAtras: number[] = [];
     global.document = comoGlobal<Document>({
       querySelector: (sel: string) => (sel === '#app' ? app : null),
       querySelectorAll: () => [], addEventListener: () => {}
@@ -67,16 +72,30 @@ describe('main.ts: las rutas', () => {
       google: {}, addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; }
     });
     global.location = comoGlobal<Location>({ hash: '', pathname: '/recetario/', search: '' });
-    global.history = comoGlobal<History>({ back: () => {}, replaceState: () => {} });
+    global.history = comoGlobal<History>({
+      back: () => { vueltasAtras.push(1); }, replaceState: () => {}, length: 5
+    });
 
     await import('../src/main.js');
     await esperar();
 
     return {
       app,
+      vueltasAtras,
       abrir: async (hash: string) => {
         global.location.hash = hash;
         listeners['hashchange']?.();
+        await esperar();
+      },
+      /** Un click en un control con esta acción, como lo entrega la delegación. */
+      tocar: async (accion: string) => {
+        const boton = {
+          dataset: { accion }, classList: { contains: () => false },
+          closest: () => null, tagName: 'BUTTON', remove: () => {}
+        };
+        for (const fn of clicks) {
+          await fn({ target: { closest: (sel: string) => (sel.includes('data-accion') ? boton : null) } });
+        }
         await esperar();
       }
     };
@@ -116,6 +135,22 @@ describe('main.ts: las rutas', () => {
     await abrir('#/r/f1');
     expect(app.innerHTML).not.toContain('Unable to parse range');
     expect(app.innerHTML).toContain('data-accion="reintentar"');
+  });
+
+  it('el volver del encabezado vuelve: es la acción que las pantallas dibujan', async () => {
+    // El encabezado emite `volver`; el cableado escuchaba `atras`, el nombre
+    // de v1, así que el botón no hacía nada en ninguna pantalla.
+    const { abrir, tocar, vueltasAtras } = await montar();
+    await abrir('#/c/Carnes');
+    await tocar('volver');
+    expect(vueltasAtras).toHaveLength(1);
+  });
+
+  it('salir del modo cocina y volver son la misma salida', async () => {
+    const { abrir, tocar, vueltasAtras } = await montar();
+    await abrir('#/r/f1/cocinar');
+    await tocar('salir-cocina');
+    expect(vueltasAtras).toHaveLength(1);
   });
 
   it('ningún guardado exitoso muestra un cartel de confirmación', async () => {

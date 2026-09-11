@@ -40,6 +40,36 @@ describe('renderEditor', () => {
     expect(html).not.toContain('---\ntitulo:');
   });
 
+  it('los tags son pills que se sacan de a una, más un campo para agregar', () => {
+    const html = dibujar();
+    expect(html).toContain('data-accion="tag-quitar"');
+    expect(html).toContain('data-valor="fritura"');
+    expect(html).toContain('data-valor="rápido"');
+    expect(html).toContain('data-tag-nuevo');
+  });
+
+  it('lo que viaja en el formulario es el campo oculto, no lo a medio escribir', () => {
+    const html = dibujar();
+    expect(html).toContain('<input type="hidden" name="tags" value="fritura, rápido">');
+    // El campo de agregar no se llama `tags`: un tag a medio tipear no se guarda.
+    expect(html.match(/name="tags"/g)).toHaveLength(1);
+  });
+
+  it('rinde y tiempo no sugieren un valor: son texto libre', () => {
+    // El value sí sale del .md; lo que no va es un ejemplo puesto por la app,
+    // que se lee como si fuera el formato esperado.
+    const html = dibujar();
+    expect(html).toContain('<input name="rinde" value="4 porciones">');
+    expect(html).toContain('<input name="tiempo" value="">');
+    expect(html).not.toContain('40 min');
+  });
+
+  it('la casilla de completa dice si la receta ya cuenta como completa', () => {
+    expect(dibujar()).toContain('Ya cuenta como completa');
+    const floja = renderEditor({ entrada: null, receta: parse('---\ntitulo: A\n---\n'), categorias });
+    expect(floja).toContain('Le falta algún ingrediente o paso');
+  });
+
   it('dificultad es una elección de tres', () => {
     const html = dibujar();
     for (const d of ['fácil', 'media', 'difícil']) expect(html).toContain(d);

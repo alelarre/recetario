@@ -79,11 +79,9 @@ export function renderReceta({ entrada, receta }: OpcionesReceta): string {
     ? '<button class="btn prim" data-accion="cocinar">Cocinar</button>'
     : '';
 
-  return encabezado({
-    titulo: receta.titulo ?? '',
-    volver: true,
-    derecha: `<button class="ico" data-accion="menu" aria-label="Más">${ICO.puntos}</button>`
-  }) +
+  // Sin menú de ⋯: las acciones de la receta son Cocinar y Editar, y las dos
+  // están al pie. Un botón que abre un menú vacío es peor que no tenerlo.
+  return encabezado({ titulo: receta.titulo ?? '', volver: true }) +
     '<div class="cuerpo">' +
       ficha(cabecera) +
       ficha(receta.descripcion ? `<div class="lee">${aHtml(receta.descripcion)}</div>` : '') +

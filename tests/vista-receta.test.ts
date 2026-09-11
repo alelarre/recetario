@@ -105,6 +105,10 @@ describe('Receta en lectura', () => {
     expect(renderReceta({ entrada: null, receta: r })).toContain('data-tag="horno"');
   });
 
+  it('no hay un menú de ⋯: las acciones están al pie', () => {
+    expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('data-accion="menu"');
+  });
+
   it('al pie están Cocinar y Editar', () => {
     const html = renderReceta({ entrada: null, receta: COMPLETA });
     expect(html).toContain('>Cocinar<');
