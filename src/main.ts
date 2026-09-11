@@ -13,9 +13,11 @@ import { renderResultados } from './ui/resultados.js';
 import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
 import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
+import { crearBorradores } from './borradores.js';
+import { convertirBorrador } from './compartido.js';
+import type { Borradores } from './borradores.js';
 import type { Ruta } from './ui/router.js';
 import type { DatosFormulario } from './ui/editor.js';
-import type { Receta } from './tipos.js';
 import type { PosicionCocina } from './ui/cocina.js';
 import type { ResultadoArranque } from './store.js';
 
@@ -28,6 +30,7 @@ const drive = crearDrive(() => auth.token());
 const sheets = crearSheets(() => auth.token());
 
 let store: Store;
+let borradores: Borradores | null = null;
 let estadoArranque: ResultadoArranque | undefined;
 let vistaActual: Ruta | null = null;
 let vaciasVisibles = false;        // las categorías en cero, plegadas en el home
@@ -137,6 +140,10 @@ async function arrancar() {
     const motivo = estadoArranque.motivo ? `: ${escapar(estadoArranque.motivo)}` : '.';
     return pintar(`<p class="contenido">No pude conectar con Drive${motivo} Quedás en modo solo lectura. <button data-accion="reconectar">Reintentar</button></p>`);
   }
+
+  // Los borradores viven en su propia planilla, al lado del índice, y recién
+  // acá se conoce la carpeta raíz.
+  borradores = crearBorradores({ drive, sheets, raizId: estadoArranque.raizId });
 
   await store.cargarIndice();
   if (estadoArranque.reconstruir) await reconstruir();
@@ -321,28 +328,41 @@ app.addEventListener('click', async (e) => {
     const datos: DatosFormulario = Object.fromEntries(
       [...new FormData(form)].map(([k, v]) => [k, typeof v === 'string' ? v : undefined])
     );
-
-    if (vistaActual?.vista === 'nueva') {
-      const nueva = recetaDesdeFormulario(datos, parse('')) as Receta;
-      if (!nueva.titulo) return alert('Ponele un título a la receta antes de guardar.');
-      try {
-        await store.crear(nueva, { carpetaId: datos['carpeta'] || undefined });
-        return history.back();
-      } catch (err) {
-        console.error(err);
-        return alert(`No se pudo crear la receta en Drive: ${mensajeDe(err)}. Probá de nuevo.`);
-      }
-    }
-
+    const carpetaId = datos['carpeta'] || '';
+    const esNueva = vistaActual?.vista === 'nueva';
     const id = vistaActual?.params['id'] ?? '';
+    const borradorId = vistaActual?.params['borrador'] ?? '';
+
+    // Mientras trabaja, el botón lo dice y no se puede tocar dos veces (C04.5.1).
+    boton.setAttribute('disabled', '');
+    boton.textContent = 'Guardando…';
+
+    const base = esNueva ? parse('') : (await store.receta(id)).receta;
+    const nueva = recetaDesdeFormulario(datos, base);
+
+    /** El editor otra vez, con lo que el usuario tenía escrito y el aviso (C04.5.2). */
+    const conError = (mensaje: string) => pintar(renderEditor({
+      entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
+      receta: nueva, categorias: categoriasDelArranque(),
+      tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje
+    }));
+
+    if (!nueva.titulo) return conError('Ponele un título antes de guardar.');
+
     try {
-      const { receta } = await store.receta(id);
-      const nueva = recetaDesdeFormulario(datos, receta) as Receta;
-      await store.guardar(id, nueva, { carpetaDestino: datos['carpeta'] });
+      if (esNueva && borradorId && borradores) {
+        // Convertir es una sola operación: el .md, la fila y el borrador (C01.7.1).
+        await convertirBorrador({ store, borradores }, { borradorId, receta: nueva, carpetaId });
+      } else if (esNueva) {
+        await store.crear(nueva, { carpetaId: carpetaId || undefined });
+      } else {
+        await store.guardar(id, nueva, { carpetaDestino: carpetaId });
+      }
+      // Nada confirma el éxito: al terminar, vuelve a la receta.
       return history.back();
     } catch (err) {
       console.error(err);
-      return alert(`No se pudo guardar en Drive: ${mensajeDe(err)}. El cambio puede no haberse guardado — probá de nuevo antes de salir de la receta.`);
+      return conError('No se pudo guardar. Revisá la conexión.');
     }
   }
 
