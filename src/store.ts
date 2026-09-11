@@ -417,5 +417,8 @@ export function crearStore({ drive, sheets }: Dependencias) {
     return { entrada, receta: parse(texto), texto };
   }
 
-  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, _ctx: ctx };
+  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, escribirFila, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, _ctx: ctx };
 }
+
+/** El objeto que devuelve `crearStore`. Lo consumen `compartido`, `main` y los tests. */
+export type Store = ReturnType<typeof crearStore>;
