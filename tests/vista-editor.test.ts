@@ -77,6 +77,14 @@ describe('renderEditor', () => {
       .toContain('data-accion="borrar"');
   });
 
+  it('borrar pide confirmación y nombra la receta', () => {
+    const html = renderEditor({
+      entrada: entradaFalsa(), receta: cargada, categorias, confirmandoBorrado: true
+    });
+    expect(html).toContain('¿Borrar <b>Rabas</b>?');
+    expect(html).toContain('data-accion="borrar-confirmado"');
+  });
+
   it('cuando falla, el aviso aparece y lo escrito sigue en pantalla', () => {
     const html = dibujar({ error: 'No se pudo guardar.' });
     expect(html).toContain('No se pudo guardar.');

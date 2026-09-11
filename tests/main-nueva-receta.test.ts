@@ -13,7 +13,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
-vi.mock('../src/ui/app.css', () => ({}));
+vi.mock('../src/ui/base.css', () => ({}));
 vi.mock('../src/auth.js', () => ({
   crearAuth: () => ({ conectar: async () => {}, token: async () => 'tok', olvidar: () => {} })
 }));

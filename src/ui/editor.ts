@@ -25,6 +25,8 @@ export interface ArgsEditor {
   tagsConocidos?: string[];
   /** El texto del aviso cuando el guardado falló. Lo escrito sigue en pantalla. */
   error?: string;
+  /** Borrar es destructivo: la confirmación nombra la receta (C04.6.1). */
+  confirmandoBorrado?: boolean;
 }
 
 const campo = (nombre: string, etiqueta: string, valor?: string | null, ph = ''): string =>
@@ -35,7 +37,9 @@ const area = (nombre: string, etiqueta: string, valor?: string | null, filas = 4
   `<label class="campo"><span>${escapar(etiqueta)}</span>` +
   `<textarea name="${nombre}" rows="${filas}">${escapar(valor ?? '')}</textarea></label>`;
 
-export function renderEditor({ receta, entrada, categorias = [], tagsConocidos = [], error }: ArgsEditor): string {
+export function renderEditor(
+  { receta, entrada, categorias = [], tagsConocidos = [], error, confirmandoBorrado }: ArgsEditor
+): string {
   const opcionesCarpeta = categorias.map(c =>
     `<option value="${escapar(c.id)}"${c.id === entrada?.carpeta_id ? ' selected' : ''}>${escapar(c.nombre)}</option>`
   ).join('');
@@ -76,9 +80,15 @@ export function renderEditor({ receta, entrada, categorias = [], tagsConocidos =
     `<input type="checkbox" name="completa"${receta.completa ? ' checked' : ''}> Está completa así como está` +
   '</label></div>';
 
-  const borrar = entrada
-    ? '<div class="ficha"><button class="btn pel" data-accion="borrar" type="button">Borrar receta</button></div>'
-    : '';
+  const borrar = !entrada ? ''
+    : confirmandoBorrado
+      ? '<div class="ficha" style="border-color:var(--error)">' +
+        `<p class="lee" style="margin:0 0 var(--e-4)">¿Borrar <b>${escapar(receta.titulo ?? 'esta receta')}</b>?</p>` +
+        '<div class="acciones">' +
+          '<button class="btn sec" data-accion="cancelar-borrado" type="button">Cancelar</button>' +
+          '<button class="btn pel" data-accion="borrar-confirmado" type="button">Borrar</button>' +
+        '</div></div>'
+      : '<div class="ficha"><button class="btn pel" data-accion="borrar" type="button">Borrar receta</button></div>';
 
   return encabezado({
     titulo: entrada ? 'Editando' : 'Nueva receta',
