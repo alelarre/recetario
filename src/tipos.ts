@@ -129,6 +129,19 @@ export interface Entrada {
   completa: boolean;
 }
 
+/**
+ * Una fila de la planilla de Borradores. No entra al índice: es una cola de
+ * trabajo, no un archivo consolidado (IA §2.1).
+ */
+export interface Borrador {
+  id: string;
+  titulo: string;
+  /** Texto libre: una URL o "libro de pescados, pág. 84". No se edita (C01.6.1). */
+  fuente: string;
+  /** ISO. El orden de la lista es por acá, lo más viejo primero. */
+  capturado: string;
+}
+
 /** Los filtros de la vista de categoría. Todos opcionales y combinables. */
 export interface Filtros {
   texto?: string | null;

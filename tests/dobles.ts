@@ -113,6 +113,13 @@ export interface EscrituraFalsa {
   valores: string[][];
 }
 
+/** Una fila que se sacó de la planilla falsa, con la hoja de la que salió. */
+export interface FilaBorrada {
+  id: string;
+  hoja: string;
+  fila: number;
+}
+
 /** Sheets falso: una planilla es un objeto {hojas: {nombre: filas[][]}}. */
 export function sheetsFalso() {
   const planillas = new Map<string, PlanillaFalsa>();
@@ -120,15 +127,22 @@ export function sheetsFalso() {
   const hojasMetadatos = new Map<string, PropiedadesHoja[]>();
   const escrituras: EscrituraFalsa[] = [];
   const appends: EscrituraFalsa[] = [];
+  const filasBorradas: FilaBorrada[] = [];
 
   // La app crea la planilla con drive.crear y después le escribe: el doble tiene
   // que aceptar una escritura sobre un id que todavía no vio. Cuando se crea una
   // planilla nueva, tiene una hoja por defecto llamada 'Sheet1', no 'recetas'.
-  /** Borrar filas de una planilla que no existe es un test mal armado, no un caso real. */
-  const exigirRecetas = (id: string): string[][] => {
-    const recetas = planillas.get(id)?.['recetas'];
-    if (!recetas) throw new Error(`El doble de Sheets no tiene la hoja recetas en ${id}`);
-    return recetas;
+  /**
+   * La hoja que un `sheetId` nombra, igual que en la API real: borrar filas se
+   * pide por id de hoja, no por nombre. Que la planilla o la hoja no existan es
+   * un test mal armado, no un caso real.
+   */
+  const exigirHoja = (id: string, hojaId: number): { titulo: string; filas: string[][] } => {
+    const titulo = (hojasMetadatos.get(id) ?? []).find(h => h.sheetId === hojaId)?.title;
+    if (!titulo) throw new Error(`El doble de Sheets no tiene la hoja ${hojaId} en ${id}`);
+    const filas = planillas.get(id)?.[titulo];
+    if (!filas) throw new Error(`El doble de Sheets no tiene la hoja ${titulo} en ${id}`);
+    return { titulo, filas };
   };
 
   const asegurar = (id: string): PlanillaFalsa => {
@@ -146,6 +160,7 @@ export function sheetsFalso() {
     _hojasMetadatos: hojasMetadatos,
     escrituras,
     appends,
+    filasBorradas,
     /**
      * Gancho opcional para simular la confirmación de Sheets: si está,
      * `escribir` y `append` lo esperan antes de tocar la planilla. Sirve para
@@ -155,12 +170,15 @@ export function sheetsFalso() {
      */
     alEscribir: undefined as (() => Promise<void>) | undefined,
 
-    crearPlanilla(id: string) {
-      planillas.set(id, { recetas: [], meta: [] });
-      hojasMetadatos.set(id, [
-        { sheetId: 0, title: 'recetas' },
-        { sheetId: 1, title: 'meta' }
-      ]);
+    crearPlanilla(id: string, hojas: string[] = ['recetas', 'meta']) {
+      planillas.set(id, Object.fromEntries(hojas.map(h => [h, [] as string[][]])));
+      hojasMetadatos.set(id, hojas.map((title, sheetId) => ({ sheetId, title })));
+    },
+
+    /** Deja filas puestas sin pasar por `escribir`: es fixture, no escritura. */
+    cargar(id: string, hoja: string, filas: string[][]) {
+      const p = asegurar(id);
+      p[hoja] = filas.map(f => [...f]);
     },
 
     async leer(id: string, rango: string) {
@@ -195,15 +213,20 @@ export function sheetsFalso() {
       hojasMetadatos.set(id, hojas);
     },
 
-    async borrarFila(id: string, _hojaId: number, fila: number) {
-      exigirRecetas(id).splice(fila - 1, 1);
+    async borrarFila(id: string, hojaId: number, fila: number) {
+      const hoja = exigirHoja(id, hojaId);
+      hoja.filas.splice(fila - 1, 1);
+      filasBorradas.push({ id, hoja: hoja.titulo, fila });
     },
 
-    async borrarFilas(id: string, _hojaId: number, filas: number[]) {
-      const recetas = exigirRecetas(id);
+    async borrarFilas(id: string, hojaId: number, filas: number[]) {
+      const hoja = exigirHoja(id, hojaId);
       // Mismo contrato que la API real: de mayor a menor, para que cada
       // índice siga siendo válido según se van sacando filas.
-      for (const fila of filas) recetas.splice(fila - 1, 1);
+      for (const fila of filas) {
+        hoja.filas.splice(fila - 1, 1);
+        filasBorradas.push({ id, hoja: hoja.titulo, fila });
+      }
     },
 
     async hojas(id: string) {
