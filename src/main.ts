@@ -14,6 +14,7 @@ import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
 import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
 import { crearBorradores } from './borradores.js';
+import { renderBorradores, renderBorrador } from './ui/borradores.js';
 import { convertirBorrador } from './compartido.js';
 import type { Borradores } from './borradores.js';
 import type { Ruta } from './ui/router.js';
@@ -49,6 +50,11 @@ let observadorTramo: IntersectionObserver | null = null;
  * El estado del modo cocina. Se limpia al entrar: al volver a abrir una receta
  * no hay ningún paso realzado ni marcado (C03.2.4). No persiste en ningún lado.
  */
+/** El borrador que se está por descartar pide confirmación antes (C01.6.2). */
+let confirmandoDescarte = false;
+/** El título del borrador se corrige en su lugar (C01.6.1). */
+let editandoTitulo = false;
+
 let posicionCocina: PosicionCocina = 'ingredientes';
 let pasoAqui: number | null = null;
 let pasosHechos: number[] = [];
@@ -187,6 +193,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       || ruta.params.id !== vistaActual.params.id) {
     tagsActivos = [];
     visibles = TRAMO;
+    confirmandoDescarte = false;
+    editandoTitulo = false;
     posicionCocina = 'ingredientes';
     pasoAqui = null;
     pasosHechos = [];
@@ -220,15 +228,45 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       receta, posicion: posicionCocina, aqui: pasoAqui, hechos: pasosHechos, wakeActivo: !!wakeLock
     }));
   }
+  if (ruta.vista === 'borradores') {
+    try {
+      return pintar(renderBorradores({ borradores: await borradores?.listar() ?? [] }));
+    } catch (err) {
+      console.error(err);
+      // Sin la lectura no hay con qué dibujar: se avisa, no se inventa (C05.8.1).
+      return pintar(renderBorradores({ borradores: [], error: 'No se pudieron leer los borradores.' }));
+    }
+  }
+  if (ruta.vista === 'borrador') {
+    const id = ruta.params['id'] ?? '';
+    try {
+      const borrador = (await borradores?.listar() ?? []).find(b => b.id === id);
+      if (!borrador) return pintar(renderBorradores({ borradores: await borradores?.listar() ?? [] }));
+      return pintar(renderBorrador({ borrador, confirmando: confirmandoDescarte, editando: editandoTitulo }));
+    } catch (err) {
+      console.error(err);
+      return pintar(renderBorradores({ borradores: [], error: 'No se pudo leer el borrador.' }));
+    }
+  }
   if (ruta.vista === 'editar') {
     const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
     return pintar(renderEditor({ entrada, receta, categorias: categoriasDelArranque(), tagsConocidos: store.tagsDe().map(t => t.tag) }));
   }
   if (ruta.vista === 'nueva') {
-    // El mismo formulario que editar, sin entrada (todavía no hay archivo
-    // en Drive) y con una receta vacía en vez de una leída. Guardar es lo
-    // que de verdad la crea (§11: "crear una receta mínima").
-    return pintar(renderEditor({ entrada: null, receta: parse(''), categorias: categoriasDelArranque(), tagsConocidos: store.tagsDe().map(t => t.tag) }));
+    // El mismo formulario que editar, sin entrada (todavía no hay archivo en
+    // Drive) y con una receta vacía en vez de una leída. Desde un borrador
+    // abre con el título y la fuente cargados (C04.3b.1); guardar es lo que
+    // de verdad la crea, y ahí se borra el borrador (C01.7.1).
+    const receta = parse('');
+    const borradorId = ruta.params['borrador'] ?? '';
+    if (borradorId) {
+      const borrador = (await borradores?.listar() ?? []).find(b => b.id === borradorId);
+      if (borrador) {
+        receta.titulo = borrador.titulo;
+        receta.fuente = borrador.fuente || null;
+      }
+    }
+    return pintar(renderEditor({ entrada: null, receta, categorias: categoriasDelArranque(), tagsConocidos: store.tagsDe().map(t => t.tag) }));
   }
 }
 
@@ -299,6 +337,49 @@ app.addEventListener('click', async (e) => {
     if (wakeLock) await soltarPantalla();
     else await mantenerPantalla();
     return render();
+  }
+
+  if (accion === 'borradores') { location.hash = '#/borradores'; return; }
+  if (accion === 'crear-receta') {
+    location.hash = `#/nueva?borrador=${encodeURIComponent(vistaActual?.params['id'] ?? '')}`;
+    return;
+  }
+  if (accion === 'descartar') { confirmandoDescarte = true; return render(); }
+  if (accion === 'cancelar-descarte') { confirmandoDescarte = false; return render(); }
+  if (accion === 'descartar-confirmado') {
+    const id = vistaActual?.params['id'] ?? '';
+    try {
+      await borradores?.descartar(id);
+      location.hash = '#/borradores';
+      return;
+    } catch (err) {
+      console.error(err);
+      const borrador = (await borradores?.listar() ?? []).find(b => b.id === id);
+      if (!borrador) return;
+      return pintar(renderBorrador({ borrador, confirmando: true, error: 'No se pudo descartar.' }));
+    }
+  }
+  if (accion === 'agregar-borrador') { location.hash = '#/capturar'; return; }
+  if (accion === 'editar-titulo') { editandoTitulo = true; return render(); }
+  if (accion === 'cancelar-titulo') { editandoTitulo = false; return render(); }
+  if (accion === 'guardar-titulo') {
+    const campo = document.querySelector<HTMLInputElement>('input[name="titulo"]');
+    const titulo = campo?.value.trim() ?? '';
+    const id = vistaActual?.params['id'] ?? '';
+    if (!titulo) return;
+    try {
+      await borradores?.editarTitulo(id, titulo);
+      editandoTitulo = false;
+      return render();
+    } catch (err) {
+      console.error(err);
+      const borrador = (await borradores?.listar() ?? []).find(b => b.id === id);
+      if (!borrador) return;
+      return pintar(renderBorrador({
+        borrador: { ...borrador, titulo }, confirmando: false, editando: true,
+        error: 'No se pudo guardar el título.'
+      }));
+    }
   }
 
   if (accion === 'atras') return history.back();
