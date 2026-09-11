@@ -16,7 +16,7 @@ foto: https://x/1.jpg
 Una entrada clásica.
 
 ## Ingredientes
-- Calamar: 500 g
+- Calamar — 500 g
 - Sal, pimienta
 
 ## Preparación

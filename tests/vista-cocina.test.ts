@@ -1,0 +1,89 @@
+import { describe, it, expect } from 'vitest';
+import { renderCocina } from '../src/ui/cocina.js';
+import { parse } from '../src/recipe.js';
+
+const COMPLETA = parse(`---
+titulo: Rabas
+---
+
+## Ingredientes
+- Calamar — 500 g
+- Sal
+
+## Preparación
+1. Lavar.
+2. Freír.
+`);
+
+const CON_TODO = parse(`---
+titulo: Rabas
+---
+
+Una entrada clásica.
+
+## Ingredientes
+- Calamar — 500 g
+
+## Preparación
+1. Lavar.
+
+## Variaciones
+- Tempura.
+
+## Notas
+Ojo con el aceite.
+`);
+
+const base: { posicion: 'pasos'; aqui: number | null; hechos: number[] } =
+  { posicion: 'pasos', aqui: null, hechos: [] };
+
+describe('Modo cocina', () => {
+  it('abre en Ingredientes: el mise en place va primero', () => {
+    const html = renderCocina({ ...base, receta: COMPLETA, posicion: 'ingredientes' });
+    expect(html).toMatch(/<button class="on" data-accion="conmutar" data-posicion="ingredientes">Ingredientes<\/button>/);
+  });
+
+  it('notas, variaciones y descripción no se muestran', () => {
+    const html = renderCocina({ ...base, receta: CON_TODO });
+    expect(html).not.toContain('Notas');
+    expect(html).not.toContain('Variaciones');
+    expect(html).not.toContain('Una entrada clásica');
+  });
+
+  it('el paso realzado lleva la clase aqui, y solo uno', () => {
+    const html = renderCocina({ ...base, receta: COMPLETA, aqui: 1 });
+    expect(html.match(/class="aqui"/g)).toHaveLength(1);
+  });
+
+  it('un paso hecho se atenúa y no se tacha', () => {
+    const html = renderCocina({ ...base, receta: COMPLETA, hechos: [0] });
+    expect(html).toContain('class="hecho"');
+    expect(html).not.toContain('text-decoration');
+    expect(html).not.toContain('<s>');
+  });
+
+  it('el paso donde voy no cuenta además como hecho', () => {
+    const html = renderCocina({ ...base, receta: COMPLETA, aqui: 0, hechos: [0] });
+    expect(html.match(/class="hecho"/g)).toBeNull();
+  });
+
+  it('sin ingredientes, el conmutador no dibuja esa posición', () => {
+    const r = parse('---\ntitulo: A\n---\n## Preparación\n1. Salar.');
+    expect(renderCocina({ ...base, receta: r })).not.toContain('>Ingredientes<');
+  });
+
+  it('los ingredientes conservan la distinción entre nombre y cantidad', () => {
+    const html = renderCocina({ ...base, receta: COMPLETA, posicion: 'ingredientes' });
+    expect(html).toContain('class="n"');
+    expect(html).toContain('class="c"');
+  });
+
+  it('tiene salida visible', () => {
+    expect(renderCocina({ ...base, receta: COMPLETA })).toContain('>Salir<');
+  });
+
+  it('escapa lo que viene del .md', () => {
+    const r = parse('---\ntitulo: "<img onerror=alert(1)>"\n---\n## Preparación\n1. Salar.');
+    expect(renderCocina({ ...base, receta: r })).not.toContain('<img onerror');
+  });
+});

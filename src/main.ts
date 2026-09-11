@@ -11,10 +11,12 @@ import { renderRecetario } from './ui/recetario.js';
 import { renderCategoria } from './ui/categoria.js';
 import { renderResultados } from './ui/resultados.js';
 import { renderReceta } from './ui/receta.js';
+import { renderCocina } from './ui/cocina.js';
 import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
 import type { Ruta } from './ui/router.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { Receta } from './tipos.js';
+import type { PosicionCocina } from './ui/cocina.js';
 import type { ResultadoArranque } from './store.js';
 
 type Store = ReturnType<typeof crearStore>;
@@ -39,6 +41,16 @@ let tagsActivos: string[] = [];   // filtro de la vista de categoría; se limpia
 const TRAMO = 30;
 let visibles = TRAMO;
 let observadorTramo: IntersectionObserver | null = null;
+
+/**
+ * El estado del modo cocina. Se limpia al entrar: al volver a abrir una receta
+ * no hay ningún paso realzado ni marcado (C03.2.4). No persiste en ningún lado.
+ */
+let posicionCocina: PosicionCocina = 'ingredientes';
+let pasoAqui: number | null = null;
+let pasosHechos: number[] = [];
+/** El scroll de cada lado del conmutador, para no perderlo al conmutar (C03.2.2). */
+const scrollCocina: Record<PosicionCocina, number> = { ingredientes: 0, pasos: 0 };
 
 /**
  * Estrecha el destino de un evento a algo con `closest`.
@@ -96,8 +108,8 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
   // Si el botón sigue activo, el usuario nunca lo apagó: el bloqueo se
   // perdió al irse a segundo plano y hay que volver a pedirlo.
-  const b = document.querySelector<HTMLElement>('[data-accion="pantalla"][aria-pressed="true"]');
-  if (b && !wakeLock) mantenerPantalla().then(ok => b.setAttribute('aria-pressed', String(ok)));
+  const b = document.querySelector<HTMLElement>('[data-accion="wake"].prim');
+  if (b && !wakeLock) void mantenerPantalla().then(() => render());
 });
 
 async function arrancar() {
@@ -168,6 +180,10 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       || ruta.params.id !== vistaActual.params.id) {
     tagsActivos = [];
     visibles = TRAMO;
+    posicionCocina = 'ingredientes';
+    pasoAqui = null;
+    pasosHechos = [];
+    scrollCocina.ingredientes = scrollCocina.pasos = 0;
   }
   vistaActual = ruta;
   if (ruta.vista === 'recetario') {
@@ -190,6 +206,12 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   if (ruta.vista === 'receta') {
     const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
     return pintar(renderReceta({ entrada, receta }));
+  }
+  if (ruta.vista === 'cocinar') {
+    const { receta } = await store.receta(ruta.params['id'] ?? '');
+    return pintar(renderCocina({
+      receta, posicion: posicionCocina, aqui: pasoAqui, hechos: pasosHechos, wakeActivo: !!wakeLock
+    }));
   }
   if (ruta.vista === 'editar') {
     const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
@@ -240,13 +262,36 @@ app.addEventListener('click', async (e) => {
     boton.setAttribute('aria-pressed', String(activo));
     return;
   }
-  if (accion === 'pantalla') {
-    const activo = boton.getAttribute('aria-pressed') === 'true';
-    if (activo) { await soltarPantalla(); boton.setAttribute('aria-pressed', 'false'); return; }
-    const ok = await mantenerPantalla();
-    boton.setAttribute('aria-pressed', String(ok));
-    if (!ok) alert('Este navegador no deja mantener la pantalla encendida.');
+
+  if (accion === 'cocinar') { location.hash = `#/r/${vistaActual?.params['id'] ?? ''}/cocinar`; return; }
+  if (accion === 'salir-cocina') { await soltarPantalla(); return history.back(); }
+  if (accion === 'conmutar') {
+    const destinoPos = boton.dataset['posicion'] === 'pasos' ? 'pasos' : 'ingredientes';
+    if (destinoPos === posicionCocina) return;
+    scrollCocina[posicionCocina] = window.scrollY;
+    posicionCocina = destinoPos;
+    await render();
+    window.scrollTo(0, scrollCocina[destinoPos]);
     return;
+  }
+  if (accion === 'paso') {
+    // Tocar un paso marca dónde voy; tocar el que ya estaba realzado lo da por
+    // hecho y el hilo sigue al siguiente.
+    const n = Number(boton.dataset['paso'] ?? -1);
+    if (!Number.isInteger(n) || n < 0) return;
+    if (pasoAqui === n) {
+      pasosHechos = [...pasosHechos.filter(p => p !== n), n];
+      pasoAqui = n + 1;
+    } else {
+      pasoAqui = n;
+      pasosHechos = pasosHechos.filter(p => p !== n);
+    }
+    return render();
+  }
+  if (accion === 'wake') {
+    if (wakeLock) await soltarPantalla();
+    else await mantenerPantalla();
+    return render();
   }
 
   if (accion === 'atras') return history.back();
