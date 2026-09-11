@@ -27,7 +27,7 @@ beforeEach(async () => {
   await sheets.append('i1', 'recetas', [
     fila('r1', 'Milanesas napolitanas', 'Carnes', 'c1', 'horno|rápido', 'muzzarella|nalga', 'fácil'),
     fila('r2', 'Bife de chorizo', 'Carnes', 'c1', 'parrilla', 'bife', 'fácil'),
-    fila('r3', 'Flan casero', 'Postres', 'c2', 'incompleto', 'huevo|leche', 'media')
+    fila('r3', 'Flan casero', 'Postres', 'c2', 'dulce', 'huevo|leche', 'media')
   ]);
   store = crearStore({ drive, sheets });
   await store.arrancar();
@@ -65,8 +65,10 @@ describe('buscar', () => {
     expect(store.buscar({ categoria: 'Carnes', tags: ['rápido'] }).map(e => e.id_archivo)).toEqual(['r1']);
   });
 
-  it('lista lo que falta terminar filtrando por incompleto', () => {
-    expect(store.buscar({ tags: ['incompleto'] }).map(e => e.id_archivo)).toEqual(['r3']);
+  it('el filtro por tag no conoce ningún tag en particular', () => {
+    // El tag manual `incompleto` se fue con el rediseño: la completitud se
+    // deriva al leer el .md (C05.3.1) y el filtro es de tags cualesquiera.
+    expect(store.buscar({ tags: ['dulce'] }).map(e => e.id_archivo)).toEqual(['r3']);
   });
 
   it('no lanza con argumentos inválidos', () => {

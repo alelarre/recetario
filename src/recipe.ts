@@ -1,5 +1,5 @@
 import type {
-  Receta, Ingrediente, Aviso, ClaveSeccion, OtraSeccion,
+  Receta, Ingrediente, ClaveSeccion,
   GrupoIngredientes, TramoPreparacion, Variacion
 } from './tipos.js';
 
