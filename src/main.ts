@@ -168,7 +168,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     ingredientesPlegados = false;
   }
   vistaActual = ruta;
-  if (ruta.vista === 'home') {
+  if (ruta.vista === 'recetario') {
     return pintar(renderHome({ categorias: store.categoriasConConteo(), ultimaReconstruccion: store.ultimaReconstruccion(), vaciasVisibles }));
   }
   if (ruta.vista === 'categoria') {
@@ -181,13 +181,13 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     return pintar(renderLista({ titulo: nombre, categoria: nombre, entradas,
       tags: store.tagsDe(nombre), tagsActivos, vacio }));
   }
-  if (ruta.vista === 'buscar') {
+  if (ruta.vista === 'resultados') {
     const q = ruta.params['q'] ?? '';
     const grupos = store.buscarPorTexto(q);
     return pintar(renderLista({ titulo: `"${q}"`, grupos,
       vacio: { titulo: 'Sin resultados', detalle: 'Se busca por título y por ingrediente.' } }));
   }
-  if (ruta.vista === 'detalle') {
+  if (ruta.vista === 'receta') {
     const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
     return pintar(renderDetalle({ entrada, receta, ingredientesPlegados }));
   }
