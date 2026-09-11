@@ -3,13 +3,13 @@
 App personal de recetas. Los datos viven en Google Drive como archivos `.md` y
 sobreviven a la app. Un solo usuario.
 
-**Estado: v1 mergeada a `main`, publicada en GitHub Pages y probada contra el
-Drive real.** 331 tests, `npm run build` genera `dist/`.
-
-**Lo próximo es implementar el rediseño de `product-design/`** (ver la sección
-siguiente), no seguir con los pendientes de v1.
+**Estado: el rediseño de `product-design/` está implementado en la rama
+`redisenio`, sin mergear todavía.** 381 tests, `npm run typecheck` y
+`npm run build` en verde, y recorrida a mano contra el Drive real: el Recetario,
+una categoría, una receta, el modo cocina, Borradores y Ajustes.
 
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
+- El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
 - Spec técnico de v1: `docs/superpowers/specs/2026-08-31-recetario-design.md`
 - Pasos manuales de instalación: `SETUP.md`
 
@@ -26,14 +26,24 @@ visual y mockups.
 implementado o a este archivo, gana `product-design/`: la contradicción es
 deliberada y está registrada.
 
-### Por dónde se empieza a implementar
+### Ya está implementado
 
-**`product-design/plan/delta-implementacion.md`.** Tiene las ocho decisiones que
-hay que entender antes de escribir la primera línea, y después el delta archivo
-por archivo contra este código: qué se mantiene, qué cambia, qué se elimina y qué
-es nuevo. **El rediseño se implementa de una sola vez, no por fases.**
+Las 24 tareas del plan (`docs/superpowers/plans/2026-09-07-rediseno.md`) están
+hechas y commiteadas en `redisenio`, un commit por tarea. El delta
+(`product-design/plan/delta-implementacion.md`) sirve ahora para leer por qué
+cada archivo quedó como quedó, no como punto de entrada.
 
-Después, según lo que necesites:
+Lo que se implementó por fuera del plan, porque salió de mirar la app andando:
+el reindexado ahora anota `schemaVersion` en la meta —sin eso, subir la versión
+del esquema hacía reconstruir el índice en cada arranque—, el permiso de Google
+se pide al tocar el botón y no al abrir, y las categorías del Recetario salen
+alfabéticas y no en el orden en que Drive las lista.
+
+Falta verificar a mano lo que ningún test alcanza: el **Share Target real**
+(necesita la PWA instalada en Android), el foco del teclado en la captura y la
+posición de scroll al conmutar en el modo cocina.
+
+Para lo demás, según lo que necesites:
 
 | Para saber | Leé |
 |---|---|
@@ -43,20 +53,20 @@ Después, según lo que necesites:
 | Por qué algo es así | `product-design/plan/decision-log.md` — 89 decisiones con lo descartado |
 | Qué quedó afuera a propósito | `product-design/plan/BACKLOG.md` |
 
-### Lo que cambia de este código
-
-Resumido; el detalle está en el delta.
+### Cómo quedó el código
 
 | | |
 |---|---|
-| **Se mantiene** | El stack: TypeScript estricto + Vite, sin framework. `auth.ts`, `drive.ts`, `sheets.ts` y las fotos de `src/categorias/`. |
-| **Cambia** | `recipe.ts` (parser de ingredientes nuevo), `store.ts` (se elimina la cola de escrituras), `cache.ts` (se reduce o desaparece), `catalogo.ts` (columna de ingredientes), y `src/ui/` entero. |
-| **Se elimina** | `app.css` y el `tokens.css` actual, las tres familias tipográficas, el tag manual `incompleto`, la clase `texto-grande`, la cola y el cache local del índice. |
-| **Es nuevo** | La captura y los borradores —hoy no existe nada—, la búsqueda por ingrediente y por tag, el modo cocina y Ajustes. |
+| **Se mantuvo** | El stack: TypeScript estricto + Vite, sin framework. `auth.ts`, `drive.ts`, `sheets.ts` y las fotos de `src/categorias/`. |
+| **Cambió** | `recipe.ts` (el ingrediente es nombre + separador + cantidad, y los `###` estructuran), `store.ts` (la fila se escribe en el momento, sin cola), `catalogo.ts` (la fila suma `foto` y `completa`), y `src/ui/` entero. |
+| **Se eliminó** | `app.css`, `cache.ts`, `home.ts`, `lista.ts`, `detalle.ts`, `visor.ts`, las tres familias tipográficas, el tag manual `incompleto`, la clase `texto-grande`, la cola, el cache local del índice y la Changes API. |
+| **Es nuevo** | `borradores.ts` (la planilla de la cola) y `compartido.ts` (la capa que la app y el agente invocan igual), más las once pantallas de `src/ui/`: recetario, categoria, resultados, receta, cocina, editor, captura, borradores, ajustes y conexion, sobre `componentes.ts` e `iconos.ts`. |
 
-**Todo el producto sigue viviendo en `src/`.** Nada del código apunta a
+**Todo el producto vive en `src/`.** Nada del código apunta a
 `product-design/`: los documentos son especificación, no dependencia. Los tokens
-se **copian** de `product-design/ux/mockups/tokens.css` a `src/ui/tokens.css`.
+están **copiados** de `product-design/ux/mockups/tokens.css` a
+`src/ui/tokens.css`, sin el andamio del catálogo; `src/ui/base.css` es lo que en
+los mockups vivía en el `<style>` de cada pantalla.
 
 ### Lo que el rediseño dio vuelta de la tabla de abajo
 
@@ -112,10 +122,16 @@ Todo en español rioplatense: spec, comentarios, UI y nombres de carpetas.
 - **Las recetas son `.md` en Drive.** La carpeta contenedora es la categoría y es
   la única verdad; el frontmatter no lleva `categoria`.
 - **El índice es una Google Sheet** (`Recetario/_indice`). Es un cache derivado y
-  reconstruible: los `.md` son siempre la verdad.
+  reconstruible: los `.md` son siempre la verdad. **Los borradores son otra**
+  (`Recetario/_borradores`): una cola de trabajo de cuatro columnas, que no entra
+  al índice porque no es contenido consolidado.
 - **El input principal no es el editor**, son sesiones con agentes que reciben
   una fuente (PDF, foto, video, sitio web), extraen la receta y escriben el
   `.md`. El editor de la app existe para corregir, no para componer.
+- **La app y el agente escriben con la misma función.** `src/compartido.ts` tiene
+  las tres operaciones —escribir una receta al índice, convertir un borrador en
+  receta y leer un `.md`— y son el único camino para escribir: dos
+  implementaciones del mismo formato divergen, una sola no (C05.4.3).
 
 ## Ubicación en Drive
 
@@ -140,25 +156,24 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | Cooklang para el cuerpo de la receta | Da parsing exacto, pero ensucia el `.md`, que es justamente lo que se eligió proteger. |
 | `schema.org/Recipe` como modelo de datos | Está diseñado para publicar a buscadores: nutrición, rating, autor, video. Sirve como checklist, no como modelo. |
 | Reabrir el alcance de v1 | Se revisó entero el 2026-09-01: el planificador salió, y crear una receta mínima entró (§11). |
-| Una vista de bandeja o triage | Lo que falta archivar se ve en el tile "Sin categorizar" del home; lo que falta terminar se lista filtrando por el tag `incompleto`. |
-| Campos `ultima_vez`, `veces`, `puntaje`, `porciones` numérico, `foto:` | El esquema del frontmatter es cerrado y son seis claves (§3.2). |
+| Una vista de bandeja o triage | Lo que falta archivar se ve en el tile "Sin categorizar" del Recetario. **El rediseño cambió la otra mitad:** lo que falta terminar ya no se filtra por un tag manual — la completitud se deriva al leer el `.md` (C05.3.1) y se dibuja como marca en la tarjeta. |
+| Campos `ultima_vez`, `veces`, `puntaje`, `porciones` numérico | El esquema del frontmatter es cerrado. **El rediseño lo abrió a ocho claves:** entraron `foto` y `completa` (IA §1.5), y nada más. |
 | Datos nutricionales: calorías, macros, porciones diarias | Decidido el 2026-09-03. Las 24 recetas del libro de pescados vinieron con una nota "Valor calórico según la fuente" y se sacaron todas. No entra en las seis claves del §3.2, y como nota al cuerpo crea un campo paralelo que ninguna otra receta tiene. Si la fuente lo trae, se descarta. |
 | Guardar fotos en Drive, miniaturas, imagen de portada | Decidido el 2026-09-02. Mostrar una foto de Drive obliga a pedirla con el token y armar un object URL; las miniaturas, a mantener un mapa de `thumbnailLink` que caduca. Demasiado para un recetario donde casi ninguna receta va a tener imagen. Solo URLs externas, dibujadas donde estén (§3.3). |
-| Funcionar sin conexión | Salió de v1 el 2026-09-02. El índice ya se guarda en IndexedDB; usarlo para dibujar antes de la red quedó inventariado en el §11. |
+| Funcionar sin conexión | Salió de v1 el 2026-09-02, y el rediseño lo cerró del todo: **no hay copia local del índice** (C05.4.2). Sin la lectura de Drive no hay con qué dibujar, y esa es la consecuencia buscada. `cache.ts` y su IndexedDB se eliminaron. |
 | AppSheet, Apps Script, apps nativas, Artifact de Claude | Evaluadas como plataforma y descartadas (§2). |
-| Pestañas en el detalle | Costaban cuatro toques para leer una receta entera y escondían las notas y las variaciones justo cuando se cocina. Reemplazadas el 2026-09-04 por una columna sola con los ingredientes en barra pegajosa. |
-| Derivar el color de categoría de un hash del nombre | Medido: con 16 categorías siempre agrupa. `Pescados y mariscos` y `Ensaladas` caían en el mismo matiz exacto. La paleta es una lista escrita a mano, con 14° de separación mínima. |
+| Pestañas en el detalle | Costaban cuatro toques para leer una receta entera y escondían las notas y las variaciones justo cuando se cocina. La receta se lee de corrido, en una pila de fichas. **El conmutador volvió, pero solo dentro del modo cocina**, que es donde notas y variaciones no se usan. |
+| Derivar el color de categoría de un hash del nombre | Medido: con 16 categorías siempre agrupa. `Pescados y mariscos` y `Ensaladas` caían en el mismo matiz exacto. La paleta es una lista escrita a mano: quince colores a 18° entre sí y a 20° del acento, más el neutro de `Otros` (design-system §2.3), y vive en `src/ui/tokens.css` como tokens `--cat-*`. |
 | Identificar las categorías por una abreviación de 3 letras | Hay que aprenderlas. La foto se reconoce sin memorizar nada, y el nombre completo está escrito al lado igual. |
 | Las fotos de categoría en `public/` o en Drive | `sw.js` sirve caché-primero solo `/assets/`; en `public/` serían 16 pedidos de red por apertura. Desde Drive haría falta el token y un object URL, que es lo que hizo descartar las fotos de receta. Van en `src/categorias/`, importadas con `import.meta.glob`. |
 | Ordenar el home por cantidad de recetas | Reacomoda la grilla cada vez que entra una receta, y la posición de la categoría es justo lo que se aprende. Alfabético. |
 | Una paleta clara, o `prefers-color-scheme` | La app se abre en la cocina, de noche. Un solo tema oscuro es un solo juego de tokens, y deja que las fotos sean lo único con color. |
 | `drive.file` como scope, y el Google Picker | Medido el 2026-09-01: es estrictamente por archivo. Con `Recetario/` elegida en el Picker, la app no veía ninguna de las 16 subcarpetas ni un solo `.md` ajeno — y los `.md` los escriben agentes por fuera. |
-| Detectar y reparar la planilla del índice corrupta o incompleta | Decidido el 2026-09-03. Siempre que el índice esté corrupto o incompleto, la recuperación es borrar el archivo `_indice` en Drive y dejar que la app lo cree de nuevo (arranca en el caso "falta-estructura" de `store.js`, que llama a `crearPlanilla()` y reconstruye solo). Diagnosticar cada tipo de daño posible para repararlo in situ es más trabajo y más riesgo que recrear desde los `.md`, que son la fuente de verdad. |
+| Detectar y reparar la planilla del índice corrupta o incompleta | Decidido el 2026-09-03. Siempre que el índice esté corrupto o incompleto, la recuperación es borrar el archivo `_indice` en Drive y dejar que la app lo cree de nuevo (`store.ts` llama a `crearPlanilla()` y reconstruye solo); el rediseño agregó el camino a mano: **Ajustes → Reindexar**. Diagnosticar cada tipo de daño posible para repararlo in situ es más trabajo y más riesgo que recrear desde los `.md`, que son la fuente de verdad. |
 
-## Pendientes de v1
+## Lo que queda pendiente
 
-**Ojo con esta sección: es anterior al rediseño.** El planificador ya está
-diseñado y queda fuera de la primera implementación
+El planificador está diseñado y queda afuera a propósito
 (`product-design/plan/BACKLOG.md`). Lo que queda es una sola cosa.
 
 **Migrar el contenido existente:** ya se migraron ~60 recetas del recetario
@@ -168,10 +183,13 @@ macarons, fermentación) y el Doc de ~7,3 MB.
 
 Lo que ya no está pendiente:
 
-- **La app corrió contra el Drive real y funciona.** La verificación manual se
-  hizo y salió bien: era lo único que separaba a v1 de estar terminada.
+- **La app corrió contra el Drive real y funciona**, antes y después del
+  rediseño: el 2026-09-11 se recorrieron a mano el Recetario, una categoría, una
+  receta, el modo cocina, Borradores y Ajustes contra las ~60 recetas reales.
 - **El origen `https://alelarre.github.io` ya está autorizado** en el cliente
   OAuth de Google Cloud Console.
+- **La planilla `Recetario/_borradores` ya existe:** la creó la app sola la
+  primera vez que se abrió Borradores, igual que hace con el índice.
 
 ## Lo que quedó sabido y no arreglado
 
@@ -197,6 +215,13 @@ Lo que ya no está pendiente:
   Describe la funcionalidad de fotos que después se eliminó. Sirve como registro
   de cómo se construyó, no como runbook: si se vuelve a usar, hay que leerlo
   contra el spec.
+- **Subir `SCHEMA_VERSION` cuesta un reindexado entero al próximo arranque.**
+  Es el mecanismo, no un bug: la versión pasó a 2 con el rediseño porque la fila
+  suma `foto` y `completa`. Con ~60 recetas son unos 40 segundos; con las miles
+  de la migración va a ser el problema de la línea de arriba.
+- **Tres cosas del rediseño no las cubre ningún test:** el Share Target real
+  (necesita la PWA instalada en Android), el foco del teclado en la captura y la
+  posición de scroll al conmutar en el modo cocina.
 
 ## El spike del §10, ya corrido
 
@@ -204,7 +229,8 @@ Las cuatro verificaciones se corrieron el 2026-09-01 contra las APIs reales y
 sus resultados están incorporados al spec, que por eso ya no tiene un §10 de
 riesgos. Sirvieron para: descartar `drive.file` (ver la tabla de arriba) y
 confirmar la Changes API, las escrituras por fila de Sheets y el
-`thumbnailLink`. El harness quedó en el historial de git (`647ab75`, borrado en
+`thumbnailLink`. La Changes API terminó eliminada por el rediseño: la app no
+descubre lo que se escribe afuera (R6). El harness quedó en el historial de git (`647ab75`, borrado en
 la punta) por si Google cambia algo y hay que volver a medir.
 
 ## En Drive, además de las carpetas
