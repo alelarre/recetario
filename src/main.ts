@@ -16,12 +16,15 @@ import { renderEditor, recetaDesdeFormulario } from './ui/editor.js';
 import { crearBorradores } from './borradores.js';
 import { renderBorradores, renderBorrador } from './ui/borradores.js';
 import { renderCaptura } from './ui/captura.js';
+import { renderAjustes } from './ui/ajustes.js';
+import { renderConexion } from './ui/conexion.js';
+import { aviso } from './ui/componentes.js';
 import { convertirBorrador } from './compartido.js';
 import type { Borradores } from './borradores.js';
 import type { Ruta } from './ui/router.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { PosicionCocina } from './ui/cocina.js';
-import type { ResultadoArranque } from './store.js';
+import type { ResultadoArranque, Progreso } from './store.js';
 
 type Store = ReturnType<typeof crearStore>;
 
@@ -57,6 +60,13 @@ let confirmandoDescarte = false;
 let editandoTitulo = false;
 
 /** La captura: lo escrito sobrevive al error y a la reautenticación (R3). */
+/** Lo que el reindexado dejó afuera, para la sección de avisos de Ajustes. */
+let ignorados: string[] = [];
+/** El mail de la cuenta conectada. Se pide una vez, al entrar a Ajustes. */
+let cuenta = '';
+/** El progreso del reindexado en curso, o `null`. Mientras corre no se guarda ni se borra. */
+let reindexando: Progreso | null = null;
+
 let tituloCaptura = '';
 let guardandoCaptura = false;
 let errorCaptura = '';
@@ -128,7 +138,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 async function arrancar() {
-  pintar('<p class="contenido">Conectando…</p>');
+  pintar(renderConexion({ estado: 'conectando' }));
   try {
     // Vía silenciosa primero: es la misma que usa auth.token() para renovar
     // (pedir('') con la sesión en frío). Para una app que se abre a diario,
@@ -137,20 +147,36 @@ async function arrancar() {
     // sesión previa, o con el permiso revocado.
     await auth.token();
   } catch {
-    await auth.conectar();
+    try {
+      await auth.conectar();
+    } catch (err) {
+      console.error(err);
+      // Cancelado o denegado: nunca se queda en «Conectando…» (C05.9.2).
+      return pintar(renderConexion({ estado: 'cancelado' }));
+    }
   }
   store = crearStore({ drive, sheets });
   estadoArranque = await store.arrancar();
 
+  // Los tres estados que no llegan a 'listo' avisan en castellano, con su
+  // control: ninguno muestra el mensaje crudo de Google (R1).
   if (estadoArranque.estado === 'falta-estructura') {
-    return pintar('<p class="contenido">No encontré la carpeta <b>Recetario</b> en tu Drive. Ver <code>SETUP.md</code>.</p>');
+    return pintar('<div class="cuerpo">' + aviso({
+      texto: 'No encontré la carpeta Recetario en tu Drive. Está en SETUP.md cómo crearla.',
+      accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
+    }) + '</div>');
   }
   if (estadoArranque.estado === 'elegir-carpeta') {
-    return pintar('<p class="contenido">Hay más de una carpeta llamada Recetario. Dejá una sola y recargá.</p>');
+    return pintar('<div class="cuerpo">' + aviso({
+      texto: 'Hay más de una carpeta llamada Recetario en tu Drive. Dejá una sola y volvé a entrar.',
+      accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
+    }) + '</div>');
   }
   if (estadoArranque.estado === 'solo-lectura') {
-    const motivo = estadoArranque.motivo ? `: ${escapar(estadoArranque.motivo)}` : '.';
-    return pintar(`<p class="contenido">No pude conectar con Drive${motivo} Quedás en modo solo lectura. <button data-accion="reconectar">Reintentar</button></p>`);
+    return pintar('<div class="cuerpo">' + aviso({
+      texto: 'No pude conectar con Drive. Sin esa lectura no hay con qué dibujar.',
+      accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
+    }) + '</div>');
   }
 
   // Los borradores viven en su propia planilla, al lado del índice, y recién
@@ -163,13 +189,28 @@ async function arrancar() {
   router.iniciar();
 }
 
-async function reconstruir() {
-  pintar('<p class="contenido">Reconstruyendo el índice… <span data-progreso>0</span></p>');
-  await store.reconstruir(({ leidas, total }) => {
-    const el = document.querySelector('[data-progreso]');
-    if (el) el.textContent = `${leidas} / ${total}`;
-  });
-  render();
+/**
+ * Reindexar lee todos los `.md` y rearma la planilla: es la reparación
+ * universal. No se puede cancelar —cortar a mitad deja el índice en el estado
+ * que el reindexado existe para reparar— y mientras corre no se guarda ni se
+ * borra nada (C05.5.2).
+ */
+async function reconstruir({ enAjustes = false } = {}) {
+  reindexando = { leidas: 0, total: 0 };
+  const dibujar = () => enAjustes
+    ? pintar(renderAjustes({
+        cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados, reindexando
+      }))
+    : pintar(renderConexion({ estado: 'creando-indice', ...(reindexando ? { progreso: reindexando } : {}) }));
+
+  dibujar();
+  try {
+    const r = await store.reconstruir(progreso => { reindexando = progreso; dibujar(); });
+    ignorados = r.ignorados;
+  } finally {
+    reindexando = null;
+  }
+  await render();
 }
 
 /**
@@ -233,6 +274,14 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     const { receta } = await store.receta(ruta.params['id'] ?? '');
     return pintar(renderCocina({
       receta, posicion: posicionCocina, aqui: pasoAqui, hechos: pasosHechos, wakeActivo: !!wakeLock
+    }));
+  }
+  if (ruta.vista === 'ajustes') {
+    // El mail no lo guarda nadie: se lo pide a Drive una vez. Que falle no
+    // rompe la pantalla, solo deja la línea de la cuenta vacía.
+    if (!cuenta) cuenta = await drive.cuenta().catch(() => '');
+    return pintar(renderAjustes({
+      cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados, reindexando
     }));
   }
   if (ruta.vista === 'capturar') {
@@ -356,6 +405,15 @@ app.addEventListener('click', async (e) => {
   }
 
   if (accion === 'borradores') { location.hash = '#/borradores'; return; }
+  if (accion === 'ajustes') { location.hash = '#/ajustes'; return; }
+  if (accion === 'reindexar') return reconstruir({ enAjustes: true });
+  if (accion === 'conectar') return arrancar();
+  if (accion === 'salir') {
+    auth.olvidar();
+    cuenta = '';
+    location.hash = '#/';
+    return pintar(renderConexion({ estado: 'inicial' }));
+  }
   if (accion === 'crear-receta') {
     location.hash = `#/nueva?borrador=${encodeURIComponent(vistaActual?.params['id'] ?? '')}`;
     return;
@@ -436,7 +494,6 @@ app.addEventListener('click', async (e) => {
   if (accion === 'atras') return history.back();
   if (accion === 'editar') { location.hash = `#/r/${vistaActual?.params['id'] ?? ''}/editar`; return; }
   if (accion === 'cancelar') return history.back();
-  if (accion === 'reconstruir') return reconstruir();
   if (accion === 'reconectar') {
     try {
       // Si el arranque nunca llegó a "listo" (solo-lectura), reintentar todo

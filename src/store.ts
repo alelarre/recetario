@@ -284,7 +284,7 @@ export function crearStore({ drive, sheets }: Dependencias) {
     await borrarDelIndice(id);
   }
 
-  async function reconstruir(alProgresar: (p: Progreso) => void = () => {}): Promise<{ indexadas: number; ignoradasSinTitulo: number }> {
+  async function reconstruir(alProgresar: (p: Progreso) => void = () => {}): Promise<{ indexadas: number; ignorados: string[] }> {
     // Defender el parámetro: si no es función, ignorar.
     if (typeof alProgresar !== 'function') alProgresar = () => {};
 
@@ -306,14 +306,16 @@ export function crearStore({ drive, sheets }: Dependencias) {
     }
 
     const nuevas: string[][] = [];
-    let ignoradasSinTitulo = 0;
+    // Por nombre y no un conteo: un archivo que se salteó hay que poder
+    // encontrarlo en Drive (C05.5.2).
+    const ignorados: string[] = [];
     let leidas = 0;
     for (const { archivo, lugar } of pendientes) {
       const texto = await drive.leerTexto(archivo.id);
       leidas++;
       alProgresar({ leidas, total: pendientes.length });
       const receta = parse(texto);
-      if (!receta.titulo) { ignoradasSinTitulo++; continue; }
+      if (!receta.titulo) { ignorados.push(archivo.name ?? archivo.id); continue; }
       nuevas.push(filaDesde(receta, {
         id: archivo.id, nombre_archivo: archivo.name ?? '',
         categoria: lugar.categoria, carpeta_id: lugar.id,
@@ -344,7 +346,7 @@ export function crearStore({ drive, sheets }: Dependencias) {
     ctx.ultimaReconstruccionEnMemoria = ahora;
     await guardarMeta('reconstruccion_en_curso', '');
 
-    return { indexadas: entradas.length, ignoradasSinTitulo };
+    return { indexadas: entradas.length, ignorados };
   }
 
   function buscar(filtros?: Filtros | unknown): Entrada[] {

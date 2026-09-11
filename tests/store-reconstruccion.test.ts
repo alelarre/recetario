@@ -45,9 +45,11 @@ describe('reconstruir', () => {
     expect(store.entradas().find(e => e.titulo === 'Suelta')!.categoria).toBe('Sin categorizar');
   });
 
-  it('cuenta las ignoradas por no tener titulo, sin borrar el archivo', async () => {
+  it('nombra las ignoradas por no tener titulo, sin borrar el archivo', async () => {
+    // Por nombre y no un conteo: así el aviso de Ajustes dice cuál buscar en
+    // Drive (C05.5.2).
     const r = await store.reconstruir();
-    expect(r.ignoradasSinTitulo).toBe(1);
+    expect(r.ignorados).toEqual(['sin-titulo.md']);
     expect(drive._store.has('x1')).toBe(true);
   });
 

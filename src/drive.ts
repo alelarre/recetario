@@ -91,6 +91,11 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
     metadatos: (id: string, campos = 'id,name,parents,modifiedTime') =>
       pedir<ArchivoDrive>(`/files/${id}?fields=${campos}`),
 
+    /** El mail de la cuenta conectada, para Ajustes (C05.7.1). */
+    cuenta: async (): Promise<string> =>
+      (await pedir<{ user?: { emailAddress?: string } }>('/about?fields=user(emailAddress)'))
+        .user?.emailAddress ?? '',
+
     /** Devuelve el `.md` crudo: `alt=media` no responde JSON. */
     leerTexto: (id: string) => pedir<string>(`/files/${id}?alt=media`),
 
