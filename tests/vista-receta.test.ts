@@ -54,6 +54,47 @@ describe('Receta en lectura', () => {
     expect(pos('Variaciones')).toBeLessThan(pos('Notas'));
   });
 
+  it('el encabezado no repite el título: dice la categoría', () => {
+    const html = renderReceta({ entrada: entradaFalsa({ categoria: 'Pescados y mariscos' }), receta: COMPLETA });
+    const enc = html.slice(0, html.indexOf('class="cuerpo'));
+    expect(enc).toContain('Pescados y mariscos');
+    expect(enc).not.toContain('Rabas');
+  });
+
+  it('la descripción va en la misma ficha que el título, no en una aparte', () => {
+    const html = renderReceta({ entrada: null, receta: COMPLETA });
+    // Entre el título y la descripción no hay otra ficha: es la misma.
+    const entre = html.slice(html.indexOf('rec-tit'), html.indexOf('Una entrada clásica'));
+    expect(entre).not.toContain('class="ficha"');
+    expect(html.indexOf('Una entrada clásica')).toBeLessThan(html.indexOf('<h2>Ingredientes'));
+  });
+
+  it('una fuente que es URL se dibuja clickeable, sin el esquema a la vista', () => {
+    const r = parse('---\ntitulo: A\nfuente: https://cookpad.com/ar/recetas/123\n---\n');
+    const html = renderReceta({ entrada: null, receta: r });
+    expect(html).toContain('<a href="https://cookpad.com/ar/recetas/123" target="_blank" rel="noopener">');
+    expect(html).toContain('>cookpad.com/ar/recetas/123<');
+  });
+
+  it('una fuente en markdown usa su texto como link', () => {
+    const r = parse('---\ntitulo: A\nfuente: "[Directo al paladar](https://directoalpaladar.com/x)"\n---\n');
+    const html = renderReceta({ entrada: null, receta: r });
+    expect(html).toContain('href="https://directoalpaladar.com/x"');
+    expect(html).toContain('>Directo al paladar<');
+  });
+
+  it('una fuente que no es URL queda como texto', () => {
+    const r = parse('---\ntitulo: A\nfuente: libro de pescados, pág. 84\n---\n');
+    const html = renderReceta({ entrada: null, receta: r });
+    expect(html).toContain('libro de pescados, pág. 84');
+    expect(html).not.toContain('<a href');
+  });
+
+  it('una fuente con esquema raro no se convierte en link', () => {
+    const r = parse('---\ntitulo: A\nfuente: "[click](javascript:alert(1))"\n---\n');
+    expect(renderReceta({ entrada: null, receta: r })).not.toContain('<a href');
+  });
+
   it('la fuente cierra la cabecera: va después de los tags, no entre el título y ellos', () => {
     const html = renderReceta({ entrada: null, receta: COMPLETA });
     expect(html.indexOf('rec-ctx')).toBeLessThan(html.indexOf('class="chips"'));

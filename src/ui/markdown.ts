@@ -4,15 +4,26 @@ export function escapar(texto: unknown): string {
     .replace(/"/g, '&quot;');
 }
 
+/**
+ * Sólo `http:`, `https:` y rutas relativas. Todo lo demás —`javascript:` el
+ * primero— no se emite como destino: los `.md` los escribe cualquiera.
+ */
+export const esDestinoSeguro = (url: string): boolean =>
+  /^(https?:\/\/|\/|\.\.?\/)/i.test(url);
+
 function enLinea(texto: unknown): string {
   const escapado = escapar(texto);
-  // Validar esquemas: solo http:, https: y rutas relativas. Todo lo demás no se emite.
   // Nota: URLs con paréntesis anidados (ej: alert(1)) se truncan en el primer ), limitación conocida.
   return escapado
     .replace(/!\[[^\]]*\]\(([^)\s]+)\)/g, (_, url) => {
-      const esSeguro = /^(https?:\/\/|\/|\.\.?\/)/i.test(url);
-      return esSeguro ? `<img src="${url}" alt="" loading="lazy">` : `![](${url})`;
+      return esDestinoSeguro(url) ? `<img src="${url}" alt="" loading="lazy">` : `![](${url})`;
     })
+    // El link markdown: `[texto](url)`. Va después de la imagen, que comparte
+    // la forma y se distingue sólo por el `!` de adelante.
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (entero, texto: string, url: string) =>
+      esDestinoSeguro(url)
+        ? `<a href="${url}" target="_blank" rel="noopener">${texto}</a>`
+        : entero)
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>');
 }

@@ -8,7 +8,7 @@
  * Una pila de `.ficha`: la primera con la foto —si la hay—, el título, el
  * contexto, la fuente y los tags; después una por sección, y ninguna vacía.
  */
-import { escapar, aHtml } from './markdown.js';
+import { escapar, aHtml, esDestinoSeguro } from './markdown.js';
 import { encabezado } from './componentes.js';
 import { colorCategoria } from './categorias.js';
 import { ICO } from './iconos.js';
@@ -19,6 +19,26 @@ export interface OpcionesReceta {
   /** La fila del índice, para la categoría. Falta si la receta no está indexada. */
   entrada: Entrada | null;
   receta: Receta;
+}
+
+/**
+ * La fuente es texto libre: puede ser una URL pelada, un link markdown, o
+ * «libro de pescados, pág. 84». Las dos primeras se dibujan clickeables; de la
+ * URL pelada se muestra el sitio y no el esquema, que no informa nada.
+ */
+function fuenteHtml(fuente: string): string {
+  // El parser del frontmatter deja el valor tal cual, comillas incluidas: se
+  // sacan acá para mirar qué hay adentro.
+  const limpia = fuente.trim().replace(/^["'](.*)["']$/, '$1').trim();
+  const md = limpia.match(/^\[([^\]]+)\]\(([^)\s]+)\)$/);
+  if (md?.[1] && md[2] && esDestinoSeguro(md[2])) {
+    return `<a href="${escapar(md[2])}" target="_blank" rel="noopener">${escapar(md[1])}</a>`;
+  }
+  if (/^https?:\/\/\S+$/i.test(limpia)) {
+    return `<a href="${escapar(limpia)}" target="_blank" rel="noopener">` +
+      `${escapar(limpia.replace(/^https?:\/\//i, ''))}</a>`;
+  }
+  return escapar(limpia);
 }
 
 const ficha = (contenido: string, titulo?: string): string =>
@@ -64,8 +84,11 @@ export function renderReceta({ entrada, receta }: OpcionesReceta): string {
         receta.tags.map(t => `<button class="chip" data-tag="${escapar(t)}">${escapar(t)}</button>`).join('') +
         '</div>'
       : '') +
+    // La descripción es de la receta, no una sección aparte: va en la misma
+    // ficha, después de los datos y antes de la procedencia.
+    (receta.descripcion ? `<div class="lee rec-desc">${aHtml(receta.descripcion)}</div>` : '') +
     marca +
-    (receta.fuente ? `<div class="rec-fuente">${escapar(receta.fuente)}</div>` : '');
+    (receta.fuente ? `<div class="rec-fuente">${fuenteHtml(receta.fuente)}</div>` : '');
 
   const variaciones = secciones.length
     ? secciones.map(v =>
@@ -81,12 +104,12 @@ export function renderReceta({ entrada, receta }: OpcionesReceta): string {
     ? '<button class="btn prim" data-accion="cocinar">Cocinar</button>'
     : '';
 
-  // Sin menú de ⋯: las acciones de la receta son Cocinar y Editar, y las dos
-  // están al pie. Un botón que abre un menú vacío es peor que no tenerlo.
-  return encabezado({ titulo: receta.titulo ?? '', volver: true }) +
+  // El encabezado no repite el título —está abajo, grande y entero— sino que
+  // dice la categoría, que es de dónde se viene y a dónde vuelve el chevron.
+  // Sin menú de ⋯: las acciones son Cocinar y Editar, y las dos están al pie.
+  return encabezado({ titulo: categoria, volver: true }) +
     '<div class="cuerpo">' +
       ficha(cabecera) +
-      ficha(receta.descripcion ? `<div class="lee">${aHtml(receta.descripcion)}</div>` : '') +
       ficha(ingredientes(grupos), 'Ingredientes') +
       ficha(preparacion(tramos), 'Preparación') +
       ficha(variaciones, 'Variaciones') +
