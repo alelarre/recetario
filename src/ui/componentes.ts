@@ -139,6 +139,10 @@ export function lateral({ activo, borradores, abierto }: OpcionesLateral): strin
       '<div class="marca">Recetario</div>' +
       item('recetario', '#/', ICO.casa, 'Recetario') +
       item('borradores', '#/borradores', ICO.bandeja, 'Borradores', borradores) +
+      // Nueva receta es una acción y no un lugar: nunca queda marcada, porque
+      // el editor al que lleva no dibuja el menú. Está acá porque es el único
+      // sitio desde donde se alcanza sin pasar por un borrador.
+      `<a href="#/nueva">${ICO.mas}Nueva receta</a>` +
       item('ajustes', '#/ajustes', ICO.ajustes, 'Ajustes') +
     '</nav>';
 }

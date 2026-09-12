@@ -44,13 +44,15 @@ describe('Recetario', () => {
     expect(html.indexOf('>Bebidas<')).toBeLessThan(html.indexOf('>Otros<'));
   });
 
-  it('los tres destinos están en el menú lateral, con su nombre', () => {
+  it('el menú lateral lleva los destinos y el alta, con su nombre', () => {
     const html = dibujar();
     expect(html).toContain('class="lat');
     expect(html).toContain('href="#/borradores"');
+    expect(html).toContain('href="#/nueva"');
     expect(html).toContain('href="#/ajustes"');
-    // El destino actual queda marcado.
+    // El destino actual queda marcado; «nueva receta» es una acción y no.
     expect(html).toContain('<a class="act" href="#/"');
+    expect(html).toContain('<a href="#/nueva">');
   });
 
   it('el contador de borradores se ve con el menú cerrado, sobre la hamburguesa', () => {
