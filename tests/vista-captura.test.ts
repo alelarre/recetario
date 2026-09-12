@@ -32,6 +32,18 @@ describe('Captura', () => {
     expect(html).toContain('name="nota"');
   });
 
+  it('escribiendo o editando, el título va primero', () => {
+    const nuevo = renderCaptura({ ...base, fuente: '' });
+    expect(nuevo.indexOf('name="titulo"')).toBeLessThan(nuevo.indexOf('name="fuente"'));
+    const editando = renderCaptura({ ...base, edicion: true });
+    expect(editando.indexOf('name="titulo"')).toBeLessThan(editando.indexOf('name="fuente"'));
+  });
+
+  it('compartida, la fuente que vino va arriba del título', () => {
+    const html = renderCaptura(base);
+    expect(html.indexOf('class="fnt"')).toBeLessThan(html.indexOf('name="titulo"'));
+  });
+
   it('la nota escrita sobrevive al redibujado', () => {
     expect(renderCaptura({ ...base, nota: 'sin lactosa' })).toContain('sin lactosa');
   });

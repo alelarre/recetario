@@ -39,21 +39,30 @@ export function renderCaptura(
   // de la app, y lleva encabezado y volver como todas.
   const compartido = !!fuente && !edicion;
 
+  const campoTitulo = '<label class="campo"><span>Título</span>' +
+    `<input name="titulo" value="${escapar(titulo)}" autofocus placeholder="Pasta con berenjenas"></label>`;
+  // Lo que haya que recordar y no entre en el título: «la versión sin
+  // lactosa», «probarla con menos sal». Opcional.
+  const campoNota =
+    `<label class="campo"><span>Nota</span><textarea name="nota" rows="2">${escapar(nota)}</textarea></label>`;
+
+  // Compartida, la fuente va arriba: es el dato que ya vino y el título es lo
+  // único que hay que escribir. Escribiendo o editando, el título va primero,
+  // que es lo que identifica al borrador.
+  const campos = compartido
+    ? `<div class="fnt">${escapar(fuenteVisible)}</div>` + campoTitulo + campoNota
+    : campoTitulo +
+      '<label class="campo"><span>Fuente</span>' +
+      `<input name="fuente" value="${escapar(fuente)}" placeholder="Una URL, o dónde está anotada"></label>` +
+      campoNota;
+
   return (compartido ? '' : encabezado({
       titulo: edicion ? 'Editar borrador' : 'Nuevo borrador', volver: true
     })) +
     '<div class="hoja">' +
     (compartido ? '<h1>Guardar en Recetario</h1>' : '') +
-    (compartido
-      ? `<div class="fnt">${escapar(fuenteVisible)}</div>`
-      : '<label class="campo"><span>Fuente</span>' +
-        `<input name="fuente" value="${escapar(fuente)}" placeholder="Una URL, o dónde está anotada"></label>`) +
     (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'guardar-captura' } }) : '') +
-    '<label class="campo"><span>Título</span>' +
-      `<input name="titulo" value="${escapar(titulo)}" autofocus placeholder="Pasta con berenjenas"></label>` +
-    // Lo que haya que recordar y no entre en el título: «la versión sin
-    // lactosa», «probarla con menos sal». Opcional.
-    `<label class="campo"><span>Nota</span><textarea name="nota" rows="2">${escapar(nota)}</textarea></label>` +
+    campos +
     '<div class="pie2">' +
       '<button class="btn sec" data-accion="cancelar-captura">Cancelar</button>' +
       `<button class="btn prim" data-accion="guardar-captura"${sinTitulo || guardando ? ' disabled' : ''}>` +
