@@ -158,6 +158,9 @@ describe('renderEditor', () => {
     const html = dibujar({ error: 'No se pudo guardar.' });
     expect(html).toContain('No se pudo guardar.');
     expect(html).toContain(cargada.titulo!);
+    // El reintento es Guardar, que sigue en el encabezado: el aviso no repite
+    // un control que ya está.
+    expect(html).not.toContain('Reintentar');
   });
 });
 

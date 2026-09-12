@@ -90,7 +90,8 @@ export function renderCaptura(
     })) +
     '<div class="hoja">' +
     (compartido ? '<h1>Guardar en Recetario</h1>' : '') +
-    (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'guardar-captura' } }) : '') +
+    // Mismo criterio que el editor: se reintenta con Guardar.
+    (error ? aviso({ texto: error }) : '') +
     campos +
     '<div class="pie2">' +
       '<button class="btn sec" data-accion="cancelar-captura">Cancelar</button>' +

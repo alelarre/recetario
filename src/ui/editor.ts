@@ -44,8 +44,10 @@ export const pillTag = (tag: string): string =>
   `<button type="button" class="chip" data-accion="tag-quitar" data-valor="${escapar(tag)}">` +
   `${escapar(tag)}${ICO.cerrar}</button>`;
 
-const area = (nombre: string, etiqueta: string, valor?: string | null, filas = 4): string =>
-  `<label class="campo"><span>${escapar(etiqueta)}</span>` +
+const area = (
+  nombre: string, etiqueta: string, valor?: string | null, filas = 4, estilo = ''
+): string =>
+  `<label class="campo"${estilo ? ` style="${estilo}"` : ''}><span>${escapar(etiqueta)}</span>` +
   `<textarea name="${nombre}" rows="${filas}">${escapar(valor ?? '')}</textarea></label>`;
 
 export function renderEditor(
@@ -115,7 +117,8 @@ export function renderEditor(
 
   const contenido = '<div class="ficha"><h2>Contenido</h2>' +
     area('descripcion', 'Descripción', receta.descripcion, 3) +
-    area('ingredientes', 'Ingredientes', receta.ingredientes, 8) +
+    // El campo y su ayuda son un bloque: se pegan.
+    area('ingredientes', 'Ingredientes', receta.ingredientes, 8, 'margin-bottom:var(--e-1)') +
     ayudaIngredientes +
     area('preparacion', 'Preparación', receta.preparacion, 6) +
     area('variaciones', 'Variaciones', receta.variaciones, 3) +
@@ -169,7 +172,9 @@ export function renderEditor(
     derecha: '<button class="btn prim compacto" data-accion="guardar">Guardar</button>'
   }) +
     '<form class="cuerpo" data-formulario>' +
-      (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'guardar' } }) : '') +
+      // Sin botón de reintentar: el reintento es tocar Guardar otra vez, que
+      // está arriba y no se fue a ningún lado (R1).
+      (error ? aviso({ texto: error }) : '') +
       datos + contenido + completa + borrar +
     '</form>';
 }

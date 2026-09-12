@@ -92,5 +92,6 @@ describe('Captura', () => {
     expect(html).toContain('Focaccia');
     expect(html).toContain('No se pudo guardar.');
     expect(html).not.toMatch(/más tarde|se guardará/i);
+    expect(html).not.toContain('Reintentar');
   });
 });
