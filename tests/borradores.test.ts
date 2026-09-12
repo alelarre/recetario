@@ -114,13 +114,13 @@ describe('borradores', () => {
     expect(sheets.filasBorradas).toEqual([]);
   });
 
-  it('editar el título reescribe solo esa fila', async () => {
+  it('editar reescribe solo esa fila, con los tres campos', async () => {
     const { sheets, bor } = armar([
       ['b1', 'A', 'https://x/1', '2026-09-01T10:00:00Z'],
       ['b2', 'B', '', '2026-09-02T10:00:00Z']
     ]);
 
-    await bor.editarTitulo('b1', 'Anchoítas');
+    await bor.editar('b1', { titulo: 'Anchoítas' });
 
     expect(sheets.escrituras).toHaveLength(1);
     expect(sheets.escrituras[0]?.valores[0])
@@ -128,9 +128,16 @@ describe('borradores', () => {
     expect((await bor.listar()).map(b => b.titulo)).toEqual(['Anchoítas', 'B']);
   });
 
-  it('editar el título de un borrador que ya no está no es un error', async () => {
+  it('editar un borrador que ya no está no es un error', async () => {
     const { sheets, bor } = armar();
-    await expect(bor.editarTitulo('inexistente', 'X')).resolves.toBeUndefined();
+    await expect(bor.editar('inexistente', { titulo: 'X' })).resolves.toBeUndefined();
     expect(sheets.escrituras).toHaveLength(0);
+  });
+
+  it('editar la fuente y la nota también reescribe la fila', async () => {
+    const { sheets, bor } = armar([['b1', 'A', 'vieja', '2026-09-01T10:00:00Z', 'nota vieja']]);
+    await bor.editar('b1', { fuente: 'https://x/9', nota: 'nota nueva' });
+    expect(sheets.escrituras[0]?.valores[0])
+      .toEqual(['b1', 'A', 'https://x/9', '2026-09-01T10:00:00Z', 'nota nueva']);
   });
 });

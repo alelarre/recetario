@@ -166,8 +166,11 @@ button.chip { cursor: pointer; }
 .pie2 { margin-top: auto; display: flex; gap: var(--e-2); justify-content: flex-end; padding-top: var(--e-5); }
 
 /* ---- Borradores (mockup 08) ---- */
-.bor { display: flex; gap: var(--e-3); align-items: flex-start; padding: var(--e-3);
-       background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha); }
+.bor { display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
+       background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha);
+       /* Es un <a>: sin esto lleva el subrayado y el violeta de link visitado. */
+       text-decoration: none; color: inherit; }
+.bor:hover { background: var(--surface-alta); }
 .bor .txt { flex: 1; min-width: 0; }
 .bor .n { font-weight: 600; }
 .bor .f { font-size: var(--txt-chico); color: var(--fg-2); white-space: nowrap;

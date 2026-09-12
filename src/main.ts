@@ -58,8 +58,8 @@ let menuAbierto = false;
 
 /** Lo que se está por descartar o borrar pide confirmación antes (C01.6.2, C04.6.1). */
 let confirmandoDescarte = false;
-/** El título del borrador se corrige en su lugar (C01.6.1). */
-let editandoTitulo = false;
+/** El borrador se edita con el mismo formulario con el que se creó, precargado. */
+let editandoBorrador = false;
 
 /** La captura: lo escrito sobrevive al error y a la reautenticación (R3). */
 /** Lo que el reindexado dejó afuera, para la sección de avisos de Ajustes. */
@@ -287,8 +287,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     // Navegar cierra el menú: se abrió para elegir a dónde ir.
     menuAbierto = false;
     confirmandoDescarte = false;
-    editandoTitulo = false;
-    if (ruta.vista !== 'capturar') {
+    editandoBorrador = false;
+    if (ruta.vista !== 'capturar' && ruta.vista !== 'borrador') {
       tituloCaptura = ''; notaCaptura = ''; guardandoCaptura = false; errorCaptura = '';
     }
     posicionCocina = 'ingredientes';
@@ -387,7 +387,15 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         // Un borrador que ya no está —convertido afuera, descartado— no es un
         // error: la lista es lo que corresponde mostrar.
         if (!borrador) return pintar(renderBorradores({ borradores: lista }));
-        return pintar(renderBorrador({ borrador, confirmando: confirmandoDescarte, editando: editandoTitulo }));
+        // Editar es el mismo formulario con el que se creó, precargado.
+        if (editandoBorrador) {
+          return pintar(renderCaptura({
+            fuente: borrador.fuente, titulo: borrador.titulo, nota: borrador.nota,
+            edicion: true, guardando: guardandoCaptura,
+            ...(errorCaptura ? { error: errorCaptura } : {})
+          }));
+        }
+        return pintar(renderBorrador({ borrador, confirmando: confirmandoDescarte }));
       } catch (err) {
         console.error(err);
         return pintar(renderBorradores({ borradores: [], error: 'No se pudo leer el borrador.' }));
@@ -558,8 +566,11 @@ app.addEventListener('click', async (e) => {
   }
   if (accion === 'agregar-borrador') { location.hash = '#/capturar'; return; }
   if (accion === 'cancelar-captura') {
-    // Cerrar sin escribir nada y sin preguntar: no hay nada que perder todavía.
     tituloCaptura = '';
+    notaCaptura = '';
+    // Editando, cancelar vuelve al borrador sin tocarlo; en la captura
+    // compartida cierra sin escribir nada y sin preguntar.
+    if (editandoBorrador) { editandoBorrador = false; return render(); }
     window.close();
     return;
   }
@@ -577,6 +588,15 @@ app.addEventListener('click', async (e) => {
     errorCaptura = '';
     await render();
     try {
+      if (editandoBorrador) {
+        await borradores?.editar(vistaActual?.params['id'] ?? '',
+          { titulo: tituloCaptura, fuente, nota: notaCaptura });
+        editandoBorrador = false;
+        guardandoCaptura = false;
+        tituloCaptura = '';
+        notaCaptura = '';
+        return render();
+      }
       await borradores?.agregar({ titulo: tituloCaptura, fuente, nota: notaCaptura });
     } catch (err) {
       console.error(err);
@@ -595,27 +615,7 @@ app.addEventListener('click', async (e) => {
     irCerrando('#/borradores');
     return;
   }
-  if (accion === 'editar-titulo') { editandoTitulo = true; return render(); }
-  if (accion === 'cancelar-titulo') { editandoTitulo = false; return render(); }
-  if (accion === 'guardar-titulo') {
-    const campo = document.querySelector<HTMLInputElement>('input[name="titulo"]');
-    const titulo = campo?.value.trim() ?? '';
-    const id = vistaActual?.params['id'] ?? '';
-    if (!titulo) return;
-    try {
-      await borradores?.editarTitulo(id, titulo);
-      editandoTitulo = false;
-      return render();
-    } catch (err) {
-      console.error(err);
-      const borrador = (await borradores?.listar() ?? []).find(b => b.id === id);
-      if (!borrador) return;
-      return pintar(renderBorrador({
-        borrador: { ...borrador, titulo }, confirmando: false, editando: true,
-        error: 'No se pudo guardar el título.'
-      }));
-    }
-  }
+  if (accion === 'editar-borrador') { editandoBorrador = true; return render(); }
 
   if (accion === 'tag-quitar') {
     const tag = boton.dataset['valor'] ?? '';
@@ -751,7 +751,7 @@ app.addEventListener('click', async (e) => {
  * habilita tocándolo directo, sin volver a pintar la pantalla.
  */
 app.addEventListener('input', (e) => {
-  if (vistaActual?.vista !== 'capturar') return;
+  if (vistaActual?.vista !== 'capturar' && !editandoBorrador) return;
   const campo = e.target as HTMLInputElement | HTMLTextAreaElement | null;
   if (!campo?.name) return;
   if (campo.name === 'nota') { notaCaptura = campo.value; return; }

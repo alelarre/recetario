@@ -24,8 +24,6 @@ export interface OpcionesBorrador {
   borrador: Borrador;
   /** La confirmación de descarte reemplaza las acciones (C01.6.2). */
   confirmando: boolean;
-  /** El título se corrige en su lugar, sin pantalla nueva. */
-  editando?: boolean;
   error?: string;
 }
 
@@ -57,16 +55,16 @@ const esUrl = (fuente: string): boolean => /^https?:\/\//i.test(fuente.trim());
 const fuenteVisible = (fuente: string): string => fuente.replace(/^https?:\/\//i, '');
 
 export function renderBorradores({ borradores, error, menuAbierto }: OpcionesBorradores): string {
+  // Sólo el título y cuándo entró: la fuente y la nota están adentro, y en la
+  // fila competían con el título.
   const lista = borradores.map(b =>
     `<a class="bor" href="#/borradores/${encodeURIComponent(b.id)}">` +
-      `<span class="txt"><span class="n">${escapar(b.titulo)}</span>` +
-      (b.fuente ? `<span class="f">${escapar(fuenteVisible(b.fuente))}</span>` : '') +
-      '</span>' +
+      `<span class="txt"><span class="n">${escapar(b.titulo)}</span></span>` +
       `<span class="d">${escapar(cuando(b.capturado))}</span>` +
     '</a>').join('');
 
   const agregar = '<button class="btn sec" style="width:100%" data-accion="agregar-borrador">' +
-    `${ICO.mas}Agregar a mano</button>`;
+    `${ICO.mas}Nuevo</button>`;
 
   const cuerpo = lista
     // Sin celebración: no hay «¡todo al día!».
@@ -91,7 +89,7 @@ export function renderBorradores({ borradores, error, menuAbierto }: OpcionesBor
     '</div>';
 }
 
-export function renderBorrador({ borrador, confirmando, editando, error }: OpcionesBorrador): string {
+export function renderBorrador({ borrador, confirmando, error }: OpcionesBorrador): string {
   const ficha = '<div class="ficha">' +
     `<div style="font-size:var(--txt-titulo);font-weight:600;line-height:1.25">${escapar(borrador.titulo)}</div>` +
     (borrador.fuente
@@ -111,21 +109,12 @@ export function renderBorrador({ borrador, confirmando, editando, error }: Opcio
       '<button class="btn pel" data-accion="descartar-confirmado">Descartar</button>' +
     '</div></div>';
 
-  // El título se corrige acá mismo: es un campo y dos botones, no una pantalla.
-  const edicion = '<div class="ficha">' +
-    '<label class="campo" style="margin-bottom:var(--e-3)"><span>Título</span>' +
-    `<input name="titulo" value="${escapar(borrador.titulo)}" autofocus></label>` +
-    '<div class="acciones">' +
-      '<button class="btn sec" data-accion="cancelar-titulo">Cancelar</button>' +
-      '<button class="btn prim" data-accion="guardar-titulo">Guardar</button>' +
-    '</div></div>';
-
   const acciones = '<div style="display:flex;flex-direction:column;gap:var(--e-2)">' +
     '<button class="btn prim" data-accion="crear-receta">Crear la receta</button>' +
     (esUrl(borrador.fuente)
       ? `<a class="btn sec" href="${escapar(borrador.fuente)}" target="_blank" rel="noopener">Ir a la fuente</a>`
       : '') +
-    '<button class="btn sec" data-accion="editar-titulo">Editar título</button>' +
+    '<button class="btn sec" data-accion="editar-borrador">Editar</button>' +
   '</div>';
 
   return encabezado({
@@ -134,6 +123,6 @@ export function renderBorrador({ borrador, confirmando, editando, error }: Opcio
   }) +
     '<div class="cuerpo">' +
       (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'reintentar' } }) : '') +
-      (confirmando ? ficha + confirmacion : editando ? edicion : ficha + acciones) +
+      (confirmando ? ficha + confirmacion : ficha + acciones) +
     '</div>';
 }

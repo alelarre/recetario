@@ -6,12 +6,11 @@ const borradorFalso = (p: Partial<Borrador> = {}): Borrador =>
   ({ id: 'b1', titulo: 'A', fuente: '', nota: '', capturado: '', ...p });
 
 describe('Borradores', () => {
-  it('cada entrada muestra título, fuente y cuándo se capturó', () => {
+  it('cada entrada muestra el título y cuándo se capturó', () => {
     const html = renderBorradores({
       borradores: [borradorFalso({ titulo: 'Focaccia', fuente: 'https://x/1', capturado: '2026-09-01T10:00:00Z' })]
     });
     expect(html).toContain('Focaccia');
-    expect(html).toContain('x/1');
     expect(html).toContain('1 de septiembre');
   });
 
@@ -20,6 +19,20 @@ describe('Borradores', () => {
     expect(html).toContain('No hay nada esperando.');
     expect(html).toContain('data-accion="agregar-borrador"');
     expect(html).not.toContain('<svg class="ilustracion"');
+  });
+
+  it('la fila muestra sólo el título, y no parece un hipervínculo', () => {
+    const html = renderBorradores({
+      borradores: [borradorFalso({ titulo: 'Focaccia', fuente: 'https://x/1', nota: 'una nota' })]
+    });
+    expect(html).toContain('Focaccia');
+    // La fuente y la nota están adentro del borrador, no en la fila.
+    expect(html).not.toContain('x/1');
+    expect(html).not.toContain('una nota');
+  });
+
+  it('el control de alta dice Nuevo', () => {
+    expect(renderBorradores({ borradores: [] })).toContain('Nuevo</button>');
   });
 
   it('cada borrador lleva al suyo', () => {
@@ -78,12 +91,10 @@ describe('Borrador', () => {
     expect(html).toContain('data-accion="descartar-confirmado"');
   });
 
-  it('el título se corrige en su lugar, con un campo y dos botones', () => {
-    const html = renderBorrador({ borrador: borradorFalso({ titulo: 'Focacia' }), confirmando: false, editando: true });
-    expect(html).toContain('name="titulo"');
-    expect(html).toContain('value="Focacia"');
-    expect(html).toContain('data-accion="guardar-titulo"');
-    expect(html).not.toContain('data-accion="crear-receta"');
+  it('editar abre el formulario completo, no un campo suelto', () => {
+    const html = renderBorrador({ borrador: borradorFalso(), confirmando: false });
+    expect(html).toContain('data-accion="editar-borrador"');
+    expect(html).not.toContain('data-accion="guardar-titulo"');
   });
 
   it('mientras confirma, las acciones no están: no se crea por error', () => {

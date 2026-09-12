@@ -102,14 +102,20 @@ export function crearBorradores({ drive, sheets, raizId }: DependenciasBorradore
     return borrador;
   }
 
-  async function editarTitulo(id: string, titulo: string): Promise<void> {
+  /**
+   * Reescribe la fila con lo que venga: título, fuente y nota. Lo que no se
+   * pasa queda como estaba, y que el borrador ya no exista no es un error.
+   */
+  async function editar(
+    id: string, datos: { titulo?: string; fuente?: string; nota?: string }
+  ): Promise<void> {
     const encontrado = (await filas()).find(x => x.borrador.id === id);
-    if (!encontrado) return;   // que ya no esté no es un error
+    if (!encontrado) return;
     const planilla = await idDePlanilla();
     await sheets.escribir(
       planilla,
       `${HOJA_BORRADORES}!A${encontrado.fila}:${ULTIMA_COLUMNA}${encontrado.fila}`,
-      [filaDesde({ ...encontrado.borrador, titulo })]
+      [filaDesde({ ...encontrado.borrador, ...datos })]
     );
   }
 
@@ -122,7 +128,7 @@ export function crearBorradores({ drive, sheets, raizId }: DependenciasBorradore
     await sheets.borrarFila(planilla, hojaId, encontrado.fila);
   }
 
-  return { listar, agregar, editarTitulo, descartar };
+  return { listar, agregar, editar, descartar };
 }
 
 /** El objeto que devuelve `crearBorradores`. Lo consumen la UI y los tests. */

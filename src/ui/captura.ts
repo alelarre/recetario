@@ -18,29 +18,36 @@ export interface OpcionesCaptura {
   titulo: string;
   /** Texto libre, opcional: lo que haya que recordar del borrador. */
   nota?: string;
+  /**
+   * Se está editando un borrador que ya existe: los tres campos se editan
+   * —incluida la fuente— y el encabezado lo dice. Contradice C01.6.1, que
+   * dejaba la fuente fija; decisión del usuario el 2026-09-12.
+   */
+  edicion?: boolean;
   guardando: boolean;
   error?: string;
 }
 
-export function renderCaptura({ fuente, titulo, nota = '', guardando, error }: OpcionesCaptura): string {
+export function renderCaptura(
+  { fuente, titulo, nota = '', edicion, guardando, error }: OpcionesCaptura
+): string {
   const sinTitulo = !titulo.trim();
   const fuenteVisible = fuente.replace(/^https?:\/\//i, '');
+  // Compartido desde otra app: pantalla efímera encima de lo que el usuario
+  // estaba haciendo, sin encabezado ni volver, y se sale con Cancelar
+  // (C01.2.2). Agregado a mano o editado desde Borradores es una pantalla más
+  // de la app, y lleva encabezado y volver como todas.
+  const compartido = !!fuente && !edicion;
 
-  // Compartido desde otra app: es una pantalla efímera encima de lo que el
-  // usuario estaba haciendo, sin encabezado ni volver, y se sale con Cancelar
-  // (C01.2.2). Agregado a mano desde Borradores es una pantalla más de la app,
-  // y lleva el encabezado y el volver como todas.
-  const cabecera = fuente
-    ? '<h1>Guardar en Recetario</h1>'
-    : '';
-
-  return (fuente ? '' : encabezado({ titulo: 'Nuevo borrador', volver: true })) +
+  return (compartido ? '' : encabezado({
+      titulo: edicion ? 'Editar borrador' : 'Nuevo borrador', volver: true
+    })) +
     '<div class="hoja">' +
-    cabecera +
-    (fuente
+    (compartido ? '<h1>Guardar en Recetario</h1>' : '') +
+    (compartido
       ? `<div class="fnt">${escapar(fuenteVisible)}</div>`
       : '<label class="campo"><span>Fuente</span>' +
-        '<input name="fuente" placeholder="Una URL, o dónde está anotada"></label>') +
+        `<input name="fuente" value="${escapar(fuente)}" placeholder="Una URL, o dónde está anotada"></label>`) +
     (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'guardar-captura' } }) : '') +
     '<label class="campo"><span>Título</span>' +
       `<input name="titulo" value="${escapar(titulo)}" autofocus placeholder="Pasta con berenjenas"></label>` +
