@@ -34,7 +34,7 @@ export function renderRecetario(
   // hamburguesa, que en pantalla ancha no se dibuja porque el lateral es fijo.
   return lateral({ activo: 'recetario', borradores, ...(menuAbierto ? { abierto: true } : {}) }) +
     '<div class="conten">' +
-        encabezado({ titulo: 'Recetario', grande: true, derecha: botonMenu(borradores) }) +
+        encabezado({ titulo: 'Recetario', grande: true, izquierda: botonMenu(borradores) }) +
       '<div class="cuerpo">' +
         '<div class="buscar">' + ICO.buscar +
           '<input data-accion="buscar" placeholder="Buscar receta o ingrediente">' +

@@ -55,7 +55,7 @@ export function renderAjustes(
 
   return lateral({ activo: 'ajustes', borradores, ...(menuAbierto ? { abierto: true } : {}) }) +
     '<div class="conten">' +
-      encabezado({ titulo: 'Ajustes', grande: true, derecha: botonMenu(borradores) }) +
+      encabezado({ titulo: 'Ajustes', grande: true, izquierda: botonMenu(borradores) }) +
       '<div class="cuerpo">' + seccionCuenta + seccionIndice +
         `<div class="ficha"><h2>Avisos</h2>${lista}</div>` +
       '</div>' +

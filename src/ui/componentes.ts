@@ -21,6 +21,12 @@ export interface OpcionesEncabezado {
   grande?: boolean;
   /** HTML ya armado para el extremo derecho: botones de ícono. */
   derecha?: string;
+  /**
+   * HTML para el extremo izquierdo, donde iría el volver. Lo usa la
+   * hamburguesa del menú: en Android el control del drawer va a la izquierda,
+   * del mismo lado por el que el panel entra.
+   */
+  izquierda?: string;
   /** El total de la categoría va acá y no en la lista (mockup 04). */
   total?: number;
   /** Queda fijo arriba al scrollear. Lo usa la receta, que le pone el título. */
@@ -28,14 +34,14 @@ export interface OpcionesEncabezado {
 }
 
 export function encabezado(
-  { titulo, volver, grande, derecha, total, pegajoso }: OpcionesEncabezado
+  { titulo, volver, grande, derecha, izquierda, total, pegajoso }: OpcionesEncabezado
 ): string {
-  const izquierda = volver
+  const alaIzquierda = izquierda ?? (volver
     ? `<button class="ico" data-accion="volver" aria-label="Volver">${ICO.volver}</button>`
-    : '';
+    : '');
   const clase = grande ? 'tit app' : 'tit';
   const estilo = grande ? ' style="font-size:var(--txt-titulo)"' : '';
-  return `<div class="enc${pegajoso ? ' peg' : ''}">${izquierda}` +
+  return `<div class="enc${pegajoso ? ' peg' : ''}">${alaIzquierda}` +
     `<span class="${clase}"${estilo}>${escapar(titulo)}</span>` +
     (total === undefined ? '' : `<span class="tot">${total}</span>`) +
     // Los controles de la derecha van en su propio grupo: con el título

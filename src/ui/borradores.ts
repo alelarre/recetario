@@ -81,7 +81,7 @@ export function renderBorradores({ borradores, error, menuAbierto }: OpcionesBor
   }) +
     '<div class="conten">' +
       encabezado({
-        titulo: 'Borradores', grande: true, derecha: botonMenu(0),
+        titulo: 'Borradores', grande: true, izquierda: botonMenu(0),
         ...(borradores.length ? { total: borradores.length } : {})
       }) +
       '<div class="cuerpo denso">' +

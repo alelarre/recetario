@@ -18,6 +18,9 @@
 .enc { position: relative; }
 .enc .tit.app { position: absolute; left: 50%; transform: translateX(-50%); }
 .enc .der { margin-left: auto; display: flex; align-items: center; }
+/* El total va al otro extremo: con el título centrado en absoluto, nada lo
+   empuja y quedaba pegado al borde izquierdo. */
+.enc .tot { margin-left: auto; }
 .buscar { display: flex; align-items: center; gap: var(--e-2); min-height: 48px;
           padding: 0 var(--e-3); background: var(--surface-alta);
           border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio); }
