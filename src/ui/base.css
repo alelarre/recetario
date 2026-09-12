@@ -133,8 +133,11 @@
 .coc .grupo { font-size: var(--txt-base); margin-top: var(--e-6); margin-bottom: var(--e-2); }
 .coc .grupo:first-child { margin-top: 0; }
 .coc .ing { font-size: var(--txt-cocina); line-height: 1.65; padding: var(--e-cocina) 0; }
+/* Tocar un paso lo marca: en Android el toque seleccionaba el texto. Copiar un
+   paso sigue pudiéndose desde la receta abierta, que no está bajo `.coc`. */
 .coc .pasos li { font-size: var(--txt-cocina); line-height: 1.65; padding: var(--e-cocina) 0;
-                 border-bottom: 1px solid var(--borde); }
+                 border-bottom: 1px solid var(--borde);
+                 -webkit-user-select: none; user-select: none; }
 .coc .pasos li:last-child { border-bottom: 0; }
 .coc .tramo { font-size: var(--txt-base); color: var(--fg-2); text-transform: uppercase;
               letter-spacing: .06em; margin: var(--e-6) 0 var(--e-2); }
