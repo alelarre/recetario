@@ -22,6 +22,7 @@ import { renderAjustes } from './ui/ajustes.js';
 import { renderConexion } from './ui/conexion.js';
 import { aviso } from './ui/componentes.js';
 import { convertirBorrador } from './compartido.js';
+import type { RecetaCreada } from './compartido.js';
 import type { Borradores } from './borradores.js';
 import type { Ruta } from './ui/router.js';
 import type { DatosFormulario } from './ui/editor.js';
@@ -38,6 +39,12 @@ const sheets = crearSheets(() => auth.token());
 
 let store: Store;
 let borradores: Borradores | null = null;
+/**
+ * Lo que una conversión de borrador ya creó, por si hay que reintentarla
+ * (C01.7.1). Vive acá y no en cada Guardar: si el borrado del borrador falla,
+ * el segundo intento tiene que reescribir el `.md` que ya existe, no crear otro.
+ */
+const convertidos = new Map<string, RecetaCreada>();
 let estadoArranque: ResultadoArranque | undefined;
 let vistaActual: Ruta | null = null;
 let wakeLock: WakeLockSentinel | null = null;  // para que la pantalla no se apague cocinando
@@ -774,7 +781,7 @@ app.addEventListener('click', async (e) => {
     try {
       if (esNueva && borradorId && borradores) {
         // Convertir es una sola operación: el .md, la fila y el borrador (C01.7.1).
-        await convertirBorrador({ store, borradores }, { borradorId, receta: nueva, carpetaId });
+        await convertirBorrador({ store, borradores, convertidos }, { borradorId, receta: nueva, carpetaId });
       } else if (esNueva) {
         await store.crear(nueva, { carpetaId: carpetaId || undefined });
       } else {

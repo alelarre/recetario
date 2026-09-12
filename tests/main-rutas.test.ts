@@ -21,7 +21,15 @@ vi.mock('../src/sheets.js', () => ({ crearSheets: () => ({}) }));
 /** Lo que los dobles le dan a main. `falla` enciende el error de lectura. */
 const estado = {
   falla: false as boolean | Error,
-  borradores: [] as { id: string; titulo: string; fuente: string; nota: string; capturado: string }[]
+  borradores: [] as { id: string; titulo: string; fuente: string; nota: string; capturado: string }[],
+  /** Los ids que se pidió descartar, en orden. */
+  descartados: [] as string[],
+  /** Cuántas veces más va a fallar `descartar` antes de andar. */
+  fallasAlDescartar: 0,
+  /** Los títulos de las recetas que se crearon: cada una es un `.md` nuevo. */
+  creadas: [] as string[],
+  /** Lo que el editor tiene escrito cuando se toca Guardar. */
+  formulario: {} as Record<string, string>
 };
 
 const storeFake = {
@@ -37,6 +45,11 @@ const storeFake = {
   buscar: () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })],
   buscarPorTexto: () => ({ porNombre: [], porIngrediente: [], porTag: [] }),
   tagsDe: () => [],
+  crear: async (receta: { titulo: string | null }) => {
+    estado.creadas.push(receta.titulo ?? '');
+    return { id: `nuevo-${estado.creadas.length}`, nombre_archivo: 'receta.md' };
+  },
+  guardar: async () => {},
   receta: async (id: string) => {
     if (estado.falla) throw estado.falla === true ? new Error('red') : estado.falla;
     return { entrada: entradaFalsa({ id_archivo: id }), receta: parse('---\ntitulo: Milanesas\n---\n') };
@@ -48,7 +61,10 @@ vi.mock('../src/borradores.js', () => ({
     listar: async () => estado.borradores,
     agregar: async () => ({ id: 'b1', titulo: '', fuente: '', capturado: '' }),
     editar: async () => {},
-    descartar: async () => {}
+    descartar: async (id: string) => {
+      if (estado.fallasAlDescartar > 0) { estado.fallasAlDescartar--; throw new Error('red'); }
+      estado.descartados.push(id);
+    }
   })
 }));
 
@@ -61,6 +77,11 @@ describe('main.ts: las rutas', () => {
     limpiarGlobales();
     estado.falla = false;
     estado.borradores = [];
+    estado.descartados = [];
+    estado.fallasAlDescartar = 0;
+    estado.creadas = [];
+    estado.formulario = {};
+    delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
   });
 
@@ -78,7 +99,7 @@ describe('main.ts: las rutas', () => {
     const vueltasAtras: number[] = [];
     const scrolls: number[] = [];
     global.document = comoGlobal<Document>({
-      querySelector: (sel: string) => (sel === '#app' ? app : null),
+      querySelector: (sel: string) => (sel === '#app' ? app : sel === '[data-formulario]' ? {} : null),
       querySelectorAll: () => [], addEventListener: () => {}
     });
     global.window = comoGlobal<Window & typeof globalThis>({
@@ -92,6 +113,11 @@ describe('main.ts: las rutas', () => {
       hash: '', pathname: '/recetario/', search: '',
       replace: (h: string) => { reemplazos.push(h); global.location.hash = h; }
     });
+    // El editor se lee con `new FormData(form)`: el doble entrega lo que diga
+    // `estado.formulario`, sin importar el form.
+    (global as unknown as Record<string, unknown>)['FormData'] = class {
+      [Symbol.iterator]() { return Object.entries(estado.formulario)[Symbol.iterator](); }
+    };
     global.history = comoGlobal<History>({
       back: () => { vueltasAtras.push(1); }, replaceState: () => {}, length: 5
     });
@@ -119,7 +145,7 @@ describe('main.ts: las rutas', () => {
       tocar: async (accion: string) => {
         const boton = {
           dataset: { accion }, classList: { contains: () => false },
-          closest: () => null, tagName: 'BUTTON', remove: () => {}
+          closest: () => null, tagName: 'BUTTON', remove: () => {}, setAttribute: () => {}
         };
         for (const fn of clicks) {
           await fn({ target: { closest: (sel: string) => (sel.includes('data-accion') ? boton : null) } });
@@ -241,6 +267,61 @@ describe('main.ts: las rutas', () => {
     expect(app.innerHTML).toContain('1. Amasar.');
     expect(app.innerHTML).toContain('Dejar levar.');
     expect(app.innerHTML).toContain('Una focaccia simple.');
+  });
+
+  it('crear la receta desde un borrador y salir sin guardar deja el borrador', async () => {
+    estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+    const { abrir, tocar, vueltasAtras } = await montar();
+    await abrir('#/borradores/b1');
+    await tocar('crear-receta');
+    await abrir('#/nueva?borrador=b1');
+
+    await tocar('volver');
+    await abrir('#/borradores/b1');
+
+    expect(vueltasAtras).toHaveLength(1);
+    expect(estado.creadas).toEqual([]);
+    expect(estado.descartados).toEqual([]);
+  });
+
+  it('guardar la receta nueva borra el borrador del que salió', async () => {
+    estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+    const { abrir, tocar } = await montar();
+    await abrir('#/nueva?borrador=b1');
+
+    estado.formulario = { titulo: 'Focaccia', carpeta: 'c1' };
+    await tocar('guardar');
+
+    expect(estado.creadas).toEqual(['Focaccia']);
+    expect(estado.descartados).toEqual(['b1']);
+  });
+
+  it('una receta nueva que no sale de un borrador no borra ninguno', async () => {
+    estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+    const { abrir, tocar } = await montar();
+    await abrir('#/nueva');
+
+    estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+    await tocar('guardar');
+
+    expect(estado.creadas).toEqual(['Pan']);
+    expect(estado.descartados).toEqual([]);
+  });
+
+  it('si borrar el borrador falla, guardar de nuevo no crea un segundo .md (R2)', async () => {
+    estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+    estado.fallasAlDescartar = 1;
+    const { abrir, tocar, app } = await montar();
+    await abrir('#/nueva?borrador=b1');
+
+    estado.formulario = { titulo: 'Focaccia', carpeta: 'c1' };
+    await tocar('guardar');
+    expect(app.innerHTML).toContain('No se pudo guardar.');
+
+    await tocar('guardar');
+
+    expect(estado.creadas).toEqual(['Focaccia']);
+    expect(estado.descartados).toEqual(['b1']);
   });
 
   it('volver mientras se edita un borrador muestra el borrador, no la lista', async () => {
