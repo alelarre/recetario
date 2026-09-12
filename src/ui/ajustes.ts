@@ -3,7 +3,7 @@
  * interrumpen. Está a tres toques a propósito: lo de acá es raro y caro.
  */
 import { escapar } from './markdown.js';
-import { encabezado } from './componentes.js';
+import { encabezado, SPINNER } from './componentes.js';
 import { cuando } from './borradores.js';
 import type { Progreso } from '../store.js';
 
@@ -24,12 +24,17 @@ export function renderAjustes({ cuenta, ultimaReindexado, ignorados, reindexando
     '<p class="aviso-mudo" style="margin:var(--e-2) 0 0">Salir no borra nada de Drive.</p>' +
   '</div>';
 
-  // Con número hay barra; no hay cancelar, porque cortar a mitad deja el
-  // índice en el estado que el reindexado existe para reparar (C05.5.2).
+  // Con número hay barra y sin número hay spinner (mockup 10): antes de la
+  // primera lectura el total todavía es 0, y «Reindexando: 0 de 0» no dice
+  // nada. No hay cancelar, porque cortar a mitad deja el índice en el estado
+  // que el reindexado existe para reparar (C05.5.2).
+  const avance = reindexando && reindexando.total > 0
+    ? `<p style="margin:0 0 var(--e-3);font-variant-numeric:tabular-nums">Reindexando: ${reindexando.leidas} de ${reindexando.total}.</p>` +
+      `<div class="barra"><i style="width:${porcentaje(reindexando)}%"></i></div>`
+    : '<p style="margin:0">Reindexando…</p>' + SPINNER;
+
   const seccionIndice = enCurso
-    ? '<div class="ficha"><h2>Índice</h2>' +
-      `<p style="margin:0 0 var(--e-3);font-variant-numeric:tabular-nums">Reindexando: ${reindexando.leidas} de ${reindexando.total}.</p>` +
-      `<div class="barra"><i style="width:${porcentaje(reindexando)}%"></i></div>` +
+    ? '<div class="ficha"><h2>Índice</h2>' + avance +
       '<p class="aviso-mudo" style="margin:var(--e-3) 0 0">No se puede guardar ni borrar recetas mientras tanto.</p>' +
     '</div>'
     : '<div class="ficha"><h2>Índice</h2>' +

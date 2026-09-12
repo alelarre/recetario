@@ -6,7 +6,7 @@
  * el usuario recibe. El permiso se pide al tocar el botón, nunca al abrir.
  */
 import { escapar } from './markdown.js';
-import { aviso } from './componentes.js';
+import { aviso, SPINNER } from './componentes.js';
 import type { Progreso } from '../store.js';
 
 export type EstadoConexion = 'inicial' | 'conectando' | 'cancelado' | 'denegado' | 'creando-indice';
@@ -30,9 +30,11 @@ export function renderConexion({ estado, progreso }: OpcionesConexion): string {
         return aviso({ texto: 'Sin acceso a Drive no hay app: las recetas son archivos de tu Drive.' }) + BOTON;
       case 'creando-indice': {
         // Puede tardar minutos —los `.md` se leen de a uno—, así que número y
-        // no spinner.
+        // no spinner. Hasta que se sepa cuántos son, el número no existe: ahí
+        // va el spinner, no un «0 de 0».
         const { leidas = 0, total = 0 } = progreso ?? {};
-        const ancho = total > 0 ? Math.min(100, Math.round((leidas / total) * 100)) : 0;
+        if (total <= 0) return '<p>Creando el índice…</p>' + SPINNER;
+        const ancho = Math.min(100, Math.round((leidas / total) * 100));
         return `<p style="font-variant-numeric:tabular-nums">Creando el índice: ${leidas} de ${total}.</p>` +
           `<div class="barra"><i style="width:${ancho}%"></i></div>`;
       }

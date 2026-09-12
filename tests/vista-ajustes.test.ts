@@ -29,6 +29,14 @@ describe('Ajustes', () => {
     expect(html).not.toContain('<svg class="ilustracion"');
   });
 
+  it('antes del primer archivo no hay números: spinner, no «0 de 0»', () => {
+    const html = renderAjustes({ ...base, reindexando: { leidas: 0, total: 0 } });
+    expect(html).toContain('Reindexando…');
+    expect(html).toContain('class="spin"');
+    expect(html).not.toContain('0 de 0');
+    expect(html).not.toContain('class="barra"');
+  });
+
   it('reindexando hay barra con cuántos van sobre el total, y no hay cancelar', () => {
     const html = renderAjustes({ ...base, reindexando: { leidas: 40, total: 200 } });
     expect(html).toContain('40');

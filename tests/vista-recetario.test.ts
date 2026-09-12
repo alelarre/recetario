@@ -7,6 +7,10 @@ const dibujar = (o = {}) => renderRecetario({
 });
 
 describe('Recetario', () => {
+  it('el título de la app va centrado en la barra', () => {
+    expect(dibujar()).toContain('<span class="tit app"');
+  });
+
   it('la búsqueda está arriba y visible, no detrás de un ícono', () => {
     const html = dibujar();
     expect(html.indexOf('class="buscar"')).toBeLessThan(html.indexOf('class="grilla"'));

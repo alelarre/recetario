@@ -130,7 +130,8 @@ describe('main.ts: las rutas', () => {
       ['#/r/f1/cocinar', 'class="coc"'],
       ['#/buscar?q=nada', 'class="cajaenc"'],
       ['#/borradores', 'No hay nada esperando.'],
-      ['#/capturar', 'Guardar en Recetario'],
+      // Sin fuente compartida es «agregar a mano»: lleva encabezado propio.
+      ['#/capturar', 'Nuevo borrador'],
       ['#/ajustes', 'Reindexar']
     ] as const) {
       await abrir(hash);

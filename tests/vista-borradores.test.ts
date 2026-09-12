@@ -3,7 +3,7 @@ import { renderBorradores, renderBorrador, cuando } from '../src/ui/borradores.j
 import type { Borrador } from '../src/tipos.js';
 
 const borradorFalso = (p: Partial<Borrador> = {}): Borrador =>
-  ({ id: 'b1', titulo: 'A', fuente: '', capturado: '', ...p });
+  ({ id: 'b1', titulo: 'A', fuente: '', nota: '', capturado: '', ...p });
 
 describe('Borradores', () => {
   it('cada entrada muestra título, fuente y cuándo se capturó', () => {
@@ -62,6 +62,14 @@ describe('Borrador', () => {
     const html = renderBorrador({ borrador: borradorFalso(), confirmando: false });
     expect(html).not.toMatch(/convertir/i);
     expect(html).toContain('Crear la receta');
+  });
+
+  it('la nota se muestra cuando hay una', () => {
+    const conNota = renderBorrador({
+      borrador: borradorFalso({ nota: 'La versión sin lactosa' }), confirmando: false
+    });
+    expect(conNota).toContain('La versión sin lactosa');
+    expect(renderBorrador({ borrador: borradorFalso(), confirmando: false })).not.toContain('class="lee"');
   });
 
   it('descartar pide confirmación y nombra el borrador', () => {

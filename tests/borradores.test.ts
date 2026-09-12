@@ -16,7 +16,7 @@ const armar = (filas: string[][] = []) => {
   ]);
   const sheets = sheetsFalso();
   sheets.crearPlanilla('b1', ['borradores']);
-  sheets.cargar('b1', 'borradores', [['id', 'titulo', 'fuente', 'capturado'], ...filas]);
+  sheets.cargar('b1', 'borradores', [['id', 'titulo', 'fuente', 'capturado', 'nota'], ...filas]);
   return { drive, sheets, bor: crearBorradores({ drive, sheets, raizId: 'raiz' }) };
 };
 
@@ -30,8 +30,8 @@ describe('borradores', () => {
 
     const creadas = await drive.buscarPorNombre('_borradores', 'raiz');
     expect(creadas).toHaveLength(1);
-    expect(await sheets.leer(creadas[0]?.id ?? '', 'borradores!A1:D1'))
-      .toEqual([['id', 'titulo', 'fuente', 'capturado']]);
+    expect(await sheets.leer(creadas[0]?.id ?? '', 'borradores!A1:E1'))
+      .toEqual([['id', 'titulo', 'fuente', 'capturado', 'nota']]);
   });
 
   it('si algo falla después de crear el archivo, no deja una planilla a medio hacer', async () => {
@@ -66,6 +66,24 @@ describe('borradores', () => {
     // otra es lo que dice que la planilla no se reescribió entera.
     expect(sheets.escrituras).toHaveLength(1);
     expect(sheets.appends[0]?.valores[0]?.slice(1, 3)).toEqual(['Rabas', 'https://x/3']);
+  });
+
+  it('la nota es texto libre y opcional, y viaja en su columna', async () => {
+    const { sheets, bor } = armar();
+    const b = await bor.agregar({ titulo: 'Focaccia', fuente: 'https://x/1', nota: 'sin lactosa' });
+    expect(b.nota).toBe('sin lactosa');
+    expect(sheets.appends[0]?.valores[0]?.[4]).toBe('sin lactosa');
+    expect((await bor.listar())[0]?.nota).toBe('sin lactosa');
+  });
+
+  it('una planilla escrita antes de la nota se lee igual: la celda falta', async () => {
+    const { sheets, bor } = armar();
+    // Cuatro columnas, como la planilla que ya existe en Drive.
+    sheets.cargar('b1', 'borradores', [
+      ['id', 'titulo', 'fuente', 'capturado'],
+      ['b1', 'Fondue', 'libro, p. 12', '2026-09-01T10:00:00Z']
+    ]);
+    expect((await bor.listar())[0]).toMatchObject({ titulo: 'Fondue', nota: '' });
   });
 
   it('cada borrador tiene un id propio que no depende de su posición', async () => {
@@ -105,7 +123,8 @@ describe('borradores', () => {
     await bor.editarTitulo('b1', 'Anchoítas');
 
     expect(sheets.escrituras).toHaveLength(1);
-    expect(sheets.escrituras[0]?.valores[0]).toEqual(['b1', 'Anchoítas', 'https://x/1', '2026-09-01T10:00:00Z']);
+    expect(sheets.escrituras[0]?.valores[0])
+      .toEqual(['b1', 'Anchoítas', 'https://x/1', '2026-09-01T10:00:00Z', '']);
     expect((await bor.listar()).map(b => b.titulo)).toEqual(['Anchoítas', 'B']);
   });
 

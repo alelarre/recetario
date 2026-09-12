@@ -67,6 +67,7 @@ let cuenta = '';
 let reindexando: Progreso | null = null;
 
 let tituloCaptura = '';
+let notaCaptura = '';
 let guardandoCaptura = false;
 let errorCaptura = '';
 
@@ -282,7 +283,9 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     visibles = TRAMO;
     confirmandoDescarte = false;
     editandoTitulo = false;
-    if (ruta.vista !== 'capturar') { tituloCaptura = ''; guardandoCaptura = false; errorCaptura = ''; }
+    if (ruta.vista !== 'capturar') {
+      tituloCaptura = ''; notaCaptura = ''; guardandoCaptura = false; errorCaptura = '';
+    }
     posicionCocina = 'ingredientes';
     pasoAqui = null;
     pasosHechos = [];
@@ -358,7 +361,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // usuario estaba haciendo en otra app (C01.2.2).
       const fuente = ruta.params['url'] || ruta.params['text'] || '';
       return pintar(renderCaptura({
-        fuente, titulo: tituloCaptura, guardando: guardandoCaptura,
+        fuente, titulo: tituloCaptura, nota: notaCaptura, guardando: guardandoCaptura,
         ...(errorCaptura ? { error: errorCaptura } : {})
       }));
     }
@@ -555,7 +558,9 @@ app.addEventListener('click', async (e) => {
   if (accion === 'guardar-captura') {
     const campoTitulo = document.querySelector<HTMLInputElement>('input[name="titulo"]');
     const campoFuente = document.querySelector<HTMLInputElement>('input[name="fuente"]');
+    const campoNota = document.querySelector<HTMLTextAreaElement>('textarea[name="nota"]');
     tituloCaptura = campoTitulo?.value.trim() ?? '';
+    notaCaptura = campoNota?.value.trim() ?? '';
     if (!tituloCaptura) return;
     const fuente = campoFuente?.value.trim()
       ?? vistaActual?.params['url'] ?? vistaActual?.params['text'] ?? '';
@@ -564,7 +569,7 @@ app.addEventListener('click', async (e) => {
     errorCaptura = '';
     await render();
     try {
-      await borradores?.agregar({ titulo: tituloCaptura, fuente });
+      await borradores?.agregar({ titulo: tituloCaptura, fuente, nota: notaCaptura });
     } catch (err) {
       console.error(err);
       // Nada queda esperando: el texto sigue en pantalla y se reintenta a mano.
@@ -574,6 +579,7 @@ app.addEventListener('click', async (e) => {
     }
     guardandoCaptura = false;
     tituloCaptura = '';
+    notaCaptura = '';
     // Volver a donde estabas, con Recetario sin quedar abierto (C01.2.2). Si
     // la pestaña no la abrió un script, `close()` no hace nada: ahí queda la
     // lista, que es el lugar donde el borrador nuevo está.
@@ -728,6 +734,23 @@ app.addEventListener('click', async (e) => {
   }
 
   if (accion === 'reintentar') return render();
+});
+
+/**
+ * La captura se escribe en el DOM y no en el estado: redibujar en cada tecla
+ * perdería el foco y el cursor. Lo que se sigue tecla a tecla es lo mínimo —el
+ * título habilita Guardar, y lo escrito sobrevive a un error—, y el botón se
+ * habilita tocándolo directo, sin volver a pintar la pantalla.
+ */
+app.addEventListener('input', (e) => {
+  if (vistaActual?.vista !== 'capturar') return;
+  const campo = e.target as HTMLInputElement | HTMLTextAreaElement | null;
+  if (!campo?.name) return;
+  if (campo.name === 'nota') { notaCaptura = campo.value; return; }
+  if (campo.name !== 'titulo') return;
+  tituloCaptura = campo.value;
+  const boton = document.querySelector<HTMLButtonElement>('#app [data-accion="guardar-captura"]');
+  if (boton) boton.toggleAttribute('disabled', !tituloCaptura.trim());
 });
 
 app.addEventListener('keydown', (e) => {

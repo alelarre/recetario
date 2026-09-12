@@ -88,6 +88,9 @@ export function renderBorrador({ borrador, confirmando, editando, error }: Opcio
       ? `<div style="font-size:var(--txt-chico);color:var(--fg-2);margin-top:var(--e-2);word-break:break-all">${escapar(fuenteVisible(borrador.fuente))}</div>`
       : '') +
     `<div style="font-size:var(--txt-micro);color:var(--fg-3);margin-top:var(--e-1)">Capturado ${escapar(cuando(borrador.capturado))}</div>` +
+    (borrador.nota
+      ? `<p class="lee" style="margin:var(--e-4) 0 0;padding-top:var(--e-3);border-top:1px solid var(--borde)">${escapar(borrador.nota)}</p>`
+      : '') +
   '</div>';
 
   // Es destructivo y no hay papelera: la confirmación nombra el borrador.

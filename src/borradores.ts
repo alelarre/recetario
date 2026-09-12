@@ -12,7 +12,7 @@ import type { Sheets } from './sheets.js';
 import type { Borrador } from './tipos.js';
 
 export const HOJA_BORRADORES = 'borradores';
-export const COLUMNAS_BORRADORES = ['id', 'titulo', 'fuente', 'capturado'] as const;
+export const COLUMNAS_BORRADORES = ['id', 'titulo', 'fuente', 'capturado', 'nota'] as const;
 
 const ULTIMA_COLUMNA = String.fromCharCode(64 + COLUMNAS_BORRADORES.length);
 const MIME_PLANILLA = 'application/vnd.google-apps.spreadsheet';
@@ -29,10 +29,15 @@ export interface DependenciasBorradores {
   raizId: string;
 }
 
-const filaDesde = (b: Borrador): string[] => [b.id, b.titulo, b.fuente, b.capturado];
+const filaDesde = (b: Borrador): string[] => [b.id, b.titulo, b.fuente, b.capturado, b.nota];
 
+/**
+ * `nota` es la quinta columna y llegó después: una planilla escrita antes no la
+ * tiene, y ahí la celda falta. Por eso todas las celdas se leen con `?? ''`.
+ */
 const desdeFila = (f: string[]): Borrador => ({
-  id: f[0] ?? '', titulo: f[1] ?? '', fuente: f[2] ?? '', capturado: f[3] ?? ''
+  id: f[0] ?? '', titulo: f[1] ?? '', fuente: f[2] ?? '',
+  capturado: f[3] ?? '', nota: f[4] ?? ''
 });
 
 export function crearBorradores({ drive, sheets, raizId }: DependenciasBorradores) {
@@ -85,11 +90,13 @@ export function crearBorradores({ drive, sheets, raizId }: DependenciasBorradore
       .sort((a, b) => a.capturado.localeCompare(b.capturado));
   }
 
-  async function agregar({ titulo, fuente }: { titulo: string; fuente: string }): Promise<Borrador> {
+  async function agregar(
+    { titulo, fuente, nota = '' }: { titulo: string; fuente: string; nota?: string }
+  ): Promise<Borrador> {
     const id = await idDePlanilla();
     // El id es propio y no la posición: las filas se corren cuando se borra una.
     const borrador: Borrador = {
-      id: crypto.randomUUID(), titulo, fuente, capturado: new Date().toISOString()
+      id: crypto.randomUUID(), titulo, fuente, nota, capturado: new Date().toISOString()
     };
     await sheets.append(id, HOJA_BORRADORES, [filaDesde(borrador)]);
     return borrador;

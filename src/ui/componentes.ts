@@ -17,7 +17,7 @@ export const SPINNER = '<div class="spin"></div>';
 export interface OpcionesEncabezado {
   titulo: string;
   volver?: boolean;
-  /** El Recetario y Borradores llevan el título grande y a la izquierda. */
+  /** El título de la app: grande y centrado en la barra. */
   grande?: boolean;
   /** HTML ya armado para el extremo derecho: botones de ícono. */
   derecha?: string;
@@ -33,12 +33,14 @@ export function encabezado(
   const izquierda = volver
     ? `<button class="ico" data-accion="volver" aria-label="Volver">${ICO.volver}</button>`
     : '';
-  const clase = grande ? 'tit izq' : 'tit';
+  const clase = grande ? 'tit app' : 'tit';
   const estilo = grande ? ' style="font-size:var(--txt-titulo)"' : '';
   return `<div class="enc${pegajoso ? ' peg' : ''}">${izquierda}` +
     `<span class="${clase}"${estilo}>${escapar(titulo)}</span>` +
     (total === undefined ? '' : `<span class="tot">${total}</span>`) +
-    (derecha ?? '') +
+    // Los controles de la derecha van en su propio grupo: con el título
+    // centrado en absoluto, nada los empuja hasta el borde.
+    (derecha ? `<span class="der">${derecha}</span>` : '') +
     '</div>';
 }
 

@@ -138,6 +138,8 @@ export interface Borrador {
   titulo: string;
   /** Texto libre: una URL o "libro de pescados, pág. 84". No se edita (C01.6.1). */
   fuente: string;
+  /** Lo que haya que recordar del borrador. Texto libre y opcional. */
+  nota: string;
   /** ISO. El orden de la lista es por acá, lo más viejo primero. */
   capturado: string;
 }

@@ -12,6 +12,12 @@
 .cuerpo { max-width: 680px; margin: 0 auto; }
 
 /* ---- Recetario (mockup 03) ---- */
+/* El título de la app se centra en la barra, no en el hueco que dejan los
+   íconos: con dos a la derecha y ninguno a la izquierda, `text-align: center`
+   lo deja corrido casi 50 px. */
+.enc { position: relative; }
+.enc .tit.app { position: absolute; left: 50%; transform: translateX(-50%); }
+.enc .der { margin-left: auto; display: flex; align-items: center; }
 .buscar { display: flex; align-items: center; gap: var(--e-2); min-height: 48px;
           padding: 0 var(--e-3); background: var(--surface-alta);
           border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio); }

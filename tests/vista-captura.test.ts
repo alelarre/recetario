@@ -4,16 +4,36 @@ import { renderCaptura } from '../src/ui/captura.js';
 const base = { fuente: 'https://x/1', titulo: '', guardando: false };
 
 describe('Captura', () => {
+  it('compartida desde otra app no lleva encabezado: es efímera sobre lo que estabas haciendo', () => {
+    const html = renderCaptura(base);
+    expect(html).not.toContain('class="enc"');
+    expect(html).toContain('Guardar en Recetario');
+    expect(html).toContain('data-accion="cancelar-captura"');
+  });
+
+  it('agregada a mano lleva el encabezado y el volver, como el resto de las pantallas', () => {
+    const html = renderCaptura({ ...base, fuente: '' });
+    expect(html).toContain('class="enc"');
+    expect(html).toContain('data-accion="volver"');
+    expect(html).toContain('Nuevo borrador');
+  });
+
   it('la fuente se muestra y no se edita', () => {
     const html = renderCaptura(base);
     expect(html).toContain('x/1');
     expect(html).not.toContain('name="fuente"');
   });
 
-  it('el único campo editable es el título, y tiene el foco', () => {
+  it('el título tiene el foco, y es el único campo obligatorio', () => {
     const html = renderCaptura(base);
+    // Un input —el título— más el textarea de la nota, que es opcional.
     expect(html.match(/<input/g)).toHaveLength(1);
     expect(html).toContain('autofocus');
+    expect(html).toContain('name="nota"');
+  });
+
+  it('la nota escrita sobrevive al redibujado', () => {
+    expect(renderCaptura({ ...base, nota: 'sin lactosa' })).toContain('sin lactosa');
   });
 
   it('sin fuente —agregar a mano— la fuente se escribe', () => {
