@@ -71,6 +71,9 @@
 .grupo-res + .grupo-res { margin-top: var(--e-5); }
 
 /* ---- Receta en lectura (mockup 01) ---- */
+/* Un logo ajeno dentro de un botón: mismo tamaño que los íconos del sistema,
+   sin heredar el trazo, y si no carga no deja un hueco raro. */
+.btn .logo { width: var(--ico); height: var(--ico); object-fit: contain; flex: 0 0 auto; }
 /* El encabezado queda fijo: es lo que hace útil que tome el título cuando el
    título grande sale de pantalla. */
 .enc.peg { position: sticky; top: 0; z-index: 3; }

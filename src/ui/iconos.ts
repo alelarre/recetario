@@ -22,12 +22,6 @@ export const ICO = {
     'M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>'),
   puntos: svg('<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>'),
   mas: svg('<path d="M12 5v14M5 12h14"/>'),
-  /**
-   * Drive: las tres piezas del triángulo del logo, dibujadas con el trazo del
-   * sistema. Es una alusión, no el logo —que es de Google y viene relleno y a
-   * cuatro colores—.
-   */
-  drive: svg('<path d="M11.4 3.8L5.2 14.5"/><path d="M12.8 3.8L19 14.5"/><path d="M5.6 17.2h12.8"/>'),
   /** Los dos destinos del menú lateral que no tenían ícono propio. */
   casa: svg('<path d="M4 11l8-6 8 6v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-8z"/>'),
   bandeja: svg('<path d="M4 13l2.5-7h11L20 13v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5z"/>' +

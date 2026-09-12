@@ -166,6 +166,7 @@ describe('Receta en lectura', () => {
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener"');
     expect(html).toContain('.md</a>');
+    expect(html).toContain('drive_favicon_2026_32dp.png');
   });
 
   it('sin fila del índice no hay link: no se conoce el id del archivo', () => {
