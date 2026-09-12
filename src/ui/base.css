@@ -159,7 +159,10 @@
                      background: var(--surface-alta); color: var(--fg-2);
                      border: 1px solid var(--borde); border-radius: var(--r-medio);
                      font: 600 var(--txt-base)/1 var(--tipo); }
-.conm-doble button:hover:not([disabled]) { color: var(--fg); }
+/* Sin `:not(.on)` el hover le gana en especificidad a la regla de abajo y deja
+   el texto en `--fg` sobre el fondo `--fg`: la posición elegida se borra
+   mientras el puntero está encima, que es justo después de tocarla. */
+.conm-doble button:hover:not([disabled]):not(.on) { color: var(--fg); }
 .conm-doble button.on { background: var(--fg); border-color: var(--fg); color: var(--bg); }
 .conm-doble button[disabled] { background: none; border-color: var(--borde);
                                color: var(--fg-3); cursor: default; }
