@@ -27,7 +27,12 @@ export function parsearHash(hash: unknown): Ruta {
   }
 
   if (partes[0] === 'buscar') return { vista: 'resultados', params: { q: params['q'] ?? '' } };
-  if (partes[0] === 'nueva') return { vista: 'nueva', params: {} };
+  // `#/nueva?borrador=b1` es crear la receta desde un borrador: sin el
+  // parámetro, el editor abría vacío y el borrador no se borraba al guardar.
+  if (partes[0] === 'nueva') {
+    const borrador = params['borrador'] ?? '';
+    return { vista: 'nueva', params: borrador ? { borrador } : {} };
+  }
 
   if (partes[0] === 'r' && partes[1]) {
     if (partes[2] === 'editar') return { vista: 'editar', params: { id: partes[1] } };

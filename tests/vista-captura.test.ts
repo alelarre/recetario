@@ -44,6 +44,17 @@ describe('Captura', () => {
     expect(html.indexOf('class="fnt"')).toBeLessThan(html.indexOf('name="titulo"'));
   });
 
+  it('debajo de la nota va el esbozo de cómo se reparte en la receta', () => {
+    const html = renderCaptura(base);
+    expect(html.indexOf('name="nota"')).toBeLessThan(html.indexOf('class="esbozo"'));
+    for (const seccion of ['## Ingredientes', '## Preparación', '## Variaciones', '## Notas']) {
+      expect(html).toContain(seccion);
+    }
+    // Es referencia, no un campo: no tiene name ni se envía.
+    const esbozo = html.slice(html.indexOf('class="esbozo"'));
+    expect(esbozo).not.toContain('name=');
+  });
+
   it('la nota escrita sobrevive al redibujado', () => {
     expect(renderCaptura({ ...base, nota: 'sin lactosa' })).toContain('sin lactosa');
   });

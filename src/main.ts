@@ -425,8 +425,15 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         const borrador = (await borradores?.listar().catch(() => []) ?? [])
           .find(b => b.id === borradorId);
         if (borrador) {
-          receta.titulo = borrador.titulo;
-          receta.fuente = borrador.fuente || null;
+          // La nota se lee como si fuera el `.md` de la receta: lo que esté
+          // bajo `## Ingredientes`, `## Preparación`, `## Variaciones` o
+          // `## Notas` cae en su campo, y el texto suelto de arriba queda como
+          // descripción. Escribirla así es opcional.
+          const deLaNota = parse(borrador.nota);
+          Object.assign(receta, deLaNota, {
+            titulo: borrador.titulo || deLaNota.titulo,
+            fuente: borrador.fuente || deLaNota.fuente
+          });
         }
       }
       return pintar(renderEditor({

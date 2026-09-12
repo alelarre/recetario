@@ -43,8 +43,36 @@ export function renderCaptura(
     `<input name="titulo" value="${escapar(titulo)}" autofocus placeholder="Pasta con berenjenas"></label>`;
   // Lo que haya que recordar y no entre en el título: «la versión sin
   // lactosa», «probarla con menos sal». Opcional.
+  //
+  // Y el ayuda memoria: la nota se lee como el `.md` de la receta cuando el
+  // borrador se convierte, así que lo escrito bajo cada encabezado termina en
+  // su campo. Escribirla así no es obligatorio; por eso es un esbozo y no una
+  // validación.
+  const ESBOZO = [
+    'Lo de arriba, sin encabezado, queda como descripción.',
+    '',
+    '## Ingredientes',
+    '- Harina 0000 — 500 g',
+    '- Sal — c/n',
+    '',
+    '## Preparación',
+    '1. Mezclar todo.',
+    '2. Amasar 10 minutos.',
+    '',
+    '## Variaciones',
+    '- Con aceitunas.',
+    '',
+    '## Notas',
+    'Lo que no entre en ningún lado.'
+  ].join('\n');
+
   const campoNota =
-    `<label class="campo"><span>Nota</span><textarea name="nota" rows="2">${escapar(nota)}</textarea></label>`;
+    '<label class="campo" style="margin-bottom:var(--e-2)"><span>Nota</span>' +
+    `<textarea name="nota" rows="6">${escapar(nota)}</textarea></label>` +
+    '<details class="esbozo" open>' +
+      '<summary>Cómo escribirla para que se reparta sola en la receta</summary>' +
+      `<pre>${escapar(ESBOZO)}</pre>` +
+    '</details>';
 
   // Compartida, la fuente va arriba: es el dato que ya vino y el título es lo
   // único que hay que escribir. Escribiendo o editando, el título va primero,

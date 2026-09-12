@@ -226,6 +226,23 @@ describe('main.ts: las rutas', () => {
     expect(reemplazos).toEqual(['#/c/Carnes']);
   });
 
+  it('crear la receta desde un borrador reparte la nota en sus secciones', async () => {
+    estado.borradores = [{
+      id: 'b1', titulo: 'Focaccia', fuente: 'https://x/1', capturado: '',
+      nota: 'Una focaccia simple.\n\n## Ingredientes\n- Harina — 500 g\n\n## Preparación\n1. Amasar.\n\n## Notas\nDejar levar.'
+    }];
+    const { abrir, app } = await montar();
+    await abrir('#/nueva?borrador=b1');
+
+    // El editor abre con cada parte en su campo, no todo en Notas.
+    expect(app.innerHTML).toContain('value="Focaccia"');
+    expect(app.innerHTML).toContain('value="https://x/1"');
+    expect(app.innerHTML).toContain('- Harina — 500 g');
+    expect(app.innerHTML).toContain('1. Amasar.');
+    expect(app.innerHTML).toContain('Dejar levar.');
+    expect(app.innerHTML).toContain('Una focaccia simple.');
+  });
+
   it('volver mientras se edita un borrador muestra el borrador, no la lista', async () => {
     // Editar no cambia la URL: con un `history.back()` el volver se iba a la
     // lista, que es la entrada anterior.
