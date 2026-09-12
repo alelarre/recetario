@@ -93,9 +93,13 @@ export function renderBorrador({ borrador, confirmando, error }: OpcionesBorrado
   const ficha = '<div class="ficha">' +
     `<div style="font-size:var(--txt-titulo);font-weight:600;line-height:1.25">${escapar(borrador.titulo)}</div>` +
     (borrador.fuente
-      ? `<div style="font-size:var(--txt-chico);color:var(--fg-2);margin-top:var(--e-2);word-break:break-all">${escapar(fuenteVisible(borrador.fuente))}</div>`
+      ? '<div style="font-size:var(--txt-chico);color:var(--fg-2);margin-top:var(--e-2);word-break:break-all">' +
+        `<span class="emo">📖</span>fuente: ${escapar(fuenteVisible(borrador.fuente))}</div>`
       : '') +
-    `<div style="font-size:var(--txt-micro);color:var(--fg-3);margin-top:var(--e-1)">Capturado ${escapar(cuando(borrador.capturado))}</div>` +
+    // Cuándo entró es un dato al margen: se despega y se va al borde, como el
+    // total del encabezado.
+    '<div style="font-size:var(--txt-micro);color:var(--fg-3);margin-top:var(--e-3);text-align:right">' +
+      `Capturado ${escapar(cuando(borrador.capturado))}</div>` +
     (borrador.nota
       ? `<p class="lee" style="margin:var(--e-4) 0 0;padding-top:var(--e-3);border-top:1px solid var(--borde)">${escapar(borrador.nota)}</p>`
       : '') +

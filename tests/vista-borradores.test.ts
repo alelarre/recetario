@@ -66,6 +66,16 @@ describe('Borrador', () => {
     expect(sinUrl).not.toContain('Ir a la fuente');
   });
 
+  it('la fuente lleva el mismo rótulo que en la receta', () => {
+    const html = renderBorrador({ borrador: borradorFalso({ fuente: 'https://x/1' }), confirmando: false });
+    expect(html).toContain('>📖</span>fuente: ');
+  });
+
+  it('cuándo se capturó va al margen, a la derecha', () => {
+    const html = renderBorrador({ borrador: borradorFalso({ capturado: '2026-09-01T10:00:00Z' }), confirmando: false });
+    expect(html).toContain('text-align:right">Capturado');
+  });
+
   it('la fuente no se edita', () => {
     const html = renderBorrador({ borrador: borradorFalso({ fuente: 'https://x/1' }), confirmando: false });
     expect(html).not.toContain('name="fuente"');
