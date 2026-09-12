@@ -97,6 +97,16 @@ describe('Borrador', () => {
     expect(html).not.toContain('data-accion="guardar-titulo"');
   });
 
+  it('editar está arriba, y crear cierra la lista de acciones', () => {
+    const html = renderBorrador({ borrador: borradorFalso({ fuente: 'https://x/1' }), confirmando: false });
+    const enc = html.slice(0, html.indexOf('class="cuerpo'));
+    expect(enc).toContain('data-accion="editar-borrador"');
+    expect(enc).not.toContain('data-accion="descartar"');
+    // En el cuerpo: descartar, la fuente y crear, en ese orden.
+    expect(html.indexOf('data-accion="descartar"')).toBeLessThan(html.indexOf('Ir a la fuente'));
+    expect(html.indexOf('Ir a la fuente')).toBeLessThan(html.indexOf('data-accion="crear-receta"'));
+  });
+
   it('mientras confirma, las acciones no están: no se crea por error', () => {
     const html = renderBorrador({ borrador: borradorFalso(), confirmando: true });
     expect(html).not.toContain('data-accion="crear-receta"');
