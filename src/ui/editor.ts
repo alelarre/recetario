@@ -96,11 +96,27 @@ export function renderEditor(
   // aunque les falte algo. Sin decirlo, la casilla desmarcada se lee como si
   // la receta estuviera incompleta.
   const derivada = estaCompleta({ ...receta, completa: false });
-  const nota = derivada
-    ? 'Ya cuenta como completa: tiene título, ingredientes y pasos.'
-    : 'Le falta algún ingrediente o paso. Marcala si igual está terminada así.';
+  // Tildada cuando la receta está completa, venga del cálculo o de la clave:
+  // verla vacía en una receta completa se lee como una contradicción.
+  //
+  // Cuando la completitud es derivada la casilla queda **bloqueada**: no hay
+  // nada que declarar, y dejarla editable haría que guardar sin tocar nada
+  // escribiera `completa: true` en un `.md` que no la tenía — convertiría en
+  // declarado lo que F05.3 quiere derivado. Un `input` deshabilitado no viaja
+  // en el formulario, así que no se escribe ninguna clave.
+  //
+  // Si el archivo sí trae `completa: true`, la casilla queda editable aunque el
+  // cálculo también la dé por completa: es la única forma de borrar la clave.
+  const bloqueada = derivada && !receta.completa;
+  const nota = bloqueada
+    ? 'Ya cuenta como completa: tiene título, ingredientes y pasos. No hace falta marcarla.'
+    : derivada
+      ? 'Tiene título, ingredientes y pasos. Podés desmarcarla: igual va a contar como completa.'
+      : 'Le falta algún ingrediente o paso. Marcala si igual está terminada así.';
   const completa = '<div class="ficha"><label class="check">' +
-    `<input type="checkbox" name="completa"${receta.completa ? ' checked' : ''}> Está completa así como está` +
+    '<input type="checkbox" name="completa"' +
+      `${receta.completa || derivada ? ' checked' : ''}${bloqueada ? ' disabled' : ''}>` +
+      ' Está completa así como está' +
     '</label>' +
     `<p class="aviso-mudo" style="margin:var(--e-2) 0 0">${nota}</p>` +
   '</div>';

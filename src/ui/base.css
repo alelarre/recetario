@@ -118,6 +118,12 @@
 /* El chip del sistema (§6.10) es una etiqueta; el del editor se saca, así que
    lleva su cruz. La regla vive acá y no en tokens.css, que es copia literal. */
 button.chip { cursor: pointer; }
+/* Las pills y el campo de agregar comparten `--surface-alta`, así que la pill
+   va un tono más clara: se distinguen sin que parezcan dos cosas distintas. */
+[data-tags] .chip { background: color-mix(in srgb, var(--surface-alta) 86%, var(--fg));
+                    border-color: var(--borde-fuerte); }
+/* Y un poco de aire entre los tags puestos y el campo para sumar otro. */
+[data-pills]:not(:empty) { margin-bottom: var(--e-3); }
 .chip svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;
             stroke-linecap: round; opacity: .7; }
 .par { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-3); }

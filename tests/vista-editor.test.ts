@@ -64,10 +64,26 @@ describe('renderEditor', () => {
     expect(html).not.toContain('40 min');
   });
 
-  it('la casilla de completa dice si la receta ya cuenta como completa', () => {
-    expect(dibujar()).toContain('Ya cuenta como completa');
-    const floja = renderEditor({ entrada: null, receta: parse('---\ntitulo: A\n---\n'), categorias });
-    expect(floja).toContain('Le falta algún ingrediente o paso');
+  it('una receta completa muestra la casilla tildada, y bloqueada', () => {
+    // Tildada porque lo está; bloqueada porque no hay nada que declarar, y
+    // dejarla editable escribiría `completa: true` en un .md que no la tenía.
+    const html = dibujar();
+    expect(html).toContain('<input type="checkbox" name="completa" checked disabled>');
+    expect(html).toContain('Ya cuenta como completa');
+  });
+
+  it('a una receta incompleta la casilla se le puede marcar', () => {
+    const html = renderEditor({ entrada: null, receta: parse('---\ntitulo: A\n---\n'), categorias });
+    expect(html).toContain('<input type="checkbox" name="completa">');
+    expect(html).toContain('Le falta algún ingrediente o paso');
+  });
+
+  it('con completa: true en el archivo, la casilla queda editable: es la única forma de borrar la clave', () => {
+    const conClave = parse(`---\ntitulo: A\ncompleta: true\n---\n\n## Ingredientes\n- Sal\n\n## Preparación\n1. Salar.\n`);
+    const html = renderEditor({ entrada: null, receta: conClave, categorias });
+    expect(html).toContain('<input type="checkbox" name="completa" checked>');
+    expect(html).not.toContain('disabled>');
+    expect(html).toContain('Podés desmarcarla');
   });
 
   it('dificultad es una elección de tres', () => {
