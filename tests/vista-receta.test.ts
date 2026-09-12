@@ -142,6 +142,23 @@ describe('Receta en lectura', () => {
     expect(html).toContain('class="inc');
   });
 
+  it('la marca es un chip de la fila de tags, y el primero', () => {
+    const conTags = parse('---\ntitulo: A\ntags: [vegetariano, legumbres]\ncompleta: no\n---\n');
+    const html = renderReceta({ entrada: null, receta: conTags });
+    const fila = html.slice(html.indexOf('<div class="chips">'), html.indexOf('</div>', html.indexOf('<div class="chips">')));
+    expect(fila).toContain('chip pend');
+    expect(fila).toContain('Incompleta');
+    // Primero el estado, después los tags.
+    expect(fila.indexOf('Incompleta')).toBeLessThan(fila.indexOf('vegetariano'));
+    // Y una sola vez: suelto debajo de los chips se montaba sobre ellos.
+    expect(html.split('class="inc"').length - 1).toBe(1);
+  });
+
+  it('sin tags, la marca arma igual la fila de chips', () => {
+    const html = renderReceta({ entrada: null, receta: MINIMA });
+    expect(html).toContain('<div class="chips">');
+  });
+
   it('la marca sale del archivo: una receta declarada terminada no la lleva', () => {
     expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('class="inc"');
     // Y una escrita entera pero sin declarar, sí.

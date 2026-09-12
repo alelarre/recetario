@@ -72,7 +72,9 @@ export function tarjeta(e: Entrada, { motivo }: OpcionesTarjeta = {}): string {
     ? `<span class="motivo">${escapar(motivo)}</span>`
     : `<span class="pin" style="background:${colorCategoria(e.categoria)}"></span>` +
       escapar([e.categoria, e.tiempo, e.rinde].filter(Boolean).join(' · '));
-  const marca = e.completa ? '' : '<span class="inc"></span>';
+  // La misma marca que la receta y el editor (§6.5). Acá no lleva texto al lado,
+  // así que lo dice por su cuenta para quien no la ve.
+  const marca = e.completa ? '' : '<span class="inc" role="img" aria-label="Incompleta"></span>';
   return `<a class="tarjeta" href="#/r/${encodeURIComponent(e.id_archivo)}">` +
     placeholder(e.categoria, e.foto) +
     '<span class="txt">' +

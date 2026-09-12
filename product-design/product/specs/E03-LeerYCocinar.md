@@ -73,7 +73,8 @@ notas. Sin pestañas: costaban cuatro toques para leer una receta entera.
 
 #### C03.1.3 — Estados de la receta *(J6)*
 
-- [ ] Incompleta: la marca junto al título, **tocable**. Tocarla **abre el editor**, que es donde están las dos salidas: completar lo que falta, o mover el conmutador a *Terminada* (C04.4.1). El resto de la receta se muestra igual.
+- [ ] Incompleta: **un chip más de la fila de tags, el primero, que dice *Incompleta*** y lleva la marca (design-system §6.5). Es **tocable** y **abre el editor**, que es donde están las dos salidas: completar lo que falta, o mover el conmutador a *Terminada* (C04.4.1). El resto de la receta se muestra igual.
+- [ ] Va **en la fila de tags y no suelto debajo** `[2026-09-12]`: es un estado del mismo orden que un tag, se lee en el mismo barrido, y toma de ahí el alto y el aire que le faltaban.
 - [ ] La marca sale de la clave `completa` del archivo, no de mirar el contenido (C05.3.1).
 - [ ] Sin foto: el bloque de foto no se dibuja y la receta empieza por el título.
 - [ ] Cargando: el esqueleto de la pantalla está mientras se lee el `.md`.

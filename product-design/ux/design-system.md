@@ -459,16 +459,33 @@ porque es el único donde la categoría es el contenido y no un dato de otra cos
 
 ### 6.5 Marca de incompleta
 
-**Un círculo vacío de 12 px, en `--fg-3`**, junto al título.
+**Un círculo de 12 px a medio llenar** `[reescrita el 2026-09-12]`: 1,5 px de
+borde en `currentColor` y la mitad izquierda rellena del mismo color
+—`linear-gradient(to right, currentColor 50%, transparent 50%)`—. **En
+`--acento`**, salvo donde el contexto ya tiene un color propio.
+
+Es la misma marca en los tres lugares donde el dato se muestra, y no hay ningún
+otro dibujo para decir lo mismo:
+
+| Dónde | Cómo |
+|---|---|
+| **Tarjeta de la lista** | Sólo la marca, al final de la línea de contexto. Sin texto, así que se nombra para el lector de pantalla. |
+| **Receta abierta** | Un chip (§6.10) que dice *Incompleta*, el primero de la fila de tags. Tocable, abre el editor (`E03-LeerYCocinar.md` C03.1.3). |
+| **Editor** | Dentro de la posición *Incompleta* del conmutador (§6.16), en el color del botón y no en el acento. |
 
 - **Nunca `--error` y nunca amarillo.** No es un problema: la receta funciona, le
   falta algo.
-- En la tarjeta es solo la marca; en la receta abierta es la marca más la palabra
-  de lo que falta, en `--txt-chico` y `--fg-3`: *"Sin ingredientes."*
-- En la receta abierta es **tocable**, con área de 48 px, y abre el editor.
+- **El acento acá no rompe la regla de que el acento es de las acciones:** donde
+  la marca es más visible —la receta abierta— es efectivamente una acción, la
+  única de su fila. En la tarjeta hereda ese color para que la marca sea una
+  sola, aprendida una vez.
 
-**Por qué un círculo vacío:** lee como "falta llenar", que es exactamente lo que
-pasa. Un signo de exclamación lee como advertencia y un triángulo como error.
+**Por qué a medio llenar y no un círculo vacío:** el aro vacío de la 2.0 no decía
+nada. Al lado de un título se leía como viñeta, y en el conmutador, como el
+símbolo de apagado. Medio relleno dice "hecha a medias", que es exactamente el
+estado. Un signo de exclamación lee como advertencia y un triángulo como error;
+un lápiz nombra la acción, no el estado, y se repetiría con el botón *Editar* que
+está a centímetros.
 
 ### 6.6 Ficha
 
@@ -566,6 +583,11 @@ más una `×` de trazo de 14 px en `currentColor` a 70 % de opacidad, y el chip
 entero es el botón que lo saca. No hay una cruz con su propia área táctil
 adentro: a 32 px de alto no entra un segundo blanco de 48. Debajo de la fila de
 chips van `--e-3` de aire antes del campo de agregar.
+
+**Pendiente** —el estado de una receta incompleta, en la receta abierta—
+`[agregado el 2026-09-12]` usa los mismos valores que **Activo**, con la marca de
+§6.5 adelante y el texto *Incompleta*. Son clases distintas porque significan
+cosas distintas: uno es un filtro puesto, el otro un estado del contenido.
 
 **Un tag reservado no llega a ser chip:** el editor lo rechaza al agregarlo y lo
 dice en una línea de `--txt-chico` en `--error`, sin caja ni botón

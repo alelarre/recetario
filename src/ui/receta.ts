@@ -69,8 +69,12 @@ export function renderReceta({ entrada, receta }: OpcionesReceta): string {
   const completa = receta.completa;
 
   const contexto = [categoria, receta.rinde, receta.tiempo, receta.dificultad].filter(Boolean).join(' · ');
+  // El estado es un chip más de la fila de tags, y va primero: es lo que hay que
+  // ver al mirar la receta. Como chip hereda el ancho, el alto y el aire de los
+  // demás — suelto debajo se montaba sobre ellos (C03.1.3).
   const marca = completa ? '' :
-    '<button class="inc-txt" data-accion="editar"><span class="inc"></span>Falta terminarla</button>';
+    '<button class="chip pend" data-accion="editar" aria-label="Incompleta: abrir el editor">' +
+      '<span class="inc"></span>Incompleta</button>';
 
   // Arriba, qué es y cómo se clasifica; la fuente al pie, tras un divisor: es
   // dato de procedencia y con los cuatro bloques pegados no se leía ninguno.
@@ -80,15 +84,14 @@ export function renderReceta({ entrada, receta }: OpcionesReceta): string {
     (contexto
       ? `<div class="rec-ctx">${categoria ? `<span class="pin" style="background:${colorCategoria(categoria)}"></span>` : ''}${escapar(contexto)}</div>`
       : '') +
-    (receta.tags.length
-      ? '<div class="chips">' +
+    (marca || receta.tags.length
+      ? '<div class="chips">' + marca +
         receta.tags.map(t => `<button class="chip" data-tag="${escapar(t)}">${escapar(t)}</button>`).join('') +
         '</div>'
       : '') +
     // La descripción es de la receta, no una sección aparte: va en la misma
     // ficha, después de los datos y antes de la procedencia.
     (receta.descripcion ? `<div class="lee rec-desc">${aHtml(receta.descripcion)}</div>` : '') +
-    marca +
     (receta.fuente
       ? `<div class="rec-fuente"><span class="emo">📖</span>fuente: ${fuenteHtml(receta.fuente)}</div>`
       : '');

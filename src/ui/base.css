@@ -166,12 +166,26 @@
 .conm-doble button.on { background: var(--fg); border-color: var(--fg); color: var(--bg); }
 .conm-doble button[disabled] { background: none; border-color: var(--borde);
                                color: var(--fg-3); cursor: default; }
-/* La posición «Incompleta» lleva el mismo círculo que la tarjeta. */
-.conm-doble .inc { border-color: currentColor; }
+/* La posición «Incompleta» lleva la misma marca que la tarjeta, pero en el color
+   del botón: adentro del conmutador el acento competiría con el estado elegido. */
+.conm-doble .inc { color: inherit; }
 .leyenda-completa { line-height: 1.5; }
 /* El chip del sistema (§6.10) es una etiqueta; el del editor se saca, así que
    lleva su cruz. La regla vive acá y no en tokens.css, que es copia literal. */
 button.chip { cursor: pointer; }
+/* §6.5 — La marca de incompleta es un círculo a medio llenar. El anterior era un
+   círculo vacío y no decía nada: un aro chico al lado del título se lee como
+   viñeta, no como «hecha a medias». El relleno de media luna sí. Va en el acento
+   —es lo único tocable de su fila y lleva al editor—, y nunca en `--error`: a la
+   receta le falta algo, no está rota. La regla vive acá y no en tokens.css, que
+   es copia literal de los mockups. */
+.inc { color: var(--acento); border-color: currentColor;
+       background: linear-gradient(to right, currentColor 50%, transparent 50%); }
+/* El mismo estado, dicho con palabras: un chip más de la fila de tags, que abre
+   el editor. Los valores son los del chip activo (§6.10); la clase es otra
+   porque significan cosas distintas. */
+.chip.pend { background: var(--acento-suave); border-color: var(--acento); color: var(--acento); }
+
 /* Un tag que la app se reserva: el aviso es una línea, sin caja ni botón. */
 .error-tag { margin: var(--e-1) 0 0; font-size: var(--txt-chico); color: var(--error); }
 /* Un tono más claro que `--surface-alta`, que es lo que trae el sistema: en el
