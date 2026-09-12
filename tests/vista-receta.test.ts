@@ -167,6 +167,8 @@ describe('Receta en lectura', () => {
     expect(html).toContain('rel="noopener"');
     expect(html).toContain('.md</a>');
     expect(html).toContain('drive_favicon_2026_32dp.png');
+    // Es un dato al margen, no un botón del encabezado.
+    expect(html).toContain('class="archivo"');
   });
 
   it('sin fila del índice no hay link: no se conoce el id del archivo', () => {

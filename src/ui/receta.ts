@@ -111,11 +111,11 @@ export function renderReceta({ entrada, receta }: OpcionesReceta): string {
   const alArchivo = entrada?.id_archivo
     // El logo de Drive servido por Google, no uno dibujado: el triángulo a mano
     // no se leía como Drive.
-    ? `<a class="btn sec compacto" href="https://drive.google.com/file/d/${encodeURIComponent(entrada.id_archivo)}/view" ` +
+    ? `<a class="archivo" href="https://drive.google.com/file/d/${encodeURIComponent(entrada.id_archivo)}/view" ` +
       'target="_blank" rel="noopener" aria-label="Ver el archivo en Drive">' +
       '<img class="logo" src="https://ssl.gstatic.com/docs/doclist/images/drive_favicon_2026_32dp.png" ' +
       // Sin `lazy`: son 513 bytes y está en pantalla desde el primer momento.
-      'alt="" width="20" height="20">.md</a>'
+      'alt="" width="16" height="16">.md</a>'
     : '';
 
   // El encabezado arranca sin texto: el título está abajo, grande y entero, y
