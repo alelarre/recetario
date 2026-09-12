@@ -14,13 +14,8 @@ describe('completa: es un dato del archivo, no un cálculo', () => {
     }
   });
 
-  it('`true` sigue valiendo: es lo que escribían los archivos anteriores', () => {
-    expect(parse('---\ntitulo: A\ncompleta: true\n---\n').completa).toBe(true);
-    expect(parse('---\ntitulo: A\ncompleta: false\n---\n').completa).toBe(false);
-  });
-
-  it('cualquier otro valor se lee como incompleta', () => {
-    for (const valor of ['tal vez', '1', 'yes', '']) {
+  it('cualquier otro valor se lee como incompleta, `true` incluido', () => {
+    for (const valor of ['true', 'false', 'tal vez', '1', 'yes', '']) {
       expect(parse(`---\ntitulo: A\ncompleta: ${valor}\n---\n`).completa).toBe(false);
     }
   });

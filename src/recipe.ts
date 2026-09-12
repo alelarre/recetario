@@ -70,9 +70,8 @@ function parsearFrontmatter(bloque: string, receta: Receta): void {
       receta.tags = parsearLista(valor.trim(), lineas.slice(i + 1));
     } else if (clave === 'completa') {
       // En el `.md` se escribe «sí» o «no», que es como se lee un archivo de
-      // texto. Sin tilde vale igual, y `true` también: es lo que escribían los
-      // archivos anteriores al 2026-09-12.
-      receta.completa = ['si', 'true'].includes(normalizar(valor));
+      // texto. Sin tilde vale igual; cualquier otro valor es «no».
+      receta.completa = normalizar(valor) === 'si';
     } else if (esClaveSimple(clave)) {
       receta[clave] = valor.trim() === '' ? null : valor.trim();
     } else {

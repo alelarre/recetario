@@ -7,7 +7,7 @@ const MINIMA = parse('---\ntitulo: A\n---\n');
 
 const COMPLETA = parse(`---
 titulo: Rabas
-completa: true
+completa: sí
 tags: [fritura]
 rinde: 4 porciones
 fuente: Recetario original

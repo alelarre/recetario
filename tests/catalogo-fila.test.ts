@@ -67,7 +67,7 @@ describe('filaDesde', () => {
   });
 
   it('la fila lleva foto y completitud', () => {
-    const receta = parse('---\ntitulo: A\nfoto: https://x/y.jpg\ncompleta: true\n---\n## Ingredientes\n- Sal\n');
+    const receta = parse('---\ntitulo: A\nfoto: https://x/y.jpg\ncompleta: sí\n---\n## Ingredientes\n- Sal\n');
     const fila = filaDesde(receta, { id: 'f1', categoria: 'Carnes' });
     expect(fila[COLUMNAS.indexOf('foto')]).toBe('https://x/y.jpg');
     expect(fila[COLUMNAS.indexOf('completa')]).toBe('si');
@@ -78,7 +78,7 @@ describe('filaDesde', () => {
     const sinDeclarar = parse('---\ntitulo: A\n---\n## Ingredientes\n- Sal\n## Preparación\n1. Salar.');
     expect(filaDesde(sinDeclarar, { id: 'f1' })[COLUMNAS.indexOf('completa')]).toBe('');
     // Y declarada aunque no tenga nada: la fila dice que sí.
-    const declarada = parse('---\ntitulo: A\ncompleta: true\n---\n');
+    const declarada = parse('---\ntitulo: A\ncompleta: sí\n---\n');
     expect(filaDesde(declarada, { id: 'f1' })[COLUMNAS.indexOf('completa')]).toBe('si');
   });
 
@@ -147,7 +147,7 @@ describe('entradaDesdeFila', () => {
   });
 
   it('devuelve la completitud como booleano', () => {
-    const receta = parse('---\ntitulo: A\ncompleta: true\n---\n');
+    const receta = parse('---\ntitulo: A\ncompleta: sí\n---\n');
     expect(entradaDesdeFila(filaDesde(receta, { id: 'f1' })).completa).toBe(true);
     expect(entradaDesdeFila([]).completa).toBe(false);
   });

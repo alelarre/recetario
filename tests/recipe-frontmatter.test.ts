@@ -80,7 +80,7 @@ tiempo: 40 min
 dificultad: fácil
 fuente: Cuaderno de mamá, p. 12
 foto: https://ejemplo/foto.jpg
-completa: true
+completa: sí
 ---
 `);
     expect(r).toMatchObject({
