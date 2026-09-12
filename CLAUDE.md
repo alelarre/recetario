@@ -4,7 +4,7 @@ App personal de recetas. Los datos viven en Google Drive como archivos `.md` y
 sobreviven a la app. Un solo usuario.
 
 **Estado: el rediseño de `product-design/` está implementado, mergeado a `main`
-y publicado en GitHub Pages** (PR #3, 2026-09-11). 392 tests, `npm run typecheck`
+y publicado en GitHub Pages** (PR #3, 2026-09-11). 451 tests, `npm run typecheck`
 y `npm run build` en verde, y recorrida a mano contra el Drive real: el
 Recetario, una categoría, una receta, el modo cocina, el editor, Borradores y
 Ajustes.
@@ -54,7 +54,7 @@ Para lo demás, según lo que necesites:
 | Qué tiene que hacer cada cosa | `product-design/product/specs/` — 91 capacidades con criterios de aceptación y edge cases. Las **reglas transversales** están en `E05-Cimientos.md` §Reglas. |
 | Cómo se ve | `product-design/ux/design-system.md`, y `ux/mockups/index.html` para verlo funcionando |
 | Cómo habla la app | `product-design/ux/brand-identity.md` §3 y §4 |
-| Por qué algo es así | `product-design/plan/decision-log.md` — 89 decisiones con lo descartado |
+| Por qué algo es así | `product-design/plan/decision-log.md` — 97 decisiones con lo descartado |
 | Qué quedó afuera a propósito | `product-design/plan/BACKLOG.md` |
 
 ### Cómo quedó el código
@@ -127,7 +127,7 @@ Todo en español rioplatense: spec, comentarios, UI y nombres de carpetas.
   la única verdad; el frontmatter no lleva `categoria`.
 - **El índice es una Google Sheet** (`Recetario/_indice`). Es un cache derivado y
   reconstruible: los `.md` son siempre la verdad. **Los borradores son otra**
-  (`Recetario/_borradores`): una cola de trabajo de cuatro columnas, que no entra
+  (`Recetario/_borradores`): una cola de trabajo de cinco columnas, que no entra
   al índice porque no es contenido consolidado.
 - **El input principal no es el editor**, son sesiones con agentes que reciben
   una fuente (PDF, foto, video, sitio web), extraen la receta y escriben el
@@ -181,7 +181,7 @@ El planificador está diseñado y queda afuera a propósito
 (`product-design/plan/BACKLOG.md`).
 
 **Los pendientes de la app usada de verdad están en `BACKLOG.md` §6**
-`[2026-09-12]`, con identificador estable —P1 a P13— para nombrarlos sin repetir
+`[2026-09-12]`, con identificador estable —P1 a P14— para nombrarlos sin repetir
 el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5). Tres de ellos se miran antes que el resto: **P2** —el
@@ -193,7 +193,10 @@ Y queda el contenido.
 
 **Migrar el contenido existente:** ya se migraron ~60 recetas del recetario
 original y del PDF de pescados a `Recetario/`, con el skill de
-`skills/recetario/`. Falta el resto: los documentos temáticos (fondues, pan,
+`skills/recetario/`. **El skill está al día con el esquema de ocho claves**
+(2026-09-12) pero todavía no escribe la fila del índice: después de cargar
+recetas hay que tocar *Ajustes → Reindexar*. Que la escriba es la v2 del skill
+(`BACKLOG.md` P14). Falta el resto: los documentos temáticos (fondues, pan,
 macarons, fermentación) y el Doc de ~7,3 MB.
 
 Lo que ya no está pendiente:

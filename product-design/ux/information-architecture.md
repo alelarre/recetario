@@ -153,8 +153,8 @@ Un clásico de los domingos en casa.
 
 ## Ingredientes
 ### Para la milanesa
-- *4* milanesas de nalga
-- *200 g* muzzarella
+- Milanesas de nalga — 4
+- Muzzarella — 200 g
 
 ## Preparación
 1. Precalentar el horno a 200 °C.
@@ -181,7 +181,7 @@ Cambiar la salsa y la muzzarella por salsa blanca y gruyere.
 | `dificultad` | enumerado | no | `fácil` · `media` · `difícil` |
 | `fuente` | texto | no | **Texto libre:** URL o *"libro de pescados, pág. 84"* |
 | `foto` | URL | no | **Nueva.** Solo URL externa. Ver §1.7 |
-| `completa` | booleano | no | **Nueva.** Solo se escribe para forzar `true`. Ver §1.6 |
+| `completa` | `sí` · `no` | no | **Nueva.** La app la escribe siempre; si falta, se lee `no`. Ver §1.6 |
 
 **Cuerpo.** Cuatro secciones conocidas, todas opcionales: `## Ingredientes`
 —con subtítulos `###` como grupos—, `## Preparación`, `## Variaciones` y
@@ -298,7 +298,7 @@ implementan cada una por su lado: **usan el mismo código**.
 |---|---|---|
 | **Escribir receta al índice** | Recibe el `.md` o el objeto que representa la receta, y escribe o reemplaza su fila | La app al guardar; el agente al convertir |
 | **Convertir borrador en receta** | Escribe el `.md`, escribe la fila del índice, y **borra la entrada del borrador** | La app; el agente |
-| **Leer y parsear un `.md`** | Aplica el esquema, deriva la completitud | La app al listar; el agente para validar lo que escribió |
+| **Leer y parsear un `.md`** | Aplica el esquema y lee la completitud tal como la dice el archivo | La app al listar; el agente para validar lo que escribió |
 
 Eso elimina la fuente de divergencia más obvia —dos implementaciones del mismo
 formato que se separan con el tiempo— y hace concreto lo que la visión llama
