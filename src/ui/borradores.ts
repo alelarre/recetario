@@ -109,13 +109,13 @@ export function renderBorrador({ borrador, confirmando, error }: OpcionesBorrado
       '<button class="btn pel" data-accion="descartar-confirmado">Descartar</button>' +
     '</div></div>';
 
-  // Editar va arriba, como en la receta; descartar toma el primer lugar de la
-  // lista y crear el último, que era el de editar.
+  // Editar va arriba, como en la receta. En el cuerpo: primero ver de dónde
+  // sale, después descartarlo, y crear la receta cierra la lista.
   const acciones = '<div style="display:flex;flex-direction:column;gap:var(--e-2)">' +
-    '<button class="btn pel" data-accion="descartar">Descartar</button>' +
     (esUrl(borrador.fuente)
       ? `<a class="btn sec" href="${escapar(borrador.fuente)}" target="_blank" rel="noopener">Ir a la fuente</a>`
       : '') +
+    '<button class="btn pel" data-accion="descartar">Descartar</button>' +
     '<button class="btn prim" data-accion="crear-receta">Crear la receta</button>' +
   '</div>';
 

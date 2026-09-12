@@ -102,9 +102,9 @@ describe('Borrador', () => {
     const enc = html.slice(0, html.indexOf('class="cuerpo'));
     expect(enc).toContain('data-accion="editar-borrador"');
     expect(enc).not.toContain('data-accion="descartar"');
-    // En el cuerpo: descartar, la fuente y crear, en ese orden.
-    expect(html.indexOf('data-accion="descartar"')).toBeLessThan(html.indexOf('Ir a la fuente'));
-    expect(html.indexOf('Ir a la fuente')).toBeLessThan(html.indexOf('data-accion="crear-receta"'));
+    // En el cuerpo: la fuente, descartar y crear, en ese orden.
+    expect(html.indexOf('Ir a la fuente')).toBeLessThan(html.indexOf('data-accion="descartar"'));
+    expect(html.indexOf('data-accion="descartar"')).toBeLessThan(html.indexOf('data-accion="crear-receta"'));
   });
 
   it('mientras confirma, las acciones no están: no se crea por error', () => {
