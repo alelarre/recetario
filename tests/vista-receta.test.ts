@@ -160,6 +160,18 @@ describe('Receta en lectura', () => {
     expect(renderReceta({ entrada: null, receta: r })).toContain('data-tag="horno"');
   });
 
+  it('el encabezado lleva el link al .md en Drive, en otra pestaña', () => {
+    const html = renderReceta({ entrada: entradaFalsa({ id_archivo: 'f1' }), receta: COMPLETA });
+    expect(html).toContain('href="https://drive.google.com/file/d/f1/view"');
+    expect(html).toContain('target="_blank"');
+    expect(html).toContain('rel="noopener"');
+    expect(html).toContain('.md</a>');
+  });
+
+  it('sin fila del índice no hay link: no se conoce el id del archivo', () => {
+    expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('drive.google.com');
+  });
+
   it('no hay un menú de ⋯: las acciones están al pie', () => {
     expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('data-accion="menu"');
   });

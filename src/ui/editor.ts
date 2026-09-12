@@ -88,9 +88,36 @@ export function renderEditor(
     campo('foto', 'Foto', receta.foto, 'https://…') +
   '</div>';
 
+  // Cómo se escribe un ingrediente para que el filtro por ingrediente lo
+  // encuentre y la cantidad quede en su columna (C05.1.2, C05.1.3). El editor
+  // no corrige ni valida: por eso es una ayuda y no una regla.
+  const FORMATO = [
+    'Un ingrediente por línea, con guión:',
+    '',
+    '- Merluza — 800 g',
+    '- Aceite — c/n',
+    '- Sal, pimienta',
+    '',
+    'El nombre va primero y la cantidad después del separador, que puede ser',
+    '— | - ; o una coma seguida de un número. Sin separador, el ítem queda sin',
+    'cantidad, y el nombre completo es lo que se busca.',
+    '',
+    'Los ### arman grupos:',
+    '',
+    '### Para la salsa',
+    '- Tomate perita — 1 lata'
+  ].join('\n');
+
+  const ayudaIngredientes =
+    '<details class="esbozo">' +
+      '<summary>Formato</summary>' +
+      `<pre>${escapar(FORMATO)}</pre>` +
+    '</details>';
+
   const contenido = '<div class="ficha"><h2>Contenido</h2>' +
     area('descripcion', 'Descripción', receta.descripcion, 3) +
     area('ingredientes', 'Ingredientes', receta.ingredientes, 8) +
+    ayudaIngredientes +
     area('preparacion', 'Preparación', receta.preparacion, 6) +
     area('variaciones', 'Variaciones', receta.variaciones, 3) +
     area('notas', 'Notas', receta.notas, 3) +

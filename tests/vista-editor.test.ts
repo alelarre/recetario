@@ -120,6 +120,16 @@ describe('renderEditor', () => {
     expect(html.match(/name="ingredientes"/g)).toHaveLength(1);
   });
 
+  it('debajo de los ingredientes va el formato, plegado', () => {
+    const html = dibujar();
+    expect(html.indexOf('name="ingredientes"')).toBeLessThan(html.indexOf('class="esbozo"'));
+    expect(html).toContain('<summary>Formato</summary>');
+    expect(html).not.toContain('<details class="esbozo" open>');
+    // Dice lo que hay que saber: el separador y los grupos.
+    expect(html).toContain('- Merluza — 800 g');
+    expect(html).toContain('### Para la salsa');
+  });
+
   it('lo que el editor no entiende no se muestra', () => {
     const html = dibujar();
     expect(html).not.toContain('maridaje: tinto');

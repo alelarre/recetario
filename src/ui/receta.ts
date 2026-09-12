@@ -106,12 +106,19 @@ export function renderReceta({ entrada, receta }: OpcionesReceta): string {
     ? '<button class="btn prim" data-accion="cocinar">Cocinar</button>'
     : '';
 
+  // El `.md` en Drive, en una pestaña nueva. Sólo si la receta está en el
+  // índice: sin fila no se conoce su id de archivo.
+  const alArchivo = entrada?.id_archivo
+    ? `<a class="btn sec compacto" href="https://drive.google.com/file/d/${encodeURIComponent(entrada.id_archivo)}/view" ` +
+      `target="_blank" rel="noopener" aria-label="Ver el archivo en Drive">${ICO.drive}.md</a>`
+    : '';
+
   // El encabezado arranca sin texto: el título está abajo, grande y entero, y
   // repetirlo arriba —o poner la categoría, que ya está en el contexto— era
   // decir dos veces lo mismo. `main` le pone el título recortado cuando el
-  // grande sale de pantalla.
+  // grande sale de pantalla, y ahí se corta antes de llegar al link.
   // Sin menú de ⋯: las acciones son Cocinar y Editar, y las dos están al pie.
-  return encabezado({ titulo: '', volver: true, pegajoso: true }) +
+  return encabezado({ titulo: '', volver: true, pegajoso: true, derecha: alArchivo }) +
     '<div class="cuerpo">' +
       ficha(cabecera) +
       ficha(ingredientes(grupos), 'Ingredientes') +
