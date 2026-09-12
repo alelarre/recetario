@@ -54,6 +54,13 @@ describe('Receta en lectura', () => {
     expect(pos('Variaciones')).toBeLessThan(pos('Notas'));
   });
 
+  it('la fuente cierra la cabecera: va después de los tags, no entre el título y ellos', () => {
+    const html = renderReceta({ entrada: null, receta: COMPLETA });
+    expect(html.indexOf('rec-ctx')).toBeLessThan(html.indexOf('class="chips"'));
+    expect(html.indexOf('class="chips"')).toBeLessThan(html.indexOf('rec-fuente'));
+    expect(html.indexOf('rec-fuente')).toBeLessThan(html.indexOf('Ingredientes'));
+  });
+
   it('la categoría sale de la fila del índice, no del frontmatter', () => {
     const html = renderReceta({ entrada: entradaFalsa({ categoria: 'Pescados y mariscos' }), receta: COMPLETA });
     expect(html).toContain('Pescados y mariscos');

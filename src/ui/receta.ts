@@ -51,19 +51,21 @@ export function renderReceta({ entrada, receta }: OpcionesReceta): string {
   const marca = completa ? '' :
     '<button class="inc-txt" data-accion="editar"><span class="inc"></span>Falta terminarla</button>';
 
+  // Arriba, qué es y cómo se clasifica; la fuente al pie, tras un divisor: es
+  // dato de procedencia y con los cuatro bloques pegados no se leía ninguno.
   const cabecera =
     (receta.foto ? `<img class="rec-foto" src="${escapar(receta.foto)}" alt="" loading="lazy">` : '') +
     `<h1 class="rec-tit">${escapar(receta.titulo ?? 'Sin título')}</h1>` +
     (contexto
       ? `<div class="rec-ctx">${categoria ? `<span class="pin" style="background:${colorCategoria(categoria)}"></span>` : ''}${escapar(contexto)}</div>`
       : '') +
-    (receta.fuente ? `<div class="rec-fuente">${escapar(receta.fuente)}</div>` : '') +
     (receta.tags.length
-      ? '<div class="chips" style="margin-top:var(--e-3)">' +
+      ? '<div class="chips">' +
         receta.tags.map(t => `<button class="chip" data-tag="${escapar(t)}">${escapar(t)}</button>`).join('') +
         '</div>'
       : '') +
-    marca;
+    marca +
+    (receta.fuente ? `<div class="rec-fuente">${escapar(receta.fuente)}</div>` : '');
 
   const variaciones = secciones.length
     ? secciones.map(v =>

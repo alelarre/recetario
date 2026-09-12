@@ -64,10 +64,14 @@
 .grupo-res + .grupo-res { margin-top: var(--e-5); }
 
 /* ---- Receta en lectura (mockup 01) ---- */
-.rec-tit { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0 0 var(--e-2); }
+.rec-tit { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0 0 var(--e-3); }
 .rec-ctx { font-size: var(--txt-chico); color: var(--fg-2); display: flex; align-items: center;
-           gap: var(--e-2); flex-wrap: wrap; margin-bottom: var(--e-1); }
-.rec-fuente { font-size: var(--txt-chico); color: var(--fg-3); }
+           gap: var(--e-2); flex-wrap: wrap; margin-bottom: var(--e-4); }
+/* La fuente cierra la ficha, separada por un divisor: es procedencia, no un
+   dato de la receta, y pegada al contexto no se leía ni una ni otra. */
+.rec-fuente { margin-top: var(--e-4); padding-top: var(--e-3); border-top: 1px solid var(--borde);
+              font-size: var(--txt-micro); color: var(--fg-3); }
+.rec-ctx:last-child, .chips:last-child { margin-bottom: 0; }
 .rec-foto { width: 100%; aspect-ratio: 16/9; max-height: 200px; object-fit: cover;
             border-radius: var(--r-foto); display: block; margin-bottom: var(--e-4); }
 .var { padding: var(--e-3) 0; border-bottom: 1px solid var(--borde); }
