@@ -18,8 +18,11 @@ vi.mock('../src/auth.js', () => ({
 vi.mock('../src/drive.js', () => ({ crearDrive: () => ({ cuenta: async () => 'alguien@gmail.com' }) }));
 vi.mock('../src/sheets.js', () => ({ crearSheets: () => ({}) }));
 
-/** Lo que el store le da a main. `falla` enciende el error de lectura. */
-const estado = { falla: false as boolean | Error };
+/** Lo que los dobles le dan a main. `falla` enciende el error de lectura. */
+const estado = {
+  falla: false as boolean | Error,
+  borradores: [] as { id: string; titulo: string; fuente: string; nota: string; capturado: string }[]
+};
 
 const storeFake = {
   arrancar: async () => ({
@@ -42,9 +45,9 @@ const storeFake = {
 vi.mock('../src/store.js', () => ({ crearStore: () => storeFake }));
 vi.mock('../src/borradores.js', () => ({
   crearBorradores: () => ({
-    listar: async () => [],
+    listar: async () => estado.borradores,
     agregar: async () => ({ id: 'b1', titulo: '', fuente: '', capturado: '' }),
-    editarTitulo: async () => {},
+    editar: async () => {},
     descartar: async () => {}
   })
 }));
@@ -54,7 +57,12 @@ const esperar = async (vueltas = 5) => {
 };
 
 describe('main.ts: las rutas', () => {
-  afterEach(() => { limpiarGlobales(); estado.falla = false; vi.resetModules(); });
+  afterEach(() => {
+    limpiarGlobales();
+    estado.falla = false;
+    estado.borradores = [];
+    vi.resetModules();
+  });
 
   const montar = async () => {
     const clicks: ((e: unknown) => unknown)[] = [];
@@ -216,6 +224,28 @@ describe('main.ts: las rutas', () => {
     await abrir('#/r/f1/cocinar');
     await tocar('salir-cocina');
     expect(reemplazos).toEqual(['#/c/Carnes']);
+  });
+
+  it('volver mientras se edita un borrador muestra el borrador, no la lista', async () => {
+    // Editar no cambia la URL: con un `history.back()` el volver se iba a la
+    // lista, que es la entrada anterior.
+    estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+    const { abrir, tocar, app, vueltasAtras } = await montar();
+    await abrir('#/borradores/b1');
+    await tocar('editar-borrador');
+    expect(app.innerHTML).toContain('Editar borrador');
+
+    await tocar('volver');
+    expect(vueltasAtras).toHaveLength(0);
+    expect(app.innerHTML).toContain('data-accion="crear-receta"');
+  });
+
+  it('cancelar un borrador nuevo vuelve: `close()` no alcanza cuando la pestaña no la abrió un script', async () => {
+    const { abrir, tocar, vueltasAtras } = await montar();
+    await abrir('#/borradores');
+    await abrir('#/capturar');
+    await tocar('cancelar-captura');
+    expect(vueltasAtras).toHaveLength(1);
   });
 
   it('buscar con la caja vacía no hace nada, y no avisa', async () => {

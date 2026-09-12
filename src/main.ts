@@ -568,11 +568,16 @@ app.addEventListener('click', async (e) => {
   if (accion === 'cancelar-captura') {
     tituloCaptura = '';
     notaCaptura = '';
-    // Editando, cancelar vuelve al borrador sin tocarlo; en la captura
-    // compartida cierra sin escribir nada y sin preguntar.
+    // Editando, cancelar vuelve al borrador sin tocarlo.
     if (editandoBorrador) { editandoBorrador = false; return render(); }
-    window.close();
-    return;
+    // Compartida desde otra app, cerrar la pestaña es volver a donde estabas
+    // (C01.2.2). Pero `close()` sólo funciona si la abrió un script: si no
+    // —y si la captura se abrió a mano desde Borradores—, hay que volver por
+    // la app, o Cancelar no hacía nada.
+    const compartida = !!(vistaActual?.params['url'] || vistaActual?.params['text']);
+    if (compartida) window.close();
+    if (history.length <= 1) { irCerrando('#/borradores'); return; }
+    return history.back();
   }
   if (accion === 'guardar-captura') {
     const campoTitulo = document.querySelector<HTMLInputElement>('input[name="titulo"]');
@@ -647,6 +652,10 @@ app.addEventListener('click', async (e) => {
   }
 
   if (accion === 'volver' || accion === 'atras') {
+    // Editar un borrador no cambia la URL: es estado de la pantalla. Volver
+    // cierra la edición y muestra el borrador, en vez de irse a la lista, que
+    // es la entrada anterior del historial.
+    if (editandoBorrador) { editandoBorrador = false; return render(); }
     if (vistaActual?.vista === 'cocinar') await soltarPantalla();
     // Entrar por un link directo deja el historial vacío: ahí volver es ir al
     // Recetario, no salirse de la app.
