@@ -165,9 +165,12 @@ button.chip { cursor: pointer; }
 .esbozo { margin-bottom: var(--e-5); }
 .esbozo summary { font-size: var(--txt-chico); color: var(--fg-2);
                   cursor: pointer; padding: var(--e-2) 0; }
-.esbozo pre { margin: 0; padding: var(--e-3); background: var(--surface);
-              /* Sin borde: con uno parecía un campo más, editable. */
-              border: 0; border-radius: var(--r-medio);
+.esbozo pre { margin: 0; padding: 0 0 var(--e-2);
+              /* Sin caja: con borde parecía un campo editable, y con fondo
+                 propio se veía distinto según dónde estuviera —invisible sobre
+                 la ficha del editor, un recuadro gris sobre la hoja de la
+                 captura—. Es sólo texto de referencia. */
+              background: none; border: 0;
               font-size: calc(var(--txt-micro) - 1px); line-height: 1.6; color: var(--fg-2);
               white-space: pre-wrap; word-break: break-word; }
 .hoja { min-height: 100%; display: flex; flex-direction: column; padding: var(--e-5) var(--e-4); }
