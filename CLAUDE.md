@@ -178,7 +178,18 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 ## Lo que queda pendiente
 
 El planificador está diseñado y queda afuera a propósito
-(`product-design/plan/BACKLOG.md`). Lo que queda es una sola cosa.
+(`product-design/plan/BACKLOG.md`).
+
+**Los pendientes de la app usada de verdad están en `BACKLOG.md` §6**
+`[2026-09-12]`, con identificador estable —P1 a P13— para nombrarlos sin repetir
+el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
+investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
+y la deuda chica (§6.5). Tres de ellos se miran antes que el resto: **P2** —el
+acento se lee como error en los botones primarios—, **P11** —la jerarquía
+tipográfica, que pide informe antes de cambios— y **P12** —cómo se sabe si el
+índice está al día—.
+
+Y queda el contenido.
 
 **Migrar el contenido existente:** ya se migraron ~60 recetas del recetario
 original y del PDF de pescados a `Recetario/`, con el skill de
@@ -227,6 +238,12 @@ Lo que ya no está pendiente:
 - **Tres cosas del rediseño no las cubre ningún test:** el Share Target real
   (necesita la PWA instalada en Android), el foco del teclado en la captura y la
   posición de scroll al conmutar en el modo cocina.
+- **El índice quedó con cada receta dos veces** (2026-09-12): 122 filas para 61
+  recetas. La causa probable son dos reconstrucciones solapadas —dos pestañas
+  abiertas, o *Reindexar* tocado mientras el arranque ya reconstruía—:
+  `reconstruir()` lee las filas previas, las borra y appendea las nuevas, y nada
+  impide que dos pasadas se pisen. **Se decidió no agregar lógica de
+  concurrencia:** la salida es reindexar una vez con una sola pestaña abierta.
 
 ## El spike del §10, ya corrido
 
