@@ -153,7 +153,7 @@ export interface Filtros {
 /** Una coincidencia que necesita decir por qué apareció (C02.3.4). */
 export interface Coincidencia {
   entrada: Entrada;
-  /** «tiene Merluza o pescadilla», «lleva horno». El valor, sin normalizar. */
+  /** «tiene Merluza o pescadilla», «tiene tag horno». El valor, sin normalizar. */
   motivo: string;
 }
 

@@ -126,8 +126,8 @@ describe('buscarPorTexto: los tres criterios', () => {
     expect(store.buscarPorTexto('merluza').porIngrediente[0]?.motivo).toContain('Merluza o pescadilla');
   });
 
-  it('el motivo del tag dice que lo lleva', () => {
-    expect(store.buscarPorTexto('merluza').porTag[0]?.motivo).toBe('lleva merluza');
+  it('el motivo del tag lo nombra como tag', () => {
+    expect(store.buscarPorTexto('merluza').porTag[0]?.motivo).toBe('tiene tag merluza');
   });
 
   it('no busca en la descripción, en los pasos ni en las notas', () => {

@@ -402,7 +402,7 @@ export function crearStore({ drive, sheets }: Dependencias) {
       if (ingrediente) porIngrediente.push({ entrada: e, motivo: `tiene ${ingrediente}` });
 
       const tag = e.tags.find(x => normalizar(x).includes(t));
-      if (tag) porTag.push({ entrada: e, motivo: `lleva ${tag}` });
+      if (tag) porTag.push({ entrada: e, motivo: `tiene tag ${tag}` });
     }
 
     return { porNombre, porIngrediente, porTag };

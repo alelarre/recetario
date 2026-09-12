@@ -24,12 +24,12 @@ describe('Resultados', () => {
       grupos: {
         porNombre: [entradaFalsa({ titulo: 'Filet de merluza' })],
         porIngrediente: [{ entrada: entradaFalsa({ titulo: 'Gratin' }), motivo: 'tiene Merluza o pescadilla' }],
-        porTag: [{ entrada: entradaFalsa({ titulo: 'Caballa' }), motivo: 'lleva merluza' }]
+        porTag: [{ entrada: entradaFalsa({ titulo: 'Caballa' }), motivo: 'tiene tag merluza' }]
       }
     });
     expect(html).toContain('Por nombre');
     expect(html).toContain('tiene Merluza o pescadilla');
-    expect(html).toContain('lleva merluza');
+    expect(html).toContain('tiene tag merluza');
   });
 
   it('la caja lleva la lupa, y dice Buscar cuando está vacía', () => {
