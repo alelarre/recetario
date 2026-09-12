@@ -9,13 +9,15 @@
  * PDF ocurre afuera, y lo que la app ofrece es crear la receta a mano.
  */
 import { escapar } from './markdown.js';
-import { encabezado, aviso, vacio } from './componentes.js';
+import { encabezado, aviso, vacio, lateral, botonMenu } from './componentes.js';
 import { ICO } from './iconos.js';
 import type { Borrador } from '../tipos.js';
 
 export interface OpcionesBorradores {
   borradores: Borrador[];
   error?: string;
+  /** El menú lateral está desplegado (sólo en pantalla angosta). */
+  menuAbierto?: boolean;
 }
 
 export interface OpcionesBorrador {
@@ -54,7 +56,7 @@ const esUrl = (fuente: string): boolean => /^https?:\/\//i.test(fuente.trim());
 /** La URL se muestra sin el esquema: lo que informa es el sitio. */
 const fuenteVisible = (fuente: string): string => fuente.replace(/^https?:\/\//i, '');
 
-export function renderBorradores({ borradores, error }: OpcionesBorradores): string {
+export function renderBorradores({ borradores, error, menuAbierto }: OpcionesBorradores): string {
   const lista = borradores.map(b =>
     `<a class="bor" href="#/borradores/${encodeURIComponent(b.id)}">` +
       `<span class="txt"><span class="n">${escapar(b.titulo)}</span>` +
@@ -71,13 +73,21 @@ export function renderBorradores({ borradores, error }: OpcionesBorradores): str
     ? `<div class="lista">${lista}</div>`
     : vacio('No hay nada esperando.');
 
-  return encabezado({
-    titulo: 'Borradores', volver: true,
-    ...(borradores.length ? { total: borradores.length } : {})
+  // Es uno de los dos lugares primarios: se llega por el menú, así que lleva la
+  // hamburguesa y no un volver.
+  return lateral({
+    activo: 'borradores', borradores: borradores.length,
+    ...(menuAbierto ? { abierto: true } : {})
   }) +
-    '<div class="cuerpo denso">' +
-      (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'reintentar' } }) : '') +
-      cuerpo + agregar +
+    '<div class="conten">' +
+      encabezado({
+        titulo: 'Borradores', grande: true, derecha: botonMenu(0),
+        ...(borradores.length ? { total: borradores.length } : {})
+      }) +
+      '<div class="cuerpo denso">' +
+        (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'reintentar' } }) : '') +
+        cuerpo + agregar +
+      '</div>' +
     '</div>';
 }
 

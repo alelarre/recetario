@@ -188,3 +188,42 @@ button.chip { cursor: pointer; }
   .grilla { grid-template-columns: repeat(4, 1fr); }
   .par3 { grid-template-columns: 1fr 1fr 1fr; }
 }
+
+/* ---- El menú lateral: navegación primaria (IA §4.1) ---- */
+/* En el teléfono se despliega sobre el contenido; desde 900 px queda fijo y el
+   contenido se corre, que es el ancho donde la grilla ya pasa a cuatro
+   columnas. La hamburguesa sólo existe mientras el lateral se esconde. */
+.lat { position: fixed; inset: 0 auto 0 0; width: 260px; z-index: 20;
+       background: var(--surface); border-right: 1px solid var(--borde);
+       padding: var(--e-4); display: flex; flex-direction: column; gap: var(--e-1);
+       transform: translateX(-100%); transition: transform .2s; }
+.lat.abierto { transform: none; }
+.lat .marca { font-size: var(--txt-titulo); font-weight: 600;
+              margin: 0 0 var(--e-4); padding: 0 var(--e-2); }
+.lat a { display: flex; align-items: center; gap: var(--e-3); min-height: 48px;
+         padding: 0 var(--e-2); border-radius: var(--r-medio);
+         color: var(--fg); text-decoration: none; font-weight: 600; }
+.lat a:hover { background: var(--surface-alta); }
+.lat a.act { background: var(--acento-suave); color: var(--acento); }
+.lat a .cu { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px;
+             border-radius: 10px; background: var(--surface-alta);
+             border: 1px solid var(--borde-fuerte); color: var(--fg-2);
+             font-size: var(--txt-micro); font-weight: 600;
+             display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.lat svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none;
+           stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.velo-lat { position: fixed; inset: 0; z-index: 19; background: var(--velo);
+            opacity: 0; pointer-events: none; transition: opacity .2s; }
+.velo-lat.on { opacity: .6; pointer-events: auto; }
+
+@media (min-width: 900px) {
+  .lat { transform: none; }
+  .velo-lat { display: none; }
+  .menu-lat { display: none; }
+  .conten { padding-left: 260px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lat { transition: none; }
+  .velo-lat { transition: none; }
+}

@@ -25,8 +25,9 @@ describe('Recetario', () => {
     const html = dibujar();
     expect(html).toContain('Postres');
     // Y sin un 0 encima: el contador sólo aparece cuando hay algo que contar.
+    // Los dos `cu` son el del tile de Carnes y el de Borradores en el menú.
     expect(html).toContain('<span class="cu">4</span>');
-    expect(html.match(/class="cu"/g)).toHaveLength(1);
+    expect(html.match(/class="cu"/g)).toHaveLength(2);
   });
 
   it('cada categoría lleva a su lista', () => {
@@ -43,18 +44,31 @@ describe('Recetario', () => {
     expect(html.indexOf('>Bebidas<')).toBeLessThan(html.indexOf('>Otros<'));
   });
 
-  it('la entrada a Borradores lleva el contador', () => {
-    expect(dibujar()).toContain('>3<');
+  it('los tres destinos están en el menú lateral, con su nombre', () => {
+    const html = dibujar();
+    expect(html).toContain('class="lat');
+    expect(html).toContain('href="#/borradores"');
+    expect(html).toContain('href="#/ajustes"');
+    // El destino actual queda marcado.
+    expect(html).toContain('<a class="act" href="#/"');
   });
 
-  it('en cero, la entrada a Borradores sigue visible y sin número', () => {
+  it('el contador de borradores se ve con el menú cerrado, sobre la hamburguesa', () => {
+    const html = dibujar();
+    expect(html).toContain('data-accion="abrir-menu"');
+    expect(html).toContain('<span class="n">3</span>');
+  });
+
+  it('en cero no hay número: ni en el menú ni sobre la hamburguesa', () => {
     const html = dibujar({ borradores: 0 });
-    expect(html).toContain('data-accion="borradores"');
+    expect(html).toContain('data-accion="abrir-menu"');
     expect(html).not.toContain('class="n"');
+    expect(html).toContain('href="#/borradores"');
   });
 
-  it('Ajustes se llega desde acá', () => {
-    expect(dibujar()).toContain('data-accion="ajustes"');
+  it('el menú arranca cerrado y se despliega con la clase', () => {
+    expect(dibujar()).not.toContain('lat abierto');
+    expect(dibujar({ menuAbierto: true })).toContain('lat abierto');
   });
 
   it('no hay barra de navegación inferior', () => {

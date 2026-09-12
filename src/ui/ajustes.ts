@@ -3,7 +3,7 @@
  * interrumpen. Está a tres toques a propósito: lo de acá es raro y caro.
  */
 import { escapar } from './markdown.js';
-import { encabezado, SPINNER } from './componentes.js';
+import { encabezado, SPINNER, lateral, botonMenu } from './componentes.js';
 import { cuando } from './borradores.js';
 import type { Progreso } from '../store.js';
 
@@ -13,9 +13,15 @@ export interface OpcionesAjustes {
   /** Los `.md` que el reindexado salteó, por nombre: sin eso no se encuentran en Drive. */
   ignorados: string[];
   reindexando: Progreso | null;
+  /** Cuántos borradores esperan, para el contador del menú. */
+  borradores?: number;
+  /** El menú lateral está desplegado (sólo en pantalla angosta). */
+  menuAbierto?: boolean;
 }
 
-export function renderAjustes({ cuenta, ultimaReindexado, ignorados, reindexando }: OpcionesAjustes): string {
+export function renderAjustes(
+  { cuenta, ultimaReindexado, ignorados, reindexando, borradores = 0, menuAbierto }: OpcionesAjustes
+): string {
   const enCurso = !!reindexando;
 
   const seccionCuenta = '<div class="ficha"><h2>Cuenta</h2>' +
@@ -47,9 +53,12 @@ export function renderAjustes({ cuenta, ultimaReindexado, ignorados, reindexando
       `<p class="aviso-mudo" style="margin:var(--e-2) 0 0">${ignorados.map(n => escapar(n)).join(', ')}</p>`
     : '<p class="aviso-mudo" style="margin:0">No hay nada para avisar.</p>';
 
-  return encabezado({ titulo: 'Ajustes', volver: true }) +
-    '<div class="cuerpo">' + seccionCuenta + seccionIndice +
-      `<div class="ficha"><h2>Avisos</h2>${lista}</div>` +
+  return lateral({ activo: 'ajustes', borradores, ...(menuAbierto ? { abierto: true } : {}) }) +
+    '<div class="conten">' +
+      encabezado({ titulo: 'Ajustes', grande: true, derecha: botonMenu(borradores) }) +
+      '<div class="cuerpo">' + seccionCuenta + seccionIndice +
+        `<div class="ficha"><h2>Avisos</h2>${lista}</div>` +
+      '</div>' +
     '</div>';
 }
 

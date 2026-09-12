@@ -53,6 +53,9 @@ let observadorTramo: IntersectionObserver | null = null;
  * El estado del modo cocina. Se limpia al entrar: al volver a abrir una receta
  * no hay ningún paso realzado ni marcado (C03.2.4). No persiste en ningún lado.
  */
+/** El menú lateral desplegado. Sólo aplica en pantalla angosta: desde 900 px es fijo. */
+let menuAbierto = false;
+
 /** Lo que se está por descartar o borrar pide confirmación antes (C01.6.2, C04.6.1). */
 let confirmandoDescarte = false;
 /** El título del borrador se corrige en su lugar (C01.6.1). */
@@ -281,6 +284,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       || ruta.params.id !== vistaActual.params.id) {
     tagsActivos = [];
     visibles = TRAMO;
+    // Navegar cierra el menú: se abrió para elegir a dónde ir.
+    menuAbierto = false;
     confirmandoDescarte = false;
     editandoTitulo = false;
     if (ruta.vista !== 'capturar') {
@@ -308,7 +313,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // dejar sin Recetario: se dibuja sin número.
       const pendientes = await borradores?.listar().catch(() => []) ?? [];
       return pintar(renderRecetario({
-        categorias: store.categoriasConConteo(), borradores: pendientes.length
+        categorias: store.categoriasConConteo(), borradores: pendientes.length, menuAbierto
       }));
     }
 
@@ -353,7 +358,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // rompe la pantalla, solo deja la línea de la cuenta vacía.
       if (!cuenta) cuenta = await drive.cuenta().catch(() => '');
       return pintar(renderAjustes({
-        cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados, reindexando
+        cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados, reindexando,
+        borradores: (await borradores?.listar().catch(() => []) ?? []).length, menuAbierto
       }));
 
     case 'capturar': {
@@ -368,7 +374,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
 
     case 'borradores':
       try {
-        return pintar(renderBorradores({ borradores: await borradores?.listar() ?? [] }));
+        return pintar(renderBorradores({ borradores: await borradores?.listar() ?? [], menuAbierto }));
       } catch (err) {
         console.error(err);
         return pintar(renderBorradores({ borradores: [], error: 'No se pudieron leer los borradores.' }));
@@ -510,6 +516,8 @@ app.addEventListener('click', async (e) => {
     return render();
   }
 
+  if (accion === 'abrir-menu') { menuAbierto = true; return render(); }
+  if (accion === 'cerrar-menu') { menuAbierto = false; return render(); }
   if (accion === 'borradores') { location.hash = '#/borradores'; return; }
   if (accion === 'ajustes') { location.hash = '#/ajustes'; return; }
   if (accion === 'limpiar') {

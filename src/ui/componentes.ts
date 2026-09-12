@@ -103,6 +103,50 @@ export function vacio(texto: string): string {
   return `<div class="vacio">${escapar(texto)}</div>`;
 }
 
+/** Los tres destinos del menú lateral. Es la navegación primaria de la app. */
+export type DestinoLateral = 'recetario' | 'borradores' | 'ajustes';
+
+export interface OpcionesLateral {
+  /** Cuál de los tres se está mirando: se marca con el acento. */
+  activo: DestinoLateral;
+  /** Cuántos borradores esperan. En cero no se dibuja el número. */
+  borradores: number;
+  /** El menú está desplegado. En pantalla ancha el lateral es fijo y esto no aplica. */
+  abierto?: boolean;
+}
+
+/**
+ * El menú lateral: Recetario, Borradores y Ajustes, con su nombre.
+ *
+ * En el teléfono se despliega desde la hamburguesa y se cierra tocando el velo
+ * o cualquier destino; en pantalla ancha queda fijo y la hamburguesa no se
+ * dibuja —eso lo resuelve el CSS, no este HTML, que es el mismo en los dos
+ * casos—.
+ */
+export function lateral({ activo, borradores, abierto }: OpcionesLateral): string {
+  const item = (destino: DestinoLateral, hash: string, icono: string, texto: string, cuenta = 0): string =>
+    `<a class="${destino === activo ? 'act' : ''}" href="${hash}">${icono}${texto}` +
+    (cuenta > 0 ? `<span class="cu">${cuenta}</span>` : '') + '</a>';
+
+  return `<div class="velo-lat${abierto ? ' on' : ''}" data-accion="cerrar-menu"></div>` +
+    `<nav class="lat${abierto ? ' abierto' : ''}">` +
+      '<div class="marca">Recetario</div>' +
+      item('recetario', '#/', ICO.casa, 'Recetario') +
+      item('borradores', '#/borradores', ICO.bandeja, 'Borradores', borradores) +
+      item('ajustes', '#/ajustes', ICO.ajustes, 'Ajustes') +
+    '</nav>';
+}
+
+/**
+ * La hamburguesa que abre el lateral, con el contador de borradores encima: en
+ * el teléfono el menú está cerrado, y si no, no habría manera de saber que hay
+ * algo esperando.
+ */
+export function botonMenu(borradores: number): string {
+  const cuenta = borradores > 0 ? `<span class="n">${borradores}</span>` : '';
+  return `<button class="ico cuenta menu-lat" data-accion="abrir-menu" aria-label="Menú">${ICO.menu}${cuenta}</button>`;
+}
+
 /** El tile de una categoría en la grilla del Recetario (mockup 03). */
 export function tile(nombre: string, cantidad?: number): string {
   const imagen = fotoCategoria(nombre);

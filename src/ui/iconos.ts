@@ -21,5 +21,9 @@ export const ICO = {
   sol: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3' +
     'M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>'),
   puntos: svg('<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>'),
-  mas: svg('<path d="M12 5v14M5 12h14"/>')
+  mas: svg('<path d="M12 5v14M5 12h14"/>'),
+  /** Los dos destinos del menú lateral que no tenían ícono propio. */
+  casa: svg('<path d="M4 11l8-6 8 6v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-8z"/>'),
+  bandeja: svg('<path d="M4 13l2.5-7h11L20 13v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5z"/>' +
+    '<path d="M4 13h5l1 2h4l1-2h5"/>')
 } as const satisfies Record<string, string>;
