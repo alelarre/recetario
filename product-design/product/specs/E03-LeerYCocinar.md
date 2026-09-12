@@ -117,10 +117,11 @@ de las dos → **Cocinar** no se ofrece.
 
 `[nueva en la 2.1 — Hito 9]`
 
-- [ ] Tocar un paso lo **realza**, y queda realzado hasta que se toque otro. Es dónde estás.
+- [ ] **Al entrar, el paso 1 ya está realzado** `[del 2026-09-12]`: sin un paso elegido, la pantalla no dice dónde estás.
+- [ ] Tocar un paso lo **realza**, y queda realzado hasta que se toque otro. Es dónde estás. Tocar el que ya está realzado lo da por hecho y realza el siguiente.
 - [ ] Un paso se puede **marcar como hecho**: su número se reemplaza por un check y el texto se atenúa. **No se tacha** — a 22 px el tachado cruza el renglón entero y lo vuelve difícil de leer, que es lo contrario de lo que el modo cocina busca.
 - [ ] **Nada de esto persiste:** no entra al `.md`, no entra al índice, y se pierde al salir del modo cocina.
-- [ ] Al volver a entrar, no hay ningún paso realzado ni tachado.
+- [ ] Al volver a entrar, no hay ningún paso hecho y el realzado vuelve a ser el 1.
 - [ ] Solo existe en modo cocina: la receta en lectura no tiene ni realce ni tachado.
 
 **Por qué efímero:** perder el renglón es el problema concreto de cocinar, y estas

@@ -90,7 +90,8 @@ let guardandoCaptura = false;
 let errorCaptura = '';
 
 let posicionCocina: PosicionCocina = 'ingredientes';
-let pasoAqui: number | null = null;
+/** El paso actual. Al entrar es el primero: sin uno elegido, la pantalla no dice dónde estás. */
+let pasoAqui = 0;
 let pasosHechos: number[] = [];
 /**
  * Si al modo cocina se entró tocando «Cocinar», la receta ya está una entrada
@@ -336,7 +337,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       tituloCaptura = ''; notaCaptura = ''; guardandoCaptura = false; errorCaptura = '';
     }
     posicionCocina = 'ingredientes';
-    pasoAqui = null;
+    pasoAqui = 0;
     pasosHechos = [];
     scrollCocina.ingredientes = scrollCocina.pasos = 0;
     // La pantalla nueva empieza arriba: el hash no cambia el scroll, así que

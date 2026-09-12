@@ -28,6 +28,8 @@ const estado = {
   fallasAlDescartar: 0,
   /** Los títulos de las recetas que se crearon: cada una es un `.md` nuevo. */
   creadas: [] as string[],
+  /** El `.md` que devuelve `store.receta`. */
+  md: '---\ntitulo: Milanesas\n---\n',
   /** Lo que el editor tiene escrito cuando se toca Guardar. */
   formulario: {} as Record<string, string>
 };
@@ -52,7 +54,7 @@ const storeFake = {
   guardar: async () => {},
   receta: async (id: string) => {
     if (estado.falla) throw estado.falla === true ? new Error('red') : estado.falla;
-    return { entrada: entradaFalsa({ id_archivo: id }), receta: parse('---\ntitulo: Milanesas\n---\n') };
+    return { entrada: entradaFalsa({ id_archivo: id }), receta: parse(estado.md) };
   }
 };
 vi.mock('../src/store.js', () => ({ crearStore: () => storeFake }));
@@ -81,6 +83,7 @@ describe('main.ts: las rutas', () => {
     estado.fallasAlDescartar = 0;
     estado.creadas = [];
     estado.formulario = {};
+    estado.md = '---\ntitulo: Milanesas\n---\n';
     delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
   });
@@ -264,6 +267,16 @@ describe('main.ts: las rutas', () => {
     await abrir('#/r/f1/cocinar');
     await tocar('salir-cocina');
     expect(reemplazos).toEqual(['#/c/Carnes']);
+  });
+
+  it('el modo cocina arranca con el paso 1 como actual', async () => {
+    // Sin ingredientes, el modo cocina abre directo en los pasos.
+    estado.md = '---\ntitulo: Rabas\n---\n\n## Preparación\n1. Lavar.\n2. Freír.\n';
+    const { abrir, app } = await montar();
+    await abrir('#/r/f1/cocinar');
+
+    expect(app.innerHTML).toContain('<li class="aqui" data-accion="paso" data-paso="0">');
+    expect(app.innerHTML).toContain('<li data-accion="paso" data-paso="1">');
   });
 
   it('crear la receta desde un borrador reparte la nota en sus secciones', async () => {
