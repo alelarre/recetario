@@ -92,7 +92,7 @@ repetir el enunciado.
 | # | Qué | Qué hay que hacer |
 |---|---|---|
 | **P2** | **El acento parece un error** | **Resuelto** `[2026-09-12]`. `--acento` pasa a arcilla `#D98A5F` (y `--acento-suave` a `#39291D`): queda a 14.6 de distancia percibida del error, contra 8.1 de la terracota. Se eligió entre cinco candidatos dibujados con el CSS de la app. La regla de §2.3 pasó de «20° de matiz respecto del acento» a «distancia percibida de al menos 12», porque la arcilla queda a 15° de Carnes pero se distingue por saturación. Decisión en `decision-log.md`. |
-| **P3** | **El chevron de los desplegables queda pegado al margen derecho** | En los `select` de categoría y tags del editor. Es padding del control, no del sistema. |
+| **P3** | **El chevron de los desplegables queda pegado al margen derecho** | **Resuelto** `[2026-09-12]`. El `select` del navegador ignoraba el padding. Ahora `.campo select` (`src/ui/base.css`) dibuja su propio chevron, con el trazo de los íconos, a 16 px del borde, y reserva el lugar para que un texto largo no se le monte encima. |
 | **P4** | **«Borrar receta» lleva emoji de tacho** | El único botón de peligro de la app. |
 | **P5** | **El editor: la completitud adentro de la ficha, el borrar afuera** | El conmutador de completitud tiene hoy ficha propia y debería estar en la ficha principal del formulario. Y *Borrar receta* no debería estar dentro de una `.ficha`: es una acción destructiva al pie, no un campo más. |
 | **P6** | **El editor: encabezado fijo** | Como en la receta abierta (C03.1.2b), que ya queda pegado arriba. |

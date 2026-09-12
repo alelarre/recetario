@@ -200,6 +200,15 @@ button.chip { cursor: pointer; }
 [data-pills]:not(:empty) { margin-bottom: var(--e-3); }
 .chip svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;
             stroke-linecap: round; opacity: .7; }
+/* El chevron del desplegable es propio: el del navegador ignora el padding y
+   quedaba pegado al borde derecho. Es el trazo de los íconos (§3.4), a 16 px
+   del borde. El color es `--fg-2` escrito a mano: adentro de un `url()` no
+   llegan las variables. */
+.campo select { -webkit-appearance: none; appearance: none; cursor: pointer;
+                padding-right: calc(var(--e-4) + 16px + var(--e-2));
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B3A99B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+                background-repeat: no-repeat; background-size: 16px;
+                background-position: right var(--e-4) center; }
 .par { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-3); }
 .par .campo { margin-bottom: 0; }
 
