@@ -148,10 +148,10 @@
 .wake .btn { width: 100%; min-height: 64px; }
 
 /* ---- Editor (mockup 06) ---- */
-/* El estado de la receta: dos posiciones, una sola verdadera. Reusa el lenguaje
-   del chip activo —`--acento-suave` con borde y texto de acento— para la
-   posición elegida, y el gris de los controles para la otra. Deshabilitada usa
-   el mismo apagado que un botón sin acción disponible. */
+/* El estado de la receta: dos posiciones, una sola verdadera. La elegida se
+   invierte —fondo claro, texto oscuro— en vez de usar el acento: el acento es
+   de las acciones de la app, y en terracota sobre un estado se lee como alerta.
+   Deshabilitada usa el mismo apagado que un botón sin acción disponible. */
 .conm-doble { display: flex; gap: var(--e-2); }
 .conm-doble button { flex: 1; min-height: 48px; padding: 0 var(--e-3);
                      display: inline-flex; align-items: center; justify-content: center;
@@ -160,8 +160,7 @@
                      border: 1px solid var(--borde); border-radius: var(--r-medio);
                      font: 600 var(--txt-base)/1 var(--tipo); }
 .conm-doble button:hover:not([disabled]) { color: var(--fg); }
-.conm-doble button.on { background: var(--acento-suave); border-color: var(--acento);
-                        color: var(--acento); }
+.conm-doble button.on { background: var(--fg); border-color: var(--fg); color: var(--bg); }
 .conm-doble button[disabled] { background: none; border-color: var(--borde);
                                color: var(--fg-3); cursor: default; }
 /* La posición «Incompleta» lleva el mismo círculo que la tarjeta. */
