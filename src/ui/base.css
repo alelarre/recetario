@@ -151,6 +151,8 @@
 /* El chip del sistema (§6.10) es una etiqueta; el del editor se saca, así que
    lleva su cruz. La regla vive acá y no en tokens.css, que es copia literal. */
 button.chip { cursor: pointer; }
+/* Un tag que la app se reserva: el aviso es una línea, sin caja ni botón. */
+.error-tag { margin: var(--e-1) 0 0; font-size: var(--txt-chico); color: var(--error); }
 /* Un tono más claro que `--surface-alta`, que es lo que trae el sistema: en el
    editor lo separa del campo de agregar, que comparte ese fondo, y en la receta
    lo despega de la ficha. El mismo chip en las dos pantallas. */

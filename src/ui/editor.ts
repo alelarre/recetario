@@ -14,7 +14,7 @@
 import { escapar } from './markdown.js';
 import { encabezado, aviso } from './componentes.js';
 import { ICO } from './iconos.js';
-import { DIFICULTADES, dificultadValida } from '../catalogo.js';
+import { DIFICULTADES, dificultadValida, tagReservado } from '../catalogo.js';
 import { estaCompleta } from '../recipe.js';
 import type { Receta, Entrada } from '../tipos.js';
 import type { Categoria } from '../store.js';
@@ -79,7 +79,10 @@ export function renderEditor(
       `<div class="chips" data-pills>${tags.map(pillTag).join('')}</div>` +
       `<input type="hidden" name="tags" value="${escapar(tags.join(', '))}">` +
       '<input data-tag-nuevo list="tags-conocidos" placeholder="Agregar un tag y Enter">' +
-      `<datalist id="tags-conocidos">${tagsConocidos.map(t => `<option value="${escapar(t)}">`).join('')}</datalist>` +
+      // Los reservados no se sugieren: no se pueden escribir a mano.
+      `<datalist id="tags-conocidos">${tagsConocidos.filter(t => !tagReservado(t))
+        .map(t => `<option value="${escapar(t)}">`).join('')}</datalist>` +
+      '<p class="error-tag" hidden>Tag no permitido</p>' +
     '</div>' +
     '<div class="par" style="margin-bottom:var(--e-4)">' +
       campo('rinde', 'Rinde', receta.rinde) +

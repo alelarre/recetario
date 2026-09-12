@@ -48,6 +48,18 @@ describe('renderEditor', () => {
     expect(html).toContain('data-tag-nuevo');
   });
 
+  it('los tags reservados no se sugieren, y el aviso está listo pero oculto', () => {
+    const html = renderEditor({
+      entrada: null, receta: cargada, categorias,
+      tagsConocidos: ['horno', 'incompleto', 'favorito', 'probar', 'rápido']
+    });
+    const lista = html.slice(html.indexOf('<datalist'), html.indexOf('</datalist>'));
+    expect(lista).toContain('horno');
+    expect(lista).toContain('rápido');
+    for (const t of ['incompleto', 'favorito', 'probar']) expect(lista).not.toContain(t);
+    expect(html).toContain('<p class="error-tag" hidden>Tag no permitido</p>');
+  });
+
   it('lo que viaja en el formulario es el campo oculto, no lo a medio escribir', () => {
     const html = dibujar();
     expect(html).toContain('<input type="hidden" name="tags" value="fritura, rápido">');

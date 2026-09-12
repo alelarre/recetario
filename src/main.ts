@@ -5,6 +5,7 @@ import { crearDrive } from './drive.js';
 import { crearSheets } from './sheets.js';
 import { crearStore } from './store.js';
 import { parse } from './recipe.js';
+import { tagReservado } from './catalogo.js';
 import { crearRouter, parsearHash } from './ui/router.js';
 import { escapar } from './ui/markdown.js';
 import { renderRecetario } from './ui/recetario.js';
@@ -451,11 +452,20 @@ function sincronizarTags(): void {
   if (oculto) oculto.value = pills.map(p => p.dataset['valor'] ?? '').filter(Boolean).join(', ');
 }
 
+/** El aviso de tag reservado, que aparece y se va sin redibujar el formulario. */
+function avisarTag(mostrar: boolean): void {
+  const aviso = document.querySelector<HTMLElement>('#app .error-tag');
+  if (aviso) aviso.hidden = !mostrar;
+}
+
 /** Agrega el tag escrito, si no estaba ya. Devuelve si lo agregó. */
 function agregarTag(valor: string): boolean {
   const tag = valor.trim().replace(/,+$/, '').trim();
   const contenedor = document.querySelector('[data-pills]');
   if (!tag || !contenedor) return false;
+  // Los reservados nombran estados que calcula la app: no se escriben a mano.
+  if (tagReservado(tag)) { avisarTag(true); return false; }
+  avisarTag(false);
   const yaEsta = [...contenedor.querySelectorAll<HTMLElement>('[data-valor]')]
     .some(p => (p.dataset['valor'] ?? '').toLowerCase() === tag.toLowerCase());
   if (!yaEsta) contenedor.insertAdjacentHTML('beforeend', pillTag(tag));
@@ -782,6 +792,8 @@ app.addEventListener('input', (e) => {
 app.addEventListener('keydown', (e) => {
   const campo = (e.target as HTMLInputElement | null);
   if (!campo?.dataset || !('tagNuevo' in campo.dataset)) return;
+  // Seguir escribiendo borra el aviso del intento anterior.
+  if ((e as KeyboardEvent).key.length === 1) avisarTag(false);
   const tecla = (e as KeyboardEvent).key;
   if (tecla !== 'Enter' && tecla !== ',') return;
   // Enter dentro de un formulario lo manda: acá el Enter es «agregá el tag».

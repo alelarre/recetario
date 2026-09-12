@@ -27,6 +27,23 @@ export const COLUMNAS = [
 
 export const DIFICULTADES = ['fácil', 'media', 'difícil'] as const;
 
+/**
+ * Tags que la app se reserva: nombran estados que calcula o va a calcular ella,
+ * no cosas de la receta. Escribirlos a mano crearía un dato paralelo que miente
+ * en cuanto alguien edita el `.md` por afuera, que es justo lo que la
+ * completitud derivada vino a evitar (F05.3).
+ *
+ * `incompleto` era el tag manual de v1 y hoy se deriva; `favorito` y `probar`
+ * todavía no se usan y quedan tomados desde ahora.
+ */
+export const TAGS_RESERVADOS = ['incompleto', 'favorito', 'probar'] as const;
+
+/** Si el tag es uno de los reservados, sin importar mayúsculas ni acentos. */
+export function tagReservado(valor: unknown): boolean {
+  const n = normalizar(String(valor ?? ''));
+  return (TAGS_RESERVADOS as readonly string[]).some(t => normalizar(t) === n);
+}
+
 /** Un valor que no matchea cae en "sin definir" en vez de romper el filtro (§3.2). */
 export function dificultadValida(valor: unknown): string {
   // Defender contra cualquier tipo

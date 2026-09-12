@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { tagReservado, TAGS_RESERVADOS } from '../src/catalogo.js';
 import { invalido } from './aserciones.js';
 import { parse } from '../src/recipe.js';
 import { COLUMNAS, filaDesde, entradaDesdeFila, dificultadValida } from '../src/catalogo.js';
@@ -190,5 +191,29 @@ describe('dificultadValida', () => {
     expect(dificultadValida({})).toBe('');
     expect(dificultadValida([])).toBe('');
     expect(dificultadValida(true)).toBe('');
+  });
+});
+
+describe('tagReservado', () => {
+  it('los tres tags que la app se reserva', () => {
+    expect([...TAGS_RESERVADOS]).toEqual(['incompleto', 'favorito', 'probar']);
+    for (const t of TAGS_RESERVADOS) expect(tagReservado(t)).toBe(true);
+  });
+
+  it('no distingue mayúsculas ni acentos', () => {
+    expect(tagReservado('INCOMPLETO')).toBe(true);
+    expect(tagReservado('Favorito')).toBe(true);
+    expect(tagReservado(' probar ')).toBe(true);
+  });
+
+  it('cualquier otro tag se puede usar', () => {
+    for (const t of ['horno', 'rápido', 'incompletos', 'favoritos']) {
+      expect(tagReservado(t)).toBe(false);
+    }
+  });
+
+  it('no lanza con lo que no es texto', () => {
+    expect(tagReservado(null)).toBe(false);
+    expect(tagReservado(42)).toBe(false);
   });
 });
