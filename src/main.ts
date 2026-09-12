@@ -14,7 +14,7 @@ import { renderCategoria } from './ui/categoria.js';
 import { renderResultados } from './ui/resultados.js';
 import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
-import { renderEditor, recetaDesdeFormulario, pillTag } from './ui/editor.js';
+import { renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida } from './ui/editor.js';
 import { crearBorradores } from './borradores.js';
 import { renderBorradores, renderBorrador } from './ui/borradores.js';
 import { renderCaptura } from './ui/captura.js';
@@ -69,6 +69,12 @@ let menuAbierto = false;
 let confirmandoDescarte = false;
 /** El borrador se edita con el mismo formulario con el que se creó, precargado. */
 let editandoBorrador = false;
+/**
+ * El editor abierto: su hash y cómo estaba el formulario al dibujarlo. Salir
+ * con el formulario distinto pregunta antes (C04.1.1). La comparación es contra
+ * esta foto, no contra el `.md` de Drive: no se lee nada para decidir.
+ */
+let editorAbierto: { hash: string; formulario: string } | null = null;
 
 /** La captura: lo escrito sobrevive al error y a la reautenticación (R3). */
 /** Lo que el reindexado dejó afuera, para la sección de avisos de Ajustes. */
@@ -121,6 +127,18 @@ const categoriasDelArranque = () =>
   estadoArranque?.estado === 'listo' ? estadoArranque.categorias : [];
 
 const pintar = (html: string): void => { app.innerHTML = html; };
+
+/** Lo que el editor tiene escrito, como texto comparable. Los tags y la completitud viajan en campos ocultos. */
+const formularioActual = (): string => {
+  const form = document.querySelector<HTMLFormElement>('[data-formulario]');
+  return form ? JSON.stringify([...new FormData(form)]) : '';
+};
+
+/** Recién dibujado, el editor no tiene cambios: su formulario es la foto contra la que se compara. */
+const abrirEditor = (html: string): void => {
+  pintar(html);
+  editorAbierto = { hash: location.hash, formulario: formularioActual() };
+};
 
 /**
  * Que la pantalla no se apague mientras se cocina: es la fricción más real de
@@ -286,11 +304,28 @@ function observarTramo(): void {
  * el mensaje crudo de Google (R1).
  */
 async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
+  const cambiaDePantalla = !vistaActual || ruta.vista !== vistaActual.vista
+    || ruta.params.nombre !== vistaActual.params.nombre || ruta.params.id !== vistaActual.params.id;
+
+  // Salir del editor con cambios pregunta antes (C04.1.1). El `hashchange` no
+  // se puede cancelar: cuando llega, el volver del encabezado o el gesto de
+  // atrás ya cambiaron la URL. Así que no se dibuja la pantalla nueva —el
+  // formulario sigue en el DOM con lo escrito—, la URL vuelve a ser la del
+  // editor, y se pregunta.
+  if (cambiaDePantalla && editorAbierto && formularioActual() !== editorAbierto.formulario) {
+    history.pushState(null, '', editorAbierto.hash);
+    if (!document.querySelector('[data-salida]')) {
+      document.querySelector('[data-formulario]')?.insertAdjacentHTML('afterbegin', confirmacionSalida);
+    }
+    window.scrollTo?.(0, 0);
+    return;
+  }
+
   // Cambiar de categoría o de vista limpia lo que era de la anterior: si no,
   // se entra a otra categoría y no se ve nada porque quedó filtrando por un
   // tag que ahí no existe, sin forma de darse cuenta.
-  if (!vistaActual || ruta.vista !== vistaActual.vista || ruta.params.nombre !== vistaActual.params.nombre
-      || ruta.params.id !== vistaActual.params.id) {
+  if (cambiaDePantalla) {
+    editorAbierto = null;
     tagsActivos = [];
     visibles = TRAMO;
     // Navegar cierra el menú: se abrió para elegir a dónde ir.
@@ -413,7 +448,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     case 'editar':
       try {
         const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
-        return pintar(renderEditor({
+        return abrirEditor(renderEditor({
           entrada, receta, categorias: categoriasDelArranque(),
           tagsConocidos: store.tagsDe().map(t => t.tag),
           confirmandoBorrado: confirmandoDescarte
@@ -445,7 +480,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
           });
         }
       }
-      return pintar(renderEditor({
+      return abrirEditor(renderEditor({
         entrada: null, receta, categorias: categoriasDelArranque(),
         tagsConocidos: store.tagsDe().map(t => t.tag)
       }));
@@ -730,6 +765,8 @@ app.addEventListener('click', async (e) => {
   }
   if (accion === 'editar') { location.hash = `#/r/${vistaActual?.params['id'] ?? ''}/editar`; return; }
   if (accion === 'cancelar') return history.back();
+  if (accion === 'seguir-editando') { document.querySelector('[data-salida]')?.remove(); return; }
+  if (accion === 'salir-sin-guardar') { editorAbierto = null; return history.back(); }
   if (accion === 'reconectar') {
     try {
       // Si el arranque nunca llegó a "listo" (solo-lectura), reintentar todo
@@ -787,7 +824,9 @@ app.addEventListener('click', async (e) => {
       } else {
         await store.guardar(id, nueva, { carpetaDestino: carpetaId });
       }
-      // Nada confirma el éxito: al terminar, vuelve a la receta.
+      // Nada confirma el éxito: al terminar, vuelve a la receta. Lo escrito ya
+      // está en Drive, así que salir no tiene nada que preguntar.
+      editorAbierto = null;
       return history.back();
     } catch (err) {
       console.error(err);
@@ -802,6 +841,7 @@ app.addEventListener('click', async (e) => {
     try {
       await store.borrar(id);
       confirmandoDescarte = false;
+      editorAbierto = null;
       // Vuelve a la lista de donde se venía; el archivo queda en la papelera
       // de Drive, que es la red de seguridad y es del usuario. Y la receta
       // borrada no queda en el historial.

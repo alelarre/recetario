@@ -31,6 +31,19 @@ export interface ArgsEditor {
   confirmandoBorrado?: boolean;
 }
 
+/**
+ * Salir con cambios pendientes pregunta antes (C04.1.1). Se inserta arriba del
+ * formulario sin redibujarlo, por lo mismo que `pillTag`: redibujar perdería
+ * justo lo que se está preguntando si descartar.
+ */
+export const confirmacionSalida =
+  '<div class="ficha" data-salida style="border-color:var(--error)">' +
+    '<p class="lee" style="margin:0 0 var(--e-4)">¿Salir sin guardar los cambios?</p>' +
+    '<div class="acciones">' +
+      '<button class="btn sec" data-accion="seguir-editando" type="button">Seguir editando</button>' +
+      '<button class="btn pel" data-accion="salir-sin-guardar" type="button">Salir</button>' +
+    '</div></div>';
+
 const campo = (nombre: string, etiqueta: string, valor?: string | null, ph = ''): string =>
   `<label class="campo"><span>${escapar(etiqueta)}</span>` +
   `<input name="${nombre}" value="${escapar(valor ?? '')}"${ph ? ` placeholder="${escapar(ph)}"` : ''}></label>`;

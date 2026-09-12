@@ -95,11 +95,21 @@ describe('main.ts: las rutas', () => {
         if (ev === 'change') cambios.push(fn);
       }
     };
+    /** Lo que se insertó arriba del formulario sin redibujarlo. */
+    const preguntas: string[] = [];
+    const formulario = {
+      insertAdjacentHTML: (_donde: string, html: string) => { preguntas.push(html); }
+    };
     const listeners: Record<string, () => void> = {};
     const vueltasAtras: number[] = [];
     const scrolls: number[] = [];
     global.document = comoGlobal<Document>({
-      querySelector: (sel: string) => (sel === '#app' ? app : sel === '[data-formulario]' ? {} : null),
+      querySelector: (sel: string) => {
+        if (sel === '#app') return app;
+        if (sel === '[data-formulario]') return formulario;
+        if (sel === '[data-salida]') return preguntas.length ? { remove: () => { preguntas.length = 0; } } : null;
+        return null;
+      },
       querySelectorAll: () => [], addEventListener: () => {}
     });
     global.window = comoGlobal<Window & typeof globalThis>({
@@ -109,6 +119,7 @@ describe('main.ts: las rutas', () => {
     // `replace` es lo que usan las navegaciones de cierre: no agrega una
     // entrada al historial, y el doble lo distingue de asignar `hash`.
     const reemplazos: string[] = [];
+    const empujados: string[] = [];
     global.location = comoGlobal<Location>({
       hash: '', pathname: '/recetario/', search: '',
       replace: (h: string) => { reemplazos.push(h); global.location.hash = h; }
@@ -119,7 +130,8 @@ describe('main.ts: las rutas', () => {
       [Symbol.iterator]() { return Object.entries(estado.formulario)[Symbol.iterator](); }
     };
     global.history = comoGlobal<History>({
-      back: () => { vueltasAtras.push(1); }, replaceState: () => {}, length: 5
+      back: () => { vueltasAtras.push(1); }, replaceState: () => {}, length: 5,
+      pushState: (_estado: unknown, _titulo: string, url: string) => { empujados.push(url); global.location.hash = url; }
     });
 
     await import('../src/main.js');
@@ -130,6 +142,8 @@ describe('main.ts: las rutas', () => {
       vueltasAtras,
       scrolls,
       reemplazos,
+      empujados,
+      preguntas,
       abrir: async (hash: string) => {
         global.location.hash = hash;
         listeners['hashchange']?.();
@@ -322,6 +336,94 @@ describe('main.ts: las rutas', () => {
 
     expect(estado.creadas).toEqual(['Focaccia']);
     expect(estado.descartados).toEqual(['b1']);
+  });
+
+  describe('salir del editor con cambios pendientes pregunta antes (C04.1.1)', () => {
+    it('sin cambios, salir no pregunta', async () => {
+      estado.formulario = { titulo: 'Milanesas' };
+      const { abrir, app, empujados, preguntas } = await montar();
+      await abrir('#/r/f1/editar');
+
+      await abrir('#/r/f1');
+
+      expect(empujados).toEqual([]);
+      expect(preguntas).toEqual([]);
+      expect(app.innerHTML).not.toContain('data-formulario');
+    });
+
+    it('con cambios, el atrás no dibuja la pantalla anterior: vuelve al editor y pregunta', async () => {
+      estado.formulario = { titulo: 'Milanesas' };
+      const { abrir, app, empujados, preguntas } = await montar();
+      await abrir('#/r/f1/editar');
+
+      estado.formulario = { titulo: 'Milanesas a la napolitana' };
+      await abrir('#/r/f1');
+
+      expect(empujados).toEqual(['#/r/f1/editar']);
+      expect(app.innerHTML).toContain('data-formulario');
+      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
+    });
+
+    it('escribir y borrar lo escrito no cuenta como cambio', async () => {
+      estado.formulario = { titulo: 'Milanesas' };
+      const { abrir, empujados } = await montar();
+      await abrir('#/r/f1/editar');
+
+      estado.formulario = { titulo: 'Milanesas' };
+      await abrir('#/r/f1');
+
+      expect(empujados).toEqual([]);
+    });
+
+    it('seguir editando saca la pregunta y se queda en el editor', async () => {
+      estado.formulario = { titulo: 'Milanesas' };
+      const { abrir, tocar, preguntas, vueltasAtras } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = { titulo: 'Otra cosa' };
+      await abrir('#/r/f1');
+
+      await tocar('seguir-editando');
+
+      expect(preguntas).toEqual([]);
+      expect(vueltasAtras).toEqual([]);
+    });
+
+    it('salir sin guardar sale de verdad', async () => {
+      estado.formulario = { titulo: 'Milanesas' };
+      const { abrir, tocar, app, vueltasAtras } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = { titulo: 'Otra cosa' };
+      await abrir('#/r/f1');
+
+      await tocar('salir-sin-guardar');
+      await abrir('#/r/f1');
+
+      expect(vueltasAtras).toHaveLength(1);
+      expect(app.innerHTML).not.toContain('data-formulario');
+    });
+
+    it('guardar no pregunta al volver', async () => {
+      estado.formulario = { titulo: 'Milanesas' };
+      const { abrir, tocar, empujados } = await montar();
+      await abrir('#/r/f1/editar');
+
+      estado.formulario = { titulo: 'Milanesas a la napolitana' };
+      await tocar('guardar');
+      await abrir('#/r/f1');
+
+      expect(empujados).toEqual([]);
+    });
+
+    it('vale también para la receta nueva', async () => {
+      estado.formulario = { titulo: '' };
+      const { abrir, empujados } = await montar();
+      await abrir('#/nueva');
+
+      estado.formulario = { titulo: 'Pan' };
+      await abrir('#/');
+
+      expect(empujados).toEqual(['#/nueva']);
+    });
   });
 
   it('volver mientras se edita un borrador muestra el borrador, no la lista', async () => {

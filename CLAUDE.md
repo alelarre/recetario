@@ -44,8 +44,9 @@ receta se eliminó por no tener contenido, y los **tags del editor** pasaron a
 ser pills con su cruz.
 
 Falta verificar a mano lo que ningún test alcanza: el **Share Target real**
-(necesita la PWA instalada en Android), el foco del teclado en la captura y la
-posición de scroll al conmutar en el modo cocina.
+(necesita la PWA instalada en Android), el foco del teclado en la captura, la
+posición de scroll al conmutar en el modo cocina y el gesto de atrás de Android
+en el editor con cambios sin guardar.
 
 Para lo demás, según lo que necesites:
 
@@ -238,9 +239,10 @@ Lo que ya no está pendiente:
   suma `foto` y `completa`, y a 3 cuando `completa` dejó de calcularse y pasó a
   copiarse del archivo. Con ~60 recetas son unos 40 segundos; con las miles
   de la migración va a ser el problema de la línea de arriba.
-- **Tres cosas del rediseño no las cubre ningún test:** el Share Target real
-  (necesita la PWA instalada en Android), el foco del teclado en la captura y la
-  posición de scroll al conmutar en el modo cocina.
+- **Cuatro cosas no las cubre ningún test:** el Share Target real
+  (necesita la PWA instalada en Android), el foco del teclado en la captura, la
+  posición de scroll al conmutar en el modo cocina y el gesto de atrás de
+  Android en el editor con cambios sin guardar (`BACKLOG.md` P7).
 - **El índice quedó con cada receta dos veces** (2026-09-12): 122 filas para 61
   recetas. La causa probable son dos reconstrucciones solapadas —dos pestañas
   abiertas, o *Reindexar* tocado mientras el arranque ya reconstruía—:
