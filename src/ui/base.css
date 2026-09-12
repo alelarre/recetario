@@ -105,7 +105,11 @@
 /* ---- Modo cocina (mockup 02) ---- */
 .encoc { height: 56px; display: flex; align-items: center; padding: 0 var(--e-2);
          border-bottom: 1px solid var(--borde); }
-.encoc .tit { flex: 1; font-weight: 600; }
+/* Centrado como el encabezado del resto de la app, y recortado: el chevron y
+   Salir no miden lo mismo, así que sin `min-width: 0` un título largo empuja
+   el botón fuera de la pantalla. */
+.encoc .tit { flex: 1; font-weight: 600; text-align: center; min-width: 0;
+              white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .conm { position: sticky; top: 0; z-index: 2; display: flex; background: var(--surface);
         border-bottom: 1px solid var(--borde); }
 .conm button { flex: 1; height: 64px; background: none; border: 0; cursor: pointer;
