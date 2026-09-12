@@ -69,7 +69,8 @@ export function renderCaptura(
   const campoNota =
     '<label class="campo" style="margin-bottom:var(--e-2)"><span>Nota</span>' +
     `<textarea name="nota" rows="6">${escapar(nota)}</textarea></label>` +
-    '<details class="esbozo" open>' +
+    // Colapsado: es referencia para cuando hace falta, no algo para leer cada vez.
+    '<details class="esbozo">' +
       '<summary>Estructura básica</summary>' +
       `<pre>${escapar(ESBOZO)}</pre>` +
     '</details>';

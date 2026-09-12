@@ -48,6 +48,8 @@ describe('Captura', () => {
     const html = renderCaptura(base);
     expect(html.indexOf('name="nota"')).toBeLessThan(html.indexOf('class="esbozo"'));
     expect(html).toContain('Estructura básica');
+    // Colapsado: el bloque está, pero no ocupa la pantalla hasta que se abre.
+    expect(html).not.toContain('<details class="esbozo" open>');
     expect(html).toContain('_Descripción_');
     for (const seccion of ['## Ingredientes', '## Preparación', '## Variaciones', '## Notas']) {
       expect(html).toContain(seccion);
