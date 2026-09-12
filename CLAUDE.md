@@ -55,7 +55,7 @@ Para lo demás, según lo que necesites:
 | Qué tiene que hacer cada cosa | `product-design/product/specs/` — 91 capacidades con criterios de aceptación y edge cases. Las **reglas transversales** están en `E05-Cimientos.md` §Reglas. |
 | Cómo se ve | `product-design/ux/design-system.md`, y `ux/mockups/index.html` para verlo funcionando |
 | Cómo habla la app | `product-design/ux/brand-identity.md` §3 y §4 |
-| Por qué algo es así | `product-design/plan/decision-log.md` — 97 decisiones con lo descartado |
+| Por qué algo es así | `product-design/plan/decision-log.md` — 98 decisiones con lo descartado |
 | Qué quedó afuera a propósito | `product-design/plan/BACKLOG.md` |
 
 ### Cómo quedó el código
@@ -168,7 +168,7 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | Funcionar sin conexión | Salió de v1 el 2026-09-02, y el rediseño lo cerró del todo: **no hay copia local del índice** (C05.4.2). Sin la lectura de Drive no hay con qué dibujar, y esa es la consecuencia buscada. `cache.ts` y su IndexedDB se eliminaron. |
 | AppSheet, Apps Script, apps nativas, Artifact de Claude | Evaluadas como plataforma y descartadas (§2). |
 | Pestañas en el detalle | Costaban cuatro toques para leer una receta entera y escondían las notas y las variaciones justo cuando se cocina. La receta se lee de corrido, en una pila de fichas. **El conmutador volvió, pero solo dentro del modo cocina**, que es donde notas y variaciones no se usan. |
-| Derivar el color de categoría de un hash del nombre | Medido: con 16 categorías siempre agrupa. `Pescados y mariscos` y `Ensaladas` caían en el mismo matiz exacto. La paleta es una lista escrita a mano: quince colores a 18° entre sí y a 20° del acento, más el neutro de `Otros` (design-system §2.3), y vive en `src/ui/tokens.css` como tokens `--cat-*`. |
+| Derivar el color de categoría de un hash del nombre | Medido: con 16 categorías siempre agrupa. `Pescados y mariscos` y `Ensaladas` caían en el mismo matiz exacto. La paleta es una lista escrita a mano: quince colores a 18° entre sí y a una distancia percibida de al menos 12 del acento, más el neutro de `Otros` (design-system §2.3), y vive en `src/ui/tokens.css` como tokens `--cat-*`. |
 | Identificar las categorías por una abreviación de 3 letras | Hay que aprenderlas. La foto se reconoce sin memorizar nada, y el nombre completo está escrito al lado igual. |
 | Las fotos de categoría en `public/` o en Drive | `sw.js` sirve caché-primero solo `/assets/`; en `public/` serían 16 pedidos de red por apertura. Desde Drive haría falta el token y un object URL, que es lo que hizo descartar las fotos de receta. Van en `src/categorias/`, importadas con `import.meta.glob`. |
 | Ordenar el home por cantidad de recetas | Reacomoda la grilla cada vez que entra una receta, y la posición de la categoría es justo lo que se aprende. Alfabético. El **número** sí se muestra: un badge en la esquina del tile, y sólo si la categoría tiene algo (2026-09-11, elegido sobre ponerlo en la banda del nombre). |
@@ -182,7 +182,7 @@ El planificador está diseñado y queda afuera a propósito
 (`product-design/plan/BACKLOG.md`).
 
 **Los pendientes de la app usada de verdad están en `BACKLOG.md` §6**
-`[2026-09-12]`, con identificador estable —P1 a P14— para nombrarlos sin repetir
+`[2026-09-12]`, con identificador estable —P1 a P15— para nombrarlos sin repetir
 el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5). Tres de ellos se miran antes que el resto: **P2** —el

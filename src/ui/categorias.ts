@@ -34,7 +34,7 @@ const porSlug = new Map<string, string>(
 
 /**
  * El color de cada categoría es un token de `tokens.css`: quince matices a 18°
- * entre sí y a 20° del acento (design-system §2.3). Acá vive solo el mapa de
+ * entre sí y a una distancia percibida de 12 del acento (design-system §2.3). Acá vive solo el mapa de
  * carpeta → token; los valores están en un lugar y son los del sistema visual.
  */
 const COLORES: Record<string, string> = {

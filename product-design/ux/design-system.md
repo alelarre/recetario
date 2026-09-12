@@ -89,14 +89,19 @@ identidad prohíbe.
 
 | Token | Valor | Uso | Contraste |
 |---|---|---|---|
-| `--acento` | `#E0663C` | Terracota. La acción primaria, el foco, el tag activo. | **4.9:1** sobre `--surface` |
-| `--acento-suave` | `#3A2018` | El fondo de un elemento con el acento aplicado. | — |
+| `--acento` | `#D98A5F` | Arcilla `[del 2026-09-12]`. La acción primaria, el foco, el tag activo. | **6.2:1** sobre `--surface` |
+| `--acento-suave` | `#39291D` | El fondo de un elemento con el acento aplicado. | — |
 | `--error` | `#D95F52` | **Solo para operaciones que fallaron.** | **4.6:1** |
 | `--error-suave` | `#33191A` | El fondo del aviso con acción. | — |
 
 **No hay token de éxito ni de advertencia.** El éxito no se comunica
 (`brand-identity.md` §3.2), y lo que en otro producto sería una advertencia —una
 receta incompleta— acá no es un problema y usa `--fg-3`.
+
+**El acento y el error se tienen que distinguir de reojo:** una distancia
+percibida (CIEDE2000) de al menos 12 entre los dos. La terracota anterior
+(`#E0663C`) estaba a 8, lo mismo que dos categorías vecinas, y los botones
+primarios se leían como error. La arcilla está a 14.6.
 
 **Regla dura: el error es solo para errores y para lo destructivo.** Una receta
 sin ingredientes, un archivo ignorado o una categoría vacía **nunca** usan
@@ -113,7 +118,7 @@ Quince colores, uno por categoría, más un neutro para `Otros`.
 
 **Reglas de la paleta:**
 
-1. **Separación mínima de 18° de matiz**, y **20° mínimos respecto del acento**. 18° es la distancia a la que dos colores se distinguen sin compararlos lado a lado, que es como se ven en una lista. La segunda regla existe porque el acento es de la app y una categoría no puede parecerse a un botón: por eso la serie arranca en 36° y deja libre todo el vecindario de la terracota.
+1. **Separación mínima de 18° de matiz**, y **una distancia percibida (CIEDE2000) de al menos 12 respecto del acento** `[del 2026-09-12; antes eran 20° de matiz]`. 18° es la distancia a la que dos colores se distinguen sin compararlos lado a lado, que es como se ven en una lista. La segunda regla existe porque el acento es de la app y una categoría no puede parecerse a un botón: por eso la serie arranca en 36° y deja libre el vecindario del acento. Se mide en distancia percibida y no en matiz porque la saturación también separa: la arcilla está a 15° de Carnes pero a 14.1 de distancia, porque Carnes es un beige apagado. Carnes es la más cercana.
 2. **Se evita el rango 255°-300°**, el violeta corporativo que la identidad prohíbe.
 3. **Luminosidad compensada por matiz:** los amarillo-verdes (55°-115°) van más oscuros y los azules (175°-255°) más claros, porque a igual valor de HSL se perciben distinto.
 4. **Todos superan 4.5:1 sobre `--surface`.** El más bajo es Entradas y picadas, con 4.9:1.
@@ -194,7 +199,7 @@ salto de texto al cargar.
 elegía IBM Plex Sans porque es humanista, y ese carácter era lo que la tipografía
 aportaba a *doméstico*. En Android la fuente del sistema es Roboto, que es
 neogrotesca: correcta y neutra. **La calidez pasa a depender enteramente del
-color** —los neutros cálidos y la terracota—, así que esos tokens dejan de tener
+color** —los neutros cálidos y la arcilla—, así que esos tokens dejan de tener
 margen para enfriarse.
 
 **Cifras tabulares:** se piden con `font-variant-numeric: tabular-nums`, que

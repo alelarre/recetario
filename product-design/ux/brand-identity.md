@@ -62,7 +62,7 @@ lugares concretos:
 | Riesgo | Cómo se evita |
 |---|---|
 | El gris azulado | **Todos los neutros son cálidos.** Ningún gris del sistema tiene matiz frío. |
-| El acento violeta | El acento es una **terracota**, del lado cálido del círculo. |
+| El acento violeta | El acento es una **arcilla**, del lado cálido del círculo. |
 | Los bordes translúcidos de 1px | Los bordes son **opacos y visibles**: se ven como bordes, no como una insinuación. |
 
 ### 2.3 El color vive en el contenido
@@ -98,7 +98,7 @@ un precio que la tipografía acá no se gana.
 **La consecuencia es que la tipografía deja de aportar lo doméstico.** La primera
 versión elegía una humanista justamente por eso; la del sistema es neutra. **La
 calidez queda entera del lado del color**, así que los neutros cálidos y la
-terracota dejan de ser una preferencia y pasan a ser lo único que sostiene el
+arcilla dejan de ser una preferencia y pasan a ser lo único que sostiene el
 quinto adjetivo.
 
 La escala está en `design-system.md` §3.
