@@ -3,9 +3,26 @@ import { parse, serialize, sePuedeTerminar } from '../src/recipe.js';
 import { recetaFalsa } from './dobles.js';
 
 describe('completa: es un dato del archivo, no un cálculo', () => {
-  it('se lee tal cual del frontmatter', () => {
+  it('se lee del frontmatter, donde dice «sí» o «no»', () => {
+    expect(parse('---\ntitulo: A\ncompleta: sí\n---\n').completa).toBe(true);
+    expect(parse('---\ntitulo: A\ncompleta: no\n---\n').completa).toBe(false);
+  });
+
+  it('«si» sin tilde vale igual, y las mayúsculas no importan', () => {
+    for (const valor of ['si', 'Sí', 'SI', ' sí ']) {
+      expect(parse(`---\ntitulo: A\ncompleta: ${valor}\n---\n`).completa).toBe(true);
+    }
+  });
+
+  it('`true` sigue valiendo: es lo que escribían los archivos anteriores', () => {
     expect(parse('---\ntitulo: A\ncompleta: true\n---\n').completa).toBe(true);
     expect(parse('---\ntitulo: A\ncompleta: false\n---\n').completa).toBe(false);
+  });
+
+  it('cualquier otro valor se lee como incompleta', () => {
+    for (const valor of ['tal vez', '1', 'yes', '']) {
+      expect(parse(`---\ntitulo: A\ncompleta: ${valor}\n---\n`).completa).toBe(false);
+    }
   });
 
   it('un archivo sin la clave se lee como incompleta, sin mirar el contenido', () => {
@@ -22,9 +39,9 @@ titulo: Rabas
     expect(conTodo.completa).toBe(false);
   });
 
-  it('la clave se escribe siempre, en los dos valores', () => {
-    expect(serialize(recetaFalsa({ titulo: 'A', completa: true }))).toContain('completa: true');
-    expect(serialize(recetaFalsa({ titulo: 'A', completa: false }))).toContain('completa: false');
+  it('la clave se escribe siempre, con «sí» o «no»', () => {
+    expect(serialize(recetaFalsa({ titulo: 'A', completa: true }))).toContain('completa: sí');
+    expect(serialize(recetaFalsa({ titulo: 'A', completa: false }))).toContain('completa: no');
   });
 
   it('vuelve del archivo como entró', () => {

@@ -33,10 +33,18 @@ export const DIFICULTADES = ['fácil', 'media', 'difícil'] as const;
  * en cuanto alguien edita el `.md` por afuera, que es justo lo que la
  * completitud derivada vino a evitar (F05.3).
  *
- * `incompleto` era el tag manual de v1 y hoy se deriva; `favorito` y `probar`
- * todavía no se usan y quedan tomados desde ahora.
+ * `incompleto` y `terminado` nombran la completitud, que es la clave `completa`
+ * del frontmatter; `favorito` y `probar` todavía no se usan y quedan tomados
+ * desde ahora. De cada uno se reservan las cuatro formas —masculino, femenino
+ * y sus plurales—, porque un tag escrito a mano no tiene por qué coincidir con
+ * la que el código eligió.
  */
-export const TAGS_RESERVADOS = ['incompleto', 'favorito', 'probar'] as const;
+export const TAGS_RESERVADOS = [
+  'incompleto', 'incompleta', 'incompletos', 'incompletas',
+  'terminado', 'terminada', 'terminados', 'terminadas',
+  'favorito', 'favorita', 'favoritos', 'favoritas',
+  'probar'
+] as const;
 
 /** Si el tag es uno de los reservados, sin importar mayúsculas ni acentos. */
 export function tagReservado(valor: unknown): boolean {

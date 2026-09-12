@@ -10,7 +10,7 @@ rinde: 4 porciones
 tiempo: 40 min
 dificultad: fácil
 fuente: Cuaderno de mamá
-completa: false
+completa: no
 ---
 
 Un clásico.
@@ -36,7 +36,7 @@ describe('serialize', () => {
 
   it('omite las claves vacías en vez de escribirlas en null', () => {
     const texto = serialize(parse(`---\ntitulo: X\n---\n`));
-    expect(texto).toBe('---\ntitulo: X\ncompleta: false\n---\n');
+    expect(texto).toBe('---\ntitulo: X\ncompleta: no\n---\n');
   });
 
   it('escribe las secciones en el orden canónico aunque vengan al revés', () => {
@@ -102,12 +102,12 @@ describe('serialize', () => {
   it('escribe foto y completa cuando están', () => {
     const md = serialize({ titulo: 'A', foto: 'https://x/y.jpg', completa: true });
     expect(md).toContain('foto: https://x/y.jpg');
-    expect(md).toContain('completa: true');
+    expect(md).toContain('completa: sí');
   });
 
   it('escribe la clave en los dos valores: la completitud es un dato del archivo', () => {
-    expect(serialize({ titulo: 'A', completa: false })).toContain('completa: false');
-    expect(serialize({ titulo: 'A', completa: true })).toContain('completa: true');
+    expect(serialize({ titulo: 'A', completa: false })).toContain('completa: no');
+    expect(serialize({ titulo: 'A', completa: true })).toContain('completa: sí');
   });
 
   it('sin título no escribe nada, tampoco la completitud', () => {

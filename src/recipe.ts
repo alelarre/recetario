@@ -69,7 +69,10 @@ function parsearFrontmatter(bloque: string, receta: Receta): void {
     if (clave === 'tags') {
       receta.tags = parsearLista(valor.trim(), lineas.slice(i + 1));
     } else if (clave === 'completa') {
-      receta.completa = valor.trim().toLowerCase() === 'true';
+      // En el `.md` se escribe «sí» o «no», que es como se lee un archivo de
+      // texto. Sin tilde vale igual, y `true` también: es lo que escribían los
+      // archivos anteriores al 2026-09-12.
+      receta.completa = ['si', 'true'].includes(normalizar(valor));
     } else if (esClaveSimple(clave)) {
       receta[clave] = valor.trim() === '' ? null : valor.trim();
     } else {
@@ -173,7 +176,7 @@ export function serialize(receta?: Partial<Receta> | null): string {
   // del archivo y se lee tal cual, sin calcular nada (2026-09-12). Antes sólo
   // se escribía `true` y la ausencia significaba `false`. Sin título no hay
   // receta —el índice la ignora—, así que ahí no se escribe nada.
-  if (r.titulo) fm.push(`completa: ${r.completa === true}`);
+  if (r.titulo) fm.push(`completa: ${r.completa === true ? 'sí' : 'no'}`);
   for (const [clave, valor] of Object.entries(typeof r.extras === 'object' && r.extras !== null ? r.extras : {})) {
     fm.push(`${clave}: ${valor}`);
   }

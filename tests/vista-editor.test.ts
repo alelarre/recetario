@@ -218,9 +218,9 @@ describe('recetaDesdeFormulario', () => {
 
   it('el conmutador manda, y la clave se escribe en los dos valores', () => {
     const terminada = recetaDesdeFormulario({ titulo: 'A', completa: 'si' }, parse(''));
-    expect(serialize(terminada)).toContain('completa: true');
+    expect(serialize(terminada)).toContain('completa: sí');
     const incompleta = recetaDesdeFormulario({ titulo: 'A', completa: 'no' }, parse(''));
-    expect(serialize(incompleta)).toContain('completa: false');
+    expect(serialize(incompleta)).toContain('completa: no');
   });
 
   it('el título vacío no borra el que había: es el único obligatorio', () => {

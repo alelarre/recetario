@@ -204,9 +204,12 @@ describe('dificultadValida', () => {
 });
 
 describe('tagReservado', () => {
-  it('los tres tags que la app se reserva', () => {
-    expect([...TAGS_RESERVADOS]).toEqual(['incompleto', 'favorito', 'probar']);
+  it('las cuatro formas de cada palabra reservada', () => {
     for (const t of TAGS_RESERVADOS) expect(tagReservado(t)).toBe(true);
+    for (const t of ['incompleta', 'incompletos', 'terminada', 'terminadas',
+                     'favorita', 'favoritos', 'favoritas', 'probar']) {
+      expect(tagReservado(t)).toBe(true);
+    }
   });
 
   it('no distingue mayúsculas ni acentos', () => {
@@ -216,7 +219,7 @@ describe('tagReservado', () => {
   });
 
   it('cualquier otro tag se puede usar', () => {
-    for (const t of ['horno', 'rápido', 'incompletos', 'favoritos']) {
+    for (const t of ['horno', 'rápido', 'terminar', 'favorable', 'probado']) {
       expect(tagReservado(t)).toBe(false);
     }
   });
