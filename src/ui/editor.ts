@@ -15,7 +15,7 @@ import { escapar } from './markdown.js';
 import { encabezado, aviso } from './componentes.js';
 import { ICO } from './iconos.js';
 import { DIFICULTADES, dificultadValida, tagReservado } from '../catalogo.js';
-import { estaCompleta } from '../recipe.js';
+import { sePuedeTerminar } from '../recipe.js';
 import type { Receta, Entrada } from '../tipos.js';
 import type { Categoria } from '../store.js';
 
@@ -128,35 +128,26 @@ export function renderEditor(
     area('notas', 'Notas', receta.notas, 3) +
   '</div>';
 
-  // La casilla es la declaración del usuario, no el cálculo: una receta con
-  // ingredientes y pasos ya cuenta como completa sin tildar nada (C05.3.1), y
-  // la clave `completa: true` existe para las que igual están terminadas
-  // aunque les falte algo. Sin decirlo, la casilla desmarcada se lee como si
-  // la receta estuviera incompleta.
-  const derivada = estaCompleta({ ...receta, completa: false });
-  // Tildada cuando la receta está completa, venga del cálculo o de la clave:
-  // verla vacía en una receta completa se lee como una contradicción.
-  //
-  // Cuando la completitud es derivada la casilla queda **bloqueada**: no hay
-  // nada que declarar, y dejarla editable haría que guardar sin tocar nada
-  // escribiera `completa: true` en un `.md` que no la tenía — convertiría en
-  // declarado lo que F05.3 quiere derivado. Un `input` deshabilitado no viaja
-  // en el formulario, así que no se escribe ninguna clave.
-  //
-  // Si el archivo sí trae `completa: true`, la casilla queda editable aunque el
-  // cálculo también la dé por completa: es la única forma de borrar la clave.
-  const bloqueada = derivada && !receta.completa;
-  const nota = bloqueada
-    ? 'Ya cuenta como completa: tiene título, ingredientes y pasos. No hace falta marcarla.'
-    : derivada
-      ? 'Tiene título, ingredientes y pasos. Podés desmarcarla: igual va a contar como completa.'
-      : 'Le falta algún ingrediente o paso. Marcala si igual está terminada así.';
-  const completa = '<div class="ficha"><label class="check">' +
-    '<input type="checkbox" name="completa"' +
-      `${receta.completa || derivada ? ' checked' : ''}${bloqueada ? ' disabled' : ''}>` +
-      ' Está completa así como está' +
-    '</label>' +
-    `<p class="aviso-mudo" style="margin:var(--e-2) 0 0">${nota}</p>` +
+  // La completitud es una declaración del usuario y nada más: la app no la
+  // calcula ni la corrige (2026-09-12). El control es un conmutador de dos
+  // posiciones, y «Terminada» sólo se habilita cuando la receta tiene lo
+  // mínimo —título, categoría, ingredientes y pasos—; mientras no los tenga,
+  // la leyenda dice qué falta.
+  const carpetaActual = entrada?.carpeta_id ?? '';
+  const puede = sePuedeTerminar(receta, carpetaActual);
+  const terminada = receta.completa;
+  const completa = '<div class="ficha" data-completitud>' +
+    '<div class="conm-doble" role="group" aria-label="Estado de la receta">' +
+      `<button type="button" class="${terminada ? '' : 'on'}" data-completa="no">` +
+        '<span class="inc"></span>Incompleta</button>' +
+      `<button type="button" class="${terminada ? 'on' : ''}" data-completa="si"` +
+        `${puede ? '' : ' disabled'}>Terminada</button>` +
+    '</div>' +
+    `<input type="hidden" name="completa" value="${terminada ? 'si' : 'no'}">` +
+    '<p class="aviso-mudo leyenda-completa" style="margin:var(--e-3) 0 0"' +
+      `${puede ? ' hidden' : ''}>` +
+      'Se podrá marcar como terminada cuando se cargue: título, categoría, ' +
+      'ingredientes y pasos.</p>' +
   '</div>';
 
   const borrar = !entrada ? ''
@@ -200,7 +191,7 @@ export function formularioDesde(receta: Receta): DatosFormulario {
     preparacion: receta.preparacion,
     variaciones: receta.variaciones,
     notas: receta.notas,
-    ...(receta.completa ? { completa: 'on' } : {})
+    completa: receta.completa ? 'si' : 'no'
   };
 }
 
@@ -222,8 +213,8 @@ export function recetaDesdeFormulario(datos: DatosFormulario, base: Receta): Rec
     dificultad: dificultadValida(datos['dificultad']) || null,
     fuente: texto('fuente'),
     foto: texto('foto'),
-    // La casilla desmarcada borra la clave; la app nunca escribe `completa: false`.
-    completa: datos['completa'] === 'on' || datos['completa'] === 'true',
+    // El conmutador manda: es la declaración del usuario y se escribe siempre.
+    completa: datos['completa'] === 'si',
     descripcion: datos['descripcion'] ?? base.descripcion,
     ingredientes: datos['ingredientes'] ?? base.ingredientes,
     preparacion: datos['preparacion'] ?? base.preparacion,

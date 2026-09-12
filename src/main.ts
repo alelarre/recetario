@@ -6,6 +6,7 @@ import { crearSheets } from './sheets.js';
 import { crearStore } from './store.js';
 import { parse } from './recipe.js';
 import { tagReservado } from './catalogo.js';
+import { sePuedeTerminar } from './recipe.js';
 import { crearRouter, parsearHash } from './ui/router.js';
 import { escapar } from './ui/markdown.js';
 import { renderRecetario } from './ui/recetario.js';
@@ -452,6 +453,41 @@ function sincronizarTags(): void {
   if (oculto) oculto.value = pills.map(p => p.dataset['valor'] ?? '').filter(Boolean).join(', ');
 }
 
+/**
+ * Vuelve a mirar si la receta del formulario puede declararse terminada, y
+ * habilita o apaga el conmutador en consecuencia. Corre en cada tecla, así que
+ * toca el DOM en vez de redibujar: redibujar perdería el foco y el cursor.
+ */
+function revisarCompletitud(): void {
+  const bloque = document.querySelector<HTMLElement>('#app [data-completitud]');
+  if (!bloque) return;
+  const valor = (n: string): string =>
+    document.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
+      `#app [name="${n}"]`)?.value ?? '';
+
+  const puede = sePuedeTerminar(
+    { titulo: valor('titulo'), ingredientes: valor('ingredientes'), preparacion: valor('preparacion') },
+    valor('carpeta')
+  );
+  const terminada = bloque.querySelector<HTMLButtonElement>('[data-completa="si"]');
+  const leyenda = bloque.querySelector<HTMLElement>('.leyenda-completa');
+  if (terminada) terminada.disabled = !puede;
+  if (leyenda) leyenda.hidden = puede;
+
+  // Si dejó de cumplir, la declaración se cae con ella.
+  if (!puede && terminada?.classList.contains('on')) marcarCompletitud(false);
+}
+
+/** Mueve el conmutador y deja el valor en el campo que viaja al guardar. */
+function marcarCompletitud(terminada: boolean): void {
+  const bloque = document.querySelector<HTMLElement>('#app [data-completitud]');
+  if (!bloque) return;
+  bloque.querySelector('[data-completa="si"]')?.classList.toggle('on', terminada);
+  bloque.querySelector('[data-completa="no"]')?.classList.toggle('on', !terminada);
+  const oculto = bloque.querySelector<HTMLInputElement>('input[name="completa"]');
+  if (oculto) oculto.value = terminada ? 'si' : 'no';
+}
+
 /** El aviso de tag reservado, que aparece y se va sin redibujar el formulario. */
 function avisarTag(mostrar: boolean): void {
   const aviso = document.querySelector<HTMLElement>('#app .error-tag');
@@ -490,7 +526,7 @@ app.addEventListener('click', async (e) => {
   // Todo el manejo de clicks es delegación desde #app, así que el destino
   // llega como EventTarget y hay que estrecharlo una sola vez, acá.
   const destino = conClosest(e.target);
-  const boton = destino?.closest<HTMLElement>('[data-accion], .check, [data-tag]') ?? null;
+  const boton = destino?.closest<HTMLElement>('[data-accion], .check, [data-tag], [data-completa]') ?? null;
   if (!boton) return;
 
   if (boton.classList.contains('check')) {
@@ -639,6 +675,12 @@ app.addEventListener('click', async (e) => {
   }
   if (accion === 'editar-borrador') { editandoBorrador = true; return render(); }
 
+  if (boton.dataset['completa']) {
+    if (boton.hasAttribute('disabled')) return;
+    marcarCompletitud(boton.dataset['completa'] === 'si');
+    return;
+  }
+
   if (accion === 'tag-quitar') {
     const tag = boton.dataset['valor'] ?? '';
     boton.remove();
@@ -779,6 +821,8 @@ app.addEventListener('click', async (e) => {
  * habilita tocándolo directo, sin volver a pintar la pantalla.
  */
 app.addEventListener('input', (e) => {
+  // En el editor, cada tecla puede habilitar o apagar «Terminada».
+  if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') return revisarCompletitud();
   if (vistaActual?.vista !== 'capturar' && !editandoBorrador) return;
   const campo = e.target as HTMLInputElement | HTMLTextAreaElement | null;
   if (!campo?.name) return;
@@ -808,6 +852,11 @@ app.addEventListener('focusout', (e) => {
   const campo = (e.target as HTMLInputElement | null);
   if (!campo?.dataset || !('tagNuevo' in campo.dataset)) return;
   if (agregarTag(campo.value)) campo.value = '';
+});
+
+// La categoría es un select: cambia por `change`, no por `input`.
+app.addEventListener('change', () => {
+  if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') revisarCompletitud();
 });
 
 app.addEventListener('change', (e) => {

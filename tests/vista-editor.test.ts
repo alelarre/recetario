@@ -76,28 +76,6 @@ describe('renderEditor', () => {
     expect(html).not.toContain('40 min');
   });
 
-  it('una receta completa muestra la casilla tildada, y bloqueada', () => {
-    // Tildada porque lo está; bloqueada porque no hay nada que declarar, y
-    // dejarla editable escribiría `completa: true` en un .md que no la tenía.
-    const html = dibujar();
-    expect(html).toContain('<input type="checkbox" name="completa" checked disabled>');
-    expect(html).toContain('Ya cuenta como completa');
-  });
-
-  it('a una receta incompleta la casilla se le puede marcar', () => {
-    const html = renderEditor({ entrada: null, receta: parse('---\ntitulo: A\n---\n'), categorias });
-    expect(html).toContain('<input type="checkbox" name="completa">');
-    expect(html).toContain('Le falta algún ingrediente o paso');
-  });
-
-  it('con completa: true en el archivo, la casilla queda editable: es la única forma de borrar la clave', () => {
-    const conClave = parse(`---\ntitulo: A\ncompleta: true\n---\n\n## Ingredientes\n- Sal\n\n## Preparación\n1. Salar.\n`);
-    const html = renderEditor({ entrada: null, receta: conClave, categorias });
-    expect(html).toContain('<input type="checkbox" name="completa" checked>');
-    expect(html).not.toContain('disabled>');
-    expect(html).toContain('Podés desmarcarla');
-  });
-
   it('dificultad es una elección de tres', () => {
     const html = dibujar();
     for (const d of ['fácil', 'media', 'difícil']) expect(html).toContain(d);
@@ -148,10 +126,6 @@ describe('renderEditor', () => {
     expect(html).not.toContain('name="otra-0"');
   });
 
-  it('la casilla de completa está al pie', () => {
-    expect(dibujar()).toContain('Está completa así como está');
-  });
-
   it('sin entrada no se ofrece borrar: el archivo todavía no existe', () => {
     expect(dibujar()).not.toContain('data-accion="borrar"');
     expect(renderEditor({ entrada: entradaFalsa(), receta: cargada, categorias }))
@@ -176,6 +150,51 @@ describe('renderEditor', () => {
   });
 });
 
+describe('el estado de la receta', () => {
+  const escrita = parse(`---
+titulo: Rabas
+---
+
+## Ingredientes
+- Calamar — 500 g
+
+## Preparación
+1. Freír.
+`);
+
+  it('es un conmutador de dos posiciones, y arranca en incompleta', () => {
+    const html = renderEditor({ entrada: null, receta: escrita, categorias });
+    expect(html).toContain('data-completa="no"');
+    expect(html).toContain('data-completa="si"');
+    expect(html).toContain('<button type="button" class="on" data-completa="no">');
+  });
+
+  it('sin categoría, Terminada está deshabilitada y la leyenda dice qué falta', () => {
+    const html = renderEditor({ entrada: null, receta: escrita, categorias });
+    expect(html).toContain('data-completa="si" disabled>');
+    expect(html).toContain('Se podrá marcar como terminada cuando se cargue: título, categoría, ingredientes y pasos.');
+    expect(html).not.toContain('hidden>Se podrá marcar');
+  });
+
+  it('con todo cargado, Terminada se habilita y la leyenda se esconde', () => {
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: escrita, categorias });
+    expect(html).toContain('<button type="button" class="" data-completa="si">');
+    expect(html).toContain('hidden>Se podrá marcar');
+  });
+
+  it('una receta declarada terminada abre en esa posición', () => {
+    const declarada = { ...escrita, completa: true };
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: declarada, categorias });
+    expect(html).toContain('<button type="button" class="on" data-completa="si"');
+    expect(html).toContain('<button type="button" class="" data-completa="no">');
+  });
+
+  it('lo que viaja al guardar es un campo oculto con la declaración', () => {
+    const html = renderEditor({ entrada: null, receta: escrita, categorias });
+    expect(html).toContain('<input type="hidden" name="completa" value="no">');
+  });
+});
+
 describe('recetaDesdeFormulario', () => {
   it('un campo vacío no escribe su clave', () => {
     const r = recetaDesdeFormulario({ titulo: 'A', rinde: '', foto: '' }, parse(''));
@@ -197,14 +216,11 @@ describe('recetaDesdeFormulario', () => {
     expect(serialize(recetaDesdeFormulario(formularioDesde(original), original))).toBe(serialize(original));
   });
 
-  it('marcar la casilla escribe completa: true', () => {
-    const r = recetaDesdeFormulario({ titulo: 'A', completa: 'on' }, parse('---\ntitulo: A\n---\n'));
-    expect(serialize(r)).toContain('completa: true');
-  });
-
-  it('desmarcar la casilla borra la clave, no escribe completa: false', () => {
-    const r = recetaDesdeFormulario({ titulo: 'A' }, parse('---\ntitulo: A\ncompleta: true\n---\n'));
-    expect(serialize(r)).not.toContain('completa');
+  it('el conmutador manda, y la clave se escribe en los dos valores', () => {
+    const terminada = recetaDesdeFormulario({ titulo: 'A', completa: 'si' }, parse(''));
+    expect(serialize(terminada)).toContain('completa: true');
+    const incompleta = recetaDesdeFormulario({ titulo: 'A', completa: 'no' }, parse(''));
+    expect(serialize(incompleta)).toContain('completa: false');
   });
 
   it('el título vacío no borra el que había: es el único obligatorio', () => {

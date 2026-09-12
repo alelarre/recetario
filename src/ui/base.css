@@ -148,6 +148,25 @@
 .wake .btn { width: 100%; min-height: 64px; }
 
 /* ---- Editor (mockup 06) ---- */
+/* El estado de la receta: dos posiciones, una sola verdadera. Reusa el lenguaje
+   del chip activo —`--acento-suave` con borde y texto de acento— para la
+   posición elegida, y el gris de los controles para la otra. Deshabilitada usa
+   el mismo apagado que un botón sin acción disponible. */
+.conm-doble { display: flex; gap: var(--e-2); }
+.conm-doble button { flex: 1; min-height: 48px; padding: 0 var(--e-3);
+                     display: inline-flex; align-items: center; justify-content: center;
+                     gap: var(--e-2); cursor: pointer;
+                     background: var(--surface-alta); color: var(--fg-2);
+                     border: 1px solid var(--borde); border-radius: var(--r-medio);
+                     font: 600 var(--txt-base)/1 var(--tipo); }
+.conm-doble button:hover:not([disabled]) { color: var(--fg); }
+.conm-doble button.on { background: var(--acento-suave); border-color: var(--acento);
+                        color: var(--acento); }
+.conm-doble button[disabled] { background: none; border-color: var(--borde);
+                               color: var(--fg-3); cursor: default; }
+/* La posición «Incompleta» lleva el mismo círculo que la tarjeta. */
+.conm-doble .inc { border-color: currentColor; }
+.leyenda-completa { line-height: 1.5; }
 /* El chip del sistema (§6.10) es una etiqueta; el del editor se saca, así que
    lleva su cruz. La regla vive acá y no en tokens.css, que es copia literal. */
 button.chip { cursor: pointer; }

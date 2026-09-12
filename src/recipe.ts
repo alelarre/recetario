@@ -169,8 +169,11 @@ export function serialize(receta?: Partial<Receta> | null): string {
     if (r[clave]) fm.push(`${clave}: ${r[clave]}`);
   }
   if (r.foto) fm.push(`foto: ${r.foto}`);
-  // Nunca `completa: false`: la clave ausente ya significa eso (C05.3.2).
-  if (r.completa === true) fm.push('completa: true');
+  // La clave se escribe siempre, en los dos valores: la completitud es un dato
+  // del archivo y se lee tal cual, sin calcular nada (2026-09-12). Antes sólo
+  // se escribía `true` y la ausencia significaba `false`. Sin título no hay
+  // receta —el índice la ignora—, así que ahí no se escribe nada.
+  if (r.titulo) fm.push(`completa: ${r.completa === true}`);
   for (const [clave, valor] of Object.entries(typeof r.extras === 'object' && r.extras !== null ? r.extras : {})) {
     fm.push(`${clave}: ${valor}`);
   }
@@ -279,18 +282,21 @@ export function variacionesDe(variaciones: string): { lista: string[]; secciones
 }
 
 /**
- * Estado derivado, calculado al leer y nunca persistido en el `.md` (C05.3.1).
- * `completa: true` es la salida manual del usuario y gana sobre el cálculo.
+ * Si la receta reúne lo mínimo para que el usuario pueda declararla terminada.
  *
- * El parámetro es parcial porque la va a llamar `filaDesde()` de `catalogo.ts`
- * con lo que venga del índice, no con una `Receta` garantizada (ver el
- * comentario de cabecera de esa función): acá se defiende cada campo, igual
- * que en `serialize` e `ingredientesIndexables`.
+ * **No es la completitud**: la completitud es `completa` del frontmatter y se
+ * lee tal cual (C05.3.2 reescrito el 2026-09-12). Esto sólo habilita el control
+ * del editor, y por eso vive en el editor y en ningún camino de lectura.
+ *
+ * `categoria` es la carpeta elegida: sin ella no se puede guardar, pero se
+ * evalúa igual para que la leyenda diga todo lo que falta.
  */
-export function estaCompleta(receta?: Partial<Receta> | null): boolean {
+export function sePuedeTerminar(
+  receta?: Partial<Receta> | null, categoria?: string | null
+): boolean {
   if (!receta) return false;
-  if (receta.completa) return true;
   if (!receta.titulo) return false;
+  if (!categoria) return false;
   const hayIngrediente = gruposDe(String(receta.ingredientes ?? '')).some(g => g.items.length > 0);
   const hayPaso = tramosDe(String(receta.preparacion ?? '')).some(t => t.pasos.length > 0);
   return hayIngrediente && hayPaso;

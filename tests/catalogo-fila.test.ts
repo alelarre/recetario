@@ -67,10 +67,19 @@ describe('filaDesde', () => {
   });
 
   it('la fila lleva foto y completitud', () => {
-    const receta = parse('---\ntitulo: A\nfoto: https://x/y.jpg\n---\n## Ingredientes\n- Sal\n## Preparación\n1. Salar.');
+    const receta = parse('---\ntitulo: A\nfoto: https://x/y.jpg\ncompleta: true\n---\n## Ingredientes\n- Sal\n');
     const fila = filaDesde(receta, { id: 'f1', categoria: 'Carnes' });
     expect(fila[COLUMNAS.indexOf('foto')]).toBe('https://x/y.jpg');
     expect(fila[COLUMNAS.indexOf('completa')]).toBe('si');
+  });
+
+  it('la completitud de la fila es la del archivo, no un cálculo', () => {
+    // Receta escrita entera, pero sin declarar: la fila dice que no.
+    const sinDeclarar = parse('---\ntitulo: A\n---\n## Ingredientes\n- Sal\n## Preparación\n1. Salar.');
+    expect(filaDesde(sinDeclarar, { id: 'f1' })[COLUMNAS.indexOf('completa')]).toBe('');
+    // Y declarada aunque no tenga nada: la fila dice que sí.
+    const declarada = parse('---\ntitulo: A\ncompleta: true\n---\n');
+    expect(filaDesde(declarada, { id: 'f1' })[COLUMNAS.indexOf('completa')]).toBe('si');
   });
 
   it('una receta a la que le falta algo va con la completitud vacía', () => {

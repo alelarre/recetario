@@ -9,5 +9,7 @@ export const NOMBRE_INDICE = '_indice';
 export const NOMBRE_BORRADORES = '_borradores';
 
 // Subir esta versión fuerza una reconstrucción del índice en el próximo
-// arranque. Va a 2 con el rediseño: la fila suma `foto` y `completa`.
-export const SCHEMA_VERSION = 2;
+// arranque. Fue a 2 con el rediseño —la fila sumó `foto` y `completa`— y a 3
+// el 2026-09-12: la columna `completa` pasó de guardar un cálculo a guardar lo
+// que dice el `.md`, así que lo que hay escrito ya no significa lo mismo.
+export const SCHEMA_VERSION = 3;

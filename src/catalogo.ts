@@ -1,4 +1,4 @@
-import { normalizar, ingredientesIndexables, estaCompleta } from './recipe.js';
+import { normalizar, ingredientesIndexables } from './recipe.js';
 import type {
   Receta, Ubicacion, Entrada
 } from './tipos.js';
@@ -105,7 +105,8 @@ export function filaDesde(receta?: Partial<Receta> | null, ubicacion?: Partial<U
     mtime: String(typeof u.mtime === 'number' ? u.mtime : 0),
     foto: typeof r.foto === 'string' ? r.foto : '',
     // 'si' y no 'true': la celda la puede leer una persona en la planilla.
-    completa: r.titulo && estaCompleta(r) ? 'si' : ''
+    // Lo que dice el archivo, sin recalcular: la completitud es un dato.
+    completa: r.completa === true ? 'si' : ''
   };
 
   return COLUMNAS.map(c => String(celdas[c] ?? ''));

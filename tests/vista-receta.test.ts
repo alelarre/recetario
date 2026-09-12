@@ -7,6 +7,7 @@ const MINIMA = parse('---\ntitulo: A\n---\n');
 
 const COMPLETA = parse(`---
 titulo: Rabas
+completa: true
 tags: [fritura]
 rinde: 4 porciones
 fuente: Recetario original
@@ -141,8 +142,11 @@ describe('Receta en lectura', () => {
     expect(html).toContain('class="inc');
   });
 
-  it('una receta completa no lleva la marca', () => {
+  it('la marca sale del archivo: una receta declarada terminada no la lleva', () => {
     expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('class="inc"');
+    // Y una escrita entera pero sin declarar, sí.
+    const sinDeclarar = parse('---\ntitulo: A\n---\n## Ingredientes\n- Sal\n## Preparación\n1. Salar.');
+    expect(renderReceta({ entrada: null, receta: sinDeclarar })).toContain('class="inc"');
   });
 
   it('las variaciones como bullets se muestran como lista', () => {

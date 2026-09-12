@@ -12,7 +12,7 @@ import { escapar, aHtml, esDestinoSeguro } from './markdown.js';
 import { encabezado } from './componentes.js';
 import { colorCategoria } from './categorias.js';
 import { ICO } from './iconos.js';
-import { gruposDe, tramosDe, variacionesDe, estaCompleta } from '../recipe.js';
+import { gruposDe, tramosDe, variacionesDe } from '../recipe.js';
 import type { Entrada, Receta, GrupoIngredientes, TramoPreparacion } from '../tipos.js';
 
 export interface OpcionesReceta {
@@ -65,7 +65,8 @@ export function renderReceta({ entrada, receta }: OpcionesReceta): string {
   const grupos = gruposDe(receta.ingredientes).filter(g => g.items.length);
   const tramos = tramosDe(receta.preparacion).filter(t => t.pasos.length);
   const { lista, secciones } = variacionesDe(receta.variaciones);
-  const completa = estaCompleta(receta);
+  // Lo que dice el `.md`, sin calcular nada.
+  const completa = receta.completa;
 
   const contexto = [categoria, receta.rinde, receta.tiempo, receta.dificultad].filter(Boolean).join(' · ');
   const marca = completa ? '' :
