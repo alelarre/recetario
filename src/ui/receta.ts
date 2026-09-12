@@ -13,6 +13,12 @@ import { encabezado } from './componentes.js';
 import { colorCategoria } from './categorias.js';
 import { ICO } from './iconos.js';
 import { gruposDe, tramosDe, variacionesDe } from '../recipe.js';
+// El logo de Drive, en el repo y no pedido a `gstatic.com`: una dependencia de
+// red para 513 bytes es una dependencia de más, y así entra a `/assets/`, que es
+// lo único que el service worker sirve caché-primero. Es el favicon que publica
+// Google, copiado tal cual: redibujarlo de trazo lo vuelve irreconocible, que es
+// lo único que el logo aporta (design-system §6.7).
+import logoDrive from './drive.png';
 import type { Entrada, Receta, GrupoIngredientes, TramoPreparacion } from '../tipos.js';
 
 export interface OpcionesReceta {
@@ -113,11 +119,9 @@ export function renderReceta({ entrada, receta }: OpcionesReceta): string {
   // El `.md` en Drive, en una pestaña nueva. Sólo si la receta está en el
   // índice: sin fila no se conoce su id de archivo.
   const alArchivo = entrada?.id_archivo
-    // El logo de Drive servido por Google, no uno dibujado: el triángulo a mano
-    // no se leía como Drive.
     ? `<a class="archivo" href="https://drive.google.com/file/d/${encodeURIComponent(entrada.id_archivo)}/view" ` +
       'target="_blank" rel="noopener" aria-label="Ver el archivo en Drive">' +
-      '<img class="logo" src="https://ssl.gstatic.com/docs/doclist/images/drive_favicon_2026_32dp.png" ' +
+      `<img class="logo" src="${escapar(logoDrive)}" ` +
       // Sin `lazy`: son 513 bytes y está en pantalla desde el primer momento.
       'alt="" width="16" height="16">.md</a>'
     : '';

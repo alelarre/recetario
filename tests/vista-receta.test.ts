@@ -187,7 +187,10 @@ describe('Receta en lectura', () => {
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener"');
     expect(html).toContain('.md</a>');
-    expect(html).toContain('drive_favicon_2026_32dp.png');
+    // El logo viaja con la app: sin él servido por un tercero, el link no depende
+    // de que `gstatic.com` conteste.
+    expect(html).toContain('drive.png');
+    expect(html).not.toContain('gstatic.com');
     // Es un dato al margen, no un botón del encabezado.
     expect(html).toContain('class="archivo"');
   });

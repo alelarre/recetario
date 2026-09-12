@@ -112,7 +112,6 @@ Esto no se arregla escribiendo código.
 | **El índice tiene cada receta dos veces** | 122 filas para 61 recetas, visto el 2026-09-12. La causa probable son dos reconstrucciones solapadas —dos pestañas de la app abiertas, o *Reindexar* tocado mientras el arranque ya estaba reconstruyendo—: `reconstruir()` lee las filas previas, las borra y appendea las nuevas, sin nada que impida que dos pasadas se pisen. **Se decidió no agregar lógica de concurrencia** (2026-09-12): la salida es reindexar una vez, con una sola pestaña abierta. |
 | **Las 61 recetas del Drive se leen como incompletas** | Ninguna trae la clave `completa` todavía, y sin ella la receta se lee como no terminada (C05.3.1). El usuario edita esos `.md` a mano. |
 | **Tres cosas que ningún test alcanza** | El Share Target real —necesita la PWA instalada en Android—, el foco del teclado en la captura, y la posición del scroll al conmutar en modo cocina. |
-| **El logo de Drive se sirve desde `gstatic.com`** | El link al `.md` (C03.1.2b) usa el favicon que publica Google. Si esa URL cambia, queda un hueco de 16 px; no rompe nada más. |
 | **Las acciones del workflow de Pages usan Node 20** | GitHub ya lo marca como deprecado. Es mantenimiento del CI, no del producto. |
 
 ### 6.5 Deuda chica del código

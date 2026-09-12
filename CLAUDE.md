@@ -282,3 +282,9 @@ también, y la trama queda como respaldo de una carpeta que todavía no tiene
 imagen. El nombre del archivo es el slug de la carpeta:
 así se agrega una foto nueva sin tocar código. Una categoría sin foto se dibuja
 con su color plano y no rompe nada.
+
+La otra imagen del producto es `src/ui/drive.png`, el favicon de Drive que
+acompaña al link al `.md` (2026-09-12). Es el que publica Google, copiado al
+repo: pedírselo a `gstatic.com` era una dependencia de red para 513 bytes. Vite
+lo inlinea como `data:` —queda debajo del límite de 4 KB—, así que no cuesta
+ningún pedido.

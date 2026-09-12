@@ -527,7 +527,9 @@ verbo en gerundio: *"Guardando"*) · deshabilitado (`--fg-3`, sin fondo).
 `currentColor` (§3.4). El logo de Drive del link al `.md` (`E03-LeerYCocinar.md`
 C03.1.2b) es el favicon de Google, a color y relleno: redibujarlo de trazo lo
 vuelve irreconocible, que es lo único que el logo aporta. La regla es que un
-logo de un tercero se usa **tal como lo publica el tercero**, a 16 px, y se
+logo de un tercero se usa **tal como lo publica el tercero**, a 16 px, **y viaja
+con la app** —en el repo, no pedido al servidor del tercero: una dependencia de
+red para 513 bytes es una dependencia de más—, y se
 compensa bajándole el peso al resto del control —texto en `--txt-chico` y
 `--fg-2`, sin caja— para que no pese más que los controles propios de al lado.
 
