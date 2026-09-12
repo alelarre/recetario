@@ -73,6 +73,14 @@ let errorCaptura = '';
 let posicionCocina: PosicionCocina = 'ingredientes';
 let pasoAqui: number | null = null;
 let pasosHechos: number[] = [];
+/**
+ * Si al modo cocina se entró tocando «Cocinar», la receta ya está una entrada
+ * atrás en el historial: volver a ella es un `back`, no una navegación nueva.
+ * Con una navegación quedaba dos veces seguidas y el volver de la receta
+ * parecía no hacer nada.
+ */
+let cocinaDesdeReceta = false;
+
 /** El scroll de cada lado del conmutador, para no perderlo al conmutar (C03.2.2). */
 const scrollCocina: Record<PosicionCocina, number> = { ingredientes: 0, pasos: 0 };
 
@@ -431,6 +439,17 @@ function agregarTag(valor: string): boolean {
   return !yaEsta;
 }
 
+/**
+ * Navega reemplazando la entrada del historial en vez de agregar una.
+ *
+ * Es lo que corresponde cuando la navegación es un **cierre**: volver de la
+ * cocina a la receta, salir a la categoría, o irse de un borrador que se acaba
+ * de descartar. Con `location.hash =` el historial acumulaba la pantalla que
+ * se estaba dejando, y el volver de la siguiente traía de vuelta justo eso:
+ * el chevron de la receta llevaba al modo cocina.
+ */
+const irCerrando = (hash: string): void => { location.replace(hash); };
+
 const router = crearRouter(render);
 
 app.addEventListener('click', async (e) => {
@@ -454,7 +473,11 @@ app.addEventListener('click', async (e) => {
 
   const accion = boton.dataset['accion'];
 
-  if (accion === 'cocinar') { location.hash = `#/r/${vistaActual?.params['id'] ?? ''}/cocinar`; return; }
+  if (accion === 'cocinar') {
+    cocinaDesdeReceta = true;
+    location.hash = `#/r/${vistaActual?.params['id'] ?? ''}/cocinar`;
+    return;
+  }
   if (accion === 'conmutar') {
     const destinoPos = boton.dataset['posicion'] === 'pasos' ? 'pasos' : 'ingredientes';
     if (destinoPos === posicionCocina) return;
@@ -491,7 +514,7 @@ app.addEventListener('click', async (e) => {
   if (accion === 'salir') {
     auth.olvidar();
     cuenta = '';
-    location.hash = '#/';
+    irCerrando('#/');
     return pintar(renderConexion({ estado: 'inicial' }));
   }
   if (accion === 'crear-receta') {
@@ -504,7 +527,9 @@ app.addEventListener('click', async (e) => {
     const id = vistaActual?.params['id'] ?? '';
     try {
       await borradores?.descartar(id);
-      location.hash = '#/borradores';
+      // El borrador que se acaba de descartar no tiene que quedar en el
+      // historial: volver ahí mostraría algo que ya no existe.
+      irCerrando('#/borradores');
       return;
     } catch (err) {
       console.error(err);
@@ -546,7 +571,7 @@ app.addEventListener('click', async (e) => {
     // la pestaña no la abrió un script, `close()` no hace nada: ahí queda la
     // lista, que es el lugar donde el borrador nuevo está.
     window.close();
-    location.hash = '#/borradores';
+    irCerrando('#/borradores');
     return;
   }
   if (accion === 'editar-titulo') { editandoTitulo = true; return render(); }
@@ -583,14 +608,20 @@ app.addEventListener('click', async (e) => {
   // sueltan el bloqueo de pantalla: se dejó de cocinar.
   if (accion === 'volver-receta') {
     await soltarPantalla();
-    location.hash = `#/r/${encodeURIComponent(vistaActual?.params['id'] ?? '')}`;
+    if (cocinaDesdeReceta) {
+      cocinaDesdeReceta = false;
+      return history.back();
+    }
+    // Se entró al modo cocina por un link directo: no hay receta atrás.
+    irCerrando(`#/r/${encodeURIComponent(vistaActual?.params['id'] ?? '')}`);
     return;
   }
   if (accion === 'salir-cocina') {
     await soltarPantalla();
+    cocinaDesdeReceta = false;
     const entrada = store.entradas().find(e => e.id_archivo === (vistaActual?.params['id'] ?? ''));
     // Sin fila del índice no se sabe de qué categoría es: se vuelve al Recetario.
-    location.hash = entrada?.categoria ? `#/c/${encodeURIComponent(entrada.categoria)}` : '#/';
+    irCerrando(entrada?.categoria ? `#/c/${encodeURIComponent(entrada.categoria)}` : '#/');
     return;
   }
 
@@ -674,8 +705,9 @@ app.addEventListener('click', async (e) => {
       await store.borrar(id);
       confirmandoDescarte = false;
       // Vuelve a la lista de donde se venía; el archivo queda en la papelera
-      // de Drive, que es la red de seguridad y es del usuario.
-      location.hash = '#/';
+      // de Drive, que es la red de seguridad y es del usuario. Y la receta
+      // borrada no queda en el historial.
+      irCerrando('#/');
       return;
     } catch (err) {
       console.error(err);

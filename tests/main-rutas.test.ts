@@ -73,7 +73,13 @@ describe('main.ts: las rutas', () => {
       google: {}, addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; },
       scrollTo: (_x: number, y: number) => { scrolls.push(y); }, scrollY: 0
     });
-    global.location = comoGlobal<Location>({ hash: '', pathname: '/recetario/', search: '' });
+    // `replace` es lo que usan las navegaciones de cierre: no agrega una
+    // entrada al historial, y el doble lo distingue de asignar `hash`.
+    const reemplazos: string[] = [];
+    global.location = comoGlobal<Location>({
+      hash: '', pathname: '/recetario/', search: '',
+      replace: (h: string) => { reemplazos.push(h); global.location.hash = h; }
+    });
     global.history = comoGlobal<History>({
       back: () => { vueltasAtras.push(1); }, replaceState: () => {}, length: 5
     });
@@ -85,6 +91,7 @@ describe('main.ts: las rutas', () => {
       app,
       vueltasAtras,
       scrolls,
+      reemplazos,
       abrir: async (hash: string) => {
         global.location.hash = hash;
         listeners['hashchange']?.();
@@ -172,6 +179,32 @@ describe('main.ts: las rutas', () => {
     await abrir('#/r/f1/cocinar');
     await tocar('salir-cocina');
     expect(global.location.hash).toBe('#/c/Carnes');
+  });
+
+  it('volver de la cocina a la receta es un back cuando se entró desde ella', async () => {
+    // Con una navegación nueva, la receta quedaba dos veces seguidas en el
+    // historial y su chevron parecía no hacer nada. Y antes de eso, con
+    // `location.hash =`, el chevron de la receta volvía al modo cocina.
+    const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
+    await abrir('#/r/f1');
+    await tocar('cocinar');
+    await tocar('volver-receta');
+    expect(vueltasAtras).toHaveLength(1);
+    expect(reemplazos).toEqual([]);
+  });
+
+  it('con un link directo al modo cocina, volver navega a la receta', async () => {
+    const { abrir, tocar, reemplazos } = await montar();
+    await abrir('#/r/f1/cocinar');
+    await tocar('volver-receta');
+    expect(reemplazos).toEqual(['#/r/f1']);
+  });
+
+  it('salir de la cocina no la deja en el historial', async () => {
+    const { abrir, tocar, reemplazos } = await montar();
+    await abrir('#/r/f1/cocinar');
+    await tocar('salir-cocina');
+    expect(reemplazos).toEqual(['#/c/Carnes']);
   });
 
   it('ningún guardado exitoso muestra un cartel de confirmación', async () => {
