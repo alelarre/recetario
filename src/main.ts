@@ -215,6 +215,29 @@ async function reconstruir({ enAjustes = false } = {}) {
 }
 
 /**
+ * El encabezado de la receta arranca vacío y toma el título recortado cuando el
+ * título grande sale de pantalla, como hacen las pantallas de detalle del
+ * sistema. `IntersectionObserver` no existe en Node, donde corren los tests.
+ */
+let observadorTitulo: IntersectionObserver | null = null;
+
+function observarTitulo(): void {
+  observadorTitulo?.disconnect();
+  observadorTitulo = null;
+  if (typeof IntersectionObserver === 'undefined') return;
+  const grande = document.querySelector<HTMLElement>('#app .rec-tit');
+  const chico = document.querySelector<HTMLElement>('#app .enc .tit');
+  if (!grande || !chico) return;
+  const titulo = grande.textContent ?? '';
+  observadorTitulo = new IntersectionObserver(([entrada]) => {
+    chico.textContent = entrada?.isIntersecting ? '' : titulo;
+  // El umbral en el borde de arriba: el título cuenta como fuera de pantalla
+  // recién cuando pasó por detrás del encabezado, que mide 56 px.
+  }, { rootMargin: '-56px 0px 0px 0px' });
+  observadorTitulo.observe(grande);
+}
+
+/**
  * El tramo siguiente se dibuja cuando el spinner del final entra en pantalla.
  * `IntersectionObserver` no existe en Node, donde corren los tests: se
  * pregunta antes, igual que el resto del código hace con `navigator`.
@@ -256,6 +279,11 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     pasoAqui = null;
     pasosHechos = [];
     scrollCocina.ingredientes = scrollCocina.pasos = 0;
+    // La pantalla nueva empieza arriba: el hash no cambia el scroll, así que
+    // entrar al modo cocina desde el pie de la receta abría los ingredientes
+    // ya scrolleados. La llamada es opcional por lo mismo que
+    // `IntersectionObserver`: los tests corren sobre un DOM mínimo.
+    window.scrollTo?.(0, 0);
   }
   vistaActual = ruta;
 
@@ -291,7 +319,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     case 'receta':
       try {
         const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
-        return pintar(renderReceta({ entrada, receta }));
+        pintar(renderReceta({ entrada, receta }));
+        return observarTitulo();
       } catch (err) {
         console.error(err);
         return enPantalla('No se pudo leer la receta.');
@@ -550,9 +579,22 @@ app.addEventListener('click', async (e) => {
     return;
   }
 
-  if (accion === 'volver' || accion === 'atras' || accion === 'salir-cocina') {
-    // Salir del modo cocina suelta el bloqueo de pantalla, se vaya por el
-    // botón Salir o por el chevron: son la misma salida.
+  // Las dos salidas del modo cocina tienen destinos distintos, y las dos
+  // sueltan el bloqueo de pantalla: se dejó de cocinar.
+  if (accion === 'volver-receta') {
+    await soltarPantalla();
+    location.hash = `#/r/${encodeURIComponent(vistaActual?.params['id'] ?? '')}`;
+    return;
+  }
+  if (accion === 'salir-cocina') {
+    await soltarPantalla();
+    const entrada = store.entradas().find(e => e.id_archivo === (vistaActual?.params['id'] ?? ''));
+    // Sin fila del índice no se sabe de qué categoría es: se vuelve al Recetario.
+    location.hash = entrada?.categoria ? `#/c/${encodeURIComponent(entrada.categoria)}` : '#/';
+    return;
+  }
+
+  if (accion === 'volver' || accion === 'atras') {
     if (vistaActual?.vista === 'cocinar') await soltarPantalla();
     // Entrar por un link directo deja el historial vacío: ahí volver es ir al
     // Recetario, no salirse de la app.

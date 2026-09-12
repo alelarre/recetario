@@ -64,6 +64,11 @@
 .grupo-res + .grupo-res { margin-top: var(--e-5); }
 
 /* ---- Receta en lectura (mockup 01) ---- */
+/* El encabezado queda fijo: es lo que hace útil que tome el título cuando el
+   título grande sale de pantalla. */
+.enc.peg { position: sticky; top: 0; z-index: 3; }
+/* El título que toma el encabezado se recorta: hay de 86 caracteres. */
+.enc.peg .tit { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .rec-tit { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0 0 var(--e-3); }
 .rec-ctx { font-size: var(--txt-chico); color: var(--fg-2); display: flex; align-items: center;
            gap: var(--e-2); flex-wrap: wrap; margin-bottom: var(--e-4); }
@@ -72,6 +77,8 @@
 .rec-fuente { margin-top: var(--e-4); padding-top: var(--e-3); border-top: 1px solid var(--borde);
               font-size: var(--txt-micro); color: var(--fg-3); }
 .rec-fuente a { color: var(--fg-2); }
+/* El emoji se come el espacio que le sigue: el aire va por margen. */
+.rec-fuente .emo { margin-right: var(--e-2); font-style: normal; }
 /* La descripción cierra el bloque de la receta; el margen del último párrafo
    sumaría al del divisor de la fuente. */
 .rec-desc { margin-top: var(--e-4); }

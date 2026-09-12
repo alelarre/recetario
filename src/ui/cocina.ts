@@ -72,8 +72,11 @@ export function renderCocina(
       `${wakeActivo ? 'Pantalla encendida' : 'Mantener la pantalla encendida'}</button></div>`
     : '';
 
+  // Dos salidas con dos destinos: el chevron vuelve a la receta —seguir
+  // leyéndola sin la escala de cocina— y Salir vuelve a la categoría, que es
+  // donde se elige otra cosa. Las dos sueltan el bloqueo de pantalla.
   return '<div class="encoc">' +
-      `<button class="ico" data-accion="volver" aria-label="Volver">${ICO.volver}</button>` +
+      `<button class="ico" data-accion="volver-receta" aria-label="Volver a la receta">${ICO.volver}</button>` +
       `<span class="tit">${escapar(receta.titulo ?? '')}</span>` +
       '<button class="btn sec compacto" data-accion="salir-cocina">Salir</button>' +
     '</div>' +

@@ -54,11 +54,18 @@ describe('Receta en lectura', () => {
     expect(pos('Variaciones')).toBeLessThan(pos('Notas'));
   });
 
-  it('el encabezado no repite el título: dice la categoría', () => {
+  it('el encabezado arranca sin texto: ni el título ni la categoría se repiten', () => {
     const html = renderReceta({ entrada: entradaFalsa({ categoria: 'Pescados y mariscos' }), receta: COMPLETA });
     const enc = html.slice(0, html.indexOf('class="cuerpo'));
-    expect(enc).toContain('Pescados y mariscos');
+    // Vacío pero presente: `main` le pone el título cuando el grande sale de
+    // pantalla, así que el span tiene que estar.
+    expect(enc).toContain('<span class="tit"></span>');
     expect(enc).not.toContain('Rabas');
+    expect(enc).not.toContain('Pescados y mariscos');
+  });
+
+  it('la fuente lleva su prefijo', () => {
+    expect(renderReceta({ entrada: null, receta: COMPLETA })).toContain('>📖</span>fuente: ');
   });
 
   it('la descripción va en la misma ficha que el título, no en una aparte', () => {

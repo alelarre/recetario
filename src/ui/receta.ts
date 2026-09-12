@@ -88,7 +88,9 @@ export function renderReceta({ entrada, receta }: OpcionesReceta): string {
     // ficha, después de los datos y antes de la procedencia.
     (receta.descripcion ? `<div class="lee rec-desc">${aHtml(receta.descripcion)}</div>` : '') +
     marca +
-    (receta.fuente ? `<div class="rec-fuente">${fuenteHtml(receta.fuente)}</div>` : '');
+    (receta.fuente
+      ? `<div class="rec-fuente"><span class="emo">📖</span>fuente: ${fuenteHtml(receta.fuente)}</div>`
+      : '');
 
   const variaciones = secciones.length
     ? secciones.map(v =>
@@ -104,10 +106,12 @@ export function renderReceta({ entrada, receta }: OpcionesReceta): string {
     ? '<button class="btn prim" data-accion="cocinar">Cocinar</button>'
     : '';
 
-  // El encabezado no repite el título —está abajo, grande y entero— sino que
-  // dice la categoría, que es de dónde se viene y a dónde vuelve el chevron.
+  // El encabezado arranca sin texto: el título está abajo, grande y entero, y
+  // repetirlo arriba —o poner la categoría, que ya está en el contexto— era
+  // decir dos veces lo mismo. `main` le pone el título recortado cuando el
+  // grande sale de pantalla.
   // Sin menú de ⋯: las acciones son Cocinar y Editar, y las dos están al pie.
-  return encabezado({ titulo: categoria, volver: true }) +
+  return encabezado({ titulo: '', volver: true, pegajoso: true }) +
     '<div class="cuerpo">' +
       ficha(cabecera) +
       ficha(ingredientes(grupos), 'Ingredientes') +

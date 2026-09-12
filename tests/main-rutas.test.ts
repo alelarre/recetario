@@ -64,12 +64,14 @@ describe('main.ts: las rutas', () => {
     };
     const listeners: Record<string, () => void> = {};
     const vueltasAtras: number[] = [];
+    const scrolls: number[] = [];
     global.document = comoGlobal<Document>({
       querySelector: (sel: string) => (sel === '#app' ? app : null),
       querySelectorAll: () => [], addEventListener: () => {}
     });
     global.window = comoGlobal<Window & typeof globalThis>({
-      google: {}, addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; }
+      google: {}, addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; },
+      scrollTo: (_x: number, y: number) => { scrolls.push(y); }, scrollY: 0
     });
     global.location = comoGlobal<Location>({ hash: '', pathname: '/recetario/', search: '' });
     global.history = comoGlobal<History>({
@@ -82,6 +84,7 @@ describe('main.ts: las rutas', () => {
     return {
       app,
       vueltasAtras,
+      scrolls,
       abrir: async (hash: string) => {
         global.location.hash = hash;
         listeners['hashchange']?.();
@@ -137,6 +140,17 @@ describe('main.ts: las rutas', () => {
     expect(app.innerHTML).toContain('data-accion="reintentar"');
   });
 
+  it('cada pantalla nueva empieza arriba', async () => {
+    // El hash no toca el scroll: entrar al modo cocina desde el pie de la
+    // receta abría los ingredientes ya scrolleados.
+    const { abrir, scrolls } = await montar();
+    await abrir('#/r/f1');
+    const antes = scrolls.length;
+    await abrir('#/r/f1/cocinar');
+    expect(scrolls.length).toBeGreaterThan(antes);
+    expect(scrolls.at(-1)).toBe(0);
+  });
+
   it('el volver del encabezado vuelve: es la acción que las pantallas dibujan', async () => {
     // El encabezado emite `volver`; el cableado escuchaba `atras`, el nombre
     // de v1, así que el botón no hacía nada en ninguna pantalla.
@@ -146,11 +160,18 @@ describe('main.ts: las rutas', () => {
     expect(vueltasAtras).toHaveLength(1);
   });
 
-  it('salir del modo cocina y volver son la misma salida', async () => {
-    const { abrir, tocar, vueltasAtras } = await montar();
+  it('las dos salidas del modo cocina tienen destinos distintos', async () => {
+    const { abrir, tocar } = await montar();
+
+    // El chevron vuelve a la receta, para seguir leyéndola sin la escala de cocina.
+    await abrir('#/r/f1/cocinar');
+    await tocar('volver-receta');
+    expect(global.location.hash).toBe('#/r/f1');
+
+    // Salir vuelve a la categoría, que es donde se elige otra cosa.
     await abrir('#/r/f1/cocinar');
     await tocar('salir-cocina');
-    expect(vueltasAtras).toHaveLength(1);
+    expect(global.location.hash).toBe('#/c/Carnes');
   });
 
   it('ningún guardado exitoso muestra un cartel de confirmación', async () => {

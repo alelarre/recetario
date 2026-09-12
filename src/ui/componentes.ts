@@ -23,15 +23,19 @@ export interface OpcionesEncabezado {
   derecha?: string;
   /** El total de la categoría va acá y no en la lista (mockup 04). */
   total?: number;
+  /** Queda fijo arriba al scrollear. Lo usa la receta, que le pone el título. */
+  pegajoso?: boolean;
 }
 
-export function encabezado({ titulo, volver, grande, derecha, total }: OpcionesEncabezado): string {
+export function encabezado(
+  { titulo, volver, grande, derecha, total, pegajoso }: OpcionesEncabezado
+): string {
   const izquierda = volver
     ? `<button class="ico" data-accion="volver" aria-label="Volver">${ICO.volver}</button>`
     : '';
   const clase = grande ? 'tit izq' : 'tit';
   const estilo = grande ? ' style="font-size:var(--txt-titulo)"' : '';
-  return `<div class="enc">${izquierda}` +
+  return `<div class="enc${pegajoso ? ' peg' : ''}">${izquierda}` +
     `<span class="${clase}"${estilo}>${escapar(titulo)}</span>` +
     (total === undefined ? '' : `<span class="tot">${total}</span>`) +
     (derecha ?? '') +
