@@ -51,9 +51,15 @@ const area = (nombre: string, etiqueta: string, valor?: string | null, filas = 4
 export function renderEditor(
   { receta, entrada, categorias = [], tagsConocidos = [], error, confirmandoBorrado }: ArgsEditor
 ): string {
-  const opcionesCarpeta = categorias.map(c =>
-    `<option value="${escapar(c.id)}"${c.id === entrada?.carpeta_id ? ' selected' : ''}>${escapar(c.nombre)}</option>`
-  ).join('');
+  // En el alta no hay categoría elegida, y la primera de la lista no es una
+  // respuesta: sin elegirla no se sabe en qué carpeta va el archivo
+  // (C04.3b.1). El placeholder queda seleccionado y no se puede volver a él.
+  const sinElegir = !entrada?.carpeta_id;
+  const opcionesCarpeta =
+    (sinElegir ? '<option value="" disabled selected>Elegí una categoría</option>' : '') +
+    categorias.map(c =>
+      `<option value="${escapar(c.id)}"${c.id === entrada?.carpeta_id ? ' selected' : ''}>${escapar(c.nombre)}</option>`
+    ).join('');
 
   const actual = dificultadValida(receta.dificultad);
   const opcionesDificultad = ['', ...DIFICULTADES].map(d =>

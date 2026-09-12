@@ -716,6 +716,8 @@ app.addEventListener('click', async (e) => {
     }));
 
     if (!nueva.titulo) return conError('Ponele un título antes de guardar.');
+    // Sin categoría no se sabe en qué carpeta de Drive va el archivo (C04.3b.1).
+    if (esNueva && !carpetaId) return conError('Elegí una categoría antes de guardar.');
 
     try {
       if (esNueva && borradorId && borradores) {

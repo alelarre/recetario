@@ -91,6 +91,19 @@ describe('renderEditor', () => {
     for (const d of ['fácil', 'media', 'difícil']) expect(html).toContain(d);
   });
 
+  it('en el alta la categoría arranca sin elegir, y hay que elegirla', () => {
+    const html = dibujar();
+    expect(html).toContain('<option value="" disabled selected>Elegí una categoría</option>');
+    // Y la primera categoría real no queda seleccionada por descarte.
+    expect(html).not.toContain('<option value="c1" selected>');
+  });
+
+  it('editando una receta no aparece el placeholder: ya tiene carpeta', () => {
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: cargada, categorias });
+    expect(html).not.toContain('Elegí una categoría');
+    expect(html).toContain('value="c1" selected');
+  });
+
   it('la categoría son las subcarpetas, y la actual viene elegida', () => {
     const html = renderEditor({
       entrada: entradaFalsa({ carpeta_id: 'c2' }), receta: cargada, categorias
