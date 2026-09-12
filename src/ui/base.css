@@ -158,6 +158,16 @@ button.chip { cursor: pointer; }
 .par .campo { margin-bottom: 0; }
 
 /* ---- Captura (mockup 07) ---- */
+/* El ayuda memoria de la nota: es referencia mientras se escribe, no prosa.
+   Un punto por debajo del micro, porque la monoespaciada pesa más que la del
+   sistema al mismo tamaño, y el color de los rótulos de los campos. */
+.esbozo { margin-bottom: var(--e-5); }
+.esbozo summary { font-size: var(--txt-chico); color: var(--fg-2);
+                  cursor: pointer; padding: var(--e-2) 0; }
+.esbozo pre { margin: 0; padding: var(--e-3); background: var(--surface);
+              border: 1px solid var(--borde); border-radius: var(--r-medio);
+              font-size: calc(var(--txt-micro) - 1px); line-height: 1.6; color: var(--fg-2);
+              white-space: pre-wrap; word-break: break-word; }
 .hoja { min-height: 100%; display: flex; flex-direction: column; padding: var(--e-5) var(--e-4); }
 .hoja h1 { font-size: var(--txt-titulo); margin: 0 0 var(--e-5); }
 .fnt { font-size: var(--txt-chico); color: var(--fg-2); background: var(--surface);

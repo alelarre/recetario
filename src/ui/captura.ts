@@ -49,7 +49,7 @@ export function renderCaptura(
   // su campo. Escribirla así no es obligatorio; por eso es un esbozo y no una
   // validación.
   const ESBOZO = [
-    'Lo de arriba, sin encabezado, queda como descripción.',
+    '_Descripción_',
     '',
     '## Ingredientes',
     '- Harina 0000 — 500 g',
@@ -70,7 +70,7 @@ export function renderCaptura(
     '<label class="campo" style="margin-bottom:var(--e-2)"><span>Nota</span>' +
     `<textarea name="nota" rows="6">${escapar(nota)}</textarea></label>` +
     '<details class="esbozo" open>' +
-      '<summary>Cómo escribirla para que se reparta sola en la receta</summary>' +
+      '<summary>Estructura básica</summary>' +
       `<pre>${escapar(ESBOZO)}</pre>` +
     '</details>';
 

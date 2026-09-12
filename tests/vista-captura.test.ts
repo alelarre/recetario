@@ -47,6 +47,8 @@ describe('Captura', () => {
   it('debajo de la nota va el esbozo de cómo se reparte en la receta', () => {
     const html = renderCaptura(base);
     expect(html.indexOf('name="nota"')).toBeLessThan(html.indexOf('class="esbozo"'));
+    expect(html).toContain('Estructura básica');
+    expect(html).toContain('_Descripción_');
     for (const seccion of ['## Ingredientes', '## Preparación', '## Variaciones', '## Notas']) {
       expect(html).toContain(seccion);
     }
