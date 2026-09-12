@@ -3,10 +3,11 @@
 App personal de recetas. Los datos viven en Google Drive como archivos `.md` y
 sobreviven a la app. Un solo usuario.
 
-**Estado: el rediseño de `product-design/` está implementado en la rama
-`redisenio`, sin mergear todavía.** 381 tests, `npm run typecheck` y
-`npm run build` en verde, y recorrida a mano contra el Drive real: el Recetario,
-una categoría, una receta, el modo cocina, Borradores y Ajustes.
+**Estado: el rediseño de `product-design/` está implementado, mergeado a `main`
+y publicado en GitHub Pages** (PR #3, 2026-09-11). 392 tests, `npm run typecheck`
+y `npm run build` en verde, y recorrida a mano contra el Drive real: el
+Recetario, una categoría, una receta, el modo cocina, el editor, Borradores y
+Ajustes.
 
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
 - El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
@@ -29,15 +30,18 @@ deliberada y está registrada.
 ### Ya está implementado
 
 Las 24 tareas del plan (`docs/superpowers/plans/2026-09-07-rediseno.md`) están
-hechas y commiteadas en `redisenio`, un commit por tarea. El delta
+hechas, un commit por tarea, y mergeadas a `main`. El delta
 (`product-design/plan/delta-implementacion.md`) sirve ahora para leer por qué
 cada archivo quedó como quedó, no como punto de entrada.
 
 Lo que se implementó por fuera del plan, porque salió de mirar la app andando:
 el reindexado ahora anota `schemaVersion` en la meta —sin eso, subir la versión
 del esquema hacía reconstruir el índice en cada arranque—, el permiso de Google
-se pide al tocar el botón y no al abrir, y las categorías del Recetario salen
-alfabéticas y no en el orden en que Drive las lista.
+se pide al tocar el botón y no al abrir, las categorías del Recetario salen
+alfabéticas y no en el orden en que Drive las lista, el **volver** del
+encabezado estaba emitiendo una acción que el cableado no escuchaba, el ⋯ de la
+receta se eliminó por no tener contenido, y los **tags del editor** pasaron a
+ser pills con su cruz.
 
 Falta verificar a mano lo que ningún test alcanza: el **Share Target real**
 (necesita la PWA instalada en Android), el foco del teclado en la captura y la

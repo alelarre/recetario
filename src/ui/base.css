@@ -29,9 +29,11 @@
                    opacity: .28; mix-blend-mode: overlay; }
 .tile .cu { position: absolute; top: var(--e-2); right: var(--e-2); z-index: 1;
             min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
-            background: color-mix(in srgb, var(--velo) 80%, transparent);
+            /* Casi opaco y con el texto claro: el badge cae sobre fotos de
+               cualquier luminosidad, y una foto clara se comía al número. */
+            background: color-mix(in srgb, var(--velo) 92%, transparent);
             border: 1px solid var(--borde-fuerte);
-            font-size: var(--txt-micro); font-weight: 600; color: var(--fg-2);
+            font-size: var(--txt-micro); font-weight: 600; color: var(--fg);
             display: grid; place-items: center; font-variant-numeric: tabular-nums; }
 .tile .im.trama { background:
     repeating-linear-gradient(135deg, var(--c) 0 6px, transparent 6px 14px); opacity: .22; }
