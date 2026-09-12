@@ -32,6 +32,13 @@ describe('Resultados', () => {
     expect(html).toContain('lleva merluza');
   });
 
+  it('la caja lleva la lupa, y dice Buscar cuando está vacía', () => {
+    const html = renderResultados({ consulta: '', grupos: sinNada });
+    expect(html).toContain('class="buscar"');
+    expect(html).toContain('placeholder="Buscar"');
+    expect(html).toContain('<circle cx="11" cy="11" r="7"/>');
+  });
+
   it('la caja del encabezado trae lo buscado, para corregirlo sin volver', () => {
     expect(renderResultados({ consulta: 'berenjena', grupos: { ...sinNada, porNombre: [entradaFalsa()] } }))
       .toContain('value="berenjena"');

@@ -35,9 +35,13 @@ export function renderResultados({ consulta, grupos }: OpcionesResultados): stri
     grupo('Por ingrediente', porIngrediente.map(conMotivo)) +
     grupo('Por tag', porTag.map(conMotivo));
 
+  // La misma caja del Recetario —lupa adentro, fondo propio—, entre el volver y
+  // el limpiar: es el mismo control, no dos parecidos.
   const caja = '<div class="cajaenc">' +
     `<button class="ico" data-accion="volver" aria-label="Volver">${ICO.volver}</button>` +
-    `<input data-accion="buscar" value="${escapar(consulta)}">` +
+    `<div class="buscar">${ICO.buscar}` +
+      `<input data-accion="buscar" value="${escapar(consulta)}" placeholder="Buscar">` +
+    '</div>' +
     `<button class="ico" data-accion="limpiar" aria-label="Limpiar">${ICO.cerrar}</button>` +
     '</div>';
 

@@ -509,6 +509,13 @@ app.addEventListener('click', async (e) => {
 
   if (accion === 'borradores') { location.hash = '#/borradores'; return; }
   if (accion === 'ajustes') { location.hash = '#/ajustes'; return; }
+  if (accion === 'limpiar') {
+    // Vacía la caja y deja el cursor ahí. No navega: buscar vacío no hace nada,
+    // y salir de los resultados es el chevron.
+    const campo = document.querySelector<HTMLInputElement>('#app [data-accion="buscar"]');
+    if (campo) { campo.value = ''; campo.focus?.(); }
+    return;
+  }
   if (accion === 'reindexar') return reconstruir({ enAjustes: true });
   if (accion === 'conectar') return arrancar({ pidiendoPermiso: true });
   if (accion === 'salir') {
@@ -746,9 +753,11 @@ app.addEventListener('change', (e) => {
   // Mismo motivo que en `conClosest`: nada de instanceof contra globales del
   // navegador, que en los tests no existen.
   const campo = e.target as HTMLInputElement | null;
-  if (campo?.dataset?.['accion'] === 'buscar') {
-    location.hash = `#/buscar?q=${encodeURIComponent(campo.value)}`;
-  }
+  if (campo?.dataset?.['accion'] !== 'buscar') return;
+  const q = campo.value.trim();
+  // Con la caja vacía no se busca, y no se avisa: no hay nada que decir.
+  if (!q) return;
+  location.hash = `#/buscar?q=${encodeURIComponent(q)}`;
 });
 
 arrancar().catch(err => pintar(`<p class="contenido">No pude arrancar: ${escapar(mensajeDe(err))} <button data-accion="reconectar">Reintentar</button></p>`));

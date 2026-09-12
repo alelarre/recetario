@@ -58,9 +58,13 @@ describe('main.ts: las rutas', () => {
 
   const montar = async () => {
     const clicks: ((e: unknown) => unknown)[] = [];
+    const cambios: ((e: unknown) => unknown)[] = [];
     const app = {
       innerHTML: '', insertAdjacentHTML: () => {},
-      addEventListener: (ev: string, fn: (e: unknown) => unknown) => { if (ev === 'click') clicks.push(fn); }
+      addEventListener: (ev: string, fn: (e: unknown) => unknown) => {
+        if (ev === 'click') clicks.push(fn);
+        if (ev === 'change') cambios.push(fn);
+      }
     };
     const listeners: Record<string, () => void> = {};
     const vueltasAtras: number[] = [];
@@ -95,6 +99,12 @@ describe('main.ts: las rutas', () => {
       abrir: async (hash: string) => {
         global.location.hash = hash;
         listeners['hashchange']?.();
+        await esperar();
+      },
+      /** Un `change` en la caja de búsqueda, con el valor que tenga. */
+      escribir: async (valor: string) => {
+        const campo = { dataset: { accion: 'buscar' }, value: valor, focus: () => {} };
+        for (const fn of cambios) await fn({ target: campo });
         await esperar();
       },
       /** Un click en un control con esta acción, como lo entrega la delegación. */
@@ -205,6 +215,24 @@ describe('main.ts: las rutas', () => {
     await abrir('#/r/f1/cocinar');
     await tocar('salir-cocina');
     expect(reemplazos).toEqual(['#/c/Carnes']);
+  });
+
+  it('buscar con la caja vacía no hace nada, y no avisa', async () => {
+    const { abrir, escribir, app } = await montar();
+    await abrir('#/c/Carnes');
+    const antes = global.location.hash;
+
+    await escribir('   ');
+
+    expect(global.location.hash).toBe(antes);
+    expect(app.innerHTML).not.toContain('class="aviso"');
+  });
+
+  it('con texto, buscar navega a los resultados sin los espacios de más', async () => {
+    const { abrir, escribir } = await montar();
+    await abrir('#/');
+    await escribir('  leche  ');
+    expect(global.location.hash).toBe('#/buscar?q=leche');
   });
 
   it('ningún guardado exitoso muestra un cartel de confirmación', async () => {

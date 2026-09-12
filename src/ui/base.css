@@ -58,9 +58,7 @@
 /* ---- Resultados (mockup 05) ---- */
 .cajaenc { display: flex; align-items: center; gap: var(--e-2); padding: var(--e-2);
            border-bottom: 1px solid var(--borde); }
-.cajaenc input { flex: 1; min-height: 48px; padding: 0 var(--e-3); background: var(--surface-alta);
-                 border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio);
-                 color: var(--fg); font: 400 var(--txt-base) var(--tipo); }
+.cajaenc .buscar { flex: 1; }
 .grupo-res + .grupo-res { margin-top: var(--e-5); }
 
 /* ---- Receta en lectura (mockup 01) ---- */
