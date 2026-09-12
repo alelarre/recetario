@@ -1,9 +1,16 @@
 # Recetario — Design System
 
-**Versión:** 2.0
-**Fecha:** 2026-09-07
+**Versión:** 2.1
+**Fecha:** 2026-09-12
 **Estado:** Final — Hito 11
 
+> **Cambios en la 2.1 (2026-09-12):** salieron de implementar el rediseño y
+> mirarlo andando. Dos componentes nuevos: el **conmutador de dos posiciones**
+> (§6.16), que reemplaza a la casilla de completitud, y el **menú lateral**
+> (§6.17), que es la navegación primaria. §6.10 — el chip sube un tono y la
+> variante removible pasa a ser la del editor. §6.7 — qué hacer con un logo
+> ajeno dentro de un control. §7 — el segundo punto de quiebre, 900 px.
+>
 > **Cambios en la 2.0 (Hito 11):** §3.1 — la tipografía es **la del sistema**, sin
 > webfont. §2.1 — `--fg-3` sube a `#948A7A` para cumplir 4.5:1 sin excepción, y el
 > velo del tile pasa a ser el token `--velo`.
@@ -498,6 +505,15 @@ verbo en gerundio: *"Guardando"*) · deshabilitado (`--fg-3`, sin fondo).
 
 **No hay botón flotante.** Está vetado desde el Hito 6.
 
+**Un logo ajeno adentro de un control no sigue la regla de trazo.**
+`[agregada el 2026-09-12]` Los íconos del sistema son de trazo, 1,5 px,
+`currentColor` (§3.4). El logo de Drive del link al `.md` (`E03-LeerYCocinar.md`
+C03.1.2b) es el favicon de Google, a color y relleno: redibujarlo de trazo lo
+vuelve irreconocible, que es lo único que el logo aporta. La regla es que un
+logo de un tercero se usa **tal como lo publica el tercero**, a 16 px, y se
+compensa bajándole el peso al resto del control —texto en `--txt-chico` y
+`--fg-2`, sin caja— para que no pese más que los controles propios de al lado.
+
 ### 6.8 Aviso
 
 Dos niveles, como fija `E05-Cimientos.md` C05.9.1.
@@ -516,8 +532,10 @@ alto mínimo 48 px, `--txt-base`.
 
 **La casilla de verificación mide 22 px** `[agregada en el Hito 9]`, con
 `--acento` de color y un área táctil de 48 px que incluye su etiqueta: la etiqueta
-es parte del control, no un texto al lado. Es el control de "Está completa así
-como está", que es el único del sistema.
+es parte del control, no un texto al lado. **Hoy no la usa ninguna pantalla**
+`[2026-09-12]`: era el control de la completitud y lo reemplazó el conmutador de
+dos posiciones (§6.16). Queda definida porque el sistema la va a necesitar, no
+porque esté puesta en algún lado.
 
 Etiqueta arriba en `--txt-chico` y `--fg-2`. Foco: borde `--acento` de 2 px.
 Placeholder en `--fg-3`, y **nunca reemplaza a la etiqueta**.
@@ -529,11 +547,29 @@ crecen con el contenido, con un mínimo de tres renglones.
 
 Para los tags y los metadatos de la receta.
 
-`--surface-alta`, borde 1 px `--borde`, `--r-chico`, padding `--e-1` `--e-2`,
-`--txt-chico`. Alto 32 px, con área táctil de 48 px cuando es tocable.
+Fondo un tono por encima de `--surface-alta` `[subido el 2026-09-12]` —
+`color-mix(in srgb, var(--surface-alta) 86%, var(--fg))`—, borde 1 px
+`--borde-fuerte`, `--r-chico`, padding `--e-1` `--e-2`, `--txt-chico`. Alto 32 px,
+con área táctil de 48 px cuando es tocable.
+
+**Por qué el tono subió:** con `--surface-alta` el chip desaparecía sobre los dos
+fondos donde vive. En el editor comparte fondo con el campo de agregar un tag, y
+la fila de tags puestos se leía como parte del campo; en la receta abierta se
+funde con la ficha. Es el mismo chip en las dos pantallas: un tag se tiene que
+ver igual donde se pone y donde se lee.
 
 **Activo** —un tag aplicado como filtro— usa `--acento-suave` de fondo, borde
 `--acento` y texto `--acento`, y muestra una `×`.
+
+**Removible** —un tag del editor— `[agregado el 2026-09-12]` es el chip normal
+más una `×` de trazo de 14 px en `currentColor` a 70 % de opacidad, y el chip
+entero es el botón que lo saca. No hay una cruz con su propia área táctil
+adentro: a 32 px de alto no entra un segundo blanco de 48. Debajo de la fila de
+chips van `--e-3` de aire antes del campo de agregar.
+
+**Un tag reservado no llega a ser chip:** el editor lo rechaza al agregarlo y lo
+dice en una línea de `--txt-chico` en `--error`, sin caja ni botón
+(`E04-Corregir.md` C04.2.1b).
 
 ### 6.11 Ítem de ingrediente
 
@@ -607,6 +643,75 @@ Ficha de `--e-3` de padding: título en `--txt-base` peso 600, fuente en
 `--txt-chico` `--fg-2` cortada con elipsis a una línea, y la fecha en
 `--txt-micro` `--fg-3` a la derecha.
 
+### 6.16 Conmutador de dos posiciones
+
+`[agregado el 2026-09-12]` Dos botones del mismo ancho, uno al lado del otro con
+`--e-2` de separación, cada uno de 48 px de alto y `--r-medio`. Una sola posición
+es verdadera. Hoy lo usa un solo control, el de completitud del editor
+(`E04-Corregir.md` C04.4.1).
+
+| Posición | Fondo | Texto | Borde |
+|---|---|---|---|
+| **Sin elegir** | `--surface-alta` | `--fg-2` | 1 px `--borde` |
+| **Elegida** | `--fg` | `--bg` | 1 px `--fg` |
+| **Deshabilitada** | transparente | `--fg-3` | 1 px `--borde` |
+
+`--txt-base` peso 600, centrado. Al pasar por encima, una posición sin elegir
+sube su texto a `--fg`.
+
+**La posición elegida se marca invirtiendo, no con el acento.** `--acento` está
+reservado para acciones —lo que se toca para que algo pase— y para el ítem activo
+de la navegación. Un estado declarado no es una acción: pintarlo de acento lo
+hace competir con el botón de guardar, que está a centímetros. La inversión es el
+contraste más alto que tiene el sistema y no gasta un color semántico.
+
+**Ningún estado del sistema se dibuja en `--error`.** Se probó *Incompleta* en
+rojo y se leyó como que algo había fallado. Es la misma regla de la marca de
+incompleta (§6.5): a la receta le falta algo, no está rota.
+
+Una posición deshabilitada lleva debajo la leyenda de qué falta para habilitarla,
+en `--txt-chico` `--fg-2` con interlineado 1,5 — un aviso sin acción (§6.8), no
+un error.
+
+**No es el conmutador de cocina (§6.14).** Aquél elige qué se mira y ocupa el
+ancho pegado arriba; éste declara un estado y vive dentro de una ficha.
+
+### 6.17 Menú lateral
+
+`[agregado el 2026-09-12]` La navegación primaria de la app: Recetario,
+Borradores, Nueva receta y Ajustes. Reemplaza a los accesos sueltos en el
+encabezado de cada pantalla.
+
+Panel de **260 px** de ancho, pegado a la izquierda y de alto completo.
+`--surface`, borde derecho 1 px `--borde`, padding `--e-4`.
+
+Arriba, el nombre de la app en `--txt-titulo` peso 600 con `--e-4` abajo. Después,
+un ítem por destino: alto mínimo 48 px, `--r-medio`, ícono de trazo de `--ico` a
+la izquierda con `--e-3` de separación, texto en `--fg` peso 600, y `--e-1` entre
+ítems.
+
+| Estado | Cómo se ve |
+|---|---|
+| **Normal** | Sin fondo, texto e ícono en `--fg`. |
+| **Encima** | Fondo `--surface-alta`. |
+| **Actual** | Fondo `--acento-suave`, texto e ícono en `--acento`. |
+
+**Un ítem puede llevar un número a la derecha** —los borradores pendientes—: una
+píldora de 20 px de alto mínimo, `--surface-alta`, borde 1 px `--borde-fuerte`,
+`--txt-micro` peso 600 en `--fg-2`, con cifras tabulares. Es el mismo recurso que
+el contador del tile de categoría (§6.4) y se dibuja sólo si hay algo que contar.
+
+**Dos comportamientos según el ancho, un solo menú.** Abajo de 900 px es un cajón
+que entra desde la izquierda en 200 ms, sobre un velo de `--velo` al 60 %, y se
+abre con el botón de hamburguesa del encabezado; el velo lo cierra al tocarlo.
+Desde 900 px queda fijo, el velo y la hamburguesa desaparecen, y el contenido se
+corre 260 px. **Es sólo CSS:** la misma marca dibujada, una consulta de medios
+decide. Con `prefers-reduced-motion` el cajón aparece sin transición.
+
+**A la izquierda, también en teléfono.** Es de donde vienen los cajones en
+Android, y el pulgar que lo abre es el mismo que toca la hamburguesa, que está
+del mismo lado.
+
 ---
 
 ## 7. Layout
@@ -617,9 +722,11 @@ Ficha de `--e-3` de padding: título en `--txt-base` peso 600, fuente en
 | Ancho máximo de la columna | **680 px**, centrada |
 | Ancho máximo del cuerpo de lectura | **62 caracteres** |
 | Punto de quiebre de la grilla | 720 px: las grillas pasan de 2 a 4 columnas |
+| Punto de quiebre del menú | 900 px: el menú lateral deja de ser cajón y queda fijo (§6.17) |
 
 **No hay layout de escritorio propio.** Es la misma app, más ancha
-(`E05-Cimientos.md` C05.10.1).
+(`E05-Cimientos.md` C05.10.1). El menú fijo desde 900 px no es una excepción: es
+el mismo menú, dibujado igual, al que le sobra lugar para quedarse abierto.
 
 ---
 
@@ -633,6 +740,7 @@ Una pantalla cumple el sistema si:
 - [ ] No tiene sombras.
 - [ ] Ningún control táctil mide menos de 48 px, ni de 64 px en cocina.
 - [ ] Ningún texto de cuerpo baja de 16 px, ni de 18 px en la receta abierta.
-- [ ] `--error` aparece solo en operaciones que fallaron.
+- [ ] `--error` aparece solo en operaciones que fallaron, nunca en un estado del
+      contenido.
 - [ ] Ningún mensaje confirma un éxito.
 - [ ] El estado vacío es una frase, sin ilustración.

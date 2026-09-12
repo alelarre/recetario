@@ -1,8 +1,12 @@
 # E02 — Encontrar
 
-**Versión:** 3.0 · **Fecha:** 2026-09-07 · **Estado:** Final — Hito 11
+**Versión:** 3.1 · **Fecha:** 2026-09-12 · **Estado:** Final — Hito 11
 **Jobs:** J1, J4, J5 · **Prioridad:** alta · **Flujos:** F3, F4, F5
 
+> **Cambios en la 3.1 (2026-09-12):** el motivo de una coincidencia por tag se
+> lee *"tiene tag X"*; buscar con el campo vacío no hace nada; y el tile de
+> categoría muestra **cuántas recetas tiene** (C02.4.1).
+>
 > **Cambio en la 3.0 (Hito 11):** la grilla de categorías queda en **dos
 > columnas** y la lista usa la tarjeta de 80 px — las dos variantes del Hito 9,
 > resueltas.
@@ -65,7 +69,8 @@ frecuente y tiene que resolverse en dos toques.
 - [ ] Llegar a una receta buscada por nombre cuesta dos toques: escribir y tocar el resultado.
 
 **Edge case:** la caja vacía no muestra resultados ni una lista completa; muestra
-el Recetario como estaba.
+el Recetario como estaba. **Buscar con la caja vacía —o con espacios— no hace
+nada y no avisa** `[del 2026-09-12]`: no hay nada que decir.
 
 ### F02.3 — Búsqueda por ingrediente y por tag
 
@@ -89,7 +94,7 @@ ingrediente.
 - [ ] Tres grupos, con su encabezado: **Por nombre**, **Por ingrediente**, **Por tag**.
 - [ ] Un grupo sin resultados no se dibuja.
 - [ ] Una receta que coincide por dos criterios aparece en los dos grupos.
-- [ ] En los grupos de ingrediente y de tag, cada tarjeta dice **por qué apareció**: *"tiene berenjena"*.
+- [ ] En los grupos de ingrediente y de tag, cada tarjeta dice **por qué apareció**, citando el valor tal como está escrito: *"tiene Merluza o pescadilla"* por ingrediente, *"tiene tag horno"* por tag. `[«tiene tag» desde el 2026-09-12: «lleva» no distinguía de un ingrediente]`
 
 #### C02.3.3 — Se resuelve contra el índice *(J4)*
 
@@ -121,6 +126,7 @@ pasear, que es para lo que existen, y ya están aprendidas por posición.
 - [ ] El orden es alfabético y estable: la posición de cada categoría se aprende.
 - [ ] Agregar una carpeta en Drive agrega una categoría sin tocar la app.
 - [ ] Una categoría sin recetas se muestra igual.
+- [ ] **Cada tile dice cuántas recetas tiene** `[del 2026-09-12]`, en un badge sobre la foto y sólo si tiene alguna: una categoría vacía no lleva un cero encima. Sobre foto clara el badge necesita fondo casi opaco.
 - [ ] La grilla pasa de dos a cuatro columnas en pantalla ancha (C05.10.1).
 
 ### F02.5 — La lista de una categoría

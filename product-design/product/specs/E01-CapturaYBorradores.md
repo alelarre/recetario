@@ -1,8 +1,15 @@
 # E01 — Captura y Borradores
 
-**Versión:** 3.0 · **Fecha:** 2026-09-07 · **Estado:** Final — Hito 11
+**Versión:** 3.1 · **Fecha:** 2026-09-12 · **Estado:** Final — Hito 11
 **Jobs:** J2, J3 · **Prioridad:** la más alta · **Flujos:** F1, F2
 
+> **Cambios en la 3.1 (2026-09-12):** salieron de implementar el rediseño y
+> mirarlo andando. El borrador suma una **nota** de texto libre (C01.2.1) que se
+> guarda en una quinta columna de la planilla (C01.4.2); la **fuente es editable**
+> como cualquier otro campo (C01.6.1); la fila de la lista muestra **sólo el
+> título** (C01.4.1); y crear la receta desde el borrador **parsea la nota** como
+> cuerpo de receta (C01.6.3, C01.7.1).
+>
 > **Cambios en la 3.0 (Hito 11):** vocabulario y estado final. Ninguna capacidad
 > cambió: E01 no existe en la implementación actual, así que se construye entera
 > desde acá (`plan/delta-implementacion.md` §2.4).
@@ -58,20 +65,25 @@ y el usuario la escribe.
 
 ### F01.2 — La pantalla de captura
 
-Un solo campo: **el título**, que escribe el usuario y es obligatorio. La fuente
-viene de lo compartido. Guardar agrega el borrador y devuelve a la app donde
-estabas.
+Un campo obligatorio: **el título**, que escribe el usuario. La fuente viene de
+lo compartido. Guardar agrega el borrador y devuelve a la app donde estabas.
 
-No pide categoría, ni tags, ni descripción. El presupuesto de la captura es un
+No pide categoría, ni tags, ni dificultad. El presupuesto de la captura es un
 campo y está gastado en el título, que es lo único que vuelve al borrador
 recuperable.
 
-#### C01.2.1 — Un campo, con el foco puesto *(J2)*
+**Y una nota opcional** `[cambio del 2026-09-12]`, para lo que se sabe en el
+momento y no entra en el título. No cuesta fricción —no bloquea Guardar— y es
+lo que después se reparte en la receta (C01.7.1).
+
+#### C01.2.1 — Un campo obligatorio, con el foco puesto *(J2)*
 
 - [ ] La pantalla muestra la fuente ya cargada, sin permitir editarla acá.
-- [ ] El único campo editable es el título, y recibe el foco con el teclado abierto al abrirse la pantalla.
-- [ ] No hay ningún otro campo: ni categoría, ni tags, ni notas.
+- [ ] El título recibe el foco con el teclado abierto al abrirse la pantalla.
 - [ ] El título es obligatorio: con el campo vacío, Guardar no está disponible.
+- [ ] Debajo, un campo de **nota** opcional, de texto libre.
+- [ ] No hay ningún otro campo: ni categoría, ni tags, ni dificultad.
+- [ ] Junto a la nota, un **esbozo plegado** muestra cómo se estructura para que se reparta sola al convertir. Es referencia, no obligación: sin encabezados todo cae en la descripción.
 
 #### C01.2.2 — Guardar devuelve a donde estabas *(J2)*
 
@@ -93,13 +105,15 @@ alguien contó— se puede crear un borrador a mano desde la app.
 - [ ] Borradores tiene un control **Agregar a mano**, visible también con la lista vacía.
 - [ ] El formulario es el mismo de la captura, con la fuente **escrita a mano** y como texto libre: una URL o *"libro de pescados, pág. 84"*.
 - [ ] El título es obligatorio; la fuente no.
-- [ ] Una vez guardada, la fuente **no se puede corregir** (C01.6.1): un borrador con la fuente mal se descarta y se captura de nuevo.
 - [ ] Guardar deja el borrador en Borradores y vuelve a la lista, que ya lo muestra.
+- [ ] Agregado a mano, el formulario es una pantalla más de la app: lleva encabezado y volver. Compartido desde otra app, no —es efímero sobre lo que estabas haciendo (C01.2.2)—.
 
 ### F01.4 — Borradores
 
-Uno de los dos lugares primarios. Lista los borradores que esperan, con su título
-y su fuente.
+Uno de los dos lugares primarios. Lista los borradores que esperan, con su
+título y cuándo entraron. `[cambio del 2026-09-12: la fuente salió de la fila]`
+La fuente y la nota se ven adentro del borrador: en la fila competían con el
+título, que es lo que se busca al recorrer la lista.
 
 **Es una planilla en Drive, una fila por borrador.** `[cambio en la 2.0]` No es
 una carpeta con un archivo por borrador, ni un archivo único que haya que
@@ -111,7 +125,7 @@ consolidado.
 
 #### C01.4.1 — La lista *(J3)*
 
-- [ ] Cada entrada muestra título, fuente y cuándo se capturó.
+- [ ] Cada entrada muestra **el título y cuándo se capturó**. La fuente y la nota están adentro.
 - [ ] El orden es por fecha de captura, **lo más viejo primero**: lo que lleva más tiempo esperando es lo que más riesgo corre.
 - [ ] La lista se lee de una sola vez: una lectura de la planilla, sin paginar.
 
@@ -119,6 +133,8 @@ consolidado.
 
 - [ ] Capturar agrega una fila; descartar borra una fila; convertir borra una fila. Ninguna operación reescribe la planilla entera.
 - [ ] Cada borrador tiene un identificador propio que no depende de su posición.
+- [ ] Las columnas son `id`, `titulo`, `fuente`, `capturado` y `nota` `[la última, del 2026-09-12]`. Una planilla escrita antes se lee igual: la celda falta y la nota queda vacía.
+- [ ] Editar un borrador reescribe **su** fila, con los tres campos editables.
 
 **Nota técnica:** con un solo usuario, dos capturas simultáneas no ocurren. La
 escritura por fila lo vuelve inofensivo igualmente.
@@ -148,10 +164,10 @@ descartarlo. La conversión en sí ocurre afuera, en una sesión con el agente.
 
 #### C01.6.1 — Lo que se ve *(J3)*
 
-- [ ] Título, fuente y cuándo se capturó.
+- [ ] Título, fuente, cuándo se capturó y la nota, si tiene.
 - [ ] **Ir a la fuente** abre la URL fuera de la app. Si la fuente no es una URL, el control no aparece.
-- [ ] **Editar título** permite corregirlo y guardar la fila. **La fuente no se edita**: es lo que se compartió.
-- [ ] **Crear la receta** abre el editor con el título y la fuente ya cargados (C01.6.3).
+- [ ] **Editar** abre el mismo formulario con el que se creó, precargado: título, fuente y nota, los tres editables. `[cambio del 2026-09-12: antes sólo el título, y la fuente no se editaba]`
+- [ ] **Crear la receta** abre el editor con lo que el borrador tenía (C01.6.3).
 - [ ] **No hay botón de "convertir" que llame a un agente**: el agente no vive adentro de la app y prometerlo sería mentir. Lo que la app ofrece es escribir la receta a mano, que es lo que sabe hacer.
 
 #### C01.6.2 — Descartar pide confirmación *(J3)*
@@ -164,7 +180,8 @@ descartarlo. La conversión en sí ocurre afuera, en una sesión con el agente.
 
 `[nueva en la 2.0]`
 
-- [ ] Abre el editor de receta nueva (C04.3b.1) con el título y la `fuente` del borrador ya cargados; el resto vacío.
+- [ ] Abre el editor de receta nueva (C04.3b.1) con el título y la `fuente` del borrador ya cargados.
+- [ ] **La nota se lee como si fuera el `.md` de la receta** `[del 2026-09-12]`: lo que esté bajo `## Ingredientes`, `## Preparación`, `## Variaciones` o `## Notas` cae en su campo, y el texto suelto de arriba queda como descripción. Sin encabezados, todo va a la descripción.
 - [ ] Hay que elegir la categoría, como en cualquier receta nueva.
 - [ ] Guardar invoca la operación de conversión de la capa compartida (C01.7.1): escribe el `.md`, escribe la fila del índice y **borra la fila del borrador**, en una sola operación.
 - [ ] Salir sin guardar deja el borrador intacto.
@@ -181,7 +198,7 @@ Su fuente sobrevive en la receta; no queda copia.
 #### C01.7.1 — Convertir es una operación, no tres *(J3)*
 
 - [ ] La operación escribe el `.md`, escribe la fila del índice y borra la fila del borrador, en ese orden.
-- [ ] La `fuente` del borrador pasa al frontmatter de la receta.
+- [ ] La `fuente` del borrador pasa al frontmatter de la receta, y la nota a los campos que nombra (C01.6.3).
 - [ ] Si alguno de los pasos falla, el reintento repite los tres (R2): reescribir el `.md`, reemplazar la fila y borrar el borrador son idempotentes.
 - [ ] Nadie borra un borrador convertido "a mano" desde otro lado.
 - [ ] La invocan las dos partes: el agente al convertir afuera, y la app cuando se guarda una receta creada desde un borrador (C01.6.3).

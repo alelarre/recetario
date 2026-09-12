@@ -1,7 +1,7 @@
 # Recetario — Arquitectura de Información
 
-**Versión:** 1.4
-**Fecha:** 2026-09-06
+**Versión:** 1.5
+**Fecha:** 2026-09-12
 **Estado:** Final — Hito 5 cerrado, corregido en los Hitos 6, 7, 8 y 9
 
 > **Cambio en la 1.1 (Hito 6):** §4.4 — la búsqueda es por título, ingrediente
@@ -17,6 +17,13 @@
 > **Cambio en la 1.4 (Hito 9):** §1.4 — la convención del ingrediente pasa a ser
 > **`nombre` + separador + `cantidad`**, contra el contenido real del Drive. La
 > cantidad en itálica al principio queda descartada.
+>
+> **Cambios en la 1.5 (2026-09-12):** salieron de implementar el rediseño.
+> §1.5 — el frontmatter escribe `completa: sí` / `no`. §1.6 — **la completitud es
+> un dato del archivo que declara el usuario**, no un cálculo sobre el contenido.
+> §2.1 — la planilla de borradores suma la columna `nota`. §4.1 y §4.6 — la
+> navegación primaria pasa a **un menú lateral**, y no hay barra inferior. §6 —
+> la tabla de divergencias con lo implementado, al día.
 
 ---
 
@@ -139,7 +146,7 @@ tiempo: 40 min
 dificultad: fácil
 fuente: Cuaderno de mamá, p. 12
 foto: https://…
-completa: true
+completa: sí
 ---
 
 Un clásico de los domingos en casa.
@@ -187,13 +194,25 @@ y la numeración de los pasos vuelve a empezar en cada uno, tal como está escri
 
 ### 1.6 Completitud
 
-**"Incompleta" es un estado derivado**, calculado al leer (principio 3). Una
-receta está completa cuando tiene título, al menos un ingrediente reconocible y
-al menos un paso de preparación.
+`[reescrita el 2026-09-12: era un estado derivado del contenido]`
 
-`completa: true` es la salida manual: el usuario declara que la receta está bien
-así —una técnica, un fondo, una masa madre— y la marca desaparece. Es la única
-excepción del principio 3, y es del usuario, no del agente.
+**La completitud es un dato del archivo**, no un cálculo: la clave `completa`,
+que vale `sí` o `no` y se escribe siempre. La app la lee tal cual y nunca la
+deduce del contenido.
+
+**Lo único que la app asume** es el caso en que el dato no está: si la clave
+falta —un `.md` escrito antes, o por un agente que no la puso— o trae cualquier
+otra cosa, la receta se lee como **incompleta**. Es el valor seguro: decir que
+algo está terminado cuando nadie lo dijo es peor que lo contrario.
+
+Terminar una receta es un juicio del usuario, no una propiedad del texto: hay
+recetas escritas enteras que todavía no están buenas, y recetas de tres líneas
+que sí. Es una declaración, y es del usuario, no del agente — la única excepción
+del principio 3.
+
+El contenido sólo decide **cuándo se puede declarar**: el conmutador del editor
+habilita «Terminada» con título, categoría, al menos un ingrediente y al menos un
+paso. Esa condición no filtra, no corrige y no escribe nada por su cuenta.
 
 ### 1.7 Foto
 
@@ -259,7 +278,8 @@ que haya que reescribir entero para agregar una línea. Es el mismo argumento qu
 eligió planilla para el índice: Drive no tiene escritura parcial, así que
 capturar escribe una fila y descartar o convertir borran una fila. Que sea otra
 planilla no la mete en el índice: es una cola de trabajo, no un archivo
-consolidado. `[decisión: Hito 4, corregida en el Hito 7]`
+consolidado. `[decisión: Hito 4, corregida en el Hito 7]` Sus columnas son `id`,
+`titulo`, `fuente`, `capturado` y `nota` `[la última, del 2026-09-12]`.
 
 **Una receta se identifica por su `fileId` de Drive.** Ni la ruta ni el nombre
 del archivo son identidad: cambiar la categoría mueve el archivo entre carpetas y
@@ -347,7 +367,8 @@ es un archivo consolidado que se consulta, el otro es una cola de trabajo que se
 vacía. Meterlos en el mismo lugar obliga a uno de los dos a comportarse como el
 otro.
 
-**Ajustes** es secundario y se llega desde el Recetario.
+**Ajustes** es secundario. `[cambio del 2026-09-12: se llega desde el menú
+lateral, como los otros dos]`
 
 **Planificador**, si existe, tiene su entrada **en el Recetario, debajo de las
 categorías** — visible, alcanzable, y sin ser uno de los lugares primarios. El
@@ -403,16 +424,39 @@ que la mayoría va a usar; el botón es el respaldo visible.
 Sale de la regla de tamaños del principio 7: el tamaño de los controles es una
 regla del sistema, no una decisión por pantalla.
 
-### 4.6 Sin barra de navegación inferior
+### 4.6 Un menú lateral, sin barra inferior
 
-Con dos lugares primarios, una barra inferior de dos ítems gasta una franja
-permanente de pantalla para una decisión que se toma poco: se va a Borradores
-cuando hay algo que convertir, no cada dos minutos.
+`[reescrita el 2026-09-12: antes «Sin barra de navegación inferior»]`
 
-**Borradores se alcanza desde el Recetario**, con su contador visible. Si el
-planificador se construye y se promueve, la decisión se revisa: con tres lugares
-la barra empieza a pagar. `[divergencia con lo implementado: hoy no hay barra,
-y el spec del repo padre la daba por necesaria para el planificador]`
+La navegación primaria vive en un **menú lateral** con cuatro entradas, cada una
+con su nombre y su ícono:
+
+| | |
+|---|---|
+| **Recetario** | El punto de entrada |
+| **Borradores** | La cola, con su contador |
+| **Nueva receta** | Una acción, no un lugar: nunca queda marcada |
+| **Ajustes** | Secundario, pero alcanzable desde cualquier parte |
+
+**En el teléfono se despliega desde una hamburguesa**, arriba a la izquierda —del
+lado por el que el panel entra—, y se cierra tocando el velo o cualquier destino.
+**Desde 900 px queda fijo** y el contenido se corre: el mismo ancho en que la
+grilla de categorías pasa a cuatro columnas. Es la misma pantalla; lo resuelve el
+CSS.
+
+**El contador de borradores aparece dos veces**: junto a «Borradores» dentro del
+menú, y sobre la hamburguesa cuando está cerrado. Sin eso, con el menú cerrado no
+habría manera de saber que hay algo esperando.
+
+**La barra inferior sigue descartada.** El argumento anterior —que con dos ítems
+una franja permanente no se justifica— ya no aplica igual con cuatro entradas,
+pero el lateral las resuelve sin gastar pantalla en el teléfono y sin desperdiciar
+el ancho en escritorio.
+
+**Capturar sigue sin estar en la navegación** (§4.1): entra por el Share Target.
+Lo que sí entró al menú es **Nueva receta**, que no tenía ninguna puerta: los
+mockups no la dibujaron y `E04-Corregir.md` F04.3b define la pantalla sin decir
+desde dónde se llega.
 
 ---
 
@@ -447,12 +491,15 @@ completitud: lo que clasifica es del usuario, lo que transcribe es del agente.
 
 ## 6. Divergencias con la implementación actual
 
+`[la columna «implementación actual» describe v1, anterior al rediseño. Hoy el
+rediseño está implementado: lo que sigue queda como registro de lo que cambió]`
+
 | Decisión | Implementación actual | Este documento |
 |---|---|---|
 | Pantalla principal | Grilla de 16 categorías, sin búsqueda a la vista | Búsqueda arriba, categorías abajo |
 | Clasificación | Categoría única | Categoría única + tags como clasificación real |
 | Ingredientes | Prosa libre bajo `## Ingredientes` | Nombre, separador y cantidad |
-| Completitud | Tag manual `incompleto` | Estado derivado + `completa: true` como salida |
+| Completitud | Tag manual `incompleto` | Dato del archivo: `completa: sí` / `no`, declarado por el usuario `[2026-09-12]` |
 | Foto | Descartada | Campo `foto`, URL externa, opcional |
 | Variaciones | Sección informativa | Entidad con `fuente` propia |
 | Borradores | No existe | Uno de los dos lugares primarios |

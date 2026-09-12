@@ -1,8 +1,16 @@
 # E03 — Leer y cocinar
 
-**Versión:** 3.0 · **Fecha:** 2026-09-07 · **Estado:** Final — Hito 11
+**Versión:** 3.1 · **Fecha:** 2026-09-12 · **Estado:** Final — Hito 11
 **Job:** J6 · **Prioridad:** media · **Flujo:** F6
 
+> **Cambios en la 3.1 (2026-09-12):** el encabezado de la receta se especifica
+> entero y es nuevo (C03.1.2b): arranca sin texto, queda fijo, toma el título
+> recortado al scrollear y lleva el **link al `.md` en Drive**. Se va el menú ⋯ y
+> *Cocinar* aparece sólo si hay pasos (C03.1.2). La marca de incompleta **sale
+> del archivo**, no de mirar el contenido (C03.1.3). El modo cocina tiene dos
+> salidas que hacen lo mismo, resetea el scroll al entrar y no se deja en el
+> historial (C03.2.1).
+>
 > **Cambio en la 3.0 (Hito 11):** C03.2.4 — un paso hecho lleva check y texto
 > atenuado, no tachado. La receta en lectura queda como pila de fichas con la
 > foto dentro de la primera.
@@ -50,12 +58,23 @@ notas. Sin pestañas: costaban cuatro toques para leer una receta entera.
 
 #### C03.1.2 — Las acciones *(J6, J7)*
 
-- [ ] Al pie: **Cocinar** y **Editar**.
+- [ ] Al pie: **Cocinar** y **Editar**. Sin ingredientes ni pasos, **Cocinar no se ofrece**: no hay nada que cocinar.
 - [ ] Volver es un control de tamaño normal en el encabezado, y el gesto del sistema hace lo mismo.
+- [ ] **No hay menú de acciones secundarias:** las dos acciones están al pie y un menú vacío es peor que ninguno. `[del 2026-09-12]`
+
+#### C03.1.2b — El encabezado *(J6)*
+
+`[nueva el 2026-09-12]`
+
+- [ ] Arranca **sin texto**: el título está abajo, grande y entero, y repetirlo arriba es decir dos veces lo mismo.
+- [ ] Queda **fijo al scrollear**, y cuando el título grande sale de pantalla lo toma **recortado con elipsis**, sin llegar a pisar lo que tenga a la derecha.
+- [ ] A la derecha, un **link al `.md` en Drive**, con el logo de Drive y la etiqueta `.md`, que abre en otra pestaña. Es un dato al margen y no un botón: sin caja y más chico que los controles.
+- [ ] El link sólo aparece si la receta está en el índice: sin fila no se conoce su id de archivo.
 
 #### C03.1.3 — Estados de la receta *(J6)*
 
-- [ ] Incompleta: la marca junto al título, **tocable**. Tocarla **abre el editor**, que es donde están las dos salidas: completar lo que falta, o marcar la casilla de "está completa así como está" (C04.4.1). El resto de la receta se muestra igual.
+- [ ] Incompleta: la marca junto al título, **tocable**. Tocarla **abre el editor**, que es donde están las dos salidas: completar lo que falta, o mover el conmutador a *Terminada* (C04.4.1). El resto de la receta se muestra igual.
+- [ ] La marca sale de la clave `completa` del archivo, no de mirar el contenido (C05.3.1).
 - [ ] Sin foto: el bloque de foto no se dibuja y la receta empieza por el título.
 - [ ] Cargando: el esqueleto de la pantalla está mientras se lee el `.md`.
 - [ ] Sin red: no se puede abrir; el aviso (C05.8.1).
@@ -77,8 +96,10 @@ el tiempo. Con eso, el conmutador no esconde nada que haga falta.
 #### C03.2.1 — Se entra a propósito *(J6)*
 
 - [ ] Se entra desde **Cocinar** en la receta abierta. No es la vista por defecto: cocinar es el uso menor.
-- [ ] El modo tiene salida visible, que devuelve a la receta en lectura.
-- [ ] Volver con el gesto del sistema sale del modo, no de la receta.
+- [ ] **Dos salidas, con destinos distintos** `[del 2026-09-12]`: el chevron vuelve **a la receta** —seguir leyéndola sin la escala de cocina— y **Salir** vuelve **a la categoría**, que es donde se elige otra cosa.
+- [ ] Las dos sueltan el bloqueo de pantalla: se dejó de cocinar.
+- [ ] Volver con el gesto del sistema sale del modo, no de la receta. Salir del modo **no deja la cocina en el historial**: volver desde la receta lleva a donde se estaba antes.
+- [ ] Al entrar, la pantalla **empieza arriba**: se entra desde el pie de la receta y heredar ese scroll abría los ingredientes por la mitad.
 
 #### C03.2.2 — El conmutador Ingredientes / Pasos *(J6)*
 

@@ -1,8 +1,13 @@
 # E04 — Corregir
 
-**Versión:** 3.0 · **Fecha:** 2026-09-07 · **Estado:** Final — Hito 11
+**Versión:** 3.1 · **Fecha:** 2026-09-12 · **Estado:** Final — Hito 11
 **Job:** J7 · **Prioridad:** baja · **Flujo:** F7
 
+> **Cambios en la 3.1 (2026-09-12):** **F04.4 reescrita** — la completitud la
+> declara el usuario con un conmutador de dos posiciones, y no se deriva del
+> contenido. **C04.2.1b nueva:** los tags son chips removibles y hay palabras que
+> la app se reserva.
+>
 > **Cambio en la 3.0 (Hito 11):** sin cambios de comportamiento. El alcance del
 > editor coincide con `product-vision.md` §1 desde su v2.1.
 >
@@ -58,6 +63,18 @@ archivo se arma solo al guardar.
 - [ ] Solo el título es obligatorio.
 - [ ] Un campo que se deja vacío **no se escribe** en el frontmatter: no quedan claves vacías.
 - [ ] `rinde` y `tiempo` son texto libre, no números: *"4 porciones"*, *"40 min"*.
+
+#### C04.2.1b — Los tags, y las palabras que la app se reserva *(J7)*
+
+`[agregada el 2026-09-12]`
+
+- [ ] Los tags puestos se dibujan como chips removibles, cada uno con su cruz, y debajo va el campo para agregar otro.
+- [ ] Hay **palabras reservadas** que el editor no deja escribir a mano: `incompleto`, `terminado` y `favorito` en sus cuatro formas —masculino, femenino, singular y plural—, más `probar`.
+- [ ] `incompleto` y `terminado` están reservadas porque lo que dicen ya lo dice `completa` (C05.3.1): un tag que contradiga la clave del archivo es ambigüedad pura.
+- [ ] `favorito` y `probar` están reservadas de antemano: son estados que el producto va a querer, y tomarlos ahora evita tener que desalojarlos después.
+- [ ] Al intentar agregar una reservada, el tag **no entra** y aparece una línea de aviso sin acción (C05.9.1): no es un error del usuario, es un nombre tomado.
+- [ ] La comparación ignora mayúsculas y acentos, igual que la búsqueda.
+- [ ] **La app no borra ni corrige** una palabra reservada que ya esté en un `.md` escrito afuera: la muestra como cualquier otro tag (R4).
 
 #### C04.2.2 — El título no renombra el archivo *(J7)*
 
@@ -124,18 +141,29 @@ usuario escribieron afuera.
 entero. Por eso conservar lo desconocido no es una mejora: si el editor no lo
 conserva, lo borra.
 
-### F04.4 — Declarar una receta completa
+### F04.4 — Declarar una receta terminada
 
-La salida manual del estado derivado: el usuario dice que la receta está bien
-así —una técnica, un fondo, una masa madre— y la marca desaparece.
+`[cambio del 2026-09-12: era una casilla sobre un estado derivado]`
+
+El estado de la receta lo fija el usuario acá, y en ningún otro lado. La app no
+lo deduce del contenido (C05.3.1): sólo dice cuándo se puede declarar.
 
 #### C04.4.1 — El control *(J7)*
 
-- [ ] Una casilla al pie del editor: *"Está completa así como está"*.
-- [ ] Marcarla escribe `completa: true` en el frontmatter.
-- [ ] Desmarcarla **borra la clave**; nunca escribe `completa: false` (C05.3.2).
+- [ ] Un **conmutador de dos posiciones al pie del editor: *Incompleta* | *Terminada***. Una sola es verdadera.
+- [ ] Arranca en **Incompleta**: una receta nueva no está terminada hasta que alguien lo diga.
+- [ ] *Terminada* se habilita sólo si la receta cumple C05.3.3 —título, categoría, ingredientes y pasos—.
+- [ ] Mientras esté deshabilitada, debajo va la leyenda: *"Se podrá marcar como terminada cuando se cargue: título, categoría, ingredientes y pasos."*
+- [ ] La condición se revisa **mientras se escribe**, sin redibujar el formulario ni perder el foco.
+- [ ] Si la receta deja de cumplirla —se borran los pasos, se vacía el título—, la posición vuelve a *Incompleta*.
+- [ ] Guardar escribe `completa: sí` o `completa: no` según la posición: la clave se escribe siempre (C05.3.1).
 - [ ] Es una declaración del usuario, no una edición de contenido: es la única excepción del principio 3 y es del usuario, no del agente.
 - [ ] También se llega acá desde la marca de incompleta de la receta abierta, que abre el editor (C03.1.3).
+
+**Por qué un conmutador y no una casilla:** una casilla tiene un estado
+implícito —lo que significa *no tildada*— y con la completitud derivada eso se
+leía como contradicción: una receta escrita entera mostraba la casilla vacía y
+ninguna marca de incompleta. Dos posiciones nombradas dicen las dos cosas.
 
 ### F04.5 — Guardar
 
@@ -177,7 +205,7 @@ ofrece deshacer: la papelera de Drive es la red de seguridad, y es del usuario.
 
 | Capacidad | Job |
 |---|---|
-| C04.1.1, C04.2.1, C04.2.2, C04.2.3, C04.3.1, C04.3b.1, C04.4.1, C04.5.1, C04.5.2, C04.6.1 | J7 |
+| C04.1.1, C04.2.1, C04.2.1b, C04.2.2, C04.2.3, C04.3.1, C04.3b.1, C04.4.1, C04.5.1, C04.5.2, C04.6.1 | J7 |
 | C04.3.2 | J4, J7 |
 | C04.3.3 | J7, J8 |
 | C04.3c.1 | J8 |

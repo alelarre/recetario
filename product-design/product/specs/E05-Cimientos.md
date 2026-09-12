@@ -1,8 +1,14 @@
 # E05 — Cimientos
 
-**Versión:** 3.0 · **Fecha:** 2026-09-07 · **Estado:** Final — Hito 11
+**Versión:** 3.1 · **Fecha:** 2026-09-12 · **Estado:** Final — Hito 11
 **Job:** J8 y transversal · **Prioridad:** alta · **Flujos:** F8, F9, F10, F11, F12
 
+> **Cambios en la 3.1 (2026-09-12):** **F05.3 reescrita** — `completa` es un dato
+> del frontmatter que el usuario declara (C05.3.1), el índice lo copia sin
+> recalcular (C05.3.2), y la condición de título + categoría + ingredientes +
+> pasos existe sólo para habilitar el control del editor (C05.3.3). Antes la
+> completitud se derivaba al leer.
+>
 > **Cambios en la 3.0 (Hito 11):** C05.4.1 — además del debounce, **se elimina la
 > cola**: nada queda esperando en almacenamiento local a que alguien lo mande
 > después. Ver `plan/delta-implementacion.md` §2.2.
@@ -173,23 +179,37 @@ el usuario a mano, y eso es el caso normal.
 - [ ] Suma al contador de archivos ignorados que se ve en Ajustes (C05.9.1).
 - [ ] El contador nombra los archivos, para poder encontrarlos en Drive.
 
-### F05.3 — Completitud derivada
+### F05.3 — La completitud la declara el usuario
 
-Una receta está completa cuando tiene título, al menos un ingrediente reconocible
-y al menos un paso. Se calcula al leer, no se guarda como tag manual — un tag
-manual miente en cuanto alguien edita el archivo afuera.
+`[cambio del 2026-09-12: antes se derivaba del contenido]`
 
-#### C05.3.1 — Calcular la completitud *(J8)*
+Una receta está terminada cuando el usuario lo dice, y no cuando el texto alcanza
+una forma. **Es un dato del archivo**, no un cálculo: la app lo lee y lo muestra,
+nunca lo deduce.
 
-- [ ] Completa = título **y** al menos un ítem en `## Ingredientes` **y** al menos un paso en `## Preparación`.
-- [ ] El cálculo ocurre al leer el `.md`, nunca se persiste en el archivo.
-- [ ] El resultado se guarda en la fila del índice, que es cache y puede quedar atrasado (R4).
+Terminar una receta es un juicio. Hay recetas escritas enteras que todavía no
+están buenas, y recetas de tres líneas que sí. Derivarlo del contenido decidía
+por el usuario y además podía cambiar solo, sin que nadie tocara nada.
 
-#### C05.3.2 — `completa: true` gana sobre el cálculo *(J7)*
+#### C05.3.1 — `completa` es un dato del frontmatter *(J8)*
 
-- [ ] Con `completa: true` en el frontmatter, la receta está completa aunque le falten ingredientes o pasos.
-- [ ] `completa: false` o la clave ausente equivalen: manda el cálculo.
-- [ ] La app nunca escribe `completa: false`; solo escribe la clave para forzar `true` (C04.4.1).
+- [ ] La clave vale **`sí`** o **`no`**; «si» sin tilde vale igual y las mayúsculas no importan.
+- [ ] **Es el único caso en que la app asume algo:** si la clave falta o trae cualquier otro valor, la receta se lee como **incompleta**. Decir que algo está terminado cuando nadie lo dijo es peor que lo contrario.
+- [ ] Se lee tal cual: **al leer no se evalúa el contenido de la receta**.
+- [ ] La app la escribe siempre, en los dos valores, cada vez que guarda: leerla no depende de interpretar una ausencia.
+- [ ] Un `.md` escrito afuera sin la clave se lee como no terminada; nadie lo corrige solo (R4).
+
+#### C05.3.2 — El índice guarda lo que dice el archivo *(J1, J8)*
+
+- [ ] La columna `completa` de la fila copia el dato del `.md`, sin recalcular nada.
+- [ ] Sigue siendo cache: un `.md` editado afuera deja la fila atrasada hasta el próximo guardado o reindexado (R4).
+
+#### C05.3.3 — Cuándo se puede declarar *(J7)*
+
+- [ ] Una receta puede declararse terminada sólo si tiene **título, categoría, al menos un ingrediente y al menos un paso**.
+- [ ] La condición existe para habilitar el control del editor (C04.4.1) y **en ningún otro lado**: no filtra, no corrige y no escribe.
+- [ ] Título y categoría ya son obligatorios para guardar; se evalúan igual para que el aviso pueda decir todo lo que falta de una vez.
+- [ ] Si una receta declarada terminada deja de cumplir la condición mientras se la edita, la declaración se cae con ella.
 
 ### F05.4 — El índice, y la capa compartida
 
@@ -397,8 +417,9 @@ azar del CSS.
 | Capacidad | Job |
 |---|---|
 | C05.1.1, C05.1.2, C05.2.1, C05.2.2, C05.2.3, C05.3.1 | J8 |
+| C05.3.2 | J1, J8 |
+| C05.3.3 | J7 |
 | C05.1.3, C05.4b.1 | J4 (y J1, J5 para la fila) |
-| C05.3.2 | J7 |
 | C05.4.1, C05.4.3, C05.5.1, C05.5.2, C05.6.1, C05.6.2, C05.7.3, C05.9b.2 | J8 |
 | C05.4.2 | J1, J4, J5 |
 | C05.7.1, C05.7.2, C05.8.1, C05.9.1, C05.9.2, C05.9b.1, C05.9b.3, C05.10.1 | Transversal |

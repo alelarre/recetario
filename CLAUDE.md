@@ -160,7 +160,7 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | Cooklang para el cuerpo de la receta | Da parsing exacto, pero ensucia el `.md`, que es justamente lo que se eligió proteger. |
 | `schema.org/Recipe` como modelo de datos | Está diseñado para publicar a buscadores: nutrición, rating, autor, video. Sirve como checklist, no como modelo. |
 | Reabrir el alcance de v1 | Se revisó entero el 2026-09-01: el planificador salió, y crear una receta mínima entró (§11). |
-| Una vista de bandeja o triage | Lo que falta archivar se ve en el tile "Sin categorizar" del Recetario. **El rediseño cambió la otra mitad:** lo que falta terminar ya no se filtra por un tag manual — la completitud se deriva al leer el `.md` (C05.3.1) y se dibuja como marca en la tarjeta. |
+| Una vista de bandeja o triage | Lo que falta archivar se ve en el tile "Sin categorizar" del Recetario. **El rediseño cambió la otra mitad:** lo que falta terminar ya no se filtra por un tag manual — la completitud es un dato del `.md` que el usuario declara en el editor (C05.3.1) y se dibuja como marca en la tarjeta. |
 | Campos `ultima_vez`, `veces`, `puntaje`, `porciones` numérico | El esquema del frontmatter es cerrado. **El rediseño lo abrió a ocho claves:** entraron `foto` y `completa` (IA §1.5), y nada más. |
 | Datos nutricionales: calorías, macros, porciones diarias | Decidido el 2026-09-03. Las 24 recetas del libro de pescados vinieron con una nota "Valor calórico según la fuente" y se sacaron todas. No entra en las seis claves del §3.2, y como nota al cuerpo crea un campo paralelo que ninguna otra receta tiene. Si la fuente lo trae, se descarta. |
 | Guardar fotos en Drive, miniaturas, imagen de portada | Decidido el 2026-09-02. Mostrar una foto de Drive obliga a pedirla con el token y armar un object URL; las miniaturas, a mantener un mapa de `thumbnailLink` que caduca. Demasiado para un recetario donde casi ninguna receta va a tener imagen. Solo URLs externas, dibujadas donde estén (§3.3). |
@@ -221,7 +221,8 @@ Lo que ya no está pendiente:
   contra el spec.
 - **Subir `SCHEMA_VERSION` cuesta un reindexado entero al próximo arranque.**
   Es el mecanismo, no un bug: la versión pasó a 2 con el rediseño porque la fila
-  suma `foto` y `completa`. Con ~60 recetas son unos 40 segundos; con las miles
+  suma `foto` y `completa`, y a 3 cuando `completa` dejó de calcularse y pasó a
+  copiarse del archivo. Con ~60 recetas son unos 40 segundos; con las miles
   de la migración va a ser el problema de la línea de arriba.
 - **Tres cosas del rediseño no las cubre ningún test:** el Share Target real
   (necesita la PWA instalada en Android), el foco del teclado en la captura y la
