@@ -12,14 +12,15 @@ Ajustes.
 **Después, usando la app** (2026-09-12 y 13): se trabajó casi todo el backlog de
 uso real (`BACKLOG.md` §6) —comportamiento, diseño visual, la auditoría
 tipográfica (`product-design/ux/auditoria-tipografica.md`) y la deuda chica—, y
-las lecturas de Drive dejaron de repetirse en cada toque. **488 tests**, typecheck
+las lecturas de Drive dejaron de repetirse en cada toque. **520 tests**, typecheck
 y build en verde, y cada cambio de UI se probó en el teléfono sobre Pages.
 
-**En curso — para retomar:** el **índice local** (P12). El diseño está aprobado
-en conversación y escrito en
-`docs/superpowers/specs/2026-09-13-indice-local-design.md`, **pendiente de que el
-usuario revise el spec**. El paso siguiente es el plan de implementación
-(skill `writing-plans`); no hay código todavía.
+**Hecho el 2026-09-13 — el índice local (P12):** al abrir, si `_indice` no cambió
+desde la última vez, el índice sale de una copia en `localStorage` y no se lee
+Sheets; cada escritura deja la copia al día. Spec en
+`docs/superpowers/specs/2026-09-13-indice-local-design.md`, plan en
+`docs/superpowers/plans/2026-09-13-indice-local.md`. **Falta la verificación a
+mano en el teléfono** (abajo).
 
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
 - El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
@@ -61,7 +62,11 @@ posición de scroll al conmutar en el modo cocina y el gesto de atrás de Androi
 en el editor con cambios sin guardar. Y de 2026-09-13, en el teléfono: que tocar
 un paso en cocina ya no resalte la pantalla entera (`f1214ac` es una hipótesis
 sin confirmar), que el sol y *Salir* respondan en toda su área de 64 px (P16), y
-que la pantalla siga encendida al volver de segundo plano.
+que la pantalla siga encendida al volver de segundo plano. Y del índice local
+(P12): abrir la app dos veces seguidas y ver en la pestaña Red que la segunda no
+lee Sheets; guardar una receta, cerrar y abrir, y ver que tampoco lee —si lee,
+Drive tardó en actualizar la fecha de `_indice`: anotarlo—; y editar una fila a
+mano en la planilla, abrir, y ver que sí lee.
 
 Para lo demás, según lo que necesites:
 
@@ -79,8 +84,8 @@ Para lo demás, según lo que necesites:
 |---|---|
 | **Se mantuvo** | El stack: TypeScript estricto + Vite, sin framework. `auth.ts`, `drive.ts`, `sheets.ts` y las fotos de `src/categorias/`. |
 | **Cambió** | `recipe.ts` (el ingrediente es nombre + separador + cantidad, y los `###` estructuran), `store.ts` (la fila se escribe en el momento, sin cola), `catalogo.ts` (la fila suma `foto` y `completa`), y `src/ui/` entero. |
-| **Se eliminó** | `app.css`, `cache.ts`, `home.ts`, `lista.ts`, `detalle.ts`, `visor.ts`, las tres familias tipográficas, el tag manual `incompleto`, la clase `texto-grande`, la cola, el cache local del índice y la Changes API. |
-| **Es nuevo** | `borradores.ts` (la planilla de la cola) y `compartido.ts` (la capa que la app y el agente invocan igual), más las once pantallas de `src/ui/`: recetario, categoria, resultados, receta, cocina, editor, captura, borradores, ajustes y conexion, sobre `componentes.ts` e `iconos.ts`. |
+| **Se eliminó** | `app.css`, `cache.ts`, `home.ts`, `lista.ts`, `detalle.ts`, `visor.ts`, las tres familias tipográficas, el tag manual `incompleto`, la clase `texto-grande`, la cola, el cache local del índice —volvió el 2026-09-13 de otra forma, ver «Funcionar sin conexión»— y la Changes API. |
+| **Es nuevo** | `borradores.ts` (la planilla de la cola), `compartido.ts` (la capa que la app y el agente invocan igual) e `indice-local.ts` (la copia del índice en el navegador, P12), más las once pantallas de `src/ui/`: recetario, categoria, resultados, receta, cocina, editor, captura, borradores, ajustes y conexion, sobre `componentes.ts` e `iconos.ts`. |
 
 **Todo el producto vive en `src/`.** Nada del código apunta a
 `product-design/`: los documentos son especificación, no dependencia.
@@ -183,7 +188,7 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | Campos `ultima_vez`, `veces`, `puntaje`, `porciones` numérico | El esquema del frontmatter es cerrado. **El rediseño lo abrió a ocho claves:** entraron `foto` y `completa` (IA §1.5), y nada más. |
 | Datos nutricionales: calorías, macros, porciones diarias | Decidido el 2026-09-03. Las 24 recetas del libro de pescados vinieron con una nota "Valor calórico según la fuente" y se sacaron todas. No entra en las seis claves del §3.2, y como nota al cuerpo crea un campo paralelo que ninguna otra receta tiene. Si la fuente lo trae, se descarta. |
 | Guardar fotos en Drive, miniaturas, imagen de portada | Decidido el 2026-09-02. Mostrar una foto de Drive obliga a pedirla con el token y armar un object URL; las miniaturas, a mantener un mapa de `thumbnailLink` que caduca. Demasiado para un recetario donde casi ninguna receta va a tener imagen. Solo URLs externas, dibujadas donde estén (§3.3). |
-| Funcionar sin conexión | Salió de v1 el 2026-09-02, y el rediseño lo cerró del todo: **no hay copia local del índice** (C05.4.2). Sin la lectura de Drive no hay con qué dibujar, y esa es la consecuencia buscada. `cache.ts` y su IndexedDB se eliminaron. **`[reabierta el 2026-09-13, sólo para el índice]`** con la premisa de que nunca hay escritura concurrente: el diseño del índice local (`docs/superpowers/specs/2026-09-13-indice-local-design.md`) guarda el índice en `localStorage` y lo verifica por la metadata de `_indice`. Dibujar sin conexión sigue afuera. Esta fila, C05.4.2 y el decision-log se reescriben al implementarlo. |
+| Funcionar sin conexión | Salió de v1 el 2026-09-02 y sigue afuera: sin la lectura de Drive no hay con qué dibujar. `cache.ts` y su IndexedDB se eliminaron con el rediseño. **Desde el 2026-09-13 hay copia local del índice, y sólo del índice** (P12, `src/indice-local.ts`): con la premisa de que nunca hay escritura concurrente, se guarda en `localStorage` y al abrir se compara el `modifiedTime` de `_indice`; si coincide no se lee Sheets. No sirve para dibujar sin red: la búsqueda en Drive va antes que la copia (C05.4.2, C05.8.1). |
 | AppSheet, Apps Script, apps nativas, Artifact de Claude | Evaluadas como plataforma y descartadas (§2). |
 | Pestañas en el detalle | Costaban cuatro toques para leer una receta entera y escondían las notas y las variaciones justo cuando se cocina. La receta se lee de corrido, en una pila de fichas. **El conmutador volvió, pero solo dentro del modo cocina**, que es donde notas y variaciones no se usan. |
 | Derivar el color de categoría de un hash del nombre | Medido: con 16 categorías siempre agrupa. `Pescados y mariscos` y `Ensaladas` caían en el mismo matiz exacto. La paleta es una lista escrita a mano: quince colores a 18° entre sí y a una distancia percibida de al menos 12 del acento, más el neutro de `Otros` (design-system §2.3), y vive en `src/ui/tokens.css` como tokens `--cat-*`. |
@@ -205,19 +210,18 @@ el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
 
-**Estado al 2026-09-13:** resueltos P1 a P11, P13, P16 y P17; §6.4 y §6.5
+**Estado al 2026-09-13:** resueltos P1 a P13, P16 y P17; §6.4 y §6.5
 cerradas. Quedan abiertos:
 
-- **P12** —el índice local—: diseño escrito, pendiente de revisión (arriba).
 - **P14** —que el agente escriba la fila del índice—: bloqueado. El conector de
   Google Drive de claude.ai no escribe planillas ni reescribe el contenido de un
   archivo (medido el 2026-09-12).
 - **P15** y **P19** —categorías y carpeta definidas por el usuario—: se superponen,
   decidir juntas.
 - **P18** —una pantalla de arranque que muestre la comparación del índice—:
-  depende de P12; primero propuestas.
+  P12 ya está hecho; primero propuestas.
 - **P20** —la versión de la app visible—.
-- **P21** —los borradores con copia local, como el índice—: depende de P12.
+- **P21** —los borradores con copia local, como el índice—: P12 ya está hecho.
 
 Y queda el contenido.
 

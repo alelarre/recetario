@@ -239,7 +239,7 @@ escritura parcial y un JSON obligaría a reescribir el archivo entero.
 
 - [ ] Una sola lectura devuelve todas las filas: buscar entre mil recetas no lee mil archivos.
 - [ ] Lo que se lee se usa para listar y buscar; abrir una receta lee su `.md`.
-- [ ] **No hay copia local del índice.** Ni IndexedDB ni ningún otro almacenamiento del navegador: sin la lectura de Drive no hay con qué dibujar, y esa es la consecuencia buscada de C05.8.1.
+- [ ] **Hay copia local del índice, y sólo del índice** `[2026-09-13]`. Vive en `localStorage` y se usa si la fecha de `_indice` en Drive es la misma que tenía al guardarla; si no, se lee la planilla y se reemplaza. Cada escritura en `_indice` la actualiza. No sirve para dibujar sin red: ver C05.8.1.
 
 #### C05.4.3 — La misma función la invocan la app y el agente *(J8)*
 
@@ -350,6 +350,7 @@ actuales.
 - [ ] Una pantalla que no pudo leer muestra el aviso, no datos de una lectura anterior.
 - [ ] El aviso dice que no se pudo conectar y ofrece reintentar.
 - [ ] Ninguna pantalla promete que algo se va a guardar después.
+- [ ] La copia local del índice (C05.4.2) no reemplaza la lectura de Drive: al abrir, la búsqueda de `_indice` va primero, y sin ella se muestra el aviso.
 
 ### F05.9 — Los avisos que no interrumpen
 
