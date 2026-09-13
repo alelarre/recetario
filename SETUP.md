@@ -33,10 +33,14 @@ Drive cuando se quiera; mientras esté, la app la ignora por empezar con `_`.
 | `Otros/` | `1hJspooBXMmzPj-bsIodSz7qKYdMWrtA4` |
 
 Los ids están acá solo para depurar. La app **no** los hardcodea: descubre las
-categorías listando las subcarpetas de `Recetario/`, así que agregar o renombrar
-una categoría se hace en Drive y no toca el código.
+categorías listando las subcarpetas de `Recetario/`, así que una categoría nueva
+aparece apenas se crea su subcarpeta en Drive.
 
-Para agregar una categoría más adelante: crear la subcarpeta en Drive. Nada más.
+**Pero su color y su foto sí están en el código**, atados al slug del nombre de la
+carpeta (`src/ui/categorias.ts`, `src/ui/tokens.css`, `src/categorias/`): una
+carpeta nueva se dibuja con el color neutro, y **renombrar una carpeta le hace
+perder el color y la foto**. Cómo ordenarlo está pendiente en `BACKLOG.md` P15 y
+P19.
 
 ## 2. Planilla `_indice` — la crea la app
 
