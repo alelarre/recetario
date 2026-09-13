@@ -31,6 +31,23 @@ export interface ArgsEditor {
   confirmandoBorrado?: boolean;
 }
 
+/** Suelto al pie y no en una ficha: es una acción destructiva, no un campo más. */
+export const botonBorrar =
+  `<button class="btn pel" data-accion="borrar" type="button" style="width:100%">${ICO.tacho}Borrar receta</button>`;
+
+/**
+ * Borrar es destructivo: la confirmación nombra la receta (C04.6.1). Toma el
+ * lugar del botón sin redibujar el formulario, por lo mismo que la pregunta de
+ * salida: redibujarlo perdería lo que se venía escribiendo.
+ */
+export const confirmacionBorrado = (titulo: string | null): string =>
+  '<div class="ficha" data-confirmar-borrado style="border-color:var(--error)">' +
+    `<p class="lee" style="margin:0 0 var(--e-4)">¿Borrar <b>${escapar(titulo ?? 'esta receta')}</b>?</p>` +
+    '<div class="acciones">' +
+      '<button class="btn sec" data-accion="cancelar-borrado" type="button">Cancelar</button>' +
+      '<button class="btn pel" data-accion="borrar-confirmado" type="button">Borrar</button>' +
+    '</div></div>';
+
 /**
  * Salir con cambios pendientes pregunta antes (C04.1.1). Se inserta arriba del
  * formulario sin redibujarlo, por lo mismo que `pillTag`: redibujar perdería
@@ -170,15 +187,7 @@ export function renderEditor(
 
 
   const borrar = !entrada ? ''
-    : confirmandoBorrado
-      ? '<div class="ficha" style="border-color:var(--error)">' +
-        `<p class="lee" style="margin:0 0 var(--e-4)">¿Borrar <b>${escapar(receta.titulo ?? 'esta receta')}</b>?</p>` +
-        '<div class="acciones">' +
-          '<button class="btn sec" data-accion="cancelar-borrado" type="button">Cancelar</button>' +
-          '<button class="btn pel" data-accion="borrar-confirmado" type="button">Borrar</button>' +
-        '</div></div>'
-      // Suelto al pie y no en una ficha: es una acción destructiva, no un campo más.
-      : `<button class="btn pel" data-accion="borrar" type="button" style="width:100%">${ICO.tacho}Borrar receta</button>`;
+    : confirmandoBorrado ? confirmacionBorrado(receta.titulo) : botonBorrar;
 
   return encabezado({
     titulo: entrada ? 'Editando' : 'Nueva receta',

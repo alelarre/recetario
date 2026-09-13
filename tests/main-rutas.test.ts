@@ -31,7 +31,9 @@ const estado = {
   /** El `.md` que devuelve `store.receta`. */
   md: '---\ntitulo: Milanesas\n---\n',
   /** Lo que el editor tiene escrito cuando se toca Guardar. */
-  formulario: {} as Record<string, string>
+  formulario: {} as Record<string, string>,
+  /** Cuántas veces se leyó un `.md` de Drive: cada una es un pedido de red. */
+  lecturas: 0
 };
 
 const storeFake = {
@@ -53,6 +55,7 @@ const storeFake = {
   },
   guardar: async () => {},
   receta: async (id: string) => {
+    estado.lecturas++;
     if (estado.falla) throw estado.falla === true ? new Error('red') : estado.falla;
     return { entrada: entradaFalsa({ id_archivo: id }), receta: parse(estado.md) };
   }
@@ -84,6 +87,8 @@ describe('main.ts: las rutas', () => {
     estado.creadas = [];
     estado.formulario = {};
     estado.md = '---\ntitulo: Milanesas\n---\n';
+    estado.lecturas = 0;
+    vi.unstubAllGlobals();
     delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
   });
@@ -104,6 +109,9 @@ describe('main.ts: las rutas', () => {
       insertAdjacentHTML: (_donde: string, html: string) => { preguntas.push(html); }
     };
     const listeners: Record<string, () => void> = {};
+    const listenersDoc: Record<string, () => void> = {};
+    /** Lo que se puso en lugar de un elemento, con `outerHTML`, sin redibujar. */
+    const enLugar: string[] = [];
     const vueltasAtras: number[] = [];
     const scrolls: number[] = [];
     global.document = comoGlobal<Document>({
@@ -111,9 +119,17 @@ describe('main.ts: las rutas', () => {
         if (sel === '#app') return app;
         if (sel === '[data-formulario]') return formulario;
         if (sel === '[data-salida]') return preguntas.length ? { remove: () => { preguntas.length = 0; } } : null;
+        if (sel === '[data-confirmar-borrado]') {
+          return enLugar.at(-1)?.includes('data-confirmar-borrado')
+            ? { set outerHTML(html: string) { enLugar.push(html); } } : null;
+        }
+        // El sol encendido, tal como lo dibuja la cocina.
+        if (sel === '[data-accion="wake"].on') return app.innerHTML.includes('class="ico on" data-accion="wake"') ? {} : null;
         return null;
       },
-      querySelectorAll: () => [], addEventListener: () => {}
+      querySelectorAll: () => [],
+      addEventListener: (ev: string, fn: () => void) => { listenersDoc[ev] = fn; },
+      visibilityState: 'visible'
     });
     global.window = comoGlobal<Window & typeof globalThis>({
       google: {}, addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; },
@@ -147,6 +163,9 @@ describe('main.ts: las rutas', () => {
       reemplazos,
       empujados,
       preguntas,
+      enLugar,
+      /** La app vuelve a primer plano. */
+      volverAPrimerPlano: async () => { listenersDoc['visibilitychange']?.(); await esperar(); },
       abrir: async (hash: string) => {
         global.location.hash = hash;
         listeners['hashchange']?.();
@@ -159,10 +178,11 @@ describe('main.ts: las rutas', () => {
         await esperar();
       },
       /** Un click en un control con esta acción, como lo entrega la delegación. */
-      tocar: async (accion: string) => {
+      tocar: async (accion: string, datos: Record<string, string> = {}) => {
         const boton = {
-          dataset: { accion }, classList: { contains: () => false },
-          closest: () => null, tagName: 'BUTTON', remove: () => {}, setAttribute: () => {}
+          dataset: { accion, ...datos }, classList: { contains: () => false },
+          closest: () => null, tagName: 'BUTTON', remove: () => {}, setAttribute: () => {},
+          set outerHTML(html: string) { enLugar.push(html); }
         };
         for (const fn of clicks) {
           await fn({ target: { closest: (sel: string) => (sel.includes('data-accion') ? boton : null) } });
@@ -277,6 +297,140 @@ describe('main.ts: las rutas', () => {
 
     expect(app.innerHTML).toContain('<li class="aqui" data-accion="paso" data-paso="0">');
     expect(app.innerHTML).toContain('<li data-accion="paso" data-paso="1">');
+  });
+
+  describe('el .md se lee al entrar a la pantalla, no en cada redibujado', () => {
+    const PASOS = '---\ntitulo: Rabas\n---\n\n## Ingredientes\n- Calamar — 1 kg\n\n## Preparación\n1. Lavar.\n2. Freír.\n';
+
+    it('en cocina, marcar pasos, conmutar y tocar el sol no vuelven a leer', async () => {
+      vi.stubGlobal('navigator', { wakeLock: { request: async () => ({ addEventListener: () => {}, release: async () => {} }) } });
+      estado.md = PASOS;
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1/cocinar');
+      expect(estado.lecturas).toBe(1);
+
+      await tocar('conmutar', { posicion: 'pasos' });
+      // El paso 1 arranca como actual (P8): tocarlo lo da por hecho.
+      await tocar('paso', { paso: '0' });
+      await tocar('wake');
+
+      expect(estado.lecturas).toBe(1);
+      // Y los toques se dibujaron: el primero hecho, el segundo actual, el sol encendido.
+      expect(app.innerHTML).toContain('<li class="hecho" data-accion="paso" data-paso="0">');
+      expect(app.innerHTML).toContain('<li class="aqui" data-accion="paso" data-paso="1">');
+      expect(app.innerHTML).toContain('class="ico on" data-accion="wake"');
+    });
+
+    it('tocar un tag en la receta abierta no vuelve a leer', async () => {
+      estado.md = '---\ntitulo: Rabas\ntags: [frito]\n---\n';
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1');
+      await tocar('', { tag: 'frito' });
+      expect(estado.lecturas).toBe(1);
+    });
+
+    it('entre la receta, su modo cocina y su editor se reutiliza la misma copia', async () => {
+      estado.md = PASOS;
+      const { abrir } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/cocinar');
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      await abrir('#/r/f1');
+      expect(estado.lecturas).toBe(1);
+    });
+
+    it('otra receta, o salir a otra pantalla y volver, sí vuelven a leer', async () => {
+      estado.md = PASOS;
+      const { abrir } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f2');
+      expect(estado.lecturas).toBe(2);
+      await abrir('#/c/Carnes');
+      await abrir('#/r/f2');
+      expect(estado.lecturas).toBe(3);
+    });
+
+    it('reintentar vuelve a leer', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1');
+      await tocar('reintentar');
+      expect(estado.lecturas).toBe(2);
+    });
+
+    it('después de guardar, volver a la receta muestra lo guardado sin volver a leer', async () => {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      expect(estado.lecturas).toBe(1);
+
+      estado.formulario = { titulo: 'Milanesas a caballo', carpeta: 'c1' };
+      await tocar('guardar');
+      // Guardar relee el .md antes de escribir: lo que la app no conoce se preserva.
+      expect(estado.lecturas).toBe(2);
+
+      await abrir('#/r/f1');
+      expect(estado.lecturas).toBe(2);
+      expect(app.innerHTML).toContain('Milanesas a caballo');
+    });
+
+    it('si la lectura falla, reintentar vuelve a pedirla', async () => {
+      estado.falla = true;
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      estado.falla = false;
+      await tocar('reintentar');
+      expect(estado.lecturas).toBe(2);
+      expect(app.innerHTML).toContain('Milanesas');
+    });
+  });
+
+  it('al volver de segundo plano con el sol encendido, se vuelve a pedir la pantalla (C03.3.1)', async () => {
+    let pedidos = 0;
+    let soltar = () => {};
+    vi.stubGlobal('navigator', { wakeLock: { request: async () => {
+      pedidos++;
+      return { addEventListener: (_ev: string, fn: () => void) => { soltar = fn; }, release: async () => {} };
+    } } });
+    estado.md = '---\ntitulo: Rabas\n---\n\n## Preparación\n1. Lavar.\n';
+    const { abrir, tocar, volverAPrimerPlano } = await montar();
+    await abrir('#/r/f1/cocinar');
+    await tocar('wake');
+    expect(pedidos).toBe(1);
+
+    // El navegador suelta el bloqueo al irse a segundo plano.
+    soltar();
+    await volverAPrimerPlano();
+
+    expect(pedidos).toBe(2);
+  });
+
+  describe('borrar receta pregunta sin redibujar el formulario', () => {
+    it('la confirmación reemplaza al botón y nombra la receta; no se relee ni se pierde lo escrito', async () => {
+      const { abrir, tocar, app, enLugar } = await montar();
+      await abrir('#/r/f1/editar');
+      const formulario = app.innerHTML;
+
+      await tocar('borrar');
+
+      expect(app.innerHTML).toBe(formulario);
+      expect(estado.lecturas).toBe(1);
+      expect(enLugar.at(-1)).toContain('¿Borrar <b>Milanesas</b>?');
+      expect(enLugar.at(-1)).toContain('data-accion="borrar-confirmado"');
+    });
+
+    it('cancelar vuelve a poner el botón, también sin redibujar', async () => {
+      const { abrir, tocar, app, enLugar } = await montar();
+      await abrir('#/r/f1/editar');
+      const formulario = app.innerHTML;
+
+      await tocar('borrar');
+      await tocar('cancelar-borrado');
+
+      expect(app.innerHTML).toBe(formulario);
+      expect(enLugar.at(-1)).toContain('data-accion="borrar"');
+      expect(enLugar.at(-1)).not.toContain('borrar-confirmado');
+    });
   });
 
   it('crear la receta desde un borrador reparte la nota en sus secciones', async () => {

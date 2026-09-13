@@ -14,7 +14,7 @@ import { renderCategoria } from './ui/categoria.js';
 import { renderResultados } from './ui/resultados.js';
 import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
-import { renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida } from './ui/editor.js';
+import { renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado } from './ui/editor.js';
 import { crearBorradores } from './borradores.js';
 import { renderBorradores, renderBorrador } from './ui/borradores.js';
 import { renderCaptura } from './ui/captura.js';
@@ -28,6 +28,7 @@ import type { Ruta } from './ui/router.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { PosicionCocina } from './ui/cocina.js';
 import type { ResultadoArranque, Progreso } from './store.js';
+import type { Entrada, Receta } from './tipos.js';
 
 type Store = ReturnType<typeof crearStore>;
 
@@ -75,6 +76,26 @@ let editandoBorrador = false;
  * esta foto, no contra el `.md` de Drive: no se lee nada para decidir.
  */
 let editorAbierto: { hash: string; formulario: string } | null = null;
+/**
+ * La receta abierta, leída una vez. La reutilizan los redibujados —marcar un
+ * paso, conmutar, tocar el sol: cada lectura era un pedido a Drive que se
+ * sentía en cada toque— y el ir y venir entre la receta, su modo cocina y su
+ * editor, que es la misma receta. Salir a cualquier otra pantalla la descarta:
+ * volver más tarde vuelve a leer, porque el archivo es la verdad (C05.8.1).
+ */
+let recetaLeida: { id: string; entrada: Entrada | null; receta: Receta } | null = null;
+
+/** Las pantallas de una misma receta, entre las que la copia leída se conserva. */
+const PANTALLAS_DE_RECETA: readonly Ruta['vista'][] = ['receta', 'cocinar', 'editar'];
+
+/** La receta de la pantalla: de Drive la primera vez, de memoria mientras no se salga. */
+async function recetaDePantalla(id: string): Promise<{ entrada: Entrada | null; receta: Receta }> {
+  if (recetaLeida?.id !== id) {
+    const { entrada, receta } = await store.receta(id);
+    recetaLeida = { id, entrada, receta };
+  }
+  return recetaLeida;
+}
 
 /** La captura: lo escrito sobrevive al error y a la reautenticación (R3). */
 /** Lo que el reindexado dejó afuera, para la sección de avisos de Ajustes. */
@@ -168,7 +189,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
   // Si el botón sigue activo, el usuario nunca lo apagó: el bloqueo se
   // perdió al irse a segundo plano y hay que volver a pedirlo.
-  const b = document.querySelector<HTMLElement>('[data-accion="wake"].prim');
+  const b = document.querySelector<HTMLElement>('[data-accion="wake"].on');
   if (b && !wakeLock) void mantenerPantalla().then(() => render());
 });
 
@@ -327,6 +348,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   // tag que ahí no existe, sin forma de darse cuenta.
   if (cambiaDePantalla) {
     editorAbierto = null;
+    if (!PANTALLAS_DE_RECETA.includes(ruta.vista)) recetaLeida = null;
     tagsActivos = [];
     visibles = TRAMO;
     // Navegar cierra el menú: se abrió para elegir a dónde ir.
@@ -379,7 +401,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
 
     case 'receta':
       try {
-        const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
+        const { entrada, receta } = await recetaDePantalla(ruta.params['id'] ?? '');
         pintar(renderReceta({ entrada, receta }));
         return observarTitulo();
       } catch (err) {
@@ -389,7 +411,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
 
     case 'cocinar':
       try {
-        const { receta } = await store.receta(ruta.params['id'] ?? '');
+        const { receta } = await recetaDePantalla(ruta.params['id'] ?? '');
         return pintar(renderCocina({
           receta, posicion: posicionCocina, aqui: pasoAqui, hechos: pasosHechos, wakeActivo: !!wakeLock
         }));
@@ -448,11 +470,10 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
 
     case 'editar':
       try {
-        const { entrada, receta } = await store.receta(ruta.params['id'] ?? '');
+        const { entrada, receta } = await recetaDePantalla(ruta.params['id'] ?? '');
         return abrirEditor(renderEditor({
           entrada, receta, categorias: categoriasDelArranque(),
-          tagsConocidos: store.tagsDe().map(t => t.tag),
-          confirmandoBorrado: confirmandoDescarte
+          tagsConocidos: store.tagsDe().map(t => t.tag)
         }));
       } catch (err) {
         console.error(err);
@@ -824,6 +845,8 @@ app.addEventListener('click', async (e) => {
         await store.crear(nueva, { carpetaId: carpetaId || undefined });
       } else {
         await store.guardar(id, nueva, { carpetaDestino: carpetaId });
+        // Lo guardado es la copia: volver a la receta la muestra sin releer.
+        recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: nueva };
       }
       // Nada confirma el éxito: al terminar, vuelve a la receta. Lo escrito ya
       // está en Drive, así que salir no tiene nada que preguntar.
@@ -835,13 +858,18 @@ app.addEventListener('click', async (e) => {
     }
   }
 
-  if (accion === 'borrar') { confirmandoDescarte = true; return render(); }
-  if (accion === 'cancelar-borrado') { confirmandoDescarte = false; return render(); }
+  // La confirmación toma el lugar del botón, y el botón el de la confirmación:
+  // redibujar el editor perdería lo escrito y la foto contra la que P7 compara.
+  if (accion === 'borrar') { boton.outerHTML = confirmacionBorrado(recetaLeida?.receta.titulo ?? null); return; }
+  if (accion === 'cancelar-borrado') {
+    const confirmacion = document.querySelector('[data-confirmar-borrado]');
+    if (confirmacion) confirmacion.outerHTML = botonBorrar;
+    return;
+  }
   if (accion === 'borrar-confirmado') {
     const id = vistaActual?.params['id'] ?? '';
     try {
       await store.borrar(id);
-      confirmandoDescarte = false;
       editorAbierto = null;
       // Vuelve a la lista de donde se venía; el archivo queda en la papelera
       // de Drive, que es la red de seguridad y es del usuario. Y la receta
@@ -850,16 +878,16 @@ app.addEventListener('click', async (e) => {
       return;
     } catch (err) {
       console.error(err);
-      const { entrada, receta } = await store.receta(id);
-      return pintar(renderEditor({
-        entrada, receta, categorias: categoriasDelArranque(),
-        tagsConocidos: store.tagsDe().map(t => t.tag),
-        error: 'No se pudo borrar. La receta sigue estando.'
-      }));
+      // El aviso va donde estaba la pregunta, y el botón vuelve: lo escrito en
+      // el formulario sigue ahí (R1).
+      const confirmacion = document.querySelector('[data-confirmar-borrado]');
+      if (confirmacion) confirmacion.outerHTML = aviso({ texto: 'No se pudo borrar. La receta sigue estando.' }) + botonBorrar;
+      return;
     }
   }
 
-  if (accion === 'reintentar') return render();
+  // Reintentar es volver a pedir: lo leído no se reutiliza.
+  if (accion === 'reintentar') { recetaLeida = null; return render(); }
 });
 
 /**
