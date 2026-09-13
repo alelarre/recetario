@@ -255,9 +255,11 @@ cocina es el dato principal.
 | `--ico` | 20 px | En toda la app. |
 | `--ico-cocina` | 24 px | Solo en modo cocina. |
 
-**Los íconos son funcionales, nunca decorativos.** Hay exactamente ocho en la
-app: volver, buscar, ajustes, borradores, descartar, editar, borrar y mantener la
-pantalla encendida.
+**Los íconos son funcionales, nunca decorativos.** Hay exactamente diez en la
+app: volver, buscar, ajustes, borradores, descartar, editar, borrar, mantener la
+pantalla encendida, y las dos posiciones del conmutador de cocina —una zanahoria
+para *Ingredientes* y una lista numerada para *Pasos*, al lado de la palabra
+`[del 2026-09-12]`—.
 
 **Regla dura: ningún ícono va solo si hay lugar para la palabra.** El ícono solo
 se permite donde el espacio no da —el encabezado, donde "Volver" y "Ajustes" no

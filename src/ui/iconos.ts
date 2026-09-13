@@ -18,6 +18,13 @@ export const ICO = {
   // Lo llevan las dos acciones destructivas: Borrar receta y Descartar un borrador.
   tacho: svg('<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/>'),
   cerrar: svg('<path d="M18 6L6 18M6 6l12 12"/>'),
+  /** Las dos posiciones del conmutador de cocina: qué va y en qué orden. De Lucide. */
+  zanahoria: svg('<path d="M2.27 21.7s9.87-3.5 12.73-6.36a4.5 4.5 0 0 0-6.36-6.37C5.77 11.84 2.27 21.7 2.27 21.7z"/>' +
+    '<path d="M8.64 14l-2.05-2.04"/><path d="M15.34 15l-2.46-2.46"/>' +
+    '<path d="M22 9s-1.33-2-3.5-2C16.86 7 15 9 15 9s1.33 2 3.5 2S22 9 22 9z"/>' +
+    '<path d="M15 2s-2 1.33-2 3.5S15 9 15 9s2-1.84 2-3.5C17 3.33 15 2 15 2z"/>'),
+  listaNumerada: svg('<path d="M10 6h11"/><path d="M10 12h11"/><path d="M10 18h11"/>' +
+    '<path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>'),
   /** El sol del modo cocina: la pantalla que no se apaga. */
   sol: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3' +
     'M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>'),

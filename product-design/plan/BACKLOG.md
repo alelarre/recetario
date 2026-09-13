@@ -97,7 +97,7 @@ repetir el enunciado.
 | **P5** | **El editor: la completitud adentro de la ficha, el borrar afuera** | **Resuelto** `[2026-09-12]`. El conmutador, rotulado *Estado*, cierra la ficha de datos después de la foto, separado por un divisor. *Borrar receta* va suelto al pie, a lo ancho, como *Descartar* en el borrador; su confirmación sigue siendo una ficha con borde de error. C04.4.1 y C04.6.1 quedaron escritos así. |
 | **P6** | **El editor: encabezado fijo** | **Resuelto** `[2026-09-12]`. El editor pasa `pegajoso: true` a `encabezado()`, lo mismo que la receta abierta: volver y *Guardar* quedan arriba al hacer scroll, en *Editando* y en *Nueva receta*. Anotado en C04.1.1. |
 | **P10** | **Modo cocina: «Mantener pantalla encendida» pasa a ícono** | **Resuelto** `[2026-09-12]`. El sol va en el encabezado, a la izquierda de *Salir*, con `aria-label` y `aria-pressed`. Encendido se invierte —fondo `--fg`, sol oscuro—, la convención del estado elegido. La barra del pie desapareció, y con ella unos 100 px que ahora son de los pasos. C03.3.1 quedó escrito así. |
-| **P13** | **Modo cocina: un ícono o emoji para «Ingredientes» y «Pasos»** | Buscar opciones para las dos posiciones del conmutador. Tener en cuenta §3.4: la iconografía del sistema es de trazo, y un emoji es la excepción —la app ya usa el 📖 de la fuente—. |
+| **P13** | **Modo cocina: un ícono para «Ingredientes» y «Pasos»** | **Resuelto** `[2026-09-12]`. Se compararon cinco pares —tres de trazo y dos de emoji— sobre el conmutador real. Quedó una zanahoria para *Ingredientes* y una lista numerada para *Pasos*, de trazo (Lucide), a 24 px y al lado de la palabra. `design-system.md` §3.4 pasó de ocho íconos a diez. |
 
 ### 6.3 Investigación primero
 

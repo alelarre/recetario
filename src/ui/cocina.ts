@@ -36,8 +36,8 @@ export function renderCocina(
   const marcados = Array.isArray(hechos) ? hechos : [];
 
   const posiciones = [
-    ...(grupos.length ? [['ingredientes', 'Ingredientes'] as const] : []),
-    ...(tramos.length ? [['pasos', 'Pasos'] as const] : [])
+    ...(grupos.length ? [['ingredientes', `${ICO.zanahoria}Ingredientes`] as const] : []),
+    ...(tramos.length ? [['pasos', `${ICO.listaNumerada}Pasos`] as const] : [])
   ];
   const conmutador = posiciones.length > 1
     ? '<div class="conm">' + posiciones.map(([clave, rotulo]) =>

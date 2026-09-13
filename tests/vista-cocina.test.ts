@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderCocina } from '../src/ui/cocina.js';
+import { ICO } from '../src/ui/iconos.js';
 import { parse } from '../src/recipe.js';
 
 const COMPLETA = parse(`---
@@ -65,7 +66,13 @@ describe('Modo cocina', () => {
 
   it('abre en Ingredientes: el mise en place va primero', () => {
     const html = renderCocina({ ...base, receta: COMPLETA, posicion: 'ingredientes' });
-    expect(html).toMatch(/<button class="on" data-accion="conmutar" data-posicion="ingredientes">Ingredientes<\/button>/);
+    expect(html).toContain(`<button class="on" data-accion="conmutar" data-posicion="ingredientes">${ICO.zanahoria}Ingredientes</button>`);
+  });
+
+  it('cada posición del conmutador lleva su ícono al lado de la palabra', () => {
+    const html = renderCocina({ ...base, receta: COMPLETA });
+    expect(html).toContain(`data-posicion="ingredientes">${ICO.zanahoria}Ingredientes</button>`);
+    expect(html).toContain(`data-posicion="pasos">${ICO.listaNumerada}Pasos</button>`);
   });
 
   it('notas, variaciones y descripción no se muestran', () => {
@@ -94,7 +101,7 @@ describe('Modo cocina', () => {
 
   it('sin ingredientes, el conmutador no dibuja esa posición', () => {
     const r = parse('---\ntitulo: A\n---\n## Preparación\n1. Salar.');
-    expect(renderCocina({ ...base, receta: r })).not.toContain('>Ingredientes<');
+    expect(renderCocina({ ...base, receta: r })).not.toContain('Ingredientes</button>');
   });
 
   it('los ingredientes conservan la distinción entre nombre y cantidad', () => {

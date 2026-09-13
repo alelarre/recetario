@@ -129,6 +129,10 @@
                color: var(--fg-2); font: 600 var(--txt-base)/1 var(--tipo);
                border-bottom: 3px solid transparent; }
 .conm button.on { background: var(--surface-alta); color: var(--fg); border-bottom-color: var(--acento); }
+/* El ícono va al lado de la palabra, no en su lugar (§3.4), al tamaño de cocina. */
+.conm button { display: inline-flex; align-items: center; justify-content: center; gap: var(--e-2); }
+.conm svg { width: var(--ico-cocina); height: var(--ico-cocina); stroke: currentColor; fill: none;
+            stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
 .coc { padding: var(--e-4); }
 .coc .grupo { font-size: var(--txt-base); margin-top: var(--e-6); margin-bottom: var(--e-2); }
 .coc .grupo:first-child { margin-top: 0; }
