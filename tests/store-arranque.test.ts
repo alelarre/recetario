@@ -121,6 +121,16 @@ describe('arranque en frío', () => {
     const r = await store.arrancar();
     expect(arranqueListo(r).indiceId).toBe('i2');
     expect(r.avisos).toContain('indice-duplicado');
+    expect(arranqueListo(r).indiceDuplicado).toEqual({ cantidad: 2, modifiedTime: '2026-02-01T00:00:00.000Z' });
+  });
+
+  it('con una sola planilla no hay aviso de duplicado', async () => {
+    const drive = conRecetario([{ id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] }]);
+    const { store, sheets } = armar(drive);
+    sheets.crearPlanilla('i1');
+    const r = arranqueListo(await store.arrancar());
+    expect(r.indiceDuplicado).toBeNull();
+    expect(r.avisos).not.toContain('indice-duplicado');
   });
 
   it('si la búsqueda falla arranca en solo lectura y NO crea una segunda planilla', async () => {

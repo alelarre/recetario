@@ -29,6 +29,21 @@ describe('Ajustes', () => {
     expect(html).not.toContain('<svg class="ilustracion"');
   });
 
+  it('con más de una planilla _indice, el aviso dice cuántas hay y cuál se usa', () => {
+    // La fecha se arma en hora local: el aviso la muestra en la hora del teléfono.
+    const modifiedTime = new Date(2026, 8, 12, 14, 30).toISOString();
+    const html = renderAjustes({ ...base, indiceDuplicado: { cantidad: 2, modifiedTime } });
+    expect(html).toContain('Hay 2 planillas _indice en Drive. Se usa la modificada el 12/09 a las 14:30.');
+    expect(html).not.toContain('No hay nada para avisar.');
+  });
+
+  it('el aviso del duplicado convive con los archivos ignorados', () => {
+    const modifiedTime = new Date(2026, 8, 12, 14, 30).toISOString();
+    const html = renderAjustes({ ...base, ignorados: ['suelta.md'], indiceDuplicado: { cantidad: 3, modifiedTime } });
+    expect(html).toContain('Hay 3 planillas _indice en Drive.');
+    expect(html).toContain('suelta.md');
+  });
+
   it('antes del primer archivo no hay números: spinner, no «0 de 0»', () => {
     const html = renderAjustes({ ...base, reindexando: { leidas: 0, total: 0 } });
     expect(html).toContain('Reindexando…');

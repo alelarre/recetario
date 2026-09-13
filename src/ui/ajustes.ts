@@ -5,13 +5,15 @@
 import { escapar } from './markdown.js';
 import { encabezado, SPINNER, lateral, botonMenu } from './componentes.js';
 import { cuando } from './borradores.js';
-import type { Progreso } from '../store.js';
+import type { Progreso, IndiceDuplicado } from '../store.js';
 
 export interface OpcionesAjustes {
   cuenta: string;
   ultimaReindexado: string;
   /** Los `.md` que el reindexado salteó, por nombre: sin eso no se encuentran en Drive. */
   ignorados: string[];
+  /** Hay más de una planilla `_indice` en Drive: cuántas y cuál se usa. */
+  indiceDuplicado?: IndiceDuplicado | null;
   reindexando: Progreso | null;
   /** Cuántos borradores esperan, para el contador del menú. */
   borradores?: number;
@@ -20,7 +22,7 @@ export interface OpcionesAjustes {
 }
 
 export function renderAjustes(
-  { cuenta, ultimaReindexado, ignorados, reindexando, borradores = 0, menuAbierto }: OpcionesAjustes
+  { cuenta, ultimaReindexado, ignorados, indiceDuplicado, reindexando, borradores = 0, menuAbierto }: OpcionesAjustes
 ): string {
   const enCurso = !!reindexando;
 
@@ -48,10 +50,18 @@ export function renderAjustes(
       '<button class="btn sec" style="width:100%" data-accion="reindexar">Reindexar</button>' +
     '</div>';
 
-  const lista = ignorados.length
+  // El tono de los avisos es el hecho y el número (brand-identity §3.2).
+  const duplicado = indiceDuplicado
+    ? `<p class="aviso-mudo" style="margin:0 0 var(--e-2)">Hay ${indiceDuplicado.cantidad} planillas _indice en Drive. ` +
+      `Se usa la modificada el ${fechaYHora(indiceDuplicado.modifiedTime)}.</p>`
+    : '';
+
+  const deIgnorados = ignorados.length
     ? `<div class="fila-a"><span class="t aviso-mudo">${ignorados.length} ${ignorados.length === 1 ? 'archivo ignorado' : 'archivos ignorados'} por no tener título.</span></div>` +
       `<p class="aviso-mudo" style="margin:var(--e-2) 0 0">${ignorados.map(n => escapar(n)).join(', ')}</p>`
-    : '<p class="aviso-mudo" style="margin:0">No hay nada para avisar.</p>';
+    : '';
+
+  const lista = duplicado + deIgnorados || '<p class="aviso-mudo" style="margin:0">No hay nada para avisar.</p>';
 
   return lateral({ activo: 'ajustes', borradores, ...(menuAbierto ? { abierto: true } : {}) }) +
     '<div class="conten">' +
@@ -64,3 +74,11 @@ export function renderAjustes(
 
 const porcentaje = ({ leidas, total }: Progreso): number =>
   total > 0 ? Math.min(100, Math.round((leidas / total) * 100)) : 0;
+
+/** «12/09 a las 14:30», en la hora del teléfono. */
+function fechaYHora(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const dos = (n: number): string => String(n).padStart(2, '0');
+  return `${dos(d.getDate())}/${dos(d.getMonth() + 1)} a las ${dos(d.getHours())}:${dos(d.getMinutes())}`;
+}

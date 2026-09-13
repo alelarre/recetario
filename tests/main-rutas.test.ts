@@ -35,13 +35,17 @@ const estado = {
   /** Cuántas veces se leyó un `.md` de Drive: cada una es un pedido de red. */
   lecturas: 0,
   /** Cuántas veces se leyó la planilla de borradores entera. */
-  lecturasBorradores: 0
+  lecturasBorradores: 0,
+  /** Lo que el arranque dice de las planillas `_indice` repetidas. */
+  indiceDuplicado: null as null | { cantidad: number; modifiedTime: string },
+  /** Cuántas veces se borró la copia local del índice. */
+  copiasBorradas: 0
 };
 
 const storeFake = {
   arrancar: async () => ({
     estado: 'listo', reconstruir: false, raizId: 'raiz',
-    categorias: [{ id: 'c1', nombre: 'Carnes' }]
+    categorias: [{ id: 'c1', nombre: 'Carnes' }], indiceDuplicado: estado.indiceDuplicado
   }),
   cargarIndice: async () => [],
   guardarMeta: async () => {},
@@ -63,6 +67,11 @@ const storeFake = {
   }
 };
 vi.mock('../src/store.js', () => ({ crearStore: () => storeFake }));
+vi.mock('../src/indice-local.js', () => ({
+  leer: () => null,
+  guardar: () => {},
+  borrar: () => { estado.copiasBorradas++; }
+}));
 vi.mock('../src/borradores.js', () => ({
   crearBorradores: () => ({
     listar: async () => { estado.lecturasBorradores++; return estado.borradores; },
@@ -91,6 +100,8 @@ describe('main.ts: las rutas', () => {
     estado.md = '---\ntitulo: Milanesas\n---\n';
     estado.lecturas = 0;
     estado.lecturasBorradores = 0;
+    estado.indiceDuplicado = null;
+    estado.copiasBorradas = 0;
     vi.unstubAllGlobals();
     delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
@@ -211,6 +222,19 @@ describe('main.ts: las rutas', () => {
       await abrir(hash);
       expect(app.innerHTML, hash).toContain(marca);
     }
+  });
+
+  it('Salir borra la copia local del índice, además del token', async () => {
+    const { tocar } = await montar();
+    await tocar('salir');
+    expect(estado.copiasBorradas).toBe(1);
+  });
+
+  it('el aviso de la planilla _indice duplicada llega a Ajustes', async () => {
+    estado.indiceDuplicado = { cantidad: 2, modifiedTime: new Date(2026, 8, 12, 14, 30).toISOString() };
+    const { app, abrir } = await montar();
+    await abrir('#/ajustes');
+    expect(app.innerHTML).toContain('Hay 2 planillas _indice en Drive.');
   });
 
   it('sin red, la pantalla avisa y no dibuja datos de una lectura anterior', async () => {

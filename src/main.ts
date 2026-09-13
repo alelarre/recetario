@@ -166,6 +166,10 @@ const mensajeDe = (e: unknown): string => e instanceof Error ? e.message : Strin
 const categoriasDelArranque = () =>
   estadoArranque?.estado === 'listo' ? estadoArranque.categorias : [];
 
+/** El aviso de la planilla `_indice` repetida, para Ajustes. Sólo existe con el arranque en 'listo'. */
+const indiceDuplicado = () =>
+  estadoArranque?.estado === 'listo' ? estadoArranque.indiceDuplicado : null;
+
 const pintar = (html: string): void => { app.innerHTML = html; };
 
 /** Lo que el editor tiene escrito, como texto comparable. Los tags y la completitud viajan en campos ocultos. */
@@ -279,7 +283,8 @@ async function reconstruir({ enAjustes = false } = {}) {
   reindexando = { leidas: 0, total: 0 };
   const dibujar = () => enAjustes
     ? pintar(renderAjustes({
-        cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados, reindexando
+        cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
+        indiceDuplicado: indiceDuplicado(), reindexando
       }))
     : pintar(renderConexion({ estado: 'creando-indice', ...(reindexando ? { progreso: reindexando } : {}) }));
 
@@ -444,7 +449,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // rompe la pantalla, solo deja la línea de la cuenta vacía.
       if (!cuenta) cuenta = await drive.cuenta().catch(() => '');
       return pintar(renderAjustes({
-        cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados, reindexando,
+        cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
+        indiceDuplicado: indiceDuplicado(), reindexando,
         borradores: (await borradoresDePantalla().catch(() => [])).length, menuAbierto
       }));
 
@@ -675,6 +681,9 @@ app.addEventListener('click', async (e) => {
   if (accion === 'conectar') return arrancar({ pidiendoPermiso: true });
   if (accion === 'salir') {
     auth.olvidar();
+    // La copia tiene títulos e ingredientes: después de Salir no queda nada
+    // del usuario en el navegador.
+    indiceLocal.borrar();
     cuenta = '';
     irCerrando('#/');
     return pintar(renderConexion({ estado: 'inicial' }));

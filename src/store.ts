@@ -18,6 +18,12 @@ export interface Categoria {
   nombre: string;
 }
 
+/** Hay más de una planilla `_indice`: cuántas, y la fecha de la que se usa (la más reciente). */
+export interface IndiceDuplicado {
+  cantidad: number;
+  modifiedTime: string;
+}
+
 /**
  * Cómo terminó el arranque. Es una unión discriminada por `estado` a propósito:
  * cada caso trae exactamente los datos que la vista necesita para dibujarlo, y
@@ -37,6 +43,8 @@ export type ResultadoArranque =
       categorias: Categoria[];
       /** El índice quedó viejo o a medio hacer y hay que rehacerlo. */
       reconstruir: boolean;
+      /** Para el aviso de Ajustes; `null` si hay una sola planilla. */
+      indiceDuplicado: IndiceDuplicado | null;
       avisos: string[];
     };
 
@@ -229,6 +237,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     }
 
     let reconstruir = false;
+    let indiceDuplicado: IndiceDuplicado | null = null;
     if (planillas.length === 0) {
       ctx.indiceId = await crearPlanilla();
       ctx.meta = { schemaVersion: String(SCHEMA_VERSION), ultima_reconstruccion: '' };
@@ -240,6 +249,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
       ctx.indiceId = ordenadas[0]?.id ?? '';
       // La búsqueda ya trae la fecha: esa es toda la verificación, sin pedidos nuevos.
       ctx.modifiedTime = ordenadas[0]?.modifiedTime ?? '';
+      if (planillas.length > 1) indiceDuplicado = { cantidad: planillas.length, modifiedTime: ctx.modifiedTime };
       const copia = copiaQueSirve();
       if (copia) usarCopia(copia);
       else ctx.meta = await leerMeta();
@@ -249,7 +259,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
 
     return {
       estado: 'listo', raizId: ctx.raizId, indiceId: ctx.indiceId,
-      categorias: ctx.categorias, reconstruir, avisos
+      categorias: ctx.categorias, reconstruir, indiceDuplicado, avisos
     };
   }
 
