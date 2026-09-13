@@ -157,9 +157,11 @@ describe('main.ts: las rutas', () => {
     // entrada al historial, y el doble lo distingue de asignar `hash`.
     const reemplazos: string[] = [];
     const empujados: string[] = [];
+    const recargas: number[] = [];
     global.location = comoGlobal<Location>({
       hash: '', pathname: '/recetario/', search: '',
-      replace: (h: string) => { reemplazos.push(h); global.location.hash = h; }
+      replace: (h: string) => { reemplazos.push(h); global.location.hash = h; },
+      reload: () => { recargas.push(1); }
     });
     // El editor se lee con `new FormData(form)`: el doble entrega lo que diga
     // `estado.formulario`, sin importar el form.
@@ -176,6 +178,7 @@ describe('main.ts: las rutas', () => {
 
     return {
       app,
+      recargas,
       vueltasAtras,
       scrolls,
       reemplazos,
@@ -226,6 +229,14 @@ describe('main.ts: las rutas', () => {
       await abrir(hash);
       expect(app.innerHTML, hash).toContain(marca);
     }
+  });
+
+  it('borrar los datos locales borra la copia y recarga: lo que hay en memoria salió de ella', async () => {
+    const { abrir, tocar, recargas } = await montar();
+    await abrir('#/ajustes');
+    await tocar('borrar-datos-locales');
+    expect(estado.copiasBorradas).toBe(1);
+    expect(recargas).toHaveLength(1);
   });
 
   it('Salir borra la copia local del índice, además del token', async () => {

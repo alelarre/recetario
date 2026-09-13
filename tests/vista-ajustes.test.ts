@@ -125,3 +125,17 @@ describe('Ajustes: la ficha «Al abrir» (P18)', () => {
     expect(renderAjustes(base)).not.toContain('Al abrir');
   });
 });
+
+describe('Ajustes: borrar los datos locales (P24)', () => {
+  it('ofrece borrar lo guardado en este navegador, y dice qué pasa después', () => {
+    const html = renderAjustes(base);
+    expect(html).toContain('<h2>En este navegador</h2>');
+    expect(html).toContain('data-accion="borrar-datos-locales"');
+    expect(html).toMatch(/se baja todo de Drive/);
+  });
+
+  it('mientras reindexa no se ofrece', () => {
+    expect(renderAjustes({ ...base, reindexando: { leidas: 1, total: 2 } }))
+      .not.toContain('data-accion="borrar-datos-locales"');
+  });
+});

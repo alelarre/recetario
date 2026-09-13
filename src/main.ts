@@ -670,6 +670,13 @@ app.addEventListener('click', async (e) => {
   }
   if (accion === 'reindexar') return reconstruir({ enAjustes: true });
   if (accion === 'conectar') return arrancar({ pidiendoPermiso: true });
+  if (accion === 'borrar-datos-locales') {
+    // Recargar y no seguir: lo que hay en memoria salió de esa copia, y la
+    // próxima escritura la volvería a guardar igual.
+    indiceLocal.borrar();
+    location.reload();
+    return;
+  }
   if (accion === 'salir') {
     auth.olvidar();
     // La copia tiene títulos e ingredientes: después de Salir no queda nada

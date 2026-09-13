@@ -72,6 +72,7 @@ export function renderAjustes(
       encabezado({ titulo: 'Ajustes', grande: true, izquierda: botonMenu(borradores) }) +
       '<div class="cuerpo">' + seccionCuenta + seccionIndice +
         (informe ? fichaAlAbrir(informe, recetas, borradores) : '') +
+        (enCurso ? '' : FICHA_DATOS_LOCALES) +
         `<div class="ficha"><h2>Avisos</h2>${lista}</div>` +
       '</div>' +
     '</div>';
@@ -79,6 +80,17 @@ export function renderAjustes(
 
 const porcentaje = ({ leidas, total }: Progreso): number =>
   total > 0 ? Math.min(100, Math.round((leidas / total) * 100)) : 0;
+
+/**
+ * Borrar lo guardado en el navegador, sin salir de la cuenta (P24): la salida
+ * para una copia local corrupta o vieja. Mientras reindexa no se ofrece, igual
+ * que Reindexar.
+ */
+const FICHA_DATOS_LOCALES = '<div class="ficha"><h2>En este navegador</h2>' +
+  '<p class="aviso-mudo" style="margin:0 0 var(--e-3)">La copia del índice se guarda acá para abrir más rápido. ' +
+  'Si algo se ve viejo o roto, borrala: la app se recarga y se baja todo de Drive.</p>' +
+  '<button class="btn sec" style="width:100%" data-accion="borrar-datos-locales">Borrar datos locales</button>' +
+'</div>';
 
 const COPIA: Record<InformeArranque['copia'], string> = {
   'coincide': 'coincide con _indice',

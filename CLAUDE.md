@@ -12,22 +12,20 @@ Ajustes.
 **Después, usando la app** (2026-09-12 y 13): se trabajó casi todo el backlog de
 uso real (`BACKLOG.md` §6) —comportamiento, diseño visual, la auditoría
 tipográfica (`product-design/ux/auditoria-tipografica.md`) y la deuda chica—, y
-las lecturas de Drive dejaron de repetirse en cada toque. **564 tests**, typecheck
+las lecturas de Drive dejaron de repetirse en cada toque. **567 tests**, typecheck
 y build en verde, y cada cambio de UI se probó en el teléfono sobre Pages.
 
 **Hecho el 2026-09-13 — el índice local (P12):** al abrir, si `_indice` no cambió
 desde la última vez, el índice sale de una copia en `localStorage` y no se lee
 Sheets; cada escritura deja la copia al día. Spec en
 `docs/superpowers/specs/2026-09-13-indice-local-design.md`, plan en
-`docs/superpowers/plans/2026-09-13-indice-local.md`. La primera prueba en el
-teléfono —la segunda apertura no lee `_indice`— ya se vio bien; faltan las otras
-dos (abajo).
+`docs/superpowers/plans/2026-09-13-indice-local.md`. Probado en el teléfono.
 
 **Hecho el 2026-09-13 — los borradores como `.md`:** un archivo por borrador en
 `Recetario/_borradores/`, listado desde la hoja `borradores` de `_indice`, y borrar
 manda a la papelera. Spec en `docs/superpowers/specs/2026-09-13-borradores-md-design.md`.
-**Falta la verificación en el teléfono** y borrar a mano la planilla vieja
-`_borradores`.
+Probado en el teléfono, junto con la versión visible (P20) y la ficha «Al abrir»
+de Ajustes (P18).
 
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
 - El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
@@ -69,14 +67,7 @@ posición de scroll al conmutar en el modo cocina y el gesto de atrás de Androi
 en el editor con cambios sin guardar. Y de 2026-09-13, en el teléfono: que tocar
 un paso en cocina ya no resalte la pantalla entera (`f1214ac` es una hipótesis
 sin confirmar), que el sol y *Salir* respondan en toda su área de 64 px (P16), y
-que la pantalla siga encendida al volver de segundo plano. Y del índice local
-(P12): abrir la app dos veces seguidas y ver en la pestaña Red que la segunda no
-lee Sheets; guardar una receta, cerrar y abrir, y ver que tampoco lee —si lee,
-Drive tardó en actualizar la fecha de `_indice`: anotarlo—; y editar una fila a
-mano en la planilla, abrir, y ver que sí lee. Y de los borradores como `.md`: la
-primera apertura reindexa; compartir un link crea el `.md` en `_borradores/`;
-editar, crear la receta y descartar dejan el `.md` cambiado o en la papelera; y
-volver al Recetario no pide nada a Sheets.
+que la pantalla siga encendida al volver de segundo plano.
 
 Para lo demás, según lo que necesites:
 
@@ -221,7 +212,7 @@ el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
 
-**Estado al 2026-09-13:** resueltos P1 a P13, P16 a P18 y P20 a P22; §6.4 y §6.5
+**Estado al 2026-09-13:** resueltos P1 a P13, P16 a P18, P20 a P22 y P24; §6.4 y §6.5
 cerradas. Quedan abiertos:
 
 - **P14** —que el agente escriba la fila del índice—: bloqueado. El conector de
@@ -233,7 +224,6 @@ cerradas. Quedan abiertos:
   como hoja derivada del índice, imágenes en Cache Storage— está en la fila de
   P19 del backlog.
 - **P23** —compartir recetas—: sin definir; se cruza con P15/P19.
-- **P24** —borrar los datos locales desde Ajustes—, para datos locales corruptos o viejos.
 
 Y queda el contenido.
 
