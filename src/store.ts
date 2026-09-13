@@ -2,7 +2,7 @@ import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_BORRADORES, SCHEMA_VERSION } from '.
 import { COLUMNAS, entradaDesdeFila, filaDesde } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, HOJA_BORRADORES, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
-import { COLUMNAS_BORRADORES, entradaBorradorDesdeFila, filaDeBorrador, parseBorrador } from './borrador.js';
+import { COLUMNAS_BORRADORES, entradaBorradorDesdeFila, filaDeBorrador, parseBorrador, serializeBorrador } from './borrador.js';
 import type { Drive } from './drive.js';
 import type { Sheets } from './sheets.js';
 import type { CopiaIndice, IndiceLocal } from './indice-local.js';
@@ -320,36 +320,44 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     return entradas;
   }
 
+  /** Escribe la fila de `id` donde está, o la agrega al final. `nros` es el mapa de esa hoja. */
+  async function escribirEnHoja(
+    hoja: string, nros: Map<string, number>, id: string, valores: string[], columnas: number
+  ): Promise<void> {
+    const nro = nros.get(id);
+    if (nro) await sheets.escribir(ctx.indiceId, rangoDeFila(nro, hoja, columnas), [valores]);
+    else {
+      await sheets.append(ctx.indiceId, hoja, [valores]);
+      nros.set(id, nros.size + 2);
+    }
+  }
+
+  /** Borra la fila de `id` y corre las siguientes. Devuelve si tenía fila. */
+  async function borrarDeHoja(hoja: string, nros: Map<string, number>, id: string): Promise<boolean> {
+    const nro = nros.get(id);
+    if (!nro) return false;
+    const hojas = await sheets.hojas(ctx.indiceId);
+    await sheets.borrarFila(ctx.indiceId, idDeHoja(hojas, hoja), nro);
+    nros.delete(id);
+    // El corrimiento es determinístico: no hace falta releer nada (§4.3).
+    for (const [otroId, otraFila] of nros) if (otraFila > nro) nros.set(otroId, otraFila - 1);
+    return true;
+  }
+
   async function escribirFila(receta: Receta, ubicacion: Ubicacion): Promise<void> {
     const fila = filaDesde(receta, ubicacion);
     // La entrada en memoria se actualiza acá y no en quien llama: la capa
     // compartida escribe la fila sin pasar por guardar ni crear, y la copia
     // se arma desde las entradas.
     entradas = [...entradas.filter(e => e.id_archivo !== ubicacion.id), entradaDesdeFila(fila)];
-    const nro = filas.get(ubicacion.id);
-    if (nro) await sheets.escribir(ctx.indiceId, rangoDeFila(nro), [fila]);
-    else {
-      await sheets.append(ctx.indiceId, HOJA_RECETAS, [fila]);
-      filas.set(ubicacion.id, filas.size + 2);
-    }
+    await escribirEnHoja(HOJA_RECETAS, filas, ubicacion.id, fila, COLUMNAS.length);
     await persistir();
   }
 
   async function borrarDelIndice(id: string): Promise<void> {
     // Sacar la entrada siempre, tenga fila o no.
     entradas = entradas.filter(e => e.id_archivo !== id);
-
-    // Borrar la fila y hacer el corrimiento solo si tenía fila.
-    const nro = filas.get(id);
-    if (nro) {
-      const hojas = await sheets.hojas(ctx.indiceId);
-      const hojaId = hojas.find(h => h.title === HOJA_RECETAS)?.sheetId ?? 0;
-      await sheets.borrarFila(ctx.indiceId, hojaId, nro);
-      filas.delete(id);
-      // El corrimiento es determinístico: no hace falta releer nada (§4.3).
-      for (const [otroId, otraFila] of filas) if (otraFila > nro) filas.set(otroId, otraFila - 1);
-      await persistir();
-    }
+    if (await borrarDeHoja(HOJA_RECETAS, filas, id)) await persistir();
   }
 
   async function guardar(
@@ -588,6 +596,53 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     return { entrada, receta: parse(texto), texto };
   }
 
+  /** Escribe la fila del borrador y actualiza su entrada en memoria. */
+  async function escribirBorrador(entrada: EntradaBorrador): Promise<void> {
+    entradasBorradores = [...entradasBorradores.filter(e => e.id_archivo !== entrada.id_archivo), entrada];
+    await escribirEnHoja(HOJA_BORRADORES, filasBorradores, entrada.id_archivo,
+      filaDeBorrador(entrada), COLUMNAS_BORRADORES.length);
+    await persistir();
+  }
+
+  /** Captura: un `.md` nuevo en `_borradores/` y su fila (C01.2). */
+  async function agregarBorrador(
+    { titulo, fuente, nota }: { titulo: string; fuente: string; nota: string }
+  ): Promise<Borrador> {
+    if (!ctx.borradoresId) {
+      const carpeta = await drive.crear({ nombre: NOMBRE_BORRADORES, padre: ctx.raizId, mime: MIME_CARPETA });
+      ctx.borradoresId = carpeta.id;
+    }
+    const hermanos = (await drive.listarHijos(ctx.borradoresId)).map(a => a.name ?? '');
+    const nombre = slugArchivo(titulo, hermanos);
+    const contenido = { titulo, fuente, nota, capturado: new Date().toISOString() };
+    const archivo = await drive.crear({ nombre, contenido: serializeBorrador(contenido), padre: ctx.borradoresId });
+    await escribirBorrador({ id_archivo: archivo.id, nombre_archivo: nombre, titulo, capturado: contenido.capturado });
+    return { id: archivo.id, ...contenido };
+  }
+
+  /** Reescribe el `.md` y su fila. `capturado` sale de la fila: editar no cambia cuándo entró. */
+  async function editarBorrador(
+    id: string, { titulo, fuente, nota }: { titulo: string; fuente: string; nota: string }
+  ): Promise<void> {
+    const entrada = entradasBorradores.find(e => e.id_archivo === id);
+    if (!entrada) return;
+    await drive.actualizar(id, serializeBorrador({ titulo, fuente, nota, capturado: entrada.capturado }));
+    await escribirBorrador({ ...entrada, titulo });
+  }
+
+  /**
+   * El `.md` a la papelera y la fila afuera. Sin fila no hace nada: descartar
+   * dos veces termina bien. Si la fila falla, reintentar vuelve a mandar a la
+   * papelera un archivo que ya está ahí, que no falla.
+   */
+  async function descartarBorrador(id: string): Promise<void> {
+    if (!filasBorradores.has(id)) return;
+    await drive.borrar(id);
+    entradasBorradores = entradasBorradores.filter(e => e.id_archivo !== id);
+    await borrarDeHoja(HOJA_BORRADORES, filasBorradores, id);
+    await persistir();
+  }
+
   /** La lista y el contador: desde memoria, lo más viejo primero (C01.4.1). */
   function borradores(): EntradaBorrador[] {
     return [...entradasBorradores].sort((a, b) => a.capturado.localeCompare(b.capturado));
@@ -598,7 +653,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     return { id, ...parseBorrador(await drive.leerTexto(id)) };
   }
 
-  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, escribirFila, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, borradores, borrador, _ctx: ctx };
+  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, escribirFila, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, borradores, borrador, agregarBorrador, editarBorrador, descartarBorrador, _ctx: ctx };
 }
 
 /** El objeto que devuelve `crearStore`. Lo consumen `compartido`, `main` y los tests. */

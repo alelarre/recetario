@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { crearStore } from '../src/store.js';
 import { COLUMNAS } from '../src/catalogo.js';
-import { COLUMNAS_BORRADORES, serializeBorrador } from '../src/borrador.js';
+import { COLUMNAS_BORRADORES, parseBorrador, serializeBorrador } from '../src/borrador.js';
 import { SCHEMA_VERSION } from '../src/config.js';
 import type { CopiaIndice } from '../src/indice-local.js';
-import { driveFalso, sheetsFalso, indiceLocalFalso } from './dobles.js';
+import { driveFalso, sheetsFalso, indiceLocalFalso, recetaFalsa } from './dobles.js';
 import type { SheetsFalso } from './dobles.js';
 import { arranqueListo } from './aserciones.js';
 
@@ -173,5 +173,108 @@ describe('reindexar los borradores', () => {
     const vistos: number[] = [];
     await store.reconstruir(p => vistos.push(p.total));
     expect(vistos.at(-1)).toBe(2);
+  });
+});
+
+/** La app abierta, con la copia ya guardada y la fecha de `_indice` que cambiaría al escribir. */
+async function abierta(opciones: Parameters<typeof armar>[0] = {}) {
+  const armado = await armar(opciones);
+  await armado.store.arrancar();
+  await armado.store.cargarIndice();
+  armado.drive._store.get('i1')!.modifiedTime = '2026-09-13T11:00:00.000Z';
+  return armado;
+}
+
+describe('agregar un borrador', () => {
+  it('crea el .md en _borradores con su formato, agrega la fila y deja la copia al día', async () => {
+    const { store, drive, sheets, indiceLocal } = await abierta();
+    const b = await store.agregarBorrador({ titulo: 'Pollo al disco', fuente: 'https://x/2', nota: 'Con cerveza.' });
+
+    const archivo = drive._store.get(b.id)!;
+    expect(archivo.parents).toEqual(['bc']);
+    expect(archivo.name).toBe('pollo-al-disco.md');
+    expect(parseBorrador(archivo.contenido ?? '')).toEqual({
+      titulo: 'Pollo al disco', fuente: 'https://x/2', nota: 'Con cerveza.', capturado: b.capturado
+    });
+    expect(store.borradores().map(x => x.id_archivo)).toContain(b.id);
+    expect(indiceLocal.actual()?.modifiedTime).toBe('2026-09-13T11:00:00.000Z');
+    await borradoresCoincidenConLaPlanilla(sheets, indiceLocal.actual());
+  });
+
+  it('sin carpeta _borradores, la crea una vez', async () => {
+    const { store, drive } = await abierta({ conCarpeta: false });
+    await store.agregarBorrador({ titulo: 'A', fuente: '', nota: '' });
+    await store.agregarBorrador({ titulo: 'B', fuente: '', nota: '' });
+    const carpetas = [...drive._store.values()].filter(a => a.name === '_borradores' && a.mimeType === CARPETA);
+    expect(carpetas).toHaveLength(1);
+    expect(carpetas[0]?.parents).toEqual(['raiz']);
+  });
+
+  it('un título repetido no pisa el archivo', async () => {
+    const { store, drive } = await abierta();
+    const b = await store.agregarBorrador({ titulo: 'Focaccia', fuente: '', nota: '' });
+    expect(drive._store.get(b.id)?.name).toBe('focaccia-2.md');
+  });
+});
+
+describe('editar un borrador', () => {
+  it('reescribe el .md conservando capturado, y reescribe su fila', async () => {
+    const { store, drive, sheets, indiceLocal } = await abierta();
+    await store.editarBorrador('b1', { titulo: 'Focaccia de romero', fuente: 'https://x/9', nota: 'Otra nota.' });
+
+    expect(parseBorrador(drive._store.get('b1')?.contenido ?? '')).toEqual({
+      titulo: 'Focaccia de romero', fuente: 'https://x/9', nota: 'Otra nota.',
+      capturado: '2026-09-10T00:00:00.000Z'
+    });
+    expect(store.borradores().find(b => b.id_archivo === 'b1')?.titulo).toBe('Focaccia de romero');
+    expect(sheets.appends).toHaveLength(0);   // reescribe, no agrega
+    await borradoresCoincidenConLaPlanilla(sheets, indiceLocal.actual());
+  });
+
+  it('un borrador que no está en el índice no es un error', async () => {
+    const { store } = await abierta();
+    await expect(store.editarBorrador('fantasma', { titulo: 'A', fuente: '', nota: '' })).resolves.toBeUndefined();
+  });
+});
+
+describe('descartar un borrador', () => {
+  it('manda el .md a la papelera, borra la fila y corre las siguientes en la copia', async () => {
+    const { store, drive, sheets, indiceLocal } = await abierta();
+    await store.descartarBorrador('b1');
+
+    expect(drive._store.get('b1')?.trashed).toBe(true);
+    expect(store.borradores().map(b => b.id_archivo)).toEqual(['b2']);
+    expect(indiceLocal.actual()?.borradores).toEqual([
+      { fila: 2, entrada: expect.objectContaining({ id_archivo: 'b2' }) }
+    ]);
+    await borradoresCoincidenConLaPlanilla(sheets, indiceLocal.actual());
+  });
+
+  it('descartar dos veces termina bien', async () => {
+    const { store } = await abierta();
+    await store.descartarBorrador('b1');
+    await expect(store.descartarBorrador('b1')).resolves.toBeUndefined();
+  });
+
+  it('si borrar la fila falla, reintentar la borra', async () => {
+    const { store, sheets } = await abierta();
+    const borrarFila = sheets.borrarFila.bind(sheets);
+    let fallas = 1;
+    sheets.borrarFila = async (id: string, hojaId: number, fila: number) => {
+      if (fallas-- > 0) throw new Error('red');
+      return borrarFila(id, hojaId, fila);
+    };
+    await expect(store.descartarBorrador('b1')).rejects.toThrow('red');
+    await store.descartarBorrador('b1');
+    expect(store.borradores().map(b => b.id_archivo)).toEqual(['b2']);
+    expect(await sheets.leer('i1', 'borradores!A1:D100')).toHaveLength(2);
+  });
+});
+
+describe('las recetas, con las filas generalizadas', () => {
+  it('crear una receta sigue escribiendo en la hoja recetas', async () => {
+    const { store, sheets } = await abierta();
+    await store.crear(recetaFalsa({ titulo: 'Asado' }), { carpetaId: 'c1' });
+    expect(sheets.appends.at(-1)?.hoja).toBe('recetas');
   });
 });
