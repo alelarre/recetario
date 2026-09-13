@@ -257,7 +257,7 @@ versiones que el formato no aguanta sin dejar de ser legible.
 | Entidad | Dónde vive | Nace | Muere |
 |---|---|---|---|
 | **Receta** | Un `.md` en una carpeta de Drive | Al convertir un borrador, o cuando un agente la escribe directo | Se borra a mano |
-| **Borrador** | Una **fila en la planilla de Borradores** en Drive | Al capturar | **Al convertirse**, o al descartarse |
+| **Borrador** | Un **`.md` en `Recetario/_borradores/`**, con su fila en la hoja `borradores` del índice | Al capturar | **Al convertirse**, o al descartarse |
 | **Categoría** | Una carpeta dentro de `Recetario/` | Al crear la carpeta en Drive | Al borrarla |
 | **Tag** | Frontmatter | Al escribirlo | Cuando ninguna receta lo usa |
 | **Fuente** | Frontmatter, o línea en itálica en una variación | Con el borrador o la receta | Con ella |
@@ -272,14 +272,11 @@ versiones que el formato no aguanta sin dejar de ser legible.
 archivo*. Los tags dicen *cómo se lo encuentra*, y son varios. La navegación
 puede cruzar criterios; no está atada al árbol de carpetas.
 
-**El borrador no entra al índice.** Borradores es **su propia planilla, una fila
-por borrador**, no una carpeta con un archivo por borrador ni un archivo único
-que haya que reescribir entero para agregar una línea. Es el mismo argumento que
-eligió planilla para el índice: Drive no tiene escritura parcial, así que
-capturar escribe una fila y descartar o convertir borran una fila. Que sea otra
-planilla no la mete en el índice: es una cola de trabajo, no un archivo
-consolidado. `[decisión: Hito 4, corregida en el Hito 7]` Sus columnas son `id`,
-`titulo`, `fuente`, `capturado` y `nota` `[la última, del 2026-09-12]`.
+**El borrador es un `.md` propio, con su hoja en el índice.** Cada borrador es un
+archivo en `Recetario/_borradores/` —título, fuente y cuándo se capturó en el
+frontmatter, la nota como cuerpo—, y el índice tiene una hoja `borradores` con lo
+que la lista y el contador necesitan. No es una receta: la hoja es otra, y buscar
+recetas no lo encuentra. `[decisión: 2026-09-13, reemplaza la planilla propia del Hito 7]`
 
 **Una receta se identifica por su `fileId` de Drive.** Ni la ruta ni el nombre
 del archivo son identidad: cambiar la categoría mueve el archivo entre carpetas y
@@ -297,7 +294,7 @@ implementan cada una por su lado: **usan el mismo código**.
 | Operación | Qué hace | Quién la invoca |
 |---|---|---|
 | **Escribir receta al índice** | Recibe el `.md` o el objeto que representa la receta, y escribe o reemplaza su fila | La app al guardar; el agente al convertir |
-| **Convertir borrador en receta** | Escribe el `.md`, escribe la fila del índice, y **borra la entrada del borrador** | La app; el agente |
+| **Convertir borrador en receta** | Escribe el `.md`, escribe la fila del índice, y **descarta el borrador**: su `.md` a la papelera y su fila afuera | La app; el agente |
 | **Leer y parsear un `.md`** | Aplica el esquema y lee la completitud tal como la dice el archivo | La app al listar; el agente para validar lo que escribió |
 
 Eso elimina la fuente de divergencia más obvia —dos implementaciones del mismo
@@ -505,6 +502,6 @@ rediseño está implementado: lo que sigue queda como registro de lo que cambió
 | Borradores | No existe | Uno de los dos lugares primarios |
 | Índice | Lo escribe solo la app | Lógica compartida: la escriben la app y el agente con la misma función |
 | Contenido del índice | Metadatos de la receta | Fila completa, con los nombres de los ingredientes |
-| Borradores | No existe | Una planilla en Drive, una fila por borrador |
+| Borradores | No existe | Un `.md` por borrador en `_borradores/`, con su hoja en el índice |
 | Índice corrupto | Error crudo, se repara a mano en Drive | Aviso con botón de reindexar |
 | Barra de navegación | No existe | Sigue sin existir, ahora por decisión |

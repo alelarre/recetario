@@ -12,15 +12,22 @@ Ajustes.
 **Después, usando la app** (2026-09-12 y 13): se trabajó casi todo el backlog de
 uso real (`BACKLOG.md` §6) —comportamiento, diseño visual, la auditoría
 tipográfica (`product-design/ux/auditoria-tipografica.md`) y la deuda chica—, y
-las lecturas de Drive dejaron de repetirse en cada toque. **520 tests**, typecheck
+las lecturas de Drive dejaron de repetirse en cada toque. **538 tests**, typecheck
 y build en verde, y cada cambio de UI se probó en el teléfono sobre Pages.
 
 **Hecho el 2026-09-13 — el índice local (P12):** al abrir, si `_indice` no cambió
 desde la última vez, el índice sale de una copia en `localStorage` y no se lee
 Sheets; cada escritura deja la copia al día. Spec en
 `docs/superpowers/specs/2026-09-13-indice-local-design.md`, plan en
-`docs/superpowers/plans/2026-09-13-indice-local.md`. **Falta la verificación a
-mano en el teléfono** (abajo).
+`docs/superpowers/plans/2026-09-13-indice-local.md`. La primera prueba en el
+teléfono —la segunda apertura no lee `_indice`— ya se vio bien; faltan las otras
+dos (abajo).
+
+**Hecho el 2026-09-13 — los borradores como `.md`:** un archivo por borrador en
+`Recetario/_borradores/`, listado desde la hoja `borradores` de `_indice`, y borrar
+manda a la papelera. Spec en `docs/superpowers/specs/2026-09-13-borradores-md-design.md`.
+**Falta la verificación en el teléfono** y borrar a mano la planilla vieja
+`_borradores`.
 
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
 - El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
@@ -66,7 +73,10 @@ que la pantalla siga encendida al volver de segundo plano. Y del índice local
 (P12): abrir la app dos veces seguidas y ver en la pestaña Red que la segunda no
 lee Sheets; guardar una receta, cerrar y abrir, y ver que tampoco lee —si lee,
 Drive tardó en actualizar la fecha de `_indice`: anotarlo—; y editar una fila a
-mano en la planilla, abrir, y ver que sí lee.
+mano en la planilla, abrir, y ver que sí lee. Y de los borradores como `.md`: la
+primera apertura reindexa; compartir un link crea el `.md` en `_borradores/`;
+editar, crear la receta y descartar dejan el `.md` cambiado o en la papelera; y
+volver al Recetario no pide nada a Sheets.
 
 Para lo demás, según lo que necesites:
 
@@ -85,7 +95,7 @@ Para lo demás, según lo que necesites:
 | **Se mantuvo** | El stack: TypeScript estricto + Vite, sin framework. `auth.ts`, `drive.ts`, `sheets.ts` y las fotos de `src/categorias/`. |
 | **Cambió** | `recipe.ts` (el ingrediente es nombre + separador + cantidad, y los `###` estructuran), `store.ts` (la fila se escribe en el momento, sin cola), `catalogo.ts` (la fila suma `foto` y `completa`), y `src/ui/` entero. |
 | **Se eliminó** | `app.css`, `cache.ts`, `home.ts`, `lista.ts`, `detalle.ts`, `visor.ts`, las tres familias tipográficas, el tag manual `incompleto`, la clase `texto-grande`, la cola, el cache local del índice —volvió el 2026-09-13 de otra forma, ver «Funcionar sin conexión»— y la Changes API. |
-| **Es nuevo** | `borradores.ts` (la planilla de la cola), `compartido.ts` (la capa que la app y el agente invocan igual) e `indice-local.ts` (la copia del índice en el navegador, P12), más las once pantallas de `src/ui/`: recetario, categoria, resultados, receta, cocina, editor, captura, borradores, ajustes y conexion, sobre `componentes.ts` e `iconos.ts`. |
+| **Es nuevo** | `borrador.ts` (el `.md` del borrador), `compartido.ts` (la capa que la app y el agente invocan igual) e `indice-local.ts` (la copia del índice en el navegador, P12), más las once pantallas de `src/ui/`: recetario, categoria, resultados, receta, cocina, editor, captura, borradores, ajustes y conexion, sobre `componentes.ts` e `iconos.ts`. |
 
 **Todo el producto vive en `src/`.** Nada del código apunta a
 `product-design/`: los documentos son especificación, no dependencia.
@@ -150,9 +160,9 @@ Todo en español rioplatense: spec, comentarios, UI y nombres de carpetas.
 - **Las recetas son `.md` en Drive.** La carpeta contenedora es la categoría y es
   la única verdad; el frontmatter no lleva `categoria`.
 - **El índice es una Google Sheet** (`Recetario/_indice`). Es un cache derivado y
-  reconstruible: los `.md` son siempre la verdad. **Los borradores son otra**
-  (`Recetario/_borradores`): una cola de trabajo de cinco columnas, que no entra
-  al índice porque no es contenido consolidado.
+  reconstruible: los `.md` son siempre la verdad. **Los borradores son `.md` aparte**
+  (`Recetario/_borradores/`), con un formato propio —título, fuente, capturado y
+  la nota— y su hoja `borradores` en `_indice`.
 - **El input principal no es el editor**, son sesiones con agentes que reciben
   una fuente (PDF, foto, video, sitio web), extraen la receta y escriben el
   `.md`. El editor de la app existe para corregir, no para componer.
@@ -198,6 +208,7 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | Una paleta clara, o `prefers-color-scheme` | La app se abre en la cocina, de noche. Un solo tema oscuro es un solo juego de tokens, y deja que las fotos sean lo único con color. |
 | `drive.file` como scope, y el Google Picker | Medido el 2026-09-01: es estrictamente por archivo. Con `Recetario/` elegida en el Picker, la app no veía ninguna de las 16 subcarpetas ni un solo `.md` ajeno — y los `.md` los escriben agentes por fuera. |
 | Detectar y reparar la planilla del índice corrupta o incompleta | Decidido el 2026-09-03. Siempre que el índice esté corrupto o incompleto, la recuperación es borrar el archivo `_indice` en Drive y dejar que la app lo cree de nuevo (`store.ts` llama a `crearPlanilla()` y reconstruye solo); el rediseño agregó el camino a mano: **Ajustes → Reindexar**. Diagnosticar cada tipo de daño posible para repararlo in situ es más trabajo y más riesgo que recrear desde los `.md`, que son la fuente de verdad. |
+| Los borradores en una planilla propia, o como receta incompleta | Decidido el 2026-09-13. La planilla se bajaba entera y no tenía copia; como hoja del índice hereda la copia local y el reindexado. Y el borrador no es una receta: título, fuente y nota. Si lo fuera, alcanzaría con crear recetas incompletas. |
 
 ## Lo que queda pendiente
 
@@ -205,7 +216,7 @@ El planificador está diseñado y queda afuera a propósito
 (`product-design/plan/BACKLOG.md`).
 
 **Los pendientes de la app usada de verdad están en `BACKLOG.md` §6**
-`[2026-09-12]`, con identificador estable —P1 a P21— para nombrarlos sin repetir
+`[2026-09-12]`, con identificador estable —P1 a P22— para nombrarlos sin repetir
 el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
@@ -221,7 +232,7 @@ cerradas. Quedan abiertos:
 - **P18** —una pantalla de arranque que muestre la comparación del índice—:
   P12 ya está hecho; primero propuestas.
 - **P20** —la versión de la app visible—.
-- **P21** —los borradores con copia local, como el índice—: P12 ya está hecho.
+- **P22** —el skill del agente escribe borradores—.
 
 Y queda el contenido.
 

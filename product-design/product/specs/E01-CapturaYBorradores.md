@@ -127,17 +127,14 @@ consolidado.
 
 - [ ] Cada entrada muestra **el título y cuándo se capturó**. La fuente y la nota están adentro.
 - [ ] El orden es por fecha de captura, **lo más viejo primero**: lo que lleva más tiempo esperando es lo que más riesgo corre.
-- [ ] La lista se lee de una sola vez: una lectura de la planilla, sin paginar.
+- [ ] La lista sale de la hoja `borradores` del índice, en memoria: mostrarla no hace ningún pedido. `[2026-09-13]`
 
-#### C01.4.2 — Escritura por fila *(J2)*
+#### C01.4.2 — Un `.md` por borrador *(J2)* `[reescrita el 2026-09-13]`
 
-- [ ] Capturar agrega una fila; descartar borra una fila; convertir borra una fila. Ninguna operación reescribe la planilla entera.
-- [ ] Cada borrador tiene un identificador propio que no depende de su posición.
-- [ ] Las columnas son `id`, `titulo`, `fuente`, `capturado` y `nota` `[la última, del 2026-09-12]`. Una planilla escrita antes se lee igual: la celda falta y la nota queda vacía.
-- [ ] Editar un borrador reescribe **su** fila, con los tres campos editables.
-
-**Nota técnica:** con un solo usuario, dos capturas simultáneas no ocurren. La
-escritura por fila lo vuelve inofensivo igualmente.
+- [ ] Cada borrador es un `.md` en `Recetario/_borradores/`: `titulo`, `fuente` y `capturado` en el frontmatter, y la nota como cuerpo. Es un formato propio, no el de una receta.
+- [ ] El identificador del borrador es el id del archivo en Drive.
+- [ ] La hoja `borradores` de `_indice` tiene una fila por borrador: `id_archivo`, `nombre_archivo`, `titulo` y `capturado`. Capturar agrega una fila; descartar y convertir borran una; editar reescribe la suya. Reindexar la rearma desde la carpeta.
+- [ ] Editar un borrador reescribe su `.md` y su fila, con los tres campos editables, y conserva cuándo se capturó.
 
 #### C01.4.3 — Estados de Borradores *(J3)*
 
@@ -172,8 +169,8 @@ descartarlo. La conversión en sí ocurre afuera, en una sesión con el agente.
 
 #### C01.6.2 — Descartar pide confirmación *(J3)*
 
-- [ ] Descartar pregunta antes: es destructivo y no hay papelera.
-- [ ] Confirmado, borra la fila y vuelve a Borradores.
+- [ ] Descartar pregunta antes.
+- [ ] Confirmado, manda el `.md` a la papelera de Drive, borra su fila y vuelve a Borradores.
 - [ ] Si falla, avisa y el borrador sigue ahí (R1).
 
 #### C01.6.3 — Crear la receta desde el borrador *(J3)*
@@ -183,21 +180,21 @@ descartarlo. La conversión en sí ocurre afuera, en una sesión con el agente.
 - [ ] Abre el editor de receta nueva (C04.3b.1) con el título y la `fuente` del borrador ya cargados.
 - [ ] **La nota se lee como si fuera el `.md` de la receta** `[del 2026-09-12]`: lo que esté bajo `## Ingredientes`, `## Preparación`, `## Variaciones` o `## Notas` cae en su campo, y el texto suelto de arriba queda como descripción. Sin encabezados, todo va a la descripción.
 - [ ] Hay que elegir la categoría, como en cualquier receta nueva.
-- [ ] Guardar invoca la operación de conversión de la capa compartida (C01.7.1): escribe el `.md`, escribe la fila del índice y **borra la fila del borrador**, en una sola operación.
+- [ ] Guardar invoca la operación de conversión de la capa compartida (C01.7.1): escribe el `.md`, escribe la fila del índice y **descarta el borrador**, en una sola operación.
 - [ ] Salir sin guardar deja el borrador intacto.
 - [ ] Es el alcance del editor y no otro: sirve para una receta que ya tenés en la cabeza. Transcribir el video o el PDF de la fuente sigue siendo trabajo del agente.
 
 ### F01.7 — El borrador desaparece al convertirse
 
 Convertir es **una sola operación de la capa compartida**: escribe el `.md`,
-escribe la fila del índice y borra la fila del borrador. La invocan tanto la app
+escribe la fila del índice y descarta el borrador —su `.md` a la papelera y su fila afuera—. La invocan tanto la app
 como el agente, y nadie borra el borrador por separado.
 
 Su fuente sobrevive en la receta; no queda copia.
 
 #### C01.7.1 — Convertir es una operación, no tres *(J3)*
 
-- [ ] La operación escribe el `.md`, escribe la fila del índice y borra la fila del borrador, en ese orden.
+- [ ] La operación escribe el `.md`, escribe la fila del índice, manda el `.md` del borrador a la papelera y borra su fila, en ese orden.
 - [ ] La `fuente` del borrador pasa al frontmatter de la receta, y la nota a los campos que nombra (C01.6.3).
 - [ ] Si alguno de los pasos falla, el reintento repite los tres (R2): reescribir el `.md`, reemplazar la fila y borrar el borrador son idempotentes.
 - [ ] Nadie borra un borrador convertido "a mano" desde otro lado.
