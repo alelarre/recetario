@@ -133,9 +133,24 @@ describe('renderEditor', () => {
       .toContain('data-accion="borrar"');
   });
 
+  it('el estado cierra la ficha de datos, después de la foto', () => {
+    const html = dibujar();
+    const datos = html.slice(html.indexOf('<div class="ficha">'), html.indexOf('<h2>Contenido</h2>'));
+    expect(datos).toContain('data-completitud');
+    expect(datos.indexOf('name="foto"')).toBeLessThan(datos.indexOf('data-completitud'));
+    // Sin ficha propia: las fichas son la de datos y la de contenido.
+    expect(html.match(/class="ficha"/g)).toHaveLength(2);
+  });
+
+  it('borrar receta va suelto al pie, fuera de las fichas', () => {
+    const html = renderEditor({ entrada: entradaFalsa(), receta: cargada, categorias });
+    expect(html.match(/class="ficha"/g)).toHaveLength(2);
+    expect(html.indexOf('<h2>Contenido</h2>')).toBeLessThan(html.indexOf('data-accion="borrar"'));
+  });
+
   it('borrar receta lleva el tacho, como descartar un borrador', () => {
     expect(renderEditor({ entrada: entradaFalsa(), receta: cargada, categorias }))
-      .toContain(`data-accion="borrar" type="button">${ICO.tacho}Borrar receta</button>`);
+      .toContain(`${ICO.tacho}Borrar receta</button>`);
   });
 
   it('borrar pide confirmación y nombra la receta', () => {

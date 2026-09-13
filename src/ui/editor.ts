@@ -82,6 +82,30 @@ export function renderEditor(
 
   const tags = receta.tags ?? [];
 
+  // La completitud es una declaración del usuario y nada más: la app no la
+  // calcula ni la corrige (2026-09-12). El control es un conmutador de dos
+  // posiciones, y «Terminada» sólo se habilita cuando la receta tiene lo
+  // mínimo —título, categoría, ingredientes y pasos—; mientras no los tenga,
+  // la leyenda dice qué falta.
+  const carpetaActual = entrada?.carpeta_id ?? '';
+  const puede = sePuedeTerminar(receta, carpetaActual);
+  const terminada = receta.completa;
+  // Cierra la ficha de datos, separado por un divisor: primero se cargan los
+  // datos y al final se declara el estado.
+  const completa = '<div class="campo estado" data-completitud><span>Estado</span>' +
+    '<div class="conm-doble" role="group" aria-label="Estado de la receta">' +
+      `<button type="button" class="${terminada ? '' : 'on'}" data-completa="no">` +
+        '<span class="inc"></span>Incompleta</button>' +
+      `<button type="button" class="${terminada ? 'on' : ''}" data-completa="si"` +
+        `${puede ? '' : ' disabled'}>Terminada</button>` +
+    '</div>' +
+    `<input type="hidden" name="completa" value="${terminada ? 'si' : 'no'}">` +
+    '<p class="aviso-mudo leyenda-completa" style="margin:var(--e-3) 0 0"' +
+      `${puede ? ' hidden' : ''}>` +
+      'Se podrá marcar como terminada cuando se cargue: título, categoría, ' +
+      'ingredientes y pasos.</p>' +
+  '</div>';
+
   const datos = '<div class="ficha">' +
     campo('titulo', 'Título', receta.titulo) +
     `<label class="campo"><span>Categoría</span><select name="carpeta">${opcionesCarpeta}</select></label>` +
@@ -104,6 +128,7 @@ export function renderEditor(
     `<label class="campo"><span>Dificultad</span><select name="dificultad">${opcionesDificultad}</select></label>` +
     campo('fuente', 'Fuente', receta.fuente) +
     campo('foto', 'Foto', receta.foto, 'https://…') +
+    completa +
   '</div>';
 
   // Cómo se escribe un ingrediente para que el filtro por ingrediente lo
@@ -141,27 +166,6 @@ export function renderEditor(
     area('notas', 'Notas', receta.notas, 3) +
   '</div>';
 
-  // La completitud es una declaración del usuario y nada más: la app no la
-  // calcula ni la corrige (2026-09-12). El control es un conmutador de dos
-  // posiciones, y «Terminada» sólo se habilita cuando la receta tiene lo
-  // mínimo —título, categoría, ingredientes y pasos—; mientras no los tenga,
-  // la leyenda dice qué falta.
-  const carpetaActual = entrada?.carpeta_id ?? '';
-  const puede = sePuedeTerminar(receta, carpetaActual);
-  const terminada = receta.completa;
-  const completa = '<div class="ficha" data-completitud>' +
-    '<div class="conm-doble" role="group" aria-label="Estado de la receta">' +
-      `<button type="button" class="${terminada ? '' : 'on'}" data-completa="no">` +
-        '<span class="inc"></span>Incompleta</button>' +
-      `<button type="button" class="${terminada ? 'on' : ''}" data-completa="si"` +
-        `${puede ? '' : ' disabled'}>Terminada</button>` +
-    '</div>' +
-    `<input type="hidden" name="completa" value="${terminada ? 'si' : 'no'}">` +
-    '<p class="aviso-mudo leyenda-completa" style="margin:var(--e-3) 0 0"' +
-      `${puede ? ' hidden' : ''}>` +
-      'Se podrá marcar como terminada cuando se cargue: título, categoría, ' +
-      'ingredientes y pasos.</p>' +
-  '</div>';
 
   const borrar = !entrada ? ''
     : confirmandoBorrado
@@ -171,7 +175,8 @@ export function renderEditor(
           '<button class="btn sec" data-accion="cancelar-borrado" type="button">Cancelar</button>' +
           '<button class="btn pel" data-accion="borrar-confirmado" type="button">Borrar</button>' +
         '</div></div>'
-      : `<div class="ficha"><button class="btn pel" data-accion="borrar" type="button">${ICO.tacho}Borrar receta</button></div>`;
+      // Suelto al pie y no en una ficha: es una acción destructiva, no un campo más.
+      : `<button class="btn pel" data-accion="borrar" type="button" style="width:100%">${ICO.tacho}Borrar receta</button>`;
 
   return encabezado({
     titulo: entrada ? 'Editando' : 'Nueva receta',
@@ -182,7 +187,7 @@ export function renderEditor(
       // Sin botón de reintentar: el reintento es tocar Guardar otra vez, que
       // está arriba y no se fue a ningún lado (R1).
       (error ? aviso({ texto: error }) : '') +
-      datos + contenido + completa + borrar +
+      datos + contenido + borrar +
     '</form>';
 }
 

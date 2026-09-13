@@ -150,7 +150,7 @@ lo deduce del contenido (C05.3.1): sólo dice cuándo se puede declarar.
 
 #### C04.4.1 — El control *(J7)*
 
-- [ ] Un **conmutador de dos posiciones al pie del editor: *Incompleta* | *Terminada***. Una sola es verdadera.
+- [ ] Un **conmutador de dos posiciones: *Incompleta* | *Terminada***, rotulado *Estado*, que cierra la ficha de datos después de un divisor `[del 2026-09-12: estaba al pie del editor, en su propia ficha]`. Una sola es verdadera.
 - [ ] Arranca en **Incompleta**: una receta nueva no está terminada hasta que alguien lo diga.
 - [ ] *Terminada* se habilita sólo si la receta cumple C05.3.3 —título, categoría, ingredientes y pasos—.
 - [ ] Mientras esté deshabilitada, debajo va la leyenda: *"Se podrá marcar como terminada cuando se cargue: título, categoría, ingredientes y pasos."*
@@ -190,6 +190,7 @@ sobre contenido del usuario.
 
 #### C04.6.1 — Borrar *(J7)*
 
+- [ ] *Borrar receta* va suelto al pie del formulario, a lo ancho y fuera de las fichas: es una acción destructiva, no un campo `[del 2026-09-12]`.
 - [ ] Pide confirmación, y la confirmación nombra la receta.
 - [ ] Borra el `.md` de Drive y la fila del índice.
 - [ ] Al terminar, vuelve a la lista de donde se venía.
