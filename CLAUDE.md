@@ -229,6 +229,9 @@ cerradas. Quedan abiertos:
   archivo (medido el 2026-09-12).
 - **P15** y **P19** —categorías y carpeta definidas por el usuario—: se superponen,
   decidir juntas, a partir de qué pasa si otra persona usa la app con sus recetas.
+  Lo decidido en conversación el 2026-09-13 —carpeta base marcada, categorías
+  como hoja derivada del índice, imágenes en Cache Storage— está en la fila de
+  P19 del backlog.
 - **P23** —compartir recetas—: sin definir; se cruza con P15/P19.
 
 Y queda el contenido.
