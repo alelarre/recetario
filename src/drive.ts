@@ -130,7 +130,13 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
     mover: (id: string, { de, a }: { de: string; a: string }) =>
       pedir<ArchivoDrive>(`/files/${id}?addParents=${a}&removeParents=${de}&fields=id,parents`, { method: 'PATCH' }),
 
-    borrar: (id: string) => pedir<string>(`/files/${id}`, { method: 'DELETE' })
+    /**
+     * Manda el archivo a la papelera de Drive. `DELETE` lo borraría para
+     * siempre, y la papelera es la red de seguridad, que es del usuario (E04).
+     */
+    borrar: (id: string) => pedir<ArchivoDrive>(`/files/${id}?fields=id,trashed`, {
+      method: 'PATCH', body: JSON.stringify({ trashed: true })
+    })
   };
 }
 

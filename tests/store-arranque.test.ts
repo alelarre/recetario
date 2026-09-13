@@ -202,6 +202,6 @@ describe('arranque en frío', () => {
     sheets.agregarHoja = async () => { throw new Error('falla de red a mitad de crear'); };
 
     await expect(store.arrancar()).rejects.toThrow('falla de red a mitad de crear');
-    expect([...drive._store.values()].some(a => a.name === '_indice')).toBe(false);
+    expect([...drive._store.values()].some(a => a.name === '_indice' && !a.trashed)).toBe(false);
   });
 });

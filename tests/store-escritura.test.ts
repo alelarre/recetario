@@ -153,7 +153,7 @@ describe('crear', () => {
 describe('borrar', () => {
   it('borra el archivo y saca la fila del índice', async () => {
     await store.borrar('r1');
-    expect(drive._store.has('r1')).toBe(false);
+    expect(drive._store.get('r1')?.trashed).toBe(true);
     expect(store.entradas()).toHaveLength(0);
   });
 
@@ -161,7 +161,7 @@ describe('borrar', () => {
     const r = await store.crear(recetaFalsa({ titulo: 'Nueva' }));
     expect(store.entradas()).toHaveLength(2);  // r1 + nueva
     await store.borrar(r.id);
-    expect(drive._store.has(r.id)).toBe(false);
+    expect(drive._store.get(r.id)?.trashed).toBe(true);
     expect(store.entradas()).toHaveLength(1);  // solo r1
   });
 
@@ -177,7 +177,7 @@ describe('borrar', () => {
 
   it('borrar una receta con fila sigue funcionando', async () => {
     await store.borrar('r1');
-    expect(drive._store.has('r1')).toBe(false);
+    expect(drive._store.get('r1')?.trashed).toBe(true);
     expect(store.entradas()).toHaveLength(0);
     const filas = await sheets.leer('i1', 'recetas!A1:L10');
     expect(filas).toHaveLength(1);  // solo el encabezado

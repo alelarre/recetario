@@ -91,7 +91,9 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       a.parents = [destino, ...(a.parents ?? []).filter(p => p !== de && p !== destino)].slice(0, 1);
       return a;
     },
-    async borrar(id: string) { store.delete(id); return ''; }
+    // Como el real: a la papelera, no fuera de `_store`. `vivos()` ya lo
+    // saca de búsquedas y listados.
+    async borrar(id: string) { const a = exigir(id); a.trashed = true; return a; }
   } satisfies DriveUsado & Record<string, unknown>;
 
   /** Los mutadores del doble asumen que el archivo existe: si no, es un test mal armado. */
