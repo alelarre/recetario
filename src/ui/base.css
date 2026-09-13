@@ -95,8 +95,12 @@
 .pie .acciones { max-width: 680px; margin: 0 auto; }
 
 /* ---- Modo cocina (mockup 02) ---- */
-.encoc { height: 56px; display: flex; align-items: center; gap: var(--e-2); padding: 0 var(--e-2);
+/* 64 de alto: cada control del encabezado tiene 64 × 64 de área táctil, como
+   pide §1 en cocina (P16). Sin `gap`: el aire entre el sol y *Salir* lo pone el
+   margen interno del sol, que dibuja su caja a 40 dentro de sus 64. */
+.encoc { height: 64px; display: flex; align-items: center; padding: 0 var(--e-2);
          border-bottom: 1px solid var(--borde); }
+.encoc .ico { width: 64px; height: 64px; flex-basis: 64px; }
 /* Centrado como el encabezado del resto de la app, y recortado: el chevron y
    Salir no miden lo mismo, así que sin `min-width: 0` un título largo empuja
    el botón fuera de la pantalla. */
@@ -129,13 +133,21 @@
                       border-radius: var(--r-medio); border-bottom-color: transparent; }
 .coc .pasos li.hecho { color: var(--fg-3); }
 .coc .pasos li.hecho::before { content: '✓'; color: var(--fg-3); }
-/* La pantalla encendida, en el encabezado. Lleva el borde y el alto de *Salir*:
-   sin reborde, un ícono suelto no se lee como algo que se toca. Activa se
-   invierte, como el estado elegido del editor. Sin `.encoc` el hover de `.ico`
-   le ganaría. */
-.encoc [data-accion="wake"] { width: 40px; height: 40px; flex-basis: 40px;
-                              border: 1px solid var(--borde-fuerte); }
-.encoc .ico.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+/* El sol y *Salir* tocan en 64 × 64 pero se dibujan como antes: la caja con
+   reborde, de 40 de alto, es un pseudo-elemento adentro del botón. Sin reborde
+   un ícono suelto no se lee como algo que se toca. El sol encendido se
+   invierte, como el estado elegido del editor. */
+.encoc [data-accion="wake"], .encoc .btn.compacto { position: relative; isolation: isolate;
+                                                    background: none; border-color: transparent; }
+.encoc [data-accion="wake"]::before, .encoc .btn.compacto::before {
+  content: ''; position: absolute; z-index: -1; border-radius: var(--r-medio);
+  border: 1px solid var(--borde-fuerte); }
+.encoc [data-accion="wake"]::before { inset: 12px; }
+.encoc .btn.compacto { min-height: 64px; min-width: 64px; }
+.encoc .btn.compacto::before { inset: 12px 0; }
+.encoc [data-accion="wake"]:hover::before { background: var(--surface-alta); }
+.encoc [data-accion="wake"].on { color: var(--bg); }
+.encoc [data-accion="wake"].on::before { background: var(--fg); border-color: var(--fg); }
 
 /* ---- Editor (mockup 06) ---- */
 /* El estado de la receta: dos posiciones, una sola verdadera. La elegida se
