@@ -216,7 +216,7 @@ El planificador está diseñado y queda afuera a propósito
 (`product-design/plan/BACKLOG.md`).
 
 **Los pendientes de la app usada de verdad están en `BACKLOG.md` §6**
-`[2026-09-12]`, con identificador estable —P1 a P22— para nombrarlos sin repetir
+`[2026-09-12]`, con identificador estable —P1 a P23— para nombrarlos sin repetir
 el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
@@ -228,7 +228,8 @@ cerradas. Quedan abiertos:
   Google Drive de claude.ai no escribe planillas ni reescribe el contenido de un
   archivo (medido el 2026-09-12).
 - **P15** y **P19** —categorías y carpeta definidas por el usuario—: se superponen,
-  decidir juntas.
+  decidir juntas, a partir de qué pasa si otra persona usa la app con sus recetas.
+- **P23** —compartir recetas—: sin definir; se cruza con P15/P19.
 
 Y queda el contenido.
 
