@@ -9,6 +9,12 @@
 Abrir `index.html`. Cada pantalla usa **los tokens de `../design-system.md`
 literalmente**, en `tokens.css`.
 
+> `[2026-09-12]` **Los mockups son la especificación de cuando se diseñaron, no
+> el estado de la app.** El sistema del producto es `src/ui/tokens.css`, que nació
+> como copia de este `tokens.css` y se edita allá. Lo que se decidió usando la
+> app —la tipografía de la auditoría, el chip, la marca de incompleta, el
+> chevron— no está acá.
+
 ---
 
 ## Cómo están hechos

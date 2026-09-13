@@ -121,5 +121,5 @@ Esto no se arregla escribiendo código.
 
 | Qué | Situación |
 |---|---|
-| **`src/ui/tokens.css` ya no es copia literal de los mockups** | Es la convención declarada en su encabezado, pero los cambios posteriores al Hito 11 —el chip más claro, la marca a medio llenar, el chip «pendiente»— viven como overrides en `base.css`. Se lee bien, pero para saber cómo se dibuja algo hay que mirar los dos archivos. |
-| **`.inc-txt` quedó sin uso** | Era el texto suelto de «Falta terminarla» en la receta abierta. Sigue definido en `tokens.css` porque ese archivo no se toca. |
+| **`src/ui/tokens.css` ya no es copia literal de los mockups** | **Resuelto** `[2026-09-12]`. Se terminó la convención: `src/ui/tokens.css` es el sistema del producto y se edita directamente. Los overrides que pisaban reglas del sistema desde `base.css` —interlínea del `body`, título de sección, ingredientes, chip, marca de incompleta, chevron del `select`, notas, encabezado y columna— se movieron a su regla en `tokens.css`. Se verificó midiendo el estilo computado de 1404 elementos en 18 vistas y dos anchos, antes y después: sin diferencias. Los mockups quedaron como la especificación de cuando se diseñaron, y lo dicen su `tokens.css` y su README. |
+| **`.inc-txt` quedó sin uso** | **Resuelto** `[2026-09-12]`. Borrado de `src/ui/tokens.css`, que ya se puede tocar. |

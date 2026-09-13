@@ -68,10 +68,13 @@ Para lo demás, según lo que necesites:
 | **Es nuevo** | `borradores.ts` (la planilla de la cola) y `compartido.ts` (la capa que la app y el agente invocan igual), más las once pantallas de `src/ui/`: recetario, categoria, resultados, receta, cocina, editor, captura, borradores, ajustes y conexion, sobre `componentes.ts` e `iconos.ts`. |
 
 **Todo el producto vive en `src/`.** Nada del código apunta a
-`product-design/`: los documentos son especificación, no dependencia. Los tokens
-están **copiados** de `product-design/ux/mockups/tokens.css` a
-`src/ui/tokens.css`, sin el andamio del catálogo; `src/ui/base.css` es lo que en
-los mockups vivía en el `<style>` de cada pantalla.
+`product-design/`: los documentos son especificación, no dependencia.
+**`src/ui/tokens.css` es el sistema del producto** —tokens y componentes— y se
+edita directamente; `src/ui/base.css` es lo que es de cada pantalla. Los dos
+nacieron copiados de los mockups, pero desde el 2026-09-12 la copia dejó de ser
+literal: lo decidido usando la app —la tipografía, el chip, la marca de
+incompleta, el chevron— vive sólo en `src/`, y los mockups quedaron como la
+especificación de cuando se diseñaron.
 
 ### Lo que el rediseño dio vuelta de la tabla de abajo
 

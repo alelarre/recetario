@@ -1,9 +1,11 @@
 /* Recetario — los tokens de ux/design-system.md, literales.
    Si un mockup necesita un valor que no está acá, es un hueco del sistema.
 
-   AL IMPLEMENTAR: este archivo se COPIA a src/ui/tokens.css, no se referencia.
-   Nada de src/ debe apuntar a product-design/. La sección marcada como ANDAMIO
-   no se copia: no es producto. */
+   AL IMPLEMENTAR: este archivo se copió a src/ui/tokens.css, sin referenciarlo
+   y sin la sección marcada como ANDAMIO. Desde el 2026-09-12 el sistema del
+   producto es src/ui/tokens.css y se edita allá: lo decidido después de usar
+   la app vive sólo en ese archivo, y este quedó como la especificación de
+   cuando se diseñó. */
 
 :root {
   color-scheme: dark;

@@ -1,37 +1,13 @@
-/* Recetario — lo que en los mockups vive en el <style> de cada pantalla.
-   Copiado de product-design/ux/mockups/, sin cambiar valores. Lo que es
-   sistema —encabezado, ficha, botón, tarjeta, chip, campo, aviso— está en
-   tokens.css; acá está lo que es de una pantalla.
+/* Recetario — lo que es de una pantalla. Lo que es sistema —encabezado, ficha,
+   botón, tarjeta, chip, campo, aviso— está en tokens.css. Nació copiado del
+   <style> de cada mockup de product-design/ux/mockups/; desde el 2026-09-12 se
+   edita acá y los mockups quedaron como la especificación de cuando se
+   diseñaron.
 
    Las reglas que en el catálogo cuelgan de `.desk` acá son media queries: el
    marco de escritorio era andamio, el ancho es producto. */
 
-/* C05.10.1 — una columna con máximo. La grilla de cuatro columnas está al
-   final del archivo: una media query con la misma especificidad tiene que ir
-   después de `.grilla`, o la pisa la regla de dos columnas. */
-.cuerpo { max-width: 680px; margin: 0 auto; }
-
-/* §3.2 — La interlínea de la escala. Sin esto todo lo que no la declara se
-   dibujaba con la `normal` del navegador, ≈1.2 (auditoría tipográfica T2). Los
-   títulos van más cerrados: la del cuerpo los separaba de más en dos renglones. */
-body { line-height: 1.5; }
-.ficha > h2, .var h3 { line-height: 1.3; }
-/* El título de sección y el de una variación van en el tamaño del cuerpo de la
-   receta, y se separan de él por peso, divisor y aire: en 20 competían con el
-   título de la receta, a una razón de 1.2 (auditoría T9 y T10). */
-.ficha > h2, .var h3 { font-size: var(--txt-lectura); }
-.hoja h1, .arr h1, .lat .marca { line-height: 1.25; }
-
 /* ---- Recetario (mockup 03) ---- */
-/* El título de la app se centra en la barra, no en el hueco que dejan los
-   íconos: con dos a la derecha y ninguno a la izquierda, `text-align: center`
-   lo deja corrido casi 50 px. */
-.enc { position: relative; }
-.enc .tit.app { position: absolute; left: 50%; transform: translateX(-50%); }
-.enc .der { margin-left: auto; display: flex; align-items: center; }
-/* El total va al otro extremo: con el título centrado en absoluto, nada lo
-   empuja y quedaba pegado al borde izquierdo. */
-.enc .tot { margin-left: auto; }
 .buscar { display: flex; align-items: center; gap: var(--e-2); min-height: 48px;
           padding: 0 var(--e-3); background: var(--surface-alta);
           border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio); }
@@ -87,11 +63,6 @@ body { line-height: 1.5; }
 .archivo { display: inline-flex; align-items: center; gap: var(--e-1);
            padding: 0 var(--e-2); font-size: var(--txt-chico); color: var(--fg-2); }
 .archivo .logo { width: 16px; height: 16px; object-fit: contain; flex: 0 0 auto; }
-/* El encabezado queda fijo: es lo que hace útil que tome el título cuando el
-   título grande sale de pantalla. */
-.enc.peg { position: sticky; top: 0; z-index: 3; }
-/* El título que toma el encabezado se recorta: hay de 86 caracteres. */
-.enc.peg .tit { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .rec-tit { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0 0 var(--e-3); }
 .rec-ctx { font-size: var(--txt-chico); color: var(--fg-2); display: flex; align-items: center;
            gap: var(--e-2); flex-wrap: wrap; margin-bottom: var(--e-4); }
@@ -106,16 +77,13 @@ body { line-height: 1.5; }
 /* La descripción cierra el bloque de la receta; el margen del último párrafo
    sumaría al del divisor de la fuente. */
 .rec-desc { margin-top: var(--e-4); }
-/* Los ingredientes son cuerpo de la receta, como los pasos: 18 px (§1). En
-   cocina los pisa `.coc .ing`, que es más específica (auditoría T1). */
-.ing { font-size: var(--txt-lectura); line-height: 1.6; }
 .rec-desc p:last-child { margin-bottom: 0; }
 .rec-ctx:last-child, .chips:last-child { margin-bottom: 0; }
 .rec-foto { width: 100%; aspect-ratio: 16/9; max-height: 200px; object-fit: cover;
             border-radius: var(--r-foto); display: block; margin-bottom: var(--e-4); }
 .var { padding: var(--e-3) 0; border-bottom: 1px solid var(--borde); }
 .var:last-child { border-bottom: 0; }
-.var h3 { font-weight: 600; margin: 0 0 var(--e-1); }
+.var h3 { font-size: var(--txt-lectura); font-weight: 600; line-height: 1.3; margin: 0 0 var(--e-1); }
 .var .f { font-size: var(--txt-chico); color: var(--fg-3); font-style: italic; }
 .var p { margin: var(--e-1) 0 0; font-size: var(--txt-lectura); line-height: 1.6; }
 .tramo { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
@@ -125,9 +93,6 @@ body { line-height: 1.5; }
        border-top: 1px solid var(--borde); padding: var(--e-4); }
 /* El pie sigue el ancho del cuerpo: en pantalla ancha no se va a los bordes. */
 .pie .acciones { max-width: 680px; margin: 0 auto; }
-/* Un paso es una línea, no un párrafo con aire propio: el margen del <p> que
-   deja el markdown desalinea el número de la lista. */
-.pasos li p { margin: 0; }
 
 /* ---- Modo cocina (mockup 02) ---- */
 .encoc { height: 56px; display: flex; align-items: center; gap: var(--e-2); padding: 0 var(--e-2);
@@ -195,49 +160,14 @@ body { line-height: 1.5; }
    del botón: adentro del conmutador el acento competiría con el estado elegido. */
 .conm-doble .inc { color: inherit; }
 .leyenda-completa { line-height: 1.5; }
-/* Las notas de una oración —las de Ajustes, la leyenda de Estado— son prosa, y
-   la prosa no baja del cuerpo mínimo de 16 px (§1). En 14 quedaban por debajo
-   del piso (auditoría tipográfica T12). */
-.aviso-mudo { font-size: var(--txt-base); }
 /* El estado cierra la ficha de datos: un divisor lo separa de los campos, y
    como último elemento no suma margen al padding de la ficha. */
 .campo.estado { margin-bottom: 0; padding-top: var(--e-4); border-top: 1px solid var(--borde); }
-/* El chip del sistema (§6.10) es una etiqueta; el del editor se saca, así que
-   lleva su cruz. La regla vive acá y no en tokens.css, que es copia literal. */
-button.chip { cursor: pointer; }
-/* §6.5 — La marca de incompleta es un círculo a medio llenar. El anterior era un
-   círculo vacío y no decía nada: un aro chico al lado del título se lee como
-   viñeta, no como «hecha a medias». El relleno de media luna sí. Va en el acento
-   —es lo único tocable de su fila y lleva al editor—, y nunca en `--error`: a la
-   receta le falta algo, no está rota. La regla vive acá y no en tokens.css, que
-   es copia literal de los mockups. */
-.inc { color: var(--acento); border-color: currentColor;
-       background: linear-gradient(to right, currentColor 50%, transparent 50%); }
-/* El mismo estado, dicho con palabras: un chip más de la fila de tags, que abre
-   el editor. Los valores son los del chip activo (§6.10); la clase es otra
-   porque significan cosas distintas. */
-.chip.pend { background: var(--acento-suave); border-color: var(--acento); color: var(--acento); }
 
 /* Un tag que la app se reserva: el aviso es una línea, sin caja ni botón. */
 .error-tag { margin: var(--e-1) 0 0; font-size: var(--txt-chico); color: var(--error); }
-/* Un tono más claro que `--surface-alta`, que es lo que trae el sistema: en el
-   editor lo separa del campo de agregar, que comparte ese fondo, y en la receta
-   lo despega de la ficha. El mismo chip en las dos pantallas. */
-.chip { background: color-mix(in srgb, var(--surface-alta) 86%, var(--fg));
-        border-color: var(--borde-fuerte); }
 /* Y un poco de aire entre los tags puestos y el campo para sumar otro. */
 [data-pills]:not(:empty) { margin-bottom: var(--e-3); }
-.chip svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;
-            stroke-linecap: round; opacity: .7; }
-/* El chevron del desplegable es propio: el del navegador ignora el padding y
-   quedaba pegado al borde derecho. Es el trazo de los íconos (§3.4), a 16 px
-   del borde. El color es `--fg-2` escrito a mano: adentro de un `url()` no
-   llegan las variables. */
-.campo select { -webkit-appearance: none; appearance: none; cursor: pointer;
-                padding-right: calc(var(--e-4) + 16px + var(--e-2));
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B3A99B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-                background-repeat: no-repeat; background-size: 16px;
-                background-position: right var(--e-4) center; }
 .par { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-3); }
 .par .campo { margin-bottom: 0; }
 
@@ -258,7 +188,7 @@ button.chip { cursor: pointer; }
               font-size: var(--txt-micro); line-height: 1.6; color: var(--fg-2);
               white-space: pre-wrap; word-break: break-word; }
 .hoja { min-height: 100%; display: flex; flex-direction: column; padding: var(--e-5) var(--e-4); }
-.hoja h1 { font-size: var(--txt-titulo); font-weight: 600; margin: 0 0 var(--e-5); }
+.hoja h1 { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0 0 var(--e-5); }
 .fnt { font-size: var(--txt-chico); color: var(--fg-2); background: var(--surface);
        border: 1px solid var(--borde); border-radius: var(--r-medio); padding: var(--e-3);
        word-break: break-all; margin-bottom: var(--e-5); }
@@ -285,7 +215,7 @@ button.chip { cursor: pointer; }
 /* ---- Conexión (mockup 11) ---- */
 .arr { min-height: 100%; display: flex; flex-direction: column; justify-content: center;
        padding: var(--e-6) var(--e-4); gap: var(--e-5); }
-.arr h1 { font-size: var(--txt-titulo); font-weight: 600; margin: 0; }
+.arr h1 { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0; }
 .arr p { font-size: var(--txt-lectura); line-height: 1.6; color: var(--fg-2); margin: 0; }
 
 /* ---- Pantalla ancha (C05.10.1) ---- */
@@ -303,7 +233,7 @@ button.chip { cursor: pointer; }
        padding: var(--e-4); display: flex; flex-direction: column; gap: var(--e-1);
        transform: translateX(-100%); transition: transform .2s; }
 .lat.abierto { transform: none; }
-.lat .marca { font-size: var(--txt-titulo); font-weight: 600;
+.lat .marca { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25;
               margin: 0 0 var(--e-4); padding: 0 var(--e-2); }
 .lat a { display: flex; align-items: center; gap: var(--e-3); min-height: 48px;
          padding: 0 var(--e-2); border-radius: var(--r-medio);

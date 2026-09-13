@@ -1,6 +1,9 @@
-/* Recetario — los tokens de ux/design-system.md, literales.
-   Copiados de product-design/ux/mockups/tokens.css sin el andamio del catálogo.
-   Si hace falta un valor que no está acá, es un hueco del sistema.
+/* Recetario — los tokens y los componentes de ux/design-system.md.
+   Nació copiado de product-design/ux/mockups/tokens.css. Desde el 2026-09-12
+   es el sistema del producto y se edita acá: los mockups quedaron como la
+   especificación de cuando se diseñaron, y lo que se decidió después vive sólo
+   en este archivo. Si hace falta un valor que no está acá, es un hueco del
+   sistema.
  */
 
 :root {
@@ -56,12 +59,28 @@
 body {
   margin: 0; background: var(--bg); color: var(--fg);
   font-family: var(--tipo); font-size: var(--txt-base);
+  /* §3.2 — sin esto, lo que no declara interlínea se dibujaba con la `normal`
+     del navegador, ≈1.2 (auditoría tipográfica T2). */
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
 /* ---- §6.12 Encabezado ---- */
 .enc { height: 56px; display: flex; align-items: center; gap: var(--e-2);
-       padding: 0 var(--e-2); background: var(--bg); border-bottom: 1px solid var(--borde); }
+       padding: 0 var(--e-2); background: var(--bg); border-bottom: 1px solid var(--borde);
+       position: relative; }
+/* El título de la app se centra en la barra, no en el hueco que dejan los
+   íconos: con dos a la derecha y ninguno a la izquierda, `text-align: center`
+   lo deja corrido casi 50 px. */
+.enc .tit.app { position: absolute; left: 50%; transform: translateX(-50%); }
+.enc .der { margin-left: auto; display: flex; align-items: center; }
+/* El total va al otro extremo: con el título centrado en absoluto, nada lo
+   empuja y quedaba pegado al borde izquierdo. */
+.enc .tot { margin-left: auto; }
+/* Fijo arriba, en la receta abierta y en el editor. El título que toma se
+   recorta: hay de 86 caracteres. */
+.enc.peg { position: sticky; top: 0; z-index: 3; }
+.enc.peg .tit { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .enc .tit { flex: 1; font-size: var(--txt-base); font-weight: 600; text-align: center; }
 .enc .tit.izq { text-align: left; padding-left: var(--e-2); }
 .ico { width: 48px; height: 48px; display: grid; place-items: center; flex: 0 0 48px;
@@ -76,13 +95,18 @@ body {
              display: grid; place-items: center; }
 
 /* ---- El cuerpo de una pantalla ---- */
-.cuerpo { padding: var(--e-4); display: flex; flex-direction: column; gap: var(--e-5); }
+.cuerpo { padding: var(--e-4); display: flex; flex-direction: column; gap: var(--e-5);
+          /* C05.10.1 — una columna con máximo. */
+          max-width: 680px; margin: 0 auto; }
 .cuerpo.denso { gap: var(--e-3); }
 
 /* ---- §6.6 Ficha ---- */
 .ficha { background: var(--surface); border: 1px solid var(--borde);
          border-radius: var(--r-ficha); padding: var(--e-4); }
-.ficha > h2 { font-size: var(--txt-titulo-s); font-weight: 600; margin: 0 0 var(--e-3);
+/* El título de sección va en el tamaño del cuerpo de la receta y se separa de
+   él por peso, divisor y aire: en 20 competía con el título de la receta
+   (auditoría tipográfica T9). */
+.ficha > h2 { font-size: var(--txt-lectura); font-weight: 600; line-height: 1.3; margin: 0 0 var(--e-3);
               padding-bottom: var(--e-3); border-bottom: 1px solid var(--borde-fuerte); }
 
 /* ---- §6.7 Botón ---- */
@@ -123,15 +147,29 @@ body {
 .ph::before { content: ''; position: absolute; inset: 0; background: #000; opacity: .45; }
 
 /* ---- §6.5 Marca de incompleta ---- */
-.inc { width: 12px; height: 12px; border: 1.5px solid var(--fg-3); border-radius: 50%; flex: 0 0 12px; }
-.inc-txt { display: inline-flex; align-items: center; gap: var(--e-2);
-           color: var(--fg-3); font-size: var(--txt-chico); }
+/* Un círculo a medio llenar: el aro vacío anterior se leía como viñeta, no como
+   «hecha a medias». Va en el acento —es lo único tocable de su fila y lleva al
+   editor—, y nunca en `--error`: a la receta le falta algo, no está rota. */
+.inc { width: 12px; height: 12px; border: 1.5px solid currentColor; border-radius: 50%; flex: 0 0 12px;
+       color: var(--acento);
+       background: linear-gradient(to right, currentColor 50%, transparent 50%); }
 
 /* ---- §6.10 Chip ---- */
+/* Un tono más claro que `--surface-alta`: en el editor lo separa del campo de
+   agregar, que comparte ese fondo, y en la receta lo despega de la ficha. */
 .chip { display: inline-flex; align-items: center; gap: var(--e-1); height: 32px; padding: 0 var(--e-2);
-        background: var(--surface-alta); border: 1px solid var(--borde); border-radius: var(--r-chico);
+        background: color-mix(in srgb, var(--surface-alta) 86%, var(--fg));
+        border: 1px solid var(--borde-fuerte); border-radius: var(--r-chico);
         font-size: var(--txt-chico); color: var(--fg); }
 .chip.act { background: var(--acento-suave); border-color: var(--acento); color: var(--acento); }
+/* La incompleta, dicha con palabras: un chip más de la fila de tags, que abre
+   el editor. Los valores del chip activo; la clase es otra porque significan
+   cosas distintas. */
+.chip.pend { background: var(--acento-suave); border-color: var(--acento); color: var(--acento); }
+/* El chip de un tag del editor se saca: es botón y lleva su cruz. */
+button.chip { cursor: pointer; }
+.chip svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;
+            stroke-linecap: round; opacity: .7; }
 .chips { display: flex; flex-wrap: wrap; gap: var(--e-2); }
 
 /* ---- §6.9 Campo ---- */
@@ -142,6 +180,15 @@ body {
   border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio);
   color: var(--fg); font: 400 var(--txt-base)/1.5 var(--tipo); resize: vertical; }
 .campo textarea { min-height: calc(1.5em * 3 + var(--e-3) * 2); }
+/* El chevron del desplegable es propio: el del navegador ignora el padding y
+   quedaba pegado al borde derecho. Es el trazo de los íconos (§3.4), a 16 px
+   del borde. El color es `--fg-2` escrito a mano: adentro de un `url()` no
+   llegan las variables. */
+.campo select { -webkit-appearance: none; appearance: none; cursor: pointer;
+                padding-right: calc(var(--e-4) + 16px + var(--e-2));
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B3A99B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+                background-repeat: no-repeat; background-size: 16px;
+                background-position: right var(--e-4) center; }
 .campo input:focus, .campo textarea:focus { outline: none; border: 2px solid var(--acento); }
 .check { display: flex; align-items: center; gap: var(--e-3); min-height: 48px; cursor: pointer; }
 .check input { width: 22px; height: 22px; accent-color: var(--acento); }   /* §6.9 */
@@ -152,11 +199,15 @@ body {
          background: var(--error-suave); border: 1px solid var(--error);
          border-radius: var(--r-ficha); padding: var(--e-4); }
 .aviso p { margin: 0; flex: 1; min-width: 12ch; }
-.aviso-mudo { font-size: var(--txt-chico); color: var(--fg-2); }
+/* Las notas de una oración son prosa, y la prosa no baja de 16 (§1; auditoría
+   tipográfica T12). */
+.aviso-mudo { font-size: var(--txt-base); color: var(--fg-2); }
 
 /* ---- §6.11 Ítem de ingrediente ---- */
 .ing { display: flex; gap: var(--e-3); align-items: baseline;
-       padding: var(--e-2) 0; border-bottom: 1px solid var(--borde); }
+       padding: var(--e-2) 0; border-bottom: 1px solid var(--borde);
+       /* Cuerpo de la receta, como los pasos: 18 (§1; auditoría T1). */
+       font-size: var(--txt-lectura); line-height: 1.6; }
 .ing:last-child { border-bottom: 0; }
 .ing .n { flex: 1; }
 .ing .c { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
@@ -170,6 +221,9 @@ body {
 .pasos { list-style: none; margin: 0; padding: 0; counter-reset: p; }
 .pasos li { counter-increment: p; display: flex; gap: var(--e-3); padding: var(--e-2) 0;
             font-size: var(--txt-lectura); line-height: 1.6; }
+/* Un paso es una línea, no un párrafo con aire propio: el margen del <p> que
+   deja el markdown desalinea el número de la lista. */
+.pasos li p { margin: 0; }
 .pasos li::before { content: counter(p) '.'; color: var(--fg-3); font-variant-numeric: tabular-nums;
                     font-weight: 600; flex: 0 0 1.6em; }
 
