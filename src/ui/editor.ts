@@ -171,7 +171,7 @@ export function renderEditor(
           '<button class="btn sec" data-accion="cancelar-borrado" type="button">Cancelar</button>' +
           '<button class="btn pel" data-accion="borrar-confirmado" type="button">Borrar</button>' +
         '</div></div>'
-      : '<div class="ficha"><button class="btn pel" data-accion="borrar" type="button">Borrar receta</button></div>';
+      : `<div class="ficha"><button class="btn pel" data-accion="borrar" type="button">${ICO.tacho}Borrar receta</button></div>`;
 
   return encabezado({
     titulo: entrada ? 'Editando' : 'Nueva receta',

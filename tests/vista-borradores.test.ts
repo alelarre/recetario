@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderBorradores, renderBorrador, cuando } from '../src/ui/borradores.js';
+import { ICO } from '../src/ui/iconos.js';
 import type { Borrador } from '../src/tipos.js';
 
 const borradorFalso = (p: Partial<Borrador> = {}): Borrador =>
@@ -115,6 +116,11 @@ describe('Borrador', () => {
     // En el cuerpo: la fuente, descartar y crear, en ese orden.
     expect(html.indexOf('Ir a la fuente')).toBeLessThan(html.indexOf('data-accion="descartar"'));
     expect(html.indexOf('data-accion="descartar"')).toBeLessThan(html.indexOf('data-accion="crear-receta"'));
+  });
+
+  it('descartar lleva el tacho, como borrar una receta', () => {
+    const html = renderBorrador({ borrador: borradorFalso(), confirmando: false });
+    expect(html).toContain(`data-accion="descartar">${ICO.tacho}Descartar</button>`);
   });
 
   it('mientras confirma, las acciones no están: no se crea por error', () => {

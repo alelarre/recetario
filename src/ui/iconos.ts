@@ -15,6 +15,7 @@ export const ICO = {
     '<circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/>'),
   lapiz: svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>'),
   // No está en ningún mockup: se dibuja con el mismo trazo que los demás (§3.4).
+  // Lo llevan las dos acciones destructivas: Borrar receta y Descartar un borrador.
   tacho: svg('<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/>'),
   cerrar: svg('<path d="M18 6L6 18M6 6l12 12"/>'),
   /** El sol del modo cocina: la pantalla que no se apaga. */

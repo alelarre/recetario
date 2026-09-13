@@ -119,7 +119,7 @@ export function renderBorrador({ borrador, confirmando, error }: OpcionesBorrado
     (esUrl(borrador.fuente)
       ? `<a class="btn sec" href="${escapar(borrador.fuente)}" target="_blank" rel="noopener">Ir a la fuente</a>`
       : '') +
-    '<button class="btn pel" data-accion="descartar">Descartar</button>' +
+    `<button class="btn pel" data-accion="descartar">${ICO.tacho}Descartar</button>` +
     '<button class="btn prim" data-accion="crear-receta">Crear la receta</button>' +
   '</div>';
 

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderEditor, recetaDesdeFormulario, formularioDesde } from '../src/ui/editor.js';
+import { ICO } from '../src/ui/iconos.js';
 import { parse, serialize } from '../src/recipe.js';
 import { entradaFalsa } from './dobles.js';
 import type { Categoria } from '../src/store.js';
@@ -130,6 +131,11 @@ describe('renderEditor', () => {
     expect(dibujar()).not.toContain('data-accion="borrar"');
     expect(renderEditor({ entrada: entradaFalsa(), receta: cargada, categorias }))
       .toContain('data-accion="borrar"');
+  });
+
+  it('borrar receta lleva el tacho, como descartar un borrador', () => {
+    expect(renderEditor({ entrada: entradaFalsa(), receta: cargada, categorias }))
+      .toContain(`data-accion="borrar" type="button">${ICO.tacho}Borrar receta</button>`);
   });
 
   it('borrar pide confirmación y nombra la receta', () => {
