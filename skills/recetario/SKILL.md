@@ -1,11 +1,12 @@
 ---
 name: recetario
-description: Use when the user wants to save a recipe into their Google Drive recipe collection from any source — a website, a PDF, a photo of a cookbook page, a video, or pasted text — or wants to edit, complete, or fix a recipe already saved there.
+description: Use when the user wants to save a recipe into their Google Drive recipe collection from any source — a website, a PDF, a photo of a cookbook page, a video, or pasted text — or wants to edit, complete, or fix a recipe already saved there, or wants to keep a source as a draft (borrador) to turn into a recipe later.
 ---
 
 # Recetario
 
-Convierte una fuente en un archivo `.md` dentro de `Recetario/` en Google Drive.
+Convierte una fuente en un archivo `.md` dentro de `Recetario/` en Google Drive: una
+receta, o un borrador para convertir en receta más adelante.
 
 El `.md` es el dato real y vale por sí solo. El esquema de abajo es un contrato: lo
 que no está listado, no se agrega.
@@ -160,13 +161,58 @@ El nombre se decide **una sola vez, al crear el archivo**, y no vuelve a cambiar
 aunque cambie el título. La app identifica cada receta por el id del archivo en
 Drive, no por su nombre.
 
+## Capturar un borrador
+
+Un borrador es una fuente guardada para después: **título, fuente y nota**, sin
+transcribir la receta. Va cuando el usuario quiere no perder algo que encontró
+—"guardame este reel para después", "anotá este link"— y no pide la receta
+entera. Si pide la receta, es una receta, no un borrador.
+
+Un borrador no es una receta a medias. No lleva ingredientes, pasos, tags ni
+`completa`, y no se escribe con el esquema de receta.
+
+### Dónde y cómo
+
+- Va en la carpeta **`Recetario/_borradores/`**. Si no existe, creala dentro de
+  `Recetario/`. Nunca en una carpeta de categoría ni en la raíz.
+- El nombre del archivo sigue la misma regla que las recetas (ver «Nombre del
+  archivo»), sobre el título del borrador.
+- Subilo como `text/markdown`, igual que una receta.
+
+```markdown
+---
+titulo: Pollo al disco
+fuente: https://instagram.com/reel/abc
+capturado: 2026-09-13T10:30:00.000Z
+---
+
+La nota, texto libre, tal cual la dicta el usuario.
+```
+
+- **Exactamente tres claves:** `titulo` (obligatorio), `fuente` (la URL o de dónde
+  salió; vacía si no se sabe) y `capturado` (la fecha y hora de ahora, en ISO con
+  `Z`).
+- **La nota es el cuerpo entero**, sin encabezados impuestos. Si el usuario no dijo
+  nada para anotar, el archivo termina en el `---` de cierre.
+- Validá con el usuario igual que con una receta: mostrá el archivo completo, la
+  carpeta y el nombre, y esperá aprobación.
+
+### Después
+
+- Avisá que **el borrador no aparece en la app hasta reindexar**, igual que una
+  receta nueva (ver «El índice»).
+- Convertir un borrador en receta, editarlo o descartarlo se hace desde la app. Si
+  el usuario te pide la receta de un borrador, escribila como receta nueva y
+  decile que descarte el borrador desde la app.
+
 ## El índice
 
 La app no lee los `.md` para listar ni buscar: lee un índice, la planilla
-`Recetario/_indice`, con una fila por receta. **Este skill todavía no escribe esa
-fila.** La app tampoco descubre sola lo que se escribe en Drive por fuera de ella.
+`Recetario/_indice`, con una hoja para las recetas y otra para los borradores.
+**Este skill todavía no escribe esas filas.** La app tampoco descubre sola lo que
+se escribe en Drive por fuera de ella.
 
-La consecuencia, para cada receta que subas o edites:
+La consecuencia, para cada receta o borrador que subas o edites:
 
 - **Una receta nueva no aparece en la app** hasta que el usuario toque
   **Ajustes → Reindexar**.
@@ -177,8 +223,9 @@ La consecuencia, para cada receta que subas o edites:
 Decíselo al confirmar dónde quedó. Si cargás varias en la misma sesión, alcanza
 con reindexar una vez al final.
 
-No toques `_indice` ni `_borradores` a mano, ni para agregar la fila ni para
-«arreglar» nada: si el índice queda mal, la reparación es siempre reindexar.
+No toques la planilla `_indice` a mano, ni para agregar una fila ni para
+«arreglar» nada: si el índice queda mal, la reparación es siempre reindexar. En la
+carpeta `_borradores/` sí escribís, pero sólo archivos de borrador nuevos.
 
 ## Según de dónde venga la receta
 
@@ -288,6 +335,8 @@ Además:
 | Usar un tag reservado (`incompleto`, `terminada`, `favoritos`, `probar`…) | La app no los acepta, y dicen algo que ya dice `completa` o algo que todavía no existe. |
 | Escribir la cantidad antes del nombre (`4 milanesas`) | La receta no aparece al buscar por ese ingrediente. |
 | Renombrar el archivo porque cambió el título | El nombre se decide una vez. Cambiarlo no rompe la app, pero deja de ser predecible dónde está cada receta. |
+| Guardar como borrador lo que el usuario pidió como receta, o al revés | Un borrador no tiene ingredientes ni pasos, y una receta no es una fuente para después. |
+| Escribir un borrador con el esquema de receta, o dejarlo fuera de `_borradores/` | Fuera de `_borradores/`, la app lo indexa como una receta sin categorizar. Adentro, las claves de receta se pierden la primera vez que se edita desde la app. |
 | Escribir la fila en `_indice` a mano | Una fila mal armada rompe la búsqueda. Mientras el skill no la escriba con la misma función que la app, se reindexa. |
 | Estimar una temperatura o un tiempo que la fuente no dice | La receta falla la primera vez que alguien la cocina. |
 | Escribir tags sin tilde (`clasica`) | `clasica` y `clásica` quedan como dos tags distintos. |

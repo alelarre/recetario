@@ -221,7 +221,7 @@ el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
 
-**Estado al 2026-09-13:** resueltos P1 a P13, P16 y P17; §6.4 y §6.5
+**Estado al 2026-09-13:** resueltos P1 a P13, P16, P17, P21 y P22; §6.4 y §6.5
 cerradas. Quedan abiertos:
 
 - **P14** —que el agente escriba la fila del índice—: bloqueado. El conector de
@@ -232,7 +232,6 @@ cerradas. Quedan abiertos:
 - **P18** —una pantalla de arranque que muestre la comparación del índice—:
   P12 ya está hecho; primero propuestas.
 - **P20** —la versión de la app visible—.
-- **P22** —el skill del agente escribe borradores—.
 
 Y queda el contenido.
 
