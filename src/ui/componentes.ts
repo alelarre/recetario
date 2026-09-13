@@ -9,6 +9,7 @@
 import { escapar } from './markdown.js';
 import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
 import { ICO } from './iconos.js';
+import { textoVersion } from '../version.js';
 import type { Entrada } from '../tipos.js';
 
 /** §5.1 — el spinner del final de la lista y de las esperas. */
@@ -147,6 +148,8 @@ export function lateral({ activo, borradores, abierto }: OpcionesLateral): strin
       // sitio desde donde se alcanza sin pasar por un borrador.
       `<a href="#/nueva">${ICO.mas}Nueva receta</a>` +
       item('ajustes', '#/ajustes', ICO.ajustes, 'Ajustes') +
+      // Al pie y tenue: sirve para saber si el teléfono ya tomó el último deploy (P20).
+      `<div class="version">${escapar(textoVersion())}</div>` +
     '</nav>';
 }
 

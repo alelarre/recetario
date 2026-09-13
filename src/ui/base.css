@@ -258,6 +258,8 @@
          color: var(--fg); text-decoration: none; font-weight: 600; }
 .lat a:hover { background: var(--surface-alta); }
 .lat a.act { background: var(--acento-suave); color: var(--acento); }
+.lat .version { margin-top: auto; padding: 0 var(--e-2); font-size: var(--txt-micro);
+                color: var(--fg-3); font-variant-numeric: tabular-nums; }
 .lat a .cu { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px;
              border-radius: 10px; background: var(--surface-alta);
              border: 1px solid var(--borde-fuerte); color: var(--fg-2);
