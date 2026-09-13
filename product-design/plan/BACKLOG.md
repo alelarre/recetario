@@ -109,13 +109,13 @@ repetir el enunciado.
 
 ### 6.4 Estado del contenido y del entorno
 
-Esto no se arregla escribiendo código.
+Esto no se arregla escribiendo código. **Cerrada** `[2026-09-13]`: lo que quedaba es contenido o verificación a mano.
 
 | Qué | Situación |
 |---|---|
-| **El índice tiene cada receta dos veces** | 122 filas para 61 recetas, visto el 2026-09-12. La causa probable son dos reconstrucciones solapadas —dos pestañas de la app abiertas, o *Reindexar* tocado mientras el arranque ya estaba reconstruyendo—: `reconstruir()` lee las filas previas, las borra y appendea las nuevas, sin nada que impida que dos pasadas se pisen. **Se decidió no agregar lógica de concurrencia** (2026-09-12): la salida es reindexar una vez, con una sola pestaña abierta. |
-| **Las 61 recetas del Drive se leen como incompletas** | Ninguna trae la clave `completa` todavía, y sin ella la receta se lee como no terminada (C05.3.1). El usuario edita esos `.md` a mano. |
-| **Cuatro cosas que ningún test alcanza** | El Share Target real —necesita la PWA instalada en Android—, el foco del teclado en la captura, la posición del scroll al conmutar en modo cocina, y el gesto de atrás de Android en el editor con cambios (P7): los tests cubren la lógica con un historial falso, no el gesto. |
+| **El índice tiene cada receta dos veces** | **Cerrado** `[2026-09-13]`: no es trabajo de código; la salida es reindexar una vez, con una sola pestaña abierta. 122 filas para 61 recetas, visto el 2026-09-12. La causa probable son dos reconstrucciones solapadas —dos pestañas de la app abiertas, o *Reindexar* tocado mientras el arranque ya estaba reconstruyendo—: `reconstruir()` lee las filas previas, las borra y appendea las nuevas, sin nada que impida que dos pasadas se pisen. **Se decidió no agregar lógica de concurrencia** (2026-09-12): la salida es reindexar una vez, con una sola pestaña abierta. |
+| **Las 61 recetas del Drive se leen como incompletas** | **Cerrado** `[2026-09-13]`: es contenido, no código. Ninguna trae la clave `completa` todavía, y sin ella la receta se lee como no terminada (C05.3.1). El usuario edita esos `.md` a mano. |
+| **Cuatro cosas que ningún test alcanza** | **Cerrado** `[2026-09-13]` como pendiente de código: queda como verificación a mano en el teléfono, y `CLAUDE.md` la lista. El Share Target real —necesita la PWA instalada en Android—, el foco del teclado en la captura, la posición del scroll al conmutar en modo cocina, y el gesto de atrás de Android en el editor con cambios (P7): los tests cubren la lógica con un historial falso, no el gesto. |
 | **Las acciones del workflow de Pages usan Node 20** | **Resuelto** `[2026-09-13]`. `checkout` y `setup-node` a v7, `configure-pages` a v6, `upload-pages-artifact` y `deploy-pages` a v5: todas corren sobre Node 24. El build también pasa de Node 20 a 24. |
 
 ### 6.5 Deuda chica del código
