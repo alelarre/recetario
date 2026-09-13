@@ -716,8 +716,9 @@ ancho pegado arriba; éste declara un estado y vive dentro de una ficha.
 
 ### 6.17 Menú lateral
 
-`[agregado el 2026-09-12]` La navegación primaria de la app: Recetario,
-Borradores, Nueva receta y Ajustes. Reemplaza a los accesos sueltos en el
+`[agregado el 2026-09-12]` La navegación primaria de la app: Inicio —la pantalla
+del Recetario, que no repite el nombre de la marca—, Borradores, Nueva receta y
+Ajustes. Reemplaza a los accesos sueltos en el
 encabezado de cada pantalla.
 
 Panel de **260 px** de ancho, pegado a la izquierda y de alto completo.

@@ -55,6 +55,12 @@ describe('Recetario', () => {
     expect(html).toContain('<a href="#/nueva">');
   });
 
+  it('el destino del Recetario se llama Inicio: «Recetario» ya es la marca de arriba del menú', () => {
+    const html = dibujar();
+    expect(html).toContain('<div class="marca">Recetario</div>');
+    expect(html).toMatch(/<a class="act" href="#\/"><svg[^]*?<\/svg>Inicio<\/a>/);
+  });
+
   it('el contador de borradores se ve con el menú cerrado, sobre la hamburguesa', () => {
     const html = dibujar();
     expect(html).toContain('data-accion="abrir-menu"');

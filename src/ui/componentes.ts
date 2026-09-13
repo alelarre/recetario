@@ -139,7 +139,8 @@ export function lateral({ activo, borradores, abierto }: OpcionesLateral): strin
   return `<div class="velo-lat${abierto ? ' on' : ''}" data-accion="cerrar-menu"></div>` +
     `<nav class="lat${abierto ? ' abierto' : ''}">` +
       '<div class="marca">Recetario</div>' +
-      item('recetario', '#/', ICO.casa, 'Recetario') +
+      // «Inicio» y no «Recetario»: ese nombre ya es la marca de arriba del menú.
+      item('recetario', '#/', ICO.casa, 'Inicio') +
       item('borradores', '#/borradores', ICO.bandeja, 'Borradores', borradores) +
       // Nueva receta es una acción y no un lugar: nunca queda marcada, porque
       // el editor al que lleva no dibuja el menú. Está acá porque es el único

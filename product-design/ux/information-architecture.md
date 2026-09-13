@@ -433,7 +433,7 @@ con su nombre y su ícono:
 
 | | |
 |---|---|
-| **Recetario** | El punto de entrada |
+| **Inicio** | El punto de entrada: la pantalla del Recetario. Se llama *Inicio* porque «Recetario» ya es la marca de arriba del menú `[2026-09-12]` |
 | **Borradores** | La cola, con su contador |
 | **Nueva receta** | Una acción, no un lugar: nunca queda marcada |
 | **Ajustes** | Secundario, pero alcanzable desde cualquier parte |
