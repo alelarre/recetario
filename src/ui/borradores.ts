@@ -92,8 +92,10 @@ export function renderBorradores({ borradores, error, menuAbierto }: OpcionesBor
 export function renderBorrador({ borrador, confirmando, error }: OpcionesBorrador): string {
   const ficha = '<div class="ficha">' +
     `<div style="font-size:var(--txt-titulo);font-weight:600;line-height:1.25">${escapar(borrador.titulo)}</div>` +
+    // La fuente se dibuja como en la receta abierta (`.rec-fuente`): micro y
+    // tenue, un dato al margen (auditoría tipográfica T11).
     (borrador.fuente
-      ? '<div style="font-size:var(--txt-chico);color:var(--fg-2);margin-top:var(--e-2);word-break:break-all">' +
+      ? '<div style="font-size:var(--txt-micro);color:var(--fg-3);margin-top:var(--e-2);word-break:break-all">' +
         `<span class="emo">📖</span>fuente: ${escapar(fuenteVisible(borrador.fuente))}</div>`
       : '') +
     // Cuándo entró es un dato al margen: se despega y se va al borde, como el

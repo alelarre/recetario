@@ -106,7 +106,9 @@ export function renderEditor(
       'ingredientes y pasos.</p>' +
   '</div>';
 
-  const datos = '<div class="ficha">' +
+  // Las dos fichas llevan título: el formulario es largo, y al hacer scroll es lo
+  // que dice en qué parte se está (auditoría tipográfica T13).
+  const datos = '<div class="ficha"><h2>Datos</h2>' +
     campo('titulo', 'Título', receta.titulo) +
     `<label class="campo"><span>Categoría</span><select name="carpeta">${opcionesCarpeta}</select></label>` +
     // Los tags son pills que se sacan de a una, y un campo aparte para sumar.

@@ -55,7 +55,7 @@ Para lo demás, según lo que necesites:
 | Qué tiene que hacer cada cosa | `product-design/product/specs/` — 91 capacidades con criterios de aceptación y edge cases. Las **reglas transversales** están en `E05-Cimientos.md` §Reglas. |
 | Cómo se ve | `product-design/ux/design-system.md`, y `ux/mockups/index.html` para verlo funcionando |
 | Cómo habla la app | `product-design/ux/brand-identity.md` §3 y §4 |
-| Por qué algo es así | `product-design/plan/decision-log.md` — 98 decisiones con lo descartado |
+| Por qué algo es así | `product-design/plan/decision-log.md` — 99 decisiones con lo descartado |
 | Qué quedó afuera a propósito | `product-design/plan/BACKLOG.md` |
 
 ### Cómo quedó el código
@@ -182,7 +182,7 @@ El planificador está diseñado y queda afuera a propósito
 (`product-design/plan/BACKLOG.md`).
 
 **Los pendientes de la app usada de verdad están en `BACKLOG.md` §6**
-`[2026-09-12]`, con identificador estable —P1 a P15— para nombrarlos sin repetir
+`[2026-09-12]`, con identificador estable —P1 a P16— para nombrarlos sin repetir
 el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5). Tres de ellos se miran antes que el resto: **P2** —el

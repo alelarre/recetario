@@ -211,17 +211,24 @@ Base 16 px, razón 1.2, redondeada a valores enteros.
 
 | Token | Tamaño | Interlínea | Peso | Uso |
 |---|---|---|---|---|
-| `--txt-micro` | 12 px | 1.4 | 500 | El contador, la fecha del borrador. **Solo datos, nunca prosa.** |
+| `--txt-micro` | 12 px | 1.4 | 400 · 600 | En 400, la fecha del borrador y la fuente; en 600, los contadores. **Solo datos y referencia —la ayuda de formato—, nunca prosa.** `[del 2026-09-12: decía 500, que ningún texto usaba]` |
 | `--txt-chico` | 14 px | 1.45 | 400 | La línea de contexto de una tarjeta, las etiquetas de metadato. |
 | `--txt-base` | 16 px | 1.5 | 400 | La interfaz. El piso de la restricción §1. |
+| *base fuerte* | 16 px | 1.3 | 600 | `[del 2026-09-12]` El nombre de un ítem de lista —tarjeta, borrador—, los botones y el título del encabezado chico. No es un token aparte: es `--txt-base` en 600, y se nombra porque es el estilo más repetido de la app. |
 | `--txt-lectura` | 18 px | 1.6 | 400 | **El cuerpo de la receta abierta.** Descripción, pasos, notas, ingredientes. |
-| `--txt-titulo-s` | 20 px | 1.3 | 600 | El encabezado de una sección de la receta. |
-| `--txt-titulo` | 24 px | 1.25 | 600 | El título de la receta, el nombre de la categoría. |
+| *título de sección* | 18 px | 1.3 | 600 | `[del 2026-09-12: era --txt-titulo-s, 20 px]` El encabezado de una ficha —«Ingredientes», «Cuenta»— y el nombre de una variación. Es `--txt-lectura` en 600: se separa del cuerpo por peso, divisor y aire, no por tamaño. En 20 competía con el título de la receta, a una razón de 1.2 con el mismo peso. `--txt-titulo-s` queda definido en `tokens.css` y sin uso. |
+| `--txt-titulo` | 24 px | 1.25 | 600 | El título de las pantallas de primer nivel —Recetario, Borradores, Ajustes—, en el encabezado; y el nombre del objeto de una pantalla de detalle —la receta, el borrador—, en el cuerpo. |
 | `--txt-cocina` | 22 px | 1.65 | 400 | El cuerpo en modo cocina. |
-| `--txt-cocina-titulo` | 28 px | 1.3 | 600 | El encabezado en modo cocina. |
+| `--txt-cocina-titulo` | 28 px | 1.3 | 600 | El encabezado de sección en modo cocina (§3.3). **Todavía sin aplicar:** los grupos y los tramos en cocina van en 16, mayúsculas y `--fg-2`, hasta la prueba a 50 cm (`plan/BACKLOG.md` §4). |
 
 **Interlínea alta en lectura y en cocina** —1.6 y 1.65— porque en las dos hay que
 volver a encontrar el renglón después de mirar para otro lado.
+
+**Dónde va el título de una pantalla** `[del 2026-09-12]`. Las pantallas de primer
+nivel —las del menú lateral— lo llevan grande en el encabezado. Las de detalle llevan
+el encabezado chico, en *base fuerte*, y si tienen un objeto propio, su nombre grande en
+el cuerpo. **Categoría es de detalle y no tiene objeto propio**: su nombre queda en el
+encabezado chico, como el de Borrador y el del Editor.
 
 ### 3.3 La escala de cocina
 
@@ -231,7 +238,7 @@ distancia de lectura cambia.
 | Qué | Fuera de cocina | En cocina | Factor |
 |---|---|---|---|
 | Cuerpo | 18 px | **22 px** | ×1.22 |
-| Encabezado de sección | 20 px | **28 px** | ×1.4 |
+| Encabezado de sección | 18 px | **28 px** | ×1.56 · *sin aplicar* (§3.2) |
 | Área táctil | 48 px | **64 px** | ×1.33 |
 | Espaciado entre ítems | 12 px | **20 px** | ×1.67 |
 
@@ -499,7 +506,7 @@ está a centímetros.
 El contenedor de todo. `--surface`, borde 1 px `--borde`, `--r-ficha`, padding
 `--e-4`.
 
-Dentro, un encabezado opcional en `--txt-titulo-s` con un separador de 1 px
+Dentro, un encabezado opcional en *título de sección* (18 / 600, §3.2) con un separador de 1 px
 `--borde-fuerte` debajo.
 
 **Una ficha no lleva otra ficha adentro** salvo en el editor, donde el bloque

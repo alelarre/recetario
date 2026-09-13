@@ -16,6 +16,10 @@
    títulos van más cerrados: la del cuerpo los separaba de más en dos renglones. */
 body { line-height: 1.5; }
 .ficha > h2, .var h3 { line-height: 1.3; }
+/* El título de sección y el de una variación van en el tamaño del cuerpo de la
+   receta, y se separan de él por peso, divisor y aire: en 20 competían con el
+   título de la receta, a una razón de 1.2 (auditoría T9 y T10). */
+.ficha > h2, .var h3 { font-size: var(--txt-lectura); }
 .hoja h1, .arr h1, .lat .marca { line-height: 1.25; }
 
 /* ---- Recetario (mockup 03) ---- */
@@ -111,7 +115,7 @@ body { line-height: 1.5; }
             border-radius: var(--r-foto); display: block; margin-bottom: var(--e-4); }
 .var { padding: var(--e-3) 0; border-bottom: 1px solid var(--borde); }
 .var:last-child { border-bottom: 0; }
-.var h3 { font-size: var(--txt-base); font-weight: 600; margin: 0 0 var(--e-1); }
+.var h3 { font-weight: 600; margin: 0 0 var(--e-1); }
 .var .f { font-size: var(--txt-chico); color: var(--fg-3); font-style: italic; }
 .var p { margin: var(--e-1) 0 0; font-size: var(--txt-lectura); line-height: 1.6; }
 .tramo { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
@@ -191,6 +195,10 @@ body { line-height: 1.5; }
    del botón: adentro del conmutador el acento competiría con el estado elegido. */
 .conm-doble .inc { color: inherit; }
 .leyenda-completa { line-height: 1.5; }
+/* Las notas de una oración —las de Ajustes, la leyenda de Estado— son prosa, y
+   la prosa no baja del cuerpo mínimo de 16 px (§1). En 14 quedaban por debajo
+   del piso (auditoría tipográfica T12). */
+.aviso-mudo { font-size: var(--txt-base); }
 /* El estado cierra la ficha de datos: un divisor lo separa de los campos, y
    como último elemento no suma margen al padding de la ficha. */
 .campo.estado { margin-bottom: 0; padding-top: var(--e-4); border-top: 1px solid var(--borde); }

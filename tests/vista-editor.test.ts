@@ -137,6 +137,12 @@ describe('renderEditor', () => {
     expect(dibujar()).toContain('<div class="enc peg">');
   });
 
+  it('las dos fichas llevan título: Datos y Contenido', () => {
+    const html = dibujar();
+    expect(html.indexOf('<h2>Datos</h2>')).toBeLessThan(html.indexOf('name="titulo"'));
+    expect(html.indexOf('name="foto"')).toBeLessThan(html.indexOf('<h2>Contenido</h2>'));
+  });
+
   it('el estado cierra la ficha de datos, después de la foto', () => {
     const html = dibujar();
     const datos = html.slice(html.indexOf('<div class="ficha">'), html.indexOf('<h2>Contenido</h2>'));

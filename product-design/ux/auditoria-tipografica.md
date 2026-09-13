@@ -346,7 +346,7 @@ el 700 accidental. Eso está bien: **el problema no es la cantidad de pesos, es 
 Ordenada por lo que cuesta decidirla, no por gravedad.
 
 **Estado** `[2026-09-12]`: **T1 a T4 aplicadas** en `src/ui/base.css` y probadas en el
-teléfono. Las demás, pendientes.
+teléfono. **T5 a T8 escritas** en `design-system.md` §3.2. **T9 por la salida a) y T10 aplicadas.** **T11 aplicada al revés de lo propuesto:** la fuente se unifica con el estilo de la receta (12, `fg-3`), también en el borrador. **T12 por la salida a):** las notas de una oración suben a 16, el piso de §1. **T13 por la salida a):** la primera ficha del editor se titula «Datos». T14, fuera de la tipografía, pasó a `plan/BACKLOG.md` P16.
 Las que dicen *decisión* tienen más de una salida razonable; las demás son desvíos del
 propio sistema.
 
