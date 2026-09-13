@@ -12,7 +12,7 @@ Ajustes.
 **Después, usando la app** (2026-09-12 y 13): se trabajó casi todo el backlog de
 uso real (`BACKLOG.md` §6) —comportamiento, diseño visual, la auditoría
 tipográfica (`product-design/ux/auditoria-tipografica.md`) y la deuda chica—, y
-las lecturas de Drive dejaron de repetirse en cada toque. **542 tests**, typecheck
+las lecturas de Drive dejaron de repetirse en cada toque. **564 tests**, typecheck
 y build en verde, y cada cambio de UI se probó en el teléfono sobre Pages.
 
 **Hecho el 2026-09-13 — el índice local (P12):** al abrir, si `_indice` no cambió
@@ -221,7 +221,7 @@ el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
 
-**Estado al 2026-09-13:** resueltos P1 a P13, P16, P17 y P20 a P22; §6.4 y §6.5
+**Estado al 2026-09-13:** resueltos P1 a P13, P16 a P18 y P20 a P22; §6.4 y §6.5
 cerradas. Quedan abiertos:
 
 - **P14** —que el agente escriba la fila del índice—: bloqueado. El conector de
@@ -229,8 +229,6 @@ cerradas. Quedan abiertos:
   archivo (medido el 2026-09-12).
 - **P15** y **P19** —categorías y carpeta definidas por el usuario—: se superponen,
   decidir juntas.
-- **P18** —una pantalla de arranque que muestre la comparación del índice—:
-  P12 ya está hecho; primero propuestas.
 
 Y queda el contenido.
 

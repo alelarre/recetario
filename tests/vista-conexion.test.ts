@@ -32,3 +32,11 @@ describe('Conexión', () => {
     expect(html).not.toContain('class="spin"');
   });
 });
+
+describe('Conexión: la carga', () => {
+  it('Conectando… lleva el spinner', () => {
+    const html = renderConexion({ estado: 'conectando' });
+    expect(html).toContain('Conectando…');
+    expect(html).toContain('class="spin"');
+  });
+});

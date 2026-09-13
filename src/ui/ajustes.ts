@@ -5,7 +5,7 @@
 import { escapar } from './markdown.js';
 import { encabezado, SPINNER, lateral, botonMenu } from './componentes.js';
 import { cuando } from './borradores.js';
-import type { Progreso, IndiceDuplicado } from '../store.js';
+import type { Progreso, IndiceDuplicado, InformeArranque } from '../store.js';
 
 export interface OpcionesAjustes {
   cuenta: string;
@@ -17,12 +17,16 @@ export interface OpcionesAjustes {
   reindexando: Progreso | null;
   /** Cuántos borradores esperan, para el contador del menú. */
   borradores?: number;
+  /** Lo que verificó el arranque de esta sesión (P18). */
+  informe?: InformeArranque | null;
+  /** Cuántas recetas tiene el índice ahora, para la ficha «Al abrir». */
+  recetas?: number;
   /** El menú lateral está desplegado (sólo en pantalla angosta). */
   menuAbierto?: boolean;
 }
 
 export function renderAjustes(
-  { cuenta, ultimaReindexado, ignorados, indiceDuplicado, reindexando, borradores = 0, menuAbierto }: OpcionesAjustes
+  { cuenta, ultimaReindexado, ignorados, indiceDuplicado, reindexando, borradores = 0, menuAbierto, informe, recetas = 0 }: OpcionesAjustes
 ): string {
   const enCurso = !!reindexando;
 
@@ -67,6 +71,7 @@ export function renderAjustes(
     '<div class="conten">' +
       encabezado({ titulo: 'Ajustes', grande: true, izquierda: botonMenu(borradores) }) +
       '<div class="cuerpo">' + seccionCuenta + seccionIndice +
+        (informe ? fichaAlAbrir(informe, recetas, borradores) : '') +
         `<div class="ficha"><h2>Avisos</h2>${lista}</div>` +
       '</div>' +
     '</div>';
@@ -74,6 +79,48 @@ export function renderAjustes(
 
 const porcentaje = ({ leidas, total }: Progreso): number =>
   total > 0 ? Math.min(100, Math.round((leidas / total) * 100)) : 0;
+
+const COPIA: Record<InformeArranque['copia'], string> = {
+  'coincide': 'coincide con _indice',
+  'sin-copia': 'no había',
+  'otra-fecha': 'distinta',
+  'otra-planilla': 'de otra planilla',
+  'otro-esquema': 'de otra versión'
+};
+
+const REINDEXADO: Record<InformeArranque['reindexado'], string> = {
+  '': 'No hizo falta reindexar.',
+  'planilla-nueva': 'Se reindexó: la planilla es nueva.',
+  'esquema': 'Se reindexó: cambió la versión del esquema.',
+  'a-medias': 'Se reindexó: había uno a medias.'
+};
+
+const contar = (n: number, uno: string, varios: string): string => `${n} ${n === 1 ? uno : varios}`;
+
+/**
+ * Lo que pasó al abrir, con el tono de los avisos: el hecho y el número
+ * (brand-identity §3.2). Si reindexó, la copia dice sólo cómo estaba: lo que
+ * se hizo después no fue bajar la planilla sino rearmarla.
+ */
+function fichaAlAbrir(informe: InformeArranque, recetas: number, borradores: number): string {
+  const { momento, indiceModificado, copia, copiaModificada, reindexado, categorias } = informe;
+  const estadoCopia = copia === 'otra-fecha' && copiaModificada
+    ? `del ${fechaYHora(copiaModificada)}, ${COPIA[copia]}`
+    : COPIA[copia];
+  const consecuencia = reindexado ? ''
+    : copia === 'coincide' ? '; no se leyó Sheets' : '; se bajó la planilla';
+  const lineas = [
+    `Abrió el ${fechaYHora(momento)}.`,
+    indiceModificado ? `_indice: modificada el ${fechaYHora(indiceModificado)}.` : '_indice: se creó al abrir.',
+    `Copia local: ${estadoCopia}${consecuencia}.`,
+    `${contar(recetas, 'receta', 'recetas')} · ${contar(borradores, 'borrador', 'borradores')} · ` +
+      `${contar(categorias, 'categoría', 'categorías')}.`,
+    REINDEXADO[reindexado]
+  ];
+  return '<div class="ficha"><h2>Al abrir</h2>' +
+    lineas.map(l => `<p class="aviso-mudo" style="margin:0 0 var(--e-2)">${escapar(l)}</p>`).join('') +
+  '</div>';
+}
 
 /** «12/09 a las 14:30», en la hora del teléfono. */
 function fechaYHora(iso: string): string {

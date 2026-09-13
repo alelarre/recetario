@@ -161,6 +161,10 @@ const mensajeDe = (e: unknown): string => e instanceof Error ? e.message : Strin
 const categoriasDelArranque = () =>
   estadoArranque?.estado === 'listo' ? estadoArranque.categorias : [];
 
+/** Lo que verificó el arranque, para la ficha «Al abrir» de Ajustes (P18). */
+const informeArranque = () =>
+  estadoArranque?.estado === 'listo' ? estadoArranque.informe : null;
+
 /** El aviso de la planilla `_indice` repetida, para Ajustes. Sólo existe con el arranque en 'listo'. */
 const indiceDuplicado = () =>
   estadoArranque?.estado === 'listo' ? estadoArranque.indiceDuplicado : null;
@@ -440,7 +444,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       return pintar(renderAjustes({
         cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
         indiceDuplicado: indiceDuplicado(), reindexando,
-        borradores: store.borradores().length, menuAbierto
+        borradores: store.borradores().length, menuAbierto,
+        informe: informeArranque(), recetas: store.entradas().length
       }));
 
     case 'capturar': {

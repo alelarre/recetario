@@ -28,6 +28,25 @@ export interface IndiceDuplicado {
   modifiedTime: string;
 }
 
+/** Qué pasó con la copia local al abrir, comparada con `_indice`. */
+export type EstadoCopia = 'coincide' | 'sin-copia' | 'otra-fecha' | 'otra-planilla' | 'otro-esquema';
+
+/** Por qué el arranque pide reindexar, o vacío si no hace falta. */
+export type MotivoReindexado = '' | 'planilla-nueva' | 'esquema' | 'a-medias';
+
+/** Lo que el arranque verificó, para la ficha «Al abrir» de Ajustes (P18). */
+export interface InformeArranque {
+  /** Cuándo arrancó, en ISO. */
+  momento: string;
+  /** El modifiedTime de `_indice`; vacío si se creó al abrir. */
+  indiceModificado: string;
+  copia: EstadoCopia;
+  /** La fecha de la copia local; vacío si no había. */
+  copiaModificada: string;
+  reindexado: MotivoReindexado;
+  categorias: number;
+}
+
 /**
  * Cómo terminó el arranque. Es una unión discriminada por `estado` a propósito:
  * cada caso trae exactamente los datos que la vista necesita para dibujarlo, y
@@ -49,6 +68,7 @@ export type ResultadoArranque =
       reconstruir: boolean;
       /** Para el aviso de Ajustes; `null` si hay una sola planilla. */
       indiceDuplicado: IndiceDuplicado | null;
+      informe: InformeArranque;
       avisos: string[];
     };
 
@@ -118,13 +138,18 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
    * tiene la misma fecha que ella. Se compara metadata, nunca contenido.
    */
   function copiaQueSirve(): CopiaIndice | null {
-    if (!ctx.modifiedTime) return null;
+    const { copia, estado } = compararCopia();
+    return estado === 'coincide' ? copia : null;
+  }
+
+  /** La copia local y cómo está respecto de `_indice`, en el orden en que se descarta. */
+  function compararCopia(): { copia: CopiaIndice | null; estado: EstadoCopia } {
     const copia = indiceLocal.leer();
-    if (!copia) return null;
-    const sirve = copia.schemaVersion === SCHEMA_VERSION
-      && copia.indiceId === ctx.indiceId
-      && copia.modifiedTime === ctx.modifiedTime;
-    return sirve ? copia : null;
+    if (!copia) return { copia, estado: 'sin-copia' };
+    if (copia.schemaVersion !== SCHEMA_VERSION) return { copia, estado: 'otro-esquema' };
+    if (copia.indiceId !== ctx.indiceId) return { copia, estado: 'otra-planilla' };
+    if (!ctx.modifiedTime || copia.modifiedTime !== ctx.modifiedTime) return { copia, estado: 'otra-fecha' };
+    return { copia, estado: 'coincide' };
   }
 
   /** Cada entrada con su número de fila; una entrada sin fila no está en la planilla. */
@@ -217,6 +242,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
   }
 
   async function arrancar(): Promise<ResultadoArranque> {
+    const momento = new Date().toISOString();
     const avisos: string[] = [];
     const mensaje = (e: unknown): string => e instanceof Error ? e.message : String(e);
 
@@ -261,10 +287,14 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
 
     let reconstruir = false;
     let indiceDuplicado: IndiceDuplicado | null = null;
+    let reindexado: MotivoReindexado = '';
+    let comparacion: ReturnType<typeof compararCopia>;
     if (planillas.length === 0) {
       ctx.indiceId = await crearPlanilla();
       ctx.meta = { schemaVersion: String(SCHEMA_VERSION), ultima_reconstruccion: '' };
       reconstruir = true;
+      reindexado = 'planilla-nueva';
+      comparacion = compararCopia();
     } else {
       if (planillas.length > 1) avisos.push('indice-duplicado');
       const ordenadas = [...planillas].sort(
@@ -273,16 +303,22 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
       // La búsqueda ya trae la fecha: esa es toda la verificación, sin pedidos nuevos.
       ctx.modifiedTime = ordenadas[0]?.modifiedTime ?? '';
       if (planillas.length > 1) indiceDuplicado = { cantidad: planillas.length, modifiedTime: ctx.modifiedTime };
-      const copia = copiaQueSirve();
-      if (copia) usarCopia(copia);
+      comparacion = compararCopia();
+      if (comparacion.estado === 'coincide' && comparacion.copia) usarCopia(comparacion.copia);
       else ctx.meta = await leerMeta();
-      if (Number(ctx.meta['schemaVersion']) !== SCHEMA_VERSION) reconstruir = true;
-      if (ctx.meta['reconstruccion_en_curso']) reconstruir = true;
+      if (ctx.meta['reconstruccion_en_curso']) { reconstruir = true; reindexado = 'a-medias'; }
+      if (Number(ctx.meta['schemaVersion']) !== SCHEMA_VERSION) { reconstruir = true; reindexado = 'esquema'; }
     }
+
+    const informe: InformeArranque = {
+      momento, indiceModificado: ctx.modifiedTime,
+      copia: comparacion.estado, copiaModificada: comparacion.copia?.modifiedTime ?? '',
+      reindexado, categorias: ctx.categorias.length
+    };
 
     return {
       estado: 'listo', raizId: ctx.raizId, indiceId: ctx.indiceId,
-      categorias: ctx.categorias, reconstruir, indiceDuplicado, avisos
+      categorias: ctx.categorias, reconstruir, indiceDuplicado, informe, avisos
     };
   }
 

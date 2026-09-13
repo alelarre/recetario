@@ -22,7 +22,7 @@ export function renderConexion({ estado, progreso }: OpcionesConexion): string {
   const cuerpo = (() => {
     switch (estado) {
       case 'conectando':
-        return '<p>Conectando…</p>';
+        return '<p>Conectando…</p>' + SPINNER;
       case 'cancelado':
         // Tres palabras y el botón otra vez: nunca se queda en «Conectando…».
         return aviso({ texto: 'No se pudo conectar.' }) + BOTON;

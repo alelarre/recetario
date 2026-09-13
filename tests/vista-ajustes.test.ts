@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderAjustes } from '../src/ui/ajustes.js';
+import type { InformeArranque } from '../src/store.js';
 
 const base = { cuenta: 'a@b.c', ultimaReindexado: '', ignorados: [] as string[], reindexando: null };
 
@@ -63,5 +64,64 @@ describe('Ajustes', () => {
   it('mientras reindexa no se ofrece reindexar de nuevo', () => {
     expect(renderAjustes({ ...base, reindexando: { leidas: 1, total: 2 } }))
       .not.toContain('data-accion="reindexar"');
+  });
+});
+
+describe('Ajustes: la ficha «Al abrir» (P18)', () => {
+  const f = (d: number, h: number, m: number) => new Date(2026, 8, d, h, m).toISOString();
+  const informe: InformeArranque = {
+    momento: f(13, 14, 31), indiceModificado: f(13, 14, 30), copia: 'coincide',
+    copiaModificada: f(13, 14, 30), reindexado: '', categorias: 16
+  };
+  const conInforme = (cambios: Partial<InformeArranque> = {}) =>
+    renderAjustes({ ...base, informe: { ...informe, ...cambios }, recetas: 61, borradores: 3 });
+
+  it('dice cuándo abrió, la fecha de _indice, lo que hay y que no reindexó', () => {
+    const html = conInforme();
+    expect(html).toContain('<h2>Al abrir</h2>');
+    expect(html).toContain('Abrió el 13/09 a las 14:31.');
+    expect(html).toContain('_indice: modificada el 13/09 a las 14:30.');
+    expect(html).toContain('Copia local: coincide con _indice; no se leyó Sheets.');
+    expect(html).toContain('61 recetas · 3 borradores · 16 categorías.');
+    expect(html).toContain('No hizo falta reindexar.');
+  });
+
+  const lineasDeCopia: [Partial<InformeArranque>, string][] = [
+    [{ copia: 'otra-fecha', copiaModificada: f(12, 10, 2) }, 'Copia local: del 12/09 a las 10:02, distinta; se bajó la planilla.'],
+    [{ copia: 'sin-copia', copiaModificada: '' }, 'Copia local: no había; se bajó la planilla.'],
+    [{ copia: 'otra-planilla' }, 'Copia local: de otra planilla; se bajó la planilla.'],
+    [{ copia: 'otro-esquema' }, 'Copia local: de otra versión; se bajó la planilla.']
+  ];
+
+  it.each(lineasDeCopia)('la línea de la copia: %o', (cambios, texto) => {
+    expect(conInforme(cambios)).toContain(texto);
+  });
+
+  const motivos: [InformeArranque['reindexado'], string][] = [
+    ['planilla-nueva', 'Se reindexó: la planilla es nueva.'],
+    ['esquema', 'Se reindexó: cambió la versión del esquema.'],
+    ['a-medias', 'Se reindexó: había uno a medias.']
+  ];
+
+  it.each(motivos)('reindexado por %s', (reindexado, texto) => {
+    const html = conInforme({ reindexado, copia: 'otra-fecha', copiaModificada: f(12, 10, 2) });
+    expect(html).toContain(texto);
+    // Reindexar reemplaza a bajar la planilla: la copia dice sólo cómo estaba.
+    expect(html).toContain('Copia local: del 12/09 a las 10:02, distinta.');
+    expect(html).not.toContain('se bajó la planilla');
+  });
+
+  it('con la planilla nueva, _indice se creó al abrir', () => {
+    expect(conInforme({ reindexado: 'planilla-nueva', indiceModificado: '' }))
+      .toContain('_indice: se creó al abrir.');
+  });
+
+  it('una receta y un borrador van en singular', () => {
+    const html = renderAjustes({ ...base, informe, recetas: 1, borradores: 1 });
+    expect(html).toContain('1 receta · 1 borrador · 16 categorías.');
+  });
+
+  it('sin informe no hay ficha', () => {
+    expect(renderAjustes(base)).not.toContain('Al abrir');
   });
 });
