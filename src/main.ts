@@ -16,7 +16,6 @@ import { renderResultados } from './ui/resultados.js';
 import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
 import { renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado } from './ui/editor.js';
-import { crearBorradores } from './borradores.js';
 import { renderBorradores, renderBorrador } from './ui/borradores.js';
 import { renderCaptura } from './ui/captura.js';
 import { renderAjustes } from './ui/ajustes.js';
@@ -24,7 +23,6 @@ import { renderConexion } from './ui/conexion.js';
 import { aviso } from './ui/componentes.js';
 import { convertirBorrador } from './compartido.js';
 import type { RecetaCreada } from './compartido.js';
-import type { Borradores } from './borradores.js';
 import type { Ruta } from './ui/router.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { PosicionCocina } from './ui/cocina.js';
@@ -40,7 +38,6 @@ const drive = crearDrive(() => auth.token());
 const sheets = crearSheets(() => auth.token());
 
 let store: Store;
-let borradores: Borradores | null = null;
 /**
  * Lo que una conversión de borrador ya creó, por si hay que reintentarla
  * (C01.7.1). Vive acá y no en cada Guardar: si el borrado del borrador falla,
@@ -87,20 +84,18 @@ let editorAbierto: { hash: string; formulario: string } | null = null;
 let recetaLeida: { id: string; entrada: Entrada | null; receta: Receta } | null = null;
 
 /**
- * La planilla de borradores, leída una vez (P17). Mismo criterio que la
- * receta: la reutilizan los redibujados —abrir el menú, tocar Descartar— y el
- * ir y venir entre Borradores, un borrador y crear la receta desde él. Salir a
- * otra pantalla la descarta, y cualquier escritura también: agregar, editar,
- * descartar o convertir cambian la planilla.
+ * El borrador abierto, leído de su `.md` una vez. Mismo criterio que la
+ * receta: lo reutilizan los redibujados —confirmar el descarte, Editar, un
+ * error— y crear la receta desde él. Salir a otra pantalla lo descarta. La
+ * lista y el contador no leen nada: salen del índice en memoria.
  */
-let borradoresLeidos: Borrador[] | null = null;
-const PANTALLAS_DE_BORRADORES: readonly Ruta['vista'][] = ['borradores', 'borrador', 'nueva'];
+let borradorLeido: Borrador | null = null;
+const PANTALLAS_DE_BORRADOR: readonly Ruta['vista'][] = ['borrador', 'nueva'];
 
-/** Los borradores de la pantalla: de Sheets la primera vez, de memoria mientras no se salga. */
-async function borradoresDePantalla(): Promise<Borrador[]> {
-  if (!borradores) return [];
-  borradoresLeidos ??= await borradores.listar();
-  return borradoresLeidos;
+/** El borrador de la pantalla: de Drive la primera vez, de memoria mientras no se salga. */
+async function borradorDePantalla(id: string): Promise<Borrador> {
+  if (borradorLeido?.id !== id) borradorLeido = await store.borrador(id);
+  return borradorLeido;
 }
 
 /** Las pantallas de una misma receta, entre las que la copia leída se conserva. */
@@ -263,12 +258,10 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
     }) + '</div>');
   }
 
-  // Los borradores viven en su propia planilla, al lado del índice, y recién
-  // acá se conoce la carpeta raíz.
-  borradores = crearBorradores({ drive, sheets, raizId: estadoArranque.raizId });
-
-  await store.cargarIndice();
+  // Reindexar rearma el índice entero: cargarlo antes es leer de más, y una
+  // planilla de un esquema viejo puede no tener todas sus hojas.
   if (estadoArranque.reconstruir) await reconstruir();
+  else await store.cargarIndice();
 
   router.iniciar();
 }
@@ -372,7 +365,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   if (cambiaDePantalla) {
     editorAbierto = null;
     if (!PANTALLAS_DE_RECETA.includes(ruta.vista)) recetaLeida = null;
-    if (!PANTALLAS_DE_BORRADORES.includes(ruta.vista)) borradoresLeidos = null;
+    if (!PANTALLAS_DE_BORRADOR.includes(ruta.vista)) borradorLeido = null;
     tagsActivos = [];
     visibles = TRAMO;
     // Navegar cierra el menú: se abrió para elegir a dónde ir.
@@ -399,14 +392,10 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   }) + '</div>');
 
   switch (ruta.vista) {
-    case 'recetario': {
-      // El contador de borradores es una lectura más, y que falle no puede
-      // dejar sin Recetario: se dibuja sin número.
-      const pendientes = await borradoresDePantalla().catch(() => []);
+    case 'recetario':
       return pintar(renderRecetario({
-        categorias: store.categoriasConConteo(), borradores: pendientes.length, menuAbierto
+        categorias: store.categoriasConConteo(), borradores: store.borradores().length, menuAbierto
       }));
-    }
 
     case 'categoria': {
       const nombre = ruta.params['nombre'] ?? '';
@@ -451,7 +440,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       return pintar(renderAjustes({
         cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
         indiceDuplicado: indiceDuplicado(), reindexando,
-        borradores: (await borradoresDePantalla().catch(() => [])).length, menuAbierto
+        borradores: store.borradores().length, menuAbierto
       }));
 
     case 'capturar': {
@@ -465,20 +454,17 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     }
 
     case 'borradores':
-      try {
-        return pintar(renderBorradores({ borradores: await borradoresDePantalla(), menuAbierto }));
-      } catch (err) {
-        console.error(err);
-        return pintar(renderBorradores({ borradores: [], error: 'No se pudieron leer los borradores.' }));
-      }
+      return pintar(renderBorradores({ borradores: store.borradores(), menuAbierto }));
 
-    case 'borrador':
+    case 'borrador': {
+      const id = ruta.params['id'] ?? '';
+      // Un borrador que ya no está en el índice —convertido, descartado— no
+      // es un error: la lista es lo que corresponde mostrar.
+      if (!store.borradores().some(b => b.id_archivo === id)) {
+        return pintar(renderBorradores({ borradores: store.borradores(), menuAbierto }));
+      }
       try {
-        const lista = await borradoresDePantalla();
-        const borrador = lista.find(b => b.id === (ruta.params['id'] ?? ''));
-        // Un borrador que ya no está —convertido afuera, descartado— no es un
-        // error: la lista es lo que corresponde mostrar.
-        if (!borrador) return pintar(renderBorradores({ borradores: lista }));
+        const borrador = await borradorDePantalla(id);
         // Editar es el mismo formulario con el que se creó, precargado.
         if (editandoBorrador) {
           return pintar(renderCaptura({
@@ -490,8 +476,9 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         return pintar(renderBorrador({ borrador, confirmando: confirmandoDescarte }));
       } catch (err) {
         console.error(err);
-        return pintar(renderBorradores({ borradores: [], error: 'No se pudo leer el borrador.' }));
+        return enPantalla('No se pudo leer el borrador.');
       }
+    }
 
     case 'editar':
       try {
@@ -513,8 +500,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       const receta = parse('');
       const borradorId = ruta.params['borrador'] ?? '';
       if (borradorId) {
-        const borrador = (await borradoresDePantalla().catch(() => []))
-          .find(b => b.id === borradorId);
+        const borrador = await borradorDePantalla(borradorId).catch(() => null);
         if (borrador) {
           // La nota se lee como si fuera el `.md` de la receta: lo que esté
           // bajo `## Ingredientes`, `## Preparación`, `## Variaciones` o
@@ -697,17 +683,15 @@ app.addEventListener('click', async (e) => {
   if (accion === 'descartar-confirmado') {
     const id = vistaActual?.params['id'] ?? '';
     try {
-      borradoresLeidos = null;
-      await borradores?.descartar(id);
+      await store.descartarBorrador(id);
       // El borrador que se acaba de descartar no tiene que quedar en el
       // historial: volver ahí mostraría algo que ya no existe.
       irCerrando('#/borradores');
       return;
     } catch (err) {
       console.error(err);
-      const borrador = (await borradoresDePantalla()).find(b => b.id === id);
-      if (!borrador) return;
-      return pintar(renderBorrador({ borrador, confirmando: true, error: 'No se pudo descartar.' }));
+      if (!borradorLeido) return;
+      return pintar(renderBorrador({ borrador: borradorLeido, confirmando: true, error: 'No se pudo descartar.' }));
     }
   }
   if (accion === 'agregar-borrador') { location.hash = '#/capturar'; return; }
@@ -738,18 +722,19 @@ app.addEventListener('click', async (e) => {
     guardandoCaptura = true;
     errorCaptura = '';
     await render();
-    borradoresLeidos = null;
     try {
       if (editandoBorrador) {
-        await borradores?.editar(vistaActual?.params['id'] ?? '',
-          { titulo: tituloCaptura, fuente, nota: notaCaptura });
+        const id = vistaActual?.params['id'] ?? '';
+        await store.editarBorrador(id, { titulo: tituloCaptura, fuente, nota: notaCaptura });
+        // Lo guardado es lo que se muestra: volver al borrador no relee el `.md`.
+        if (borradorLeido?.id === id) borradorLeido = { ...borradorLeido, titulo: tituloCaptura, fuente, nota: notaCaptura };
         editandoBorrador = false;
         guardandoCaptura = false;
         tituloCaptura = '';
         notaCaptura = '';
         return render();
       }
-      await borradores?.agregar({ titulo: tituloCaptura, fuente, nota: notaCaptura });
+      await store.agregarBorrador({ titulo: tituloCaptura, fuente, nota: notaCaptura });
     } catch (err) {
       console.error(err);
       // Nada queda esperando: el texto sigue en pantalla y se reintenta a mano.
@@ -868,10 +853,9 @@ app.addEventListener('click', async (e) => {
     if (esNueva && !carpetaId) return conError('Elegí una categoría antes de guardar.');
 
     try {
-      if (esNueva && borradorId && borradores) {
+      if (esNueva && borradorId) {
         // Convertir es una sola operación: el .md, la fila y el borrador (C01.7.1).
-        borradoresLeidos = null;
-        await convertirBorrador({ store, borradores, convertidos }, { borradorId, receta: nueva, carpetaId });
+        await convertirBorrador({ store, convertidos }, { borradorId, receta: nueva, carpetaId });
       } else if (esNueva) {
         await store.crear(nueva, { carpetaId: carpetaId || undefined });
       } else {
@@ -918,7 +902,7 @@ app.addEventListener('click', async (e) => {
   }
 
   // Reintentar es volver a pedir: lo leído no se reutiliza.
-  if (accion === 'reintentar') { recetaLeida = null; return render(); }
+  if (accion === 'reintentar') { recetaLeida = null; borradorLeido = null; return render(); }
 });
 
 /**

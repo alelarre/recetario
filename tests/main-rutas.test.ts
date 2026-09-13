@@ -34,7 +34,7 @@ const estado = {
   formulario: {} as Record<string, string>,
   /** Cuántas veces se leyó un `.md` de Drive: cada una es un pedido de red. */
   lecturas: 0,
-  /** Cuántas veces se leyó la planilla de borradores entera. */
+  /** Cuántas veces se leyó el .md de un borrador. */
   lecturasBorradores: 0,
   /** Lo que el arranque dice de las planillas `_indice` repetidas. */
   indiceDuplicado: null as null | { cantidad: number; modifiedTime: string },
@@ -64,6 +64,21 @@ const storeFake = {
     estado.lecturas++;
     if (estado.falla) throw estado.falla === true ? new Error('red') : estado.falla;
     return { entrada: entradaFalsa({ id_archivo: id }), receta: parse(estado.md) };
+  },
+  borradores: () => estado.borradores.map(b => ({
+    id_archivo: b.id, nombre_archivo: `${b.id}.md`, titulo: b.titulo, capturado: b.capturado
+  })),
+  borrador: async (id: string) => {
+    estado.lecturasBorradores++;
+    const b = estado.borradores.find(x => x.id === id);
+    if (!b) throw new Error(`no hay borrador ${id}`);
+    return b;
+  },
+  agregarBorrador: async () => ({ id: 'b1', titulo: '', fuente: '', nota: '', capturado: '' }),
+  editarBorrador: async () => {},
+  descartarBorrador: async (id: string) => {
+    if (estado.fallasAlDescartar > 0) { estado.fallasAlDescartar--; throw new Error('red'); }
+    estado.descartados.push(id);
   }
 };
 vi.mock('../src/store.js', () => ({ crearStore: () => storeFake }));
@@ -71,17 +86,6 @@ vi.mock('../src/indice-local.js', () => ({
   leer: () => null,
   guardar: () => {},
   borrar: () => { estado.copiasBorradas++; }
-}));
-vi.mock('../src/borradores.js', () => ({
-  crearBorradores: () => ({
-    listar: async () => { estado.lecturasBorradores++; return estado.borradores; },
-    agregar: async () => ({ id: 'b1', titulo: '', fuente: '', capturado: '' }),
-    editar: async () => {},
-    descartar: async (id: string) => {
-      if (estado.fallasAlDescartar > 0) { estado.fallasAlDescartar--; throw new Error('red'); }
-      estado.descartados.push(id);
-    }
-  })
 }));
 
 const esperar = async (vueltas = 5) => {
@@ -412,21 +416,24 @@ describe('main.ts: las rutas', () => {
     });
   });
 
-  describe('la planilla de borradores se lee al entrar, no en cada redibujado (P17)', () => {
+  describe('los borradores salen del índice; el .md se lee al abrir uno', () => {
     const B1 = { id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' };
 
-    it('abrir y cerrar el menú del Recetario no vuelve a leer', async () => {
-      const { abrir, tocar } = await montar();
+    it('el contador y la lista no leen nada', async () => {
+      estado.borradores = [B1];
+      const { abrir, tocar, app } = await montar();
       await abrir('#/');
       await tocar('abrir-menu');
-      await tocar('cerrar-menu');
-      expect(estado.lecturasBorradores).toBe(1);
+      await abrir('#/borradores');
+      await abrir('#/ajustes');
+      expect(estado.lecturasBorradores).toBe(0);
+      await abrir('#/borradores');
+      expect(app.innerHTML).toContain('Focaccia');
     });
 
-    it('entre Borradores, un borrador y crear la receta se reutiliza la copia', async () => {
+    it('entre un borrador, sus redibujados y crear la receta, el .md se lee una vez', async () => {
       estado.borradores = [B1];
       const { abrir, tocar } = await montar();
-      await abrir('#/borradores');
       await abrir('#/borradores/b1');
       await tocar('descartar');
       await tocar('cancelar-descarte');
@@ -436,22 +443,30 @@ describe('main.ts: las rutas', () => {
       expect(estado.lecturasBorradores).toBe(1);
     });
 
-    it('salir a otra pantalla y volver sí vuelve a leer', async () => {
+    it('salir a la lista y volver a abrirlo sí lo relee', async () => {
+      estado.borradores = [B1];
       const { abrir } = await montar();
-      await abrir('#/');
-      await abrir('#/ajustes');
-      await abrir('#/');
-      expect(estado.lecturasBorradores).toBe(3);
+      await abrir('#/borradores/b1');
+      await abrir('#/borradores');
+      await abrir('#/borradores/b1');
+      expect(estado.lecturasBorradores).toBe(2);
     });
 
-    it('si descartar falla, la lista se vuelve a leer: puede haber cambiado', async () => {
+    it('si descartar falla, avisa y el borrador sigue en pantalla', async () => {
       estado.borradores = [B1];
       estado.fallasAlDescartar = 1;
       const { abrir, tocar, app } = await montar();
       await abrir('#/borradores/b1');
       await tocar('descartar-confirmado');
-      expect(estado.lecturasBorradores).toBe(2);
       expect(app.innerHTML).toContain('No se pudo descartar.');
+      expect(app.innerHTML).toContain('Focaccia');
+    });
+
+    it('un borrador que no está en el índice muestra la lista', async () => {
+      const { abrir, app } = await montar();
+      await abrir('#/borradores/fantasma');
+      expect(app.innerHTML).toContain('No hay nada esperando.');
+      expect(estado.lecturasBorradores).toBe(0);
     });
   });
 

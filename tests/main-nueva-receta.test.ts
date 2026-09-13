@@ -30,7 +30,8 @@ const storeFake = {
   categoriasConConteo: () => [],
   receta: async () => ({ entrada: null, receta: null }),
   buscar: () => [],
-  tagsDe: () => []
+  tagsDe: () => [],
+  borradores: () => []
 };
 vi.mock('../src/store.js', () => ({ crearStore: () => storeFake }));
 

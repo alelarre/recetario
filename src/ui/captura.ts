@@ -3,7 +3,7 @@
  *
  * El flujo más crítico del producto y la pantalla más simple: la fuente ya
  * viene cargada y no se edita, el único campo es el título, y guardar escribe
- * una fila de la planilla de Borradores y cierra. Sin categoría, sin tags y
+ * el `.md` del borrador y cierra. Sin categoría, sin tags y
  * sin notas: cada campo de más es una razón para no capturar (C01.2.1).
  *
  * Sin fuente es «Agregar a mano» desde Borradores: ahí la fuente sí se

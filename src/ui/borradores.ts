@@ -11,10 +11,10 @@
 import { escapar } from './markdown.js';
 import { encabezado, aviso, vacio, lateral, botonMenu } from './componentes.js';
 import { ICO } from './iconos.js';
-import type { Borrador } from '../tipos.js';
+import type { Borrador, EntradaBorrador } from '../tipos.js';
 
 export interface OpcionesBorradores {
-  borradores: Borrador[];
+  borradores: EntradaBorrador[];
   error?: string;
   /** El menú lateral está desplegado (sólo en pantalla angosta). */
   menuAbierto?: boolean;
@@ -58,7 +58,7 @@ export function renderBorradores({ borradores, error, menuAbierto }: OpcionesBor
   // Sólo el título y cuándo entró: la fuente y la nota están adentro, y en la
   // fila competían con el título.
   const lista = borradores.map(b =>
-    `<a class="bor" href="#/borradores/${encodeURIComponent(b.id)}">` +
+    `<a class="bor" href="#/borradores/${encodeURIComponent(b.id_archivo)}">` +
       `<span class="txt"><span class="n">${escapar(b.titulo)}</span></span>` +
       `<span class="d">${escapar(cuando(b.capturado))}</span>` +
     '</a>').join('');
@@ -107,7 +107,7 @@ export function renderBorrador({ borrador, confirmando, error }: OpcionesBorrado
       : '') +
   '</div>';
 
-  // Es destructivo y no hay papelera: la confirmación nombra el borrador.
+  // Es destructivo —el .md va a la papelera de Drive—: la confirmación nombra el borrador.
   const confirmacion = '<div class="ficha" style="border-color:var(--error)">' +
     `<p class="lee" style="margin:0 0 var(--e-4)">¿Descartar <b>${escapar(borrador.titulo)}</b>?</p>` +
     '<div class="acciones">' +

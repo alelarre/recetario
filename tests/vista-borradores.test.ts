@@ -1,15 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { renderBorradores, renderBorrador, cuando } from '../src/ui/borradores.js';
 import { ICO } from '../src/ui/iconos.js';
-import type { Borrador } from '../src/tipos.js';
+import type { Borrador, EntradaBorrador } from '../src/tipos.js';
 
 const borradorFalso = (p: Partial<Borrador> = {}): Borrador =>
   ({ id: 'b1', titulo: 'A', fuente: '', nota: '', capturado: '', ...p });
 
+const entradaFalsa = (p: Partial<EntradaBorrador> = {}): EntradaBorrador =>
+  ({ id_archivo: 'b1', nombre_archivo: 'a.md', titulo: 'A', capturado: '', ...p });
+
 describe('Borradores', () => {
   it('cada entrada muestra el título y cuándo se capturó', () => {
     const html = renderBorradores({
-      borradores: [borradorFalso({ titulo: 'Focaccia', fuente: 'https://x/1', capturado: '2026-09-01T10:00:00Z' })]
+      borradores: [entradaFalsa({ titulo: 'Focaccia', capturado: '2026-09-01T10:00:00Z' })]
     });
     expect(html).toContain('Focaccia');
     expect(html).toContain('1 de septiembre');
@@ -22,14 +25,10 @@ describe('Borradores', () => {
     expect(html).not.toContain('<svg class="ilustracion"');
   });
 
-  it('la fila muestra sólo el título, y no parece un hipervínculo', () => {
-    const html = renderBorradores({
-      borradores: [borradorFalso({ titulo: 'Focaccia', fuente: 'https://x/1', nota: 'una nota' })]
-    });
+  it('la fila muestra el título y la fecha, y nada más', () => {
+    const html = renderBorradores({ borradores: [entradaFalsa({ titulo: 'Focaccia', nombre_archivo: 'focaccia.md' })] });
     expect(html).toContain('Focaccia');
-    // La fuente y la nota están adentro del borrador, no en la fila.
-    expect(html).not.toContain('x/1');
-    expect(html).not.toContain('una nota');
+    expect(html).not.toContain('focaccia.md');
   });
 
   it('el control de alta dice Nuevo', () => {
@@ -37,7 +36,7 @@ describe('Borradores', () => {
   });
 
   it('cada borrador lleva al suyo', () => {
-    expect(renderBorradores({ borradores: [borradorFalso({ id: 'b7' })] }))
+    expect(renderBorradores({ borradores: [entradaFalsa({ id_archivo: 'b7' })] }))
       .toContain('href="#/borradores/b7"');
   });
 });

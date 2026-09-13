@@ -5,11 +5,10 @@
  * borrador en receta y leer un `.md`— y son el único camino para escribir: dos
  * implementaciones del mismo formato divergen, una sola no.
  *
- * Son funciones finas sobre el store y sobre `borradores`. La única con lógica
- * propia es `convertirBorrador`, que es una operación y no tres.
+ * Son funciones finas sobre el store. La única con lógica propia es
+ * `convertirBorrador`, que es una operación y no tres.
  */
 import type { Store } from './store.js';
-import type { Borradores } from './borradores.js';
 import type { Receta, Ubicacion } from './tipos.js';
 
 /** Lo que una receta recién creada devuelve: su identidad en Drive (R5). */
@@ -18,12 +17,10 @@ export interface RecetaCreada {
   nombre_archivo: string;
 }
 
-export type StoreDeCompartido = Pick<Store, 'escribirFila' | 'crear' | 'guardar' | 'receta'>;
-export type BorradoresDeCompartido = Pick<Borradores, 'descartar'>;
+export type StoreDeCompartido = Pick<Store, 'escribirFila' | 'crear' | 'guardar' | 'receta' | 'descartarBorrador'>;
 
 export interface DependenciasCompartido {
   store: StoreDeCompartido;
-  borradores: BorradoresDeCompartido;
   /**
    * Lo que una conversión ya creó, por si hay que reintentarla: borrador → la
    * receta. Sin esto el reintento crearía un segundo `.md`, y R2 pide que deje
@@ -65,8 +62,9 @@ export async function convertirBorrador(
     : await deps.store.crear(receta, { carpetaId });
   convertidos.set(borradorId, creada);
 
-  // El borrador. Que ya no esté no es un error (edge case de F01.7).
-  await deps.borradores.descartar(borradorId);
+  // El borrador: su `.md` a la papelera y su fila afuera. Que ya no esté no es
+  // un error (edge case de F01.7).
+  await deps.store.descartarBorrador(borradorId);
 
   convertidos.delete(borradorId);
   return creada;
