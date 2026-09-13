@@ -33,7 +33,9 @@ const estado = {
   /** Lo que el editor tiene escrito cuando se toca Guardar. */
   formulario: {} as Record<string, string>,
   /** Cuántas veces se leyó un `.md` de Drive: cada una es un pedido de red. */
-  lecturas: 0
+  lecturas: 0,
+  /** Cuántas veces se leyó la planilla de borradores entera. */
+  lecturasBorradores: 0
 };
 
 const storeFake = {
@@ -63,7 +65,7 @@ const storeFake = {
 vi.mock('../src/store.js', () => ({ crearStore: () => storeFake }));
 vi.mock('../src/borradores.js', () => ({
   crearBorradores: () => ({
-    listar: async () => estado.borradores,
+    listar: async () => { estado.lecturasBorradores++; return estado.borradores; },
     agregar: async () => ({ id: 'b1', titulo: '', fuente: '', capturado: '' }),
     editar: async () => {},
     descartar: async (id: string) => {
@@ -88,6 +90,7 @@ describe('main.ts: las rutas', () => {
     estado.formulario = {};
     estado.md = '---\ntitulo: Milanesas\n---\n';
     estado.lecturas = 0;
+    estado.lecturasBorradores = 0;
     vi.unstubAllGlobals();
     delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
@@ -382,6 +385,49 @@ describe('main.ts: las rutas', () => {
       await tocar('reintentar');
       expect(estado.lecturas).toBe(2);
       expect(app.innerHTML).toContain('Milanesas');
+    });
+  });
+
+  describe('la planilla de borradores se lee al entrar, no en cada redibujado (P17)', () => {
+    const B1 = { id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' };
+
+    it('abrir y cerrar el menú del Recetario no vuelve a leer', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/');
+      await tocar('abrir-menu');
+      await tocar('cerrar-menu');
+      expect(estado.lecturasBorradores).toBe(1);
+    });
+
+    it('entre Borradores, un borrador y crear la receta se reutiliza la copia', async () => {
+      estado.borradores = [B1];
+      const { abrir, tocar } = await montar();
+      await abrir('#/borradores');
+      await abrir('#/borradores/b1');
+      await tocar('descartar');
+      await tocar('cancelar-descarte');
+      await tocar('editar-borrador');
+      await tocar('volver');
+      await abrir('#/nueva?borrador=b1');
+      expect(estado.lecturasBorradores).toBe(1);
+    });
+
+    it('salir a otra pantalla y volver sí vuelve a leer', async () => {
+      const { abrir } = await montar();
+      await abrir('#/');
+      await abrir('#/ajustes');
+      await abrir('#/');
+      expect(estado.lecturasBorradores).toBe(3);
+    });
+
+    it('si descartar falla, la lista se vuelve a leer: puede haber cambiado', async () => {
+      estado.borradores = [B1];
+      estado.fallasAlDescartar = 1;
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/borradores/b1');
+      await tocar('descartar-confirmado');
+      expect(estado.lecturasBorradores).toBe(2);
+      expect(app.innerHTML).toContain('No se pudo descartar.');
     });
   });
 

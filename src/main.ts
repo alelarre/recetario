@@ -28,7 +28,7 @@ import type { Ruta } from './ui/router.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { PosicionCocina } from './ui/cocina.js';
 import type { ResultadoArranque, Progreso } from './store.js';
-import type { Entrada, Receta } from './tipos.js';
+import type { Borrador, Entrada, Receta } from './tipos.js';
 
 type Store = ReturnType<typeof crearStore>;
 
@@ -84,6 +84,23 @@ let editorAbierto: { hash: string; formulario: string } | null = null;
  * volver más tarde vuelve a leer, porque el archivo es la verdad (C05.8.1).
  */
 let recetaLeida: { id: string; entrada: Entrada | null; receta: Receta } | null = null;
+
+/**
+ * La planilla de borradores, leída una vez (P17). Mismo criterio que la
+ * receta: la reutilizan los redibujados —abrir el menú, tocar Descartar— y el
+ * ir y venir entre Borradores, un borrador y crear la receta desde él. Salir a
+ * otra pantalla la descarta, y cualquier escritura también: agregar, editar,
+ * descartar o convertir cambian la planilla.
+ */
+let borradoresLeidos: Borrador[] | null = null;
+const PANTALLAS_DE_BORRADORES: readonly Ruta['vista'][] = ['borradores', 'borrador', 'nueva'];
+
+/** Los borradores de la pantalla: de Sheets la primera vez, de memoria mientras no se salga. */
+async function borradoresDePantalla(): Promise<Borrador[]> {
+  if (!borradores) return [];
+  borradoresLeidos ??= await borradores.listar();
+  return borradoresLeidos;
+}
 
 /** Las pantallas de una misma receta, entre las que la copia leída se conserva. */
 const PANTALLAS_DE_RECETA: readonly Ruta['vista'][] = ['receta', 'cocinar', 'editar'];
@@ -349,6 +366,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   if (cambiaDePantalla) {
     editorAbierto = null;
     if (!PANTALLAS_DE_RECETA.includes(ruta.vista)) recetaLeida = null;
+    if (!PANTALLAS_DE_BORRADORES.includes(ruta.vista)) borradoresLeidos = null;
     tagsActivos = [];
     visibles = TRAMO;
     // Navegar cierra el menú: se abrió para elegir a dónde ir.
@@ -378,7 +396,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     case 'recetario': {
       // El contador de borradores es una lectura más, y que falle no puede
       // dejar sin Recetario: se dibuja sin número.
-      const pendientes = await borradores?.listar().catch(() => []) ?? [];
+      const pendientes = await borradoresDePantalla().catch(() => []);
       return pintar(renderRecetario({
         categorias: store.categoriasConConteo(), borradores: pendientes.length, menuAbierto
       }));
@@ -426,7 +444,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       if (!cuenta) cuenta = await drive.cuenta().catch(() => '');
       return pintar(renderAjustes({
         cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados, reindexando,
-        borradores: (await borradores?.listar().catch(() => []) ?? []).length, menuAbierto
+        borradores: (await borradoresDePantalla().catch(() => [])).length, menuAbierto
       }));
 
     case 'capturar': {
@@ -441,7 +459,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
 
     case 'borradores':
       try {
-        return pintar(renderBorradores({ borradores: await borradores?.listar() ?? [], menuAbierto }));
+        return pintar(renderBorradores({ borradores: await borradoresDePantalla(), menuAbierto }));
       } catch (err) {
         console.error(err);
         return pintar(renderBorradores({ borradores: [], error: 'No se pudieron leer los borradores.' }));
@@ -449,7 +467,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
 
     case 'borrador':
       try {
-        const lista = await borradores?.listar() ?? [];
+        const lista = await borradoresDePantalla();
         const borrador = lista.find(b => b.id === (ruta.params['id'] ?? ''));
         // Un borrador que ya no está —convertido afuera, descartado— no es un
         // error: la lista es lo que corresponde mostrar.
@@ -488,7 +506,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       const receta = parse('');
       const borradorId = ruta.params['borrador'] ?? '';
       if (borradorId) {
-        const borrador = (await borradores?.listar().catch(() => []) ?? [])
+        const borrador = (await borradoresDePantalla().catch(() => []))
           .find(b => b.id === borradorId);
         if (borrador) {
           // La nota se lee como si fuera el `.md` de la receta: lo que esté
@@ -669,6 +687,7 @@ app.addEventListener('click', async (e) => {
   if (accion === 'descartar-confirmado') {
     const id = vistaActual?.params['id'] ?? '';
     try {
+      borradoresLeidos = null;
       await borradores?.descartar(id);
       // El borrador que se acaba de descartar no tiene que quedar en el
       // historial: volver ahí mostraría algo que ya no existe.
@@ -676,7 +695,7 @@ app.addEventListener('click', async (e) => {
       return;
     } catch (err) {
       console.error(err);
-      const borrador = (await borradores?.listar() ?? []).find(b => b.id === id);
+      const borrador = (await borradoresDePantalla()).find(b => b.id === id);
       if (!borrador) return;
       return pintar(renderBorrador({ borrador, confirmando: true, error: 'No se pudo descartar.' }));
     }
@@ -709,6 +728,7 @@ app.addEventListener('click', async (e) => {
     guardandoCaptura = true;
     errorCaptura = '';
     await render();
+    borradoresLeidos = null;
     try {
       if (editandoBorrador) {
         await borradores?.editar(vistaActual?.params['id'] ?? '',
@@ -840,6 +860,7 @@ app.addEventListener('click', async (e) => {
     try {
       if (esNueva && borradorId && borradores) {
         // Convertir es una sola operación: el .md, la fila y el borrador (C01.7.1).
+        borradoresLeidos = null;
         await convertirBorrador({ store, borradores, convertidos }, { borradorId, receta: nueva, carpetaId });
       } else if (esNueva) {
         await store.crear(nueva, { carpetaId: carpetaId || undefined });
