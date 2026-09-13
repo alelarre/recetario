@@ -130,17 +130,26 @@ export interface Entrada {
 }
 
 /**
- * Una fila de la planilla de Borradores. No entra al índice: es una cola de
- * trabajo, no un archivo consolidado (IA §2.1).
+ * Un borrador: un `.md` en `Recetario/_borradores/`. Es su propia entidad —título,
+ * fuente y nota—, no una receta incompleta.
  */
 export interface Borrador {
+  /** El id del archivo en Drive. */
   id: string;
   titulo: string;
-  /** Texto libre: una URL o "libro de pescados, pág. 84". No se edita (C01.6.1). */
+  /** Texto libre: una URL o "libro de pescados, pág. 84". */
   fuente: string;
   /** Lo que haya que recordar del borrador. Texto libre y opcional. */
   nota: string;
   /** ISO. El orden de la lista es por acá, lo más viejo primero. */
+  capturado: string;
+}
+
+/** Una fila de la hoja `borradores` del índice: lo que alcanza para la lista y el contador. */
+export interface EntradaBorrador {
+  id_archivo: string;
+  nombre_archivo: string;
+  titulo: string;
   capturado: string;
 }
 
