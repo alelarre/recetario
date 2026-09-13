@@ -38,6 +38,21 @@ export function clienteGisFalso(token = 'tok-123'): ClienteToken {
   return c;
 }
 
+/**
+ * `localStorage` en memoria. Node no lo tiene, y los módulos que lo usan lo
+ * envuelven en `try/catch`: sin este doble, los tests sólo verían el camino
+ * de la falla.
+ */
+export function localStorageFalso() {
+  const datos = new Map<string, string>();
+  return {
+    getItem: (k: string) => (datos.has(k) ? datos.get(k)! : null),
+    setItem: (k: string, v: unknown) => { datos.set(k, String(v)); },
+    removeItem: (k: string) => { datos.delete(k); },
+    _datos: datos
+  };
+}
+
 /** `window` con Identity Services ya cargado y respondiendo. */
 export function windowConGis(): Window & typeof globalThis {
   return comoGlobal<Window & typeof globalThis>({

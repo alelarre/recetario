@@ -6,17 +6,7 @@
 // recarga. Estas pruebas verifican que ahora sobrevive en localStorage.
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { crearAuth } from '../src/auth.js';
-import { comoGlobal, windowConGis } from './dom-falso.js';
-
-function localStorageFalso() {
-  const datos = new Map<string, string>();
-  return {
-    getItem: (k: string) => (datos.has(k) ? datos.get(k)! : null),
-    setItem: (k: string, v: unknown) => { datos.set(k, String(v)); },
-    removeItem: (k: string) => { datos.delete(k); },
-    _datos: datos
-  };
-}
+import { comoGlobal, windowConGis, localStorageFalso } from './dom-falso.js';
 
 describe('auth.js: persistencia del token entre aperturas', () => {
   beforeEach(() => {
