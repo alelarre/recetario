@@ -103,7 +103,7 @@ repetir el enunciado.
 
 | # | Qué | Qué hay que hacer |
 |---|---|---|
-| **P11** | **La jerarquía tipográfica, pantalla por pantalla y entre pantallas** | **Un informe antes de tocar nada.** Primero un research de fuentes externas para fijar los criterios —el usuario propuso [uxplanet: *What is typographic hierarchy*](https://uxplanet.org/what-is-typographic-hierarchy-definition-examples-26f6225f6bad) como punto de partida—, después la auditoría de las once pantallas contra la escala de `design-system.md` §3.2 y §3.3, y recién después la propuesta de cambios. **Informe escrito** `[2026-09-12]`: `ux/auditoria-tipografica.md`, con los criterios de las fuentes, las once pantallas medidas en el navegador y catorce propuestas (T1 a T14). Falta decidir cuáles se aplican. |
+| **P11** | **La jerarquía tipográfica, pantalla por pantalla y entre pantallas** | **Un informe antes de tocar nada.** Primero un research de fuentes externas para fijar los criterios —el usuario propuso [uxplanet: *What is typographic hierarchy*](https://uxplanet.org/what-is-typographic-hierarchy-definition-examples-26f6225f6bad) como punto de partida—, después la auditoría de las once pantallas contra la escala de `design-system.md` §3.2 y §3.3, y recién después la propuesta de cambios. **Informe escrito** `[2026-09-12]`: `ux/auditoria-tipografica.md`, con los criterios de las fuentes, las once pantallas medidas en el navegador y catorce propuestas (T1 a T14). T1 a T4 —los desvíos del propio sistema— ya están aplicadas; falta decidir el resto. |
 
 ### 6.4 Estado del contenido y del entorno
 

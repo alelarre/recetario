@@ -11,6 +11,13 @@
    después de `.grilla`, o la pisa la regla de dos columnas. */
 .cuerpo { max-width: 680px; margin: 0 auto; }
 
+/* §3.2 — La interlínea de la escala. Sin esto todo lo que no la declara se
+   dibujaba con la `normal` del navegador, ≈1.2 (auditoría tipográfica T2). Los
+   títulos van más cerrados: la del cuerpo los separaba de más en dos renglones. */
+body { line-height: 1.5; }
+.ficha > h2, .var h3 { line-height: 1.3; }
+.hoja h1, .arr h1, .lat .marca { line-height: 1.25; }
+
 /* ---- Recetario (mockup 03) ---- */
 /* El título de la app se centra en la barra, no en el hueco que dejan los
    íconos: con dos a la derecha y ninguno a la izquierda, `text-align: center`
@@ -95,6 +102,9 @@
 /* La descripción cierra el bloque de la receta; el margen del último párrafo
    sumaría al del divisor de la fuente. */
 .rec-desc { margin-top: var(--e-4); }
+/* Los ingredientes son cuerpo de la receta, como los pasos: 18 px (§1). En
+   cocina los pisa `.coc .ing`, que es más específica (auditoría T1). */
+.ing { font-size: var(--txt-lectura); line-height: 1.6; }
 .rec-desc p:last-child { margin-bottom: 0; }
 .rec-ctx:last-child, .chips:last-child { margin-bottom: 0; }
 .rec-foto { width: 100%; aspect-ratio: 16/9; max-height: 200px; object-fit: cover;
@@ -150,9 +160,13 @@
                       border-radius: var(--r-medio); border-bottom-color: transparent; }
 .coc .pasos li.hecho { color: var(--fg-3); }
 .coc .pasos li.hecho::before { content: '✓'; color: var(--fg-3); }
-/* La pantalla encendida, en el encabezado: activa se invierte, como el estado
-   elegido del editor. Sin `.encoc` el hover de `.ico` le ganaría. */
-.encoc .ico.on { background: var(--fg); color: var(--bg); }
+/* La pantalla encendida, en el encabezado. Lleva el borde y el alto de *Salir*:
+   sin reborde, un ícono suelto no se lee como algo que se toca. Activa se
+   invierte, como el estado elegido del editor. Sin `.encoc` el hover de `.ico`
+   le ganaría. */
+.encoc [data-accion="wake"] { width: 40px; height: 40px; flex-basis: 40px;
+                              border: 1px solid var(--borde-fuerte); }
+.encoc .ico.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 
 /* ---- Editor (mockup 06) ---- */
 /* El estado de la receta: dos posiciones, una sola verdadera. La elegida se
@@ -221,8 +235,9 @@ button.chip { cursor: pointer; }
 
 /* ---- Captura (mockup 07) ---- */
 /* El ayuda memoria de la nota: es referencia mientras se escribe, no prosa.
-   Un punto por debajo del micro, porque la monoespaciada pesa más que la del
-   sistema al mismo tamaño, y el color de los rótulos de los campos. */
+   En micro, que es el piso de la escala —antes iba un punto por debajo, porque
+   la monoespaciada pesa más, y quedaba en 11 px (auditoría T4)—, y en el color
+   de los rótulos de los campos. */
 .esbozo { margin-bottom: var(--e-5); }
 .esbozo summary { font-size: var(--txt-chico); color: var(--fg-2);
                   cursor: pointer; padding: 0 0 var(--e-2); }
@@ -232,10 +247,10 @@ button.chip { cursor: pointer; }
                  la ficha del editor, un recuadro gris sobre la hoja de la
                  captura—. Es sólo texto de referencia. */
               background: none; border: 0;
-              font-size: calc(var(--txt-micro) - 1px); line-height: 1.6; color: var(--fg-2);
+              font-size: var(--txt-micro); line-height: 1.6; color: var(--fg-2);
               white-space: pre-wrap; word-break: break-word; }
 .hoja { min-height: 100%; display: flex; flex-direction: column; padding: var(--e-5) var(--e-4); }
-.hoja h1 { font-size: var(--txt-titulo); margin: 0 0 var(--e-5); }
+.hoja h1 { font-size: var(--txt-titulo); font-weight: 600; margin: 0 0 var(--e-5); }
 .fnt { font-size: var(--txt-chico); color: var(--fg-2); background: var(--surface);
        border: 1px solid var(--borde); border-radius: var(--r-medio); padding: var(--e-3);
        word-break: break-all; margin-bottom: var(--e-5); }
@@ -262,7 +277,7 @@ button.chip { cursor: pointer; }
 /* ---- Conexión (mockup 11) ---- */
 .arr { min-height: 100%; display: flex; flex-direction: column; justify-content: center;
        padding: var(--e-6) var(--e-4); gap: var(--e-5); }
-.arr h1 { font-size: var(--txt-titulo); margin: 0; }
+.arr h1 { font-size: var(--txt-titulo); font-weight: 600; margin: 0; }
 .arr p { font-size: var(--txt-lectura); line-height: 1.6; color: var(--fg-2); margin: 0; }
 
 /* ---- Pantalla ancha (C05.10.1) ---- */

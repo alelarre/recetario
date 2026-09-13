@@ -343,7 +343,10 @@ el 700 accidental. Eso está bien: **el problema no es la cantidad de pesos, es 
 
 ## 4. Propuesta
 
-Ordenada por lo que cuesta decidirla, no por gravedad. **Nada de esto está aplicado.**
+Ordenada por lo que cuesta decidirla, no por gravedad.
+
+**Estado** `[2026-09-12]`: **T1 a T4 aplicadas** en `src/ui/base.css` y probadas en el
+teléfono. Las demás, pendientes.
 Las que dicen *decisión* tienen más de una salida razonable; las demás son desvíos del
 propio sistema.
 
