@@ -47,6 +47,7 @@ error.
 
 - [ ] **Editar** está al pie de la receta abierta, a un toque.
 - [ ] El editor abre con todos los campos cargados con lo que dice el `.md`.
+- [ ] El encabezado —volver, título y *Guardar*— queda fijo arriba al hacer scroll, como en la receta abierta (C03.1.2b) `[del 2026-09-12]`.
 - [ ] Salir sin guardar con cambios pendientes **pregunta antes**.
 - [ ] Salir sin cambios no pregunta nada.
 

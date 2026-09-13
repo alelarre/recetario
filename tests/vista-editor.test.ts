@@ -133,6 +133,10 @@ describe('renderEditor', () => {
       .toContain('data-accion="borrar"');
   });
 
+  it('el encabezado queda fijo arriba, como en la receta abierta', () => {
+    expect(dibujar()).toContain('<div class="enc peg">');
+  });
+
   it('el estado cierra la ficha de datos, después de la foto', () => {
     const html = dibujar();
     const datos = html.slice(html.indexOf('<div class="ficha">'), html.indexOf('<h2>Contenido</h2>'));

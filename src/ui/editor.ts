@@ -181,6 +181,9 @@ export function renderEditor(
   return encabezado({
     titulo: entrada ? 'Editando' : 'Nueva receta',
     volver: true,
+    // Fijo arriba, como en la receta abierta (C03.1.2b): Guardar queda a mano
+    // aunque se esté escribiendo al fondo del formulario.
+    pegajoso: true,
     derecha: '<button class="btn prim compacto" data-accion="guardar">Guardar</button>'
   }) +
     '<form class="cuerpo" data-formulario>' +
