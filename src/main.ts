@@ -4,6 +4,7 @@ import { crearAuth } from './auth.js';
 import { crearDrive } from './drive.js';
 import { crearSheets } from './sheets.js';
 import { crearStore } from './store.js';
+import * as indiceLocal from './indice-local.js';
 import { parse } from './recipe.js';
 import { tagReservado } from './catalogo.js';
 import { sePuedeTerminar } from './recipe.js';
@@ -234,7 +235,7 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
       return pintar(renderConexion({ estado: 'cancelado' }));
     }
   }
-  store = crearStore({ drive, sheets });
+  store = crearStore({ drive, sheets, indiceLocal });
   estadoArranque = await store.arrancar();
 
   // Los tres estados que no llegan a 'listo' avisan en castellano, con su

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { crearStore } from '../src/store.js';
-import { driveFalso, sheetsFalso } from './dobles.js';
-import type { SheetsFalso } from './dobles.js';
+import { driveFalso, sheetsFalso, indiceLocalFalso } from './dobles.js';
+import type { DriveFalso, SheetsFalso } from './dobles.js';
 import { COLUMNAS } from '../src/catalogo.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
@@ -12,9 +12,10 @@ const fila = (id: string, titulo: string, categoria: string, carpeta: string,
 
 let store: ReturnType<typeof crearStore>;
 let sheets: SheetsFalso;
+let drive: DriveFalso;
 
 beforeEach(async () => {
-  const drive = driveFalso([
+  drive = driveFalso([
     { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'c2', name: 'Postres', mimeType: CARPETA, parents: ['raiz'] },
@@ -29,10 +30,20 @@ beforeEach(async () => {
     fila('r2', 'Bife de chorizo', 'Carnes', 'c1', 'parrilla', 'bife', 'fácil'),
     fila('r3', 'Flan casero', 'Postres', 'c2', 'dulce', 'huevo|leche', 'media')
   ]);
-  store = crearStore({ drive, sheets });
+  store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
   await store.arrancar();
   await store.cargarIndice();
 });
+
+/**
+ * Filas escritas por fuera de la app se ven al abrirla de nuevo: una apertura
+ * sin la copia local de la anterior, que las lee de la planilla.
+ */
+async function abrirDeNuevo(): Promise<void> {
+  store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
+  await store.arrancar();
+  await store.cargarIndice();
+}
 
 describe('buscar', () => {
   it('sin filtros devuelve todo', async () => {
@@ -100,7 +111,7 @@ describe('buscarPorTexto: los tres criterios', () => {
       fila('f-caballa', 'Caballa a la sidra', 'Carnes', 'c1', 'merluza', 'Caballa'),
       fila('f-pure', 'Puré de papas', 'Carnes', 'c1', '', 'Papa|Leche')
     ]);
-    await store.cargarIndice();
+    await abrirDeNuevo();
   });
 
   it('busca en título, ingredientes y tags, y separa los tres grupos', () => {
@@ -172,7 +183,7 @@ describe('tagsDe', () => {
       fila('r6', 'Zapallo gratinado', 'Carnes', 'c1', 'zapallo', 'zapallo', 'media'),
       fila('r7', 'Asado', 'Carnes', 'c1', 'asado', 'carne', 'media')
     ]);
-    await store.cargarIndice();
+    await abrirDeNuevo();
     const tags = store.tagsDe('Carnes');
     // zapallo aparece 3 veces, es el primero aunque alfabéticamente viene después que 'horno'
     expect(tags[0].tag).toBe('zapallo');

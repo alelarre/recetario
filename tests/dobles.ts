@@ -3,6 +3,7 @@ import type { PropiedadesHoja } from '../src/sheets.js';
 import type { Entrada, Receta } from '../src/tipos.js';
 import { parse } from '../src/recipe.js';
 import type { DriveDelStore, SheetsDelStore } from '../src/store.js';
+import type { CopiaIndice, IndiceLocal } from '../src/indice-local.js';
 
 /**
  * Los dobles se declaran contra el mismo tipo que el store consume, con
@@ -54,6 +55,8 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
     // El real siempre devuelve un archivo o tira; pedir metadatos de un id que
     // no existe es un error del test, no un caso a tolerar en silencio.
     async metadatos(id: string) {
+      api.llamadas.push(['metadatos', id]);
+      if (fallas.has('metadatos')) throw fallas.get('metadatos');
       const a = store.get(id);
       if (!a) throw new Error(`El doble de Drive no tiene el archivo ${id}`);
       return a;
@@ -253,11 +256,36 @@ export function sheetsFalso() {
   return api;
 }
 
+/**
+ * La copia local del índice, en memoria. Clona al guardar y al leer, como el
+ * JSON de `localStorage`: sin eso el store y la copia compartirían objetos, y
+ * un test podría pasar gracias a un alias que en el navegador no existe.
+ */
+export function indiceLocalFalso(inicial: CopiaIndice | null = null) {
+  let copia: CopiaIndice | null = inicial ? structuredClone(inicial) : null;
+  const api = {
+    /** Cada copia que el store guardó, en orden. */
+    guardadas: [] as CopiaIndice[],
+    /** Cuántas veces se pidió borrarla. */
+    borradas: 0,
+    /** Lo que hay guardado ahora, para las aserciones. */
+    actual: (): CopiaIndice | null => copia,
+    leer: (): CopiaIndice | null => (copia ? structuredClone(copia) : null),
+    guardar: (c: CopiaIndice): void => {
+      copia = structuredClone(c);
+      api.guardadas.push(structuredClone(c));
+    },
+    borrar: (): void => { copia = null; api.borradas++; }
+  } satisfies IndiceLocal & Record<string, unknown>;
+  return api;
+}
+
 export const COLUMNAS_ESPERADAS = COLUMNAS;
 
 /** Los tipos de los dobles, para anotar las variables de los tests. */
 export type DriveFalso = ReturnType<typeof driveFalso>;
 export type SheetsFalso = ReturnType<typeof sheetsFalso>;
+export type IndiceLocalFalso = ReturnType<typeof indiceLocalFalso>;
 
 /**
  * Una `Entrada` completa a partir de lo poco que le importa a cada test.

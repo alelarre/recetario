@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { crearStore } from '../src/store.js';
-import { driveFalso, sheetsFalso, recetaFalsa } from './dobles.js';
+import { driveFalso, sheetsFalso, recetaFalsa, indiceLocalFalso } from './dobles.js';
 import type { DriveFalso, SheetsFalso } from './dobles.js';
 import { parse } from '../src/recipe.js';
 import { COLUMNAS } from '../src/catalogo.js';
@@ -12,7 +12,7 @@ const MD = `---\ntitulo: Milanesas\n---\n\n## Notas\n- ojo\n`;
 describe('guardar: escritura sincrónica, sin cola', () => {
   it('escribe la fila del índice en el momento, sin cola', async () => {
     const sheets = sheetsFalso();
-    const store = crearStore({ drive: driveFalso([{ id: 'f1' }]), sheets });
+    const store = crearStore({ drive: driveFalso([{ id: 'f1' }]), sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();
     await store.cargarIndice();
 
@@ -26,7 +26,7 @@ describe('guardar: escritura sincrónica, sin cola', () => {
     const sheets = sheetsFalso();
     let confirmado = false;
     sheets.alEscribir = async () => { await Promise.resolve(); confirmado = true; };
-    const store = crearStore({ drive: driveFalso([{ id: 'f1' }]), sheets });
+    const store = crearStore({ drive: driveFalso([{ id: 'f1' }]), sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();
     await store.cargarIndice();
 
@@ -36,7 +36,7 @@ describe('guardar: escritura sincrónica, sin cola', () => {
 
   it('guardar dos veces la misma receta deja una sola fila (R2)', async () => {
     const sheets = sheetsFalso();
-    const store = crearStore({ drive: driveFalso([{ id: 'f1' }]), sheets });
+    const store = crearStore({ drive: driveFalso([{ id: 'f1' }]), sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();
     await store.cargarIndice();
 
@@ -63,7 +63,7 @@ describe('guardar: escritura sincrónica, sin cola', () => {
     await sheets.append('i1', 'recetas', [
       ['f1', 'f1.md', 'Vieja', 'Sin categorizar', 'raiz', '', '', '', '', '', '', String(Date.parse('2020-01-01T00:00:00.000Z'))]
     ]);
-    const store = crearStore({ drive, sheets });
+    const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();
     await store.cargarIndice();
     const mtimeViejo = store.entradas().find(e => e.id_archivo === 'f1')?.mtime;
@@ -82,7 +82,7 @@ describe('guardar: escritura sincrónica, sin cola', () => {
   it('si falla la escritura de la fila, el error sale y no queda nada encolado', async () => {
     const sheets = sheetsFalso();
     sheets.alEscribir = async () => { throw new Error('cuota'); };
-    const store = crearStore({ drive: driveFalso([{ id: 'f1' }]), sheets });
+    const store = crearStore({ drive: driveFalso([{ id: 'f1' }]), sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();
     await store.cargarIndice();
 
@@ -108,7 +108,7 @@ beforeEach(async () => {
   await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
   await sheets.append('i1', 'recetas', [['r1', 'milanesas.md', 'Milanesas', 'Carnes', 'c1', '', '', '', '', '', '', String(Date.parse('2026-01-01T00:00:00.000Z'))]]);
-  store = crearStore({ drive, sheets });
+  store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
   await store.arrancar();
   await store.cargarIndice();
 });

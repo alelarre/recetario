@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { crearStore } from '../src/store.js';
-import { driveFalso, sheetsFalso } from './dobles.js';
+import { driveFalso, sheetsFalso, indiceLocalFalso } from './dobles.js';
 import type { DriveFalso, SheetsFalso } from './dobles.js';
 import { COLUMNAS } from '../src/catalogo.js';
 import { SCHEMA_VERSION } from '../src/config.js';
@@ -29,7 +29,7 @@ beforeEach(async () => {
   sheets.crearPlanilla('i1');
   await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
-  store = crearStore({ drive, sheets });
+  store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
   await store.arrancar();
 });
 

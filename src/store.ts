@@ -4,6 +4,7 @@ import { HOJA_RECETAS, HOJA_META, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 import type { Drive } from './drive.js';
 import type { Sheets } from './sheets.js';
+import type { CopiaIndice, IndiceLocal } from './indice-local.js';
 import type {
   Receta, Ubicacion, Entrada, Filtros, Coincidencia, Coincidencias, ArchivoDrive
 } from './tipos.js';
@@ -46,7 +47,14 @@ interface Contexto {
   /** Id de carpeta → nombre de categoría. Incluye la raíz. */
   carpetas: Map<string, string>;
   soloLectura: boolean;
-  ultimaReconstruccionEnMemoria: string;
+  /** La hoja `meta` como se vio por última vez, de la planilla o de la copia. */
+  meta: Record<string, string>;
+  /**
+   * El modifiedTime de `_indice` que se vio por última vez: el de la búsqueda
+   * al arrancar, o el que se pidió después de escribir. Vacío si no se sabe, y
+   * entonces la copia no se usa ni se guarda.
+   */
+  modifiedTime: string;
 }
 
 /** Cuántos `.md` se leyeron de cuántos, para la barra de progreso. */
@@ -62,7 +70,7 @@ export interface Progreso {
  * implementar de más para satisfacer al compilador.
  */
 export type DriveDelStore = Pick<Drive,
-  'buscarPorNombre' | 'listarCarpetas' | 'listarHijos' | 'leerTexto' |
+  'buscarPorNombre' | 'listarCarpetas' | 'listarHijos' | 'leerTexto' | 'metadatos' |
   'crear' | 'actualizar' | 'renombrar' | 'mover' | 'borrar'>;
 
 export type SheetsDelStore = Pick<Sheets,
@@ -72,12 +80,14 @@ export type SheetsDelStore = Pick<Sheets,
 export interface Dependencias {
   drive: DriveDelStore;
   sheets: SheetsDelStore;
+  /** La copia local del índice (P12). `main` pasa `indice-local.ts`; los tests, un doble. */
+  indiceLocal: IndiceLocal;
 }
 
-export function crearStore({ drive, sheets }: Dependencias) {
+export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
   const ctx: Contexto = {
     raizId: '', indiceId: '', categorias: [], carpetas: new Map(),
-    soloLectura: false, ultimaReconstruccionEnMemoria: ''
+    soloLectura: false, meta: {}, modifiedTime: ''
   };
   let entradas: Entrada[] = [];
   let filas = new Map<string, number>();
@@ -85,6 +95,61 @@ export function crearStore({ drive, sheets }: Dependencias) {
   async function leerMeta(): Promise<Record<string, string>> {
     const filas = await sheets.leer(ctx.indiceId, `${HOJA_META}!A1:B20`);
     return Object.fromEntries(filas.map(f => [f[0] ?? '', f[1] ?? '']));
+  }
+
+  /**
+   * La copia local, si es de esta planilla, la escribió este código y Drive
+   * tiene la misma fecha que ella. Se compara metadata, nunca contenido.
+   */
+  function copiaQueSirve(): CopiaIndice | null {
+    if (!ctx.modifiedTime) return null;
+    const copia = indiceLocal.leer();
+    if (!copia) return null;
+    const sirve = copia.schemaVersion === SCHEMA_VERSION
+      && copia.indiceId === ctx.indiceId
+      && copia.modifiedTime === ctx.modifiedTime;
+    return sirve ? copia : null;
+  }
+
+  /** Lo que hay en memoria, con el número de fila que cada entrada tiene en la planilla. */
+  function copiaActual(): CopiaIndice {
+    return {
+      schemaVersion: SCHEMA_VERSION,
+      indiceId: ctx.indiceId,
+      modifiedTime: ctx.modifiedTime,
+      meta: { ...ctx.meta },
+      filas: entradas.flatMap(entrada => {
+        const nro = filas.get(entrada.id_archivo);
+        return nro ? [{ fila: nro, entrada }] : [];
+      })
+    };
+  }
+
+  /** Carga la copia en memoria, en el orden de la planilla, como si se la hubiera leído. */
+  function usarCopia(copia: CopiaIndice): void {
+    const ordenadas = [...copia.filas].sort((a, b) => a.fila - b.fila);
+    ctx.meta = { ...copia.meta };
+    entradas = ordenadas.map(f => f.entrada);
+    filas = new Map(ordenadas.map(f => [f.entrada.id_archivo, f.fila]));
+  }
+
+  /**
+   * El paso con que termina toda escritura en `_indice`: pedir su fecha nueva
+   * y guardar la copia entera. Si la fecha no llega, la copia se borra y la
+   * próxima apertura baja la planilla; la escritura ya salió, así que no se
+   * propaga nada. Así la copia nunca queda más nueva que la planilla.
+   */
+  async function persistir(): Promise<void> {
+    try {
+      const { modifiedTime } = await drive.metadatos(ctx.indiceId, 'modifiedTime');
+      if (!modifiedTime) throw new Error('Drive no devolvió la fecha de _indice');
+      ctx.modifiedTime = modifiedTime;
+    } catch {
+      ctx.modifiedTime = '';
+      indiceLocal.borrar();
+      return;
+    }
+    indiceLocal.guardar(copiaActual());
   }
 
   async function crearPlanilla(): Promise<string> {
@@ -166,16 +231,20 @@ export function crearStore({ drive, sheets }: Dependencias) {
     let reconstruir = false;
     if (planillas.length === 0) {
       ctx.indiceId = await crearPlanilla();
+      ctx.meta = { schemaVersion: String(SCHEMA_VERSION), ultima_reconstruccion: '' };
       reconstruir = true;
     } else {
       if (planillas.length > 1) avisos.push('indice-duplicado');
       const ordenadas = [...planillas].sort(
         (a, b) => Date.parse(b.modifiedTime ?? '') - Date.parse(a.modifiedTime ?? ''));
       ctx.indiceId = ordenadas[0]?.id ?? '';
-      const meta = await leerMeta();
-      if (Number(meta['schemaVersion']) !== SCHEMA_VERSION) reconstruir = true;
-      if (meta['reconstruccion_en_curso']) reconstruir = true;
-      ctx.ultimaReconstruccionEnMemoria = meta['ultima_reconstruccion'] || '';
+      // La búsqueda ya trae la fecha: esa es toda la verificación, sin pedidos nuevos.
+      ctx.modifiedTime = ordenadas[0]?.modifiedTime ?? '';
+      const copia = copiaQueSirve();
+      if (copia) usarCopia(copia);
+      else ctx.meta = await leerMeta();
+      if (Number(ctx.meta['schemaVersion']) !== SCHEMA_VERSION) reconstruir = true;
+      if (ctx.meta['reconstruccion_en_curso']) reconstruir = true;
     }
 
     return {
@@ -184,9 +253,9 @@ export function crearStore({ drive, sheets }: Dependencias) {
     };
   }
 
-  /** Cuándo se reconstruyó el índice por última vez, para el menú del home (§7.2). Retorna el valor en caché sin red. */
+  /** Cuándo se reconstruyó el índice por última vez, para Ajustes. Sin red: sale de la meta en memoria. */
   function ultimaReconstruccion(): string {
-    return ctx.ultimaReconstruccionEnMemoria;
+    return ctx.meta['ultima_reconstruccion'] ?? '';
   }
 
   async function guardarMeta(clave: string, valor: string): Promise<void> {
@@ -194,24 +263,39 @@ export function crearStore({ drive, sheets }: Dependencias) {
     const i = meta.findIndex(f => f[0] === clave);
     const fila = i >= 0 ? i + 1 : meta.length + 1;
     await sheets.escribir(ctx.indiceId, `${HOJA_META}!A${fila}:B${fila}`, [[clave, valor]]);
+    ctx.meta[clave] = valor;
   }
 
   async function cargarIndice(): Promise<Entrada[]> {
+    const copia = copiaQueSirve();
+    if (copia) {
+      usarCopia(copia);
+      return entradas;
+    }
     const crudo = await sheets.leer(ctx.indiceId, `${HOJA_RECETAS}!A1:${ULTIMA_COLUMNA}100000`);
     const cuerpo = crudo.slice(1);  // la fila 1 son los encabezados
     entradas = cuerpo.map(entradaDesdeFila).filter(e => e.id_archivo);
     filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
+    // La fecha es la de la búsqueda de recién: nada escribió entre medio (§1 del
+    // diseño). Sin fecha —la planilla recién creada— no se guarda: lo hace el
+    // reindexado al terminar.
+    if (ctx.modifiedTime) indiceLocal.guardar(copiaActual());
     return entradas;
   }
 
   async function escribirFila(receta: Receta, ubicacion: Ubicacion): Promise<void> {
     const fila = filaDesde(receta, ubicacion);
+    // La entrada en memoria se actualiza acá y no en quien llama: la capa
+    // compartida escribe la fila sin pasar por guardar ni crear, y la copia
+    // se arma desde las entradas.
+    entradas = [...entradas.filter(e => e.id_archivo !== ubicacion.id), entradaDesdeFila(fila)];
     const nro = filas.get(ubicacion.id);
     if (nro) await sheets.escribir(ctx.indiceId, rangoDeFila(nro), [fila]);
     else {
       await sheets.append(ctx.indiceId, HOJA_RECETAS, [fila]);
       filas.set(ubicacion.id, filas.size + 2);
     }
+    await persistir();
   }
 
   async function borrarDelIndice(id: string): Promise<void> {
@@ -227,6 +311,7 @@ export function crearStore({ drive, sheets }: Dependencias) {
       filas.delete(id);
       // El corrimiento es determinístico: no hace falta releer nada (§4.3).
       for (const [otroId, otraFila] of filas) if (otraFila > nro) filas.set(otroId, otraFila - 1);
+      await persistir();
     }
   }
 
@@ -254,8 +339,6 @@ export function crearStore({ drive, sheets }: Dependencias) {
       mtime: Date.parse(actualizado.modifiedTime ?? '') || Date.now()
     };
 
-    const nueva = entradaDesdeFila(filaDesde(receta, ubicacion));
-    entradas = [...entradas.filter(e => e.id_archivo !== id), nueva];
     await escribirFila(receta, ubicacion);
   }
 
@@ -274,7 +357,6 @@ export function crearStore({ drive, sheets }: Dependencias) {
       categoria: ctx.carpetas.get(padre) ?? CATEGORIA_RAIZ,
       carpeta_id: padre, mtime: Date.parse(archivo.modifiedTime ?? '') || Date.now()
     };
-    entradas = [...entradas, entradaDesdeFila(filaDesde(receta, ubicacion))];
     await escribirFila(receta, ubicacion);
     return { id: archivo.id, nombre_archivo: nombre };
   }
@@ -347,8 +429,11 @@ export function crearStore({ drive, sheets }: Dependencias) {
     // anotada, el próximo arranque vuelve a reconstruir para siempre.
     await guardarMeta('schemaVersion', String(SCHEMA_VERSION));
     await guardarMeta('ultima_reconstruccion', ahora);
-    ctx.ultimaReconstruccionEnMemoria = ahora;
     await guardarMeta('reconstruccion_en_curso', '');
+    // Una sola vez, al final: si se corta a mitad, la primera anotación ya
+    // cambió la fecha de _indice, y la próxima apertura baja la planilla y ve
+    // la reconstrucción en curso.
+    await persistir();
 
     return { indexadas: entradas.length, ignorados };
   }

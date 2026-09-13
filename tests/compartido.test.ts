@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { convertirBorrador, escribirRecetaAlIndice, leerReceta } from '../src/compartido.js';
 import { crearStore } from '../src/store.js';
 import { crearBorradores } from '../src/borradores.js';
-import { driveFalso, sheetsFalso, recetaFalsa } from './dobles.js';
+import { driveFalso, sheetsFalso, recetaFalsa, indiceLocalFalso } from './dobles.js';
 import { COLUMNAS } from '../src/catalogo.js';
 import { SCHEMA_VERSION } from '../src/config.js';
 
@@ -28,7 +28,7 @@ const armar = async ({ borradores: filas = [] as string[][] } = {}) => {
   sheets.crearPlanilla('bp', ['borradores']);
   sheets.cargar('bp', 'borradores', [['id', 'titulo', 'fuente', 'capturado'], ...filas]);
 
-  const store = crearStore({ drive, sheets });
+  const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
   await store.arrancar();
   await store.cargarIndice();
   const borradores = crearBorradores({ drive, sheets, raizId: 'raiz' });
