@@ -95,6 +95,12 @@
 .pie .acciones { max-width: 680px; margin: 0 auto; }
 
 /* ---- Modo cocina (mockup 02) ---- */
+/* Un paso es un <li>, no un botón: Chrome en Android sube hasta el primer
+   ancestro que responde al toque —#app, que tiene el único listener de clics—
+   y resalta la pantalla entera mientras Drive tarda en devolver la receta. Se
+   veía como el encabezado marcándose y desmarcándose. El resaltado se lee del
+   elemento resaltado, así que va en #app, y sólo mientras muestra la cocina. */
+#app:has(.coc) { -webkit-tap-highlight-color: transparent; }
 /* 64 de alto: cada control del encabezado tiene 64 × 64 de área táctil, como
    pide §1 en cocina (P16). Sin `gap`: el aire entre el sol y *Salir* lo pone el
    margen interno del sol, que dibuja su caja a 40 dentro de sus 64. */
