@@ -3,20 +3,22 @@ import { COLUMNAS } from './catalogo.js';
 const API = 'https://sheets.googleapis.com/v4/spreadsheets';
 export const HOJA_RECETAS = 'recetas';
 export const HOJA_META = 'meta';
+export const HOJA_BORRADORES = 'borradores';
 
 const letra = (i: number): string => String.fromCharCode(65 + i);
 
 /**
- * Genera un rango A1 para una fila entera (de A a la última columna).
+ * Genera un rango A1 para una fila entera (de A a la última columna), de la
+ * hoja de recetas salvo que se diga otra.
  * Lanza si fila no es un entero >= 1: la fila 1 son los encabezados y no hay fallback seguro.
  * Un rango mal calculado es un error de programación, no un dato malo del usuario.
  */
-export const rangoDeFila = (fila: unknown): string => {
+export const rangoDeFila = (fila: unknown, hoja = HOJA_RECETAS, columnas: number = COLUMNAS.length): string => {
   // El typeof es lo que estrecha el tipo; Number.isInteger solo devuelve boolean.
   if (typeof fila !== 'number' || !Number.isInteger(fila) || fila < 1) {
     throw new Error(`La fila tiene que ser un entero mayor o igual a 1; recibí ${JSON.stringify(fila)}`);
   }
-  return `${HOJA_RECETAS}!A${fila}:${letra(COLUMNAS.length - 1)}${fila}`;
+  return `${hoja}!A${fila}:${letra(columnas - 1)}${fila}`;
 };
 
 export function rangoDeCelda(columna: string, fila: number): string {
