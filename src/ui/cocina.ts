@@ -67,9 +67,12 @@ export function renderCocina(
 
   const contenido = posicion === 'ingredientes' && grupos.length ? ingredientes : pasos;
 
+  // Un ícono solo en el encabezado, que es donde la palabra no entra (§3.4).
+  // Encendido se invierte, como el estado elegido del editor: el acento sobre
+  // un estado se lee como alerta.
   const wake = hayWakeLock()
-    ? `<div class="wake"><button class="btn ${wakeActivo ? 'prim' : 'sec'}" data-accion="wake">${ICO.sol}` +
-      `${wakeActivo ? 'Pantalla encendida' : 'Mantener la pantalla encendida'}</button></div>`
+    ? `<button class="ico${wakeActivo ? ' on' : ''}" data-accion="wake" aria-pressed="${wakeActivo}" ` +
+      `aria-label="Mantener la pantalla encendida">${ICO.sol}</button>`
     : '';
 
   // Dos salidas con dos destinos: el chevron vuelve a la receta —seguir
@@ -78,9 +81,9 @@ export function renderCocina(
   return '<div class="encoc">' +
       `<button class="ico" data-accion="volver-receta" aria-label="Volver a la receta">${ICO.volver}</button>` +
       `<span class="tit">${escapar(receta.titulo ?? '')}</span>` +
+      wake +
       '<button class="btn sec compacto" data-accion="salir-cocina">Salir</button>' +
     '</div>' +
     conmutador +
-    `<div class="coc">${contenido}</div>` +
-    wake;
+    `<div class="coc">${contenido}</div>`;
 }

@@ -116,7 +116,7 @@
 .pasos li p { margin: 0; }
 
 /* ---- Modo cocina (mockup 02) ---- */
-.encoc { height: 56px; display: flex; align-items: center; padding: 0 var(--e-2);
+.encoc { height: 56px; display: flex; align-items: center; gap: var(--e-2); padding: 0 var(--e-2);
          border-bottom: 1px solid var(--borde); }
 /* Centrado como el encabezado del resto de la app, y recortado: el chevron y
    Salir no miden lo mismo, así que sin `min-width: 0` un título largo empuja
@@ -146,9 +146,9 @@
                       border-radius: var(--r-medio); border-bottom-color: transparent; }
 .coc .pasos li.hecho { color: var(--fg-3); }
 .coc .pasos li.hecho::before { content: '✓'; color: var(--fg-3); }
-.wake { position: sticky; bottom: 0; background: var(--bg);
-        border-top: 1px solid var(--borde); padding: var(--e-4); }
-.wake .btn { width: 100%; min-height: 64px; }
+/* La pantalla encendida, en el encabezado: activa se invierte, como el estado
+   elegido del editor. Sin `.encoc` el hover de `.ico` le ganaría. */
+.encoc .ico.on { background: var(--fg); color: var(--bg); }
 
 /* ---- Editor (mockup 06) ---- */
 /* El estado de la receta: dos posiciones, una sola verdadera. La elegida se

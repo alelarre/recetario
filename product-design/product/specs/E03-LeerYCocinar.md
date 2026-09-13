@@ -143,7 +143,8 @@ dejarla prendida.
 
 #### C03.3.1 — El control *(J6)*
 
-- [ ] Vive dentro del modo cocina y dice si está activo.
+- [ ] Vive en el encabezado del modo cocina, como ícono solo —el sol— a la izquierda de *Salir*, con su etiqueta accesible `[del 2026-09-12: era una barra al pie]`.
+- [ ] Dice si está activo: encendido, el ícono se invierte —fondo claro, sol oscuro—, como el estado elegido del editor.
 - [ ] Arranca apagado cada vez que se entra al modo: no recuerda la elección anterior.
 - [ ] Salir del modo cocina lo libera.
 - [ ] Al volver de segundo plano con el modo abierto, se reintenta tomarlo.

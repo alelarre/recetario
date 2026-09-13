@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderCocina } from '../src/ui/cocina.js';
 import { parse } from '../src/recipe.js';
 
@@ -38,6 +38,31 @@ const base: { posicion: 'pasos'; aqui: number | null; hechos: number[] } =
   { posicion: 'pasos', aqui: null, hechos: [] };
 
 describe('Modo cocina', () => {
+  describe('mantener la pantalla encendida (C03.3.1)', () => {
+    afterEach(() => { vi.unstubAllGlobals(); });
+
+    it('es un ícono del encabezado, antes de Salir, y no hay barra al pie', () => {
+      vi.stubGlobal('navigator', { wakeLock: {} });
+      const html = renderCocina({ ...base, receta: COMPLETA });
+      const enc = html.slice(0, html.indexOf('data-accion="salir-cocina"'));
+      expect(enc).toContain('data-accion="wake"');
+      expect(enc).toContain('aria-label="Mantener la pantalla encendida"');
+      expect(html).not.toContain('class="wake"');
+    });
+
+    it('apagado no está presionado; encendido se invierte', () => {
+      vi.stubGlobal('navigator', { wakeLock: {} });
+      expect(renderCocina({ ...base, receta: COMPLETA })).toContain('class="ico" data-accion="wake" aria-pressed="false"');
+      expect(renderCocina({ ...base, receta: COMPLETA, wakeActivo: true }))
+        .toContain('class="ico on" data-accion="wake" aria-pressed="true"');
+    });
+
+    it('si el navegador no lo soporta, no se dibuja', () => {
+      vi.stubGlobal('navigator', {});
+      expect(renderCocina({ ...base, receta: COMPLETA })).not.toContain('data-accion="wake"');
+    });
+  });
+
   it('abre en Ingredientes: el mise en place va primero', () => {
     const html = renderCocina({ ...base, receta: COMPLETA, posicion: 'ingredientes' });
     expect(html).toMatch(/<button class="on" data-accion="conmutar" data-posicion="ingredientes">Ingredientes<\/button>/);
