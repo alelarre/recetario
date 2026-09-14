@@ -12,7 +12,7 @@ Ajustes.
 **Después, usando la app** (2026-09-12 y 13): se trabajó casi todo el backlog de
 uso real (`BACKLOG.md` §6) —comportamiento, diseño visual, la auditoría
 tipográfica (`product-design/ux/auditoria-tipografica.md`) y la deuda chica—, y
-las lecturas de Drive dejaron de repetirse en cada toque. **671 tests**, typecheck
+las lecturas de Drive dejaron de repetirse en cada toque. **675 tests**, typecheck
 y build en verde, y cada cambio de UI se probó en el teléfono sobre Pages.
 
 **Hecho el 2026-09-13 — el índice local (P12):** al abrir, si `_indice` no cambió
@@ -81,7 +81,8 @@ receta se eliminó por no tener contenido, y los **tags del editor** pasaron a
 ser pills con su cruz.
 
 Falta verificar a mano lo que ningún test alcanza: el **Share Target real**
-(necesita la PWA instalada en Android), el foco del teclado en la captura, la
+(necesita la PWA instalada en Android; desde el 2026-09-14 lo compartido llega en
+la query y `hashDeCompartido` lo pasa a `#/capturar`), el foco del teclado en la captura, la
 posición de scroll al conmutar en el modo cocina y el gesto de atrás de Android
 en el editor con cambios sin guardar. Y de 2026-09-13, en el teléfono: que tocar
 un paso en cocina ya no resalte la pantalla entera (`f1214ac` es una hipótesis

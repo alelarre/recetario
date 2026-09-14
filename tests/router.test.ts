@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parsearHash } from '../src/ui/router.js';
+import { parsearHash, hashDeCompartido } from '../src/ui/router.js';
 
 describe('parsearHash', () => {
   it('la raíz es el Recetario', () => {
@@ -86,5 +86,24 @@ describe('parsearHash', () => {
       expect(parsearHash('#/c')).toEqual({ vista: 'recetario', params: {} });
       expect(parsearHash('#/c/')).toEqual({ vista: 'recetario', params: {} });
     });
+  });
+});
+
+describe('lo compartido desde otra app (Share Target)', () => {
+  it('Android manda los datos en la query, antes del #: pasan a la captura', () => {
+    expect(hashDeCompartido('?title=Pollo&text=Mir%C3%A1+esto&url=https%3A%2F%2Fx.com%2F1'))
+      .toBe('#/capturar?url=https%3A%2F%2Fx.com%2F1&text=Mir%C3%A1+esto');
+  });
+
+  it('muchas apps mandan el link sólo en text', () => {
+    const hash = hashDeCompartido('?text=https%3A%2F%2Finstagram.com%2Freel%2Fabc');
+    expect(hash).toBe('#/capturar?text=https%3A%2F%2Finstagram.com%2Freel%2Fabc');
+    expect(parsearHash(hash)).toEqual({ vista: 'capturar', params: { url: '', text: 'https://instagram.com/reel/abc' } });
+  });
+
+  it('sin url ni text no hay nada compartido', () => {
+    expect(hashDeCompartido('')).toBeNull();
+    expect(hashDeCompartido('?title=Solo+t%C3%ADtulo')).toBeNull();
+    expect(hashDeCompartido('?url=&text=')).toBeNull();
   });
 });

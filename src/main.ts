@@ -8,7 +8,7 @@ import * as indiceLocal from './indice-local.js';
 import { parse } from './recipe.js';
 import { tagReservado } from './catalogo.js';
 import { sePuedeTerminar } from './recipe.js';
-import { crearRouter, parsearHash } from './ui/router.js';
+import { crearRouter, parsearHash, hashDeCompartido } from './ui/router.js';
 import { escapar } from './ui/markdown.js';
 import { renderRecetario } from './ui/recetario.js';
 import { renderCategoria } from './ui/categoria.js';
@@ -1229,6 +1229,11 @@ app.addEventListener('change', (e) => {
   if (!q) return;
   location.hash = `#/buscar?q=${encodeURIComponent(q)}`;
 });
+
+// Lo que llega desde el menú Compartir de Android viene en la query: se pasa
+// a la captura y se limpia la URL, para que recargar no vuelva a capturarlo.
+const compartido = hashDeCompartido(location.search);
+if (compartido) history.replaceState(null, '', location.pathname + compartido);
 
 arrancar().catch(err => pintar(`<p class="contenido">No pude arrancar: ${escapar(mensajeDe(err))} <button data-accion="reconectar">Reintentar</button></p>`));
 

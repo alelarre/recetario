@@ -71,6 +71,24 @@ export function parsearHash(hash: unknown): Ruta {
   return { vista: 'recetario', params: {} };
 }
 
+/**
+ * Lo compartido desde otra app, como hash de la captura, o `null`.
+ *
+ * El Share Target de Android manda `title`, `text` y `url` en la query de la
+ * URL —antes del `#`—, y el router sólo lee lo que viene después. Muchas apps
+ * mandan el link sólo en `text`, así que los dos viajan. El título no: lo que
+ * trae es el de la página, y el de la receta lo escribe el usuario.
+ */
+export function hashDeCompartido(search: string): string | null {
+  const params = new URLSearchParams(search);
+  const destino = new URLSearchParams();
+  for (const clave of ['url', 'text']) {
+    const valor = params.get(clave);
+    if (valor) destino.set(clave, valor);
+  }
+  return [...destino.keys()].length ? `#/capturar?${destino.toString()}` : null;
+}
+
 export function crearRouter(alCambiar: (ruta: Ruta) => void) {
   const disparar = () => alCambiar(parsearHash(location.hash));
   window.addEventListener('hashchange', disparar);

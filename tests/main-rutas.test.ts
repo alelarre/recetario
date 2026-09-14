@@ -138,7 +138,7 @@ describe('main.ts: las rutas', () => {
     vi.resetModules();
   });
 
-  const montar = async () => {
+  const montar = async ({ search = '' } = {}) => {
     const clicks: ((e: unknown) => unknown)[] = [];
     const cambios: ((e: unknown) => unknown)[] = [];
     const app = {
@@ -186,7 +186,7 @@ describe('main.ts: las rutas', () => {
     const empujados: string[] = [];
     const recargas: number[] = [];
     global.location = comoGlobal<Location>({
-      hash: '', pathname: '/recetario/', search: '',
+      hash: '', pathname: '/recetario/', search,
       replace: (h: string) => { reemplazos.push(h); global.location.hash = h; },
       reload: () => { recargas.push(1); }
     });
@@ -196,7 +196,11 @@ describe('main.ts: las rutas', () => {
       [Symbol.iterator]() { return Object.entries(estado.formulario)[Symbol.iterator](); }
     };
     global.history = comoGlobal<History>({
-      back: () => { vueltasAtras.push(1); }, replaceState: () => {}, length: 5,
+      back: () => { vueltasAtras.push(1); }, length: 5,
+      replaceState: (_estado: unknown, _titulo: string, url: string) => {
+        const i = url.indexOf('#');
+        if (i >= 0) global.location.hash = url.slice(i);
+      },
       pushState: (_estado: unknown, _titulo: string, url: string) => { empujados.push(url); global.location.hash = url; }
     });
 
@@ -303,6 +307,12 @@ describe('main.ts: las rutas', () => {
       expect(estado.categoriasBorradas).toEqual(['c1']);
       expect(reemplazos.at(-1)).toBe('#/categorias');
     });
+  });
+
+  it('lo compartido desde otra app abre la captura con la fuente cargada', async () => {
+    const { app } = await montar({ search: '?title=Reel&text=https%3A%2F%2Finstagram.com%2Freel%2Fabc' });
+    expect(global.location.hash).toBe('#/capturar?text=https%3A%2F%2Finstagram.com%2Freel%2Fabc');
+    expect(app.innerHTML).toContain('instagram.com/reel/abc');
   });
 
   describe('la carpeta base', () => {

@@ -13,7 +13,7 @@
     { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "share_target": {
-    "action": "/recetario/#/capturar",
+    "action": "/recetario/",
     "method": "GET",
     "params": { "title": "text", "text": "text", "url": "url" }
   }
