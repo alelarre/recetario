@@ -46,6 +46,23 @@ nombre de la categoría de cada receta sale de su carpeta. Spec en
 `docs/superpowers/specs/2026-09-13-gestion-de-categorias-design.md`. **Falta
 probarlo en el teléfono.**
 
+**Hecho el 2026-09-14:** el ícono nuevo —una olla con vapor en los colores de la
+app, `public/icono.svg` como fuente y los PNG también `maskable`—, deslizar para
+abrir y cerrar el menú lateral (`src/ui/gesto-menu.ts`, empieza a 24 px del borde
+porque desde el borde Android lo toma como «atrás»), y el arreglo del Share
+Target: lo compartido llega en la query y `hashDeCompartido` lo pasa a
+`#/capturar`. **Falta probar las tres cosas en el teléfono**, con la PWA
+reinstalada desde el ⋮ de Chrome para que tome el manifest nuevo.
+
+**Para retomar:** probar en el teléfono lo que dice «Falta probarlo» arriba —las
+etapas 1, 2 y 3a de P19 y lo del 2026-09-14—. Lo siguiente del backlog es la
+**etapa 3b de P19** (imágenes propias de categorías en Drive, guardadas en Cache
+Storage, y que *Borrar datos locales* también las borre), **P26** (rediseñar el
+selector de carpetas: primero entender qué no convence) y **P27** (favoritos y
+tags especiales: primero propuestas). Las features grandes se trabajan con spec y
+plan en `docs/superpowers/`, y el código no se commitea hasta que el usuario
+revisa el diff.
+
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
 - El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
 - Spec técnico de v1: `docs/superpowers/specs/2026-08-31-recetario-design.md`
@@ -240,17 +257,17 @@ el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
 
-**Estado al 2026-09-13:** resueltos P1 a P13, P16 a P18, P20 a P22, P24 y P25; §6.4 y §6.5
+**Estado al 2026-09-14:** resueltos P1 a P13, P16 a P18, P20 a P22, P24 y P25; §6.4 y §6.5
 cerradas. Quedan abiertos:
 
 - **P14** —que el agente escriba la fila del índice—: bloqueado. El conector de
   Google Drive de claude.ai no escribe planillas ni reescribe el contenido de un
   archivo (medido el 2026-09-12).
-- **P15** y **P19** —categorías y carpeta definidas por el usuario—: se superponen,
-  decidir juntas, a partir de qué pasa si otra persona usa la app con sus recetas.
-  Lo decidido en conversación el 2026-09-13 —carpeta base marcada, categorías
-  como hoja derivada del índice, imágenes en Cache Storage— está en la fila de
-  P19 del backlog.
+- **P15** y **P19** —categorías y carpeta definidas por el usuario—: partido en
+  etapas. **Hechas la 1** (categorías en el índice), **la 2** (carpeta base
+  elegida) **y la 3a** (gestión de categorías). **Queda la 3b:** imágenes propias
+  en Drive. Lo decidido está en la fila de P19 del backlog y en los tres specs del
+  2026-09-13.
 - **P23** —compartir recetas—: sin definir; se cruza con P15/P19.
 - **P26** —rediseñar el selector de carpetas—: no convence el actual; primero propuestas.
 - **P27** —darle entidad a favoritos y a otros tags especiales—: choca con el esquema cerrado del frontmatter; primero propuestas.
