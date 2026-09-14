@@ -339,6 +339,12 @@ verificada" una vez, que es inevitable con el scope `drive`.
 - [ ] Si `Recetario/_indice` no existe, se crea y se puebla leyendo los `.md`, con la barra de progreso de C05.5.2.
 - [ ] Si la creación falla a mitad, el archivo a medio hacer se borra antes de avisar, para que el próximo arranque no lo encuentre corrupto.
 
+#### C05.7.4 — Elegir la carpeta base *(transversal)* `[2026-09-13]`
+
+- [ ] La app encuentra su carpeta por una marca, no por el nombre.
+- [ ] Sin una carpeta marcada, ofrece elegirla —o crearla— entre las carpetas propias del usuario, y sugiere las que se llamen `Recetario`.
+- [ ] Al elegirla, crea las categorías predefinidas que falten, el índice, y recién al final la marca.
+
 ### F05.8 — Sin red
 
 Avisa y no insiste. No hay cola de reintentos, ni guardado local, ni "se guardará
@@ -385,6 +391,7 @@ no interrumpen. Se llega desde el Recetario.
 - [ ] Muestra con qué cuenta de Google está conectada la app.
 - [ ] Ofrece **Salir**, que descarta la sesión y vuelve a la pantalla de conexión.
 - [ ] Salir no borra nada de Drive y lo dice.
+- [ ] Muestra la carpeta base en uso y ofrece cambiarla; la anterior queda como está en Drive. `[2026-09-13]`
 
 #### C05.9b.2 — Índice *(J8)*
 

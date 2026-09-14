@@ -14,7 +14,7 @@ interface ArchivoDelFixture {
 
 function conRecetario(extra: ArchivoDelFixture[] = []) {
   return driveFalso([
-    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
+    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'c2', name: 'Postres', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'privada', name: '_privada', mimeType: CARPETA, parents: ['raiz'] },
@@ -29,20 +29,20 @@ const armar = (drive: DriveFalso) => {
 };
 
 describe('arranque en frío', () => {
-  it('sin carpeta Recetario no crea nada y manda al SETUP', async () => {
+  it('sin carpeta marcada no crea nada y pide elegir', async () => {
     const { store, drive } = armar(driveFalso([]));
     const r = await store.arrancar();
-    expect(r.estado).toBe('falta-estructura');
+    expect(arranqueEligiendo(r).sugerencias).toEqual([]);
     expect(drive._store.size).toBe(0);
   });
 
   it('con dos carpetas Recetario pide elegir', async () => {
     const drive = driveFalso([
-      { id: 'r1', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
-      { id: 'r2', name: 'Recetario', mimeType: CARPETA, parents: ['otra'] }
+      { id: 'r1', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
+      { id: 'r2', name: 'Recetario', mimeType: CARPETA, parents: ['otra'], appProperties: { recetario: 'raiz' } }
     ]);
     const r = await armar(drive).store.arrancar();
-    expect(arranqueEligiendo(r).candidatas).toHaveLength(2);
+    expect(arranqueEligiendo(r).sugerencias).toHaveLength(2);
   });
 
   it('las categorías salen del reindexado: las subcarpetas, sin las que empiezan con _', async () => {
@@ -137,7 +137,7 @@ describe('arranque en frío', () => {
 
   it('si la búsqueda falla arranca en solo lectura y NO crea una segunda planilla', async () => {
     const drive = conRecetario();
-    drive.fallar('buscarPorNombre', Object.assign(new Error('sin red'), { status: 0 }));
+    drive.fallar('carpetasMarcadas', Object.assign(new Error('sin red'), { status: 0 }));
     const { store } = armar(drive);
     const r = await store.arrancar();
     expect(r.estado).toBe('solo-lectura');
@@ -178,7 +178,7 @@ describe('arranque en frío', () => {
     let callCount = 0;
     drive.buscarPorNombre = async function(nombre, padre) {
       callCount++;
-      if (callCount === 2) throw Object.assign(new Error('sin red'), { status: 0 });
+      if (callCount === 1) throw Object.assign(new Error('sin red'), { status: 0 });
       return buscarOriginal.call(drive, nombre, padre);
     };
 

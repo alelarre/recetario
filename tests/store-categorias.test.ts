@@ -17,7 +17,7 @@ const PLANILLA = 'application/vnd.google-apps.spreadsheet';
  */
 function armar(hojas = ['recetas', 'meta', 'borradores', 'categorias']) {
   const drive = driveFalso([
-    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
+    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
     { id: 'c1', name: 'Pastas', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'c2', name: 'Mis tartas', mimeType: CARPETA, parents: ['raiz'], appProperties: { color: 'tartas', foto: 'catalogo:tartas-y-empanadas' } },
     { id: 'c3', name: 'Fiambres', mimeType: CARPETA, parents: ['raiz'] },
@@ -108,7 +108,7 @@ describe('cargar las categorías', () => {
 
   it('con la planilla recién creada están vacías hasta reindexar', async () => {
     const drive = driveFalso([
-      { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
+      { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
       { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] }
     ]);
     const store = crearStore({ drive, sheets: sheetsFalso(), indiceLocal: indiceLocalFalso() });
@@ -128,7 +128,7 @@ describe('cargar las categorías', () => {
   });
 
   it('crear la planilla crea las cuatro hojas', async () => {
-    const drive = driveFalso([{ id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] }]);
+    const drive = driveFalso([{ id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } }]);
     const sheets = sheetsFalso();
     const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();
@@ -176,7 +176,7 @@ describe('abrir por la copia', () => {
     const { store, drive } = await segundaApertura();
     drive._store.get('i1')!.trashed = true;
     await store.arrancar();
-    expect(drive.llamadas.some(l => l[0] === 'buscarPorNombre')).toBe(true);
+    expect(drive.llamadas.some(l => l[0] === 'carpetasMarcadas')).toBe(true);
   });
 
   it('sin red, solo-lectura: la copia no se usa para dibujar', async () => {

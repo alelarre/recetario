@@ -18,7 +18,7 @@ const CAPTURADO = '2026-09-01T10:00:00Z';
  */
 const armar = async ({ borradores: lista = [] as { id: string; titulo: string }[] } = {}) => {
   const drive = driveFalso([
-    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
+    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
     { id: 'c1', name: 'Pescados y mariscos', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },
     { id: 'bc', name: '_borradores', mimeType: CARPETA, parents: ['raiz'] },

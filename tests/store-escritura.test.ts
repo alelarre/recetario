@@ -53,7 +53,7 @@ describe('guardar: escritura sincrónica, sin cola', () => {
     // guardado como su mtime. Con el chequeo de conflicto de antes de esta
     // tarea, esta diferencia rechazaba el guardado; R4 manda pisar igual.
     const drive = driveFalso([
-      { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
+      { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
       { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },
       { id: 'f1', name: 'f1.md', parents: ['raiz'], modifiedTime: '2030-01-01T00:00:00.000Z' }
     ]);
@@ -98,7 +98,7 @@ let store: ReturnType<typeof crearStore>;
 
 beforeEach(async () => {
   drive = driveFalso([
-    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
+    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'c2', name: 'Postres', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },

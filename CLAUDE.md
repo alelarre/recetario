@@ -12,7 +12,7 @@ Ajustes.
 **Después, usando la app** (2026-09-12 y 13): se trabajó casi todo el backlog de
 uso real (`BACKLOG.md` §6) —comportamiento, diseño visual, la auditoría
 tipográfica (`product-design/ux/auditoria-tipografica.md`) y la deuda chica—, y
-las lecturas de Drive dejaron de repetirse en cada toque. **591 tests**, typecheck
+las lecturas de Drive dejaron de repetirse en cada toque. **628 tests**, typecheck
 y build en verde, y cada cambio de UI se probó en el teléfono sobre Pages.
 
 **Hecho el 2026-09-13 — el índice local (P12):** al abrir, si `_indice` no cambió
@@ -33,6 +33,12 @@ la foto son propiedades de la carpeta, las predefinidas viven en
 copia vigente es un pedido. Spec en
 `docs/superpowers/specs/2026-09-13-categorias-en-el-indice-design.md`. **Falta
 probarlo en el teléfono.**
+
+**Hecho el 2026-09-13 — carpeta base elegida (P15/P19, etapa 2):** la app encuentra
+su carpeta por una marca, ofrece un selector cuando falta, arma la estructura con
+las 16 predefinidas y permite cambiar de carpeta desde Ajustes. Spec en
+`docs/superpowers/specs/2026-09-13-carpeta-base-design.md`. **Falta probarlo en el
+teléfono.**
 
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
 - El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
@@ -175,7 +181,9 @@ Todo en español rioplatense: spec, comentarios, UI y nombres de carpetas.
 `recetas` del usuario. Las 16 categorías ya están creadas; los ids
 de cada una están en `SETUP.md`.
 
-**La app no hardcodea ninguno de esos ids.** Las categorías salen de la hoja
+**La app no busca `Recetario` por nombre:** encuentra la carpeta base por su marca en
+`appProperties` (`recetario=raiz`), y si no hay ninguna ofrece elegirla desde un
+selector (P15/P19, etapa 2). **La app no hardcodea ninguno de esos ids.** Las categorías salen de la hoja
 `categorias` de `_indice`, que el reindexado arma listando las subcarpetas: una
 carpeta nueva aparece al reindexar. Las 16 predefinidas —nombre, color y foto—
 están en `src/categorias.ts`, y el color y la foto de cada carpeta son sus

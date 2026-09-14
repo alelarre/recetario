@@ -1,3 +1,4 @@
+import { MARCA_RAIZ } from './config.js';
 import type { ArchivoDrive } from './tipos.js';
 
 const API = 'https://www.googleapis.com/drive/v3';
@@ -12,7 +13,16 @@ export const q = {
     `'${escapar(id)}' in parents and mimeType='${MIME_CARPETA}' and trashed=false`,
   porNombre: (nombre: string, padre?: string): string => padre
     ? `name='${escapar(nombre)}' and '${escapar(padre)}' in parents and trashed=false`
-    : `name='${escapar(nombre)}' and trashed=false`
+    : `name='${escapar(nombre)}' and trashed=false`,
+  /** La carpeta base: la que lleva la marca de la app. Sólo propias. */
+  marcadas: (): string =>
+    `appProperties has { key='${MARCA_RAIZ.clave}' and value='${MARCA_RAIZ.valor}' } and ` +
+    `'me' in owners and mimeType='${MIME_CARPETA}' and trashed=false`,
+  /** Las carpetas propias dentro de otra: un nivel del selector. */
+  carpetasPropiasDe: (id: string): string =>
+    `'${escapar(id)}' in parents and mimeType='${MIME_CARPETA}' and 'me' in owners and trashed=false`,
+  carpetasPropiasPorNombre: (nombre: string): string =>
+    `name='${escapar(nombre)}' and mimeType='${MIME_CARPETA}' and 'me' in owners and trashed=false`
 };
 
 export class ErrorDeDrive extends Error {
@@ -88,6 +98,9 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
     buscarPorNombre: (nombre: string, padre?: string) => listar(q.porNombre(nombre, padre)),
     listarCarpetas: (id: string) => listar(q.carpetasDe(id), 'files(id,name,appProperties)'),
     listarHijos: (id: string, campos?: string) => listar(q.hijosDe(id), campos),
+    carpetasMarcadas: () => listar(q.marcadas(), 'files(id,name,modifiedTime)'),
+    carpetasPropias: (padre: string) => listar(q.carpetasPropiasDe(padre), 'files(id,name)'),
+    carpetasPropiasPorNombre: (nombre: string) => listar(q.carpetasPropiasPorNombre(nombre), 'files(id,name)'),
     metadatos: (id: string, campos = 'id,name,parents,modifiedTime') =>
       pedir<ArchivoDrive>(`/files/${id}?fields=${campos}`),
 
@@ -127,8 +140,8 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
         method: 'PATCH', body: JSON.stringify({ name: nombre })
       }),
 
-    /** Las propiedades privadas de la app: el color y la foto de una categoría. */
-    propiedades: (id: string, props: Record<string, string>) =>
+    /** Las propiedades privadas de la app: color, foto, la marca. Una clave en `null` se borra. */
+    propiedades: (id: string, props: Record<string, string | null>) =>
       pedir<ArchivoDrive>(`/files/${id}?fields=id,appProperties`, {
         method: 'PATCH', body: JSON.stringify({ appProperties: props })
       }),

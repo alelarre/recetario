@@ -15,7 +15,7 @@ let store: ReturnType<typeof crearStore>;
 
 beforeEach(async () => {
   drive = driveFalso([
-    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
+    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'privada', name: '_privada', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },

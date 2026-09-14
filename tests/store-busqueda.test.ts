@@ -17,7 +17,7 @@ let drive: DriveFalso;
 
 beforeEach(async () => {
   drive = driveFalso([
-    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
+    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'c2', name: 'Postres', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] }

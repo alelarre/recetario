@@ -1,8 +1,12 @@
 # Setup
 
-Pasos manuales, una sola vez. **Nada de esto es lógica de la aplicación:** la app
-asume que la estructura de Drive ya existe y no la crea. Si falta algo, falla con
-un mensaje que apunta a este documento.
+Pasos manuales, una sola vez.
+
+`[2026-09-13]` **La carpeta y las categorías ya no se crean a mano.** Al abrir, si
+no hay una carpeta marcada, la app ofrece elegir una —o crearla— y arma la
+estructura con las 16 categorías predefinidas. La sección 1 queda como referencia
+de cómo está armado el Drive de este proyecto; lo que sigue haciendo falta a mano
+es el cliente OAuth (§3) y la publicación (§4).
 
 ## 1. Estructura en Drive — hecho (2026-09-01)
 

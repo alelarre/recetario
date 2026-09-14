@@ -39,14 +39,27 @@ const estado = {
   /** Lo que el arranque dice de las planillas `_indice` repetidas. */
   indiceDuplicado: null as null | { cantidad: number; modifiedTime: string },
   /** Cuántas veces se borró la copia local del índice. */
-  copiasBorradas: 0
+  copiasBorradas: 0,
+  /** El arranque termina en elegir-carpeta, con estas sugerencias. */
+  eligiendo: null as null | { id: string; name: string }[],
+  /** Las carpetas que se prepararon con el setup, en orden. */
+  preparadas: [] as string[],
+  /** Cuántas veces se anotó la carpeta anterior como reemplazada. */
+  reemplazadas: 0
 };
 
 const storeFake = {
-  arrancar: async () => ({
-    estado: 'listo', reconstruir: false, raizId: 'raiz',
-    categorias: [{ id: 'c1', nombre: 'Carnes' }], indiceDuplicado: estado.indiceDuplicado
-  }),
+  arrancar: async () => estado.eligiendo
+    ? { estado: 'elegir-carpeta', sugerencias: estado.eligiendo, avisos: [] }
+    : {
+        estado: 'listo', reconstruir: false, raizId: 'raiz',
+        categorias: [{ id: 'c1', nombre: 'Carnes' }], indiceDuplicado: estado.indiceDuplicado
+      },
+  carpeta: () => ({ id: 'raiz', nombre: 'Recetario' }),
+  carpetasDe: async () => [{ id: 'a1', nombre: 'Cocina' }],
+  crearCarpeta: async (nombre: string) => ({ id: 'nueva', nombre }),
+  prepararCarpeta: async (c: { id: string }) => { estado.preparadas.push(c.id); return { ignorados: [] }; },
+  marcarReemplazada: async () => { estado.reemplazadas++; },
   cargarIndice: async () => [],
   guardarMeta: async () => {},
   ultimaReconstruccion: () => '',
@@ -107,6 +120,9 @@ describe('main.ts: las rutas', () => {
     estado.lecturasBorradores = 0;
     estado.indiceDuplicado = null;
     estado.copiasBorradas = 0;
+    estado.eligiendo = null;
+    estado.preparadas = [];
+    estado.reemplazadas = 0;
     vi.unstubAllGlobals();
     delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
@@ -238,6 +254,51 @@ describe('main.ts: las rutas', () => {
     await tocar('borrar-datos-locales');
     expect(estado.copiasBorradas).toBe(1);
     expect(recargas).toHaveLength(1);
+  });
+
+  describe('la carpeta base', () => {
+    it('sin carpeta marcada, el arranque lleva al selector con las sugerencias', async () => {
+      estado.eligiendo = [{ id: 'r1', name: 'Recetario' }];
+      const { app, reemplazos } = await montar();
+      expect(reemplazos).toContain('#/carpeta');
+      expect(app.innerHTML).toContain('Elegí la carpeta de tus recetas');
+      expect(app.innerHTML).toContain('data-id="r1"');
+    });
+
+    it('mientras no hay carpeta, otra ruta vuelve al selector', async () => {
+      estado.eligiendo = [];
+      const { abrir, reemplazos } = await montar();
+      await abrir('#/ajustes');
+      expect(reemplazos.at(-1)).toBe('#/carpeta');
+    });
+
+    it('elegir una sugerencia confirma, prepara la carpeta y recarga', async () => {
+      estado.eligiendo = [{ id: 'r1', name: 'Recetario' }];
+      const { app, tocar, recargas } = await montar();
+      await tocar('carpeta-sugerida', { id: 'r1', nombre: 'Recetario' });
+      expect(app.innerHTML).toContain('Voy a usar <b>Recetario</b>.');
+      await tocar('carpeta-confirmar');
+      expect(estado.preparadas).toEqual(['r1']);
+      expect(estado.reemplazadas).toBe(0);
+      expect(recargas).toHaveLength(1);
+    });
+
+    it('cambiar de carpeta desde Ajustes anota la anterior antes de preparar la nueva', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/ajustes');
+      await tocar('cambiar-carpeta');
+      await abrir('#/carpeta?id=a1&nombre=Cocina');
+      await tocar('carpeta-usar');
+      await tocar('carpeta-confirmar');
+      expect(estado.reemplazadas).toBe(1);
+      expect(estado.preparadas).toEqual(['a1']);
+    });
+
+    it('Ajustes dice qué carpeta se usa', async () => {
+      const { app, abrir } = await montar();
+      await abrir('#/ajustes');
+      expect(app.innerHTML).toContain('Carpeta: Recetario');
+    });
   });
 
   it('Salir borra la copia local del índice, además del token', async () => {

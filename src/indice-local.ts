@@ -18,6 +18,8 @@ export interface CopiaIndice {
   indiceId: string;
   /** La carpeta `Recetario/`: con ella y `indiceId`, abrir no busca nada. */
   raizId: string;
+  /** El nombre de la carpeta, para mostrar en Ajustes sin pedidos. */
+  raizNombre: string;
   /** El modifiedTime de `_indice` en Drive cuando se guardó la copia. */
   modifiedTime: string;
   /** La hoja `meta`: schemaVersion, ultima_reconstruccion, reconstruccion_en_curso. */
@@ -76,5 +78,6 @@ function esCopia(c: unknown): c is CopiaIndice {
     && Array.isArray(x['filas'])
     && Array.isArray(x['borradores'])
     && typeof x['raizId'] === 'string'
+    && typeof x['raizNombre'] === 'string'
     && Array.isArray(x['categorias']);
 }

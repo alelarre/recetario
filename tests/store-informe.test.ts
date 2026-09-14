@@ -19,7 +19,7 @@ function armar({
   conIndice = true
 } = {}) {
   const drive = driveFalso([
-    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
+    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'c2', name: 'Postres', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'bc', name: '_borradores', mimeType: CARPETA, parents: ['raiz'] },
@@ -37,7 +37,7 @@ function armar({
 
 const copiaVigente = (cambios: Partial<CopiaIndice> = {}): CopiaIndice => ({
   schemaVersion: SCHEMA_VERSION, indiceId: 'i1', modifiedTime: FECHA,
-  meta: { schemaVersion: String(SCHEMA_VERSION) }, filas: [], borradores: [], raizId: 'raiz', categorias: [], ...cambios
+  meta: { schemaVersion: String(SCHEMA_VERSION) }, filas: [], borradores: [], raizId: 'raiz', raizNombre: 'Recetario', categorias: [], ...cambios
 });
 
 describe('el informe del arranque (P18)', () => {

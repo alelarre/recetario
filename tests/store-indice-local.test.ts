@@ -25,7 +25,7 @@ async function armar({
   meta = [['schemaVersion', String(SCHEMA_VERSION)]] as string[][]
 } = {}) {
   const drive = driveFalso([
-    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
+    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'], modifiedTime: FECHA },
     { id: 'r1', name: 'r1.md', parents: ['c1'], contenido: '---\ntitulo: Milanesas\n---\n' }
@@ -55,6 +55,7 @@ const copiaVigente = (cambios: Partial<CopiaIndice> = {}): CopiaIndice => ({
   ],
   borradores: [],
   raizId: 'raiz',
+  raizNombre: 'Recetario',
   categorias: [],
   ...cambios
 });
@@ -128,7 +129,7 @@ describe('al abrir, con la copia local del índice', () => {
 
   it('con la planilla recién creada, cargar no guarda copia: la guarda el reindexado', async () => {
     const drive = driveFalso([
-      { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
+      { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
       { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] }
     ]);
     const indiceLocal = indiceLocalFalso();

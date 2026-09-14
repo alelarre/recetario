@@ -9,6 +9,12 @@ export const NOMBRE_INDICE = '_indice';
 /** La carpeta de los borradores, un `.md` por borrador. El `_` la deja fuera de las categorías. */
 export const NOMBRE_BORRADORES = '_borradores';
 
+/**
+ * La marca de la carpeta base en sus `appProperties`. La app la encuentra por
+ * esta marca y no por el nombre: la carpeta puede llamarse como el usuario quiera.
+ */
+export const MARCA_RAIZ = { clave: 'recetario', valor: 'raiz' } as const;
+
 // Subir esta versión fuerza una reconstrucción del índice en el próximo
 // arranque. Fue a 2 con el rediseño —la fila sumó `foto` y `completa`—, a 3
 // el 2026-09-12 —la columna `completa` pasó de guardar un cálculo a guardar lo

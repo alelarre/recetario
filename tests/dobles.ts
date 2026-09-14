@@ -1,4 +1,6 @@
 import { COLUMNAS } from '../src/catalogo.js';
+
+const MIME_CARPETA = 'application/vnd.google-apps.folder';
 import type { PropiedadesHoja } from '../src/sheets.js';
 import type { Entrada, Receta } from '../src/tipos.js';
 import { parse } from '../src/recipe.js';
@@ -22,6 +24,8 @@ interface ArchivoFalso {
   trashed?: boolean;
   contenido?: string;
   appProperties?: Record<string, string>;
+  /** De otra persona, compartida con el usuario: `'me' in owners` la deja afuera. */
+  ajena?: boolean;
 }
 
 /**
@@ -52,6 +56,19 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
     },
     async listarHijos(id: string) {
       return vivos().filter(a => (a.parents ?? []).includes(id));
+    },
+    async carpetasMarcadas() {
+      api.llamadas.push(['carpetasMarcadas']);
+      if (fallas.has('carpetasMarcadas')) throw fallas.get('carpetasMarcadas');
+      return vivos().filter(a => a.mimeType === MIME_CARPETA && !a.ajena && a.appProperties?.['recetario'] === 'raiz');
+    },
+    async carpetasPropias(padre: string) {
+      api.llamadas.push(['carpetasPropias', padre]);
+      if (fallas.has('carpetasPropias')) throw fallas.get('carpetasPropias');
+      return vivos().filter(a => a.mimeType === MIME_CARPETA && !a.ajena && (a.parents ?? []).includes(padre));
+    },
+    async carpetasPropiasPorNombre(nombre: string) {
+      return vivos().filter(a => a.mimeType === MIME_CARPETA && !a.ajena && a.name === nombre);
     },
     // Como el real: un id que no está es un 404, que el arranque distingue de
     // no poder preguntar.
@@ -87,10 +104,14 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       a.name = nombre;
       return a;
     },
-    async propiedades(id: string, props: Record<string, string>) {
+    async propiedades(id: string, props: Record<string, string | null>) {
       api.llamadas.push(['propiedades', id, props]);
       const a = exigir(id);
-      a.appProperties = { ...a.appProperties, ...props };
+      const nuevas: Record<string, string> = { ...a.appProperties };
+      for (const [clave, valor] of Object.entries(props)) {
+        if (valor === null) delete nuevas[clave]; else nuevas[clave] = valor;
+      }
+      a.appProperties = nuevas;
       return a;
     },
     async mover(id: string, { de, a: destino }: { de: string; a: string }) {

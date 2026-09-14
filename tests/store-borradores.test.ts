@@ -26,7 +26,7 @@ async function armar({
   copia = null as CopiaIndice | null
 } = {}) {
   const drive = driveFalso([
-    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] },
+    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
     { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
     { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'], modifiedTime: FECHA },
     ...(conCarpeta ? [
@@ -112,7 +112,7 @@ describe('los borradores al abrir', () => {
   });
 
   it('crear la planilla crea también la hoja borradores con su encabezado', async () => {
-    const drive = driveFalso([{ id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'] }]);
+    const drive = driveFalso([{ id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } }]);
     const sheets = sheetsFalso();
     const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();

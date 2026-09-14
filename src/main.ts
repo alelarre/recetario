@@ -20,6 +20,8 @@ import { renderBorradores, renderBorrador } from './ui/borradores.js';
 import { renderCaptura } from './ui/captura.js';
 import { renderAjustes } from './ui/ajustes.js';
 import { renderConexion } from './ui/conexion.js';
+import { renderSelector } from './ui/carpeta.js';
+import type { CarpetaSimple } from './ui/carpeta.js';
 import { aviso } from './ui/componentes.js';
 import { registrarCategorias } from './ui/categorias.js';
 import { convertirBorrador } from './compartido.js';
@@ -62,6 +64,20 @@ let observadorTramo: IntersectionObserver | null = null;
  * El estado del modo cocina. Se limpia al entrar: al volver a abrir una receta
  * no hay ningún paso realzado ni marcado (C03.2.4). No persiste en ningún lado.
  */
+/**
+ * El selector de la carpeta base. Las sugerencias vienen del arranque; el nivel
+ * que se mira, de la ruta. Lo leído de cada nivel se reutiliza en sus
+ * redibujados —confirmar, crear, cancelar—.
+ */
+const selector = {
+  sugerencias: [] as CarpetaSimple[],
+  nivel: null as null | { id: string; carpetas: CarpetaSimple[] },
+  confirmando: null as CarpetaSimple | null,
+  creando: false,
+  cambiando: false,
+  error: ''
+};
+
 /** El menú lateral desplegado. Sólo aplica en pantalla angosta: desde 900 px es fijo. */
 let menuAbierto = false;
 
@@ -235,17 +251,11 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
 
   // Los tres estados que no llegan a 'listo' avisan en castellano, con su
   // control: ninguno muestra el mensaje crudo de Google (R1).
-  if (estadoArranque.estado === 'falta-estructura') {
-    return pintar('<div class="cuerpo">' + aviso({
-      texto: 'No encontré la carpeta Recetario en tu Drive. Está en SETUP.md cómo crearla.',
-      accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
-    }) + '</div>');
-  }
   if (estadoArranque.estado === 'elegir-carpeta') {
-    return pintar('<div class="cuerpo">' + aviso({
-      texto: 'Hay más de una carpeta llamada Recetario en tu Drive. Dejá una sola y volvé a entrar.',
-      accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
-    }) + '</div>');
+    selector.sugerencias = estadoArranque.sugerencias.map(c => ({ id: c.id, nombre: c.name ?? '' }));
+    location.replace('#/carpeta');
+    router.iniciar();
+    return;
   }
   if (estadoArranque.estado === 'solo-lectura') {
     return pintar('<div class="cuerpo">' + aviso({
@@ -343,6 +353,12 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   const cambiaDePantalla = !vistaActual || ruta.vista !== vistaActual.vista
     || ruta.params.nombre !== vistaActual.params.nombre || ruta.params.id !== vistaActual.params.id;
 
+  // Sin carpeta base no hay con qué dibujar ninguna otra pantalla.
+  if (estadoArranque?.estado === 'elegir-carpeta' && ruta.vista !== 'carpeta') {
+    location.replace('#/carpeta');
+    return;
+  }
+
   // Salir del editor con cambios pregunta antes (C04.1.1). El `hashchange` no
   // se puede cancelar: cuando llega, el volver del encabezado o el gesto de
   // atrás ya cambiaron la URL. Así que no se dibuja la pantalla nueva —el
@@ -370,6 +386,11 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     menuAbierto = false;
     confirmandoDescarte = false;
     editandoBorrador = false;
+    // Salir del selector lo cierra: lo que se estaba por usar o crear no sigue.
+    if (ruta.vista !== 'carpeta') selector.cambiando = false;
+    selector.confirmando = null;
+    selector.creando = false;
+    selector.error = '';
     if (ruta.vista !== 'capturar' && ruta.vista !== 'borrador') {
       tituloCaptura = ''; notaCaptura = ''; guardandoCaptura = false; errorCaptura = '';
     }
@@ -439,8 +460,27 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
         indiceDuplicado: indiceDuplicado(), reindexando,
         borradores: store.borradores().length, menuAbierto,
-        informe: informeArranque(), recetas: store.entradas().length, categorias: store.categorias().length
+        informe: informeArranque(), recetas: store.entradas().length, categorias: store.categorias().length,
+        carpeta: store.carpeta().nombre
       }));
+
+    case 'carpeta': {
+      const nivel = { id: ruta.params['id'] ?? 'root', nombre: ruta.params['nombre'] ?? '' };
+      if (selector.nivel?.id !== nivel.id) {
+        selector.nivel = null;
+        pintar(renderSelector({ ...selector, nivel, carpetas: null }));
+        try {
+          selector.nivel = { id: nivel.id, carpetas: await store.carpetasDe(nivel.id) };
+        } catch (err) {
+          console.error(err);
+          return pintar(renderSelector({ ...selector, nivel, carpetas: [], error: 'No se pudieron leer las carpetas.' }));
+        }
+      }
+      const { error, ...resto } = selector;
+      return pintar(renderSelector({
+        ...resto, nivel, carpetas: selector.nivel?.carpetas ?? [], ...(error ? { error } : {})
+      }));
+    }
 
     case 'capturar': {
       // La captura no dibuja la app: es una pantalla efímera sobre lo que el
@@ -664,6 +704,51 @@ app.addEventListener('click', async (e) => {
   }
   if (accion === 'reindexar') return reconstruir({ enAjustes: true });
   if (accion === 'conectar') return arrancar({ pidiendoPermiso: true });
+  if (accion === 'cambiar-carpeta') {
+    selector.cambiando = true;
+    location.hash = '#/carpeta';
+    return;
+  }
+  if (accion === 'carpeta-sugerida') {
+    selector.confirmando = { id: boton.dataset['id'] ?? '', nombre: boton.dataset['nombre'] ?? '' };
+    return render();
+  }
+  if (accion === 'carpeta-usar') {
+    selector.confirmando = { id: vistaActual?.params['id'] ?? '', nombre: vistaActual?.params['nombre'] ?? '' };
+    return render();
+  }
+  if (accion === 'carpeta-crear') { selector.creando = true; return render(); }
+  if (accion === 'carpeta-cancelar') { selector.confirmando = null; selector.creando = false; return render(); }
+  if (accion === 'carpeta-crear-confirmado') {
+    const nombre = document.querySelector<HTMLInputElement>('#app input[name="nombre-carpeta"]')?.value.trim() || 'Recetario';
+    try {
+      selector.confirmando = await store.crearCarpeta(nombre, vistaActual?.params['id'] ?? 'root');
+      selector.creando = false;
+      selector.nivel = null;   // el nivel ganó una carpeta
+    } catch (err) {
+      console.error(err);
+      selector.error = 'No se pudo crear la carpeta.';
+    }
+    return render();
+  }
+  if (accion === 'carpeta-confirmar') {
+    const elegida = selector.confirmando;
+    if (!elegida) return;
+    try {
+      // La anotación es para los otros dispositivos: si falla, el cambio sigue.
+      if (selector.cambiando) await store.marcarReemplazada().catch(err => console.error(err));
+      pintar(renderConexion({ estado: 'creando-indice' }));
+      await store.prepararCarpeta(elegida, progreso => pintar(renderConexion({ estado: 'creando-indice', progreso })));
+      // La copia ya es la de la carpeta elegida: recargar abre con un pedido.
+      location.replace('#/');
+      location.reload();
+    } catch (err) {
+      console.error(err);
+      selector.error = 'No se pudo preparar la carpeta. Revisá la conexión.';
+      await render();
+    }
+    return;
+  }
   if (accion === 'borrar-datos-locales') {
     // Recargar y no seguir: lo que hay en memoria salió de esa copia, y la
     // próxima escritura la volvería a guardar igual.
@@ -908,7 +993,10 @@ app.addEventListener('click', async (e) => {
   }
 
   // Reintentar es volver a pedir: lo leído no se reutiliza.
-  if (accion === 'reintentar') { recetaLeida = null; borradorLeido = null; return render(); }
+  if (accion === 'reintentar') {
+    recetaLeida = null; borradorLeido = null; selector.nivel = null; selector.error = '';
+    return render();
+  }
 });
 
 /**

@@ -5,6 +5,12 @@ import type { InformeArranque } from '../src/store.js';
 const base = { cuenta: 'a@b.c', ultimaReindexado: '', ignorados: [] as string[], reindexando: null };
 
 describe('Ajustes', () => {
+  it('la ficha Cuenta dice qué carpeta se usa y ofrece cambiarla', () => {
+    const html = renderAjustes({ ...base, carpeta: 'Recetario' });
+    expect(html).toContain('Carpeta: Recetario');
+    expect(html).toContain('data-accion="cambiar-carpeta"');
+  });
+
   it('las tres secciones: cuenta, índice y avisos', () => {
     const html = renderAjustes({ ...base, cuenta: 'alguien@gmail.com', ultimaReindexado: '2026-09-06T10:00:00Z' });
     expect(html).toContain('alguien@gmail.com');

@@ -264,7 +264,10 @@ Abro la app por primera vez
   ▸ popup de Google
   ▸ pantalla de "app no verificada"     ⚑ una vez, inevitable sin verificación
   → acepto
-  ▸ la app busca Recetario/ en Drive
+  ▸ la app busca la carpeta marcada
+  ⚑ ¿hay una?
+      no  → selector: elijo o creo una carpeta
+            ▸ la app crea las categorías que falten, el índice, y marca la carpeta
   ⚑ ¿existe el índice?
       sí  → arranca
       no  → lo crea, leyendo los .md

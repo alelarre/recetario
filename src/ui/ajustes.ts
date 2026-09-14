@@ -23,12 +23,14 @@ export interface OpcionesAjustes {
   recetas?: number;
   /** Cuántas categorías hay ahora, para la ficha «Al abrir». */
   categorias?: number;
+  /** El nombre de la carpeta base en uso. */
+  carpeta?: string;
   /** El menú lateral está desplegado (sólo en pantalla angosta). */
   menuAbierto?: boolean;
 }
 
 export function renderAjustes(
-  { cuenta, ultimaReindexado, ignorados, indiceDuplicado, reindexando, borradores = 0, menuAbierto, informe, recetas = 0, categorias = 0 }: OpcionesAjustes
+  { cuenta, ultimaReindexado, ignorados, indiceDuplicado, reindexando, borradores = 0, menuAbierto, informe, recetas = 0, categorias = 0, carpeta = '' }: OpcionesAjustes
 ): string {
   const enCurso = !!reindexando;
 
@@ -36,6 +38,10 @@ export function renderAjustes(
     `<div class="fila-a"><span class="t">${escapar(cuenta || 'Sin cuenta conectada')}</span>` +
     '<button class="btn sec compacto" data-accion="salir">Salir</button></div>' +
     '<p class="aviso-mudo" style="margin:var(--e-2) 0 0">Salir no borra nada de Drive.</p>' +
+    (carpeta
+      ? `<div class="fila-a" style="margin-top:var(--e-3)"><span class="t">Carpeta: ${escapar(carpeta)}</span>` +
+        '<button class="btn sec compacto" data-accion="cambiar-carpeta">Cambiar carpeta</button></div>'
+      : '') +
   '</div>';
 
   // Con número hay barra y sin número hay spinner (mockup 10): antes de la

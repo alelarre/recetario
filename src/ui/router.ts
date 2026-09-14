@@ -1,7 +1,7 @@
 /** Las vistas que la app sabe dibujar. El hash es el único estado de navegación. */
 export type Vista =
   | 'recetario' | 'categoria' | 'resultados' | 'receta' | 'cocinar'
-  | 'editar' | 'nueva' | 'borradores' | 'borrador' | 'capturar' | 'ajustes';
+  | 'editar' | 'nueva' | 'borradores' | 'borrador' | 'capturar' | 'ajustes' | 'carpeta';
 
 export interface Ruta {
   vista: Vista;
@@ -50,6 +50,15 @@ export function parsearHash(hash: unknown): Ruta {
   // pueden venir vacíos y la captura igual se abre (F01.2).
   if (partes[0] === 'capturar') {
     return { vista: 'capturar', params: { url: params['url'] ?? '', text: params['text'] ?? '' } };
+  }
+
+  // El selector de la carpeta base: el nivel que se mira viaja en la query, y
+  // volver un nivel es el historial.
+  if (partes[0] === 'carpeta') {
+    const nivel: Record<string, string> = {};
+    if (params['id']) nivel['id'] = params['id'];
+    if (params['nombre']) nivel['nombre'] = params['nombre'];
+    return { vista: 'carpeta', params: nivel };
   }
 
   return { vista: 'recetario', params: {} };

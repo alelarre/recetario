@@ -33,6 +33,11 @@ describe('parsearHash', () => {
     expect(parsearHash('#/no-existe')).toEqual({ vista: 'recetario', params: {} });
   });
 
+  it('el selector de carpeta, con el nivel en la query', () => {
+    expect(parsearHash('#/carpeta')).toEqual({ vista: 'carpeta', params: {} });
+    expect(parsearHash('#/carpeta?id=a1&nombre=Cocina')).toEqual({ vista: 'carpeta', params: { id: 'a1', nombre: 'Cocina' } });
+  });
+
   it('reconoce las rutas nuevas', () => {
     expect(parsearHash('#/borradores')).toEqual({ vista: 'borradores', params: {} });
     expect(parsearHash('#/borradores/b1')).toEqual({ vista: 'borrador', params: { id: 'b1' } });
