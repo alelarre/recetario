@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- El ícono de la app: una olla con vapor. El dibujo queda dentro de la zona
+       segura de Android (un círculo de 40 de radio): sirve también como maskable. -->
+  <rect width="100" height="100" fill="#17140F"/>
+  <rect x="29" y="50" width="42" height="22" rx="6" fill="#D98A5F"/>
+  <rect x="25" y="45" width="50" height="5" rx="2.5" fill="#D98A5F"/>
+  <g fill="none" stroke="#F2EBE1" stroke-width="3.5" stroke-linecap="round">
+    <path d="M41 39c-3-4 3-7 0-11"/><path d="M50 39c-3-4 3-7 0-11"/><path d="M59 39c-3-4 3-7 0-11"/>
+  </g>
+</svg>
