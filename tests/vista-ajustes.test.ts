@@ -73,7 +73,7 @@ describe('Ajustes', () => {
   });
 });
 
-describe('Ajustes: la ficha «Al abrir» (P18)', () => {
+describe('Ajustes: la ficha «Registro de actividad» (P18)', () => {
   const f = (d: number, h: number, m: number) => new Date(2026, 8, d, h, m).toISOString();
   const informe: InformeArranque = {
     momento: f(13, 14, 31), indiceModificado: f(13, 14, 30), copia: 'coincide',
@@ -84,7 +84,7 @@ describe('Ajustes: la ficha «Al abrir» (P18)', () => {
 
   it('dice cuándo abrió, la fecha de _indice, lo que hay y que no reindexó', () => {
     const html = conInforme();
-    expect(html).toContain('<h2>Al abrir</h2>');
+    expect(html).toContain('<h2>Registro de actividad</h2>');
     expect(html).toContain('Abrió el 13/09 a las 14:31.');
     expect(html).toContain('_indice: modificada el 13/09 a las 14:30.');
     expect(html).toContain('Copia local: coincide con _indice; no se leyó Sheets.');
@@ -128,14 +128,14 @@ describe('Ajustes: la ficha «Al abrir» (P18)', () => {
   });
 
   it('sin informe no hay ficha', () => {
-    expect(renderAjustes(base)).not.toContain('Al abrir');
+    expect(renderAjustes(base)).not.toContain('Registro de actividad');
   });
 });
 
 describe('Ajustes: borrar los datos locales (P24)', () => {
   it('ofrece borrar lo guardado en este navegador, y dice qué pasa después', () => {
     const html = renderAjustes(base);
-    expect(html).toContain('<h2>En este navegador</h2>');
+    expect(html).toContain('<h2>Archivos locales</h2>');
     expect(html).toContain('data-accion="borrar-datos-locales"');
     expect(html).toMatch(/se baja todo de Drive/);
   });
@@ -143,5 +143,17 @@ describe('Ajustes: borrar los datos locales (P24)', () => {
   it('mientras reindexa no se ofrece', () => {
     expect(renderAjustes({ ...base, reindexando: { leidas: 1, total: 2 } }))
       .not.toContain('data-accion="borrar-datos-locales"');
+  });
+});
+
+describe('Ajustes: el orden de las fichas (P25)', () => {
+  it('Cuenta, Índice, Archivos locales, Avisos y Registro de actividad, en ese orden', () => {
+    const informe = {
+      momento: new Date(2026, 8, 13, 14, 31).toISOString(), indiceModificado: '', copia: 'coincide' as const,
+      copiaModificada: '', reindexado: '' as const
+    };
+    const html = renderAjustes({ ...base, informe });
+    const titulos = [...html.matchAll(/<h2>([^<]+)<\/h2>/g)].map(m => m[1]);
+    expect(titulos).toEqual(['Cuenta', 'Índice', 'Archivos locales', 'Avisos', 'Registro de actividad']);
   });
 });

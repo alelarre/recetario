@@ -12,7 +12,7 @@ Ajustes.
 **Después, usando la app** (2026-09-12 y 13): se trabajó casi todo el backlog de
 uso real (`BACKLOG.md` §6) —comportamiento, diseño visual, la auditoría
 tipográfica (`product-design/ux/auditoria-tipografica.md`) y la deuda chica—, y
-las lecturas de Drive dejaron de repetirse en cada toque. **628 tests**, typecheck
+las lecturas de Drive dejaron de repetirse en cada toque. **629 tests**, typecheck
 y build en verde, y cada cambio de UI se probó en el teléfono sobre Pages.
 
 **Hecho el 2026-09-13 — el índice local (P12):** al abrir, si `_indice` no cambió
@@ -230,7 +230,7 @@ el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
 
-**Estado al 2026-09-13:** resueltos P1 a P13, P16 a P18, P20 a P22 y P24; §6.4 y §6.5
+**Estado al 2026-09-13:** resueltos P1 a P13, P16 a P18, P20 a P22, P24 y P25; §6.4 y §6.5
 cerradas. Quedan abiertos:
 
 - **P14** —que el agente escriba la fila del índice—: bloqueado. El conector de
@@ -242,7 +242,6 @@ cerradas. Quedan abiertos:
   como hoja derivada del índice, imágenes en Cache Storage— está en la fila de
   P19 del backlog.
 - **P23** —compartir recetas—: sin definir; se cruza con P15/P19.
-- **P25** —reordenar y renombrar las fichas de Ajustes—.
 
 Y queda el contenido.
 

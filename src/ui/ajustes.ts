@@ -19,9 +19,9 @@ export interface OpcionesAjustes {
   borradores?: number;
   /** Lo que verificó el arranque de esta sesión (P18). */
   informe?: InformeArranque | null;
-  /** Cuántas recetas tiene el índice ahora, para la ficha «Al abrir». */
+  /** Cuántas recetas tiene el índice ahora, para el registro de actividad. */
   recetas?: number;
-  /** Cuántas categorías hay ahora, para la ficha «Al abrir». */
+  /** Cuántas categorías hay ahora, para el registro de actividad. */
   categorias?: number;
   /** El nombre de la carpeta base en uso. */
   carpeta?: string;
@@ -78,10 +78,11 @@ export function renderAjustes(
   return lateral({ activo: 'ajustes', borradores, ...(menuAbierto ? { abierto: true } : {}) }) +
     '<div class="conten">' +
       encabezado({ titulo: 'Ajustes', grande: true, izquierda: botonMenu(borradores) }) +
+      // El orden de P25: lo de la cuenta y el índice primero, lo raro al final.
       '<div class="cuerpo">' + seccionCuenta + seccionIndice +
-        (informe ? fichaAlAbrir(informe, recetas, borradores, categorias) : '') +
         (enCurso ? '' : FICHA_DATOS_LOCALES) +
         `<div class="ficha"><h2>Avisos</h2>${lista}</div>` +
+        (informe ? fichaAlAbrir(informe, recetas, borradores, categorias) : '') +
       '</div>' +
     '</div>';
 }
@@ -94,7 +95,7 @@ const porcentaje = ({ leidas, total }: Progreso): number =>
  * para una copia local corrupta o vieja. Mientras reindexa no se ofrece, igual
  * que Reindexar.
  */
-const FICHA_DATOS_LOCALES = '<div class="ficha"><h2>En este navegador</h2>' +
+const FICHA_DATOS_LOCALES = '<div class="ficha"><h2>Archivos locales</h2>' +
   '<p class="aviso-mudo" style="margin:0 0 var(--e-3)">La copia del índice se guarda acá para abrir más rápido. ' +
   'Si algo se ve viejo o roto, borrala: la app se recarga y se baja todo de Drive.</p>' +
   '<button class="btn sec" style="width:100%" data-accion="borrar-datos-locales">Borrar datos locales</button>' +
@@ -137,7 +138,7 @@ function fichaAlAbrir(informe: InformeArranque, recetas: number, borradores: num
       `${contar(categorias, 'categoría', 'categorías')}.`,
     REINDEXADO[reindexado]
   ];
-  return '<div class="ficha"><h2>Al abrir</h2>' +
+  return '<div class="ficha"><h2>Registro de actividad</h2>' +
     lineas.map(l => `<p class="aviso-mudo" style="margin:0 0 var(--e-2)">${escapar(l)}</p>`).join('') +
   '</div>';
 }
