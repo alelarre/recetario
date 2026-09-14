@@ -12,7 +12,7 @@ Ajustes.
 **Después, usando la app** (2026-09-12 y 13): se trabajó casi todo el backlog de
 uso real (`BACKLOG.md` §6) —comportamiento, diseño visual, la auditoría
 tipográfica (`product-design/ux/auditoria-tipografica.md`) y la deuda chica—, y
-las lecturas de Drive dejaron de repetirse en cada toque. **629 tests**, typecheck
+las lecturas de Drive dejaron de repetirse en cada toque. **664 tests**, typecheck
 y build en verde, y cada cambio de UI se probó en el teléfono sobre Pages.
 
 **Hecho el 2026-09-13 — el índice local (P12):** al abrir, si `_indice` no cambió
@@ -39,6 +39,12 @@ su carpeta por una marca, ofrece un selector cuando falta, arma la estructura co
 las 16 predefinidas y permite cambiar de carpeta desde Ajustes. Spec en
 `docs/superpowers/specs/2026-09-13-carpeta-base-design.md`. **Falta probarlo en el
 teléfono.**
+
+**Hecho el 2026-09-13 — gestión de categorías (P15/P19, etapa 3a):** crear,
+renombrar, editar color y foto, y borrar categorías desde *Ajustes → Recetario*; el
+nombre de la categoría de cada receta sale de su carpeta. Spec en
+`docs/superpowers/specs/2026-09-13-gestion-de-categorias-design.md`. **Falta
+probarlo en el teléfono.**
 
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
 - El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
@@ -185,7 +191,8 @@ de cada una están en `SETUP.md`.
 `appProperties` (`recetario=raiz`), y si no hay ninguna ofrece elegirla desde un
 selector (P15/P19, etapa 2). **La app no hardcodea ninguno de esos ids.** Las categorías salen de la hoja
 `categorias` de `_indice`, que el reindexado arma listando las subcarpetas: una
-carpeta nueva aparece al reindexar. Las 16 predefinidas —nombre, color y foto—
+carpeta creada a mano en Drive aparece al reindexar, aunque el camino normal es
+crearla desde *Ajustes → Recetario → Categorías*. Las 16 predefinidas —nombre, color y foto—
 están en `src/categorias.ts`, y el color y la foto de cada carpeta son sus
 `appProperties` en Drive.
 

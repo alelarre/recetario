@@ -33,6 +33,12 @@ describe('parsearHash', () => {
     expect(parsearHash('#/no-existe')).toEqual({ vista: 'recetario', params: {} });
   });
 
+  it('la gestión de categorías', () => {
+    expect(parsearHash('#/categorias')).toEqual({ vista: 'categorias', params: {} });
+    expect(parsearHash('#/categorias/nueva')).toEqual({ vista: 'editar-categoria', params: { id: 'nueva' } });
+    expect(parsearHash('#/categorias/c1')).toEqual({ vista: 'editar-categoria', params: { id: 'c1' } });
+  });
+
   it('el selector de carpeta, con el nivel en la query', () => {
     expect(parsearHash('#/carpeta')).toEqual({ vista: 'carpeta', params: {} });
     expect(parsearHash('#/carpeta?id=a1&nombre=Cocina')).toEqual({ vista: 'carpeta', params: { id: 'a1', nombre: 'Cocina' } });

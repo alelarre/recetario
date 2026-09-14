@@ -38,10 +38,17 @@ export function renderAjustes(
     `<div class="fila-a"><span class="t">${escapar(cuenta || 'Sin cuenta conectada')}</span>` +
     '<button class="btn sec compacto" data-accion="salir">Salir</button></div>' +
     '<p class="aviso-mudo" style="margin:var(--e-2) 0 0">Salir no borra nada de Drive.</p>' +
+  '</div>';
+
+  // La carpeta y sus categorías, juntas y fuera de Cuenta. Mientras reindexa no
+  // se ofrece nada, igual que Índice.
+  const seccionRecetario = '<div class="ficha"><h2>Recetario</h2>' +
     (carpeta
-      ? `<div class="fila-a" style="margin-top:var(--e-3)"><span class="t">Carpeta: ${escapar(carpeta)}</span>` +
-        '<button class="btn sec compacto" data-accion="cambiar-carpeta">Cambiar carpeta</button></div>'
+      ? `<div class="fila-a"><span class="t">Carpeta: ${escapar(carpeta)}</span>` +
+        (enCurso ? '' : '<button class="btn sec compacto" data-accion="cambiar-carpeta">Cambiar carpeta</button>') + '</div>'
       : '') +
+    `<div class="fila-a" style="margin-top:var(--e-3)"><span class="t">${categorias} ${categorias === 1 ? 'categoría' : 'categorías'}</span>` +
+      (enCurso ? '' : '<a class="btn sec compacto" href="#/categorias">Categorías ›</a>') + '</div>' +
   '</div>';
 
   // Con número hay barra y sin número hay spinner (mockup 10): antes de la
@@ -79,7 +86,7 @@ export function renderAjustes(
     '<div class="conten">' +
       encabezado({ titulo: 'Ajustes', grande: true, izquierda: botonMenu(borradores) }) +
       // El orden de P25: lo de la cuenta y el índice primero, lo raro al final.
-      '<div class="cuerpo">' + seccionCuenta + seccionIndice +
+      '<div class="cuerpo">' + seccionCuenta + seccionRecetario + seccionIndice +
         (enCurso ? '' : FICHA_DATOS_LOCALES) +
         `<div class="ficha"><h2>Avisos</h2>${lista}</div>` +
         (informe ? fichaAlAbrir(informe, recetas, borradores, categorias) : '') +

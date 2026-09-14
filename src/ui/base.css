@@ -282,3 +282,16 @@
   .lat { transition: none; }
   .velo-lat { transition: none; }
 }
+
+/* Gestión de categorías: la muestra de arriba, las muestras de color y de foto. */
+.tile.muestra { display: block; }
+.cat-fila .tile.muestra { width: 56px; aspect-ratio: 4/3; flex: 0 0 56px; }
+.cat-fila .tile.muestra .nm { display: none; }
+.muestras { display: grid; grid-template-columns: repeat(8, 1fr); gap: var(--e-2); }
+.muestras.fotos { grid-template-columns: repeat(4, 1fr); }
+.muestra-color { aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent; }
+.muestra-foto { aspect-ratio: 4/3; border-radius: var(--r-medio); border: 2px solid transparent;
+                background-size: cover; background-position: center; }
+.muestra-foto.trama { background:
+    repeating-linear-gradient(135deg, var(--cat-otros) 0 6px, transparent 6px 14px); }
+.muestra-color[aria-pressed="true"], .muestra-foto[aria-pressed="true"] { border-color: var(--fg); }

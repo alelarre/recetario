@@ -5,10 +5,15 @@ import type { InformeArranque } from '../src/store.js';
 const base = { cuenta: 'a@b.c', ultimaReindexado: '', ignorados: [] as string[], reindexando: null };
 
 describe('Ajustes', () => {
-  it('la ficha Cuenta dice qué carpeta se usa y ofrece cambiarla', () => {
-    const html = renderAjustes({ ...base, carpeta: 'Recetario' });
-    expect(html).toContain('Carpeta: Recetario');
-    expect(html).toContain('data-accion="cambiar-carpeta"');
+  it('la ficha Recetario dice qué carpeta se usa, cuántas categorías hay, y ofrece cambiar y gestionar', () => {
+    const html = renderAjustes({ ...base, carpeta: 'Recetario', categorias: 16 });
+    const recetario = html.slice(html.indexOf('<h2>Recetario</h2>'), html.indexOf('<h2>Índice</h2>'));
+    expect(recetario).toContain('Carpeta: Recetario');
+    expect(recetario).toContain('data-accion="cambiar-carpeta"');
+    expect(recetario).toContain('16 categorías');
+    expect(recetario).toContain('href="#/categorias"');
+    const cuenta = html.slice(html.indexOf('<h2>Cuenta</h2>'), html.indexOf('<h2>Recetario</h2>'));
+    expect(cuenta).not.toContain('Carpeta:');
   });
 
   it('las tres secciones: cuenta, índice y avisos', () => {
@@ -152,8 +157,8 @@ describe('Ajustes: el orden de las fichas (P25)', () => {
       momento: new Date(2026, 8, 13, 14, 31).toISOString(), indiceModificado: '', copia: 'coincide' as const,
       copiaModificada: '', reindexado: '' as const
     };
-    const html = renderAjustes({ ...base, informe });
+    const html = renderAjustes({ ...base, informe, carpeta: 'Recetario' });
     const titulos = [...html.matchAll(/<h2>([^<]+)<\/h2>/g)].map(m => m[1]);
-    expect(titulos).toEqual(['Cuenta', 'Índice', 'Archivos locales', 'Avisos', 'Registro de actividad']);
+    expect(titulos).toEqual(['Cuenta', 'Recetario', 'Índice', 'Archivos locales', 'Avisos', 'Registro de actividad']);
   });
 });

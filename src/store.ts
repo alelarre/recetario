@@ -3,7 +3,7 @@ import { COLUMNAS, entradaDesdeFila, filaDesde } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, HOJA_BORRADORES, HOJA_CATEGORIAS, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 import { COLUMNAS_BORRADORES, entradaBorradorDesdeFila, filaDeBorrador, parseBorrador, serializeBorrador } from './borrador.js';
-import { COLUMNAS_CATEGORIAS, PREDEFINIDAS, categoriaDesdeFila, filaDeCategoria, predefinidaPorNombre } from './categorias.js';
+import { COLUMNAS_CATEGORIAS, PREDEFINIDAS, categoriaDesdeFila, filaDeCategoria, predefinidaPorNombre, problemaDelNombre } from './categorias.js';
 import type { Drive } from './drive.js';
 import type { Sheets } from './sheets.js';
 import type { CopiaIndice, IndiceLocal } from './indice-local.js';
@@ -192,6 +192,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     entradasBorradores = borradores.map(f => f.entrada);
     filasBorradores = new Map(borradores.map(f => [f.entrada.id_archivo, f.fila]));
     usarCategorias(copia.categorias);
+    entradas = entradas.map(conCategoria);
     ctx.borradoresId = ctx.meta['carpeta_borradores'] ?? '';
   }
 
@@ -202,6 +203,15 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
       [ctx.raizId, CATEGORIA_RAIZ],
       ...lista.map(c => [c.id, c.nombre] as [string, string])
     ]);
+  }
+
+  /**
+   * La categoría de una receta sale de su carpeta, no de la columna: así
+   * renombrar una categoría no obliga a reescribir las filas de sus recetas.
+   * Una carpeta que no es categoría —o la raíz— es Sin categorizar.
+   */
+  function conCategoria(e: Entrada): Entrada {
+    return { ...e, categoria: ctx.carpetas.get(e.carpeta_id) ?? CATEGORIA_RAIZ };
   }
 
   /**
@@ -412,6 +422,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     const crudoCategorias = await sheets.leer(
       ctx.indiceId, `${HOJA_CATEGORIAS}!A1:${ULTIMA_COLUMNA_CATEGORIAS}1000`);
     usarCategorias(crudoCategorias.slice(1).map(categoriaDesdeFila).filter(c => c.id));
+    entradas = entradas.map(conCategoria);
     ctx.borradoresId = ctx.meta['carpeta_borradores'] ?? '';
     // La fecha es la de la búsqueda de recién: nada escribió entre medio (§1 del
     // diseño). Sin fecha —la planilla recién creada— no se guarda: lo hace el
@@ -621,7 +632,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     await reemplazarFilas(HOJA_CATEGORIAS, idDeHoja(hojas, HOJA_CATEGORIAS), ULTIMA_COLUMNA_CATEGORIAS,
       ctx.categorias.map(filaDeCategoria));
 
-    entradas = nuevas.map(entradaDesdeFila);
+    entradas = nuevas.map(entradaDesdeFila).map(conCategoria);
     filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
     entradasBorradores = nuevosBorradores;
     filasBorradores = new Map(nuevosBorradores.map((e, i) => [e.id_archivo, i + 2]));
@@ -847,6 +858,83 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     await guardarMeta('reemplazada', 'si');
   }
 
+  /** Las recetas de una categoría: para contarlas y nombrarlas antes de borrar. */
+  function recetasDe(id: string): Entrada[] {
+    return entradas.filter(e => e.carpeta_id === id);
+  }
+
+  /** Tira si el nombre no sirve; `idPropio` es la categoría que se edita. */
+  function validarNombre(nombre: string, idPropio = ''): void {
+    const problema = problemaDelNombre(nombre, ctx.categorias.filter(c => c.id !== idPropio).map(c => c.nombre));
+    if (problema) throw new Error(problema);
+  }
+
+  /** La fila de una categoría en su hoja: su lugar en `ctx.categorias`, que sigue el orden de la hoja. */
+  const filaDeLaCategoria = (id: string): number => ctx.categorias.findIndex(c => c.id === id) + 2;
+
+  /** Una categoría nueva: su carpeta en la raíz, con color y foto, y su fila. */
+  async function crearCategoria(datos: { nombre: string; color: string; foto: string }): Promise<Categoria> {
+    const nombre = datos.nombre.trim();
+    validarNombre(nombre);
+    const carpeta = await drive.crear({ nombre, padre: ctx.raizId, mime: MIME_CARPETA });
+    await drive.propiedades(carpeta.id, { color: datos.color, foto: datos.foto });
+    const categoria: Categoria = { id: carpeta.id, nombre, color: datos.color, foto: datos.foto };
+    await sheets.append(ctx.indiceId, HOJA_CATEGORIAS, [filaDeCategoria(categoria)]);
+    usarCategorias([...ctx.categorias, categoria]);
+    await persistir();
+    return categoria;
+  }
+
+  /** Renombrar, cambiar color o foto: la carpeta, su fila, y las recetas en memoria. */
+  async function editarCategoria(id: string, datos: { nombre: string; color: string; foto: string }): Promise<void> {
+    const actual = ctx.categorias.find(c => c.id === id);
+    if (!actual) return;
+    const nombre = datos.nombre.trim();
+    validarNombre(nombre, id);
+    if (nombre !== actual.nombre) await drive.renombrar(id, nombre);
+    if (datos.color !== actual.color || datos.foto !== actual.foto) {
+      await drive.propiedades(id, { color: datos.color, foto: datos.foto });
+    }
+    const editada: Categoria = { id, nombre, color: datos.color, foto: datos.foto };
+    const nro = filaDeLaCategoria(id);
+    await sheets.escribir(ctx.indiceId, rangoDeFila(nro, HOJA_CATEGORIAS, COLUMNAS_CATEGORIAS.length), [filaDeCategoria(editada)]);
+    usarCategorias(ctx.categorias.map(c => c.id === id ? editada : c));
+    entradas = entradas.map(conCategoria);
+    await persistir();
+  }
+
+  /**
+   * La carpeta a la papelera con sus recetas adentro, y sus filas afuera: las de
+   * las recetas en una sola llamada —de a una, la cuota de Sheets se agota— y la
+   * de la categoría.
+   */
+  async function borrarCategoria(id: string): Promise<void> {
+    const nroCategoria = filaDeLaCategoria(id);
+    if (nroCategoria < 2) return;
+    await drive.borrar(id);
+
+    const hojas = await sheets.hojas(ctx.indiceId);
+    const nros = recetasDe(id)
+      .map(e => filas.get(e.id_archivo))
+      .filter((n): n is number => typeof n === 'number')
+      .sort((a, b) => b - a);
+    if (nros.length) {
+      await sheets.borrarFilas(ctx.indiceId, idDeHoja(hojas, HOJA_RECETAS), nros);
+      entradas = entradas.filter(e => e.carpeta_id !== id);
+      const quedan = new Map<string, number>();
+      for (const [otro, nro] of filas) {
+        if (nros.includes(nro)) continue;
+        // Cada fila borrada por encima corre a esta un lugar hacia arriba.
+        quedan.set(otro, nro - nros.filter(n => n < nro).length);
+      }
+      filas = quedan;
+    }
+
+    await sheets.borrarFila(ctx.indiceId, idDeHoja(hojas, HOJA_CATEGORIAS), nroCategoria);
+    usarCategorias(ctx.categorias.filter(c => c.id !== id));
+    await persistir();
+  }
+
   /** La carpeta base en uso, para la ficha Cuenta de Ajustes. */
   function carpeta(): { id: string; nombre: string } {
     return { id: ctx.raizId, nombre: ctx.raizNombre };
@@ -867,7 +955,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     return { id, ...parseBorrador(await drive.leerTexto(id)) };
   }
 
-  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, escribirFila, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, carpeta, carpetasDe, crearCarpeta, prepararCarpeta, marcarReemplazada, categorias, borradores, borrador, agregarBorrador, editarBorrador, descartarBorrador, _ctx: ctx };
+  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, escribirFila, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, recetasDe, crearCategoria, editarCategoria, borrarCategoria, carpeta, carpetasDe, crearCarpeta, prepararCarpeta, marcarReemplazada, categorias, borradores, borrador, agregarBorrador, editarBorrador, descartarBorrador, _ctx: ctx };
 }
 
 /** El objeto que devuelve `crearStore`. Lo consumen `compartido`, `main` y los tests. */

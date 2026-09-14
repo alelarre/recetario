@@ -59,3 +59,22 @@ export const filaDeCategoria = (c: Categoria): string[] => [c.id, c.nombre, c.co
 export const categoriaDesdeFila = (f: string[]): Categoria => ({
   id: f[0] ?? '', nombre: f[1] ?? '', color: f[2] ?? '', foto: f[3] ?? ''
 });
+
+/**
+ * Por qué un nombre no sirve para una categoría, o vacío si sirve. `otros` son
+ * los nombres de las demás categorías: al editar, sin la que se edita.
+ */
+export function problemaDelNombre(nombre: string, otros: readonly string[]): string {
+  const limpio = nombre.trim();
+  if (!limpio) return 'Ponele un nombre.';
+  // Las carpetas que empiezan con _ no son categorías: `_borradores`, `_indice`.
+  if (limpio.startsWith('_')) return 'No puede empezar con _.';
+  const buscado = normalizar(limpio);
+  if (otros.some(o => normalizar(o) === buscado)) return 'Ya hay una categoría con ese nombre.';
+  return '';
+}
+
+/** El color de una categoría nueva: el primero de la paleta que nadie usa, o el neutro. */
+export function colorLibre(usados: readonly string[]): ClaveColor {
+  return CLAVES_COLOR.find(c => c !== 'otros' && !usados.includes(c)) ?? 'otros';
+}

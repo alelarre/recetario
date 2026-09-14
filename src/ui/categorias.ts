@@ -52,17 +52,27 @@ export function slugCategoria(nombre: unknown): string {
   return slugArchivo(nombre, []).replace(/\.md$/, '');
 }
 
-/** El color de una categoría. Sin clave válida cae en el neutro, sin romper nada. */
-export function colorCategoria(nombre: unknown): string {
-  const color = registradas.get(String(nombre ?? ''))?.color ?? '';
+/** Las claves del catálogo de fotos, en orden. */
+export function fotosDelCatalogo(): string[] {
+  return [...CATALOGO.keys()].sort((a, b) => a.localeCompare(b, 'es'));
+}
+
+/** El token de una clave de color, o el neutro si la paleta no la tiene. */
+export function colorDeClave(color: string): string {
   return (CLAVES_COLOR as readonly string[]).includes(color) ? `var(--cat-${color})` : NEUTRO;
 }
 
-/**
- * La URL de la foto, o null. Sólo las del catálogo se dibujan: una foto de
- * Drive (`drive:<id>`) llega en la etapa 3.
- */
-export function fotoCategoria(nombre: unknown): string | null {
-  const foto = registradas.get(String(nombre ?? ''))?.foto ?? '';
+/** La URL de una foto (`catalogo:<clave>`), o null. `drive:<id>` llega en la etapa 3b. */
+export function urlDeFoto(foto: string): string | null {
   return foto.startsWith('catalogo:') ? CATALOGO.get(foto.slice('catalogo:'.length)) ?? null : null;
+}
+
+/** El color de una categoría registrada. Sin clave válida cae en el neutro, sin romper nada. */
+export function colorCategoria(nombre: unknown): string {
+  return colorDeClave(registradas.get(String(nombre ?? ''))?.color ?? '');
+}
+
+/** La URL de la foto de una categoría registrada, o null. */
+export function fotoCategoria(nombre: unknown): string | null {
+  return urlDeFoto(registradas.get(String(nombre ?? ''))?.foto ?? '');
 }

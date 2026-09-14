@@ -45,7 +45,11 @@ const estado = {
   /** Las carpetas que se prepararon con el setup, en orden. */
   preparadas: [] as string[],
   /** Cuántas veces se anotó la carpeta anterior como reemplazada. */
-  reemplazadas: 0
+  reemplazadas: 0,
+  /** Lo que se guardó desde la gestión de categorías, en orden. */
+  categoriasGuardadas: [] as string[],
+  /** Los ids de las categorías borradas. */
+  categoriasBorradas: [] as string[]
 };
 
 const storeFake = {
@@ -60,6 +64,10 @@ const storeFake = {
   crearCarpeta: async (nombre: string) => ({ id: 'nueva', nombre }),
   prepararCarpeta: async (c: { id: string }) => { estado.preparadas.push(c.id); return { ignorados: [] }; },
   marcarReemplazada: async () => { estado.reemplazadas++; },
+  recetasDe: (id: string) => id === 'c1' ? [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', carpeta_id: 'c1' })] : [],
+  crearCategoria: async (d: { nombre: string }) => { estado.categoriasGuardadas.push(`nueva:${d.nombre}`); return { id: 'c9', nombre: d.nombre, color: '', foto: '' }; },
+  editarCategoria: async (id: string, d: { nombre: string }) => { estado.categoriasGuardadas.push(`${id}:${d.nombre}`); },
+  borrarCategoria: async (id: string) => { estado.categoriasBorradas.push(id); },
   cargarIndice: async () => [],
   guardarMeta: async () => {},
   ultimaReconstruccion: () => '',
@@ -123,6 +131,8 @@ describe('main.ts: las rutas', () => {
     estado.eligiendo = null;
     estado.preparadas = [];
     estado.reemplazadas = 0;
+    estado.categoriasGuardadas = [];
+    estado.categoriasBorradas = [];
     vi.unstubAllGlobals();
     delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
@@ -254,6 +264,45 @@ describe('main.ts: las rutas', () => {
     await tocar('borrar-datos-locales');
     expect(estado.copiasBorradas).toBe(1);
     expect(recargas).toHaveLength(1);
+  });
+
+  describe('la gestión de categorías', () => {
+    it('la lista y la edición se dibujan', async () => {
+      const { app, abrir } = await montar();
+      await abrir('#/categorias');
+      expect(app.innerHTML).toContain('href="#/categorias/c1"');
+      await abrir('#/categorias/c1');
+      expect(app.innerHTML).toContain('name="nombre" value="Carnes"');
+      await abrir('#/categorias/nueva');
+      expect(app.innerHTML).toContain('Nueva categoría');
+    });
+
+    it('guardar una edición llama al store con lo del formulario y vuelve a la lista', async () => {
+      const { abrir, tocar, vueltasAtras } = await montar();
+      await abrir('#/categorias/c1');
+      estado.formulario = { nombre: 'Carnes rojas', color: 'carnes', foto: 'catalogo:carnes' };
+      await tocar('guardar-categoria');
+      expect(estado.categoriasGuardadas).toEqual(['c1:Carnes rojas']);
+      expect(vueltasAtras).toHaveLength(1);
+    });
+
+    it('guardar una nueva la crea', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/categorias/nueva');
+      estado.formulario = { nombre: 'Fiambres', color: 'bebidas', foto: '' };
+      await tocar('guardar-categoria');
+      expect(estado.categoriasGuardadas).toEqual(['nueva:Fiambres']);
+    });
+
+    it('borrar pregunta con las recetas, y confirmar borra y vuelve a la lista', async () => {
+      const { abrir, tocar, enLugar, reemplazos } = await montar();
+      await abrir('#/categorias/c1');
+      await tocar('borrar-categoria');
+      expect(enLugar.at(-1)).toContain('Carnes y su receta va a la papelera de Drive.');
+      await tocar('borrar-categoria-confirmado');
+      expect(estado.categoriasBorradas).toEqual(['c1']);
+      expect(reemplazos.at(-1)).toBe('#/categorias');
+    });
   });
 
   describe('la carpeta base', () => {

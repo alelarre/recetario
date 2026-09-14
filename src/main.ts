@@ -20,6 +20,9 @@ import { renderBorradores, renderBorrador } from './ui/borradores.js';
 import { renderCaptura } from './ui/captura.js';
 import { renderAjustes } from './ui/ajustes.js';
 import { renderConexion } from './ui/conexion.js';
+import { renderListaCategorias, renderEdicionCategoria, confirmacionBorrarCategoria, botonBorrarCategoria } from './ui/gestion-categorias.js';
+import { colorLibre, problemaDelNombre } from './categorias.js';
+import { colorDeClave, urlDeFoto } from './ui/categorias.js';
 import { renderSelector } from './ui/carpeta.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
 import { aviso } from './ui/componentes.js';
@@ -482,6 +485,23 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       }));
     }
 
+    case 'categorias':
+      return pintar(renderListaCategorias({
+        categorias: store.categorias().map(categoria => ({ categoria, recetas: store.recetasDe(categoria.id).length }))
+      }));
+
+    case 'editar-categoria': {
+      const id = ruta.params['id'] ?? 'nueva';
+      const categoria = id === 'nueva' ? null : store.categorias().find(c => c.id === id) ?? null;
+      // Un id que ya no está —borrada en otra pestaña— vuelve a la lista.
+      if (id !== 'nueva' && !categoria) { irCerrando('#/categorias'); return; }
+      const otros = store.categorias().filter(c => c.id !== id).map(c => c.nombre);
+      const valores = categoria
+        ? { nombre: categoria.nombre, color: categoria.color, foto: categoria.foto }
+        : { nombre: '', color: colorLibre(store.categorias().map(c => c.color)), foto: '' };
+      return abrirEditor(renderEdicionCategoria({ categoria, valores, otros }));
+    }
+
     case 'capturar': {
       // La captura no dibuja la app: es una pantalla efímera sobre lo que el
       // usuario estaba haciendo en otra app (C01.2.2).
@@ -590,6 +610,43 @@ function revisarCompletitud(): void {
 
   // Si dejó de cumplir, la declaración se cae con ella.
   if (!puede && terminada?.classList.contains('on')) marcarCompletitud(false);
+}
+
+/**
+ * La edición de una categoría, en cada tecla y en cada elección: la muestra de
+ * arriba, la línea del nombre inválido y si Guardar se puede tocar. Toca el DOM
+ * en vez de redibujar, que perdería el foco y el cursor.
+ */
+function revisarCategoria(): void {
+  const form = document.querySelector<HTMLFormElement>('#app [data-formulario]');
+  if (!form) return;
+  const valor = (n: string): string => form.querySelector<HTMLInputElement>(`[name="${n}"]`)?.value ?? '';
+  const otros = JSON.parse(form.dataset['otros'] ?? '[]') as string[];
+  const problema = problemaDelNombre(valor('nombre'), otros);
+
+  const muestra = form.querySelector<HTMLElement>('[data-muestra]');
+  if (muestra) {
+    muestra.style.setProperty('--c', colorDeClave(valor('color')));
+    const im = muestra.querySelector<HTMLElement>('.im');
+    const url = urlDeFoto(valor('foto'));
+    if (im) { im.classList.toggle('trama', !url); im.style.backgroundImage = url ? `url(${url})` : ''; }
+    const nm = muestra.querySelector<HTMLElement>('.nm');
+    if (nm) nm.textContent = valor('nombre');
+  }
+  const linea = form.querySelector<HTMLElement>('.error-nombre');
+  if (linea) { linea.hidden = !problema; linea.textContent = problema; }
+  const guardar = document.querySelector<HTMLButtonElement>('#app [data-accion="guardar-categoria"]');
+  if (guardar) guardar.disabled = !!problema || formularioActual() === editorAbierto?.formulario;
+}
+
+/** Elegir un color o una foto: el campo oculto, la marca y la muestra, sin redibujar. */
+function elegirEnCategoria(campo: 'color' | 'foto', valor: string): void {
+  const oculto = document.querySelector<HTMLInputElement>(`#app input[name="${campo}"]`);
+  if (oculto) oculto.value = valor;
+  for (const b of document.querySelectorAll<HTMLElement>(`#app [data-accion="elegir-${campo}"]`)) {
+    b.setAttribute('aria-pressed', String(b.dataset['valor'] === valor));
+  }
+  revisarCategoria();
 }
 
 /** Mueve el conmutador y deja el valor en el campo que viaja al guardar. */
@@ -912,6 +969,59 @@ app.addEventListener('click', async (e) => {
     }
   }
 
+  if (accion === 'elegir-color') { elegirEnCategoria('color', boton.dataset['valor'] ?? ''); return; }
+  if (accion === 'elegir-foto') { elegirEnCategoria('foto', boton.dataset['valor'] ?? ''); return; }
+
+  if (accion === 'guardar-categoria') {
+    const form = document.querySelector<HTMLFormElement>('[data-formulario]');
+    if (!form) return;
+    const datos = Object.fromEntries([...new FormData(form)].map(([k, v]) => [k, typeof v === 'string' ? v : '']));
+    const valores = { nombre: datos['nombre'] ?? '', color: datos['color'] ?? '', foto: datos['foto'] ?? '' };
+    const id = vistaActual?.params['id'] ?? 'nueva';
+    try {
+      if (id === 'nueva') await store.crearCategoria(valores);
+      else await store.editarCategoria(id, valores);
+      registrarCategorias(store.categorias());
+      editorAbierto = null;
+      return history.back();
+    } catch (err) {
+      console.error(err);
+      const categoria = id === 'nueva' ? null : store.categorias().find(c => c.id === id) ?? null;
+      const otros = store.categorias().filter(c => c.id !== id).map(c => c.nombre);
+      // El motivo del nombre se dice tal cual; lo demás, sin el mensaje de Google (R1).
+      const mensaje = err instanceof Error && problemaDelNombre(valores.nombre, otros) ? err.message : 'No se pudo guardar. Revisá la conexión.';
+      pintar(renderEdicionCategoria({ categoria, valores, otros, error: mensaje }));
+      return;
+    }
+  }
+
+  if (accion === 'borrar-categoria') {
+    const id = vistaActual?.params['id'] ?? '';
+    const categoria = store.categorias().find(c => c.id === id);
+    if (categoria) boton.outerHTML = confirmacionBorrarCategoria(categoria.nombre, store.recetasDe(id).map(e => e.titulo));
+    return;
+  }
+  if (accion === 'cancelar-borrar-categoria') {
+    const confirmacion = document.querySelector('[data-confirmar-borrado-categoria]');
+    if (confirmacion) confirmacion.outerHTML = botonBorrarCategoria;
+    return;
+  }
+  if (accion === 'borrar-categoria-confirmado') {
+    const id = vistaActual?.params['id'] ?? '';
+    try {
+      await store.borrarCategoria(id);
+      registrarCategorias(store.categorias());
+      editorAbierto = null;
+      irCerrando('#/categorias');
+      return;
+    } catch (err) {
+      console.error(err);
+      const confirmacion = document.querySelector('[data-confirmar-borrado-categoria]');
+      if (confirmacion) confirmacion.outerHTML = aviso({ texto: 'No se pudo borrar. La categoría sigue estando.' }) + botonBorrarCategoria;
+      return;
+    }
+  }
+
   if (accion === 'guardar') {
     const form = document.querySelector<HTMLFormElement>('[data-formulario]');
     if (!form) return;
@@ -1006,6 +1116,7 @@ app.addEventListener('click', async (e) => {
  * habilita tocándolo directo, sin volver a pintar la pantalla.
  */
 app.addEventListener('input', (e) => {
+  if (vistaActual?.vista === 'editar-categoria') return revisarCategoria();
   // En el editor, cada tecla puede habilitar o apagar «Terminada».
   if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') return revisarCompletitud();
   if (vistaActual?.vista !== 'capturar' && !editandoBorrador) return;

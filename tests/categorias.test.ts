@@ -3,7 +3,7 @@
 // por nombre, que una categoría renombrada conserva lo suyo, y que lo que falta
 // no rompe nada.
 import { describe, it, expect, beforeEach } from 'vitest';
-import { colorCategoria, fotoCategoria, slugCategoria, registrarCategorias } from '../src/ui/categorias.js';
+import { colorCategoria, fotoCategoria, slugCategoria, registrarCategorias, fotosDelCatalogo, colorDeClave, urlDeFoto } from '../src/ui/categorias.js';
 
 describe('categorias', () => {
   beforeEach(() => registrarCategorias([
@@ -47,5 +47,13 @@ describe('categorias', () => {
   it('defendé: sin nombre no lanza', () => {
     expect(() => colorCategoria(undefined)).not.toThrow();
     expect(() => fotoCategoria(null)).not.toThrow();
+  });
+  it('el catálogo lista sus fotos, y las claves se traducen sin registro', () => {
+    expect(fotosDelCatalogo()).toContain('pastas');
+    expect(colorDeClave('pastas')).toBe('var(--cat-pastas)');
+    expect(colorDeClave('fucsia')).toBe('var(--cat-otros)');
+    expect(urlDeFoto('catalogo:pastas')).toMatch(/pastas/);
+    expect(urlDeFoto('')).toBeNull();
+    expect(urlDeFoto('drive:abc')).toBeNull();
   });
 });

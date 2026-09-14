@@ -168,6 +168,9 @@ aguantarlo sin que nadie toque nada.
   propiedades suyas en Drive (`appProperties`), así que renombrarla no los pierde,
   y una carpeta nueva los toma de la tabla sólo si su nombre coincide con una
   predefinida.
+- `[2026-09-13]` Las categorías se crean y se editan desde la app —*Ajustes →
+  Recetario → Categorías*—: el color se elige de la paleta, y una nueva arranca con
+  el primero que nadie usa.
 
 #### Dónde se usa el color, y dónde no
 

@@ -391,7 +391,6 @@ no interrumpen. Se llega desde el Recetario.
 - [ ] Muestra con qué cuenta de Google está conectada la app.
 - [ ] Ofrece **Salir**, que descarta la sesión y vuelve a la pantalla de conexión.
 - [ ] Salir no borra nada de Drive y lo dice.
-- [ ] Muestra la carpeta base en uso y ofrece cambiarla; la anterior queda como está en Drive. `[2026-09-13]`
 
 #### C05.9b.2 — Índice *(J8)*
 
@@ -403,6 +402,13 @@ no interrumpen. Se llega desde el Recetario.
 
 - [ ] Lista los avisos sin acción acumulados (C05.9.2).
 - [ ] Sin avisos, la sección dice que no hay nada, sin ilustración.
+
+#### C05.9b.4 — Recetario: la carpeta y las categorías *(transversal)* `[2026-09-13]`
+
+- [ ] Una ficha propia, segunda en Ajustes, muestra la carpeta base en uso y ofrece cambiarla; la anterior queda como está en Drive.
+- [ ] Desde ahí se gestionan las categorías: crear, renombrar, elegir color de la paleta y foto del catálogo, y borrar. Las predefinidas no tienen trato especial.
+- [ ] Un nombre vacío, que empiece con `_` o repetido sin mirar tildes ni mayúsculas no se acepta, y se dice por qué.
+- [ ] Borrar una categoría con recetas lo advierte con la cantidad y los nombres: la carpeta y sus recetas van a la papelera de Drive.
 
 ### F05.10 — La app en pantalla ancha
 

@@ -1,0 +1,179 @@
+import { describe, it, expect } from 'vitest';
+import { crearStore } from '../src/store.js';
+import { COLUMNAS } from '../src/catalogo.js';
+import { COLUMNAS_BORRADORES } from '../src/borrador.js';
+import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
+import { SCHEMA_VERSION } from '../src/config.js';
+import type { CopiaIndice } from '../src/indice-local.js';
+import { driveFalso, sheetsFalso, indiceLocalFalso, recetaFalsa } from './dobles.js';
+import type { SheetsFalso } from './dobles.js';
+
+const CARPETA = 'application/vnd.google-apps.folder';
+const PLANILLA = 'application/vnd.google-apps.spreadsheet';
+
+const fila = (id: string, titulo: string, categoria: string, carpeta: string): string[] =>
+  [id, `${id}.md`, titulo, categoria, carpeta, '', '', '', '', '', '', '1000'];
+
+/**
+ * Pastas (c1) con dos recetas, Aves (c2) con una, y una suelta en la raíz. La
+ * columna categoria de r1 dice un nombre viejo a propósito.
+ */
+async function abierta() {
+  const drive = driveFalso([
+    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['root'], appProperties: { recetario: 'raiz' } },
+    { id: 'c1', name: 'Pastas', mimeType: CARPETA, parents: ['raiz'], appProperties: { color: 'pastas', foto: 'catalogo:pastas' } },
+    { id: 'c2', name: 'Aves', mimeType: CARPETA, parents: ['raiz'], appProperties: { color: 'aves', foto: 'catalogo:aves' } },
+    { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },
+    { id: 'r1', name: 'r1.md', parents: ['c1'] }, { id: 'r2', name: 'r2.md', parents: ['c2'] },
+    { id: 'r3', name: 'r3.md', parents: ['c1'] }, { id: 'r4', name: 'r4.md', parents: ['raiz'] }
+  ]);
+  const sheets = sheetsFalso();
+  sheets.crearPlanilla('i1', ['recetas', 'meta', 'borradores', 'categorias']);
+  sheets.cargar('i1', 'recetas', [
+    [...COLUMNAS],
+    fila('r1', 'Ñoquis', 'Nombre viejo', 'c1'),
+    fila('r2', 'Pollo', 'Aves', 'c2'),
+    fila('r3', 'Lasaña', 'Pastas', 'c1'),
+    fila('r4', 'Suelta', 'Sin categorizar', 'raiz')
+  ]);
+  sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)]]);
+  sheets.cargar('i1', 'borradores', [[...COLUMNAS_BORRADORES]]);
+  sheets.cargar('i1', 'categorias', [
+    [...COLUMNAS_CATEGORIAS], ['c1', 'Pastas', 'pastas', 'catalogo:pastas'], ['c2', 'Aves', 'aves', 'catalogo:aves']
+  ]);
+  const indiceLocal = indiceLocalFalso();
+  const store = crearStore({ drive, sheets, indiceLocal });
+  await store.arrancar();
+  await store.cargarIndice();
+  drive._store.get('i1')!.modifiedTime = '2026-09-13T11:00:00.000Z';
+  return { drive, sheets, indiceLocal, store };
+}
+
+/** Las filas de la copia apuntan a las de la planilla, en las dos hojas. */
+async function copiaCoincide(sheets: SheetsFalso, copia: CopiaIndice | null) {
+  const recetas = await sheets.leer('i1', 'recetas!A1:L100');
+  expect(copia!.filas).toHaveLength(recetas.length - 1);
+  for (const { fila: nro, entrada } of copia!.filas) expect(recetas[nro - 1]?.[0]).toBe(entrada.id_archivo);
+  const categorias = await sheets.leer('i1', 'categorias!A1:D100');
+  expect(copia!.categorias.map(c => c.id)).toEqual(categorias.slice(1).map(f => f[0]));
+}
+
+describe('el nombre de la categoría de cada receta', () => {
+  it('sale de la carpeta, no de la columna', async () => {
+    const { store } = await abierta();
+    expect(store.entradas().find(e => e.id_archivo === 'r1')?.categoria).toBe('Pastas');
+    expect(store.entradas().find(e => e.id_archivo === 'r4')?.categoria).toBe('Sin categorizar');
+  });
+
+  it('también al abrir desde la copia', async () => {
+    const primera = await abierta();
+    const store = crearStore({ drive: primera.drive, sheets: primera.sheets, indiceLocal: primera.indiceLocal });
+    primera.drive._store.get('i1')!.modifiedTime = primera.indiceLocal.actual()!.modifiedTime;
+    await store.arrancar();
+    await store.cargarIndice();
+    expect(store.entradas().find(e => e.id_archivo === 'r1')?.categoria).toBe('Pastas');
+  });
+
+  it('una receta con una carpeta que no es categoría queda Sin categorizar', async () => {
+    const { sheets } = await abierta();
+    sheets.cargar('i1', 'recetas', [[...COLUMNAS], fila('r9', 'Rara', 'Vieja', 'borrada')]);
+    const otra = crearStore({ drive: driveFalso([]), sheets, indiceLocal: indiceLocalFalso() });
+    otra._ctx.indiceId = 'i1';
+    await otra.cargarIndice();
+    expect(otra.entradas()[0]?.categoria).toBe('Sin categorizar');
+  });
+});
+
+describe('crear una categoría', () => {
+  it('crea la carpeta en la raíz con sus propiedades, agrega la fila y la copia coincide', async () => {
+    const { store, drive, sheets, indiceLocal } = await abierta();
+    const c = await store.crearCategoria({ nombre: 'Fiambres', color: 'bebidas', foto: '' });
+    expect(drive._store.get(c.id)).toMatchObject({ name: 'Fiambres', mimeType: CARPETA, parents: ['raiz'] });
+    expect(drive._store.get(c.id)?.appProperties).toEqual({ color: 'bebidas', foto: '' });
+    expect(store.categorias().map(x => x.nombre)).toContain('Fiambres');
+    await copiaCoincide(sheets, indiceLocal.actual());
+  });
+
+  it('un nombre repetido no toca Drive', async () => {
+    const { store, drive } = await abierta();
+    const antes = drive._store.size;
+    await expect(store.crearCategoria({ nombre: 'pastas', color: 'aves', foto: '' })).rejects.toThrow('Ya hay una categoría con ese nombre.');
+    expect(drive._store.size).toBe(antes);
+  });
+});
+
+describe('editar una categoría', () => {
+  it('renombra la carpeta, reescribe sólo su fila, y las recetas muestran el nombre nuevo', async () => {
+    const { store, drive, sheets, indiceLocal } = await abierta();
+    const escriturasAntes = sheets.escrituras.length;
+    await store.editarCategoria('c1', { nombre: 'Pastas frescas', color: 'pastas', foto: 'catalogo:pastas' });
+
+    expect(drive._store.get('c1')?.name).toBe('Pastas frescas');
+    const nuevas = sheets.escrituras.slice(escriturasAntes);
+    expect(nuevas.map(e => e.hoja)).toEqual(['categorias']);
+    expect(store.entradas().filter(e => e.carpeta_id === 'c1').map(e => e.categoria)).toEqual(['Pastas frescas', 'Pastas frescas']);
+    expect(indiceLocal.actual()?.filas.find(f => f.entrada.id_archivo === 'r1')?.entrada.categoria).toBe('Pastas frescas');
+    await copiaCoincide(sheets, indiceLocal.actual());
+  });
+
+  it('sin cambiar el nombre no renombra; sin cambiar color ni foto no escribe propiedades', async () => {
+    const { store, drive } = await abierta();
+    drive.llamadas.length = 0;
+    await store.editarCategoria('c1', { nombre: 'Pastas', color: 'pastas', foto: 'catalogo:pastas' });
+    expect(drive.llamadas.filter(l => l[0] === 'propiedades')).toEqual([]);
+    drive.llamadas.length = 0;
+    await store.editarCategoria('c1', { nombre: 'Pastas', color: 'aves', foto: 'catalogo:pastas' });
+    expect(drive.llamadas.filter(l => l[0] === 'propiedades')).toEqual([['propiedades', 'c1', { color: 'aves', foto: 'catalogo:pastas' }]]);
+  });
+
+  it('su propio nombre no cuenta como repetido; el de otra sí', async () => {
+    const { store } = await abierta();
+    await expect(store.editarCategoria('c1', { nombre: 'PASTAS', color: 'pastas', foto: '' })).resolves.toBeUndefined();
+    await expect(store.editarCategoria('c1', { nombre: 'Aves', color: 'pastas', foto: '' })).rejects.toThrow('Ya hay una categoría');
+  });
+});
+
+describe('borrar una categoría', () => {
+  it('la carpeta a la papelera, las filas de sus recetas en una llamada, y la copia coincide', async () => {
+    const { store, drive, sheets, indiceLocal } = await abierta();
+    let llamadas = 0;
+    const borrarFilas = sheets.borrarFilas.bind(sheets);
+    sheets.borrarFilas = async (id: string, hojaId: number, nros: number[]) => { llamadas++; return borrarFilas(id, hojaId, nros); };
+
+    await store.borrarCategoria('c1');
+
+    expect(drive._store.get('c1')?.trashed).toBe(true);
+    expect(llamadas).toBe(1);
+    expect(store.entradas().map(e => e.id_archivo).sort()).toEqual(['r2', 'r4']);
+    expect(store.categorias().map(c => c.id)).toEqual(['c2']);
+    await copiaCoincide(sheets, indiceLocal.actual());
+  });
+
+  it('una categoría vacía no borra filas de recetas', async () => {
+    const { store, sheets } = await abierta();
+    const c = await store.crearCategoria({ nombre: 'Vacía', color: 'bebidas', foto: '' });
+    let llamadas = 0;
+    const borrarFilas = sheets.borrarFilas.bind(sheets);
+    sheets.borrarFilas = async (id: string, hojaId: number, nros: number[]) => { llamadas++; return borrarFilas(id, hojaId, nros); };
+    await store.borrarCategoria(c.id);
+    expect(llamadas).toBe(0);
+    expect(store.categorias().map(x => x.id)).toEqual(['c1', 'c2']);
+  });
+
+  it('después de borrar, guardar otra receta escribe su fila correcta', async () => {
+    const { store, sheets } = await abierta();
+    await store.borrarCategoria('c1');
+    await store.escribirFila(recetaFalsa({ titulo: 'Pollo al horno' }),
+      { id: 'r2', nombre_archivo: 'r2.md', categoria: 'Aves', carpeta_id: 'c2', mtime: 1 });
+    const recetas = await sheets.leer('i1', 'recetas!A1:L100');
+    expect(recetas.filter(f => f[0] === 'r2')).toHaveLength(1);
+    expect(recetas.find(f => f[0] === 'r2')?.[2]).toBe('Pollo al horno');
+  });
+});
+
+describe('recetasDe', () => {
+  it('las entradas de una categoría', async () => {
+    const { store } = await abierta();
+    expect(store.recetasDe('c1').map(e => e.titulo).sort()).toEqual(['Lasaña', 'Ñoquis']);
+  });
+});
