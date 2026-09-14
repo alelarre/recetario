@@ -235,7 +235,7 @@ El planificador está diseñado y queda afuera a propósito
 (`product-design/plan/BACKLOG.md`).
 
 **Los pendientes de la app usada de verdad están en `BACKLOG.md` §6**
-`[2026-09-12]`, con identificador estable —P1 a P26— para nombrarlos sin repetir
+`[2026-09-12]`, con identificador estable —P1 a P27— para nombrarlos sin repetir
 el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
@@ -253,6 +253,7 @@ cerradas. Quedan abiertos:
   P19 del backlog.
 - **P23** —compartir recetas—: sin definir; se cruza con P15/P19.
 - **P26** —rediseñar el selector de carpetas—: no convence el actual; primero propuestas.
+- **P27** —darle entidad a favoritos y a otros tags especiales—: choca con el esquema cerrado del frontmatter; primero propuestas.
 
 Y queda el contenido.
 
