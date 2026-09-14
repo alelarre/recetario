@@ -86,7 +86,7 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
     q,
     listar,
     buscarPorNombre: (nombre: string, padre?: string) => listar(q.porNombre(nombre, padre)),
-    listarCarpetas: (id: string) => listar(q.carpetasDe(id), 'files(id,name)'),
+    listarCarpetas: (id: string) => listar(q.carpetasDe(id), 'files(id,name,appProperties)'),
     listarHijos: (id: string, campos?: string) => listar(q.hijosDe(id), campos),
     metadatos: (id: string, campos = 'id,name,parents,modifiedTime') =>
       pedir<ArchivoDrive>(`/files/${id}?fields=${campos}`),
@@ -125,6 +125,12 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
     renombrar: (id: string, nombre: string) =>
       pedir<ArchivoDrive>(`/files/${id}?fields=id,name`, {
         method: 'PATCH', body: JSON.stringify({ name: nombre })
+      }),
+
+    /** Las propiedades privadas de la app: el color y la foto de una categoría. */
+    propiedades: (id: string, props: Record<string, string>) =>
+      pedir<ArchivoDrive>(`/files/${id}?fields=id,appProperties`, {
+        method: 'PATCH', body: JSON.stringify({ appProperties: props })
       }),
 
     mover: (id: string, { de, a }: { de: string; a: string }) =>

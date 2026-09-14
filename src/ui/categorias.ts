@@ -1,17 +1,18 @@
 import { slugArchivo } from '../recipe.js';
+import { CLAVES_COLOR } from '../categorias.js';
+import type { Categoria } from '../tipos.js';
 
 /**
  * Identidad visual de cada categoría: una foto y un color.
  *
  * La foto identifica —es lo que se reconoce de un vistazo, sin aprender nada—
- * y el color hilvana: el mismo tono aparece en el filo del tile, en el chip de
- * los resultados de búsqueda y en la banda del detalle, donde una foto de
- * categoría no entra.
+ * y el color hilvana: el mismo tono aparece en el filo del tile, en el punto de
+ * las tarjetas y en la línea de contexto de la receta.
  *
- * Las dos cosas se resuelven desde el nombre de la carpeta, que es la única
- * verdad del modelo (§3.1). No hay ids ni mapas de archivos que mantener:
- * agregar una carpeta en Drive alcanza, y la categoría nueva arranca con color
- * plano hasta que alguien le ponga su imagen.
+ * Las dos cosas son propiedades de la carpeta en Drive, y llegan acá desde el
+ * índice: `main` registra las categorías y este módulo sólo traduce claves. No
+ * conoce ningún nombre de categoría; las predefinidas están en
+ * `src/categorias.ts`.
  */
 
 /**
@@ -25,7 +26,8 @@ const IMAGENES = import.meta.glob<string>('../categorias/*.webp', {
   eager: true, query: '?url', import: 'default'
 });
 
-const porSlug = new Map<string, string>(
+/** El catálogo: clave → URL. La clave es el nombre del `.webp`. */
+const CATALOGO = new Map<string, string>(
   Object.entries(IMAGENES).map(([ruta, url]) => [
     (ruta.split('/').pop() ?? '').replace(/\.webp$/, ''),
     url
@@ -33,47 +35,34 @@ const porSlug = new Map<string, string>(
 );
 
 /**
- * El color de cada categoría es un token de `tokens.css`: quince matices a 18°
- * entre sí y a una distancia percibida de 12 del acento (design-system §2.3). Acá vive solo el mapa de
- * carpeta → token; los valores están en un lugar y son los del sistema visual.
- */
-const COLORES: Record<string, string> = {
-  'arroces-y-legumbres': 'var(--cat-arroces)',
-  'aves': 'var(--cat-aves)',
-  'bebidas': 'var(--cat-bebidas)',
-  'carnes': 'var(--cat-carnes)',
-  'desayunos-y-meriendas': 'var(--cat-desayunos)',
-  'ensaladas': 'var(--cat-ensaladas)',
-  'entradas-y-picadas': 'var(--cat-entradas)',
-  'panes-y-masas': 'var(--cat-panes)',
-  'pastas': 'var(--cat-pastas)',
-  'pescados-y-mariscos': 'var(--cat-pescados)',
-  'postres': 'var(--cat-postres)',
-  'salsas-y-aderezos': 'var(--cat-salsas)',
-  'sopas-y-caldos': 'var(--cat-sopas)',
-  'tartas-y-empanadas': 'var(--cat-tartas)',
-  'verduras-y-guarniciones': 'var(--cat-verduras)'
-};
-
-/**
- * `Otros` no tiene color propio: es la categoría comodín y lo que dice es
- * "todavía no sabemos" (design-system §2.3). Sí tiene foto —el pixel art
- * compuesto sobre su color—, y el neutro es también el respaldo de una carpeta
- * que todavía no está en la lista; sin foto, el tile cae en la trama.
+ * El neutro de `Otros`: también el respaldo de una categoría sin color o con
+ * una clave que la paleta no tiene (design-system §2.3).
  */
 const NEUTRO = 'var(--cat-otros)';
+
+let registradas = new Map<string, Categoria>();
+
+/** Las categorías del índice. `main` las registra al arrancar y después de reindexar. */
+export function registrarCategorias(lista: Categoria[]): void {
+  registradas = new Map(lista.map(c => [c.nombre, c]));
+}
 
 /** Del nombre de la carpeta al slug, igual que el nombre del archivo de receta. */
 export function slugCategoria(nombre: unknown): string {
   return slugArchivo(nombre, []).replace(/\.md$/, '');
 }
 
-/** El color de una categoría. Una desconocida cae en el neutro, sin romper nada. */
+/** El color de una categoría. Sin clave válida cae en el neutro, sin romper nada. */
 export function colorCategoria(nombre: unknown): string {
-  return COLORES[slugCategoria(nombre)] ?? NEUTRO;
+  const color = registradas.get(String(nombre ?? ''))?.color ?? '';
+  return (CLAVES_COLOR as readonly string[]).includes(color) ? `var(--cat-${color})` : NEUTRO;
 }
 
-/** La URL de la foto, o null si esa categoría todavía no tiene. */
+/**
+ * La URL de la foto, o null. Sólo las del catálogo se dibujan: una foto de
+ * Drive (`drive:<id>`) llega en la etapa 3.
+ */
 export function fotoCategoria(nombre: unknown): string | null {
-  return porSlug.get(slugCategoria(nombre)) ?? null;
+  const foto = registradas.get(String(nombre ?? ''))?.foto ?? '';
+  return foto.startsWith('catalogo:') ? CATALOGO.get(foto.slice('catalogo:'.length)) ?? null : null;
 }

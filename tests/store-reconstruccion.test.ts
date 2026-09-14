@@ -83,14 +83,17 @@ describe('reconstruir', () => {
     expect(filas.length).toBe(4);  // encabezado + tres recetas
   });
 
-  it('borra las filas viejas en una sola llamada, no una por fila', async () => {
+  it('borra las filas viejas de cada hoja en una sola llamada, no una por fila', async () => {
     // De a una, la cuota de escrituras por minuto de Sheets se agota apenas
     // hay unas pocas decenas de recetas: pasó en la práctica con 60 reales.
     await store.reconstruir();  // dos filas más el encabezado, para tener algo que borrar
     const espiaBorrarFilas = vi.spyOn(sheets, 'borrarFilas');
     const espiaBorrarFila = vi.spyOn(sheets, 'borrarFila');
     await store.reconstruir();
-    expect(espiaBorrarFilas).toHaveBeenCalledTimes(1);
+    // Una llamada por hoja con filas —recetas y categorías—, nunca dos a la misma.
+    const hojas = espiaBorrarFilas.mock.calls.map(llamada => llamada[1]);
+    expect(hojas.length).toBeGreaterThan(0);
+    expect(new Set(hojas).size).toBe(hojas.length);
     expect(espiaBorrarFila).not.toHaveBeenCalled();
   });
 

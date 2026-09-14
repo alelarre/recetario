@@ -52,6 +52,7 @@ const storeFake = {
   ultimaReconstruccion: () => '',
   entradas: () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })],
   categoriasConConteo: () => [{ id: 'c1', nombre: 'Carnes', cantidad: 1 }],
+  categorias: () => [{ id: 'c1', nombre: 'Carnes', color: 'carnes', foto: 'catalogo:carnes' }],
   buscar: () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })],
   buscarPorTexto: () => ({ porNombre: [], porIngrediente: [], porTag: [] }),
   tagsDe: () => [],

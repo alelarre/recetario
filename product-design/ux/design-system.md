@@ -163,6 +163,11 @@ aguantarlo sin que nadie toque nada.
   y una vecindad más cerrada no la rompe.
 - **Una categoría sin entrada en el mapa usa `#99907F`**, el mismo neutro que
   `Otros`, y no rompe nada.
+- `[2026-09-13]` **La tabla de las 16 predefinidas —nombre, clave de color y
+  foto— vive en `src/categorias.ts`.** El color y la foto de cada carpeta son
+  propiedades suyas en Drive (`appProperties`), así que renombrarla no los pierde,
+  y una carpeta nueva los toma de la tabla sólo si su nombre coincide con una
+  predefinida.
 
 #### Dónde se usa el color, y dónde no
 

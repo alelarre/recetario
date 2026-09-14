@@ -4,6 +4,7 @@ import { driveFalso, sheetsFalso, recetaFalsa, indiceLocalFalso } from './dobles
 import type { DriveFalso, SheetsFalso } from './dobles.js';
 import { parse } from '../src/recipe.js';
 import { COLUMNAS } from '../src/catalogo.js';
+import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
@@ -108,6 +109,9 @@ beforeEach(async () => {
   await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
   await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
   await sheets.append('i1', 'recetas', [['r1', 'milanesas.md', 'Milanesas', 'Carnes', 'c1', '', '', '', '', '', '', String(Date.parse('2026-01-01T00:00:00.000Z'))]]);
+  sheets.cargar('i1', 'categorias', [
+    [...COLUMNAS_CATEGORIAS], ['c1', 'Carnes', 'carnes', 'catalogo:carnes'], ['c2', 'Postres', 'postres', 'catalogo:postres']
+  ]);
   store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
   await store.arrancar();
   await store.cargarIndice();

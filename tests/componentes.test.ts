@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { tarjeta, placeholder, aviso, encabezado, chips, vacio, tile } from '../src/ui/componentes.js';
 import { entradaFalsa } from './dobles.js';
+import { registrarCategorias } from '../src/ui/categorias.js';
 
 describe('tarjeta', () => {
   it('lleva foto, título y la línea de contexto con categoría y tiempo', () => {
@@ -32,6 +33,7 @@ describe('tarjeta', () => {
   });
 
   it('el placeholder lleva el color y la foto de la categoría', () => {
+    registrarCategorias([{ id: 'c1', nombre: 'Pescados y mariscos', color: 'pescados', foto: 'catalogo:pescados-y-mariscos' }]);
     const html = placeholder('Pescados y mariscos');
     expect(html).toContain('--c:var(--cat-pescados)');
     expect(html).toContain('--img:url(');
@@ -103,6 +105,7 @@ describe('vacio', () => {
 
 describe('tile', () => {
   it('lleva la foto de la categoría y su color', () => {
+    registrarCategorias([{ id: 'c1', nombre: 'Pescados y mariscos', color: 'pescados', foto: 'catalogo:pescados-y-mariscos' }]);
     const html = tile('Pescados y mariscos');
     expect(html).toContain('--c:var(--cat-pescados)');
     expect(html).toContain('background-image:url(');

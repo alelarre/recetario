@@ -28,6 +28,7 @@ const storeFake = {
   crear: async () => ({ id: 'nuevo-id', nombre_archivo: 'x.md' }),
   entradas: () => [],
   categoriasConConteo: () => [],
+  categorias: () => [],
   receta: async () => ({ entrada: null, receta: null }),
   buscar: () => [],
   tagsDe: () => [],

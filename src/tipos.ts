@@ -184,9 +184,25 @@ export interface Coincidencias {
 /* La frontera con Google. Nada de acá se asume presente.              */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Una subcarpeta de `Recetario/`: la carpeta es la categoría (§3.1). El color y
+ * la foto son las propiedades de la carpeta en Drive; vacíos, se dibuja con el
+ * neutro y la trama.
+ */
+export interface Categoria {
+  id: string;
+  nombre: string;
+  /** Clave de la paleta (`src/categorias.ts`), o vacío. */
+  color: string;
+  /** `catalogo:<clave>`, `drive:<id>` o vacío. */
+  foto: string;
+}
+
 /** Un archivo tal como lo devuelve Drive. Todo campo puede faltar. */
 export interface ArchivoDrive {
   id: string;
+  /** Las propiedades privadas de la app sobre el archivo. */
+  appProperties?: Record<string, string>;
   name?: string;
   mimeType?: string;
   parents?: string[];

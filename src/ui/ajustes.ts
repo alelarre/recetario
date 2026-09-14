@@ -21,12 +21,14 @@ export interface OpcionesAjustes {
   informe?: InformeArranque | null;
   /** Cuántas recetas tiene el índice ahora, para la ficha «Al abrir». */
   recetas?: number;
+  /** Cuántas categorías hay ahora, para la ficha «Al abrir». */
+  categorias?: number;
   /** El menú lateral está desplegado (sólo en pantalla angosta). */
   menuAbierto?: boolean;
 }
 
 export function renderAjustes(
-  { cuenta, ultimaReindexado, ignorados, indiceDuplicado, reindexando, borradores = 0, menuAbierto, informe, recetas = 0 }: OpcionesAjustes
+  { cuenta, ultimaReindexado, ignorados, indiceDuplicado, reindexando, borradores = 0, menuAbierto, informe, recetas = 0, categorias = 0 }: OpcionesAjustes
 ): string {
   const enCurso = !!reindexando;
 
@@ -71,7 +73,7 @@ export function renderAjustes(
     '<div class="conten">' +
       encabezado({ titulo: 'Ajustes', grande: true, izquierda: botonMenu(borradores) }) +
       '<div class="cuerpo">' + seccionCuenta + seccionIndice +
-        (informe ? fichaAlAbrir(informe, recetas, borradores) : '') +
+        (informe ? fichaAlAbrir(informe, recetas, borradores, categorias) : '') +
         (enCurso ? '' : FICHA_DATOS_LOCALES) +
         `<div class="ficha"><h2>Avisos</h2>${lista}</div>` +
       '</div>' +
@@ -114,8 +116,8 @@ const contar = (n: number, uno: string, varios: string): string => `${n} ${n ===
  * (brand-identity §3.2). Si reindexó, la copia dice sólo cómo estaba: lo que
  * se hizo después no fue bajar la planilla sino rearmarla.
  */
-function fichaAlAbrir(informe: InformeArranque, recetas: number, borradores: number): string {
-  const { momento, indiceModificado, copia, copiaModificada, reindexado, categorias } = informe;
+function fichaAlAbrir(informe: InformeArranque, recetas: number, borradores: number, categorias: number): string {
+  const { momento, indiceModificado, copia, copiaModificada, reindexado } = informe;
   const estadoCopia = copia === 'otra-fecha' && copiaModificada
     ? `del ${fechaYHora(copiaModificada)}, ${COPIA[copia]}`
     : COPIA[copia];

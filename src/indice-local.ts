@@ -7,7 +7,7 @@
  * bloqueado, JSON roto— se lee como «no hay copia». La copia nunca es
  * imprescindible: sin ella, la app baja la planilla.
  */
-import type { Entrada, EntradaBorrador } from './tipos.js';
+import type { Categoria, Entrada, EntradaBorrador } from './tipos.js';
 
 const CLAVE_STORAGE = 'recetario-indice';
 
@@ -16,6 +16,8 @@ export interface CopiaIndice {
   schemaVersion: number;
   /** Qué planilla es. */
   indiceId: string;
+  /** La carpeta `Recetario/`: con ella y `indiceId`, abrir no busca nada. */
+  raizId: string;
   /** El modifiedTime de `_indice` en Drive cuando se guardó la copia. */
   modifiedTime: string;
   /** La hoja `meta`: schemaVersion, ultima_reconstruccion, reconstruccion_en_curso. */
@@ -28,6 +30,8 @@ export interface CopiaIndice {
   filas: { fila: number; entrada: Entrada }[];
   /** La hoja `borradores`, con el mismo criterio que `filas`. */
   borradores: { fila: number; entrada: EntradaBorrador }[];
+  /** La hoja `categorias`, en el orden de la planilla. */
+  categorias: Categoria[];
 }
 
 /** Lo que el store usa. `main` le pasa este módulo entero; los tests, un doble. */
@@ -70,5 +74,7 @@ function esCopia(c: unknown): c is CopiaIndice {
     && typeof x['modifiedTime'] === 'string'
     && !!x['meta'] && typeof x['meta'] === 'object'
     && Array.isArray(x['filas'])
-    && Array.isArray(x['borradores']);
+    && Array.isArray(x['borradores'])
+    && typeof x['raizId'] === 'string'
+    && Array.isArray(x['categorias']);
 }

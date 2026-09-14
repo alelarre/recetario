@@ -21,6 +21,7 @@ interface ArchivoFalso {
   modifiedTime?: string;
   trashed?: boolean;
   contenido?: string;
+  appProperties?: Record<string, string>;
 }
 
 /**
@@ -52,13 +53,13 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
     async listarHijos(id: string) {
       return vivos().filter(a => (a.parents ?? []).includes(id));
     },
-    // El real siempre devuelve un archivo o tira; pedir metadatos de un id que
-    // no existe es un error del test, no un caso a tolerar en silencio.
+    // Como el real: un id que no está es un 404, que el arranque distingue de
+    // no poder preguntar.
     async metadatos(id: string) {
       api.llamadas.push(['metadatos', id]);
       if (fallas.has('metadatos')) throw fallas.get('metadatos');
       const a = store.get(id);
-      if (!a) throw new Error(`El doble de Drive no tiene el archivo ${id}`);
+      if (!a) throw Object.assign(new Error(`El doble de Drive no tiene el archivo ${id}`), { status: 404 });
       return a;
     },
     async leerTexto(id: string) {
@@ -84,6 +85,12 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
     async renombrar(id: string, nombre: string) {
       const a = exigir(id);
       a.name = nombre;
+      return a;
+    },
+    async propiedades(id: string, props: Record<string, string>) {
+      api.llamadas.push(['propiedades', id, props]);
+      const a = exigir(id);
+      a.appProperties = { ...a.appProperties, ...props };
       return a;
     },
     async mover(id: string, { de, a: destino }: { de: string; a: string }) {

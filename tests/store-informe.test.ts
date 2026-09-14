@@ -37,7 +37,7 @@ function armar({
 
 const copiaVigente = (cambios: Partial<CopiaIndice> = {}): CopiaIndice => ({
   schemaVersion: SCHEMA_VERSION, indiceId: 'i1', modifiedTime: FECHA,
-  meta: { schemaVersion: String(SCHEMA_VERSION) }, filas: [], borradores: [], ...cambios
+  meta: { schemaVersion: String(SCHEMA_VERSION) }, filas: [], borradores: [], raizId: 'raiz', categorias: [], ...cambios
 });
 
 describe('el informe del arranque (P18)', () => {
@@ -55,12 +55,11 @@ describe('el informe del arranque (P18)', () => {
     expect(informe.copiaModificada).toBe(copia?.modifiedTime ?? '');
   });
 
-  it('trae cuándo arrancó, la fecha de _indice y cuántas categorías hay', async () => {
+  it('trae cuándo arrancó y la fecha de _indice', async () => {
     const antes = Date.now();
     const { informe } = arranqueListo(await armar().arrancar());
     expect(Date.parse(informe.momento)).toBeGreaterThanOrEqual(antes);
     expect(informe.indiceModificado).toBe(FECHA);
-    expect(informe.categorias).toBe(2);
   });
 
   it('sin motivo, no reindexa', async () => {

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { renderReceta } from '../src/ui/receta.js';
 import { parse } from '../src/recipe.js';
 import { entradaFalsa } from './dobles.js';
+import { registrarCategorias } from '../src/ui/categorias.js';
 
 const MINIMA = parse('---\ntitulo: A\n---\n');
 
@@ -111,6 +112,7 @@ describe('Receta en lectura', () => {
   });
 
   it('la categoría sale de la fila del índice, no del frontmatter', () => {
+    registrarCategorias([{ id: 'c1', nombre: 'Pescados y mariscos', color: 'pescados', foto: 'catalogo:pescados-y-mariscos' }]);
     const html = renderReceta({ entrada: entradaFalsa({ categoria: 'Pescados y mariscos' }), receta: COMPLETA });
     expect(html).toContain('Pescados y mariscos');
     expect(html).toContain('var(--cat-pescados)');

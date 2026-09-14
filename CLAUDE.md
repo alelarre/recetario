@@ -12,7 +12,7 @@ Ajustes.
 **Después, usando la app** (2026-09-12 y 13): se trabajó casi todo el backlog de
 uso real (`BACKLOG.md` §6) —comportamiento, diseño visual, la auditoría
 tipográfica (`product-design/ux/auditoria-tipografica.md`) y la deuda chica—, y
-las lecturas de Drive dejaron de repetirse en cada toque. **567 tests**, typecheck
+las lecturas de Drive dejaron de repetirse en cada toque. **591 tests**, typecheck
 y build en verde, y cada cambio de UI se probó en el teléfono sobre Pages.
 
 **Hecho el 2026-09-13 — el índice local (P12):** al abrir, si `_indice` no cambió
@@ -26,6 +26,13 @@ Sheets; cada escritura deja la copia al día. Spec en
 manda a la papelera. Spec en `docs/superpowers/specs/2026-09-13-borradores-md-design.md`.
 Probado en el teléfono, junto con la versión visible (P20) y la ficha «Al abrir»
 de Ajustes (P18).
+
+**Hecho el 2026-09-13 — categorías en el índice (P15/P19, etapa 1):** el color y
+la foto son propiedades de la carpeta, las predefinidas viven en
+`src/categorias.ts`, la hoja `categorias` entra en la copia local y abrir con la
+copia vigente es un pedido. Spec en
+`docs/superpowers/specs/2026-09-13-categorias-en-el-indice-design.md`. **Falta
+probarlo en el teléfono.**
 
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
 - El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
@@ -168,8 +175,11 @@ Todo en español rioplatense: spec, comentarios, UI y nombres de carpetas.
 `recetas` del usuario. Las 16 categorías ya están creadas; los ids
 de cada una están en `SETUP.md`.
 
-**La app no hardcodea ninguno de esos ids:** descubre las categorías listando las
-subcarpetas, así que agregar una categoría es crear una carpeta en Drive.
+**La app no hardcodea ninguno de esos ids.** Las categorías salen de la hoja
+`categorias` de `_indice`, que el reindexado arma listando las subcarpetas: una
+carpeta nueva aparece al reindexar. Las 16 predefinidas —nombre, color y foto—
+están en `src/categorias.ts`, y el color y la foto de cada carpeta son sus
+`appProperties` en Drive.
 
 ## Decisiones cerradas — no reabrir
 
@@ -192,7 +202,7 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | Funcionar sin conexión | Salió de v1 el 2026-09-02 y sigue afuera: sin la lectura de Drive no hay con qué dibujar. `cache.ts` y su IndexedDB se eliminaron con el rediseño. **Desde el 2026-09-13 hay copia local del índice, y sólo del índice** (P12, `src/indice-local.ts`): con la premisa de que nunca hay escritura concurrente, se guarda en `localStorage` y al abrir se compara el `modifiedTime` de `_indice`; si coincide no se lee Sheets. No sirve para dibujar sin red: la búsqueda en Drive va antes que la copia (C05.4.2, C05.8.1). |
 | AppSheet, Apps Script, apps nativas, Artifact de Claude | Evaluadas como plataforma y descartadas (§2). |
 | Pestañas en el detalle | Costaban cuatro toques para leer una receta entera y escondían las notas y las variaciones justo cuando se cocina. La receta se lee de corrido, en una pila de fichas. **El conmutador volvió, pero solo dentro del modo cocina**, que es donde notas y variaciones no se usan. |
-| Derivar el color de categoría de un hash del nombre | Medido: con 16 categorías siempre agrupa. `Pescados y mariscos` y `Ensaladas` caían en el mismo matiz exacto. La paleta es una lista escrita a mano: quince colores a 18° entre sí y a una distancia percibida de al menos 12 del acento, más el neutro de `Otros` (design-system §2.3), y vive en `src/ui/tokens.css` como tokens `--cat-*`. |
+| Derivar el color de categoría de un hash del nombre | Medido: con 16 categorías siempre agrupa. `Pescados y mariscos` y `Ensaladas` caían en el mismo matiz exacto. La paleta es una lista escrita a mano: quince colores a 18° entre sí y a una distancia percibida de al menos 12 del acento, más el neutro de `Otros` (design-system §2.3), y vive en `src/ui/tokens.css` como tokens `--cat-*`. Desde el 2026-09-13 el color es una propiedad de la carpeta; la tabla de predefinidas está en `src/categorias.ts`. |
 | Identificar las categorías por una abreviación de 3 letras | Hay que aprenderlas. La foto se reconoce sin memorizar nada, y el nombre completo está escrito al lado igual. |
 | Las fotos de categoría en `public/` o en Drive | `sw.js` sirve caché-primero solo `/assets/`; en `public/` serían 16 pedidos de red por apertura. Desde Drive haría falta el token y un object URL, que es lo que hizo descartar las fotos de receta. Van en `src/categorias/`, importadas con `import.meta.glob`. |
 | Ordenar el home por cantidad de recetas | Reacomoda la grilla cada vez que entra una receta, y la posición de la categoría es justo lo que se aprende. Alfabético. El **número** sí se muestra: un badge en la esquina del tile, y sólo si la categoría tiene algo (2026-09-11, elegido sobre ponerlo en la banda del nombre). |
@@ -325,9 +335,11 @@ un agente (una grilla de 5×3), salvo `otros.webp`, que es pixel art compuesto
 sobre el color de la categoría. El rediseño lo había dado de baja —`Otros` se
 dibujaba con la trama— y se repuso el 2026-09-11: la foto va, el color neutro
 también, y la trama queda como respaldo de una carpeta que todavía no tiene
-imagen. El nombre del archivo es el slug de la carpeta:
-así se agrega una foto nueva sin tocar código. Una categoría sin foto se dibuja
-con su color plano y no rompe nada.
+imagen. El nombre del archivo es la clave del catálogo: sumar una foto al
+catálogo es agregar un `.webp`, y sumar una predefinida es además una fila en
+`src/categorias.ts`. Cada carpeta guarda su foto como `appProperties`
+(`foto=catalogo:<clave>`); una categoría sin foto se dibuja con su color plano y
+no rompe nada.
 
 La otra imagen del producto es `src/ui/drive.png`, el favicon de Drive que
 acompaña al link al `.md` (2026-09-12). Es el que publica Google, copiado al

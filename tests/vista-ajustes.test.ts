@@ -71,10 +71,10 @@ describe('Ajustes: la ficha «Al abrir» (P18)', () => {
   const f = (d: number, h: number, m: number) => new Date(2026, 8, d, h, m).toISOString();
   const informe: InformeArranque = {
     momento: f(13, 14, 31), indiceModificado: f(13, 14, 30), copia: 'coincide',
-    copiaModificada: f(13, 14, 30), reindexado: '', categorias: 16
+    copiaModificada: f(13, 14, 30), reindexado: ''
   };
   const conInforme = (cambios: Partial<InformeArranque> = {}) =>
-    renderAjustes({ ...base, informe: { ...informe, ...cambios }, recetas: 61, borradores: 3 });
+    renderAjustes({ ...base, informe: { ...informe, ...cambios }, recetas: 61, borradores: 3, categorias: 16 });
 
   it('dice cuándo abrió, la fecha de _indice, lo que hay y que no reindexó', () => {
     const html = conInforme();
@@ -117,7 +117,7 @@ describe('Ajustes: la ficha «Al abrir» (P18)', () => {
   });
 
   it('una receta y un borrador van en singular', () => {
-    const html = renderAjustes({ ...base, informe, recetas: 1, borradores: 1 });
+    const html = renderAjustes({ ...base, informe, recetas: 1, borradores: 1, categorias: 16 });
     expect(html).toContain('1 receta · 1 borrador · 16 categorías.');
   });
 

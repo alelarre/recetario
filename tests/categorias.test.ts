@@ -1,33 +1,47 @@
-// tests/categorias.test.js
-//
-// La identidad visual se resuelve desde el nombre de la carpeta, que es la
-// única verdad del modelo (§3.1). Lo que importa probar es que una carpeta
-// nueva —creada en Drive, que la app descubre listando subcarpetas— no rompe
-// nada aunque todavía no tenga ni color ni foto asignados.
-import { describe, it, expect } from 'vitest';
-import { colorCategoria, fotoCategoria, slugCategoria } from '../src/ui/categorias.js';
+// La identidad visual sale de las propiedades de la carpeta —color y foto—, que
+// `main` registra desde el índice. Lo que importa probar es que la búsqueda es
+// por nombre, que una categoría renombrada conserva lo suyo, y que lo que falta
+// no rompe nada.
+import { describe, it, expect, beforeEach } from 'vitest';
+import { colorCategoria, fotoCategoria, slugCategoria, registrarCategorias } from '../src/ui/categorias.js';
 
 describe('categorias', () => {
-  it('el slug coincide con el nombre del archivo de imagen', () => {
+  beforeEach(() => registrarCategorias([
+    { id: 'c1', nombre: 'Pescados y mariscos', color: 'pescados', foto: 'catalogo:pescados-y-mariscos' },
+    { id: 'c2', nombre: 'Mis tartas', color: 'tartas', foto: 'catalogo:tartas-y-empanadas' },
+    { id: 'c3', nombre: 'Fiambres', color: '', foto: '' },
+    { id: 'c4', nombre: 'Rara', color: 'fucsia', foto: 'drive:abc' },
+    { id: 'c5', nombre: 'Otros', color: 'otros', foto: 'catalogo:otros' }
+  ]));
+
+  it('el slug sigue siendo el del nombre', () => {
     expect(slugCategoria('Pescados y mariscos')).toBe('pescados-y-mariscos');
-    expect(slugCategoria('Arroces y legumbres')).toBe('arroces-y-legumbres');
   });
 
-  it('cada categoría conocida tiene su token de color', () => {
+  it('color y foto salen de las claves registradas', () => {
     expect(colorCategoria('Pescados y mariscos')).toBe('var(--cat-pescados)');
-    expect(colorCategoria('Carnes')).toBe('var(--cat-carnes)');
+    expect(fotoCategoria('Pescados y mariscos')).toMatch(/pescados-y-mariscos/);
   });
 
-  it('Otros lleva el neutro, y su foto como cualquier otra', () => {
+  it('una categoría renombrada conserva su color y su foto', () => {
+    expect(colorCategoria('Mis tartas')).toBe('var(--cat-tartas)');
+    expect(fotoCategoria('Mis tartas')).toMatch(/tartas-y-empanadas/);
+  });
+
+  it('Otros lleva el neutro y su foto', () => {
     expect(colorCategoria('Otros')).toBe('var(--cat-otros)');
     expect(fotoCategoria('Otros')).not.toBeNull();
   });
 
-  it('una categoría desconocida cae en el neutro y no rompe', () => {
-    // Agregar una categoría es crear una carpeta en Drive: la app tiene que
-    // dibujarla igual, aunque nadie le haya puesto color ni foto.
-    expect(colorCategoria('Fiambres caseros')).toBe('var(--cat-otros)');
-    expect(fotoCategoria('Fiambres caseros')).toBeNull();
+  it('sin propiedades, con una clave desconocida o sin registrar: neutro y sin foto', () => {
+    expect(colorCategoria('Fiambres')).toBe('var(--cat-otros)');
+    expect(fotoCategoria('Fiambres')).toBeNull();
+    expect(colorCategoria('Rara')).toBe('var(--cat-otros)');
+    expect(colorCategoria('Sin categorizar')).toBe('var(--cat-otros)');
+  });
+
+  it('una foto de Drive todavía no se dibuja', () => {
+    expect(fotoCategoria('Rara')).toBeNull();
   });
 
   it('defendé: sin nombre no lanza', () => {

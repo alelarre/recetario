@@ -21,6 +21,7 @@ import { renderCaptura } from './ui/captura.js';
 import { renderAjustes } from './ui/ajustes.js';
 import { renderConexion } from './ui/conexion.js';
 import { aviso } from './ui/componentes.js';
+import { registrarCategorias } from './ui/categorias.js';
 import { convertirBorrador } from './compartido.js';
 import type { RecetaCreada } from './compartido.js';
 import type { Ruta } from './ui/router.js';
@@ -152,15 +153,6 @@ const conClosest = (t: EventTarget | null): Element | null =>
 /** El mensaje de un error desconocido, sin asumir que es un Error. */
 const mensajeDe = (e: unknown): string => e instanceof Error ? e.message : String(e);
 
-/**
- * Las categorías sólo existen cuando el arranque llegó a 'listo'. Antes esto
- * se leía como `estadoArranque.categorias` a secas: en cualquier otro estado
- * daba undefined y el editor dibujaba un selector de carpeta vacío, sin decir
- * por qué.
- */
-const categoriasDelArranque = () =>
-  estadoArranque?.estado === 'listo' ? estadoArranque.categorias : [];
-
 /** Lo que verificó el arranque, para la ficha «Al abrir» de Ajustes (P18). */
 const informeArranque = () =>
   estadoArranque?.estado === 'listo' ? estadoArranque.informe : null;
@@ -266,6 +258,7 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
   // planilla de un esquema viejo puede no tener todas sus hojas.
   if (estadoArranque.reconstruir) await reconstruir();
   else await store.cargarIndice();
+  registrarCategorias(store.categorias());
 
   router.iniciar();
 }
@@ -289,6 +282,7 @@ async function reconstruir({ enAjustes = false } = {}) {
   try {
     const r = await store.reconstruir(progreso => { reindexando = progreso; dibujar(); });
     ignorados = r.ignorados;
+    registrarCategorias(store.categorias());
   } finally {
     reindexando = null;
   }
@@ -445,7 +439,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
         indiceDuplicado: indiceDuplicado(), reindexando,
         borradores: store.borradores().length, menuAbierto,
-        informe: informeArranque(), recetas: store.entradas().length
+        informe: informeArranque(), recetas: store.entradas().length, categorias: store.categorias().length
       }));
 
     case 'capturar': {
@@ -489,7 +483,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       try {
         const { entrada, receta } = await recetaDePantalla(ruta.params['id'] ?? '');
         return abrirEditor(renderEditor({
-          entrada, receta, categorias: categoriasDelArranque(),
+          entrada, receta, categorias: store.categorias(),
           tagsConocidos: store.tagsDe().map(t => t.tag)
         }));
       } catch (err) {
@@ -519,7 +513,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         }
       }
       return abrirEditor(renderEditor({
-        entrada: null, receta, categorias: categoriasDelArranque(),
+        entrada: null, receta, categorias: store.categorias(),
         tagsConocidos: store.tagsDe().map(t => t.tag)
       }));
     }
@@ -856,7 +850,7 @@ app.addEventListener('click', async (e) => {
     /** El editor otra vez, con lo que el usuario tenía escrito y el aviso (C04.5.2). */
     const conError = (mensaje: string) => pintar(renderEditor({
       entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
-      receta: nueva, categorias: categoriasDelArranque(),
+      receta: nueva, categorias: store.categorias(),
       tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje
     }));
 

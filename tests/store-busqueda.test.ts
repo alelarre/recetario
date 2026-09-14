@@ -3,6 +3,7 @@ import { crearStore } from '../src/store.js';
 import { driveFalso, sheetsFalso, indiceLocalFalso } from './dobles.js';
 import type { DriveFalso, SheetsFalso } from './dobles.js';
 import { COLUMNAS } from '../src/catalogo.js';
+import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
@@ -29,6 +30,9 @@ beforeEach(async () => {
     fila('r1', 'Milanesas napolitanas', 'Carnes', 'c1', 'horno|rápido', 'muzzarella|nalga', 'fácil'),
     fila('r2', 'Bife de chorizo', 'Carnes', 'c1', 'parrilla', 'bife', 'fácil'),
     fila('r3', 'Flan casero', 'Postres', 'c2', 'dulce', 'huevo|leche', 'media')
+  ]);
+  sheets.cargar('i1', 'categorias', [
+    [...COLUMNAS_CATEGORIAS], ['c1', 'Carnes', 'carnes', 'catalogo:carnes'], ['c2', 'Postres', 'postres', 'catalogo:postres']
   ]);
   store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
   await store.arrancar();

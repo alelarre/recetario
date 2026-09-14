@@ -3,6 +3,7 @@ import { convertirBorrador, escribirRecetaAlIndice, leerReceta } from '../src/co
 import { crearStore } from '../src/store.js';
 import { driveFalso, sheetsFalso, recetaFalsa, indiceLocalFalso } from './dobles.js';
 import { COLUMNAS } from '../src/catalogo.js';
+import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 import { COLUMNAS_BORRADORES, serializeBorrador } from '../src/borrador.js';
 import { SCHEMA_VERSION } from '../src/config.js';
 
@@ -27,12 +28,13 @@ const armar = async ({ borradores: lista = [] as { id: string; titulo: string }[
     }))
   ]);
   const sheets = sheetsFalso();
-  sheets.crearPlanilla('i1', ['recetas', 'meta', 'borradores']);
+  sheets.crearPlanilla('i1', ['recetas', 'meta', 'borradores', 'categorias']);
   sheets.cargar('i1', 'recetas', [[...COLUMNAS]]);
   sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)]]);
   sheets.cargar('i1', 'borradores', [
     [...COLUMNAS_BORRADORES], ...lista.map(b => [b.id, `${b.id}.md`, b.titulo, CAPTURADO])
   ]);
+  sheets.cargar('i1', 'categorias', [[...COLUMNAS_CATEGORIAS], ['c1', 'Pescados y mariscos', 'pescados', 'catalogo:pescados-y-mariscos']]);
 
   const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
   await store.arrancar();

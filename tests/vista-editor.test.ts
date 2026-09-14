@@ -5,7 +5,7 @@ import { parse, serialize } from '../src/recipe.js';
 import { entradaFalsa } from './dobles.js';
 import type { Categoria } from '../src/store.js';
 
-const categorias: Categoria[] = [
+const categorias: Pick<Categoria, 'id' | 'nombre'>[] = [
   { id: 'c1', nombre: 'Carnes' }, { id: 'c2', nombre: 'Pescados y mariscos' }
 ];
 

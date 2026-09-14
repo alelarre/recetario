@@ -45,9 +45,11 @@ describe('arranque en frío', () => {
     expect(arranqueEligiendo(r).candidatas).toHaveLength(2);
   });
 
-  it('descubre las categorías listando subcarpetas, y excluye las que empiezan con _', async () => {
-    const r = await armar(conRecetario()).store.arrancar();
-    expect(arranqueListo(r).categorias.map(c => c.nombre).sort()).toEqual(['Carnes', 'Postres']);
+  it('las categorías salen del reindexado: las subcarpetas, sin las que empiezan con _', async () => {
+    const { store } = armar(conRecetario());
+    await store.arrancar();   // sin planilla: la crea y pide reindexar
+    await store.reconstruir();
+    expect(store.categorias().map(c => c.nombre).sort()).toEqual(['Carnes', 'Postres']);
   });
 
   it('sin planilla la crea con encabezados y pide reconstruir', async () => {
@@ -159,19 +161,12 @@ describe('arranque en frío', () => {
     expect(arranqueListo(await store.arrancar()).reconstruir).toBe(true);
   });
 
-  it('si falla listarCarpetas arranca en solo lectura sin lanzar', async () => {
-    const drive = conRecetario();
-    const { store } = armar(drive);
-
-    // Envolvé listarCarpetas para lanzar
-    const listarOriginal = drive.listarCarpetas;
-    drive.listarCarpetas = async function() {
-      throw Object.assign(new Error('sin red'), { status: 0 });
-    };
-
-    const r = await store.arrancar();
-    expect(r.estado).toBe('solo-lectura');
-    expect([...drive._store.values()].some(a => a.name === '_indice')).toBe(false);
+  it('abrir no lista carpetas: las categorías salen del índice', async () => {
+    const drive = conRecetario([{ id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] }]);
+    drive.listarCarpetas = async () => { throw new Error('no debería listar al abrir'); };
+    const { store, sheets } = armar(drive);
+    sheets.crearPlanilla('i1');
+    expect((await store.arrancar()).estado).toBe('listo');
   });
 
   it('si falla buscarPorNombre de planilla arranca en solo lectura y NO crea _indice', async () => {

@@ -23,7 +23,7 @@ export interface ArgsEditor {
   receta: Receta;
   /** Sin entrada es el alta: el archivo todavía no existe en Drive. */
   entrada: Entrada | null;
-  categorias?: Categoria[];
+  categorias?: Pick<Categoria, 'id' | 'nombre'>[];
   tagsConocidos?: string[];
   /** El texto del aviso cuando el guardado falló. Lo escrito sigue en pantalla. */
   error?: string;

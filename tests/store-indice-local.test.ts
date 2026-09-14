@@ -54,6 +54,8 @@ const copiaVigente = (cambios: Partial<CopiaIndice> = {}): CopiaIndice => ({
     { fila: 2, entrada: entradaDesdeFila(fila('r1', 'Milanesas de la copia')) }
   ],
   borradores: [],
+  raizId: 'raiz',
+  categorias: [],
   ...cambios
 });
 
@@ -138,7 +140,7 @@ describe('al abrir, con la copia local del índice', () => {
 
   it('sin red no toca la copia', async () => {
     const { store, drive, indiceLocal } = await armar({ copia: copiaVigente() });
-    drive.fallar('buscarPorNombre', new Error('sin red'));
+    drive.fallar('metadatos', Object.assign(new Error('sin red'), { status: 0 }));
     expect((await store.arrancar()).estado).toBe('solo-lectura');
     expect(indiceLocal.guardadas).toEqual([]);
     expect(indiceLocal.borradas).toBe(0);

@@ -38,7 +38,9 @@ async function armar({
   const sheets = sheetsFalso();
   sheets.crearPlanilla('i1', hojas);
   sheets.cargar('i1', 'recetas', [[...COLUMNAS]]);
-  sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)]]);
+  sheets.cargar('i1', 'meta', [
+    ['schemaVersion', String(SCHEMA_VERSION)], ...(conCarpeta ? [['carpeta_borradores', 'bc']] : [])
+  ]);
   if (hojas.includes('borradores')) {
     sheets.cargar('i1', 'borradores', [
       [...COLUMNAS_BORRADORES],
@@ -104,7 +106,9 @@ describe('los borradores al abrir', () => {
 
   it('la carpeta _borradores no es una categoría', async () => {
     const { store } = await armar();
-    expect(arranqueListo(await store.arrancar()).categorias.map(c => c.nombre)).toEqual(['Carnes']);
+    await store.arrancar();
+    await store.reconstruir();
+    expect(store.categorias().map(c => c.nombre)).toEqual(['Carnes']);
   });
 
   it('crear la planilla crea también la hoja borradores con su encabezado', async () => {
@@ -113,7 +117,7 @@ describe('los borradores al abrir', () => {
     const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();
     const id = store._ctx.indiceId;
-    expect((await sheets.hojas(id)).map(h => h.title)).toEqual(['recetas', 'meta', 'borradores']);
+    expect((await sheets.hojas(id)).map(h => h.title)).toEqual(['recetas', 'meta', 'borradores', 'categorias']);
     expect((await sheets.leer(id, 'borradores!A1:D1'))[0]).toEqual([...COLUMNAS_BORRADORES]);
   });
 });

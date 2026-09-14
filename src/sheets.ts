@@ -4,6 +4,7 @@ const API = 'https://sheets.googleapis.com/v4/spreadsheets';
 export const HOJA_RECETAS = 'recetas';
 export const HOJA_META = 'meta';
 export const HOJA_BORRADORES = 'borradores';
+export const HOJA_CATEGORIAS = 'categorias';
 
 const letra = (i: number): string => String.fromCharCode(65 + i);
 

@@ -32,15 +32,14 @@ Drive cuando se quiera; mientras esté, la app la ignora por empezar con `_`.
 | `Bebidas/` | `1o9wvgO8sKpij53hYfcAX3PO7WxizjJmB` |
 | `Otros/` | `1hJspooBXMmzPj-bsIodSz7qKYdMWrtA4` |
 
-Los ids están acá solo para depurar. La app **no** los hardcodea: descubre las
-categorías listando las subcarpetas de `Recetario/`, así que una categoría nueva
-aparece apenas se crea su subcarpeta en Drive.
+Los ids están acá solo para depurar. La app **no** los hardcodea: arma sus
+categorías al reindexar, listando las subcarpetas de `Recetario/`, así que una
+carpeta nueva aparece después de *Ajustes → Reindexar*.
 
-**Pero su color y su foto sí están en el código**, atados al slug del nombre de la
-carpeta (`src/ui/categorias.ts`, `src/ui/tokens.css`, `src/categorias/`): una
-carpeta nueva se dibuja con el color neutro, y **renombrar una carpeta le hace
-perder el color y la foto**. Cómo ordenarlo está pendiente en `BACKLOG.md` P15 y
-P19.
+El color y la foto de cada carpeta son propiedades suyas en Drive. El primer
+reindexado se los escribe a las carpetas cuyo nombre coincide con una de las 16
+predefinidas de `src/categorias.ts`; una carpeta que no coincide se dibuja con el
+color neutro. Renombrar una carpeta ya no le hace perder el color ni la foto.
 
 ## 2. Planilla `_indice` — la crea la app
 
