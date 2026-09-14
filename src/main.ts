@@ -24,6 +24,7 @@ import { renderListaCategorias, renderEdicionCategoria, confirmacionBorrarCatego
 import { colorLibre, problemaDelNombre } from './categorias.js';
 import { colorDeClave, urlDeFoto } from './ui/categorias.js';
 import { renderSelector } from './ui/carpeta.js';
+import { puedeEmpezar, direccion, progreso, seAbre } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
 import { aviso } from './ui/componentes.js';
 import { registrarCategorias } from './ui/categorias.js';
@@ -1128,6 +1129,69 @@ app.addEventListener('input', (e) => {
   const boton = document.querySelector<HTMLButtonElement>('#app [data-accion="guardar-captura"]');
   if (boton) boton.toggleAttribute('disabled', !tituloCaptura.trim());
 });
+
+/** Las pantallas que dibujan el menú lateral: sólo ahí se desliza para abrirlo. */
+const PANTALLAS_CON_MENU: readonly Ruta['vista'][] = ['recetario', 'borradores', 'ajustes'];
+
+/** El deslizamiento en curso: dónde empezó, si ya se sabe que es gesto, y cuánto va abierto. */
+let deslizando: { x: number; y: number; decidido: 'indeciso' | 'horizontal' | 'vertical'; p: number } | null = null;
+
+/** Desde 900 px el menú es fijo (`base.css`): no hay nada que abrir. */
+const menuFijo = (): boolean =>
+  typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 900px)').matches;
+
+/** El menú y el velo al ritmo del dedo, sin transición; con `null` vuelven a lo que diga el CSS. */
+function seguirDedo(p: number | null): void {
+  const lat = document.querySelector<HTMLElement>('#app .lat');
+  const velo = document.querySelector<HTMLElement>('#app .velo-lat');
+  if (lat) {
+    lat.style.transition = p === null ? '' : 'none';
+    lat.style.transform = p === null ? '' : `translateX(${(p - 1) * 100}%)`;
+  }
+  if (velo) {
+    velo.style.transition = p === null ? '' : 'none';
+    velo.style.opacity = p === null ? '' : String(p * 0.6);
+  }
+}
+
+// Deslizar para abrir o cerrar el menú, como en una app nativa. Los listeners
+// son pasivos: un deslizamiento vertical tiene que seguir desplazando la página.
+app.addEventListener('touchstart', (e) => {
+  deslizando = null;
+  const toques = (e as TouchEvent).touches;
+  const toque = toques[0];
+  if (!toque || toques.length !== 1) return;
+  if (!vistaActual || !PANTALLAS_CON_MENU.includes(vistaActual.vista) || menuFijo()) return;
+  if (!puedeEmpezar(toque.clientX, menuAbierto)) return;
+  deslizando = { x: toque.clientX, y: toque.clientY, decidido: 'indeciso', p: menuAbierto ? 1 : 0 };
+}, { passive: true });
+
+app.addEventListener('touchmove', (e) => {
+  const toque = (e as TouchEvent).touches[0];
+  if (!deslizando || !toque) return;
+  const dx = toque.clientX - deslizando.x;
+  const dy = toque.clientY - deslizando.y;
+  if (deslizando.decidido === 'indeciso') deslizando.decidido = direccion(dx, dy);
+  if (deslizando.decidido === 'vertical') { deslizando = null; return; }
+  if (deslizando.decidido !== 'horizontal') return;
+  deslizando.p = progreso(dx, menuAbierto);
+  seguirDedo(deslizando.p);
+}, { passive: true });
+
+const soltarDeslizamiento = (): void => {
+  if (!deslizando) return;
+  const { decidido, p } = deslizando;
+  deslizando = null;
+  if (decidido !== 'horizontal') return;
+  seguirDedo(null);
+  const abrir = seAbre(p);
+  // Si vuelve a donde estaba, el CSS lo reacomoda con su transición.
+  if (abrir === menuAbierto) return;
+  menuAbierto = abrir;
+  void render();
+};
+app.addEventListener('touchend', soltarDeslizamiento);
+app.addEventListener('touchcancel', soltarDeslizamiento);
 
 app.addEventListener('keydown', (e) => {
   const campo = (e.target as HTMLInputElement | null);

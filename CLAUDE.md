@@ -12,7 +12,7 @@ Ajustes.
 **Después, usando la app** (2026-09-12 y 13): se trabajó casi todo el backlog de
 uso real (`BACKLOG.md` §6) —comportamiento, diseño visual, la auditoría
 tipográfica (`product-design/ux/auditoria-tipografica.md`) y la deuda chica—, y
-las lecturas de Drive dejaron de repetirse en cada toque. **664 tests**, typecheck
+las lecturas de Drive dejaron de repetirse en cada toque. **671 tests**, typecheck
 y build en verde, y cada cambio de UI se probó en el teléfono sobre Pages.
 
 **Hecho el 2026-09-13 — el índice local (P12):** al abrir, si `_indice` no cambió
@@ -86,7 +86,9 @@ posición de scroll al conmutar en el modo cocina y el gesto de atrás de Androi
 en el editor con cambios sin guardar. Y de 2026-09-13, en el teléfono: que tocar
 un paso en cocina ya no resalte la pantalla entera (`f1214ac` es una hipótesis
 sin confirmar), que el sol y *Salir* respondan en toda su área de 64 px (P16), y
-que la pantalla siga encendida al volver de segundo plano.
+que la pantalla siga encendida al volver de segundo plano. Y de 2026-09-14: que
+deslizar hacia la derecha, empezando a 24 px del borde, abra el menú lateral en
+Recetario, Borradores y Ajustes, y que deslizar a la izquierda lo cierre.
 
 Para lo demás, según lo que necesites:
 
