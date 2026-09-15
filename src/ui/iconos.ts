@@ -28,6 +28,9 @@ export const ICO = {
   /** El sol del modo cocina: la pantalla que no se apaga. */
   sol: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3' +
     'M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>'),
+  /** Compartir la receta: PDF, link o texto. De Lucide (share-2). */
+  compartir: svg('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>' +
+    '<path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>'),
   puntos: svg('<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>'),
   mas: svg('<path d="M12 5v14M5 12h14"/>'),
   /** Los dos destinos del menú lateral que no tenían ícono propio. */

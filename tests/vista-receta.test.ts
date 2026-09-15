@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderReceta } from '../src/ui/receta.js';
+import { renderFichaCompartir } from '../src/ui/compartir.js';
 import { parse } from '../src/recipe.js';
 import { entradaFalsa } from './dobles.js';
 import { registrarCategorias } from '../src/ui/categorias.js';
@@ -218,5 +219,46 @@ describe('Receta en lectura', () => {
   it('escapa el título: el .md lo escribe cualquiera', () => {
     const r = parse('---\ntitulo: "<img onerror=alert(1)>"\n---\n');
     expect(renderReceta({ entrada: null, receta: r })).not.toContain('<img onerror');
+  });
+
+  it('el encabezado lleva compartir, antes del .md', () => {
+    const html = renderReceta({ entrada: entradaFalsa({ id_archivo: 'f1' }), receta: COMPLETA });
+    const enc = html.slice(0, html.indexOf('class="cuerpo'));
+    expect(enc).toContain('data-accion="compartir" aria-label="Compartir"');
+    expect(enc.indexOf('data-accion="compartir"')).toBeLessThan(enc.indexOf('class="archivo"'));
+  });
+
+  it('sin estado de compartir no hay ficha; con estado, sí', () => {
+    expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('hoja-compartir');
+    expect(renderReceta({ entrada: null, receta: COMPLETA, compartir: { paso: 'opciones' } })).toContain('hoja-compartir');
+  });
+});
+
+describe('La ficha de compartir', () => {
+  it('opciones: PDF, Link, Texto y Cancelar; tocar el velo cierra', () => {
+    const html = renderFichaCompartir({ paso: 'opciones' });
+    for (const a of ['compartir-pdf', 'compartir-link', 'compartir-texto']) expect(html).toContain(`data-accion="${a}"`);
+    expect(html).toContain('>Cancelar<');
+    expect(html).toContain('class="velo" data-accion="cerrar-compartir"');
+  });
+  it('generando: nada se puede tocar', () => {
+    const html = renderFichaCompartir({ paso: 'generando' });
+    expect(html).toContain('Armando el PDF…');
+    expect(html).not.toMatch(/data-accion="compartir-(pdf|link|texto)"/);
+  });
+  it('pdf-listo: Enviar PDF', () => {
+    expect(renderFichaCompartir({ paso: 'pdf-listo' })).toContain('data-accion="enviar-pdf"');
+    expect(renderFichaCompartir({ paso: 'pdf-listo' })).toContain('El PDF está listo.');
+  });
+  it('error-pdf: avisa y ofrece reintentar', () => {
+    const html = renderFichaCompartir({ paso: 'error-pdf' });
+    expect(html).toContain('No pude armar el PDF.');
+    expect(html).toContain('data-accion="compartir-pdf">Reintentar');
+  });
+  it('copiado y mostrar', () => {
+    expect(renderFichaCompartir({ paso: 'copiado', que: 'link' })).toContain('Link copiado.');
+    expect(renderFichaCompartir({ paso: 'copiado', que: 'texto' })).toContain('Texto copiado.');
+    const html = renderFichaCompartir({ paso: 'mostrar', que: 'texto', contenido: '<b>Rabas</b>' });
+    expect(html).toContain('&lt;b&gt;Rabas&lt;/b&gt;');
   });
 });

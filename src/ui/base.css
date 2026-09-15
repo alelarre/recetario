@@ -94,6 +94,22 @@
 /* El pie sigue el ancho del cuerpo: en pantalla ancha no se va a los bordes. */
 .pie .acciones { max-width: 680px; margin: 0 auto; }
 
+/* ---- Compartir (spec P23 §2) ---- */
+.velo { position: fixed; inset: 0; z-index: 30; background: var(--velo); opacity: .6; }
+.hoja-compartir { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-width: 680px; margin: 0 auto;
+                  display: flex; flex-direction: column; gap: var(--e-2);
+                  background: var(--surface); border-top: 1px solid var(--borde);
+                  border-radius: var(--r-ficha) var(--r-ficha) 0 0;
+                  padding: var(--e-4) var(--e-4) calc(var(--e-4) + env(safe-area-inset-bottom)); }
+.hoja-compartir h2 { font-size: var(--txt-base); font-weight: 600; margin: 0 0 var(--e-2); }
+.hoja-compartir p { margin: 0 0 var(--e-2); }
+.hoja-compartir .btn { width: 100%; }
+.hoja-compartir .copia { font-size: var(--txt-chico); color: var(--fg-2); background: var(--bg);
+                         border: 1px solid var(--borde); border-radius: var(--r-medio); padding: var(--e-3);
+                         max-height: 40vh; overflow: auto; white-space: pre-wrap; word-break: break-all;
+                         user-select: all; }
+.spin.en-boton { width: 16px; height: 16px; margin: 0 var(--e-2) 0 0; }
+
 /* ---- Modo cocina (mockup 02) ---- */
 /* Un paso es un <li>, no un botón: Chrome en Android sube hasta el primer
    ancestro que responde al toque —#app, que tiene el único listener de clics—

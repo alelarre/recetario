@@ -1,14 +1,12 @@
-import './ui/tokens.css';
-import './ui/base.css';
 import { crearAuth } from './auth.js';
 import { crearDrive } from './drive.js';
 import { crearSheets } from './sheets.js';
 import { crearStore } from './store.js';
 import * as indiceLocal from './indice-local.js';
-import { parse } from './recipe.js';
+import { parse, slugArchivo } from './recipe.js';
 import { tagReservado } from './catalogo.js';
 import { sePuedeTerminar } from './recipe.js';
-import { crearRouter, parsearHash, hashDeCompartido } from './ui/router.js';
+import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado } from './ui/router.js';
 import { escapar } from './ui/markdown.js';
 import { renderRecetario } from './ui/recetario.js';
 import { renderCategoria } from './ui/categoria.js';
@@ -27,12 +25,18 @@ import { renderSelector } from './ui/carpeta.js';
 import { puedeEmpezar, direccion, progreso, seAbre } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
 import { aviso } from './ui/componentes.js';
+import { pintar, conClosest } from './ui/pintar.js';
+import { crearControlCocina } from './cocina-control.js';
 import { registrarCategorias } from './ui/categorias.js';
 import { convertirBorrador } from './compartido.js';
+import { precargar, generar } from './pdf/generar.js';
+import { compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador } from './compartir.js';
+import { codificar, urlDeLink } from './link-receta.js';
+import { textoReceta } from './texto-receta.js';
+import type { EstadoCompartir } from './ui/compartir.js';
 import type { RecetaCreada } from './compartido.js';
 import type { Ruta } from './ui/router.js';
 import type { DatosFormulario } from './ui/editor.js';
-import type { PosicionCocina } from './ui/cocina.js';
 import type { ResultadoArranque, Progreso } from './store.js';
 import type { Borrador, Entrada, Receta } from './tipos.js';
 
@@ -53,7 +57,6 @@ let store: Store;
 const convertidos = new Map<string, RecetaCreada>();
 let estadoArranque: ResultadoArranque | undefined;
 let vistaActual: Ruta | null = null;
-let wakeLock: WakeLockSentinel | null = null;  // para que la pantalla no se apague cocinando
 let tagsActivos: string[] = [];   // filtro de la vista de categoría; se limpia al cambiar de vista
 
 /**
@@ -64,10 +67,6 @@ const TRAMO = 30;
 let visibles = TRAMO;
 let observadorTramo: IntersectionObserver | null = null;
 
-/**
- * El estado del modo cocina. Se limpia al entrar: al volver a abrir una receta
- * no hay ningún paso realzado ni marcado (C03.2.4). No persiste en ningún lado.
- */
 /**
  * El selector de la carpeta base. Las sugerencias vienen del arranque; el nivel
  * que se mira, de la ruta. Lo leído de cada nivel se reutiliza en sus
@@ -144,31 +143,15 @@ let notaCaptura = '';
 let guardandoCaptura = false;
 let errorCaptura = '';
 
-let posicionCocina: PosicionCocina = 'ingredientes';
-/** El paso actual. Al entrar es el primero: sin uno elegido, la pantalla no dice dónde estás. */
-let pasoAqui = 0;
-let pasosHechos: number[] = [];
-/**
- * Si al modo cocina se entró tocando «Cocinar», la receta ya está una entrada
- * atrás en el historial: volver a ella es un `back`, no una navegación nueva.
- * Con una navegación quedaba dos veces seguidas y el volver de la receta
- * parecía no hacer nada.
- */
-let cocinaDesdeReceta = false;
+/** El modo cocina: paso actual, marcados, conmutador y pantalla encendida. */
+const cocina = crearControlCocina();
 
-/** El scroll de cada lado del conmutador, para no perderlo al conmutar (C03.2.2). */
-const scrollCocina: Record<PosicionCocina, number> = { ingredientes: 0, pasos: 0 };
-
-/**
- * Estrecha el destino de un evento a algo con `closest`.
- *
- * Va por capacidad y no por `instanceof Element` a propósito: los tests corren
- * en Node contra un DOM mínimo escrito a mano, donde `Element` no existe como
- * global. Chequear la clase ataría el código de producción a que el entorno de
- * test cargue un DOM completo, que es justo lo que este proyecto no hace.
- */
-const conClosest = (t: EventTarget | null): Element | null =>
-  t && typeof (t as Element).closest === 'function' ? t as Element : null;
+/** La ficha de compartir de la receta abierta, o `null`. */
+let compartiendo: EstadoCompartir | null = null;
+/** El PDF ya armado, para *Enviar PDF* cuando Chrome perdió el toque: no se vuelve a generar. */
+let pdfListo: File | null = null;
+/** Lo que la ficha de compartir escucha. Con el PDF armándose, ninguna responde. */
+const ACCIONES_DE_LA_FICHA = ['compartir', 'cerrar-compartir', 'compartir-pdf', 'enviar-pdf', 'compartir-link', 'compartir-texto'];
 
 /** El mensaje de un error desconocido, sin asumir que es un Error. */
 const mensajeDe = (e: unknown): string => e instanceof Error ? e.message : String(e);
@@ -180,8 +163,6 @@ const informeArranque = () =>
 /** El aviso de la planilla `_indice` repetida, para Ajustes. Sólo existe con el arranque en 'listo'. */
 const indiceDuplicado = () =>
   estadoArranque?.estado === 'listo' ? estadoArranque.indiceDuplicado : null;
-
-const pintar = (html: string): void => { app.innerHTML = html; };
 
 /** Lo que el editor tiene escrito, como texto comparable. Los tags y la completitud viajan en campos ocultos. */
 const formularioActual = (): string => {
@@ -195,35 +176,12 @@ const abrirEditor = (html: string): void => {
   editorAbierto = { hash: location.hash, formulario: formularioActual() };
 };
 
-/**
- * Que la pantalla no se apague mientras se cocina: es la fricción más real de
- * seguir una receta con las manos sucias. El bloqueo se pierde solo cuando la
- * app pasa a segundo plano, así que hay que volver a pedirlo al volver — sin
- * eso, alcanza con atender un mensaje para que la pantalla se apague de nuevo.
- */
-async function mantenerPantalla(): Promise<boolean> {
-  if (!navigator.wakeLock) return false;
-  try {
-    wakeLock = await navigator.wakeLock.request('screen');
-    wakeLock.addEventListener('release', () => { wakeLock = null; });
-    return true;
-  } catch {
-    wakeLock = null;
-    return false;
-  }
-}
-
-async function soltarPantalla(): Promise<void> {
-  try { await wakeLock?.release(); } catch { /* ya soltado */ }
-  wakeLock = null;
-}
-
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
   // Si el botón sigue activo, el usuario nunca lo apagó: el bloqueo se
   // perdió al irse a segundo plano y hay que volver a pedirlo.
-  const b = document.querySelector<HTMLElement>('[data-accion="wake"].on');
-  if (b && !wakeLock) void mantenerPantalla().then(() => render());
+  const sol = document.querySelector<HTMLElement>('[data-accion="wake"].on');
+  if (cocina.necesitaRepedir(!!sol)) void cocina.mantenerPantalla().then(() => render());
 });
 
 /**
@@ -354,6 +312,10 @@ function observarTramo(): void {
  * el mensaje crudo de Google (R1).
  */
 async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
+  // La vista de invitado se elige una sola vez, al cargar (`inicio.ts`), y un
+  // cambio de fragmento no recarga: el dueño que toca su propio link con la PWA
+  // abierta vería el Recetario. Recargar deja que `inicio.ts` vuelva a decidir.
+  if (esHashDeInvitado(location.hash)) { location.reload(); return; }
   const cambiaDePantalla = !vistaActual || ruta.vista !== vistaActual.vista
     || ruta.params.nombre !== vistaActual.params.nombre || ruta.params.id !== vistaActual.params.id;
 
@@ -398,10 +360,9 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     if (ruta.vista !== 'capturar' && ruta.vista !== 'borrador') {
       tituloCaptura = ''; notaCaptura = ''; guardandoCaptura = false; errorCaptura = '';
     }
-    posicionCocina = 'ingredientes';
-    pasoAqui = 0;
-    pasosHechos = [];
-    scrollCocina.ingredientes = scrollCocina.pasos = 0;
+    cocina.reiniciar();
+    compartiendo = null;
+    pdfListo = null;
     // La pantalla nueva empieza arriba: el hash no cambia el scroll, así que
     // entrar al modo cocina desde el pie de la receta abría los ingredientes
     // ya scrolleados. La llamada es opcional por lo mismo que
@@ -438,7 +399,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     case 'receta':
       try {
         const { entrada, receta } = await recetaDePantalla(ruta.params['id'] ?? '');
-        pintar(renderReceta({ entrada, receta }));
+        pintar(renderReceta({ entrada, receta, ...(compartiendo ? { compartir: compartiendo } : {}) }));
         return observarTitulo();
       } catch (err) {
         console.error(err);
@@ -448,9 +409,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     case 'cocinar':
       try {
         const { receta } = await recetaDePantalla(ruta.params['id'] ?? '');
-        return pintar(renderCocina({
-          receta, posicion: posicionCocina, aqui: pasoAqui, hechos: pasosHechos, wakeActivo: !!wakeLock
-        }));
+        return pintar(renderCocina({ receta, ...cocina.estado(), salidas: 'volver-y-salir' }));
       } catch (err) {
         console.error(err);
         return enPantalla('No se pudo leer la receta.');
@@ -715,37 +674,92 @@ app.addEventListener('click', async (e) => {
 
   const accion = boton.dataset['accion'];
 
+  // Mientras se arma el PDF la ficha no acepta otro toque (spec §2.1.3): cerrar
+  // con el velo no frena `generar`, y al terminar el PDF se mandaba igual.
+  if (compartiendo?.paso === 'generando' && ACCIONES_DE_LA_FICHA.includes(accion ?? '')) return;
+
+  if (accion === 'compartir') {
+    compartiendo = { paso: 'opciones' };
+    // Lo pesado del PDF empieza a bajar ya: el toque que lo genera es otro.
+    void precargar().catch(() => {});
+    return render();
+  }
+  if (accion === 'cerrar-compartir') {
+    compartiendo = null;
+    pdfListo = null;
+    return render();
+  }
+  if (accion === 'compartir-pdf' || accion === 'enviar-pdf') {
+    if (!recetaLeida) return;
+    const { entrada, receta } = recetaLeida;
+    if (accion === 'compartir-pdf' || !pdfListo) {
+      compartiendo = { paso: 'generando' };
+      await render();
+      // Si mientras se armaba se navegó, `render` ya cerró la ficha: el PDF es
+      // de una pantalla que no está, y aplicarlo mostraría «listo» en otra receta.
+      const sigueGenerando = (): boolean => compartiendo?.paso === 'generando';
+      try {
+        const blob = await generar(receta, entrada?.categoria ?? '');
+        if (!sigueGenerando()) return;
+        pdfListo = new File([blob], slugArchivo(receta.titulo).replace(/\.md$/, '.pdf'), { type: 'application/pdf' });
+      } catch (err) {
+        console.error(err);
+        if (!sigueGenerando()) return;
+        compartiendo = { paso: 'error-pdf' };
+        return render();
+      }
+    }
+    try {
+      const r = await compartirPdf(plataformaDelNavegador(), pdfListo);
+      compartiendo = r === 'sin-activacion' ? { paso: 'pdf-listo' } : null;
+    } catch (err) {
+      console.error(err);
+      compartiendo = { paso: 'error-pdf' };
+    }
+    if (!compartiendo) pdfListo = null;
+    return render();
+  }
+  if (accion === 'compartir-link' || accion === 'compartir-texto') {
+    if (!recetaLeida) return;
+    const { entrada, receta } = recetaLeida;
+    const categoria = entrada?.categoria ?? '';
+    const que = accion === 'compartir-link' ? 'link' : 'texto';
+    let contenido = '';
+    try {
+      const plataforma = plataformaDelNavegador();
+      contenido = que === 'link' ? urlDeLink(await codificar(receta, categoria)) : textoReceta(receta, categoria);
+      const r = que === 'link'
+        ? await compartirLink(plataforma, receta.titulo ?? '', contenido)
+        : await compartirTexto(plataforma, contenido);
+      compartiendo = r === 'copiado' ? { paso: 'copiado', que }
+        : r === 'sin-portapapeles' ? { paso: 'mostrar', que, contenido }
+        : null;
+    } catch (err) {
+      console.error(err);
+      compartiendo = contenido ? { paso: 'mostrar', que, contenido } : null;
+    }
+    return render();
+  }
   if (accion === 'cocinar') {
-    cocinaDesdeReceta = true;
+    cocina.entrarDesdeLectura();
     location.hash = `#/r/${vistaActual?.params['id'] ?? ''}/cocinar`;
     return;
   }
   if (accion === 'conmutar') {
-    const destinoPos = boton.dataset['posicion'] === 'pasos' ? 'pasos' : 'ingredientes';
-    if (destinoPos === posicionCocina) return;
-    scrollCocina[posicionCocina] = window.scrollY;
-    posicionCocina = destinoPos;
+    const volverA = cocina.conmutar(boton.dataset['posicion'], window.scrollY);
+    if (volverA === null) return;
     await render();
-    window.scrollTo(0, scrollCocina[destinoPos]);
+    window.scrollTo(0, volverA);
     return;
   }
   if (accion === 'paso') {
     // Tocar un paso marca dónde voy; tocar el que ya estaba realzado lo da por
     // hecho y el hilo sigue al siguiente.
-    const n = Number(boton.dataset['paso'] ?? -1);
-    if (!Number.isInteger(n) || n < 0) return;
-    if (pasoAqui === n) {
-      pasosHechos = [...pasosHechos.filter(p => p !== n), n];
-      pasoAqui = n + 1;
-    } else {
-      pasoAqui = n;
-      pasosHechos = pasosHechos.filter(p => p !== n);
-    }
-    return render();
+    if (cocina.marcarPaso(boton.dataset['paso'])) return render();
+    return;
   }
   if (accion === 'wake') {
-    if (wakeLock) await soltarPantalla();
-    else await mantenerPantalla();
+    await cocina.alternarPantalla();
     return render();
   }
 
@@ -920,18 +934,15 @@ app.addEventListener('click', async (e) => {
   // Las dos salidas del modo cocina tienen destinos distintos, y las dos
   // sueltan el bloqueo de pantalla: se dejó de cocinar.
   if (accion === 'volver-receta') {
-    await soltarPantalla();
-    if (cocinaDesdeReceta) {
-      cocinaDesdeReceta = false;
-      return history.back();
-    }
+    await cocina.soltarPantalla();
+    if (cocina.salirALectura() === 'atras') return history.back();
     // Se entró al modo cocina por un link directo: no hay receta atrás.
     irCerrando(`#/r/${encodeURIComponent(vistaActual?.params['id'] ?? '')}`);
     return;
   }
   if (accion === 'salir-cocina') {
-    await soltarPantalla();
-    cocinaDesdeReceta = false;
+    await cocina.soltarPantalla();
+    cocina.olvidarLectura();
     const entrada = store.entradas().find(e => e.id_archivo === (vistaActual?.params['id'] ?? ''));
     // Sin fila del índice no se sabe de qué categoría es: se vuelve al Recetario.
     irCerrando(entrada?.categoria ? `#/c/${encodeURIComponent(entrada.categoria)}` : '#/');
@@ -943,7 +954,7 @@ app.addEventListener('click', async (e) => {
     // cierra la edición y muestra el borrador, en vez de irse a la lista, que
     // es la entrada anterior del historial.
     if (editandoBorrador) { editandoBorrador = false; return render(); }
-    if (vistaActual?.vista === 'cocinar') await soltarPantalla();
+    if (vistaActual?.vista === 'cocinar') await cocina.soltarPantalla();
     // Entrar por un link directo deja el historial vacío: ahí volver es ir al
     // Recetario, no salirse de la app.
     if (history.length <= 1) { location.hash = '#/'; return; }
@@ -1237,6 +1248,11 @@ if (compartido) history.replaceState(null, '', location.pathname + compartido);
 
 arrancar().catch(err => pintar(`<p class="contenido">No pude arrancar: ${escapar(mensajeDe(err))} <button data-accion="reconectar">Reintentar</button></p>`));
 
+// `main.ts` se carga con `import()` desde `inicio.ts`, no con un `<script>`
+// directo: puede llegar después de `load`, y ahí `addEventListener('load', …)`
+// no dispara nunca y el service worker no se registra.
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
+  const registrarSW = (): void => { navigator.serviceWorker.register('./sw.js').catch(console.error); };
+  if (document.readyState === 'complete') registrarSW();
+  else window.addEventListener('load', registrarSW);
 }

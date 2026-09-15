@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { aHtml, escapar } from '../src/ui/markdown.js';
+import { aHtml, escapar, aTexto, aPdf, tramosEnLinea, tramosDeFuente } from '../src/ui/markdown.js';
 
 describe('aHtml', () => {
   it('escapa el HTML de entrada', () => {
@@ -161,5 +161,68 @@ describe('aHtml', () => {
       const html = aHtml('![](../fotos/receta.jpg)');
       expect(html).toContain('<img src="../fotos/receta.jpg"');
     });
+  });
+});
+
+describe('tramosEnLinea', () => {
+  it('negrita, itálica, link e imagen como tramos', () => {
+    expect(tramosEnLinea('a **b** *c* [d](https://x.com) ![](https://y.com/i.png)')).toEqual([
+      { texto: 'a ' }, { texto: 'b', negrita: true }, { texto: ' ' }, { texto: 'c', italica: true },
+      { texto: ' ' }, { texto: 'd', link: 'https://x.com' }, { texto: ' ' }, { texto: '', imagen: 'https://y.com/i.png' }
+    ]);
+  });
+  it('un link adentro de negrita conserva las dos cosas', () => {
+    expect(tramosEnLinea('**ver [x](https://x.com)**')).toEqual([
+      { texto: 'ver ', negrita: true }, { texto: 'x', link: 'https://x.com', negrita: true }
+    ]);
+  });
+  it('un destino inseguro queda como texto', () => {
+    expect(tramosEnLinea('[a](javascript:alert(1))')).toEqual([{ texto: '[a](javascript:alert(1)' }, { texto: ')' }]);
+  });
+});
+
+describe('tramosDeFuente', () => {
+  it('URL pelada: link con el sitio a la vista', () => {
+    expect(tramosDeFuente('https://cookpad.com/r/1')).toEqual([{ texto: 'cookpad.com/r/1', link: 'https://cookpad.com/r/1' }]);
+  });
+  it('link markdown entre comillas', () => {
+    expect(tramosDeFuente('"[Paladar](https://p.com/x)"')).toEqual([{ texto: 'Paladar', link: 'https://p.com/x' }]);
+  });
+  it('texto libre, sin formato', () => {
+    expect(tramosDeFuente('libro *viejo*, pág. 84')).toEqual([{ texto: 'libro *viejo*, pág. 84' }]);
+  });
+});
+
+describe('aTexto', () => {
+  it('negrita a *, itálica a _, listas tal cual', () => {
+    expect(aTexto('Batir **fuerte** y *suave*.\n\n- sal\n- pimienta\n\n1. Uno\n2. Dos'))
+      .toBe('Batir *fuerte* y _suave_.\n\n- sal\n- pimienta\n\n1. Uno\n2. Dos');
+  });
+  it('el subtítulo va pegado a lo que sigue, sin #', () => {
+    expect(aTexto('### Más liviana\nBajar el aceite.\n\n### Otra\n- a')).toBe('Más liviana\nBajar el aceite.\n\nOtra\n- a');
+  });
+  it('link como texto (url); si el texto es la URL, sólo la URL; imagen como URL', () => {
+    expect(aTexto('[Paladar](https://p.com) https://q.com ![](https://i.com/a.png)'))
+      .toBe('Paladar (https://p.com) https://q.com https://i.com/a.png');
+    expect(aTexto('[https://p.com](https://p.com)')).toBe('https://p.com');
+  });
+  it('la numeración vuelve a empezar en cada lista', () => {
+    expect(aTexto('### A\n1. x\n2. y\n### B\n1. z')).toBe('A\n1. x\n2. y\n\nB\n1. z');
+  });
+  it('vacío es vacío', () => { expect(aTexto('')).toBe(''); });
+});
+
+describe('aPdf', () => {
+  it('un nodo por ítem, que no se parte, con la numeración de su lista', () => {
+    const nodos = aPdf('- sal\n- ajo\n\n1. Uno\n2. **Dos**');
+    expect(nodos).toHaveLength(4);
+    expect(nodos[0]).toEqual({ ul: [{ text: [{ text: 'sal' }] }], style: 'lista', unbreakable: true });
+    expect(nodos[3]).toEqual({ ol: [{ text: [{ text: 'Dos', bold: true }] }], start: 2, style: 'lista', unbreakable: true });
+  });
+  it('párrafo y subtítulo con su estilo; links con el estilo link', () => {
+    expect(aPdf('### Sub\nVer [acá](https://x.com).')).toEqual([
+      { text: [{ text: 'Sub' }], style: 'subtitulo' },
+      { text: [{ text: 'Ver ' }, { text: 'acá', link: 'https://x.com', style: 'link' }, { text: '.' }], style: 'parrafo', unbreakable: true }
+    ]);
   });
 });

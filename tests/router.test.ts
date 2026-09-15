@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parsearHash, hashDeCompartido } from '../src/ui/router.js';
+import { parsearHash, hashDeCompartido, rutaDeInvitado, esHashDeInvitado } from '../src/ui/router.js';
 
 describe('parsearHash', () => {
   it('la raíz es el Recetario', () => {
@@ -105,5 +105,19 @@ describe('lo compartido desde otra app (Share Target)', () => {
     expect(hashDeCompartido('')).toBeNull();
     expect(hashDeCompartido('?title=Solo+t%C3%ADtulo')).toBeNull();
     expect(hashDeCompartido('?url=&text=')).toBeNull();
+  });
+});
+
+describe('rutaDeInvitado', () => {
+  it('lectura y cocina, con la carga', () => {
+    expect(rutaDeInvitado('#/ver?r=1abc')).toEqual({ vista: 'lectura', carga: '1abc' });
+    expect(rutaDeInvitado('#/ver/cocinar?r=1abc')).toEqual({ vista: 'cocina', carga: '1abc' });
+  });
+  it('sin carga, la carga es vacía; otra cosa no es de invitado', () => {
+    expect(rutaDeInvitado('#/ver')).toEqual({ vista: 'lectura', carga: '' });
+    expect(rutaDeInvitado('#/r/f1')).toBeNull();
+    expect(rutaDeInvitado('')).toBeNull();
+    expect(esHashDeInvitado('#/ver?r=x')).toBe(true);
+    expect(esHashDeInvitado('#/verduras')).toBe(false);
   });
 });

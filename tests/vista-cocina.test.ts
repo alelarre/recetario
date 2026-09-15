@@ -35,8 +35,8 @@ Una entrada clásica.
 Ojo con el aceite.
 `);
 
-const base: { posicion: 'pasos'; aqui: number | null; hechos: number[] } =
-  { posicion: 'pasos', aqui: null, hechos: [] };
+const base: { posicion: 'pasos'; aqui: number | null; hechos: number[]; salidas: 'volver-y-salir' } =
+  { posicion: 'pasos', aqui: null, hechos: [], salidas: 'volver-y-salir' };
 
 describe('Modo cocina', () => {
   describe('mantener la pantalla encendida (C03.3.1)', () => {
@@ -117,5 +117,11 @@ describe('Modo cocina', () => {
   it('escapa lo que viene del .md', () => {
     const r = parse('---\ntitulo: "<img onerror=alert(1)>"\n---\n## Preparación\n1. Salar.');
     expect(renderCocina({ ...base, receta: r })).not.toContain('<img onerror');
+  });
+
+  it('con solo-volver no hay Salir, y el chevron sigue', () => {
+    const html = renderCocina({ ...base, receta: COMPLETA, salidas: 'solo-volver' });
+    expect(html).not.toContain('salir-cocina');
+    expect(html).toContain('data-accion="volver-receta"');
   });
 });

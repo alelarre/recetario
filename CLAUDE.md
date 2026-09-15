@@ -54,14 +54,32 @@ Target: lo compartido llega en la query y `hashDeCompartido` lo pasa a
 `#/capturar`. **Falta probar las tres cosas en el teléfono**, con la PWA
 reinstalada desde el ⋮ de Chrome para que tome el manifest nuevo.
 
+**Hecho el 2026-09-14 — compartir recetas (P23):** desde un ícono en el
+encabezado de la receta: **PDF** (pdfmake con Inter embebida, 105 × 180 mm, tema
+oscuro), **Link** a una vista de invitado sin login —la receta viaja comprimida
+en el fragmento, sin tags, y se puede leer y cocinar— y **Texto** para cualquier
+app, con la negrita y la itálica de WhatsApp. Es una copia del momento: nada
+queda publicado en Drive. Spec en
+`docs/superpowers/specs/2026-09-14-compartir-recetas-design.md`, plan en
+`docs/superpowers/plans/2026-09-14-compartir-recetas.md`. **Falta probarlo en
+el teléfono:**
+
+- Que el chunk de pdfmake funcione dentro del build de Vite.
+- Cuánto tarda en generar en un Android real, y si la primera vez entra en la
+  ventana de activación.
+- Cómo llega el PDF a WhatsApp, y cómo se ve el texto en WhatsApp y en otra app
+  destino.
+- Que el link abra la vista de invitado desde WhatsApp, y el modo cocina con la
+  pantalla encendida.
+
 **Para retomar:** probar en el teléfono lo que dice «Falta probarlo» arriba —las
-etapas 1, 2 y 3a de P19 y lo del 2026-09-14—. Lo siguiente del backlog es la
-**etapa 3b de P19** (imágenes propias de categorías en Drive, guardadas en Cache
-Storage, y que *Borrar datos locales* también las borre), **P26** (rediseñar el
-selector de carpetas: primero entender qué no convence) y **P27** (favoritos y
-tags especiales: primero propuestas). Las features grandes se trabajan con spec y
-plan en `docs/superpowers/`, y el código no se commitea hasta que el usuario
-revisa el diff.
+etapas 1, 2 y 3a de P19, lo del 2026-09-14 y lo de compartir—. Lo siguiente del
+backlog es la **etapa 3b de P19** (imágenes propias de categorías en Drive,
+guardadas en Cache Storage, y que *Borrar datos locales* también las borre),
+**P26** (rediseñar el selector de carpetas: primero entender qué no convence) y
+**P27** (favoritos y tags especiales: primero propuestas). Las features grandes
+se trabajan con spec y plan en `docs/superpowers/`, y el código no se commitea
+hasta que el usuario revisa el diff.
 
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
 - El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
@@ -125,7 +143,7 @@ Para lo demás, según lo que necesites:
 | **Se mantuvo** | El stack: TypeScript estricto + Vite, sin framework. `auth.ts`, `drive.ts`, `sheets.ts` y las fotos de `src/categorias/`. |
 | **Cambió** | `recipe.ts` (el ingrediente es nombre + separador + cantidad, y los `###` estructuran), `store.ts` (la fila se escribe en el momento, sin cola), `catalogo.ts` (la fila suma `foto` y `completa`), y `src/ui/` entero. |
 | **Se eliminó** | `app.css`, `cache.ts`, `home.ts`, `lista.ts`, `detalle.ts`, `visor.ts`, las tres familias tipográficas, el tag manual `incompleto`, la clase `texto-grande`, la cola, el cache local del índice —volvió el 2026-09-13 de otra forma, ver «Funcionar sin conexión»— y la Changes API. |
-| **Es nuevo** | `borrador.ts` (el `.md` del borrador), `compartido.ts` (la capa que la app y el agente invocan igual) e `indice-local.ts` (la copia del índice en el navegador, P12), más las once pantallas de `src/ui/`: recetario, categoria, resultados, receta, cocina, editor, captura, borradores, ajustes y conexion, sobre `componentes.ts` e `iconos.ts`. |
+| **Es nuevo** | `borrador.ts` (el `.md` del borrador), `compartido.ts` (la capa que la app y el agente invocan igual) e `indice-local.ts` (la copia del índice en el navegador, P12); de compartir (P23): `inicio.ts` (la entrada: decide entre `main.ts` e `invitado.ts`), `invitado.ts` (el controlador de la vista sin login), `link-receta.ts` (arma y lee el link comprimido), `texto-receta.ts` (la receta como texto), `compartir.ts` (el menú Compartir del sistema, con sus respaldos), `cocina-control.ts` (el modo cocina y la pantalla encendida, compartidos entre receta e invitado) y `src/pdf/` (el PDF con pdfmake e Inter embebida); más las pantallas de `src/ui/`: recetario, categoria, resultados, receta, cocina, editor, captura, borradores, ajustes, conexion e invitado, sobre `componentes.ts`, `iconos.ts`, `pintar.ts`, `fichas-receta.ts` y la ficha `compartir.ts`. |
 
 **Todo el producto vive en `src/`.** Nada del código apunta a
 `product-design/`: los documentos son especificación, no dependencia.
@@ -245,6 +263,13 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | `drive.file` como scope, y el Google Picker | Medido el 2026-09-01: es estrictamente por archivo. Con `Recetario/` elegida en el Picker, la app no veía ninguna de las 16 subcarpetas ni un solo `.md` ajeno — y los `.md` los escriben agentes por fuera. |
 | Detectar y reparar la planilla del índice corrupta o incompleta | Decidido el 2026-09-03. Siempre que el índice esté corrupto o incompleto, la recuperación es borrar el archivo `_indice` en Drive y dejar que la app lo cree de nuevo (`store.ts` llama a `crearPlanilla()` y reconstruye solo); el rediseño agregó el camino a mano: **Ajustes → Reindexar**. Diagnosticar cada tipo de daño posible para repararlo in situ es más trabajo y más riesgo que recrear desde los `.md`, que son la fuente de verdad. |
 | Los borradores en una planilla propia, o como receta incompleta | Decidido el 2026-09-13. La planilla se bajaba entera y no tenía copia; como hoja del índice hereda la copia local y el reindexado. Y el borrador no es una receta: título, fuente y nota. Si lo fuera, alcanzaría con crear recetas incompletas. |
+| Compartir con un link público al `.md` en Drive | Decidido el 2026-09-14. Pide volver público el archivo y sumar una API key a la app. El link lleva la receta comprimida en el fragmento: 383 caracteres la más corta, ~950 la típica, 2075 la más larga, y llega entero y tocable a WhatsApp. |
+| Compartir la receta como imagen | Decidido el 2026-09-14. WhatsApp recomprime las imágenes: una receta larga a 1080 px de ancho mide ~10.000 px de alto y la letra no se lee. |
+| Armar el PDF con `window.print()` o rasterizando el HTML | Imprimir no es un toque: hay que guardar en Descargas y adjuntar a mano. Rasterizar da un PDF-imagen, pesado y sin texto. |
+| jsPDF, PDFKit, pdf-lib, @react-pdf, typst en WASM para el PDF | Medido el 2026-09-14. jsPDF y PDFKit no paginan ni mezclan negrita en un párrafo sin un motor propio; pdf-lib no tiene layout y no se publica desde 2021; @react-pdf exige React; typst son 10,7 MB. pdfmake arma listas, paginación y fondo de forma declarativa. |
+| Roboto en el PDF | No tiene ⅓ ni ⅔ (verificado en tres archivos). En pantalla Android la completa con otra fuente; un PDF no. Inter sí los tiene. |
+| El texto compartido en texto plano neutro | Decidido el 2026-09-14: se conserva `*negrita*`, `_itálica_`, `- ` y `1. ` porque WhatsApp los entiende; en otra app se ven los asteriscos. |
+| La vista de invitado como un modo de la receta | Decidido el 2026-09-14. Es una pantalla con controlador propio y una lista cerrada de acciones, armada con las mismas piezas: lo que se agregue a la receta no aparece en el invitado sin querer. |
 
 ## Lo que queda pendiente
 
@@ -258,7 +283,7 @@ investigación antes de tocar nada (§6.3), lo que no se arregla con código (§
 y la deuda chica (§6.5).
 
 **Estado al 2026-09-14:** resueltos P1 a P13, P16 a P18, P20 a P22, P24 y P25;
-P15 cerrado (lo resolvió P19 desde la app); §6.4 y §6.5 cerradas.
+P15 cerrado (lo resolvió P19 desde la app); P23 resuelto; §6.4 y §6.5 cerradas.
 Quedan abiertos:
 
 - **P14** —rehacer el skill del agente—. El conector de Google Drive de claude.ai
@@ -269,7 +294,6 @@ Quedan abiertos:
   elegida) **y la 3a** (gestión de categorías). **Queda la 3b:** imágenes propias
   en Drive. Lo decidido está en la fila de P19 del backlog y en los tres specs del
   2026-09-13.
-- **P23** —compartir recetas—: sin definir; se cruza con P19.
 - **P26** —rediseñar el selector de carpetas—: no convence el actual; primero propuestas.
 - **P27** —darle entidad a favoritos y a otros tags especiales—: choca con el esquema cerrado del frontmatter; primero propuestas.
 - **P28** —un agente embebido que convierta un borrador en receta—: era la decisión abierta del §1 del backlog; sin definir cómo se llama al modelo sin backend.

@@ -19,8 +19,12 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "^26.4.1",
+    "@types/pdfmake": "^0.3.3",
     "typescript": "^7.0.2",
     "vite": "^8.2.2",
     "vitest": "^4.1.11"
+  },
+  "dependencies": {
+    "pdfmake": "^0.3.11"
   }
 }

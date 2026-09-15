@@ -316,6 +316,11 @@ export function ingredientesIndexables(receta?: Partial<Receta> | null): string[
   return [...vistos];
 }
 
+/** La línea de contexto de una receta: lo que la ubica sin abrirla. La categoría sale de la carpeta. */
+export function contextoDe(receta: Receta, categoria: string): string {
+  return [categoria, receta.rinde, receta.tiempo, receta.dificultad].filter(Boolean).join(' · ');
+}
+
 export function slugArchivo(titulo: unknown, existentes: unknown[] = []): string {
   // Aceptar solo strings, números o null/undefined; rechazar objetos
   if (typeof titulo !== 'string' && typeof titulo !== 'number' && titulo !== null && titulo !== undefined) {

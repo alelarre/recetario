@@ -22,6 +22,11 @@ export interface OpcionesCocina {
   hechos: number[];
   /** El wake lock está tomado. Si el navegador no lo soporta, el botón no se dibuja. */
   wakeActivo?: boolean;
+  /**
+   * Las salidas del encabezado. La receta tiene dos: el chevron vuelve a la
+   * receta y Salir a la categoría. El invitado no tiene categoría: sólo el chevron.
+   */
+  salidas: 'volver-y-salir' | 'solo-volver';
 }
 
 /** Sin soporte no se ofrece y no se avisa: no hay nada que el usuario pueda hacer (C03.3.1). */
@@ -29,7 +34,7 @@ const hayWakeLock = (): boolean =>
   typeof navigator !== 'undefined' && 'wakeLock' in navigator;
 
 export function renderCocina(
-  { receta, posicion, aqui, hechos, wakeActivo = false }: OpcionesCocina
+  { receta, posicion, aqui, hechos, wakeActivo = false, salidas }: OpcionesCocina
 ): string {
   const grupos = gruposDe(receta.ingredientes).filter(g => g.items.length);
   const tramos = tramosDe(receta.preparacion).filter(t => t.pasos.length);
@@ -82,7 +87,7 @@ export function renderCocina(
       `<button class="ico" data-accion="volver-receta" aria-label="Volver a la receta">${ICO.volver}</button>` +
       `<span class="tit">${escapar(receta.titulo ?? '')}</span>` +
       wake +
-      '<button class="btn sec compacto" data-accion="salir-cocina">Salir</button>' +
+      (salidas === 'volver-y-salir' ? '<button class="btn sec compacto" data-accion="salir-cocina">Salir</button>' : '') +
     '</div>' +
     conmutador +
     `<div class="coc">${contenido}</div>`;

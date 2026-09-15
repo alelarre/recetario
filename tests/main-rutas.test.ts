@@ -17,6 +17,16 @@ vi.mock('../src/auth.js', () => ({
 }));
 vi.mock('../src/drive.js', () => ({ crearDrive: () => ({ cuenta: async () => 'alguien@gmail.com' }) }));
 vi.mock('../src/sheets.js', () => ({ crearSheets: () => ({}) }));
+/** `espera`, si está, es una promesa que el test resuelve a mano: el PDF tarda lo que el test quiera. */
+const pdfs = vi.hoisted(() => ({ generados: 0, espera: null as Promise<void> | null }));
+vi.mock('../src/pdf/generar.js', () => ({
+  precargar: async () => ({}),
+  generar: async () => {
+    pdfs.generados++;
+    if (pdfs.espera) await pdfs.espera;
+    return new Blob(['%PDF'], { type: 'application/pdf' });
+  }
+}));
 
 /** Lo que los dobles le dan a main. `falla` enciende el error de lectura. */
 const estado = {
@@ -138,7 +148,7 @@ describe('main.ts: las rutas', () => {
     vi.resetModules();
   });
 
-  const montar = async ({ search = '' } = {}) => {
+  const montar = async ({ search = '', readyState = 'complete' as DocumentReadyState } = {}) => {
     const clicks: ((e: unknown) => unknown)[] = [];
     const cambios: ((e: unknown) => unknown)[] = [];
     const app = {
@@ -174,7 +184,8 @@ describe('main.ts: las rutas', () => {
       },
       querySelectorAll: () => [],
       addEventListener: (ev: string, fn: () => void) => { listenersDoc[ev] = fn; },
-      visibilityState: 'visible'
+      visibilityState: 'visible',
+      readyState
     });
     global.window = comoGlobal<Window & typeof globalThis>({
       google: {}, addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; },
@@ -186,7 +197,7 @@ describe('main.ts: las rutas', () => {
     const empujados: string[] = [];
     const recargas: number[] = [];
     global.location = comoGlobal<Location>({
-      hash: '', pathname: '/recetario/', search,
+      hash: '', pathname: '/recetario/', search, origin: 'https://h',
       replace: (h: string) => { reemplazos.push(h); global.location.hash = h; },
       reload: () => { recargas.push(1); }
     });
@@ -218,6 +229,8 @@ describe('main.ts: las rutas', () => {
       enLugar,
       /** La app vuelve a primer plano. */
       volverAPrimerPlano: async () => { listenersDoc['visibilitychange']?.(); await esperar(); },
+      /** El evento `load` de `window`, para lo que quedó pendiente de él. */
+      dispararLoad: async () => { listeners['load']?.(); await esperar(); },
       abrir: async (hash: string) => {
         global.location.hash = hash;
         listeners['hashchange']?.();
@@ -260,6 +273,12 @@ describe('main.ts: las rutas', () => {
       await abrir(hash);
       expect(app.innerHTML, hash).toContain(marca);
     }
+  });
+
+  it('un link de invitado con la app ya abierta recarga: la vista de invitado se decide al cargar', async () => {
+    const { abrir, recargas } = await montar();
+    await abrir('#/ver?r=1abc');
+    expect(recargas).toHaveLength(1);
   });
 
   it('borrar los datos locales borra la copia y recarga: lo que hay en memoria salió de ella', async () => {
@@ -850,9 +869,121 @@ describe('main.ts: las rutas', () => {
     expect(global.location.hash).toBe('#/buscar?q=leche');
   });
 
+  describe('compartir desde la receta', () => {
+    const PASOS = '---\ntitulo: Rabas\n---\n\n## Ingredientes\n- Calamar — 1 kg\n\n## Preparación\n1. Lavar.\n';
+    afterEach(() => { pdfs.generados = 0; pdfs.espera = null; });
+
+    it('el ícono abre la ficha y cancelar la cierra', async () => {
+      estado.md = PASOS;
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      await tocar('compartir');
+      expect(app.innerHTML).toContain('hoja-compartir');
+      await tocar('cerrar-compartir');
+      expect(app.innerHTML).not.toContain('hoja-compartir');
+    });
+
+    it('PDF: genera y lo comparte como archivo, y la ficha se cierra', async () => {
+      estado.md = PASOS;
+      const compartidos: ShareData[] = [];
+      vi.stubGlobal('navigator', { share: async (d: ShareData) => { compartidos.push(d); }, canShare: () => true });
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      await tocar('compartir');
+      await tocar('compartir-pdf');
+      expect(pdfs.generados).toBe(1);
+      expect(compartidos[0]?.files?.[0]?.name).toBe('rabas.pdf');
+      expect(app.innerHTML).not.toContain('hoja-compartir');
+    });
+
+    it('PDF sin activación: Enviar PDF manda el mismo archivo sin volver a generar', async () => {
+      estado.md = PASOS;
+      let intentos = 0;
+      vi.stubGlobal('navigator', {
+        share: async () => { if (++intentos === 1) throw Object.assign(new Error('x'), { name: 'NotAllowedError' }); },
+        canShare: () => true
+      });
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      await tocar('compartir');
+      await tocar('compartir-pdf');
+      expect(app.innerHTML).toContain('El PDF está listo.');
+      await tocar('enviar-pdf');
+      expect(intentos).toBe(2);
+      expect(pdfs.generados).toBe(1);
+      expect(app.innerHTML).not.toContain('hoja-compartir');
+    });
+
+    it('mientras arma el PDF la ficha no acepta toques, y navegar descarta el resultado', async () => {
+      estado.md = PASOS;
+      const compartidos: ShareData[] = [];
+      vi.stubGlobal('navigator', { share: async (d: ShareData) => { compartidos.push(d); }, canShare: () => true });
+      let terminar = (): void => {};
+      pdfs.espera = new Promise<void>(r => { terminar = r; });
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      await tocar('compartir');
+      // Sin await: el toque queda colgado de `generar` hasta que el test lo suelte.
+      const generando = tocar('compartir-pdf');
+      await esperar();
+      expect(app.innerHTML).toContain('Armando el PDF…');
+      await tocar('cerrar-compartir');
+      expect(app.innerHTML).toContain('Armando el PDF…');
+      // Se va a otra receta antes de que termine: el PDF de la primera no se manda.
+      await abrir('#/r/f2');
+      terminar();
+      await generando;
+      await esperar();
+      expect(compartidos).toHaveLength(0);
+      expect(app.innerHTML).not.toContain('hoja-compartir');
+    });
+
+    it('texto: lo comparte con el título adentro', async () => {
+      estado.md = PASOS;
+      const compartidos: ShareData[] = [];
+      vi.stubGlobal('navigator', { share: async (d: ShareData) => { compartidos.push(d); } });
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1');
+      await tocar('compartir');
+      await tocar('compartir-texto');
+      expect(compartidos[0]?.text?.startsWith('Rabas\n')).toBe(true);
+    });
+
+    it('link sin share ni portapapeles: lo muestra para copiar', async () => {
+      estado.md = PASOS;
+      vi.stubGlobal('navigator', {});
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      await tocar('compartir');
+      await tocar('compartir-link');
+      expect(app.innerHTML).toContain('#/ver?r=1');
+    });
+  });
+
   it('ningún guardado exitoso muestra un cartel de confirmación', async () => {
     const { app, abrir } = await montar();
     await abrir('#/r/f1');
     expect(app.innerHTML).not.toMatch(/guardad|listo|éxito/i);
+  });
+
+  describe('el registro del service worker', () => {
+    // `main.ts` ya no es el script de entrada: `inicio.ts` lo carga con
+    // `import()`, así que puede evaluarse después de `load`. Sin este chequeo,
+    // el `addEventListener('load', …)` no dispara nunca y el SW no se registra.
+    it('con el documento ya completo, se registra sin esperar `load`', async () => {
+      const registros: string[] = [];
+      vi.stubGlobal('navigator', { serviceWorker: { register: async (ruta: string) => { registros.push(ruta); return {}; } } });
+      await montar({ readyState: 'complete' });
+      expect(registros).toEqual(['./sw.js']);
+    });
+
+    it('con el documento todavía cargando, se registra recién al disparar `load`', async () => {
+      const registros: string[] = [];
+      vi.stubGlobal('navigator', { serviceWorker: { register: async (ruta: string) => { registros.push(ruta); return {}; } } });
+      const { dispararLoad } = await montar({ readyState: 'loading' });
+      expect(registros).toEqual([]);
+      await dispararLoad();
+      expect(registros).toEqual(['./sw.js']);
+    });
   });
 });

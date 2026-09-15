@@ -89,6 +89,23 @@ export function hashDeCompartido(search: string): string | null {
   return [...destino.keys()].length ? `#/capturar?${destino.toString()}` : null;
 }
 
+/** La vista de invitado: la receta que viaja en el link, sin login (spec P23 §3). */
+export interface RutaInvitado {
+  vista: 'lectura' | 'cocina';
+  carga: string;
+}
+
+export function rutaDeInvitado(hash: unknown): RutaInvitado | null {
+  const limpio = String(hash ?? '').replace(/^#/, '');
+  const [ruta = '', query = ''] = limpio.split('?');
+  const partes = ruta.split('/').filter(Boolean);
+  if (partes[0] !== 'ver') return null;
+  const carga = new URLSearchParams(query).get('r') ?? '';
+  return { vista: partes[1] === 'cocinar' ? 'cocina' : 'lectura', carga };
+}
+
+export const esHashDeInvitado = (hash: unknown): boolean => rutaDeInvitado(hash) !== null;
+
 export function crearRouter(alCambiar: (ruta: Ruta) => void) {
   const disparar = () => alCambiar(parsearHash(location.hash));
   window.addEventListener('hashchange', disparar);
