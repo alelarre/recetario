@@ -252,25 +252,27 @@ El planificador está diseñado y queda afuera a propósito
 (`product-design/plan/BACKLOG.md`).
 
 **Los pendientes de la app usada de verdad están en `BACKLOG.md` §6**
-`[2026-09-12]`, con identificador estable —P1 a P27— para nombrarlos sin repetir
+`[2026-09-12]`, con identificador estable —P1 a P28— para nombrarlos sin repetir
 el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
 
-**Estado al 2026-09-14:** resueltos P1 a P13, P16 a P18, P20 a P22, P24 y P25; §6.4 y §6.5
-cerradas. Quedan abiertos:
+**Estado al 2026-09-14:** resueltos P1 a P13, P16 a P18, P20 a P22, P24 y P25;
+P15 cerrado (lo resolvió P19 desde la app); §6.4 y §6.5 cerradas.
+Quedan abiertos:
 
-- **P14** —que el agente escriba la fila del índice—: bloqueado. El conector de
-  Google Drive de claude.ai no escribe planillas ni reescribe el contenido de un
-  archivo (medido el 2026-09-12).
-- **P15** y **P19** —categorías y carpeta definidas por el usuario—: partido en
+- **P14** —rehacer el skill del agente—. El conector de Google Drive de claude.ai
+  no escribe planillas ni reescribe el contenido de un archivo (medido el
+  2026-09-12): el skill nuevo parte de eso.
+- **P19** —categorías y carpeta definidas por el usuario—: partido en
   etapas. **Hechas la 1** (categorías en el índice), **la 2** (carpeta base
   elegida) **y la 3a** (gestión de categorías). **Queda la 3b:** imágenes propias
   en Drive. Lo decidido está en la fila de P19 del backlog y en los tres specs del
   2026-09-13.
-- **P23** —compartir recetas—: sin definir; se cruza con P15/P19.
+- **P23** —compartir recetas—: sin definir; se cruza con P19.
 - **P26** —rediseñar el selector de carpetas—: no convence el actual; primero propuestas.
 - **P27** —darle entidad a favoritos y a otros tags especiales—: choca con el esquema cerrado del frontmatter; primero propuestas.
+- **P28** —un agente embebido que convierta un borrador en receta—: era la decisión abierta del §1 del backlog; sin definir cómo se llama al modelo sin backend.
 
 Y queda el contenido.
 
@@ -278,8 +280,8 @@ Y queda el contenido.
 original y del PDF de pescados a `Recetario/`, con el skill de
 `skills/recetario/`. **El skill está al día con el esquema de ocho claves**
 (2026-09-12) pero todavía no escribe la fila del índice: después de cargar
-recetas hay que tocar *Ajustes → Reindexar*. Que la escriba es la v2 del skill
-(`BACKLOG.md` P14). Falta el resto: los documentos temáticos (fondues, pan,
+recetas hay que tocar *Ajustes → Reindexar*. Que la escriba entra en rehacer
+el skill (`BACKLOG.md` P14). Falta el resto: los documentos temáticos (fondues, pan,
 macarons, fermentación) y el Doc de ~7,3 MB.
 
 Lo que ya no está pendiente:
@@ -296,8 +298,8 @@ Lo que ya no está pendiente:
 
 - **El conector de Google Drive de claude.ai es limitado** (medido el
   2026-09-12): crea archivos, los lee, los mueve y los renombra, pero **no escribe
-  planillas ni reescribe el contenido de un archivo existente**. Por eso P14 está
-  bloqueado, y la sección «Editar una receta guardada» de `skills/recetario/` no se
+  planillas ni reescribe el contenido de un archivo existente**. El skill nuevo de P14
+  parte de eso, y la sección «Editar una receta guardada» de `skills/recetario/` no se
   puede cumplir con ese conector tal como está escrita.
 
 - **La app no detecta sola una planilla del índice corrupta o incompleta.**
