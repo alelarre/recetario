@@ -181,6 +181,8 @@ describe('main.ts: las rutas', () => {
     const enLugar: string[] = [];
     const vueltasAtras: number[] = [];
     const scrolls: number[] = [];
+    /** Lo que la flecha del carrusel le pidió desplazar a `scrollBy`. */
+    const desplazamientos: number[] = [];
     global.document = comoGlobal<Document>({
       querySelector: (sel: string) => {
         if (sel === '#app') return app;
@@ -192,6 +194,10 @@ describe('main.ts: las rutas', () => {
         }
         // El sol encendido, tal como lo dibuja la cocina.
         if (sel === '[data-accion="wake"].on') return app.innerHTML.includes('class="ico on" data-accion="wake"') ? {} : null;
+        // El carrusel: 400 px visibles, como para que el 80% dé un número redondo.
+        if (sel === '#app [data-carrusel]') {
+          return { clientWidth: 400, scrollBy: (o: { left: number }) => desplazamientos.push(o.left) };
+        }
         return null;
       },
       querySelectorAll: () => [],
@@ -239,6 +245,7 @@ describe('main.ts: las rutas', () => {
       empujados,
       preguntas,
       enLugar,
+      desplazamientos,
       /** La app vuelve a primer plano. */
       volverAPrimerPlano: async () => { listenersDoc['visibilitychange']?.(); await esperar(); },
       /** El evento `load` de `window`, para lo que quedó pendiente de él. */
@@ -293,6 +300,17 @@ describe('main.ts: las rutas', () => {
     await abrir('#/');
     expect(app.innerHTML).toContain('>t19<');
     expect(app.innerHTML).not.toContain('>t20<');
+  });
+
+  it('la flecha desplaza el carrusel el 80% de lo que se ve', async () => {
+    estado.tags = [{ tag: 'horno', cantidad: 3 }];
+    const { abrir, tocar, desplazamientos } = await montar();
+    await abrir('#/');
+
+    await tocar('carrusel-der');
+    await tocar('carrusel-izq');
+
+    expect(desplazamientos).toEqual([320, -320]);
   });
 
   it('un link de invitado con la app ya abierta recarga: la vista de invitado se decide al cargar', async () => {

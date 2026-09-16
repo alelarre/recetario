@@ -798,6 +798,17 @@ app.addEventListener('click', async (e) => {
     return render();
   }
 
+  // Las flechas sólo existen con mouse o trackpad (el CSS las esconde): el
+  // teléfono desliza con el dedo. Se mueve el 80% de lo que se ve, para que
+  // quede un chip de referencia entre una vista y la siguiente.
+  if (accion === 'carrusel-izq' || accion === 'carrusel-der') {
+    const carrusel = document.querySelector<HTMLElement>('#app [data-carrusel]');
+    if (!carrusel) return;
+    const paso = Math.round(carrusel.clientWidth * 0.8);
+    carrusel.scrollBy?.({ left: accion === 'carrusel-der' ? paso : -paso, behavior: 'smooth' });
+    return;
+  }
+
   if (accion === 'abrir-menu') { menuAbierto = true; return render(); }
   if (accion === 'cerrar-menu') { menuAbierto = false; return render(); }
   if (accion === 'borradores') { location.hash = '#/borradores'; return; }
