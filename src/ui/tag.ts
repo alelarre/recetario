@@ -21,10 +21,14 @@ export interface OpcionesTag {
 
 export function renderTag({ tag, entradas, total, visibles, tagsActivos, tags }: OpcionesTag): string {
   const lista = ordenarRecetas(entradas).map(e => tarjeta(e)).join('');
+  // El tag de la ruta no se puede sacar —cambiar de tag es volver—, así que el
+  // vacío dice el hecho y no invita a «sacar un filtro» que no se puede sacar.
   const cuerpo = lista
     ? `<div class="lista">${lista}</div>` + (visibles < total ? SPINNER : '')
-    : vacio('Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba.');
+    : vacio('Ninguna receta tiene estos tags.');
 
+  // Corta en los mismos veinte que el Recetario (P27 §6): la ronda de
+  // corrección lo alineó, que antes acá no cortaba.
   return encabezado({ titulo: tag, volver: true, total }) +
-    `<div class="cuerpo denso">${carruselTags(tags, { activos: tagsActivos })}${cuerpo}</div>`;
+    `<div class="cuerpo denso">${carruselTags(tags, { activos: tagsActivos, tope: 20, fijo: tag })}${cuerpo}</div>`;
 }

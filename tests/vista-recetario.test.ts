@@ -3,7 +3,7 @@ import { renderRecetario } from '../src/ui/recetario.js';
 
 const dibujar = (o = {}) => renderRecetario({
   categorias: [{ id: 'c1', nombre: 'Carnes', cantidad: 4 }, { id: 'c2', nombre: 'Postres', cantidad: 0 }],
-  borradores: 3, ...o
+  borradores: 3, tags: [], ...o
 });
 
 describe('Recetario', () => {

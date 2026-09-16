@@ -116,16 +116,22 @@ export interface OpcionesChip {
   activo?: boolean;
   /** Cuántas recetas lo llevan. Sin número, no se dibuja. */
   cantidad?: number;
-  /** La acción del click. Por defecto el filtro por tag, que `main` ya escucha. */
-  accion?: string;
+  /**
+   * El tag de la ruta en la lista por tag (P27 §6, ronda de corrección): va
+   * encendido pero no es tocable. Cambiar de tag es volver y elegir otro, no
+   * tocarlo acá, así que va sin `data-tag` —no entra en la delegación de
+   * clicks— y como `<span>`, no `<button>`, que es lo único que gana
+   * `cursor: pointer` (tokens.css).
+   */
+  fijo?: boolean;
 }
 
 /** §6.10 — Un tag como chip: con su ícono si es especial, y con su número si lo trae. */
-export function chipTag(tag: string, { activo, cantidad, accion }: OpcionesChip = {}): string {
+export function chipTag(tag: string, { activo, cantidad, fijo }: OpcionesChip = {}): string {
   const cuenta = cantidad === undefined ? '' : `<span class="cuenta">${cantidad}</span>`;
-  const attr = accion ? ` data-accion="${escapar(accion)}"` : '';
-  return `<button class="chip${activo ? ' act' : ''}"${attr} data-tag="${escapar(tag)}">` +
-    `${iconoDeTag(tag)}${escapar(tag)}${cuenta}</button>`;
+  const adentro = `${iconoDeTag(tag)}${escapar(tag)}${cuenta}`;
+  if (fijo) return `<span class="chip act">${adentro}</span>`;
+  return `<button class="chip${activo ? ' act' : ''}" data-tag="${escapar(tag)}">${adentro}</button>`;
 }
 
 /**
@@ -137,15 +143,12 @@ export function chipsSueltos(tags: string[], activos: string[] = []): string {
     .map(tag => chipTag(tag, { activo: activos.includes(tag) })).join('');
 }
 
-/** §6.10 — Los tags como chips; los activos marcados con el acento, los especiales primero. */
-export function chips(tags: string[], activos: string[] = []): string {
-  return `<div class="chips">${chipsSueltos(tags, activos)}</div>`;
-}
-
 export interface OpcionesCarrusel {
   activos?: string[];
   /** Cuántos tags comunes entran. Los especiales no cuentan y van siempre. */
   tope?: number;
+  /** El tag de la ruta en la lista por tag: va encendido pero no es tocable. */
+  fijo?: string;
 }
 
 /**
@@ -156,7 +159,7 @@ export interface OpcionesCarrusel {
  * dice que sigue, y las flechas aparecen sólo con mouse o trackpad.
  */
 export function carruselTags(
-  tags: { tag: string; cantidad: number }[], { activos = [], tope }: OpcionesCarrusel = {}
+  tags: { tag: string; cantidad: number }[], { activos = [], tope, fijo }: OpcionesCarrusel = {}
 ): string {
   const lista = Array.isArray(tags) ? tags : [];
   const especiales = TAGS_ESPECIALES
@@ -170,7 +173,9 @@ export function carruselTags(
   if (!todos.length) return '';
 
   const chips = todos
-    .map(({ tag, cantidad }) => chipTag(tag, { cantidad, activo: activos.includes(tag) }))
+    .map(({ tag, cantidad }) => tag === fijo
+      ? chipTag(tag, { cantidad, fijo: true })
+      : chipTag(tag, { cantidad, activo: activos.includes(tag) }))
     .join('');
   return '<div class="carrusel-marco">' +
     `<div class="carrusel" data-carrusel>${chips}</div>` +

@@ -18,7 +18,7 @@ export interface OpcionesRecetario {
   /** El menú lateral está desplegado (sólo en pantalla angosta). */
   menuAbierto?: boolean;
   /** Los tags del recetario entero, ya ordenados por cantidad (P27). */
-  tags?: { tag: string; cantidad: number }[];
+  tags: { tag: string; cantidad: number }[];
 }
 
 export function renderRecetario(
@@ -43,7 +43,7 @@ export function renderRecetario(
         '</div>' +
         // Los veinte más usados: con cientos de recetas la cola larga no aporta,
         // y para eso está la búsqueda.
-        carruselTags(tags ?? [], { tope: 20 }) +
+        carruselTags(tags, { tope: 20 }) +
         '<div><div class="rot">Categorías</div>' +
         `<div class="grilla">${grilla}</div></div>` +
       '</div>' +

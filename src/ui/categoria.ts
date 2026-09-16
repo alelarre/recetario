@@ -20,7 +20,7 @@ export interface OpcionesCategoria {
   visibles: number;
   tagsActivos: string[];
   /** Los tags de la categoría, ya ordenados por cantidad (P27). */
-  tags?: { tag: string; cantidad: number }[];
+  tags: { tag: string; cantidad: number }[];
 }
 
 export function renderCategoria(
@@ -30,7 +30,7 @@ export function renderCategoria(
 
   // El carrusel reemplaza a la fila de chips activos: los puestos se ven
   // encendidos ahí mismo, y se sacan tocándolos de nuevo (P27).
-  const filtros = carruselTags(tags ?? [], { activos });
+  const filtros = carruselTags(tags, { activos });
 
   // Las favoritas primero; dentro de cada bloque, alfabético (P27).
   const lista = ordenarRecetas(entradas).map(e => tarjeta(e)).join('');

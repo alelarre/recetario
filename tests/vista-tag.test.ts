@@ -21,6 +21,22 @@ describe('la lista por tag', () => {
     expect(html).toContain('class="chip act"');
   });
 
+  it('el chip del tag de la ruta no es tocable: cambiar de tag es volver', () => {
+    const html = renderTag({
+      ...base, entradas: [], tags: [{ tag: 'horno', cantidad: 2 }, { tag: 'rápido', cantidad: 1 }]
+    });
+    expect(html).not.toContain('data-tag="horno"');
+    // Los demás chips del carrusel siguen acumulando como siempre.
+    expect(html).toContain('data-tag="rápido"');
+  });
+
+  it('corta el carrusel en veinte tags, como el Recetario', () => {
+    const muchos = Array.from({ length: 25 }, (_, i) => ({ tag: `t${i}`, cantidad: 25 - i }));
+    const html = renderTag({ ...base, entradas: [], tags: muchos });
+    expect(html).toContain('>t19<');
+    expect(html).not.toContain('>t20<');
+  });
+
   it('las favoritas van primero', () => {
     const html = renderTag({ ...base, entradas: [
       entradaFalsa({ titulo: 'Zapallo', tags: ['horno'] }),
@@ -29,8 +45,10 @@ describe('la lista por tag', () => {
     expect(html.indexOf('Arroz')).toBeLessThan(html.indexOf('Zapallo'));
   });
 
-  it('sin recetas muestra el vacío', () => {
-    expect(renderTag({ ...base, entradas: [], total: 0, visibles: 0 }))
-      .toContain('Ninguna receta con esos tags');
+  it('sin recetas muestra el vacío, sin invitar a sacar un filtro que no se puede sacar', () => {
+    const html = renderTag({ ...base, entradas: [], total: 0, visibles: 0 });
+    expect(html).toContain('class="vacio"');
+    // El tag de la ruta no se puede sacar: el vacío dice el hecho, no invita a nada.
+    expect(html).not.toContain('Probá');
   });
 });

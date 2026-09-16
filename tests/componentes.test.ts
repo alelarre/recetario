@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  tarjeta, placeholder, aviso, encabezado, chips, chipTag, iconoDeTag, vacio, tile, carruselTags
+  tarjeta, placeholder, aviso, encabezado, chipsSueltos, chipTag, iconoDeTag, vacio, tile, carruselTags
 } from '../src/ui/componentes.js';
 import { entradaFalsa } from './dobles.js';
 import { registrarCategorias } from '../src/ui/categorias.js';
@@ -102,9 +102,9 @@ describe('encabezado', () => {
   });
 });
 
-describe('chips', () => {
+describe('chipsSueltos', () => {
   it('marca los activos', () => {
-    const html = chips(['horno', 'rápido'], ['horno']);
+    const html = chipsSueltos(['horno', 'rápido'], ['horno']);
     expect(html).toContain('class="chip act"');
     expect(html).toContain('data-tag="horno"');
   });
@@ -131,13 +131,20 @@ describe('los chips de tags', () => {
   });
 
   it('la fila de tags de una receta pone los especiales primero', () => {
-    const html = chips(['horno', 'menú diario', 'favorito']);
+    const html = chipsSueltos(['horno', 'menú diario', 'favorito']);
     expect(html.indexOf('favorito')).toBeLessThan(html.indexOf('menú diario'));
     expect(html.indexOf('menú diario')).toBeLessThan(html.indexOf('horno'));
   });
 
   it('escapa lo que viene del archivo', () => {
     expect(chipTag('<b>x</b>')).toContain('&lt;b&gt;x&lt;/b&gt;');
+  });
+
+  it('el fijo va encendido pero no es tocable: sin data-tag y sin ser un botón', () => {
+    const html = chipTag('horno', { fijo: true });
+    expect(html).toContain('act');
+    expect(html).not.toContain('data-tag');
+    expect(html).not.toContain('<button');
   });
 });
 
@@ -186,6 +193,13 @@ describe('el carrusel de tags', () => {
 
   it('marca los activos', () => {
     expect(carruselTags(tags, { activos: ['horno'] })).toContain('class="chip act"');
+  });
+
+  it('el tag fijo —el de la ruta en la lista por tag— no es tocable (P27 §6)', () => {
+    const html = carruselTags(tags, { fijo: 'horno' });
+    expect(html).not.toContain('data-tag="horno"');
+    // Los demás siguen siendo botones que acumulan como siempre.
+    expect(html).toContain('data-tag="clásica"');
   });
 });
 

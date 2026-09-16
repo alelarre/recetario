@@ -9,19 +9,19 @@ const veinte = Array.from({ length: 20 }, (_, i) =>
 describe('Categoría', () => {
   it('el total del encabezado es el total real desde el primer momento', () => {
     const html = renderCategoria({
-      nombre: 'Pescados y mariscos', entradas: veinte.slice(0, 13), total: 20, visibles: 13, tagsActivos: []
+      nombre: 'Pescados y mariscos', entradas: veinte.slice(0, 13), total: 20, visibles: 13, tagsActivos: [], tags: []
     });
     expect(html).toContain('>20<');
     expect(html.match(/class="tarjeta"/g)).toHaveLength(13);
   });
 
   it('mientras falta un tramo, el spinner va al final de la lista', () => {
-    const html = renderCategoria({ nombre: 'A', entradas: veinte.slice(0, 13), total: 20, visibles: 13, tagsActivos: [] });
+    const html = renderCategoria({ nombre: 'A', entradas: veinte.slice(0, 13), total: 20, visibles: 13, tagsActivos: [], tags: [] });
     expect(html.indexOf('class="spin"')).toBeGreaterThan(html.lastIndexOf('class="tarjeta"'));
   });
 
   it('con todo cargado no queda spinner', () => {
-    expect(renderCategoria({ nombre: 'A', entradas: veinte, total: 20, visibles: 20, tagsActivos: [] }))
+    expect(renderCategoria({ nombre: 'A', entradas: veinte, total: 20, visibles: 20, tagsActivos: [], tags: [] }))
       .not.toContain('class="spin"');
   });
 
@@ -54,13 +54,13 @@ describe('Categoría', () => {
 
   it('una receta incompleta se lista igual y no se ordena distinto', () => {
     const entradas = [entradaFalsa({ titulo: 'A', completa: false }), entradaFalsa({ titulo: 'B', completa: true })];
-    const html = renderCategoria({ nombre: 'C', entradas, total: 2, visibles: 2, tagsActivos: [] });
+    const html = renderCategoria({ nombre: 'C', entradas, total: 2, visibles: 2, tagsActivos: [], tags: [] });
     expect(html.indexOf('>A<')).toBeLessThan(html.indexOf('>B<'));
   });
 
   it('el orden es alfabético por título, venga como venga', () => {
     const entradas = [entradaFalsa({ titulo: 'Zapallo' }), entradaFalsa({ titulo: 'Ajo' })];
-    const html = renderCategoria({ nombre: 'C', entradas, total: 2, visibles: 2, tagsActivos: [] });
+    const html = renderCategoria({ nombre: 'C', entradas, total: 2, visibles: 2, tagsActivos: [], tags: [] });
     expect(html.indexOf('>Ajo<')).toBeLessThan(html.indexOf('>Zapallo<'));
   });
 
@@ -69,14 +69,14 @@ describe('Categoría', () => {
     const html = renderCategoria({
       nombre: 'Carnes',
       entradas: [e('Vitel toné'), e('Osobuco', ['favorito']), e('Bife'), e('Asado', ['favorito'])],
-      total: 4, visibles: 4, tagsActivos: []
+      total: 4, visibles: 4, tagsActivos: [], tags: []
     });
     const orden = ['Asado', 'Osobuco', 'Bife', 'Vitel toné'].map(t => html.indexOf(t));
     expect(orden).toEqual([...orden].sort((a, b) => a - b));
   });
 
   it('una categoría vacía muestra una frase, sin ilustración', () => {
-    const html = renderCategoria({ nombre: 'Bebidas', entradas: [], total: 0, visibles: 0, tagsActivos: [] });
+    const html = renderCategoria({ nombre: 'Bebidas', entradas: [], total: 0, visibles: 0, tagsActivos: [], tags: [] });
     expect(html).toContain('class="vacio"');
     // Sin ilustración es del cuerpo: el ícono de volver del encabezado queda.
     const cuerpo = html.slice(html.indexOf('class="cuerpo'));
