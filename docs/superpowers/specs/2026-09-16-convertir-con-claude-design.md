@@ -152,7 +152,7 @@ Lo que llega por el Share Target a `#/capturar`:
 - **`decision-log.md`:** una fila con la conversión por Claude sin modelo en la app.
 - **`BACKLOG.md`:** P28 resuelto; P14 suma que el skill ya no necesita escribir en Drive:
   le alcanza con producir el `.md` y compartirlo.
-- **`E01-Capturar.md`** (o el que describe Borradores y la captura): los dos botones, la
+- **`E01-CapturaYBorradores.md`:** los dos botones, la
   pregunta y la captura que reconoce recetas.
 - **`CLAUDE.md`:** el bloque de lo hecho, y P28 sale de pendientes.
 
