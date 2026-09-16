@@ -24,6 +24,13 @@
 > §2.1 — la planilla de borradores suma la columna `nota`. §4.1 y §4.6 — la
 > navegación primaria pasa a **un menú lateral**, y no hay barra inferior. §6 —
 > la tabla de divergencias con lo implementado, al día.
+>
+> **Cambio del 2026-09-16:** la clave `completa` sale del frontmatter y de la fila
+> del índice. **La completitud pasa a ser el tag especial `incompleta`** en la
+> lista `tags`, que el usuario pone y saca con su botón en el editor; una receta
+> nueva nace con él. El frontmatter queda con siete claves. Lo que §1.5, §1.6, §3
+> y §6 dicen de `completa` quedó reemplazado por
+> `docs/superpowers/specs/2026-09-16-tags-especiales-2-design.md`.
 
 ---
 

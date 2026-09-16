@@ -211,7 +211,7 @@ tag.
 receta**: un carrusel en el Recetario y en cada categoría, y una lista por tag
 (`#/t/<tag>`). Lo que sigue sin existir es la nube de tags y la sección en la
 navegación. El vocabulario sigue siendo libre: la app no propone ni valida,
-salvo los tres especiales, que se reserva.
+salvo los cuatro especiales, que se reserva.
 
 ### F02.7 — La marca de incompleta en las listas
 
