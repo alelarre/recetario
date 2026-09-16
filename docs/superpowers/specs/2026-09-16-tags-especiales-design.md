@@ -146,9 +146,12 @@ Una pantalla nueva, armada con las piezas de la categoría:
 
 - **Encabezado** con el nombre del tag —y su ícono si es especial— y el total, como el de
   una categoría.
-- **El mismo carrusel**, para cambiar de tag o acumular otro.
+- **El mismo carrusel**, para acumular otro tag: el propio, el de la ruta, va encendido
+  pero no es tocable —cambiar de tag es volver y elegir otro, no tocarlo acá—; los demás
+  siguen acumulando como en una categoría. Corta en los mismos veinte que el Recetario.
 - **La lista** de recetas con ese tag, con las favoritas primero.
-- **Vacía:** si el tag ya no tiene recetas, el estado vacío de siempre.
+- **Vacía:** si el tag ya no tiene recetas, una frase propia que dice el hecho: como el
+  tag de la ruta no se puede sacar, no invita a «sacar un filtro».
 
 No es la pantalla de resultados: esa agrupa por *por qué* apareció cada receta, y acá hay
 un solo motivo.
