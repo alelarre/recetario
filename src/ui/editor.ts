@@ -12,7 +12,7 @@
  * (C04.3c.1).
  */
 import { escapar } from './markdown.js';
-import { encabezado, aviso } from './componentes.js';
+import { encabezado, aviso, iconoDeTag } from './componentes.js';
 import { ICO } from './iconos.js';
 import { DIFICULTADES, dificultadValida, tagReservado } from '../catalogo.js';
 import { sePuedeTerminar } from '../recipe.js';
@@ -68,11 +68,13 @@ const campo = (nombre: string, etiqueta: string, valor?: string | null, ph = '')
 /**
  * Un tag del editor: una pill con su propia cruz. Se exporta porque `main`
  * agrega una sin redibujar el formulario entero —redibujarlo perdería lo que
- * el usuario venía escribiendo en los demás campos—.
+ * el usuario venía escribiendo en los demás campos—. El ícono del especial va
+ * antes del nombre, como en los chips de las demás pantallas; la cruz queda
+ * al final, que es la que saca el tag.
  */
 export const pillTag = (tag: string): string =>
   `<button type="button" class="chip" data-accion="tag-quitar" data-valor="${escapar(tag)}">` +
-  `${escapar(tag)}${ICO.cerrar}</button>`;
+  `${iconoDeTag(tag)}${escapar(tag)}${ICO.cerrar}</button>`;
 
 const area = (
   nombre: string, etiqueta: string, valor?: string | null, filas = 4, estilo = ''

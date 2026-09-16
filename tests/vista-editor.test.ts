@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderEditor, recetaDesdeFormulario, formularioDesde } from '../src/ui/editor.js';
+import { renderEditor, recetaDesdeFormulario, formularioDesde, pillTag } from '../src/ui/editor.js';
 import { ICO } from '../src/ui/iconos.js';
 import { parse, serialize } from '../src/recipe.js';
 import { entradaFalsa } from './dobles.js';
@@ -47,6 +47,19 @@ describe('renderEditor', () => {
     expect(html).toContain('data-valor="fritura"');
     expect(html).toContain('data-valor="rápido"');
     expect(html).toContain('data-tag-nuevo');
+  });
+
+  it('un tag especial se dibuja con su ícono, y se puede sacar como cualquiera', () => {
+    const html = pillTag('probar');
+    expect(html).toContain(ICO.marcador);
+    expect(html).toContain('data-accion="tag-quitar"');
+  });
+
+  it('un tag común no lleva ícono', () => {
+    // La cruz de sacar el tag también es un <svg>, así que "sin ícono" se
+    // verifica por orden: el nombre aparece pegado al cierre del botón, sin
+    // nada antepuesto.
+    expect(pillTag('horno')).toContain('valor="horno">horno<svg');
   });
 
   it('los tags reservados no se sugieren, y el aviso está listo pero oculto', () => {
