@@ -48,7 +48,11 @@ Esta tabla **reemplaza** el orden de la primera parte (`favorito`, `probar`, `me
   tag `incompleta` está terminada.
 - **No hay transición:** una receta con `completa: no` y sin el tag se ve terminada.
 - **Al guardar, si el `.md` todavía tiene la clave `completa`, se borra.** Conservarla como
-  clave desconocida dejaría un dato paralelo al tag.
+  clave desconocida dejaría un dato paralelo al tag: el archivo podría decir `completa: sí`
+  y tener `incompleta` a la vez.
+- **Es una excepción con nombre, no una regla nueva.** Guardar sigue conservando todas las
+  demás claves que la app no conoce (`extras`) y las secciones que no reconoce (`otras`),
+  como hasta ahora.
 - **El índice pierde la columna `completa`.** Si una receta está incompleta se sabe por su
   columna `tags`, como si es favorita. `SCHEMA_VERSION` pasa de 3 a 4: la próxima apertura
   reindexa sola.
