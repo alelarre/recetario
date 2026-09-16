@@ -59,7 +59,11 @@ const estado = {
   /** Lo que se guardó desde la gestión de categorías, en orden. */
   categoriasGuardadas: [] as string[],
   /** Los ids de las categorías borradas. */
-  categoriasBorradas: [] as string[]
+  categoriasBorradas: [] as string[],
+  /** Los tags con los que se guardó cada vez que se tocó la estrella, en orden. */
+  guardados: [] as { tags: string[] }[],
+  /** Cuántas veces más falla `guardar` antes de andar, para probar el aviso de la estrella. */
+  fallaGuardar: 0
 };
 
 const storeFake = {
@@ -91,7 +95,10 @@ const storeFake = {
     estado.creadas.push(receta.titulo ?? '');
     return { id: `nuevo-${estado.creadas.length}`, nombre_archivo: 'receta.md' };
   },
-  guardar: async () => {},
+  guardar: async (_id: string, receta: { tags: string[] }) => {
+    if (estado.fallaGuardar > 0) { estado.fallaGuardar--; throw new Error('red'); }
+    estado.guardados.push({ tags: receta.tags });
+  },
   receta: async (id: string) => {
     estado.lecturas++;
     if (estado.falla) throw estado.falla === true ? new Error('red') : estado.falla;
@@ -143,6 +150,8 @@ describe('main.ts: las rutas', () => {
     estado.reemplazadas = 0;
     estado.categoriasGuardadas = [];
     estado.categoriasBorradas = [];
+    estado.guardados = [];
+    estado.fallaGuardar = 0;
     vi.unstubAllGlobals();
     delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
@@ -957,6 +966,42 @@ describe('main.ts: las rutas', () => {
       await tocar('compartir');
       await tocar('compartir-link');
       expect(app.innerHTML).toContain('#/ver?r=1');
+    });
+  });
+
+  describe('la estrella de favorito', () => {
+    it('la estrella pone el tag, guarda y queda encendida', async () => {
+      estado.md = '---\ntitulo: Rabas\ntags: [frito]\n---\n';
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+
+      await tocar('favorito');
+
+      expect(estado.guardados.at(-1)?.tags).toEqual(['favorito', 'frito']);
+      expect(app.innerHTML).toContain('class="fav on"');
+    });
+
+    it('tocarla de nuevo lo saca', async () => {
+      estado.md = '---\ntitulo: Rabas\ntags: [favorito, frito]\n---\n';
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+
+      await tocar('favorito');
+
+      expect(estado.guardados.at(-1)?.tags).toEqual(['frito']);
+      expect(app.innerHTML).not.toContain('class="fav on"');
+    });
+
+    it('si la escritura falla, la estrella vuelve como estaba y avisa', async () => {
+      estado.md = '---\ntitulo: Rabas\n---\n';
+      estado.fallaGuardar = 1;
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+
+      await tocar('favorito');
+
+      expect(app.innerHTML).not.toContain('class="fav on"');
+      expect(app.innerHTML).toContain('No se pudo marcar');
     });
   });
 

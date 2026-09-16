@@ -258,6 +258,13 @@ describe('la estrella de favorito', () => {
     expect(html).toContain('disabled');
   });
 
+  it('si la escritura falló, avisa arriba de la ficha y ofrece reintentar', () => {
+    const html = renderReceta({ entrada: entradaFalsa(), receta, error: 'No se pudo marcar.' });
+    expect(html).toContain('No se pudo marcar.');
+    expect(html).toContain('data-accion="favorito">Reintentar');
+    expect(html.indexOf('class="aviso"')).toBeLessThan(html.indexOf('class="ficha"'));
+  });
+
   it('los tags especiales van primeros y con su ícono', () => {
     const conTags = parse('---\ntitulo: Asado\ntags: [horno, probar]\n---\n');
     const html = renderReceta({ entrada: entradaFalsa(), receta: conTags });

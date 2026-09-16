@@ -4,7 +4,7 @@ import { crearSheets } from './sheets.js';
 import { crearStore } from './store.js';
 import * as indiceLocal from './indice-local.js';
 import { parse, slugArchivo } from './recipe.js';
-import { tagReservado } from './catalogo.js';
+import { tagReservado, conFavorito, esFavorita } from './catalogo.js';
 import { sePuedeTerminar } from './recipe.js';
 import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado } from './ui/router.js';
 import { escapar } from './ui/markdown.js';
@@ -102,6 +102,11 @@ let editorAbierto: { hash: string; formulario: string } | null = null;
  * volver más tarde vuelve a leer, porque el archivo es la verdad (C05.8.1).
  */
 let recetaLeida: { id: string; entrada: Entrada | null; receta: Receta } | null = null;
+
+/** La estrella de favorito está escribiendo: dura lo que tarda Drive (P27). */
+let marcandoFavorito = false;
+/** Lo último que falló al marcar favorito. Lo dibuja la receta, arriba de la ficha. */
+let errorFavorito = '';
 
 /**
  * El borrador abierto, leído de su `.md` una vez. Mismo criterio que la
@@ -363,6 +368,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     cocina.reiniciar();
     compartiendo = null;
     pdfListo = null;
+    marcandoFavorito = false;
+    errorFavorito = '';
     // La pantalla nueva empieza arriba: el hash no cambia el scroll, así que
     // entrar al modo cocina desde el pie de la receta abría los ingredientes
     // ya scrolleados. La llamada es opcional por lo mismo que
@@ -399,7 +406,12 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     case 'receta':
       try {
         const { entrada, receta } = await recetaDePantalla(ruta.params['id'] ?? '');
-        pintar(renderReceta({ entrada, receta, ...(compartiendo ? { compartir: compartiendo } : {}) }));
+        pintar(renderReceta({
+          entrada, receta,
+          ...(compartiendo ? { compartir: compartiendo } : {}),
+          ...(marcandoFavorito ? { favorito: 'escribiendo' as const } : {}),
+          ...(errorFavorito ? { error: errorFavorito } : {})
+        }));
         return observarTitulo();
       } catch (err) {
         console.error(err);
@@ -738,6 +750,28 @@ app.addEventListener('click', async (e) => {
       console.error(err);
       compartiendo = contenido ? { paso: 'mostrar', que, contenido } : null;
     }
+    return render();
+  }
+  if (accion === 'favorito') {
+    const id = vistaActual?.params['id'] ?? '';
+    const actual = recetaLeida?.receta;
+    if (!id || !actual || marcandoFavorito) return;
+
+    // El resultado se dibuja recién cuando Drive contesta (P27): mientras
+    // tanto, la estrella muestra que está escribiendo y no acepta otro toque.
+    marcandoFavorito = true;
+    errorFavorito = '';
+    await render();
+
+    const nueva = { ...actual, tags: conFavorito(actual.tags, !esFavorita(actual)) };
+    try {
+      await store.guardar(id, nueva);
+      recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: nueva };
+    } catch (err) {
+      console.error(err);
+      errorFavorito = 'No se pudo marcar como favorita. Revisá la conexión.';
+    }
+    marcandoFavorito = false;
     return render();
   }
   if (accion === 'cocinar') {

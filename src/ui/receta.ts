@@ -9,7 +9,7 @@
  * contexto, la fuente y los tags; después una por sección, y ninguna vacía.
  */
 import { escapar } from './markdown.js';
-import { encabezado, chipsSueltos } from './componentes.js';
+import { encabezado, chipsSueltos, aviso } from './componentes.js';
 import { ICO } from './iconos.js';
 import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones } from './fichas-receta.js';
 import { renderFichaCompartir } from './compartir.js';
@@ -31,6 +31,8 @@ export interface OpcionesReceta {
   compartir?: EstadoCompartir;
   /** Qué está pasando con la estrella: nada, o una escritura en curso. */
   favorito?: 'escribiendo';
+  /** Lo último que falló al marcar favorito (P27). Se dibuja arriba de la ficha. */
+  error?: string;
 }
 
 /**
@@ -47,7 +49,7 @@ function botonFavorito(receta: Receta, escribiendo: boolean): string {
     `<span class="${clase}">${ICO.estrella}${ICO.estrella}</span></button>`;
 }
 
-export function renderReceta({ entrada, receta, compartir, favorito }: OpcionesReceta): string {
+export function renderReceta({ entrada, receta, compartir, favorito, error }: OpcionesReceta): string {
   const categoria = entrada?.categoria ?? '';
   // El estado es un chip más de la fila de tags, y va primero: es lo que hay que
   // ver al mirar la receta. Como chip hereda el ancho, el alto y el aire de los
@@ -79,7 +81,10 @@ export function renderReceta({ entrada, receta, compartir, favorito }: OpcionesR
   const botonCompartir = `<button class="ico" data-accion="compartir" aria-label="Compartir">${ICO.compartir}</button>`;
   const estrella = botonFavorito(receta, favorito === 'escribiendo');
   return encabezado({ titulo: '', volver: true, pegajoso: true, derecha: estrella + botonCompartir + alArchivo }) +
-    '<div class="cuerpo">' + fichaCabecera({ receta, categoria, marcas }) + fichasDelCuerpo(receta) + '</div>' +
+    '<div class="cuerpo">' +
+      (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'favorito' } }) : '') +
+      fichaCabecera({ receta, categoria, marcas }) + fichasDelCuerpo(receta) +
+    '</div>' +
     pieDeAcciones(botonCocinar(receta) + `<button class="btn sec" data-accion="editar">${ICO.lapiz}Editar</button>`) +
     (compartir ? renderFichaCompartir(compartir) : '');
 }
