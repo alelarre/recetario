@@ -13,7 +13,7 @@ import { encabezado, chipsSueltos, aviso } from './componentes.js';
 import { ICO } from './iconos.js';
 import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones } from './fichas-receta.js';
 import { renderFichaCompartir } from './compartir.js';
-import { esFavorita } from '../catalogo.js';
+import { esFavorita, tagEspecial } from '../catalogo.js';
 // El logo de Drive, en el repo y no pedido a `gstatic.com`: una dependencia de
 // red para 513 bytes es una dependencia de más, y así entra a `/assets/`, que es
 // lo único que el service worker sirve caché-primero. Es el favicon que publica
@@ -52,8 +52,10 @@ function botonFavorito(receta: Receta, escribiendo: boolean): string {
 export function renderReceta({ entrada, receta, compartir, favorito, error }: OpcionesReceta): string {
   const categoria = entrada?.categoria ?? '';
   // Los tags, con los especiales primero y con su ícono (P27). Incompleta es
-  // uno más: su chip abre el editor.
-  const marcas = receta.tags.length ? `<div class="chips">${chipsSueltos(receta.tags)}</div>` : '';
+  // uno más: su chip abre el editor. Favorito no va: ya lo dice la estrella del
+  // encabezado, y un chip igual parecía otro control para marcarla.
+  const tags = receta.tags.filter(t => tagEspecial(t) !== 'favorito');
+  const marcas = tags.length ? `<div class="chips">${chipsSueltos(tags)}</div>` : '';
 
   // El `.md` en Drive, en una pestaña nueva. Sólo si la receta está en el
   // índice: sin fila no se conoce su id de archivo.

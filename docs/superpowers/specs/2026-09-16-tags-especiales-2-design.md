@@ -105,7 +105,9 @@ comunes y del campo para agregar.
 
 ## 7. La receta
 
-- Los especiales van **primeros en la fila de tags**, en el orden del §2 y con su ícono.
+- Los especiales van **primeros en la fila de tags**, en el orden del §2 y con su ícono,
+  **salvo `favorito`**: ya lo muestra la estrella del encabezado, y un chip igual parecía
+  otro control para marcarla.
 - **Tocar `incompleta` abre el editor**, como hoy la marca de incompleta. Los demás chips se
   comportan como hasta ahora.
 - La estrella del encabezado no cambia: es el atajo para `favorito`.

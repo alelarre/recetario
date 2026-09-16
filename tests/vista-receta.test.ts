@@ -285,6 +285,18 @@ describe('la estrella de favorito', () => {
     expect(html.indexOf('probar')).toBeLessThan(html.indexOf('horno'));
     expect(html).toContain(ICO.marcador);
   });
+
+  it('favorito no va en la fila de tags: ya está la estrella del encabezado', () => {
+    const fav = parse('---\ntitulo: Asado\ntags: [favorito, horno]\n---\n');
+    const html = renderReceta({ entrada: entradaFalsa(), receta: fav });
+    expect(html).not.toContain('data-tag="favorito"');
+    expect(html).toContain('data-tag="horno"');
+  });
+
+  it('una receta con sólo favorito no arma la fila de chips vacía', () => {
+    const fav = parse('---\ntitulo: Asado\ntags: [favoritas]\n---\n');
+    expect(renderReceta({ entrada: entradaFalsa(), receta: fav })).not.toContain('<div class="chips">');
+  });
 });
 
 describe('La ficha de compartir', () => {
