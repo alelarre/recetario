@@ -10,14 +10,39 @@ import { escapar } from './markdown.js';
 import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
 import { ICO, ICONO_DE_DURACION } from './iconos.js';
 import { textoVersion } from '../version.js';
-import { tagEspecial, ordenarTags, tieneEspecial, TAGS_ESPECIALES, duracionValida } from '../catalogo.js';
+import { tagEspecial, ordenarTags, tieneEspecial, TAGS_ESPECIALES, duracionValida, DURACIONES } from '../catalogo.js';
 import type { Entrada } from '../tipos.js';
-import type { TagEspecial } from '../catalogo.js';
+import type { TagEspecial, Duracion, Orden } from '../catalogo.js';
 
 /** La duración con su relojito, o nada si el tiempo no es uno de los cinco valores (P29). */
 export function duracionConReloj(tiempo: unknown): string {
   const d = duracionValida(tiempo);
   return d ? `<span class="dur">${ICONO_DE_DURACION[d]}${escapar(d)}</span>` : '';
+}
+
+/**
+ * Los chips de duración de una lista (P29): cada uno con su relojito y
+ * cuántas recetas trae. Un valor encendido se dibuja aunque ya no traiga
+ * ninguna, para poder apagarlo. Sin nada que mostrar, no hay fila.
+ */
+export function filaDuraciones(conteo: { valor: Duracion; cantidad: number }[], activas: string[]): string {
+  const lista = DURACIONES
+    .map(valor => ({ valor, cantidad: conteo.find(c => c.valor === valor)?.cantidad ?? 0 }))
+    .filter(x => x.cantidad > 0 || activas.includes(x.valor));
+  if (!lista.length) return '';
+  const chips = lista.map(({ valor, cantidad }) =>
+    `<button class="chip${activas.includes(valor) ? ' act' : ''}" data-accion="filtrar-duracion" data-valor="${escapar(valor)}">` +
+    `${ICONO_DE_DURACION[valor]}${escapar(valor)}<span class="cuenta">${cantidad}</span></button>`).join('');
+  return `<div class="fila-dur" role="group" aria-label="Filtrar por duración">${chips}</div>`;
+}
+
+/** «A–Z | Duración», a la derecha (P29). */
+export function conmutadorOrden(orden: Orden): string {
+  const b = (valor: Orden, contenido: string) =>
+    `<button data-accion="ordenar" data-valor="${valor}" aria-pressed="${orden === valor}">${contenido}</button>`;
+  return '<div class="orden"><div class="orden-seg" role="group" aria-label="Orden">' +
+    b('alfa', 'A–Z') + b('duracion', `${ICONO_DE_DURACION['~30 min']}Duración`) +
+  '</div></div>';
 }
 
 /** §5.1 — el spinner del final de la lista y de las esperas. */

@@ -396,3 +396,21 @@ html:has(.hoja-compartir) { overflow: hidden; }
   .carrusel { padding-inline: 40px; }
 }
 @media (prefers-reduced-motion: reduce) { .carrusel { scroll-behavior: auto; } }
+
+/* P29 — la fila de duraciones: chips con relojito que se deslizan como el
+   carrusel, sin degradé ni flechas; y el conmutador de orden, a la derecha. */
+.fila-dur { display: flex; gap: var(--e-2); overflow-x: auto; scrollbar-width: none;
+            margin-inline: calc(-1 * var(--e-4)); padding-inline: var(--e-4); margin-bottom: var(--e-3); }
+.fila-dur::-webkit-scrollbar { display: none; }
+.fila-dur .chip { flex: 0 0 auto; --fondo-reloj: color-mix(in srgb, var(--surface-alta) 86%, var(--fg)); }
+.fila-dur .chip.act { --fondo-reloj: var(--acento-suave); }
+.orden { display: flex; justify-content: flex-end; margin-bottom: var(--e-3); }
+.orden-seg { display: inline-grid; grid-template-columns: auto auto; border: 1px solid var(--borde);
+             border-radius: var(--r-medio); overflow: hidden; }
+.orden-seg button { min-height: 40px; padding: 0 var(--e-3); border: 0; background: none; color: var(--fg-2);
+                    font: 600 var(--txt-chico)/1 var(--tipo); cursor: pointer; display: inline-flex;
+                    align-items: center; gap: 6px; --fondo-reloj: var(--bg); }
+.orden-seg button + button { border-left: 1px solid var(--borde); }
+.orden-seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); --fondo-reloj: var(--fg); }
+.orden-seg svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5;
+                 stroke-linecap: round; stroke-linejoin: round; }

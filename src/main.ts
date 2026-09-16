@@ -4,7 +4,8 @@ import { crearSheets } from './sheets.js';
 import { crearStore } from './store.js';
 import * as indiceLocal from './indice-local.js';
 import { parse, slugArchivo } from './recipe.js';
-import { tagReservado, conEspecial, esFavorita } from './catalogo.js';
+import { tagReservado, conEspecial, esFavorita, contarDuraciones, filtrarPorDuracion, ordenarRecetas } from './catalogo.js';
+import type { Orden } from './catalogo.js';
 import { sePuedeTerminar } from './recipe.js';
 import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado } from './ui/router.js';
 import { escapar } from './ui/markdown.js';
@@ -59,6 +60,8 @@ const convertidos = new Map<string, RecetaCreada>();
 let estadoArranque: ResultadoArranque | undefined;
 let vistaActual: Ruta | null = null;
 let tagsActivos: string[] = [];   // filtro de la vista de categoría; se limpia al cambiar de vista
+let duracionesActivas: string[] = [];   // filtro de duración de la categoría o la lista por tag (P29)
+let orden: Orden = 'alfa';               // el conmutador de las listas; vuelve a A–Z al cambiar de pantalla
 
 /**
  * Cuántas tarjetas dibuja la categoría. El tramo no es una lectura de red —el
@@ -353,6 +356,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     if (!PANTALLAS_DE_RECETA.includes(ruta.vista)) recetaLeida = null;
     if (!PANTALLAS_DE_BORRADOR.includes(ruta.vista)) borradorLeido = null;
     tagsActivos = [];
+    duracionesActivas = [];
+    orden = 'alfa';
     visibles = TRAMO;
     // Navegar cierra el menú: se abrió para elegir a dónde ir.
     menuAbierto = false;
@@ -392,10 +397,12 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
 
     case 'categoria': {
       const nombre = ruta.params['nombre'] ?? '';
-      const entradas = store.buscar({ categoria: nombre, tags: tagsActivos });
+      const porTags = store.buscar({ categoria: nombre, tags: tagsActivos });
+      const entradas = ordenarRecetas(filtrarPorDuracion(porTags, duracionesActivas), orden);
       pintar(renderCategoria({
         nombre, entradas: entradas.slice(0, visibles), total: entradas.length,
-        visibles: Math.min(visibles, entradas.length), tagsActivos, tags: store.tagsDe(nombre)
+        visibles: Math.min(visibles, entradas.length), tagsActivos, tags: store.tagsDe(nombre),
+        duraciones: contarDuraciones(porTags), duracionesActivas, orden
       }));
       return observarTramo();
     }
@@ -405,10 +412,12 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // entra como filtro igual que en la categoría, para poder sumarle otros.
       const nombre = ruta.params['nombre'] ?? '';
       const activos = tagsActivos.includes(nombre) ? tagsActivos : [nombre, ...tagsActivos];
-      const entradas = store.buscar({ tags: activos });
+      const porTags = store.buscar({ tags: activos });
+      const entradas = ordenarRecetas(filtrarPorDuracion(porTags, duracionesActivas), orden);
       pintar(renderTag({
         tag: nombre, entradas: entradas.slice(0, visibles), total: entradas.length,
-        visibles: Math.min(visibles, entradas.length), tagsActivos: activos, tags: store.tagsDe()
+        visibles: Math.min(visibles, entradas.length), tagsActivos: activos, tags: store.tagsDe(),
+        duraciones: contarDuraciones(porTags), duracionesActivas, orden
       }));
       return observarTramo();
     }
@@ -699,6 +708,19 @@ app.addEventListener('click', async (e) => {
   }
 
   const accion = boton.dataset['accion'];
+
+  if (accion === 'filtrar-duracion') {
+    const valor = boton.dataset['valor'] ?? '';
+    duracionesActivas = duracionesActivas.includes(valor)
+      ? duracionesActivas.filter(d => d !== valor) : [...duracionesActivas, valor];
+    visibles = TRAMO;
+    return render();
+  }
+  if (accion === 'ordenar') {
+    orden = boton.dataset['valor'] === 'duracion' ? 'duracion' : 'alfa';
+    visibles = TRAMO;
+    return render();
+  }
 
   // Mientras se arma el PDF la ficha no acepta otro toque (spec §2.1.3): cerrar
   // con el velo no frena `generar`, y al terminar el PDF se mandaba igual.

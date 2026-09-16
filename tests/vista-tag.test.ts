@@ -2,9 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { renderTag } from '../src/ui/tag.js';
 import { entradaFalsa } from './dobles.js';
 import { ICO } from '../src/ui/iconos.js';
+import type { Duracion } from '../src/catalogo.js';
 
 describe('la lista por tag', () => {
-  const base = { tag: 'horno', total: 2, visibles: 2, tagsActivos: ['horno'], tags: [] };
+  const base = {
+    tag: 'horno', total: 2, visibles: 2, tagsActivos: ['horno'], tags: [],
+    duraciones: [] as { valor: Duracion; cantidad: number }[],
+    duracionesActivas: [] as string[], orden: 'alfa' as const
+  };
 
   it('el encabezado lleva el nombre del tag y el total', () => {
     const html = renderTag({ ...base, entradas: [entradaFalsa({ titulo: 'Pan' })] });
@@ -62,5 +67,18 @@ describe('la lista por tag', () => {
     expect(html).toContain('class="vacio"');
     // El tag de la ruta no se puede sacar: el vacío dice el hecho, no invita a nada.
     expect(html).not.toContain('Probá');
+  });
+
+  it('con duraciones, dibuja la fila de filtro y el conmutador (P29)', () => {
+    const html = renderTag({
+      ...base,
+      entradas: [
+        entradaFalsa({ id_archivo: 'a', titulo: 'Zarzuela', tags: ['horno'], tiempo: '~15 min' }),
+        entradaFalsa({ id_archivo: 'b', titulo: 'Abadejo', tags: ['horno'], tiempo: '>60 min' })
+      ],
+      duraciones: [{ valor: '~15 min', cantidad: 1 }, { valor: '>60 min', cantidad: 1 }]
+    });
+    expect(html).toContain('data-accion="filtrar-duracion"');
+    expect(html).toContain('data-accion="ordenar"');
   });
 });

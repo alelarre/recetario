@@ -425,6 +425,51 @@ describe('main.ts: las rutas', () => {
     expect(app.innerHTML).toContain('class="chip act"');
   });
 
+  it('en la categoría, encender duraciones suma y el total baja; cambiar de pantalla lo limpia', async () => {
+    const original = storeFake.buscar;
+    storeFake.buscar = () => [
+      entradaFalsa({ id_archivo: 'f1', titulo: 'Rabas', categoria: 'Carnes', tiempo: '~30 min' }),
+      entradaFalsa({ id_archivo: 'f2', titulo: 'Guiso', categoria: 'Carnes', tiempo: '>60 min' }),
+      entradaFalsa({ id_archivo: 'f3', titulo: 'Asado', categoria: 'Carnes', tiempo: '' })
+    ];
+    try {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/c/Carnes');
+      await tocar('filtrar-duracion', { valor: '~30 min' });
+      expect(app.innerHTML).toContain('Rabas');
+      expect(app.innerHTML).not.toContain('Guiso');
+      expect(app.innerHTML).toContain('<span class="tot">1</span>');
+      await tocar('filtrar-duracion', { valor: '>60 min' });
+      expect(app.innerHTML).toContain('Guiso');
+      expect(app.innerHTML).not.toContain('Asado');
+      await abrir('#/');
+      await abrir('#/c/Carnes');
+      expect(app.innerHTML).toContain('Asado');
+    } finally {
+      storeFake.buscar = original;
+    }
+  });
+
+  it('ordenar por duración reordena la lista y vuelve a A–Z al cambiar de pantalla', async () => {
+    const original = storeFake.buscar;
+    storeFake.buscar = () => [
+      entradaFalsa({ id_archivo: 'f1', titulo: 'Asado', categoria: 'Carnes', tiempo: '>60 min' }),
+      entradaFalsa({ id_archivo: 'f2', titulo: 'Rabas', categoria: 'Carnes', tiempo: '~15 min' })
+    ];
+    try {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/c/Carnes');
+      expect(app.innerHTML.indexOf('Asado')).toBeLessThan(app.innerHTML.indexOf('Rabas'));
+      await tocar('ordenar', { valor: 'duracion' });
+      expect(app.innerHTML.indexOf('Rabas')).toBeLessThan(app.innerHTML.indexOf('Asado'));
+      await abrir('#/');
+      await abrir('#/c/Carnes');
+      expect(app.innerHTML.indexOf('Asado')).toBeLessThan(app.innerHTML.indexOf('Rabas'));
+    } finally {
+      storeFake.buscar = original;
+    }
+  });
+
   it('un link de invitado con la app ya abierta recarga: la vista de invitado se decide al cargar', async () => {
     const { abrir, recargas } = await montar();
     await abrir('#/ver?r=1abc');

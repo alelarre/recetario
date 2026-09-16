@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  tarjeta, placeholder, aviso, encabezado, chipsSueltos, chipTag, iconoDeTag, vacio, tile, carruselTags
+  tarjeta, placeholder, aviso, encabezado, chipsSueltos, chipTag, iconoDeTag, vacio, tile, carruselTags,
+  filaDuraciones, conmutadorOrden
 } from '../src/ui/componentes.js';
 import { entradaFalsa } from './dobles.js';
 import { registrarCategorias } from '../src/ui/categorias.js';
@@ -237,6 +238,32 @@ describe('el carrusel de tags', () => {
     expect(html).not.toContain('data-tag="horno"');
     // Los demás siguen siendo botones que acumulan como siempre.
     expect(html).toContain('data-tag="clásica"');
+  });
+});
+
+describe('la fila de duraciones y el conmutador de orden', () => {
+  it('un chip por valor con su relojito y cantidad; el encendido va activo', () => {
+    const html = filaDuraciones([{ valor: '~15 min', cantidad: 2 }, { valor: '>1 día', cantidad: 1 }], ['>1 día']);
+    expect(html).toContain('data-accion="filtrar-duracion" data-valor="~15 min"');
+    expect(html).toContain(ICO_DUR['~15 min']);
+    expect(html).toContain('<span class="cuenta">2</span>');
+    expect(html).toMatch(/class="chip act" data-accion="filtrar-duracion" data-valor="&gt;1 día"/);
+  });
+
+  it('un valor encendido sin recetas se dibuja igual, para poder apagarlo', () => {
+    expect(filaDuraciones([], ['~30 min'])).toContain('data-valor="~30 min"');
+  });
+
+  it('sin valores ni encendidos, no hay fila', () => {
+    expect(filaDuraciones([], [])).toBe('');
+  });
+
+  it('el conmutador marca el orden elegido', () => {
+    const html = conmutadorOrden('duracion');
+    expect(html).toContain('data-accion="ordenar" data-valor="alfa" aria-pressed="false"');
+    expect(html).toContain('data-accion="ordenar" data-valor="duracion" aria-pressed="true"');
+    expect(html).toContain('A–Z');
+    expect(html).toContain('Duración');
   });
 });
 
