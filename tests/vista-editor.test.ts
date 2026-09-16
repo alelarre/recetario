@@ -53,6 +53,9 @@ describe('renderEditor', () => {
     const html = pillTag('probar');
     expect(html).toContain(ICO.marcador);
     expect(html).toContain('data-accion="tag-quitar"');
+    // No alcanza con que el ícono esté: tiene que ir antes del nombre. Con
+    // `toContain` solo, invertir el orden en `pillTag` no lo detectaría.
+    expect(html).toContain(`valor="probar">${ICO.marcador}probar`);
   });
 
   it('un tag común no lleva ícono', () => {
