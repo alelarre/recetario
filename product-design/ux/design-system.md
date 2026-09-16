@@ -1,9 +1,15 @@
 # Recetario — Design System
 
-**Versión:** 2.3
+**Versión:** 2.4
 **Fecha:** 2026-09-16
 **Estado:** Final — Hito 11
 
+> **Cambios en la 2.4 (2026-09-16):** §3.4 — cinco íconos más, de quince a
+> veinte: los relojitos de la duración (P29), compartidos por el editor, la
+> tarjeta, la receta, la búsqueda, el filtro y el orden. Tres componentes
+> nuevos: los botones de duración del editor (§6.18), la fila de chips de
+> duración (§6.19) y el conmutador de orden (§6.20).
+>
 > **Cambios en la 2.3 (2026-09-16):** el conmutador de completitud (§6.16)
 > queda sin uso: el editor pasa a un botón por tag especial (§6.10b, nuevo),
 > invertido al apretar, la misma convención que ya usaba el conmutador. §6.5
@@ -281,13 +287,23 @@ cocina es el dato principal.
 | `--ico` | 20 px | En toda la app. |
 | `--ico-cocina` | 24 px | Solo en modo cocina. |
 
-**Los íconos son funcionales, nunca decorativos.** Hay quince en la
+**Los íconos son funcionales, nunca decorativos.** Hay veinte en la
 app: volver, buscar, ajustes, borradores, descartar, editar, borrar, mantener la
 pantalla encendida, compartir `[del 2026-09-14]`, la estrella de favorito, el
 marcador de *probar*, el calendario de *menú diario* y el medio círculo de
-*incompleta* —reutilizado de la marca, §6.5— `[del 2026-09-16]`, y las
-dos posiciones del conmutador de cocina —una zanahoria para *Ingredientes* y
-una lista numerada para *Pasos*, al lado de la palabra `[del 2026-09-12]`—.
+*incompleta* —reutilizado de la marca, §6.5— `[del 2026-09-16]`, los **cinco
+relojitos de la duración** —uno por valor, el mismo mapa para el editor
+(§6.18), la tarjeta, la receta, la búsqueda, el filtro (§6.19) y el orden
+(§6.20) `[del 2026-09-16, P29]`—, y las dos posiciones del conmutador de
+cocina —una zanahoria para *Ingredientes* y una lista numerada para *Pasos*,
+al lado de la palabra `[del 2026-09-12]`—.
+
+**Los relojitos:** una esfera con la aguja y el recorrido recién hecho, tenue
+al 30 % de opacidad, en las posiciones de `~15 min`, `~30 min` y `~60 min`;
+`>60 min` es la esfera de `~60 min`, más chica, con un cuarto de aro por
+afuera que termina en flecha; `>1 día` son dos relojes, uno detrás del otro,
+donde el de adelante corta al de atrás con un disco del color del fondo
+—`--fondo-reloj`, que cada lugar donde se dibuja un relojito redefine—.
 
 **Regla dura: ningún ícono va solo si hay lugar para la palabra.** El ícono solo
 se permite donde el espacio no da —el encabezado, donde "Volver" y "Ajustes" no
@@ -386,7 +402,7 @@ Los del Hito 6, con tokens aplicados. Quince: el último salió de mockupear.
 ```
 ┌────────────────────────────────────────┐  --surface, borde 1px --borde
 │ ┌──────┐  Milanesas napolitanas    ★○  │  --r-ficha, padding --e-3
-│ │ foto │  ▪ Carnes · 40 min             │
+│ │ foto │  ▪ Carnes · ◷ ~30 min           │
 │ └──────┘                               │
 └────────────────────────────────────────┘
 ```
@@ -396,6 +412,7 @@ Los del Hito 6, con tokens aplicados. Quince: el último salió de mockupear.
 | Foto o placeholder | 56 × 56 px, `--r-foto` |
 | Título | `--txt-base`, peso 600, `--fg` |
 | Línea de contexto | `--txt-chico`, `--fg-2`, sólo datos |
+| El relojito de la duración `[del 2026-09-16, P29]` | 15 × 15 px, pegado al valor (`.dur`); mismo mapa de íconos que el editor (§6.18) |
 | El cuadrito `▪` de categoría | 8 × 8 px, `--r-chico`, el color de la categoría |
 | Marcas de los especiales, juntas arriba a la derecha `[cambio del 2026-09-16]` | 16 × 16 px cada una, en el orden de los especiales, `--acento`; ver §6.5. La estrella de favorito lleva además un relleno al 35 % |
 | Motivo, en resultados por ingrediente | `--txt-chico`, `--acento` |
@@ -801,6 +818,64 @@ decide. Con `prefers-reduced-motion` el cajón aparece sin transición.
 **A la izquierda, también en teléfono.** Es de donde vienen los cajones en
 Android, y el pulgar que lo abre es el mismo que toca la hamburguesa, que está
 del mismo lado.
+
+### 6.18 Botones de duración, en el editor
+
+`[agregado el 2026-09-16, P29]` Reemplaza al campo «Tiempo» de texto.
+«Rinde» pasa a ocupar la fila entera, y «Duración» va debajo, también a lo
+ancho.
+
+Cinco botones (`.dur-btn`), uno por valor, en una grilla de **tres columnas**
+(`.duraciones`) separadas `--e-2`. Cada uno mide un mínimo de **72 px** de
+alto, con el relojito arriba —24 px, en `--fg`— y el valor abajo, en
+`--txt-chico` peso 600.
+
+| Estado | Fondo | Texto | Borde |
+|---|---|---|---|
+| **Suelto** | `--surface-alta` | `--fg-2` | 1 px `--borde` |
+| **Apretado** | `--fg` | `--bg`, ícono incluido | 1 px `--fg` |
+
+**Se aprieta uno a la vez, y tocar el apretado lo suelta:** la misma
+inversión que el botón de tag especial (§6.10b), no el conmutador de dos
+posiciones (§6.16).
+
+Debajo de la grilla, en `--txt-base` `--fg-2` (`.aviso-mudo`): *"Hasta comer,
+con reposo y horno incluidos."*
+
+### 6.19 Fila de chips de duración
+
+`[agregado el 2026-09-16, P29]` Debajo del carrusel de tags (P27), en la
+categoría y en la lista por tag. Mismo chip que §6.10 —`.fila-dur .chip`—,
+con el relojito (14 px, como cualquier ícono de chip) y la cantidad en
+`--fg-3` a la derecha del valor, en el orden de los cinco valores.
+
+Se desliza como el carrusel de tags: overflow horizontal sin degradé ni
+flechas, con el mismo margen negativo hasta el borde de la pantalla.
+
+Un chip encendido usa la variante `.act` —fondo `--acento-suave`, borde y
+texto `--acento`—, la misma de un tag activo.
+
+**No se dibuja si ninguna receta de la lista tiene duración**, y un valor sin
+recetas no se dibuja salvo que esté encendido, para poder apagarlo.
+
+### 6.20 Conmutador de orden
+
+`[agregado el 2026-09-16, P29]` «A–Z | ◷ Duración» (`.orden-seg`), en una
+fila propia alineada a la derecha (`.orden`), debajo del filtro; en la
+búsqueda, arriba de los grupos y sin fila de filtro.
+
+Dos botones del mismo panel (`--borde` de 1 px alrededor, `--r-medio`,
+separados por un borde de 1 px entre sí): alto mínimo **40 px**, sin fondo ni
+borde propios, texto `--fg-2`; el elegido invierte a fondo `--fg` y texto
+`--bg`. El botón de Duración lleva el relojito de `~30 min` como ícono
+genérico, 16 px.
+
+**No es el conmutador de dos posiciones del §6.16** —que declara un estado
+adentro de una ficha— **ni el de cocina del §6.14** —que ocupa el ancho
+pegado arriba—: es un patrón propio, más chico y dentro de la fila de orden.
+
+Vuelve a A–Z al cambiar de pantalla, y no se dibuja si ninguna receta de la
+lista tiene duración.
 
 ---
 

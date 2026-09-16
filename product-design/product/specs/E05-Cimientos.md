@@ -1,8 +1,15 @@
 # E05 — Cimientos
 
-**Versión:** 3.2 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
+**Versión:** 3.3 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
 **Job:** J8 y transversal · **Prioridad:** alta · **Flujos:** F8, F9, F10, F11, F12
 
+> **Cambios en la 3.3 (2026-09-16):** **C05.1.1** — `tiempo` pasa a ser uno de
+> cinco valores (`~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`); lo que
+> no matchea se lee como sin duración, igual que una `dificultad` inválida. No
+> sube `SCHEMA_VERSION`: la validación es al leer, no en la fila del índice
+> (P29).
+> Spec: `docs/superpowers/specs/2026-09-16-duracion-design.md`.
+>
 > **Cambios en la 3.2 (2026-09-16):** **F05.1 y F05.3 reescritas** — el
 > frontmatter pasa a siete claves: `completa` sale del esquema. La
 > completitud es el tag `incompleta` en la lista `tags` (C05.3.1); el índice
@@ -129,6 +136,7 @@ Es lo que permite J4 sin ensuciar el archivo. Definido en
 - [ ] Una clave ausente se representa como ausente, no como cadena vacía.
 - [ ] Una clave desconocida se conserva sin interpretarse.
 - [ ] `dificultad` fuera de `fácil` · `media` · `difícil` se muestra tal cual y no se corrige.
+- [ ] **`tiempo` es uno de cinco valores** `[cambio del 2026-09-16]`: `~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`. Cuenta el tiempo hasta comer, con reposo y horno incluidos. Cualquier otro texto se lee como sin duración —no se muestra, no filtra y no ordena—, igual que una `dificultad` inválida.
 - [ ] Un archivo sin bloque de frontmatter es válido si el cuerpo permite deducir el título; si no, cae en C05.2.3.
 
 **Edge cases:** frontmatter con YAML inválido → el archivo se trata como sin

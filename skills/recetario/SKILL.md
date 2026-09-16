@@ -62,14 +62,16 @@ siempre.
 | `titulo` | libre |
 | `tags` | lista, vocabulario libre, minúsculas y con tildes. Hay palabras prohibidas: ver abajo |
 | `rinde` | texto libre: `4 porciones`, `1 tarta de 24 cm`, `12 medialunas` |
-| `tiempo` | texto corto y parejo: `40 min`, `1 h 15`, `3 h` |
+| `tiempo` | uno de estos cinco, tal cual: `~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`. Cuenta el tiempo hasta comer, con reposo y horno. Si la fuente no lo dice, no lo pongas. |
 | `dificultad` | exactamente `fácil`, `media` o `difícil` |
 | `fuente` | de dónde salió |
 | `foto` | la URL de una foto del plato, sólo `http:` o `https:` externa |
 | `completa` | exactamente `sí` o `no`. **Siempre presente** |
 
 Un campo que la fuente no dice, se omite —salvo `completa`—. No infieras la
-dificultad ni calcules el tiempo sumando pasos.
+dificultad ni calcules el tiempo sumando pasos. El tiempo activo, si importa
+aparte del total, va en `## Notas`: `tiempo` es uno de los cinco valores y
+nada más.
 
 **`completa`** dice si la receta está terminada, y **lo decide el usuario, no
 vos**:
@@ -98,7 +100,7 @@ En este orden. Ninguna sección es obligatoria.
 titulo: Milanesas napolitanas
 tags: [horno, rápido]
 rinde: 4 porciones
-tiempo: 40 min
+tiempo: ~30 min
 dificultad: fácil
 fuente: Cuaderno de mamá, p. 12
 completa: no
@@ -340,7 +342,7 @@ Además:
 | Escribir la fila en `_indice` a mano | Una fila mal armada rompe la búsqueda. Mientras el skill no la escriba con la misma función que la app, se reindexa. |
 | Estimar una temperatura o un tiempo que la fuente no dice | La receta falla la primera vez que alguien la cocina. |
 | Escribir tags sin tilde (`clasica`) | `clasica` y `clásica` quedan como dos tags distintos. |
-| Usar formatos de `tiempo` distintos en cada receta | No se ordenan juntos. El tiempo activo va en una nota. |
+| Escribir `tiempo` con otro formato que los cinco valores | La app lo lee como sin duración: no aparece, no filtra y no ordena. |
 | Agregar claves nuevas al frontmatter | Se preservan pero ninguna app las lee. Lo que no entra en las ocho claves va al cuerpo. |
 | Copiar los datos nutricionales de la fuente | El recetario no los guarda, ni en el frontmatter ni como nota. Si la fuente los trae, se descartan. |
 | Subir el archivo como documento de Google | Deja de ser un `.md` legible y editable por fuera. |

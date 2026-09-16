@@ -1,8 +1,15 @@
 # E02 — Encontrar
 
-**Versión:** 3.2 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
+**Versión:** 3.3 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
 **Jobs:** J1, J4, J5 · **Prioridad:** alta · **Flujos:** F3, F4, F5
 
+> **Cambios en la 3.3 (2026-09-16):** **F02.9 nueva** — la categoría y la
+> lista por tag suman una fila de chips para filtrar por duración, debajo del
+> carrusel de tags (C02.9.1); la categoría, la lista por tag y la búsqueda
+> suman el conmutador «A–Z | Duración» (C02.9.2), en la búsqueda arriba de
+> los grupos. Spec: `docs/superpowers/specs/2026-09-16-duracion-design.md`
+> (P29).
+>
 > **Cambios en la 3.2 (2026-09-16):** C02.6.4 — los tags ganan dónde tocarse
 > fuera de la receta: un carrusel en el Recetario y en cada categoría, y una
 > lista por tag (`#/t/<tag>`). Sigue sin haber nube de tags ni sección en la
@@ -238,6 +245,38 @@ resuelve mostrando, no registrando.
 `[abierto]` Sugerir es una forma posible de servir a J5, como ayuda secundaria.
 Si alguna vez entra, va entre la búsqueda y las categorías, nunca arriba.
 
+### F02.9 — Filtrar y ordenar por duración
+
+`[nueva el 2026-09-16, P29]`
+
+La duración (`tiempo`, `E05-Cimientos.md` C05.1.1) sirve para recorrer una
+lista, no para buscar: el filtro es sólo de la categoría y la lista por tag;
+el orden suma la búsqueda.
+
+#### C02.9.1 — El filtro por duración *(J5)*
+
+- [ ] Sólo en la categoría y en la lista por tag. No hay filtro por duración en la búsqueda ni en el Recetario.
+- [ ] Una fila de chips de duración, debajo del carrusel de tags (C02.6.4): cada chip lleva el relojito, el valor y cuántas recetas hay con ese valor, en el orden de los cinco valores.
+- [ ] La fila se desliza cuando no entra, como el carrusel, sin degradé ni flechas.
+- [ ] **Encender varios chips los suma.** Con tags encendidos, una receta tiene que llevar esos tags **y** alguna de las duraciones encendidas.
+- [ ] Las cantidades cuentan sobre la lista ya filtrada por tags.
+- [ ] Un valor sin recetas no se dibuja, salvo que esté encendido.
+- [ ] **Si ninguna receta de la lista tiene duración, la fila no se dibuja.**
+- [ ] El filtro se pierde al cambiar de pantalla, como el de tags (C02.6.2).
+- [ ] El total del encabezado cuenta la lista filtrada, como con los tags.
+- [ ] Filtrar hasta cero resultados muestra el vacío de siempre: *"Probá sacando alguno de los filtros de arriba."*
+
+#### C02.9.2 — El orden por duración *(J1, J5)*
+
+- [ ] Un conmutador «A–Z | Duración», en una fila propia alineada a la derecha, debajo del filtro, en la categoría y en la lista por tag.
+- [ ] **En la búsqueda va arriba de los grupos**, sin fila de filtro (C02.3.2).
+- [ ] **A–Z**, como hoy: las favoritas primero y alfabético dentro de cada bloque.
+- [ ] **Duración:** de `~15 min` a `>1 día`, con las favoritas mezcladas y alfabético dentro de cada valor; las recetas sin duración van al final, en alfabético.
+- [ ] La lista va seguida, sin rótulos por valor.
+- [ ] En la búsqueda, el orden se aplica dentro de cada grupo —Por nombre, Por ingrediente, Por tag—, sin mezclarlos.
+- [ ] Vuelve a A–Z al cambiar de pantalla.
+- [ ] **Si ninguna receta de la lista tiene duración, la fila no se dibuja.**
+
 ---
 
 ## Trazabilidad
@@ -248,7 +287,7 @@ Si alguna vez entra, va entre la búsqueda y las categorías, nunca arriba.
 | C02.3.1, C02.3.2, C02.3.4, C02.3.5, C02.5b.1, C02.5b.2, C02.7.1 | J1, J4 o J1, J5 |
 | C02.3.3, C02.6.1 | J4 |
 | C02.1.1, C02.1.2 | J1, J5 |
-| C02.4.1, C02.5.1, C02.5.2, C02.5.3, C02.6.4, C02.8.1 | J5 |
-| C02.6.2, C02.6.3 | J4, J5 |
+| C02.4.1, C02.5.1, C02.5.2, C02.5.3, C02.6.4, C02.8.1, C02.9.1 | J5 |
+| C02.6.2, C02.6.3, C02.9.2 | J4, J5 o J1, J5 |
 
 Ninguna capacidad de esta épica quedó sin job.

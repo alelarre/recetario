@@ -1,8 +1,14 @@
 # E04 — Corregir
 
-**Versión:** 3.2 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
+**Versión:** 3.3 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
 **Job:** J7 · **Prioridad:** baja · **Flujo:** F7
 
+> **Cambios en la 3.3 (2026-09-16):** **C04.2.1c nueva** — el campo «Tiempo»
+> de texto pasa a «Duración», con cinco botones de relojito, uno por valor;
+> «Rinde» pasa a ocupar la fila entera. **C04.2.1** — `tiempo` sale de los
+> campos de texto libre. Spec:
+> `docs/superpowers/specs/2026-09-16-duracion-design.md` (P29).
+>
 > **Cambios en la 3.2 (2026-09-16):** **F04.4 y C04.4.1 reescritas** — el
 > conmutador *Incompleta* | *Terminada* y la fila «Estado» de la ficha de
 > datos salen; el control pasa a ser un botón por tag especial dentro de
@@ -62,17 +68,17 @@ error.
 
 ### F04.2 — Un formulario de campos separados
 
-Título, categoría, tags, rinde, tiempo, dificultad, fuente y foto, cada uno con
-su control. **El frontmatter YAML no se ve:** es estructura, no contenido, y el
-archivo se arma solo al guardar.
+Título, categoría, tags, rinde, duración, dificultad, fuente y foto, cada uno
+con su control. **El frontmatter YAML no se ve:** es estructura, no contenido,
+y el archivo se arma solo al guardar.
 
 #### C04.2.1 — Los campos del frontmatter *(J7)*
 
-- [ ] Un control por clave: título (texto), tags (lista editable), rinde, tiempo, fuente y foto (texto), dificultad (elección de tres).
+- [ ] Un control por clave: título (texto), tags (lista editable), rinde, fuente y foto (texto), dificultad (elección de tres), `tiempo` con los cinco botones de duración (C04.2.1c).
 - [ ] **El YAML no se muestra en ningún momento.**
 - [ ] Solo el título es obligatorio.
 - [ ] Un campo que se deja vacío **no se escribe** en el frontmatter: no quedan claves vacías.
-- [ ] `rinde` y `tiempo` son texto libre, no números: *"4 porciones"*, *"40 min"*.
+- [ ] `rinde` es texto libre, no un número: *"4 porciones"*.
 
 #### C04.2.1b — Los tags, y las palabras que la app se reserva *(J7)*
 
@@ -86,6 +92,16 @@ su botón (C04.4.1) y no se escriben a mano]`
 - [ ] Al intentar agregar una reservada, el tag **no entra** y aparece una línea de aviso sin acción (C05.9.1): no es un error del usuario, es un nombre tomado.
 - [ ] La comparación ignora mayúsculas y acentos, igual que la búsqueda.
 - [ ] **La app no borra ni corrige** una palabra reservada que ya esté en un `.md` escrito afuera: la muestra como cualquier otro tag (R4).
+
+#### C04.2.1c — El campo «Duración» *(J7)*
+
+`[agregada el 2026-09-16, P29]`
+
+- [ ] El campo «Tiempo» de texto pasa a **«Duración»**: cinco botones con relojito, uno por valor, en una grilla de tres columnas (`design-system.md` §6.18). **«Rinde» pasa a ocupar la fila entera**, y «Duración» va debajo, también a lo ancho.
+- [ ] **Se aprieta uno a la vez.** Tocar el apretado lo suelta: la receta queda sin duración. Apretado se dibuja invertido, como los botones de los tags especiales (C04.4.1).
+- [ ] Debajo de la grilla, en chico: *"Hasta comer, con reposo y horno incluidos."*
+- [ ] **Un valor inválido en el archivo** abre el editor sin ningún botón apretado.
+- [ ] El valor viaja en un campo oculto `tiempo`, que es lo que lee el formulario, y entra en la foto de «cambios sin guardar» como cualquier campo (C04.1.1).
 
 #### C04.2.2 — El título no renombra el archivo *(J7)*
 
@@ -236,7 +252,7 @@ ofrece deshacer: la papelera de Drive es la red de seguridad, y es del usuario.
 
 | Capacidad | Job |
 |---|---|
-| C04.1.1, C04.2.1, C04.2.1b, C04.2.2, C04.2.3, C04.3.1, C04.3b.1, C04.4.1, C04.5.1, C04.5.2, C04.6.1 | J7 |
+| C04.1.1, C04.2.1, C04.2.1b, C04.2.1c, C04.2.2, C04.2.3, C04.3.1, C04.3b.1, C04.4.1, C04.5.1, C04.5.2, C04.6.1 | J7 |
 | C04.3.2 | J4, J7 |
 | C04.3.3 | J7, J8 |
 | C04.3c.1 | J8 |

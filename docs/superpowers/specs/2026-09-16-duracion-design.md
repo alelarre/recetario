@@ -1,7 +1,7 @@
 # La duración — diseño
 
 **Fecha:** 2026-09-16
-**Estado:** Aprobado en conversación; pendiente de revisión escrita.
+**Estado:** Implementado.
 **Resuelve:** `product-design/plan/BACKLOG.md` P29 — la duración como campo estructurado.
 **Reabre:** «Ordenar dentro de una categoría» y «Un control de filtro visible sobre las
 listas» de `BACKLOG.md` §2, sólo para la duración.

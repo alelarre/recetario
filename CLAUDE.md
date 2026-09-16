@@ -92,15 +92,27 @@ pasa a 6: la próxima apertura reindexa sola. Spec en
 `docs/superpowers/plans/2026-09-16-tags-especiales-2.md`. Queda probarla en
 el teléfono.
 
+**Hecho el 2026-09-16 — la duración (P29):** `tiempo` deja de ser texto libre
+y pasa a ser uno de cinco valores —`~15 min`, `~30 min`, `~60 min`, `>60 min`,
+`>1 día`—, cada uno con su relojito. Se carga en el editor con cinco botones
+—«Rinde» pasa a ocupar la fila entera y «Duración» va debajo—; se ve en la
+tarjeta, la receta y la búsqueda; y se filtra y ordena en la categoría y en la
+lista por tag, con orden también en la búsqueda (dentro de cada grupo). Un
+valor que no sea uno de los cinco se lee como sin duración, igual que una
+`dificultad` inválida: no sube `SCHEMA_VERSION`. Spec en
+`docs/superpowers/specs/2026-09-16-duracion-design.md`, plan en
+`docs/superpowers/plans/2026-09-16-duracion.md`. Queda probarla en el
+teléfono (spec §11).
+
 **Para retomar:** queda probar **tags especiales (P27)** en el teléfono —dos
 checklists: `tags-especiales-design.md` §11 y `tags-especiales-2-design.md`
-§10—. Lo siguiente del backlog, después, es la
-**etapa 3b de P19** (imágenes propias de categorías en Drive, guardadas en
-Cache Storage, y que *Borrar datos locales* también las borre), **P26**
-(rediseñar el selector de carpetas: primero entender qué no convence) y
-**P28** (un agente embebido que convierta un borrador en receta). Las features
-grandes se trabajan con spec y plan en `docs/superpowers/`, y el código no se
-commitea hasta que el usuario revisa el diff.
+§10— y **la duración (P29)** —`duracion-design.md` §11—. Lo siguiente del
+backlog, después, es la **etapa 3b de P19** (imágenes propias de categorías
+en Drive, guardadas en Cache Storage, y que *Borrar datos locales* también las
+borre), **P26** (rediseñar el selector de carpetas: primero entender qué no
+convence) y **P28** (un agente embebido que convierta un borrador en receta).
+Las features grandes se trabajan con spec y plan en `docs/superpowers/`, y el
+código no se commitea hasta que el usuario revisa el diff.
 
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
 - El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
@@ -276,7 +288,7 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | Derivar el color de categoría de un hash del nombre | Medido: con 16 categorías siempre agrupa. `Pescados y mariscos` y `Ensaladas` caían en el mismo matiz exacto. La paleta es una lista escrita a mano: quince colores a 18° entre sí y a una distancia percibida de al menos 12 del acento, más el neutro de `Otros` (design-system §2.3), y vive en `src/ui/tokens.css` como tokens `--cat-*`. Desde el 2026-09-13 el color es una propiedad de la carpeta; la tabla de predefinidas está en `src/categorias.ts`. |
 | Identificar las categorías por una abreviación de 3 letras | Hay que aprenderlas. La foto se reconoce sin memorizar nada, y el nombre completo está escrito al lado igual. |
 | Las fotos de categoría en `public/` o en Drive | `sw.js` sirve caché-primero solo `/assets/`; en `public/` serían 16 pedidos de red por apertura. Desde Drive haría falta el token y un object URL, que es lo que hizo descartar las fotos de receta. Van en `src/categorias/`, importadas con `import.meta.glob`. |
-| Ordenar el home por cantidad de recetas | Reacomoda la grilla cada vez que entra una receta, y la posición de la categoría es justo lo que se aprende. Alfabético. El **número** sí se muestra: un badge en la esquina del tile, y sólo si la categoría tiene algo (2026-09-11, elegido sobre ponerlo en la banda del nombre). **La excepción, desde el 2026-09-16:** no en el home —sigue alfabético—, sino en las listas de recetas, donde las favoritas van primero y alfabético dentro de cada bloque (P27). |
+| Ordenar el home por cantidad de recetas | Reacomoda la grilla cada vez que entra una receta, y la posición de la categoría es justo lo que se aprende. Alfabético. El **número** sí se muestra: un badge en la esquina del tile, y sólo si la categoría tiene algo (2026-09-11, elegido sobre ponerlo en la banda del nombre). **La excepción, desde el 2026-09-16:** no en el home —sigue alfabético—, sino en las listas de recetas, donde las favoritas van primero y alfabético dentro de cada bloque (P27), y donde la categoría, la lista por tag y la búsqueda además pueden ordenarse por duración (P29). |
 | Una paleta clara, o `prefers-color-scheme` | La app se abre en la cocina, de noche. Un solo tema oscuro es un solo juego de tokens, y deja que las fotos sean lo único con color. |
 | `drive.file` como scope, y el Google Picker | Medido el 2026-09-01: es estrictamente por archivo. Con `Recetario/` elegida en el Picker, la app no veía ninguna de las 16 subcarpetas ni un solo `.md` ajeno — y los `.md` los escriben agentes por fuera. |
 | Detectar y reparar la planilla del índice corrupta o incompleta | Decidido el 2026-09-03. Siempre que el índice esté corrupto o incompleto, la recuperación es borrar el archivo `_indice` en Drive y dejar que la app lo cree de nuevo (`store.ts` llama a `crearPlanilla()` y reconstruye solo); el rediseño agregó el camino a mano: **Ajustes → Reindexar**. Diagnosticar cada tipo de daño posible para repararlo in situ es más trabajo y más riesgo que recrear desde los `.md`, que son la fuente de verdad. |
@@ -300,9 +312,9 @@ el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
 
-**Estado al 2026-09-16:** resueltos P1 a P13, P16 a P18, P20 a P25 y P27 —P23
-probado en el teléfono, P27 todavía no—; P15 cerrado (lo resolvió P19 desde la
-app); §6.4 y §6.5 cerradas. Quedan abiertos:
+**Estado al 2026-09-16:** resueltos P1 a P13, P16 a P18, P20 a P25, P27 y P29
+—P23 probado en el teléfono; P27 y P29 todavía no—; P15 cerrado (lo resolvió
+P19 desde la app); §6.4 y §6.5 cerradas. Quedan abiertos:
 
 - **P14** —rehacer el skill del agente—. El conector de Google Drive de claude.ai
   no escribe planillas ni reescribe el contenido de un archivo (medido el
@@ -314,7 +326,6 @@ app); §6.4 y §6.5 cerradas. Quedan abiertos:
   2026-09-13.
 - **P26** —rediseñar el selector de carpetas—: no convence el actual; primero propuestas.
 - **P28** —un agente embebido que convierta un borrador en receta—: era la decisión abierta del §1 del backlog; sin definir cómo se llama al modelo sin backend.
-- **P29** —la duración como campo estructurado—: habilita filtrar y ordenar por tiempo.
 
 Y queda el contenido.
 
