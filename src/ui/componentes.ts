@@ -88,7 +88,7 @@ export function tarjeta(e: Entrada, { motivo }: OpcionesTarjeta = {}): string {
   const puestas = TAGS_ESPECIALES.filter(t => tieneEspecial(e, t));
   const marcas = puestas.length
     ? '<span class="marcas-esq">' + puestas.map(t =>
-        `<span class="marca${t === 'favorito' ? ' fav' : ''}" role="img" aria-label="${NOMBRE_DE_MARCA[t]}">` +
+        `<span class="marca${t === 'favorito' ? ' favorita' : ''}" role="img" aria-label="${NOMBRE_DE_MARCA[t]}">` +
         `${iconoDeTag(t)}</span>`).join('') +
       '</span>'
     : '';

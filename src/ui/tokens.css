@@ -162,7 +162,7 @@ body {
 .marca { display: grid; place-items: center; width: 16px; height: 16px; color: var(--acento); }
 .marca svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5;
              stroke-linecap: round; stroke-linejoin: round; }
-.marca.fav svg { fill: color-mix(in srgb, var(--acento) 35%, transparent); }
+.marca.favorita svg { fill: color-mix(in srgb, var(--acento) 35%, transparent); }
 
 /* ---- §6.2 Placeholder / foto de tarjeta ---- */
 .foto { width: 56px; height: 56px; flex: 0 0 56px; border-radius: var(--r-foto);

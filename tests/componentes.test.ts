@@ -84,7 +84,7 @@ describe('las marcas de la tarjeta', () => {
 
   it('la marca de favorito lleva su propia clase, para el relleno de tokens.css', () => {
     const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['favorito', 'incompleta'] }));
-    expect(html).toContain('<span class="marca fav" role="img" aria-label="Favorita">');
+    expect(html).toContain('<span class="marca favorita" role="img" aria-label="Favorita">');
     expect(html).toContain('<span class="marca" role="img" aria-label="Incompleta">');
   });
 });
