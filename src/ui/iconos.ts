@@ -36,5 +36,10 @@ export const ICO = {
   /** Los dos destinos del menú lateral que no tenían ícono propio. */
   casa: svg('<path d="M4 11l8-6 8 6v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-8z"/>'),
   bandeja: svg('<path d="M4 13l2.5-7h11L20 13v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5z"/>' +
-    '<path d="M4 13h5l1 2h4l1-2h5"/>')
+    '<path d="M4 13h5l1 2h4l1-2h5"/>'),
+  /** Los dos tags especiales que no son favorito: «probar» y «menú diario». */
+  marcador: svg('<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>'),
+  calendario: svg('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
+  /** Favorito: la misma estrella en la receta, en la tarjeta y en el carrusel. */
+  estrella: svg('<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/>')
 } as const satisfies Record<string, string>;

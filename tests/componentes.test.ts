@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { tarjeta, placeholder, aviso, encabezado, chips, vacio, tile } from '../src/ui/componentes.js';
+import { tarjeta, placeholder, aviso, encabezado, chips, chipTag, iconoDeTag, vacio, tile } from '../src/ui/componentes.js';
 import { entradaFalsa } from './dobles.js';
 import { registrarCategorias } from '../src/ui/categorias.js';
+import { ICO } from '../src/ui/iconos.js';
 
 describe('tarjeta', () => {
   it('lleva foto, título y la línea de contexto con categoría y tiempo', () => {
@@ -92,6 +93,37 @@ describe('chips', () => {
     const html = chips(['horno', 'rápido'], ['horno']);
     expect(html).toContain('class="chip act"');
     expect(html).toContain('data-tag="horno"');
+  });
+});
+
+describe('los chips de tags', () => {
+  it('cada especial tiene su ícono y los comunes no llevan ninguno', () => {
+    expect(iconoDeTag('favorito')).toBe(ICO.estrella);
+    expect(iconoDeTag('probar')).toBe(ICO.marcador);
+    expect(iconoDeTag('menú diario')).toBe(ICO.calendario);
+    expect(iconoDeTag('horno')).toBe('');
+  });
+
+  it('el chip lleva el ícono adelante del nombre', () => {
+    expect(chipTag('probar')).toContain(`${ICO.marcador}probar`);
+  });
+
+  it('el chip puede llevar su cantidad', () => {
+    expect(chipTag('horno', { cantidad: 4 })).toContain('<span class="cuenta">4</span>');
+  });
+
+  it('el activo se marca', () => {
+    expect(chipTag('horno', { activo: true })).toContain('class="chip act"');
+  });
+
+  it('la fila de tags de una receta pone los especiales primero', () => {
+    const html = chips(['horno', 'menú diario', 'favorito']);
+    expect(html.indexOf('favorito')).toBeLessThan(html.indexOf('menú diario'));
+    expect(html.indexOf('menú diario')).toBeLessThan(html.indexOf('horno'));
+  });
+
+  it('escapa lo que viene del archivo', () => {
+    expect(chipTag('<b>x</b>')).toContain('&lt;b&gt;x&lt;/b&gt;');
   });
 });
 

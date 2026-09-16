@@ -10,6 +10,7 @@ import { escapar } from './markdown.js';
 import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
 import { ICO } from './iconos.js';
 import { textoVersion } from '../version.js';
+import { tagEspecial, ordenarTags } from '../catalogo.js';
 import type { Entrada } from '../tipos.js';
 
 /** §5.1 — el spinner del final de la lista y de las esperas. */
@@ -98,13 +99,43 @@ export function aviso({ texto, accion }: OpcionesAviso): string {
   return `<div class="aviso"><p>${escapar(texto)}</p>${boton}</div>`;
 }
 
-/** §6.10 — Los tags como chips; los activos marcados con el acento. */
+/** El ícono del tag especial, o nada si es un tag común. */
+export function iconoDeTag(tag: string): string {
+  const esp = tagEspecial(tag);
+  if (esp === 'favorito') return ICO.estrella;
+  if (esp === 'probar') return ICO.marcador;
+  if (esp === 'menú diario') return ICO.calendario;
+  return '';
+}
+
+export interface OpcionesChip {
+  activo?: boolean;
+  /** Cuántas recetas lo llevan. Sin número, no se dibuja. */
+  cantidad?: number;
+  /** La acción del click. Por defecto el filtro por tag, que `main` ya escucha. */
+  accion?: string;
+}
+
+/** §6.10 — Un tag como chip: con su ícono si es especial, y con su número si lo trae. */
+export function chipTag(tag: string, { activo, cantidad, accion }: OpcionesChip = {}): string {
+  const cuenta = cantidad === undefined ? '' : `<span class="cuenta">${cantidad}</span>`;
+  const attr = accion ? ` data-accion="${escapar(accion)}"` : '';
+  return `<button class="chip${activo ? ' act' : ''}"${attr} data-tag="${escapar(tag)}">` +
+    `${iconoDeTag(tag)}${escapar(tag)}${cuenta}</button>`;
+}
+
+/**
+ * Los chips sueltos, sin el contenedor: los usa la receta, que arma su fila
+ * poniendo la marca de incompleta antes que los tags.
+ */
+export function chipsSueltos(tags: string[], activos: string[] = []): string {
+  return ordenarTags(Array.isArray(tags) ? tags : [])
+    .map(tag => chipTag(tag, { activo: activos.includes(tag) })).join('');
+}
+
+/** §6.10 — Los tags como chips; los activos marcados con el acento, los especiales primero. */
 export function chips(tags: string[], activos: string[] = []): string {
-  const lista = (Array.isArray(tags) ? tags : []).map(tag => {
-    const clase = activos.includes(tag) ? 'chip act' : 'chip';
-    return `<button class="${clase}" data-tag="${escapar(tag)}">${escapar(tag)}</button>`;
-  }).join('');
-  return `<div class="chips">${lista}</div>`;
+  return `<div class="chips">${chipsSueltos(tags, activos)}</div>`;
 }
 
 /** Una frase y nada más: sin ilustración y sin sugerencias (mockup 05). */
