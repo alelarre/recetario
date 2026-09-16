@@ -6,11 +6,9 @@
  */
 import { DURACIONES, DIFICULTADES, TAGS_RESERVADOS } from './catalogo.js';
 import { parse } from './recipe.js';
-import type { Receta } from './tipos.js';
+import type { Receta, Borrador } from './tipos.js';
 
-export interface BorradorAConvertir { id: string; titulo: string; fuente: string; nota: string }
-
-export function pedidoDeConversion({ id, titulo, fuente, nota }: BorradorAConvertir): string {
+export function pedidoDeConversion({ id, titulo, fuente, nota }: Pick<Borrador, 'id' | 'titulo' | 'fuente' | 'nota'>): string {
   const lista = (xs: readonly string[]): string => xs.map(x => `\`${x}\``).join(', ');
   return [
     'Convertí este borrador en una receta para mi Recetario. Leé la fuente y escribí la receta en el formato de abajo.',
