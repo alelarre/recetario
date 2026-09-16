@@ -10,8 +10,9 @@ import { escapar } from './markdown.js';
 import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
 import { ICO } from './iconos.js';
 import { textoVersion } from '../version.js';
-import { tagEspecial, ordenarTags, esFavorita, esIncompleta, TAGS_ESPECIALES } from '../catalogo.js';
+import { tagEspecial, ordenarTags, TAGS_ESPECIALES } from '../catalogo.js';
 import type { Entrada } from '../tipos.js';
+import type { TagEspecial } from '../catalogo.js';
 
 /** §5.1 — el spinner del final de la lista y de las esperas. */
 export const SPINNER = '<div class="spin"></div>';
@@ -70,26 +71,33 @@ export interface OpcionesTarjeta {
   motivo?: string;
 }
 
+/** Cómo dice cada marca lo que es, para quien no la ve. */
+const NOMBRE_DE_MARCA: Record<TagEspecial, string> = {
+  favorito: 'Favorita', 'menú diario': 'Menú diario', probar: 'Para probar', incompleta: 'Incompleta'
+};
+
 /** §6.1 — Foto, título y una línea de contexto. Alto total 80 px. */
 export function tarjeta(e: Entrada, { motivo }: OpcionesTarjeta = {}): string {
   const contexto = motivo
     ? `<span class="motivo">${escapar(motivo)}</span>`
     : `<span class="pin" style="background:${colorCategoria(e.categoria)}"></span>` +
       escapar([e.categoria, e.tiempo, e.rinde].filter(Boolean).join(' · '));
-  // La misma marca que la receta y el editor (§6.5). Acá no lleva texto al lado,
-  // así que lo dice por su cuenta para quien no la ve. `incompleta` es el tag,
-  // no un dato del `.md`.
-  const marca = esIncompleta(e) ? '<span class="inc" role="img" aria-label="Incompleta"></span>' : '';
-  // La estrella va afuera de .txt: es una marca de la tarjeta entera, no del
-  // renglón de contexto (P27).
-  const favorita = esFavorita(e)
-    ? `<span class="fav-esq" role="img" aria-label="Favorita">${ICO.estrella}</span>` : '';
-  return `<a class="tarjeta" href="#/r/${encodeURIComponent(e.id_archivo)}">` +
+  // Las marcas de los especiales, juntas en la esquina y en su orden (P27): la
+  // línea de contexto queda sólo con datos. `--marcas` reserva el ancho que
+  // ocupan, para que el título no pase por debajo.
+  const puestas = TAGS_ESPECIALES.filter(t => e.tags.some(x => tagEspecial(x) === t));
+  const marcas = puestas.length
+    ? '<span class="marcas-esq">' + puestas.map(t =>
+        `<span class="marca" role="img" aria-label="${NOMBRE_DE_MARCA[t]}">${iconoDeTag(t)}</span>`).join('') +
+      '</span>'
+    : '';
+  return `<a class="tarjeta" href="#/r/${encodeURIComponent(e.id_archivo)}"` +
+    `${puestas.length ? ` style="--marcas:${puestas.length}"` : ''}>` +
     placeholder(e.categoria, e.foto) +
     '<span class="txt">' +
       `<span class="n">${escapar(e.titulo)}</span>` +
-      `<span class="ctx">${contexto}${marca}</span>` +
-    '</span>' + favorita + '</a>';
+      `<span class="ctx">${contexto}</span>` +
+    '</span>' + marcas + '</a>';
 }
 
 export interface OpcionesAviso {

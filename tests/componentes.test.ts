@@ -62,15 +62,24 @@ describe('tarjeta', () => {
   });
 });
 
-describe('la marca de favorito en la tarjeta', () => {
-  it('una favorita lleva la estrella en la esquina', () => {
-    const html = tarjeta(entradaFalsa({ titulo: 'Asado', tags: ['favorito'] }));
-    expect(html).toContain('class="fav-esq"');
-    expect(html).toContain('aria-label="Favorita"');
+describe('las marcas de la tarjeta', () => {
+  it('van juntas arriba a la derecha, en el orden de los especiales', () => {
+    const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['incompleta', 'horno', 'favorito', 'probar'] }));
+    const esq = html.slice(html.indexOf('class="marcas-esq"'));
+    const orden = ['Favorita', 'Para probar', 'Incompleta'].map(n => esq.indexOf(`aria-label="${n}"`));
+    expect(orden.every(i => i > 0)).toBe(true);
+    expect(orden).toEqual([...orden].sort((a, b) => a - b));
+    expect(html).toContain('style="--marcas:3"');
   });
 
-  it('las demás no llevan nada', () => {
-    expect(tarjeta(entradaFalsa({ titulo: 'Asado', tags: ['horno'] }))).not.toContain('fav-esq');
+  it('la línea de contexto no lleva ninguna marca', () => {
+    const html = tarjeta(entradaFalsa({ titulo: 'Pan', categoria: 'Panes', tags: ['incompleta'] }));
+    const ctx = html.slice(html.indexOf('class="ctx"'), html.indexOf('</span></span>'));
+    expect(ctx).not.toContain('class="inc"');
+  });
+
+  it('sin especiales no hay esquina', () => {
+    expect(tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['horno'] }))).not.toContain('marcas-esq');
   });
 });
 

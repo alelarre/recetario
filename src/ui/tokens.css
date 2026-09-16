@@ -150,15 +150,19 @@ body {
               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tarjeta .ctx { font-size: var(--txt-chico); color: var(--fg-2); margin-top: var(--e-1);
                 display: flex; align-items: center; gap: var(--e-2); }
-/* §6.1 — La estrella de favorito, en la esquina de la tarjeta (P27). La
-   reserva de espacio va en el texto: sin ella, un título largo pasa por debajo. */
 .tarjeta { position: relative; }
-.tarjeta:has(.fav-esq) .txt { padding-right: 22px; }
-.fav-esq { position: absolute; top: 6px; right: 8px; line-height: 0; }
-.fav-esq svg { width: 18px; height: 18px; stroke: var(--acento); stroke-width: 1.5;
-               stroke-linejoin: round; fill: color-mix(in srgb, var(--acento) 35%, transparent); }
 .tarjeta .motivo { color: var(--acento); }
 .pin { width: 8px; height: 8px; border-radius: var(--r-chico); flex: 0 0 8px; background: var(--cat-otros); }
+
+/* §6.1 — Las marcas de los tags especiales, juntas en la esquina de la tarjeta
+   (P27). `--marcas` es cuántas hay: la reserva de ancho del título crece con
+   ellas, y una tarjeta sin marcas no pierde nada. */
+.tarjeta .txt { padding-right: calc(var(--marcas, 0) * 20px); }
+.marcas-esq { position: absolute; top: 6px; right: 8px; display: flex; gap: 4px; line-height: 0; }
+.marca { display: grid; place-items: center; width: 16px; height: 16px; color: var(--acento); }
+.marca svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5;
+             stroke-linecap: round; stroke-linejoin: round; }
+.marca[aria-label="Favorita"] svg { fill: color-mix(in srgb, var(--acento) 35%, transparent); }
 
 /* ---- §6.2 Placeholder / foto de tarjeta ---- */
 .foto { width: 56px; height: 56px; flex: 0 0 56px; border-radius: var(--r-foto);
