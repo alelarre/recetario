@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { renderEditor, recetaDesdeFormulario, formularioDesde, pillTag } from '../src/ui/editor.js';
-import { ICO } from '../src/ui/iconos.js';
+import { ICO, ICONO_DE_DURACION } from '../src/ui/iconos.js';
+import { escapar } from '../src/ui/markdown.js';
 import { parse, serialize } from '../src/recipe.js';
+import { DURACIONES } from '../src/catalogo.js';
 import { entradaFalsa } from './dobles.js';
 import type { Categoria } from '../src/store.js';
 
@@ -87,13 +89,34 @@ describe('renderEditor', () => {
     expect(html.match(/name="tags"/g)).toHaveLength(1);
   });
 
-  it('rinde y tiempo no sugieren un valor: son texto libre', () => {
-    // El value sí sale del .md; lo que no va es un ejemplo puesto por la app,
-    // que se lee como si fuera el formato esperado.
-    const html = dibujar();
-    expect(html).toContain('<input name="rinde" value="4 porciones">');
-    expect(html).toContain('<input name="tiempo" value="">');
-    expect(html).not.toContain('40 min');
+  it('rinde sigue siendo texto libre, a lo ancho', () => {
+    const html = renderEditor({ entrada: null, receta: parse('---\ntitulo: A\n---\n'), categorias });
+    expect(html).toContain('<input name="rinde" value="">');
+    expect(html).not.toContain('<input name="tiempo"');
+  });
+
+  it('la duración son cinco botones con su relojito, y el cargado va apretado', () => {
+    const html = renderEditor({ entrada: null, receta: parse('---\ntitulo: A\ntiempo: ~60 min\n---\n'), categorias });
+    for (const d of DURACIONES) expect(html).toContain(`data-accion="elegir-duracion" data-valor="${escapar(d)}"`);
+    expect(html).toContain(`data-valor="~60 min" aria-pressed="true"`);
+    expect(html.match(/aria-pressed="true"/g)?.length).toBeGreaterThanOrEqual(1);
+    expect(html).toContain(ICONO_DE_DURACION['~15 min']);
+    expect(html).toContain('<input type="hidden" name="tiempo" value="~60 min">');
+    expect(html).toContain('Hasta comer, con reposo y horno incluidos.');
+  });
+
+  it('un tiempo inválido abre sin ningún botón de duración apretado', () => {
+    const html = renderEditor({ entrada: null, receta: parse('---\ntitulo: A\ntiempo: 55 min\n---\n'), categorias });
+    const bloque = html.slice(html.indexOf('data-duraciones'), html.indexOf('name="tiempo"'));
+    expect(bloque).not.toContain('aria-pressed="true"');
+    expect(html).toContain('<input type="hidden" name="tiempo" value="">');
+  });
+
+  it('del formulario sale sólo un valor válido', () => {
+    const base = parse('---\ntitulo: A\ntiempo: 55 min\n---\n');
+    expect(recetaDesdeFormulario({ tiempo: '~30 min' }, base).tiempo).toBe('~30 min');
+    expect(recetaDesdeFormulario({ tiempo: '' }, base).tiempo).toBeNull();
+    expect(recetaDesdeFormulario({ tiempo: '45 min' }, base).tiempo).toBeNull();
   });
 
   it('dificultad es una elección de tres', () => {

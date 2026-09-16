@@ -218,6 +218,20 @@ html:has(.hoja-compartir) { overflow: hidden; }
 .tag-esp[disabled] { cursor: default; opacity: .6; }
 .leyenda-incompleta { line-height: 1.5; margin: 0 0 var(--e-3); }
 
+/* La duración (P29): cinco botones con relojito, en tres columnas. Apretado se
+   invierte, como los tags especiales; el reloj de `>1 día` corta con el fondo
+   del botón. */
+.duraciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e-2); }
+.dur-btn { --fondo-reloj: var(--surface-alta); min-height: 72px; padding: var(--e-2) var(--e-1);
+           display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+           background: var(--surface-alta); color: var(--fg-2); border: 1px solid var(--borde);
+           border-radius: var(--r-medio); font: 600 var(--txt-chico)/1.2 var(--tipo); cursor: pointer; }
+.dur-btn svg { width: 24px; height: 24px; color: var(--fg); stroke: currentColor; fill: none;
+               stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.dur-btn[aria-pressed="true"] { --fondo-reloj: var(--fg); background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.dur-btn[aria-pressed="true"] svg { color: var(--bg); }
+[data-duraciones] .aviso-mudo { margin: var(--e-2) 0 0; }
+
 /* Un tag que la app se reserva: el aviso es una línea, sin caja ni botón. */
 .error-tag { margin: var(--e-1) 0 0; font-size: var(--txt-chico); color: var(--error); }
 /* Y un poco de aire entre los tags puestos y el campo para sumar otro. */

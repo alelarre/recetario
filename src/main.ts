@@ -986,6 +986,17 @@ app.addEventListener('click', async (e) => {
     return;
   }
 
+  if (accion === 'elegir-duracion') {
+    const valor = boton.dataset['valor'] ?? '';
+    const puesto = boton.getAttribute('aria-pressed') !== 'true';
+    for (const b of document.querySelectorAll<HTMLElement>('#app [data-accion="elegir-duracion"]')) {
+      b.setAttribute('aria-pressed', String(puesto && b === boton));
+    }
+    const oculto = document.querySelector<HTMLInputElement>('#app input[name="tiempo"]');
+    if (oculto) { oculto.value = puesto ? valor : ''; oculto.setAttribute('value', oculto.value); }
+    return;
+  }
+
   if (accion === 'tag-quitar') {
     const tag = boton.dataset['valor'] ?? '';
     boton.remove();

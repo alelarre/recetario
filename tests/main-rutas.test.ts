@@ -9,6 +9,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 import { entradaFalsa } from './dobles.js';
 import { parse } from '../src/recipe.js';
+import { DURACIONES } from '../src/catalogo.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
 vi.mock('../src/ui/base.css', () => ({}));
@@ -187,6 +188,28 @@ describe('main.ts: las rutas', () => {
     const desplazamientos: number[] = [];
     /** El `behavior` de cada desplazamiento: 'auto' con reduced motion, si no 'smooth'. */
     const comportamientos: string[] = [];
+    // La duración del editor (P29): sin HTML real que releer, los cinco
+    // botones y el campo oculto comparten esta única variable, como si fuera
+    // el DOM real donde mutar un atributo se ve reflejado al releerlo. `tocar`
+    // reutiliza estos mismos objetos como el botón tocado, para que la
+    // comparación por referencia de `elegir-duracion` en `main.ts` encuentre
+    // al que se tocó.
+    let duracionElegida = '';
+    const botonesDuracion = new Map(DURACIONES.map(valor => [valor as string, {
+      dataset: { accion: 'elegir-duracion', valor }, classList: { contains: () => false },
+      closest: () => null, tagName: 'BUTTON', remove: () => {}, hasAttribute: () => false,
+      getAttribute: (n: string) => n === 'aria-pressed' ? String(valor === duracionElegida) : null,
+      setAttribute: (n: string, v: string) => {
+        if (n !== 'aria-pressed') return;
+        if (v === 'true') duracionElegida = valor;
+        else if (duracionElegida === valor) duracionElegida = '';
+      }
+    }]));
+    const campoTiempoDuracion = {
+      get value() { return duracionElegida; },
+      set value(v: string) { duracionElegida = v; },
+      setAttribute: (_n: string, v: string) => { duracionElegida = v; }
+    };
     global.document = comoGlobal<Document>({
       querySelector: (sel: string) => {
         if (sel === '#app') return app;
@@ -208,9 +231,11 @@ describe('main.ts: las rutas', () => {
             }
           };
         }
+        if (sel === '#app input[name="tiempo"]') return campoTiempoDuracion;
         return null;
       },
-      querySelectorAll: () => [],
+      querySelectorAll: (sel: string) =>
+        sel === '#app [data-accion="elegir-duracion"]' ? [...botonesDuracion.values()] : [],
       addEventListener: (ev: string, fn: () => void) => { listenersDoc[ev] = fn; },
       visibilityState: 'visible',
       readyState
@@ -277,14 +302,19 @@ describe('main.ts: las rutas', () => {
       /** Un click en un control con esta acción, como lo entrega la delegación. */
       tocar: async (accion: string, datos: Record<string, string> = {}, atributos: Record<string, string> = {}) => {
         const attrs: Record<string, string> = { ...atributos };
-        const boton = {
-          dataset: { accion, ...datos }, classList: { contains: () => false },
-          closest: () => null, tagName: 'BUTTON', remove: () => {},
-          setAttribute: (n: string, v: string) => { attrs[n] = v; },
-          getAttribute: (n: string) => attrs[n] ?? null,
-          hasAttribute: (n: string) => n in attrs,
-          set outerHTML(html: string) { enLugar.push(html); }
-        };
+        // Los botones de duración son los mismos objetos que devuelve
+        // `document.querySelectorAll`: en el DOM real el botón tocado es el
+        // mismo nodo que se vuelve a encontrar al recorrerlos.
+        const boton = accion === 'elegir-duracion' && botonesDuracion.has(datos['valor'] ?? '')
+          ? botonesDuracion.get(datos['valor']!)!
+          : {
+              dataset: { accion, ...datos }, classList: { contains: () => false },
+              closest: () => null, tagName: 'BUTTON', remove: () => {},
+              setAttribute: (n: string, v: string) => { attrs[n] = v; },
+              getAttribute: (n: string) => attrs[n] ?? null,
+              hasAttribute: (n: string) => n in attrs,
+              set outerHTML(html: string) { enLugar.push(html); }
+            };
         for (const fn of clicks) {
           await fn({ target: { closest: (sel: string) => (sel.includes('data-accion') ? boton : null) } });
         }
@@ -804,6 +834,35 @@ describe('main.ts: las rutas', () => {
       await abrir('#/r/f1/editar');
       const attrs = await tocar('tag-especial', { valor: 'incompleta' }, { 'aria-pressed': 'true', disabled: '' });
       expect(attrs['aria-pressed']).toBe('true');
+    });
+  });
+
+  describe('la duración en el editor', () => {
+    // El DOM falso de este archivo no vuelve a serializar el árbol en
+    // `app.innerHTML` cuando se mutan atributos por fuera del botón tocado
+    // (ver el comentario en `montar`), así que la aserción va contra
+    // `document.querySelector`/`querySelectorAll`, como el propio código de
+    // `main.ts` los usa para encontrar los otros botones y el campo oculto.
+    it('elegir una duración aprieta ese botón, suelta los otros y la escribe en el campo oculto; tocarla de nuevo la saca', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/nueva');
+      const boton = (valor: string) =>
+        [...document.querySelectorAll<HTMLElement & { dataset: Record<string, string> }>('#app [data-accion="elegir-duracion"]')]
+          .find(b => b.dataset['valor'] === valor)!;
+      const oculto = () => document.querySelector<HTMLInputElement>('#app input[name="tiempo"]')!;
+
+      await tocar('elegir-duracion', { valor: '~30 min' });
+      expect(boton('~30 min').getAttribute('aria-pressed')).toBe('true');
+      expect(oculto().value).toBe('~30 min');
+
+      await tocar('elegir-duracion', { valor: '>1 día' });
+      expect(boton('~30 min').getAttribute('aria-pressed')).toBe('false');
+      expect(boton('>1 día').getAttribute('aria-pressed')).toBe('true');
+      expect(oculto().value).toBe('>1 día');
+
+      await tocar('elegir-duracion', { valor: '>1 día' });
+      expect(boton('>1 día').getAttribute('aria-pressed')).toBe('false');
+      expect(oculto().value).toBe('');
     });
   });
 

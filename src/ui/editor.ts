@@ -12,8 +12,11 @@
  */
 import { escapar } from './markdown.js';
 import { encabezado, aviso, iconoDeTag } from './componentes.js';
-import { ICO } from './iconos.js';
-import { DIFICULTADES, dificultadValida, tagReservado, TAGS_ESPECIALES, tagEspecial, tieneEspecial } from '../catalogo.js';
+import { ICO, ICONO_DE_DURACION } from './iconos.js';
+import {
+  DIFICULTADES, dificultadValida, tagReservado, TAGS_ESPECIALES, tagEspecial, tieneEspecial,
+  DURACIONES, duracionValida
+} from '../catalogo.js';
 import { sePuedeTerminar } from '../recipe.js';
 import type { Receta, Entrada } from '../tipos.js';
 import type { Categoria } from '../store.js';
@@ -99,6 +102,23 @@ function botonesEspeciales(tags: string[], puedeTerminar: boolean): string {
     'Se va a poder sacar <i>incompleta</i> cuando se cargue: título, categoría, ingredientes y pasos.</p>';
 }
 
+/**
+ * La duración: cinco botones con su relojito, uno apretado a la vez (P29).
+ * Tocar el apretado lo suelta. El valor viaja en el `hidden`, que es lo que
+ * lee el formulario y lo que compara «cambios sin guardar».
+ */
+function campoDuracion(tiempo: string | null): string {
+  const actual = duracionValida(tiempo);
+  const botones = DURACIONES.map(d =>
+    `<button type="button" class="dur-btn" data-accion="elegir-duracion" data-valor="${escapar(d)}" aria-pressed="${d === actual}">` +
+    `${ICONO_DE_DURACION[d]}${escapar(d)}</button>`).join('');
+  return '<div class="campo" data-duraciones><span>Duración</span>' +
+    `<div class="duraciones" role="group" aria-label="Duración">${botones}</div>` +
+    `<input type="hidden" name="tiempo" value="${escapar(actual)}">` +
+    '<p class="aviso-mudo">Hasta comer, con reposo y horno incluidos.</p>' +
+  '</div>';
+}
+
 export function renderEditor(
   { receta, entrada, categorias = [], tagsConocidos = [], error, confirmandoBorrado }: ArgsEditor
 ): string {
@@ -142,10 +162,8 @@ export function renderEditor(
         .map(t => `<option value="${escapar(t)}">`).join('')}</datalist>` +
       '<p class="error-tag" hidden>Tag no permitido</p>' +
     '</div>' +
-    '<div class="par" style="margin-bottom:var(--e-4)">' +
-      campo('rinde', 'Rinde', receta.rinde) +
-      campo('tiempo', 'Tiempo', receta.tiempo) +
-    '</div>' +
+    campo('rinde', 'Rinde', receta.rinde) +
+    campoDuracion(receta.tiempo) +
     `<label class="campo"><span>Dificultad</span><select name="dificultad">${opcionesDificultad}</select></label>` +
     campo('fuente', 'Fuente', receta.fuente) +
     campo('foto', 'Foto', receta.foto, 'https://…') +
@@ -241,7 +259,7 @@ export function recetaDesdeFormulario(datos: DatosFormulario, base: Receta): Rec
     titulo: texto('titulo') ?? base.titulo,
     tags: String(datos['tags'] ?? '').split(',').map(t => t.trim()).filter(Boolean),
     rinde: texto('rinde'),
-    tiempo: texto('tiempo'),
+    tiempo: duracionValida(datos['tiempo']) || null,
     dificultad: dificultadValida(datos['dificultad']) || null,
     fuente: texto('fuente'),
     foto: texto('foto'),
