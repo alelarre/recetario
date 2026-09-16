@@ -72,8 +72,8 @@ la marca en la esquina de la tarjeta; `probar` y `menú diario` se ponen desde
 el editor, con su ícono. Un carrusel de tags —los especiales primero, después
 por cantidad— vive en el Recetario y en cada categoría: ahí filtra encendiendo
 el chip tocado, y **reemplazó la fila vieja de chips con cruz**; desde el
-Recetario abre una lista por tag nueva, `#/t/<tag>` —ahí el ícono del especial
-va en su chip del carrusel, no en el encabezado—. Las listas ordenan las
+Recetario abre una lista por tag nueva, `#/t/<tag>` —con el ícono del especial
+antes del título, y su chip encendido pero no tocable—. Las listas ordenan las
 favoritas primero. Spec en
 `docs/superpowers/specs/2026-09-16-tags-especiales-design.md`, plan en
 `docs/superpowers/plans/2026-09-16-tags-especiales.md`. Queda probarlo en el

@@ -12,6 +12,18 @@ describe('la lista por tag', () => {
     expect(html).toContain('<span class="tot">2</span>');
   });
 
+  it('un tag especial lleva su ícono en el encabezado, antes del nombre', () => {
+    const html = renderTag({ ...base, tag: 'probar', tagsActivos: ['probar'], entradas: [] });
+    const enc = html.slice(0, html.indexOf('class="cuerpo'));
+    expect(enc).toContain(`${ICO.marcador}probar`);
+  });
+
+  it('un tag común no lleva ícono en el encabezado', () => {
+    const html = renderTag({ ...base, entradas: [] });
+    const titulo = html.slice(html.indexOf('<span class="tit">'), html.indexOf('</span>', html.indexOf('<span class="tit">')));
+    expect(titulo).not.toContain('<svg');
+  });
+
   it('el chip encendido del carrusel lleva el ícono del especial', () => {
     const html = renderTag({
       ...base, tag: 'probar', tagsActivos: ['probar'], entradas: [],

@@ -1,12 +1,10 @@
 /**
  * La lista de las recetas con un tag (P27). Es la pantalla de categoría con
- * otro criterio: el mismo encabezado con total, el mismo carrusel para cambiar
- * o acumular, y la misma lista con las favoritas primero.
- *
- * El ícono del tag especial no va en el encabezado: ya está en su chip
- * encendido del carrusel, dos renglones más abajo.
+ * otro criterio: el mismo encabezado con total —con el ícono adelante si el
+ * tag es especial—, el mismo carrusel para acumular, y la misma lista con las
+ * favoritas primero.
  */
-import { encabezado, tarjeta, vacio, carruselTags, SPINNER } from './componentes.js';
+import { encabezado, tarjeta, vacio, carruselTags, iconoDeTag, SPINNER } from './componentes.js';
 import { ordenarRecetas } from '../catalogo.js';
 import type { Entrada } from '../tipos.js';
 
@@ -29,6 +27,7 @@ export function renderTag({ tag, entradas, total, visibles, tagsActivos, tags }:
 
   // Corta en los mismos veinte que el Recetario (P27 §6): la ronda de
   // corrección lo alineó, que antes acá no cortaba.
-  return encabezado({ titulo: tag, volver: true, total }) +
+  const icono = iconoDeTag(tag);
+  return encabezado({ titulo: tag, volver: true, total, ...(icono ? { icono } : {}) }) +
     `<div class="cuerpo denso">${carruselTags(tags, { activos: tagsActivos, tope: 20, fijo: tag })}${cuerpo}</div>`;
 }
