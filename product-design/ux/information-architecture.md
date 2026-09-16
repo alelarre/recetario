@@ -31,6 +31,11 @@
 > nueva nace con él. El frontmatter queda con siete claves. Lo que §1.5, §1.6, §3
 > y §6 dicen de `completa` quedó reemplazado por
 > `docs/superpowers/specs/2026-09-16-tags-especiales-2-design.md`.
+>
+> **Cambio del 2026-09-16, duración:** `tiempo` deja de ser texto libre y pasa a
+> aceptar sólo `~15 min`, `~30 min`, `~60 min`, `>60 min` y `>1 día`; cualquier
+> otro texto se lee como sin duración. Lo que §1.5 dice de `tiempo` quedó
+> reemplazado por `docs/superpowers/specs/2026-09-16-duracion-design.md`.
 
 ---
 
