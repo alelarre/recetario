@@ -1,7 +1,7 @@
 # Tags especiales, segunda parte — diseño
 
 **Fecha:** 2026-09-16
-**Estado:** Aprobado en conversación; pendiente de revisión escrita.
+**Estado:** Implementado.
 **Parte de:** `product-design/plan/BACKLOG.md` P27. Sigue a
 `docs/superpowers/specs/2026-09-16-tags-especiales-design.md`, ya implementado.
 **Reabre:** la decisión del 2026-09-12 «la completitud es una declaración del usuario» —se

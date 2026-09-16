@@ -1,11 +1,14 @@
 # Tags especiales — diseño
 
 **Fecha:** 2026-09-16
-**Estado:** Aprobado en conversación; pendiente de revisión escrita.
+**Estado:** Implementado.
 **Resuelve:** `product-design/plan/BACKLOG.md` P27 — darle entidad a favoritos y a otros
 tags especiales.
 **Mockups:** los de la conversación del 2026-09-16 —la estrella que se llena, el carrusel
 con degradé y flechas, los seis pares de íconos—, dibujados con el CSS real.
+**Seguido por:** `docs/superpowers/specs/2026-09-16-tags-especiales-2-design.md`, que
+cambia el orden de los especiales (§5.1) y quién pone `probar` y `menú diario` (§2), y
+reemplaza el §7.
 
 ---
 
@@ -40,7 +43,8 @@ Como hoy, la comparación normaliza mayúsculas y tildes (`tagReservado` en
 `src/catalogo.ts`), y **escribirlos a mano en el editor sigue prohibido**: los pone la app.
 
 **Quién los escribe.** `favorito`, la estrella de la receta. `probar` y `menú diario`, el
-editor, como cualquier tag, pero dibujados con su ícono.
+editor, con su botón (`docs/superpowers/specs/2026-09-16-tags-especiales-2-design.md`
+§5).
 
 **Lo que no cambia:** el `.md` es la verdad, el índice sigue siendo cache, y el agente no
 necesita saber nada nuevo.
@@ -106,9 +110,10 @@ por cantidad sigue valiendo.
 | Recetario | Debajo de la búsqueda, arriba del rótulo «Categorías» | Recetas con ese tag en todo el recetario |
 | Categoría | Debajo del encabezado, arriba de la lista | Recetas con ese tag dentro de la categoría |
 
-**El orden:** los tres especiales primero, en orden fijo —`favorito`, `probar`,
-`menú diario`—, cada uno con su ícono; después los demás por cantidad de recetas, de mayor
-a menor, y los empates alfabéticos. Todos en minúscula, como se escriben en el `.md`.
+**El orden:** los cuatro especiales primero, en orden fijo —`favorito`, `menú diario`,
+`probar`, `incompleta`— `[cambio del 2026-09-16, segunda parte]`, cada uno con su ícono;
+después los demás por cantidad de recetas, de mayor a menor, y los empates alfabéticos.
+Todos en minúscula, como se escriben en el `.md`.
 
 **Cuántos:** en una categoría, todos. En el Recetario, los **veinte** más usados.
 
@@ -158,10 +163,9 @@ un solo motivo.
 
 ## 7. El editor
 
-- Los tags especiales puestos se ven **con su ícono** entre las pills, y se sacan como
-  cualquier otro.
-- Escribirlos a mano sigue rechazado, con el aviso que ya existe.
-- El campo de agregar no los sugiere, como hoy.
+`[reemplazado el 2026-09-16 por docs/superpowers/specs/2026-09-16-tags-especiales-2-design.md
+§5]` Los cuatro especiales pasan a tener un botón propio, uno por tag, en vez de
+dibujarse como pills entre los tags comunes.
 
 ## 8. Dónde no aparece nada de esto
 

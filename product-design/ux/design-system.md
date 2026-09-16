@@ -1,9 +1,16 @@
 # Recetario — Design System
 
-**Versión:** 2.2
+**Versión:** 2.3
 **Fecha:** 2026-09-16
 **Estado:** Final — Hito 11
 
+> **Cambios en la 2.3 (2026-09-16):** el conmutador de completitud (§6.16)
+> queda sin uso: el editor pasa a un botón por tag especial (§6.10b, nuevo),
+> invertido al apretar, la misma convención que ya usaba el conmutador. §6.5
+> — el ícono del dato en el editor es el del botón, no la posición de un
+> conmutador. §3.4 — un ícono más, de catorce a quince: el medio círculo de
+> `incompleta`, reutilizado de la marca (§6.5).
+>
 > **Cambios en la 2.2 (2026-09-16):** §3.4 — tres íconos más, de once a catorce:
 > la estrella de favorito, el marcador de *probar* y el calendario de *menú
 > diario*.
@@ -274,10 +281,11 @@ cocina es el dato principal.
 | `--ico` | 20 px | En toda la app. |
 | `--ico-cocina` | 24 px | Solo en modo cocina. |
 
-**Los íconos son funcionales, nunca decorativos.** Hay catorce en la
+**Los íconos son funcionales, nunca decorativos.** Hay quince en la
 app: volver, buscar, ajustes, borradores, descartar, editar, borrar, mantener la
 pantalla encendida, compartir `[del 2026-09-14]`, la estrella de favorito, el
-marcador de *probar* y el calendario de *menú diario* `[del 2026-09-16]`, y las
+marcador de *probar*, el calendario de *menú diario* y el medio círculo de
+*incompleta* —reutilizado de la marca, §6.5— `[del 2026-09-16]`, y las
 dos posiciones del conmutador de cocina —una zanahoria para *Ingredientes* y
 una lista numerada para *Pasos*, al lado de la palabra `[del 2026-09-12]`—.
 
@@ -498,7 +506,7 @@ otro dibujo para decir lo mismo:
 |---|---|
 | **Tarjeta de la lista** | Sólo la marca, al final de la línea de contexto. Sin texto, así que se nombra para el lector de pantalla. |
 | **Receta abierta** | Un chip (§6.10) que dice *Incompleta*, el primero de la fila de tags. Tocable, abre el editor (`E03-LeerYCocinar.md` C03.1.3). |
-| **Editor** | Dentro de la posición *Incompleta* del conmutador (§6.16), en el color del botón y no en el acento. |
+| **Editor** | El ícono del botón `incompleta` (§6.10b) `[cambio del 2026-09-16: antes era la posición del conmutador, §6.16]`, en el color del botón y no en el acento. |
 
 - **Nunca `--error` y nunca amarillo.** No es un problema: la receta funciona, le
   falta algo.
@@ -622,6 +630,31 @@ cosas distintas: uno es un filtro puesto, el otro un estado del contenido.
 dice en una línea de `--txt-chico` en `--error`, sin caja ni botón
 (`E04-Corregir.md` C04.2.1b).
 
+### 6.10b Botón de tag especial
+
+`[agregado el 2026-09-16, reemplaza al uso del conmutador de dos posiciones
+en §6.16]` Cuatro botones —uno por tag especial—, dentro del campo **«Tags»**
+del editor, en fila arriba de los tags comunes y del campo para agregar
+(`E04-Corregir.md` C04.2.1b, C04.4.1). Cada uno lleva su ícono (§3.4) y su
+nombre, con `aria-pressed`.
+
+| Estado | Fondo | Texto | Borde |
+|---|---|---|---|
+| **Suelto** | `--surface-alta` | `--fg-2` | 1 px `--borde` |
+| **Apretado** | `--fg` | `--bg` | 1 px `--fg` |
+
+**Apretado se dibuja invertido, no con el acento** — la misma convención del
+estado elegido que usaba el conmutador de completitud (§6.16), que este botón
+reemplaza.
+
+**`incompleta` apretado y deshabilitado** —sin título, categoría, ingredientes
+o pasos— no se puede tocar, y debajo lleva la leyenda de qué falta, como un
+aviso sin acción (§6.8): *"Se va a poder sacar incompleta cuando se cargue:
+título, categoría, ingredientes y pasos."*
+
+**Nunca `--error`.** Misma regla que la marca de incompleta (§6.5): a la
+receta le falta algo, no está rota.
+
 ### 6.11 Ítem de ingrediente
 
 ```
@@ -698,8 +731,10 @@ Ficha de `--e-3` de padding: título en `--txt-base` peso 600, fuente en
 
 `[agregado el 2026-09-12]` Dos botones del mismo ancho, uno al lado del otro con
 `--e-2` de separación, cada uno de 48 px de alto y `--r-medio`. Una sola posición
-es verdadera. Hoy lo usa un solo control, el de completitud del editor
-(`E04-Corregir.md` C04.4.1).
+es verdadera. **Hoy no lo usa ninguna pantalla** `[2026-09-16]`: era el control
+de completitud del editor y lo reemplazó el botón de tag especial (§6.10b,
+`E04-Corregir.md` C04.4.1). Queda definido porque el sistema lo va a necesitar,
+no porque esté puesto en algún lado.
 
 | Posición | Fondo | Texto | Borde |
 |---|---|---|---|

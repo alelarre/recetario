@@ -79,8 +79,22 @@ favoritas primero. Spec en
 `docs/superpowers/plans/2026-09-16-tags-especiales.md`. Queda probarlo en el
 teléfono.
 
-**Para retomar:** queda probar **tags especiales (P27)** en el teléfono —el
-checklist está en el spec, §11—. Lo siguiente del backlog, después, es la
+**Hecho el 2026-09-16 — la completitud es el cuarto tag especial (P27,
+segunda parte):** `incompleta` se suma a `favorito`, `menú diario` y `probar`
+—la clave `completa` sale del esquema, que pasa a siete claves—. Los cuatro
+se ponen desde un botón cada uno en el campo «Tags» del editor, apretado e
+invertido —la misma convención que tenía el conmutador de completitud, que
+desaparece junto con la fila «Estado»—; `incompleta` no se puede soltar sin
+título, categoría, ingredientes y pasos, y una receta nueva nace con el tag
+puesto. Sus marcas van juntas en la esquina de la tarjeta. `SCHEMA_VERSION`
+pasa a 6: la próxima apertura reindexa sola. Spec en
+`docs/superpowers/specs/2026-09-16-tags-especiales-2-design.md`, plan en
+`docs/superpowers/plans/2026-09-16-tags-especiales-2.md`. Queda probarla en
+el teléfono.
+
+**Para retomar:** queda probar **tags especiales (P27)** en el teléfono —dos
+checklists: `tags-especiales-design.md` §11 y `tags-especiales-2-design.md`
+§10—. Lo siguiente del backlog, después, es la
 **etapa 3b de P19** (imágenes propias de categorías en Drive, guardadas en
 Cache Storage, y que *Borrar datos locales* también las borre), **P26**
 (rediseñar el selector de carpetas: primero entender qué no convence) y
@@ -145,7 +159,7 @@ Para lo demás, según lo que necesites:
 | | |
 |---|---|
 | **Se mantuvo** | El stack: TypeScript estricto + Vite, sin framework. `auth.ts`, `drive.ts`, `sheets.ts` y las fotos de `src/categorias/`. |
-| **Cambió** | `recipe.ts` (el ingrediente es nombre + separador + cantidad, y los `###` estructuran), `store.ts` (la fila se escribe en el momento, sin cola), `catalogo.ts` (la fila suma `foto` y `completa`), y `src/ui/` entero. |
+| **Cambió** | `recipe.ts` (el ingrediente es nombre + separador + cantidad, y los `###` estructuran), `store.ts` (la fila se escribe en el momento, sin cola), `catalogo.ts` (la fila suma `foto`; `completa` sumó y salió el 2026-09-16, al volverse el tag `incompleta`), y `src/ui/` entero. |
 | **Se eliminó** | `app.css`, `cache.ts`, `home.ts`, `lista.ts`, `detalle.ts`, `visor.ts`, las tres familias tipográficas, el tag manual `incompleto`, la clase `texto-grande`, la cola, el cache local del índice —volvió el 2026-09-13 de otra forma, ver «Funcionar sin conexión»— y la Changes API. |
 | **Es nuevo** | `borrador.ts` (el `.md` del borrador), `compartido.ts` (la capa que la app y el agente invocan igual) e `indice-local.ts` (la copia del índice en el navegador, P12); de compartir (P23): `inicio.ts` (la entrada: decide entre `main.ts` e `invitado.ts`), `invitado.ts` (el controlador de la vista sin login), `link-receta.ts` (arma y lee el link comprimido), `texto-receta.ts` (la receta como texto), `compartir.ts` (el menú Compartir del sistema, con sus respaldos), `cocina-control.ts` (el modo cocina y la pantalla encendida, compartidos entre receta e invitado) y `src/pdf/` (el PDF con pdfmake e Inter embebida); más las pantallas de `src/ui/`: recetario, categoria, resultados, receta, cocina, editor, captura, borradores, ajustes, conexion e invitado, sobre `componentes.ts`, `iconos.ts`, `pintar.ts`, `fichas-receta.ts` y la ficha `compartir.ts`. |
 
@@ -252,8 +266,8 @@ lo descartado. Todo esto se discutió a fondo y tiene una razón concreta.
 | Cooklang para el cuerpo de la receta | Da parsing exacto, pero ensucia el `.md`, que es justamente lo que se eligió proteger. |
 | `schema.org/Recipe` como modelo de datos | Está diseñado para publicar a buscadores: nutrición, rating, autor, video. Sirve como checklist, no como modelo. |
 | Reabrir el alcance de v1 | Se revisó entero el 2026-09-01: el planificador salió, y crear una receta mínima entró (§11). |
-| Una vista de bandeja o triage | Lo que falta archivar se ve en el tile "Sin categorizar" del Recetario. **El rediseño cambió la otra mitad:** lo que falta terminar ya no se filtra por un tag manual — la completitud es un dato del `.md` que el usuario declara en el editor (C05.3.1) y se dibuja como marca en la tarjeta. |
-| Campos `ultima_vez`, `veces`, `puntaje`, `porciones` numérico | El esquema del frontmatter es cerrado. **El rediseño lo abrió a ocho claves:** entraron `foto` y `completa` (IA §1.5), y nada más. |
+| Una vista de bandeja o triage | Lo que falta archivar se ve en el tile "Sin categorizar" del Recetario. **El rediseño cambió la otra mitad:** lo que falta terminar ya no se filtra por un tag manual — la completitud es el tag `incompleta`, que el usuario pone y saca con su botón en el editor (C05.3.1) y se dibuja junto a los demás especiales en la esquina de la tarjeta. |
+| Campos `ultima_vez`, `veces`, `puntaje`, `porciones` numérico | El esquema del frontmatter es cerrado. **El rediseño lo abrió a siete claves:** entró `foto` (IA §1.5); `completa` también entró, y salió el 2026-09-16 al volverse el tag `incompleta`. Nada más entró. |
 | Datos nutricionales: calorías, macros, porciones diarias | Decidido el 2026-09-03. Las 24 recetas del libro de pescados vinieron con una nota "Valor calórico según la fuente" y se sacaron todas. No entra en las seis claves del §3.2, y como nota al cuerpo crea un campo paralelo que ninguna otra receta tiene. Si la fuente lo trae, se descarta. |
 | Guardar fotos en Drive, miniaturas, imagen de portada | Decidido el 2026-09-02. Mostrar una foto de Drive obliga a pedirla con el token y armar un object URL; las miniaturas, a mantener un mapa de `thumbnailLink` que caduca. Demasiado para un recetario donde casi ninguna receta va a tener imagen. Solo URLs externas, dibujadas donde estén (§3.3). |
 | Funcionar sin conexión | Salió de v1 el 2026-09-02 y sigue afuera: sin la lectura de Drive no hay con qué dibujar. `cache.ts` y su IndexedDB se eliminaron con el rediseño. **Desde el 2026-09-13 hay copia local del índice, y sólo del índice** (P12, `src/indice-local.ts`): con la premisa de que nunca hay escritura concurrente, se guarda en `localStorage` y al abrir se compara el `modifiedTime` de `_indice`; si coincide no se lee Sheets. No sirve para dibujar sin red: la búsqueda en Drive va antes que la copia (C05.4.2, C05.8.1). |
@@ -306,11 +320,12 @@ Y queda el contenido.
 
 **Migrar el contenido existente:** ya se migraron ~60 recetas del recetario
 original y del PDF de pescados a `Recetario/`, con el skill de
-`skills/recetario/`. **El skill está al día con el esquema de ocho claves**
-(2026-09-12) pero todavía no escribe la fila del índice: después de cargar
-recetas hay que tocar *Ajustes → Reindexar*. Que la escriba entra en rehacer
-el skill (`BACKLOG.md` P14). Falta el resto: los documentos temáticos (fondues, pan,
-macarons, fermentación) y el Doc de ~7,3 MB.
+`skills/recetario/`. **El skill quedó en el esquema viejo** `[2026-09-16]`:
+todavía escribe la clave `completa` en vez del tag `incompleta`, y tampoco
+escribe la fila del índice: después de cargar recetas hay que tocar
+*Ajustes → Reindexar*. Los dos entran en rehacer el skill (`BACKLOG.md` P14).
+Falta el resto: los documentos temáticos (fondues, pan, macarons,
+fermentación) y el Doc de ~7,3 MB.
 
 Lo que ya no está pendiente:
 
@@ -354,9 +369,10 @@ Lo que ya no está pendiente:
   contra el spec.
 - **Subir `SCHEMA_VERSION` cuesta un reindexado entero al próximo arranque.**
   Es el mecanismo, no un bug: la versión pasó a 2 con el rediseño porque la fila
-  suma `foto` y `completa`, y a 3 cuando `completa` dejó de calcularse y pasó a
-  copiarse del archivo. Con ~60 recetas son unos 40 segundos; con las miles
-  de la migración va a ser el problema de la línea de arriba.
+  suma `foto` y `completa`, a 3 cuando `completa` dejó de calcularse y pasó a
+  copiarse del archivo, y a 6 cuando `completa` salió del índice al volverse
+  el tag `incompleta` (2026-09-16). Con ~60 recetas son unos 40 segundos; con
+  las miles de la migración va a ser el problema de la línea de arriba.
 - **Cuatro cosas no las cubre ningún test:** el Share Target real
   (necesita la PWA instalada en Android), el foco del teclado en la captura, la
   posición de scroll al conmutar en el modo cocina y el gesto de atrás de

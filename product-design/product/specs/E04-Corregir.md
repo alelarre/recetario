@@ -1,8 +1,17 @@
 # E04 — Corregir
 
-**Versión:** 3.1 · **Fecha:** 2026-09-12 · **Estado:** Final — Hito 11
+**Versión:** 3.2 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
 **Job:** J7 · **Prioridad:** baja · **Flujo:** F7
 
+> **Cambios en la 3.2 (2026-09-16):** **F04.4 y C04.4.1 reescritas** — el
+> conmutador *Incompleta* | *Terminada* y la fila «Estado» de la ficha de
+> datos salen; el control pasa a ser un botón por tag especial dentro de
+> «Tags» —`favorito`, `menú diario`, `probar` e `incompleta`—, apretado e
+> invertido. **C04.2.1b** — los cuatro especiales están reservados por tener
+> su botón, no `completa`. **C04.3b.1** — una receta nueva nace con el tag
+> `incompleta` puesto. Spec:
+> `docs/superpowers/specs/2026-09-16-tags-especiales-2-design.md`.
+>
 > **Cambios en la 3.1 (2026-09-12):** **F04.4 reescrita** — la completitud la
 > declara el usuario con un conmutador de dos posiciones, y no se deriva del
 > contenido. **C04.2.1b nueva:** los tags son chips removibles y hay palabras que
@@ -67,12 +76,13 @@ archivo se arma solo al guardar.
 
 #### C04.2.1b — Los tags, y las palabras que la app se reserva *(J7)*
 
-`[agregada el 2026-09-12]`
+`[agregada el 2026-09-12; cambio del 2026-09-16: los cuatro especiales tienen
+su botón (C04.4.1) y no se escriben a mano]`
 
-- [ ] Los tags puestos se dibujan como chips removibles, cada uno con su cruz, y debajo va el campo para agregar otro.
-- [ ] Hay **palabras reservadas** que el editor no deja escribir a mano: `incompleto`, `terminado` y `favorito` en sus cuatro formas —masculino, femenino, singular y plural—, más `probar`.
-- [ ] `incompleto` y `terminado` están reservadas porque lo que dicen ya lo dice `completa` (C05.3.1): un tag que contradiga la clave del archivo es ambigüedad pura.
-- [ ] `favorito` y `probar` están reservadas de antemano: son estados que el producto va a querer, y tomarlos ahora evita tener que desalojarlos después.
+- [ ] Los tags comunes puestos se dibujan como chips removibles, cada uno con su cruz, y debajo va el campo para agregar otro. Los especiales no: tienen su botón (C04.4.1) y no se dibujan dos veces.
+- [ ] Hay **palabras reservadas** que el editor no deja escribir a mano: `favorito`, `menú diario`, `probar` e `incompleta`, cada uno en sus formas alternativas, más `terminado` en sus cuatro formas —masculino, femenino, singular y plural—.
+- [ ] `terminado` está reservada porque contradice a `incompleta` (C05.3.1): un tag que contradiga a otro tag especial es ambigüedad pura.
+- [ ] Los cuatro especiales están reservados porque tienen su propio control: escribirlos a mano duplicaría el botón.
 - [ ] Al intentar agregar una reservada, el tag **no entra** y aparece una línea de aviso sin acción (C05.9.1): no es un error del usuario, es un nombre tomado.
 - [ ] La comparación ignora mayúsculas y acentos, igual que la búsqueda.
 - [ ] **La app no borra ni corrige** una palabra reservada que ya esté en un `.md` escrito afuera: la muestra como cualquier otro tag (R4).
@@ -124,6 +134,7 @@ El mismo formulario, con los campos vacíos.
 - [ ] El nombre del archivo se deriva del título **una sola vez, al crearlo**, y no vuelve a cambiar (C04.2.2): el título en minúsculas, sin acentos y con guiones — `milanesas-napolitanas.md`.
 - [ ] Si ya existe un archivo con ese nombre en la carpeta, se usa un nombre distinto sin preguntar: la identidad es el `fileId`, no el nombre.
 - [ ] **Desde un borrador** (C01.6.3), el editor abre con el título y la `fuente` cargados, y guardar borra la fila del borrador en la misma operación (C01.7.1).
+- [ ] **Nace con el tag `incompleta` puesto** `[agregado el 2026-09-16]` (C04.4.1, C05.3.1): terminar es una declaración explícita, no el estado inicial. Una receta creada desde un borrador también.
 
 ### F04.3c — Lo desconocido se conserva
 
@@ -144,27 +155,45 @@ conserva, lo borra.
 
 ### F04.4 — Declarar una receta terminada
 
-`[cambio del 2026-09-12: era una casilla sobre un estado derivado]`
+`[cambio del 2026-09-12: era una casilla sobre un estado derivado; cambio del
+2026-09-16: el control pasa a ser el botón del tag incompleta, uno de los
+cuatro tags especiales]`
 
-El estado de la receta lo fija el usuario acá, y en ningún otro lado. La app no
-lo deduce del contenido (C05.3.1): sólo dice cuándo se puede declarar.
+El estado de la receta lo fija el usuario acá, sacando el tag `incompleta`, y
+en ningún otro lado. La app no lo deduce del contenido (C05.3.1): sólo dice
+cuándo se lo puede sacar.
 
 #### C04.4.1 — El control *(J7)*
 
-- [ ] Un **conmutador de dos posiciones: *Incompleta* | *Terminada***, rotulado *Estado*, que cierra la ficha de datos después de un divisor `[del 2026-09-12: estaba al pie del editor, en su propia ficha]`. Una sola es verdadera.
-- [ ] Arranca en **Incompleta**: una receta nueva no está terminada hasta que alguien lo diga.
-- [ ] *Terminada* se habilita sólo si la receta cumple C05.3.3 —título, categoría, ingredientes y pasos—.
-- [ ] Mientras esté deshabilitada, debajo va la leyenda: *"Se podrá marcar como terminada cuando se cargue: título, categoría, ingredientes y pasos."*
-- [ ] La condición se revisa **mientras se escribe**, sin redibujar el formulario ni perder el foco.
-- [ ] Si la receta deja de cumplirla —se borran los pasos, se vacía el título—, la posición vuelve a *Incompleta*.
-- [ ] Guardar escribe `completa: sí` o `completa: no` según la posición: la clave se escribe siempre (C05.3.1).
-- [ ] Es una declaración del usuario, no una edición de contenido: es la única excepción del principio 3 y es del usuario, no del agente.
-- [ ] También se llega acá desde la marca de incompleta de la receta abierta, que abre el editor (C03.1.3).
+`[cambio del 2026-09-16: reemplaza al conmutador de dos posiciones]`
 
-**Por qué un conmutador y no una casilla:** una casilla tiene un estado
-implícito —lo que significa *no tildada*— y con la completitud derivada eso se
-leía como contradicción: una receta escrita entera mostraba la casilla vacía y
-ninguna marca de incompleta. Dos posiciones nombradas dicen las dos cosas.
+- [ ] Dentro del campo **«Tags»**, una fila con **un botón por tag especial**
+  —`favorito`, `menú diario`, `probar` e `incompleta`, en ese orden—, arriba de
+  los tags comunes y del campo para agregar. Apretado: la receta tiene el tag.
+  Suelto: no lo tiene. Tocarlo lo pone o lo saca, con su `aria-pressed`.
+- [ ] **Una receta nueva nace con `incompleta` puesto** (C04.3b.1): no está
+  terminada hasta que alguien lo diga.
+- [ ] `incompleta` **no se puede soltar** hasta que la receta cumpla C05.3.3
+  —título, categoría, ingredientes y pasos—. Mientras no se pueda, queda
+  **apretado y deshabilitado**, con la leyenda: *"Se va a poder sacar
+  incompleta cuando se cargue: título, categoría, ingredientes y pasos."*
+- [ ] La condición se revisa **mientras se escribe**, sin redibujar el
+  formulario ni perder el foco.
+- [ ] Si la receta deja de cumplirla —se borran los pasos, se vacía el
+  título— mientras `incompleta` está suelto, el botón **vuelve a apretarse
+  solo**.
+- [ ] Sacar `incompleta` es una declaración del usuario, no una edición de
+  contenido: es la única excepción del principio 3 entre los cuatro
+  especiales, y es del usuario, no del agente. Los otros tres se ponen y
+  sacan libremente.
+- [ ] También se llega acá desde el chip `incompleta` de la receta abierta,
+  que abre el editor (C03.1.3).
+
+**Por qué apretado y no una casilla:** una casilla tiene un estado implícito
+—lo que significa *no tildada*— y con la completitud derivada eso se leía
+como contradicción: una receta escrita entera mostraba la casilla vacía y
+ninguna marca de incompleta. Apretado e invertido dice las dos cosas, y es la
+misma convención que ya usan los otros tres especiales.
 
 ### F04.5 — Guardar
 

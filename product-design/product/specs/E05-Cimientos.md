@@ -1,8 +1,16 @@
 # E05 — Cimientos
 
-**Versión:** 3.1 · **Fecha:** 2026-09-12 · **Estado:** Final — Hito 11
+**Versión:** 3.2 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
 **Job:** J8 y transversal · **Prioridad:** alta · **Flujos:** F8, F9, F10, F11, F12
 
+> **Cambios en la 3.2 (2026-09-16):** **F05.1 y F05.3 reescritas** — el
+> frontmatter pasa a siete claves: `completa` sale del esquema. La
+> completitud es el tag `incompleta` en la lista `tags` (C05.3.1); el índice
+> ya no tiene columna propia y se deriva de los tags (C05.3.2, F05.4b);
+> `sePuedeTerminar` no cambia y sigue habilitando que se pueda sacar el tag en
+> el editor (C05.3.3). `SCHEMA_VERSION` a 6. Spec:
+> `docs/superpowers/specs/2026-09-16-tags-especiales-2-design.md`.
+>
 > **Cambios en la 3.1 (2026-09-12):** **F05.3 reescrita** — `completa` es un dato
 > del frontmatter que el usuario declara (C05.3.1), el índice lo copia sin
 > recalcular (C05.3.2), y la condición de título + categoría + ingredientes +
@@ -108,7 +116,7 @@ se soporta:** no hay Share Target y el Atajo equivalente sale del alcance.
 
 ### F05.1 — El esquema del `.md`
 
-Frontmatter de ocho claves, solo `titulo` obligatorio; cuerpo markdown con cuatro
+Frontmatter de siete claves, solo `titulo` obligatorio; cuerpo markdown con cuatro
 secciones conocidas y opcionales. Los ingredientes llevan el nombre primero y la
 cantidad después de un separador.
 
@@ -117,7 +125,7 @@ Es lo que permite J4 sin ensuciar el archivo. Definido en
 
 #### C05.1.1 — Parsear el frontmatter *(J8)*
 
-- [ ] Se leen las ocho claves: `titulo`, `tags`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`, `completa`.
+- [ ] Se leen las siete claves: `titulo`, `tags`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`. `[cambio del 2026-09-16: completa salió del esquema, ver F05.3]`
 - [ ] Una clave ausente se representa como ausente, no como cadena vacía.
 - [ ] Una clave desconocida se conserva sin interpretarse.
 - [ ] `dificultad` fuera de `fácil` · `media` · `difícil` se muestra tal cual y no se corrige.
@@ -181,35 +189,41 @@ el usuario a mano, y eso es el caso normal.
 
 ### F05.3 — La completitud la declara el usuario
 
-`[cambio del 2026-09-12: antes se derivaba del contenido]`
+`[cambio del 2026-09-12: antes se derivaba del contenido; cambio del
+2026-09-16: pasa a ser el tag incompleta y completa sale del frontmatter]`
 
 Una receta está terminada cuando el usuario lo dice, y no cuando el texto alcanza
-una forma. **Es un dato del archivo**, no un cálculo: la app lo lee y lo muestra,
-nunca lo deduce.
+una forma. **Es un dato del archivo** —el tag `incompleta` en la lista `tags`—,
+no un cálculo: la app lo lee y lo muestra, nunca lo deduce.
 
 Terminar una receta es un juicio. Hay recetas escritas enteras que todavía no
 están buenas, y recetas de tres líneas que sí. Derivarlo del contenido decidía
 por el usuario y además podía cambiar solo, sin que nadie tocara nada.
 
-#### C05.3.1 — `completa` es un dato del frontmatter *(J8)*
+#### C05.3.1 — La completitud es el tag `incompleta` *(J8)*
 
-- [ ] La clave vale **`sí`** o **`no`**; «si» sin tilde vale igual y las mayúsculas no importan.
-- [ ] **Es el único caso en que la app asume algo:** si la clave falta o trae cualquier otro valor, la receta se lee como **incompleta**. Decir que algo está terminado cuando nadie lo dijo es peor que lo contrario.
-- [ ] Se lee tal cual: **al leer no se evalúa el contenido de la receta**.
-- [ ] La app la escribe siempre, en los dos valores, cada vez que guarda: leerla no depende de interpretar una ausencia.
-- [ ] Un `.md` escrito afuera sin la clave se lee como no terminada; nadie lo corrige solo (R4).
+`[cambio del 2026-09-16: antes era la clave completa del frontmatter]`
 
-#### C05.3.2 — El índice guarda lo que dice el archivo *(J1, J8)*
+- [ ] Una receta está incompleta si su lista `tags` tiene `incompleta`; si no lo tiene, está terminada.
+- [ ] Se escribe siempre en la forma canónica, en minúscula. Se reconocen además `incompleto`, `incompletos` e `incompletas` como el mismo tag, igual que con los demás tags especiales (`docs/superpowers/specs/2026-09-16-tags-especiales-2-design.md` §2).
+- [ ] Es el único de los cuatro tags especiales que **no** se pone y saca libremente: sólo se puede sacar cuando la receta cumple C05.3.3, y una receta nueva nace con el tag puesto (`E04-Corregir.md` C04.3b.1).
+- [ ] `completa` pasa a ser una clave desconocida como cualquier otra (C05.1.1): la app no la lee ni la borra, y la conserva tal cual si venía en el `.md`.
 
-- [ ] La columna `completa` de la fila copia el dato del `.md`, sin recalcular nada.
+#### C05.3.2 — El índice no tiene columna propia *(J1, J8)*
+
+`[cambio del 2026-09-16: antes copiaba la clave completa en su propia columna]`
+
+- [ ] La fila no tiene columna de completitud. Si una receta está incompleta se sabe por su columna `tags`, igual que si es favorita (F05.4b).
 - [ ] Sigue siendo cache: un `.md` editado afuera deja la fila atrasada hasta el próximo guardado o reindexado (R4).
 
-#### C05.3.3 — Cuándo se puede declarar *(J7)*
+#### C05.3.3 — Cuándo se puede sacar el tag *(J7)*
 
-- [ ] Una receta puede declararse terminada sólo si tiene **título, categoría, al menos un ingrediente y al menos un paso**.
-- [ ] La condición existe para habilitar el control del editor (C04.4.1) y **en ningún otro lado**: no filtra, no corrige y no escribe.
+`[cambio del 2026-09-16: antes habilitaba el conmutador; ahora habilita soltar el tag]`
+
+- [ ] `sePuedeTerminar` no cambia: título, categoría, al menos un ingrediente y al menos un paso.
+- [ ] La condición existe para habilitar que se pueda soltar el botón `incompleta` del editor (`E04-Corregir.md` C04.4.1) y **en ningún otro lado**: no filtra, no corrige y no escribe.
 - [ ] Título y categoría ya son obligatorios para guardar; se evalúan igual para que el aviso pueda decir todo lo que falta de una vez.
-- [ ] Si una receta declarada terminada deja de cumplir la condición mientras se la edita, la declaración se cae con ella.
+- [ ] Si una receta sin el tag deja de cumplir la condición mientras se la edita, el tag vuelve a ponerse solo.
 
 ### F05.4 — El índice, y la capa compartida
 
@@ -252,7 +266,7 @@ reindexar (F05.5).
 
 ### F05.4b — La fila del índice es completa
 
-Título, categoría, tags, completitud, fuente, foto y **los nombres de los
+Título, categoría, tags, fuente, foto y **los nombres de los
 ingredientes**, tal como están escritos, sin normalizar.
 
 Los ingredientes están ahí porque J4 tiene que resolverse sin leer mil `.md`. No
@@ -261,7 +275,7 @@ es una fuente de divergencia.
 
 #### C05.4b.1 — Las columnas de la fila *(J1, J4, J5)*
 
-- [ ] `fileId`, título, categoría, tags, completitud, fuente, foto y nombres de ingredientes.
+- [ ] `fileId`, título, categoría, tags, fuente, foto y nombres de ingredientes. `[cambio del 2026-09-16: la columna completitud salió; si una receta está incompleta se sabe por tags]`
 - [ ] La categoría se deriva de la carpeta que contiene al archivo, no del frontmatter.
 - [ ] Los nombres de ingredientes se guardan tal como están escritos: sin singularizar, sin bajar a minúsculas, sin quitar acentos.
 - [ ] Nada de lo que se guarda se usa para dibujar la receta abierta: eso sale del `.md`.
