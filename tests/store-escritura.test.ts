@@ -130,6 +130,23 @@ describe('guardar', () => {
     expect(drive._store.get('r1')!.parents).toEqual(['c2']);
     expect(store.entradas()[0]?.categoria).toBe('Postres');
   });
+
+  it('una receta sin fila en el índice se guarda con su carpeta y nombre reales (P27 §3.1)', async () => {
+    // 'suelta.md' vive en Carnes pero nunca tuvo fila: por ejemplo, se abrió
+    // por un link directo. Sin `entrada` de dónde sacar la carpeta, antes caía
+    // en la raíz —«Sin categorizar»— y con `nombre_archivo` vacío.
+    drive._store.set('suelta', {
+      id: 'suelta', name: 'suelta.md', mimeType: 'text/markdown', parents: ['c1'],
+      modifiedTime: '2026-01-01T00:00:00.000Z', contenido: MD
+    });
+    expect(store.entradas().find(e => e.id_archivo === 'suelta')).toBeUndefined();
+
+    await store.guardar('suelta', recetaFalsa({ titulo: 'Suelta' }));
+
+    const entrada = store.entradas().find(e => e.id_archivo === 'suelta');
+    expect(entrada?.categoria).toBe('Carnes');
+    expect(entrada?.nombre_archivo).toBe('suelta.md');
+  });
 });
 
 describe('crear', () => {

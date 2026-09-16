@@ -481,7 +481,22 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     const texto = serialize(receta);
     const actualizado = await drive.actualizar(id, texto);
 
-    let carpeta_id = entrada?.carpeta_id ?? ctx.raizId;
+    // Sin fila —por ejemplo, una receta abierta por link directo y marcada
+    // favorita ahí mismo (P27 §3.1)— no hay de dónde sacar su carpeta real:
+    // `entrada?.carpeta_id ?? ctx.raizId` la mandaba a «Sin categorizar»
+    // aunque estuviera en una categoría, y con el nombre de archivo vacío. Se
+    // le pregunta a Drive, y sólo en este caso.
+    let carpeta_id: string;
+    let nombre_archivo: string;
+    if (entrada) {
+      carpeta_id = entrada.carpeta_id;
+      nombre_archivo = entrada.nombre_archivo;
+    } else {
+      const meta = await drive.metadatos(id, 'name,parents');
+      carpeta_id = meta.parents?.[0] ?? ctx.raizId;
+      nombre_archivo = meta.name ?? '';
+    }
+
     if (carpetaDestino && carpetaDestino !== carpeta_id) {
       await drive.mover(id, { de: carpeta_id, a: carpetaDestino });
       carpeta_id = carpetaDestino;
@@ -489,7 +504,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
 
     const ubicacion: Ubicacion = {
       id,
-      nombre_archivo: entrada?.nombre_archivo ?? '',
+      nombre_archivo,
       categoria: ctx.carpetas.get(carpeta_id) ?? CATEGORIA_RAIZ,
       carpeta_id,
       mtime: Date.parse(actualizado.modifiedTime ?? '') || Date.now()
