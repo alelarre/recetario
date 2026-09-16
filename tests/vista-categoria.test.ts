@@ -25,16 +25,31 @@ describe('Categoría', () => {
       .not.toContain('class="spin"');
   });
 
-  it('con un filtro puesto, el encabezado lo dice y ofrece quitarlo', () => {
-    const html = renderCategoria({ nombre: 'A', entradas: [], total: 0, visibles: 0, tagsActivos: ['horno'] });
-    expect(html).toContain('horno');
-    expect(html).toContain('data-accion="quitar-tag"');
+  it('con un filtro puesto, se ve encendido en el carrusel', () => {
+    const html = renderCategoria({
+      nombre: 'A', entradas: [], total: 0, visibles: 0, tagsActivos: ['horno'],
+      tags: [{ tag: 'horno', cantidad: 1 }]
+    });
+    expect(html).toContain('>horno<');
+    expect(html).toContain('class="chip act"');
   });
 
-  it('filtrar hasta cero muestra la frase y el control para quitar el filtro', () => {
-    const html = renderCategoria({ nombre: 'A', entradas: [], total: 0, visibles: 0, tagsActivos: ['horno'] });
+  it('filtrar hasta cero muestra la frase, con el carrusel encendido arriba', () => {
+    const html = renderCategoria({
+      nombre: 'A', entradas: [], total: 0, visibles: 0, tagsActivos: ['horno'],
+      tags: [{ tag: 'horno', cantidad: 1 }]
+    });
     expect(html).toContain('class="vacio"');
-    expect(html).toContain('data-accion="quitar-tag"');
+    expect(html).toContain('class="chip act"');
+  });
+
+  it('el carrusel va arriba de la lista, con los tags de la categoría', () => {
+    const html = renderCategoria({
+      nombre: 'Carnes', entradas: [], total: 0, visibles: 0, tagsActivos: [],
+      tags: [{ tag: 'horno', cantidad: 2 }]
+    });
+    expect(html).toContain('carrusel-marco');
+    expect(html).toContain('>horno<');
   });
 
   it('una receta incompleta se lista igual y no se ordena distinto', () => {

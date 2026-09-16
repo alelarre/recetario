@@ -385,7 +385,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   switch (ruta.vista) {
     case 'recetario':
       return pintar(renderRecetario({
-        categorias: store.categoriasConConteo(), borradores: store.borradores().length, menuAbierto
+        categorias: store.categoriasConConteo(), borradores: store.borradores().length,
+        menuAbierto, tags: store.tagsDe()
       }));
 
     case 'categoria': {
@@ -393,7 +394,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       const entradas = store.buscar({ categoria: nombre, tags: tagsActivos });
       pintar(renderCategoria({
         nombre, entradas: entradas.slice(0, visibles), total: entradas.length,
-        visibles: Math.min(visibles, entradas.length), tagsActivos
+        visibles: Math.min(visibles, entradas.length), tagsActivos, tags: store.tagsDe(nombre)
       }));
       return observarTramo();
     }

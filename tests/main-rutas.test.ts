@@ -63,7 +63,9 @@ const estado = {
   /** Los tags con los que se guardó cada vez que se tocó la estrella, en orden. */
   guardados: [] as { tags: string[] }[],
   /** Cuántas veces más falla `guardar` antes de andar, para probar el aviso de la estrella. */
-  fallaGuardar: 0
+  fallaGuardar: 0,
+  /** Lo que devuelve `store.tagsDe()`, ya ordenado por cantidad (P27). */
+  tags: [] as { tag: string; cantidad: number }[]
 };
 
 const storeFake = {
@@ -90,7 +92,7 @@ const storeFake = {
   categorias: () => [{ id: 'c1', nombre: 'Carnes', color: 'carnes', foto: 'catalogo:carnes' }],
   buscar: () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })],
   buscarPorTexto: () => ({ porNombre: [], porIngrediente: [], porTag: [] }),
-  tagsDe: () => [],
+  tagsDe: () => estado.tags,
   crear: async (receta: { titulo: string | null }) => {
     estado.creadas.push(receta.titulo ?? '');
     return { id: `nuevo-${estado.creadas.length}`, nombre_archivo: 'receta.md' };
@@ -152,6 +154,7 @@ describe('main.ts: las rutas', () => {
     estado.categoriasBorradas = [];
     estado.guardados = [];
     estado.fallaGuardar = 0;
+    estado.tags = [];
     vi.unstubAllGlobals();
     delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
@@ -282,6 +285,14 @@ describe('main.ts: las rutas', () => {
       await abrir(hash);
       expect(app.innerHTML, hash).toContain(marca);
     }
+  });
+
+  it('el Recetario corta el carrusel en veinte tags', async () => {
+    estado.tags = Array.from({ length: 25 }, (_, i) => ({ tag: `t${i}`, cantidad: 25 - i }));
+    const { abrir, app } = await montar();
+    await abrir('#/');
+    expect(app.innerHTML).toContain('>t19<');
+    expect(app.innerHTML).not.toContain('>t20<');
   });
 
   it('un link de invitado con la app ya abierta recarga: la vista de invitado se decide al cargar', async () => {

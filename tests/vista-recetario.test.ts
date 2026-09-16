@@ -17,6 +17,16 @@ describe('Recetario', () => {
     expect(html).toContain('placeholder="Buscar receta o ingrediente"');
   });
 
+  it('dibuja el carrusel debajo de la búsqueda y arriba de las categorías', () => {
+    const html = dibujar({ tags: [{ tag: 'horno', cantidad: 3 }] });
+    expect(html.indexOf('data-accion="buscar"')).toBeLessThan(html.indexOf('carrusel-marco'));
+    expect(html.indexOf('carrusel-marco')).toBeLessThan(html.indexOf('Categorías'));
+  });
+
+  it('sin tags no hay carrusel', () => {
+    expect(dibujar({ tags: [] })).not.toContain('carrusel-marco');
+  });
+
   it('las dieciséis categorías salen del índice, ninguna del código', () => {
     expect(dibujar({ categorias: [] })).not.toContain('class="tile"');
   });

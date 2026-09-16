@@ -7,9 +7,7 @@
  * scrollea (C02.5.2). El spinner del final no es una espera de red —el índice
  * ya está en memoria— sino la señal de que hay más tramo.
  */
-import { encabezado, tarjeta, vacio, SPINNER } from './componentes.js';
-import { escapar } from './markdown.js';
-import { ICO } from './iconos.js';
+import { encabezado, tarjeta, vacio, SPINNER, carruselTags } from './componentes.js';
 import { ordenarRecetas } from '../catalogo.js';
 import type { Entrada } from '../tipos.js';
 
@@ -21,18 +19,18 @@ export interface OpcionesCategoria {
   total: number;
   visibles: number;
   tagsActivos: string[];
+  /** Los tags de la categoría, ya ordenados por cantidad (P27). */
+  tags?: { tag: string; cantidad: number }[];
 }
 
 export function renderCategoria(
-  { nombre, entradas, total, visibles, tagsActivos }: OpcionesCategoria
+  { nombre, entradas, total, visibles, tagsActivos, tags }: OpcionesCategoria
 ): string {
   const activos = Array.isArray(tagsActivos) ? tagsActivos : [];
 
-  const filtros = activos.length
-    ? '<div class="chips">' + activos.map(tag =>
-        `<button class="chip act" data-accion="quitar-tag" data-tag="${escapar(tag)}">` +
-        `${escapar(tag)}${ICO.cerrar}</button>`).join('') + '</div>'
-    : '';
+  // El carrusel reemplaza a la fila de chips activos: los puestos se ven
+  // encendidos ahí mismo, y se sacan tocándolos de nuevo (P27).
+  const filtros = carruselTags(tags ?? [], { activos });
 
   // Las favoritas primero; dentro de cada bloque, alfabético (P27).
   const lista = ordenarRecetas(entradas).map(e => tarjeta(e)).join('');

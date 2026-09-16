@@ -8,7 +8,7 @@
  *
  * Mockup 03.
  */
-import { encabezado, tile, lateral, botonMenu } from './componentes.js';
+import { encabezado, tile, lateral, botonMenu, carruselTags } from './componentes.js';
 import { ICO } from './iconos.js';
 
 export interface OpcionesRecetario {
@@ -17,10 +17,12 @@ export interface OpcionesRecetario {
   borradores: number;
   /** El menú lateral está desplegado (sólo en pantalla angosta). */
   menuAbierto?: boolean;
+  /** Los tags del recetario entero, ya ordenados por cantidad (P27). */
+  tags?: { tag: string; cantidad: number }[];
 }
 
 export function renderRecetario(
-  { categorias, borradores, menuAbierto }: OpcionesRecetario
+  { categorias, borradores, menuAbierto, tags }: OpcionesRecetario
 ): string {
   // Alfabético y no por cantidad: la posición de la categoría en la grilla es
   // justo lo que se aprende, y reacomodarla cada vez que entra una receta la
@@ -39,6 +41,9 @@ export function renderRecetario(
         '<div class="buscar">' + ICO.buscar +
           '<input data-accion="buscar" placeholder="Buscar receta o ingrediente">' +
         '</div>' +
+        // Los veinte más usados: con cientos de recetas la cola larga no aporta,
+        // y para eso está la búsqueda.
+        carruselTags(tags ?? [], { tope: 20 }) +
         '<div><div class="rot">Categorías</div>' +
         `<div class="grilla">${grilla}</div></div>` +
       '</div>' +
