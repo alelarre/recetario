@@ -245,6 +245,11 @@ describe('la estrella de favorito', () => {
     expect(html).not.toContain('class="fav on"');
   });
 
+  it('va antes que compartir (spec §3.1)', () => {
+    const html = renderReceta({ entrada: entradaFalsa(), receta });
+    expect(html.indexOf('data-accion="favorito"')).toBeLessThan(html.indexOf('data-accion="compartir"'));
+  });
+
   it('se enciende cuando la receta lleva el tag', () => {
     const conTag = parse('---\ntitulo: Asado\ntags: [favorito]\n---\n');
     const html = renderReceta({ entrada: entradaFalsa(), receta: conTag });
