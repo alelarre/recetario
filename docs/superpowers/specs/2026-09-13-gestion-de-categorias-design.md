@@ -1,7 +1,7 @@
 # Gestión de categorías — diseño (P15/P19, etapa 3a)
 
 **Fecha:** 2026-09-13
-**Estado:** Aprobado en conversación; pendiente de revisión escrita.
+**Estado:** Implementado y probado en el teléfono `[2026-09-15]`.
 **Resuelve:** la etapa 3a de `product-design/plan/BACKLOG.md` P15/P19.
 **Se apoya en:** `docs/superpowers/specs/2026-09-13-categorias-en-el-indice-design.md`
 (etapa 1) y `docs/superpowers/specs/2026-09-13-carpeta-base-design.md` (etapa 2).

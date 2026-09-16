@@ -1,7 +1,7 @@
 # Índice local — diseño
 
 **Fecha:** 2026-09-13
-**Estado:** Aprobado en conversación; pendiente de revisión escrita.
+**Estado:** Implementado y probado en el teléfono `[2026-09-15]`.
 **Resuelve:** `product-design/plan/BACKLOG.md` P12 — cómo se sabe si el índice está al día.
 **Reabre:** «No hay copia local del índice» (`decision-log.md`, 2026-09-06), C05.4.2 y
 C05.8.1 de `E05-Cimientos.md`, y la fila «Funcionar sin conexión» de las decisiones

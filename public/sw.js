@@ -1,6 +1,7 @@
-// Service worker: solo cachea el app shell. Los datos los cachea IndexedDB (§6);
-// si este archivo cacheara respuestas de las APIs de Google, la app mostraría
-// datos viejos sin forma de saberlo.
+// Service worker: solo cachea el app shell. Los datos no se cachean acá —la
+// copia del índice vive en localStorage (P12)—: si este archivo cacheara
+// respuestas de las APIs de Google, la app mostraría datos viejos sin forma de
+// saberlo.
 const CACHE = 'recetario-v1';
 const SHELL = ['./', './index.html', './manifest.webmanifest'];
 

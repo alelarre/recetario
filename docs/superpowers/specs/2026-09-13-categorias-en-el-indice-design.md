@@ -1,7 +1,7 @@
 # Categorías en el índice — diseño (P15/P19, etapa 1)
 
 **Fecha:** 2026-09-13
-**Estado:** Aprobado en conversación; pendiente de revisión escrita.
+**Estado:** Implementado y probado en el teléfono `[2026-09-15]`.
 **Resuelve:** la etapa 1 de `product-design/plan/BACKLOG.md` P15/P19.
 **Se apoya en:** `docs/superpowers/specs/2026-09-13-indice-local-design.md` y
 `docs/superpowers/specs/2026-09-13-borradores-md-design.md`.

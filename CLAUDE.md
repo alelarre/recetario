@@ -31,28 +31,24 @@ de Ajustes (P18).
 la foto son propiedades de la carpeta, las predefinidas viven en
 `src/categorias.ts`, la hoja `categorias` entra en la copia local y abrir con la
 copia vigente es un pedido. Spec en
-`docs/superpowers/specs/2026-09-13-categorias-en-el-indice-design.md`. **Falta
-probarlo en el teléfono.**
+`docs/superpowers/specs/2026-09-13-categorias-en-el-indice-design.md`. Probado en el teléfono.
 
 **Hecho el 2026-09-13 — carpeta base elegida (P15/P19, etapa 2):** la app encuentra
 su carpeta por una marca, ofrece un selector cuando falta, arma la estructura con
 las 16 predefinidas y permite cambiar de carpeta desde Ajustes. Spec en
-`docs/superpowers/specs/2026-09-13-carpeta-base-design.md`. **Falta probarlo en el
-teléfono.**
+`docs/superpowers/specs/2026-09-13-carpeta-base-design.md`. Probado en el teléfono.
 
 **Hecho el 2026-09-13 — gestión de categorías (P15/P19, etapa 3a):** crear,
 renombrar, editar color y foto, y borrar categorías desde *Ajustes → Recetario*; el
 nombre de la categoría de cada receta sale de su carpeta. Spec en
-`docs/superpowers/specs/2026-09-13-gestion-de-categorias-design.md`. **Falta
-probarlo en el teléfono.**
+`docs/superpowers/specs/2026-09-13-gestion-de-categorias-design.md`. Probado en el teléfono.
 
 **Hecho el 2026-09-14:** el ícono nuevo —una olla con vapor en los colores de la
 app, `public/icono.svg` como fuente y los PNG también `maskable`—, deslizar para
 abrir y cerrar el menú lateral (`src/ui/gesto-menu.ts`, empieza a 24 px del borde
 porque desde el borde Android lo toma como «atrás»), y el arreglo del Share
 Target: lo compartido llega en la query y `hashDeCompartido` lo pasa a
-`#/capturar`. **Falta probar las tres cosas en el teléfono**, con la PWA
-reinstalada desde el ⋮ de Chrome para que tome el manifest nuevo.
+`#/capturar`. Probado en el teléfono con la PWA reinstalada.
 
 **Hecho el 2026-09-14 — compartir recetas (P23):** desde un ícono en el
 encabezado de la receta: **PDF** (pdfmake con Inter embebida, 105 × 180 mm, tema
@@ -61,25 +57,20 @@ en el fragmento, sin tags, y se puede leer y cocinar— y **Texto** para cualqui
 app, con la negrita y la itálica de WhatsApp. Es una copia del momento: nada
 queda publicado en Drive. Spec en
 `docs/superpowers/specs/2026-09-14-compartir-recetas-design.md`, plan en
-`docs/superpowers/plans/2026-09-14-compartir-recetas.md`. **Falta probarlo en
-el teléfono:**
+`docs/superpowers/plans/2026-09-14-compartir-recetas.md`. Probado en el teléfono
+el 2026-09-15: el PDF y el texto por WhatsApp, y el link abierto desde el
+teléfono. De probarlo salió `de2319d`: los controles se marcan mientras el dedo
+está apoyado —el hover pasó a `@media (hover: hover)`, porque en el teléfono
+quedaba pegado— y la ficha de compartir traba el scroll de la página de atrás.
 
-- Que el chunk de pdfmake funcione dentro del build de Vite.
-- Cuánto tarda en generar en un Android real, y si la primera vez entra en la
-  ventana de activación.
-- Cómo llega el PDF a WhatsApp, y cómo se ve el texto en WhatsApp y en otra app
-  destino.
-- Que el link abra la vista de invitado desde WhatsApp, y el modo cocina con la
-  pantalla encendida.
-
-**Para retomar:** probar en el teléfono lo que dice «Falta probarlo» arriba —las
-etapas 1, 2 y 3a de P19, lo del 2026-09-14 y lo de compartir—. Lo siguiente del
+**Para retomar:** no queda nada esperando prueba en el teléfono. Lo siguiente del
 backlog es la **etapa 3b de P19** (imágenes propias de categorías en Drive,
 guardadas en Cache Storage, y que *Borrar datos locales* también las borre),
-**P26** (rediseñar el selector de carpetas: primero entender qué no convence) y
-**P27** (favoritos y tags especiales: primero propuestas). Las features grandes
-se trabajan con spec y plan en `docs/superpowers/`, y el código no se commitea
-hasta que el usuario revisa el diff.
+**P26** (rediseñar el selector de carpetas: primero entender qué no convence),
+**P27** (favoritos y tags especiales: primero propuestas) y **P28** (un agente
+embebido que convierta un borrador en receta). Las features grandes se trabajan
+con spec y plan en `docs/superpowers/`, y el código no se commitea hasta que el
+usuario revisa el diff.
 
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
 - El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
@@ -115,16 +106,13 @@ encabezado estaba emitiendo una acción que el cableado no escuchaba, el ⋯ de 
 receta se eliminó por no tener contenido, y los **tags del editor** pasaron a
 ser pills con su cruz.
 
-Falta verificar a mano lo que ningún test alcanza: el **Share Target real**
-(necesita la PWA instalada en Android; desde el 2026-09-14 lo compartido llega en
-la query y `hashDeCompartido` lo pasa a `#/capturar`), el foco del teclado en la captura, la
-posición de scroll al conmutar en el modo cocina y el gesto de atrás de Android
-en el editor con cambios sin guardar. Y de 2026-09-13, en el teléfono: que tocar
-un paso en cocina ya no resalte la pantalla entera (`f1214ac` es una hipótesis
-sin confirmar), que el sol y *Salir* respondan en toda su área de 64 px (P16), y
-que la pantalla siga encendida al volver de segundo plano. Y de 2026-09-14: que
-deslizar hacia la derecha, empezando a 24 px del borde, abra el menú lateral en
-Recetario, Borradores y Ajustes, y que deslizar a la izquierda lo cierre.
+Lo que ningún test alcanza se verificó a mano en el teléfono `[2026-09-15]`: el
+Share Target real, el foco del teclado en la captura, la posición de scroll al
+conmutar en el modo cocina, el gesto de atrás de Android en el editor con
+cambios sin guardar, que tocar un paso en cocina no resalte la pantalla entera,
+que el sol y *Salir* respondan en toda su área de 64 px (P16), que la pantalla
+siga encendida al volver de segundo plano, y que deslizar desde 24 px del borde
+abra y cierre el menú lateral.
 
 Para lo demás, según lo que necesites:
 
@@ -282,8 +270,8 @@ el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
 
-**Estado al 2026-09-14:** resueltos P1 a P13, P16 a P18, P20 a P22, P24 y P25;
-P15 cerrado (lo resolvió P19 desde la app); P23 resuelto; §6.4 y §6.5 cerradas.
+**Estado al 2026-09-15:** resueltos P1 a P13, P16 a P18, P20 a P25 —P23 probado en
+el teléfono—; P15 cerrado (lo resolvió P19 desde la app); §6.4 y §6.5 cerradas.
 Quedan abiertos:
 
 - **P14** —rehacer el skill del agente—. El conector de Google Drive de claude.ai

@@ -118,8 +118,9 @@ como catálogo —los marcos de 390 y 1280 px, los rótulos, `.pagina`, `.fila`,
 **Nada obligatorio.** Los `.md` no se migran: la convención de ingredientes se
 escribió contra el contenido que ya está, justamente para no tener que tocarlo.
 
-Lo único a decidir: **la planilla de borradores** hay que crearla, y la crea la
-app la primera vez, igual que hace con `_indice`.
+Lo único a decidir era **dónde viven los borradores**: eran una planilla que la
+app creaba sola, y desde el 2026-09-13 son un `.md` por borrador en
+`Recetario/_borradores/` con su hoja en `_indice`.
 
 ---
 

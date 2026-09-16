@@ -1,8 +1,8 @@
 # Backlog
 
-**Versión:** 1.1
-**Fecha:** 2026-09-12
-**Estado:** Final — Hito 11, con los pendientes de uso real del §6
+**Versión:** 1.2
+**Fecha:** 2026-09-15
+**Estado:** Vivo — el §6 se edita a medida que los pendientes se resuelven
 
 ---
 
@@ -35,7 +35,7 @@ sino de usar la app terminada. Son cosas para hacer, no cosas descartadas.
 | **Sugerencias para J5** — *"hace mucho que no hacés esto"* | La novedad se resuelve mostrando, no registrando. Y registrar obliga a guardar historial de uso, que el esquema no tiene. | Va **entre** la búsqueda y las categorías, nunca arriba. |
 | **Un control de filtro visible sobre las listas** | Quedó a decidir "al ver la pantalla llena". Se vio en el Hito 9 y no hizo falta: los tags se aplican desde la receta. | — |
 | **Ordenar dentro de una categoría** | Mismo caso. Con veinte recetas el alfabético alcanza; con cientos habría que volver a mirarlo. | — |
-| **Que la app sugiera tags** | `[abierto]` de `ux/information-architecture.md` §4.5. Con sesenta recetas el desorden de tags no molesta. | Recién si con mil recetas molesta. |
+| **Que la app sugiera tags** | Quedó abierto en `ux/information-architecture.md` (Hito 6). Con sesenta recetas el desorden de tags no molesta. | Recién si con mil recetas molesta. |
 | **Historial de cocina, escalado de porciones, timers** | Ningún job los pide. | — |
 | **Modo offline** | Decisión, no carencia: sin Drive no hay app, y una copia local es una segunda fuente de verdad. | — |
 | **iOS** | Salió del alcance en el Hito 7. No tiene Share Target, y un equivalente declarado sin diseñar es una deuda que nadie implementa. | Sería un Atajo, con la misma pantalla de captura. |

@@ -1,7 +1,7 @@
 # Compartir recetas — diseño (P23)
 
 **Fecha:** 2026-09-14
-**Estado:** Implementado el 2026-09-14; falta probarlo en el teléfono.
+**Estado:** Implementado el 2026-09-14 y probado en el teléfono el 2026-09-15.
 **Resuelve:** `product-design/plan/BACKLOG.md` P23.
 **Entrega:** un único commit —código, spec, plan y documentación—, para poder
 revertir la función entera de una vez.

@@ -1,7 +1,7 @@
 # Borradores como `.md` — diseño
 
 **Fecha:** 2026-09-13
-**Estado:** Aprobado en conversación; pendiente de revisión escrita.
+**Estado:** Implementado y probado en el teléfono `[2026-09-15]`.
 **Reemplaza:** `product-design/plan/BACKLOG.md` P21.
 **Reabre:** «El borrador no entra al índice» (`information-architecture.md` §2.1),
 C01.4.1, C01.4.2, C01.6.2 y C01.7.1 de `E01-CapturaYBorradores.md`.
