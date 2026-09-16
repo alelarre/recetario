@@ -5,7 +5,8 @@
  */
 import { escapar, aHtml, tramosAHtml, tramosDeFuente } from './markdown.js';
 import { colorCategoria } from './categorias.js';
-import { contextoDe, gruposDe, tramosDe, variacionesDe } from '../recipe.js';
+import { duracionConReloj } from './componentes.js';
+import { gruposDe, tramosDe, variacionesDe } from '../recipe.js';
 import type { Receta, GrupoIngredientes, TramoPreparacion } from '../tipos.js';
 
 export const ficha = (contenido: string, titulo?: string): string =>
@@ -45,13 +46,14 @@ export interface OpcionesCabecera {
  * dato de procedencia y con los cuatro bloques pegados no se leía ninguno.
  */
 export function fichaCabecera({ receta, categoria, marcas = '', pin = true }: OpcionesCabecera): string {
-  const contexto = contextoDe(receta, categoria);
+  const partes = [escapar(categoria), escapar(receta.rinde ?? ''), duracionConReloj(receta.tiempo), escapar(receta.dificultad ?? '')]
+    .filter(Boolean);
   const fuente = receta.fuente ? tramosAHtml(tramosDeFuente(receta.fuente)) : '';
   return ficha(
     (receta.foto ? `<img class="rec-foto" src="${escapar(receta.foto)}" alt="" loading="lazy">` : '') +
     `<h1 class="rec-tit">${escapar(receta.titulo ?? 'Sin título')}</h1>` +
-    (contexto
-      ? `<div class="rec-ctx">${categoria && pin ? `<span class="pin" style="background:${colorCategoria(categoria)}"></span>` : ''}${escapar(contexto)}</div>`
+    (partes.length
+      ? `<div class="rec-ctx">${categoria && pin ? `<span class="pin" style="background:${colorCategoria(categoria)}"></span>` : ''}<span class="ctx-txt">${partes.join(' · ')}</span></div>`
       : '') +
     marcas +
     // La descripción es de la receta, no una sección aparte: va en la misma

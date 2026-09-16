@@ -4,14 +4,24 @@ import {
 } from '../src/ui/componentes.js';
 import { entradaFalsa } from './dobles.js';
 import { registrarCategorias } from '../src/ui/categorias.js';
-import { ICO } from '../src/ui/iconos.js';
+import { ICO, ICONO_DE_DURACION as ICO_DUR } from '../src/ui/iconos.js';
 
 describe('tarjeta', () => {
-  it('lleva foto, título y la línea de contexto con categoría y tiempo', () => {
-    const html = tarjeta(entradaFalsa({ titulo: 'Rabas', categoria: 'Pescados y mariscos', tiempo: '30 min' }));
+  it('lleva foto, título y la línea de contexto con categoría y duración, con su relojito', () => {
+    const html = tarjeta(entradaFalsa({ titulo: 'Rabas', categoria: 'Pescados y mariscos', tiempo: '~30 min', rinde: '4 porciones' }));
     expect(html).toContain('Rabas');
-    expect(html).toContain('Pescados y mariscos');
-    expect(html).toContain('30 min');
+    expect(html).toContain(`Pescados y mariscos · <span class="dur">${ICO_DUR['~30 min']}~30 min</span> · 4 porciones`);
+  });
+
+  it('sin duración válida, la línea no la nombra', () => {
+    const html = tarjeta(entradaFalsa({ categoria: 'Carnes', tiempo: '55 min', rinde: '4' }));
+    expect(html).toContain('Carnes · 4');
+    expect(html).not.toContain('class="dur"');
+  });
+
+  it('con motivo, la duración va después del motivo', () => {
+    const html = tarjeta(entradaFalsa({ tiempo: '>60 min' }), { motivo: 'tiene tag horno' });
+    expect(html).toContain(`<span class="motivo">tiene tag horno</span> · <span class="dur">${ICO_DUR['>60 min']}&gt;60 min</span>`);
   });
 
   it('lleva a la receta', () => {
@@ -74,7 +84,8 @@ describe('las marcas de la tarjeta', () => {
 
   it('la línea de contexto no lleva ninguna marca', () => {
     const html = tarjeta(entradaFalsa({ titulo: 'Pan', categoria: 'Panes', tags: ['incompleta'] }));
-    const ctx = html.slice(html.indexOf('class="ctx"'), html.indexOf('</span></span>'));
+    const inicio = html.indexOf('class="ctx"');
+    const ctx = html.slice(inicio, html.indexOf('</span></span>', inicio));
     expect(ctx).not.toContain('class="inc"');
   });
 

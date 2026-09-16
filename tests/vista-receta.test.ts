@@ -4,7 +4,7 @@ import { renderFichaCompartir } from '../src/ui/compartir.js';
 import { parse } from '../src/recipe.js';
 import { entradaFalsa } from './dobles.js';
 import { registrarCategorias } from '../src/ui/categorias.js';
-import { ICO } from '../src/ui/iconos.js';
+import { ICO, ICONO_DE_DURACION } from '../src/ui/iconos.js';
 
 const MINIMA = parse('---\ntitulo: A\n---\n');
 
@@ -241,6 +241,17 @@ describe('Receta en lectura', () => {
   it('sin estado de compartir no hay ficha; con estado, sí', () => {
     expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('hoja-compartir');
     expect(renderReceta({ entrada: null, receta: COMPLETA, compartir: { paso: 'opciones' } })).toContain('hoja-compartir');
+  });
+
+  it('la línea de contexto de la receta lleva la duración con su relojito', () => {
+    const r = parse('---\ntitulo: Pan\nrinde: 4\ntiempo: ~60 min\n---\n');
+    const html = renderReceta({ entrada: entradaFalsa({ categoria: 'Panes y masas' }), receta: r });
+    expect(html).toContain(`<span class="dur">${ICONO_DE_DURACION['~60 min']}~60 min</span>`);
+  });
+
+  it('un tiempo inválido no aparece en la receta', () => {
+    const r = parse('---\ntitulo: Pan\ntiempo: 55 min\n---\n');
+    expect(renderReceta({ entrada: entradaFalsa(), receta: r })).not.toContain('55 min');
   });
 });
 

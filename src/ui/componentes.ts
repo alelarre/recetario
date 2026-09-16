@@ -8,11 +8,17 @@
  */
 import { escapar } from './markdown.js';
 import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
-import { ICO } from './iconos.js';
+import { ICO, ICONO_DE_DURACION } from './iconos.js';
 import { textoVersion } from '../version.js';
-import { tagEspecial, ordenarTags, tieneEspecial, TAGS_ESPECIALES } from '../catalogo.js';
+import { tagEspecial, ordenarTags, tieneEspecial, TAGS_ESPECIALES, duracionValida } from '../catalogo.js';
 import type { Entrada } from '../tipos.js';
 import type { TagEspecial } from '../catalogo.js';
+
+/** La duración con su relojito, o nada si el tiempo no es uno de los cinco valores (P29). */
+export function duracionConReloj(tiempo: unknown): string {
+  const d = duracionValida(tiempo);
+  return d ? `<span class="dur">${ICONO_DE_DURACION[d]}${escapar(d)}</span>` : '';
+}
 
 /** §5.1 — el spinner del final de la lista y de las esperas. */
 export const SPINNER = '<div class="spin"></div>';
@@ -78,10 +84,11 @@ const NOMBRE_DE_MARCA: Record<TagEspecial, string> = {
 
 /** §6.1 — Foto, título y una línea de contexto. Alto total 80 px. */
 export function tarjeta(e: Entrada, { motivo }: OpcionesTarjeta = {}): string {
+  const dur = duracionConReloj(e.tiempo);
   const contexto = motivo
-    ? `<span class="motivo">${escapar(motivo)}</span>`
+    ? `<span class="ctx-txt"><span class="motivo">${escapar(motivo)}</span>${dur ? ` · ${dur}` : ''}</span>`
     : `<span class="pin" style="background:${colorCategoria(e.categoria)}"></span>` +
-      escapar([e.categoria, e.tiempo, e.rinde].filter(Boolean).join(' · '));
+      `<span class="ctx-txt">${[escapar(e.categoria), dur, escapar(e.rinde)].filter(Boolean).join(' · ')}</span>`;
   // Las marcas de los especiales, juntas en la esquina y en su orden (P27): la
   // línea de contexto queda sólo con datos. `--marcas` reserva el ancho que
   // ocupan, para que el título no pase por debajo.

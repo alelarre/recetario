@@ -158,6 +158,12 @@ body {
 .tarjeta .motivo { color: var(--acento); }
 .pin { width: 8px; height: 8px; border-radius: var(--r-chico); flex: 0 0 8px; background: var(--cat-otros); }
 
+/* P29 — la duración va en la misma línea de texto, con el relojito pegado. */
+.ctx-txt { min-width: 0; }
+.dur { white-space: nowrap; }
+.dur svg { width: 15px; height: 15px; vertical-align: -3px; margin-right: 3px; stroke: currentColor; fill: none;
+           stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
 /* §6.1 — Las marcas de los tags especiales, juntas en la esquina de la tarjeta
    (P27). `--marcas` es cuántas hay: la reserva de ancho del título crece con
    ellas, y una tarjeta sin marcas no pierde nada. */
