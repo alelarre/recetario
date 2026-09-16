@@ -18,4 +18,8 @@ describe('config', () => {
   it('declara una versión de esquema entera', () => {
     expect(Number.isInteger(SCHEMA_VERSION)).toBe(true);
   });
+
+  it('SCHEMA_VERSION es 6: la fila perdió la columna completa', () => {
+    expect(SCHEMA_VERSION).toBe(6);
+  });
 });

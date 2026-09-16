@@ -245,8 +245,6 @@ export function recetaDesdeFormulario(datos: DatosFormulario, base: Receta): Rec
     dificultad: dificultadValida(datos['dificultad']) || null,
     fuente: texto('fuente'),
     foto: texto('foto'),
-    // Transitorio: la tarea 3 saca el campo de la receta.
-    completa: base.completa,
     descripcion: datos['descripcion'] ?? base.descripcion,
     ingredientes: datos['ingredientes'] ?? base.ingredientes,
     preparacion: datos['preparacion'] ?? base.preparacion,

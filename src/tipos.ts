@@ -16,9 +16,9 @@
  *   resuelve en el borde.
  */
 
-/** Las ocho claves del frontmatter (IA §1.5). El esquema es cerrado. */
+/** Las siete claves del frontmatter (IA §1.5). El esquema es cerrado. */
 export type ClaveFrontmatter =
-  'titulo' | 'tags' | 'rinde' | 'tiempo' | 'dificultad' | 'fuente' | 'foto' | 'completa';
+  'titulo' | 'tags' | 'rinde' | 'tiempo' | 'dificultad' | 'fuente' | 'foto';
 
 /** Las cuatro secciones que la app entiende; el resto cae en `otras`. */
 export type ClaveSeccion = 'ingredientes' | 'preparacion' | 'variaciones' | 'notas';
@@ -48,9 +48,7 @@ export interface Receta {
   dificultad: string | null;
   fuente: string | null;
   foto: string | null;
-  /** Solo se escribe para forzar `true`; la app nunca escribe `false` (C05.3.2). */
-  completa: boolean;
-  /** Claves del frontmatter que no son las ocho. Se preservan al guardar. */
+  /** Claves del frontmatter que no son las siete. Se preservan al guardar. */
   extras: Record<string, string>;
   descripcion: string;
   ingredientes: string;
@@ -125,8 +123,6 @@ export interface Entrada {
   mtime: number;
   /** URL externa, o cadena vacía. Se dibuja donde esté (IA §1.7). */
   foto: string;
-  /** Derivada al leer el `.md` (C05.3.1). Es cache: el archivo gana (R4). */
-  completa: boolean;
 }
 
 /**

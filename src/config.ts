@@ -19,6 +19,8 @@ export const MARCA_RAIZ = { clave: 'recetario', valor: 'raiz' } as const;
 // arranque. Fue a 2 con el rediseño —la fila sumó `foto` y `completa`—, a 3
 // el 2026-09-12 —la columna `completa` pasó de guardar un cálculo a guardar lo
 // que dice el `.md`—, a 4 el 2026-09-13, cuando la planilla sumó la hoja
-// `borradores`, y a 5 el mismo día, cuando sumó la hoja `categorias` y las
-// carpetas pasaron a guardar su color y su foto como propiedades.
-export const SCHEMA_VERSION = 5;
+// `borradores`, a 5 el mismo día, cuando sumó la hoja `categorias` y las
+// carpetas pasaron a guardar su color y su foto como propiedades, y a 6 el
+// 2026-09-16, cuando la fila perdió la columna `completa`: la completitud
+// pasó a ser el tag especial `incompleta`.
+export const SCHEMA_VERSION = 6;

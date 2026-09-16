@@ -10,7 +10,6 @@ const MINIMA = parse('---\ntitulo: A\n---\n');
 
 const COMPLETA = parse(`---
 titulo: Rabas
-completa: sí
 tags: [fritura]
 rinde: 4 porciones
 fuente: Recetario original
@@ -141,33 +140,37 @@ describe('Receta en lectura', () => {
   });
 
   it('la marca de incompleta es tocable y abre el editor', () => {
-    const html = renderReceta({ entrada: null, receta: MINIMA });
+    const conTag = parse('---\ntitulo: A\ntags: [incompleta]\n---\n');
+    const html = renderReceta({ entrada: null, receta: conTag });
     expect(html).toContain('data-accion="editar"');
     expect(html).toContain('class="inc');
   });
 
   it('la marca es un chip de la fila de tags, y el primero', () => {
-    const conTags = parse('---\ntitulo: A\ntags: [vegetariano, legumbres]\ncompleta: no\n---\n');
+    const conTags = parse('---\ntitulo: A\ntags: [incompleta, vegetariano, legumbres]\n---\n');
     const html = renderReceta({ entrada: null, receta: conTags });
     const fila = html.slice(html.indexOf('<div class="chips">'), html.indexOf('</div>', html.indexOf('<div class="chips">')));
     expect(fila).toContain('chip pend');
     expect(fila).toContain('Incompleta');
     // Primero el estado, después los tags.
     expect(fila.indexOf('Incompleta')).toBeLessThan(fila.indexOf('vegetariano'));
-    // Y una sola vez: suelto debajo de los chips se montaba sobre ellos.
+    // Y una sola vez: el tag no se repite como chip suelto, la marca ya lo dice.
     expect(html.split('class="inc"').length - 1).toBe(1);
   });
 
-  it('sin tags, la marca arma igual la fila de chips', () => {
-    const html = renderReceta({ entrada: null, receta: MINIMA });
+  it('sin otros tags, la marca arma igual la fila de chips', () => {
+    const soloIncompleta = parse('---\ntitulo: A\ntags: [incompleta]\n---\n');
+    const html = renderReceta({ entrada: null, receta: soloIncompleta });
     expect(html).toContain('<div class="chips">');
   });
 
-  it('la marca sale del archivo: una receta declarada terminada no la lleva', () => {
-    expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('class="inc"');
-    // Y una escrita entera pero sin declarar, sí.
-    const sinDeclarar = parse('---\ntitulo: A\n---\n## Ingredientes\n- Sal\n## Preparación\n1. Salar.');
-    expect(renderReceta({ entrada: null, receta: sinDeclarar })).toContain('class="inc"');
+  it('la marca es el tag incompleta, no un dato calculado', () => {
+    // Sin el tag no aparece, aunque a la receta le falte todo.
+    const sinTag = parse('---\ntitulo: A\n---\n');
+    expect(renderReceta({ entrada: null, receta: sinTag })).not.toContain('class="inc"');
+    // Con el tag aparece, aunque la receta esté escrita entera.
+    const conTag = parse('---\ntitulo: A\ntags: [incompleta]\n---\n## Ingredientes\n- Sal\n## Preparación\n1. Salar.');
+    expect(renderReceta({ entrada: null, receta: conTag })).toContain('class="inc"');
   });
 
   it('las variaciones como bullets se muestran como lista', () => {

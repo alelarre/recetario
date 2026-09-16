@@ -4,7 +4,7 @@ import { entradaFalsa } from './dobles.js';
 
 const veinte = Array.from({ length: 20 }, (_, i) =>
   entradaFalsa({ id_archivo: `f${i}`, titulo: `Receta ${String(i).padStart(2, '0')}`,
-                 categoria: 'Pescados y mariscos', completa: true }));
+                 categoria: 'Pescados y mariscos' }));
 
 describe('Categoría', () => {
   it('el total del encabezado es el total real desde el primer momento', () => {
@@ -53,7 +53,7 @@ describe('Categoría', () => {
   });
 
   it('una receta incompleta se lista igual y no se ordena distinto', () => {
-    const entradas = [entradaFalsa({ titulo: 'A', completa: false }), entradaFalsa({ titulo: 'B', completa: true })];
+    const entradas = [entradaFalsa({ titulo: 'A', tags: ['incompleta'] }), entradaFalsa({ titulo: 'B' })];
     const html = renderCategoria({ nombre: 'C', entradas, total: 2, visibles: 2, tagsActivos: [], tags: [] });
     expect(html.indexOf('>A<')).toBeLessThan(html.indexOf('>B<'));
   });

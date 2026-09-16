@@ -329,7 +329,7 @@ export function entradaFalsa(parcial: Partial<Entrada> = {}): Entrada {
   return {
     id_archivo: '', nombre_archivo: '', titulo: '', categoria: '', carpeta_id: '',
     rinde: '', tiempo: '', dificultad: '', fuente: '',
-    tags: [], ingredientes: [], mtime: 0, foto: '', completa: false,
+    tags: [], ingredientes: [], mtime: 0, foto: '',
     ...parcial
   };
 }

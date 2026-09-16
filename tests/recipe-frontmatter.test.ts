@@ -71,7 +71,7 @@ describe('parse — frontmatter', () => {
     expect(r.avisos).toContain('frontmatter-ilegible');
   });
 
-  it('lee las ocho claves', () => {
+  it('lee las siete claves', () => {
     const r = parse(`---
 titulo: Milanesas
 tags: [horno, rápido]
@@ -80,25 +80,18 @@ tiempo: 40 min
 dificultad: fácil
 fuente: Cuaderno de mamá, p. 12
 foto: https://ejemplo/foto.jpg
-completa: sí
 ---
 `);
     expect(r).toMatchObject({
       titulo: 'Milanesas', rinde: '4 porciones', tiempo: '40 min',
       dificultad: 'fácil', fuente: 'Cuaderno de mamá, p. 12',
-      foto: 'https://ejemplo/foto.jpg', completa: true
+      foto: 'https://ejemplo/foto.jpg'
     });
   });
 
   it('una clave ausente llega como null, no como cadena vacía', () => {
     const r = parse('---\ntitulo: Sopa\n---\n');
     expect(r.foto).toBe(null);
-    expect(r.completa).toBe(false);
-  });
-
-  it('`completa: false` y la clave ausente son lo mismo', () => {
-    expect(parse('---\ntitulo: A\ncompleta: false\n---\n').completa).toBe(false);
-    expect(parse('---\ntitulo: A\n---\n').completa).toBe(false);
   });
 
   it('una foto que no es una URL se conserva igual', () => {
@@ -107,6 +100,12 @@ completa: sí
 
   it('dificultad fuera de las tres se muestra tal cual, sin corregir', () => {
     expect(parse('---\ntitulo: A\ndificultad: imposible\n---\n').dificultad).toBe('imposible');
+  });
+
+  it('completa es una clave desconocida más: va a extras, tal cual', () => {
+    const r = parse('---\ntitulo: Pan\ncompleta: sí\n---\n');
+    expect(r.extras).toEqual({ completa: 'sí' });
+    expect('completa' in r).toBe(false);
   });
 });
 

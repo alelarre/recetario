@@ -21,8 +21,7 @@ export const COLUMNAS = [
   'tags',
   'ingredientes',
   'mtime',
-  'foto',
-  'completa'
+  'foto'
 ] as const satisfies ReadonlyArray<keyof Entrada>;
 
 export const DIFICULTADES = ['fácil', 'media', 'difícil'] as const;
@@ -30,7 +29,7 @@ export const DIFICULTADES = ['fácil', 'media', 'difícil'] as const;
 /** Si el tag es uno de los reservados, sin importar mayúsculas ni acentos. */
 export function tagReservado(valor: unknown): boolean {
   const n = normalizar(String(valor ?? ''));
-  return (TAGS_RESERVADOS as readonly string[]).some(t => normalizar(t) === n);
+  return TAGS_RESERVADOS.some(t => normalizar(t) === n);
 }
 
 /** Un valor que no matchea cae en "sin definir" en vez de romper el filtro (§3.2). */
@@ -92,10 +91,7 @@ export function filaDesde(receta?: Partial<Receta> | null, ubicacion?: Partial<U
     tags: tagsStr,
     ingredientes: ingredientesStr,
     mtime: String(typeof u.mtime === 'number' ? u.mtime : 0),
-    foto: typeof r.foto === 'string' ? r.foto : '',
-    // 'si' y no 'true': la celda la puede leer una persona en la planilla.
-    // Lo que dice el archivo, sin recalcular: la completitud es un dato.
-    completa: r.completa === true ? 'si' : ''
+    foto: typeof r.foto === 'string' ? r.foto : ''
   };
 
   return COLUMNAS.map(c => String(celdas[c] ?? ''));
@@ -131,8 +127,7 @@ export function entradaDesdeFila(fila?: unknown): Entrada {
     tags: partir(texto.tags),
     ingredientes: partir(texto.ingredientes),
     mtime: isNaN(mtimeNum) || mtimeNum < 0 ? 0 : mtimeNum,
-    foto: texto.foto,
-    completa: texto.completa === 'si'
+    foto: texto.foto
   };
 }
 

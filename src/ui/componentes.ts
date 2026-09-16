@@ -10,7 +10,7 @@ import { escapar } from './markdown.js';
 import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
 import { ICO } from './iconos.js';
 import { textoVersion } from '../version.js';
-import { tagEspecial, ordenarTags, esFavorita, TAGS_ESPECIALES } from '../catalogo.js';
+import { tagEspecial, ordenarTags, esFavorita, esIncompleta, TAGS_ESPECIALES } from '../catalogo.js';
 import type { Entrada } from '../tipos.js';
 
 /** §5.1 — el spinner del final de la lista y de las esperas. */
@@ -77,8 +77,9 @@ export function tarjeta(e: Entrada, { motivo }: OpcionesTarjeta = {}): string {
     : `<span class="pin" style="background:${colorCategoria(e.categoria)}"></span>` +
       escapar([e.categoria, e.tiempo, e.rinde].filter(Boolean).join(' · '));
   // La misma marca que la receta y el editor (§6.5). Acá no lleva texto al lado,
-  // así que lo dice por su cuenta para quien no la ve.
-  const marca = e.completa ? '' : '<span class="inc" role="img" aria-label="Incompleta"></span>';
+  // así que lo dice por su cuenta para quien no la ve. `incompleta` es el tag,
+  // no un dato del `.md`.
+  const marca = esIncompleta(e) ? '<span class="inc" role="img" aria-label="Incompleta"></span>' : '';
   // La estrella va afuera de .txt: es una marca de la tarjeta entera, no del
   // renglón de contexto (P27).
   const favorita = esFavorita(e)

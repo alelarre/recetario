@@ -43,13 +43,13 @@ describe('tarjeta', () => {
   });
 
   it('una receta incompleta lleva la marca, sin color de error', () => {
-    const html = tarjeta(entradaFalsa({ completa: false }));
+    const html = tarjeta(entradaFalsa({ tags: ['incompleta'] }));
     expect(html).toContain('class="inc"');
     expect(html).not.toContain('error');
   });
 
-  it('una receta completa no lleva ninguna marca', () => {
-    expect(tarjeta(entradaFalsa({ completa: true }))).not.toContain('class="inc"');
+  it('una receta sin el tag incompleta no lleva ninguna marca', () => {
+    expect(tarjeta(entradaFalsa({ tags: [] }))).not.toContain('class="inc"');
   });
 
   it('en un resultado por ingrediente, la tarjeta dice por qué apareció', () => {

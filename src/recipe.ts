@@ -22,7 +22,7 @@ export function normalizar(texto: unknown): string {
 function recetaVacia(): Receta {
   return {
     titulo: null, tags: [], rinde: null, tiempo: null, dificultad: null, fuente: null,
-    foto: null, completa: false,
+    foto: null,
     extras: {},
     descripcion: '', ingredientes: '', preparacion: '', variaciones: '', notas: '',
     otras: [], avisos: []
@@ -68,10 +68,6 @@ function parsearFrontmatter(bloque: string, receta: Receta): void {
     ultimaClave = clave;
     if (clave === 'tags') {
       receta.tags = parsearLista(valor.trim(), lineas.slice(i + 1));
-    } else if (clave === 'completa') {
-      // En el `.md` se escribe «sí» o «no», que es como se lee un archivo de
-      // texto. Sin tilde vale igual; cualquier otro valor es «no».
-      receta.completa = normalizar(valor) === 'si';
     } else if (esClaveSimple(clave)) {
       receta[clave] = valor.trim() === '' ? null : valor.trim();
     } else {
@@ -171,11 +167,6 @@ export function serialize(receta?: Partial<Receta> | null): string {
     if (r[clave]) fm.push(`${clave}: ${r[clave]}`);
   }
   if (r.foto) fm.push(`foto: ${r.foto}`);
-  // La clave se escribe siempre, en los dos valores: la completitud es un dato
-  // del archivo y se lee tal cual, sin calcular nada (2026-09-12). Antes sólo
-  // se escribía `true` y la ausencia significaba `false`. Sin título no hay
-  // receta —el índice la ignora—, así que ahí no se escribe nada.
-  if (r.titulo) fm.push(`completa: ${r.completa === true ? 'sí' : 'no'}`);
   for (const [clave, valor] of Object.entries(typeof r.extras === 'object' && r.extras !== null ? r.extras : {})) {
     fm.push(`${clave}: ${valor}`);
   }
@@ -286,9 +277,9 @@ export function variacionesDe(variaciones: string): { lista: string[]; secciones
 /**
  * Si la receta reúne lo mínimo para que el usuario pueda declararla terminada.
  *
- * **No es la completitud**: la completitud es `completa` del frontmatter y se
- * lee tal cual (C05.3.2 reescrito el 2026-09-12). Esto sólo habilita el control
- * del editor, y por eso vive en el editor y en ningún camino de lectura.
+ * La completitud es el tag especial `incompleta` (P27): esto sólo habilita que
+ * se pueda sacar en el editor, y por eso vive en el editor y en ningún camino
+ * de lectura.
  *
  * `categoria` es la carpeta elegida: sin ella no se puede guardar, pero se
  * evalúa igual para que la leyenda diga todo lo que falta.

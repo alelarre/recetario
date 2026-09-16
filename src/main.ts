@@ -170,7 +170,7 @@ const informeArranque = () =>
 const indiceDuplicado = () =>
   estadoArranque?.estado === 'listo' ? estadoArranque.indiceDuplicado : null;
 
-/** Lo que el editor tiene escrito, como texto comparable. Los tags y la completitud viajan en campos ocultos. */
+/** Lo que el editor tiene escrito, como texto comparable. Los tags viajan en un campo oculto. */
 const formularioActual = (): string => {
   const form = document.querySelector<HTMLFormElement>('[data-formulario]');
   return form ? JSON.stringify([...new FormData(form)]) : '';
