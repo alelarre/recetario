@@ -160,7 +160,9 @@ describe('main.ts: las rutas', () => {
     vi.resetModules();
   });
 
-  const montar = async ({ search = '', readyState = 'complete' as DocumentReadyState } = {}) => {
+  const montar = async ({
+    search = '', readyState = 'complete' as DocumentReadyState, reducedMotion = false
+  } = {}) => {
     const clicks: ((e: unknown) => unknown)[] = [];
     const cambios: ((e: unknown) => unknown)[] = [];
     const app = {
@@ -183,6 +185,8 @@ describe('main.ts: las rutas', () => {
     const scrolls: number[] = [];
     /** Lo que la flecha del carrusel le pidió desplazar a `scrollBy`. */
     const desplazamientos: number[] = [];
+    /** El `behavior` de cada desplazamiento: 'auto' con reduced motion, si no 'smooth'. */
+    const comportamientos: string[] = [];
     global.document = comoGlobal<Document>({
       querySelector: (sel: string) => {
         if (sel === '#app') return app;
@@ -196,7 +200,13 @@ describe('main.ts: las rutas', () => {
         if (sel === '[data-accion="wake"].on') return app.innerHTML.includes('class="ico on" data-accion="wake"') ? {} : null;
         // El carrusel: 400 px visibles, como para que el 80% dé un número redondo.
         if (sel === '#app [data-carrusel]') {
-          return { clientWidth: 400, scrollBy: (o: { left: number }) => desplazamientos.push(o.left) };
+          return {
+            clientWidth: 400,
+            scrollBy: (o: { left: number; behavior?: string }) => {
+              desplazamientos.push(o.left);
+              comportamientos.push(o.behavior ?? '');
+            }
+          };
         }
         return null;
       },
@@ -207,7 +217,9 @@ describe('main.ts: las rutas', () => {
     });
     global.window = comoGlobal<Window & typeof globalThis>({
       google: {}, addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; },
-      scrollTo: (_x: number, y: number) => { scrolls.push(y); }, scrollY: 0
+      scrollTo: (_x: number, y: number) => { scrolls.push(y); }, scrollY: 0,
+      // Sólo la consulta de reduced motion importa acá: las demás no se usan.
+      matchMedia: (q: string) => ({ matches: reducedMotion && q.includes('prefers-reduced-motion') })
     });
     // `replace` es lo que usan las navegaciones de cierre: no agrega una
     // entrada al historial, y el doble lo distingue de asignar `hash`.
@@ -246,6 +258,7 @@ describe('main.ts: las rutas', () => {
       preguntas,
       enLugar,
       desplazamientos,
+      comportamientos,
       /** La app vuelve a primer plano. */
       volverAPrimerPlano: async () => { listenersDoc['visibilitychange']?.(); await esperar(); },
       /** El evento `load` de `window`, para lo que quedó pendiente de él. */
@@ -313,11 +326,51 @@ describe('main.ts: las rutas', () => {
     expect(desplazamientos).toEqual([320, -320]);
   });
 
+  it('la flecha respeta prefers-reduced-motion: sin animación al desplazar', async () => {
+    estado.tags = [{ tag: 'horno', cantidad: 3 }];
+    const { abrir, tocar, comportamientos } = await montar({ reducedMotion: true });
+    await abrir('#/');
+
+    await tocar('carrusel-der');
+
+    expect(comportamientos).toEqual(['auto']);
+  });
+
   it('la lista por tag se dibuja, con el total y las recetas', async () => {
     const { abrir, app } = await montar();
     await abrir('#/t/horno');
     expect(app.innerHTML).toContain('>horno<');
     expect(app.innerHTML).toContain('class="tarjeta"');
+  });
+
+  it('en la lista por tag, tocar otro chip acumula: los dos quedan activos y la lista se achica', async () => {
+    // El tag de la ruta (`horno`) no es tocable: el que acumula es el otro
+    // chip del carrusel. `buscar` filtra de verdad acá, a diferencia del resto
+    // de este archivo, para poder ver que la lista se achica con los dos
+    // tags puestos (§6, ronda de corrección).
+    estado.tags = [{ tag: 'horno', cantidad: 2 }, { tag: 'dulce', cantidad: 1 }];
+    const original = storeFake.buscar;
+    storeFake.buscar = (filtros?: { tags?: string[] }) => {
+      const activos = filtros?.tags ?? [];
+      const todas = [
+        entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags: ['horno'] }),
+        entradaFalsa({ id_archivo: 'f2', titulo: 'Torta frita', categoria: 'Postres', tags: ['horno', 'dulce'] })
+      ];
+      return todas.filter(e => activos.every(t => e.tags.includes(t)));
+    };
+    try {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/t/horno');
+      expect(app.innerHTML).toContain('Milanesas');
+      expect(app.innerHTML).toContain('Torta frita');
+
+      await tocar('', { tag: 'dulce' });
+
+      expect(app.innerHTML).not.toContain('Milanesas');
+      expect(app.innerHTML).toContain('Torta frita');
+    } finally {
+      storeFake.buscar = original;
+    }
   });
 
   it('en el Recetario, tocar un chip del carrusel navega a la lista por tag', async () => {

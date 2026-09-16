@@ -822,7 +822,10 @@ app.addEventListener('click', async (e) => {
     const carrusel = document.querySelector<HTMLElement>('#app [data-carrusel]');
     if (!carrusel) return;
     const paso = Math.round(carrusel.clientWidth * 0.8);
-    carrusel.scrollBy?.({ left: accion === 'carrusel-der' ? paso : -paso, behavior: 'smooth' });
+    carrusel.scrollBy?.({
+      left: accion === 'carrusel-der' ? paso : -paso,
+      behavior: movimientoReducido() ? 'auto' : 'smooth'
+    });
     return;
   }
 
@@ -1213,6 +1216,10 @@ let deslizando: { x: number; y: number; decidido: 'indeciso' | 'horizontal' | 'v
 /** Desde 900 px el menú es fijo (`base.css`): no hay nada que abrir. */
 const menuFijo = (): boolean =>
   typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 900px)').matches;
+
+/** Sin animaciones: el CSS ya lo respeta con `scroll-behavior`, `scrollBy` no. */
+const movimientoReducido = (): boolean =>
+  typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** El menú y el velo al ritmo del dedo, sin transición; con `null` vuelven a lo que diga el CSS. */
 function seguirDedo(p: number | null): void {
