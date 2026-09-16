@@ -1,8 +1,11 @@
 # E03 — Leer y cocinar
 
-**Versión:** 3.1 · **Fecha:** 2026-09-12 · **Estado:** Final — Hito 11
+**Versión:** 3.2 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
 **Job:** J6 · **Prioridad:** media · **Flujo:** F6
 
+> **Cambios en la 3.2 (2026-09-16):** C03.1.2b suma **la estrella de
+> favorito**, en el encabezado, a la izquierda de compartir.
+>
 > **Cambios en la 3.1 (2026-09-12):** el encabezado de la receta se especifica
 > entero y es nuevo (C03.1.2b): arranca sin texto, queda fijo, toma el título
 > recortado al scrollear y lleva el **link al `.md` en Drive**. Se va el menú ⋯ y
@@ -70,6 +73,7 @@ notas. Sin pestañas: costaban cuatro toques para leer una receta entera.
 - [ ] Queda **fijo al scrollear**, y cuando el título grande sale de pantalla lo toma **recortado con elipsis**, sin llegar a pisar lo que tenga a la derecha.
 - [ ] A la derecha, un **link al `.md` en Drive**, con el logo de Drive y la etiqueta `.md`, que abre en otra pestaña. Es un dato al margen y no un botón: sin caja y más chico que los controles.
 - [ ] El link sólo aparece si la receta está en el índice: sin fila no se conoce su id de archivo.
+- [ ] **La estrella de favorito** vive en el encabezado, a la izquierda de compartir. Un toque pone el tag `favorito` y otro lo saca; mientras se escribe en Drive se llena de izquierda a derecha en loop, y el resultado se dibuja recién con la respuesta —si falla, vuelve como estaba y avisa. `[del 2026-09-16]`
 
 #### C03.1.3 — Estados de la receta *(J6)*
 

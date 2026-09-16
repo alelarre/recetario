@@ -1,8 +1,13 @@
 # E02 — Encontrar
 
-**Versión:** 3.1 · **Fecha:** 2026-09-12 · **Estado:** Final — Hito 11
+**Versión:** 3.2 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
 **Jobs:** J1, J4, J5 · **Prioridad:** alta · **Flujos:** F3, F4, F5
 
+> **Cambios en la 3.2 (2026-09-16):** C02.6.4 — los tags ganan dónde tocarse
+> fuera de la receta: un carrusel en el Recetario y en cada categoría, y una
+> lista por tag (`#/t/<tag>`). Sigue sin haber nube de tags ni sección en la
+> navegación.
+>
 > **Cambios en la 3.1 (2026-09-12):** el motivo de una coincidencia por tag se
 > lee *"tiene tag X"*; buscar con el campo vacío no hace nada; y el tile de
 > categoría muestra **cuántas recetas tiene** (C02.4.1).
@@ -201,6 +206,12 @@ tag.
 
 - [ ] No hay nube de tags, ni listado, ni sección en la navegación.
 - [ ] El vocabulario de tags es libre: la app no propone ni valida.
+
+`[cambio del 2026-09-16]` Los tags **sí tienen dónde tocarse fuera de la
+receta**: un carrusel en el Recetario y en cada categoría, y una lista por tag
+(`#/t/<tag>`). Lo que sigue sin existir es la nube de tags y la sección en la
+navegación. El vocabulario sigue siendo libre: la app no propone ni valida,
+salvo los tres especiales, que se reserva.
 
 ### F02.7 — La marca de incompleta en las listas
 

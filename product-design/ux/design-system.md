@@ -1,9 +1,13 @@
 # Recetario — Design System
 
-**Versión:** 2.1
-**Fecha:** 2026-09-12
+**Versión:** 2.2
+**Fecha:** 2026-09-16
 **Estado:** Final — Hito 11
 
+> **Cambios en la 2.2 (2026-09-16):** §3.4 — tres íconos más, de once a catorce:
+> la estrella de favorito, el marcador de *probar* y el calendario de *menú
+> diario*.
+>
 > **Cambios en la 2.1 (2026-09-12):** salieron de implementar el rediseño y
 > mirarlo andando. Dos componentes nuevos: el **conmutador de dos posiciones**
 > (§6.16), que reemplaza a la casilla de completitud, y el **menú lateral**
@@ -270,11 +274,12 @@ cocina es el dato principal.
 | `--ico` | 20 px | En toda la app. |
 | `--ico-cocina` | 24 px | Solo en modo cocina. |
 
-**Los íconos son funcionales, nunca decorativos.** Hay once en la
+**Los íconos son funcionales, nunca decorativos.** Hay catorce en la
 app: volver, buscar, ajustes, borradores, descartar, editar, borrar, mantener la
-pantalla encendida, compartir `[del 2026-09-14]`, y las dos posiciones del
-conmutador de cocina —una zanahoria para *Ingredientes* y una lista numerada
-para *Pasos*, al lado de la palabra `[del 2026-09-12]`—.
+pantalla encendida, compartir `[del 2026-09-14]`, la estrella de favorito, el
+marcador de *probar* y el calendario de *menú diario* `[del 2026-09-16]`, y las
+dos posiciones del conmutador de cocina —una zanahoria para *Ingredientes* y
+una lista numerada para *Pasos*, al lado de la palabra `[del 2026-09-12]`—.
 
 **Regla dura: ningún ícono va solo si hay lugar para la palabra.** El ícono solo
 se permite donde el espacio no da —el encabezado, donde "Volver" y "Ajustes" no
