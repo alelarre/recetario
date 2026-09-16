@@ -337,3 +337,48 @@ html:has(.hoja-compartir) { overflow: hidden; }
 .muestra-foto.trama { background:
     repeating-linear-gradient(135deg, var(--cat-otros) 0 6px, transparent 6px 14px); }
 .muestra-color[aria-pressed="true"], .muestra-foto[aria-pressed="true"] { border-color: var(--fg); }
+
+/* ---- El carrusel de tags (P27) ---- */
+.carrusel-marco { position: relative; margin-bottom: var(--e-3); }
+.carrusel { display: flex; gap: var(--e-2); overflow-x: auto; padding-bottom: var(--e-1);
+            scrollbar-width: none; scroll-behavior: smooth; }
+.carrusel::-webkit-scrollbar { display: none; }
+.carrusel .chip { flex: 0 0 auto; }
+.chip .cuenta { color: var(--fg-3); font-variant-numeric: tabular-nums; margin-left: 2px; }
+.chip.act .cuenta { color: inherit; opacity: .8; }
+.chip svg { width: 14px; height: 14px; }
+/* `tokens.css` deja `.chip svg` en stroke-width: 2, pensado para la cruz del
+   chip del editor. Acá lo pisamos: los íconos de los tags especiales tienen
+   que quedar con el mismo trazo que el resto (1.5). */
+.chip svg { stroke-width: 1.5; }
+
+/* El degradé dice que sigue. A la derecha mientras quede algo; a la izquierda,
+   sólo cuando ya se corrió. La opacidad se ata a la posición del carrusel sin
+   JavaScript; donde no haya soporte, los dos se ven siempre, que no rompe nada. */
+.carrusel-marco::before, .carrusel-marco::after {
+  content: ''; position: absolute; top: 0; bottom: var(--e-1); width: 40px; pointer-events: none; }
+.carrusel-marco::after { right: 0; background: linear-gradient(to right, transparent, var(--bg)); }
+.carrusel-marco::before { left: 0; background: linear-gradient(to left, transparent, var(--bg)); }
+@supports (animation-timeline: scroll()) {
+  .carrusel-marco { timeline-scope: --tags; }
+  .carrusel { scroll-timeline: --tags inline; }
+  .carrusel-marco::before { opacity: 0; animation: aparecer linear both;
+                            animation-timeline: --tags; animation-range: 0 40px; }
+  .carrusel-marco::after { animation: desaparecer linear both;
+                           animation-timeline: --tags; animation-range: calc(100% - 40px) 100%; }
+}
+@keyframes aparecer { to { opacity: 1; } }
+@keyframes desaparecer { to { opacity: 0; } }
+
+/* Las flechas, sólo con mouse o trackpad: en el teléfono se desliza con el dedo. */
+.carrusel-flecha { display: none; position: absolute; top: 50%; transform: translateY(-50%); z-index: 1;
+  width: 32px; height: 32px; place-items: center; cursor: pointer; color: var(--fg);
+  background: var(--surface-alta); border: 1px solid var(--borde-fuerte); border-radius: 50%; }
+.carrusel-flecha svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+.carrusel-flecha.izq { left: 0; }
+.carrusel-flecha.der { right: 0; }
+@media (hover: hover) and (pointer: fine) {
+  .carrusel-flecha { display: grid; }
+  .carrusel { padding-inline: 40px; }
+}
+@media (prefers-reduced-motion: reduce) { .carrusel { scroll-behavior: auto; } }

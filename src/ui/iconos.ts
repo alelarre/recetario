@@ -41,5 +41,7 @@ export const ICO = {
   marcador: svg('<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>'),
   calendario: svg('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
   /** Favorito: la misma estrella en la receta, en la tarjeta y en el carrusel. */
-  estrella: svg('<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/>')
+  estrella: svg('<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/>'),
+  /** El chevron hacia adelante: la flecha derecha del carrusel. */
+  chevron: svg('<path d="M9 18l6-6-6-6"/>')
 } as const satisfies Record<string, string>;

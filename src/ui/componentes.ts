@@ -10,7 +10,7 @@ import { escapar } from './markdown.js';
 import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
 import { ICO } from './iconos.js';
 import { textoVersion } from '../version.js';
-import { tagEspecial, ordenarTags, esFavorita } from '../catalogo.js';
+import { tagEspecial, ordenarTags, esFavorita, TAGS_ESPECIALES } from '../catalogo.js';
 import type { Entrada } from '../tipos.js';
 
 /** §5.1 — el spinner del final de la lista y de las esperas. */
@@ -140,6 +140,43 @@ export function chipsSueltos(tags: string[], activos: string[] = []): string {
 /** §6.10 — Los tags como chips; los activos marcados con el acento, los especiales primero. */
 export function chips(tags: string[], activos: string[] = []): string {
   return `<div class="chips">${chipsSueltos(tags, activos)}</div>`;
+}
+
+export interface OpcionesCarrusel {
+  activos?: string[];
+  /** Cuántos tags comunes entran. Los especiales no cuentan y van siempre. */
+  tope?: number;
+}
+
+/**
+ * El carrusel de tags que filtra (P27): los especiales primero y en su orden,
+ * después los demás por cantidad. `store.tagsDe()` ya entrega los comunes así
+ * de ordenados, pero se reordena igual acá: el carrusel no debe depender de
+ * que quien lo llame respete ese contrato. Se desliza de costado; el degradé
+ * dice que sigue, y las flechas aparecen sólo con mouse o trackpad.
+ */
+export function carruselTags(
+  tags: { tag: string; cantidad: number }[], { activos = [], tope }: OpcionesCarrusel = {}
+): string {
+  const lista = Array.isArray(tags) ? tags : [];
+  const especiales = TAGS_ESPECIALES
+    .map(t => lista.find(x => tagEspecial(x.tag) === t))
+    .filter((x): x is { tag: string; cantidad: number } => !!x && x.cantidad > 0);
+  const comunes = lista
+    .filter(x => !tagEspecial(x.tag))
+    .sort((a, b) => b.cantidad - a.cantidad || a.tag.localeCompare(b.tag, 'es'));
+  const cortados = tope === undefined ? comunes : comunes.slice(0, tope);
+  const todos = [...especiales, ...cortados];
+  if (!todos.length) return '';
+
+  const chips = todos
+    .map(({ tag, cantidad }) => chipTag(tag, { cantidad, activo: activos.includes(tag) }))
+    .join('');
+  return '<div class="carrusel-marco">' +
+    `<div class="carrusel" data-carrusel>${chips}</div>` +
+    `<button class="carrusel-flecha izq" data-accion="carrusel-izq" aria-label="Tags anteriores">${ICO.volver}</button>` +
+    `<button class="carrusel-flecha der" data-accion="carrusel-der" aria-label="Más tags">${ICO.chevron}</button>` +
+    '</div>';
 }
 
 /** Una frase y nada más: sin ilustración y sin sugerencias (mockup 05). */

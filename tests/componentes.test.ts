@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { tarjeta, placeholder, aviso, encabezado, chips, chipTag, iconoDeTag, vacio, tile } from '../src/ui/componentes.js';
+import {
+  tarjeta, placeholder, aviso, encabezado, chips, chipTag, iconoDeTag, vacio, tile, carruselTags
+} from '../src/ui/componentes.js';
 import { entradaFalsa } from './dobles.js';
 import { registrarCategorias } from '../src/ui/categorias.js';
 import { ICO } from '../src/ui/iconos.js';
@@ -144,6 +146,46 @@ describe('vacio', () => {
     const html = vacio('Ninguna receta se llama así.');
     expect(html).toContain('Ninguna receta se llama así.');
     expect(html).not.toContain('<button');
+  });
+});
+
+describe('el carrusel de tags', () => {
+  const tags = [
+    { tag: 'horno', cantidad: 11 }, { tag: 'favorito', cantidad: 3 },
+    { tag: 'clásica', cantidad: 14 }, { tag: 'menú diario', cantidad: 2 }
+  ];
+
+  it('pone los especiales primero y después los demás por cantidad', () => {
+    const html = carruselTags(tags);
+    const orden = ['favorito', 'menú diario', 'clásica', 'horno'].map(t => html.indexOf(`>${t}<`));
+    expect(orden).toEqual([...orden].sort((a, b) => a - b));
+  });
+
+  it('cada chip lleva su número', () => {
+    expect(carruselTags(tags)).toContain('<span class="cuenta">14</span>');
+  });
+
+  it('sin tags no dibuja nada', () => {
+    expect(carruselTags([])).toBe('');
+  });
+
+  it('corta en el tope cuando se lo pasan, sin contar los especiales', () => {
+    const muchos = Array.from({ length: 25 }, (_, i) => ({ tag: `t${i}`, cantidad: 25 - i }));
+    const html = carruselTags([...muchos, { tag: 'favorito', cantidad: 1 }], { tope: 20 });
+    expect(html).toContain('>favorito<');
+    expect(html).toContain('>t19<');
+    expect(html).not.toContain('>t20<');
+  });
+
+  it('lleva las dos flechas y el marco del degradé', () => {
+    const html = carruselTags(tags);
+    expect(html).toContain('class="carrusel-marco"');
+    expect(html).toContain('data-accion="carrusel-izq"');
+    expect(html).toContain('data-accion="carrusel-der"');
+  });
+
+  it('marca los activos', () => {
+    expect(carruselTags(tags, { activos: ['horno'] })).toContain('class="chip act"');
   });
 });
 
