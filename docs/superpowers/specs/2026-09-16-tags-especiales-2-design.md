@@ -47,18 +47,17 @@ Esta tabla **reemplaza** el orden de la primera parte (`favorito`, `probar`, `me
 - **El frontmatter queda con siete claves.** La app no lee `completa`: una receta sin el
   tag `incompleta` está terminada.
 - **No hay transición:** una receta con `completa: no` y sin el tag se ve terminada.
-- **Al guardar, si el `.md` todavía tiene la clave `completa`, se borra.** Conservarla como
-  clave desconocida dejaría un dato paralelo al tag: el archivo podría decir `completa: sí`
-  y tener `incompleta` a la vez.
-- **Es una excepción con nombre, no una regla nueva.** Guardar sigue conservando todas las
-  demás claves que la app no conoce (`extras`) y las secciones que no reconoce (`otras`),
-  como hasta ahora.
+- **`completa` pasa a ser una clave desconocida como cualquier otra**, sin código propio:
+  al guardar se conserva tal cual, igual que el resto de las claves que la app no conoce
+  (`extras`). Nada la lee ni la borra. Dejar una excepción sólo para ella sería código que
+  deja de tener sentido apenas los archivos estén al día.
 - **El índice pierde la columna `completa`.** Si una receta está incompleta se sabe por su
   columna `tags`, como si es favorita. `SCHEMA_VERSION` pasa de 3 a 4: la próxima apertura
   reindexa sola.
 
-**Lo existente no se migra.** Antes de publicar se lista qué `.md` del Drive tienen la clave
-`completa`, y el usuario los edita a mano.
+**Lo existente no se migra.** Se listó qué `.md` del Drive tienen la clave `completa` —2 con
+`no`, 5 con `sí`, 52 sin ella— y el usuario los regulariza a mano, en paralelo con el
+cambio: pone `incompleta` donde corresponda y saca la clave `completa`.
 
 ## 4. Una receta nace incompleta
 
@@ -120,7 +119,8 @@ del campo para agregar.
 ## 9. Tests
 
 - Los cuatro especiales, en su orden, con sus formas alternativas.
-- `parse` no lee `completa`; `serialize` no la escribe y la borra si venía.
+- `parse` trata `completa` como clave desconocida; `serialize` no la escribe por su cuenta y
+  la conserva si venía, como a cualquier otra.
 - La fila del índice no tiene la columna `completa`, y `SCHEMA_VERSION` es 4.
 - Una receta nueva y un borrador convertido abren con `incompleta`.
 - El editor dibuja los cuatro botones con su estado; tocarlos pone y saca el tag.
