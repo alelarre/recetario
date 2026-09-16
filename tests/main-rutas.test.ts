@@ -1001,6 +1001,12 @@ describe('main.ts: las rutas', () => {
       await tocar('favorito');
 
       expect(app.innerHTML).not.toContain('class="fav on"');
+      // No sólo «no quedó encendida»: tiene que haber vuelto a su estado
+      // normal y no quedar girando —si `marcandoFavorito` no se revierte en
+      // el camino de error, la estrella se dibuja "cargando" y `disabled`
+      // para siempre, y las dos aserciones de arriba no lo notarían.
+      expect(app.innerHTML).not.toContain('class="fav cargando"');
+      expect(app.innerHTML).not.toContain('disabled');
       expect(app.innerHTML).toContain('No se pudo marcar');
     });
   });
