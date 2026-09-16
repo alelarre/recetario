@@ -313,6 +313,30 @@ describe('main.ts: las rutas', () => {
     expect(desplazamientos).toEqual([320, -320]);
   });
 
+  it('la lista por tag se dibuja, con el total y las recetas', async () => {
+    const { abrir, app } = await montar();
+    await abrir('#/t/horno');
+    expect(app.innerHTML).toContain('>horno<');
+    expect(app.innerHTML).toContain('class="tarjeta"');
+  });
+
+  it('en el Recetario, tocar un chip del carrusel navega a la lista por tag', async () => {
+    estado.tags = [{ tag: 'horno', cantidad: 3 }];
+    const { abrir, tocar } = await montar();
+    await abrir('#/');
+    await tocar('', { tag: 'horno' });
+    expect(global.location.hash).toBe('#/t/horno');
+  });
+
+  it('en la categoría, tocar un chip sigue filtrando ahí mismo, sin navegar', async () => {
+    estado.tags = [{ tag: 'horno', cantidad: 3 }];
+    const { abrir, tocar, app } = await montar();
+    await abrir('#/c/Carnes');
+    await tocar('', { tag: 'horno' });
+    expect(global.location.hash).toBe('#/c/Carnes');
+    expect(app.innerHTML).toContain('class="chip act"');
+  });
+
   it('un link de invitado con la app ya abierta recarga: la vista de invitado se decide al cargar', async () => {
     const { abrir, recargas } = await montar();
     await abrir('#/ver?r=1abc');

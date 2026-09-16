@@ -10,6 +10,7 @@ import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado } from './
 import { escapar } from './ui/markdown.js';
 import { renderRecetario } from './ui/recetario.js';
 import { renderCategoria } from './ui/categoria.js';
+import { renderTag } from './ui/tag.js';
 import { renderResultados } from './ui/resultados.js';
 import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
@@ -399,6 +400,19 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       return observarTramo();
     }
 
+    case 'tag': {
+      // Se llega tocando un chip del carrusel del Recetario: el tag tocado
+      // entra como filtro igual que en la categoría, para poder sumarle otros.
+      const nombre = ruta.params['nombre'] ?? '';
+      const activos = tagsActivos.includes(nombre) ? tagsActivos : [nombre, ...tagsActivos];
+      const entradas = store.buscar({ tags: activos });
+      pintar(renderTag({
+        tag: nombre, entradas: entradas.slice(0, visibles), total: entradas.length,
+        visibles: Math.min(visibles, entradas.length), tagsActivos: activos, tags: store.tagsDe()
+      }));
+      return observarTramo();
+    }
+
     case 'resultados': {
       const q = ruta.params['q'] ?? '';
       return pintar(renderResultados({ consulta: q, grupos: store.buscarPorTexto(q) }));
@@ -681,6 +695,9 @@ app.addEventListener('click', async (e) => {
 
   if (boton.dataset['tag']) {
     const tag = boton.dataset['tag'];
+    // Desde el Recetario el carrusel no filtra nada ahí mismo: navega a la
+    // lista por tag, que es donde ese chip tiene algo que mostrar.
+    if (vistaActual?.vista === 'recetario') { location.hash = `#/t/${encodeURIComponent(tag)}`; return; }
     tagsActivos = tagsActivos.includes(tag) ? tagsActivos.filter(t => t !== tag) : [...tagsActivos, tag];
     return render();
   }

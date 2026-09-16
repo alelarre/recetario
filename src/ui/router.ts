@@ -2,7 +2,7 @@
 export type Vista =
   | 'recetario' | 'categoria' | 'resultados' | 'receta' | 'cocinar'
   | 'editar' | 'nueva' | 'borradores' | 'borrador' | 'capturar' | 'ajustes' | 'carpeta'
-  | 'categorias' | 'editar-categoria';
+  | 'categorias' | 'editar-categoria' | 'tag';
 
 export interface Ruta {
   vista: Vista;
@@ -66,6 +66,15 @@ export function parsearHash(hash: unknown): Ruta {
     if (params['id']) nivel['id'] = params['id'];
     if (params['nombre']) nivel['nombre'] = params['nombre'];
     return { vista: 'carpeta', params: nivel };
+  }
+
+  // La lista por tag: se llega tocando un chip del carrusel del Recetario.
+  if (partes[0] === 't' && partes[1]) {
+    try {
+      return { vista: 'tag', params: { nombre: decodeURIComponent(partes[1]) } };
+    } catch {
+      return { vista: 'recetario', params: {} };
+    }
   }
 
   return { vista: 'recetario', params: {} };

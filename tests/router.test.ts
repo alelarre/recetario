@@ -39,6 +39,10 @@ describe('parsearHash', () => {
     expect(parsearHash('#/categorias/c1')).toEqual({ vista: 'editar-categoria', params: { id: 'c1' } });
   });
 
+  it('#/t/<tag> es la lista por tag, y el nombre viene decodificado', () => {
+    expect(parsearHash('#/t/menú%20diario')).toEqual({ vista: 'tag', params: { nombre: 'menú diario' } });
+  });
+
   it('el selector de carpeta, con el nivel en la query', () => {
     expect(parsearHash('#/carpeta')).toEqual({ vista: 'carpeta', params: {} });
     expect(parsearHash('#/carpeta?id=a1&nombre=Cocina')).toEqual({ vista: 'carpeta', params: { id: 'a1', nombre: 'Cocina' } });
