@@ -52,7 +52,7 @@ Esta tabla **reemplaza** el orden de la primera parte (`favorito`, `probar`, `me
   (`extras`). Nada la lee ni la borra. Dejar una excepción sólo para ella sería código que
   deja de tener sentido apenas los archivos estén al día.
 - **El índice pierde la columna `completa`.** Si una receta está incompleta se sabe por su
-  columna `tags`, como si es favorita. `SCHEMA_VERSION` pasa de 3 a 4: la próxima apertura
+  columna `tags`, como si es favorita. `SCHEMA_VERSION` pasa de 5 a 6: la próxima apertura
   reindexa sola.
 
 **Lo existente no se migra.** Se listó qué `.md` del Drive tienen la clave `completa` —2 con
@@ -121,7 +121,7 @@ del campo para agregar.
 - Los cuatro especiales, en su orden, con sus formas alternativas.
 - `parse` trata `completa` como clave desconocida; `serialize` no la escribe por su cuenta y
   la conserva si venía, como a cualquier otra.
-- La fila del índice no tiene la columna `completa`, y `SCHEMA_VERSION` es 4.
+- La fila del índice no tiene la columna `completa`, y `SCHEMA_VERSION` es 6.
 - Una receta nueva y un borrador convertido abren con `incompleta`.
 - El editor dibuja los cuatro botones con su estado; tocarlos pone y saca el tag.
 - `incompleta` no se puede soltar sin lo mínimo, y vuelve a apretarse si se pierde.
