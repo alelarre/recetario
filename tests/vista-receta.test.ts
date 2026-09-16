@@ -151,11 +151,17 @@ describe('Receta en lectura', () => {
     const html = renderReceta({ entrada: null, receta: conTags });
     const fila = html.slice(html.indexOf('<div class="chips">'), html.indexOf('</div>', html.indexOf('<div class="chips">')));
     expect(fila).toContain('chip pend');
-    expect(fila).toContain('Incompleta');
+    expect(fila).toContain('incompleta');
     // Primero el estado, después los tags.
-    expect(fila.indexOf('Incompleta')).toBeLessThan(fila.indexOf('vegetariano'));
+    expect(fila.indexOf('incompleta')).toBeLessThan(fila.indexOf('vegetariano'));
     // Y una sola vez: el tag no se repite como chip suelto, la marca ya lo dice.
     expect(html.split('class="inc"').length - 1).toBe(1);
+  });
+
+  it('la fila de tags no repite la marca de incompleta: es el chip del tag', () => {
+    const r = parse('---\ntitulo: Pan\ntags: [incompleta, horno]\n---\n');
+    const html = renderReceta({ entrada: entradaFalsa(), receta: r });
+    expect(html.match(/class="inc"/g)).toHaveLength(1);
   });
 
   it('sin otros tags, la marca arma igual la fila de chips', () => {

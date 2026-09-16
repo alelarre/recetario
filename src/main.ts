@@ -559,6 +559,9 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
           });
         }
       }
+      // Una receta nace incompleta: sacar el tag es la declaración explícita de
+      // que está terminada (P27).
+      receta.tags = conEspecial(receta.tags, 'incompleta', true);
       return abrirEditor(renderEditor({
         entrada: null, receta, categorias: store.categorias(),
         tagsConocidos: store.tagsDe().map(t => t.tag)

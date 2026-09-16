@@ -807,6 +807,20 @@ describe('main.ts: las rutas', () => {
     });
   });
 
+  it('una receta nueva abre con incompleta', async () => {
+    const { abrir, app } = await montar();
+    await abrir('#/nueva');
+    expect(app.innerHTML).toContain('data-valor="incompleta" aria-pressed="true"');
+  });
+
+  it('un borrador convertido también abre con incompleta', async () => {
+    estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', capturado: '', nota: '' }];
+    const { abrir, app } = await montar();
+    await abrir('#/nueva?borrador=b1');
+    expect(app.innerHTML).toContain('value="Focaccia"');
+    expect(app.innerHTML).toContain('data-valor="incompleta" aria-pressed="true"');
+  });
+
   it('crear la receta desde un borrador reparte la nota en sus secciones', async () => {
     estado.borradores = [{
       id: 'b1', titulo: 'Focaccia', fuente: 'https://x/1', capturado: '',

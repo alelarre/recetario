@@ -117,6 +117,13 @@ describe('chipsSueltos', () => {
     expect(html).toContain('class="chip act"');
     expect(html).toContain('data-tag="horno"');
   });
+
+  it('en la fila de tags de la receta, incompleta abre el editor en vez de filtrar', () => {
+    const html = chipsSueltos(['horno', 'incompleta']);
+    expect(html).toContain('data-accion="editar"');
+    expect(html).not.toContain('data-tag="incompleta"');
+    expect(html.indexOf('incompleta')).toBeLessThan(html.indexOf('horno'));
+  });
 });
 
 describe('los chips de tags', () => {
