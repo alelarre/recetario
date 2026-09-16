@@ -85,7 +85,6 @@ body {
 .enc .tit.izq { text-align: left; padding-left: var(--e-2); }
 .ico { width: 48px; height: 48px; display: grid; place-items: center; flex: 0 0 48px;
        color: var(--fg); background: none; border: 0; cursor: pointer; border-radius: var(--r-medio); }
-.ico:hover { background: var(--surface-alta); }
 .ico svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none; stroke-width: 1.5;
            stroke-linecap: round; stroke-linejoin: round; }
 .cuenta { position: relative; }
@@ -123,11 +122,24 @@ body {
 .acciones { display: flex; gap: var(--e-2); }
 .acciones .btn { flex: 1; }
 
+/* ---- Cómo responden al toque y al puntero ----
+   En el teléfono el hover no existe: el fondo queda pegado después de tocar,
+   hasta que se toca otra cosa. Lo que sirve ahí es el presionado —mientras el
+   dedo está apoyado—, y el hover queda para los punteros de verdad. */
+:is(.ico, .btn.sec, .btn.pel, .tarjeta, .bor, .lat a):active { background: var(--surface-alta); }
+.btn.prim:active { background: color-mix(in srgb, var(--acento) 78%, var(--fg)); }
+.btn[disabled]:active { background: none; }
+
+@media (hover: hover) {
+  :is(.ico, .btn.sec, .btn.pel, .tarjeta, .bor, .lat a):hover { background: var(--surface-alta); }
+  .btn.prim:hover { background: color-mix(in srgb, var(--acento) 88%, var(--fg)); }
+  .btn[disabled]:hover { background: none; }
+}
+
 /* ---- §6.1 Tarjeta miniatura ---- */
 .tarjeta { display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
            background: var(--surface); border: 1px solid var(--borde);
            border-radius: var(--r-ficha); text-decoration: none; color: inherit; }
-.tarjeta:hover { background: var(--surface-alta); }
 .tarjeta .txt { flex: 1; min-width: 0; }
 .tarjeta .n { font-size: var(--txt-base); font-weight: 600; line-height: 1.3;
               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

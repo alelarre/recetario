@@ -109,6 +109,11 @@
                          max-height: 40vh; overflow: auto; white-space: pre-wrap; word-break: break-all;
                          user-select: all; }
 .spin.en-boton { width: 16px; height: 16px; margin: 0 var(--e-2) 0 0; }
+/* Con la ficha abierta, la página de atrás no se desplaza: el velo la tapa y
+   moverla deja la ficha flotando sobre otra cosa. Lo único que desplaza es el
+   cuadro del link o el texto, y no arrastra a la página. */
+html:has(.hoja-compartir) { overflow: hidden; }
+.hoja-compartir .copia { overscroll-behavior: contain; }
 
 /* ---- Modo cocina (mockup 02) ---- */
 /* Un paso es un <li>, no un botón: Chrome en Android sube hasta el primer
@@ -167,7 +172,10 @@
 .encoc [data-accion="wake"]::before { inset: 12px; }
 .encoc .btn.compacto { min-height: 64px; min-width: 64px; }
 .encoc .btn.compacto::before { inset: 12px 0; }
-.encoc [data-accion="wake"]:hover::before { background: var(--surface-alta); }
+.encoc :is([data-accion="wake"], .btn.compacto):active::before { background: var(--surface-alta); }
+@media (hover: hover) {
+  .encoc :is([data-accion="wake"], .btn.compacto):hover::before { background: var(--surface-alta); }
+}
 .encoc [data-accion="wake"].on { color: var(--bg); }
 .encoc [data-accion="wake"].on::before { background: var(--fg); border-color: var(--fg); }
 
@@ -186,7 +194,9 @@
 /* Sin `:not(.on)` el hover le gana en especificidad a la regla de abajo y deja
    el texto en `--fg` sobre el fondo `--fg`: la posición elegida se borra
    mientras el puntero está encima, que es justo después de tocarla. */
-.conm-doble button:hover:not([disabled]):not(.on) { color: var(--fg); }
+@media (hover: hover) {
+  .conm-doble button:hover:not([disabled]):not(.on) { color: var(--fg); }
+}
 .conm-doble button.on { background: var(--fg); border-color: var(--fg); color: var(--bg); }
 .conm-doble button[disabled] { background: none; border-color: var(--borde);
                                color: var(--fg-3); cursor: default; }
@@ -233,7 +243,6 @@
        background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha);
        /* Es un <a>: sin esto lleva el subrayado y el violeta de link visitado. */
        text-decoration: none; color: inherit; }
-.bor:hover { background: var(--surface-alta); }
 .bor .txt { flex: 1; min-width: 0; }
 .bor .n { font-weight: 600; }
 .bor .f { font-size: var(--txt-chico); color: var(--fg-2); white-space: nowrap;
@@ -272,7 +281,6 @@
 .lat a { display: flex; align-items: center; gap: var(--e-3); min-height: 48px;
          padding: 0 var(--e-2); border-radius: var(--r-medio);
          color: var(--fg); text-decoration: none; font-weight: 600; }
-.lat a:hover { background: var(--surface-alta); }
 .lat a.act { background: var(--acento-suave); color: var(--acento); }
 .lat .version { margin-top: auto; padding: 0 var(--e-2); font-size: var(--txt-micro);
                 color: var(--fg-3); font-variant-numeric: tabular-nums; }
