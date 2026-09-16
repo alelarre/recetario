@@ -38,9 +38,10 @@ orden en una categoría y en la búsqueda, y el filtro—, dibujados con el CSS 
 - **Cualquier otro texto se lee como sin cargar**, igual que una `dificultad` inválida: no
   se muestra, no filtra y no ordena. Si la receta se guarda desde el editor, queda lo que
   se elija ahí.
-- **En `src/catalogo.ts`**, al lado de `DIFICULTADES`: la lista `DURACIONES`, en el orden
-  de la tabla, y `duracionValida(valor)`, que devuelve el valor si es uno de los cinco o
-  la cadena vacía.
+- **En `src/recipe.ts`**, junto a las claves del frontmatter: la lista `DURACIONES`, en el
+  orden de la tabla, y `duracionValida(valor)`, que devuelve el valor si es uno de los
+  cinco o la cadena vacía. `src/catalogo.ts` las reexporta al lado de `DIFICULTADES`
+  (`catalogo.ts` ya importa de `recipe.ts`; al revés sería una importación circular).
 
 ### 2.2 El índice
 
@@ -126,8 +127,8 @@ En **la categoría, la lista por tag y la búsqueda**.
   del filtro. En la búsqueda va arriba de los grupos.
 - **A–Z**, como hoy: las favoritas primero y alfabético dentro de cada bloque.
 - **Duración:** de `~15 min` a `>1 día`, con las favoritas mezcladas, alfabético dentro de
-  cada valor. La estrella de la tarjeta sigue marcando cuáles son.
-- **En los dos órdenes**, las recetas sin duración van al final, en alfabético.
+  cada valor. La estrella de la tarjeta sigue marcando cuáles son. Las recetas sin
+  duración van al final, en alfabético.
 - **La lista va seguida**, sin rótulos por valor.
 - **En la búsqueda** ordena dentro de cada grupo —Por nombre, Por ingrediente, Por tag—,
   sin mezclarlos.
@@ -143,14 +144,13 @@ En **la categoría, la lista por tag y la búsqueda**.
 
 | Archivo | Qué cambia |
 |---|---|
-| `src/catalogo.ts` | `DURACIONES`, `duracionValida`; `entradaDesdeFila` valida `tiempo`; el orden por duración junto a `ordenarRecetas` |
-| `src/recipe.ts` | `contextoDe` usa `duracionValida` |
+| `src/catalogo.ts` | Reexporta `DURACIONES` y `duracionValida`; `entradaDesdeFila` valida `tiempo`; `ordenarRecetas` con el orden por duración; contar y filtrar por duración |
+| `src/recipe.ts` | `DURACIONES` y `duracionValida`; `contextoDe` usa `duracionValida` |
 | `src/ui/iconos.ts` | Los cinco relojitos |
 | `src/ui/editor.ts` | El campo «Duración» con sus cinco botones |
 | `src/ui/componentes.ts` | El relojito en la línea de contexto de `tarjeta()`; la fila de chips de duración; el conmutador de orden |
 | `src/ui/fichas-receta.ts` | El relojito en la línea de contexto de la receta |
 | `src/ui/categoria.ts`, `tag.ts`, `resultados.ts` | La fila de filtro y la de orden |
-| `src/store.ts` | El filtro por duración junto al filtro por tags |
 | `src/main.ts` | El estado del filtro y del orden, y sus acciones |
 | `src/ui/tokens.css`, `base.css` | Los botones del editor, la fila de chips y el conmutador |
 | `skills/recetario/SKILL.md` | La tabla de `tiempo` |
@@ -169,8 +169,8 @@ En **la categoría, la lista por tag y la búsqueda**.
   por tags.
 - La fila de filtro no dibuja valores sin recetas, y no se dibuja si ninguna receta tiene
   duración.
-- El orden A–Z pone favoritas primero y las sin duración al final; el orden por duración
-  mezcla favoritas y deja las sin duración al final.
+- El orden A–Z no cambia: favoritas primero y alfabético. El orden por duración mezcla
+  favoritas y deja las sin duración al final.
 - En la búsqueda el orden se aplica dentro de cada grupo.
 - La fila de orden no se dibuja si ninguna receta tiene duración.
 
