@@ -37,7 +37,20 @@ describe('el carrusel de tags: las flechas siguen la timeline del degradé', () 
 
   it('la flecha derecha desaparece al final y la izquierda aparece al correrse', () => {
     expect(BASE).toContain('@keyframes aparecer-flecha { to { visibility: visible; } }');
-    expect(BASE).toContain('@keyframes desaparecer-flecha { to { visibility: hidden; } }');
+    expect(BASE).toContain('@keyframes desaparecer-flecha { from { visibility: visible; } to { visibility: hidden; } }');
+  });
+
+  it('sin desborde no hay nada que correr: el lado derecho arranca oculto, como el izquierdo', () => {
+    // Si el carrusel no desborda, la timeline de scroll queda inactiva y la
+    // animación no se aplica: lo que se ve es el valor base. Por eso el
+    // degradé y la flecha de la derecha tienen que estar ocultos de base, y la
+    // animación es la que los muestra mientras quede algo por ver.
+    const soporte = BASE.slice(
+      BASE.indexOf('@supports (animation-timeline: scroll())'), BASE.indexOf('@keyframes aparecer')
+    );
+    expect(soporte).toContain('.carrusel-marco::after { opacity: 0;');
+    expect(soporte).toContain('.carrusel-flecha.der { visibility: hidden;');
+    expect(BASE).toContain('@keyframes desaparecer { from { opacity: 1; } to { opacity: 0; } }');
   });
 
   it('el trazo de la flecha es 1.5, como el resto de los íconos', () => {

@@ -352,6 +352,11 @@ html:has(.hoja-compartir) { overflow: hidden; }
    JavaScript; donde no haya soporte, los dos se ven siempre, que no rompe nada. */
 .carrusel-marco::before, .carrusel-marco::after {
   content: ''; position: absolute; top: 0; bottom: var(--e-1); width: 40px; pointer-events: none; }
+/* Sin desborde no hay nada que correr, y la timeline de scroll queda inactiva:
+   la animación no se aplica y se ve el valor base. Por eso, dentro del
+   @supports, los dos lados arrancan ocultos y es la animación la que los
+   muestra mientras quede algo por ver. Antes, la derecha arrancaba visible y
+   con pocos tags se dibujaban la flecha y el degradé sin nada detrás. */
 .carrusel-marco::after { right: 0; background: linear-gradient(to right, transparent, var(--bg)); }
 .carrusel-marco::before { left: 0; background: linear-gradient(to left, transparent, var(--bg)); }
 @supports (animation-timeline: scroll()) {
@@ -359,7 +364,7 @@ html:has(.hoja-compartir) { overflow: hidden; }
   .carrusel { scroll-timeline: --tags inline; }
   .carrusel-marco::before { opacity: 0; animation: aparecer linear both;
                             animation-timeline: --tags; animation-range: 0 40px; }
-  .carrusel-marco::after { animation: desaparecer linear both;
+  .carrusel-marco::after { opacity: 0; animation: desaparecer linear both;
                            animation-timeline: --tags; animation-range: calc(100% - 40px) 100%; }
   /* Las flechas siguen la misma timeline, con el mismo rango que su degradé:
      la izquierda aparece recién al correrse, la derecha desaparece al llegar
@@ -367,13 +372,13 @@ html:has(.hoja-compartir) { overflow: hidden; }
      puede tocar (a diferencia del degradé, que no es interactivo). */
   .carrusel-flecha.izq { visibility: hidden; animation: aparecer-flecha linear both;
                          animation-timeline: --tags; animation-range: 0 40px; }
-  .carrusel-flecha.der { animation: desaparecer-flecha linear both;
+  .carrusel-flecha.der { visibility: hidden; animation: desaparecer-flecha linear both;
                         animation-timeline: --tags; animation-range: calc(100% - 40px) 100%; }
 }
 @keyframes aparecer { to { opacity: 1; } }
-@keyframes desaparecer { to { opacity: 0; } }
+@keyframes desaparecer { from { opacity: 1; } to { opacity: 0; } }
 @keyframes aparecer-flecha { to { visibility: visible; } }
-@keyframes desaparecer-flecha { to { visibility: hidden; } }
+@keyframes desaparecer-flecha { from { visibility: visible; } to { visibility: hidden; } }
 
 /* Las flechas, sólo con mouse o trackpad: en el teléfono se desliza con el dedo. */
 .carrusel-flecha { display: none; position: absolute; top: 50%; transform: translateY(-50%); z-index: 1;
