@@ -148,7 +148,7 @@ body {
 /* §6.1 — La estrella de favorito, en la esquina de la tarjeta (P27). La
    reserva de espacio va en el texto: sin ella, un título largo pasa por debajo. */
 .tarjeta { position: relative; }
-.tarjeta .txt { padding-right: 22px; }
+.tarjeta:has(.fav-esq) .txt { padding-right: 22px; }
 .fav-esq { position: absolute; top: 6px; right: 8px; line-height: 0; }
 .fav-esq svg { width: 18px; height: 18px; stroke: var(--acento); stroke-width: 1.5;
                stroke-linejoin: round; fill: color-mix(in srgb, var(--acento) 35%, transparent); }
@@ -189,6 +189,10 @@ body {
 button.chip { cursor: pointer; }
 .chip svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;
             stroke-linecap: round; opacity: .7; }
+/* El trazo de los íconos de chip vale 1.5 en todos lados (design-system §3.4):
+   la estrella, el marcador y el calendario de los tags especiales del
+   carrusel, y la cruz del chip del editor. */
+.chip svg { stroke-width: 1.5; }
 .chips { display: flex; flex-wrap: wrap; gap: var(--e-2); }
 
 /* ---- §6.9 Campo ---- */
