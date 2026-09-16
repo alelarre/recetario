@@ -1,8 +1,7 @@
-import { normalizar, ingredientesIndexables, duracionValida, DURACIONES } from './recipe.js';
+import { normalizar, ingredientesIndexables, duracionValida, DURACIONES, type Duracion } from './recipe.js';
 import type {
   Receta, Ubicacion, Entrada
 } from './tipos.js';
-import type { Duracion } from './recipe.js';
 
 /**
  * El orden de las columnas de la planilla. Es el esquema del índice (§4.3):

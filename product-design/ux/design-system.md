@@ -395,7 +395,8 @@ instantáneo. El spinner sobrevive: es lo único que informa que algo está pasa
 
 ## 6. Componentes core
 
-Los del Hito 6, con tokens aplicados. Quince: el último salió de mockupear.
+Los del Hito 6, con tokens aplicados, más los que se sumaron después de usar
+la app (P27, P29).
 
 ### 6.1 Tarjeta miniatura
 
@@ -839,7 +840,7 @@ alto, con el relojito arriba —24 px, en `--fg`— y el valor abajo, en
 inversión que el botón de tag especial (§6.10b), no el conmutador de dos
 posiciones (§6.16).
 
-Debajo de la grilla, en `--txt-base` `--fg-2` (`.aviso-mudo`): *"Hasta comer,
+Debajo de la grilla, en `--txt-chico` `--fg-2` (`.aviso-mudo`): *"Hasta comer,
 con reposo y horno incluidos."*
 
 ### 6.19 Fila de chips de duración

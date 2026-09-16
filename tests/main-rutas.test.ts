@@ -189,27 +189,28 @@ describe('main.ts: las rutas', () => {
     const desplazamientos: number[] = [];
     /** El `behavior` de cada desplazamiento: 'auto' con reduced motion, si no 'smooth'. */
     const comportamientos: string[] = [];
-    // La duración del editor (P29): sin HTML real que releer, los cinco
-    // botones y el campo oculto comparten esta única variable, como si fuera
-    // el DOM real donde mutar un atributo se ve reflejado al releerlo. `tocar`
-    // reutiliza estos mismos objetos como el botón tocado, para que la
-    // comparación por referencia de `elegir-duracion` en `main.ts` encuentre
-    // al que se tocó.
-    let duracionElegida = '';
+    // La duración del editor (P29): sin HTML real que releer, cada botón
+    // guarda su propio `aria-pressed` en este mapa, y el campo oculto su
+    // propio valor en una variable aparte —dos estados independientes, como
+    // en el DOM real, para que un test pueda notar si `main.ts` deja de
+    // escribir uno de los dos. `tocar` reutiliza estos mismos objetos como
+    // el botón tocado, para que la comparación por referencia de
+    // `elegir-duracion` en `main.ts` encuentre al que se tocó.
+    const presionados = new Map(DURACIONES.map(valor => [valor as string, false]));
     const botonesDuracion = new Map(DURACIONES.map(valor => [valor as string, {
       dataset: { accion: 'elegir-duracion', valor }, classList: { contains: () => false },
       closest: () => null, tagName: 'BUTTON', remove: () => {}, hasAttribute: () => false,
-      getAttribute: (n: string) => n === 'aria-pressed' ? String(valor === duracionElegida) : null,
+      getAttribute: (n: string) => n === 'aria-pressed' ? String(presionados.get(valor) ?? false) : null,
       setAttribute: (n: string, v: string) => {
         if (n !== 'aria-pressed') return;
-        if (v === 'true') duracionElegida = valor;
-        else if (duracionElegida === valor) duracionElegida = '';
+        presionados.set(valor, v === 'true');
       }
     }]));
+    let valorOculto = '';
     const campoTiempoDuracion = {
-      get value() { return duracionElegida; },
-      set value(v: string) { duracionElegida = v; },
-      setAttribute: (_n: string, v: string) => { duracionElegida = v; }
+      get value() { return valorOculto; },
+      set value(v: string) { valorOculto = v; },
+      setAttribute: (_n: string, v: string) => { valorOculto = v; }
     };
     global.document = comoGlobal<Document>({
       querySelector: (sel: string) => {
@@ -466,6 +467,91 @@ describe('main.ts: las rutas', () => {
       await abrir('#/');
       await abrir('#/c/Carnes');
       expect(app.innerHTML.indexOf('Asado')).toBeLessThan(app.innerHTML.indexOf('Rabas'));
+    } finally {
+      storeFake.buscar = original;
+    }
+  });
+
+  it('sin la fila de duraciones (por el filtro de tags) el orden vuelve a A–Z aunque quedara en duración', async () => {
+    // Con todos los tags, hay una receta con duración: se puede elegir orden
+    // por duración. Filtrando por `sinTiempo` quedan sólo las dos sin
+    // duración: la fila de orden no se dibuja, y el orden efectivo tiene que
+    // volver a A–Z —favoritas primero— en vez de quedarse pegado en
+    // duración, donde no hay control para sacarlo (P29).
+    const original = storeFake.buscar;
+    storeFake.buscar = (filtros?: { tags?: string[] }) => {
+      const activos = filtros?.tags ?? [];
+      const todas = [
+        entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags: ['horno'], tiempo: '~30 min' }),
+        entradaFalsa({ id_archivo: 'f2', titulo: 'Arroz', categoria: 'Carnes', tags: ['sinTiempo'] }),
+        entradaFalsa({ id_archivo: 'f3', titulo: 'Zapallo', categoria: 'Carnes', tags: ['sinTiempo', 'favorito'] })
+      ];
+      return todas.filter(e => activos.every(t => e.tags.includes(t)));
+    };
+    try {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/c/Carnes');
+      await tocar('ordenar', { valor: 'duracion' });
+      expect(app.innerHTML).toContain('data-accion="ordenar" data-valor="duracion" aria-pressed="true"');
+
+      await tocar('', { tag: 'sinTiempo' });
+
+      // La fila de orden no se dibuja: no hay ninguna duración en lo filtrado.
+      expect(app.innerHTML).not.toContain('data-accion="ordenar"');
+      // Pero el orden efectivo es A–Z: Zapallo es favorita y va primero,
+      // aunque alfabéticamente vaya después de Arroz.
+      expect(app.innerHTML.indexOf('Zapallo')).toBeLessThan(app.innerHTML.indexOf('Arroz'));
+    } finally {
+      storeFake.buscar = original;
+    }
+  });
+
+  it('lo mismo en la lista por tag: sin la fila de duraciones el orden vuelve a A–Z', async () => {
+    const original = storeFake.buscar;
+    storeFake.buscar = (filtros?: { tags?: string[] }) => {
+      const activos = filtros?.tags ?? [];
+      const todas = [
+        entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags: ['horno'], tiempo: '~30 min' }),
+        entradaFalsa({ id_archivo: 'f2', titulo: 'Arroz', categoria: 'Carnes', tags: ['horno', 'sinTiempo'] }),
+        entradaFalsa({ id_archivo: 'f3', titulo: 'Zapallo', categoria: 'Carnes', tags: ['horno', 'sinTiempo', 'favorito'] })
+      ];
+      return todas.filter(e => activos.every(t => e.tags.includes(t)));
+    };
+    try {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/t/horno');
+      await tocar('ordenar', { valor: 'duracion' });
+      expect(app.innerHTML).toContain('data-accion="ordenar" data-valor="duracion" aria-pressed="true"');
+
+      await tocar('', { tag: 'sinTiempo' });
+
+      expect(app.innerHTML).not.toContain('data-accion="ordenar"');
+      expect(app.innerHTML.indexOf('Zapallo')).toBeLessThan(app.innerHTML.indexOf('Arroz'));
+    } finally {
+      storeFake.buscar = original;
+    }
+  });
+
+  it('ordenar por duración vuelve a mostrar el primer tramo: la única con duración entra ahí aunque alfabético la deje afuera', async () => {
+    // 31 recetas: 30 sin duración con títulos A01..A30, y «Zeta» con
+    // `~15 min`, que alfabéticamente cae última —fuera del primer tramo de
+    // 30 (`TRAMO`)—. Ordenar por duración la trae adelante de todas: tiene
+    // que entrar en lo que ya se dibujó, sin tocar «ver más».
+    const original = storeFake.buscar;
+    const todas = [
+      ...Array.from({ length: 30 }, (_, i) =>
+        entradaFalsa({ id_archivo: `f${i}`, titulo: `A${String(i + 1).padStart(2, '0')}`, categoria: 'Carnes' })),
+      entradaFalsa({ id_archivo: 'fz', titulo: 'Zeta', categoria: 'Carnes', tiempo: '~15 min' })
+    ];
+    storeFake.buscar = () => todas;
+    try {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/c/Carnes');
+      expect(app.innerHTML).not.toContain('Zeta');
+
+      await tocar('ordenar', { valor: 'duracion' });
+
+      expect(app.innerHTML).toContain('Zeta');
     } finally {
       storeFake.buscar = original;
     }

@@ -30,7 +30,9 @@ export function renderTag(
   // vacío dice el hecho y no invita a «sacar un filtro» que no se puede sacar.
   const cuerpo = lista
     ? `<div class="lista">${lista}</div>` + (visibles < total ? SPINNER : '')
-    : vacio('Ninguna receta tiene estos tags.');
+    : vacio(duracionesActivas.length
+        ? 'Ninguna receta con esos filtros. Probá sacando alguno de los filtros de arriba.'
+        : 'Ninguna receta tiene estos tags.');
 
   const hayDuraciones = duraciones.length > 0 || duracionesActivas.length > 0;
   const filtroDuracion = filaDuraciones(duraciones, duracionesActivas);

@@ -230,7 +230,7 @@ html:has(.hoja-compartir) { overflow: hidden; }
                stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .dur-btn[aria-pressed="true"] { --fondo-reloj: var(--fg); background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .dur-btn[aria-pressed="true"] svg { color: var(--bg); }
-[data-duraciones] .aviso-mudo { margin: var(--e-2) 0 0; }
+[data-duraciones] .aviso-mudo { margin: var(--e-2) 0 0; font-size: var(--txt-chico); }
 
 /* Un tag que la app se reserva: el aviso es una línea, sin caja ni botón. */
 .error-tag { margin: var(--e-1) 0 0; font-size: var(--txt-chico); color: var(--error); }
@@ -286,7 +286,6 @@ html:has(.hoja-compartir) { overflow: hidden; }
 /* ---- Pantalla ancha (C05.10.1) ---- */
 @media (min-width: 900px) {
   .grilla { grid-template-columns: repeat(4, 1fr); }
-  .par3 { grid-template-columns: 1fr 1fr 1fr; }
 }
 
 /* ---- El menú lateral: navegación primaria (IA §4.1) ---- */
@@ -409,8 +408,8 @@ html:has(.hoja-compartir) { overflow: hidden; }
              border-radius: var(--r-medio); overflow: hidden; }
 .orden-seg button { min-height: 40px; padding: 0 var(--e-3); border: 0; background: none; color: var(--fg-2);
                     font: 600 var(--txt-chico)/1 var(--tipo); cursor: pointer; display: inline-flex;
-                    align-items: center; gap: 6px; --fondo-reloj: var(--bg); }
+                    align-items: center; gap: 6px; }
 .orden-seg button + button { border-left: 1px solid var(--borde); }
-.orden-seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); --fondo-reloj: var(--fg); }
+.orden-seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
 .orden-seg svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5;
                  stroke-linecap: round; stroke-linejoin: round; }

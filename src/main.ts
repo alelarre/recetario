@@ -398,11 +398,14 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     case 'categoria': {
       const nombre = ruta.params['nombre'] ?? '';
       const porTags = store.buscar({ categoria: nombre, tags: tagsActivos });
-      const entradas = ordenarRecetas(filtrarPorDuracion(porTags, duracionesActivas), orden);
+      // Sin fila de duraciones no hay conmutador para volver a A–Z: si no
+      // quedaba dibujado, el orden por duración quedaba pegado sin control (P29).
+      const ordenEfectivo = contarDuraciones(porTags).length || duracionesActivas.length ? orden : 'alfa';
+      const entradas = ordenarRecetas(filtrarPorDuracion(porTags, duracionesActivas), ordenEfectivo);
       pintar(renderCategoria({
         nombre, entradas: entradas.slice(0, visibles), total: entradas.length,
         visibles: Math.min(visibles, entradas.length), tagsActivos, tags: store.tagsDe(nombre),
-        duraciones: contarDuraciones(porTags), duracionesActivas, orden
+        duraciones: contarDuraciones(porTags), duracionesActivas, orden: ordenEfectivo
       }));
       return observarTramo();
     }
@@ -413,11 +416,14 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       const nombre = ruta.params['nombre'] ?? '';
       const activos = tagsActivos.includes(nombre) ? tagsActivos : [nombre, ...tagsActivos];
       const porTags = store.buscar({ tags: activos });
-      const entradas = ordenarRecetas(filtrarPorDuracion(porTags, duracionesActivas), orden);
+      // Mismo cuidado que en la categoría: sin fila de duraciones, sin
+      // conmutador para volver a A–Z (P29).
+      const ordenEfectivo = contarDuraciones(porTags).length || duracionesActivas.length ? orden : 'alfa';
+      const entradas = ordenarRecetas(filtrarPorDuracion(porTags, duracionesActivas), ordenEfectivo);
       pintar(renderTag({
         tag: nombre, entradas: entradas.slice(0, visibles), total: entradas.length,
         visibles: Math.min(visibles, entradas.length), tagsActivos: activos, tags: store.tagsDe(),
-        duraciones: contarDuraciones(porTags), duracionesActivas, orden
+        duraciones: contarDuraciones(porTags), duracionesActivas, orden: ordenEfectivo
       }));
       return observarTramo();
     }
