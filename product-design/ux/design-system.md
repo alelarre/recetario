@@ -385,8 +385,8 @@ Los del Hito 6, con tokens aplicados. Quince: el último salió de mockupear.
 
 ```
 ┌────────────────────────────────────────┐  --surface, borde 1px --borde
-│ ┌──────┐  Milanesas napolitanas        │  --r-ficha, padding --e-3
-│ │ foto │  ▪ Carnes · 40 min        ○   │
+│ ┌──────┐  Milanesas napolitanas    ★○  │  --r-ficha, padding --e-3
+│ │ foto │  ▪ Carnes · 40 min             │
 │ └──────┘                               │
 └────────────────────────────────────────┘
 ```
@@ -395,9 +395,9 @@ Los del Hito 6, con tokens aplicados. Quince: el último salió de mockupear.
 |---|---|
 | Foto o placeholder | 56 × 56 px, `--r-foto` |
 | Título | `--txt-base`, peso 600, `--fg` |
-| Línea de contexto | `--txt-chico`, `--fg-2` |
+| Línea de contexto | `--txt-chico`, `--fg-2`, sólo datos |
 | El cuadrito `▪` de categoría | 8 × 8 px, `--r-chico`, el color de la categoría |
-| Marca de incompleta `○` | `--fg-3`, ver §6.5 |
+| Marcas de los especiales, juntas arriba a la derecha `[cambio del 2026-09-16]` | 16 × 16 px cada una, en el orden de los especiales, `--acento`; ver §6.5. La estrella de favorito lleva además un relleno al 35 % |
 | Motivo, en resultados por ingrediente | `--txt-chico`, `--acento` |
 
 **Alto total: 80 px.** Entran ocho o nueve por pantalla, que es lo que la
@@ -504,8 +504,8 @@ otro dibujo para decir lo mismo:
 
 | Dónde | Cómo |
 |---|---|
-| **Tarjeta de la lista** | Sólo la marca, al final de la línea de contexto. Sin texto, así que se nombra para el lector de pantalla. |
-| **Receta abierta** | Un chip (§6.10) que dice *Incompleta*, el primero de la fila de tags. Tocable, abre el editor (`E03-LeerYCocinar.md` C03.1.3). |
+| **Tarjeta de la lista** `[cambio del 2026-09-16]` | Junto con las demás marcas de especiales, arriba a la derecha de la tarjeta y en su orden (§6.1). Sin texto, así que cada una se nombra para el lector de pantalla. |
+| **Receta abierta** | Un chip (§6.10) con el tag tal como está escrito —*incompleta*—, el primero de la fila de tags. Tocable, abre el editor (`E03-LeerYCocinar.md` C03.1.3). |
 | **Editor** | El ícono del botón `incompleta` (§6.10b) `[cambio del 2026-09-16: antes era la posición del conmutador, §6.16]`, en el color del botón y no en el acento. |
 
 - **Nunca `--error` y nunca amarillo.** No es un problema: la receta funciona, le
@@ -623,8 +623,9 @@ chips van `--e-3` de aire antes del campo de agregar.
 
 **Pendiente** —el estado de una receta incompleta, en la receta abierta—
 `[agregado el 2026-09-12]` usa los mismos valores que **Activo**, con la marca de
-§6.5 adelante y el texto *Incompleta*. Son clases distintas porque significan
-cosas distintas: uno es un filtro puesto, el otro un estado del contenido.
+§6.5 adelante y el tag tal como está escrito, *incompleta*. Son clases distintas
+porque significan cosas distintas: uno es un filtro puesto, el otro un estado
+del contenido.
 
 **Un tag reservado no llega a ser chip:** el editor lo rechaza al agregarlo y lo
 dice en una línea de `--txt-chico` en `--error`, sin caja ni botón
@@ -634,9 +635,9 @@ dice en una línea de `--txt-chico` en `--error`, sin caja ni botón
 
 `[agregado el 2026-09-16, reemplaza al uso del conmutador de dos posiciones
 en §6.16]` Cuatro botones —uno por tag especial—, dentro del campo **«Tags»**
-del editor, en fila arriba de los tags comunes y del campo para agregar
-(`E04-Corregir.md` C04.2.1b, C04.4.1). Cada uno lleva su ícono (§3.4) y su
-nombre, con `aria-pressed`.
+del editor, en una **grilla de 2 × 2** arriba de los tags comunes y del campo
+para agregar (`E04-Corregir.md` C04.2.1b, C04.4.1). Cada uno lleva su ícono
+(§3.4) y su nombre, con `aria-pressed`.
 
 | Estado | Fondo | Texto | Borde |
 |---|---|---|---|
@@ -650,7 +651,9 @@ reemplaza.
 **`incompleta` apretado y deshabilitado** —sin título, categoría, ingredientes
 o pasos— no se puede tocar, y debajo lleva la leyenda de qué falta, como un
 aviso sin acción (§6.8): *"Se va a poder sacar incompleta cuando se cargue:
-título, categoría, ingredientes y pasos."*
+título, categoría, ingredientes y pasos."* **Deshabilitado baja a `opacity:
+.6`**, manteniendo apretado: sigue leyéndose qué estado tiene, sólo que no se
+puede tocar.
 
 **Nunca `--error`.** Misma regla que la marca de incompleta (§6.5): a la
 receta le falta algo, no está rota.

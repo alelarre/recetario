@@ -13,7 +13,7 @@
 import { escapar } from './markdown.js';
 import { encabezado, aviso, iconoDeTag } from './componentes.js';
 import { ICO } from './iconos.js';
-import { DIFICULTADES, dificultadValida, tagReservado, TAGS_ESPECIALES, tagEspecial } from '../catalogo.js';
+import { DIFICULTADES, dificultadValida, tagReservado, TAGS_ESPECIALES, tagEspecial, tieneEspecial } from '../catalogo.js';
 import { sePuedeTerminar } from '../recipe.js';
 import type { Receta, Entrada } from '../tipos.js';
 import type { Categoria } from '../store.js';
@@ -90,7 +90,7 @@ const area = (
 function botonesEspeciales(tags: string[], puedeTerminar: boolean): string {
   const botones = TAGS_ESPECIALES.map(t => {
     const bloqueado = t === 'incompleta' && !puedeTerminar;
-    const apretado = bloqueado || tags.some(x => tagEspecial(x) === t);
+    const apretado = bloqueado || tieneEspecial({ tags }, t);
     return `<button type="button" class="tag-esp" data-accion="tag-especial" data-valor="${escapar(t)}" ` +
       `aria-pressed="${apretado}"${bloqueado ? ' disabled' : ''}>${iconoDeTag(t)}${escapar(t)}</button>`;
   }).join('');
@@ -122,7 +122,7 @@ export function renderEditor(
   const puede = sePuedeTerminar(receta, carpetaActual);
   const comunes = tags.filter(t => !tagEspecial(t));
   const especiales = TAGS_ESPECIALES.filter(t =>
-    (t === 'incompleta' && !puede) || tags.some(x => tagEspecial(x) === t));
+    (t === 'incompleta' && !puede) || tieneEspecial({ tags }, t));
 
   // Las dos fichas llevan título: el formulario es largo, y al hacer scroll es lo
   // que dice en qué parte se está (auditoría tipográfica T13).

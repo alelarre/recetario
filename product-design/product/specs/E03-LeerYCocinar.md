@@ -77,7 +77,7 @@ notas. Sin pestañas: costaban cuatro toques para leer una receta entera.
 
 #### C03.1.3 — Estados de la receta *(J6)*
 
-- [ ] Incompleta: **un chip más de la fila de tags, el primero, que dice *Incompleta*** y lleva la marca (design-system §6.5). Es **tocable** y **abre el editor**, donde se saca el tag con su botón una vez cargado lo mínimo (C04.4.1). `[cambio del 2026-09-16]` El resto de la receta se muestra igual.
+- [ ] Incompleta: **un chip más de la fila de tags, el primero, con el tag tal como está escrito** —*incompleta*— **y lleva la marca** (design-system §6.5). Es **tocable** y **abre el editor**, donde se saca el tag con su botón una vez cargado lo mínimo (C04.4.1). `[cambio del 2026-09-16]` El resto de la receta se muestra igual.
 - [ ] Va **en la fila de tags y no suelto debajo** `[2026-09-12]`: es un estado del mismo orden que un tag, se lee en el mismo barrido, y toma de ahí el alto y el aire que le faltaban.
 - [ ] La marca sale del tag `incompleta` de la lista `tags`, no de mirar el contenido (C05.3.1). `[cambio del 2026-09-16]`
 - [ ] Sin foto: el bloque de foto no se dibuja y la receta empieza por el título.

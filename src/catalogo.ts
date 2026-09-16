@@ -183,9 +183,6 @@ export function tieneEspecial(x: { tags: string[] }, especial: TagEspecial): boo
 
 export const esFavorita = (x: { tags: string[] }): boolean => tieneEspecial(x, 'favorito');
 
-/** Incompleta es un tag, no una clave del frontmatter: sin el tag, la receta está terminada. */
-export const esIncompleta = (x: { tags: string[] }): boolean => tieneEspecial(x, 'incompleta');
-
 /** Los especiales primero, en el orden de `TAGS_ESPECIALES`; el resto como venía. */
 export function ordenarTags(tags: string[]): string[] {
   const lista = Array.isArray(tags) ? tags : [];

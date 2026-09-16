@@ -10,7 +10,7 @@ import { escapar } from './markdown.js';
 import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
 import { ICO } from './iconos.js';
 import { textoVersion } from '../version.js';
-import { tagEspecial, ordenarTags, TAGS_ESPECIALES } from '../catalogo.js';
+import { tagEspecial, ordenarTags, tieneEspecial, TAGS_ESPECIALES } from '../catalogo.js';
 import type { Entrada } from '../tipos.js';
 import type { TagEspecial } from '../catalogo.js';
 
@@ -85,10 +85,11 @@ export function tarjeta(e: Entrada, { motivo }: OpcionesTarjeta = {}): string {
   // Las marcas de los especiales, juntas en la esquina y en su orden (P27): la
   // línea de contexto queda sólo con datos. `--marcas` reserva el ancho que
   // ocupan, para que el título no pase por debajo.
-  const puestas = TAGS_ESPECIALES.filter(t => e.tags.some(x => tagEspecial(x) === t));
+  const puestas = TAGS_ESPECIALES.filter(t => tieneEspecial(e, t));
   const marcas = puestas.length
     ? '<span class="marcas-esq">' + puestas.map(t =>
-        `<span class="marca" role="img" aria-label="${NOMBRE_DE_MARCA[t]}">${iconoDeTag(t)}</span>`).join('') +
+        `<span class="marca${t === 'favorito' ? ' fav' : ''}" role="img" aria-label="${NOMBRE_DE_MARCA[t]}">` +
+        `${iconoDeTag(t)}</span>`).join('') +
       '</span>'
     : '';
   return `<a class="tarjeta" href="#/r/${encodeURIComponent(e.id_archivo)}"` +

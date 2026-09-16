@@ -70,8 +70,8 @@ cambio: pone `incompleta` donde corresponda y saca la clave `completa`.
 
 ### 5.1 Los botones
 
-Dentro del campo **«Tags»**, una fila con los cuatro botones, arriba de los tags comunes y
-del campo para agregar.
+Dentro del campo **«Tags»**, una grilla de 2 × 2 con los cuatro botones, arriba de los tags
+comunes y del campo para agregar.
 
 - **Apretado:** la receta tiene el tag. **Suelto:** no lo tiene. Tocarlo lo pone o lo saca.
 - Apretado se dibuja invertido —fondo claro, texto oscuro—, la convención del estado

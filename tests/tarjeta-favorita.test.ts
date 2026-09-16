@@ -16,4 +16,9 @@ describe('la reserva de espacio para las marcas de la tarjeta', () => {
   it('la esquina junta las marcas en una fila propia', () => {
     expect(TOKENS).toContain('.marcas-esq { position: absolute; top: 6px; right: 8px; display: flex; gap: 4px; line-height: 0; }');
   });
+
+  it('el relleno de la estrella cuelga de una clase, no del texto accesible', () => {
+    expect(TOKENS).toContain('.marca.fav svg');
+    expect(TOKENS).not.toContain('.marca[aria-label="Favorita"]');
+  });
 });

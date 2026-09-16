@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  TAGS_ESPECIALES, tagEspecial, esFavorita, esIncompleta, ordenarTags, ordenarRecetas, conEspecial, tagReservado
+  TAGS_ESPECIALES, tagEspecial, esFavorita, ordenarTags, ordenarRecetas, conEspecial, tagReservado
 } from '../src/catalogo.js';
 import { entradaFalsa } from './dobles.js';
 
@@ -37,11 +37,6 @@ describe('los tags especiales', () => {
     expect(esFavorita({ tags: ['horno', 'Favorita'] })).toBe(true);
     expect(esFavorita({ tags: ['horno'] })).toBe(false);
     expect(esFavorita({ tags: [] })).toBe(false);
-  });
-
-  it('una receta es incompleta si lleva el tag, escrito como sea', () => {
-    expect(esIncompleta({ tags: ['Incompleto'] })).toBe(true);
-    expect(esIncompleta({ tags: ['horno'] })).toBe(false);
   });
 
   it('terminado y sus formas siguen reservados, y los cuatro especiales también', () => {
