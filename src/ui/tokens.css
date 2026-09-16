@@ -50,6 +50,10 @@
   /* §3.4 Iconografía */
   --ico: 20px; --ico-cocina: 24px;
 
+  /* P29 — el fondo con el que `>1 día` corta el reloj de atrás. Cada lugar
+     que dibuja un relojito sobre otro fondo lo redefine. */
+  --fondo-reloj: var(--surface);
+
   /* §4.2 Radios */
   --r-chico: 4px; --r-medio: 8px; --r-ficha: 12px; --r-foto: 8px;
 }

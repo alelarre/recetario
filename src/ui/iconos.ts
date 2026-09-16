@@ -1,3 +1,5 @@
+import type { Duracion } from '../recipe.js';
+
 /**
  * Los SVG de los mockups, como constantes.
  *
@@ -45,3 +47,18 @@ export const ICO = {
   /** El chevron hacia adelante: la flecha derecha del carrusel. */
   chevron: svg('<path d="M9 18l6-6-6-6"/>')
 } as const satisfies Record<string, string>;
+
+/**
+ * Los relojitos de la duración (P29): una aguja y el recorrido desde las 12,
+ * tenue. `~60 min` completa la vuelta con la aguja de nuevo arriba; `>60 min`
+ * suma un cuarto de aro que sigue, con flecha; `>1 día` son dos relojes. El
+ * disco de `>1 día` corta al reloj de atrás con el fondo de donde se dibuje:
+ * `--fondo-reloj`.
+ */
+export const ICONO_DE_DURACION: Record<Duracion, string> = {
+  '~15 min': svg('<circle cx="12" cy="12" r="9"/><g opacity=".3"><path d="M12 12L12 3A9 9 0 0 1 21 12Z" fill="currentColor" stroke="none"/></g><path d="M12 3v2"/><path d="M12 12L18 12"/><circle cx="12" cy="12" r=".6" fill="currentColor"/>'),
+  '~30 min': svg('<circle cx="12" cy="12" r="9"/><g opacity=".3"><path d="M12 12L12 3A9 9 0 0 1 12 21Z" fill="currentColor" stroke="none"/></g><path d="M12 3v2"/><path d="M12 12L12 18"/><circle cx="12" cy="12" r=".6" fill="currentColor"/>'),
+  '~60 min': svg('<circle cx="12" cy="12" r="9"/><g opacity=".3"><circle cx="12" cy="12" r="9" fill="currentColor" stroke="none"/></g><path d="M12 3v2"/><path d="M12 12L12 6"/><circle cx="12" cy="12" r=".6" fill="currentColor"/>'),
+  '>60 min': svg('<circle cx="12" cy="12" r="7"/><g opacity=".3"><circle cx="12" cy="12" r="7" fill="currentColor" stroke="none"/></g><path d="M12 5v1.56"/><path d="M12 12L12 7.33"/><circle cx="12" cy="12" r=".6" fill="currentColor"/><path d="M12 2A10 10 0 0 1 21.78 9.92" stroke-width="1.6"/><path d="M22.92 7.15L21.78 9.92L19.61 7.85" stroke-width="1.6"/>'),
+  '>1 día': svg('<g opacity=".6"><circle cx="15.5" cy="8.5" r="6"/><g opacity=".3"><path d="M15.5 8.5L15.5 2.5A6 6 0 0 1 15.5 14.5Z" fill="currentColor" stroke="none"/></g><path d="M15.5 2.5v1.33"/><path d="M15.5 8.5L15.5 12.5"/><circle cx="15.5" cy="8.5" r=".6" fill="currentColor"/></g><circle cx="8.5" cy="15.5" r="7.2" style="fill:var(--fondo-reloj)" stroke="none"/><circle cx="8.5" cy="15.5" r="6"/><g opacity=".3"><path d="M8.5 15.5L8.5 9.5A6 6 0 0 1 14.5 15.5Z" fill="currentColor" stroke="none"/></g><path d="M8.5 9.5v1.33"/><path d="M8.5 15.5L12.5 15.5"/><circle cx="8.5" cy="15.5" r=".6" fill="currentColor"/>')
+};
