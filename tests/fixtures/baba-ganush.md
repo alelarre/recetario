@@ -2,7 +2,7 @@
 titulo: Baba ganush
 tags: [vegetariano, horno]
 rinde: 6 porciones (unas 1¾ tazas)
-tiempo: 55 min
+tiempo: ~30 min
 dificultad: fácil
 fuente: https://cookieandkate.com/epic-baba-ganoush-recipe/
 ---

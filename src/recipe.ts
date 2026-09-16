@@ -7,6 +7,20 @@ import type {
 const CLAVES = ['titulo', 'rinde', 'tiempo', 'dificultad', 'fuente', 'foto'] as const;
 type ClaveSimple = (typeof CLAVES)[number];
 
+/**
+ * La duración no es texto libre: es uno de estos cinco valores, escritos tal
+ * cual en `tiempo` (P29). Cuenta el tiempo hasta comer, con reposo y horno.
+ */
+export const DURACIONES = ['~15 min', '~30 min', '~60 min', '>60 min', '>1 día'] as const;
+export type Duracion = (typeof DURACIONES)[number];
+
+/** El valor si es uno de los cinco; si no, vacío: lo demás se lee como sin duración. */
+export function duracionValida(valor: unknown): Duracion | '' {
+  if (typeof valor !== 'string') return '';
+  const s = valor.trim();
+  return (DURACIONES as readonly string[]).includes(s) ? s as Duracion : '';
+}
+
 const esClaveSimple = (c: string): c is ClaveSimple =>
   (CLAVES as readonly string[]).includes(c);
 
@@ -309,7 +323,7 @@ export function ingredientesIndexables(receta?: Partial<Receta> | null): string[
 
 /** La línea de contexto de una receta: lo que la ubica sin abrirla. La categoría sale de la carpeta. */
 export function contextoDe(receta: Receta, categoria: string): string {
-  return [categoria, receta.rinde, receta.tiempo, receta.dificultad].filter(Boolean).join(' · ');
+  return [categoria, receta.rinde, duracionValida(receta.tiempo), receta.dificultad].filter(Boolean).join(' · ');
 }
 
 export function slugArchivo(titulo: unknown, existentes: unknown[] = []): string {

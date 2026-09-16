@@ -7,7 +7,7 @@ const BABA = parse(readFileSync(new URL('./fixtures/baba-ganush.md', import.meta
 
 describe('contextoDe', () => {
   it('categoría, rinde, tiempo y dificultad, lo que haya', () => {
-    expect(contextoDe(BABA, 'Entradas y picadas')).toBe('Entradas y picadas · 6 porciones (unas 1¾ tazas) · 55 min · fácil');
+    expect(contextoDe(BABA, 'Entradas y picadas')).toBe('Entradas y picadas · 6 porciones (unas 1¾ tazas) · ~30 min · fácil');
     expect(contextoDe(parse('---\ntitulo: A\n---\n'), '')).toBe('');
   });
 });

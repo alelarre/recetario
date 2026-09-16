@@ -1,7 +1,8 @@
-import { normalizar, ingredientesIndexables } from './recipe.js';
+import { normalizar, ingredientesIndexables, duracionValida, DURACIONES } from './recipe.js';
 import type {
   Receta, Ubicacion, Entrada
 } from './tipos.js';
+import type { Duracion } from './recipe.js';
 
 /**
  * El orden de las columnas de la planilla. Es el esquema del índice (§4.3):
@@ -25,6 +26,9 @@ export const COLUMNAS = [
 ] as const satisfies ReadonlyArray<keyof Entrada>;
 
 export const DIFICULTADES = ['fácil', 'media', 'difícil'] as const;
+
+export { DURACIONES, duracionValida } from './recipe.js';
+export type { Duracion } from './recipe.js';
 
 /** Si el tag es uno de los reservados, sin importar mayúsculas ni acentos. */
 export function tagReservado(valor: unknown): boolean {
@@ -121,7 +125,7 @@ export function entradaDesdeFila(fila?: unknown): Entrada {
     categoria: texto.categoria,
     carpeta_id: texto.carpeta_id,
     rinde: texto.rinde,
-    tiempo: texto.tiempo,
+    tiempo: duracionValida(texto.tiempo),
     dificultad: texto.dificultad,
     fuente: texto.fuente,
     tags: partir(texto.tags),
@@ -193,15 +197,41 @@ export function ordenarTags(tags: string[]): string[] {
   return [...lista].sort((a, b) => peso(a) - peso(b));
 }
 
+/** A–Z es el orden de siempre; `duracion` es el del conmutador de las listas (P29). */
+export type Orden = 'alfa' | 'duracion';
+
 /**
- * Las favoritas primero y, dentro de cada bloque, alfabético (P27). Es una
- * excepción al alfabético, no su reemplazo: sin favoritas, el orden es el de
- * siempre.
+ * A–Z: las favoritas primero y, dentro de cada bloque, alfabético (P27).
+ * Por duración: de la más corta a la más larga, con las favoritas mezcladas
+ * —la estrella de la tarjeta ya las marca—, alfabético dentro de cada valor y
+ * las que no tienen duración al final (P29).
  */
-export function ordenarRecetas(entradas: Entrada[]): Entrada[] {
+export function ordenarRecetas(entradas: Entrada[], orden: Orden = 'alfa'): Entrada[] {
   const lista = Array.isArray(entradas) ? entradas : [];
-  return [...lista].sort((a, b) =>
-    Number(esFavorita(b)) - Number(esFavorita(a)) || a.titulo.localeCompare(b.titulo, 'es'));
+  const alfa = (a: Entrada, b: Entrada): number => a.titulo.localeCompare(b.titulo, 'es');
+  if (orden === 'duracion') {
+    const pos = (e: Entrada): number => {
+      const d = duracionValida(e.tiempo);
+      return d ? DURACIONES.indexOf(d) : DURACIONES.length;
+    };
+    return [...lista].sort((a, b) => pos(a) - pos(b) || alfa(a, b));
+  }
+  return [...lista].sort((a, b) => Number(esFavorita(b)) - Number(esFavorita(a)) || alfa(a, b));
+}
+
+/** Cuántas recetas hay con cada duración, en el orden de `DURACIONES`, sin los valores vacíos. */
+export function contarDuraciones(entradas: Entrada[]): { valor: Duracion; cantidad: number }[] {
+  const lista = Array.isArray(entradas) ? entradas : [];
+  return DURACIONES
+    .map(valor => ({ valor, cantidad: lista.filter(e => duracionValida(e.tiempo) === valor).length }))
+    .filter(x => x.cantidad > 0);
+}
+
+/** Las recetas con alguna de las duraciones encendidas; sin ninguna encendida, todas. */
+export function filtrarPorDuracion(entradas: Entrada[], activas: string[]): Entrada[] {
+  const lista = Array.isArray(entradas) ? entradas : [];
+  if (!activas.length) return lista;
+  return lista.filter(e => activas.includes(duracionValida(e.tiempo)));
 }
 
 /** La lista de tags con ese especial puesto o sacado, en su forma canónica y sin tocar los demás. */
