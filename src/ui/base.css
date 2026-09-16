@@ -94,6 +94,24 @@
 /* El pie sigue el ancho del cuerpo: en pantalla ancha no se va a los bordes. */
 .pie .acciones { max-width: 680px; margin: 0 auto; }
 
+/* §6.5 — La estrella de favorito del encabezado (P27): el contorno y la llena,
+   superpuestas. Mientras se escribe en Drive, la llena se descubre de izquierda
+   a derecha en loop; el resultado se dibuja recién con la respuesta. */
+.fav { position: relative; display: inline-grid; place-items: center; line-height: 0; }
+.fav svg { grid-area: 1 / 1; width: var(--ico); height: var(--ico); fill: none; stroke-width: 1.5;
+           stroke-linejoin: round; }
+.fav svg:first-child { stroke: currentColor; }
+.fav svg:last-child { stroke: var(--acento); fill: color-mix(in srgb, var(--acento) 45%, transparent);
+                      clip-path: inset(0 100% 0 0); }
+.fav.on { color: var(--acento); }
+.fav.on svg:last-child { clip-path: inset(0); }
+.fav.cargando { color: var(--acento); }
+.fav.cargando svg:last-child { animation: llenar 2s linear infinite; }
+@keyframes llenar { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .fav.cargando svg:last-child { animation: none; clip-path: inset(0 50% 0 0); }
+}
+
 /* ---- Compartir (spec P23 §2) ---- */
 .velo { position: fixed; inset: 0; z-index: 30; background: var(--velo); opacity: .6; }
 .hoja-compartir { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-width: 680px; margin: 0 auto;

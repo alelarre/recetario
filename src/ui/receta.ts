@@ -9,10 +9,11 @@
  * contexto, la fuente y los tags; después una por sección, y ninguna vacía.
  */
 import { escapar } from './markdown.js';
-import { encabezado } from './componentes.js';
+import { encabezado, chipsSueltos } from './componentes.js';
 import { ICO } from './iconos.js';
 import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones } from './fichas-receta.js';
 import { renderFichaCompartir } from './compartir.js';
+import { esFavorita } from '../catalogo.js';
 // El logo de Drive, en el repo y no pedido a `gstatic.com`: una dependencia de
 // red para 513 bytes es una dependencia de más, y así entra a `/assets/`, que es
 // lo único que el service worker sirve caché-primero. Es el favicon que publica
@@ -28,9 +29,25 @@ export interface OpcionesReceta {
   receta: Receta;
   /** La ficha de compartir abierta, en su estado. Sin esto no se dibuja. */
   compartir?: EstadoCompartir;
+  /** Qué está pasando con la estrella: nada, o una escritura en curso. */
+  favorito?: 'escribiendo';
 }
 
-export function renderReceta({ entrada, receta, compartir }: OpcionesReceta): string {
+/**
+ * La estrella del encabezado: pone y saca el tag `favorito` (P27). Son dos
+ * estrellas superpuestas —el contorno y la llena—, y mientras Drive contesta
+ * la llena se descubre de izquierda a derecha, en loop. El resultado se dibuja
+ * recién con la respuesta: la app no adivina lo que todavía no se escribió.
+ */
+function botonFavorito(receta: Receta, escribiendo: boolean): string {
+  const puesta = esFavorita(receta);
+  const clase = escribiendo ? 'fav cargando' : puesta ? 'fav on' : 'fav';
+  return `<button class="ico" data-accion="favorito" aria-label="Favorito" ` +
+    `aria-pressed="${puesta}"${escribiendo ? ' disabled' : ''}>` +
+    `<span class="${clase}">${ICO.estrella}${ICO.estrella}</span></button>`;
+}
+
+export function renderReceta({ entrada, receta, compartir, favorito }: OpcionesReceta): string {
   const categoria = entrada?.categoria ?? '';
   // El estado es un chip más de la fila de tags, y va primero: es lo que hay que
   // ver al mirar la receta. Como chip hereda el ancho, el alto y el aire de los
@@ -38,10 +55,10 @@ export function renderReceta({ entrada, receta, compartir }: OpcionesReceta): st
   const marca = receta.completa ? '' :
     '<button class="chip pend" data-accion="editar" aria-label="Incompleta: abrir el editor">' +
       '<span class="inc"></span>Incompleta</button>';
+  // Los tags, con los especiales primero y con su ícono (P27). La marca de
+  // incompleta sigue yendo antes que todos.
   const marcas = marca || receta.tags.length
-    ? '<div class="chips">' + marca +
-      receta.tags.map(t => `<button class="chip" data-tag="${escapar(t)}">${escapar(t)}</button>`).join('') +
-      '</div>'
+    ? `<div class="chips">${marca}${chipsSueltos(receta.tags)}</div>`
     : '';
 
   // El `.md` en Drive, en una pestaña nueva. Sólo si la receta está en el
@@ -60,7 +77,8 @@ export function renderReceta({ entrada, receta, compartir }: OpcionesReceta): st
   // grande sale de pantalla, y ahí se corta antes de llegar al link.
   // Sin menú de ⋯: las acciones son Cocinar y Editar, y las dos están al pie.
   const botonCompartir = `<button class="ico" data-accion="compartir" aria-label="Compartir">${ICO.compartir}</button>`;
-  return encabezado({ titulo: '', volver: true, pegajoso: true, derecha: botonCompartir + alArchivo }) +
+  const estrella = botonFavorito(receta, favorito === 'escribiendo');
+  return encabezado({ titulo: '', volver: true, pegajoso: true, derecha: estrella + botonCompartir + alArchivo }) +
     '<div class="cuerpo">' + fichaCabecera({ receta, categoria, marcas }) + fichasDelCuerpo(receta) + '</div>' +
     pieDeAcciones(botonCocinar(receta) + `<button class="btn sec" data-accion="editar">${ICO.lapiz}Editar</button>`) +
     (compartir ? renderFichaCompartir(compartir) : '');

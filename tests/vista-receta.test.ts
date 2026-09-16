@@ -4,6 +4,7 @@ import { renderFichaCompartir } from '../src/ui/compartir.js';
 import { parse } from '../src/recipe.js';
 import { entradaFalsa } from './dobles.js';
 import { registrarCategorias } from '../src/ui/categorias.js';
+import { ICO } from '../src/ui/iconos.js';
 
 const MINIMA = parse('---\ntitulo: A\n---\n');
 
@@ -231,6 +232,37 @@ describe('Receta en lectura', () => {
   it('sin estado de compartir no hay ficha; con estado, sí', () => {
     expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('hoja-compartir');
     expect(renderReceta({ entrada: null, receta: COMPLETA, compartir: { paso: 'opciones' } })).toContain('hoja-compartir');
+  });
+});
+
+describe('la estrella de favorito', () => {
+  const receta = parse('---\ntitulo: Asado\ntags: [horno]\n---\n');
+
+  it('va en el encabezado, apagada', () => {
+    const html = renderReceta({ entrada: entradaFalsa(), receta });
+    expect(html).toContain('data-accion="favorito"');
+    expect(html).toContain('aria-pressed="false"');
+    expect(html).not.toContain('class="fav on"');
+  });
+
+  it('se enciende cuando la receta lleva el tag', () => {
+    const conTag = parse('---\ntitulo: Asado\ntags: [favorito]\n---\n');
+    const html = renderReceta({ entrada: entradaFalsa(), receta: conTag });
+    expect(html).toContain('class="fav on"');
+    expect(html).toContain('aria-pressed="true"');
+  });
+
+  it('mientras escribe muestra el estado de carga y no acepta otro toque', () => {
+    const html = renderReceta({ entrada: entradaFalsa(), receta, favorito: 'escribiendo' });
+    expect(html).toContain('class="fav cargando"');
+    expect(html).toContain('disabled');
+  });
+
+  it('los tags especiales van primeros y con su ícono', () => {
+    const conTags = parse('---\ntitulo: Asado\ntags: [horno, probar]\n---\n');
+    const html = renderReceta({ entrada: entradaFalsa(), receta: conTags });
+    expect(html.indexOf('probar')).toBeLessThan(html.indexOf('horno'));
+    expect(html).toContain(ICO.marcador);
   });
 });
 
