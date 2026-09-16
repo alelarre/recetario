@@ -118,6 +118,10 @@ describe('los chips de tags', () => {
     expect(iconoDeTag('horno')).toBe('');
   });
 
+  it('incompleta usa la marca de medio círculo como ícono', () => {
+    expect(iconoDeTag('incompleta')).toBe('<span class="inc"></span>');
+  });
+
   it('el chip lleva el ícono adelante del nombre', () => {
     expect(chipTag('probar')).toContain(`${ICO.marcador}probar`);
   });

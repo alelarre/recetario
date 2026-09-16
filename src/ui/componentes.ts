@@ -111,6 +111,7 @@ export function iconoDeTag(tag: string): string {
   if (esp === 'favorito') return ICO.estrella;
   if (esp === 'probar') return ICO.marcador;
   if (esp === 'menú diario') return ICO.calendario;
+  if (esp === 'incompleta') return '<span class="inc"></span>';
   return '';
 }
 

@@ -78,7 +78,10 @@ describe('renderEditor', () => {
   });
 
   it('lo que viaja en el formulario es el campo oculto, no lo a medio escribir', () => {
-    const html = dibujar();
+    // Con carpeta elegida `incompleta` no se fuerza: el hidden es sólo los
+    // tags comunes del `.md` (§«los tags especiales en el editor» cubre el
+    // caso con especiales puestos).
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: cargada, categorias });
     expect(html).toContain('<input type="hidden" name="tags" value="fritura, rápido">');
     // El campo de agregar no se llama `tags`: un tag a medio tipear no se guarda.
     expect(html.match(/name="tags"/g)).toHaveLength(1);
@@ -159,15 +162,6 @@ describe('renderEditor', () => {
     expect(html.indexOf('name="foto"')).toBeLessThan(html.indexOf('<h2>Contenido</h2>'));
   });
 
-  it('el estado cierra la ficha de datos, después de la foto', () => {
-    const html = dibujar();
-    const datos = html.slice(html.indexOf('<div class="ficha">'), html.indexOf('<h2>Contenido</h2>'));
-    expect(datos).toContain('data-completitud');
-    expect(datos.indexOf('name="foto"')).toBeLessThan(datos.indexOf('data-completitud'));
-    // Sin ficha propia: las fichas son la de datos y la de contenido.
-    expect(html.match(/class="ficha"/g)).toHaveLength(2);
-  });
-
   it('borrar receta va suelto al pie, fuera de las fichas', () => {
     const html = renderEditor({ entrada: entradaFalsa(), receta: cargada, categorias });
     expect(html.match(/class="ficha"/g)).toHaveLength(2);
@@ -197,48 +191,53 @@ describe('renderEditor', () => {
   });
 });
 
-describe('el estado de la receta', () => {
-  const escrita = parse(`---
-titulo: Rabas
----
-
-## Ingredientes
-- Calamar — 500 g
-
-## Preparación
-1. Freír.
-`);
-
-  it('es un conmutador de dos posiciones, y arranca en incompleta', () => {
-    const html = renderEditor({ entrada: null, receta: escrita, categorias });
-    expect(html).toContain('data-completa="no"');
-    expect(html).toContain('data-completa="si"');
-    expect(html).toContain('<button type="button" class="on" data-completa="no">');
+describe('los tags especiales en el editor', () => {
+  it('hay un botón por especial, en su orden, dentro del campo Tags', () => {
+    const html = dibujar();
+    const orden = ['favorito', 'menú diario', 'probar', 'incompleta']
+      .map(t => html.indexOf(`data-accion="tag-especial" data-valor="${t}"`));
+    expect(orden.every(i => i > 0)).toBe(true);
+    expect(orden).toEqual([...orden].sort((a, b) => a - b));
+    expect(html.indexOf('data-tags')).toBeLessThan(orden[0]!);
   });
 
-  it('sin categoría, Terminada está deshabilitada y la leyenda dice qué falta', () => {
-    const html = renderEditor({ entrada: null, receta: escrita, categorias });
-    expect(html).toContain('data-completa="si" disabled>');
-    expect(html).toContain('Se podrá marcar como terminada cuando se cargue: título, categoría, ingredientes y pasos.');
-    expect(html).not.toContain('hidden>Se podrá marcar');
+  it('apretado si la receta tiene el tag, suelto si no', () => {
+    const conProbar = { ...cargada, tags: ['probar', 'horno'] };
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: conProbar, categorias });
+    expect(html).toContain('data-valor="probar" aria-pressed="true"');
+    expect(html).toContain('data-valor="favorito" aria-pressed="false"');
   });
 
-  it('con todo cargado, Terminada se habilita y la leyenda se esconde', () => {
-    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: escrita, categorias });
-    expect(html).toContain('<button type="button" class="" data-completa="si">');
-    expect(html).toContain('hidden>Se podrá marcar');
+  it('las pills son sólo de los tags comunes', () => {
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['probar', 'horno'] }, categorias });
+    expect(html).toContain('data-accion="tag-quitar" data-valor="horno"');
+    expect(html).not.toContain('data-accion="tag-quitar" data-valor="probar"');
   });
 
-  it('una receta declarada terminada abre en esa posición', () => {
-    const declarada = { ...escrita, completa: true };
-    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: declarada, categorias });
-    expect(html).toContain('<button type="button" class="on" data-completa="si"');
-    expect(html).toContain('<button type="button" class="" data-completa="no">');
+  it('el hidden de tags lleva los especiales apretados y los comunes', () => {
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['horno', 'probar'] }, categorias });
+    expect(html).toContain('name="tags" value="probar, horno"');
   });
 
-  it('lo que viaja al guardar es un campo oculto con la declaración', () => {
-    const html = renderEditor({ entrada: null, receta: escrita, categorias });
-    expect(html).toContain('<input type="hidden" name="completa" value="no">');
+  it('sin lo mínimo, incompleta queda apretado y deshabilitado, con la leyenda', () => {
+    const vacia = { ...cargada, tags: [], preparacion: '' };
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: vacia, categorias });
+    expect(html).toContain('data-valor="incompleta" aria-pressed="true" disabled');
+    expect(html).toMatch(/class="aviso-mudo leyenda-incompleta"(?! hidden)/);
+    expect(html).toContain('name="tags" value="incompleta"');
+  });
+
+  it('con lo mínimo, incompleta se puede soltar y la leyenda no se ve', () => {
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['incompleta'] }, categorias });
+    expect(html).toContain('data-valor="incompleta" aria-pressed="true">');
+    expect(html).toContain('leyenda-incompleta" hidden');
+  });
+
+  it('el conmutador de Estado ya no existe', () => {
+    const html = dibujar();
+    expect(html).not.toContain('data-completa');
+    expect(html).not.toContain('conm-doble');
+    expect(html).not.toContain('name="completa"');
   });
 });
 
@@ -261,13 +260,6 @@ describe('recetaDesdeFormulario', () => {
   it('guardar sin tocar nada produce un archivo equivalente', () => {
     const original = parse(MD_REAL);
     expect(serialize(recetaDesdeFormulario(formularioDesde(original), original))).toBe(serialize(original));
-  });
-
-  it('el conmutador manda, y la clave se escribe en los dos valores', () => {
-    const terminada = recetaDesdeFormulario({ titulo: 'A', completa: 'si' }, parse(''));
-    expect(serialize(terminada)).toContain('completa: sí');
-    const incompleta = recetaDesdeFormulario({ titulo: 'A', completa: 'no' }, parse(''));
-    expect(serialize(incompleta)).toContain('completa: no');
   });
 
   it('el título vacío no borra el que había: es el único obligatorio', () => {

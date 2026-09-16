@@ -2,9 +2,8 @@
  * El editor: un control por clave del frontmatter y un campo de texto por
  * sección (mockup 06). El YAML no se muestra en ningún momento.
  *
- * Dos cosas que no son campos de texto: la categoría, que al guardar **mueve
- * el archivo** entre carpetas de Drive (C04.2.3), y la casilla de completitud,
- * que es la única forma de forzar `completa: true`.
+ * Lo que no es un campo de texto: la categoría, que al guardar **mueve el
+ * archivo** entre carpetas de Drive (C04.2.3).
  *
  * Lo que el editor no entiende —claves y secciones desconocidas— no se muestra
  * y se conserva igual: Drive no tiene escritura parcial, así que guardar
@@ -14,7 +13,7 @@
 import { escapar } from './markdown.js';
 import { encabezado, aviso, iconoDeTag } from './componentes.js';
 import { ICO } from './iconos.js';
-import { DIFICULTADES, dificultadValida, tagReservado } from '../catalogo.js';
+import { DIFICULTADES, dificultadValida, tagReservado, TAGS_ESPECIALES, tagEspecial } from '../catalogo.js';
 import { sePuedeTerminar } from '../recipe.js';
 import type { Receta, Entrada } from '../tipos.js';
 import type { Categoria } from '../store.js';
@@ -82,6 +81,24 @@ const area = (
   `<label class="campo"${estilo ? ` style="${estilo}"` : ''}><span>${escapar(etiqueta)}</span>` +
   `<textarea name="${nombre}" rows="${filas}">${escapar(valor ?? '')}</textarea></label>`;
 
+/**
+ * Los cuatro tags especiales, un botón cada uno (P27): apretado si la receta
+ * lo tiene, suelto si no. `incompleta` no se suelta sin lo mínimo —título,
+ * categoría, ingredientes y pasos—: mientras falte, queda apretado y
+ * deshabilitado, y la leyenda dice qué hace falta.
+ */
+function botonesEspeciales(tags: string[], puedeTerminar: boolean): string {
+  const botones = TAGS_ESPECIALES.map(t => {
+    const bloqueado = t === 'incompleta' && !puedeTerminar;
+    const apretado = bloqueado || tags.some(x => tagEspecial(x) === t);
+    return `<button type="button" class="tag-esp" data-accion="tag-especial" data-valor="${escapar(t)}" ` +
+      `aria-pressed="${apretado}"${bloqueado ? ' disabled' : ''}>${iconoDeTag(t)}${escapar(t)}</button>`;
+  }).join('');
+  return `<div class="tags-esp" role="group" aria-label="Tags especiales">${botones}</div>` +
+    `<p class="aviso-mudo leyenda-incompleta"${puedeTerminar ? ' hidden' : ''}>` +
+    'Se va a poder sacar <i>incompleta</i> cuando se cargue: título, categoría, ingredientes y pasos.</p>';
+}
+
 export function renderEditor(
   { receta, entrada, categorias = [], tagsConocidos = [], error, confirmandoBorrado }: ArgsEditor
 ): string {
@@ -101,29 +118,11 @@ export function renderEditor(
 
   const tags = receta.tags ?? [];
 
-  // La completitud es una declaración del usuario y nada más: la app no la
-  // calcula ni la corrige (2026-09-12). El control es un conmutador de dos
-  // posiciones, y «Terminada» sólo se habilita cuando la receta tiene lo
-  // mínimo —título, categoría, ingredientes y pasos—; mientras no los tenga,
-  // la leyenda dice qué falta.
   const carpetaActual = entrada?.carpeta_id ?? '';
   const puede = sePuedeTerminar(receta, carpetaActual);
-  const terminada = receta.completa;
-  // Cierra la ficha de datos, separado por un divisor: primero se cargan los
-  // datos y al final se declara el estado.
-  const completa = '<div class="campo estado" data-completitud><span>Estado</span>' +
-    '<div class="conm-doble" role="group" aria-label="Estado de la receta">' +
-      `<button type="button" class="${terminada ? '' : 'on'}" data-completa="no">` +
-        '<span class="inc"></span>Incompleta</button>' +
-      `<button type="button" class="${terminada ? 'on' : ''}" data-completa="si"` +
-        `${puede ? '' : ' disabled'}>Terminada</button>` +
-    '</div>' +
-    `<input type="hidden" name="completa" value="${terminada ? 'si' : 'no'}">` +
-    '<p class="aviso-mudo leyenda-completa" style="margin:var(--e-3) 0 0"' +
-      `${puede ? ' hidden' : ''}>` +
-      'Se podrá marcar como terminada cuando se cargue: título, categoría, ' +
-      'ingredientes y pasos.</p>' +
-  '</div>';
+  const comunes = tags.filter(t => !tagEspecial(t));
+  const especiales = TAGS_ESPECIALES.filter(t =>
+    (t === 'incompleta' && !puede) || tags.some(x => tagEspecial(x) === t));
 
   // Las dos fichas llevan título: el formulario es largo, y al hacer scroll es lo
   // que dice en qué parte se está (auditoría tipográfica T13).
@@ -134,8 +133,9 @@ export function renderEditor(
     // El valor que viaja en el formulario es el `hidden`: el campo de agregar
     // no se llama `tags` justamente para que lo a medio escribir no se guarde.
     '<div class="campo" data-tags><span>Tags</span>' +
-      `<div class="chips" data-pills>${tags.map(pillTag).join('')}</div>` +
-      `<input type="hidden" name="tags" value="${escapar(tags.join(', '))}">` +
+      botonesEspeciales(tags, puede) +
+      `<div class="chips" data-pills>${comunes.map(pillTag).join('')}</div>` +
+      `<input type="hidden" name="tags" value="${escapar([...especiales, ...comunes].join(', '))}">` +
       '<input data-tag-nuevo list="tags-conocidos" placeholder="Agregar un tag y Enter">' +
       // Los reservados no se sugieren: no se pueden escribir a mano.
       `<datalist id="tags-conocidos">${tagsConocidos.filter(t => !tagReservado(t))
@@ -149,7 +149,6 @@ export function renderEditor(
     `<label class="campo"><span>Dificultad</span><select name="dificultad">${opcionesDificultad}</select></label>` +
     campo('fuente', 'Fuente', receta.fuente) +
     campo('foto', 'Foto', receta.foto, 'https://…') +
-    completa +
   '</div>';
 
   // Cómo se escribe un ingrediente para que el filtro por ingrediente lo
@@ -224,8 +223,7 @@ export function formularioDesde(receta: Receta): DatosFormulario {
     ingredientes: receta.ingredientes,
     preparacion: receta.preparacion,
     variaciones: receta.variaciones,
-    notas: receta.notas,
-    completa: receta.completa ? 'si' : 'no'
+    notas: receta.notas
   };
 }
 
@@ -247,8 +245,8 @@ export function recetaDesdeFormulario(datos: DatosFormulario, base: Receta): Rec
     dificultad: dificultadValida(datos['dificultad']) || null,
     fuente: texto('fuente'),
     foto: texto('foto'),
-    // El conmutador manda: es la declaración del usuario y se escribe siempre.
-    completa: datos['completa'] === 'si',
+    // Transitorio: la tarea 3 saca el campo de la receta.
+    completa: base.completa,
     descripcion: datos['descripcion'] ?? base.descripcion,
     ingredientes: datos['ingredientes'] ?? base.ingredientes,
     preparacion: datos['preparacion'] ?? base.preparacion,

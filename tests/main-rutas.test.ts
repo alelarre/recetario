@@ -275,16 +275,21 @@ describe('main.ts: las rutas', () => {
         await esperar();
       },
       /** Un click en un control con esta acción, como lo entrega la delegación. */
-      tocar: async (accion: string, datos: Record<string, string> = {}) => {
+      tocar: async (accion: string, datos: Record<string, string> = {}, atributos: Record<string, string> = {}) => {
+        const attrs: Record<string, string> = { ...atributos };
         const boton = {
           dataset: { accion, ...datos }, classList: { contains: () => false },
-          closest: () => null, tagName: 'BUTTON', remove: () => {}, setAttribute: () => {},
+          closest: () => null, tagName: 'BUTTON', remove: () => {},
+          setAttribute: (n: string, v: string) => { attrs[n] = v; },
+          getAttribute: (n: string) => attrs[n] ?? null,
+          hasAttribute: (n: string) => n in attrs,
           set outerHTML(html: string) { enLugar.push(html); }
         };
         for (const fn of clicks) {
           await fn({ target: { closest: (sel: string) => (sel.includes('data-accion') ? boton : null) } });
         }
         await esperar();
+        return attrs;
       }
     };
   };
@@ -781,6 +786,24 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toBe(formulario);
       expect(enLugar.at(-1)).toContain('data-accion="borrar"');
       expect(enLugar.at(-1)).not.toContain('borrar-confirmado');
+    });
+  });
+
+  describe('los botones de tags especiales en el editor', () => {
+    it('tocar un botón especial lo invierte', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1/editar');
+      const attrs = await tocar('tag-especial', { valor: 'probar' }, { 'aria-pressed': 'false' });
+      expect(attrs['aria-pressed']).toBe('true');
+      const otra = await tocar('tag-especial', { valor: 'probar' }, { 'aria-pressed': 'true' });
+      expect(otra['aria-pressed']).toBe('false');
+    });
+
+    it('un botón especial deshabilitado no cambia al tocarlo', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1/editar');
+      const attrs = await tocar('tag-especial', { valor: 'incompleta' }, { 'aria-pressed': 'true', disabled: '' });
+      expect(attrs['aria-pressed']).toBe('true');
     });
   });
 

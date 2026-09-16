@@ -198,33 +198,25 @@ html:has(.hoja-compartir) { overflow: hidden; }
 .encoc [data-accion="wake"].on::before { background: var(--fg); border-color: var(--fg); }
 
 /* ---- Editor (mockup 06) ---- */
-/* El estado de la receta: dos posiciones, una sola verdadera. La elegida se
-   invierte —fondo claro, texto oscuro— en vez de usar el acento: el acento es
-   de las acciones de la app, y en el acento sobre un estado se lee como alerta.
-   Deshabilitada usa el mismo apagado que un botón sin acción disponible. */
-.conm-doble { display: flex; gap: var(--e-2); }
-.conm-doble button { flex: 1; min-height: 48px; padding: 0 var(--e-3);
-                     display: inline-flex; align-items: center; justify-content: center;
-                     gap: var(--e-2); cursor: pointer;
-                     background: var(--surface-alta); color: var(--fg-2);
-                     border: 1px solid var(--borde); border-radius: var(--r-medio);
-                     font: 600 var(--txt-base)/1 var(--tipo); }
-/* Sin `:not(.on)` el hover le gana en especificidad a la regla de abajo y deja
-   el texto en `--fg` sobre el fondo `--fg`: la posición elegida se borra
-   mientras el puntero está encima, que es justo después de tocarla. */
+/* Los cuatro tags especiales, un botón cada uno (P27). Apretado se invierte
+   —fondo claro, texto oscuro—, la convención del estado elegido de la app: el
+   acento sobre un estado se lee como alerta. Deshabilitado, el apagado de un
+   botón sin acción disponible. */
+.tags-esp { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-2); margin-bottom: var(--e-3); }
+.tag-esp { min-height: 48px; padding: 0 var(--e-3); display: inline-flex; align-items: center;
+           justify-content: center; gap: var(--e-2); cursor: pointer;
+           background: var(--surface-alta); color: var(--fg-2);
+           border: 1px solid var(--borde); border-radius: var(--r-medio);
+           font: 600 var(--txt-base)/1 var(--tipo); }
+.tag-esp svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5;
+               stroke-linecap: round; stroke-linejoin: round; }
+.tag-esp .inc { color: inherit; }
 @media (hover: hover) {
-  .conm-doble button:hover:not([disabled]):not(.on) { color: var(--fg); }
+  .tag-esp:hover:not([disabled]):not([aria-pressed="true"]) { color: var(--fg); }
 }
-.conm-doble button.on { background: var(--fg); border-color: var(--fg); color: var(--bg); }
-.conm-doble button[disabled] { background: none; border-color: var(--borde);
-                               color: var(--fg-3); cursor: default; }
-/* La posición «Incompleta» lleva la misma marca que la tarjeta, pero en el color
-   del botón: adentro del conmutador el acento competiría con el estado elegido. */
-.conm-doble .inc { color: inherit; }
-.leyenda-completa { line-height: 1.5; }
-/* El estado cierra la ficha de datos: un divisor lo separa de los campos, y
-   como último elemento no suma margen al padding de la ficha. */
-.campo.estado { margin-bottom: 0; padding-top: var(--e-4); border-top: 1px solid var(--borde); }
+.tag-esp[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.tag-esp[disabled] { cursor: default; opacity: .6; }
+.leyenda-incompleta { line-height: 1.5; margin: 0 0 var(--e-3); }
 
 /* Un tag que la app se reserva: el aviso es una línea, sin caja ni botón. */
 .error-tag { margin: var(--e-1) 0 0; font-size: var(--txt-chico); color: var(--error); }

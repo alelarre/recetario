@@ -567,36 +567,39 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   }
 }
 
-/** Los tags que quedaron dibujados, en el `hidden` que viaja en el formulario. */
+/** Los especiales apretados y las pills, en el `hidden` que viaja en el formulario. */
 function sincronizarTags(): void {
-  const pills = [...document.querySelectorAll<HTMLElement>('[data-pills] [data-valor]')];
+  const especiales = [...document.querySelectorAll<HTMLElement>('#app [data-accion="tag-especial"][aria-pressed="true"]')]
+    .map(b => b.dataset['valor'] ?? '');
+  const pills = [...document.querySelectorAll<HTMLElement>('[data-pills] [data-valor]')]
+    .map(p => p.dataset['valor'] ?? '');
   const oculto = document.querySelector<HTMLInputElement>('input[name="tags"]');
-  if (oculto) oculto.value = pills.map(p => p.dataset['valor'] ?? '').filter(Boolean).join(', ');
+  if (oculto) oculto.value = [...especiales, ...pills].filter(Boolean).join(', ');
 }
 
 /**
- * Vuelve a mirar si la receta del formulario puede declararse terminada, y
- * habilita o apaga el conmutador en consecuencia. Corre en cada tecla, así que
- * toca el DOM en vez de redibujar: redibujar perdería el foco y el cursor.
+ * Vuelve a mirar si la receta del formulario puede sacarse `incompleta`, y
+ * habilita o bloquea su botón. Corre en cada tecla, así que toca el DOM en vez
+ * de redibujar: redibujar perdería el foco y el cursor.
  */
-function revisarCompletitud(): void {
-  const bloque = document.querySelector<HTMLElement>('#app [data-completitud]');
-  if (!bloque) return;
+function revisarIncompleta(): void {
+  const boton = document.querySelector<HTMLButtonElement>('#app [data-accion="tag-especial"][data-valor="incompleta"]');
+  if (!boton) return;
   const valor = (n: string): string =>
     document.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
       `#app [name="${n}"]`)?.value ?? '';
-
   const puede = sePuedeTerminar(
     { titulo: valor('titulo'), ingredientes: valor('ingredientes'), preparacion: valor('preparacion') },
     valor('carpeta')
   );
-  const terminada = bloque.querySelector<HTMLButtonElement>('[data-completa="si"]');
-  const leyenda = bloque.querySelector<HTMLElement>('.leyenda-completa');
-  if (terminada) terminada.disabled = !puede;
+  boton.disabled = !puede;
+  const leyenda = document.querySelector<HTMLElement>('#app .leyenda-incompleta');
   if (leyenda) leyenda.hidden = puede;
-
-  // Si dejó de cumplir, la declaración se cae con ella.
-  if (!puede && terminada?.classList.contains('on')) marcarCompletitud(false);
+  // Si dejó de cumplir, la receta vuelve a quedar incompleta.
+  if (!puede && boton.getAttribute('aria-pressed') !== 'true') {
+    boton.setAttribute('aria-pressed', 'true');
+    sincronizarTags();
+  }
 }
 
 /**
@@ -636,16 +639,6 @@ function elegirEnCategoria(campo: 'color' | 'foto', valor: string): void {
   revisarCategoria();
 }
 
-/** Mueve el conmutador y deja el valor en el campo que viaja al guardar. */
-function marcarCompletitud(terminada: boolean): void {
-  const bloque = document.querySelector<HTMLElement>('#app [data-completitud]');
-  if (!bloque) return;
-  bloque.querySelector('[data-completa="si"]')?.classList.toggle('on', terminada);
-  bloque.querySelector('[data-completa="no"]')?.classList.toggle('on', !terminada);
-  const oculto = bloque.querySelector<HTMLInputElement>('input[name="completa"]');
-  if (oculto) oculto.value = terminada ? 'si' : 'no';
-}
-
 /** El aviso de tag reservado, que aparece y se va sin redibujar el formulario. */
 function avisarTag(mostrar: boolean): void {
   const aviso = document.querySelector<HTMLElement>('#app .error-tag');
@@ -657,7 +650,7 @@ function agregarTag(valor: string): boolean {
   const tag = valor.trim().replace(/,+$/, '').trim();
   const contenedor = document.querySelector('[data-pills]');
   if (!tag || !contenedor) return false;
-  // Los reservados nombran estados que calcula la app: no se escriben a mano.
+  // Los especiales tienen su botón y terminado contradice a incompleta: no se escriben a mano.
   if (tagReservado(tag)) { avisarTag(true); return false; }
   avisarTag(false);
   const yaEsta = [...contenedor.querySelectorAll<HTMLElement>('[data-valor]')]
@@ -684,7 +677,7 @@ app.addEventListener('click', async (e) => {
   // Todo el manejo de clicks es delegación desde #app, así que el destino
   // llega como EventTarget y hay que estrecharlo una sola vez, acá.
   const destino = conClosest(e.target);
-  const boton = destino?.closest<HTMLElement>('[data-accion], .check, [data-tag], [data-completa]') ?? null;
+  const boton = destino?.closest<HTMLElement>('[data-accion], .check, [data-tag]') ?? null;
   if (!boton) return;
 
   if (boton.classList.contains('check')) {
@@ -983,9 +976,10 @@ app.addEventListener('click', async (e) => {
   }
   if (accion === 'editar-borrador') { editandoBorrador = true; return render(); }
 
-  if (boton.dataset['completa']) {
+  if (accion === 'tag-especial') {
     if (boton.hasAttribute('disabled')) return;
-    marcarCompletitud(boton.dataset['completa'] === 'si');
+    boton.setAttribute('aria-pressed', String(boton.getAttribute('aria-pressed') !== 'true'));
+    sincronizarTags();
     return;
   }
 
@@ -1195,8 +1189,8 @@ app.addEventListener('click', async (e) => {
  */
 app.addEventListener('input', (e) => {
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria();
-  // En el editor, cada tecla puede habilitar o apagar «Terminada».
-  if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') return revisarCompletitud();
+  // En el editor, cada tecla puede habilitar o bloquear el botón de `incompleta`.
+  if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') return revisarIncompleta();
   if (vistaActual?.vista !== 'capturar' && !editandoBorrador) return;
   const campo = e.target as HTMLInputElement | HTMLTextAreaElement | null;
   if (!campo?.name) return;
@@ -1297,7 +1291,7 @@ app.addEventListener('focusout', (e) => {
 
 // La categoría es un select: cambia por `change`, no por `input`.
 app.addEventListener('change', () => {
-  if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') revisarCompletitud();
+  if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') revisarIncompleta();
 });
 
 app.addEventListener('change', (e) => {
