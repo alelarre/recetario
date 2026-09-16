@@ -60,6 +60,18 @@ describe('tarjeta', () => {
   });
 });
 
+describe('la marca de favorito en la tarjeta', () => {
+  it('una favorita lleva la estrella en la esquina', () => {
+    const html = tarjeta(entradaFalsa({ titulo: 'Asado', tags: ['favorito'] }));
+    expect(html).toContain('class="fav-esq"');
+    expect(html).toContain('aria-label="Favorita"');
+  });
+
+  it('las demás no llevan nada', () => {
+    expect(tarjeta(entradaFalsa({ titulo: 'Asado', tags: ['horno'] }))).not.toContain('fav-esq');
+  });
+});
+
 describe('aviso', () => {
   it('trae el texto y el control para reintentar', () => {
     const html = aviso({ texto: 'No se pudo guardar.', accion: { etiqueta: 'Reintentar', accion: 'reintentar' } });

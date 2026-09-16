@@ -10,6 +10,7 @@
 import { encabezado, tarjeta, vacio, SPINNER } from './componentes.js';
 import { escapar } from './markdown.js';
 import { ICO } from './iconos.js';
+import { ordenarRecetas } from '../catalogo.js';
 import type { Entrada } from '../tipos.js';
 
 export interface OpcionesCategoria {
@@ -33,8 +34,8 @@ export function renderCategoria(
         `${escapar(tag)}${ICO.cerrar}</button>`).join('') + '</div>'
     : '';
 
-  const ordenadas = [...entradas].sort((a, b) => a.titulo.localeCompare(b.titulo, 'es'));
-  const lista = ordenadas.map(e => tarjeta(e)).join('');
+  // Las favoritas primero; dentro de cada bloque, alfabético (P27).
+  const lista = ordenarRecetas(entradas).map(e => tarjeta(e)).join('');
 
   const cuerpo = lista
     ? `<div class="lista">${lista}</div>` + (visibles < total ? SPINNER : '')

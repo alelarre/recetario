@@ -49,6 +49,17 @@ describe('Categoría', () => {
     expect(html.indexOf('>Ajo<')).toBeLessThan(html.indexOf('>Zapallo<'));
   });
 
+  it('las favoritas van primero, y adentro sigue el alfabético', () => {
+    const e = (titulo: string, tags: string[] = []) => entradaFalsa({ titulo, tags, categoria: 'Carnes' });
+    const html = renderCategoria({
+      nombre: 'Carnes',
+      entradas: [e('Vitel toné'), e('Osobuco', ['favorito']), e('Bife'), e('Asado', ['favorito'])],
+      total: 4, visibles: 4, tagsActivos: []
+    });
+    const orden = ['Asado', 'Osobuco', 'Bife', 'Vitel toné'].map(t => html.indexOf(t));
+    expect(orden).toEqual([...orden].sort((a, b) => a - b));
+  });
+
   it('una categoría vacía muestra una frase, sin ilustración', () => {
     const html = renderCategoria({ nombre: 'Bebidas', entradas: [], total: 0, visibles: 0, tagsActivos: [] });
     expect(html).toContain('class="vacio"');

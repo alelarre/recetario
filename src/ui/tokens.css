@@ -145,6 +145,13 @@ body {
               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tarjeta .ctx { font-size: var(--txt-chico); color: var(--fg-2); margin-top: var(--e-1);
                 display: flex; align-items: center; gap: var(--e-2); }
+/* §6.1 — La estrella de favorito, en la esquina de la tarjeta (P27). La
+   reserva de espacio va en el texto: sin ella, un título largo pasa por debajo. */
+.tarjeta { position: relative; }
+.tarjeta .txt { padding-right: 22px; }
+.fav-esq { position: absolute; top: 6px; right: 8px; line-height: 0; }
+.fav-esq svg { width: 18px; height: 18px; stroke: var(--acento); stroke-width: 1.5;
+               stroke-linejoin: round; fill: color-mix(in srgb, var(--acento) 35%, transparent); }
 .tarjeta .motivo { color: var(--acento); }
 .pin { width: 8px; height: 8px; border-radius: var(--r-chico); flex: 0 0 8px; background: var(--cat-otros); }
 

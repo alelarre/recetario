@@ -54,4 +54,19 @@ describe('Resultados', () => {
   it('escapa lo buscado', () => {
     expect(renderResultados({ consulta: '"><script>', grupos: sinNada })).not.toContain('<script>');
   });
+
+  it('cada subsección ordena sus favoritas primero, sin mezclarse entre subsecciones', () => {
+    const e = (titulo: string, tags: string[] = []) => entradaFalsa({ titulo, tags });
+    const html = renderResultados({
+      consulta: 'x',
+      grupos: {
+        porNombre: [e('Zapallo'), e('Arroz', ['favorito'])],
+        porIngrediente: [{ entrada: e('Budín'), motivo: 'Lleva huevo' }],
+        porTag: []
+      }
+    });
+    expect(html.indexOf('Arroz')).toBeLessThan(html.indexOf('Zapallo'));
+    // La favorita del primer grupo no se sube al grupo de arriba de todo.
+    expect(html.indexOf('Por nombre')).toBeLessThan(html.indexOf('Arroz'));
+  });
 });

@@ -10,6 +10,7 @@
 import { escapar } from './markdown.js';
 import { tarjeta } from './componentes.js';
 import { ICO } from './iconos.js';
+import { ordenarRecetas } from '../catalogo.js';
 import type { Coincidencia, Entrada, Coincidencias } from '../tipos.js';
 
 export interface OpcionesResultados {
@@ -27,13 +28,26 @@ const grupo = (rotulo: string, tarjetas: string[]): string => {
 
 const conMotivo = (c: Coincidencia): string => tarjeta(c.entrada, { motivo: c.motivo });
 
+/**
+ * Ordena las entradas de una lista de coincidencias y las vuelve a emparejar
+ * con su motivo por id: el motivo viaja con la coincidencia, no con la
+ * entrada, así que reordenar entradas solas lo perdería.
+ */
+const conMotivoOrdenado = (cs: Coincidencia[]): string[] => {
+  const porId = new Map(cs.map(c => [c.entrada.id_archivo, c]));
+  return ordenarRecetas(cs.map(c => c.entrada))
+    .map(e => porId.get(e.id_archivo))
+    .filter((c): c is Coincidencia => !!c)
+    .map(conMotivo);
+};
+
 export function renderResultados({ consulta, grupos }: OpcionesResultados): string {
   const { porNombre = [] as Entrada[], porIngrediente = [], porTag = [] } = grupos ?? {};
 
   const cuerpo =
-    grupo('Por nombre', porNombre.map(e => tarjeta(e))) +
-    grupo('Por ingrediente', porIngrediente.map(conMotivo)) +
-    grupo('Por tag', porTag.map(conMotivo));
+    grupo('Por nombre', ordenarRecetas(porNombre).map(e => tarjeta(e))) +
+    grupo('Por ingrediente', conMotivoOrdenado(porIngrediente)) +
+    grupo('Por tag', conMotivoOrdenado(porTag));
 
   // La misma caja del Recetario —lupa adentro, fondo propio—, entre el volver y
   // el limpiar: es el mismo control, no dos parecidos.
