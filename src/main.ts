@@ -4,7 +4,7 @@ import { crearSheets } from './sheets.js';
 import { crearStore } from './store.js';
 import * as indiceLocal from './indice-local.js';
 import { parse, slugArchivo } from './recipe.js';
-import { tagReservado, conFavorito, esFavorita } from './catalogo.js';
+import { tagReservado, conEspecial, esFavorita } from './catalogo.js';
 import { sePuedeTerminar } from './recipe.js';
 import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado } from './ui/router.js';
 import { escapar } from './ui/markdown.js';
@@ -781,7 +781,7 @@ app.addEventListener('click', async (e) => {
     errorFavorito = '';
     await render();
 
-    const nueva = { ...actual, tags: conFavorito(actual.tags, !esFavorita(actual)) };
+    const nueva = { ...actual, tags: conEspecial(actual.tags, 'favorito', !esFavorita(actual)) };
     try {
       await store.guardar(id, nueva);
       recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: nueva };

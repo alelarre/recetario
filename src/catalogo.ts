@@ -27,35 +27,6 @@ export const COLUMNAS = [
 
 export const DIFICULTADES = ['fácil', 'media', 'difícil'] as const;
 
-/**
- * El femenino y los plurales de `favorito`, aparte porque `tagEspecial` (más
- * abajo) también los necesita para reconocer la favorita escrita de cualquier
- * forma. Una sola lista: que `TAGS_RESERVADOS` y `tagEspecial` la compartan
- * evita que diverjan en silencio si mañana cambia una y no la otra.
- */
-const FORMAS_FAVORITO = ['favorita', 'favoritos', 'favoritas'] as const;
-
-/**
- * Tags que la app se reserva: nombran estados que calcula o va a calcular ella,
- * no cosas de la receta. Escribirlos a mano crearía un dato paralelo que miente
- * en cuanto alguien edita el `.md` por afuera, que es justo lo que la
- * completitud derivada vino a evitar (F05.3).
- *
- * `incompleto` y `terminado` nombran la completitud, que es la clave `completa`
- * del frontmatter; `favorito`, `probar` y `menú diario` son los tres tags
- * especiales de P27 (`TAGS_ESPECIALES`, más abajo), que la app pone y saca
- * sola. De cada uno se reservan las cuatro formas —masculino, femenino y sus
- * plurales—, porque un tag escrito a mano no tiene por qué coincidir con la
- * que el código eligió.
- */
-export const TAGS_RESERVADOS = [
-  'incompleto', 'incompleta', 'incompletos', 'incompletas',
-  'terminado', 'terminada', 'terminados', 'terminadas',
-  'favorito', ...FORMAS_FAVORITO,
-  'probar',
-  'menú diario', 'menu diario'
-] as const;
-
 /** Si el tag es uno de los reservados, sin importar mayúsculas ni acentos. */
 export function tagReservado(valor: unknown): boolean {
   const n = normalizar(String(valor ?? ''));
@@ -168,22 +139,38 @@ export function entradaDesdeFila(fila?: unknown): Entrada {
 /**
  * Los tags que la app dibuja distinto: ícono propio y lugar fijo al principio
  * de cualquier fila de tags (P27). No son estados: son tags, y viven en la
- * lista `tags` del `.md` como cualquier otro.
+ * lista `tags` del `.md` como cualquier otro. El orden es el mismo en todos
+ * lados: primero lo que se busca para cocinar, al final lo que falta terminar.
  */
-export const TAGS_ESPECIALES = ['favorito', 'probar', 'menú diario'] as const;
+export const TAGS_ESPECIALES = ['favorito', 'menú diario', 'probar', 'incompleta'] as const;
 export type TagEspecial = (typeof TAGS_ESPECIALES)[number];
 
 /**
- * Formas alternativas de cada especial, además de lo que ya cubre `normalizar`
- * (mayúsculas y tildes). Sólo `favorito` tiene género y número —`FORMAS_FAVORITO`,
- * la misma lista de arriba que usa `TAGS_RESERVADOS`—; `probar` y `menú diario`
- * no varían.
+ * Formas que se leen como cada especial, además de lo que ya cubre
+ * `normalizar` (mayúsculas y tildes). Sólo `favorito` e `incompleta` tienen
+ * género y número.
  */
 const FORMAS_ALTERNATIVAS: Record<TagEspecial, readonly string[]> = {
-  favorito: FORMAS_FAVORITO,
+  favorito: ['favorita', 'favoritos', 'favoritas'],
+  'menú diario': [],
   probar: [],
-  'menú diario': []
+  incompleta: ['incompleto', 'incompletos', 'incompletas']
 };
+
+/** Contradicen a `incompleta`: un tag así diría lo contrario que el especial. */
+const FORMAS_TERMINADO = ['terminado', 'terminada', 'terminados', 'terminadas'] as const;
+
+/**
+ * Tags que no se escriben a mano. Los cuatro especiales tienen su botón en el
+ * editor, y escribirlos crearía una segunda forma de poner lo mismo;
+ * `terminado` contradice a `incompleta`. Derivada, para que no diverja de la
+ * lista de especiales.
+ */
+export const TAGS_RESERVADOS: readonly string[] = [
+  ...TAGS_ESPECIALES,
+  ...TAGS_ESPECIALES.flatMap(t => FORMAS_ALTERNATIVAS[t]),
+  ...FORMAS_TERMINADO
+];
 
 /** El especial que le corresponde a un tag escrito de cualquier forma, o `null`. */
 export function tagEspecial(valor: unknown): TagEspecial | null {
@@ -193,11 +180,16 @@ export function tagEspecial(valor: unknown): TagEspecial | null {
     normalizar(t) === n || FORMAS_ALTERNATIVAS[t].some(f => normalizar(f) === n)) ?? null;
 }
 
-/** Lleva el tag `favorito`, escrito como sea. */
-export function esFavorita(x: { tags: string[] }): boolean {
+/** Lleva ese especial, escrito como sea. */
+export function tieneEspecial(x: { tags: string[] }, especial: TagEspecial): boolean {
   const tags = Array.isArray(x?.tags) ? x.tags : [];
-  return tags.some(t => tagEspecial(t) === 'favorito');
+  return tags.some(t => tagEspecial(t) === especial);
 }
+
+export const esFavorita = (x: { tags: string[] }): boolean => tieneEspecial(x, 'favorito');
+
+/** Incompleta es un tag, no una clave del frontmatter: sin el tag, la receta está terminada. */
+export const esIncompleta = (x: { tags: string[] }): boolean => tieneEspecial(x, 'incompleta');
 
 /** Los especiales primero, en el orden de `TAGS_ESPECIALES`; el resto como venía. */
 export function ordenarTags(tags: string[]): string[] {
@@ -220,9 +212,9 @@ export function ordenarRecetas(entradas: Entrada[]): Entrada[] {
     Number(esFavorita(b)) - Number(esFavorita(a)) || a.titulo.localeCompare(b.titulo, 'es'));
 }
 
-/** La lista de tags con `favorito` puesto o sacado, sin tocar los demás. */
-export function conFavorito(tags: string[], favorita: boolean): string[] {
-  const sinFavorito = (Array.isArray(tags) ? tags : []).filter(t => tagEspecial(t) !== 'favorito');
-  return favorita ? ['favorito', ...sinFavorito] : sinFavorito;
+/** La lista de tags con ese especial puesto o sacado, en su forma canónica y sin tocar los demás. */
+export function conEspecial(tags: string[], especial: TagEspecial, puesto: boolean): string[] {
+  const sin = (Array.isArray(tags) ? tags : []).filter(t => tagEspecial(t) !== especial);
+  return puesto ? [especial, ...sin] : sin;
 }
 
