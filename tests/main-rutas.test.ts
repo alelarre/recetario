@@ -10,6 +10,7 @@ import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 import { entradaFalsa } from './dobles.js';
 import { parse } from '../src/recipe.js';
 import { DURACIONES } from '../src/catalogo.js';
+import type { Coincidencias } from '../src/tipos.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
 vi.mock('../src/ui/base.css', () => ({}));
@@ -92,7 +93,7 @@ const storeFake = {
   categoriasConConteo: () => [{ id: 'c1', nombre: 'Carnes', cantidad: 1 }],
   categorias: () => [{ id: 'c1', nombre: 'Carnes', color: 'carnes', foto: 'catalogo:carnes' }],
   buscar: () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })],
-  buscarPorTexto: () => ({ porNombre: [], porIngrediente: [], porTag: [] }),
+  buscarPorTexto: (): Coincidencias => ({ porNombre: [], porIngrediente: [], porTag: [] }),
   tagsDe: () => estado.tags,
   crear: async (receta: { titulo: string | null }) => {
     estado.creadas.push(receta.titulo ?? '');
@@ -467,6 +468,26 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML.indexOf('Asado')).toBeLessThan(app.innerHTML.indexOf('Rabas'));
     } finally {
       storeFake.buscar = original;
+    }
+  });
+
+  it('ordenar por duración en la búsqueda reordena los resultados', async () => {
+    const original = storeFake.buscarPorTexto;
+    storeFake.buscarPorTexto = () => ({
+      porNombre: [
+        entradaFalsa({ id_archivo: 'f1', titulo: 'Asado', tiempo: '>60 min' }),
+        entradaFalsa({ id_archivo: 'f2', titulo: 'Rabas', tiempo: '~15 min' })
+      ],
+      porIngrediente: [], porTag: []
+    });
+    try {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/buscar?q=horno');
+      expect(app.innerHTML.indexOf('Asado')).toBeLessThan(app.innerHTML.indexOf('Rabas'));
+      await tocar('ordenar', { valor: 'duracion' });
+      expect(app.innerHTML.indexOf('Rabas')).toBeLessThan(app.innerHTML.indexOf('Asado'));
+    } finally {
+      storeFake.buscarPorTexto = original;
     }
   });
 

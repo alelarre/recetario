@@ -69,4 +69,30 @@ describe('Resultados', () => {
     // La favorita del primer grupo no se sube al grupo de arriba de todo.
     expect(html.indexOf('Por nombre')).toBeLessThan(html.indexOf('Arroz'));
   });
+
+  const e = (id: string, titulo: string, tiempo: string) => entradaFalsa({ id_archivo: id, titulo, tiempo });
+
+  it('con alguna duración, el conmutador va arriba de los grupos', () => {
+    const html = renderResultados({ consulta: 'horno', grupos: { porNombre: [e('1', 'Besugo al horno', '~60 min')], porIngrediente: [], porTag: [] } });
+    expect(html).toContain('data-accion="ordenar"');
+    expect(html.indexOf('data-accion="ordenar"')).toBeLessThan(html.indexOf('grupo-res'));
+  });
+
+  it('sin ninguna duración, no hay conmutador', () => {
+    const html = renderResultados({ consulta: 'horno', grupos: { porNombre: [e('1', 'Besugo', '')], porIngrediente: [], porTag: [] } });
+    expect(html).not.toContain('data-accion="ordenar"');
+  });
+
+  it('ordena por duración dentro de cada grupo, sin mezclarlos', () => {
+    const html = renderResultados({
+      consulta: 'horno', orden: 'duracion',
+      grupos: {
+        porNombre: [e('1', 'Besugo al horno', '>60 min'), e('2', 'Pollo al horno', '~30 min')],
+        porIngrediente: [],
+        porTag: [{ entrada: e('3', 'Arroz', '~15 min'), motivo: 'tiene tag horno' }]
+      }
+    });
+    expect(html.indexOf('Pollo al horno')).toBeLessThan(html.indexOf('Besugo al horno'));
+    expect(html.indexOf('Besugo al horno')).toBeLessThan(html.indexOf('Arroz'));
+  });
 });

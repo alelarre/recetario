@@ -8,14 +8,17 @@
  * Mockup 05.
  */
 import { escapar } from './markdown.js';
-import { tarjeta } from './componentes.js';
+import { tarjeta, conmutadorOrden } from './componentes.js';
 import { ICO } from './iconos.js';
-import { ordenarRecetas } from '../catalogo.js';
+import { ordenarRecetas, duracionValida } from '../catalogo.js';
 import type { Coincidencia, Entrada, Coincidencias } from '../tipos.js';
+import type { Orden } from '../catalogo.js';
 
 export interface OpcionesResultados {
   consulta: string;
   grupos: Coincidencias;
+  /** El conmutador de orden (P29): ordena dentro de cada grupo. */
+  orden?: Orden;
 }
 
 const grupo = (rotulo: string, tarjetas: string[]): string => {
@@ -33,21 +36,24 @@ const conMotivo = (c: Coincidencia): string => tarjeta(c.entrada, { motivo: c.mo
  * con su motivo por id: el motivo viaja con la coincidencia, no con la
  * entrada, así que reordenar entradas solas lo perdería.
  */
-const conMotivoOrdenado = (cs: Coincidencia[]): string[] => {
+const conMotivoOrdenado = (cs: Coincidencia[], orden: Orden): string[] => {
   const porId = new Map(cs.map(c => [c.entrada.id_archivo, c]));
-  return ordenarRecetas(cs.map(c => c.entrada))
+  return ordenarRecetas(cs.map(c => c.entrada), orden)
     .map(e => porId.get(e.id_archivo))
     .filter((c): c is Coincidencia => !!c)
     .map(conMotivo);
 };
 
-export function renderResultados({ consulta, grupos }: OpcionesResultados): string {
+export function renderResultados({ consulta, grupos, orden = 'alfa' }: OpcionesResultados): string {
   const { porNombre = [] as Entrada[], porIngrediente = [], porTag = [] } = grupos ?? {};
 
+  const todas = [...porNombre, ...porIngrediente.map(c => c.entrada), ...porTag.map(c => c.entrada)];
+  const conmutador = todas.some(e => duracionValida(e.tiempo)) ? conmutadorOrden(orden) : '';
+
   const cuerpo =
-    grupo('Por nombre', ordenarRecetas(porNombre).map(e => tarjeta(e))) +
-    grupo('Por ingrediente', conMotivoOrdenado(porIngrediente)) +
-    grupo('Por tag', conMotivoOrdenado(porTag));
+    grupo('Por nombre', ordenarRecetas(porNombre, orden).map(e => tarjeta(e))) +
+    grupo('Por ingrediente', conMotivoOrdenado(porIngrediente, orden)) +
+    grupo('Por tag', conMotivoOrdenado(porTag, orden));
 
   // La misma caja del Recetario —lupa adentro, fondo propio—, entre el volver y
   // el limpiar: es el mismo control, no dos parecidos.
@@ -61,5 +67,5 @@ export function renderResultados({ consulta, grupos }: OpcionesResultados): stri
 
   const vacio = `<div class="vacio">Ninguna receta se llama, lleva ni tiene <b>${escapar(consulta)}</b>.</div>`;
 
-  return caja + (cuerpo ? `<div class="cuerpo denso">${cuerpo}</div>` : vacio);
+  return caja + (cuerpo ? `<div class="cuerpo denso">${conmutador}${cuerpo}</div>` : vacio);
 }

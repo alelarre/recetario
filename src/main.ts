@@ -424,7 +424,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
 
     case 'resultados': {
       const q = ruta.params['q'] ?? '';
-      return pintar(renderResultados({ consulta: q, grupos: store.buscarPorTexto(q) }));
+      return pintar(renderResultados({ consulta: q, grupos: store.buscarPorTexto(q), orden }));
     }
 
     case 'receta':
