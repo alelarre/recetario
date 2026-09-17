@@ -11,6 +11,13 @@ describe('Recetario', () => {
     expect(dibujar()).toContain('<span class="tit app"');
   });
 
+  it('sin ninguna receta, dice por dónde entran; con alguna, no', () => {
+    const vacio = dibujar({ categorias: [{ id: 'c1', nombre: 'Carnes', cantidad: 0 }] });
+    expect(vacio).toContain('Todavía no hay recetas.');
+    expect(vacio).toContain('class="grilla"');
+    expect(dibujar()).not.toContain('Todavía no hay recetas.');
+  });
+
   it('la búsqueda está arriba y visible, no detrás de un ícono', () => {
     const html = dibujar();
     expect(html.indexOf('class="buscar"')).toBeLessThan(html.indexOf('class="grilla"'));

@@ -147,6 +147,20 @@ export function aviso({ texto, accion }: OpcionesAviso): string {
   return `<div class="aviso"><p>${escapar(texto)}</p>${boton}</div>`;
 }
 
+/** Lo que dice el aviso cuando falta la sesión de Google (R3). */
+export const SIN_SESION = 'Hay que conectarse de nuevo con Google.';
+
+/**
+ * El aviso de un guardado que falló, en la captura y en el editor. Se reintenta
+ * con Guardar, que sigue a la vista; sin sesión, antes hay que conectarse, y
+ * por eso ese aviso sí lleva su control.
+ */
+export function avisoAlGuardar(error: string): string {
+  return error === SIN_SESION
+    ? `<div data-sin-sesion>${aviso({ texto: error, accion: { etiqueta: 'Conectar', accion: 'conectar-de-nuevo' } })}</div>`
+    : aviso({ texto: error });
+}
+
 /** El ícono del tag especial, o nada si es un tag común. */
 export function iconoDeTag(tag: string): string {
   const esp = tagEspecial(tag);
@@ -168,25 +182,29 @@ export interface OpcionesChip {
    * `<button>`, que es lo único que gana `cursor: pointer` (tokens.css).
    */
   fijo?: boolean;
+  /** En la receta el tag sólo se lee: `<span>` sin `data-tag`, y sin encender. */
+  quieto?: boolean;
 }
 
 /** Un tag como chip: con su ícono si es especial, y con su número si lo trae. */
-export function chipTag(tag: string, { activo, cantidad, fijo }: OpcionesChip = {}): string {
+export function chipTag(tag: string, { activo, cantidad, fijo, quieto }: OpcionesChip = {}): string {
   const cuenta = cantidad === undefined ? '' : `<span class="cuenta">${cantidad}</span>`;
   const adentro = `${iconoDeTag(tag)}${escapar(tag)}${cuenta}`;
   if (fijo) return `<span class="chip act">${adentro}</span>`;
+  if (quieto) return `<span class="chip">${adentro}</span>`;
   return `<button class="chip${activo ? ' act' : ''}" data-tag="${escapar(tag)}">${adentro}</button>`;
 }
 
 /**
- * Los chips sueltos, sin el contenedor: los usa la receta. `incompleta` no
- * filtra: abre el editor, que es donde se completa lo que falta (C03.1.3).
+ * Los chips sueltos, sin el contenedor: los usa la receta, donde los tags se
+ * leen y no se tocan (C02.6.3). La excepción es `incompleta`, que abre el
+ * editor: ahí se completa lo que falta (C03.1.3).
  */
 export function chipsSueltos(tags: string[]): string {
   return ordenarTags(Array.isArray(tags) ? tags : []).map(tag => tagEspecial(tag) === 'incompleta'
     ? `<button class="chip pend" data-accion="editar" aria-label="Incompleta: abrir el editor">` +
       `${iconoDeTag(tag)}${escapar(tag)}</button>`
-    : chipTag(tag)).join('');
+    : chipTag(tag, { quieto: true })).join('');
 }
 
 export interface OpcionesCarrusel {

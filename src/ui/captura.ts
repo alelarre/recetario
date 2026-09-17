@@ -10,7 +10,7 @@
  * escribe, porque no vino de ningún lado (C01.4.3).
  */
 import { escapar } from './markdown.js';
-import { aviso, encabezado } from './componentes.js';
+import { avisoAlGuardar, encabezado } from './componentes.js';
 
 export interface OpcionesCaptura {
   /** Lo que compartió la app de origen. Vacío cuando se agrega a mano. */
@@ -89,8 +89,7 @@ export function renderCaptura(
     })) +
     '<div class="hoja">' +
     (compartido ? '<h1>Guardar en Recetario</h1>' : '') +
-    // Mismo criterio que el editor: se reintenta con Guardar.
-    (error ? aviso({ texto: error }) : '') +
+    (error ? avisoAlGuardar(error) : '') +
     campos +
     '<div class="pie2">' +
       '<button class="btn sec" data-accion="cancelar-captura">Cancelar</button>' +

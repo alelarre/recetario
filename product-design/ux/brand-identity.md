@@ -119,10 +119,13 @@ escribiste sigue ahí, no hace falta que un cartel te avise que no lo perdiste.
 
 ### 3.2 Por contexto
 
+**Los errores van en impersonal: «No se pudo…», nunca «No pude…».** La app no
+habla de sí misma en primera persona.
+
 | Contexto | Cómo suena | Ejemplo |
 |---|---|---|
 | **Error de operación** | Qué no se pudo, y qué quedó como estaba o qué mirar. Con *Reintentar* al lado. | *"No se pudo guardar. Revisá la conexión."* · *"No se pudo borrar. La receta sigue estando."* |
-| **Sin conexión con Google** | El hecho, y el control al lado. | *"No se pudo reconectar con Google."* → `[Reintentar]` |
+| **Sin conexión con Google** | El hecho, y el control al lado. | *"No se pudo reconectar con Google."* → `[Reintentar]` · *"Hay que conectarse de nuevo con Google."* → `[Conectar]` |
 | **Estado vacío** | Qué hay, en una frase. Sin ilustración. Si está vacío por un filtro, cómo salir. | *"No hay nada esperando."* · *"Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba."* |
 | **Confirmación destructiva** | Qué se va a borrar, nombrándolo. | *"¿Borrar Milanesas napolitanas?"* · *"¿Descartar Pasta con berenjenas?"* |
 | **Operación larga** | Cuánto va, con número. Hasta que haya número, el verbo y un spinner. | *"Reindexando: 340 de 1012."* · *"Armando el PDF…"* |

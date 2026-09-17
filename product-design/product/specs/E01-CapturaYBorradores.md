@@ -233,7 +233,7 @@ un borrador detrás.
 - [ ] **Sin él** (Chrome en la Mac): abre `https://claude.ai/new?q=<pedido
   codificado>` si entra en 8.000 caracteres. Si no entra, copia el pedido al
   portapapeles, abre `https://claude.ai/new` vacío y avisa **«Pedido
-  copiado: pegalo en Claude»**. Si tampoco se puede copiar, avisa **«No pude
+  copiado: pegalo en Claude»**. Si tampoco se puede copiar, avisa **«No se pudo
   abrir Claude ni copiar el pedido.»**
 - [ ] El pedido pide la respuesta en markdown, como texto plano y sin nada
   antes ni después, dentro de un bloque de código o una cita si hace falta
@@ -271,7 +271,7 @@ un borrador detrás.
   Compartir (C01.9.2): el id si lo trae y existe, la pregunta si no.
 - [ ] Lo pegado que no es una receta avisa **«Lo copiado no es una receta en
   .md.»**, sin abrir nada.
-- [ ] Si el navegador no deja leer el portapapeles, avisa **«No pude leer lo
+- [ ] Si el navegador no deja leer el portapapeles, avisa **«No se pudo leer lo
   copiado.»**, sin abrir nada.
 
 ---

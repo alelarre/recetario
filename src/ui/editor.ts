@@ -11,7 +11,7 @@
  * (C04.3c.1).
  */
 import { escapar } from './markdown.js';
-import { encabezado, aviso, iconoDeTag } from './componentes.js';
+import { encabezado, avisoAlGuardar, iconoDeTag } from './componentes.js';
 import { ICO, ICONO_DE_DURACION } from './iconos.js';
 import {
   DIFICULTADES, dificultadValida, tagReservado, TAGS_ESPECIALES, tagEspecial, tieneEspecial,
@@ -215,9 +215,7 @@ export function renderEditor(
     derecha: '<button class="btn prim compacto" data-accion="guardar">Guardar</button>'
   }) +
     '<form class="cuerpo" data-formulario>' +
-      // Sin botón de reintentar: el reintento es tocar Guardar otra vez, que
-      // está arriba y no se fue a ningún lado (R1).
-      (error ? aviso({ texto: error }) : '') +
+      (error ? avisoAlGuardar(error) : '') +
       datos + contenido + borrar +
     '</form>';
 }

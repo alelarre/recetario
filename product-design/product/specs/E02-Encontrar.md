@@ -191,10 +191,10 @@ tag.
 - [ ] Filtrar hasta cero resultados muestra una frase: *"Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba."*
 - [ ] Los filtros se pierden al cambiar de pantalla: si no, se entra a otra categoría y no se ve nada por un tag que ahí no existe.
 
-#### C02.6.3 — Se entra al filtro desde la receta *(J4, J5)*
+#### C02.6.3 — En la receta los tags se leen *(J4, J5)*
 
-- [ ] Los tags se muestran en la receta abierta y son tocables.
-- [ ] Tocar uno lleva a la lista filtrada por ese tag.
+- [ ] Los tags se muestran en la receta abierta como chips, y no son tocables: al filtro se entra por el carrusel (C02.6.4).
+- [ ] La excepción es `incompleta`, que abre el editor (C03.1.3).
 
 #### C02.6.4 — El carrusel de tags *(J5)*
 

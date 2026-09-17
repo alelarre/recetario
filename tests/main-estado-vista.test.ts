@@ -12,11 +12,14 @@ import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
 vi.mock('../src/ui/base.css', () => ({}));
-vi.mock('../src/auth.js', () => ({
+// Los tres módulos de Google se simulan, pero conservan sus clases de error:
+// `main.ts` las usa para reconocer una sesión vencida.
+vi.mock('../src/auth.js', async original => ({
+  ...await original<typeof import('../src/auth.js')>(),
   crearAuth: () => ({ conectar: async () => {}, token: async () => 'tok', olvidar: () => {} })
 }));
-vi.mock('../src/drive.js', () => ({ crearDrive: () => ({}) }));
-vi.mock('../src/sheets.js', () => ({ crearSheets: () => ({}) }));
+vi.mock('../src/drive.js', async original => ({ ...await original<typeof import('../src/drive.js')>(), crearDrive: () => ({}) }));
+vi.mock('../src/sheets.js', async original => ({ ...await original<typeof import('../src/sheets.js')>(), crearSheets: () => ({}) }));
 
 const recetaSpy = vi.fn((_args?: OpcionesReceta) => '<div></div>');
 vi.mock('../src/ui/receta.js', () => ({

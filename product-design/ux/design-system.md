@@ -664,6 +664,9 @@ de fondo, borde `--acento` y texto `--acento`; el número hereda el color, al
 chip del tag de la ruta va encendido y no es tocable: cambiar de tag es volver y
 elegir otro.
 
+**Quieto** —un tag en la receta abierta— es el chip normal como `<span>`: se
+lee y no se toca, así que no lleva `cursor: pointer` ni estado encendido.
+
 **Removible** —un tag del editor— es el chip normal más una `×` de trazo de 14 px
 en `currentColor` a 70 % de opacidad, y el chip entero es el botón que lo saca.
 No hay una cruz con su propia área táctil adentro: a 32 px de alto no entra un
@@ -952,7 +955,7 @@ con `--e-2` entre sí: **PDF**, **Link**, **Texto** y **Cancelar**.
 |---|---|
 | **Armando el PDF** | El botón de PDF deshabilitado, con un spinner de 16 px y *"Armando el PDF…"*; los otros dos, deshabilitados. |
 | **PDF listo** | *"El PDF está listo."*, **Enviar PDF** como primario y *Cancelar*. |
-| **Falló el PDF** | El aviso con acción: *"No pude armar el PDF."* y *Reintentar*. |
+| **Falló el PDF** | El aviso con acción: *"No se pudo armar el PDF."* y *Reintentar*. |
 | **Copiado** | *"Link copiado."* o *"Texto copiado."*, y *Listo*. |
 | **Sin portapapeles** | *"Copialo desde acá:"* y el contenido en un cuadro —`--bg`, borde `--borde`, `--r-medio`, `--txt-chico` `--fg-2`, hasta 40 % del alto de la pantalla, seleccionable de un toque— y *Listo*. |
 

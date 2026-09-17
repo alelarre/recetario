@@ -156,7 +156,7 @@ cambios sin guardar: salir pregunta.
 
 ```
   ✗ el navegador no deja leer el portapapeles
-  ▸ aviso: «No pude leer lo copiado.»
+  ▸ aviso: «No se pudo leer lo copiado.»
 ```
 
 **2. Crear la receta, a mano.** Para una receta que ya tenés en la cabeza.
@@ -413,7 +413,7 @@ archivo sea la única fuente de verdad.
 
 ```
 ⚑ ¿hay red?
-    no, al abrir      → aviso: «No pude conectar con Drive. Sin esa lectura no hay con qué dibujar.», con Reintentar.
+    no, al abrir      → aviso: «No se pudo conectar con Drive. Sin esa lectura no hay con qué dibujar.», con Reintentar.
                         La copia local del índice no se usa: la consulta a Drive va antes.
     no, al guardar    → aviso: no se pudo guardar. El texto queda en pantalla.
     no, al capturar   → ver F1.
@@ -544,7 +544,7 @@ Receta
 
 ```
   ✗ el PDF no se pudo armar
-  ▸ aviso: «No pude armar el PDF.», con Reintentar
+  ▸ aviso: «No se pudo armar el PDF.», con Reintentar
 ```
 
 ---

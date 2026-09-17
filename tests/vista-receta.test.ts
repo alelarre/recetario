@@ -189,9 +189,11 @@ describe('Receta en lectura', () => {
     expect(renderReceta({ entrada: null, receta: r })).toContain('class="f"');
   });
 
-  it('los tags son tocables y llevan al filtro', () => {
+  it('los tags se leen y no se tocan: van como chip, sin data-tag', () => {
     const r = parse('---\ntitulo: A\ntags: [horno]\n---\n');
-    expect(renderReceta({ entrada: null, receta: r })).toContain('data-tag="horno"');
+    const html = renderReceta({ entrada: null, receta: r });
+    expect(html).toContain('<span class="chip">horno</span>');
+    expect(html).not.toContain('data-tag');
   });
 
   it('el encabezado lleva el link al .md en Drive, en otra pestaña', () => {
@@ -300,8 +302,8 @@ describe('la estrella de favorito', () => {
   it('favorito no va en la fila de tags: ya está la estrella del encabezado', () => {
     const fav = parse('---\ntitulo: Asado\ntags: [favorito, horno]\n---\n');
     const html = renderReceta({ entrada: entradaFalsa(), receta: fav });
-    expect(html).not.toContain('data-tag="favorito"');
-    expect(html).toContain('data-tag="horno"');
+    expect(html).not.toContain('favorito</span>');
+    expect(html).toContain('<span class="chip">horno</span>');
   });
 
   it('una receta con sólo favorito no arma la fila de chips vacía', () => {
@@ -328,7 +330,7 @@ describe('La ficha de compartir', () => {
   });
   it('error-pdf: avisa y ofrece reintentar', () => {
     const html = renderFichaCompartir({ paso: 'error-pdf' });
-    expect(html).toContain('No pude armar el PDF.');
+    expect(html).toContain('No se pudo armar el PDF.');
     expect(html).toContain('data-accion="compartir-pdf">Reintentar');
   });
   it('copiado y mostrar', () => {

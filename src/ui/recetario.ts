@@ -8,8 +8,10 @@
  *
  * Mockup 03.
  */
-import { encabezado, tile, lateral, botonMenu, carruselTags } from './componentes.js';
+import { encabezado, tile, lateral, botonMenu, carruselTags, vacio } from './componentes.js';
 import { ICO } from './iconos.js';
+
+const SIN_RECETAS = 'Todavía no hay recetas. Entran desde Borradores, o como archivos .md en las carpetas de Drive.';
 
 export interface OpcionesRecetario {
   categorias: { id: string; nombre: string; cantidad: number }[];
@@ -46,6 +48,8 @@ export function renderRecetario(
         carruselTags(tags, { tope: 20 }) +
         '<div><div class="rot">Categorías</div>' +
         `<div class="grilla">${grilla}</div></div>` +
+        // Sin ninguna receta las categorías se ven igual: falta decir por dónde entran.
+        (categorias.some(c => c.cantidad > 0) ? '' : vacio(SIN_RECETAS)) +
       '</div>' +
     '</div>';
 }

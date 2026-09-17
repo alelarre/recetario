@@ -118,7 +118,7 @@ como texto suelto, sin corchetes ni guiones → se lee como sin tags · `foto` q
 - [ ] `## Variaciones` puede traer una lista de bullets en vez de secciones `###`, y entonces se muestra como lista.
 - [ ] Cualquier otra sección se conserva y se muestra tal cual, sin interpretarse.
 - [ ] El texto antes de la primera sección es la descripción.
-- [ ] El orden de las secciones en el archivo se respeta al mostrar y al reescribir.
+- [ ] Al reescribir, el orden es siempre el mismo: la descripción, Ingredientes, Preparación, Variaciones y Notas, y después las otras secciones en el orden en que estaban. Un `.md` que las traía en otro orden queda en éste la primera vez que se guarda.
 
 #### C05.1.3 — Separar nombre y cantidad en un ingrediente *(J4)*
 
@@ -322,7 +322,7 @@ y menos riesgo que distinguir cada tipo de daño.
 
 #### C05.6.2 — La salida cuando la app no abre *(J8)*
 
-- [ ] Una planilla que no se puede leer —le falta la hoja `meta`, por ejemplo— frena el arranque con un aviso y **Reintentar**.
+- [ ] Una planilla que no se puede leer —le falta la hoja `meta`, por ejemplo— frena el arranque con el aviso *«No se pudo abrir el Recetario.»* y **Reintentar**; el mensaje de Google va a la consola, no a la pantalla (R1).
 - [ ] La recuperación es borrar el archivo `_indice` en Drive y volver a abrir: la app lo crea de nuevo y lo puebla desde los `.md`.
 - [ ] Una copia local vieja o rota se resuelve con **Borrar datos locales** (C05.9b.5).
 

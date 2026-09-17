@@ -1,6 +1,6 @@
 // El script de Identity Services carga con `async`, así que puede seguir
 // bajando cuando `auth.ts` ya se ejecuta: contra el sitio publicado esto pasó
-// en la práctica y dejó a la app en "No pude arrancar: Google Identity no
+// en la práctica y dejó a la app sin arrancar: "Google Identity no
 // cargó" sin reintento automático. Acá se verifica que `auth.ts` espera a que
 // aparezca `window.google.accounts.oauth2` en vez de asumirlo, con timers
 // falsos para no depender de tiempo real.

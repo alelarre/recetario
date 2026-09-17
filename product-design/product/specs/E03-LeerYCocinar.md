@@ -35,7 +35,7 @@ receta entera.
 
 - [ ] En la primera ficha: foto si la hay, título, línea de contexto, tags, descripción y, al pie tras un divisor, la fuente. Después ingredientes, preparación, variaciones y notas, cada una en su ficha.
 - [ ] La línea de contexto lleva el color y el nombre de la categoría, lo que rinde, **la duración con su relojito** y la dificultad. La duración sólo se dibuja si `tiempo` es uno de los cinco valores (`E05-Cimientos.md` C05.1.1).
-- [ ] Los tags van como chips, los especiales primero y con su ícono. **`favorito` no lleva chip:** ya lo dice la estrella del encabezado (C03.1.2b).
+- [ ] Los tags van como chips, los especiales primero y con su ícono. **Se leen y no se tocan** (C02.6.3); el único tocable es *incompleta* (C03.1.3). **`favorito` no lleva chip:** ya lo dice la estrella del encabezado (C03.1.2b).
 - [ ] Una sección ausente no se dibuja: no queda encabezado vacío.
 - [ ] Una sección desconocida del `.md` se muestra tal cual, al final, sin interpretarse (C05.1.2).
 - [ ] Toda la receta se lee scrolleando, sin ningún toque.
@@ -201,7 +201,7 @@ revocar.
 - [ ] Mientras se arma, *PDF* muestra el spinner con *"Armando el PDF…"* y la ficha no acepta otro toque.
 - [ ] Si armarlo tardó más de lo que dura el permiso del toque, la ficha pasa a *"El PDF está listo."* con **Enviar PDF**, que manda el archivo ya armado.
 - [ ] Si el navegador no puede compartir archivos, el PDF se descarga.
-- [ ] Si falla, la ficha dice *"No pude armar el PDF."* con *Reintentar*.
+- [ ] Si falla, la ficha dice *"No se pudo armar el PDF."* con *Reintentar*.
 
 #### C03.7.3 — Link *(J6)*
 

@@ -29,7 +29,7 @@ function cuerpo(estado: EstadoCompartir): string {
     case 'pdf-listo':
       return '<p>El PDF está listo.</p>' + boton('enviar-pdf', 'Enviar PDF', 'prim') + cancelar;
     case 'error-pdf':
-      return aviso({ texto: 'No pude armar el PDF.', accion: { etiqueta: 'Reintentar', accion: 'compartir-pdf' } }) + cancelar;
+      return aviso({ texto: 'No se pudo armar el PDF.', accion: { etiqueta: 'Reintentar', accion: 'compartir-pdf' } }) + cancelar;
     case 'copiado':
       return `<p>${estado.que === 'link' ? 'Link copiado.' : 'Texto copiado.'}</p>` + listo;
     case 'mostrar':

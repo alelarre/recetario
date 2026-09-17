@@ -94,4 +94,11 @@ describe('Captura', () => {
     expect(html).not.toMatch(/más tarde|se guardará/i);
     expect(html).not.toContain('Reintentar');
   });
+
+  it('sin sesión, el aviso ofrece conectar; con otro error, no lleva control (R3)', () => {
+    const sinSesion = renderCaptura({ ...base, titulo: 'Focaccia', error: 'Hay que conectarse de nuevo con Google.' });
+    expect(sinSesion).toContain('data-accion="conectar-de-nuevo"');
+    expect(sinSesion).toContain('value="Focaccia"');
+    expect(renderCaptura({ ...base, error: 'No se pudo guardar. Revisá la conexión.' })).not.toContain('conectar-de-nuevo');
+  });
 });

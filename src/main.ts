@@ -1,6 +1,6 @@
-import { crearAuth } from './auth.js';
-import { crearDrive } from './drive.js';
-import { crearSheets } from './sheets.js';
+import { crearAuth, ErrorDeAuth } from './auth.js';
+import { crearDrive, ErrorDeDrive } from './drive.js';
+import { crearSheets, ErrorDeSheets } from './sheets.js';
 import { crearStore } from './store.js';
 import * as indiceLocal from './indice-local.js';
 import { parse, slugArchivo } from './recipe.js';
@@ -8,7 +8,6 @@ import { tagReservado, conEspecial, esFavorita, contarDuraciones, filtrarPorDura
 import type { Orden } from './catalogo.js';
 import { sePuedeTerminar } from './recipe.js';
 import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado } from './ui/router.js';
-import { escapar } from './ui/markdown.js';
 import { renderRecetario } from './ui/recetario.js';
 import { renderCategoria } from './ui/categoria.js';
 import { renderTag } from './ui/tag.js';
@@ -26,7 +25,7 @@ import { colorDeClave, urlDeFoto } from './ui/categorias.js';
 import { renderSelector } from './ui/carpeta.js';
 import { puedeEmpezar, direccion, progreso, seAbre } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
-import { aviso } from './ui/componentes.js';
+import { aviso, SIN_SESION } from './ui/componentes.js';
 import { pintar, conClosest } from './ui/pintar.js';
 import { crearControlCocina } from './cocina-control.js';
 import { registrarCategorias } from './ui/categorias.js';
@@ -130,6 +129,18 @@ const PANTALLAS_DE_BORRADOR: readonly Ruta['vista'][] = ['borrador', 'nueva'];
  * largo para el hash.
  */
 let recibida: Receta | null = null;
+/**
+ * Falta la sesión de Google: la renovación silenciosa no salió, o Google
+ * rechazó el token. No es un problema de red, y el aviso lo dice (R3).
+ */
+const sinSesion = (err: unknown): boolean =>
+  err instanceof ErrorDeAuth ||
+  ((err instanceof ErrorDeDrive || err instanceof ErrorDeSheets) && err.status === 401);
+
+/** Por qué no se guardó, en castellano (R1). */
+const porQueNoGuardo = (err: unknown): string =>
+  sinSesion(err) ? SIN_SESION : 'No se pudo guardar. Revisá la conexión.';
+
 /** El aviso de «Pegar receta» cuando lo copiado no sirve, para Borradores y el borrador. */
 let avisoBorradores = '';
 
@@ -175,7 +186,6 @@ let pdfListo: File | null = null;
 const ACCIONES_DE_LA_FICHA = ['compartir', 'cerrar-compartir', 'compartir-pdf', 'enviar-pdf', 'compartir-link', 'compartir-texto'];
 
 /** El mensaje de un error desconocido, sin asumir que es un Error. */
-const mensajeDe = (e: unknown): string => e instanceof Error ? e.message : String(e);
 
 /** Lo que verificó el arranque, para la ficha «Al abrir» de Ajustes. */
 const informeArranque = () =>
@@ -242,7 +252,7 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
   }
   if (estadoArranque.estado === 'solo-lectura') {
     return pintar('<div class="cuerpo">' + aviso({
-      texto: 'No pude conectar con Drive. Sin esa lectura no hay con qué dibujar.',
+      texto: 'No se pudo conectar con Drive. Sin esa lectura no hay con qué dibujar.',
       accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
     }) + '</div>');
   }
@@ -1068,7 +1078,7 @@ app.addEventListener('click', async (e) => {
       console.error(err);
       // Nada queda esperando: el texto sigue en pantalla y se reintenta a mano.
       guardandoCaptura = false;
-      errorCaptura = 'No se pudo guardar. Revisá la conexión.';
+      errorCaptura = porQueNoGuardo(err);
       return render();
     }
     guardandoCaptura = false;
@@ -1088,12 +1098,12 @@ app.addEventListener('click', async (e) => {
     if (!b) return;
     const r = await enviarAClaude(plataformaDelNavegador(), pedidoDeConversion(b));
     if (r === 'copiado') { avisoBorradores = 'Pedido copiado: pegalo en Claude'; return render(); }
-    if (r === 'sin-portapapeles') { avisoBorradores = 'No pude abrir Claude ni copiar el pedido.'; return render(); }
+    if (r === 'sin-portapapeles') { avisoBorradores = 'No se pudo abrir Claude ni copiar el pedido.'; return render(); }
     return;
   }
   if (accion === 'pegar-receta') {
     const texto = await leerPortapapeles(plataformaDelNavegador());
-    if (texto === null) { avisoBorradores = 'No pude leer lo copiado.'; return render(); }
+    if (texto === null) { avisoBorradores = 'No se pudo leer lo copiado.'; return render(); }
     if (!esRecetaEnMd(texto)) { avisoBorradores = 'Lo copiado no es una receta en .md.'; return render(); }
     avisoBorradores = '';
     // En la pantalla de un borrador, pegar ata a ese borrador aunque el texto
@@ -1181,6 +1191,18 @@ app.addEventListener('click', async (e) => {
     // «Cancelar» en la captura.
     if (history.length <= 1) { irCerrando('#/borradores'); return; }
     return history.back();
+  }
+  if (accion === 'conectar-de-nuevo') {
+    // No se redibuja: en el editor lo escrito vive sólo en el formulario (R3).
+    // Conectado, el aviso se va y se guarda a mano; si no, queda donde está.
+    try {
+      await auth.conectar();
+      errorCaptura = '';
+      document.querySelector('[data-sin-sesion]')?.remove();
+    } catch (err) {
+      console.error(err);
+    }
+    return;
   }
   if (accion === 'reconectar') {
     try {
@@ -1309,7 +1331,7 @@ app.addEventListener('click', async (e) => {
       return history.back();
     } catch (err) {
       console.error(err);
-      return conError('No se pudo guardar. Revisá la conexión.');
+      return conError(porQueNoGuardo(err));
     }
   }
 
@@ -1481,7 +1503,13 @@ app.addEventListener('change', (e) => {
 const compartido = hashDeCompartido(location.search);
 if (compartido) history.replaceState(null, '', location.pathname + compartido);
 
-arrancar().catch(err => pintar(`<p class="contenido">No pude arrancar: ${escapar(mensajeDe(err))} <button data-accion="reconectar">Reintentar</button></p>`));
+arrancar().catch(err => {
+  console.error(err);
+  pintar('<div class="cuerpo">' + aviso({
+    texto: 'No se pudo abrir el Recetario.',
+    accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
+  }) + '</div>');
+});
 
 // `main.ts` se carga con `import()` desde `inicio.ts`, no con un `<script>`
 // directo: puede llegar después de `load`, y ahí `addEventListener('load', …)`

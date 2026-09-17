@@ -6,6 +6,7 @@
 // sólo se ve en el cableado: que cada ruta dibuje su pantalla, y que un fallo
 // de red avise sin dejar datos de una lectura anterior.
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { ErrorDeDrive } from '../src/drive.js';
 import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 import { entradaFalsa } from './dobles.js';
 import { parse } from '../src/recipe.js';
@@ -14,11 +15,14 @@ import type { Coincidencias } from '../src/tipos.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
 vi.mock('../src/ui/base.css', () => ({}));
-vi.mock('../src/auth.js', () => ({
+// Los tres módulos de Google se simulan, pero conservan sus clases de error:
+// `main.ts` las usa para reconocer una sesión vencida.
+vi.mock('../src/auth.js', async original => ({
+  ...await original<typeof import('../src/auth.js')>(),
   crearAuth: () => ({ conectar: async () => {}, token: async () => 'tok', olvidar: () => {} })
 }));
-vi.mock('../src/drive.js', () => ({ crearDrive: () => ({ cuenta: async () => 'alguien@gmail.com' }) }));
-vi.mock('../src/sheets.js', () => ({ crearSheets: () => ({}) }));
+vi.mock('../src/drive.js', async original => ({ ...await original<typeof import('../src/drive.js')>(), crearDrive: () => ({ cuenta: async () => 'alguien@gmail.com' }) }));
+vi.mock('../src/sheets.js', async original => ({ ...await original<typeof import('../src/sheets.js')>(), crearSheets: () => ({}) }));
 /** `espera`, si está, es una promesa que el test resuelve a mano: el PDF tarda lo que el test quiera. */
 const pdfs = vi.hoisted(() => ({ generados: 0, espera: null as Promise<void> | null }));
 vi.mock('../src/pdf/generar.js', () => ({
@@ -1113,6 +1117,43 @@ describe('main.ts: las rutas', () => {
     expect(estado.descartados).toEqual(['b1']);
   });
 
+  it('con la sesión vencida, guardar avisa que hay que conectarse y conectar no redibuja el editor (R3)', async () => {
+    const original = storeFake.crear;
+    storeFake.crear = async () => { throw new ErrorDeDrive('Invalid Credentials', 401); };
+    try {
+      const { app, abrir, tocar } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+      await tocar('guardar');
+
+      expect(app.innerHTML).toContain('Hay que conectarse de nuevo con Google.');
+      expect(app.innerHTML).toContain('data-accion="conectar-de-nuevo"');
+      expect(app.innerHTML).not.toContain('Invalid Credentials');
+
+      // Lo escrito vive en el formulario: conectar no puede repintar la pantalla.
+      const antes = app.innerHTML;
+      await tocar('conectar-de-nuevo');
+      expect(app.innerHTML).toBe(antes);
+    } finally {
+      storeFake.crear = original;
+    }
+  });
+
+  it('si guardar falla por otra cosa, el aviso habla de la conexión y no lleva control', async () => {
+    const original = storeFake.crear;
+    storeFake.crear = async () => { throw new Error('red'); };
+    try {
+      const { app, abrir, tocar } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+      await tocar('guardar');
+      expect(app.innerHTML).toContain('No se pudo guardar. Revisá la conexión.');
+      expect(app.innerHTML).not.toContain('conectar-de-nuevo');
+    } finally {
+      storeFake.crear = original;
+    }
+  });
+
   it('una receta nueva que no sale de un borrador no borra ninguno', async () => {
     estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
     const { abrir, tocar } = await montar();
@@ -1442,7 +1483,7 @@ describe('main.ts: las rutas', () => {
       await abrir('#/borradores/b1');
       await tocar('convertir-con-claude');
 
-      expect(app.innerHTML).toContain('No pude abrir Claude ni copiar el pedido.');
+      expect(app.innerHTML).toContain('No se pudo abrir Claude ni copiar el pedido.');
     });
 
     it('compartir una receta con id válido abre el editor atado a ese borrador, con `replace`', async () => {
@@ -1544,7 +1585,7 @@ describe('main.ts: las rutas', () => {
 
       await tocar('pegar-receta');
 
-      expect(app.innerHTML).toContain('No pude leer lo copiado.');
+      expect(app.innerHTML).toContain('No se pudo leer lo copiado.');
     });
 
     it('el editor con la receta recibida cuenta como cambios sin guardar desde que se abre', async () => {
