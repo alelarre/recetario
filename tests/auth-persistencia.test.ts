@@ -1,9 +1,7 @@
-// tests/auth-persistencia.test.js
-//
 // El flujo de OAuth de Identity Services es siempre por popup, incluso la
 // renovación "silenciosa" — pasó en la práctica que aparecía en cada apertura
 // de la página porque el token vivía solo en memoria y se perdía en cada
-// recarga. Estas pruebas verifican que ahora sobrevive en localStorage.
+// recarga. Acá se verifica que sobrevive en localStorage.
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { crearAuth } from '../src/auth.js';
 import { comoGlobal, windowConGis, localStorageFalso } from './dom-falso.js';

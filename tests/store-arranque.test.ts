@@ -63,8 +63,6 @@ describe('arranque en frío', () => {
   it('al crear la planilla, renombra la hoja por defecto a "recetas" y no queda ninguna hoja con nombre por defecto', async () => {
     const { store, sheets } = armar(conRecetario());
     await store.arrancar();
-    // La planilla se creó y debe tener una hoja llamada 'recetas'
-    // (no 'Sheet1' o el nombre por defecto que Google habría puesto)
     const hojas = await sheets.hojas(store._ctx.indiceId);
     const titulos = hojas.map(h => h.title);
     expect(titulos).toContain('recetas');
@@ -85,13 +83,11 @@ describe('arranque en frío', () => {
     sheets.crearPlanilla('i1');
     const fechaPrueba = '2026-01-15T10:30:00.000Z';
 
-    // Escribir la meta antes de crear el store
     await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
     await sheets.escribir('i1', 'meta!A2:B2', [['ultima_reconstruccion', fechaPrueba]]);
 
     const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
 
-    // Contar llamadas a sheets.leer durante arranque
     let llamadosDurante = 0;
     const leerOriginal = sheets.leer.bind(sheets);
     sheets.leer = async function(...args) {
@@ -100,11 +96,8 @@ describe('arranque en frío', () => {
     };
 
     await store.arrancar();
-
-    // Resetear contador después del arranque
     llamadosDurante = 0;
 
-    // Llamar ultimaReconstruccion múltiples veces después del arranque
     const resultado1 = store.ultimaReconstruccion();
     const resultado2 = store.ultimaReconstruccion();
 
@@ -173,7 +166,6 @@ describe('arranque en frío', () => {
     const drive = conRecetario();
     const { store } = armar(drive);
 
-    // Guardá la original, reemplazá para fallar solo en la segunda llamada
     const buscarOriginal = drive.buscarPorNombre;
     let callCount = 0;
     drive.buscarPorNombre = async function(nombre, padre) {

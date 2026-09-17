@@ -2,12 +2,10 @@
 //
 // El estado de la vista vive en el módulo de main.ts y no en la ruta, así que
 // sobrevive a un render: lo que se prueba acá es que cambiar de receta dibuja
-// la receta nueva y no arrastra nada de la anterior. El plegado de
-// ingredientes, que era el estado que se arrastraba en v1, se fue con la barra
-// pegajosa: la receta se lee de corrido.
+// la receta nueva y no arrastra nada de la anterior.
 //
-// El cableado entero de main.ts —las once vistas y sus errores— es de la
-// Tarea 22, y sus tests se escriben ahí.
+// El cableado entero de main.ts —las once vistas y sus errores— se prueba en
+// `tests/main-rutas.test.ts`.
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { OpcionesReceta } from '../src/ui/receta.js';
 import { comoGlobal, limpiarGlobales } from './dom-falso.js';

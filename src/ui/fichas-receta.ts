@@ -12,7 +12,8 @@ import type { Receta, GrupoIngredientes, TramoPreparacion } from '../tipos.js';
 export const ficha = (contenido: string, titulo?: string): string =>
   contenido ? `<div class="ficha">${titulo ? `<h2>${escapar(titulo)}</h2>` : ''}${contenido}</div>` : '';
 
-const ingredientes = (grupos: GrupoIngredientes[]): string =>
+/** La lista de ingredientes, con sus grupos. La misma en la receta y en el modo cocina. */
+export const listaIngredientes = (grupos: GrupoIngredientes[]): string =>
   grupos.map(g =>
     (g.nombre ? `<div class="grupo">${escapar(g.nombre)}</div>` : '') +
     g.items.map(i =>
@@ -75,7 +76,7 @@ export function fichasDelCuerpo(receta: Receta): string {
         `<p>${aHtml(v.cuerpo)}</p></div>`).join('')
     : lista.map(v => `<div class="var"><p>${aHtml(v)}</p></div>`).join('');
 
-  return ficha(ingredientes(grupos), 'Ingredientes') +
+  return ficha(listaIngredientes(grupos), 'Ingredientes') +
     ficha(preparacion(tramos), 'Preparación') +
     ficha(variaciones, 'Variaciones') +
     ficha(receta.notas ? `<div class="lee">${aHtml(receta.notas)}</div>` : '', 'Notas') +

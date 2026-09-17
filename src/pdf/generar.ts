@@ -1,5 +1,5 @@
 /**
- * pdfmake y las fuentes, cargados recién cuando se va a compartir (spec §4.3).
+ * pdfmake y las fuentes, cargados recién cuando se va a compartir.
  * Abrir la ficha llama a `precargar()`: el toque que genera el PDF es otro, con
  * su propia ventana de activación, y lo pesado ya llegó.
  */
@@ -22,11 +22,12 @@ export function precargar(): Promise<PdfMake> {
   if (!cargando) {
     cargando = (async () => {
       // pdfmake baja las fuentes por su cuenta y sólo acepta URLs http(s) absolutas.
-      const [normal, bold, italics] = [fuenteRegular, fuenteSemibold, fuenteItalica]
+      const urls = [fuenteRegular, fuenteSemibold, fuenteItalica]
         .map(u => new URL(u, location.href).href) as [string, string, string];
+      const [normal, bold, italics] = urls;
       const [modulo] = await Promise.all([
         import('pdfmake/build/pdfmake'),
-        ...[normal, bold, italics].map(async u => {
+        ...urls.map(async u => {
           const r = await fetch(u);
           if (!r.ok) throw new Error(`No se pudo bajar la fuente (${r.status})`);
         })

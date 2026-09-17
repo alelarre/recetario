@@ -1,5 +1,5 @@
 /**
- * La receta como documento de pdfmake (spec §4). Es una función pura: no
+ * La receta como documento de pdfmake. Es una función pura: no
  * importa pdfmake, sólo sus tipos, y se prueba en Node.
  *
  * Cada ítem es un nodo que no se parte, y cada título de sección —y cada

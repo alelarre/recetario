@@ -1,9 +1,6 @@
-/* Recetario — los tokens y los componentes de ux/design-system.md.
-   Nació copiado de product-design/ux/mockups/tokens.css. Desde el 2026-09-12
-   es el sistema del producto y se edita acá: los mockups quedaron como la
-   especificación de cuando se diseñaron, y lo que se decidió después vive sólo
-   en este archivo. Si hace falta un valor que no está acá, es un hueco del
-   sistema.
+/* Recetario — el sistema del producto: los tokens y los componentes de
+   product-design/ux/design-system.md, de donde salen los `§` de este archivo.
+   Si hace falta un valor que no está acá, es un hueco del sistema.
  */
 
 :root {
@@ -39,7 +36,7 @@
   /* §3.2 Tipografía */
   --tipo: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --txt-micro: 12px;   --txt-chico: 14px;  --txt-base: 16px;
-  --txt-lectura: 18px; --txt-titulo-s: 20px; --txt-titulo: 24px;
+  --txt-lectura: 18px; --txt-titulo: 24px;
   --txt-cocina: 22px;  --txt-cocina-titulo: 28px;
 
   /* §4.1 Espaciado */
@@ -50,8 +47,8 @@
   /* §3.4 Iconografía */
   --ico: 20px; --ico-cocina: 24px;
 
-  /* P29 — el fondo con el que `>1 día` corta el reloj de atrás. Cada lugar
-     que dibuja un relojito sobre otro fondo lo redefine. */
+  /* El fondo con el que `>1 día` corta el reloj de atrás. Cada lugar que
+     dibuja un relojito sobre otro fondo lo redefine. */
   --fondo-reloj: var(--surface);
 
   /* §4.2 Radios */
@@ -63,8 +60,8 @@
 body {
   margin: 0; background: var(--bg); color: var(--fg);
   font-family: var(--tipo); font-size: var(--txt-base);
-  /* §3.2 — sin esto, lo que no declara interlínea se dibujaba con la `normal`
-     del navegador, ≈1.2 (auditoría tipográfica T2). */
+  /* §3.2 — sin esto, lo que no declara interlínea cae en la `normal` del
+     navegador, ≈1.2. */
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -79,7 +76,7 @@ body {
 .enc .tit.app { position: absolute; left: 50%; transform: translateX(-50%); }
 .enc .der { margin-left: auto; display: flex; align-items: center; }
 /* El total va al otro extremo: con el título centrado en absoluto, nada lo
-   empuja y quedaba pegado al borde izquierdo. */
+   empuja y queda pegado al borde izquierdo. */
 .enc .tot { margin-left: auto; }
 /* Fijo arriba, en la receta abierta y en el editor. El título que toma se
    recorta: hay de 86 caracteres. */
@@ -87,7 +84,7 @@ body {
 .enc.peg .tit { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .enc .tit { flex: 1; font-size: var(--txt-base); font-weight: 600; text-align: center; }
 .enc .tit.izq { text-align: left; padding-left: var(--e-2); }
-/* El ícono de un tag especial, antes del título de su lista (P27): el trazo y el
+/* El ícono de un tag especial, antes del título de su lista: el trazo y el
    tamaño de los íconos del encabezado, alineado con la línea del texto. */
 .enc .tit svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none;
                 stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
@@ -112,8 +109,7 @@ body {
 .ficha { background: var(--surface); border: 1px solid var(--borde);
          border-radius: var(--r-ficha); padding: var(--e-4); }
 /* El título de sección va en el tamaño del cuerpo de la receta y se separa de
-   él por peso, divisor y aire: en 20 competía con el título de la receta
-   (auditoría tipográfica T9). */
+   él por peso, divisor y aire: en 20 compite con el título de la receta. */
 .ficha > h2 { font-size: var(--txt-lectura); font-weight: 600; line-height: 1.3; margin: 0 0 var(--e-3);
               padding-bottom: var(--e-3); border-bottom: 1px solid var(--borde-fuerte); }
 
@@ -146,7 +142,7 @@ body {
 }
 
 /* ---- §6.1 Tarjeta miniatura ---- */
-.tarjeta { display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
+.tarjeta { position: relative; display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
            background: var(--surface); border: 1px solid var(--borde);
            border-radius: var(--r-ficha); text-decoration: none; color: inherit; }
 .tarjeta .txt { flex: 1; min-width: 0; }
@@ -154,19 +150,18 @@ body {
               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tarjeta .ctx { font-size: var(--txt-chico); color: var(--fg-2); margin-top: var(--e-1);
                 display: flex; align-items: center; gap: var(--e-2); }
-.tarjeta { position: relative; }
 .tarjeta .motivo { color: var(--acento); }
 .pin { width: 8px; height: 8px; border-radius: var(--r-chico); flex: 0 0 8px; background: var(--cat-otros); }
 
-/* P29 — la duración va en la misma línea de texto, con el relojito pegado. */
+/* La duración va en la misma línea de texto, con el relojito pegado. */
 .ctx-txt { min-width: 0; }
 .dur { white-space: nowrap; }
 .dur svg { width: 15px; height: 15px; vertical-align: -3px; margin-right: 3px; stroke: currentColor; fill: none;
            stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 
-/* §6.1 — Las marcas de los tags especiales, juntas en la esquina de la tarjeta
-   (P27). `--marcas` es cuántas hay: la reserva de ancho del título crece con
-   ellas, y una tarjeta sin marcas no pierde nada. */
+/* §6.1 — Las marcas de los tags especiales, juntas en la esquina de la tarjeta.
+   `--marcas` es cuántas hay: la reserva de ancho del título crece con ellas, y
+   una tarjeta sin marcas no pierde nada. */
 .tarjeta .txt { padding-right: calc(var(--marcas, 0) * 20px); }
 .marcas-esq { position: absolute; top: 6px; right: 8px; display: flex; gap: 4px; line-height: 0; }
 .marca { display: grid; place-items: center; width: 16px; height: 16px; color: var(--acento); }
@@ -185,7 +180,7 @@ body {
 .ph::before { content: ''; position: absolute; inset: 0; background: #000; opacity: .45; }
 
 /* ---- §6.5 Marca de incompleta ---- */
-/* Un círculo a medio llenar: el aro vacío anterior se leía como viñeta, no como
+/* Un círculo a medio llenar: un aro vacío se lee como viñeta, no como
    «hecha a medias». Va en el acento —es lo único tocable de su fila y lleva al
    editor—, y nunca en `--error`: a la receta le falta algo, no está rota. */
 .inc { width: 12px; height: 12px; border: 1.5px solid currentColor; border-radius: 50%; flex: 0 0 12px;
@@ -206,11 +201,11 @@ body {
 .chip.pend { background: var(--acento-suave); border-color: var(--acento); color: var(--acento); }
 /* El chip de un tag del editor se saca: es botón y lleva su cruz. */
 button.chip { cursor: pointer; }
-.chip svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;
+.chip svg { width: 14px; height: 14px; stroke: currentColor; fill: none;
             stroke-linecap: round; opacity: .7; }
-/* El trazo de los íconos de chip vale 1.5 en todos lados (design-system §3.4):
-   la estrella, el marcador y el calendario de los tags especiales del
-   carrusel, y la cruz del chip del editor. */
+/* El trazo de los íconos de chip vale 1.5 en todos lados (§3.4): la estrella,
+   el marcador y el calendario de los tags especiales del carrusel, y la cruz
+   del chip del editor. */
 .chip svg { stroke-width: 1.5; }
 .chips { display: flex; flex-wrap: wrap; gap: var(--e-2); }
 
@@ -232,8 +227,6 @@ button.chip { cursor: pointer; }
                 background-repeat: no-repeat; background-size: 16px;
                 background-position: right var(--e-4) center; }
 .campo input:focus, .campo textarea:focus { outline: none; border: 2px solid var(--acento); }
-.check { display: flex; align-items: center; gap: var(--e-3); min-height: 48px; cursor: pointer; }
-.check input { width: 22px; height: 22px; accent-color: var(--acento); }   /* §6.9 */
 .campo ::placeholder { color: var(--fg-3); }
 
 /* ---- §6.8 Aviso ---- */
@@ -241,14 +234,13 @@ button.chip { cursor: pointer; }
          background: var(--error-suave); border: 1px solid var(--error);
          border-radius: var(--r-ficha); padding: var(--e-4); }
 .aviso p { margin: 0; flex: 1; min-width: 12ch; }
-/* Las notas de una oración son prosa, y la prosa no baja de 16 (§1; auditoría
-   tipográfica T12). */
+/* Las notas de una oración son prosa, y la prosa no baja de 16 (§1). */
 .aviso-mudo { font-size: var(--txt-base); color: var(--fg-2); }
 
 /* ---- §6.11 Ítem de ingrediente ---- */
 .ing { display: flex; gap: var(--e-3); align-items: baseline;
        padding: var(--e-2) 0; border-bottom: 1px solid var(--borde);
-       /* Cuerpo de la receta, como los pasos: 18 (§1; auditoría T1). */
+       /* Cuerpo de la receta, como los pasos: 18 (§1). */
        font-size: var(--txt-lectura); line-height: 1.6; }
 .ing:last-child { border-bottom: 0; }
 .ing .n { flex: 1; }

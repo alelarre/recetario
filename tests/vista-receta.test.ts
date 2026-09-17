@@ -265,7 +265,7 @@ describe('la estrella de favorito', () => {
     expect(html).not.toContain('class="fav on"');
   });
 
-  it('va antes que compartir (spec §3.1)', () => {
+  it('va antes que compartir', () => {
     const html = renderReceta({ entrada: entradaFalsa(), receta });
     expect(html.indexOf('data-accion="favorito"')).toBeLessThan(html.indexOf('data-accion="compartir"'));
   });

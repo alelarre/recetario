@@ -53,13 +53,17 @@ export async function convertirBorrador(
   deps: DependenciasCompartido,
   { borradorId, receta, carpetaId }: { borradorId: string; receta: Receta; carpetaId: string }
 ): Promise<RecetaCreada> {
-  const convertidos = deps.convertidos ?? (deps.convertidos = new Map<string, RecetaCreada>());
+  const convertidos = deps.convertidos ??= new Map<string, RecetaCreada>();
 
   // El `.md` y su fila: las dos las hace el store en una sola llamada.
   const anterior = convertidos.get(borradorId);
-  const creada = anterior
-    ? (await deps.store.guardar(anterior.id, receta, { carpetaDestino: carpetaId }), anterior)
-    : await deps.store.crear(receta, { carpetaId });
+  let creada: RecetaCreada;
+  if (anterior) {
+    await deps.store.guardar(anterior.id, receta, { carpetaDestino: carpetaId });
+    creada = anterior;
+  } else {
+    creada = await deps.store.crear(receta, { carpetaId });
+  }
   convertidos.set(borradorId, creada);
 
   // El borrador: su `.md` a la papelera y su fila afuera. Que ya no esté no es

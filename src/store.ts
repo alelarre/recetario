@@ -32,7 +32,7 @@ export type EstadoCopia = 'coincide' | 'sin-copia' | 'otra-fecha' | 'otra-planil
 /** Por qué el arranque pide reindexar, o vacío si no hace falta. */
 export type MotivoReindexado = '' | 'planilla-nueva' | 'esquema' | 'a-medias';
 
-/** Lo que el arranque verificó, para la ficha «Al abrir» de Ajustes (P18). */
+/** Lo que el arranque verificó, para la ficha «Al abrir» de Ajustes. */
 export interface InformeArranque {
   /** Cuándo arrancó, en ISO. */
   momento: string;
@@ -47,10 +47,10 @@ export interface InformeArranque {
 /**
  * Cómo terminó el arranque. Es una unión discriminada por `estado` a propósito:
  * cada caso trae exactamente los datos que la vista necesita para dibujarlo, y
- * ninguno de los otros. `main` la consume con un switch (§8).
+ * ninguno de los otros. `main` la consume con un switch.
  */
 export type ResultadoArranque =
-  /** Drive falló. Nunca se crea nada tras un fallo (§5.1). */
+  /** Drive falló. Nunca se crea nada tras un fallo. */
   | { estado: 'solo-lectura'; motivo: string; avisos: string[] }
   /**
    * No hay carpeta marcada, o hay más de una: la elige el usuario. Las
@@ -115,7 +115,7 @@ export type SheetsDelStore = Pick<Sheets,
 export interface Dependencias {
   drive: DriveDelStore;
   sheets: SheetsDelStore;
-  /** La copia local del índice (P12). `main` pasa `indice-local.ts`; los tests, un doble. */
+  /** La copia local del índice. `main` pasa `indice-local.ts`; los tests, un doble. */
   indiceLocal: IndiceLocal;
 }
 
@@ -184,15 +184,14 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
 
   /** Carga la copia en memoria, en el orden de la planilla, como si se la hubiera leído. */
   function usarCopia(copia: CopiaIndice): void {
-    const ordenadas = [...copia.filas].sort((a, b) => a.fila - b.fila);
     ctx.meta = { ...copia.meta };
-    entradas = ordenadas.map(f => f.entrada);
+    usarCategorias(copia.categorias);
+    const ordenadas = [...copia.filas].sort((a, b) => a.fila - b.fila);
+    entradas = ordenadas.map(f => conCategoria(f.entrada));
     filas = new Map(ordenadas.map(f => [f.entrada.id_archivo, f.fila]));
     const borradores = [...copia.borradores].sort((a, b) => a.fila - b.fila);
     entradasBorradores = borradores.map(f => f.entrada);
     filasBorradores = new Map(borradores.map(f => [f.entrada.id_archivo, f.fila]));
-    usarCategorias(copia.categorias);
-    entradas = entradas.map(conCategoria);
     ctx.borradoresId = ctx.meta['carpeta_borradores'] ?? '';
   }
 
@@ -263,10 +262,8 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
       return archivo.id;
     } catch (e) {
       // Si algo después de crear el archivo falla, no dejar una planilla a
-      // medio hacer: pasó de verdad (§ "Lo que quedó sabido") y la única
-      // recuperación es borrarla a mano. Borrar acá mismo deja que la
-      // próxima carga la vuelva a crear sola, sin que nadie tenga que
-      // encontrar el archivo roto en Drive.
+      // medio hacer: la única recuperación sería encontrarla y borrarla a mano
+      // en Drive. Borrándola acá, la próxima carga la vuelve a crear sola.
       await drive.borrar(archivo.id).catch(() => {});
       throw e;
     }
@@ -277,7 +274,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     const avisos: string[] = [];
     const mensaje = (e: unknown): string => e instanceof Error ? e.message : String(e);
     const soloLectura = (e: unknown): ResultadoArranque => {
-      // "No la encontré" no es "no existe": nunca se crea nada tras un fallo (§5.1).
+      // "No la encontré" no es "no existe": nunca se crea nada tras un fallo.
       ctx.soloLectura = true;
       return { estado: 'solo-lectura', motivo: mensaje(e), avisos };
     };
@@ -361,18 +358,20 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     }
 
     let comparacion = compararCopia();
-    if (!planillaNueva && comparacion.estado !== 'coincide') {
-      ctx.meta = await leerMeta();
-      // Otro dispositivo cambió de carpeta: la de la copia quedó atrás (§5.2 del diseño).
-      if (conocida && ctx.meta['reemplazada']) {
-        indiceLocal.borrar();
-        const resultado = await porLaMarca();
-        if (resultado) return resultado;
-        comparacion = compararCopia();
-        if (!planillaNueva) ctx.meta = await leerMeta();
+    if (!planillaNueva) {
+      if (comparacion.estado !== 'coincide') {
+        ctx.meta = await leerMeta();
+        // Otro dispositivo cambió de carpeta: la de la copia quedó atrás.
+        if (conocida && ctx.meta['reemplazada']) {
+          indiceLocal.borrar();
+          const resultado = await porLaMarca();
+          if (resultado) return resultado;
+          comparacion = compararCopia();
+          if (!planillaNueva) ctx.meta = await leerMeta();
+        }
+      } else if (comparacion.copia) {
+        usarCopia(comparacion.copia);
       }
-    } else if (!planillaNueva && comparacion.copia) {
-      usarCopia(comparacion.copia);
     }
     let reindexado: MotivoReindexado = planillaNueva ? 'planilla-nueva' : '';
     if (!planillaNueva) {
@@ -424,9 +423,9 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     usarCategorias(crudoCategorias.slice(1).map(categoriaDesdeFila).filter(c => c.id));
     entradas = entradas.map(conCategoria);
     ctx.borradoresId = ctx.meta['carpeta_borradores'] ?? '';
-    // La fecha es la de la búsqueda de recién: nada escribió entre medio (§1 del
-    // diseño). Sin fecha —la planilla recién creada— no se guarda: lo hace el
-    // reindexado al terminar.
+    // La fecha es la de la búsqueda de recién: nada escribió entre medio. Sin
+    // fecha —la planilla recién creada— no se guarda: lo hace el reindexado al
+    // terminar.
     if (ctx.modifiedTime) indiceLocal.guardar(copiaActual());
     return entradas;
   }
@@ -450,7 +449,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     const hojas = await sheets.hojas(ctx.indiceId);
     await sheets.borrarFila(ctx.indiceId, idDeHoja(hojas, hoja), nro);
     nros.delete(id);
-    // El corrimiento es determinístico: no hace falta releer nada (§4.3).
+    // El corrimiento es determinístico: no hace falta releer nada.
     for (const [otroId, otraFila] of nros) if (otraFila > nro) nros.set(otroId, otraFila - 1);
     return true;
   }
@@ -482,10 +481,9 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     const actualizado = await drive.actualizar(id, texto);
 
     // Sin fila —por ejemplo, una receta abierta por link directo y marcada
-    // favorita ahí mismo (P27 §3.1)— no hay de dónde sacar su carpeta real:
-    // `entrada?.carpeta_id ?? ctx.raizId` la mandaba a «Sin categorizar»
-    // aunque estuviera en una categoría, y con el nombre de archivo vacío. Se
-    // le pregunta a Drive, y sólo en este caso.
+    // favorita ahí mismo— no hay de dónde sacar su carpeta real ni su nombre
+    // de archivo: caer en la raíz la mandaría a «Sin categorizar» aunque esté
+    // en una categoría. Se le pregunta a Drive, y sólo en este caso.
     let carpeta_id: string;
     let nombre_archivo: string;
     if (entrada) {
@@ -542,13 +540,21 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     return hojas.find(h => h.title === nombre)?.sheetId ?? 0;
   }
 
+  /** Agrega la hoja con su encabezado si la planilla es de un esquema anterior y no la tiene. */
+  async function asegurarHoja(
+    hojas: { title: string }[], hoja: string, ultimaColumna: string, columnas: readonly string[]
+  ): Promise<void> {
+    if (hojas.some(h => h.title === hoja)) return;
+    await sheets.agregarHoja(ctx.indiceId, hoja);
+    await sheets.escribir(ctx.indiceId, `${hoja}!A1:${ultimaColumna}1`, [[...columnas]]);
+  }
+
   /** Vacía una hoja, salvo el encabezado, y la llena con `nuevas`. */
   async function reemplazarFilas(hoja: string, hojaId: number, ultimaColumna: string, nuevas: string[][]): Promise<void> {
     const previas = await sheets.leer(ctx.indiceId, `${hoja}!A1:${ultimaColumna}100000`);
     if (previas.length >= 2) {
       // Todas juntas en una sola llamada: de a una, la cuota de escritura de
-      // Sheets (60/min) se agota apenas la cantidad de recetas pasa un
-      // puñado — pasó en la práctica con 60 recetas reales.
+      // Sheets (60/min) se agota apenas la cantidad de recetas pasa un puñado.
       const filasABorrar: number[] = [];
       for (let fila = previas.length; fila >= 2; fila--) filasABorrar.push(fila);
       await sheets.borrarFilas(ctx.indiceId, hojaId, filasABorrar);
@@ -559,7 +565,6 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
   }
 
   async function reconstruir(alProgresar: (p: Progreso) => void = () => {}): Promise<{ indexadas: number; ignorados: string[] }> {
-    // Defender el parámetro: si no es función, ignorar.
     if (typeof alProgresar !== 'function') alProgresar = () => {};
 
     await guardarMeta('reconstruccion_en_curso', 'si');
@@ -604,7 +609,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
 
     const nuevas: string[][] = [];
     // Por nombre y no un conteo: un archivo que se salteó hay que poder
-    // encontrarlo en Drive (C05.5.2).
+    // encontrarlo en Drive.
     const ignorados: string[] = [];
     let leidas = 0;
     for (const { archivo, lugar } of pendientes) {
@@ -631,19 +636,11 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     }
 
     const hojas = await sheets.hojas(ctx.indiceId);
-    if (!hojas.some(h => h.title === HOJA_BORRADORES)) {
-      // Una planilla de antes de la versión 4 no la tiene.
-      await sheets.agregarHoja(ctx.indiceId, HOJA_BORRADORES);
-      await sheets.escribir(ctx.indiceId, `${HOJA_BORRADORES}!A1:${ULTIMA_COLUMNA_BORRADORES}1`, [[...COLUMNAS_BORRADORES]]);
-    }
+    await asegurarHoja(hojas, HOJA_BORRADORES, ULTIMA_COLUMNA_BORRADORES, COLUMNAS_BORRADORES);
     await reemplazarFilas(HOJA_RECETAS, idDeHoja(hojas, HOJA_RECETAS), ULTIMA_COLUMNA, nuevas);
     await reemplazarFilas(HOJA_BORRADORES, idDeHoja(hojas, HOJA_BORRADORES), ULTIMA_COLUMNA_BORRADORES,
       nuevosBorradores.map(filaDeBorrador));
-    if (!hojas.some(h => h.title === HOJA_CATEGORIAS)) {
-      // Una planilla de antes de la versión 5 no la tiene.
-      await sheets.agregarHoja(ctx.indiceId, HOJA_CATEGORIAS);
-      await sheets.escribir(ctx.indiceId, `${HOJA_CATEGORIAS}!A1:${ULTIMA_COLUMNA_CATEGORIAS}1`, [[...COLUMNAS_CATEGORIAS]]);
-    }
+    await asegurarHoja(hojas, HOJA_CATEGORIAS, ULTIMA_COLUMNA_CATEGORIAS, COLUMNAS_CATEGORIAS);
     await reemplazarFilas(HOJA_CATEGORIAS, idDeHoja(hojas, HOJA_CATEGORIAS), ULTIMA_COLUMNA_CATEGORIAS,
       ctx.categorias.map(filaDeCategoria));
 
@@ -669,17 +666,11 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
   }
 
   function buscar(filtros?: Filtros | unknown): Entrada[] {
-    // Normalizar el argumento: si no es un objeto plano, tratarlo como {}
+    // Lo que no es un objeto plano se trata como {}, y cada campo por su tipo.
     const filtrosValidos: Filtros =
       (filtros && typeof filtros === 'object' && !Array.isArray(filtros)) ? filtros as Filtros : {};
-    const {
-      texto = '',
-      categoria = '',
-      tags = [],
-      dificultad = ''
-    } = filtrosValidos;
+    const { texto, categoria, tags, dificultad } = filtrosValidos;
 
-    // Defender cada campo por tipo
     const t = normalizar(String(texto ?? ''));
     const cat = String(categoria ?? '');
     const diff = String(dificultad ?? '');
@@ -700,7 +691,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
    * que coincide por dos entra en los dos grupos, que es lo que fija C02.3.2.
    *
    * El motivo cita el valor **tal como está escrito**: la normalización es de
-   * la comparación, no del texto que se muestra (C02.3.4).
+   * la comparación, no del texto que se muestra (C02.3.2).
    */
   function buscarPorTexto(texto: unknown): Coincidencias {
     const t = normalizar(String(texto ?? ''));
@@ -733,7 +724,6 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
   }
 
   function tagsDe(categoria?: unknown): { tag: string; cantidad: number }[] {
-    // Defender el parámetro: convertir a string válido
     const cat = typeof categoria === 'string' ? categoria : '';
 
     const cuenta = new Map<string, number>();
@@ -759,7 +749,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     await persistir();
   }
 
-  /** Captura: un `.md` nuevo en `_borradores/` y su fila (C01.2). */
+  /** Captura: un `.md` nuevo en `_borradores/` y su fila (C01.4.2). */
   async function agregarBorrador(
     { titulo, fuente, nota }: { titulo: string; fuente: string; nota: string }
   ): Promise<Borrador> {
@@ -814,10 +804,10 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
   }
 
   /**
-   * El setup de una carpeta base (§5.1 del diseño): las predefinidas que
-   * falten, `_indice`, el reindexado y la marca, en ese orden. La marca va
-   * última: si algo falla antes, la carpeta queda sin marcar y el selector
-   * vuelve a ofrecerla. Repetirlo no duplica nada.
+   * El setup de una carpeta base (C05.7.4): las predefinidas que falten,
+   * `_indice`, el reindexado y la marca, en ese orden. La marca va última: si
+   * algo falla antes, la carpeta queda sin marcar y el selector vuelve a
+   * ofrecerla. Repetirlo no duplica nada.
    */
   async function prepararCarpeta(
     carpeta: { id: string; nombre: string }, alProgresar: (p: Progreso) => void = () => {}
@@ -867,7 +857,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
   /**
    * Antes de cambiar de carpeta: la `meta` de la actual dice que quedó atrás.
    * Escribir le cambia la fecha a `_indice`, y así otro dispositivo con su copia
-   * deja de usarla (§5.2 del diseño).
+   * deja de usarla.
    */
   async function marcarReemplazada(): Promise<void> {
     await guardarMeta('reemplazada', 'si');

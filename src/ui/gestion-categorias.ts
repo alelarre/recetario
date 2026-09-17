@@ -1,5 +1,5 @@
 /**
- * La gestión de categorías (P15/P19, etapa 3a): la lista y la edición.
+ * La gestión de categorías: la lista y la edición.
  *
  * Todas las categorías se tratan igual, predefinidas o no. La edición es un
  * formulario —color y foto viajan en campos ocultos— para que «salir sin
@@ -18,7 +18,7 @@ interface Valores {
 }
 
 /** El tile de una categoría con estos valores: la miniatura de la lista y la muestra de la edición. */
-export function muestraCategoria({ nombre, color, foto }: Valores, extra = ''): string {
+function muestraCategoria({ nombre, color, foto }: Valores, extra = ''): string {
   const imagen = urlDeFoto(foto);
   const fondo = imagen
     ? `<span class="im" style="background-image:url(${imagen})"></span>`
@@ -50,7 +50,7 @@ export function renderListaCategorias({ categorias }: { categorias: { categoria:
 export const botonBorrarCategoria =
   '<button class="btn pel" type="button" data-accion="borrar-categoria">Borrar categoría</button>';
 
-/** Dice todo antes de borrar: cuántas recetas se van, cuáles, y a dónde (§3.3 del diseño). */
+/** Dice todo antes de borrar: cuántas recetas se van, cuáles, y a dónde. */
 export function confirmacionBorrarCategoria(nombre: string, titulos: string[]): string {
   const n = titulos.length;
   const ordenados = [...titulos].sort((a, b) => a.localeCompare(b, 'es'));

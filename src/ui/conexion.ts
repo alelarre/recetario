@@ -5,7 +5,6 @@
  * verificada» de Google, y no conviene que esa sea la primera explicación que
  * el usuario recibe. El permiso se pide al tocar el botón, nunca al abrir.
  */
-import { escapar } from './markdown.js';
 import { aviso, SPINNER } from './componentes.js';
 import type { Progreso } from '../store.js';
 
@@ -43,5 +42,5 @@ export function renderConexion({ estado, progreso }: OpcionesConexion): string {
     }
   })();
 
-  return `<div class="arr"><h1>${escapar('Recetario')}</h1>${cuerpo}</div>`;
+  return `<div class="arr"><h1>Recetario</h1>${cuerpo}</div>`;
 }

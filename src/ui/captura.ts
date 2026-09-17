@@ -20,8 +20,7 @@ export interface OpcionesCaptura {
   nota?: string;
   /**
    * Se está editando un borrador que ya existe: los tres campos se editan
-   * —incluida la fuente— y el encabezado lo dice. Contradice C01.6.1, que
-   * dejaba la fuente fija; decisión del usuario el 2026-09-12.
+   * —incluida la fuente— y el encabezado lo dice.
    */
   edicion?: boolean;
   guardando: boolean;

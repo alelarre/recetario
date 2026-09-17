@@ -81,7 +81,7 @@ describe('renderEditor', () => {
 
   it('lo que viaja en el formulario es el campo oculto, no lo a medio escribir', () => {
     // Con carpeta elegida `incompleta` no se fuerza: el hidden es sólo los
-    // tags comunes del `.md` (§«los tags especiales en el editor» cubre el
+    // tags comunes del `.md` («los tags especiales en el editor» cubre el
     // caso con especiales puestos).
     const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: cargada, categorias });
     expect(html).toContain('<input type="hidden" name="tags" value="fritura, rápido">');

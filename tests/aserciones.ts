@@ -27,18 +27,11 @@ export function arranqueEligiendo(r: ResultadoArranque): Extract<ResultadoArranq
   return r;
 }
 
-export function arranqueSoloLectura(r: ResultadoArranque): Extract<ResultadoArranque, { estado: 'solo-lectura' }> {
-  if (r.estado !== 'solo-lectura') {
-    throw new Error(`Se esperaba el arranque en 'solo-lectura' y llegó en '${r.estado}'`);
-  }
-  return r;
-}
-
 /**
  * Marca un valor deliberadamente inválido para el parámetro que lo recibe.
  *
  * Varias funciones de la app prometen no romperse con entrada mala —un `.md`
- * malformado, una fila corta, un argumento nulo (§8)— y los tests que lo
+ * malformado, una fila corta, un argumento nulo— y los tests que lo
  * comprueban tienen que pasarle justamente lo que el tipo prohíbe. El cast es
  * necesario; envolverlo acá deja claro que es la intención del test y no una
  * anotación que alguien no supo cómo escribir.

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { textoVersion, COMMIT } from '../src/version.js';
 import { lateral } from '../src/ui/componentes.js';
 
-describe('la versión visible (P20)', () => {
+describe('la versión visible', () => {
   it('es el commit corto y cuándo se compiló, en la hora del teléfono', () => {
     const compilado = new Date(2026, 8, 13, 14, 30).toISOString();
     expect(textoVersion('8648476', compilado)).toBe('8648476 · 13/09 14:30');

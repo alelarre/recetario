@@ -1,7 +1,6 @@
 // Service worker: solo cachea el app shell. Los datos no se cachean acá —la
-// copia del índice vive en localStorage (P12)—: si este archivo cacheara
-// respuestas de las APIs de Google, la app mostraría datos viejos sin forma de
-// saberlo.
+// copia del índice vive en localStorage—: si este archivo cacheara respuestas
+// de las APIs de Google, la app mostraría datos viejos sin forma de saberlo.
 const CACHE = 'recetario-v1';
 const SHELL = ['./', './index.html', './manifest.webmanifest'];
 
@@ -14,28 +13,25 @@ self.addEventListener('activate', (e) => {
     Promise.all(claves.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
+/** Solo se guarda la respuesta exitosa: una de error cacheada sobrevive a la recarga y rompe la app. */
+function guardar(request, resp) {
+  if (resp.ok) {
+    const copia = resp.clone();
+    caches.open(CACHE).then(c => c.put(request, copia));
+  }
+  return resp;
+}
+
 /** Caché primero: para lo que ya trae la prueba de que es correcto en el propio nombre. */
 function cachePrimero(request) {
-  return caches.match(request).then(hit => hit ?? fetch(request).then(resp => {
-    const copia = resp.clone();
-    // Guardar solo si la respuesta es exitosa; una respuesta de error cacheada sobrevive a la recarga y rompe la app.
-    if (resp.ok) {
-      caches.open(CACHE).then(c => c.put(request, copia));
-    }
-    return resp;
-  }));
+  return caches.match(request).then(hit => hit ?? fetch(request).then(resp => guardar(request, resp)));
 }
 
 /** Red primero: para lo que puede cambiar de contenido sin cambiar de nombre. */
 function redPrimero(request) {
-  return fetch(request).then(resp => {
-    const copia = resp.clone();
-    // Guardar solo si la respuesta es exitosa; una respuesta de error cacheada sobrevive a la recarga y rompe la app.
-    if (resp.ok) {
-      caches.open(CACHE).then(c => c.put(request, copia));
-    }
-    return resp;
-  }).catch(() => caches.match(request).then(hit => hit ?? caches.match('./index.html')));
+  return fetch(request)
+    .then(resp => guardar(request, resp))
+    .catch(() => caches.match(request).then(hit => hit ?? caches.match('./index.html')));
 }
 
 self.addEventListener('fetch', (e) => {
@@ -50,14 +46,12 @@ self.addEventListener('fetch', (e) => {
     return e.respondWith(cachePrimero(e.request));
   }
 
-  // El documento de navegación no lleva hash: el mismo index.html puede
-  // cambiar de contenido entre un deploy y el siguiente (referencia a otros
-  // assets/*.js). Antes esto también iba con caché primero, y como este
-  // archivo (sw.js) no cambiaba de bytes entre deploys, el navegador nunca
-  // reinstalaba el service worker: el index.html viejo quedaba sirviéndose
-  // para siempre aunque hubiera una versión nueva publicada. Con red primero,
-  // un deploy nuevo se ve apenas hay señal; sin señal, cae al último que
-  // quedó cacheado.
+  // El documento de navegación no lleva hash: el mismo index.html cambia de
+  // contenido entre un deploy y el siguiente (referencia a otros assets/*.js).
+  // Con red primero, un deploy nuevo se ve apenas hay señal; sin señal, cae al
+  // último que quedó cacheado. Con caché primero quedaría sirviéndose el viejo
+  // para siempre, porque sw.js tampoco cambia de bytes entre deploys y el
+  // navegador no reinstala el service worker.
   if (e.request.mode === 'navigate') {
     return e.respondWith(redPrimero(e.request));
   }

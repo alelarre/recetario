@@ -17,7 +17,7 @@ export interface OpcionesRecetario {
   borradores: number;
   /** El menú lateral está desplegado (sólo en pantalla angosta). */
   menuAbierto?: boolean;
-  /** Los tags del recetario entero, ya ordenados por cantidad (P27). */
+  /** Los tags del recetario entero, ya ordenados por cantidad. */
   tags: { tag: string; cantidad: number }[];
 }
 

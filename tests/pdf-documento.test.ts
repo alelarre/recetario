@@ -8,13 +8,12 @@ const mm = (v: number) => v * 72 / 25.4;
 type Nodo = Record<string, unknown>;
 // `content` tipa como `Content`, cuyo union incluye variantes que no son
 // array (además de `Content[]`): la aserción directa a `Nodo[]` no
-// «sobrepone lo suficiente» para TS. Ajuste mínimo sobre el test del brief,
-// ver task-5-report.md.
+// «sobrepone lo suficiente» para TS.
 const contenido = (r = BABA) => documentoPdf(r, 'Entradas y picadas').content as unknown as Nodo[];
 // `JSON.stringify(undefined)` es `undefined`, no la cadena "undefined": los
 // nodos sin `stack` (la cabecera, que es una `table`) devuelven `undefined` en
 // `n['stack']?.[0]`, y sin este resguardo el `.includes()` de quien llama
-// explota. Ajuste mínimo sobre el test del brief, ver task-5-report.md.
+// explota.
 const textoDe = (n: unknown): string => JSON.stringify(n) ?? '';
 
 describe('el documento del PDF', () => {

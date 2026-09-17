@@ -81,8 +81,8 @@ describe('buscar', () => {
   });
 
   it('el filtro por tag no conoce ningún tag en particular', () => {
-    // El tag manual `incompleto` se fue con el rediseño: la completitud se
-    // deriva al leer el .md (C05.3.1) y el filtro es de tags cualesquiera.
+    // La completitud se deriva al leer el .md (C05.3.1), y el filtro es de
+    // tags cualesquiera.
     expect(store.buscar({ tags: ['dulce'] }).map(e => e.id_archivo)).toEqual(['r3']);
   });
 
@@ -174,13 +174,11 @@ describe('categoriasConConteo', () => {
 
 describe('tagsDe', () => {
   it('ordena por frecuencia descendente, y a igual frecuencia, alfabéticamente', () => {
-    // Carnes tiene horno, rápido, parrilla todos con frecuencia 1, así que el orden es alfabético
+    // En Carnes los tres tienen frecuencia 1, así que el orden es alfabético.
     expect(store.tagsDe('Carnes').map(t => t.tag)).toEqual(['horno', 'parrilla', 'rápido']);
   });
 
   it('prioriza frecuencia sobre orden alfabético', async () => {
-    // Agregar recetas: zapallo en tres, asado en una
-    // Así zapallo (3 veces) viene antes que horno (1 vez) a pesar de que 'h' < 'z'
     await sheets.append('i1', 'recetas', [
       fila('r4', 'Ensalada de zapallo', 'Carnes', 'c1', 'zapallo', 'zapallo', 'fácil'),
       fila('r5', 'Zapallo relleno', 'Carnes', 'c1', 'zapallo', 'zapallo', 'media'),
@@ -189,7 +187,7 @@ describe('tagsDe', () => {
     ]);
     await abrirDeNuevo();
     const tags = store.tagsDe('Carnes');
-    // zapallo aparece 3 veces, es el primero aunque alfabéticamente viene después que 'horno'
+    // zapallo aparece 3 veces: va primero aunque 'h' < 'z'.
     expect(tags[0].tag).toBe('zapallo');
     expect(tags[0].cantidad).toBe(3);
   });

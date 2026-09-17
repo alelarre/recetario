@@ -17,7 +17,7 @@ import type { Orden } from '../catalogo.js';
 export interface OpcionesResultados {
   consulta: string;
   grupos: Coincidencias;
-  /** El conmutador de orden (P29): ordena dentro de cada grupo. */
+  /** El conmutador de orden: ordena dentro de cada grupo. */
   orden?: Orden;
 }
 

@@ -9,7 +9,7 @@ type ClaveSimple = (typeof CLAVES)[number];
 
 /**
  * La duración no es texto libre: es uno de estos cinco valores, escritos tal
- * cual en `tiempo` (P29). Cuenta el tiempo hasta comer, con reposo y horno.
+ * cual en `tiempo`. Cuenta el tiempo hasta comer, con reposo y horno.
  */
 export const DURACIONES = ['~15 min', '~30 min', '~60 min', '>60 min', '>1 día'] as const;
 export type Duracion = (typeof DURACIONES)[number];
@@ -24,7 +24,7 @@ export function duracionValida(valor: unknown): Duracion | '' {
 const esClaveSimple = (c: string): c is ClaveSimple =>
   (CLAVES as readonly string[]).includes(c);
 
-/** Minúsculas y sin tildes. Es la única normalización del sistema (§3.2). */
+/** Minúsculas y sin tildes. Es la única normalización del sistema. */
 export function normalizar(texto: unknown): string {
   return String(texto ?? '')
     .normalize('NFD')
@@ -66,10 +66,7 @@ function parsearFrontmatter(bloque: string, receta: Receta): void {
     const linea = lineas[i];
     if (linea === undefined || !linea.trim()) continue;
     if (/^\s*-\s+/.test(linea)) {
-      // Si no es tags, es ilegible
-      if (ultimaClave !== 'tags') {
-        receta.avisos.push('frontmatter-ilegible');
-      }
+      if (ultimaClave !== 'tags') receta.avisos.push('frontmatter-ilegible');
       continue; // ya consumida por una lista
     }
     const m = linea.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(.*)$/);
@@ -130,21 +127,21 @@ function parsearCuerpo(cuerpo: string, receta: Receta): void {
     const texto = buffer.join('\n').trim();
     buffer = [];
     if (!texto) { encabezadoOtra = null; return; }
-    if (destino === 'otra') receta.otras.push({ encabezado: encabezadoOtra ?? '', cuerpo: texto });
-    else {
-      if (receta[destino]) {
-        receta[destino] = receta[destino] + '\n\n' + texto;
-        receta.avisos.push('seccion-duplicada');
-      } else {
-        receta[destino] = texto;
-      }
+    if (destino === 'otra') {
+      receta.otras.push({ encabezado: encabezadoOtra ?? '', cuerpo: texto });
+    } else if (receta[destino]) {
+      receta[destino] = receta[destino] + '\n\n' + texto;
+      receta.avisos.push('seccion-duplicada');
+    } else {
+      receta[destino] = texto;
     }
     encabezadoOtra = null;
   };
 
   for (const linea of lineas) {
+    // `\s+` después de `##` es lo que deja afuera a los `###`.
     const m = linea.match(/^##\s+(.+?)\s*$/);
-    if (m?.[1] !== undefined && !linea.startsWith('###')) {
+    if (m?.[1] !== undefined) {
       volcar();
       const encabezadoTrimado = m[1].trim();
       if (!encabezadoTrimado) {
@@ -291,7 +288,7 @@ export function variacionesDe(variaciones: string): { lista: string[]; secciones
 /**
  * Si la receta reúne lo mínimo para que el usuario pueda declararla terminada.
  *
- * La completitud es el tag especial `incompleta` (P27): esto sólo habilita que
+ * La completitud es el tag especial `incompleta`: esto sólo habilita que
  * se pueda sacar en el editor, y por eso vive en el editor y en ningún camino
  * de lectura.
  *
@@ -327,7 +324,6 @@ export function contextoDe(receta: Receta, categoria: string): string {
 }
 
 export function slugArchivo(titulo: unknown, existentes: unknown[] = []): string {
-  // Aceptar solo strings, números o null/undefined; rechazar objetos
   if (typeof titulo !== 'string' && typeof titulo !== 'number' && titulo !== null && titulo !== undefined) {
     return 'sin-titulo.md';
   }

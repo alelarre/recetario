@@ -93,18 +93,16 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
   };
 
   return {
-    q,
-    listar,
     buscarPorNombre: (nombre: string, padre?: string) => listar(q.porNombre(nombre, padre)),
     listarCarpetas: (id: string) => listar(q.carpetasDe(id), 'files(id,name,appProperties)'),
-    listarHijos: (id: string, campos?: string) => listar(q.hijosDe(id), campos),
+    listarHijos: (id: string) => listar(q.hijosDe(id)),
     carpetasMarcadas: () => listar(q.marcadas(), 'files(id,name,modifiedTime)'),
     carpetasPropias: (padre: string) => listar(q.carpetasPropiasDe(padre), 'files(id,name)'),
     carpetasPropiasPorNombre: (nombre: string) => listar(q.carpetasPropiasPorNombre(nombre), 'files(id,name)'),
     metadatos: (id: string, campos = 'id,name,parents,modifiedTime') =>
       pedir<ArchivoDrive>(`/files/${id}?fields=${campos}`),
 
-    /** El mail de la cuenta conectada, para Ajustes (C05.7.1). */
+    /** El mail de la cuenta conectada, para Ajustes (C05.9b.1). */
     cuenta: async (): Promise<string> =>
       (await pedir<{ user?: { emailAddress?: string } }>('/about?fields=user(emailAddress)'))
         .user?.emailAddress ?? '',
@@ -115,14 +113,14 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
     crear: ({ nombre, contenido = '', padre, mime = 'text/markdown' }: OpcionesCrear): Promise<ArchivoCreado> => {
       const meta = { name: nombre, mimeType: mime, ...(padre ? { parents: [padre] } : {}) };
 
-      // Tipos nativos de Google se crean con solo metadata (sin archivo)
+      // Los tipos nativos de Google —una planilla, una carpeta— se crean con
+      // solo metadata: no hay archivo que subir.
       if (mime.startsWith('application/vnd.google-apps.')) {
         return pedir<ArchivoCreado>('/files?fields=id,name,modifiedTime', {
           method: 'POST', body: JSON.stringify(meta)
         });
       }
 
-      // Otros archivos usan subida multipart
       const fd = new FormData();
       fd.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
       fd.append('file', new Blob([contenido], { type: mime }));

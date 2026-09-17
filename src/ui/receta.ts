@@ -2,8 +2,8 @@
  * La receta entera, en una columna (mockup 01).
  *
  * Sin pestañas: costaban cuatro toques para leerla y escondían las notas y las
- * variaciones justo cuando se cocina. El conmutador vuelve, pero solo dentro
- * del modo cocina, que es donde esas dos secciones no se usan.
+ * variaciones justo cuando se cocina. El conmutador existe sólo dentro del modo
+ * cocina, que es donde esas dos secciones no se usan.
  *
  * Una pila de `.ficha`: la primera con la foto —si la hay—, el título, el
  * contexto, la fuente y los tags; después una por sección, y ninguna vacía.
@@ -31,12 +31,12 @@ export interface OpcionesReceta {
   compartir?: EstadoCompartir;
   /** Qué está pasando con la estrella: nada, o una escritura en curso. */
   favorito?: 'escribiendo';
-  /** Lo último que falló al marcar favorito (P27). Se dibuja arriba de la ficha. */
+  /** Lo último que falló al marcar favorito. Se dibuja arriba de la ficha. */
   error?: string;
 }
 
 /**
- * La estrella del encabezado: pone y saca el tag `favorito` (P27). Son dos
+ * La estrella del encabezado: pone y saca el tag `favorito`. Son dos
  * estrellas superpuestas —el contorno y la llena—, y mientras Drive contesta
  * la llena se descubre de izquierda a derecha, en loop. El resultado se dibuja
  * recién con la respuesta: la app no adivina lo que todavía no se escribió.
@@ -51,7 +51,7 @@ function botonFavorito(receta: Receta, escribiendo: boolean): string {
 
 export function renderReceta({ entrada, receta, compartir, favorito, error }: OpcionesReceta): string {
   const categoria = entrada?.categoria ?? '';
-  // Los tags, con los especiales primero y con su ícono (P27). Incompleta es
+  // Los tags, con los especiales primero y con su ícono. Incompleta es
   // uno más: su chip abre el editor. Favorito no va: ya lo dice la estrella del
   // encabezado, y un chip igual parecía otro control para marcarla.
   const tags = receta.tags.filter(t => tagEspecial(t) !== 'favorito');
@@ -71,7 +71,6 @@ export function renderReceta({ entrada, receta, compartir, favorito, error }: Op
   // repetirlo arriba —o poner la categoría, que ya está en el contexto— era
   // decir dos veces lo mismo. `main` le pone el título recortado cuando el
   // grande sale de pantalla, y ahí se corta antes de llegar al link.
-  // Sin menú de ⋯: las acciones son Cocinar y Editar, y las dos están al pie.
   const botonCompartir = `<button class="ico" data-accion="compartir" aria-label="Compartir">${ICO.compartir}</button>`;
   const estrella = botonFavorito(receta, favorito === 'escribiendo');
   return encabezado({ titulo: '', volver: true, pegajoso: true, derecha: estrella + botonCompartir + alArchivo }) +

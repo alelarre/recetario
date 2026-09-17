@@ -4,7 +4,7 @@ import type {
 } from './tipos.js';
 
 /**
- * El orden de las columnas de la planilla. Es el esquema del índice (§4.3):
+ * El orden de las columnas de la planilla. Es el esquema del índice:
  * cambiarlo invalida las filas ya escritas, así que se agrega al final o se
  * sube SCHEMA_VERSION para forzar una reconstrucción.
  */
@@ -29,15 +29,8 @@ export const DIFICULTADES = ['fácil', 'media', 'difícil'] as const;
 export { DURACIONES, duracionValida } from './recipe.js';
 export type { Duracion } from './recipe.js';
 
-/** Si el tag es uno de los reservados, sin importar mayúsculas ni acentos. */
-export function tagReservado(valor: unknown): boolean {
-  const n = normalizar(String(valor ?? ''));
-  return TAGS_RESERVADOS.some(t => normalizar(t) === n);
-}
-
-/** Un valor que no matchea cae en "sin definir" en vez de romper el filtro (§3.2). */
+/** Un valor que no matchea cae en "sin definir" en vez de romper el filtro. */
 export function dificultadValida(valor: unknown): string {
-  // Defender contra cualquier tipo
   const s = String(valor ?? '').trim();
   if (!s) return '';
   const n = normalizar(s);
@@ -46,41 +39,27 @@ export function dificultadValida(valor: unknown): string {
 }
 
 /**
+ * Una celda con varios valores. El `|` se saca de cada uno: es el separador de
+ * la celda, y un valor que lo trajera partiría mal al releer. Son valores
+ * curados, no texto libre del `.md`, así que sacarlo no pierde nada real.
+ */
+function unirConBarra(valores: unknown[]): string {
+  return valores
+    .filter((v): v is string => typeof v === 'string')
+    .map(v => v.trim().replace(/\|/g, ''))
+    .filter(Boolean)
+    .join('|');
+}
+
+/**
  * Arma la fila de la planilla para una receta. Acepta cualquier cosa a
  * propósito: la receta puede venir de un `.md` malformado y la ubicación de una
  * respuesta de Drive incompleta, y ninguna de las dos puede tumbar el índice.
  */
 export function filaDesde(receta?: Partial<Receta> | null, ubicacion?: Partial<Ubicacion> | null): string[] {
-  // Defender receta
   const r: Partial<Receta> = typeof receta === 'object' && receta !== null ? receta : {};
-
-  // Defender ubicacion
   const u: Partial<Ubicacion> = typeof ubicacion === 'object' && ubicacion !== null ? ubicacion : {};
 
-  // Defender tags: debe ser array
-  const tagsArray: unknown[] = Array.isArray(r.tags) ? r.tags : [];
-  const tagsStr = tagsArray
-    .filter((t): t is string => typeof t === 'string' && Boolean(t.trim()))
-    // Sacar el | de cada valor: es el separador de la celda (§4.3), y un tag
-    // que lo trajera partiría mal al releer. Son valores curados, no texto
-    // libre del .md, así que sacarlo no pierde nada real.
-    .map(t => t.trim().replace(/\|/g, ''))
-    .filter(Boolean)
-    .join('|');
-
-  // Defender ingredientes: debe ser array de strings
-  const ingredientesArray: unknown[] = ingredientesIndexables(r);
-  const ingredientesStr = Array.isArray(ingredientesArray)
-    ? ingredientesArray
-      .filter((i): i is string => typeof i === 'string' && Boolean(i.trim()))
-      // Mismo motivo que con tags: el | es el separador de la celda, no un
-      // carácter válido dentro de un valor.
-      .map(i => i.trim().replace(/\|/g, ''))
-      .filter(Boolean)
-      .join('|')
-    : '';
-
-  // Construir celdas
   const celdas: Record<(typeof COLUMNAS)[number], string> = {
     id_archivo: typeof u.id === 'string' ? u.id : '',
     nombre_archivo: typeof u.nombre_archivo === 'string' ? u.nombre_archivo : '',
@@ -91,8 +70,8 @@ export function filaDesde(receta?: Partial<Receta> | null, ubicacion?: Partial<U
     tiempo: typeof r.tiempo === 'string' ? r.tiempo : '',
     dificultad: dificultadValida(r.dificultad),
     fuente: typeof r.fuente === 'string' ? r.fuente : '',
-    tags: tagsStr,
-    ingredientes: ingredientesStr,
+    tags: unirConBarra(Array.isArray(r.tags) ? r.tags : []),
+    ingredientes: unirConBarra(ingredientesIndexables(r)),
     mtime: String(typeof u.mtime === 'number' ? u.mtime : 0),
     foto: typeof r.foto === 'string' ? r.foto : ''
   };
@@ -102,7 +81,6 @@ export function filaDesde(receta?: Partial<Receta> | null, ubicacion?: Partial<U
 
 /** El inverso de `filaDesde`. Una fila corta o con huecos da campos vacíos. */
 export function entradaDesdeFila(fila?: unknown): Entrada {
-  // Defender fila: debe ser array
   const f: unknown[] = Array.isArray(fila) ? fila : [];
 
   // Cada columna a texto; lo que no sea string cuenta como ausente.
@@ -136,7 +114,7 @@ export function entradaDesdeFila(fila?: unknown): Entrada {
 
 /**
  * Los tags que la app dibuja distinto: ícono propio y lugar fijo al principio
- * de cualquier fila de tags (P27). No son estados: son tags, y viven en la
+ * de cualquier fila de tags. No son estados: son tags, y viven en la
  * lista `tags` del `.md` como cualquier otro. El orden es el mismo en todos
  * lados: primero lo que se busca para cocinar, al final lo que falta terminar.
  */
@@ -170,6 +148,12 @@ export const TAGS_RESERVADOS: readonly string[] = [
   ...FORMAS_TERMINADO
 ];
 
+/** Si el tag es uno de los reservados, sin importar mayúsculas ni acentos. */
+export function tagReservado(valor: unknown): boolean {
+  const n = normalizar(String(valor ?? ''));
+  return TAGS_RESERVADOS.some(t => normalizar(t) === n);
+}
+
 /** El especial que le corresponde a un tag escrito de cualquier forma, o `null`. */
 export function tagEspecial(valor: unknown): TagEspecial | null {
   const n = normalizar(String(valor ?? ''));
@@ -196,14 +180,14 @@ export function ordenarTags(tags: string[]): string[] {
   return [...lista].sort((a, b) => peso(a) - peso(b));
 }
 
-/** A–Z es el orden de siempre; `duracion` es el del conmutador de las listas (P29). */
+/** A–Z es el orden de siempre; `duracion` es el del conmutador de las listas. */
 export type Orden = 'alfa' | 'duracion';
 
 /**
- * A–Z: las favoritas primero y, dentro de cada bloque, alfabético (P27).
+ * A–Z: las favoritas primero y, dentro de cada bloque, alfabético.
  * Por duración: de la más corta a la más larga, con las favoritas mezcladas
  * —la estrella de la tarjeta ya las marca—, alfabético dentro de cada valor y
- * las que no tienen duración al final (P29).
+ * las que no tienen duración al final.
  */
 export function ordenarRecetas(entradas: Entrada[], orden: Orden = 'alfa'): Entrada[] {
   const lista = Array.isArray(entradas) ? entradas : [];

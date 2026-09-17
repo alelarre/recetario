@@ -1,5 +1,5 @@
 // Las flechas y el degradé del carrusel de tags se atan al scroll con CSS
-// puro (`animation-timeline`, P27 §5.2): sin scroll de verdad en el DOM
+// puro (`animation-timeline`): sin scroll de verdad en el DOM
 // mínimo de los tests, lo único que se puede verificar es que las reglas
 // sigan ahí y atadas a la misma timeline que el degradé (mismo mecanismo que
 // `tests/estilos-toque.test.ts` usa para lo que sólo se ve en el teléfono).

@@ -62,7 +62,7 @@ export function colorDeClave(color: string): string {
   return (CLAVES_COLOR as readonly string[]).includes(color) ? `var(--cat-${color})` : NEUTRO;
 }
 
-/** La URL de una foto (`catalogo:<clave>`), o null. `drive:<id>` llega en la etapa 3b. */
+/** La URL de una foto del catálogo (`catalogo:<clave>`); cualquier otro valor da null. */
 export function urlDeFoto(foto: string): string | null {
   return foto.startsWith('catalogo:') ? CATALOGO.get(foto.slice('catalogo:'.length)) ?? null : null;
 }

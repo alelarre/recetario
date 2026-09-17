@@ -6,7 +6,6 @@ import { SCHEMA_VERSION } from '../src/config.js';
 import type { CopiaIndice } from '../src/indice-local.js';
 import { driveFalso, sheetsFalso, indiceLocalFalso, recetaFalsa } from './dobles.js';
 import type { SheetsFalso } from './dobles.js';
-import { arranqueListo } from './aserciones.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';

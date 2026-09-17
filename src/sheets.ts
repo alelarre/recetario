@@ -34,7 +34,7 @@ export interface PropiedadesHoja {
   title: string;
 }
 
-/** Un error de la API de Sheets, con el status para distinguir el 429 (§4.3). */
+/** Un error de la API de Sheets, con el status para distinguir el 429 de cuota. */
 export class ErrorDeSheets extends Error {
   readonly status: number;
   constructor(mensaje: string, status: number) {
@@ -77,7 +77,7 @@ export function crearSheets(obtenerToken: () => Promise<string>) {
     agregarHoja: (id: string, titulo: string) => pedir<unknown>(`/${id}:batchUpdate`,
       { method: 'POST', body: JSON.stringify({ requests: [{ addSheet: { properties: { title: titulo } } }] }) }),
 
-    /** Borra la fila de verdad: el corrimiento posterior es determinístico (§4.3). */
+    /** Borra la fila de verdad: el corrimiento posterior es determinístico. */
     borrarFila: (id: string, hojaId: number, fila: number) => pedir<unknown>(`/${id}:batchUpdate`, {
       method: 'POST',
       body: JSON.stringify({
@@ -90,7 +90,7 @@ export function crearSheets(obtenerToken: () => Promise<string>) {
      * de una por fila. `filas` tiene que venir de mayor a menor: un
      * `deleteDimension` corre las filas de abajo hacia arriba, así que borrar
      * primero una fila de más arriba invalidaría el índice de las que
-     * todavía faltan (§4.3, mismo corrimiento que `borrarFila`).
+     * todavía faltan (el mismo corrimiento que `borrarFila`).
      */
     borrarFilas: (id: string, hojaId: number, filas: number[]) => pedir<unknown>(`/${id}:batchUpdate`, {
       method: 'POST',
@@ -102,9 +102,9 @@ export function crearSheets(obtenerToken: () => Promise<string>) {
     }),
 
     /**
-     * `sheets` puede faltar entera: es justo lo que pasó con la planilla que
-     * quedó a medio crear y dejó la app sin arrancar. Devolver [] hace que el
-     * llamador vea "no está la hoja" en vez de un TypeError sin salida (§8).
+     * `sheets` puede faltar entera —una planilla que quedó a medio crear—.
+     * Devolver [] hace que el llamador vea "no está la hoja" en vez de un
+     * TypeError sin salida.
      */
     hojas: async (id: string): Promise<PropiedadesHoja[]> => {
       const r = await pedir<{ sheets?: { properties?: PropiedadesHoja }[] }>(

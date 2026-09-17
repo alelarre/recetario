@@ -233,7 +233,7 @@ describe('el carrusel de tags', () => {
     expect(carruselTags(tags, { activos: ['horno'] })).toContain('class="chip act"');
   });
 
-  it('el tag fijo —el de la ruta en la lista por tag— no es tocable (P27 §6)', () => {
+  it('el tag fijo —el de la ruta en la lista por tag— no es tocable', () => {
     const html = carruselTags(tags, { fijo: 'horno' });
     expect(html).not.toContain('data-tag="horno"');
     // Los demás siguen siendo botones que acumulan como siempre.

@@ -1,5 +1,5 @@
 /**
- * La copia local del índice (P12): «la planilla `_indice` tal como la vi por
+ * La copia local del índice: «la planilla `_indice` tal como la vi por
  * última vez». Este módulo sólo la lee, la guarda y la borra; cuándo usarla lo
  * decide el store.
  *

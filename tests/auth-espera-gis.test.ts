@@ -1,11 +1,9 @@
-// tests/auth-espera-gis.test.js
-//
 // El script de Identity Services carga con `async`, así que puede seguir
-// bajando cuando auth.js ya se ejecuta: contra el sitio publicado esto pasó
+// bajando cuando `auth.ts` ya se ejecuta: contra el sitio publicado esto pasó
 // en la práctica y dejó a la app en "No pude arrancar: Google Identity no
-// cargó" sin reintento automático. Estas pruebas verifican que auth.js
-// espera a que aparezca `window.google.accounts.oauth2` en vez de
-// asumirlo, con timers falsos para no depender de tiempo real.
+// cargó" sin reintento automático. Acá se verifica que `auth.ts` espera a que
+// aparezca `window.google.accounts.oauth2` en vez de asumirlo, con timers
+// falsos para no depender de tiempo real.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { crearAuth } from '../src/auth.js';
 import { comoGlobal, clienteGisFalso, limpiarGlobales } from './dom-falso.js';

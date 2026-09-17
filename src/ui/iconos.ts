@@ -11,13 +11,12 @@ const svg = (contenido: string): string => `<svg viewBox="0 0 24 24">${contenido
 export const ICO = {
   volver: svg('<path d="M15 18l-6-6 6-6"/>'),
   buscar: svg('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>'),
-  /** Las tres líneas del encabezado del Recetario: lleva a Borradores. */
+  /** Las tres líneas del encabezado: abren el menú lateral. */
   menu: svg('<path d="M4 6h16M4 12h16M4 18h10"/>'),
   ajustes: svg('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2"/>' +
     '<circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/>'),
   lapiz: svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>'),
-  // No está en ningún mockup: se dibuja con el mismo trazo que los demás (§3.4).
-  // Lo llevan las dos acciones destructivas: Borrar receta y Descartar un borrador.
+  /** Lo llevan las dos acciones destructivas: Borrar receta y Descartar un borrador. */
   tacho: svg('<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/>'),
   cerrar: svg('<path d="M18 6L6 18M6 6l12 12"/>'),
   /** Las dos posiciones del conmutador de cocina: qué va y en qué orden. De Lucide. */
@@ -33,7 +32,6 @@ export const ICO = {
   /** Compartir la receta: PDF, link o texto. De Lucide (share-2). */
   compartir: svg('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>' +
     '<path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>'),
-  puntos: svg('<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>'),
   mas: svg('<path d="M12 5v14M5 12h14"/>'),
   /** Los dos destinos del menú lateral que no tenían ícono propio. */
   casa: svg('<path d="M4 11l8-6 8 6v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-8z"/>'),
@@ -49,7 +47,7 @@ export const ICO = {
 } as const satisfies Record<string, string>;
 
 /**
- * Los relojitos de la duración (P29): una aguja y el recorrido desde las 12,
+ * Los relojitos de la duración: una aguja y el recorrido desde las 12,
  * tenue. `~60 min` completa la vuelta con la aguja de nuevo arriba; `>60 min`
  * suma un cuarto de aro que sigue, con flecha; `>1 día` son dos relojes. El
  * disco de `>1 día` corta al reloj de atrás con el fondo de donde se dibuje:

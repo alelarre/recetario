@@ -20,9 +20,9 @@ export interface OpcionesCategoria {
   total: number;
   visibles: number;
   tagsActivos: string[];
-  /** Los tags de la categoría, ya ordenados por cantidad (P27). */
+  /** Los tags de la categoría, ya ordenados por cantidad. */
   tags: { tag: string; cantidad: number }[];
-  /** Cuántas recetas hay con cada duración, sobre el filtro de tags (P29). */
+  /** Cuántas recetas hay con cada duración, sobre el filtro de tags. */
   duraciones: { valor: Duracion; cantidad: number }[];
   duracionesActivas: string[];
   orden: Orden;
@@ -33,17 +33,17 @@ export function renderCategoria(
 ): string {
   const activos = Array.isArray(tagsActivos) ? tagsActivos : [];
 
-  // El carrusel reemplaza a la fila de chips activos: los puestos se ven
-  // encendidos ahí mismo, y se sacan tocándolos de nuevo (P27).
+  // Los tags puestos se ven encendidos en el carrusel mismo, y se sacan
+  // tocándolos de nuevo: no hay una fila aparte de filtros activos.
   const filtros = carruselTags(tags, { activos });
 
   // La fila de duraciones y el conmutador de orden sólo existen si hay algo
-  // que filtrar u ordenar: una duración con recetas, o encendida (P29).
+  // que filtrar u ordenar: una duración con recetas, o encendida.
   const hayDuraciones = duraciones.length > 0 || duracionesActivas.length > 0;
   const filtroDuracion = filaDuraciones(duraciones, duracionesActivas);
-  const orden_ = hayDuraciones ? conmutadorOrden(orden) : '';
+  const conmutador = hayDuraciones ? conmutadorOrden(orden) : '';
 
-  // Las favoritas primero, o por duración si se eligió ese orden (P27, P29).
+  // Las favoritas primero, o por duración si se eligió ese orden.
   const lista = ordenarRecetas(entradas, orden).map(e => tarjeta(e)).join('');
 
   const hayFiltros = activos.length > 0 || duracionesActivas.length > 0;
@@ -56,5 +56,5 @@ export function renderCategoria(
           : 'Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba.');
 
   return encabezado({ titulo: nombre, volver: true, total }) +
-    `<div class="cuerpo denso">${filtros}${filtroDuracion}${orden_}${cuerpo}</div>`;
+    `<div class="cuerpo denso">${filtros}${filtroDuracion}${conmutador}${cuerpo}</div>`;
 }

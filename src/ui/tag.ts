@@ -1,7 +1,7 @@
 /**
- * La lista de las recetas con un tag (P27). Es la pantalla de categoría con
- * otro criterio: el mismo encabezado con total —con el ícono adelante si el
- * tag es especial—, el mismo carrusel para acumular, y la misma lista con las
+ * La lista de las recetas con un tag. Es la pantalla de categoría con otro
+ * criterio: el mismo encabezado con total —con el ícono adelante si el tag es
+ * especial—, el mismo carrusel para acumular, y la misma lista con las
  * favoritas primero.
  */
 import { encabezado, tarjeta, vacio, carruselTags, iconoDeTag, SPINNER, filaDuraciones, conmutadorOrden } from './componentes.js';
@@ -16,7 +16,7 @@ export interface OpcionesTag {
   visibles: number;
   tagsActivos: string[];
   tags: { tag: string; cantidad: number }[];
-  /** Cuántas recetas hay con cada duración, sobre el filtro de tags (P29). */
+  /** Cuántas recetas hay con cada duración, sobre el filtro de tags. */
   duraciones: { valor: Duracion; cantidad: number }[];
   duracionesActivas: string[];
   orden: Orden;
@@ -36,12 +36,11 @@ export function renderTag(
 
   const hayDuraciones = duraciones.length > 0 || duracionesActivas.length > 0;
   const filtroDuracion = filaDuraciones(duraciones, duracionesActivas);
-  const orden_ = hayDuraciones ? conmutadorOrden(orden) : '';
+  const conmutador = hayDuraciones ? conmutadorOrden(orden) : '';
 
-  // Corta en los mismos veinte que el Recetario (P27 §6): la ronda de
-  // corrección lo alineó, que antes acá no cortaba.
+  // El carrusel corta en los mismos veinte que el Recetario.
   const icono = iconoDeTag(tag);
   return encabezado({ titulo: tag, volver: true, total, ...(icono ? { icono } : {}) }) +
     `<div class="cuerpo denso">${carruselTags(tags, { activos: tagsActivos, tope: 20, fijo: tag })}` +
-    `${filtroDuracion}${orden_}${cuerpo}</div>`;
+    `${filtroDuracion}${conmutador}${cuerpo}</div>`;
 }

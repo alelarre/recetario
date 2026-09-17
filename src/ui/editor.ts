@@ -38,9 +38,8 @@ export const botonBorrar =
   `<button class="btn pel" data-accion="borrar" type="button" style="width:100%">${ICO.tacho}Borrar receta</button>`;
 
 /**
- * Borrar es destructivo: la confirmación nombra la receta (C04.6.1). Toma el
- * lugar del botón sin redibujar el formulario, por lo mismo que la pregunta de
- * salida: redibujarlo perdería lo que se venía escribiendo.
+ * Toma el lugar del botón sin redibujar el formulario, por lo mismo que la
+ * pregunta de salida: redibujarlo perdería lo que se venía escribiendo.
  */
 export const confirmacionBorrado = (titulo: string | null): string =>
   '<div class="ficha" data-confirmar-borrado style="border-color:var(--error)">' +
@@ -85,7 +84,7 @@ const area = (
   `<textarea name="${nombre}" rows="${filas}">${escapar(valor ?? '')}</textarea></label>`;
 
 /**
- * Los cuatro tags especiales, un botón cada uno (P27): apretado si la receta
+ * Los cuatro tags especiales, un botón cada uno: apretado si la receta
  * lo tiene, suelto si no. `incompleta` no se suelta sin lo mínimo —título,
  * categoría, ingredientes y pasos—: mientras falte, queda apretado y
  * deshabilitado, y la leyenda dice qué hace falta.
@@ -103,7 +102,7 @@ function botonesEspeciales(tags: string[], puedeTerminar: boolean): string {
 }
 
 /**
- * La duración: cinco botones con su relojito, uno apretado a la vez (P29).
+ * La duración: cinco botones con su relojito, uno apretado a la vez.
  * Tocar el apretado lo suelta. El valor viaja en el `hidden`, que es lo que
  * lee el formulario y lo que compara «cambios sin guardar».
  */
@@ -145,7 +144,7 @@ export function renderEditor(
     (t === 'incompleta' && !puede) || tieneEspecial({ tags }, t));
 
   // Las dos fichas llevan título: el formulario es largo, y al hacer scroll es lo
-  // que dice en qué parte se está (auditoría tipográfica T13).
+  // que dice en qué parte se está.
   const datos = '<div class="ficha"><h2>Datos</h2>' +
     campo('titulo', 'Título', receta.titulo) +
     `<label class="campo"><span>Categoría</span><select name="carpeta">${opcionesCarpeta}</select></label>` +
@@ -203,7 +202,6 @@ export function renderEditor(
     area('variaciones', 'Variaciones', receta.variaciones, 3) +
     area('notas', 'Notas', receta.notas, 3) +
   '</div>';
-
 
   const borrar = !entrada ? ''
     : confirmandoBorrado ? confirmacionBorrado(receta.titulo) : botonBorrar;

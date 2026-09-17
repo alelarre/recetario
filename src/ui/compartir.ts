@@ -1,6 +1,6 @@
 /**
- * La ficha de compartir, al pie de la receta (spec §2). Es estado de la
- * pantalla, no una ruta: volver, Cancelar o tocar el velo la cierran.
+ * La ficha de compartir, al pie de la receta. Es estado de la pantalla, no una
+ * ruta: volver, Cancelar o tocar el velo la cierran.
  */
 import { escapar } from './markdown.js';
 import { aviso } from './componentes.js';

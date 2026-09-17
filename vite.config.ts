@@ -5,8 +5,8 @@ import { execSync } from 'node:child_process';
 import { defineConfig } from 'vitest/config';
 
 /**
- * El commit que se está compilando, para la versión visible (P20). En el CI lo
- * da `GITHUB_SHA`; en local, git. Sin ninguno de los dos, `dev`.
+ * El commit que se está compilando, para la versión que se ve al pie del menú
+ * lateral. En el CI lo da `GITHUB_SHA`; en local, git. Sin ninguno, `dev`.
  */
 function commit(): string {
   if (process.env['GITHUB_SHA']) return process.env['GITHUB_SHA'].slice(0, 7);

@@ -28,17 +28,17 @@ export function parsearHash(hash: unknown): Ruta {
   }
 
   if (partes[0] === 'buscar') return { vista: 'resultados', params: { q: params['q'] ?? '' } };
-  // `#/nueva?borrador=b1` es crear la receta desde un borrador: sin el
-  // parámetro, el editor abría vacío y el borrador no se borraba al guardar.
+  // `#/nueva?borrador=b1` es crear la receta desde un borrador: el parámetro es
+  // lo que ata las dos cosas, y sin él el borrador no se borra al guardar.
   if (partes[0] === 'nueva') {
     const p: Record<string, string> = {};
     if (params['borrador']) p['borrador'] = params['borrador'];
-    // `recibida`: el editor abre con la receta que llegó de Claude (P28).
+    // `recibida`: el editor abre con la receta que llegó de Claude.
     if (params['recibida']) p['recibida'] = params['recibida'];
     return { vista: 'nueva', params: p };
   }
   // La pregunta «¿De qué borrador es esta receta?», cuando la receta que
-  // llegó de Claude no trae un id de borrador que exista (P28).
+  // llegó de Claude no trae un id de borrador que exista.
   if (partes[0] === 'recibida') return { vista: 'recibida', params: {} };
 
   if (partes[0] === 'r' && partes[1]) {
@@ -104,7 +104,7 @@ export function hashDeCompartido(search: string): string | null {
   return [...destino.keys()].length ? `#/capturar?${destino.toString()}` : null;
 }
 
-/** La vista de invitado: la receta que viaja en el link, sin login (spec P23 §3). */
+/** La vista de invitado: la receta que viaja en el link, sin login. */
 export interface RutaInvitado {
   vista: 'lectura' | 'cocina';
   carga: string;

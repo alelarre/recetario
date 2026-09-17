@@ -69,7 +69,7 @@ describe('la lista por tag', () => {
     expect(html).not.toContain('Probá');
   });
 
-  it('con un filtro de duración sin resultados, el vacío no le echa la culpa a los tags (P29)', () => {
+  it('con un filtro de duración sin resultados, el vacío no le echa la culpa a los tags', () => {
     const html = renderTag({
       ...base, entradas: [], total: 0, visibles: 0, duracionesActivas: ['~15 min']
     });
@@ -78,7 +78,7 @@ describe('la lista por tag', () => {
     expect(html).not.toContain('Ninguna receta tiene estos tags.');
   });
 
-  it('con duraciones, dibuja la fila de filtro y el conmutador (P29)', () => {
+  it('con duraciones, dibuja la fila de filtro y el conmutador', () => {
     const html = renderTag({
       ...base,
       entradas: [

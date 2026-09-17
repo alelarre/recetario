@@ -210,7 +210,7 @@ Base 16 px, razón 1.2, redondeada a valores enteros.
 | `--txt-base` | 16 px | 1.5 | 400 | La interfaz, y las notas de una oración (§6.8): son prosa, y la prosa no baja de 16. El piso de la restricción §1. |
 | *base fuerte* | 16 px | 1.3 | 600 | El nombre de un ítem de lista —tarjeta, borrador—, los botones y el título del encabezado chico. No es un token aparte: es `--txt-base` en 600, y se nombra porque es el estilo más repetido de la app. |
 | `--txt-lectura` | 18 px | 1.6 | 400 | **El cuerpo de la receta abierta.** Descripción, pasos, notas, ingredientes. |
-| *título de sección* | 18 px | 1.3 | 600 | El encabezado de una ficha —«Ingredientes», «Cuenta»— y el nombre de una variación. Es `--txt-lectura` en 600: se separa del cuerpo por peso, divisor y aire, no por tamaño, para no competir con el título de la receta. `--txt-titulo-s` (20 px) está definido en `tokens.css` y no se usa. |
+| *título de sección* | 18 px | 1.3 | 600 | El encabezado de una ficha —«Ingredientes», «Cuenta»— y el nombre de una variación. Es `--txt-lectura` en 600: se separa del cuerpo por peso, divisor y aire, no por tamaño, para no competir con el título de la receta. |
 | `--txt-titulo` | 24 px | 1.25 | 600 | El título de las pantallas de primer nivel —Recetario, Borradores, Ajustes—, en el encabezado; y el nombre del objeto de una pantalla de detalle —la receta, el borrador—, en el cuerpo. También el nombre de la app arriba del menú lateral y el de la pantalla de conexión. |
 | `--txt-cocina` | 22 px | 1.65 | 400 | El cuerpo en modo cocina. |
 | `--txt-cocina-titulo` | 28 px | 1.3 | 600 | El encabezado de sección en modo cocina (§3.3). **Sin aplicar:** los grupos y los tramos en cocina van en 16, mayúsculas y `--fg-2`. El token se aplica sólo si cocinando a 50 cm reales esos rótulos no alcanzan. |
@@ -266,7 +266,7 @@ carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chi
 24 px en el botón de duración.
 
 **Los íconos son funcionales, nunca decorativos.** `iconos.ts` tiene
-**veinticuatro**: diecinueve en `ICO` y los cinco relojitos de
+**veintitrés**: dieciocho en `ICO` y los cinco relojitos de
 `ICONO_DE_DURACION`.
 
 | Ícono | Dónde |
@@ -285,7 +285,6 @@ carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chi
 | `cerrar` | La cruz: la del chip removible del editor y la que limpia la búsqueda. |
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `zanahoria`, `listaNumerada` | Las dos posiciones del conmutador de cocina —*Ingredientes* y *Pasos*—, al lado de la palabra. |
-| `puntos` | Sin uso: la receta no tiene menú ⋯. |
 | Los cinco relojitos | Uno por valor de la duración, el mismo mapa en el editor (§6.18), la tarjeta, la receta, la búsqueda, el filtro (§6.19) y el orden (§6.20). |
 
 **Dos dibujos no están en `iconos.ts` porque son CSS:** el medio círculo de
@@ -632,10 +631,6 @@ alto mínimo 48 px, `--txt-base`.
 padding y queda pegado al borde derecho: el trazo de los íconos (§3.4), 16 px, en
 `--fg-2`, a `--e-4` del borde. Es una imagen de fondo del `select`, con el color
 escrito a mano porque adentro de un `url()` no llegan las variables.
-
-**La casilla de verificación mide 22 px**, con `--acento` de color y un área
-táctil de 48 px que incluye su etiqueta: la etiqueta es parte del control, no un
-texto al lado. **No la usa ninguna pantalla**; está definida en `tokens.css`.
 
 Etiqueta arriba en `--txt-chico` y `--fg-2`. Foco: borde `--acento` de 2 px.
 Placeholder en `--fg-3`, y **nunca reemplaza a la etiqueta**.

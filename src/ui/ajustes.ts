@@ -17,7 +17,7 @@ export interface OpcionesAjustes {
   reindexando: Progreso | null;
   /** Cuántos borradores esperan, para el contador del menú. */
   borradores?: number;
-  /** Lo que verificó el arranque de esta sesión (P18). */
+  /** Lo que verificó el arranque de esta sesión. */
   informe?: InformeArranque | null;
   /** Cuántas recetas tiene el índice ahora, para el registro de actividad. */
   recetas?: number;
@@ -85,7 +85,7 @@ export function renderAjustes(
   return lateral({ activo: 'ajustes', borradores, ...(menuAbierto ? { abierto: true } : {}) }) +
     '<div class="conten">' +
       encabezado({ titulo: 'Ajustes', grande: true, izquierda: botonMenu(borradores) }) +
-      // El orden de P25: lo de la cuenta y el índice primero, lo raro al final.
+      // Lo de la cuenta y el índice primero, lo raro al final.
       '<div class="cuerpo">' + seccionCuenta + seccionRecetario + seccionIndice +
         (enCurso ? '' : FICHA_DATOS_LOCALES) +
         `<div class="ficha"><h2>Avisos</h2>${lista}</div>` +
@@ -98,9 +98,9 @@ const porcentaje = ({ leidas, total }: Progreso): number =>
   total > 0 ? Math.min(100, Math.round((leidas / total) * 100)) : 0;
 
 /**
- * Borrar lo guardado en el navegador, sin salir de la cuenta (P24): la salida
- * para una copia local corrupta o vieja. Mientras reindexa no se ofrece, igual
- * que Reindexar.
+ * Borrar lo guardado en el navegador, sin salir de la cuenta: la salida para
+ * una copia local corrupta o vieja. Mientras reindexa no se ofrece, igual que
+ * Reindexar.
  */
 const FICHA_DATOS_LOCALES = '<div class="ficha"><h2>Archivos locales</h2>' +
   '<p class="aviso-mudo" style="margin:0 0 var(--e-3)">La copia del índice se guarda acá para abrir más rápido. ' +

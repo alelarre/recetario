@@ -1,5 +1,5 @@
 /**
- * El link que muestra una receta sin login (spec §5). La receta viaja entera en
+ * El link que muestra una receta sin login. La receta viaja entera en
  * el fragmento, comprimida: no hay nada publicado en Drive y nada que revocar.
  */
 import { parse, serialize } from './recipe.js';

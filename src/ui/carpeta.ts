@@ -1,5 +1,5 @@
 /**
- * El selector de la carpeta base (P15/P19, etapa 2).
+ * El selector de la carpeta base.
  *
  * Aparece cuando no hay una carpeta marcada, o hay más de una, y desde Ajustes
  * para cambiarla. Sólo muestra carpetas propias: las compartidas y las unidades
@@ -32,9 +32,6 @@ export interface OpcionesSelector {
 const hrefNivel = (c: CarpetaSimple): string =>
   `#/carpeta?id=${encodeURIComponent(c.id)}&nombre=${encodeURIComponent(c.nombre)}`;
 
-const fila = (c: CarpetaSimple, destino: string): string =>
-  `${destino}<span class="txt"><span class="n">${escapar(c.nombre)}</span></span></a>`;
-
 export function renderSelector(
   { sugerencias, nivel, carpetas, confirmando, creando, cambiando, error }: OpcionesSelector
 ): string {
@@ -53,7 +50,10 @@ export function renderSelector(
     : carpetas === null
       ? SPINNER
       : carpetas.length
-        ? '<div class="lista">' + carpetas.map(c => fila(c, `<a class="bor" href="${escapar(hrefNivel(c))}">`)).join('') + '</div>'
+        ? '<div class="lista">' + carpetas.map(c =>
+            `<a class="bor" href="${escapar(hrefNivel(c))}">` +
+              `<span class="txt"><span class="n">${escapar(c.nombre)}</span></span></a>`
+          ).join('') + '</div>'
         : vacio('No hay carpetas acá.');
 
   const rotulo = enRaiz ? 'Mi unidad' : `Mi unidad › ${nivel.nombre}`;

@@ -1,18 +1,15 @@
-import { COLUMNAS } from '../src/catalogo.js';
-
-const MIME_CARPETA = 'application/vnd.google-apps.folder';
+/**
+ * Los dobles se declaran contra el mismo tipo que el store consume, con
+ * `satisfies`: una firma que se aparte de la API real deja de compilar en vez
+ * de mentirle a los tests.
+ */
 import type { PropiedadesHoja } from '../src/sheets.js';
 import type { Entrada, Receta } from '../src/tipos.js';
 import { parse } from '../src/recipe.js';
 import type { DriveDelStore, SheetsDelStore } from '../src/store.js';
 import type { CopiaIndice, IndiceLocal } from '../src/indice-local.js';
 
-/**
- * Los dobles se declaran contra el mismo tipo que el store consume, con
- * `satisfies`: una firma que se aparte de la API real deja de compilar en vez
- * de mentirle a los tests.
- */
-type DriveUsado = DriveDelStore;
+const MIME_CARPETA = 'application/vnd.google-apps.folder';
 
 /** Un archivo del Drive falso: lo de Drive más el contenido que sirve. */
 interface ArchivoFalso {
@@ -28,10 +25,7 @@ interface ArchivoFalso {
   ajena?: boolean;
 }
 
-/**
- * Drive falso en memoria. `archivos` es un array de
- * {id, name, mimeType, parents, modifiedTime, contenido}.
- */
+/** Drive falso en memoria, sembrado con los archivos que el test necesita. */
 export function driveFalso(archivos: ArchivoFalso[] = []) {
   const store = new Map<string, ArchivoFalso>(archivos.map(a => [a.id, {
     mimeType: 'text/markdown', parents: [], modifiedTime: '2026-01-01T00:00:00.000Z', ...a
@@ -52,7 +46,7 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       return vivos().filter(a => a.name === nombre && (!padre || (a.parents ?? []).includes(padre)));
     },
     async listarCarpetas(id: string) {
-      return vivos().filter(a => (a.parents ?? []).includes(id) && a.mimeType === 'application/vnd.google-apps.folder');
+      return vivos().filter(a => (a.parents ?? []).includes(id) && a.mimeType === MIME_CARPETA);
     },
     async listarHijos(id: string) {
       return vivos().filter(a => (a.parents ?? []).includes(id));
@@ -122,7 +116,7 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
     // Como el real: a la papelera, no fuera de `_store`. `vivos()` ya lo
     // saca de búsquedas y listados.
     async borrar(id: string) { const a = exigir(id); a.trashed = true; return a; }
-  } satisfies DriveUsado & Record<string, unknown>;
+  } satisfies DriveDelStore & Record<string, unknown>;
 
   /** Los mutadores del doble asumen que el archivo existe: si no, es un test mal armado. */
   function exigir(id: string): ArchivoFalso {
@@ -134,50 +128,41 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
   return api;
 }
 
-type SheetsUsado = SheetsDelStore;
-
 /** Las hojas de una planilla falsa: nombre de hoja → filas. */
 type PlanillaFalsa = Record<string, string[][]>;
 
 /** Un envío a la planilla falsa: una llamada a `escribir` o a `append`. */
-export interface EscrituraFalsa {
+interface EscrituraFalsa {
   id: string;
   hoja: string;
   valores: string[][];
 }
 
-/** Una fila que se sacó de la planilla falsa, con la hoja de la que salió. */
-export interface FilaBorrada {
-  id: string;
-  hoja: string;
-  fila: number;
-}
-
 /** Sheets falso: una planilla es un objeto {hojas: {nombre: filas[][]}}. */
 export function sheetsFalso() {
   const planillas = new Map<string, PlanillaFalsa>();
-  // Mapeo de id → lista de hojas con sus metadatos {sheetId, title}
   const hojasMetadatos = new Map<string, PropiedadesHoja[]>();
   const escrituras: EscrituraFalsa[] = [];
   const appends: EscrituraFalsa[] = [];
-  const filasBorradas: FilaBorrada[] = [];
 
-  // La app crea la planilla con drive.crear y después le escribe: el doble tiene
-  // que aceptar una escritura sobre un id que todavía no vio. Cuando se crea una
-  // planilla nueva, tiene una hoja por defecto llamada 'Sheet1', no 'recetas'.
   /**
    * La hoja que un `sheetId` nombra, igual que en la API real: borrar filas se
    * pide por id de hoja, no por nombre. Que la planilla o la hoja no existan es
    * un test mal armado, no un caso real.
    */
-  const exigirHoja = (id: string, hojaId: number): { titulo: string; filas: string[][] } => {
+  const exigirHoja = (id: string, hojaId: number): string[][] => {
     const titulo = (hojasMetadatos.get(id) ?? []).find(h => h.sheetId === hojaId)?.title;
     if (!titulo) throw new Error(`El doble de Sheets no tiene la hoja ${hojaId} en ${id}`);
     const filas = planillas.get(id)?.[titulo];
     if (!filas) throw new Error(`El doble de Sheets no tiene la hoja ${titulo} en ${id}`);
-    return { titulo, filas };
+    return filas;
   };
 
+  /**
+   * La app crea la planilla con `drive.crear` y después le escribe: el doble
+   * tiene que aceptar una escritura sobre un id que todavía no vio, y una
+   * planilla recién creada trae una sola hoja llamada 'Sheet1'.
+   */
   const asegurar = (id: string): PlanillaFalsa => {
     let p = planillas.get(id);
     if (!p) {
@@ -189,17 +174,13 @@ export function sheetsFalso() {
   };
 
   const api = {
-    _planillas: planillas,
-    _hojasMetadatos: hojasMetadatos,
     escrituras,
     appends,
-    filasBorradas,
     /**
      * Gancho opcional para simular la confirmación de Sheets: si está,
      * `escribir` y `append` lo esperan antes de tocar la planilla. Sirve para
-     * probar que `guardar()` no termina hasta que Sheets confirmó (Tarea 6:
-     * la escritura de la fila es sincrónica, sin cola) y que un error acá se
-     * propaga en vez de quedar encolado en algún lado.
+     * probar que `guardar()` no termina hasta que Sheets confirmó y que un
+     * error acá se propaga en vez de quedar encolado en algún lado.
      */
     alEscribir: undefined as (() => Promise<void>) | undefined,
 
@@ -247,23 +228,18 @@ export function sheetsFalso() {
     },
 
     async borrarFila(id: string, hojaId: number, fila: number) {
-      const hoja = exigirHoja(id, hojaId);
-      hoja.filas.splice(fila - 1, 1);
-      filasBorradas.push({ id, hoja: hoja.titulo, fila });
+      exigirHoja(id, hojaId).splice(fila - 1, 1);
     },
 
     async borrarFilas(id: string, hojaId: number, filas: number[]) {
       const hoja = exigirHoja(id, hojaId);
       // Mismo contrato que la API real: de mayor a menor, para que cada
       // índice siga siendo válido según se van sacando filas.
-      for (const fila of filas) {
-        hoja.filas.splice(fila - 1, 1);
-        filasBorradas.push({ id, hoja: hoja.titulo, fila });
-      }
+      for (const fila of filas) hoja.splice(fila - 1, 1);
     },
 
     async hojas(id: string) {
-      asegurar(id);  // Asegurar que la planilla existe en metadatos
+      asegurar(id);  // Una planilla que nadie creó todavía igual tiene su hoja por defecto.
       return hojasMetadatos.get(id) ?? [];
     },
 
@@ -274,14 +250,13 @@ export function sheetsFalso() {
       if (hoja) {
         const nombreAnterior = hoja.title;
         hoja.title = nuevoTitulo;
-        // Renombrar también en el objeto de datos
         if (p[nombreAnterior]) {
           p[nuevoTitulo] = p[nombreAnterior];
           delete p[nombreAnterior];
         }
       }
     }
-  } satisfies SheetsUsado & Record<string, unknown>;
+  } satisfies SheetsDelStore & Record<string, unknown>;
 
   return api;
 }
@@ -310,20 +285,16 @@ export function indiceLocalFalso(inicial: CopiaIndice | null = null) {
   return api;
 }
 
-export const COLUMNAS_ESPERADAS = COLUMNAS;
-
 /** Los tipos de los dobles, para anotar las variables de los tests. */
 export type DriveFalso = ReturnType<typeof driveFalso>;
 export type SheetsFalso = ReturnType<typeof sheetsFalso>;
-export type IndiceLocalFalso = ReturnType<typeof indiceLocalFalso>;
 
 /**
  * Una `Entrada` completa a partir de lo poco que le importa a cada test.
  *
- * Los tests venían armando literales con dos o tres campos y pasándolos donde
- * se espera una fila del índice entera. Funcionaba porque nadie miraba el
- * resto, pero dejaba fixtures que no se parecen a lo que el store maneja de
- * verdad. Completar desde acá cuesta lo mismo y mantiene el parecido.
+ * Un literal con dos o tres campos pasado donde se espera una fila entera del
+ * índice funciona mientras nadie mire el resto, pero deja fixtures que no se
+ * parecen a lo que el store maneja de verdad.
  */
 export function entradaFalsa(parcial: Partial<Entrada> = {}): Entrada {
   return {

@@ -83,8 +83,8 @@ export function crearAuth() {
       resolve(resp.access_token);
     };
     // Si el usuario cierra el popup de consentimiento (en vez de tocar algo
-    // adentro), Google no llama a `callback`: sin esto la promesa quedaba
-    // pendiente para siempre y la pantalla se congelaba en "Conectando…".
+    // adentro), Google no llama a `callback`: sin esto la promesa queda
+    // pendiente para siempre y la pantalla se congela en "Conectando…".
     c.error_callback = () => reject(new ErrorDeAuth('No se completó la conexión con Google'));
     c.requestAccessToken({ prompt });
   }));

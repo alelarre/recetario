@@ -1,5 +1,5 @@
 /**
- * Qué build está corriendo (P20): el commit corto y cuándo se compiló, para
+ * Qué build está corriendo: el commit corto y cuándo se compiló, para
  * saber si el teléfono ya tomó el último deploy. Los inyecta Vite al compilar
  * (`define` en `vite.config.ts`); sin eso, el commit es `dev`.
  */

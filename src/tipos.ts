@@ -3,7 +3,7 @@
  *
  * Dos fronteras distintas viven acá y conviene no confundirlas:
  *
- * - La del `.md`, que es la fuente de verdad (§3.2). Una receta parseada tiene
+ * - La del `.md`, que es la fuente de verdad. Una receta parseada tiene
  *   todas sus claves siempre presentes; lo que falta en el archivo llega como
  *   `null`, nunca ausente. Por eso el parser no devuelve campos opcionales:
  *   quien la consume no tiene que preguntarse si la clave existe, solo si
@@ -16,14 +16,10 @@
  *   resuelve en el borde.
  */
 
-/** Las siete claves del frontmatter (IA §1.5). El esquema es cerrado. */
-export type ClaveFrontmatter =
-  'titulo' | 'tags' | 'rinde' | 'tiempo' | 'dificultad' | 'fuente' | 'foto';
-
 /** Las cuatro secciones que la app entiende; el resto cae en `otras`. */
 export type ClaveSeccion = 'ingredientes' | 'preparacion' | 'variaciones' | 'notas';
 
-/** Lo que el parser puede tener para decir. Se muestran traducidos (§8). */
+/** Lo que el parser puede tener para decir. Se muestran traducidos. */
 export type Aviso = 'frontmatter-ilegible' | 'sin-frontmatter' | 'sin-titulo' | 'seccion-duplicada';
 
 /** Un encabezado `##` que no es ninguna de las cuatro secciones conocidas. */
@@ -90,7 +86,7 @@ export interface Variacion {
   cuerpo: string;
 }
 
-/** Dónde vive un `.md` en Drive. La carpeta es la categoría (§3.1). */
+/** Dónde vive un `.md` en Drive. La carpeta es la categoría. */
 export interface Ubicacion {
   id: string;
   nombre_archivo: string;
@@ -103,7 +99,7 @@ export interface Ubicacion {
 /**
  * Una fila del índice, ya deserializada.
  *
- * Es un cache derivado de los `.md` (§4.3): si dice algo distinto del archivo,
+ * Es un cache derivado de los `.md`: si dice algo distinto del archivo,
  * el archivo gana. `tags` e `ingredientes` viajan en la planilla como una celda
  * con `|` entre valores y vuelven acá como arreglos.
  */
@@ -157,7 +153,7 @@ export interface Filtros {
   tags?: string[] | null;
 }
 
-/** Una coincidencia que necesita decir por qué apareció (C02.3.4). */
+/** Una coincidencia que necesita decir por qué apareció (C02.3.2). */
 export interface Coincidencia {
   entrada: Entrada;
   /** «tiene Merluza o pescadilla», «tiene tag horno». El valor, sin normalizar. */
@@ -181,7 +177,7 @@ export interface Coincidencias {
 /* ------------------------------------------------------------------ */
 
 /**
- * Una subcarpeta de `Recetario/`: la carpeta es la categoría (§3.1). El color y
+ * Una subcarpeta de `Recetario/`: la carpeta es la categoría. El color y
  * la foto son las propiedades de la carpeta en Drive; vacíos, se dibuja con el
  * neutro y la trama.
  */

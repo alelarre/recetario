@@ -1,14 +1,11 @@
-// tests/main-nueva-receta.test.js
-//
-// main.js es el cableado de la app: no tiene entorno DOM en los tests
-// (vite.config.js usa `environment: 'node'`) y no exporta nada, así que la
+// main.ts es el cableado de la app: no tiene entorno DOM en los tests
+// (vite.config.ts usa `environment: 'node'`) y no exporta nada, así que la
 // única forma de probarlo es simular su entorno global (document, window,
 // location) y los módulos de los que depende, y después mirar qué se pintó.
-// "Nueva receta" ya no usa prompt(): navega directo al mismo formulario que
-// editar, sin entrada, y "Guardar" es lo que de verdad crea el archivo en
-// Drive (cubierto en store-escritura.test.js) con los datos del formulario
-// (cubierto en vista-editor.test.js) — acá solo importa que no aparezca
-// ningún prompt en el camino.
+// "Nueva receta" navega directo al mismo formulario que editar, sin entrada;
+// crear el archivo en Drive lo cubre `store-escritura.test.ts` y los datos del
+// formulario, `vista-editor.test.ts` — acá solo importa que no aparezca ningún
+// prompt en el camino.
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 
@@ -40,7 +37,7 @@ async function esperarMicrotareas(vueltas = 5) {
   for (let i = 0; i < vueltas; i++) await new Promise(r => setTimeout(r, 0));
 }
 
-describe('main.js: navegar a "nueva receta"', () => {
+describe('main.ts: navegar a "nueva receta"', () => {
   afterEach(() => {
     limpiarGlobales();
     delete (global as unknown as Record<string, unknown>)['prompt'];

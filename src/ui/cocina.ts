@@ -1,13 +1,13 @@
 /**
  * El modo cocina (mockup 02).
  *
- * Es la única pantalla con conmutador: acá notas y variaciones no se usan, que
- * era el argumento con el que las pestañas se habían vetado. Abre en
- * Ingredientes —el mise en place va primero— y todo lo que se marca mientras
+ * Es la única pantalla con conmutador: acá notas y variaciones no se usan. Abre
+ * en Ingredientes —el mise en place va primero— y todo lo que se marca mientras
  * se cocina se pierde al salir: no persiste nada (C03.2.4).
  */
 import { escapar, aHtml } from './markdown.js';
 import { ICO } from './iconos.js';
+import { listaIngredientes } from './fichas-receta.js';
 import { gruposDe, tramosDe } from '../recipe.js';
 import type { Receta } from '../tipos.js';
 
@@ -50,14 +50,6 @@ export function renderCocina(
       ).join('') + '</div>'
     : '';
 
-  const ingredientes = grupos.map(g =>
-    (g.nombre ? `<div class="grupo">${escapar(g.nombre)}</div>` : '') +
-    g.items.map(i =>
-      `<div class="ing"><span class="n">${escapar(i.nombre)}</span>` +
-      (i.cantidad ? `<span class="c">${escapar(i.cantidad)}</span>` : '') +
-      '</div>').join('')
-  ).join('');
-
   // Los pasos se numeran por tramo, como están escritos; el índice que marca
   // el hilo es global, para que «acá voy» sea uno solo en toda la receta.
   let n = -1;
@@ -70,9 +62,9 @@ export function renderCocina(
     }).join('')}</ol>`
   ).join('');
 
-  const contenido = posicion === 'ingredientes' && grupos.length ? ingredientes : pasos;
+  const contenido = posicion === 'ingredientes' && grupos.length ? listaIngredientes(grupos) : pasos;
 
-  // Un ícono solo en el encabezado, que es donde la palabra no entra (§3.4).
+  // Un ícono solo en el encabezado, que es donde la palabra no entra.
   // Encendido se invierte, como el estado elegido del editor: el acento sobre
   // un estado se lee como alerta.
   const wake = hayWakeLock()

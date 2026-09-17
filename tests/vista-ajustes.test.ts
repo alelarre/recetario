@@ -78,7 +78,7 @@ describe('Ajustes', () => {
   });
 });
 
-describe('Ajustes: la ficha «Registro de actividad» (P18)', () => {
+describe('Ajustes: la ficha «Registro de actividad»', () => {
   const f = (d: number, h: number, m: number) => new Date(2026, 8, d, h, m).toISOString();
   const informe: InformeArranque = {
     momento: f(13, 14, 31), indiceModificado: f(13, 14, 30), copia: 'coincide',
@@ -137,7 +137,7 @@ describe('Ajustes: la ficha «Registro de actividad» (P18)', () => {
   });
 });
 
-describe('Ajustes: borrar los datos locales (P24)', () => {
+describe('Ajustes: borrar los datos locales', () => {
   it('ofrece borrar lo guardado en este navegador, y dice qué pasa después', () => {
     const html = renderAjustes(base);
     expect(html).toContain('<h2>Archivos locales</h2>');
@@ -151,7 +151,7 @@ describe('Ajustes: borrar los datos locales (P24)', () => {
   });
 });
 
-describe('Ajustes: el orden de las fichas (P25)', () => {
+describe('Ajustes: el orden de las fichas', () => {
   it('Cuenta, Índice, Archivos locales, Avisos y Registro de actividad, en ese orden', () => {
     const informe = {
       momento: new Date(2026, 8, 13, 14, 31).toISOString(), indiceModificado: '', copia: 'coincide' as const,

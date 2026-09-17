@@ -1,5 +1,5 @@
 /**
- * El menú Compartir del sistema, con sus respaldos (spec §2). La plataforma se
+ * El menú Compartir del sistema, con sus respaldos. La plataforma se
  * inyecta: los tests corren en Node, donde `navigator.share` no existe.
  */
 export interface Plataforma {
@@ -62,7 +62,7 @@ export const compartirTexto = (p: Plataforma, texto: string): Promise<Resultado>
 export const LARGO_MAXIMO_DEL_LINK = 8000;
 
 /**
- * El pedido de P28 hacia Claude. Con el menú Compartir del sistema (Android)
+ * El pedido hacia Claude. Con el menú Compartir del sistema (Android)
  * se elige Claude ahí. Sin él, un link a claude.ai con el pedido cargado; si
  * el pedido no entra en el link, se copia y se abre Claude vacío para pegarlo.
  */

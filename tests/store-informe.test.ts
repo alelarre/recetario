@@ -40,7 +40,7 @@ const copiaVigente = (cambios: Partial<CopiaIndice> = {}): CopiaIndice => ({
   meta: { schemaVersion: String(SCHEMA_VERSION) }, filas: [], borradores: [], raizId: 'raiz', raizNombre: 'Recetario', categorias: [], ...cambios
 });
 
-describe('el informe del arranque (P18)', () => {
+describe('el informe del arranque', () => {
   const casos: [EstadoCopia, CopiaIndice | null][] = [
     ['coincide', copiaVigente()],
     ['sin-copia', null],

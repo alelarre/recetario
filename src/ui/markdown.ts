@@ -10,7 +10,7 @@ export function escapar(texto: unknown): string {
  * Sólo `http:`, `https:` y rutas relativas. Todo lo demás —`javascript:` el
  * primero— no se emite como destino: los `.md` los escribe cualquiera.
  */
-export const esDestinoSeguro = (url: string): boolean =>
+const esDestinoSeguro = (url: string): boolean =>
   /^(https?:\/\/|\/|\.\.?\/)/i.test(url);
 
 /** Un pedazo de texto en línea con su formato. Lo leen las tres salidas: HTML, texto y PDF. */
@@ -110,21 +110,14 @@ export function tramosAHtml(tramos: TramoEnLinea[]): string {
   }).join('');
 }
 
-/** `pasos` convierte la <ol> en la lista tildable del detalle (§7.2). */
-export function aHtml(texto: unknown, { pasos = false }: { pasos?: boolean } = {}): string {
+export function aHtml(texto: unknown): string {
   return bloques(texto).map(b => {
     // `'tramos' in b` angosta la unión donde `b.tipo === 'parrafo'` no alcanza:
     // el discriminante de esta rama es él mismo `'parrafo' | 'subtitulo'`, y TS
     // no lo excluye de la otra rama sólo comparando contra un literal.
     if ('tramos' in b) return b.tipo === 'parrafo' ? `<p>${tramosAHtml(b.tramos)}</p>` : `<h3>${tramosAHtml(b.tramos)}</h3>`;
     if (b.tipo === 'lista') return `<ul>${b.items.map(i => `<li>${tramosAHtml(i)}</li>`).join('')}</ul>`;
-    // La clase va acá y no en quien llama: con `pasos` esta misma <ol> es la
-    // lista de pasos tildables del detalle, y el CSS la necesita para numerar.
-    return pasos
-      ? '<ol class="pasos">' + b.items.map(i =>
-          `<li class="paso"><button class="check" aria-pressed="false" aria-label="Marcar paso"></button><span>${tramosAHtml(i)}</span></li>`
-        ).join('') + '</ol>'
-      : `<ol>${b.items.map(i => `<li>${tramosAHtml(i)}</li>`).join('')}</ol>`;
+    return `<ol>${b.items.map(i => `<li>${tramosAHtml(i)}</li>`).join('')}</ol>`;
   }).join('');
 }
 

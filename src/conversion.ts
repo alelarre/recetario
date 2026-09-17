@@ -1,5 +1,5 @@
 /**
- * Convertir un borrador con Claude (P28). La app no llama a ningún modelo:
+ * Convertir un borrador con Claude. La app no llama a ningún modelo:
  * arma el pedido, y reconoce la receta en `.md` que vuelve. Las reglas del
  * formato salen de las mismas constantes que usa la app, así el pedido no se
  * desactualiza cuando cambia el esquema.
@@ -36,7 +36,7 @@ export function pedidoDeConversion({ id, titulo, fuente, nota }: Pick<Borrador, 
 
 /**
  * `\r\n` → `\n`, una vez, para que el resto del módulo no tenga que pensar en
- * CRLF (precedente: `borrador.ts:21`). `parse()` de `recipe.ts` sólo reconoce
+ * CRLF (precedente: `borrador.ts`). `parse()` de `recipe.ts` sólo reconoce
  * `\n`: sin esto, una receta compartida o pegada con saltos de Windows se
  * detecta como receta pero se parsea vacía.
  */

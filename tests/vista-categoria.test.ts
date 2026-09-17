@@ -99,7 +99,7 @@ describe('Categoría', () => {
   });
 });
 
-describe('Categoría — duración (P29)', () => {
+describe('Categoría — duración', () => {
   const base = {
     nombre: 'Pescados y mariscos', total: 2, visibles: 2, tagsActivos: [], tags: [],
     duracionesActivas: [] as string[], orden: 'alfa' as const

@@ -50,8 +50,7 @@ describe('guardar: escritura sincrónica, sin cola', () => {
 
   it('no compara el modifiedTime remoto: pisa lo que haya', async () => {
     // 'f1' remoto quedó modificado bien después de lo que el índice tiene
-    // guardado como su mtime. Con el chequeo de conflicto de antes de esta
-    // tarea, esta diferencia rechazaba el guardado; R4 manda pisar igual.
+    // guardado como su mtime: R4 manda pisar igual.
     const drive = driveFalso([
       { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
       { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },
@@ -131,10 +130,10 @@ describe('guardar', () => {
     expect(store.entradas()[0]?.categoria).toBe('Postres');
   });
 
-  it('una receta sin fila en el índice se guarda con su carpeta y nombre reales (P27 §3.1)', async () => {
+  it('una receta sin fila en el índice se guarda con su carpeta y nombre reales', async () => {
     // 'suelta.md' vive en Carnes pero nunca tuvo fila: por ejemplo, se abrió
-    // por un link directo. Sin `entrada` de dónde sacar la carpeta, antes caía
-    // en la raíz —«Sin categorizar»— y con `nombre_archivo` vacío.
+    // por un link directo. Sin `entrada` de dónde sacar la carpeta, caería en
+    // la raíz —«Sin categorizar»— y con `nombre_archivo` vacío.
     drive._store.set('suelta', {
       id: 'suelta', name: 'suelta.md', mimeType: 'text/markdown', parents: ['c1'],
       modifiedTime: '2026-01-01T00:00:00.000Z', contenido: MD
@@ -151,7 +150,7 @@ describe('guardar', () => {
 
 describe('crear', () => {
   it('escribe un .md con lo que le pasen, y nombre derivado del título', async () => {
-    // No fuerza ningún tag: eso ahora lo decide quien llama (el formulario).
+    // No fuerza ningún tag: eso lo decide quien llama (el formulario).
     const r = await store.crear(recetaFalsa({ titulo: 'Ñoquis del 29', tags: ['rico'] }), { carpetaId: 'c1' });
     expect(r.nombre_archivo).toBe('noquis-del-29.md');
     const contenido = drive._store.get(r.id)!.contenido;
@@ -187,8 +186,8 @@ describe('borrar', () => {
   });
 
   it('crear y borrar no deja fila fantasma en la planilla', async () => {
-    // La escritura es sincrónica ahora: no hace falta un flush aparte para
-    // que esto se refleje en la planilla.
+    // La escritura es sincrónica: no hace falta un flush aparte para que esto
+    // se refleje en la planilla.
     const r = await store.crear(recetaFalsa({ titulo: 'Fantasma' }));
     await store.borrar(r.id);
     const filas = await sheets.leer('i1', 'recetas!A1:L10');

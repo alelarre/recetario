@@ -1,5 +1,5 @@
 /**
- * La receta como texto, para el menú Compartir (spec §6). Casi el `.md`: sin
+ * La receta como texto, para el menú Compartir. Casi el `.md`: sin
  * frontmatter, sin `#`, con la negrita y la itálica que WhatsApp entiende.
  */
 import { aTexto, tramosATexto, tramosDeFuente } from './ui/markdown.js';

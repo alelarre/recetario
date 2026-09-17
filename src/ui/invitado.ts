@@ -1,7 +1,7 @@
 /**
- * La vista de invitado: la receta de un link, para quien no usa la app (spec
- * P23 §3). Es una pantalla propia, armada con las piezas de la receta: su
- * cabecera no lleva marcas, no hay encabezado, y la única acción es Cocinar.
+ * La vista de invitado: la receta de un link, para quien no usa la app. Es una
+ * pantalla propia, armada con las piezas de la receta: su cabecera no lleva
+ * marcas, no hay encabezado, y la única acción es Cocinar.
  */
 import { vacio } from './componentes.js';
 import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones } from './fichas-receta.js';

@@ -2,9 +2,9 @@
  * Los fragmentos que comparten las pantallas: encabezado, tarjeta,
  * placeholder, aviso, chips, vacío y el spinner.
  *
- * El markup es el de los mockups, literal. Todo texto que venga de un `.md`
- * pasa por `escapar()`: los archivos los escribe cualquiera —un agente, el
- * usuario, un PDF mal convertido— y ninguno es confiable.
+ * Todo texto que venga de un `.md` pasa por `escapar()`: los archivos los
+ * escribe cualquiera —un agente, el usuario, un PDF mal convertido— y ninguno
+ * es confiable.
  */
 import { escapar } from './markdown.js';
 import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
@@ -14,14 +14,14 @@ import { tagEspecial, ordenarTags, tieneEspecial, TAGS_ESPECIALES, duracionValid
 import type { Entrada } from '../tipos.js';
 import type { TagEspecial, Duracion, Orden } from '../catalogo.js';
 
-/** La duración con su relojito, o nada si el tiempo no es uno de los cinco valores (P29). */
+/** La duración con su relojito, o nada si el tiempo no es uno de los cinco valores. */
 export function duracionConReloj(tiempo: unknown): string {
   const d = duracionValida(tiempo);
   return d ? `<span class="dur">${ICONO_DE_DURACION[d]}${escapar(d)}</span>` : '';
 }
 
 /**
- * Los chips de duración de una lista (P29): cada uno con su relojito y
+ * Los chips de duración de una lista: cada uno con su relojito y
  * cuántas recetas trae. Un valor encendido se dibuja aunque ya no traiga
  * ninguna, para poder apagarlo. Sin nada que mostrar, no hay fila.
  */
@@ -36,7 +36,7 @@ export function filaDuraciones(conteo: { valor: Duracion; cantidad: number }[], 
   return `<div class="fila-dur" role="group" aria-label="Filtrar por duración">${chips}</div>`;
 }
 
-/** «A–Z | Duración», a la derecha (P29). */
+/** «A–Z | Duración», a la derecha. */
 export function conmutadorOrden(orden: Orden): string {
   const b = (valor: Orden, contenido: string) =>
     `<button data-accion="ordenar" data-valor="${valor}" aria-pressed="${orden === valor}">${contenido}</button>`;
@@ -45,7 +45,7 @@ export function conmutadorOrden(orden: Orden): string {
   '</div></div>';
 }
 
-/** §5.1 — el spinner del final de la lista y de las esperas. */
+/** El spinner del final de la lista y de las esperas. */
 export const SPINNER = '<div class="spin"></div>';
 
 export interface OpcionesEncabezado {
@@ -65,7 +65,7 @@ export interface OpcionesEncabezado {
   total?: number;
   /** Queda fijo arriba al scrollear. Lo usa la receta, que le pone el título. */
   pegajoso?: boolean;
-  /** Un ícono antes del título: el del tag especial en su lista (P27). HTML ya armado. */
+  /** Un ícono antes del título: el del tag especial en su lista. HTML ya armado. */
   icono?: string;
 }
 
@@ -87,8 +87,8 @@ export function encabezado(
 }
 
 /**
- * §6.2 — La foto de la receta si la tiene; si no, la de la categoría
- * oscurecida y teñida. Ocupa exactamente el mismo espacio en los dos casos.
+ * La foto de la receta si la tiene; si no, la de la categoría oscurecida y
+ * teñida. Ocupa exactamente el mismo espacio en los dos casos.
  */
 export function placeholder(categoria: unknown, foto?: string): string {
   if (foto) return `<img class="foto" src="${escapar(foto)}" alt="" loading="lazy">`;
@@ -107,16 +107,16 @@ const NOMBRE_DE_MARCA: Record<TagEspecial, string> = {
   favorito: 'Favorita', 'menú diario': 'Menú diario', probar: 'Para probar', incompleta: 'Incompleta'
 };
 
-/** §6.1 — Foto, título y una línea de contexto. Alto total 80 px. */
+/** Foto, título y una línea de contexto. Alto total 80 px. */
 export function tarjeta(e: Entrada, { motivo }: OpcionesTarjeta = {}): string {
   const dur = duracionConReloj(e.tiempo);
   const contexto = motivo
     ? `<span class="ctx-txt"><span class="motivo">${escapar(motivo)}</span>${dur ? ` · ${dur}` : ''}</span>`
     : `<span class="pin" style="background:${colorCategoria(e.categoria)}"></span>` +
       `<span class="ctx-txt">${[escapar(e.categoria), dur, escapar(e.rinde)].filter(Boolean).join(' · ')}</span>`;
-  // Las marcas de los especiales, juntas en la esquina y en su orden (P27): la
-  // línea de contexto queda sólo con datos. `--marcas` reserva el ancho que
-  // ocupan, para que el título no pase por debajo.
+  // Las marcas de los especiales, juntas en la esquina y en su orden: la línea
+  // de contexto queda sólo con datos. `--marcas` reserva el ancho que ocupan,
+  // para que el título no pase por debajo.
   const puestas = TAGS_ESPECIALES.filter(t => tieneEspecial(e, t));
   const marcas = puestas.length
     ? '<span class="marcas-esq">' + puestas.map(t =>
@@ -139,7 +139,7 @@ export interface OpcionesAviso {
   accion?: { etiqueta: string; accion: string };
 }
 
-/** §6.8 — Un aviso en castellano, donde ocurrió, y un control para reintentar. */
+/** Un aviso en castellano, donde ocurrió, y un control para reintentar. */
 export function aviso({ texto, accion }: OpcionesAviso): string {
   const boton = accion
     ? `<button class="btn sec compacto" data-accion="${escapar(accion.accion)}">${escapar(accion.etiqueta)}</button>`
@@ -162,16 +162,15 @@ export interface OpcionesChip {
   /** Cuántas recetas lo llevan. Sin número, no se dibuja. */
   cantidad?: number;
   /**
-   * El tag de la ruta en la lista por tag (P27 §6, ronda de corrección): va
-   * encendido pero no es tocable. Cambiar de tag es volver y elegir otro, no
-   * tocarlo acá, así que va sin `data-tag` —no entra en la delegación de
-   * clicks— y como `<span>`, no `<button>`, que es lo único que gana
-   * `cursor: pointer` (tokens.css).
+   * El tag de la ruta en la lista por tag: va encendido pero no es tocable.
+   * Cambiar de tag es volver y elegir otro, no tocarlo acá, así que va sin
+   * `data-tag` —no entra en la delegación de clicks— y como `<span>`, no
+   * `<button>`, que es lo único que gana `cursor: pointer` (tokens.css).
    */
   fijo?: boolean;
 }
 
-/** §6.10 — Un tag como chip: con su ícono si es especial, y con su número si lo trae. */
+/** Un tag como chip: con su ícono si es especial, y con su número si lo trae. */
 export function chipTag(tag: string, { activo, cantidad, fijo }: OpcionesChip = {}): string {
   const cuenta = cantidad === undefined ? '' : `<span class="cuenta">${cantidad}</span>`;
   const adentro = `${iconoDeTag(tag)}${escapar(tag)}${cuenta}`;
@@ -199,7 +198,7 @@ export interface OpcionesCarrusel {
 }
 
 /**
- * El carrusel de tags que filtra (P27): los especiales primero y en su orden,
+ * El carrusel de tags que filtra: los especiales primero y en su orden,
  * después los demás por cantidad. `store.tagsDe()` ya entrega los comunes así
  * de ordenados, pero se reordena igual acá: el carrusel no debe depender de
  * que quien lo llame respete ese contrato. Se desliza de costado; el degradé
@@ -272,7 +271,7 @@ export function lateral({ activo, borradores, abierto }: OpcionesLateral): strin
       // sitio desde donde se alcanza sin pasar por un borrador.
       `<a href="#/nueva">${ICO.mas}Nueva receta</a>` +
       item('ajustes', '#/ajustes', ICO.ajustes, 'Ajustes') +
-      // Al pie y tenue: sirve para saber si el teléfono ya tomó el último deploy (P20).
+      // Al pie y tenue: sirve para saber si el teléfono ya tomó el último deploy.
       `<div class="version">${escapar(textoVersion())}</div>` +
     '</nav>';
 }

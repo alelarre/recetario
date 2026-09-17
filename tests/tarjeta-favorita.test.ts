@@ -1,4 +1,4 @@
-// La reserva de espacio para las marcas de la esquina (P27 §6.1) es CSS puro:
+// La reserva de espacio para las marcas de la esquina es CSS puro:
 // sin ella, no hay forma de ver desde un test si el título de una tarjeta
 // perdió ancho por algo que no lleva.
 import { describe, it, expect } from 'vitest';
@@ -12,7 +12,7 @@ const BASE = readFileSync(new URL('../src/ui/base.css', import.meta.url), 'utf8'
 describe('la reserva de espacio para las marcas de la tarjeta', () => {
   it('crece con --marcas y no le saca ancho a una tarjeta sin marcas', () => {
     expect(TOKENS).toContain('.tarjeta .txt { padding-right: calc(var(--marcas, 0) * 20px); }');
-    // La regla vieja reservaba un ancho fijo sólo para la estrella.
+    // Nada de reservar un ancho fijo, que sólo alcanzaba para la estrella.
     expect(TOKENS).not.toContain('padding-right: 22px');
   });
 

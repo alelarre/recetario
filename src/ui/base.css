@@ -1,13 +1,8 @@
 /* Recetario — lo que es de una pantalla. Lo que es sistema —encabezado, ficha,
-   botón, tarjeta, chip, campo, aviso— está en tokens.css. Nació copiado del
-   <style> de cada mockup de product-design/ux/mockups/; desde el 2026-09-12 se
-   edita acá y los mockups quedaron como la especificación de cuando se
-   diseñaron.
+   botón, tarjeta, chip, campo, aviso— está en tokens.css, de donde también
+   salen los `§`, que son de product-design/ux/design-system.md. */
 
-   Las reglas que en el catálogo cuelgan de `.desk` acá son media queries: el
-   marco de escritorio era andamio, el ancho es producto. */
-
-/* ---- Recetario (mockup 03) ---- */
+/* ---- Recetario ---- */
 .buscar { display: flex; align-items: center; gap: var(--e-2); min-height: 48px;
           padding: 0 var(--e-3); background: var(--surface-alta);
           border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio); }
@@ -40,24 +35,22 @@
                         color-mix(in srgb, var(--velo) 88%, transparent) 40%,
                         transparent 100%); }
 
-/* ---- Rótulo de sección y listas (mockups 03, 04, 05, 08) ---- */
+/* ---- Rótulo de sección y listas ---- */
 .rot { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
        letter-spacing: .06em; display: flex; justify-content: space-between; margin-bottom: var(--e-3); }
 .lista { display: flex; flex-direction: column; gap: var(--e-2); }
 
-/* ---- Categoría (mockup 04) ---- */
+/* ---- Categoría ---- */
 .tot { font-size: var(--txt-chico); color: var(--fg-2); font-variant-numeric: tabular-nums;
        padding-right: var(--e-3); }
-.compacta .tarjeta { padding: var(--e-2) var(--e-3); }
-.compacta .foto, .compacta .ph { width: 40px; height: 40px; flex-basis: 40px; }
 
-/* ---- Resultados (mockup 05) ---- */
+/* ---- Resultados ---- */
 .cajaenc { display: flex; align-items: center; gap: var(--e-2); padding: var(--e-2);
            border-bottom: 1px solid var(--borde); }
 .cajaenc .buscar { flex: 1; }
 .grupo-res + .grupo-res { margin-top: var(--e-5); }
 
-/* ---- Receta en lectura (mockup 01) ---- */
+/* ---- Receta en lectura ---- */
 /* El link al `.md` en Drive: un dato al margen, no un botón. Sin caja, y más
    chico que los controles del encabezado. */
 .archivo { display: inline-flex; align-items: center; gap: var(--e-1);
@@ -94,7 +87,7 @@
 /* El pie sigue el ancho del cuerpo: en pantalla ancha no se va a los bordes. */
 .pie .acciones { max-width: 680px; margin: 0 auto; }
 
-/* §6.5 — La estrella de favorito del encabezado (P27): el contorno y la llena,
+/* §6.22 — La estrella de favorito del encabezado: el contorno y la llena,
    superpuestas. Mientras se escribe en Drive, la llena se descubre de izquierda
    a derecha en loop; el resultado se dibuja recién con la respuesta. */
 .fav { position: relative; display: inline-grid; place-items: center; line-height: 0; }
@@ -112,7 +105,7 @@
   .fav.cargando svg:last-child { animation: none; clip-path: inset(0 50% 0 0); }
 }
 
-/* ---- Compartir (spec P23 §2) ---- */
+/* ---- Ficha de compartir (§6.23) ---- */
 .velo { position: fixed; inset: 0; z-index: 30; background: var(--velo); opacity: .6; }
 .hoja-compartir { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-width: 680px; margin: 0 auto;
                   display: flex; flex-direction: column; gap: var(--e-2);
@@ -133,15 +126,15 @@
 html:has(.hoja-compartir) { overflow: hidden; }
 .hoja-compartir .copia { overscroll-behavior: contain; }
 
-/* ---- Modo cocina (mockup 02) ---- */
+/* ---- Modo cocina ---- */
 /* Un paso es un <li>, no un botón: Chrome en Android sube hasta el primer
    ancestro que responde al toque —#app, que tiene el único listener de clics—
-   y resalta la pantalla entera mientras Drive tarda en devolver la receta. Se
-   veía como el encabezado marcándose y desmarcándose. El resaltado se lee del
-   elemento resaltado, así que va en #app, y sólo mientras muestra la cocina. */
+   y resalta la pantalla entera mientras Drive tarda en devolver la receta. El
+   resaltado se lee del elemento resaltado, así que va en #app, y sólo mientras
+   muestra la cocina. */
 #app:has(.coc) { -webkit-tap-highlight-color: transparent; }
 /* 64 de alto: cada control del encabezado tiene 64 × 64 de área táctil, como
-   pide §1 en cocina (P16). Sin `gap`: el aire entre el sol y *Salir* lo pone el
+   pide §1 en cocina. Sin `gap`: el aire entre el sol y *Salir* lo pone el
    margen interno del sol, que dibuja su caja a 40 dentro de sus 64. */
 .encoc { height: 64px; display: flex; align-items: center; padding: 0 var(--e-2);
          border-bottom: 1px solid var(--borde); }
@@ -153,19 +146,19 @@ html:has(.hoja-compartir) { overflow: hidden; }
               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .conm { position: sticky; top: 0; z-index: 2; display: flex; background: var(--surface);
         border-bottom: 1px solid var(--borde); }
+/* El ícono va al lado de la palabra, no en su lugar (§3.4), al tamaño de cocina. */
 .conm button { flex: 1; height: 64px; background: none; border: 0; cursor: pointer;
                color: var(--fg-2); font: 600 var(--txt-base)/1 var(--tipo);
-               border-bottom: 3px solid transparent; }
+               border-bottom: 3px solid transparent;
+               display: inline-flex; align-items: center; justify-content: center; gap: var(--e-2); }
 .conm button.on { background: var(--surface-alta); color: var(--fg); border-bottom-color: var(--acento); }
-/* El ícono va al lado de la palabra, no en su lugar (§3.4), al tamaño de cocina. */
-.conm button { display: inline-flex; align-items: center; justify-content: center; gap: var(--e-2); }
 .conm svg { width: var(--ico-cocina); height: var(--ico-cocina); stroke: currentColor; fill: none;
             stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
 .coc { padding: var(--e-4); }
 .coc .grupo { font-size: var(--txt-base); margin-top: var(--e-6); margin-bottom: var(--e-2); }
 .coc .grupo:first-child { margin-top: 0; }
 .coc .ing { font-size: var(--txt-cocina); line-height: 1.65; padding: var(--e-cocina) 0; }
-/* Tocar un paso lo marca: en Android el toque seleccionaba el texto. Copiar un
+/* Tocar un paso lo marca: en Android el toque selecciona el texto. Copiar un
    paso sigue pudiéndose desde la receta abierta, que no está bajo `.coc`. */
 .coc .pasos li { font-size: var(--txt-cocina); line-height: 1.65; padding: var(--e-cocina) 0;
                  border-bottom: 1px solid var(--borde);
@@ -178,7 +171,7 @@ html:has(.hoja-compartir) { overflow: hidden; }
                       border-radius: var(--r-medio); border-bottom-color: transparent; }
 .coc .pasos li.hecho { color: var(--fg-3); }
 .coc .pasos li.hecho::before { content: '✓'; color: var(--fg-3); }
-/* El sol y *Salir* tocan en 64 × 64 pero se dibujan como antes: la caja con
+/* El sol y *Salir* tocan en 64 × 64 pero se dibujan más chicos: la caja con
    reborde, de 40 de alto, es un pseudo-elemento adentro del botón. Sin reborde
    un ícono suelto no se lee como algo que se toca. El sol encendido se
    invierte, como el estado elegido del editor. */
@@ -197,8 +190,8 @@ html:has(.hoja-compartir) { overflow: hidden; }
 .encoc [data-accion="wake"].on { color: var(--bg); }
 .encoc [data-accion="wake"].on::before { background: var(--fg); border-color: var(--fg); }
 
-/* ---- Editor (mockup 06) ---- */
-/* Los cuatro tags especiales, un botón cada uno (P27). Apretado se invierte
+/* ---- Editor ---- */
+/* Los cuatro tags especiales, un botón cada uno. Apretado se invierte
    —fondo claro, texto oscuro—, la convención del estado elegido de la app: el
    acento sobre un estado se lee como alerta. Deshabilitado, el apagado de un
    botón sin acción disponible. */
@@ -218,7 +211,7 @@ html:has(.hoja-compartir) { overflow: hidden; }
 .tag-esp[disabled] { cursor: default; opacity: .6; }
 .leyenda-incompleta { line-height: 1.5; margin: 0 0 var(--e-3); }
 
-/* La duración (P29): cinco botones con relojito, en tres columnas. Apretado se
+/* La duración: cinco botones con relojito, en tres columnas. Apretado se
    invierte, como los tags especiales; el reloj de `>1 día` corta con el fondo
    del botón. */
 .duraciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e-2); }
@@ -237,11 +230,10 @@ html:has(.hoja-compartir) { overflow: hidden; }
 /* Y un poco de aire entre los tags puestos y el campo para sumar otro. */
 [data-pills]:not(:empty) { margin-bottom: var(--e-3); }
 
-/* ---- Captura (mockup 07) ---- */
+/* ---- Captura ---- */
 /* El ayuda memoria de la nota: es referencia mientras se escribe, no prosa.
-   En micro, que es el piso de la escala —antes iba un punto por debajo, porque
-   la monoespaciada pesa más, y quedaba en 11 px (auditoría T4)—, y en el color
-   de los rótulos de los campos. */
+   En micro, que es el piso de la escala, y en el color de los rótulos de los
+   campos. */
 .esbozo { margin-bottom: var(--e-5); }
 .esbozo summary { font-size: var(--txt-chico); color: var(--fg-2);
                   cursor: pointer; padding: 0 0 var(--e-2); }
@@ -260,7 +252,7 @@ html:has(.hoja-compartir) { overflow: hidden; }
        word-break: break-all; margin-bottom: var(--e-5); }
 .pie2 { margin-top: auto; display: flex; gap: var(--e-2); justify-content: flex-end; padding-top: var(--e-5); }
 
-/* ---- Borradores (mockup 08) ---- */
+/* ---- Borradores ---- */
 .bor { display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
        background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha);
        /* Es un <a>: sin esto lleva el subrayado y el violeta de link visitado. */
@@ -271,13 +263,13 @@ html:has(.hoja-compartir) { overflow: hidden; }
           overflow: hidden; text-overflow: ellipsis; margin-top: var(--e-1); }
 .bor .d { font-size: var(--txt-micro); color: var(--fg-3); white-space: nowrap; }
 
-/* ---- Ajustes (mockup 10) ---- */
+/* ---- Ajustes ---- */
 .fila-a { display: flex; align-items: center; gap: var(--e-3); min-height: 48px; }
 .fila-a .t { flex: 1; }
 .barra { height: 8px; background: var(--surface-alta); border-radius: var(--r-chico); overflow: hidden; }
 .barra i { display: block; height: 100%; background: var(--acento); }
 
-/* ---- Conexión (mockup 11) ---- */
+/* ---- Conexión ---- */
 .arr { min-height: 100%; display: flex; flex-direction: column; justify-content: center;
        padding: var(--e-6) var(--e-4); gap: var(--e-5); }
 .arr h1 { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0; }
@@ -288,7 +280,7 @@ html:has(.hoja-compartir) { overflow: hidden; }
   .grilla { grid-template-columns: repeat(4, 1fr); }
 }
 
-/* ---- El menú lateral: navegación primaria (IA §4.1) ---- */
+/* ---- El menú lateral: navegación primaria (IA §4.6) ---- */
 /* En el teléfono se despliega sobre el contenido; desde 900 px queda fijo y el
    contenido se corre, que es el ancho donde la grilla ya pasa a cuatro
    columnas. La hamburguesa sólo existe mientras el lateral se esconde. */
@@ -341,7 +333,7 @@ html:has(.hoja-compartir) { overflow: hidden; }
     repeating-linear-gradient(135deg, var(--cat-otros) 0 6px, transparent 6px 14px); }
 .muestra-color[aria-pressed="true"], .muestra-foto[aria-pressed="true"] { border-color: var(--fg); }
 
-/* ---- El carrusel de tags (P27) ---- */
+/* ---- El carrusel de tags (§6.21) ---- */
 .carrusel-marco { position: relative; margin-bottom: var(--e-3); }
 .carrusel { display: flex; gap: var(--e-2); overflow-x: auto; padding-bottom: var(--e-1);
             scrollbar-width: none; scroll-behavior: smooth; }
@@ -358,8 +350,7 @@ html:has(.hoja-compartir) { overflow: hidden; }
 /* Sin desborde no hay nada que correr, y la timeline de scroll queda inactiva:
    la animación no se aplica y se ve el valor base. Por eso, dentro del
    @supports, los dos lados arrancan ocultos y es la animación la que los
-   muestra mientras quede algo por ver. Antes, la derecha arrancaba visible y
-   con pocos tags se dibujaban la flecha y el degradé sin nada detrás. */
+   muestra mientras quede algo por ver. */
 .carrusel-marco::after { right: 0; background: linear-gradient(to right, transparent, var(--bg)); }
 .carrusel-marco::before { left: 0; background: linear-gradient(to left, transparent, var(--bg)); }
 @supports (animation-timeline: scroll()) {
@@ -396,7 +387,7 @@ html:has(.hoja-compartir) { overflow: hidden; }
 }
 @media (prefers-reduced-motion: reduce) { .carrusel { scroll-behavior: auto; } }
 
-/* P29 — la fila de duraciones: chips con relojito que se deslizan como el
+/* La fila de duraciones: chips con relojito que se deslizan como el
    carrusel, sin degradé ni flechas; y el conmutador de orden, a la derecha. */
 .fila-dur { display: flex; gap: var(--e-2); overflow-x: auto; scrollbar-width: none;
             margin-inline: calc(-1 * var(--e-4)); padding-inline: var(--e-4); margin-bottom: var(--e-3); }

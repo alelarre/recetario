@@ -31,7 +31,7 @@ vi.mock('../src/pdf/generar.js', () => ({
 }));
 
 /** Lo que los dobles le dan a main. `falla` enciende el error de lectura. */
-const estado = {
+const estadoInicial = () => ({
   falla: false as boolean | Error,
   borradores: [] as { id: string; titulo: string; fuente: string; nota: string; capturado: string }[],
   /** Los ids que se pidió descartar, en orden. */
@@ -66,9 +66,11 @@ const estado = {
   guardados: [] as { tags: string[] }[],
   /** Cuántas veces más falla `guardar` antes de andar, para probar el aviso de la estrella. */
   fallaGuardar: 0,
-  /** Lo que devuelve `store.tagsDe()`, ya ordenado por cantidad (P27). */
+  /** Lo que devuelve `store.tagsDe()`, ya ordenado por cantidad. */
   tags: [] as { tag: string; cantidad: number }[]
-};
+});
+
+const estado = estadoInicial();
 
 const storeFake = {
   arrancar: async () => estado.eligiendo
@@ -138,25 +140,7 @@ const esperar = async (vueltas = 5) => {
 describe('main.ts: las rutas', () => {
   afterEach(() => {
     limpiarGlobales();
-    estado.falla = false;
-    estado.borradores = [];
-    estado.descartados = [];
-    estado.fallasAlDescartar = 0;
-    estado.creadas = [];
-    estado.formulario = {};
-    estado.md = '---\ntitulo: Milanesas\n---\n';
-    estado.lecturas = 0;
-    estado.lecturasBorradores = 0;
-    estado.indiceDuplicado = null;
-    estado.copiasBorradas = 0;
-    estado.eligiendo = null;
-    estado.preparadas = [];
-    estado.reemplazadas = 0;
-    estado.categoriasGuardadas = [];
-    estado.categoriasBorradas = [];
-    estado.guardados = [];
-    estado.fallaGuardar = 0;
-    estado.tags = [];
+    Object.assign(estado, estadoInicial());
     vi.unstubAllGlobals();
     delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
@@ -189,7 +173,7 @@ describe('main.ts: las rutas', () => {
     const desplazamientos: number[] = [];
     /** El `behavior` de cada desplazamiento: 'auto' con reduced motion, si no 'smooth'. */
     const comportamientos: string[] = [];
-    // La duración del editor (P29): sin HTML real que releer, cada botón
+    // La duración del editor: sin HTML real que releer, cada botón
     // guarda su propio `aria-pressed` en este mapa, y el campo oculto su
     // propio valor en una variable aparte —dos estados independientes, como
     // en el DOM real, para que un test pueda notar si `main.ts` deja de
@@ -384,7 +368,7 @@ describe('main.ts: las rutas', () => {
     // El tag de la ruta (`horno`) no es tocable: el que acumula es el otro
     // chip del carrusel. `buscar` filtra de verdad acá, a diferencia del resto
     // de este archivo, para poder ver que la lista se achica con los dos
-    // tags puestos (§6, ronda de corrección).
+    // tags puestos.
     estado.tags = [{ tag: 'horno', cantidad: 2 }, { tag: 'dulce', cantidad: 1 }];
     const original = storeFake.buscar;
     storeFake.buscar = (filtros?: { tags?: string[] }) => {
@@ -477,7 +461,7 @@ describe('main.ts: las rutas', () => {
     // por duración. Filtrando por `sinTiempo` quedan sólo las dos sin
     // duración: la fila de orden no se dibuja, y el orden efectivo tiene que
     // volver a A–Z —favoritas primero— en vez de quedarse pegado en
-    // duración, donde no hay control para sacarlo (P29).
+    // duración, donde no hay control para sacarlo.
     const original = storeFake.buscar;
     storeFake.buscar = (filtros?: { tags?: string[] }) => {
       const activos = filtros?.tags ?? [];
@@ -725,8 +709,8 @@ describe('main.ts: las rutas', () => {
   });
 
   it('el volver del encabezado vuelve: es la acción que las pantallas dibujan', async () => {
-    // El encabezado emite `volver`; el cableado escuchaba `atras`, el nombre
-    // de v1, así que el botón no hacía nada en ninguna pantalla.
+    // El encabezado emite `volver`: si el cableado escuchara otro nombre, el
+    // botón no haría nada en ninguna pantalla.
     const { abrir, tocar, vueltasAtras } = await montar();
     await abrir('#/c/Carnes');
     await tocar('volver');
@@ -748,9 +732,9 @@ describe('main.ts: las rutas', () => {
   });
 
   it('volver de la cocina a la receta es un back cuando se entró desde ella', async () => {
-    // Con una navegación nueva, la receta quedaba dos veces seguidas en el
-    // historial y su chevron parecía no hacer nada. Y antes de eso, con
-    // `location.hash =`, el chevron de la receta volvía al modo cocina.
+    // Con una navegación nueva, la receta quedaría dos veces seguidas en el
+    // historial y su chevron parecería no hacer nada; con `location.hash =`,
+    // el chevron de la receta volvería al modo cocina.
     const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
     await abrir('#/r/f1');
     await tocar('cocinar');
@@ -794,7 +778,7 @@ describe('main.ts: las rutas', () => {
       expect(estado.lecturas).toBe(1);
 
       await tocar('conmutar', { posicion: 'pasos' });
-      // El paso 1 arranca como actual (P8): tocarlo lo da por hecho.
+      // El paso 1 arranca como actual: tocarlo lo da por hecho.
       await tocar('paso', { paso: '0' });
       await tocar('wake');
 
@@ -1371,7 +1355,7 @@ describe('main.ts: las rutas', () => {
     expect(app.innerHTML).not.toMatch(/guardad|listo|éxito/i);
   });
 
-  describe('convertir con Claude (P28)', () => {
+  describe('convertir con Claude', () => {
     const mdConId = (id: string): string =>
       `---\ntitulo: Focaccia\nborrador: ${id}\n---\n\n## Preparación\n1. Hornear.\n`;
     const MD_SIN_ID = '---\ntitulo: Focaccia\n---\n\n## Preparación\n1. Hornear.\n';
@@ -1420,9 +1404,7 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('data-valor="incompleta" aria-pressed="true"');
       // Con `replace`, no con una entrada nueva: `#/capturar` era la única
       // entrada que dejó el Share Target, y sumar una acá haría que volver
-      // cayera de nuevo en la captura, que reabriría esta misma receta
-      // (spec §3.2). Antes de este arreglo, `recibirReceta` usaba
-      // `location.hash =` y `reemplazos` quedaba vacío.
+      // cayera de nuevo en la captura, que reabriría esta misma receta.
       expect(reemplazos).toContain('#/nueva?borrador=b1&recibida=1');
     });
 
@@ -1539,7 +1521,7 @@ describe('main.ts: las rutas', () => {
       expect(estado.descartados).toEqual(['b1']);
       // No `history.back()`: desde acá volvería a `#/capturar` —o a
       // `#/recibida`—, que reconocería la misma receta ya guardada y la
-      // reabriría (P28, spec §3.2). Cierra directo a la receta que
+      // reabriría. Cierra directo a la receta que
       // `store.crear`/`convertirBorrador` acaba de crear.
       expect(vueltasAtras).toEqual([]);
       expect(reemplazos).toContain('#/r/nuevo-1');
@@ -1573,7 +1555,7 @@ describe('main.ts: las rutas', () => {
   });
 
   describe('el registro del service worker', () => {
-    // `main.ts` ya no es el script de entrada: `inicio.ts` lo carga con
+    // `main.ts` no es el script de entrada: `inicio.ts` lo carga con
     // `import()`, así que puede evaluarse después de `load`. Sin este chequeo,
     // el `addEventListener('load', …)` no dispara nunca y el SW no se registra.
     it('con el documento ya completo, se registra sin esperar `load`', async () => {

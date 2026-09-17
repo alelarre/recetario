@@ -21,7 +21,7 @@ fuente: Cuaderno
 `);
 
 describe('filaDesde', () => {
-  it('tiene exactamente las trece columnas del §4.3, en orden', () => {
+  it('tiene exactamente las trece columnas, en orden', () => {
     expect(COLUMNAS).toHaveLength(13);
     expect(filaDesde(RECETA, UBICACION)).toHaveLength(13);
   });

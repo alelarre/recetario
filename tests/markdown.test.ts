@@ -23,13 +23,6 @@ describe('aHtml', () => {
     expect(aHtml('Hola.\n\nChau.')).toBe('<p>Hola.</p><p>Chau.</p>');
   });
 
-  it('con pasos:true emite ítems marcables', () => {
-    const html = aHtml('1. Precalentar.\n2. Hornear.', { pasos: true });
-    expect(html).toContain('class="paso"');
-    expect(html).toContain('aria-pressed="false"');
-    expect(html).toContain('Precalentar.');
-  });
-
   it('sin pasos, una lista numerada es una lista común', () => {
     expect(aHtml('1. Precalentar.')).toBe('<ol><li>Precalentar.</li></ol>');
   });
