@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { compartirPdf, compartirLink, compartirTexto } from '../src/compartir.js';
+import { compartirPdf, compartirLink, compartirTexto, enviarAClaude, leerPortapapeles, LARGO_MAXIMO_DEL_LINK } from '../src/compartir.js';
 import type { Plataforma } from '../src/compartir.js';
 
 const error = (name: string) => Object.assign(new Error(name), { name });
@@ -75,5 +75,48 @@ describe('compartir link y texto', () => {
     const { p, registro } = plataforma({ share: 'NotAllowedError', copiar: true });
     expect(await compartirTexto(p, 'hola')).toBe('copiado');
     expect(registro.copiado).toEqual(['hola']);
+  });
+});
+
+describe('enviar el pedido a Claude', () => {
+  const base = { descargar: () => {} };
+
+  it('con el menú Compartir, lo comparte como texto', async () => {
+    const compartidos: ShareData[] = [];
+    const r = await enviarAClaude({ ...base, share: async d => { compartidos.push(d); } }, 'pedido');
+    expect(r).toBe('compartido');
+    expect(compartidos).toEqual([{ text: 'pedido' }]);
+  });
+
+  it('sin menú Compartir y con un pedido corto, abre claude.ai con el pedido cargado', async () => {
+    const abiertos: string[] = [];
+    const r = await enviarAClaude({ ...base, abrir: u => abiertos.push(u) }, 'hola mundo');
+    expect(r).toBe('abierto');
+    expect(abiertos).toEqual(['https://claude.ai/new?q=hola%20mundo']);
+  });
+
+  it('con un pedido que no entra en el link, lo copia y abre claude.ai vacío', async () => {
+    const abiertos: string[] = [];
+    const copiados: string[] = [];
+    const largo = 'x'.repeat(LARGO_MAXIMO_DEL_LINK);
+    const r = await enviarAClaude({ ...base, abrir: u => abiertos.push(u), copiar: async t => { copiados.push(t); } }, largo);
+    expect(r).toBe('copiado');
+    expect(copiados).toEqual([largo]);
+    expect(abiertos).toEqual(['https://claude.ai/new']);
+  });
+
+  it('si cancela el menú Compartir, no abre nada más', async () => {
+    const abiertos: string[] = [];
+    const abortar = async () => { throw Object.assign(new Error('x'), { name: 'AbortError' }); };
+    expect(await enviarAClaude({ ...base, share: abortar, abrir: u => abiertos.push(u) }, 'p')).toBe('cancelado');
+    expect(abiertos).toEqual([]);
+  });
+});
+
+describe('leer el portapapeles', () => {
+  it('devuelve el texto, o null si no se puede', async () => {
+    expect(await leerPortapapeles({ descargar: () => {}, leer: async () => 'hola' })).toBe('hola');
+    expect(await leerPortapapeles({ descargar: () => {} })).toBeNull();
+    expect(await leerPortapapeles({ descargar: () => {}, leer: async () => { throw new Error('no'); } })).toBeNull();
   });
 });

@@ -7,9 +7,11 @@ export interface Plataforma {
   canShare?: (datos: ShareData) => boolean;
   copiar?: (texto: string) => Promise<void>;
   descargar: (archivo: File) => void;
+  abrir?: (url: string) => void;
+  leer?: () => Promise<string>;
 }
 
-export type Resultado = 'compartido' | 'cancelado' | 'sin-activacion' | 'descargado' | 'copiado' | 'sin-portapapeles';
+export type Resultado = 'compartido' | 'cancelado' | 'sin-activacion' | 'descargado' | 'copiado' | 'sin-portapapeles' | 'abierto';
 
 const nombreDe = (e: unknown): string =>
   e && typeof e === 'object' && 'name' in e ? String((e as { name: unknown }).name) : '';
@@ -57,6 +59,39 @@ export const compartirLink = (p: Plataforma, titulo: string, url: string): Promi
 export const compartirTexto = (p: Plataforma, texto: string): Promise<Resultado> =>
   compartirOCopiar(p, { text: texto }, texto);
 
+export const LARGO_MAXIMO_DEL_LINK = 8000;
+
+/**
+ * El pedido de P28 hacia Claude. Con el menú Compartir del sistema (Android)
+ * se elige Claude ahí. Sin él, un link a claude.ai con el pedido cargado; si
+ * el pedido no entra en el link, se copia y se abre Claude vacío para pegarlo.
+ */
+export async function enviarAClaude(p: Plataforma, pedido: string): Promise<Resultado> {
+  if (p.share) {
+    const r = await mandar(p.share, { text: pedido });
+    if (r !== 'sin-activacion') return r;
+  }
+  const link = `https://claude.ai/new?q=${encodeURIComponent(pedido)}`;
+  if (link.length <= LARGO_MAXIMO_DEL_LINK) {
+    p.abrir?.(link);
+    return 'abierto';
+  }
+  if (!p.copiar) return 'sin-portapapeles';
+  try {
+    await p.copiar(pedido);
+  } catch {
+    return 'sin-portapapeles';
+  }
+  p.abrir?.('https://claude.ai/new');
+  return 'copiado';
+}
+
+/** El texto copiado, o `null` si el navegador no lo deja leer. */
+export async function leerPortapapeles(p: Plataforma): Promise<string | null> {
+  if (!p.leer) return null;
+  try { return await p.leer(); } catch { return null; }
+}
+
 export function plataformaDelNavegador(): Plataforma {
   const nav = navigator;
   return {
@@ -71,6 +106,9 @@ export function plataformaDelNavegador(): Plataforma {
       a.download = archivo.name;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    }
+    },
+    abrir: (url: string) => { window.open(url, '_blank', 'noopener'); },
+    ...(nav.clipboard && typeof nav.clipboard.readText === 'function'
+      ? { leer: () => nav.clipboard.readText() } : {}),
   };
 }
