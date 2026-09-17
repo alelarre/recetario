@@ -82,3 +82,40 @@ describe('CRLF (una receta compartida o pegada con saltos de línea de Windows)'
     expect(receta.avisos).not.toContain('sin-titulo');
   });
 });
+
+describe('lo que llega envuelto', () => {
+  const receta = '---\ntitulo: Focaccia\nborrador: b1\n---\n\n## Preparación\n1. Amasar.\n';
+
+  it('dentro de un bloque de código, con o sin lenguaje', () => {
+    expect(esRecetaEnMd('```\n' + receta + '```')).toBe(true);
+    expect(esRecetaEnMd('```markdown\n' + receta + '```\n')).toBe(true);
+    expect(recetaRecibida('```markdown\n' + receta + '```').receta.titulo).toBe('Focaccia');
+    expect(recetaRecibida('~~~\n' + receta + '~~~').borradorId).toBe('b1');
+  });
+
+  it('con texto del agente antes y después del bloque', () => {
+    const conCharla = 'Listo, acá va:\n\n```md\n' + receta + '```\n\n¿Querés que agregue algo?';
+    expect(esRecetaEnMd(conCharla)).toBe(true);
+    const { receta: r, borradorId } = recetaRecibida(conCharla);
+    expect(r.titulo).toBe('Focaccia');
+    expect(borradorId).toBe('b1');
+    expect(r.preparacion).toContain('Amasar');
+  });
+
+  it('citada con >, y citada adentro de un bloque', () => {
+    const citada = receta.split('\n').map(l => (l ? '> ' + l : '>')).join('\n');
+    expect(esRecetaEnMd(citada)).toBe(true);
+    expect(recetaRecibida(citada).receta.titulo).toBe('Focaccia');
+    expect(recetaRecibida('```\n' + citada + '\n```').borradorId).toBe('b1');
+  });
+
+  it('un texto cualquiera dentro de un bloque no es una receta', () => {
+    expect(esRecetaEnMd('```\nhola\n```')).toBe(false);
+    expect(esRecetaEnMd('> mirá esta receta\n> de pan')).toBe(false);
+  });
+
+  it('sin envoltorio, todo sigue igual', () => {
+    expect(esRecetaEnMd(receta)).toBe(true);
+    expect(recetaRecibida(receta).receta.titulo).toBe('Focaccia');
+  });
+});

@@ -331,7 +331,7 @@ function observarTramo(): void {
  * Target deja esa pantalla como única entrada (`hashDeCompartido` ya
  * reemplazó), y si acá se sumara una entrada, volver —o «Salir sin
  * guardar», o cerrar después de guardar— caería de nuevo en `#/capturar`,
- * que reconocería la misma receta y la reabriría (spec §3.2). Desde «Pegar
+ * que reconocería la misma receta y la reabriría (spec §3.3). Desde «Pegar
  * receta» no hace falta: ahí sí conviene que volver deje al borrador o a
  * Borradores, de donde se pegó.
  */
@@ -551,7 +551,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // se captura como borrador, se abre el editor directo. Con `replace`:
       // esta pantalla es la única entrada del historial que dejó el Share
       // Target, y sin reemplazarla, volver caería de nuevo acá y reabriría
-      // la misma receta (spec §3.2).
+      // la misma receta (spec §3.3).
       if (esRecetaEnMd(textoCompartido)) { recibirReceta(textoCompartido, undefined, true); return; }
       const fuente = ruta.params['url'] || ruta.params['text'] || '';
       return pintar(renderCaptura({
@@ -1098,7 +1098,7 @@ app.addEventListener('click', async (e) => {
     if (!esRecetaEnMd(texto)) { avisoBorradores = 'Lo copiado no es una receta en .md.'; return render(); }
     avisoBorradores = '';
     // En la pantalla de un borrador, pegar ata a ese borrador aunque el texto
-    // traiga otro id; en Borradores sigue la regla del id que trae (P28 §3.3).
+    // traiga otro id; en Borradores sigue la regla del id que trae (P28 §3.4).
     const enBorrador = vistaActual?.vista === 'borrador' ? vistaActual.params['id'] : undefined;
     return recibirReceta(texto, enBorrador);
   }

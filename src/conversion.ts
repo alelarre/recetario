@@ -42,16 +42,38 @@ export function pedidoDeConversion({ id, titulo, fuente, nota }: Pick<Borrador, 
  */
 const normalizarSaltos = (texto: string): string => texto.replace(/\r\n/g, '\n');
 
+/**
+ * El contenido del primer bloque de código, si hay uno. El pedido acepta que
+ * la respuesta venga envuelta —algunos agentes la muestran así para no
+ * aplicarle formato—, y de paso tolera el texto que quede afuera del bloque.
+ */
+function sinBloqueDeCodigo(texto: string): string {
+  const m = texto.match(/(?:^|\n)[ \t]*(`{3,}|~{3,})[^\n]*\n([\s\S]*?)\n?[ \t]*\1[ \t]*(?:\n|$)/);
+  return m?.[2] ?? texto;
+}
+
+/** Sin el `>` de la cita, cuando todo lo que tiene texto viene citado. */
+function sinCita(texto: string): string {
+  const lineas = texto.split('\n');
+  const conTexto = lineas.filter(l => l.trim());
+  if (!conTexto.length || !conTexto.every(l => /^\s*>/.test(l))) return texto;
+  return lineas.map(l => l.replace(/^\s*>\s?/, '')).join('\n');
+}
+
+/** Lo que llega compartido o pegado, sin el envoltorio que le puso el agente. */
+const limpiarRecibido = (texto: string): string =>
+  sinCita(sinBloqueDeCodigo(normalizarSaltos(texto))).trim();
+
 /** Empieza con un frontmatter cerrado que tiene `titulo:`. */
 export function esRecetaEnMd(texto: unknown): boolean {
   if (typeof texto !== 'string') return false;
-  const m = normalizarSaltos(texto).trimStart().match(/^---\n([\s\S]*?)\n---(\n|$)/);
+  const m = limpiarRecibido(texto).match(/^---\n([\s\S]*?)\n---(\n|$)/);
   return !!m && /^titulo\s*:/m.test(m[1] ?? '');
 }
 
 /** La receta parseada, sin la clave `borrador`, que se devuelve aparte. */
 export function recetaRecibida(texto: string): { receta: Receta; borradorId: string } {
-  const receta = parse(normalizarSaltos(texto).trimStart());
+  const receta = parse(limpiarRecibido(texto) + '\n');
   const borradorId = String(receta.extras['borrador'] ?? '').trim();
   const extras = { ...receta.extras };
   delete extras['borrador'];

@@ -69,13 +69,26 @@ La categoría no viaja: se elige en el editor.
 
 ## 3. La vuelta
 
-### 3.1 Reconocer una receta
+### 3.1 Limpiar lo que llega
+
+Antes de mirar si es una receta, lo compartido o pegado se limpia `[2026-09-17]`:
+
+- los saltos `\r\n` pasan a `\n`;
+- si hay un bloque de código —``` o `~~~`, con o sin lenguaje—, se usa lo de adentro y se
+  descarta lo de afuera, así también tolera el texto que el agente escriba alrededor;
+- si todo lo que tiene texto viene citado con `>`, se saca ese prefijo;
+- se recortan los extremos.
+
+Lo que no hace: reparar un frontmatter sin sus `---`. Si el agente los perdió, el texto se
+captura como borrador.
+
+### 3.2 Reconocer una receta
 
 `esRecetaEnMd(texto)`: sin espacios al principio, el texto empieza con `---`, tiene un
 cierre `---`, y entre los dos hay una línea `titulo:`. Cualquier otra cosa no es una
 receta.
 
-### 3.2 Por Compartir
+### 3.3 Por Compartir
 
 Lo que llega por el Share Target a `#/capturar`:
 
@@ -86,7 +99,7 @@ Lo que llega por el Share Target a `#/capturar`:
   receta?»**: la lista de borradores por título y **«Ninguno»**. Elegir un borrador abre el
   editor atado a él; «Ninguno» lo abre como receta nueva. Volver descarta lo recibido.
 
-### 3.3 Pegando
+### 3.4 Pegando
 
 **«Pegar receta»** lee el portapapeles (`navigator.clipboard.readText`):
 
@@ -99,7 +112,7 @@ Lo que llega por el Share Target a `#/capturar`:
 - **El navegador no deja leer el portapapeles:** aviso «No pude leer lo copiado.», y no abre
   nada.
 
-### 3.4 El editor con la receta cargada
+### 3.5 El editor con la receta cargada
 
 - La receta llega pasada por `parse`: lo que no respeta el formato se trata como siempre
   —un tiempo inválido queda sin duración, una clave desconocida se conserva—.
@@ -115,7 +128,7 @@ Lo que llega por el Share Target a `#/capturar`:
 
 | Archivo | Qué cambia |
 |---|---|
-| `src/conversion.ts` (nuevo) | `pedidoDeConversion`, `esRecetaEnMd`, `recetaRecibida` (lee y saca la clave `borrador` de una receta parseada) |
+| `src/conversion.ts` (nuevo) | `pedidoDeConversion`, la limpieza de lo recibido, `esRecetaEnMd`, `recetaRecibida` (lee y saca la clave `borrador` de una receta parseada) |
 | `src/ui/borradores.ts` | «Convertir con Claude» y «Pegar receta» en el borrador; «Pegar receta» en Borradores; la pantalla «¿De qué borrador es esta receta?» |
 | `src/compartir.ts` | Abrir el menú Compartir con un texto, o el link a Claude, o el portapapeles |
 | `src/main.ts` | Las acciones, la receta recibida en memoria, la ruta de la pregunta, y el editor con la receta cargada |
@@ -126,6 +139,7 @@ Lo que llega por el Share Target a `#/capturar`:
 
 - `pedidoDeConversion` lleva título, fuente, nota, el id, los cinco valores de duración, las
   tres dificultades y los tags reservados.
+- La limpieza saca el bloque de código, el texto de alrededor y la cita con `>`.
 - `esRecetaEnMd` reconoce una receta, y rechaza un link, un texto suelto, un frontmatter sin
   `titulo` y uno sin cierre.
 - `recetaRecibida` devuelve el id y saca la clave.
