@@ -16,7 +16,7 @@ import { renderResultados } from './ui/resultados.js';
 import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
 import { renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado } from './ui/editor.js';
-import { renderBorradores, renderBorrador } from './ui/borradores.js';
+import { renderBorradores, renderBorrador, renderPreguntaBorrador } from './ui/borradores.js';
 import { renderCaptura } from './ui/captura.js';
 import { renderAjustes } from './ui/ajustes.js';
 import { renderConexion } from './ui/conexion.js';
@@ -31,8 +31,9 @@ import { pintar, conClosest } from './ui/pintar.js';
 import { crearControlCocina } from './cocina-control.js';
 import { registrarCategorias } from './ui/categorias.js';
 import { convertirBorrador } from './compartido.js';
+import { pedidoDeConversion, esRecetaEnMd, recetaRecibida } from './conversion.js';
 import { precargar, generar } from './pdf/generar.js';
-import { compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador } from './compartir.js';
+import { compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador, enviarAClaude, leerPortapapeles } from './compartir.js';
 import { codificar, urlDeLink } from './link-receta.js';
 import { textoReceta } from './texto-receta.js';
 import type { EstadoCompartir } from './ui/compartir.js';
@@ -120,6 +121,15 @@ let errorFavorito = '';
  */
 let borradorLeido: Borrador | null = null;
 const PANTALLAS_DE_BORRADOR: readonly Ruta['vista'][] = ['borrador', 'nueva'];
+
+/**
+ * La receta que llegó de Claude —compartida o pegada— mientras se decide a qué
+ * borrador va y se revisa en el editor (P28). Vive en memoria: el `.md` puede
+ * ser largo para el hash.
+ */
+let recibida: Receta | null = null;
+/** El aviso de «Pegar receta» cuando lo copiado no sirve, para Borradores y el borrador (P28). */
+let avisoBorradores = '';
 
 /** El borrador de la pantalla: de Drive la primera vez, de memoria mientras no se salga. */
 async function borradorDePantalla(id: string): Promise<Borrador> {
@@ -313,6 +323,21 @@ function observarTramo(): void {
 }
 
 /**
+ * Lo recibido de Claude va al editor del borrador del id si existe; si no, a
+ * la pregunta «¿De qué borrador es esta receta?» (P28).
+ */
+function recibirReceta(texto: string, borradorElegido?: string): void {
+  const { receta, borradorId } = recetaRecibida(texto);
+  recibida = receta;
+  const id = borradorElegido ?? borradorId;
+  const existe = !!id && store.borradores().some(b => b.id_archivo === id);
+  location.hash = existe ? `#/nueva?borrador=${encodeURIComponent(id)}&recibida=1` : '#/recibida';
+  // Un `hashchange` real haría lo mismo, pero en el próximo tick: no hay que
+  // esperarlo para mostrar el editor o la pregunta.
+  void render();
+}
+
+/**
  * Dibuja la pantalla que la ruta pide. Es el único lugar que decide qué se ve.
  *
  * Cada rama que lee de red envuelve la lectura y dibuja un aviso si falla,
@@ -353,6 +378,10 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   // tag que ahí no existe, sin forma de darse cuenta.
   if (cambiaDePantalla) {
     editorAbierto = null;
+    avisoBorradores = '';
+    // Lo recibido de Claude sobrevive a la pregunta y al editor que abre
+    // desde ella; cualquier otra pantalla lo descarta (P28).
+    if (!(ruta.vista === 'recibida' || (ruta.vista === 'nueva' && ruta.params['recibida']))) recibida = null;
     if (!PANTALLAS_DE_RECETA.includes(ruta.vista)) recetaLeida = null;
     if (!PANTALLAS_DE_BORRADOR.includes(ruta.vista)) borradorLeido = null;
     tagsActivos = [];
@@ -507,6 +536,10 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     case 'capturar': {
       // La captura no dibuja la app: es una pantalla efímera sobre lo que el
       // usuario estaba haciendo en otra app (C01.2.2).
+      const compartido = ruta.params['text'] || '';
+      // Lo compartido puede ser la receta que volvió de Claude (P28): ahí no
+      // se captura como borrador, se abre el editor directo.
+      if (esRecetaEnMd(compartido)) { recibirReceta(compartido); return; }
       const fuente = ruta.params['url'] || ruta.params['text'] || '';
       return pintar(renderCaptura({
         fuente, titulo: tituloCaptura, nota: notaCaptura, guardando: guardandoCaptura,
@@ -514,8 +547,17 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       }));
     }
 
+    case 'recibida':
+      // Sin nada recibido —una recarga de esta misma pantalla, por
+      // ejemplo— no hay qué preguntar: se vuelve a Borradores (P28).
+      if (!recibida) { irCerrando('#/borradores'); return; }
+      return pintar(renderPreguntaBorrador({ borradores: store.borradores() }));
+
     case 'borradores':
-      return pintar(renderBorradores({ borradores: store.borradores(), menuAbierto }));
+      return pintar(renderBorradores({
+        borradores: store.borradores(), menuAbierto,
+        ...(avisoBorradores ? { aviso: avisoBorradores } : {})
+      }));
 
     case 'borrador': {
       const id = ruta.params['id'] ?? '';
@@ -534,7 +576,10 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
             ...(errorCaptura ? { error: errorCaptura } : {})
           }));
         }
-        return pintar(renderBorrador({ borrador, confirmando: confirmandoDescarte }));
+        return pintar(renderBorrador({
+          borrador, confirmando: confirmandoDescarte,
+          ...(avisoBorradores ? { aviso: avisoBorradores } : {})
+        }));
       } catch (err) {
         console.error(err);
         return enPantalla('No se pudo leer el borrador.');
@@ -557,30 +602,43 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // El mismo formulario que editar, sin entrada (todavía no hay archivo en
       // Drive) y con una receta vacía en vez de una leída. Desde un borrador
       // abre con el título y la fuente cargados (C04.3b.1); guardar es lo que
-      // de verdad la crea, y ahí se borra el borrador (C01.7.1).
-      const receta = parse('');
+      // de verdad la crea, y ahí se borra el borrador (C01.7.1). Si la receta
+      // viene de Claude —recibida—, se usa tal cual, sin mezclar la nota de
+      // ningún borrador (P28).
       const borradorId = ruta.params['borrador'] ?? '';
-      if (borradorId) {
-        const borrador = await borradorDePantalla(borradorId).catch(() => null);
-        if (borrador) {
-          // La nota se lee como si fuera el `.md` de la receta: lo que esté
-          // bajo `## Ingredientes`, `## Preparación`, `## Variaciones` o
-          // `## Notas` cae en su campo, y el texto suelto de arriba queda como
-          // descripción. Escribirla así es opcional.
-          const deLaNota = parse(borrador.nota);
-          Object.assign(receta, deLaNota, {
-            titulo: borrador.titulo || deLaNota.titulo,
-            fuente: borrador.fuente || deLaNota.fuente
-          });
+      const deClaude = !!ruta.params['recibida'] && !!recibida;
+      let receta: Receta;
+      if (deClaude && recibida) {
+        receta = recibida;
+      } else {
+        receta = parse('');
+        if (borradorId) {
+          const borrador = await borradorDePantalla(borradorId).catch(() => null);
+          if (borrador) {
+            // La nota se lee como si fuera el `.md` de la receta: lo que esté
+            // bajo `## Ingredientes`, `## Preparación`, `## Variaciones` o
+            // `## Notas` cae en su campo, y el texto suelto de arriba queda como
+            // descripción. Escribirla así es opcional.
+            const deLaNota = parse(borrador.nota);
+            Object.assign(receta, deLaNota, {
+              titulo: borrador.titulo || deLaNota.titulo,
+              fuente: borrador.fuente || deLaNota.fuente
+            });
+          }
         }
       }
       // Una receta nace incompleta: sacar el tag es la declaración explícita de
       // que está terminada (P27).
       receta.tags = conEspecial(receta.tags, 'incompleta', true);
-      return abrirEditor(renderEditor({
+      abrirEditor(renderEditor({
         entrada: null, receta, categorias: store.categorias(),
         tagsConocidos: store.tagsDe().map(t => t.tag)
       }));
+      // Cuenta como cambios sin guardar desde que se abre (P28): la foto
+      // contra la que se compara queda vacía, así que cualquier formulario
+      // difiere.
+      if (deClaude && editorAbierto) editorAbierto.formulario = '';
+      return;
     }
   }
 }
@@ -1007,6 +1065,30 @@ app.addEventListener('click', async (e) => {
   }
   if (accion === 'editar-borrador') { editandoBorrador = true; return render(); }
 
+  if (accion === 'convertir-con-claude') {
+    const b = borradorLeido;
+    if (!b) return;
+    const r = await enviarAClaude(plataformaDelNavegador(), pedidoDeConversion(b));
+    if (r === 'copiado') { avisoBorradores = 'Pedido copiado: pegalo en Claude'; return render(); }
+    return;
+  }
+  if (accion === 'pegar-receta') {
+    const texto = await leerPortapapeles(plataformaDelNavegador());
+    if (texto === null) { avisoBorradores = 'No pude leer lo copiado.'; return render(); }
+    if (!esRecetaEnMd(texto)) { avisoBorradores = 'Lo copiado no es una receta en .md.'; return render(); }
+    avisoBorradores = '';
+    // En la pantalla de un borrador, pegar ata a ese borrador aunque el texto
+    // traiga otro id; en Borradores sigue la regla del id que trae (P28 §3.3).
+    const enBorrador = vistaActual?.vista === 'borrador' ? vistaActual.params['id'] : undefined;
+    return recibirReceta(texto, enBorrador);
+  }
+  if (accion === 'elegir-borrador-recibido') {
+    if (!recibida) return;
+    const id = boton.dataset['valor'] ?? '';
+    location.hash = id ? `#/nueva?borrador=${encodeURIComponent(id)}&recibida=1` : '#/nueva?recibida=1';
+    return render();
+  }
+
   if (accion === 'tag-especial') {
     if (boton.hasAttribute('disabled')) return;
     boton.setAttribute('aria-pressed', String(boton.getAttribute('aria-pressed') !== 'true'));
@@ -1153,7 +1235,10 @@ app.addEventListener('click', async (e) => {
     boton.setAttribute('disabled', '');
     boton.textContent = 'Guardando…';
 
-    const base = esNueva ? parse('') : (await store.receta(id)).receta;
+    // Atada a la receta que volvió de Claude, la base es esa receta y no una
+    // vacía: así se conservan sus claves desconocidas (P28).
+    const recibidaBase = vistaActual?.params['recibida'] && recibida ? recibida : null;
+    const base = esNueva ? (recibidaBase ?? parse('')) : (await store.receta(id)).receta;
     const nueva = recetaDesdeFormulario(datos, base);
 
     /** El editor otra vez, con lo que el usuario tenía escrito y el aviso (C04.5.2). */
@@ -1181,6 +1266,7 @@ app.addEventListener('click', async (e) => {
       // Nada confirma el éxito: al terminar, vuelve a la receta. Lo escrito ya
       // está en Drive, así que salir no tiene nada que preguntar.
       editorAbierto = null;
+      recibida = null;
       return history.back();
     } catch (err) {
       console.error(err);

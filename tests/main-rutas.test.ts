@@ -1371,6 +1371,153 @@ describe('main.ts: las rutas', () => {
     expect(app.innerHTML).not.toMatch(/guardad|listo|éxito/i);
   });
 
+  describe('convertir con Claude (P28)', () => {
+    const mdConId = (id: string): string =>
+      `---\ntitulo: Focaccia\nborrador: ${id}\n---\n\n## Preparación\n1. Hornear.\n`;
+    const MD_SIN_ID = '---\ntitulo: Focaccia\n---\n\n## Preparación\n1. Hornear.\n';
+
+    it('Convertir con Claude, sin menú Compartir, abre el link a Claude con el pedido', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: 'https://x', nota: '', capturado: '' }];
+      vi.stubGlobal('navigator', {});
+      const { abrir, tocar } = await montar();
+      // `montar()` no le da `open` al doble de `window`: se lo agrega acá,
+      // sólo para este test, y se lo saca en el `finally`.
+      const aperturas: string[] = [];
+      const ventana = global.window as unknown as Record<string, unknown>;
+      const original = ventana['open'];
+      ventana['open'] = (u: string) => { aperturas.push(u); };
+      try {
+        await abrir('#/borradores/b1');
+        await tocar('convertir-con-claude');
+        expect(aperturas).toHaveLength(1);
+        expect(aperturas[0]).toMatch(/^https:\/\/claude\.ai\/new\?q=/);
+        expect(aperturas[0]).toContain('borrador%3A%20b1');
+      } finally {
+        ventana['open'] = original;
+      }
+    });
+
+    it('compartir una receta con id válido abre el editor atado a ese borrador', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+      const { abrir, app } = await montar();
+      await abrir('#/capturar?text=' + encodeURIComponent(mdConId('b1')));
+
+      expect(global.location.hash).toBe('#/nueva?borrador=b1&recibida=1');
+      expect(app.innerHTML).toContain('value="Focaccia"');
+      expect(app.innerHTML).not.toContain('borrador: b1');
+      expect(app.innerHTML).not.toContain('name="borrador"');
+      expect(app.innerHTML).toContain('data-valor="incompleta" aria-pressed="true"');
+    });
+
+    it('compartir una receta sin id abre la pregunta, y elegir "Ninguno" crea la receta nueva', async () => {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/capturar?text=' + encodeURIComponent(MD_SIN_ID));
+
+      expect(global.location.hash).toBe('#/recibida');
+      expect(app.innerHTML).toContain('¿De qué borrador es esta receta?');
+
+      await tocar('elegir-borrador-recibido', { valor: '' });
+
+      expect(global.location.hash).toBe('#/nueva?recibida=1');
+      expect(app.innerHTML).toContain('value="Focaccia"');
+    });
+
+    it('en la pregunta, elegir un borrador ata el editor a él', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+      const { abrir, tocar } = await montar();
+      await abrir('#/capturar?text=' + encodeURIComponent(MD_SIN_ID));
+
+      await tocar('elegir-borrador-recibido', { valor: 'b1' });
+
+      expect(global.location.hash).toBe('#/nueva?borrador=b1&recibida=1');
+    });
+
+    it('compartir una receta con un id de borrador que no existe también abre la pregunta', async () => {
+      const { abrir } = await montar();
+      await abrir('#/capturar?text=' + encodeURIComponent(mdConId('fantasma')));
+      expect(global.location.hash).toBe('#/recibida');
+    });
+
+    it('compartir algo que no es una receta sigue abriendo la captura', async () => {
+      const { abrir, app } = await montar();
+      await abrir('#/capturar?text=hola');
+      expect(app.innerHTML).toContain('hola');
+      expect(app.innerHTML).not.toContain('¿De qué borrador');
+    });
+
+    it('pegar receta en el borrador ata el editor a ese borrador, aunque el texto traiga otro id', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+      vi.stubGlobal('navigator', { clipboard: { readText: async () => mdConId('otro') } });
+      const { abrir, tocar } = await montar();
+      await abrir('#/borradores/b1');
+
+      await tocar('pegar-receta');
+
+      expect(global.location.hash).toBe('#/nueva?borrador=b1&recibida=1');
+    });
+
+    it('pegar receta en Borradores sigue la regla del id: sin id, lleva a la pregunta', async () => {
+      vi.stubGlobal('navigator', { clipboard: { readText: async () => MD_SIN_ID } });
+      const { abrir, tocar } = await montar();
+      await abrir('#/borradores');
+
+      await tocar('pegar-receta');
+
+      expect(global.location.hash).toBe('#/recibida');
+    });
+
+    it('pegar algo que no es una receta avisa y no abre nada', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+      vi.stubGlobal('navigator', { clipboard: { readText: async () => 'esto no es una receta' } });
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/borradores/b1');
+
+      await tocar('pegar-receta');
+
+      expect(app.innerHTML).toContain('Lo copiado no es una receta en .md.');
+      expect(app.innerHTML).toContain('Focaccia');
+      expect(global.location.hash).toBe('#/borradores/b1');
+    });
+
+    it('con el portapapeles bloqueado, avisa que no se pudo leer', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+      vi.stubGlobal('navigator', { clipboard: { readText: async () => { throw new Error('denegado'); } } });
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/borradores/b1');
+
+      await tocar('pegar-receta');
+
+      expect(app.innerHTML).toContain('No pude leer lo copiado.');
+    });
+
+    it('el editor con la receta recibida cuenta como cambios sin guardar desde que se abre', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+      const { abrir, app, empujados, preguntas } = await montar();
+      await abrir('#/capturar?text=' + encodeURIComponent(mdConId('b1')));
+      expect(global.location.hash).toBe('#/nueva?borrador=b1&recibida=1');
+
+      await abrir('#/');
+
+      expect(empujados).toEqual(['#/nueva?borrador=b1&recibida=1']);
+      expect(app.innerHTML).toContain('data-formulario');
+      expect(preguntas.join('')).toContain('data-salida');
+      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
+    });
+
+    it('guardar atado a un borrador, desde la receta recibida, convierte y descarta el borrador', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+      const { abrir, tocar } = await montar();
+      await abrir('#/capturar?text=' + encodeURIComponent(mdConId('b1')));
+      expect(global.location.hash).toBe('#/nueva?borrador=b1&recibida=1');
+
+      estado.formulario = { titulo: 'Focaccia', carpeta: 'c1' };
+      await tocar('guardar');
+
+      expect(estado.creadas).toEqual(['Focaccia']);
+      expect(estado.descartados).toEqual(['b1']);
+    });
+  });
+
   describe('el registro del service worker', () => {
     // `main.ts` ya no es el script de entrada: `inicio.ts` lo carga con
     // `import()`, así que puede evaluarse después de `load`. Sin este chequeo,
