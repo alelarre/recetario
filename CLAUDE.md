@@ -2,7 +2,7 @@
 
 App personal de recetas. Los datos viven en Google Drive como archivos `.md` y
 sobreviven a la app. Un solo usuario. Publicada en GitHub Pages
-(`https://alelarre.github.io`) y en uso contra el Drive real.
+(`https://alelarre.github.io/recetario/`) y en uso contra el Drive real.
 
 Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
 
@@ -70,8 +70,10 @@ Nada del código depende de `product-design/`. **Todo el producto vive en `src/`
 
 ## Comandos
 
-- `npm run dev` — Vite en `http://localhost:8080`, que es el origen autorizado
-  en el cliente OAuth.
+- `npm run dev` — Vite en `http://localhost:8080/recetario/`; `localhost:8080`
+  es el origen autorizado en el cliente OAuth.
+- `npx vitest run tests/<archivo>.test.ts` corre un solo archivo;
+  `npm run test:watch` los deja corriendo.
 - `npm test`, `npm run typecheck`, `npm run build` — las tres tienen que quedar
   en verde. **Vite borra los tipos, no los verifica:** sin `typecheck` un error
   de tipos se publica igual. El CI corre tests y typecheck antes de publicar.
@@ -104,6 +106,12 @@ Todo `src/` y `tests/` es TypeScript con `strict`, más
   la API real deja de compilar. Los helpers están en `tests/dobles.ts`,
   `tests/dom-falso.ts` (el DOM mínimo y el cliente de GIS) y
   `tests/aserciones.ts`.
+- **Los tests corren en Node contra un DOM escrito a mano** (`tests/dom-falso.ts`),
+  sin jsdom: `Element`, `HTMLElement` y compañía no existen como globales. En
+  `src/` no va `instanceof` contra clases del navegador; el destino de un evento
+  se estrecha con `conClosest` (`src/ui/pintar.ts`).
+- **Las decisiones van en módulos puros y testeables** (`ui/gesto-menu.ts`,
+  `ui/router.ts`, `catalogo.ts`); `main.ts` lee el DOM, las llama y cablea.
 
 ## Drive y Google Cloud
 
