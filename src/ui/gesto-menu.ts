@@ -16,9 +16,14 @@ export const MARGEN_BORDE = 24;
 /** Cuánto tiene que moverse el dedo antes de decidir si es gesto o desplazamiento. */
 const UMBRAL = 10;
 
-/** Cerrado, desde dónde puede empezar; abierto, desde cualquier lado. */
-export function puedeEmpezar(xInicio: number, abierto: boolean): boolean {
-  return abierto || xInicio >= MARGEN_BORDE;
+/**
+ * Cerrado, desde dónde puede empezar; abierto, desde cualquier lado. Sobre una
+ * fila que se desplaza de costado el dedo es de la fila: si no, se mueven las
+ * dos cosas a la vez.
+ */
+export function puedeEmpezar(xInicio: number, abierto: boolean, sobreFilaDeslizable = false): boolean {
+  if (abierto) return true;
+  return !sobreFilaDeslizable && xInicio >= MARGEN_BORDE;
 }
 
 /**

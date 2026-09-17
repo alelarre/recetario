@@ -12,6 +12,11 @@ describe('el gesto del menú lateral', () => {
     expect(puedeEmpezar(0, true)).toBe(true);
   });
 
+  it('cerrado, no empieza sobre una fila que se desplaza de costado: el dedo es de la fila', () => {
+    expect(puedeEmpezar(200, false, true)).toBe(false);
+    expect(puedeEmpezar(200, true, true)).toBe(true);
+  });
+
   it('no decide hasta que el dedo se mueve lo suficiente', () => {
     expect(direccion(4, 3)).toBe('indeciso');
   });

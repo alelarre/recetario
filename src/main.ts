@@ -1398,6 +1398,12 @@ function seguirDedo(p: number | null): void {
   }
 }
 
+/** El toque cayó en el carrusel de tags o en la fila de duraciones, y hay para desplazar. */
+function sobreFilaDeslizable(destino: EventTarget | null): boolean {
+  const fila = destino instanceof Element ? destino.closest<HTMLElement>('.carrusel, .fila-dur') : null;
+  return !!fila && fila.scrollWidth > fila.clientWidth;
+}
+
 // Deslizar para abrir o cerrar el menú, como en una app nativa. Los listeners
 // son pasivos: un deslizamiento vertical tiene que seguir desplazando la página.
 app.addEventListener('touchstart', (e) => {
@@ -1406,7 +1412,7 @@ app.addEventListener('touchstart', (e) => {
   const toque = toques[0];
   if (!toque || toques.length !== 1) return;
   if (!vistaActual || !PANTALLAS_CON_MENU.includes(vistaActual.vista) || menuFijo()) return;
-  if (!puedeEmpezar(toque.clientX, menuAbierto)) return;
+  if (!puedeEmpezar(toque.clientX, menuAbierto, sobreFilaDeslizable(e.target))) return;
   deslizando = { x: toque.clientX, y: toque.clientY, decidido: 'indeciso', p: menuAbierto ? 1 : 0 };
 }, { passive: true });
 
