@@ -9,15 +9,14 @@
 ## Sobre este documento
 
 Siete principios. No son valores: son **árbitros**. Cada uno existe porque hay
-una decisión concreta, pendiente en este proyecto, que sin él se resolvería por
-gusto.
+una decisión concreta que sin él se resolvería por gusto.
 
 El orden importa. **El 1 es innegociable** y gana contra cualquier otro. Del 2
 al 7 son operativos y se leen juntos; cuando dos chocan, el conflicto se
-resuelve explícitamente y se registra en `plan/decision-log.md`.
+resuelve explícitamente y la regla que sale queda escrita en el spec que toca.
 
 Cada principio lleva la tensión que resuelve, cómo se aplica, y una decisión
-real de los Hitos 5, 6 u 8 que desempata.
+real del producto que desempata.
 
 ---
 
@@ -54,13 +53,13 @@ vive primero adentro.
 
 - Un borrador es un `.md` en Drive desde el primer momento, no una nota local que sube después. No es solo doctrina: es lo que permite empezar en el Android y seguir en la Mac.
 - Un plan semanal, si J9 alguna vez se construye, es un archivo. Por homogeneidad y simplicidad, aunque ahí la portabilidad importe menos.
-- Cualquier estructura derivada —índice, caches— tiene que poder borrarse y reconstruirse sin pérdida.
+- Cualquier estructura derivada —el índice, su copia en el navegador— tiene que poder borrarse y reconstruirse sin pérdida.
 - No existe un dato que solo la app sepa leer. Si hace falta inventar un formato, se elige el más aburrido que funcione.
 - **Sin red no hay captura.** No hay cola local ni copia offline que espere para subir: si Drive no está, la operación falla y se avisa (principio 4). Es la consecuencia dura de este principio y se acepta como tal.
 
-**Ejemplo de arbitraje (Hito 5):** al diseñar la bandeja de J2 va a aparecer la
-opción de guardar el borrador local y subirlo en batch, para que compartir sea
-instantáneo y no dependa de la red. Este principio la descarta, aun sabiendo que
+**Ejemplo de arbitraje:** en la captura de J2 aparece la opción de guardar el
+borrador local y subirlo en batch, para que compartir sea instantáneo y no
+dependa de la red. Este principio la descarta, aun sabiendo que
 el costo es una captura perdida cuando no hay señal — que es justo el riesgo que
 J2 existe para eliminar. Se prefiere un sistema con una sola fuente de verdad
 antes que uno con dos y un momento de reconciliación.
@@ -88,10 +87,10 @@ rápido entra sin estructura, y está bien.
 - La bandeja **no** pregunta categoría, ni tags, ni ingredientes, ni nada más. Cualquier campo nuevo tiene que ganarle al riesgo de perder la receta, y ninguno lo hace.
 - Un borrador con título y una URL es una captura completa. Puede no tener ingredientes, ni pasos, ni sentido.
 - La estructura la impone la **conversión** (J3), que es un momento con atención completa y sentada, no la captura (J2).
-- Corolario: borrador y receta son **dos entidades distintas**, no dos estados de la misma. El borrador es input crudo y **se borra de Drive cuando se convierte**; la URL de origen sobrevive como atributo `fuente` de la receta.
+- Corolario: borrador y receta son **dos entidades distintas**, no dos estados de la misma. El borrador es input crudo y **va a la papelera de Drive cuando se convierte**; la URL de origen sobrevive como atributo `fuente` de la receta.
 
-**Ejemplo de arbitraje (Hito 5):** al diseñar el Share Target va a ser tentador
-pedir también una categoría —"total es un toque más"— porque resuelve de una vez
+**Ejemplo de arbitraje:** en el Share Target es tentador pedir también una
+categoría —"total es un toque más"— porque resuelve de una vez
 dónde archivarlo después. Este principio lo descarta: el presupuesto de la
 captura es un campo y ya está gastado en el título.
 
@@ -110,18 +109,17 @@ se escribe casi todo.
 
 **En la práctica, esto significa:**
 
-- El mínimo para renderizar es chico —probablemente solo el título; el formato exacto se define en el Hito 5— y todo lo demás es opcional.
-- **"Incompleta" es un estado derivado del contenido**, calculado al leer, no un tag que alguien escribe y que se desactualiza en cuanto el archivo se edita afuera.
-- El criterio de completitud y el de buscabilidad son el mismo: una receta cuyos ingredientes están en prosa libre no se puede filtrar por ingrediente (J4), y por eso mismo está incompleta. No hay dos varas.
-- **La marca se puede quitar a mano.** Hay recetas que legítimamente nunca van a tener ingredientes estructurados —una técnica, un fondo, una masa madre—; el usuario declara que están bien así y la marca desaparece. Es la única excepción manual del principio, y es del usuario, no de un agente.
-- Una receta incompleta **se lista y se abre igual**. Se ve que le falta algo; no se esconde ni se bloquea.
-- Un archivo corrupto —que no cumple ni el mínimo— se ignora, y el hecho se informa en un lugar no central del diseño. Dónde exactamente se decide en el Hito 5.
+- El mínimo para renderizar es el título; todo lo demás es opcional. Un valor que la app no reconoce —una `dificultad` o una duración fuera de la lista— se lee como ausente, no como error.
+- **"Incompleta" es un tag del `.md`**, uno de los cuatro reservados. Lo pone y lo saca el usuario con su botón en el editor; la app no lo calcula.
+- Una receta nueva nace con el tag puesto, y no se puede sacar hasta que tenga título, categoría, ingredientes y pasos. Pasado ese mínimo, decidir que está terminada es del usuario.
+- Una receta incompleta **se lista y se abre igual**. Se ve que le falta algo —la marca en la esquina de la tarjeta—; no se esconde ni se bloquea.
+- Un archivo que no cumple ni el mínimo —no tiene título— se ignora, y el hecho se informa en un lugar no central: la ficha *Avisos* de Ajustes, con el nombre del archivo.
 
-**Ejemplo de arbitraje (Hito 5):** cuando se elija el formato del `.md` va a
-aparecer la opción de exigir ingredientes estructurados para que J4 funcione
-siempre. Este principio la descarta: se prefiere una receta consultable a medias
-antes que una receta rechazada. El formato define un objetivo, la app dice quién
-no lo alcanza, y el usuario tiene la última palabra.
+**Ejemplo de arbitraje:** al elegir el formato del `.md` aparece la opción de
+exigir ingredientes estructurados para que J4 funcione siempre. Este principio
+la descarta: se prefiere una receta consultable a medias antes que una receta
+rechazada. El formato define un objetivo, y el usuario tiene la última palabra
+sobre qué receta está terminada.
 
 ---
 
@@ -139,15 +137,16 @@ segundos.
 **En la práctica, esto significa:**
 
 - Se corta la red al guardar: avisa, y nada más. No hay cola de reintentos, ni "se guardará más tarde" sin evidencia. Vale igual para guardar una receta y para capturar un borrador.
-- El índice está corrupto: avisa **y ofrece el botón de reindexar**. Esto contradice explícitamente la política del repo padre, donde la recuperación es borrar `_indice` a mano en Drive.
+- El índice está mal: la salida es **Ajustes → Reindexar**, adentro de la app. La app no diagnostica ni repara la planilla in situ: la rehace desde los `.md`.
 - Ningún error se muestra crudo. El mensaje dice qué pasó y qué se puede hacer.
 - Un aviso que no tiene acción asociada no interrumpe: vive en un lugar secundario.
 
-**Ejemplo de arbitraje (Hito 6):** al wireframear el arranque va a estar la
-opción de auto-reparar el índice sin preguntar, porque el índice es derivado y
-reconstruirlo no pierde datos. Este principio la descarta: reconstruir puede
-tardar mucho —hoy se leen los `.md` de a uno— y arrancar la app no es el momento
-de decidirlo por el usuario. Se ofrece.
+**Ejemplo de arbitraje:** en el arranque está la opción de auto-reparar el
+índice sin preguntar, porque el índice es derivado y reconstruirlo no pierde
+datos. Este principio la descarta: reconstruir puede tardar mucho —los `.md` se
+leen de a uno— y arrancar la app no es el momento de decidirlo por el usuario.
+Se ofrece. Las dos excepciones son las que no tienen alternativa: cuando
+`_indice` no existe, y cuando cambió la versión del esquema.
 
 ---
 
@@ -164,16 +163,16 @@ está buscando una receta o una idea.
 
 **En la práctica, esto significa:**
 
-- **La pantalla principal es la búsqueda arriba y las categorías abajo.** Dos cosas, nada más. Si en algún momento entran recomendaciones, van entre las dos — no arriba de la búsqueda.
+- **La pantalla principal es la búsqueda arriba y las categorías abajo**, con el carrusel de tags entre las dos. Nada va arriba de la búsqueda.
 - Pasear es un modo de uso de primera clase, no un efecto secundario de navegar el árbol.
-- La forma concreta de la clasificación no se hereda: las 16 categorías se justifican de nuevo o se van, aunque el lugar del bloque en la pantalla ya esté decidido.
+- La forma concreta de la clasificación es del usuario: hay 16 categorías predefinidas, y se crean, renombran y borran desde *Ajustes → Recetario*.
 - **Novedad no es un dato.** No hay historial, `ultima_vez` ni `veces`. Se resuelve mostrando, no registrando.
 - El objetivo de escala son ~1.000 recetas, mayormente migradas — recetas que el usuario nunca cocinó y cuyo nombre no recuerda. Toda navegación se evalúa a esa escala, no a las decenas de hoy.
 
-**Ejemplo de arbitraje (Hito 5):** hoy la app se abre en una grilla de 16
-categorías con fotos, sin búsqueda a la vista. Este principio la desaloja del
-primer lugar sin discutir su valor: la categoría sirve a J5, que es real, pero
-J1 es más frecuente y no la usa nunca. La grilla baja; la búsqueda sube.
+**Ejemplo de arbitraje:** una grilla de categorías con fotos como primera
+pantalla, sin búsqueda a la vista. Este principio la desaloja del primer lugar
+sin discutir su valor: la categoría sirve a J5, que es real, pero J1 es más
+frecuente y no la usa nunca. La grilla va abajo; la búsqueda, arriba.
 
 ---
 
@@ -196,7 +195,7 @@ receta.
 - Sacarlo tiene que costar borrar una pantalla, no rediseñar el producto.
 - Lo mismo vale para cualquier job futuro que aparezca sin conducta observada.
 
-**Ejemplo de arbitraje (Hito 5):** si el planificador entra o no en la barra de
+**Ejemplo de arbitraje:** si el planificador entra o no en la barra de
 navegación primaria. Este principio dice que no: la navegación primaria la
 ocupan los jobs validados. El planificador se explora por una entrada
 secundaria, y se promueve si el uso lo justifica.
@@ -214,37 +213,36 @@ Es una asimetría declarada, no paridad: nadie va a diseñar dos veces cada
 pantalla, pero tampoco se acepta que la versión ancha sea una columna angosta
 perdida en el medio de la nada.
 
-**Tensión que resuelve:** optimizar para un contexto vs. servir a todos. La app
-actual eligió el teléfono en vertical y simplificó el resto, y el resultado es
-una de las tres molestias que el usuario reporta.
+**Tensión que resuelve:** optimizar para un contexto vs. servir a todos.
+Elegir el teléfono en vertical y simplificar el resto deja una versión ancha
+que molesta cada vez que se usa.
 
 **En la práctica, esto significa:**
 
 - Se diseña para el teléfono y se define qué hace el layout cuando sobra ancho. No queda librado al azar del CSS.
 - Las pantallas comparten sistema: los mismos componentes, la misma jerarquía, el mismo vocabulario visual. La cohesión es un requisito, no un pulido final.
-- **El tamaño de los controles es una regla del sistema, no una decisión por pantalla.** Nace de las manos que los usan: dedo, a veces sucio, a veces a la distancia del brazo. El chevron de volver de la app actual es el contraejemplo.
+- **El tamaño de los controles es una regla del sistema, no una decisión por pantalla.** Nace de las manos que los usan: dedo, a veces sucio, a veces a la distancia del brazo.
 
-**Ejemplo de arbitraje (Hito 8):** cuando se defina el design system va a
-aparecer la opción de tratar el desktop como una variante secundaria sin tokens
+**Ejemplo de arbitraje:** en el design system aparece la opción de tratar el
+desktop como una variante secundaria sin tokens
 propios. Este principio acota el alcance: no exige un diseño desktop completo,
 pero sí que el ancho tenga una respuesta definida y que los tamaños de control
 salgan de una regla única.
 
 ---
 
-## Verificación — decisiones abiertas
+## Verificación — decisiones que desempatan
 
-Criterio de completitud del hito: los principios tienen que desempatar
-decisiones reales de este proyecto.
+Los principios tienen que desempatar decisiones reales del producto.
 
-| Decisión abierta | Principio | Cómo desempata |
+| Decisión | Principio | Cómo desempata |
 |---|---|---|
-| ¿Qué ocupa la pantalla principal? | **5** | Búsqueda arriba, categorías abajo. La grilla de 16 tiles pierde el primer lugar; qué forma toma la clasificación se decide en el Hito 5. |
+| ¿Qué ocupa la pantalla principal? | **5** | Búsqueda arriba, categorías abajo. La grilla de tiles no tiene el primer lugar. |
 | ¿El planificador entra en la navegación primaria? | **6** | No. Es el único job hipotético; entra como exploración por una entrada secundaria y con costo de retiro bajo. |
-| ¿Cuánto muestra la pantalla de cocina? | **3** + **7** | Muestra la receta entera tal como está en el archivo, incluida la marca de incompleta. La app no decide qué esconder de un dato que no controla; los tamaños salen de la regla de controles del principio 7. |
+| ¿Cuánto muestra la receta? | **3** + **7** | La lectura muestra la receta entera tal como está en el archivo, incluido el tag `incompleta`: la app no decide qué esconder de un dato que no controla. El modo cocina muestra sólo ingredientes y pasos, con un conmutador; los tamaños salen de la regla de controles del principio 7. |
 | ¿Qué pide el Share Target al capturar? | **2** | El título, escrito por el usuario. Nada más. |
 | ¿Qué pasa si se comparte sin red? | **1** + **4** | Falla y avisa. No hay cola local. Está aceptado explícitamente, aun sabiendo que es el riesgo que J2 existe para eliminar. |
-| ¿Qué pasa con el borrador al convertirse? | **2** | Se borra de Drive. La URL de origen sobrevive como atributo `fuente` de la receta. |
+| ¿Qué pasa con el borrador al convertirse? | **2** | Va a la papelera de Drive. La URL de origen sobrevive como atributo `fuente` de la receta. |
 
 ---
 
@@ -254,8 +252,8 @@ Registrado para no forzarlos donde no llegan:
 
 | Tema | Por qué queda afuera |
 |---|---|
-| El popup de autenticación de Google | Es una restricción de plataforma, no una decisión de producto: sin backend no hay alternativa. Registrado en `plan/BACKLOG.md`. |
-| La estética concreta —paleta, tipografía, densidad, tema— | Se decide en el Hito 8 con el design system. El principio 7 exige cohesión y una regla de tamaños; no dice de qué color es nada. |
-| El formato exacto del `.md` | El principio 3 fija el criterio —mínimo chico, completitud derivada—; el benchmark del Hito 5 elige el formato. |
-| Si el agente se embebe en la PWA | Decisión abierta sin hito asignado. Ningún principio la fuerza en ninguna dirección. |
-| Qué clasificación reemplaza a las 16 categorías | El principio 5 le asigna un lugar en la pantalla, no una forma. Hito 5. |
+| El popup de autenticación de Google | Es una restricción de plataforma, no una decisión de producto: sin backend no hay alternativa. |
+| La estética concreta —paleta, tipografía, densidad, tema— | Se decide en `ux/design-system.md`. El principio 7 exige cohesión y una regla de tamaños; no dice de qué color es nada. |
+| El formato exacto del `.md` | El principio 3 fija el criterio —mínimo chico, lectura tolerante—; el formato está en `ux/information-architecture.md`. |
+| Si el agente se embebe en la PWA | Ningún principio lo fuerza en ninguna dirección. No se embebe: la app arma el pedido, lo manda a Claude y recibe la respuesta. |
+| Qué categorías hay | El principio 5 les asigna un lugar en la pantalla, no una forma: las define el usuario. |

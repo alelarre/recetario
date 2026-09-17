@@ -3,37 +3,6 @@
 **Versión:** 3.3 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
 **Job:** J7 · **Prioridad:** baja · **Flujo:** F7
 
-> **Cambios en la 3.3 (2026-09-16):** **C04.2.1c nueva** — el campo «Tiempo»
-> de texto pasa a «Duración», con cinco botones de relojito, uno por valor;
-> «Rinde» pasa a ocupar la fila entera. **C04.2.1** — `tiempo` sale de los
-> campos de texto libre. Spec:
-> `docs/superpowers/specs/2026-09-16-duracion-design.md` (P29).
->
-> **Cambios en la 3.2 (2026-09-16):** **F04.4 y C04.4.1 reescritas** — el
-> conmutador *Incompleta* | *Terminada* y la fila «Estado» de la ficha de
-> datos salen; el control pasa a ser un botón por tag especial dentro de
-> «Tags» —`favorito`, `menú diario`, `probar` e `incompleta`—, apretado e
-> invertido. **C04.2.1b** — los cuatro especiales están reservados por tener
-> su botón, no `completa`. **C04.3b.1** — una receta nueva nace con el tag
-> `incompleta` puesto. Spec:
-> `docs/superpowers/specs/2026-09-16-tags-especiales-2-design.md`.
->
-> **Cambios en la 3.1 (2026-09-12):** **F04.4 reescrita** — la completitud la
-> declara el usuario con un conmutador de dos posiciones, y no se deriva del
-> contenido. **C04.2.1b nueva:** los tags son chips removibles y hay palabras que
-> la app se reserva.
->
-> **Cambio en la 3.0 (Hito 11):** sin cambios de comportamiento. El alcance del
-> editor coincide con `product-vision.md` §1 desde su v2.1.
->
-> **Cambio en la 2.1 (Hito 9):** la convención del ingrediente es `nombre` +
-> separador + `cantidad` (C05.1.3), no la cantidad en itálica.
->
-> **Cambios en la 2.0 (Hito 7):** features partidas en capacidades con criterios
-> de aceptación y edge cases. El guardado deja de tener debounce: la fila del
-> índice se escribe sincrónicamente (C05.4.1). Se precisa que editar el título
-> **no renombra el archivo** (R5).
-
 **Reglas transversales:** ver `E05-Cimientos.md` §Reglas.
 
 ---
@@ -62,8 +31,9 @@ error.
 
 - [ ] **Editar** está al pie de la receta abierta, a un toque.
 - [ ] El editor abre con todos los campos cargados con lo que dice el `.md`.
-- [ ] El encabezado —volver, título y *Guardar*— queda fijo arriba al hacer scroll, como en la receta abierta (C03.1.2b) `[del 2026-09-12]`.
-- [ ] Salir sin guardar con cambios pendientes **pregunta antes**.
+- [ ] El encabezado —volver, título y *Guardar*— queda fijo arriba al hacer scroll, como en la receta abierta (C03.1.2b): *Guardar* queda a mano aunque se esté escribiendo al fondo del formulario.
+- [ ] Salir sin guardar con cambios pendientes **pregunta antes**: *"¿Salir sin guardar los cambios?"*, con *Seguir editando* y *Salir*. Vale para el volver del encabezado y para el gesto de atrás de Android. La pregunta se inserta arriba del formulario sin redibujarlo, para no perder lo escrito.
+- [ ] El formulario va en dos fichas con título, **Datos** y **Contenido**.
 - [ ] Salir sin cambios no pregunta nada.
 
 ### F04.2 — Un formulario de campos separados
@@ -82,22 +52,17 @@ y el archivo se arma solo al guardar.
 
 #### C04.2.1b — Los tags, y las palabras que la app se reserva *(J7)*
 
-`[agregada el 2026-09-12; cambio del 2026-09-16: los cuatro especiales tienen
-su botón (C04.4.1) y no se escriben a mano]`
-
-- [ ] Los tags comunes puestos se dibujan como chips removibles, cada uno con su cruz, y debajo va el campo para agregar otro. Los especiales no: tienen su botón (C04.4.1) y no se dibujan dos veces.
+- [ ] Los tags comunes puestos se dibujan como pills, cada una con su cruz, que la saca; debajo va el campo para agregar otro, que se suma con Enter y sugiere los tags que ya existen —nunca los reservados—. Lo que quedó a medio escribir en ese campo no se guarda. Los especiales no: tienen su botón (C04.4.1) y no se dibujan dos veces.
 - [ ] Hay **palabras reservadas** que el editor no deja escribir a mano: `favorito`, `menú diario`, `probar` e `incompleta`, cada uno en sus formas alternativas, más `terminado` en sus cuatro formas —masculino, femenino, singular y plural—.
 - [ ] `terminado` está reservada porque contradice a `incompleta` (C05.3.1): un tag que contradiga a otro tag especial es ambigüedad pura.
 - [ ] Los cuatro especiales están reservados porque tienen su propio control: escribirlos a mano duplicaría el botón.
-- [ ] Al intentar agregar una reservada, el tag **no entra** y aparece una línea de aviso sin acción (C05.9.1): no es un error del usuario, es un nombre tomado.
+- [ ] Al intentar agregar una reservada, el tag **no entra** y aparece una línea de aviso sin acción, *"Tag no permitido"* (C05.9.1): no es un error del usuario, es un nombre tomado.
 - [ ] La comparación ignora mayúsculas y acentos, igual que la búsqueda.
 - [ ] **La app no borra ni corrige** una palabra reservada que ya esté en un `.md` escrito afuera: la muestra como cualquier otro tag (R4).
 
 #### C04.2.1c — El campo «Duración» *(J7)*
 
-`[agregada el 2026-09-16, P29]`
-
-- [ ] El campo «Tiempo» de texto pasa a **«Duración»**: cinco botones con relojito, uno por valor, en una grilla de tres columnas (`design-system.md` §6.18). **«Rinde» pasa a ocupar la fila entera**, y «Duración» va debajo, también a lo ancho.
+- [ ] **«Duración»** son cinco botones con relojito, uno por valor —`~15 min`, `~30 min`, `~60 min`, `>60 min` y `>1 día`—, en una grilla de tres columnas (`design-system.md` §6.18). **«Rinde» ocupa la fila entera**, y «Duración» va debajo, también a lo ancho.
 - [ ] **Se aprieta uno a la vez.** Tocar el apretado lo suelta: la receta queda sin duración. Apretado se dibuja invertido, como los botones de los tags especiales (C04.4.1).
 - [ ] Debajo de la grilla, en chico: *"Hasta comer, con reposo y horno incluidos."*
 - [ ] **Un valor inválido en el archivo** abre el editor sin ningún botón apretado.
@@ -149,8 +114,8 @@ El mismo formulario, con los campos vacíos.
 - [ ] Guardar crea el `.md` en la carpeta elegida y escribe su fila del índice, con la operación de la capa compartida (C05.4.1).
 - [ ] El nombre del archivo se deriva del título **una sola vez, al crearlo**, y no vuelve a cambiar (C04.2.2): el título en minúsculas, sin acentos y con guiones — `milanesas-napolitanas.md`.
 - [ ] Si ya existe un archivo con ese nombre en la carpeta, se usa un nombre distinto sin preguntar: la identidad es el `fileId`, no el nombre.
-- [ ] **Desde un borrador** (C01.6.3), el editor abre con el título y la `fuente` cargados, y guardar borra la fila del borrador en la misma operación (C01.7.1).
-- [ ] **Nace con el tag `incompleta` puesto** `[agregado el 2026-09-16]` (C04.4.1, C05.3.1): terminar es una declaración explícita, no el estado inicial. Una receta creada desde un borrador también.
+- [ ] **Desde un borrador** (C01.6.3), el editor abre con el título y la `fuente` cargados, y guardar descarta el borrador —su `.md` a la papelera y su fila afuera— en la misma operación (C01.7.1). Lo mismo con una receta que llegó de Claude atada a un borrador (C01.9.2).
+- [ ] **Nace con el tag `incompleta` puesto** (C04.4.1, C05.3.1): terminar es una declaración explícita, no el estado inicial. Una receta creada desde un borrador también.
 
 ### F04.3c — Lo desconocido se conserva
 
@@ -171,22 +136,18 @@ conserva, lo borra.
 
 ### F04.4 — Declarar una receta terminada
 
-`[cambio del 2026-09-12: era una casilla sobre un estado derivado; cambio del
-2026-09-16: el control pasa a ser el botón del tag incompleta, uno de los
-cuatro tags especiales]`
-
 El estado de la receta lo fija el usuario acá, sacando el tag `incompleta`, y
 en ningún otro lado. La app no lo deduce del contenido (C05.3.1): sólo dice
 cuándo se lo puede sacar.
 
 #### C04.4.1 — El control *(J7)*
 
-`[cambio del 2026-09-16: reemplaza al conmutador de dos posiciones]`
-
 - [ ] Dentro del campo **«Tags»**, una fila con **un botón por tag especial**
   —`favorito`, `menú diario`, `probar` e `incompleta`, en ese orden—, arriba de
   los tags comunes y del campo para agregar. Apretado: la receta tiene el tag.
-  Suelto: no lo tiene. Tocarlo lo pone o lo saca, con su `aria-pressed`.
+  Suelto: no lo tiene. Tocarlo lo pone o lo saca, con su `aria-pressed`. Cada
+  botón lleva el ícono de su tag. No hay fila «Estado» ni otro control de
+  completitud: es este botón.
 - [ ] **Una receta nueva nace con `incompleta` puesto** (C04.3b.1): no está
   terminada hasta que alguien lo diga.
 - [ ] `incompleta` **no se puede soltar** hasta que la receta cumpla C05.3.3
@@ -206,10 +167,8 @@ cuándo se lo puede sacar.
   que abre el editor (C03.1.3).
 
 **Por qué apretado y no una casilla:** una casilla tiene un estado implícito
-—lo que significa *no tildada*— y con la completitud derivada eso se leía
-como contradicción: una receta escrita entera mostraba la casilla vacía y
-ninguna marca de incompleta. Apretado e invertido dice las dos cosas, y es la
-misma convención que ya usan los otros tres especiales.
+—lo que significa *no tildada*—. Apretado e invertido dice las dos cosas, y es
+la misma convención para los cuatro especiales y para la duración (C04.2.1c).
 
 ### F04.5 — Guardar
 
@@ -236,8 +195,8 @@ sobre contenido del usuario.
 
 #### C04.6.1 — Borrar *(J7)*
 
-- [ ] *Borrar receta* va suelto al pie del formulario, a lo ancho y fuera de las fichas: es una acción destructiva, no un campo `[del 2026-09-12]`.
-- [ ] Pide confirmación, y la confirmación nombra la receta.
+- [ ] *Borrar receta*, con su tacho, va suelto al pie del formulario, a lo ancho y fuera de las fichas: es una acción destructiva, no un campo. En una receta nueva no aparece.
+- [ ] Pide confirmación, y la confirmación nombra la receta. Toma el lugar del botón sin redibujar el formulario.
 - [ ] Borra el `.md` de Drive y la fila del índice.
 - [ ] Al terminar, vuelve a la lista de donde se venía.
 - [ ] Si falla, avisa y la receta sigue estando (R1).

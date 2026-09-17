@@ -510,7 +510,7 @@ problemas que Recetario todavía tiene abiertos. Van como input a los Hitos 5, 6
 No son insights estratégicos —no cambian el posicionamiento ni la propuesta de
 valor— pero salieron del research y tienen destino concreto:
 
-- **El wake lock ya existe y es manual por decisión.** El único dolor de contexto que apareció en la entrevista fue que la pantalla se apaga al cocinar. Verificado en el código: `src/main.ts:93` implementa la Wake Lock API con reintento al volver de segundo plano, expuesta como un botón. Que sea manual es deliberado —no siempre hace falta dejarla prendida—, así que el punto queda cerrado y no es material del Hito 5.
+- **El wake lock ya existe y es manual por decisión.** El único dolor de contexto que apareció en la entrevista fue que la pantalla se apaga al cocinar. Verificado en el código: `src/cocina-control.ts` implementa la Wake Lock API con reintento al volver de segundo plano, expuesta como un botón. Que sea manual es deliberado —no siempre hace falta dejarla prendida—, así que el punto queda cerrado y no es material del Hito 5.
 - **Cuatro competidores tienen escalado, timers e historial de cocina.** Recetario no. No es una carencia a corregir por defecto: es material para la discusión de features del Hito 5, donde se decide caso por caso.
 
 ### Dimensiones evaluadas y descartadas

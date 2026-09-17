@@ -2,10 +2,7 @@
 
 **Versión:** 1.1
 **Fecha:** 2026-09-07
-**Estado:** Final — Hito 8, corregida en el Hito 11
-
-> **Cambio en la 1.1 (Hito 11):** §2.6 — la tipografía es la del sistema, sin
-> webfont, y con eso **la calidez queda entera del lado del color**.
+**Estado:** Vigente
 
 ---
 
@@ -15,9 +12,11 @@ La personalidad del producto, cómo se ve traducida en decisiones visuales, cóm
 habla, y con qué palabras. **Los valores concretos —colores, tamaños, tokens—
 están en `design-system.md`;** acá está el criterio que los genera.
 
-No hay logo, no hay manual de marca y no hay público al que convencer: Recetario
-tiene un solo usuario. Lo que sí hay es un conjunto de decisiones que tienen que
-ser consistentes para que la app no se contradiga a sí misma.
+No hay manual de marca y no hay público al que convencer: Recetario tiene un solo
+usuario. Lo único que hace de logo es el ícono de la app —una olla con vapor, en
+el fondo y la arcilla de la app (`design-system.md` §7.1)—. Lo que sí hay es un
+conjunto de decisiones que tienen que ser consistentes para que la app no se
+contradiga a sí misma.
 
 ---
 
@@ -90,16 +89,18 @@ solo juego de tokens.
 
 ### 2.6 Tipografía: la del sistema, una sola familia
 
-`[cambiada en el Hito 11]` Una familia para todo —la interfaz y el contenido— y es
-**la fuente del sistema**, sin webfont. Un pedido de red externo en una PWA que no
-tiene ninguno, o 100 KB empaquetados que el service worker tenga que cachear, es
-un precio que la tipografía acá no se gana.
+Una familia para todo —la interfaz y el contenido— y es **la fuente del
+sistema**, sin webfont. Un pedido de red externo en una PWA que no tiene ninguno,
+o 100 KB empaquetados que el service worker tenga que cachear, es un precio que
+la tipografía acá no se gana.
 
-**La consecuencia es que la tipografía deja de aportar lo doméstico.** La primera
-versión elegía una humanista justamente por eso; la del sistema es neutra. **La
-calidez queda entera del lado del color**, así que los neutros cálidos y la
-arcilla dejan de ser una preferencia y pasan a ser lo único que sostiene el
-quinto adjetivo.
+**La consecuencia es que la tipografía no aporta lo doméstico:** la del sistema
+es neutra. **La calidez queda entera del lado del color**, así que los neutros
+cálidos y la arcilla no son una preferencia: son lo único que sostiene el quinto
+adjetivo.
+
+La única excepción es el PDF de una receta compartida, que lleva Inter embebida
+porque un PDF no puede usar la fuente del sistema.
 
 La escala está en `design-system.md` §3.
 
@@ -120,31 +121,34 @@ escribiste sigue ahí, no hace falta que un cartel te avise que no lo perdiste.
 
 | Contexto | Cómo suena | Ejemplo |
 |---|---|---|
-| **Error de operación** | Qué falló y por qué, en esa orden. | *"Error al guardar. Sin conexión."* |
-| **Sesión vencida** | El hecho, y el control al lado. | *"Sesión vencida."* → `[Conectar]` |
-| **Estado vacío** | Qué hay, en una frase. Sin ilustración y sin invitación. | *"No hay borradores."* |
-| **Confirmación destructiva** | Qué se va a borrar, nombrándolo. | *"¿Borrar Milanesas napolitanas?"* |
-| **Operación larga** | Cuánto va, con número. | *"Reindexando: 340 de 1.012."* |
-| **Aviso sin acción** | El hecho y el número. | *"2 archivos ignorados por no tener título."* |
-| **Falta información** | Lo que falta, no lo que está mal. | *"Sin ingredientes."* |
-| **Éxito** | **No existe.** Nada confirma que algo salió bien. | — |
+| **Error de operación** | Qué no se pudo, y qué quedó como estaba o qué mirar. Con *Reintentar* al lado. | *"No se pudo guardar. Revisá la conexión."* · *"No se pudo borrar. La receta sigue estando."* |
+| **Sin conexión con Google** | El hecho, y el control al lado. | *"No se pudo reconectar con Google."* → `[Reintentar]` |
+| **Estado vacío** | Qué hay, en una frase. Sin ilustración. Si está vacío por un filtro, cómo salir. | *"No hay nada esperando."* · *"Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba."* |
+| **Confirmación destructiva** | Qué se va a borrar, nombrándolo. | *"¿Borrar Milanesas napolitanas?"* · *"¿Descartar Pasta con berenjenas?"* |
+| **Operación larga** | Cuánto va, con número. Hasta que haya número, el verbo y un spinner. | *"Reindexando: 340 de 1012."* · *"Armando el PDF…"* |
+| **Aviso sin acción** | El hecho y el número. | *"2 archivos ignorados por no tener título."* · *"No hay nada para avisar."* |
+| **Falta información** | Lo que falta, no lo que está mal. | *"Se va a poder sacar incompleta cuando se cargue: título, categoría, ingredientes y pasos."* |
+| **Explicación de un control** | Una oración, debajo, sólo donde el control no se explica solo. | *"Salir no borra nada de Drive."* · *"Hasta comer, con reposo y horno incluidos."* |
+| **Resultado de copiar o armar algo para compartir** | El hecho, porque no deja nada a la vista que lo diga. | *"Link copiado."* · *"El PDF está listo."* |
+| **Éxito** | **No existe.** Nada confirma que guardar, borrar o reindexar salió bien: lo dice la pantalla. | — |
 
 ### 3.3 Correcto e incorrecto
 
 | ✅ | ❌ | Por qué |
 |---|---|---|
-| *"Error al guardar. Sin conexión."* | *"Uy, algo salió mal 😕"* | El "uy" es simpatía en el peor momento, y "algo" no es información. |
-| *"El índice está dañado."* | *"Parece que hubo un problema con el índice."* | "Parece que" convierte un hecho en una sospecha. |
-| *"No hay borradores."* | *"¡Todo al día! No tenés nada pendiente 🎉"* | Es una celebración por no haber hecho nada. |
-| *"Sin ingredientes."* | *"Esta receta está incompleta. Completala para poder buscarla."* | Reta, y da una instrucción que nadie pidió. |
-| *"Sesión vencida."* | *"Tu sesión de Google expiró. Por favor volvé a conectarte para continuar."* | Tres líneas para lo que se resuelve con dos palabras y un botón. |
-| *"Reindexando: 340 de 1.012."* | *"Esto puede tardar un ratito…"* | Un número es una espera medible; "un ratito" no. |
-| *"Error al guardar."* | *"Unable to parse range: meta!A1:B20"* | El error crudo del servidor no se muestra nunca. |
+| *"No se pudo guardar. Revisá la conexión."* | *"Uy, algo salió mal 😕"* | El "uy" es simpatía en el peor momento, y "algo" no es información. |
+| *"No se pudo conectar."* | *"Parece que hubo un problema al conectar."* | "Parece que" convierte un hecho en una sospecha. |
+| *"No hay nada esperando."* | *"¡Todo al día! No tenés nada pendiente 🎉"* | Es una celebración por no haber hecho nada. |
+| El botón `incompleta` apretado, y debajo qué falta cargar. | *"Esta receta está incompleta. Completala para poder buscarla."* | Reta, y da una instrucción que nadie pidió. |
+| *"No se pudo reconectar con Google."* | *"Tu sesión de Google expiró. Por favor volvé a conectarte para continuar."* | Tres líneas para lo que se resuelve con una y un botón. |
+| *"Reindexando: 340 de 1012."* | *"Esto puede tardar un ratito…"* | Un número es una espera medible; "un ratito" no. |
+| *"No se pudo guardar."* | *"Unable to parse range: meta!A1:B20"* | El error crudo del servidor no se muestra nunca. |
 
 ### 3.4 Prohibido siempre
 
 - Disculparse. La app no dice "perdón" ni "lo sentimos".
-- Emojis en los mensajes del sistema.
+- Emojis en los mensajes del sistema. El único emoji de la interfaz es el 📖 que rotula
+  la *fuente* de una receta o de un borrador: es un rótulo, no un mensaje.
 - Signos de exclamación.
 - Prometer algo futuro: *"se guardará más tarde"*, *"lo intentaremos de nuevo"*.
 - Mostrar el error crudo de Google.
@@ -165,20 +169,41 @@ la interfaz**, y no tienen sinónimos.
 
 | Concepto | Término | Nunca |
 |---|---|---|
-| El producto entero, y su pantalla principal | **Recetario** | "Inicio", "Home", "Mis recetas" |
+| El producto entero, y su pantalla principal | **Recetario** | "Home", "Mis recetas" |
+| La pantalla principal, en el menú lateral | **Inicio** | — (sólo ahí: «Recetario» ya es la marca, arriba del menú) |
 | Un `.md` con una comida | **receta** | "plato", "ficha", "entrada" |
-| La carpeta de Drive donde vive | **categoría** | "sección", "colección", "carpeta" |
+| La carpeta de Drive donde vive | **categoría** | "sección", "colección" |
+| La carpeta de Drive que contiene todo el Recetario | **carpeta** — *"Carpeta: Recetario"*, **Cambiar carpeta**, *Usar esta carpeta*, *Crear una carpeta nueva acá* | "raíz", "directorio", "ubicación" |
 | Lo capturado que espera conversión | **borrador** | "pendiente", "captura", "item" |
 | El lugar donde esperan | **Borradores** | **"bandeja"**, "inbox", "por procesar" |
-| Guardar algo desde otra app | **capturar** | "importar", "agregar", "compartir a" |
-| Escribir la receta a partir de un borrador | **crear la receta** | "convertir", "procesar" |
+| Guardar algo desde otra app | **capturar** —la pantalla se titula **Nuevo borrador**, y el botón de Borradores, **Nuevo**— | "importar", "agregar", "compartir a" |
+| Escribir a mano la receta de un borrador | **Crear la receta** | "procesar", "pasar a receta" |
+| Pedirle a Claude que escriba la receta de un borrador | **Convertir con Claude** | "generar", "importar con IA" |
+| Traer a la app la receta que devolvió Claude | **Pegar receta** | "importar", "cargar" |
+| A qué borrador corresponde una receta que llegó | **¿De qué borrador es esta receta?**, con **Ninguno** como salida | — |
+| Tirar un borrador | **Descartar** | "borrar", "eliminar" |
+| Tirar una receta o una categoría | **Borrar** — *Borrar receta*, *Borrar categoría* | "eliminar", "quitar" |
+| Empezar una receta sin borrador | **Nueva receta** | "crear", "agregar receta" |
+| Mandar una receta afuera de la app | **Compartir**, con sus tres formas: **PDF**, **Link**, **Texto** | "exportar", "enviar", "publicar" |
 | Una versión alternativa de un plato | **variación** | "versión", "alternativa" |
-| Sacar la marca de incompleta | **marcar como completada** | "declarar completa", "validar" |
-| Rehacer la planilla del índice | **reindexar** | **"reconstruir"**, "reparar", "sincronizar" |
-| La planilla derivada | **el índice** | "la base", "el cache", "la planilla" |
-| Lo que la receta no tiene | **incompleta** | "inválida", "con errores", "borrador" |
-| De dónde salió la receta | **fuente** | "origen", "link", "referencia" |
 | Los criterios libres de la receta | **tags** | "etiquetas", "labels" |
+| Los cuatro tags que la app se reserva | **tags especiales**: `favorito`, `menú diario`, `probar`, `incompleta`. Se escriben así, en minúscula, en el `.md`, en el chip y en su botón del editor | "estado", "marcadores", "listas" |
+| El nombre de cada marca de la tarjeta, para el lector de pantalla | **Favorita**, **Menú diario**, **Para probar**, **Incompleta** —en femenino, por *la receta*; el botón de la estrella se llama **Favorito**— | — |
+| Lo que la receta no tiene | **incompleta** | "inválida", "con errores", "borrador" |
+| Sacar la marca de incompleta | **sacar *incompleta*** —soltar su botón en el editor— | "marcar como completada", "declarar completa", "validar" |
+| Cuánto lleva la receta, hasta comer | **Duración** —uno de `~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`— | "tiempo", "tiempo de cocción", "preparación" |
+| Para cuántos alcanza | **Rinde** | "porciones", "comensales" |
+| El modo de lectura con la pantalla encendida | **Cocinar**, y **Salir** para dejarlo | "modo cocina" como etiqueta, "empezar" |
+| Rehacer la planilla del índice | **Reindexar** —*"Reindexando: 340 de 1012."*, *"Último reindexado: …"*— | **"reconstruir"**, "reparar", "sincronizar" |
+| La planilla derivada | **el índice** —la ficha de Ajustes se titula **Índice**— | "la base", "el cache", "la planilla" |
+| Lo que la app guarda en el navegador | **Archivos locales** es la ficha de Ajustes; **Borrar datos locales**, su botón; *la copia del índice*, lo que guarda | "caché", "almacenamiento", "datos de la app" |
+| Lo que pasó al abrir la app | **Registro de actividad** | "log", "diagnóstico", "depuración" |
+| Lo que la app tiene para decir sin pedir nada | **Avisos** | "notificaciones", "alertas" |
+| Dejar la cuenta de Google | **Salir**; entrar es **Conectar con Google** | "cerrar sesión", "logout", "iniciar sesión" |
+| De dónde salió la receta | **fuente** —*Ir a la fuente*, en el borrador— | "origen", "link", "referencia" |
+
+**Las fichas de Ajustes, en orden:** Cuenta, Recetario, Índice, Archivos locales,
+Avisos, Registro de actividad.
 
 ### 4.1 Dos que hubo que decidir
 
@@ -186,21 +211,33 @@ la interfaz**, y no tienen sinónimos.
 contiene, así que el nombre no hay que aprenderlo. "Bandeja" además arrastraba
 "bandeja de entrada", que es una metáfora de correo y no de cocina.
 
-**"Reindexar" reemplaza a "reconstruir".** Los documentos usaban las dos.
-Reindexar es más preciso: lo que se rehace es el índice, y las recetas —que son
+**"Reindexar" reemplaza a "reconstruir".** Reindexar es más preciso: lo que se rehace es el índice, y las recetas —que son
 lo que el usuario tiene miedo de perder— no se tocan.
 
 ### 4.2 "Recetario" nombra dos cosas y está bien
 
 Es el producto y es la pantalla principal. No genera ambigüedad porque **ninguna
 etiqueta de la interfaz dice "volver al Recetario"**: volver es un control, no
-una frase.
+una frase. Donde las dos se tocarían —el menú lateral, que lleva la marca
+arriba— el destino se llama **Inicio**.
+
+### 4.3 "Compartir" y "capturar" son sentidos opuestos
+
+Lo que entra a la app desde otra se **captura**; lo que sale de la app se
+**comparte**. El menú Compartir de Android aparece en los dos caminos, y por eso
+la app nunca dice "compartir a Recetario".
+
+### 4.4 "Convertir" es sólo con Claude
+
+El verbo de pasar un borrador a receta es **crear la receta**. "Convertir" queda
+para un solo botón, **Convertir con Claude**, donde quien escribe la receta no es
+el usuario.
 
 ---
 
 ## 5. Lo que esta identidad prohíbe
 
-Registrado para que se pueda verificar contra un mockup:
+Registrado para que se pueda verificar contra una pantalla:
 
 | Prohibido | De dónde sale |
 |---|---|
@@ -210,8 +247,8 @@ Registrado para que se pueda verificar contra un mockup:
 | Sombras y elevación | §2.4 |
 | Tema claro | §2.5 |
 | Una segunda familia tipográfica, y cualquier webfont | §2.6 |
-| Ilustraciones y estados vacíos decorativos | §1, y el veto del Hito 6 |
-| Botón flotante de acción | El veto del Hito 6 |
+| Ilustraciones y estados vacíos decorativos | §1 |
+| Botón flotante de acción | `design-system.md` §6.7 |
 | Emojis, exclamaciones y disculpas | §3.4 |
 | Confirmaciones de éxito | §3.2 |
 | Madera, papel arrugado, tiza, íconos de batidora | La versión mala de "doméstico" |

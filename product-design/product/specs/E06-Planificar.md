@@ -1,15 +1,13 @@
 # E06 — Planificar `[exploración]`
 
-**Versión:** 3.0 · **Fecha:** 2026-09-07 · **Estado:** Final — Hito 11
+**Versión:** 3.1 · **Fecha:** 2026-09-17 · **Estado:** En el backlog
 **Job:** J9 · **Prioridad:** sin comprometer · **Flujo:** F13
 
-> **Cambio en la 3.0 (Hito 11):** la épica entera pasa al backlog. Sigue
-> diseñada y mockupeada, sin comprometer (`plan/BACKLOG.md` §2).
->
-> **Cambios en la 2.0 (Hito 7):** features partidas en capacidades con criterios
-> de aceptación y edge cases. El nivel de detalle es deliberadamente menor que
-> el de las otras cinco épicas: es exploración, y detallarla al mismo nivel la
-> instalaría, que es justo lo que el principio 6 evita.
+> La épica entera está en el backlog ([`BACKLOG.md`](../../../BACKLOG.md), en la
+> raíz del repo): diseñada y mockupeada, sin comprometer. El nivel de detalle es
+> deliberadamente menor que el de las otras cinco épicas: es exploración, y
+> detallarla al mismo nivel la instalaría, que es justo lo que el principio 6
+> evita.
 
 **Reglas transversales:** ver `E05-Cimientos.md` §Reglas.
 

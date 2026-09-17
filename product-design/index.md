@@ -47,7 +47,13 @@ en la cabeza, no para convertir una fuente.
 
 Para que nada se pierda antes de eso, lo que se encuentra se captura en el
 momento como **borrador** —un título y la fuente, nada más— y espera en una
-sección separada hasta que haya tiempo de convertirlo.
+sección separada hasta que haya tiempo de convertirlo. Desde el borrador,
+**«Convertir con Claude»** arma el pedido y lo manda a Claude; la respuesta vuelve
+a la app compartida o pegada y abre el editor. La app no llama a ningún modelo.
+
+Una receta se puede **compartir** como PDF, como link a una vista de invitado
+que se lee y se cocina sin login, o como texto. Es una copia del momento: nada
+queda publicado en Drive.
 
 Esa forma y no otra por tres razones que se sostienen juntas: los archivos son
 abiertos **y están en Drive**, que es donde los agentes escriben y desde donde
@@ -75,12 +81,17 @@ Se diseña para ~1.000 recetas, no para las decenas de hoy.
 | 10 — Usability Testing | ⏭ Salteado — 2026-09-06 |
 | 11 — Iteración final + Handoff | ✅ 2026-09-07 |
 
-**El proyecto está terminado.** Quien venga a implementar empieza por
-[`plan/delta-implementacion.md`](plan/delta-implementacion.md).
+**El diseño se terminó el 2026-09-07, y está implementado y publicado.** Desde
+entonces estos documentos se mantienen al día con el producto: dicen lo que la
+app hace hoy. Si un documento y el código en `src/` se contradicen, gana el
+código y el documento se corrige.
 
-Dos decisiones siguen abiertas, sin bloquear nada: la vía de hosting de las fotos
-de receta y si el agente se embebe en la PWA. Están en
-[BACKLOG.md](plan/BACKLOG.md) §1 con su contexto.
+Las dos decisiones que el diseño había dejado abiertas están resueltas. El
+agente no se embebe en la PWA: la app arma el pedido, lo manda a Claude y recibe
+la respuesta compartida o pegada. Las fotos de receta son sólo URLs externas: la
+app no guarda imágenes de receta en Drive.
+
+Lo pendiente está en [`BACKLOG.md`](../BACKLOG.md), en la raíz del repo.
 
 ---
 
@@ -89,7 +100,6 @@ de receta y si el agente se embebe en la PWA. Están en
 | Documento | Qué contiene | Hito |
 |---|---|---|
 | [Análisis competitivo](research/competitive-analysis.md) | El landscape de soluciones para guardar y consultar recetas, con vacíos e insights. | 1 |
-| [Usability testing](research/usability-testing/README.md) | El Hito 10 se salteó: no hay protocolo ni hallazgos, y el README dice qué quedó sin evidencia. | ⏭ |
 
 ## Producto
 
@@ -100,7 +110,7 @@ de receta y si el agente se embebe en la PWA. Están en
 | [Jobs to be Done](product/strategy/jtbd.md) | Los jobs que el producto resuelve, por persona y transversales. | 2 |
 | [Principios de producto](product/strategy/product-principles.md) | Los árbitros de las decisiones de diseño ambiguas. | 3 |
 | [Índice de épicas](product/specs/specs-overview.md) | Las seis épicas del producto, cómo se relacionan, y dónde viven las reglas transversales. | 5 → 7 → 11 |
-| [E01 — Captura y borradores](product/specs/E01-CapturaYBorradores.md) | Guardar algo antes de perderlo, y la cola que espera conversión. | 5 → 7 → 11 |
+| [E01 — Captura y borradores](product/specs/E01-CapturaYBorradores.md) | Guardar algo antes de perderlo, la cola que espera conversión, y convertir con Claude. | 5 → 7 → 11 |
 | [E02 — Encontrar](product/specs/E02-Encontrar.md) | Búsqueda por título, ingrediente y tag; categorías; paseo. | 5 → 7 → 11 |
 | [E03 — Leer y cocinar](product/specs/E03-LeerYCocinar.md) | La receta a la vista, con las manos ocupadas. | 5 → 7 → 11 |
 | [E04 — Corregir](product/specs/E04-Corregir.md) | El editor: arreglar un error, crear una receta mínima. | 5 → 7 → 11 |
@@ -116,13 +126,5 @@ de receta y si el agente se embebe en la PWA. Están en
 | [Wireframes](ux/wireframes.md) | Estructura y jerarquía de cada pantalla, con decisiones de layout explícitas. | 6 → 7 → 8 |
 | [Brand Identity](ux/brand-identity.md) | Cinco adjetivos con lo que descarta cada uno, dirección visual, tono de voz y vocabulario canónico. | 8 → 11 |
 | [Design System](ux/design-system.md) | Tokens con su contraste medido, paleta de categorías, tipografía, iconografía, motion y 15 componentes core. | 8 → 9 → 11 |
-| [Mockups](ux/mockups/) | Trece pantallas en HTML+CSS con los tokens reales, una sola versión de cada una, más su [README](ux/mockups/README.md) con los hallazgos. | 9 → 11 |
-
-## Plan
-
-| Documento | Qué contiene |
-|---|---|
-| [Delta contra la implementación](plan/delta-implementacion.md) | **Por acá se empieza a implementar.** Las ocho decisiones que hay que entender, y el delta archivo por archivo contra la app existente. |
-| [PLAN.md](plan/PLAN.md) | El runbook de ejecución, hito por hito. |
-| [Decision log](plan/decision-log.md) | Decisiones no obvias, con alternativas descartadas y racional. |
-| [Backlog](plan/BACKLOG.md) | Lo que quedó fuera de scope, con su razón y con qué haría falta para retomarlo. |
+| [Auditoría tipográfica](ux/auditoria-tipografica.md) | Informe: criterios, la tipografía de las once pantallas medida sobre la app implementada, y una propuesta de cambios. | — |
+| [Mockups](ux/mockups/) | Trece pantallas en HTML+CSS, una sola versión de cada una, más su [README](ux/mockups/README.md) con los hallazgos. Son la especificación de cuando se diseñó: lo decidido después usando la app vive en `src/ui/tokens.css`. | 9 → 11 |

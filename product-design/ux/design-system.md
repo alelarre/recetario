@@ -2,39 +2,12 @@
 
 **Versión:** 2.4
 **Fecha:** 2026-09-16
-**Estado:** Final — Hito 11
+**Estado:** Vigente
 
-> **Cambios en la 2.4 (2026-09-16):** §3.4 — cinco íconos más, de quince a
-> veinte: los relojitos de la duración (P29), compartidos por el editor, la
-> tarjeta, la receta, la búsqueda, el filtro y el orden. Tres componentes
-> nuevos: los botones de duración del editor (§6.18), la fila de chips de
-> duración (§6.19) y el conmutador de orden (§6.20).
->
-> **Cambios en la 2.3 (2026-09-16):** el conmutador de completitud (§6.16)
-> queda sin uso: el editor pasa a un botón por tag especial (§6.10b, nuevo),
-> invertido al apretar, la misma convención que ya usaba el conmutador. §6.5
-> — el ícono del dato en el editor es el del botón, no la posición de un
-> conmutador. §3.4 — un ícono más, de catorce a quince: el medio círculo de
-> `incompleta`, reutilizado de la marca (§6.5).
->
-> **Cambios en la 2.2 (2026-09-16):** §3.4 — tres íconos más, de once a catorce:
-> la estrella de favorito, el marcador de *probar* y el calendario de *menú
-> diario*.
->
-> **Cambios en la 2.1 (2026-09-12):** salieron de implementar el rediseño y
-> mirarlo andando. Dos componentes nuevos: el **conmutador de dos posiciones**
-> (§6.16), que reemplaza a la casilla de completitud, y el **menú lateral**
-> (§6.17), que es la navegación primaria. §6.10 — el chip sube un tono y la
-> variante removible pasa a ser la del editor. §6.7 — qué hacer con un logo
-> ajeno dentro de un control. §7 — el segundo punto de quiebre, 900 px.
->
-> **Cambios en la 2.0 (Hito 11):** §3.1 — la tipografía es **la del sistema**, sin
-> webfont. §2.1 — `--fg-3` sube a `#948A7A` para cumplir 4.5:1 sin excepción, y el
-> velo del tile pasa a ser el token `--velo`.
->
-> **Cambios en la 1.1 (Hito 9):** cuatro huecos cerrados —`--e-cocina`, el botón
-> compacto, los tokens de ícono y casilla, y §6.13— y tres reglas precisadas, todas
-> por lo que se vio al mockupear. El detalle en `mockups/README.md`.
+> Los valores de este documento están implementados en `src/ui/tokens.css`
+> —tokens y componentes del sistema— y `src/ui/base.css` —lo que es de cada
+> pantalla—; los íconos, en `src/ui/iconos.ts`. Si el documento y esos archivos
+> se contradicen, gana el código y se corrige acá.
 
 ---
 
@@ -44,9 +17,9 @@ Los valores concretos con los que se implementa cualquier pantalla de Recetario.
 **El criterio que los genera está en `brand-identity.md`;** acá están los
 números.
 
-Es lo que reemplaza a `app.css` como especificación visual. Un mockup o una
-pantalla que necesite un valor que no esté acá indica un hueco del sistema, y el
-hueco se arregla acá, no en la pantalla.
+Una pantalla que necesite un valor que no esté acá indica un hueco del sistema, y
+el hueco se arregla en el sistema —`src/ui/tokens.css` y este documento—, no en
+la pantalla.
 
 **Un solo tema, oscuro** (`brand-identity.md` §2.5). No hay `prefers-color-scheme`
 ni conmutador, así que cada token tiene un solo valor.
@@ -93,10 +66,8 @@ Todos cálidos. Ninguno tiene matiz frío (`brand-identity.md` §2.2).
 | `--fg-3` | `#948A7A` | El texto tenue: fechas, contadores, la marca de incompleta. | **4.9:1** |
 | `--velo` | `#0C0A07` | Más oscuro que `--bg`. Solo bajo el nombre de un tile de categoría, como degradado. | — |
 
-`[--fg-3 corregido en el Hito 11]` Estaba en `#8A8073`, que da 4.3:1 y quedaba por
-debajo del mínimo del propio documento con una excepción para texto chico. Subirlo
-un escalón lo hace cumplir sin excepción, que es más barato que sostener la
-excepción.
+**`--fg-3` cumple 4.5:1 sin excepción:** es el piso de todo texto, también del
+chico.
 
 **Por qué `--fg` no es blanco puro:** sobre un fondo cálido, el blanco puro se ve
 azul por contraste simultáneo, que es exactamente el gris azulado que la
@@ -106,7 +77,7 @@ identidad prohíbe.
 
 | Token | Valor | Uso | Contraste |
 |---|---|---|---|
-| `--acento` | `#D98A5F` | Arcilla `[del 2026-09-12]`. La acción primaria, el foco, el tag activo. | **6.2:1** sobre `--surface` |
+| `--acento` | `#D98A5F` | Arcilla. La acción primaria, el foco, el tag activo. | **6.2:1** sobre `--surface` |
 | `--acento-suave` | `#39291D` | El fondo de un elemento con el acento aplicado. | — |
 | `--error` | `#D95F52` | **Solo para operaciones que fallaron.** | **4.6:1** |
 | `--error-suave` | `#33191A` | El fondo del aviso con acción. | — |
@@ -116,18 +87,17 @@ identidad prohíbe.
 receta incompleta— acá no es un problema y usa `--fg-3`.
 
 **El acento y el error se tienen que distinguir de reojo:** una distancia
-percibida (CIEDE2000) de al menos 12 entre los dos. La terracota anterior
-(`#E0663C`) estaba a 8, lo mismo que dos categorías vecinas, y los botones
-primarios se leían como error. La arcilla está a 14.6.
+percibida (CIEDE2000) de al menos 12 entre los dos. La arcilla está a 14.6 del
+error: más cerca, un botón primario se lee como error.
 
 **Regla dura: el error es solo para errores y para lo destructivo.** Una receta
 sin ingredientes, un archivo ignorado o una categoría vacía **nunca** usan
 `--error`.
 
-`[precisada en el Hito 9]` La excepción son los dos controles que borran algo:
-*Descartar* un borrador y *Borrar* una receta, con la variante de peligro del
-botón (§6.7). No es una contradicción — la operación **es** destructiva, y es el
-único aviso que el usuario tiene antes de tocarla.
+La excepción son los controles que borran algo —*Descartar* un borrador, *Borrar*
+una receta, borrar una categoría—, con la variante de peligro del botón (§6.7), y
+el borde de la ficha que pide la confirmación. La operación **es** destructiva, y
+es el único aviso que el usuario tiene antes de tocarla.
 
 ### 2.3 Los colores de categoría
 
@@ -135,7 +105,7 @@ Quince colores, uno por categoría, más un neutro para `Otros`.
 
 **Reglas de la paleta:**
 
-1. **Separación mínima de 18° de matiz**, y **una distancia percibida (CIEDE2000) de al menos 12 respecto del acento** `[del 2026-09-12; antes eran 20° de matiz]`. 18° es la distancia a la que dos colores se distinguen sin compararlos lado a lado, que es como se ven en una lista. La segunda regla existe porque el acento es de la app y una categoría no puede parecerse a un botón: por eso la serie arranca en 36° y deja libre el vecindario del acento. Se mide en distancia percibida y no en matiz porque la saturación también separa: la arcilla está a 15° de Carnes pero a 14.1 de distancia, porque Carnes es un beige apagado. Carnes es la más cercana.
+1. **Separación mínima de 18° de matiz**, y **una distancia percibida (CIEDE2000) de al menos 12 respecto del acento**. 18° es la distancia a la que dos colores se distinguen sin compararlos lado a lado, que es como se ven en una lista. La segunda regla existe porque el acento es de la app y una categoría no puede parecerse a un botón: por eso la serie arranca en 36° y deja libre el vecindario del acento. Se mide en distancia percibida y no en matiz porque la saturación también separa: la arcilla está a 15° de Carnes pero a 14.1 de distancia, porque Carnes es un beige apagado. Carnes es la más cercana.
 2. **Se evita el rango 255°-300°**, el violeta corporativo que la identidad prohíbe.
 3. **Luminosidad compensada por matiz:** los amarillo-verdes (55°-115°) van más oscuros y los azules (175°-255°) más claros, porque a igual valor de HSL se perciben distinto.
 4. **Todos superan 4.5:1 sobre `--surface`.** El más bajo es Entradas y picadas, con 4.9:1.
@@ -165,36 +135,31 @@ mismo nivel que las demás, cuando lo que dice es "todavía no sabemos".
 
 #### Cómo se agrega una categoría
 
-Agregar una categoría es crear una carpeta en Drive, así que el sistema tiene que
-aguantarlo sin que nadie toque nada.
+Las categorías se crean y se editan desde la app —*Ajustes → Recetario →
+Categorías*—, y una carpeta creada a mano en Drive aparece al reindexar.
 
-- La paleta es **un mapa del slug de la carpeta al color**, escrito a mano. No se
-  deriva de un hash ni de la posición alfabética: si dependiera de la posición,
-  agregar una categoría le cambiaría el color a todas las que van después, y la
-  posición de cada una es justo lo que se aprende.
-- Hay **cuatro colores de reserva** sin asignar, para las próximas cuatro
-  categorías: `#9E6ECF` (270°), `#BB6ECF` (288°), `#CFB86E` (45°) y `#89C7D2`
-  (189°). Los dos primeros rompen la regla 2 y los dos últimos bajan la
-  separación local a 9°: con quince colores el círculo ya está repartido, y para
-  cuando haga falta una decimosexta categoría la identidad va a estar establecida
-  y una vecindad más cerrada no la rompe.
-- **Una categoría sin entrada en el mapa usa `#99907F`**, el mismo neutro que
-  `Otros`, y no rompe nada.
-- `[2026-09-13]` **La tabla de las 16 predefinidas —nombre, clave de color y
-  foto— vive en `src/categorias.ts`.** El color y la foto de cada carpeta son
-  propiedades suyas en Drive (`appProperties`), así que renombrarla no los pierde,
-  y una carpeta nueva los toma de la tabla sólo si su nombre coincide con una
-  predefinida.
-- `[2026-09-13]` Las categorías se crean y se editan desde la app —*Ajustes →
-  Recetario → Categorías*—: el color se elige de la paleta, y una nueva arranca con
-  el primero que nadie usa.
+- **El color y la foto son propiedades de la carpeta** en Drive
+  (`appProperties`), así que renombrarla no los pierde. No se derivan de un hash
+  ni de la posición alfabética: si dependieran de la posición, agregar una
+  categoría le cambiaría el color a todas las que van después.
+- **El color se guarda como clave de la paleta** —`carnes`, `aves`…— y se dibuja
+  con el token `--cat-<clave>` de `src/ui/tokens.css`. Se elige entre los dieciséis
+  de la tabla, en una grilla de muestras donde la elegida lleva un borde de 2 px
+  en `--fg`; la foto se elige igual, entre las del catálogo.
+- **Una categoría nueva arranca con el primer color de la paleta que nadie usa**,
+  y con el neutro si ya están todos usados. Dos categorías pueden compartir color.
+- **La tabla de las 16 predefinidas —nombre, clave de color y foto— vive en
+  `src/categorias.ts`.** Una carpeta nueva toma su color y su foto de esa tabla
+  sólo si su nombre coincide con una predefinida.
+- **Una categoría sin color, o con una clave que la paleta no tiene, usa
+  `#99907F`**, el mismo neutro que `Otros`, y no rompe nada.
 
 #### Dónde se usa el color, y dónde no
 
 | Sí | No |
 |---|---|
 | El borde del tile en la grilla del Recetario | El fondo entero de una pantalla |
-| El bloque de color detrás de la categoría en la línea de contexto de una tarjeta | El texto de la receta |
+| El cuadrito de 8 px antes de la categoría, en la línea de contexto de una tarjeta y de la receta | El texto de la receta |
 | El placeholder de foto (§6.2) | Los controles: los botones son siempre `--acento` |
 
 **El color identifica, no describe.** Lo que describe es la foto de la categoría,
@@ -206,7 +171,7 @@ que se reconoce sin memorizar nada.
 
 ### 3.1 La familia
 
-`[cambiada en el Hito 11]` **La fuente del sistema**, sin webfont:
+**La fuente del sistema**, sin webfont:
 
 ```css
 --tipo: system-ui, -apple-system, 'Segoe UI', Roboto,
@@ -220,12 +185,16 @@ ninguno, y empaquetarlo son ~100 KB en `assets/` que el service worker tiene que
 cachear. La fuente del sistema no cuesta nada, nunca falla y nunca provoca un
 salto de texto al cargar.
 
-**Qué se pierde, dicho sin disimulo:** la primera versión de este documento
-elegía IBM Plex Sans porque es humanista, y ese carácter era lo que la tipografía
-aportaba a *doméstico*. En Android la fuente del sistema es Roboto, que es
-neogrotesca: correcta y neutra. **La calidez pasa a depender enteramente del
-color** —los neutros cálidos y la arcilla—, así que esos tokens dejan de tener
+**El costo:** en Android la fuente del sistema es Roboto, que es neogrotesca:
+correcta y neutra, no aporta nada a *doméstico*. **La calidez depende enteramente
+del color** —los neutros cálidos y la arcilla—, así que esos tokens no tienen
 margen para enfriarse.
+
+**La interlínea base es 1.5**, declarada en `body`: lo que no declara la suya no
+cae en la `normal` del navegador.
+
+**El PDF compartido no puede usar la fuente del sistema** y lleva Inter embebida
+(§6.23).
 
 **Cifras tabulares:** se piden con `font-variant-numeric: tabular-nums`, que
 Roboto, SF y Segoe soportan. Es lo que alinea las cantidades en columna.
@@ -236,20 +205,20 @@ Base 16 px, razón 1.2, redondeada a valores enteros.
 
 | Token | Tamaño | Interlínea | Peso | Uso |
 |---|---|---|---|---|
-| `--txt-micro` | 12 px | 1.4 | 400 · 600 | En 400, la fecha del borrador y la fuente; en 600, los contadores. **Solo datos y referencia —la ayuda de formato—, nunca prosa.** `[del 2026-09-12: decía 500, que ningún texto usaba]` |
-| `--txt-chico` | 14 px | 1.45 | 400 | La línea de contexto de una tarjeta, las etiquetas de metadato. |
-| `--txt-base` | 16 px | 1.5 | 400 | La interfaz. El piso de la restricción §1. |
-| *base fuerte* | 16 px | 1.3 | 600 | `[del 2026-09-12]` El nombre de un ítem de lista —tarjeta, borrador—, los botones y el título del encabezado chico. No es un token aparte: es `--txt-base` en 600, y se nombra porque es el estilo más repetido de la app. |
+| `--txt-micro` | 12 px | 1.4 | 400 · 600 | En 400, la fecha del borrador y la fuente; en 600, los contadores. La versión, al pie del menú lateral. **Solo datos y referencia —la ayuda de formato—, nunca prosa.** |
+| `--txt-chico` | 14 px | 1.45 | 400 · 600 | En 400, la línea de contexto de una tarjeta, las etiquetas de los campos, el chip y los rótulos de grupo en mayúsculas. En 600, el nombre del tile, el valor de un botón de duración y el conmutador de orden. |
+| `--txt-base` | 16 px | 1.5 | 400 | La interfaz, y las notas de una oración (§6.8): son prosa, y la prosa no baja de 16. El piso de la restricción §1. |
+| *base fuerte* | 16 px | 1.3 | 600 | El nombre de un ítem de lista —tarjeta, borrador—, los botones y el título del encabezado chico. No es un token aparte: es `--txt-base` en 600, y se nombra porque es el estilo más repetido de la app. |
 | `--txt-lectura` | 18 px | 1.6 | 400 | **El cuerpo de la receta abierta.** Descripción, pasos, notas, ingredientes. |
-| *título de sección* | 18 px | 1.3 | 600 | `[del 2026-09-12: era --txt-titulo-s, 20 px]` El encabezado de una ficha —«Ingredientes», «Cuenta»— y el nombre de una variación. Es `--txt-lectura` en 600: se separa del cuerpo por peso, divisor y aire, no por tamaño. En 20 competía con el título de la receta, a una razón de 1.2 con el mismo peso. `--txt-titulo-s` queda definido en `tokens.css` y sin uso. |
-| `--txt-titulo` | 24 px | 1.25 | 600 | El título de las pantallas de primer nivel —Recetario, Borradores, Ajustes—, en el encabezado; y el nombre del objeto de una pantalla de detalle —la receta, el borrador—, en el cuerpo. |
+| *título de sección* | 18 px | 1.3 | 600 | El encabezado de una ficha —«Ingredientes», «Cuenta»— y el nombre de una variación. Es `--txt-lectura` en 600: se separa del cuerpo por peso, divisor y aire, no por tamaño, para no competir con el título de la receta. `--txt-titulo-s` (20 px) está definido en `tokens.css` y no se usa. |
+| `--txt-titulo` | 24 px | 1.25 | 600 | El título de las pantallas de primer nivel —Recetario, Borradores, Ajustes—, en el encabezado; y el nombre del objeto de una pantalla de detalle —la receta, el borrador—, en el cuerpo. También el nombre de la app arriba del menú lateral y el de la pantalla de conexión. |
 | `--txt-cocina` | 22 px | 1.65 | 400 | El cuerpo en modo cocina. |
-| `--txt-cocina-titulo` | 28 px | 1.3 | 600 | El encabezado de sección en modo cocina (§3.3). **Todavía sin aplicar:** los grupos y los tramos en cocina van en 16, mayúsculas y `--fg-2`, hasta la prueba a 50 cm (`plan/BACKLOG.md` §4). |
+| `--txt-cocina-titulo` | 28 px | 1.3 | 600 | El encabezado de sección en modo cocina (§3.3). **Sin aplicar:** los grupos y los tramos en cocina van en 16, mayúsculas y `--fg-2`. El token se aplica sólo si cocinando a 50 cm reales esos rótulos no alcanzan. |
 
 **Interlínea alta en lectura y en cocina** —1.6 y 1.65— porque en las dos hay que
 volver a encontrar el renglón después de mirar para otro lado.
 
-**Dónde va el título de una pantalla** `[del 2026-09-12]`. Las pantallas de primer
+**Dónde va el título de una pantalla.** Las pantallas de primer
 nivel —las del menú lateral— lo llevan grande en el encabezado. Las de detalle llevan
 el encabezado chico, en *base fuerte*, y si tienen un objeto propio, su nombre grande en
 el cuerpo. **Categoría es de detalle y no tiene objeto propio**: su nombre queda en el
@@ -279,24 +248,49 @@ cocina es el dato principal.
 
 ### 3.4 Iconografía
 
-**Un set de trazo existente** —Lucide o equivalente—, no íconos propios. Trazo de
-1.5 px, color heredado del texto que acompañan, y dos tamaños:
+**De trazo, con la grilla de Lucide** —`viewBox` de 24—: los que Lucide tiene se
+toman de ahí, y los que no —el tacho, los relojitos— se dibujan con el mismo
+trazo. Viven en `src/ui/iconos.ts` como constantes, sólo el contenido del SVG: el
+trazo de 1.5 px, el `fill: none` y el color heredado del texto los pone el CSS
+del lugar donde se dibujan, así que un ícono se ve igual esté donde esté. Dos
+tamaños de base:
 
 | Token | Valor | Dónde |
 |---|---|---|
 | `--ico` | 20 px | En toda la app. |
 | `--ico-cocina` | 24 px | Solo en modo cocina. |
 
-**Los íconos son funcionales, nunca decorativos.** Hay veinte en la
-app: volver, buscar, ajustes, borradores, descartar, editar, borrar, mantener la
-pantalla encendida, compartir `[del 2026-09-14]`, la estrella de favorito, el
-marcador de *probar*, el calendario de *menú diario* y el medio círculo de
-*incompleta* —reutilizado de la marca, §6.5— `[del 2026-09-16]`, los **cinco
-relojitos de la duración** —uno por valor, el mismo mapa para el editor
-(§6.18), la tarjeta, la receta, la búsqueda, el filtro (§6.19) y el orden
-(§6.20) `[del 2026-09-16, P29]`—, y las dos posiciones del conmutador de
-cocina —una zanahoria para *Ingredientes* y una lista numerada para *Pasos*,
-al lado de la palabra `[del 2026-09-12]`—.
+Adentro de otro componente el ícono se achica a su medida: 16 px en la marca de
+la tarjeta, el botón de tag especial, el conmutador de orden y la flecha del
+carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chip;
+24 px en el botón de duración.
+
+**Los íconos son funcionales, nunca decorativos.** `iconos.ts` tiene
+**veinticuatro**: diecinueve en `ICO` y los cinco relojitos de
+`ICONO_DE_DURACION`.
+
+| Ícono | Dónde |
+|---|---|
+| `volver` | El volver del encabezado, el de cocina y el de la búsqueda; y la flecha izquierda del carrusel de tags. |
+| `chevron` | La flecha derecha del carrusel de tags. |
+| `buscar` | La caja de búsqueda. |
+| `menu` | La hamburguesa que abre el menú lateral, con el contador de borradores encima. |
+| `casa`, `bandeja`, `mas`, `ajustes` | Los destinos del menú lateral: Inicio, Borradores, Nueva receta y Ajustes. `mas` va también en *Nuevo*, en Borradores. |
+| `lapiz` | *Editar*, en el pie de la receta. |
+| `compartir` | *Compartir*, en el encabezado de la receta. |
+| `estrella` | Favorito: en el encabezado de la receta (§6.22), en la marca de la tarjeta, en el chip y en el botón del editor. |
+| `marcador` | El tag *probar*. |
+| `calendario` | El tag *menú diario*. |
+| `tacho` | Las acciones destructivas: *Borrar receta* y *Descartar* un borrador. |
+| `cerrar` | La cruz: la del chip removible del editor y la que limpia la búsqueda. |
+| `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
+| `zanahoria`, `listaNumerada` | Las dos posiciones del conmutador de cocina —*Ingredientes* y *Pasos*—, al lado de la palabra. |
+| `puntos` | Sin uso: la receta no tiene menú ⋯. |
+| Los cinco relojitos | Uno por valor de la duración, el mismo mapa en el editor (§6.18), la tarjeta, la receta, la búsqueda, el filtro (§6.19) y el orden (§6.20). |
+
+**Dos dibujos no están en `iconos.ts` porque son CSS:** el medio círculo de
+*incompleta* (§6.5) —que hace de ícono del cuarto tag especial— y el chevron del
+desplegable (§6.9).
 
 **Los relojitos:** una esfera con la aguja y el recorrido recién hecho, tenue
 al 30 % de opacidad, en las posiciones de `~15 min`, `~30 min` y `~60 min`;
@@ -332,12 +326,11 @@ Base **4 px**. Solo estos valores:
 | `--e-7` | 48 px | El aire del final del scroll. |
 | `--e-cocina` | 20 px | **Solo en modo cocina:** la separación entre ingredientes y entre pasos. |
 
-`[--e-cocina agregado en el Hito 9]` No estaba, y al mockupear el modo cocina hizo
-falta: la escala de §3.3 pide 20 px de separación y ninguno de los siete valores
-de la escala base da eso. Es la única excepción, y existe porque el modo cocina
-es la única escala distinta del sistema.
+**`--e-cocina` es la única excepción a la escala:** §3.3 pide 20 px de separación
+y ninguno de los siete valores de la base lo da. Existe porque el modo cocina es
+la única escala distinta del sistema.
 
-**Densidad, según el Hito 6:** las listas usan `--e-3`, la receta abierta usa
+**Densidad:** las listas usan `--e-3`, la receta abierta usa
 `--e-5` y `--e-6`. Se recorren cientos de recetas y se lee una sola.
 
 ### 4.2 Radios
@@ -349,8 +342,10 @@ es la única escala distinta del sistema.
 | `--r-ficha` | 12 px | Las fichas y las tarjetas. |
 | `--r-foto` | 8 px | La foto y el placeholder de una tarjeta. |
 
-**Nada es circular ni de radio completo.** Un chip con `border-radius: 999px` es
-la píldora de Material, que está descartada.
+**Ningún control con texto es de radio completo.** Un chip con `border-radius:
+999px` es la píldora de Material, que está descartada. Lo redondo es lo que no
+lleva palabras: los contadores (§6.4, §6.17), la flecha del carrusel (§6.21), la
+marca de incompleta (§6.5) y las muestras de color de una categoría.
 
 ### 4.3 Borde
 
@@ -364,17 +359,19 @@ para los controles y los separadores internos.
 
 ## 5. Motion
 
-**Casi nada se mueve.** El sistema tiene exactamente tres transiciones:
+**Casi nada se mueve.** El sistema tiene cuatro movimientos:
 
 | Qué | Duración | Curva |
 |---|---|---|
-| Cambio de estado de un control (presionado, foco) | 120 ms | `ease-out` |
-| Aparición de un aviso | 160 ms | `ease-out` |
-| Cambio de posición del conmutador de cocina | 140 ms | `ease-out` |
+| El menú lateral que entra y sale, y su velo | 200 ms | la del navegador |
+| El desplazamiento del carrusel de tags al tocar una flecha | el del navegador (`scroll-behavior: smooth`) | — |
+| La estrella de favorito que se llena mientras Drive contesta (§6.22) | 2 s, en bucle | lineal |
 | Giro del indicador de carga | 900 ms, en bucle | lineal |
 
-**Todo lo demás es instantáneo.** No hay transiciones de pantalla, ni skeletons
-que pulsan, ni nada que entre solo.
+**Todo lo demás es instantáneo:** el cambio de estado de un control, la aparición
+de un aviso, el conmutador de cocina. No hay transiciones de pantalla, ni
+skeletons que pulsan, ni nada que entre solo. El degradé y las flechas del
+carrusel aparecen y desaparecen atados a la posición del scroll, no al tiempo.
 
 ### 5.1 El indicador de carga
 
@@ -388,15 +385,38 @@ vacío no se distingue de un bloque vacío de verdad.
 que decir (`E05-Cimientos.md` C05.5.2). La regla es esa — con número, barra; sin
 número, spinner.
 
-**`prefers-reduced-motion: reduce` elimina las transiciones**, y todo pasa a ser
-instantáneo. El spinner sobrevive: es lo único que informa que algo está pasando. No hay ninguna información que dependa del movimiento.
+**`prefers-reduced-motion: reduce` elimina los cuatro movimientos:** el menú
+aparece sin transición, el carrusel salta, el spinner queda quieto y la estrella
+se dibuja llena a la mitad, fija. No hay ninguna información que dependa del
+movimiento.
 
 ---
 
 ## 6. Componentes core
 
-Los del Hito 6, con tokens aplicados, más los que se sumaron después de usar
-la app (P27, P29).
+Con tokens aplicados. Los que son sistema —encabezado, ficha, botón, tarjeta,
+placeholder, marca de incompleta, chip, campo, aviso, ítem de ingrediente,
+spinner— están en `src/ui/tokens.css`; los que son de una pantalla, en
+`src/ui/base.css`.
+
+### 6.0 Cómo responde un control
+
+Tres convenciones valen para todos los componentes:
+
+- **Elegido se dibuja invertido** —fondo `--fg`, texto `--bg`, borde `--fg`—, no
+  con el acento: el botón de tag especial (§6.10b), el botón de duración
+  (§6.18), el conmutador de orden (§6.20) y el sol encendido de cocina (§6.12).
+  `--acento` está reservado para las acciones y para lo que está activo como
+  filtro o como destino: el chip encendido (§6.10) y el ítem actual del menú
+  (§6.17). Un estado declarado pintado de acento compite con *Guardar*, que está
+  a centímetros. Todos llevan `aria-pressed`.
+- **El presionado es lo que vale en el teléfono:** mientras el dedo está apoyado
+  (`:active`), el control pasa a `--surface-alta` —el ícono, el botón secundario
+  y el de peligro, la tarjeta, la entrada de borrador, el ítem del menú— y el
+  primario se aclara mezclando el acento con `--fg`.
+- **El hover existe sólo bajo `@media (hover: hover)`**, con el mismo dibujo que
+  el presionado. En una pantalla táctil el hover queda pegado después de tocar,
+  hasta que se toca otra cosa.
 
 ### 6.1 Tarjeta miniatura
 
@@ -411,25 +431,23 @@ la app (P27, P29).
 | Parte | Token |
 |---|---|
 | Foto o placeholder | 56 × 56 px, `--r-foto` |
-| Título | `--txt-base`, peso 600, `--fg` |
-| Línea de contexto | `--txt-chico`, `--fg-2`, sólo datos |
-| El relojito de la duración `[del 2026-09-16, P29]` | 15 × 15 px, pegado al valor (`.dur`); mismo mapa de íconos que el editor (§6.18) |
+| Título | `--txt-base`, peso 600, `--fg`; hasta dos renglones, después elipsis |
+| Línea de contexto | `--txt-chico`, `--fg-2`, sólo datos: categoría · duración · rinde |
+| El relojito de la duración | 15 × 15 px, pegado al valor (`.dur`); mismo mapa de íconos que el editor (§6.18) |
 | El cuadrito `▪` de categoría | 8 × 8 px, `--r-chico`, el color de la categoría |
-| Marcas de los especiales, juntas arriba a la derecha `[cambio del 2026-09-16]` | 16 × 16 px cada una, en el orden de los especiales, `--acento`; ver §6.5. La estrella de favorito lleva además un relleno al 35 % |
+| Marcas de los especiales, juntas en la esquina de arriba a la derecha | 16 × 16 px cada una, separadas 4 px, en el orden de los especiales —favorito, menú diario, probar, incompleta—, en `--acento`; ver §6.5. La estrella de favorito lleva además un relleno del acento al 35 %. El título reserva 20 px de ancho por marca, para no pasar por debajo; una tarjeta sin marcas no reserva nada. Sin texto, así que cada una se nombra para el lector de pantalla: *Favorita*, *Menú diario*, *Para probar*, *Incompleta* |
 | Motivo, en resultados por ingrediente | `--txt-chico`, `--acento` |
 
-**Alto total: 80 px.** Entran ocho o nueve por pantalla, que es lo que la
-decisión de densidad del Hito 6 pedía.
+**Alto total: 80 px** con el título en un renglón. Entran ocho o nueve por
+pantalla.
 
-**Estados:** normal · presionada (`--surface-alta`) · sin foto (§6.2) ·
-incompleta (§6.5).
+**Estados:** normal · presionada (`--surface-alta`, §6.0) · sin foto (§6.2) ·
+con marcas.
 
 ### 6.2 Placeholder de foto
 
-`[cierra la decisión pendiente del Hito 6]`
-
-**La foto de la categoría, oscurecida, con el color de la categoría encima al
-25 %.**
+**La foto de la categoría, oscurecida con negro al 45 %, con el color de la
+categoría encima al 25 %.**
 
 - Ocupa **exactamente el mismo espacio que una foto** —56 × 56 px en la tarjeta,
   el ancho completo en la receta— para que la lista no se desalinee.
@@ -439,7 +457,7 @@ incompleta (§6.5).
 - Aporta información: **dice de qué categoría es la receta** sin ocupar una línea
   de texto, y con la misma imagen que esa categoría tiene en la grilla, así que
   se reconoce sin leer.
-- `[observado en el Hito 9]` **Dentro de una lista de categoría no aporta nada**,
+- **Dentro de una lista de categoría no aporta nada**,
   porque las veinte filas comparten categoría. Se conserva igual: su función ahí
   es que la fila no se desalinee el día que una receta tenga foto propia. Donde sí
   informa es en los resultados de búsqueda, que mezclan categorías.
@@ -492,12 +510,18 @@ que la fila no se desalinee.
 | Radio | `--r-ficha` |
 | Nombre | `--txt-chico`, peso 600, `--fg`, sobre el velo |
 | Velo | Degradado a `--velo` al 96 % desde abajo, alto `--e-6` |
+| Proporción | 4:3 |
+| Foto | El tile entero, con el color de la categoría encima al 28 % (`overlay`) |
+| Contador | Un badge en la esquina de arriba a la derecha, a `--e-2` del borde: 20 px de alto mínimo, radio completo, fondo `--velo` al 92 %, borde 1 px `--borde-fuerte`, `--txt-micro` peso 600 en `--fg`, cifras tabulares |
+| Grilla | **2 columnas** en teléfono, 4 desde 900 px, `--e-3` de separación |
 
-`[el velo, precisado en el Hito 9; tokenizado en el 11]` Al mockupear con las dieciséis fotos reales se
-vio que sobre las claras —la paella, la ensalada— un velo suave deja el nombre sin
-contraste. El velo llega a .96 abajo y sube hasta `--e-6`: el nombre siempre
-cumple 4.5:1, sea cual sea la foto.
-| Grilla | **2 columnas** en teléfono, 4 en pantalla ancha, `--e-3` de separación |
+**El velo llega a .96 abajo y sube hasta `--e-6`** para que el nombre cumpla
+4.5:1 sea cual sea la foto: sobre las claras —la paella, la ensalada— un velo
+suave lo deja sin contraste.
+
+**El contador se dibuja sólo si la categoría tiene algo.** Es casi opaco y con
+el texto claro porque cae sobre fotos de cualquier luminosidad. El orden de la
+grilla es alfabético: el número informa, no ordena.
 
 **Dos columnas y no tres:** con tres, el tile mide 110 px y la foto de categoría
 —que es lo que hace que se reconozca sin leer— deja de distinguirse. Entran menos
@@ -507,24 +531,26 @@ categoría se aprende igual porque el orden es alfabético y estable.
 **Es el único lugar donde el color de la categoría es el borde y no un cuadrito**,
 porque es el único donde la categoría es el contenido y no un dato de otra cosa.
 
-**Sin foto:** el tile es el color plano de la categoría al 20 % sobre
-`--surface`, con el nombre. No se rompe.
+**Sin foto:** una trama de rayas diagonales del color de la categoría, al 22 %
+sobre `--surface`, con el nombre. No se rompe. La misma trama es la muestra «sin
+foto» al elegir la foto de una categoría.
 
 ### 6.5 Marca de incompleta
 
-**Un círculo de 12 px a medio llenar** `[reescrita el 2026-09-12]`: 1,5 px de
+**Un círculo de 12 px a medio llenar**: 1,5 px de
 borde en `currentColor` y la mitad izquierda rellena del mismo color
 —`linear-gradient(to right, currentColor 50%, transparent 50%)`—. **En
 `--acento`**, salvo donde el contexto ya tiene un color propio.
 
-Es la misma marca en los tres lugares donde el dato se muestra, y no hay ningún
+Es la misma marca en todos los lugares donde el dato se muestra, y no hay ningún
 otro dibujo para decir lo mismo:
 
 | Dónde | Cómo |
 |---|---|
-| **Tarjeta de la lista** `[cambio del 2026-09-16]` | Junto con las demás marcas de especiales, arriba a la derecha de la tarjeta y en su orden (§6.1). Sin texto, así que cada una se nombra para el lector de pantalla. |
+| **Tarjeta de la lista** | Junto con las demás marcas de especiales, arriba a la derecha de la tarjeta y en su orden (§6.1). Sin texto, así que cada una se nombra para el lector de pantalla. |
 | **Receta abierta** | Un chip (§6.10) con el tag tal como está escrito —*incompleta*—, el primero de la fila de tags. Tocable, abre el editor (`E03-LeerYCocinar.md` C03.1.3). |
-| **Editor** | El ícono del botón `incompleta` (§6.10b) `[cambio del 2026-09-16: antes era la posición del conmutador, §6.16]`, en el color del botón y no en el acento. |
+| **Editor** | El ícono del botón `incompleta` (§6.10b), en el color del botón y no en el acento. |
+| **Carrusel de tags** | El ícono del chip `incompleta` (§6.21). |
 
 - **Nunca `--error` y nunca amarillo.** No es un problema: la receta funciona, le
   falta algo.
@@ -533,12 +559,8 @@ otro dibujo para decir lo mismo:
   única de su fila. En la tarjeta hereda ese color para que la marca sea una
   sola, aprendida una vez.
 
-**Por qué a medio llenar y no un círculo vacío:** el aro vacío de la 2.0 no decía
-nada. Al lado de un título se leía como viñeta, y en el conmutador, como el
-símbolo de apagado. Medio relleno dice "hecha a medias", que es exactamente el
-estado. Un signo de exclamación lee como advertencia y un triángulo como error;
-un lápiz nombra la acción, no el estado, y se repetiría con el botón *Editar* que
-está a centímetros.
+**Por qué a medio llenar:** dice "hecha a medias", que es exactamente el estado.
+Un aro vacío al lado de un título se lee como viñeta.
 
 ### 6.6 Ficha
 
@@ -562,21 +584,25 @@ anidado usa `--surface-alta` y no lleva borde.
 Alto 48 px (64 en cocina), padding lateral `--e-4`, `--r-medio`,
 `--txt-base` peso 600.
 
-**Variante compacta: 40 px de alto.** `[agregada en el Hito 9]` Existe para un
-solo lugar: **un botón dentro del encabezado de pantalla**, que mide 56 px y no
-puede contener uno de 48 con aire alrededor. Es el caso de *Guardar* en el
-editor, *Salir* en cocina y *Descartar* en el borrador. **Su área táctil sigue
-siendo de 48 px**, porque el padding vertical del encabezado la completa. Fuera
-del encabezado no se usa.
+**Variante compacta: 40 px de alto.** Existe para **un botón dentro de otra
+barra**: el encabezado de pantalla, que mide 56 px y no puede contener uno de 48
+con aire alrededor —*Guardar* en el editor, *Editar* en el borrador, *Salir* en
+cocina, *+ Nueva* en Categorías—, el botón de un aviso con acción (§6.8) y el de
+una fila de Ajustes —*Salir*, *Cambiar carpeta*, *Categorías ›*—. **Su área
+táctil sigue siendo de 48 px**, porque el alto de la barra la completa; en
+cocina, de 64 (§6.12). Suelto en el cuerpo de una pantalla no se usa.
 
-**Estados:** normal · presionado (fondo un escalón más claro) · foco (contorno de
-2 px `--acento` a 2 px de separación) · trabajando (el texto se reemplaza por el
-verbo en gerundio: *"Guardando"*) · deshabilitado (`--fg-3`, sin fondo).
+**Estados:** normal · presionado y hover (§6.0) · trabajando (el texto se
+reemplaza por el verbo en gerundio: *"Guardando…"*; en la ficha de compartir, un
+spinner de 16 px adelante: *"Armando el PDF…"*) · deshabilitado (`--fg-3`, sin
+fondo, borde `--borde`).
 
-**No hay botón flotante.** Está vetado desde el Hito 6.
+**Con ícono,** va a la izquierda de la palabra, a `--ico`, con `--e-2` de
+separación.
 
-**Un logo ajeno adentro de un control no sigue la regla de trazo.**
-`[agregada el 2026-09-12]` Los íconos del sistema son de trazo, 1,5 px,
+**No hay botón flotante.**
+
+**Un logo ajeno adentro de un control no sigue la regla de trazo.** Los íconos del sistema son de trazo, 1,5 px,
 `currentColor` (§3.4). El logo de Drive del link al `.md` (`E03-LeerYCocinar.md`
 C03.1.2b) es el favicon de Google, a color y relleno: redibujarlo de trazo lo
 vuelve irreconocible, que es lo único que el logo aporta. La regla es que un
@@ -593,7 +619,7 @@ Dos niveles, como fija `E05-Cimientos.md` C05.9.1.
 | Nivel | Forma |
 |---|---|
 | **Con acción** | Ficha con fondo `--error-suave` y borde `--error`. El mensaje en `--fg`, el botón secundario a la derecha. Aparece donde ocurrió el problema. |
-| **Sin acción** | Una línea de `--txt-chico` en `--fg-2`, sin fondo ni borde. Se acumula en Ajustes. |
+| **Sin acción** | Una nota de `--txt-base` en `--fg-2`, sin fondo ni borde (`.aviso-mudo`): es prosa, y la prosa no baja de 16. Las de Ajustes —Avisos, Archivos locales, Registro de actividad— son todas así. La excepción es la nota debajo de los botones de duración (§6.18), que va en `--txt-chico`. |
 
 Ninguno se cierra solo, ninguno lleva ícono y ninguno muestra el error crudo.
 
@@ -602,12 +628,14 @@ Ninguno se cierra solo, ninguno lleva ícono y ninguno muestra el error crudo.
 `--surface-alta`, borde 1 px `--borde-fuerte`, `--r-medio`, padding `--e-3`,
 alto mínimo 48 px, `--txt-base`.
 
-**La casilla de verificación mide 22 px** `[agregada en el Hito 9]`, con
-`--acento` de color y un área táctil de 48 px que incluye su etiqueta: la etiqueta
-es parte del control, no un texto al lado. **Hoy no la usa ninguna pantalla**
-`[2026-09-12]`: era el control de la completitud y lo reemplazó el conmutador de
-dos posiciones (§6.16). Queda definida porque el sistema la va a necesitar, no
-porque esté puesta en algún lado.
+**El desplegable lleva un chevron propio**, no el del navegador, que ignora el
+padding y queda pegado al borde derecho: el trazo de los íconos (§3.4), 16 px, en
+`--fg-2`, a `--e-4` del borde. Es una imagen de fondo del `select`, con el color
+escrito a mano porque adentro de un `url()` no llegan las variables.
+
+**La casilla de verificación mide 22 px**, con `--acento` de color y un área
+táctil de 48 px que incluye su etiqueta: la etiqueta es parte del control, no un
+texto al lado. **No la usa ninguna pantalla**; está definida en `tokens.css`.
 
 Etiqueta arriba en `--txt-chico` y `--fg-2`. Foco: borde `--acento` de 2 px.
 Placeholder en `--fg-3`, y **nunca reemplaza a la etiqueta**.
@@ -619,31 +647,38 @@ crecen con el contenido, con un mínimo de tres renglones.
 
 Para los tags y los metadatos de la receta.
 
-Fondo un tono por encima de `--surface-alta` `[subido el 2026-09-12]` —
+Fondo un tono por encima de `--surface-alta` —
 `color-mix(in srgb, var(--surface-alta) 86%, var(--fg))`—, borde 1 px
-`--borde-fuerte`, `--r-chico`, padding `--e-1` `--e-2`, `--txt-chico`. Alto 32 px,
-con área táctil de 48 px cuando es tocable.
+`--borde-fuerte`, `--r-chico`, padding lateral `--e-2`, `--txt-chico` en `--fg`.
+Alto 32 px.
 
-**Por qué el tono subió:** con `--surface-alta` el chip desaparecía sobre los dos
-fondos donde vive. En el editor comparte fondo con el campo de agregar un tag, y
-la fila de tags puestos se leía como parte del campo; en la receta abierta se
-funde con la ficha. Es el mismo chip en las dos pantallas: un tag se tiene que
-ver igual donde se pone y donde se lee.
+**Por qué un tono por encima:** con `--surface-alta` el chip desaparece sobre los
+dos fondos donde vive. En el editor comparte fondo con el campo de agregar un
+tag, y en la receta abierta se funde con la ficha. Es el mismo chip en las dos
+pantallas: un tag se tiene que ver igual donde se pone y donde se lee.
 
-**Activo** —un tag aplicado como filtro— usa `--acento-suave` de fondo, borde
-`--acento` y texto `--acento`, y muestra una `×`.
+**Con ícono** —un tag especial lleva el suyo adelante (§3.4), y un chip de
+duración su relojito—: 14 px, trazo de 1.5 px, al 70 % de opacidad.
 
-**Removible** —un tag del editor— `[agregado el 2026-09-12]` es el chip normal
-más una `×` de trazo de 14 px en `currentColor` a 70 % de opacidad, y el chip
-entero es el botón que lo saca. No hay una cruz con su propia área táctil
-adentro: a 32 px de alto no entra un segundo blanco de 48. Debajo de la fila de
-chips van `--e-3` de aire antes del campo de agregar.
+**Con número** —en el carrusel de tags (§6.21) y en la fila de duraciones
+(§6.19)—: la cantidad de recetas a la derecha, en `--fg-3` y cifras tabulares.
 
-**Pendiente** —el estado de una receta incompleta, en la receta abierta—
-`[agregado el 2026-09-12]` usa los mismos valores que **Activo**, con la marca de
-§6.5 adelante y el tag tal como está escrito, *incompleta*. Son clases distintas
-porque significan cosas distintas: uno es un filtro puesto, el otro un estado
-del contenido.
+**Encendido** —un tag o una duración aplicados como filtro— usa `--acento-suave`
+de fondo, borde `--acento` y texto `--acento`; el número hereda el color, al
+80 %. **No lleva cruz:** se apaga tocándolo de nuevo. En la lista por tag, el
+chip del tag de la ruta va encendido y no es tocable: cambiar de tag es volver y
+elegir otro.
+
+**Removible** —un tag del editor— es el chip normal más una `×` de trazo de 14 px
+en `currentColor` a 70 % de opacidad, y el chip entero es el botón que lo saca.
+No hay una cruz con su propia área táctil adentro: a 32 px de alto no entra un
+segundo blanco de 48. Debajo de la fila de chips van `--e-3` de aire antes del
+campo de agregar.
+
+**Pendiente** —el estado de una receta incompleta, en la receta abierta— usa los
+mismos valores que **Encendido**, con la marca de §6.5 adelante y el tag tal como
+está escrito, *incompleta*. Son clases distintas porque significan cosas
+distintas: uno es un filtro puesto, el otro un estado del contenido.
 
 **Un tag reservado no llega a ser chip:** el editor lo rechaza al agregarlo y lo
 dice en una línea de `--txt-chico` en `--error`, sin caja ni botón
@@ -651,20 +686,20 @@ dice en una línea de `--txt-chico` en `--error`, sin caja ni botón
 
 ### 6.10b Botón de tag especial
 
-`[agregado el 2026-09-16, reemplaza al uso del conmutador de dos posiciones
-en §6.16]` Cuatro botones —uno por tag especial—, dentro del campo **«Tags»**
+Cuatro botones —uno por tag especial: `favorito`, `menú diario`, `probar`,
+`incompleta`—, dentro del campo **«Tags»**
 del editor, en una **grilla de 2 × 2** arriba de los tags comunes y del campo
-para agregar (`E04-Corregir.md` C04.2.1b, C04.4.1). Cada uno lleva su ícono
-(§3.4) y su nombre, con `aria-pressed`.
+para agregar (`E04-Corregir.md` C04.2.1b, C04.4.1), con `--e-2` entre sí. Cada
+uno mide 48 px de alto mínimo, `--r-medio`, `--txt-base` peso 600, y lleva su
+ícono (§3.4) a 16 px y el tag tal como se escribe, con `aria-pressed`.
 
 | Estado | Fondo | Texto | Borde |
 |---|---|---|---|
 | **Suelto** | `--surface-alta` | `--fg-2` | 1 px `--borde` |
 | **Apretado** | `--fg` | `--bg` | 1 px `--fg` |
 
-**Apretado se dibuja invertido, no con el acento** — la misma convención del
-estado elegido que usaba el conmutador de completitud (§6.16), que este botón
-reemplaza.
+**Apretado se dibuja invertido, no con el acento** (§6.0). Con puntero, un botón
+suelto sube su texto a `--fg` al pasar por encima.
 
 **`incompleta` apretado y deshabilitado** —sin título, categoría, ingredientes
 o pasos— no se puede tocar, y debajo lleva la leyenda de qué falta, como un
@@ -697,29 +732,43 @@ de un vistazo. El nombre queda del lado donde empieza la lectura.
 **Nombres largos:** el nombre puede ocupar dos renglones; la cantidad se mantiene
 arriba a la derecha, alineada con el primero.
 
-Los grupos —los `###` del `.md`— son `--txt-chico` en `--fg-2`, en versalitas,
-con `--e-4` arriba.
+Los grupos —los `###` del `.md`— son `--txt-chico` en `--fg-2`, en mayúsculas con
+`.06em` de espaciado, con `--e-4` arriba.
 
 ### 6.12 Encabezado de pantalla
 
 Alto 56 px, fondo `--bg`, borde inferior 1 px `--borde`.
 
 Volver a la izquierda como control de 48 px —no un chevron chico—, título al
-medio en `--txt-base` peso 600, acciones a la derecha.
+medio en `--txt-base` peso 600, acciones a la derecha. En las pantallas de
+primer nivel, a la izquierda va la hamburguesa del menú (§6.17) y el título va en
+`--txt-titulo`, centrado en la barra y no en el hueco que dejan los controles.
+El total de una lista —las recetas de una categoría, los borradores— va a la
+derecha, en `--txt-chico` `--fg-2` y cifras tabulares. En la lista por tag de un
+especial, su ícono va antes del título, a `--ico`.
 
-**No es pegajoso.** En modo cocina se va con el scroll, y **queda pegado solo el
-conmutador**: 64 px fijos arriba en vez de 120.
+**Queda pegado arriba en la receta abierta y en el editor**, donde las acciones
+—la estrella, *Compartir*, *Guardar*— tienen que estar a mano en cualquier punto
+del scroll. El título ahí se recorta a una línea con elipsis. En las demás
+pantallas se va con el scroll.
 
-**Las barras pegadas se separan con un borde, no con un degradado.**
-`[precisada en el Hito 9]` Al mockupear se vio que un degradado sobre fichas deja
-el contenido cortado a mitad detrás de él, que lee como un error de dibujo. Fondo
-`--bg` opaco y 1 px de `--borde` arriba — la misma regla que el resto del sistema:
-los límites se marcan con borde. Volver y salir se recuperan
-scrolleando hacia arriba, o con el gesto del sistema.
+**En modo cocina el encabezado mide 64 px y cada control suyo toca en
+64 × 64** —volver, el sol, *Salir*—, como pide §1. El sol y *Salir* se dibujan
+como una caja de 40 px de alto con borde `--borde-fuerte` adentro de sus 64: sin
+reborde, un ícono suelto no se lee como algo que se toca. **El sol encendido se
+invierte** (§6.0). El encabezado de cocina se va con el scroll, y **queda pegado
+solo el conmutador** (§6.14): 64 px fijos arriba en vez de 128. Volver y salir se
+recuperan scrolleando hacia arriba, o con el gesto del sistema.
+
+**Las barras pegadas se separan con un borde, no con un degradado.** Un degradado
+sobre fichas deja el contenido cortado a mitad detrás de él, que lee como un
+error de dibujo. Fondo `--bg` opaco y 1 px de `--borde` — la misma regla que el
+resto del sistema: los límites se marcan con borde. Vale también para el pie de
+acciones de la receta, pegado abajo.
 
 ### 6.13 Paso de la preparación, en cocina
 
-`[agregado en el Hito 9]` Tres estados, y ninguno persiste (`E03-LeerYCocinar.md`
+Tres estados, y ninguno persiste (`E03-LeerYCocinar.md`
 C03.2.4).
 
 | Estado | Cómo se ve |
@@ -740,55 +789,19 @@ Dos posiciones del mismo ancho, pegado arriba, alto 64 px.
 Inactiva: `--surface`, texto `--fg-2`. Activa: `--surface-alta`, texto `--fg`,
 con una barra de 3 px de `--acento` abajo.
 
-`--txt-base` peso 600. La transición de la barra dura 140 ms.
+`--txt-base` peso 600. Cada posición lleva su ícono —la zanahoria, la lista
+numerada— a `--ico-cocina`, al lado de la palabra. El cambio es instantáneo.
 
 ### 6.15 Entrada de borrador
 
-Ficha de `--e-3` de padding: título en `--txt-base` peso 600, fuente en
-`--txt-chico` `--fg-2` cortada con elipsis a una línea, y la fecha en
-`--txt-micro` `--fg-3` a la derecha.
-
-### 6.16 Conmutador de dos posiciones
-
-`[agregado el 2026-09-12]` Dos botones del mismo ancho, uno al lado del otro con
-`--e-2` de separación, cada uno de 48 px de alto y `--r-medio`. Una sola posición
-es verdadera. **Hoy no lo usa ninguna pantalla** `[2026-09-16]`: era el control
-de completitud del editor y lo reemplazó el botón de tag especial (§6.10b,
-`E04-Corregir.md` C04.4.1). Queda definido porque el sistema lo va a necesitar,
-no porque esté puesto en algún lado.
-
-| Posición | Fondo | Texto | Borde |
-|---|---|---|---|
-| **Sin elegir** | `--surface-alta` | `--fg-2` | 1 px `--borde` |
-| **Elegida** | `--fg` | `--bg` | 1 px `--fg` |
-| **Deshabilitada** | transparente | `--fg-3` | 1 px `--borde` |
-
-`--txt-base` peso 600, centrado. Al pasar por encima, una posición sin elegir
-sube su texto a `--fg`.
-
-**La posición elegida se marca invirtiendo, no con el acento.** `--acento` está
-reservado para acciones —lo que se toca para que algo pase— y para el ítem activo
-de la navegación. Un estado declarado no es una acción: pintarlo de acento lo
-hace competir con el botón de guardar, que está a centímetros. La inversión es el
-contraste más alto que tiene el sistema y no gasta un color semántico.
-
-**Ningún estado del sistema se dibuja en `--error`.** Se probó *Incompleta* en
-rojo y se leyó como que algo había fallado. Es la misma regla de la marca de
-incompleta (§6.5): a la receta le falta algo, no está rota.
-
-Una posición deshabilitada lleva debajo la leyenda de qué falta para habilitarla,
-en `--txt-chico` `--fg-2` con interlineado 1,5 — un aviso sin acción (§6.8), no
-un error.
-
-**No es el conmutador de cocina (§6.14).** Aquél elige qué se mira y ocupa el
-ancho pegado arriba; éste declara un estado y vive dentro de una ficha.
+Ficha de `--e-3` de padding: título en `--txt-base` peso 600 y la fecha en
+`--txt-micro` `--fg-3` a la derecha. La fuente y la nota no van en la fila: están
+adentro del borrador, y acá competían con el título.
 
 ### 6.17 Menú lateral
 
-`[agregado el 2026-09-12]` La navegación primaria de la app: Inicio —la pantalla
-del Recetario, que no repite el nombre de la marca—, Borradores, Nueva receta y
-Ajustes. Reemplaza a los accesos sueltos en el
-encabezado de cada pantalla.
+La navegación primaria de la app: Inicio —la pantalla del Recetario, que no
+repite el nombre de la marca—, Borradores, Nueva receta y Ajustes.
 
 Panel de **260 px** de ancho, pegado a la izquierda y de alto completo.
 `--surface`, borde derecho 1 px `--borde`, padding `--e-4`.
@@ -808,10 +821,19 @@ la izquierda con `--e-3` de separación, texto en `--fg` peso 600, y `--e-1` ent
 píldora de 20 px de alto mínimo, `--surface-alta`, borde 1 px `--borde-fuerte`,
 `--txt-micro` peso 600 en `--fg-2`, con cifras tabulares. Es el mismo recurso que
 el contador del tile de categoría (§6.4) y se dibuja sólo si hay algo que contar.
+Con el menú cerrado, el mismo número va sobre la hamburguesa, en una píldora de
+18 px.
+
+**Al pie, la versión de la app,** en `--txt-micro` `--fg-3` y cifras tabulares:
+sirve para saber si el teléfono ya tomó la última publicación.
 
 **Dos comportamientos según el ancho, un solo menú.** Abajo de 900 px es un cajón
 que entra desde la izquierda en 200 ms, sobre un velo de `--velo` al 60 %, y se
-abre con el botón de hamburguesa del encabezado; el velo lo cierra al tocarlo.
+abre con el botón de hamburguesa del encabezado o deslizando hacia la derecha; el
+velo lo cierra al tocarlo, y deslizar hacia la izquierda también. **El gesto
+empieza a 24 px del borde** —desde el borde mismo Android lo toma como «atrás»— y
+no arranca sobre el carrusel de tags (§6.21) ni la fila de duraciones (§6.19),
+que se deslizan en el mismo sentido.
 Desde 900 px queda fijo, el velo y la hamburguesa desaparecen, y el contenido se
 corre 260 px. **Es sólo CSS:** la misma marca dibujada, una consulta de medios
 decide. Con `prefers-reduced-motion` el cajón aparece sin transición.
@@ -822,9 +844,7 @@ del mismo lado.
 
 ### 6.18 Botones de duración, en el editor
 
-`[agregado el 2026-09-16, P29]` Reemplaza al campo «Tiempo» de texto.
-«Rinde» pasa a ocupar la fila entera, y «Duración» va debajo, también a lo
-ancho.
+El campo **«Duración»** del editor: va debajo de «Rinde», los dos a lo ancho.
 
 Cinco botones (`.dur-btn`), uno por valor, en una grilla de **tres columnas**
 (`.duraciones`) separadas `--e-2`. Cada uno mide un mínimo de **72 px** de
@@ -836,47 +856,121 @@ alto, con el relojito arriba —24 px, en `--fg`— y el valor abajo, en
 | **Suelto** | `--surface-alta` | `--fg-2` | 1 px `--borde` |
 | **Apretado** | `--fg` | `--bg`, ícono incluido | 1 px `--fg` |
 
-**Se aprieta uno a la vez, y tocar el apretado lo suelta:** la misma
-inversión que el botón de tag especial (§6.10b), no el conmutador de dos
-posiciones (§6.16).
+**Se aprieta uno a la vez, y tocar el apretado lo suelta.** La inversión es la
+del botón de tag especial (§6.10b, §6.0). El reloj de `>1 día` corta con el fondo
+del botón: `--fondo-reloj` vale `--surface-alta` suelto y `--fg` apretado.
 
 Debajo de la grilla, en `--txt-chico` `--fg-2` (`.aviso-mudo`): *"Hasta comer,
 con reposo y horno incluidos."*
 
 ### 6.19 Fila de chips de duración
 
-`[agregado el 2026-09-16, P29]` Debajo del carrusel de tags (P27), en la
+Debajo del carrusel de tags (§6.21), en la
 categoría y en la lista por tag. Mismo chip que §6.10 —`.fila-dur .chip`—,
 con el relojito (14 px, como cualquier ícono de chip) y la cantidad en
 `--fg-3` a la derecha del valor, en el orden de los cinco valores.
 
-Se desliza como el carrusel de tags: overflow horizontal sin degradé ni
-flechas, con el mismo margen negativo hasta el borde de la pantalla.
+Se desliza de costado como el carrusel de tags, pero sin degradé ni flechas, y
+con margen negativo para llegar hasta el borde de la pantalla.
 
 Un chip encendido usa la variante `.act` —fondo `--acento-suave`, borde y
-texto `--acento`—, la misma de un tag activo.
+texto `--acento`—, la misma de un tag encendido. `--fondo-reloj` sigue al fondo
+del chip en los dos estados.
 
 **No se dibuja si ninguna receta de la lista tiene duración**, y un valor sin
 recetas no se dibuja salvo que esté encendido, para poder apagarlo.
 
 ### 6.20 Conmutador de orden
 
-`[agregado el 2026-09-16, P29]` «A–Z | ◷ Duración» (`.orden-seg`), en una
+«A–Z | ◷ Duración» (`.orden-seg`), en una
 fila propia alineada a la derecha (`.orden`), debajo del filtro; en la
 búsqueda, arriba de los grupos y sin fila de filtro.
 
 Dos botones del mismo panel (`--borde` de 1 px alrededor, `--r-medio`,
 separados por un borde de 1 px entre sí): alto mínimo **40 px**, sin fondo ni
-borde propios, texto `--fg-2`; el elegido invierte a fondo `--fg` y texto
-`--bg`. El botón de Duración lleva el relojito de `~30 min` como ícono
+borde propios, `--txt-chico` peso 600 en `--fg-2`; el elegido invierte a fondo
+`--fg` y texto `--bg` (§6.0). El botón de Duración lleva el relojito de `~30 min` como ícono
 genérico, 16 px.
 
-**No es el conmutador de dos posiciones del §6.16** —que declara un estado
-adentro de una ficha— **ni el de cocina del §6.14** —que ocupa el ancho
-pegado arriba—: es un patrón propio, más chico y dentro de la fila de orden.
+**No es el conmutador de cocina del §6.14** —que ocupa el ancho pegado
+arriba—: es un patrón propio, más chico y dentro de la fila de orden.
 
 Vuelve a A–Z al cambiar de pantalla, y no se dibuja si ninguna receta de la
 lista tiene duración.
+
+### 6.21 Carrusel de tags
+
+Una fila de chips (§6.10) que se desliza de costado, con `--e-2` entre sí y sin
+barra de scroll. Vive entre la búsqueda y las categorías en el Recetario, y
+arriba de la lista en la categoría y en la lista por tag.
+
+**El orden:** los tags especiales primero, en su orden —favorito, menú diario,
+probar, incompleta— y sólo los que tienen alguna receta; después los comunes,
+por cantidad de recetas y alfabético en el empate. Cada chip lleva su número, y
+los especiales su ícono. En el Recetario y en la lista por tag entran hasta
+veinte comunes.
+
+**Qué hace un toque:** en la categoría y en la lista por tag, enciende el chip y
+filtra la lista; en el Recetario, abre la lista de ese tag.
+
+**Un degradé de 40 px a `--bg` dice que sigue:** a la derecha mientras quede
+algo por ver, a la izquierda sólo cuando ya se corrió. Se ata a la posición del
+scroll con `animation-timeline`, sin JavaScript; sin desborde no se dibuja
+ninguno, y donde no haya soporte se ven los dos siempre.
+
+**Las flechas existen sólo con mouse o trackpad** —`@media (hover: hover) and
+(pointer: fine)`—; en el teléfono se desliza con el dedo. Son un círculo de
+32 px, `--surface-alta`, borde 1 px `--borde-fuerte`, con el chevron a 16 px:
+`volver` a la izquierda y `chevron` a la derecha. Aparecen y desaparecen con el
+mismo rango que su degradé, y mientras están ocultas no se pueden tocar. Con
+flechas, el carrusel deja 40 px de aire a cada lado.
+
+### 6.22 Estrella de favorito
+
+Un botón de ícono de 48 px en el encabezado de la receta, el primero de la
+derecha, con `aria-pressed`. Son dos estrellas superpuestas, a `--ico`: el
+contorno en `currentColor`, y encima la llena —trazo `--acento` y relleno del
+acento al 45 %—, recortada.
+
+| Estado | Cómo se ve |
+|---|---|
+| **Sin marcar** | El contorno en `--fg`; la llena, recortada entera. |
+| **Favorita** | Todo en `--acento`, con la llena a la vista. |
+| **Escribiendo en Drive** | En `--acento`, y la llena se descubre de izquierda a derecha en 2 s, en bucle. El resultado se dibuja recién con la respuesta. Con `prefers-reduced-motion`, fija a la mitad. |
+
+Si la escritura falla, el aviso con *Reintentar* va arriba del cuerpo de la
+receta (§6.8) y la estrella vuelve a como estaba.
+
+**La estrella es el único tag especial que se pone desde la receta;** los otros
+tres se ponen desde el editor (§6.10b). En la fila de tags de la receta,
+`favorito` no se repite como chip.
+
+### 6.23 Ficha de compartir
+
+Una hoja pegada al pie de la receta, sobre un velo de `--velo` al 60 %:
+`--surface`, borde superior 1 px `--borde`, `--r-ficha` en las dos esquinas de
+arriba, padding `--e-4` más el área segura de abajo, ancho máximo 680 px. El
+título, *Compartir*, en *base fuerte*. Adentro, botones secundarios a lo ancho,
+con `--e-2` entre sí: **PDF**, **Link**, **Texto** y **Cancelar**.
+
+| Paso | Qué muestra |
+|---|---|
+| **Armando el PDF** | El botón de PDF deshabilitado, con un spinner de 16 px y *"Armando el PDF…"*; los otros dos, deshabilitados. |
+| **PDF listo** | *"El PDF está listo."*, **Enviar PDF** como primario y *Cancelar*. |
+| **Falló el PDF** | El aviso con acción: *"No pude armar el PDF."* y *Reintentar*. |
+| **Copiado** | *"Link copiado."* o *"Texto copiado."*, y *Listo*. |
+| **Sin portapapeles** | *"Copialo desde acá:"* y el contenido en un cuadro —`--bg`, borde `--borde`, `--r-medio`, `--txt-chico` `--fg-2`, hasta 40 % del alto de la pantalla, seleccionable de un toque— y *Listo*. |
+
+**Con la ficha abierta, la página de atrás no se desplaza.** La cierran
+*Cancelar*, el velo y volver. Es estado de la pantalla, no una ruta.
+
+**El PDF** es una hoja de **105 × 180 mm** con 8 mm de margen, **en el tema
+oscuro**: los neutros de §2.1 —`--bg` de fondo, `--surface` y los dos bordes
+para las fichas, `--fg`, `--fg-2` y `--fg-3` para el texto—, sin acento ni color
+de categoría. Lleva **Inter embebida** —regular, semibold e itálica— porque un
+PDF no puede usar la fuente del sistema, y Inter tiene ⅓ y ⅔. La escala es la de
+la receta abierta, reducida a la hoja: título, título de sección con su divisor,
+cuerpo y texto chico para el contexto, la fuente y los rótulos de grupo.
 
 ---
 
@@ -887,12 +981,21 @@ lista tiene duración.
 | Margen lateral en teléfono | `--e-4` |
 | Ancho máximo de la columna | **680 px**, centrada |
 | Ancho máximo del cuerpo de lectura | **62 caracteres** |
-| Punto de quiebre de la grilla | 720 px: las grillas pasan de 2 a 4 columnas |
-| Punto de quiebre del menú | 900 px: el menú lateral deja de ser cajón y queda fijo (§6.17) |
+| Punto de quiebre | **900 px**, uno solo: las grillas pasan de 2 a 4 columnas y el menú lateral deja de ser cajón y queda fijo (§6.17) |
 
 **No hay layout de escritorio propio.** Es la misma app, más ancha
 (`E05-Cimientos.md` C05.10.1). El menú fijo desde 900 px no es una excepción: es
 el mismo menú, dibujado igual, al que le sobra lugar para quedarse abierto.
+
+### 7.1 El ícono de la app
+
+**Una olla con vapor, en los colores de la app:** fondo `--bg`, la olla y su tapa
+en `--acento`, tres hilos de vapor en `--fg`. La fuente es `public/icono.svg`
+—que es también el favicon—, y de ahí salen los PNG de 192 y 512 px del
+manifest, declarados `any` y `maskable`: el dibujo entra en la zona segura de
+Android, un círculo del 40 % del lado, así que el mismo archivo sirve recortado.
+Es la única figura rellena del producto: a 48 px en la pantalla del teléfono, un
+trazo de 1.5 no se ve.
 
 ---
 

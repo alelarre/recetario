@@ -14,7 +14,7 @@ inventada — el usuario es conocido y está disponible para preguntarle.
 
 El peso del documento está en la segunda parte: **los contextos de uso**. Son
 cuatro, con condiciones físicas y de atención muy distintas entre sí, y son
-ellos —no la persona— los que arbitran el diseño en los Hitos 5 y 6.
+ellos —no la persona— los que arbitran el diseño.
 
 ---
 
@@ -94,8 +94,7 @@ Es importante para el producto porque:
 ## 2. Contextos de uso
 
 Cuatro contextos, en el orden de importancia que el propio usuario les dio.
-**Los dos primeros son los principales, y son justo los que la app actual casi
-no atiende.**
+**Los dos primeros son los principales.**
 
 ### 2.1 Recuperar — *"ya sé qué quiero"* 🥇 Principal
 
@@ -106,17 +105,19 @@ no atiende.**
 | **Atención** | Completa. |
 | **Objetivo** | Llegar a una receta que ya tiene identificada. |
 
-**Cómo funciona hoy:** buscador de Drive por nombre, o el índice del documento
-temático. Ninguno de los dos es barrido visual: la recuperación es **por
-nombre**, y eso escala razonablemente bien.
+**Cómo lo hacía antes del producto:** buscador de Drive por nombre, o el índice
+del documento temático. Ninguno de los dos es barrido visual: la recuperación es
+**por nombre**, y eso escala razonablemente bien.
 
 **Los dos filtros que sí usa:**
 
-- **Ingredientes.** "Qué hago con lo que tengo." Es el que más consecuencias tiene: obliga a poder buscar *dentro* de los ingredientes de mil recetas, y por lo tanto tensiona el formato del `.md`. Se decide en el Hito 5 con el benchmark de formatos.
+- **Ingredientes.** "Qué hago con lo que tengo." Es el que más consecuencias tiene: obliga a poder buscar *dentro* de los ingredientes de mil recetas, y por lo tanto define el formato del `.md`: cada ingrediente es un ítem con nombre, separador y cantidad.
 - **Novedad.** Querer hacer algo distinto. **No es un dato, es un modo de uso:** no consulta ningún historial ni lo quiere. Pide que la app permita *mirar sin buscar*, no que registre qué cocinó.
 
-**Filtros que no usa** — descartados explícitamente: tiempo disponible,
-cantidad de comensales, dificultad, y no repetir lo reciente.
+**Filtros que declaró no usar:** tiempo disponible, cantidad de comensales,
+dificultad, y no repetir lo reciente. De esos, el producto sólo tiene la
+**duración** —cinco valores fijos—, que filtra y ordena las listas de recetas.
+Los otros tres no existen.
 
 ### 2.2 Archivar — *"la vi, no la quiero perder"* 🥇 Principal
 
@@ -139,18 +140,17 @@ navegador. Confirmado: **ahí se pierden recetas.**
 Consecuencias:
 
 - **El recetario no crece continuamente.** Una receta entra recién cuando está por cocinarse. Las ~1.000 del target son casi todas migración de contenido viejo, no captura de contenido nuevo.
-- **El limbo es el problema real y la app no lo toca.** Hoy Recetario recibe recetas ya convertidas; lo que se pierde, se pierde antes.
+- **El limbo es el problema real.** Lo que se pierde, se pierde antes de convertirse: por eso la app captura borradores, y no sólo recibe recetas ya convertidas.
 - **Las fuentes son de todo tipo** —videos, sitios, libros de papel, PDFs, gente que le pasa cosas— y ninguna app del mercado captura desde ellas.
 
-**Forma que el usuario le da a la solución** (definida en este hito, a detallar en
-el Hito 5):
+**Forma que el usuario le da a la solución:**
 
 | Momento | Qué pasa |
 |---|---|
 | Arranque | **Desde la app donde vio la receta**, compartiendo hacia Recetario. Si compartir no es posible, registrar al menos la fuente. |
-| Qué queda | Un **borrador**, o la receta ya procesada si se pudiera. |
-| Dónde espera | Una **sección separada** — bandeja o equivalente — no mezclada con el recetario. |
-| Quién completa | **El usuario**, en una sesión con el agente. No corre solo. |
+| Qué queda | Un **borrador**. |
+| Dónde espera | Una **sección separada** —Borradores—, no mezclada con el recetario. |
+| Quién completa | **El usuario**, en una sesión con el agente. No corre solo: desde el borrador, «Convertir con Claude» arma el pedido y lo manda, y la receta vuelve a la app compartida o pegada. |
 
 
 ### 2.3 Cocinar — *"lo tengo abierto mientras hago"* 🥉 Menor
@@ -165,15 +165,10 @@ el Hito 5):
 **Es el uso menor**, y solo para **recetas complejas o que hace muy de vez en
 cuando**. Lo que domina no lo mira.
 
-El único dolor que aparece acá es que **la pantalla se apaga**. Ya está resuelto
-en el código (`src/main.ts:93`, Wake Lock API), intencionalmente como botón manual que hay
-que acordarse de apretar porque no siempre es necesario que quede prendida.
-
-> ⚠️ **Este es el contexto para el que está construida la app actual.** El home
-> de categorías, el detalle en columna, la barra de ingredientes y el wake lock
-> sirven todos a este contexto, que resulta ser el tercero en importancia. Los
-> dos principales no tienen casi nada. Es el desajuste más grande que dejó el
-> Hito 2 y es material directo del Hito 5.
+El único dolor que aparece acá es que **la pantalla se apaga**. Lo resuelve el
+modo cocina (`src/cocina-control.ts`, Wake Lock API), intencionalmente como
+botón manual —el sol del encabezado— porque no siempre es necesario que quede
+prendida. Una vez encendido, se vuelve a pedir solo al volver de segundo plano.
 
 ### 2.4 Planificar la semana — *"me gustaría probar"* 🔬 Hipotético
 
@@ -204,24 +199,23 @@ Textual: *"todo tiene que ser reconstruible por `.md` o archivos de Drive como
 soporte"*. No es solo el recetario: alcanza al índice, al plan semanal y a la
 lista de compras. **Nada que importe puede vivir solo dentro de la app.** Es la
 consecuencia literal de que el producto sea el repositorio y la app una vista
-sobre él. Va como candidato a principio de producto en el Hito 3.
+sobre él. Es el principio 1 de `product-principles.md`.
 
 **3.2 La taxonomía está abierta.**
 Textual: *"la cantidad de carpetas o categorías es circunstancial, no es central
-a nada"*. Las 16 categorías de la implementación actual son un accidente, no una
-decisión de producto. Ninguno de los nueve jobs las menciona. El Hito 5 define la
-clasificación desde cero.
+a nada"*. Ninguno de los nueve jobs las menciona. Por eso las categorías las define el
+usuario: la app trae 16 predefinidas, y se crean, renombran y borran desde
+*Ajustes → Recetario*. La carpeta base también se elige.
 
-**3.3 Por ahora el agente vive afuera de la app.**
-El usuario lo embebería en la PWA si el camino fuera confiable; embeberlo es una
-posibilidad abierta, a explorar una vez resuelto el resto del producto. Mientras
-tanto, **la app tiene que estar diseñada para recibir borradores y esperar**, no
-para procesar.
+**3.3 El agente vive afuera de la app.**
+La app no llama a ningún modelo: **está diseñada para recibir borradores y
+esperar**, no para procesar. Cuando se quiere convertir uno, «Convertir con
+Claude» arma el pedido —el borrador y las reglas del formato— y lo manda a
+Claude; la respuesta vuelve compartida o pegada y abre el editor.
 
 Para la captura en sí no hace falta ningún agente: la **Share Target API**
 permite que la PWA sea destino del "Compartir" del sistema y escriba el borrador
-en Drive, sin backend. Funciona en Android; en iOS el equivalente es un Atajo.
-Se decide en el Hito 5.
+en Drive, sin backend. Funciona en Android, con la PWA instalada.
 
 ---
 
@@ -232,7 +226,7 @@ Registrado para que no se reabra sin decisión explícita:
 | Descartado | Motivo |
 |---|---|
 | Segunda persona, o cualquier consultante | Confirmado: no existe nadie más. |
-| Modelo de hogar, compartir, multiusuario | Consecuencia de lo anterior. |
+| Modelo de hogar, recetario compartido, multiusuario | Consecuencia de lo anterior. Mandarle una receta a alguien —PDF, link o texto— sí existe: es una copia, no un acceso al recetario. |
 | Historial de cocina (`ultima_vez`, `veces`) | *"No es necesario saber qué cociné."* La novedad se resuelve explorando, no registrando. |
-| Filtros por tiempo, comensales y dificultad | Preguntados uno por uno: no aplican. |
+| Filtros por comensales y dificultad | Preguntados uno por uno: no aplican. |
 | Uso diario del recetario | Entre semana cocina de memoria. El producto es de fin de semana. |

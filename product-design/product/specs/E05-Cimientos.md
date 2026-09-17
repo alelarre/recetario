@@ -1,43 +1,7 @@
 # E05 — Cimientos
 
-**Versión:** 3.3 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
+**Versión:** 4.0 · **Fecha:** 2026-09-17 · **Estado:** Vigente
 **Job:** J8 y transversal · **Prioridad:** alta · **Flujos:** F8, F9, F10, F11, F12
-
-> **Cambios en la 3.3 (2026-09-16):** **C05.1.1** — `tiempo` pasa a ser uno de
-> cinco valores (`~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`); lo que
-> no matchea se lee como sin duración, igual que una `dificultad` inválida. No
-> sube `SCHEMA_VERSION`: la validación es al leer, no en la fila del índice
-> (P29).
-> Spec: `docs/superpowers/specs/2026-09-16-duracion-design.md`.
->
-> **Cambios en la 3.2 (2026-09-16):** **F05.1 y F05.3 reescritas** — el
-> frontmatter pasa a siete claves: `completa` sale del esquema. La
-> completitud es el tag `incompleta` en la lista `tags` (C05.3.1); el índice
-> ya no tiene columna propia y se deriva de los tags (C05.3.2, F05.4b);
-> `sePuedeTerminar` no cambia y sigue habilitando que se pueda sacar el tag en
-> el editor (C05.3.3). `SCHEMA_VERSION` a 6. Spec:
-> `docs/superpowers/specs/2026-09-16-tags-especiales-2-design.md`.
->
-> **Cambios en la 3.1 (2026-09-12):** **F05.3 reescrita** — `completa` es un dato
-> del frontmatter que el usuario declara (C05.3.1), el índice lo copia sin
-> recalcular (C05.3.2), y la condición de título + categoría + ingredientes +
-> pasos existe sólo para habilitar el control del editor (C05.3.3). Antes la
-> completitud se derivaba al leer.
->
-> **Cambios en la 3.0 (Hito 11):** C05.4.1 — además del debounce, **se elimina la
-> cola**: nada queda esperando en almacenamiento local a que alguien lo mande
-> después. Ver `plan/delta-implementacion.md` §2.2.
->
-> **Cambio en la 2.1 (Hito 9):** C05.1.3 — la convención del ingrediente se
-> reescribió contra el contenido real del Drive: `nombre` + separador +
-> `cantidad`. Y `## Preparación` puede traer `###`.
->
-> **Cambios en la 2.0 (Hito 7):** features partidas en capacidades con criterios
-> de aceptación y edge cases. Se agregan las **reglas transversales** (§Reglas),
-> que valen para las seis épicas y no se repiten en cada una. Nuevas
-> capacidades a partir de los wireframes: el aviso de dos niveles y la pantalla
-> de Ajustes. La escritura del índice pasa a ser sincrónica, sin juntar
-> escrituras.
 
 ---
 
@@ -108,9 +72,11 @@ editarlo.
 
 Un `.md` o una fila que escribe un agente mientras la app está abierta **no
 disparan nada**. No hay polling, ni Changes API, ni refresco al volver del
-segundo plano. El cambio se ve la próxima vez que esa pantalla lee el índice.
+segundo plano. El cambio se ve la próxima vez que la app abre y lee el índice:
+al abrir, la fecha de `_indice` en Drive dice si la copia local sigue valiendo
+(C05.4.2). Un `.md` escrito afuera sin su fila aparece recién al reindexar.
 
-- [ ] Un borrador convertido por el agente sigue listado en Borradores hasta que se vuelva a entrar.
+- [ ] Un borrador convertido por el agente sigue listado en Borradores hasta que la app se vuelva a abrir.
 
 ### R7 — Android es la plataforma
 
@@ -132,16 +98,17 @@ Es lo que permite J4 sin ensuciar el archivo. Definido en
 
 #### C05.1.1 — Parsear el frontmatter *(J8)*
 
-- [ ] Se leen las siete claves: `titulo`, `tags`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`. `[cambio del 2026-09-16: completa salió del esquema, ver F05.3]`
+- [ ] Se leen las siete claves: `titulo`, `tags`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`. La completitud no es una clave: es un tag (F05.3).
 - [ ] Una clave ausente se representa como ausente, no como cadena vacía.
 - [ ] Una clave desconocida se conserva sin interpretarse.
 - [ ] `dificultad` fuera de `fácil` · `media` · `difícil` se muestra tal cual y no se corrige.
-- [ ] **`tiempo` es uno de cinco valores** `[cambio del 2026-09-16]`: `~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`. Cuenta el tiempo hasta comer, con reposo y horno incluidos. Cualquier otro texto se lee como sin duración —no se muestra, no filtra y no ordena—, igual que una `dificultad` inválida.
+- [ ] **`tiempo` es uno de cinco valores:** `~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`. Cuenta el tiempo hasta comer, con reposo y horno incluidos. Cualquier otro texto se lee como sin duración —no se muestra, no filtra y no ordena— y el `.md` no se corrige. La validación es al leer.
+- [ ] **Hay tags reservados** (C05.1.4): viven en la lista `tags` como cualquier otro, y la app los dibuja y los carga con forma propia.
 - [ ] Un archivo sin bloque de frontmatter es válido si el cuerpo permite deducir el título; si no, cae en C05.2.3.
 
 **Edge cases:** frontmatter con YAML inválido → el archivo se trata como sin
 frontmatter, y si no hay título se ignora y se cuenta (C05.2.3) · `tags` escrito
-como texto en vez de lista → se toma como un único tag · `foto` que no es una URL
+como texto suelto, sin corchetes ni guiones → se lee como sin tags · `foto` que no es una URL
 → se conserva y no se dibuja.
 
 #### C05.1.2 — Parsear el cuerpo *(J8)*
@@ -155,8 +122,6 @@ como texto en vez de lista → se toma como un único tag · `foto` que no es un
 
 #### C05.1.3 — Separar nombre y cantidad en un ingrediente *(J4)*
 
-`[reescrita en el Hito 9 contra el contenido real del Drive]`
-
 - [ ] El ítem se parte en **nombre + separador + cantidad**, en ese orden.
 - [ ] Los separadores son `-`, `—`, `;`, `,` y `|`. **Manda el primero que aparezca.**
 - [ ] **La coma solo separa si lo que sigue empieza con un dígito.** `Provenzal, 1 cucharada` se parte; `Sal, pimienta` no.
@@ -166,16 +131,22 @@ como texto en vez de lista → se toma como un único tag · `foto` que no es un
 
 **Edge cases:** `Harina 0000, 200gr?` → nombre "Harina 0000", cantidad "200gr?"; el signo de pregunta se conserva · `500gr de anillos de calamar`, con la cantidad adelante y sin separador → es el nombre entero, sin cantidad, y entra al filtro por "500gr de anillos de calamar" · ítem que empieza con el separador → cantidad sin nombre, no entra al filtro y no rompe · ítem vacío → se ignora.
 
-**Nota técnica:** esta convención se escribió **contra las ~60 recetas ya
-migradas**, no al revés. El libro de pescados usa `Anchoítas — 18-20 medianas` y
-el recetario original usa `Provenzal, 1 cucharada`: las dos fuentes ponen el
-nombre adelante. La convención anterior —la cantidad en itálica al principio— no
-la cumplía ni una sola receta.
+**Nota técnica:** la convención sale del contenido real del Drive. El libro de
+pescados usa `Anchoítas — 18-20 medianas` y el recetario original usa
+`Provenzal, 1 cucharada`: las dos fuentes ponen el nombre adelante.
+
+#### C05.1.4 — Los tags reservados *(J8)*
+
+- [ ] Cuatro tags son **especiales**: `favorito`, `menú diario`, `probar` e `incompleta`, en ese orden en cualquier fila de tags y antes que los demás.
+- [ ] Se reconocen sin mirar mayúsculas ni tildes. `favorito` se reconoce además como `favorita`, `favoritos` y `favoritas`; `incompleta`, como `incompleto`, `incompletos` e `incompletas`. Al escribir, la app usa siempre la forma canónica.
+- [ ] Ninguno se escribe a mano en el campo de tags: cada uno tiene su botón en el editor (`E04-Corregir.md`). Tampoco se acepta `terminado` ni sus formas de género y número, que contradicen a `incompleta`.
+- [ ] No suman claves al frontmatter ni columnas al índice: son valores de `tags`.
 
 ### F05.2 — Leer tolerante
 
-Un archivo con título se muestra. Lo que le falte se informa, no se castiga: se
-marca incompleta y se lista igual. Un archivo sin título se ignora y se cuenta.
+Un archivo con título se muestra y se lista igual, le falte lo que le falte: la
+app no lo castiga ni lo marca por su cuenta (la completitud la declara el
+usuario, F05.3). Un archivo sin título se ignora y se cuenta.
 
 **La app no es la autoridad sobre el formato**: los `.md` los escriben agentes y
 el usuario a mano, y eso es el caso normal.
@@ -197,47 +168,45 @@ el usuario a mano, y eso es el caso normal.
 
 ### F05.3 — La completitud la declara el usuario
 
-`[cambio del 2026-09-12: antes se derivaba del contenido; cambio del
-2026-09-16: pasa a ser el tag incompleta y completa sale del frontmatter]`
-
 Una receta está terminada cuando el usuario lo dice, y no cuando el texto alcanza
 una forma. **Es un dato del archivo** —el tag `incompleta` en la lista `tags`—,
 no un cálculo: la app lo lee y lo muestra, nunca lo deduce.
 
 Terminar una receta es un juicio. Hay recetas escritas enteras que todavía no
-están buenas, y recetas de tres líneas que sí. Derivarlo del contenido decidía
-por el usuario y además podía cambiar solo, sin que nadie tocara nada.
+están buenas, y recetas de tres líneas que sí. Derivarlo del contenido decidiría
+por el usuario y además podría cambiar solo, sin que nadie tocara nada.
 
 #### C05.3.1 — La completitud es el tag `incompleta` *(J8)*
 
-`[cambio del 2026-09-16: antes era la clave completa del frontmatter]`
-
 - [ ] Una receta está incompleta si su lista `tags` tiene `incompleta`; si no lo tiene, está terminada.
-- [ ] Se escribe siempre en la forma canónica, en minúscula. Se reconocen además `incompleto`, `incompletos` e `incompletas` como el mismo tag, igual que con los demás tags especiales (`docs/superpowers/specs/2026-09-16-tags-especiales-2-design.md` §2).
+- [ ] Se escribe siempre en la forma canónica, en minúscula. Se reconocen además `incompleto`, `incompletos` e `incompletas` como el mismo tag (C05.1.4).
 - [ ] Es el único de los cuatro tags especiales que **no** se pone y saca libremente: sólo se puede sacar cuando la receta cumple C05.3.3, y una receta nueva nace con el tag puesto (`E04-Corregir.md` C04.3b.1).
-- [ ] `completa` pasa a ser una clave desconocida como cualquier otra (C05.1.1): la app no la lee ni la borra, y la conserva tal cual si venía en el `.md`.
+- [ ] `completa` es una clave desconocida como cualquier otra (C05.1.1): la app no la lee ni la borra, y la conserva tal cual si venía en el `.md`.
 
 #### C05.3.2 — El índice no tiene columna propia *(J1, J8)*
-
-`[cambio del 2026-09-16: antes copiaba la clave completa en su propia columna]`
 
 - [ ] La fila no tiene columna de completitud. Si una receta está incompleta se sabe por su columna `tags`, igual que si es favorita (F05.4b).
 - [ ] Sigue siendo cache: un `.md` editado afuera deja la fila atrasada hasta el próximo guardado o reindexado (R4).
 
 #### C05.3.3 — Cuándo se puede sacar el tag *(J7)*
 
-`[cambio del 2026-09-16: antes habilitaba el conmutador; ahora habilita soltar el tag]`
-
-- [ ] `sePuedeTerminar` no cambia: título, categoría, al menos un ingrediente y al menos un paso.
+- [ ] La condición (`sePuedeTerminar`): título, categoría, al menos un ingrediente y al menos un paso.
 - [ ] La condición existe para habilitar que se pueda soltar el botón `incompleta` del editor (`E04-Corregir.md` C04.4.1) y **en ningún otro lado**: no filtra, no corrige y no escribe.
 - [ ] Título y categoría ya son obligatorios para guardar; se evalúan igual para que el aviso pueda decir todo lo que falta de una vez.
 - [ ] Si una receta sin el tag deja de cumplir la condición mientras se la edita, el tag vuelve a ponerse solo.
 
 ### F05.4 — El índice, y la capa compartida
 
-El índice es una Google Sheet derivada y reconstruible. **Lo escriben las dos
-partes del ecosistema con la misma función:** la app cuando guarda, y el agente
-cuando escribe una receta nueva.
+El índice es una Google Sheet, `_indice`, dentro de la carpeta base: derivada y
+reconstruible. Tiene cuatro hojas: **`recetas`** —una fila por receta
+(F05.4b)—, **`meta`** —la versión del esquema, la fecha del último reindexado y
+la marca de un reindexado en curso—, **`borradores`** —una fila por cada `.md`
+de `_borradores/`: archivo, título y cuándo se capturó— y **`categorias`** —una
+fila por subcarpeta: id, nombre, color y foto (C05.4.4)—.
+
+**Lo escriben las dos partes del ecosistema con la misma función**
+(`src/compartido.ts`): la app cuando guarda, y el agente cuando escribe una
+receta nueva.
 
 No es un formato acordado que cada uno implementa por su lado — es código común.
 Tres operaciones viven ahí: escribir una receta al índice, convertir un borrador
@@ -250,6 +219,7 @@ ecosistema.
 - [ ] Recibe la receta parseada y escribe o reemplaza **su** fila, identificada por `fileId` (R5).
 - [ ] **La escritura es sincrónica:** ocurre en el momento del guardado y no se junta con otras. **No hay debounce y no hay cola.**
 - [ ] Nada queda esperando en almacenamiento local a que alguien lo mande después: una fila encolada es una segunda fuente de verdad, que es lo que R1 prohíbe.
+- [ ] Lo mismo vale para las hojas `borradores` y `categorias`: cada captura, descarte o cambio de categoría escribe su fila en el momento.
 - [ ] La operación termina cuando Sheets confirmó; recién ahí el guardado se declara exitoso.
 - [ ] Es idempotente: repetirla con la misma receta deja una sola fila (R2).
 
@@ -261,21 +231,34 @@ escritura parcial y un JSON obligaría a reescribir el archivo entero.
 
 - [ ] Una sola lectura devuelve todas las filas: buscar entre mil recetas no lee mil archivos.
 - [ ] Lo que se lee se usa para listar y buscar; abrir una receta lee su `.md`.
-- [ ] **Hay copia local del índice, y sólo del índice** `[2026-09-13]`. Vive en `localStorage` y se usa si la fecha de `_indice` en Drive es la misma que tenía al guardarla; si no, se lee la planilla y se reemplaza. Cada escritura en `_indice` la actualiza. No sirve para dibujar sin red: ver C05.8.1.
+- [ ] **Hay copia local del índice, y sólo del índice.** Vive en `localStorage` y guarda las cuatro hojas, más qué planilla y qué carpeta base son. Al abrir se pide el `modifiedTime` de `_indice` en Drive: si es el mismo que tenía la copia al guardarse, no se lee Sheets; si no, se lee la planilla y la copia se reemplaza. Con la copia vigente, abrir es un solo pedido.
+- [ ] Cada escritura en `_indice` deja la copia al día.
+- [ ] Una copia de otra versión del esquema, de otra planilla, o que no se puede leer cuenta como que no hay copia. La copia nunca es imprescindible.
+- [ ] La premisa es que nunca hay escritura concurrente. No sirve para dibujar sin red: ver C05.8.1.
 
 #### C05.4.3 — La misma función la invocan la app y el agente *(J8)*
 
 - [ ] Las tres operaciones de la capa compartida son el único camino para escribir: no hay una ruta paralela dentro de la app.
 - [ ] **Convertir un borrador en receta** la invoca el agente al convertir afuera, y la app cuando se guarda una receta creada desde un borrador (C01.6.3).
 
-**Nota técnica:** dos escritores sobre la misma planilla, sin bloqueo. Con un
-solo usuario y sesiones que no se solapan el riesgo es bajo, y la reparación es
-reindexar (F05.5).
+**Nota técnica:** dos escritores sobre la misma planilla, sin bloqueo y sin
+lógica de concurrencia. Con un solo usuario y sesiones que no se solapan el
+riesgo es bajo, y la reparación es reindexar (F05.5) con una sola pestaña
+abierta.
+
+#### C05.4.4 — Las categorías salen del índice *(J1, J8)*
+
+- [ ] Una categoría es una subcarpeta de la carpeta base. Las carpetas que empiezan con `_` no son categorías.
+- [ ] **El color y la foto son propiedades de la carpeta** (`appProperties` `color` y `foto`, esta última como `catalogo:<clave>`). La hoja `categorias` las copia; la carpeta es la verdad.
+- [ ] La app no tiene escrito ningún id de carpeta. Las 16 predefinidas —nombre, color y foto— están en `src/categorias.ts` y sólo sirven para el setup (C05.7.4) y para darle color y foto, al reindexar, a una carpeta con nombre de predefinida que todavía no tiene propiedades.
+- [ ] Una carpeta creada a mano en Drive aparece como categoría al reindexar. Sin color ni foto se dibuja con el neutro y la trama, y no rompe nada.
+- [ ] El nombre de la categoría de cada receta sale de su carpeta, no de un texto guardado aparte.
 
 ### F05.4b — La fila del índice es completa
 
-Título, categoría, tags, fuente, foto y **los nombres de los
-ingredientes**, tal como están escritos, sin normalizar.
+Lo que hace falta para listar, buscar, filtrar y ordenar sin abrir ningún `.md`:
+título, categoría, tags, rinde, tiempo, dificultad, fuente, foto y **los nombres
+de los ingredientes**, tal como están escritos, sin normalizar.
 
 Los ingredientes están ahí porque J4 tiene que resolverse sin leer mil `.md`. No
 se normalizan porque cualquier regla que la app y el agente tuvieran que replicar
@@ -283,7 +266,8 @@ es una fuente de divergencia.
 
 #### C05.4b.1 — Las columnas de la fila *(J1, J4, J5)*
 
-- [ ] `fileId`, título, categoría, tags, fuente, foto y nombres de ingredientes. `[cambio del 2026-09-16: la columna completitud salió; si una receta está incompleta se sabe por tags]`
+- [ ] En este orden: `fileId`, nombre del archivo, título, categoría, id de la carpeta, rinde, tiempo, dificultad, fuente, tags, nombres de ingredientes, fecha de modificación y foto. No hay columna de completitud: se sabe por `tags`.
+- [ ] `tiempo` se guarda como está en el `.md` y se valida al leer la fila (C05.1.1); una `dificultad` inválida se guarda vacía.
 - [ ] La categoría se deriva de la carpeta que contiene al archivo, no del frontmatter.
 - [ ] Los nombres de ingredientes se guardan tal como están escritos: sin singularizar, sin bajar a minúsculas, sin quitar acentos.
 - [ ] Nada de lo que se guarda se usa para dibujar la receta abierta: eso sale del `.md`.
@@ -296,14 +280,15 @@ la rompe; no hay tope declarado.
 Lee todos los `.md` y rearma la planilla. Es la reparación universal: cualquier
 inconsistencia se resuelve así, porque los archivos son la verdad.
 
-Disponible desde Ajustes, y ofrecida cuando el índice está dañado.
+Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 
 #### C05.5.1 — Reindexar *(J8)*
 
-- [ ] Lista las subcarpetas de `Recetario/`, lee cada `.md` y escribe la planilla entera.
+- [ ] Lista las subcarpetas de la carpeta base, lee cada `.md` —los de cada categoría, los sueltos en la carpeta base, que quedan sin categorizar, y los de `_borradores/`— y escribe las hojas `recetas`, `borradores` y `categorias` enteras.
+- [ ] Si a la planilla le falta la hoja `borradores` o `categorias`, la crea.
 - [ ] Al terminar, el índice no conserva ninguna fila anterior: lo que no está en Drive, no está.
 - [ ] Los archivos ignorados por no tener título se cuentan y quedan visibles en Ajustes.
-- [ ] La fecha de la última reindexado queda registrada y se muestra en Ajustes.
+- [ ] La fecha del último reindexado queda registrada en `meta` y se muestra en Ajustes.
 
 #### C05.5.2 — El reindexado muestra progreso y no se cancela *(J8)*
 
@@ -312,32 +297,36 @@ Disponible desde Ajustes, y ofrecida cuando el índice está dañado.
 - [ ] Mientras corre, la app no permite guardar ni borrar recetas.
 - [ ] Si falla a mitad, avisa (R1) y ofrece volver a empezar; el índice queda como haya quedado y se repara volviendo a reindexar.
 
+#### C05.5.3 — Cuándo se reindexa solo *(J8)*
+
+- [ ] Al abrir, si la planilla se acaba de crear (C05.7.3), si la versión del esquema anotada en `meta` no es la del código (`SCHEMA_VERSION`, hoy 6), o si `meta` dice que un reindexado quedó a medias.
+- [ ] Al terminar, el reindexado anota la versión del esquema en `meta`: sin eso, reindexaría en cada arranque.
+- [ ] Cambiar la forma de la fila o de las hojas obliga a subir `SCHEMA_VERSION`. Lo que se valida al leer —`tiempo`, `dificultad`— no la sube.
+- [ ] Al elegir o cambiar la carpeta base (C05.7.4).
+- [ ] **No hay lógica de concurrencia:** dos reindexados solapados —dos pestañas, o *Reindexar* tocado mientras el arranque ya reindexa— pueden dejar cada receta dos veces. La salida es reindexar una vez con una sola pestaña abierta.
+
 **Nota técnica:** es la operación más cara del producto — con ~1.000 recetas son
 ~1.000 lecturas de Drive, de a una y sin paralelismo, más la escritura de la
 planilla. Puede tardar minutos. Por eso vive a tres toques y por eso tiene barra
 de progreso y no un indicador indeterminado.
 
-### F05.6 — Aviso de índice dañado, con salida
+### F05.6 — Un índice roto se recrea, no se repara
 
-Si el índice no se puede leer, la app avisa en castellano —las recetas están
-bien; lo dañado es el atajo para listarlas— y ofrece el botón de reindexar.
-**Nunca el error crudo de Google, nunca mandar al usuario a borrar un archivo en
-Drive.**
+Los `.md` son la verdad y el índice se rearma desde ellos. **La app no
+diagnostica ni repara daños de la planilla in situ:** recrearla es menos trabajo
+y menos riesgo que distinguir cada tipo de daño.
 
-#### C05.6.1 — Detectar que el índice no sirve *(J8)*
+#### C05.6.1 — La app no detecta el daño *(J8)*
 
-- [ ] Cuenta como dañado: el archivo no existe, no se puede leer, o le falta alguna de sus hojas o columnas.
-- [ ] La app no distingue entre tipos de daño: todos llevan al mismo aviso y a la misma salida.
+- [ ] La app no revisa que `_indice` tenga todas sus hojas y columnas, ni distingue tipos de daño.
+- [ ] Un índice con filas de más, de menos o atrasadas no impide abrir: se corrige con **Ajustes → Reindexar** (C05.9b.2), con una sola pestaña abierta.
+- [ ] Si `_indice` no existe, la app lo crea sola (C05.7.3): no es daño.
 
-#### C05.6.2 — El aviso reemplaza el contenido del Recetario *(J8)*
+#### C05.6.2 — La salida cuando la app no abre *(J8)*
 
-- [ ] Dice que las recetas están bien y que lo dañado es el atajo para listarlas.
-- [ ] Ofrece **Reindexar** como única acción.
-- [ ] No se ofrece nada más: ni buscar, ni entrar a categorías, porque no hay con qué.
-- [ ] Reindexar se ofrece, **no se hace solo**: arrancar no es el momento de decidir por el usuario una operación de minutos.
-
-**Edge case:** índice inexistente en el primer arranque → no es daño, es
-C05.7.3 (crearlo).
+- [ ] Una planilla que no se puede leer —le falta la hoja `meta`, por ejemplo— frena el arranque con un aviso y **Reintentar**.
+- [ ] La recuperación es borrar el archivo `_indice` en Drive y volver a abrir: la app lo crea de nuevo y lo puebla desde los `.md`.
+- [ ] Una copia local vieja o rota se resuelve con **Borrar datos locales** (C05.9b.5).
 
 ### F05.7 — Primer arranque y consentimiento
 
@@ -348,6 +337,7 @@ verificada" una vez, que es inevitable con el scope `drive`.
 
 - [ ] La primera pantalla dice que las recetas viven en el Drive del usuario y que la app las lee y las escribe.
 - [ ] El pedido de permiso ocurre al tocar **Conectar con Google**, nunca automáticamente al abrir.
+- [ ] Con una sesión previa vigente la app abre sin mostrar esa pantalla ni ningún popup: el pedido explícito es sólo para cuando no hay sesión o el permiso se revocó.
 
 #### C05.7.2 — La conexión siempre termina en algo *(transversal)*
 
@@ -358,14 +348,18 @@ verificada" una vez, que es inevitable con el scope `drive`.
 
 #### C05.7.3 — Crear el índice la primera vez *(J8)*
 
-- [ ] Si `Recetario/_indice` no existe, se crea y se puebla leyendo los `.md`, con la barra de progreso de C05.5.2.
+- [ ] Si `_indice` no existe en la carpeta base, se crea y se puebla leyendo los `.md`, con la barra de progreso de C05.5.2.
 - [ ] Si la creación falla a mitad, el archivo a medio hacer se borra antes de avisar, para que el próximo arranque no lo encuentre corrupto.
+- [ ] Si hay más de una planilla `_indice`, se usa la modificada más recientemente y Ajustes lo avisa (C05.9b.3).
 
-#### C05.7.4 — Elegir la carpeta base *(transversal)* `[2026-09-13]`
+#### C05.7.4 — Elegir la carpeta base *(transversal)*
 
-- [ ] La app encuentra su carpeta por una marca, no por el nombre.
-- [ ] Sin una carpeta marcada, ofrece elegirla —o crearla— entre las carpetas propias del usuario, y sugiere las que se llamen `Recetario`.
-- [ ] Al elegirla, crea las categorías predefinidas que falten, el índice, y recién al final la marca.
+- [ ] La app encuentra su carpeta por una marca en sus `appProperties` (`recetario=raiz`), no por el nombre: la carpeta puede llamarse como el usuario quiera y estar en cualquier lugar de su Drive.
+- [ ] Sin una carpeta marcada, o con más de una, abre el selector (`#/carpeta`): «Elegí la carpeta de tus recetas». Arriba muestra las **Encontradas** —las marcadas, o si no hay ninguna las propias que se llamen `Recetario`— y abajo deja recorrer «Mi unidad». Sólo lista carpetas propias.
+- [ ] En cualquier nivel se puede **Usar esta carpeta** o **Crear una carpeta nueva acá**, que propone el nombre `Recetario`.
+- [ ] Antes de usarla confirma: «Voy a usar *nombre*. Si faltan categorías, las creo, y después indexo lo que haya adentro.»
+- [ ] El setup, en este orden: crea las predefinidas que falten —comparando nombres sin mirar tildes ni mayúsculas—, cada una con su color y su foto; crea `_indice` si no está; reindexa, con la barra de C05.5.2; y **recién al final pone la marca** y se la saca a cualquier otra carpeta. Si algo falla antes, la carpeta queda sin marcar y el selector la vuelve a ofrecer. Repetirlo no duplica nada.
+- [ ] La carpeta se cambia desde Ajustes (C05.9b.4).
 
 ### F05.8 — Sin red
 
@@ -388,8 +382,6 @@ Que no interrumpan no significa que no existan: lo que se ignora se cuenta.
 
 #### C05.9.1 — El aviso tiene dos niveles *(transversal)*
 
-`[nueva en la 2.0 — wireframes §2.6]`
-
 - [ ] **Con acción:** aparece donde ocurrió el problema, dice qué pasó y trae el control para resolverlo.
 - [ ] **Sin acción:** no aparece donde ocurrió; se acumula en Ajustes.
 - [ ] Los dos usan el mismo componente y el mismo tono: una frase en castellano, sin el error crudo.
@@ -403,10 +395,16 @@ Que no interrumpan no significa que no existan: lo que se ignora se cuenta.
 
 ### F05.9b — Ajustes
 
-`[nueva en la 2.0 — wireframes §3.9]`
+La pantalla secundaria donde viven la cuenta, la carpeta y sus categorías, el
+reindexado y los avisos que no interrumpen. Se llega desde el menú lateral.
 
-La pantalla secundaria donde viven la cuenta, el reindexado y los avisos que
-no interrumpen. Se llega desde el Recetario.
+Seis fichas, en este orden: **Cuenta**, **Recetario**, **Índice**, **Archivos
+locales**, **Avisos** y **Registro de actividad**. Lo de la cuenta y el índice va
+primero; lo raro, al final. Mientras corre un reindexado, Recetario no ofrece
+sus controles y Archivos locales no se muestra.
+
+**La versión del build** —el commit corto y cuándo se compiló— se ve al pie del
+menú lateral, para saber si el teléfono ya tomó el último deploy.
 
 #### C05.9b.1 — Cuenta *(transversal)*
 
@@ -416,21 +414,35 @@ no interrumpen. Se llega desde el Recetario.
 
 #### C05.9b.2 — Índice *(J8)*
 
-- [ ] Muestra la fecha de la última reindexado.
+- [ ] Muestra la fecha del último reindexado.
 - [ ] Ofrece **Reindexar**, que lleva a C05.5.2.
 - [ ] Está a tres toques a propósito: es una operación rara y cara.
 
 #### C05.9b.3 — Avisos *(transversal)*
 
 - [ ] Lista los avisos sin acción acumulados (C05.9.2).
-- [ ] Sin avisos, la sección dice que no hay nada, sin ilustración.
+- [ ] Si hay más de una planilla `_indice` en Drive, dice cuántas y cuál se usa: la modificada más recientemente.
+- [ ] Sin avisos, la sección dice «No hay nada para avisar.», sin ilustración.
 
-#### C05.9b.4 — Recetario: la carpeta y las categorías *(transversal)* `[2026-09-13]`
+#### C05.9b.4 — Recetario: la carpeta y las categorías *(transversal)*
 
-- [ ] Una ficha propia, segunda en Ajustes, muestra la carpeta base en uso y ofrece cambiarla; la anterior queda como está en Drive.
-- [ ] Desde ahí se gestionan las categorías: crear, renombrar, elegir color de la paleta y foto del catálogo, y borrar. Las predefinidas no tienen trato especial.
+- [ ] La ficha muestra el nombre de la carpeta base en uso y ofrece **Cambiar carpeta**, que abre el selector de C05.7.4. La carpeta anterior queda como está en Drive, sin la marca.
+- [ ] Muestra cuántas categorías hay y lleva a **Categorías** (`#/categorias`), donde se gestionan: crear, renombrar, elegir color de la paleta y foto del catálogo, y borrar. Las predefinidas no tienen trato especial.
+- [ ] Cada cambio escribe en el momento la carpeta en Drive —su nombre y sus propiedades— y su fila en la hoja `categorias`.
+- [ ] Una categoría nueva nace con el primer color de la paleta que nadie usa.
 - [ ] Un nombre vacío, que empiece con `_` o repetido sin mirar tildes ni mayúsculas no se acepta, y se dice por qué.
-- [ ] Borrar una categoría con recetas lo advierte con la cantidad y los nombres: la carpeta y sus recetas van a la papelera de Drive.
+- [ ] Borrar una categoría con recetas lo advierte con la cantidad y los nombres: la carpeta y sus recetas van a la papelera de Drive, y sus filas salen del índice.
+
+#### C05.9b.5 — Archivos locales *(J8)*
+
+- [ ] Dice que la copia del índice se guarda en el navegador para abrir más rápido.
+- [ ] Ofrece **Borrar datos locales**: borra lo guardado en el navegador sin salir de la cuenta, la app se recarga y baja todo de Drive.
+- [ ] No toca nada de Drive.
+
+#### C05.9b.6 — Registro de actividad *(J8)*
+
+- [ ] Dice lo que verificó el arranque de esta sesión, con el tono de los avisos —el hecho y el número—: cuándo abrió, la fecha de `_indice`, si la copia local coincidía —y entonces no se leyó Sheets— o por qué no, cuántas recetas, borradores y categorías hay, y si reindexó y por qué.
+- [ ] Es sólo lectura: no ofrece ninguna acción.
 
 ### F05.10 — La app en pantalla ancha
 
@@ -452,12 +464,13 @@ azar del CSS.
 
 | Capacidad | Job |
 |---|---|
-| C05.1.1, C05.1.2, C05.2.1, C05.2.2, C05.2.3, C05.3.1 | J8 |
+| C05.1.1, C05.1.2, C05.1.4, C05.2.1, C05.2.2, C05.2.3, C05.3.1 | J8 |
 | C05.3.2 | J1, J8 |
 | C05.3.3 | J7 |
 | C05.1.3, C05.4b.1 | J4 (y J1, J5 para la fila) |
-| C05.4.1, C05.4.3, C05.5.1, C05.5.2, C05.6.1, C05.6.2, C05.7.3, C05.9b.2 | J8 |
+| C05.4.1, C05.4.3, C05.5.1, C05.5.2, C05.5.3, C05.6.1, C05.6.2, C05.7.3, C05.9b.2, C05.9b.5, C05.9b.6 | J8 |
 | C05.4.2 | J1, J4, J5 |
-| C05.7.1, C05.7.2, C05.8.1, C05.9.1, C05.9.2, C05.9b.1, C05.9b.3, C05.10.1 | Transversal |
+| C05.4.4 | J1, J8 |
+| C05.7.1, C05.7.2, C05.7.4, C05.8.1, C05.9.1, C05.9.2, C05.9b.1, C05.9b.3, C05.9b.4, C05.10.1 | Transversal |
 
 Ninguna capacidad de esta épica quedó sin job o sin justificación transversal.

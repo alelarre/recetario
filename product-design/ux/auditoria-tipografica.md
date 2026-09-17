@@ -2,14 +2,16 @@
 
 **Versión:** 1.0
 **Fecha:** 2026-09-12
-**Estado:** Informe. No cambia nada del sistema: lo que proponga se decide aparte.
-**Pedido:** `plan/BACKLOG.md` P11.
+**Estado:** Informe cerrado. **Las propuestas T1 a T14 están decididas y aplicadas**
+(§4). Describe la app del día en que se midió: lo vigente es `src/ui/tokens.css` y
+`src/ui/base.css`, y la escala vigente está en `design-system.md` §3.
+**Pedido:** revisar la tipografía de la app ya implementada.
 
 ---
 
 ## Sobre este documento
 
-Tres partes, en el orden que pidió P11:
+Tres partes, en el orden del pedido:
 
 1. **Criterios**, sacados de fuentes externas (§1).
 2. **Auditoría** de las once pantallas contra la escala de `design-system.md` §3.2 y
@@ -199,12 +201,12 @@ encabezado de sección sube de 20 a 28; en el código el rótulo de un grupo o u
 paso** (22 / `fg`): separa por mayúsculas y color, no por tamaño.
 
 En la captura se lee bien igual: el rótulo en mayúsculas con aire arriba corta el
-bloque. Lo que no se sabe es si a 50 cm alcanza (`BACKLOG.md` §4, «la escala del modo
-cocina a 50 cm reales»).
+bloque. Lo que no se sabe es si a 50 cm alcanza: falta probarlo cocinando, con el
+teléfono apoyado.
 
 **Fuera de la tipografía, pero salió acá:** §1 pide 64 × 64 px de área táctil en modo
 cocina. En el encabezado, el volver y el sol de la pantalla encendida miden 48 y
-*Salir* 40. El sol llegó con P10 (2026-09-12): antes era una barra de 64 px al pie.
+*Salir* 40. El sol llegó el 2026-09-12: antes era una barra de 64 px al pie.
 
 ### 2.6 Editor
 
@@ -346,7 +348,7 @@ el 700 accidental. Eso está bien: **el problema no es la cantidad de pesos, es 
 Ordenada por lo que cuesta decidirla, no por gravedad.
 
 **Estado** `[2026-09-12]`: **T1 a T4 aplicadas** en `src/ui/base.css` y probadas en el
-teléfono. **T5 a T8 escritas** en `design-system.md` §3.2. **T9 por la salida a) y T10 aplicadas.** **T11 aplicada al revés de lo propuesto:** la fuente se unifica con el estilo de la receta (12, `fg-3`), también en el borrador. **T12 por la salida a):** las notas de una oración suben a 16, el piso de §1. **T13 por la salida a):** la primera ficha del editor se titula «Datos». T14, fuera de la tipografía, pasó a `plan/BACKLOG.md` P16.
+teléfono. **T5 a T8 escritas** en `design-system.md` §3.2. **T9 por la salida a) y T10 aplicadas.** **T11 aplicada al revés de lo propuesto:** la fuente se unifica con el estilo de la receta (12, `fg-3`), también en el borrador. **T12 por la salida a):** las notas de una oración suben a 16, el piso de §1. **T13 por la salida a):** la primera ficha del editor se titula «Datos». **T14,** fuera de la tipografía, **resuelta:** el encabezado de cocina mide 64 px y cada control suyo toca en 64 × 64 (`design-system.md` §6.12).
 Las que dicen *decisión* tienen más de una salida razonable; las demás son desvíos del
 propio sistema.
 
@@ -366,7 +368,7 @@ propio sistema.
 | **T5** | 16 / 600 cumple cinco roles y no es ningún token | C5 | Nombrarlo en §3.2: **«base fuerte»**, para el nombre de un ítem de lista, un botón y el título del encabezado chico. No cambia nada en pantalla: ordena la escala. |
 | **T6** | `--txt-micro` dice 500 y nunca se usa en 500 | C5 | Escribir la escala como está: micro en 400 para fechas y procedencia, en 600 para contadores. Es más simple que llevar todo a 500, que hoy no usa ningún texto. |
 | **T7** | §3.2 dice que el nombre de la categoría va en 24, y va en 16 | C5 | Corregir §3.2, no la pantalla: Categoría sigue el patrón de las pantallas de detalle (§3.1), igual que Borrador y el Editor. |
-| **T8** | `--txt-cocina-titulo` (28) no se usa; en cocina los grupos van en 16 mayúsculas | C2 | Esperar a la prueba a 50 cm (`BACKLOG.md` §4). Mientras tanto, §3.3 describe lo que no está: anotar que el token no está aplicado. |
+| **T8** | `--txt-cocina-titulo` (28) no se usa; en cocina los grupos van en 16 mayúsculas | C2 | Esperar a la prueba a 50 cm. Mientras tanto, §3.3 describe lo que no está: anotar que el token no está aplicado. |
 
 ### 4.3 Decisiones
 
@@ -382,7 +384,7 @@ propio sistema.
 
 | # | Qué | Propuesta |
 |---|---|---|
-| **T14** | El encabezado del modo cocina tiene controles de 48 y 40 px, y §1 pide 64 | Llevarlo al backlog como pendiente propio. El sol de la pantalla encendida llegó con P10 (2026-09-12) y agravó algo que ya estaba: antes era una barra de 64 px. |
+| **T14** | El encabezado del modo cocina tiene controles de 48 y 40 px, y §1 pide 64 | Tratarlo como pendiente propio. El sol de la pantalla encendida llegó el 2026-09-12 y agravó algo que ya estaba: antes era una barra de 64 px. |
 
 ### Cuántos tamaños quedarían
 

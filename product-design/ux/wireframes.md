@@ -17,6 +17,9 @@
 > acción es **reindexar**, no "reconstruir". §3.1 — la grilla de categorías es de
 > dos columnas.
 
+> **Estos son los wireframes de cuando se diseñó el producto, y no se mantienen.**
+> Lo vigente son los specs de `product/specs/` y el código de `src/ui/`.
+
 ---
 
 ## Sobre este documento

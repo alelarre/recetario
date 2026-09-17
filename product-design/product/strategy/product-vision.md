@@ -4,12 +4,7 @@
 **Fecha:** 2026-09-06
 **Estado:** v2.1 — Validada post-research
 
-> **Cambio en la 2.1 (Hito 6):** el alcance del editor pasa de *"corregir, no
-> componer"* a *"corregir, y crear una receta que ya tenés en la cabeza"*.
-> Convertir una fuente sigue siendo trabajo del agente.
-
-> Reemplaza a la v1.0, que era una hipótesis escrita antes del research. Todo lo
-> que sigue está respaldado por `research/competitive-analysis.md`,
+> Todo lo que sigue está respaldado por `research/competitive-analysis.md`,
 > `product/strategy/personas.md` y `product/strategy/jtbd.md`, y no puede
 > contradecir los siete principios de `product/strategy/product-principles.md`.
 
@@ -33,7 +28,10 @@ en Drive, y ninguna de las dos es el producto sola.
 
 Por eso el input principal no es un editor. El editor de la PWA sirve para
 corregir un error encontrado al cocinar y para escribir una receta que ya se
-tiene en la cabeza; convertir una fuente en receta es trabajo del agente.
+tiene en la cabeza; convertir una fuente en receta es trabajo del agente. La
+app no llama a ningún modelo: desde un borrador, **«Convertir con Claude»** arma
+el pedido y lo manda a Claude, y la receta que vuelve —compartida o pegada— abre
+el editor.
 
 El producto se diseña para **~1.000 recetas**, no para las decenas de hoy: en su
 mayoría recetas que el usuario todavía no cocinó y cuyo nombre no recuerda.
@@ -87,21 +85,21 @@ Se sostienen juntas. Ninguna alcanza sola, y ese es el punto:
 ### Decisiones estratégicas fundamentales
 
 Las ocho primeras vienen del encuadre del proyecto y están fijas
-(`../../CLAUDE.md`). Las tres últimas se agregan en esta versión.
+(`../../../CLAUDE.md`). Las tres últimas las sumó el research.
 
 | Dimensión | Decisión |
 |---|---|
-| Usuarios | Un solo usuario. No hay multiusuario, ni compartir, ni cuentas. |
+| Usuarios | Un solo usuario. No hay multiusuario, ni recetario compartido, ni cuentas. Una receta sí se puede mandar a otra persona —PDF, link a una vista sin login, o texto—: es una copia del momento y nada queda publicado en Drive. |
 | Propiedad de los datos | Los `.md` en Drive son la fuente de verdad. La app es una vista sobre ellos, reemplazable y descartable. |
 | Plataforma | PWA de archivos estáticos en GitHub Pages. Sin backend, sin infraestructura que mantener. |
-| Persistencia | Drive para el contenido; una Google Sheet como índice derivado y reconstruible desde los `.md`. |
+| Persistencia | Drive para el contenido; una Google Sheet como índice derivado y reconstruible desde los `.md`, con una copia en el navegador que evita releerla cuando no cambió. |
 | Permisos | Scope OAuth `drive`, con su pantalla de "app no verificada" una vez. `drive.file` no sirve: es por archivo y no ve los `.md` que escriben los agentes. |
-| Input de contenido | Agentes externos escriben los `.md`. El editor de la app es para corregir. |
+| Input de contenido | Los `.md` los escribe un agente: por fuera de la app, o como respuesta a «Convertir con Claude», que vuelve a la app y se guarda desde el editor. El editor de la app es para corregir. |
 | Modelo de negocio | Ninguno. Es una app personal, no un producto a monetizar. |
 | Alcance de este proyecto | Redefinición de producto y UX desde cero, hasta wireframes. La visión y el stack están fijos; todo lo demás se rediseña. |
 | **Escala de diseño** | **~1.000 recetas.** Toda decisión de navegación, índice y arranque se evalúa a esa escala, no a las decenas actuales. |
 | **Alcance del editor** | **Corregir, y crear una receta que ya tenés en la cabeza.** Lo que no hace es componer desde una fuente: transcribir un PDF, un video o la foto de un libro es trabajo del agente. |
-| **Dónde vive el agente** | **Es parte del producto, afuera de la PWA.** Recetario es un ecosistema de dos partes que escriben sobre los mismos archivos; la conversión ocurre en una sesión con el agente, no adentro de la app. Embeberlo en la PWA queda abierto a explorar una vez resuelto el resto del producto. Mientras tanto, **la app está diseñada para recibir borradores y esperar**, no para procesar. |
+| **Dónde vive el agente** | **Es parte del producto, afuera de la PWA.** Recetario es un ecosistema de dos partes que escriben sobre los mismos archivos; la conversión ocurre en una sesión con el agente, no adentro de la app. **La app no llama a ningún modelo:** recibe borradores y espera, y cuando se quiere convertir uno arma el pedido —el borrador y las reglas del formato—, lo manda a Claude y recibe la receta compartida o pegada. |
 
 ---
 
@@ -200,11 +198,11 @@ permanente, y crece con el tamaño del archivo.
 
 | Entidad | Descripción | Persistencia |
 |---|---|---|
-| **Receta** | Un `.md` con frontmatter y cuerpo. La unidad del sistema. Su estado de completitud lo deriva la app del contenido, y el usuario puede declararla completa así como está. | Archivo en Drive |
-| **Borrador** | Input crudo sin procesar. Nace con un título —escrito por el usuario— y, si la hay, una fuente. Vive en una sección separada del recetario y **se borra al convertirse**; la fuente sobrevive en la receta. **No entra al índice:** los borradores viven en su propia planilla, una fila cada uno, y se listan de una sola lectura. `[precisado en el Hito 11: la disyuntiva del Hito 4 —carpeta o archivo único— se resolvió en el Hito 7]` | Una planilla en Drive |
-| **Categoría** | La carpeta que contiene la receta. Es **exclusiva**: una receta vive en una sola. Su forma concreta —cuántas, cuáles— se rediseña en el Hito 5. | Carpeta en Drive |
-| **Tag** | Clasificación **múltiple** y libre. Es lo que permite que una receta se cruce por más de un criterio sin mover el archivo. | Frontmatter del `.md` |
-| **Ingrediente** | Tiene que ser **filtrable**: J4 —buscar qué cocinar con lo que hay— exige poder consultar los ingredientes de mil recetas sin que "berenjena" traiga ruido. Si eso se logra con estructura en el `.md`, con normalización en el índice o con otra cosa, se decide en el Hito 5 con el benchmark de formatos. | A definir — Hito 5 |
+| **Receta** | Un `.md` con frontmatter y cuerpo. La unidad del sistema. Que le falta terminarse lo dice el tag `incompleta`, que el usuario pone y saca desde el editor; una receta nueva nace con él. | Archivo en Drive |
+| **Borrador** | Input crudo sin procesar. Nace con un título —escrito por el usuario— y, si la hay, una fuente. Vive en una sección separada del recetario y **se borra al convertirse** —va a la papelera de Drive—; la fuente sobrevive en la receta. Es un `.md` por borrador en `Recetario/_borradores/`, con un formato propio: título, fuente, cuándo se capturó y la nota. Se listan desde la hoja `borradores` de `_indice`, aparte de las recetas. | Archivo en Drive |
+| **Categoría** | La carpeta que contiene la receta. Es **exclusiva**: una receta vive en una sola. Las define el usuario: hay 16 predefinidas, y se crean, renombran y borran desde *Ajustes → Recetario*. El color y la foto son propiedades de la carpeta. | Carpeta en Drive |
+| **Tag** | Clasificación **múltiple** y libre. Es lo que permite que una receta se cruce por más de un criterio sin mover el archivo. Cuatro son reservados y tienen forma propia: `favorito`, `menú diario`, `probar` e `incompleta`. | Frontmatter del `.md` |
+| **Ingrediente** | Tiene que ser **filtrable**: J4 —buscar qué cocinar con lo que hay— exige poder consultar los ingredientes de mil recetas sin que "berenjena" traiga ruido. En el `.md` es un ítem de lista con nombre, separador y cantidad; el nombre entra al índice, y sobre él se busca. | Cuerpo del `.md`, y una columna del índice |
 | **Fuente** | De dónde salió la receta. **Campo opcional de texto libre:** a veces una URL, a veces una referencia como *"libro de pescados, pág. 84"*, a veces nada. Nace en el borrador y sobrevive en la receta convertida. | Frontmatter del `.md` |
 | **Índice** | Cache derivado de todas las recetas, para listar y buscar sin leer cada `.md`. Reconstruible y **reemplazable**: existe para que la PWA escale, no por decisión de producto. | Google Sheet |
 | **Plan semanal** *(condicional)* | Qué comida concreta va cada día. **Existe solo si J9 se construye.** | Archivo en Drive |
@@ -218,10 +216,10 @@ permanente, y crece con el tamaño del archivo.
 | Receta | Tag | Tiene cero o más |
 | Receta | Ingrediente | Contiene varios; es lo que la hace filtrable |
 | Receta | Índice | Aporta una fila |
-| Receta | Borrador | Nace de uno, que se borra; hereda su fuente |
+| Receta | Borrador | Puede nacer de uno, que se borra; hereda su fuente |
 | Receta | Fuente | Tiene cero o una |
 | Borrador | Fuente | Tiene cero o una |
-| Borrador | Índice | **Ninguna.** No se clasifica ni se indexa: se lista leyendo su carpeta. Solo espera. |
+| Borrador | Índice | Tiene su fila en la hoja `borradores`, aparte de las recetas. No se clasifica ni entra en la búsqueda: solo espera. |
 | Plan semanal | Receta | Referencia una por día |
 | Lista de compras | Plan semanal | Deriva de él, agregando ingredientes |
 
@@ -229,16 +227,15 @@ permanente, y crece con el tamaño del archivo.
 
 **Exclusiva para archivar, múltiple para clasificar.** La carpeta de Drive dice
 *dónde vive el archivo*; los tags dicen *cómo se lo encuentra*. Son dos cosas
-distintas y esta versión deja de confundirlas.
+distintas.
 
-La v1.0 decía que la categoría era "la única clasificación y es exclusiva". Esa
-exclusividad era una restricción del sistema de archivos que se había convertido
-en decisión de producto sin que nadie la tomara. Una receta puede ser a la vez
-"pescados" y "para el horno": el archivo va en una carpeta, y el segundo
-criterio es un tag.
+La exclusividad de la categoría es una restricción del sistema de archivos, no
+una decisión de producto. Una receta puede ser a la vez "pescados" y "para el
+horno": el archivo va en una carpeta, y el segundo criterio es un tag.
 
-Consecuencia para el Hito 5: la navegación **puede** cruzar criterios; no está
-obligada al árbol de carpetas.
+Por eso la navegación cruza criterios y no está obligada al árbol de carpetas:
+el carrusel de tags filtra dentro de una categoría, y desde el Recetario abre
+una lista por tag que junta recetas de todas.
 
 ---
 

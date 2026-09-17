@@ -3,29 +3,6 @@
 **Versión:** 3.2 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
 **Job:** J6 · **Prioridad:** media · **Flujo:** F6
 
-> **Cambios en la 3.2 (2026-09-16):** C03.1.2b suma **la estrella de
-> favorito**, en el encabezado, a la izquierda de compartir.
->
-> **Cambios en la 3.1 (2026-09-12):** el encabezado de la receta se especifica
-> entero y es nuevo (C03.1.2b): arranca sin texto, queda fijo, toma el título
-> recortado al scrollear y lleva el **link al `.md` en Drive**. Se va el menú ⋯ y
-> *Cocinar* aparece sólo si hay pasos (C03.1.2). La marca de incompleta **sale
-> del archivo**, no de mirar el contenido (C03.1.3). El modo cocina tiene dos
-> salidas que hacen lo mismo, resetea el scroll al entrar y no se deja en el
-> historial (C03.2.1).
->
-> **Cambio en la 3.0 (Hito 11):** C03.2.4 — un paso hecho lleva check y texto
-> atenuado, no tachado. La receta en lectura queda como pila de fichas con la
-> foto dentro de la primera.
->
-> **Cambio en la 2.1 (Hito 9):** C03.2.4 — en modo cocina se puede realzar el
-> paso actual y tachar los hechos, sin que nada de eso persista.
->
-> **Cambios en la 2.0 (Hito 7):** features partidas en capacidades con criterios
-> de aceptación y edge cases. **Se cierra el `[abierto]` de F03.2:** los
-> ingredientes se resuelven con un modo cocina y un conmutador
-> Ingredientes/Pasos, no con la barra pegajosa de la implementación actual.
-
 **Reglas transversales:** ver `E05-Cimientos.md` §Reglas.
 
 ---
@@ -35,8 +12,8 @@
 La receta a la vista mientras se cocina, con las manos ocupadas o sucias, el
 teléfono apoyado y la atención partida.
 
-**Es el uso menor de los cuatro** —solo para recetas complejas o poco
-frecuentes— y es, a la vez, lo único que la app actual ya resuelve bien.
+**Es el uso menor de los cuatro:** solo para recetas complejas o poco
+frecuentes.
 
 La pantalla sirve a **dos momentos distintos con la misma información**:
 
@@ -50,11 +27,15 @@ La pantalla sirve a **dos momentos distintos con la misma información**:
 ### F03.1 — La receta en una columna
 
 Todo a la vista, en orden: descripción, ingredientes, preparación, variaciones,
-notas. Sin pestañas: costaban cuatro toques para leer una receta entera.
+notas. Es una pila de fichas: la primera con la foto, el título y los datos;
+después una por sección. Sin pestañas: costaban cuatro toques para leer una
+receta entera.
 
 #### C03.1.1 — El orden de lectura *(J6)*
 
-- [ ] Foto si la hay, título, línea de contexto (categoría, tiempo, dificultad), fuente, descripción, ingredientes, preparación, variaciones, notas.
+- [ ] En la primera ficha: foto si la hay, título, línea de contexto, tags, descripción y, al pie tras un divisor, la fuente. Después ingredientes, preparación, variaciones y notas, cada una en su ficha.
+- [ ] La línea de contexto lleva el color y el nombre de la categoría, lo que rinde, **la duración con su relojito** y la dificultad. La duración sólo se dibuja si `tiempo` es uno de los cinco valores (`E05-Cimientos.md` C05.1.1).
+- [ ] Los tags van como chips, los especiales primero y con su ícono. **`favorito` no lleva chip:** ya lo dice la estrella del encabezado (C03.1.2b).
 - [ ] Una sección ausente no se dibuja: no queda encabezado vacío.
 - [ ] Una sección desconocida del `.md` se muestra tal cual, al final, sin interpretarse (C05.1.2).
 - [ ] Toda la receta se lee scrolleando, sin ningún toque.
@@ -63,23 +44,23 @@ notas. Sin pestañas: costaban cuatro toques para leer una receta entera.
 
 - [ ] Al pie: **Cocinar** y **Editar**. Sin ingredientes ni pasos, **Cocinar no se ofrece**: no hay nada que cocinar.
 - [ ] Volver es un control de tamaño normal en el encabezado, y el gesto del sistema hace lo mismo.
-- [ ] **No hay menú de acciones secundarias:** las dos acciones están al pie y un menú vacío es peor que ninguno. `[del 2026-09-12]`
+- [ ] **No hay menú ⋯ de acciones secundarias:** las dos acciones están al pie, y favorito y compartir tienen su ícono en el encabezado (C03.1.2b).
 
 #### C03.1.2b — El encabezado *(J6)*
 
-`[nueva el 2026-09-12]`
-
 - [ ] Arranca **sin texto**: el título está abajo, grande y entero, y repetirlo arriba es decir dos veces lo mismo.
 - [ ] Queda **fijo al scrollear**, y cuando el título grande sale de pantalla lo toma **recortado con elipsis**, sin llegar a pisar lo que tenga a la derecha.
-- [ ] A la derecha, un **link al `.md` en Drive**, con el logo de Drive y la etiqueta `.md`, que abre en otra pestaña. Es un dato al margen y no un botón: sin caja y más chico que los controles.
+- [ ] A la derecha van, en este orden, la estrella de favorito, el ícono de compartir y el link al `.md`.
+- [ ] El **link al `.md` en Drive** va con el logo de Drive y la etiqueta `.md`, que abre en otra pestaña. Es un dato al margen y no un botón: sin caja y más chico que los controles.
 - [ ] El link sólo aparece si la receta está en el índice: sin fila no se conoce su id de archivo.
-- [ ] **La estrella de favorito** vive en el encabezado, a la izquierda de compartir. Un toque pone el tag `favorito` y otro lo saca; mientras se escribe en Drive se llena de izquierda a derecha en loop, y el resultado se dibuja recién con la respuesta —si falla, vuelve como estaba y avisa. `[del 2026-09-16]`
+- [ ] **La estrella de favorito** vive en el encabezado, a la izquierda de compartir. Un toque pone el tag `favorito` y otro lo saca; mientras se escribe en Drive se llena de izquierda a derecha en loop, y el resultado se dibuja recién con la respuesta —si falla, vuelve como estaba y avisa arriba de la receta, con *Reintentar*. Mientras escribe no acepta otro toque.
+- [ ] **El ícono de compartir** abre la ficha de compartir (C03.7.1).
 
 #### C03.1.3 — Estados de la receta *(J6)*
 
-- [ ] Incompleta: **un chip más de la fila de tags, el primero, con el tag tal como está escrito** —*incompleta*— **y lleva la marca** (design-system §6.5). Es **tocable** y **abre el editor**, donde se saca el tag con su botón una vez cargado lo mínimo (C04.4.1). `[cambio del 2026-09-16]` El resto de la receta se muestra igual.
-- [ ] Va **en la fila de tags y no suelto debajo** `[2026-09-12]`: es un estado del mismo orden que un tag, se lee en el mismo barrido, y toma de ahí el alto y el aire que le faltaban.
-- [ ] La marca sale del tag `incompleta` de la lista `tags`, no de mirar el contenido (C05.3.1). `[cambio del 2026-09-16]`
+- [ ] Incompleta: **un chip más de la fila de tags, entre los especiales, con el tag tal como está escrito** —*incompleta*— **y lleva la marca** (design-system §6.5). Es **tocable** y **abre el editor**, donde se saca el tag con su botón una vez cargado lo mínimo (C04.4.1). El resto de la receta se muestra igual.
+- [ ] Va **en la fila de tags y no suelto debajo**: es un estado del mismo orden que un tag y se lee en el mismo barrido.
+- [ ] La marca sale del tag `incompleta` de la lista `tags`, no de mirar el contenido (C05.3.1).
 - [ ] Sin foto: el bloque de foto no se dibuja y la receta empieza por el título.
 - [ ] Cargando: el esqueleto de la pantalla está mientras se lee el `.md`.
 - [ ] Sin red: no se puede abrir; el aviso (C05.8.1).
@@ -87,28 +68,27 @@ notas. Sin pestañas: costaban cuatro toques para leer una receta entera.
 
 ### F03.2 — El modo cocina
 
-`[cierra el abierto de la 1.0 — wireframes §3.4]` `[divergencia deliberada con lo implementado: reemplaza la barra pegajosa]`
-
 Los ingredientes se consultan repetidamente durante la preparación y tienen que
 seguir alcanzables sin perder el lugar en los pasos. La solución es un **modo**
 aparte, con un conmutador de dos posiciones.
 
-**Por qué esto no contradice el veto a las pestañas:** el argumento contra ellas
-era que escondían las notas y las variaciones justo al cocinar. Notas y
-variaciones **no se usan cocinando**, y ingredientes y pasos son excluyentes en
-el tiempo. Con eso, el conmutador no esconde nada que haga falta.
+**Por qué acá sí hay conmutador y en la receta no hay pestañas:** las pestañas
+esconden las notas y las variaciones. Notas y variaciones **no se usan
+cocinando**, y ingredientes y pasos son excluyentes en el tiempo: el conmutador
+no esconde nada que haga falta.
 
 #### C03.2.1 — Se entra a propósito *(J6)*
 
 - [ ] Se entra desde **Cocinar** en la receta abierta. No es la vista por defecto: cocinar es el uso menor.
-- [ ] **Dos salidas, con destinos distintos** `[del 2026-09-12]`: el chevron vuelve **a la receta** —seguir leyéndola sin la escala de cocina— y **Salir** vuelve **a la categoría**, que es donde se elige otra cosa.
+- [ ] **El encabezado mide 64 px**, como sus controles: el chevron, el título de la receta centrado y recortado con elipsis, el sol (C03.3.1) y *Salir*. El sol y *Salir* responden en toda su área de 64 px, aunque su caja dibujada sea más chica.
+- [ ] **Dos salidas, con destinos distintos**: el chevron vuelve **a la receta** —seguir leyéndola sin la escala de cocina— y **Salir** vuelve **a la categoría**, que es donde se elige otra cosa. Si la receta no está en el índice no se sabe su categoría, y *Salir* vuelve al Recetario.
 - [ ] Las dos sueltan el bloqueo de pantalla: se dejó de cocinar.
 - [ ] Volver con el gesto del sistema sale del modo, no de la receta. Salir del modo **no deja la cocina en el historial**: volver desde la receta lleva a donde se estaba antes.
 - [ ] Al entrar, la pantalla **empieza arriba**: se entra desde el pie de la receta y heredar ese scroll abría los ingredientes por la mitad.
 
 #### C03.2.2 — El conmutador Ingredientes / Pasos *(J6)*
 
-- [ ] Dos posiciones. Al entrar, abre en **Ingredientes**: el *mise en place* va primero.
+- [ ] Dos posiciones, **cada una con su ícono y su nombre**: la zanahoria para *Ingredientes* y la lista numerada para *Pasos*. Queda fijo arriba al scrollear. Al entrar, abre en **Ingredientes**: el *mise en place* va primero.
 - [ ] **Preserva la posición de scroll de cada lado.** Ir a Ingredientes y volver a Pasos devuelve al paso donde se estaba, no al principio.
 - [ ] Cambiar de posición es un toque, en un control de tamaño grande.
 - [ ] Notas, variaciones y descripción **no se muestran** en este modo.
@@ -119,15 +99,15 @@ de las dos → **Cocinar** no se ofrece.
 
 #### C03.2.4 — Seguir el hilo entre los pasos *(J6)*
 
-`[nueva en la 2.1 — Hito 9]`
-
-- [ ] **Al entrar, el paso 1 ya está realzado** `[del 2026-09-12]`: sin un paso elegido, la pantalla no dice dónde estás.
+- [ ] **Al entrar, el paso 1 ya está realzado**: sin un paso elegido, la pantalla no dice dónde estás.
 - [ ] Tocar un paso lo **realza**, y queda realzado hasta que se toque otro. Es dónde estás. Tocar el que ya está realzado lo da por hecho y realza el siguiente.
-- [ ] Tocar un paso **no selecciona su texto** `[del 2026-09-12]`. Copiar un paso se hace desde la receta abierta.
-- [ ] Un paso se puede **marcar como hecho**: su número se reemplaza por un check y el texto se atenúa. **No se tacha** — a 22 px el tachado cruza el renglón entero y lo vuelve difícil de leer, que es lo contrario de lo que el modo cocina busca.
+- [ ] Tocar un paso **no selecciona su texto** ni resalta la pantalla entera: el texto de los pasos no es seleccionable en este modo. Copiar un paso se hace desde la receta abierta.
+- [ ] Un paso hecho se ve distinto: su número se reemplaza por un check y el texto se atenúa. **No se tacha** — a 22 px el tachado cruza el renglón entero y lo vuelve difícil de leer, que es lo contrario de lo que el modo cocina busca.
 - [ ] **Nada de esto persiste:** no entra al `.md`, no entra al índice, y se pierde al salir del modo cocina.
 - [ ] Al volver a entrar, no hay ningún paso hecho y el realzado vuelve a ser el 1.
-- [ ] Solo existe en modo cocina: la receta en lectura no tiene ni realce ni tachado.
+- [ ] Tocar un paso hecho lo vuelve a realzar y le saca el check.
+- [ ] Los pasos se numeran por tramo, como están escritos, pero el hilo es uno solo para toda la receta.
+- [ ] Solo existe en modo cocina: la receta en lectura no tiene ni realce ni pasos hechos.
 
 **Por qué efímero:** perder el renglón es el problema concreto de cocinar, y estas
 dos cosas lo resuelven. Persistirlas obligaría a elegir dónde viven — en el `.md`
@@ -147,15 +127,15 @@ dejarla prendida.
 
 #### C03.3.1 — El control *(J6)*
 
-- [ ] Vive en el encabezado del modo cocina, como ícono solo —el sol— a la izquierda de *Salir*, con su etiqueta accesible `[del 2026-09-12: era una barra al pie]`.
+- [ ] Vive en el encabezado del modo cocina, como ícono solo —el sol— a la izquierda de *Salir*, con su etiqueta accesible: *Mantener la pantalla encendida*.
 - [ ] Dice si está activo: encendido, el ícono se invierte —fondo claro, sol oscuro—, como el estado elegido del editor.
 - [ ] Arranca apagado cada vez que se entra al modo: no recuerda la elección anterior.
 - [ ] Salir del modo cocina lo libera.
-- [ ] Al volver de segundo plano con el modo abierto, se reintenta tomarlo.
+- [ ] El bloqueo se pierde solo cuando la app pasa a segundo plano: al volver con el modo abierto y el sol encendido, se vuelve a pedir.
 - [ ] Si el navegador no lo soporta o lo niega, el control **no se muestra**. No se avisa: no es un problema del usuario.
 
-**Nota técnica:** Wake Lock API. Ya implementada, con reintento al volver de
-segundo plano.
+**Nota técnica:** Wake Lock API. El control y el estado del modo cocina viven en
+`src/cocina-control.ts`, que comparten la app y la vista de invitado (C03.7.5).
 
 ### F03.4 — Las variaciones, con su fuente
 
@@ -197,13 +177,62 @@ distancia del brazo, con un dedo que puede estar sucio.
 - [ ] Es una regla del sistema, no una decisión de esta pantalla; la excepción hacia arriba es el modo cocina (C03.2.3).
 - [ ] No hay botón flotante de acción: taparía el contenido.
 
+### F03.7 — Compartir la receta
+
+Mandarle una receta a alguien que no usa la app, de tres maneras: un **PDF**, un
+**Link** que la muestra sin login, o la receta como **Texto**. Lo compartido es
+una copia del momento: **nada queda publicado en Drive** y no hay nada que
+revocar.
+
+#### C03.7.1 — La ficha de compartir *(J6)*
+
+- [ ] El ícono de compartir del encabezado (C03.1.2b) abre una ficha al pie con **PDF**, **Link**, **Texto** y **Cancelar**.
+- [ ] La ficha es estado de la pantalla, no una ruta: volver, *Cancelar* o tocar el velo la cierran. Mientras está abierta, la página de atrás no scrollea.
+- [ ] Las tres opciones usan el menú Compartir del sistema. Si el usuario cancela ese menú, la ficha se cierra sin aviso.
+- [ ] Ninguna de las tres lleva los tags, la marca de incompleta ni las claves extra del frontmatter.
+
+#### C03.7.2 — PDF *(J6)*
+
+- [ ] Se arma en el teléfono, con pdfmake e **Inter** embebida —tiene ⅓ y ⅔, que un PDF no puede tomar de otra fuente—. La librería y las fuentes se empiezan a cargar al abrir la ficha, no al arrancar la app.
+- [ ] Página de **105 × 180 mm**, con el tema oscuro de la app en todas las páginas. La cabecera es un bloque con título, contexto, descripción y fuente; después las secciones, con el formato en línea del markdown.
+- [ ] No lleva foto, tags, link al `.md` ni botones. Una sección vacía no se dibuja.
+- [ ] Ningún ingrediente, paso, variación ni ítem de nota se parte entre páginas, y un título de sección nunca queda solo al pie.
+- [ ] El archivo se llama como el `.md` de la receta, con extensión `.pdf`.
+- [ ] Mientras se arma, *PDF* muestra el spinner con *"Armando el PDF…"* y la ficha no acepta otro toque.
+- [ ] Si armarlo tardó más de lo que dura el permiso del toque, la ficha pasa a *"El PDF está listo."* con **Enviar PDF**, que manda el archivo ya armado.
+- [ ] Si el navegador no puede compartir archivos, el PDF se descarga.
+- [ ] Si falla, la ficha dice *"No pude armar el PDF."* con *Reintentar*.
+
+#### C03.7.3 — Link *(J6)*
+
+- [ ] El link abre la vista de invitado (C03.7.5): `…/#/ver?r=<carga>`.
+- [ ] **La receta viaja entera en el fragmento del link**, comprimida: el `.md` sin tags ni claves extra, más el nombre de la categoría, que el `.md` no lleva. No llega a ningún servidor.
+- [ ] La carga empieza con la versión del formato; una carga de otra versión se trata como link roto.
+- [ ] Sin menú Compartir, el link se copia y la ficha avisa *"Link copiado."*. Sin portapapeles, la ficha lo muestra seleccionable: *"Copialo desde acá:"*.
+
+#### C03.7.4 — Texto *(J6)*
+
+- [ ] La receta casi como está en el `.md`: el título, debajo el contexto (categoría · rinde · duración · dificultad), la descripción, cada sección con su nombre sin los `#`, y al final *Fuente: …*.
+- [ ] Conserva el formato que WhatsApp entiende: `*negrita*`, `_itálica_`, `- ` y `1. `. Un link queda como *texto (url)*; una imagen, como su URL.
+- [ ] Nunca hay dos renglones en blanco seguidos, y una sección vacía no aparece.
+- [ ] Sin menú Compartir, se copia y avisa *"Texto copiado."*; sin portapapeles, se muestra seleccionable, como el link.
+
+#### C03.7.5 — La vista de invitado *(J6)*
+
+- [ ] Quien abre el link ve la receta **sin conectar con Google**. La vista no lee ni escribe Drive, no pide el token, no guarda nada en el navegador y no ofrece guardar la receta.
+- [ ] Lectura (`#/ver?r=…`): la misma pila de fichas de la receta, con el contexto sin el color de la categoría —es de la carpeta del dueño—. **No tiene encabezado** —ni volver, ni estrella, ni compartir, ni `.md`—, ni fila de tags. Al pie, sólo **Cocinar**, si hay ingredientes o pasos.
+- [ ] Cocinar (`#/ver/cocinar?r=…`): el mismo modo cocina de la app —conmutador, paso actual, pasos hechos, sol—. **La única salida es el chevron**, que vuelve a la lectura; *Salir* no se dibuja.
+- [ ] El título de la pestaña es el de la receta.
+- [ ] Si la carga no se puede leer —cortada, alterada, de otra versión—, la pantalla dice *"Este link está roto o incompleto."* y nada más.
+- [ ] Es una pantalla con controlador propio y una lista cerrada de acciones, armada con las mismas piezas que la receta: lo que se agregue a la receta no aparece en el invitado salvo que se sume a propósito.
+
 ---
 
 ## Trazabilidad
 
 | Capacidad | Job |
 |---|---|
-| C03.1.1, C03.1.3, C03.2.1, C03.2.2, C03.2.3, C03.2.4, C03.3.1, C03.4.1, C03.5.1, C03.6.1 | J6 |
+| C03.1.1, C03.1.2b, C03.1.3, C03.2.1, C03.2.2, C03.2.3, C03.2.4, C03.3.1, C03.4.1, C03.5.1, C03.6.1, C03.7.1, C03.7.2, C03.7.3, C03.7.4, C03.7.5 | J6 |
 | C03.1.2 | J6, J7 |
 
 Ninguna capacidad de esta épica quedó sin job.

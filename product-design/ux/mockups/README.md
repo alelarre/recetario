@@ -1,29 +1,28 @@
 # Mockups Hi-Fi — plan y hallazgos
 
-**Versión:** 2.0 · **Fecha:** 2026-09-07 · **Estado:** Final — Hito 11
+**Versión:** 2.0 · **Fecha:** 2026-09-07 · **Estado:** Cerrado — no se actualiza
 
-> **Cambios en la 2.0 (Hito 11):** las tres variantes están resueltas —queda una
-> sola versión de cada pantalla, que es la que se implementa—, la tipografía pasa
-> a ser la del sistema, y `--fg-3` y `--velo` se corrigieron.
+> **Los mockups son la especificación de cuando se diseñaron, no el estado de la
+> app.** Lo vigente vive en `src/ui/tokens.css` —los tokens y los componentes del
+> sistema— y `src/ui/base.css` —lo que es de cada pantalla—, descrito en
+> `../design-system.md`. El `tokens.css` de esta carpeta fue el origen de aquél y
+> no se actualiza. Lo que se decidió usando la app no está acá: el acento
+> arcilla, la escala tipográfica, el chip, la marca de incompleta, el menú
+> lateral, el carrusel de tags, los tags especiales, la duración, compartir, la
+> gestión de categorías y el selector de carpeta.
 
-Abrir `index.html`. Cada pantalla usa **los tokens de `../design-system.md`
-literalmente**, en `tokens.css`.
-
-> `[2026-09-12]` **Los mockups son la especificación de cuando se diseñaron, no
-> el estado de la app.** El sistema del producto es `src/ui/tokens.css`, que nació
-> como copia de este `tokens.css` y se edita allá. Lo que se decidió usando la
-> app —la tipografía de la auditoría, el chip, la marca de incompleta, el
-> chevron— no está acá.
+Abrir `index.html`. Cada pantalla usa los tokens del design system de cuando se
+diseñó, en `tokens.css`.
 
 ---
 
 ## Cómo están hechos
 
-**`tokens.css` es el sistema, no una hoja de estilo de los mockups.** Tiene los
-tokens y los quince componentes core, uno a uno, con la sección del design system
-anotada. Si una pantalla necesita un valor que no está ahí, es un hueco del
-sistema y se arregla en el sistema — no en la pantalla. Eso pasó cuatro veces y
-está abajo.
+**`tokens.css` se escribió como el sistema, no como una hoja de estilo de los
+mockups.** Tiene los tokens y los quince componentes core de entonces, uno a uno,
+con la sección del design system anotada. Si una pantalla necesitaba un valor que
+no estaba ahí, era un hueco del sistema y se arregló en el sistema — no en la
+pantalla. Eso pasó cuatro veces y está abajo.
 
 Lo único que no es producto es el andamio del catálogo —los marcos de 390 y
 1280 px, los rótulos—, marcado como tal en el CSS.
