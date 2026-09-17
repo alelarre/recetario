@@ -1398,9 +1398,9 @@ function seguirDedo(p: number | null): void {
   }
 }
 
-/** El toque cayó en el carrusel de tags o en la fila de duraciones, y hay para desplazar. */
+/** Las dos filas que se desplazan de costado (`base.css`). Una que entra entera no cuenta: no hay nada que mover. */
 function sobreFilaDeslizable(destino: EventTarget | null): boolean {
-  const fila = destino instanceof Element ? destino.closest<HTMLElement>('.carrusel, .fila-dur') : null;
+  const fila = conClosest(destino)?.closest<HTMLElement>('.carrusel, .fila-dur');
   return !!fila && fila.scrollWidth > fila.clientWidth;
 }
 

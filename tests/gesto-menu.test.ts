@@ -3,13 +3,13 @@ import { puedeEmpezar, direccion, progreso, seAbre, ANCHO_MENU, MARGEN_BORDE } f
 
 describe('el gesto del menú lateral', () => {
   it('cerrado, no empieza pegado al borde: ese deslizamiento es el «atrás» de Android', () => {
-    expect(puedeEmpezar(MARGEN_BORDE - 1, false)).toBe(false);
-    expect(puedeEmpezar(MARGEN_BORDE, false)).toBe(true);
-    expect(puedeEmpezar(200, false)).toBe(true);
+    expect(puedeEmpezar(MARGEN_BORDE - 1, false, false)).toBe(false);
+    expect(puedeEmpezar(MARGEN_BORDE, false, false)).toBe(true);
+    expect(puedeEmpezar(200, false, false)).toBe(true);
   });
 
   it('abierto, empieza en cualquier lado', () => {
-    expect(puedeEmpezar(0, true)).toBe(true);
+    expect(puedeEmpezar(0, true, false)).toBe(true);
   });
 
   it('cerrado, no empieza sobre una fila que se desplaza de costado: el dedo es de la fila', () => {

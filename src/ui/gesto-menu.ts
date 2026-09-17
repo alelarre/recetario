@@ -21,7 +21,7 @@ const UMBRAL = 10;
  * fila que se desplaza de costado el dedo es de la fila: si no, se mueven las
  * dos cosas a la vez.
  */
-export function puedeEmpezar(xInicio: number, abierto: boolean, sobreFilaDeslizable = false): boolean {
+export function puedeEmpezar(xInicio: number, abierto: boolean, sobreFilaDeslizable: boolean): boolean {
   if (abierto) return true;
   return !sobreFilaDeslizable && xInicio >= MARGEN_BORDE;
 }
