@@ -22,12 +22,6 @@ export const rangoDeFila = (fila: unknown, hoja = HOJA_RECETAS, columnas: number
   return `${hoja}!A${fila}:${letra(columnas - 1)}${fila}`;
 };
 
-export function rangoDeCelda(columna: string, fila: number): string {
-  const i = (COLUMNAS as readonly string[]).indexOf(columna);
-  if (i < 0) throw new Error(`Columna desconocida: ${columna}`);
-  return `${HOJA_RECETAS}!${letra(i)}${fila}`;
-}
-
 /** Una hoja de la planilla: su id numérico y su nombre. */
 export interface PropiedadesHoja {
   sheetId: number;

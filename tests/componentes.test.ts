@@ -130,12 +130,6 @@ describe('encabezado', () => {
 });
 
 describe('chipsSueltos', () => {
-  it('marca los activos', () => {
-    const html = chipsSueltos(['horno', 'rápido'], ['horno']);
-    expect(html).toContain('class="chip act"');
-    expect(html).toContain('data-tag="horno"');
-  });
-
   it('en la fila de tags de la receta, incompleta abre el editor en vez de filtrar', () => {
     const html = chipsSueltos(['horno', 'incompleta']);
     expect(html).toContain('data-accion="editar"');

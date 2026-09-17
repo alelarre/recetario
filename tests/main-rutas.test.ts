@@ -218,6 +218,8 @@ describe('main.ts: las rutas', () => {
           };
         }
         if (sel === '#app input[name="tiempo"]') return campoTiempoDuracion;
+        // El spinner del pie de una lista: lo que mira el observador del tramo.
+        if (sel === '#app .spin') return app.innerHTML.includes('class="spin"') ? {} : null;
         return null;
       },
       querySelectorAll: (sel: string) =>
@@ -541,6 +543,36 @@ describe('main.ts: las rutas', () => {
     }
   });
 
+  it('filtrar por tag vuelve a mostrar el primer tramo, como el filtro de duración y el orden', async () => {
+    // 31 recetas con el mismo tag. El tramo avanza con un IntersectionObserver,
+    // que en Node no existe: acá es uno falso que se dispara a mano.
+    const original = storeFake.buscar;
+    const todas = Array.from({ length: 31 }, (_, i) =>
+      entradaFalsa({ id_archivo: `f${i}`, titulo: `A${String(i + 1).padStart(2, '0')}`, categoria: 'Carnes', tags: ['horno'] }));
+    storeFake.buscar = () => todas;
+    let llegarAlPie = (): void => {};
+    const g = global as unknown as Record<string, unknown>;
+    g['IntersectionObserver'] = class {
+      constructor(fn: (e: { isIntersecting: boolean }[]) => void) { llegarAlPie = () => fn([{ isIntersecting: true }]); }
+      observe(): void {}
+      disconnect(): void {}
+    };
+    try {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/c/Carnes');
+      expect(app.innerHTML).not.toContain('A31');
+      llegarAlPie();
+      await vi.waitFor(() => expect(app.innerHTML).toContain('A31'));
+
+      await tocar('', { tag: 'horno' });
+
+      expect(app.innerHTML).not.toContain('A31');
+    } finally {
+      storeFake.buscar = original;
+      delete g['IntersectionObserver'];
+    }
+  });
+
   it('ordenar por duración en la búsqueda reordena los resultados', async () => {
     const original = storeFake.buscarPorTexto;
     storeFake.buscarPorTexto = () => ({
@@ -573,6 +605,27 @@ describe('main.ts: las rutas', () => {
     await tocar('borrar-datos-locales');
     expect(estado.copiasBorradas).toBe(1);
     expect(recargas).toHaveLength(1);
+  });
+
+  it('mientras reindexa, Ajustes se dibuja con los mismos datos que al entrar', async () => {
+    const { app, abrir, tocar } = await montar();
+    let aMitad = '';
+    const conReconstruir = storeFake as typeof storeFake & {
+      reconstruir?: (alProgresar: (p: { leidas: number; total: number }) => void) => Promise<{ ignorados: string[] }>;
+    };
+    conReconstruir.reconstruir = async alProgresar => {
+      alProgresar({ leidas: 1, total: 2 });
+      aMitad = app.innerHTML;
+      return { ignorados: [] };
+    };
+    try {
+      await abrir('#/ajustes');
+      await tocar('reindexar');
+      expect(aMitad).toContain('Reindexando: 1 de 2.');
+      expect(aMitad).toContain('Carpeta: Recetario');
+    } finally {
+      delete conReconstruir.reconstruir;
+    }
   });
 
   describe('la gestión de categorías', () => {

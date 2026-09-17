@@ -256,6 +256,17 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
   router.iniciar();
 }
 
+/** Ajustes, igual al entrar que mientras reindexa: sólo cambia `reindexando`. */
+function dibujarAjustes(): void {
+  pintar(renderAjustes({
+    cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
+    indiceDuplicado: indiceDuplicado(), reindexando,
+    borradores: store.borradores().length, menuAbierto,
+    informe: informeArranque(), recetas: store.entradas().length, categorias: store.categorias().length,
+    carpeta: store.carpeta().nombre
+  }));
+}
+
 /**
  * Reindexar lee todos los `.md` y rearma la planilla: es la reparación
  * universal. No se puede cancelar —cortar a mitad deja el índice en el estado
@@ -265,10 +276,7 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
 async function reconstruir({ enAjustes = false } = {}) {
   reindexando = { leidas: 0, total: 0 };
   const dibujar = () => enAjustes
-    ? pintar(renderAjustes({
-        cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
-        indiceDuplicado: indiceDuplicado(), reindexando
-      }))
+    ? dibujarAjustes()
     : pintar(renderConexion({ estado: 'creando-indice', ...(reindexando ? { progreso: reindexando } : {}) }));
 
   dibujar();
@@ -506,13 +514,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // El mail no lo guarda nadie: se lo pide a Drive una vez. Que falle no
       // rompe la pantalla, solo deja la línea de la cuenta vacía.
       if (!cuenta) cuenta = await drive.cuenta().catch(() => '');
-      return pintar(renderAjustes({
-        cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
-        indiceDuplicado: indiceDuplicado(), reindexando,
-        borradores: store.borradores().length, menuAbierto,
-        informe: informeArranque(), recetas: store.entradas().length, categorias: store.categorias().length,
-        carpeta: store.carpeta().nombre
-      }));
+      return dibujarAjustes();
 
     case 'carpeta': {
       const nivel = { id: ruta.params['id'] ?? 'root', nombre: ruta.params['nombre'] ?? '' };
@@ -785,6 +787,7 @@ app.addEventListener('click', async (e) => {
     // lista por tag, que es donde ese chip tiene algo que mostrar.
     if (vistaActual?.vista === 'recetario') { location.hash = `#/t/${encodeURIComponent(tag)}`; return; }
     tagsActivos = tagsActivos.includes(tag) ? tagsActivos.filter(t => t !== tag) : [...tagsActivos, tag];
+    visibles = TRAMO;
     return render();
   }
 

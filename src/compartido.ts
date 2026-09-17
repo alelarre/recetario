@@ -1,15 +1,10 @@
 /**
- * La capa que la app y el agente invocan igual (C05.4.3).
- *
- * Tres operaciones viven acá —escribir una receta al índice, convertir un
- * borrador en receta y leer un `.md`— y son el único camino para escribir: dos
- * implementaciones del mismo formato divergen, una sola no.
- *
- * Son funciones finas sobre el store. La única con lógica propia es
- * `convertirBorrador`, que es una operación y no tres.
+ * Convertir un borrador en receta (C05.4.3). El único camino para escribir es
+ * el store, que escribe el `.md` y su fila juntos; acá vive la operación que
+ * además descarta el borrador, y que es una sola y no tres.
  */
 import type { Store } from './store.js';
-import type { Receta, Ubicacion } from './tipos.js';
+import type { Receta } from './tipos.js';
 
 /** Lo que una receta recién creada devuelve: su identidad en Drive (R5). */
 export interface RecetaCreada {
@@ -17,7 +12,7 @@ export interface RecetaCreada {
   nombre_archivo: string;
 }
 
-export type StoreDeCompartido = Pick<Store, 'escribirFila' | 'crear' | 'guardar' | 'receta' | 'descartarBorrador'>;
+export type StoreDeCompartido = Pick<Store, 'crear' | 'guardar' | 'descartarBorrador'>;
 
 export interface DependenciasCompartido {
   store: StoreDeCompartido;
@@ -29,16 +24,6 @@ export interface DependenciasCompartido {
    * recargó en el medio, la conversión vuelve a empezar y el duplicado se ve.
    */
   convertidos?: Map<string, RecetaCreada>;
-}
-
-/**
- * Escribe o reemplaza **su** fila, identificada por el `fileId` (C05.4.1).
- * Repetirla con la misma receta deja una sola fila.
- */
-export function escribirRecetaAlIndice(
-  { store }: DependenciasCompartido, receta: Receta, ubicacion: Ubicacion
-): Promise<void> {
-  return store.escribirFila(receta, ubicacion);
 }
 
 /**
@@ -72,9 +57,4 @@ export async function convertirBorrador(
 
   convertidos.delete(borradorId);
   return creada;
-}
-
-/** Lee el `.md` y lo parsea. El archivo es la verdad: acá no se compara nada (R4). */
-export async function leerReceta({ store }: DependenciasCompartido, id: string): Promise<Receta> {
-  return (await store.receta(id)).receta;
 }

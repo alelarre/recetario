@@ -245,41 +245,33 @@ no lo encuentra.
 del archivo son identidad: cambiar la categoría mueve el archivo entre carpetas y
 editar el título no lo renombra.
 
-**El índice es una implementación compartida, no solo un contrato.** Escribir
-una receta es escribir el `.md` y su fila, con la misma función para la app y
-para un agente. Ver §2.2.
+**Escribir una receta es escribir el `.md` y su fila, juntos.** Ver §2.2.
 
-### 2.2 La capa compartida
+### 2.2 Un solo camino de escritura
 
-Las dos partes del ecosistema —la PWA y el agente— no acuerdan un formato y lo
-implementan cada una por su lado: **usan el mismo código**.
+El formato tiene una sola implementación y la escritura un solo camino: el
+store de la app.
 
-| Operación | Qué hace | Quién la invoca |
+| Operación | Qué hace | Dónde vive |
 |---|---|---|
-| **Escribir receta al índice** | Recibe el `.md` o el objeto que representa la receta, y escribe o reemplaza su fila | La app al guardar; el agente al escribir una receta |
-| **Convertir borrador en receta** | Escribe el `.md`, escribe la fila del índice, y **descarta el borrador**: su `.md` a la papelera y su fila afuera | La app; el agente |
-| **Leer y parsear un `.md`** | Aplica el esquema: lo ausente llega vacío, y un `tiempo` o una `dificultad` fuera de sus valores se lee como sin dato | La app al abrir una receta y al reindexar; el agente para validar lo que escribió |
+| **Crear y guardar una receta** | Escribe el `.md` y escribe o reemplaza su fila del índice | `src/store.ts` |
+| **Convertir borrador en receta** | Lo anterior, y **descarta el borrador**: su `.md` a la papelera y su fila afuera | `src/compartido.ts` |
+| **Leer y parsear un `.md`** | Aplica el esquema: lo ausente llega vacío, y un `tiempo` o una `dificultad` fuera de sus valores se lee como sin dato | `src/recipe.ts` |
 
-Eso elimina la fuente de divergencia más obvia —dos implementaciones del mismo
-formato que se separan con el tiempo— y hace concreto lo que la visión llama
-ecosistema: no son dos productos que comparten una carpeta, son dos frentes
-sobre la misma lógica.
+Así no hay dos implementaciones del mismo formato que se separen con el tiempo.
 
-**Es también lo que sostiene el tercer diferenciador**, "el código es del
-usuario": el código no solo es suyo, es el mismo de los dos lados.
-
-**Un agente que no puede escribir planillas entrega la receta por la app.** El
+**El agente no corre este código: entrega la receta por la app.** El
 conector de Google Drive de claude.ai crea archivos pero no escribe planillas:
 un `.md` que deja en Drive aparece recién al reindexar. El camino sin ese paso es
 que el agente devuelva el `.md` y el usuario lo comparta o lo pegue en la app
-(*Convertir con Claude*, `user-flows.md` F2): ahí guarda la app, con la capa
-compartida. Rehacer el skill del agente sobre esa base está pendiente
+(*Convertir con Claude*, `user-flows.md` F2): ahí guarda la app, por el mismo
+camino que cualquier receta. Rehacer el skill del agente sobre esa base está pendiente
 (`../../BACKLOG.md`, P14).
 
 ### 2.3 Dos escritores sobre el mismo índice
 
-Aun con código compartido, la app y el agente escriben la misma planilla en
-momentos distintos. Con un solo usuario y sesiones que no se solapan, el riesgo
+La app escribe la planilla, y un agente puede dejar `.md` en Drive en otro
+momento. Con un solo usuario y sesiones que no se solapan, el riesgo
 de colisión es bajo, y el principio 1 lo cubre: si una fila queda mal, el índice
 se reconstruye desde los `.md`, que son la verdad.
 
@@ -298,8 +290,7 @@ de nombres de ingredientes**, fecha de modificación y foto. Los tags especiales
 Los ingredientes están ahí porque la búsqueda de J4 tiene que resolverse sin leer
 mil `.md`. Se guardan **tal como están escritos en la receta**, sin normalizar:
 cualquier normalización que la app y el agente tuvieran que replicar es una
-fuente de divergencia, y la capa compartida existe justamente para no tener dos
-versiones de la misma regla.
+fuente de divergencia.
 
 Una fila más gorda es barata: la escritura por fila ronda los 200 B y es
 exactamente para lo que el índice es una planilla.

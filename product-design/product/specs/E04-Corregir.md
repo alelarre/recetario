@@ -111,7 +111,7 @@ El mismo formulario, con los campos vacíos.
 
 - [ ] Los mismos campos, vacíos. Solo el título es obligatorio.
 - [ ] La categoría hay que elegirla: sin ella no se sabe en qué carpeta va el archivo.
-- [ ] Guardar crea el `.md` en la carpeta elegida y escribe su fila del índice, con la operación de la capa compartida (C05.4.1).
+- [ ] Guardar crea el `.md` en la carpeta elegida y escribe su fila del índice, por el store (C05.4.1).
 - [ ] El nombre del archivo se deriva del título **una sola vez, al crearlo**, y no vuelve a cambiar (C04.2.2): el título en minúsculas, sin acentos y con guiones — `milanesas-napolitanas.md`.
 - [ ] Si ya existe un archivo con ese nombre en la carpeta, se usa un nombre distinto sin preguntar: la identidad es el `fileId`, no el nombre.
 - [ ] **Desde un borrador** (C01.6.3), el editor abre con el título y la `fuente` cargados, y guardar descarta el borrador —su `.md` a la papelera y su fila afuera— en la misma operación (C01.7.1). Lo mismo con una receta que llegó de Claude atada a un borrador (C01.9.2).

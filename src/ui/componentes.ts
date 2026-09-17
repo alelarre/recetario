@@ -182,11 +182,11 @@ export function chipTag(tag: string, { activo, cantidad, fijo }: OpcionesChip = 
  * Los chips sueltos, sin el contenedor: los usa la receta. `incompleta` no
  * filtra: abre el editor, que es donde se completa lo que falta (C03.1.3).
  */
-export function chipsSueltos(tags: string[], activos: string[] = []): string {
+export function chipsSueltos(tags: string[]): string {
   return ordenarTags(Array.isArray(tags) ? tags : []).map(tag => tagEspecial(tag) === 'incompleta'
     ? `<button class="chip pend" data-accion="editar" aria-label="Incompleta: abrir el editor">` +
       `${iconoDeTag(tag)}${escapar(tag)}</button>`
-    : chipTag(tag, { activo: activos.includes(tag) })).join('');
+    : chipTag(tag)).join('');
 }
 
 export interface OpcionesCarrusel {

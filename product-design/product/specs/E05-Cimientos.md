@@ -204,15 +204,13 @@ la marca de un reindexado en curso—, **`borradores`** —una fila por cada `.m
 de `_borradores/`: archivo, título y cuándo se capturó— y **`categorias`** —una
 fila por subcarpeta: id, nombre, color y foto (C05.4.4)—.
 
-**Lo escriben las dos partes del ecosistema con la misma función**
-(`src/compartido.ts`): la app cuando guarda, y el agente cuando escribe una
-receta nueva.
-
-No es un formato acordado que cada uno implementa por su lado — es código común.
-Tres operaciones viven ahí: escribir una receta al índice, convertir un borrador
-en receta, y leer y parsear un `.md`. Eso elimina la divergencia entre dos
-implementaciones del mismo formato, y hace concreto lo que la visión llama
-ecosistema.
+**Lo escribe un solo camino: el store** (`src/store.ts`). Crear y guardar una
+receta escriben el `.md` y su fila juntos, y convertir un borrador
+(`src/compartido.ts`) suma descartarlo. El formato tiene una sola
+implementación —`src/recipe.ts` para el `.md`, `src/catalogo.ts` para la fila—,
+así que no hay dos versiones que puedan divergir. El agente no corre este
+código: devuelve el `.md` y lo guarda la app (C01.9.2); lo que deja directo en
+Drive aparece al reindexar.
 
 #### C05.4.1 — Escribir una receta al índice *(transversal)*
 
@@ -236,15 +234,15 @@ escritura parcial y un JSON obligaría a reescribir el archivo entero.
 - [ ] Una copia de otra versión del esquema, de otra planilla, o que no se puede leer cuenta como que no hay copia. La copia nunca es imprescindible.
 - [ ] La premisa es que nunca hay escritura concurrente. No sirve para dibujar sin red: ver C05.8.1.
 
-#### C05.4.3 — La misma función la invocan la app y el agente *(J8)*
+#### C05.4.3 — Un solo camino de escritura *(J8)*
 
-- [ ] Las tres operaciones de la capa compartida son el único camino para escribir: no hay una ruta paralela dentro de la app.
-- [ ] **Convertir un borrador en receta** la invoca el agente al convertir afuera, y la app cuando se guarda una receta creada desde un borrador (C01.6.3).
+- [ ] Toda escritura de una receta pasa por el store, que escribe el `.md` y su fila: no hay una ruta paralela dentro de la app.
+- [ ] **Convertir un borrador en receta** es una sola operación —el `.md`, la fila y descartar el borrador— y la usa la app cuando se guarda una receta creada desde un borrador (C01.6.3), venga escrita a mano o recibida de Claude.
+- [ ] El agente no escribe el índice: entrega el `.md` y lo guarda la app, o lo deja en Drive y aparece al reindexar.
 
-**Nota técnica:** dos escritores sobre la misma planilla, sin bloqueo y sin
-lógica de concurrencia. Con un solo usuario y sesiones que no se solapan el
-riesgo es bajo, y la reparación es reindexar (F05.5) con una sola pestaña
-abierta.
+**Nota técnica:** no hay bloqueo ni lógica de concurrencia. Con un solo usuario
+y sesiones que no se solapan el riesgo es bajo, y la reparación es reindexar
+(F05.5) con una sola pestaña abierta.
 
 #### C05.4.4 — Las categorías salen del índice *(J1, J8)*
 

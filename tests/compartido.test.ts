@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { convertirBorrador, escribirRecetaAlIndice, leerReceta } from '../src/compartido.js';
+import { convertirBorrador } from '../src/compartido.js';
 import { crearStore } from '../src/store.js';
 import { driveFalso, sheetsFalso, recetaFalsa, indiceLocalFalso } from './dobles.js';
 import { COLUMNAS } from '../src/catalogo.js';
@@ -130,34 +130,5 @@ describe('convertirBorrador', () => {
     // Y tampoco quedó un segundo .md: el reintento reescribe el que ya estaba.
     expect(await drive.listarHijos('c1')).toHaveLength(1);
     expect(store.borradores()).toEqual([]);
-  });
-});
-
-describe('escribirRecetaAlIndice', () => {
-  it('reemplaza la fila de esa receta en vez de agregar otra (R5)', async () => {
-    const { deps, store, sheets } = await armar();
-    const ubicacion = {
-      id: 'f1', nombre_archivo: 'f1.md', categoria: 'Pescados y mariscos',
-      carpeta_id: 'c1', mtime: 0
-    };
-
-    await escribirRecetaAlIndice(deps, recetaFalsa({ titulo: 'Rabas' }), ubicacion);
-    await escribirRecetaAlIndice(deps, recetaFalsa({ titulo: 'Rabas al ajo' }), ubicacion);
-
-    await store.cargarIndice();
-    expect(store.entradas()).toHaveLength(1);
-    expect(store.entradas()[0]?.titulo).toBe('Rabas al ajo');
-    expect(sheets.appends).toHaveLength(1);   // la segunda reemplaza
-  });
-});
-
-describe('leerReceta', () => {
-  it('devuelve el .md parseado', async () => {
-    const { deps, drive } = await armar();
-    const archivo = await drive.crear({
-      nombre: 'rabas.md', padre: 'c1', contenido: '---\ntitulo: Rabas\n---\n\n## Notas\n- ojo\n'
-    });
-
-    expect(await leerReceta(deps, archivo.id)).toMatchObject({ titulo: 'Rabas', notas: '- ojo' });
   });
 });

@@ -34,9 +34,10 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   para corregir. Desde un borrador, «Convertir con Claude» arma el pedido y lo
   manda a Claude; la respuesta vuelve compartida o con «Pegar receta». **La app
   no llama a ningún modelo.**
-- **La app y el agente escriben con la misma función.** `src/compartido.ts`
-  tiene las tres operaciones —escribir una receta al índice, convertir un
-  borrador en receta y leer un `.md`— y es el único camino para escribir.
+- **Hay un solo camino de escritura: el store.** `store.crear` y
+  `store.guardar` escriben el `.md` y su fila juntos; `convertirBorrador`
+  (`src/compartido.ts`) suma descartar el borrador. El agente no corre este
+  código: devuelve el `.md` y lo guarda la app.
 - **La app no descubre lo que se escribe afuera:** un `.md` subido a Drive por
   fuera aparece al reindexar.
 
