@@ -1397,6 +1397,17 @@ describe('main.ts: las rutas', () => {
       }
     });
 
+    it('sin menú Compartir ni portapapeles, y el pedido demasiado largo para el link, avisa en vez de no hacer nada', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: 'https://x', nota: 'a'.repeat(9000), capturado: '' }];
+      vi.stubGlobal('navigator', {});
+      const { abrir, tocar, app } = await montar();
+
+      await abrir('#/borradores/b1');
+      await tocar('convertir-con-claude');
+
+      expect(app.innerHTML).toContain('No pude abrir Claude ni copiar el pedido.');
+    });
+
     it('compartir una receta con id válido abre el editor atado a ese borrador, con `replace`', async () => {
       estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
       const { abrir, app, reemplazos } = await montar();

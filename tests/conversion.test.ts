@@ -66,3 +66,19 @@ describe('la receta recibida', () => {
     expect(receta.extras['maridaje']).toBe('tinto');
   });
 });
+
+describe('CRLF (una receta compartida o pegada con saltos de línea de Windows)', () => {
+  const CRLF = '---\r\ntitulo: Pan\r\nborrador: b9\r\n---\r\n\r\n## Preparación\r\n1. Amasar.\r\n';
+
+  it('se reconoce igual que con LF', () => {
+    expect(esRecetaEnMd(CRLF)).toBe(true);
+  });
+
+  it('recetaRecibida saca el título y el id del borrador, sin avisos de frontmatter faltante', () => {
+    const { receta, borradorId } = recetaRecibida(CRLF);
+    expect(receta.titulo).toBe('Pan');
+    expect(borradorId).toBe('b9');
+    expect(receta.avisos).not.toContain('sin-frontmatter');
+    expect(receta.avisos).not.toContain('sin-titulo');
+  });
+});

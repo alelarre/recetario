@@ -114,7 +114,7 @@ Lo que llega por el Share Target a `#/capturar`:
 
 | Archivo | Qué cambia |
 |---|---|
-| `src/conversion.ts` (nuevo) | `pedidoDeConversion`, `esRecetaEnMd`, `idDeBorrador` (lee y saca la clave `borrador` de una receta parseada) |
+| `src/conversion.ts` (nuevo) | `pedidoDeConversion`, `esRecetaEnMd`, `recetaRecibida` (lee y saca la clave `borrador` de una receta parseada) |
 | `src/ui/borradores.ts` | «Convertir con Claude» y «Pegar receta» en el borrador; «Pegar receta» en Borradores; la pantalla «¿De qué borrador es esta receta?» |
 | `src/compartir.ts` | Abrir el menú Compartir con un texto, o el link a Claude, o el portapapeles |
 | `src/main.ts` | Las acciones, la receta recibida en memoria, la ruta de la pregunta, y el editor con la receta cargada |
@@ -127,7 +127,7 @@ Lo que llega por el Share Target a `#/capturar`:
   tres dificultades y los tags reservados.
 - `esRecetaEnMd` reconoce una receta, y rechaza un link, un texto suelto, un frontmatter sin
   `titulo` y uno sin cierre.
-- `idDeBorrador` devuelve el id y saca la clave.
+- `recetaRecibida` devuelve el id y saca la clave.
 - Sin `navigator.share`: un pedido corto abre el link con `q`; uno largo copia y avisa.
 - Compartir una receta con id válido abre el editor atado; con id inexistente o sin id,
   abre la pregunta; «Ninguno» abre receta nueva.

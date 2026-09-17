@@ -34,16 +34,24 @@ export function pedidoDeConversion({ id, titulo, fuente, nota }: Pick<Borrador, 
   ].join('\n');
 }
 
+/**
+ * `\r\n` → `\n`, una vez, para que el resto del módulo no tenga que pensar en
+ * CRLF (precedente: `borrador.ts:21`). `parse()` de `recipe.ts` sólo reconoce
+ * `\n`: sin esto, una receta compartida o pegada con saltos de Windows se
+ * detecta como receta pero se parsea vacía.
+ */
+const normalizarSaltos = (texto: string): string => texto.replace(/\r\n/g, '\n');
+
 /** Empieza con un frontmatter cerrado que tiene `titulo:`. */
 export function esRecetaEnMd(texto: unknown): boolean {
   if (typeof texto !== 'string') return false;
-  const m = texto.trimStart().match(/^---\r?\n([\s\S]*?)\r?\n---(\r?\n|$)/);
+  const m = normalizarSaltos(texto).trimStart().match(/^---\n([\s\S]*?)\n---(\n|$)/);
   return !!m && /^titulo\s*:/m.test(m[1] ?? '');
 }
 
 /** La receta parseada, sin la clave `borrador`, que se devuelve aparte. */
 export function recetaRecibida(texto: string): { receta: Receta; borradorId: string } {
-  const receta = parse(texto.trimStart());
+  const receta = parse(normalizarSaltos(texto).trimStart());
   const borradorId = String(receta.extras['borrador'] ?? '').trim();
   const extras = { ...receta.extras };
   delete extras['borrador'];

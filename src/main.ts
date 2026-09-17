@@ -1089,6 +1089,7 @@ app.addEventListener('click', async (e) => {
     if (!b) return;
     const r = await enviarAClaude(plataformaDelNavegador(), pedidoDeConversion(b));
     if (r === 'copiado') { avisoBorradores = 'Pedido copiado: pegalo en Claude'; return render(); }
+    if (r === 'sin-portapapeles') { avisoBorradores = 'No pude abrir Claude ni copiar el pedido.'; return render(); }
     return;
   }
   if (accion === 'pegar-receta') {
