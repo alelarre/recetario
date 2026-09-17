@@ -1397,9 +1397,9 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('compartir una receta con id válido abre el editor atado a ese borrador', async () => {
+    it('compartir una receta con id válido abre el editor atado a ese borrador, con `replace`', async () => {
       estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-      const { abrir, app } = await montar();
+      const { abrir, app, reemplazos } = await montar();
       await abrir('#/capturar?text=' + encodeURIComponent(mdConId('b1')));
 
       expect(global.location.hash).toBe('#/nueva?borrador=b1&recibida=1');
@@ -1407,14 +1407,21 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).not.toContain('borrador: b1');
       expect(app.innerHTML).not.toContain('name="borrador"');
       expect(app.innerHTML).toContain('data-valor="incompleta" aria-pressed="true"');
+      // Con `replace`, no con una entrada nueva: `#/capturar` era la única
+      // entrada que dejó el Share Target, y sumar una acá haría que volver
+      // cayera de nuevo en la captura, que reabriría esta misma receta
+      // (spec §3.2). Antes de este arreglo, `recibirReceta` usaba
+      // `location.hash =` y `reemplazos` quedaba vacío.
+      expect(reemplazos).toContain('#/nueva?borrador=b1&recibida=1');
     });
 
-    it('compartir una receta sin id abre la pregunta, y elegir "Ninguno" crea la receta nueva', async () => {
-      const { abrir, tocar, app } = await montar();
+    it('compartir una receta sin id abre la pregunta con `replace`, y elegir "Ninguno" crea la receta nueva', async () => {
+      const { abrir, tocar, app, reemplazos } = await montar();
       await abrir('#/capturar?text=' + encodeURIComponent(MD_SIN_ID));
 
       expect(global.location.hash).toBe('#/recibida');
       expect(app.innerHTML).toContain('¿De qué borrador es esta receta?');
+      expect(reemplazos).toContain('#/recibida');
 
       await tocar('elegir-borrador-recibido', { valor: '' });
 
@@ -1441,7 +1448,11 @@ describe('main.ts: las rutas', () => {
     it('compartir algo que no es una receta sigue abriendo la captura', async () => {
       const { abrir, app } = await montar();
       await abrir('#/capturar?text=hola');
-      expect(app.innerHTML).toContain('hola');
+      // La pantalla de captura compartida en sí, no sólo el texto: el título
+      // y el botón de guardar del borrador.
+      expect(app.innerHTML).toContain('<h1>Guardar en Recetario</h1>');
+      expect(app.innerHTML).toContain('<div class="fnt">hola</div>');
+      expect(app.innerHTML).toContain('data-accion="guardar-captura"');
       expect(app.innerHTML).not.toContain('¿De qué borrador');
     });
 
@@ -1504,9 +1515,9 @@ describe('main.ts: las rutas', () => {
       expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
     });
 
-    it('guardar atado a un borrador, desde la receta recibida, convierte y descarta el borrador', async () => {
+    it('guardar atado a un borrador, desde la receta recibida, convierte, descarta el borrador y cierra a la receta creada', async () => {
       estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-      const { abrir, tocar } = await montar();
+      const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
       await abrir('#/capturar?text=' + encodeURIComponent(mdConId('b1')));
       expect(global.location.hash).toBe('#/nueva?borrador=b1&recibida=1');
 
@@ -1515,6 +1526,38 @@ describe('main.ts: las rutas', () => {
 
       expect(estado.creadas).toEqual(['Focaccia']);
       expect(estado.descartados).toEqual(['b1']);
+      // No `history.back()`: desde acá volvería a `#/capturar` —o a
+      // `#/recibida`—, que reconocería la misma receta ya guardada y la
+      // reabriría (P28, spec §3.2). Cierra directo a la receta que
+      // `store.crear`/`convertirBorrador` acaba de crear.
+      expect(vueltasAtras).toEqual([]);
+      expect(reemplazos).toContain('#/r/nuevo-1');
+      expect(global.location.hash).toBe('#/r/nuevo-1');
+    });
+
+    it('sin entrada previa en el historial, «Salir sin guardar» cierra a Borradores en vez de intentar volver', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
+      const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
+      await abrir('#/capturar?text=' + encodeURIComponent(mdConId('b1')));
+      // Como en el Share Target real: la captura era la única entrada.
+      (global.history as unknown as { length: number }).length = 1;
+
+      await tocar('salir-sin-guardar');
+
+      expect(vueltasAtras).toEqual([]);
+      expect(reemplazos).toContain('#/borradores');
+    });
+
+    it('sin entrada previa, volver desde «¿De qué borrador…» cierra a Borradores', async () => {
+      const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
+      await abrir('#/capturar?text=' + encodeURIComponent(MD_SIN_ID));
+      expect(global.location.hash).toBe('#/recibida');
+      (global.history as unknown as { length: number }).length = 1;
+
+      await tocar('volver');
+
+      expect(vueltasAtras).toEqual([]);
+      expect(reemplazos).toContain('#/borradores');
     });
   });
 

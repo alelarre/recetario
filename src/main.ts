@@ -325,13 +325,23 @@ function observarTramo(): void {
 /**
  * Lo recibido de Claude va al editor del borrador del id si existe; si no, a
  * la pregunta «¿De qué borrador es esta receta?» (P28).
+ *
+ * `reemplazar` navega con `replace` en vez de sumar una entrada al
+ * historial. Hace falta cuando esto se llama desde `capturar`: el Share
+ * Target deja esa pantalla como única entrada (`hashDeCompartido` ya
+ * reemplazó), y si acá se sumara una entrada, volver —o «Salir sin
+ * guardar», o cerrar después de guardar— caería de nuevo en `#/capturar`,
+ * que reconocería la misma receta y la reabriría (spec §3.2). Desde «Pegar
+ * receta» no hace falta: ahí sí conviene que volver deje al borrador o a
+ * Borradores, de donde se pegó.
  */
-function recibirReceta(texto: string, borradorElegido?: string): void {
+function recibirReceta(texto: string, borradorElegido?: string, reemplazar = false): void {
   const { receta, borradorId } = recetaRecibida(texto);
   recibida = receta;
   const id = borradorElegido ?? borradorId;
   const existe = !!id && store.borradores().some(b => b.id_archivo === id);
-  location.hash = existe ? `#/nueva?borrador=${encodeURIComponent(id)}&recibida=1` : '#/recibida';
+  const hash = existe ? `#/nueva?borrador=${encodeURIComponent(id)}&recibida=1` : '#/recibida';
+  if (reemplazar) irCerrando(hash); else location.hash = hash;
   // Un `hashchange` real haría lo mismo, pero en el próximo tick: no hay que
   // esperarlo para mostrar el editor o la pregunta.
   void render();
@@ -536,10 +546,13 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     case 'capturar': {
       // La captura no dibuja la app: es una pantalla efímera sobre lo que el
       // usuario estaba haciendo en otra app (C01.2.2).
-      const compartido = ruta.params['text'] || '';
+      const textoCompartido = ruta.params['text'] || '';
       // Lo compartido puede ser la receta que volvió de Claude (P28): ahí no
-      // se captura como borrador, se abre el editor directo.
-      if (esRecetaEnMd(compartido)) { recibirReceta(compartido); return; }
+      // se captura como borrador, se abre el editor directo. Con `replace`:
+      // esta pantalla es la única entrada del historial que dejó el Share
+      // Target, y sin reemplazarla, volver caería de nuevo acá y reabriría
+      // la misma receta (spec §3.2).
+      if (esRecetaEnMd(textoCompartido)) { recibirReceta(textoCompartido, undefined, true); return; }
       const fuente = ruta.params['url'] || ruta.params['text'] || '';
       return pintar(renderCaptura({
         fuente, titulo: tituloCaptura, nota: notaCaptura, guardando: guardandoCaptura,
@@ -606,10 +619,16 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // viene de Claude —recibida—, se usa tal cual, sin mezclar la nota de
       // ningún borrador (P28).
       const borradorId = ruta.params['borrador'] ?? '';
-      const deClaude = !!ruta.params['recibida'] && !!recibida;
+      // `recibida` se lee una sola vez: de ahí sale tanto si esta pantalla
+      // usa la receta de Claude como, más abajo, si cuenta como cambios sin
+      // guardar desde que se abre.
+      const deClaude = ruta.params['recibida'] ? recibida : null;
       let receta: Receta;
-      if (deClaude && recibida) {
-        receta = recibida;
+      if (deClaude) {
+        // Copia: `recibida` sigue viva hasta que se guarda o se navega a otra
+        // pantalla (para que `guardar` conserve sus claves desconocidas), y
+        // no tiene que verse afectada por lo que el editor le hace a la suya.
+        receta = { ...deClaude };
       } else {
         receta = parse('');
         if (borradorId) {
@@ -1139,15 +1158,31 @@ app.addEventListener('click', async (e) => {
     // es la entrada anterior del historial.
     if (editandoBorrador) { editandoBorrador = false; return render(); }
     if (vistaActual?.vista === 'cocinar') await cocina.soltarPantalla();
-    // Entrar por un link directo deja el historial vacío: ahí volver es ir al
-    // Recetario, no salirse de la app.
-    if (history.length <= 1) { location.hash = '#/'; return; }
+    if (history.length <= 1) {
+      // Sin entrada previa —por ejemplo, la pregunta «¿De qué borrador…»
+      // abierta con `replace` porque la receta llegó por Share (P28)— no hay
+      // nada detrás en este mismo hilo: se cierra a Borradores, no al
+      // Recetario, que es adonde no vino.
+      if (vistaActual?.vista === 'recibida') { irCerrando('#/borradores'); return; }
+      // Entrar por un link directo deja el historial vacío: ahí volver es ir
+      // al Recetario, no salirse de la app.
+      location.hash = '#/';
+      return;
+    }
     return history.back();
   }
   if (accion === 'editar') { location.hash = `#/r/${vistaActual?.params['id'] ?? ''}/editar`; return; }
   if (accion === 'cancelar') return history.back();
   if (accion === 'seguir-editando') { document.querySelector('[data-salida]')?.remove(); return; }
-  if (accion === 'salir-sin-guardar') { editorAbierto = null; return history.back(); }
+  if (accion === 'salir-sin-guardar') {
+    editorAbierto = null;
+    // Mismo caso que arriba: sin entrada previa —el editor de una receta
+    // recibida por Share, abierto con `replace`— volver no puede intentar
+    // salir de la app (C01.2.2 aplicado a P28); cierra a Borradores. Mismo
+    // patrón que ya usa «Cancelar» en la captura.
+    if (history.length <= 1) { irCerrando('#/borradores'); return; }
+    return history.back();
+  }
   if (accion === 'reconectar') {
     try {
       // Si el arranque nunca llegó a "listo" (solo-lectura), reintentar todo
@@ -1253,20 +1288,25 @@ app.addEventListener('click', async (e) => {
     if (esNueva && !carpetaId) return conError('Elegí una categoría antes de guardar.');
 
     try {
+      let creada: { id: string } | null = null;
       if (esNueva && borradorId) {
         // Convertir es una sola operación: el .md, la fila y el borrador (C01.7.1).
-        await convertirBorrador({ store, convertidos }, { borradorId, receta: nueva, carpetaId });
+        creada = await convertirBorrador({ store, convertidos }, { borradorId, receta: nueva, carpetaId });
       } else if (esNueva) {
-        await store.crear(nueva, { carpetaId: carpetaId || undefined });
+        creada = await store.crear(nueva, { carpetaId: carpetaId || undefined });
       } else {
         await store.guardar(id, nueva, { carpetaDestino: carpetaId });
         // Lo guardado es la copia: volver a la receta la muestra sin releer.
         recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: nueva };
       }
-      // Nada confirma el éxito: al terminar, vuelve a la receta. Lo escrito ya
-      // está en Drive, así que salir no tiene nada que preguntar.
       editorAbierto = null;
       recibida = null;
+      // Atada a la receta recibida, `history.back()` caería en `#/capturar`
+      // —o en `#/recibida`— y reabriría lo mismo que se acaba de guardar
+      // (P28, spec §3.2): se cierra directo a la receta creada.
+      if (recibidaBase && creada) { irCerrando(`#/r/${encodeURIComponent(creada.id)}`); return; }
+      // Nada más confirma el éxito: al terminar, vuelve a la receta. Lo
+      // escrito ya está en Drive, así que salir no tiene nada que preguntar.
       return history.back();
     } catch (err) {
       console.error(err);
