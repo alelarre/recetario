@@ -1,7 +1,7 @@
 # Convertir un borrador con Claude — diseño
 
 **Fecha:** 2026-09-16
-**Estado:** Aprobado en conversación; pendiente de revisión escrita.
+**Estado:** Implementado.
 **Resuelve:** `product-design/plan/BACKLOG.md` P28 — que un agente convierta un borrador en
 receta.
 

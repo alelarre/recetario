@@ -229,6 +229,18 @@ No toques la planilla `_indice` a mano, ni para agregar una fila ni para
 «arreglar» nada: si el índice queda mal, la reparación es siempre reindexar. En la
 carpeta `_borradores/` sí escribís, pero sólo archivos de borrador nuevos.
 
+## Otra forma de entregar la receta
+
+Además de subir el `.md` a Drive, la receta se puede devolver a la app
+**compartiendo la respuesta a Recetario** (Android) o **copiándola y tocando
+«Pegar receta»** en Borradores. La app la abre en el editor y, al guardar,
+escribe el `.md` y su fila del índice sola: no hace falta reindexar.
+
+Si la receta convierte un borrador, la última línea del frontmatter es
+`borrador: <id>`: la app abre el editor atado a ese borrador, y al guardar lo
+borra. Sin esa línea, o con un id que la app no reconoce, pregunta a qué
+borrador corresponde.
+
 ## Según de dónde venga la receta
 
 ### Sitio web

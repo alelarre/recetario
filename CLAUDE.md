@@ -104,15 +104,31 @@ valor que no sea uno de los cinco se lee como sin duración, igual que una
 `docs/superpowers/plans/2026-09-16-duracion.md`. Queda probarla en el
 teléfono (spec §11).
 
+**Hecho el 2026-09-16 — convertir un borrador con Claude (P28):** en el
+borrador, **«Convertir con Claude»** arma el pedido —el borrador y las
+reglas del formato, desde las mismas constantes que usa la app— y lo manda a
+Claude: con el menú Compartir del sistema (Android), o si no un link a
+`https://claude.ai/new` con el pedido, o copiarlo y avisar si no entra en
+8.000 caracteres. La respuesta vuelve a la app **compartida o pegada**
+—«Pegar receta»—: cualquier receta en `.md` que llega abre el editor, atado
+al borrador si trae su id o preguntando **«¿De qué borrador es esta
+receta?»** si no lo trae o no existe. Guardar usa `convertirBorrador` cuando
+hay un borrador atado, y crea la receta como cualquier otra si no. La app no
+llama a ningún modelo. Spec en
+`docs/superpowers/specs/2026-09-16-convertir-con-claude-design.md`, plan en
+`docs/superpowers/plans/2026-09-16-convertir-con-claude.md`. Queda probarlo
+en el teléfono y en la Mac (spec §6).
+
 **Para retomar:** queda probar **tags especiales (P27)** en el teléfono —dos
 checklists: `tags-especiales-design.md` §11 y `tags-especiales-2-design.md`
-§10— y **la duración (P29)** —`duracion-design.md` §11—. Lo siguiente del
-backlog, después, es la **etapa 3b de P19** (imágenes propias de categorías
-en Drive, guardadas en Cache Storage, y que *Borrar datos locales* también las
-borre), **P26** (rediseñar el selector de carpetas: primero entender qué no
-convence) y **P28** (un agente embebido que convierta un borrador en receta).
-Las features grandes se trabajan con spec y plan en `docs/superpowers/`, y el
-código no se commitea hasta que el usuario revisa el diff.
+§10—, **la duración (P29)** —`duracion-design.md` §11— y **convertir con
+Claude (P28)**, en el teléfono y en la Mac —`convertir-con-claude-design.md`
+§6—. Lo siguiente del backlog, después, es la **etapa 3b de P19** (imágenes
+propias de categorías en Drive, guardadas en Cache Storage, y que *Borrar
+datos locales* también las borre) y **P26** (rediseñar el selector de
+carpetas: primero entender qué no convence). Las features grandes se
+trabajan con spec y plan en `docs/superpowers/`, y el código no se commitea
+hasta que el usuario revisa el diff.
 
 - Especificación funcional y visual: **`product-design/`** ← lo vigente
 - El plan con el que se implementó: `docs/superpowers/plans/2026-09-07-rediseno.md`
@@ -312,20 +328,20 @@ el enunciado: comportamiento (§6.1), diseño visual (§6.2), lo que pide
 investigación antes de tocar nada (§6.3), lo que no se arregla con código (§6.4)
 y la deuda chica (§6.5).
 
-**Estado al 2026-09-16:** resueltos P1 a P13, P16 a P18, P20 a P25, P27 y P29
-—P23 probado en el teléfono; P27 y P29 todavía no—; P15 cerrado (lo resolvió
+**Estado al 2026-09-16:** resueltos P1 a P13, P16 a P18, P20 a P25 y P27 a P29
+—P23 probado en el teléfono; P27 a P29 todavía no—; P15 cerrado (lo resolvió
 P19 desde la app); §6.4 y §6.5 cerradas. Quedan abiertos:
 
 - **P14** —rehacer el skill del agente—. El conector de Google Drive de claude.ai
   no escribe planillas ni reescribe el contenido de un archivo (medido el
-  2026-09-12): el skill nuevo parte de eso.
+  2026-09-12): el skill nuevo parte de eso. Desde P28, ya no lo necesita para
+  que una receta cargada con Claude aparezca en la app.
 - **P19** —categorías y carpeta definidas por el usuario—: partido en
   etapas. **Hechas la 1** (categorías en el índice), **la 2** (carpeta base
   elegida) **y la 3a** (gestión de categorías). **Queda la 3b:** imágenes propias
   en Drive. Lo decidido está en la fila de P19 del backlog y en los tres specs del
   2026-09-13.
 - **P26** —rediseñar el selector de carpetas—: no convence el actual; primero propuestas.
-- **P28** —un agente embebido que convierta un borrador en receta—: era la decisión abierta del §1 del backlog; sin definir cómo se llama al modelo sin backend.
 
 Y queda el contenido.
 
