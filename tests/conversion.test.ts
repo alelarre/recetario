@@ -27,7 +27,7 @@ describe('el pedido para Claude', () => {
   it('pide sólo el .md, sin texto alrededor ni bloque de código', () => {
     expect(pedido).toContain('## Ingredientes');
     expect(pedido).toContain('## Preparación');
-    expect(pedido).toMatch(/sin bloque de código/i);
+    expect(pedido).toMatch(/sólo con el texto plano, sin texto antes ni después/i);
   });
 
   it('un borrador sin fuente ni nota no deja líneas vacías con rótulo', () => {

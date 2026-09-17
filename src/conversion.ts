@@ -30,7 +30,7 @@ export function pedidoDeConversion({ id, titulo, fuente, nota }: Pick<Borrador, 
     '',
     'No inventes temperaturas, tiempos ni cantidades que la fuente no dice. No agregues datos nutricionales.',
     '',
-    'Respondé sólo con el .md, sin texto antes ni después y sin bloque de código.'
+    'Respondé en formato markdown, sólo con el texto plano, sin texto antes ni después. Usar un bloque de código o quote si es necesario para evitar aplicar formato en la salida.'
   ].join('\n');
 }
 

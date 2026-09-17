@@ -53,8 +53,9 @@ desactualiza cuando cambia el esquema. Lleva, en este orden:
    - la preparación en pasos numerados.
 4. **Lo que no se hace:** inventar temperaturas, tiempos o cantidades que la fuente no dice;
    agregar datos nutricionales.
-5. **La salida:** sólo el `.md`, sin texto antes ni después y sin bloque de código, para
-   poder compartirlo entero.
+5. **La salida:** en markdown, sólo el texto plano, sin texto antes ni después; un bloque de
+   código o un quote si hace falta para que la app de destino no aplique formato. Se pide
+   así porque un agente que no es Claude entendió mal la versión anterior `[2026-09-17]`.
 
 La categoría no viaja: se elige en el editor.
 
