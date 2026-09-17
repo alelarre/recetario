@@ -28,6 +28,14 @@ describe('parsearHash', () => {
     expect(parsearHash('#/nueva?borrador=b1')).toEqual({ vista: 'nueva', params: { borrador: 'b1' } });
   });
 
+  it('la pregunta del borrador y la receta recibida', () => {
+    expect(parsearHash('#/recibida')).toEqual({ vista: 'recibida', params: {} });
+    expect(parsearHash('#/nueva?recibida=1')).toEqual({ vista: 'nueva', params: { recibida: '1' } });
+    expect(parsearHash('#/nueva?borrador=b1&recibida=1'))
+      .toEqual({ vista: 'nueva', params: { borrador: 'b1', recibida: '1' } });
+    expect(parsearHash('#/nueva?borrador=b1')).toEqual({ vista: 'nueva', params: { borrador: 'b1' } });
+  });
+
   it('una ruta desconocida cae en el Recetario en vez de romper', () => {
     expect(parsearHash('#/cualquiera/cosa')).toEqual({ vista: 'recetario', params: {} });
     expect(parsearHash('#/no-existe')).toEqual({ vista: 'recetario', params: {} });

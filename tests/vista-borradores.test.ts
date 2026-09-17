@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderBorradores, renderBorrador, cuando } from '../src/ui/borradores.js';
+import { renderBorradores, renderBorrador, renderPreguntaBorrador, cuando } from '../src/ui/borradores.js';
 import { ICO } from '../src/ui/iconos.js';
 import type { Borrador, EntradaBorrador } from '../src/tipos.js';
 
@@ -38,6 +38,10 @@ describe('Borradores', () => {
   it('cada borrador lleva al suyo', () => {
     expect(renderBorradores({ borradores: [entradaFalsa({ id_archivo: 'b7' })] }))
       .toContain('href="#/borradores/b7"');
+  });
+
+  it('Borradores ofrece pegar una receta', () => {
+    expect(renderBorradores({ borradores: [] })).toContain('data-accion="pegar-receta"');
   });
 });
 
@@ -81,10 +85,25 @@ describe('Borrador', () => {
     expect(html).not.toContain('name="fuente"');
   });
 
-  it('no hay ningún botón que prometa llamar a un agente', () => {
+  it('crear la receta a mano sigue disponible junto a las de Claude', () => {
     const html = renderBorrador({ borrador: borradorFalso(), confirmando: false });
-    expect(html).not.toMatch(/convertir/i);
     expect(html).toContain('Crear la receta');
+  });
+
+  it('el borrador ofrece convertir con Claude y pegar la receta', () => {
+    const html = renderBorrador({ borrador: borradorFalso(), confirmando: false });
+    expect(html).toContain('data-accion="convertir-con-claude"');
+    expect(html).toContain('>Convertir con Claude<');
+    expect(html).toContain('data-accion="pegar-receta"');
+    expect(html.indexOf('convertir-con-claude')).toBeLessThan(html.indexOf('crear-receta'));
+  });
+
+  it('un aviso del borrador se muestra sin botón de reintentar', () => {
+    const html = renderBorrador({
+      borrador: borradorFalso(), confirmando: false, aviso: 'Lo copiado no es una receta en .md.'
+    });
+    expect(html).toContain('Lo copiado no es una receta en .md.');
+    expect(html).not.toContain('data-accion="reintentar"');
   });
 
   it('la nota se muestra cuando hay una', () => {
@@ -125,5 +144,18 @@ describe('Borrador', () => {
   it('mientras confirma, las acciones no están: no se crea por error', () => {
     const html = renderBorrador({ borrador: borradorFalso(), confirmando: true });
     expect(html).not.toContain('data-accion="crear-receta"');
+  });
+});
+
+describe('renderPreguntaBorrador', () => {
+  it('la pregunta lista los borradores y «Ninguno»', () => {
+    const html = renderPreguntaBorrador({
+      borradores: [entradaFalsa({ id_archivo: 'b1', titulo: 'Focaccia <b>' })]
+    });
+    expect(html).toContain('¿De qué borrador es esta receta?');
+    expect(html).toContain('data-accion="elegir-borrador-recibido" data-valor="b1"');
+    expect(html).toContain('Focaccia &lt;b&gt;');
+    expect(html).toContain('data-accion="elegir-borrador-recibido" data-valor=""');
+    expect(html).toContain('>Ninguno<');
   });
 });

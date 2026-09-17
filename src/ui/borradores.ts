@@ -5,8 +5,11 @@
  * un archivo consolidado que se consulta, este es una cola que se vacía. Lo
  * más viejo va primero.
  *
- * Ninguna acción de acá llama a un agente: la conversión desde el video o el
- * PDF ocurre afuera, y lo que la app ofrece es crear la receta a mano.
+ * El borrador se crea a mano, o se manda a Claude: «Convertir con Claude»
+ * arma el pedido y lo abre afuera (P28), Claude responde con la receta en
+ * `.md`, y esa respuesta vuelve a la app pegándola o compartiéndola —«Pegar
+ * receta»— para abrir el editor. La app no llama a ningún modelo: sólo arma
+ * el pedido y reconoce la receta que vuelve.
  */
 import { escapar } from './markdown.js';
 import { encabezado, aviso, vacio, lateral, botonMenu } from './componentes.js';
@@ -16,6 +19,8 @@ import type { Borrador, EntradaBorrador } from '../tipos.js';
 export interface OpcionesBorradores {
   borradores: EntradaBorrador[];
   error?: string;
+  /** Un aviso sin acción de reintentar, como «Lo copiado no es una receta en .md.» (P28). */
+  aviso?: string;
   /** El menú lateral está desplegado (sólo en pantalla angosta). */
   menuAbierto?: boolean;
 }
@@ -25,6 +30,8 @@ export interface OpcionesBorrador {
   /** La confirmación de descarte reemplaza las acciones (C01.6.2). */
   confirmando: boolean;
   error?: string;
+  /** Un aviso sin acción de reintentar, como «Lo copiado no es una receta en .md.» (P28). */
+  aviso?: string;
 }
 
 const DIA = 86400000;
@@ -54,7 +61,9 @@ const esUrl = (fuente: string): boolean => /^https?:\/\//i.test(fuente.trim());
 /** La URL se muestra sin el esquema: lo que informa es el sitio. */
 const fuenteVisible = (fuente: string): string => fuente.replace(/^https?:\/\//i, '');
 
-export function renderBorradores({ borradores, error, menuAbierto }: OpcionesBorradores): string {
+export function renderBorradores(
+  { borradores, error, aviso: avisoTexto, menuAbierto }: OpcionesBorradores
+): string {
   // Sólo el título y cuándo entró: la fuente y la nota están adentro, y en la
   // fila competían con el título.
   const lista = borradores.map(b =>
@@ -65,6 +74,10 @@ export function renderBorradores({ borradores, error, menuAbierto }: OpcionesBor
 
   const agregar = '<button class="btn sec" style="width:100%" data-accion="agregar-borrador">' +
     `${ICO.mas}Nuevo</button>`;
+
+  // Lo que llega de Claude por Compartir o portapapeles puede no tener id de
+  // borrador: pegar acá hace la misma pregunta que Compartir (P28 §3.3).
+  const pegar = '<button class="btn sec" style="width:100%" data-accion="pegar-receta">Pegar receta</button>';
 
   const cuerpo = lista
     // Sin celebración: no hay «¡todo al día!».
@@ -84,12 +97,15 @@ export function renderBorradores({ borradores, error, menuAbierto }: OpcionesBor
       }) +
       '<div class="cuerpo denso">' +
         (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'reintentar' } }) : '') +
-        cuerpo + agregar +
+        (avisoTexto ? aviso({ texto: avisoTexto }) : '') +
+        cuerpo + agregar + pegar +
       '</div>' +
     '</div>';
 }
 
-export function renderBorrador({ borrador, confirmando, error }: OpcionesBorrador): string {
+export function renderBorrador(
+  { borrador, confirmando, error, aviso: avisoTexto }: OpcionesBorrador
+): string {
   const ficha = '<div class="ficha">' +
     `<div style="font-size:var(--txt-titulo);font-weight:600;line-height:1.25">${escapar(borrador.titulo)}</div>` +
     // La fuente se dibuja como en la receta abierta (`.rec-fuente`): micro y
@@ -116,12 +132,15 @@ export function renderBorrador({ borrador, confirmando, error }: OpcionesBorrado
     '</div></div>';
 
   // Editar va arriba, como en la receta. En el cuerpo: primero ver de dónde
-  // sale, después descartarlo, y crear la receta cierra la lista.
+  // sale, después descartarlo, después las dos formas de traer la receta de
+  // Claude (P28), y crear la receta a mano cierra la lista.
   const acciones = '<div style="display:flex;flex-direction:column;gap:var(--e-2)">' +
     (esUrl(borrador.fuente)
       ? `<a class="btn sec" href="${escapar(borrador.fuente)}" target="_blank" rel="noopener">Ir a la fuente</a>`
       : '') +
     `<button class="btn pel" data-accion="descartar">${ICO.tacho}Descartar</button>` +
+    '<button class="btn sec" data-accion="convertir-con-claude">Convertir con Claude</button>' +
+    '<button class="btn sec" data-accion="pegar-receta">Pegar receta</button>' +
     '<button class="btn prim" data-accion="crear-receta">Crear la receta</button>' +
   '</div>';
 
@@ -131,6 +150,19 @@ export function renderBorrador({ borrador, confirmando, error }: OpcionesBorrado
   }) +
     '<div class="cuerpo">' +
       (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'reintentar' } }) : '') +
+      (avisoTexto ? aviso({ texto: avisoTexto }) : '') +
       (confirmando ? ficha + confirmacion : ficha + acciones) +
     '</div>';
+}
+
+/** A qué borrador corresponde una receta que llegó sin id, o con uno que ya no existe (P28). */
+export function renderPreguntaBorrador({ borradores }: { borradores: EntradaBorrador[] }): string {
+  const opciones = borradores.map(b =>
+    `<button class="btn sec" data-accion="elegir-borrador-recibido" data-valor="${escapar(b.id_archivo)}">${escapar(b.titulo)}</button>`
+  ).join('');
+  return encabezado({ titulo: '¿De qué borrador es esta receta?', volver: true }) +
+    '<div class="cuerpo denso"><div style="display:flex;flex-direction:column;gap:var(--e-2)">' +
+      opciones +
+      '<button class="btn sec" data-accion="elegir-borrador-recibido" data-valor="">Ninguno</button>' +
+    '</div></div>';
 }

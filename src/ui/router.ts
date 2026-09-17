@@ -2,7 +2,7 @@
 export type Vista =
   | 'recetario' | 'categoria' | 'resultados' | 'receta' | 'cocinar'
   | 'editar' | 'nueva' | 'borradores' | 'borrador' | 'capturar' | 'ajustes' | 'carpeta'
-  | 'categorias' | 'editar-categoria' | 'tag';
+  | 'categorias' | 'editar-categoria' | 'tag' | 'recibida';
 
 export interface Ruta {
   vista: Vista;
@@ -31,9 +31,15 @@ export function parsearHash(hash: unknown): Ruta {
   // `#/nueva?borrador=b1` es crear la receta desde un borrador: sin el
   // parámetro, el editor abría vacío y el borrador no se borraba al guardar.
   if (partes[0] === 'nueva') {
-    const borrador = params['borrador'] ?? '';
-    return { vista: 'nueva', params: borrador ? { borrador } : {} };
+    const p: Record<string, string> = {};
+    if (params['borrador']) p['borrador'] = params['borrador'];
+    // `recibida`: el editor abre con la receta que llegó de Claude (P28).
+    if (params['recibida']) p['recibida'] = params['recibida'];
+    return { vista: 'nueva', params: p };
   }
+  // La pregunta «¿De qué borrador es esta receta?», cuando la receta que
+  // llegó de Claude no trae un id de borrador que exista (P28).
+  if (partes[0] === 'recibida') return { vista: 'recibida', params: {} };
 
   if (partes[0] === 'r' && partes[1]) {
     if (partes[2] === 'editar') return { vista: 'editar', params: { id: partes[1] } };
