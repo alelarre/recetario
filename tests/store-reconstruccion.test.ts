@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { crearStore } from '../src/store.js';
+import { crearStore, TOPE_LECTURAS } from '../src/store.js';
+import type { DriveDelStore } from '../src/store.js';
 import { driveFalso, sheetsFalso, indiceLocalFalso } from './dobles.js';
 import type { DriveFalso, SheetsFalso } from './dobles.js';
 import { COLUMNAS } from '../src/catalogo.js';
@@ -129,5 +130,83 @@ describe('reconstruir', () => {
     // Verificar que la segunda fecha es más reciente que la primera
     expect(fecha2).toBeTruthy();
     expect(Date.parse(fecha2)).toBeGreaterThan(Date.parse(fecha1));
+  });
+});
+
+describe('reconstruir lee varios .md a la vez', () => {
+  const TITULOS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+
+  /** Deja correr todo lo que ya está resuelto antes de mirar las pendientes. */
+  const tic = (): Promise<void> => new Promise(resolver => setTimeout(resolver, 0));
+
+  /**
+   * Un Drive cuyas lecturas quedan colgadas hasta que el test las suelta: es la
+   * única forma de ver cuántas están en vuelo al mismo tiempo.
+   */
+  function armar() {
+    const base = driveFalso([
+      { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
+      { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
+      { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },
+      ...TITULOS.map((t, i) => ({ id: `r${i}`, name: `${i}.md`, parents: ['c1'], contenido: md(t) }))
+    ]);
+    const pendientes: { id: string; soltar: () => void }[] = [];
+    const drive = {
+      ...base,
+      leerTexto: (id: string) => new Promise<string>(resolver => {
+        pendientes.push({ id, soltar: () => resolver(base._store.get(id)?.contenido ?? '') });
+      })
+    } satisfies DriveDelStore & Record<string, unknown>;
+    const sheets = sheetsFalso();
+    sheets.crearPlanilla('i1');
+    return { drive, sheets, pendientes, store: crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() }) };
+  }
+
+  it('mantiene hasta TOPE_LECTURAS lecturas en vuelo, no una sola', async () => {
+    const { store, pendientes } = armar();
+    await store.arrancar();
+
+    const reconstruccion = store.reconstruir();
+    await tic();
+    expect(pendientes.length).toBe(TOPE_LECTURAS);
+
+    // Al terminar una entra la siguiente: el tope se mantiene, no se vacía y
+    // vuelve a llenarse por lotes.
+    pendientes.shift()!.soltar();
+    await tic();
+    expect(pendientes.length).toBe(TOPE_LECTURAS);
+
+    while (pendientes.length) { pendientes.shift()!.soltar(); await tic(); }
+    await reconstruccion;
+    expect(store.entradas().length).toBe(TITULOS.length);
+  });
+
+  it('deja las filas en el orden de los archivos aunque las lecturas terminen desordenadas', async () => {
+    const { store, sheets, pendientes } = armar();
+    await store.arrancar();
+
+    const reconstruccion = store.reconstruir();
+    await tic();
+    // La última pedida termina primero: el orden de llegada no es el de Drive.
+    while (pendientes.length) { pendientes.pop()!.soltar(); await tic(); }
+    await reconstruccion;
+
+    expect(store.entradas().map(e => e.titulo)).toEqual(TITULOS);
+    const recetas = sheets.appends.filter(a => a.hoja === 'recetas').at(-1)!;
+    const titulo = COLUMNAS.indexOf('titulo');
+    expect(recetas.valores.map(f => f[titulo])).toEqual(TITULOS);
+  });
+
+  it('el progreso avanza de a uno aunque las lecturas se solapen', async () => {
+    const { store, pendientes } = armar();
+    await store.arrancar();
+
+    const vistos: number[] = [];
+    const reconstruccion = store.reconstruir(p => vistos.push(p.leidas));
+    await tic();
+    while (pendientes.length) { pendientes.pop()!.soltar(); await tic(); }
+    await reconstruccion;
+
+    expect(vistos).toEqual(TITULOS.map((_, i) => i + 1));
   });
 });

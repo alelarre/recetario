@@ -18,6 +18,41 @@ const ULTIMA_COLUMNA_BORRADORES = String.fromCharCode(64 + COLUMNAS_BORRADORES.l
 const ULTIMA_COLUMNA_CATEGORIAS = String.fromCharCode(64 + COLUMNAS_CATEGORIAS.length);
 const MIME_CARPETA = 'application/vnd.google-apps.folder';
 
+/**
+ * Cuántos `.md` se leen a la vez al reconstruir. La cuota de lectura de Drive
+ * es generosa, pero sin tope una carpeta de mil recetas abre mil pedidos juntos:
+ * seis alcanzan para que la reconstrucción deje de ser una espera en fila.
+ */
+export const TOPE_LECTURAS = 6;
+
+/**
+ * Corre `tarea` sobre cada ítem con a lo sumo `tope` en vuelo, y devuelve los
+ * resultados **en el orden de `items`**, no en el que fueron terminando. Un
+ * error corta el reparto y se propaga, como cuando las lecturas eran en fila.
+ */
+async function conConcurrencia<T, R>(
+  items: readonly T[], tope: number, tarea: (item: T) => Promise<R>
+): Promise<R[]> {
+  const resultados: R[] = new Array<R>(items.length);
+  let siguiente = 0;
+  let cortado = false;
+  const obrero = async (): Promise<void> => {
+    while (!cortado) {
+      const i = siguiente++;
+      if (i >= items.length) return;
+      const item = items[i] as T;  // El corte de arriba ya garantiza que está.
+      try {
+        resultados[i] = await tarea(item);
+      } catch (e) {
+        cortado = true;
+        throw e;
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(tope, items.length) }, obrero));
+  return resultados;
+}
+
 export type { Categoria } from './tipos.js';
 
 /** Hay más de una planilla `_indice`: cuántas, y la fecha de la que se usa (la más reciente). */
@@ -612,11 +647,18 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     // encontrarlo en Drive.
     const ignorados: string[] = [];
     let leidas = 0;
-    for (const { archivo, lugar } of pendientes) {
+    // Leer y parsear van separados: las lecturas se solapan, pero las filas se
+    // arman después, en el orden de los archivos y no en el que Drive contestó.
+    const leer = async (archivo: ArchivoDrive): Promise<string> => {
       const texto = await drive.leerTexto(archivo.id);
       leidas++;
       alProgresar({ leidas, total });
-      const receta = parse(texto);
+      return texto;
+    };
+
+    const textos = await conConcurrencia(pendientes, TOPE_LECTURAS, p => leer(p.archivo));
+    for (const [i, { archivo, lugar }] of pendientes.entries()) {
+      const receta = parse(textos[i] ?? '');
       if (!receta.titulo) { ignorados.push(archivo.name ?? archivo.id); continue; }
       nuevas.push(filaDesde(receta, {
         id: archivo.id, nombre_archivo: archivo.name ?? '',
@@ -626,11 +668,9 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     }
 
     const nuevosBorradores: EntradaBorrador[] = [];
-    for (const archivo of pendientesBorradores) {
-      const texto = await drive.leerTexto(archivo.id);
-      leidas++;
-      alProgresar({ leidas, total });
-      const { titulo, capturado } = parseBorrador(texto);
+    const textosBorradores = await conConcurrencia(pendientesBorradores, TOPE_LECTURAS, leer);
+    for (const [i, archivo] of pendientesBorradores.entries()) {
+      const { titulo, capturado } = parseBorrador(textosBorradores[i] ?? '');
       if (!titulo) { ignorados.push(archivo.name ?? archivo.id); continue; }
       nuevosBorradores.push({ id_archivo: archivo.id, nombre_archivo: archivo.name ?? '', titulo, capturado });
     }

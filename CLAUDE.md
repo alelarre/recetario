@@ -188,8 +188,9 @@ Cada una se midió o se discutió a fondo.
 - **El conector de Google Drive de claude.ai es limitado:** crea, lee, mueve y
   renombra archivos, pero no escribe planillas ni reescribe el contenido de un
   archivo existente.
-- **Subir `SCHEMA_VERSION` cuesta un reindexado entero** al próximo arranque, y
-  reindexar lee los `.md` de a uno: ~40 segundos con ~60 recetas.
+- **Subir `SCHEMA_VERSION` cuesta un reindexado entero** al próximo arranque.
+  Reindexar lee los `.md` de a seis a la vez (`TOPE_LECTURAS` en `store.ts`),
+  pero con miles de recetas sigue siendo la operación más cara.
 - **Dos reconstrucciones solapadas duplican las filas del índice** (dos pestañas
   abiertas, o *Reindexar* durante el arranque). Se arregla reindexando una vez.
 - **Android toma el deslizamiento desde el borde como «atrás»:** por eso el

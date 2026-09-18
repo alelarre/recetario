@@ -320,9 +320,11 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 - [ ] **No hay lógica de concurrencia:** dos reindexados solapados —dos pestañas, o *Reindexar* tocado mientras el arranque ya reindexa— pueden dejar cada receta dos veces. La salida es reindexar una vez con una sola pestaña abierta.
 
 **Nota técnica:** es la operación más cara del producto — con ~1.000 recetas son
-~1.000 lecturas de Drive, de a una y sin paralelismo, más la escritura de la
-planilla. Puede tardar minutos. Por eso vive a tres toques y por eso tiene barra
-de progreso y no un indicador indeterminado.
+~1.000 lecturas de Drive, más la escritura de la planilla. Se leen de a seis a la
+vez, con un tope para no abrir cientos de pedidos juntos, y las filas se escriben
+igual en el orden en que Drive lista los archivos. Aun así puede tardar minutos:
+por eso vive a tres toques y por eso tiene barra de progreso y no un indicador
+indeterminado.
 
 ### F05.6 — Un índice roto se recrea, no se repara
 
