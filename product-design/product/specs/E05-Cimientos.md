@@ -83,6 +83,22 @@ al abrir, la fecha de `_indice` en Drive dice si la copia local sigue valiendo
 El producto se especifica para Android y para navegador de escritorio. **iOS no
 se soporta:** no hay Share Target y el Atajo equivalente sale del alcance.
 
+### R8 — Una escritura por vez
+
+Mientras una operación escribe en Drive o en Sheets, **un velo con el spinner
+cubre la pantalla** (`ux/design-system.md` §6.17b), desde que la escritura
+arranca hasta que termina. Es un solo mecanismo para todas las operaciones, y no
+uno por pantalla. Mientras dura, el resultado y el error tienen a dónde llegar:
+la pantalla que lanzó la escritura sigue siendo la que está.
+
+- [ ] **No se toca:** ningún control responde, ni el gesto del menú lateral.
+- [ ] **No se navega:** un cambio de hash —un link, el volver del encabezado, el gesto de atrás de Android— no dibuja la pantalla nueva, y la URL vuelve a la de la pantalla que está escribiendo.
+- [ ] **No se repite la acción:** volver a tocar el control no hace nada.
+- [ ] El velo se suelta siempre, termine bien o mal; después la operación sigue su camino —navega, redibuja o muestra su aviso con lo escrito todavía en pantalla (R1)—.
+- [ ] Entran: guardar y crear una receta —también desde un borrador o desde Claude—, borrarla, guardar una captura, descartar un borrador, crear, editar y borrar una categoría, y crear una carpeta desde el selector.
+- [ ] Quedan afuera cuatro, cada una con su propia señal: marcar favorito, que ya tiene su estrella animada y no debe trabar la lectura de la receta; reindexar, que oculta sus controles y muestra el avance; preparar la carpeta base, que dibuja su propia pantalla de progreso; y conectar de nuevo con Google, donde el usuario está en el popup y el velo taparía la pantalla desde otra ventana.
+- [ ] Los botones que dicen «Guardando…» se quedan como están: el velo se suma, no los reemplaza.
+
 ---
 
 ## Features

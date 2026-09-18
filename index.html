@@ -12,6 +12,10 @@
   </head>
   <body>
     <div id="app"></div>
+    <!-- El velo de la escritura en curso. Hermano de #app y no hijo: pintar()
+         reemplaza el contenido de #app, y algunas pantallas redibujan antes de
+         escribir. -->
+    <div id="velo-escritura" hidden><div class="spin"></div></div>
     <script type="module" src="/src/inicio.ts"></script>
   </body>
 </html>

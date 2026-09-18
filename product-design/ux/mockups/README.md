@@ -43,7 +43,7 @@ recetas de Drive tiene `foto`, así que en `01` va un SVG embebido en su lugar.
 
 ## Alcance
 
-Trece pantallas. Las ocho prioritarias primero, por uso y por dificultad, y
+Doce pantallas. Las ocho prioritarias primero, por uso y por dificultad, y
 después las cinco restantes.
 
 - **Las tres variantes que el Hito 6 marcó para comparar están resueltas** en el

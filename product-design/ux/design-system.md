@@ -840,6 +840,20 @@ decide. Con `prefers-reduced-motion` el cajón aparece sin transición.
 Android, y el pulgar que lo abre es el mismo que toca la hamburguesa, que está
 del mismo lado.
 
+### 6.17b Velo de escritura
+
+Mientras la app escribe en Drive o en Sheets, un velo de `--velo` al 60 % cubre
+la pantalla entera con el spinner de 24 px (§5.1) centrado. Es el mismo velo del
+menú lateral y de la ficha de compartir, sin transición: aparece con la escritura
+y se va con ella, termine bien o mal.
+
+**Recibe el toque**, así que ningún control de abajo responde, y el contenido
+queda marcado como ocupado (`aria-busy`). No es una pantalla de carga: lo que
+estaba sigue dibujado debajo, incluido el botón que dice «Guardando…».
+
+Qué operaciones lo muestran y cuáles no está en `product/specs/E05-Cimientos.md`
+R8.
+
 ### 6.18 Botones de duración, en el editor
 
 El campo **«Duración»** del editor: va debajo de «Rinde», los dos a lo ancho.

@@ -46,7 +46,7 @@ const estadoInicial = () => ({
   creadas: [] as string[],
   /** El `.md` que devuelve `store.receta`. */
   md: '---\ntitulo: Milanesas\n---\n',
-  /** Lo que el editor tiene escrito cuando se toca Guardar. */
+  /** Lo que el editor o la captura tienen escrito cuando se toca Guardar. */
   formulario: {} as Record<string, string>,
   /** Cuántas veces se leyó un `.md` de Drive: cada una es un pedido de red. */
   lecturas: 0,
@@ -155,13 +155,19 @@ describe('main.ts: las rutas', () => {
   } = {}) => {
     const clicks: ((e: unknown) => unknown)[] = [];
     const cambios: ((e: unknown) => unknown)[] = [];
+    /** Los atributos de `#app`: el único que se pone desde `main` es `aria-busy`. */
+    const atributosApp: Record<string, string> = {};
     const app = {
       innerHTML: '', insertAdjacentHTML: () => {},
+      setAttribute: (n: string, v: string) => { atributosApp[n] = v; },
+      removeAttribute: (n: string) => { delete atributosApp[n]; },
       addEventListener: (ev: string, fn: (e: unknown) => unknown) => {
         if (ev === 'click') clicks.push(fn);
         if (ev === 'change') cambios.push(fn);
       }
     };
+    /** El velo de la escritura en curso, hermano de `#app` en `index.html`. */
+    const velo = { hidden: true };
     /** Lo que se insertó arriba del formulario sin redibujarlo. */
     const preguntas: string[] = [];
     const formulario = {
@@ -203,7 +209,12 @@ describe('main.ts: las rutas', () => {
     global.document = comoGlobal<Document>({
       querySelector: (sel: string) => {
         if (sel === '#app') return app;
+        if (sel === '#velo-escritura') return velo;
         if (sel === '[data-formulario]') return formulario;
+        // Los campos de la captura: lo que el test dejó escrito en `formulario`.
+        if (sel === 'input[name="titulo"]') return { value: estado.formulario['titulo'] ?? '' };
+        if (sel === 'input[name="fuente"]') return { value: estado.formulario['fuente'] ?? '' };
+        if (sel === 'textarea[name="nota"]') return { value: estado.formulario['nota'] ?? '' };
         if (sel === '[data-salida]') return preguntas.length ? { remove: () => { preguntas.length = 0; } } : null;
         if (sel === '[data-confirmar-borrado]') {
           return enLugar.at(-1)?.includes('data-confirmar-borrado')
@@ -234,7 +245,7 @@ describe('main.ts: las rutas', () => {
     });
     global.window = comoGlobal<Window & typeof globalThis>({
       google: {}, addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; },
-      scrollTo: (_x: number, y: number) => { scrolls.push(y); }, scrollY: 0,
+      scrollTo: (_x: number, y: number) => { scrolls.push(y); }, scrollY: 0, close: () => {},
       // Sólo la consulta de reduced motion importa acá: las demás no se usan.
       matchMedia: (q: string) => ({ matches: reducedMotion && q.includes('prefers-reduced-motion') })
     });
@@ -267,6 +278,8 @@ describe('main.ts: las rutas', () => {
 
     return {
       app,
+      velo,
+      atributosApp,
       recargas,
       vueltasAtras,
       scrolls,
@@ -1440,6 +1453,121 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).not.toContain('class="fav cargando"');
       expect(app.innerHTML).not.toContain('disabled');
       expect(app.innerHTML).toContain('No se pudo marcar');
+    });
+  });
+
+  describe('el velo de la escritura en curso (R8)', () => {
+    /** Una promesa que el test resuelve cuando quiere: la escritura tarda lo que él decida. */
+    function pendiente<T>() {
+      let resolver!: (valor: T) => void;
+      const promesa = new Promise<T>(r => { resolver = r; });
+      return { promesa, resolver };
+    }
+
+    it('mientras se crea la receta, la pantalla no responde ni navega', async () => {
+      const original = storeFake.crear;
+      const { promesa, resolver } = pendiente<{ id: string; nombre_archivo: string }>();
+      storeFake.crear = () => promesa;
+      try {
+        const { abrir, tocar, app, velo, empujados, vueltasAtras } = await montar();
+        await abrir('#/nueva');
+        estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+        // Sin await: el toque queda colgado de `crear` hasta que el test lo suelte.
+        const guardando = tocar('guardar');
+        await esperar();
+
+        expect(velo.hidden).toBe(false);
+        // Ningún otro toque hace nada, ni siquiera el volver del encabezado.
+        await tocar('volver');
+        expect(vueltasAtras).toEqual([]);
+        // Y el gesto de atrás no dibuja la pantalla nueva: la URL vuelve al editor.
+        await abrir('#/r/f1');
+        expect(empujados).toEqual(['#/nueva']);
+        expect(global.location.hash).toBe('#/nueva');
+        expect(app.innerHTML).toContain('data-formulario');
+
+        resolver({ id: 'nuevo-1', nombre_archivo: 'pan.md' });
+        await guardando;
+      } finally {
+        storeFake.crear = original;
+      }
+    });
+
+    it('al terminar, el velo se va y el guardado sigue su camino', async () => {
+      const { abrir, tocar, velo, vueltasAtras } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+
+      await tocar('guardar');
+
+      expect(velo.hidden).toBe(true);
+      expect(estado.creadas).toEqual(['Pan']);
+      expect(vueltasAtras).toHaveLength(1);
+    });
+
+    it('si la escritura falla, el velo se va y queda el aviso con lo escrito', async () => {
+      const original = storeFake.crear;
+      storeFake.crear = async () => { throw new Error('red'); };
+      try {
+        const { abrir, tocar, app, velo } = await montar();
+        await abrir('#/nueva');
+        estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+
+        await tocar('guardar');
+
+        expect(velo.hidden).toBe(true);
+        expect(app.innerHTML).toContain('No se pudo guardar.');
+        expect(app.innerHTML).toContain('Pan');
+      } finally {
+        storeFake.crear = original;
+      }
+    });
+
+    it('la estrella de favorito no lo muestra: no traba la lectura de la receta', async () => {
+      const original = storeFake.guardar;
+      const { promesa, resolver } = pendiente<void>();
+      storeFake.guardar = () => promesa;
+      try {
+        const { abrir, tocar, velo } = await montar();
+        await abrir('#/r/f1');
+
+        const marcando = tocar('favorito');
+        await esperar();
+
+        expect(velo.hidden).toBe(true);
+        resolver();
+        await marcando;
+      } finally {
+        storeFake.guardar = original;
+      }
+    });
+
+    it('con la captura es igual: no responde mientras escribe, y al terminar cierra a Borradores', async () => {
+      const original = storeFake.agregarBorrador;
+      const { promesa, resolver } = pendiente<{ id: string; titulo: string; fuente: string; nota: string; capturado: string }>();
+      storeFake.agregarBorrador = () => promesa;
+      try {
+        const { abrir, tocar, app, velo, empujados, reemplazos, vueltasAtras } = await montar();
+        await abrir('#/capturar');
+        estado.formulario = { titulo: 'Focaccia' };
+        const guardando = tocar('guardar-captura');
+        await esperar();
+
+        expect(velo.hidden).toBe(false);
+        await tocar('volver');
+        expect(vueltasAtras).toEqual([]);
+        await abrir('#/');
+        expect(empujados).toEqual(['#/capturar']);
+        expect(app.innerHTML).toContain('Nuevo borrador');
+
+        resolver({ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' });
+        await guardando;
+
+        expect(velo.hidden).toBe(true);
+        expect(reemplazos.at(-1)).toBe('#/borradores');
+      } finally {
+        storeFake.agregarBorrador = original;
+      }
     });
   });
 

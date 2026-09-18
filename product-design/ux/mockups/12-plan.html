@@ -1,0 +1,773 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>12 — Plan de la semana</title>
+<style>/* Recetario — el sistema del producto: los tokens y los componentes de
+   product-design/ux/design-system.md, de donde salen los `§` de este archivo.
+   Si hace falta un valor que no está acá, es un hueco del sistema.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* §2.1 Neutros — todos cálidos */
+  --bg: #17140F;
+  --surface: #211D17;
+  --surface-alta: #2B261E;
+  --borde: #3A342B;
+  --borde-fuerte: #544C40;
+  --fg: #F2EBE1;
+  --fg-2: #B3A99B;
+  --fg-3: #948A7A;
+  --velo: #0C0A07;
+
+  /* §2.2 Acento y semánticos */
+  --acento: #D98A5F;
+  --acento-suave: #39291D;
+  --error: #D95F52;
+  --error-suave: #33191A;
+
+  /* §2.3 Categorías */
+  --cat-arroces: #6ECF77;  --cat-aves: #CFC56E;
+  --cat-bebidas: #89A6D2;  --cat-carnes: #CFA86E;
+  --cat-desayunos: #CF6EA8; --cat-ensaladas: #6ECFB1;
+  --cat-entradas: #CF6E8B; --cat-panes: #8FC954;
+  --cat-pastas: #B2C954;   --cat-pescados: #89BCD2;
+  --cat-postres: #CF6EC5;  --cat-salsas: #8990D2;
+  --cat-sopas: #89D2D2;    --cat-tartas: #6CC954;
+  --cat-verduras: #6ECF94; --cat-otros: #99907F;
+
+  /* §3.2 Tipografía */
+  --tipo: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --txt-micro: 12px;   --txt-chico: 14px;  --txt-base: 16px;
+  --txt-lectura: 18px; --txt-titulo: 24px;
+  --txt-cocina: 22px;  --txt-cocina-titulo: 28px;
+
+  /* §4.1 Espaciado */
+  --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px;
+  --e-5: 24px; --e-6: 32px; --e-7: 48px;
+  --e-cocina: 20px;          /* §4.1 — solo en modo cocina */
+
+  /* §3.4 Iconografía */
+  --ico: 20px; --ico-cocina: 24px;
+
+  /* El fondo con el que `>1 día` corta el reloj de atrás. Cada lugar que
+     dibuja un relojito sobre otro fondo lo redefine. */
+  --fondo-reloj: var(--surface);
+
+  /* §4.2 Radios */
+  --r-chico: 4px; --r-medio: 8px; --r-ficha: 12px; --r-foto: 8px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--tipo); font-size: var(--txt-base);
+  /* §3.2 — sin esto, lo que no declara interlínea cae en la `normal` del
+     navegador, ≈1.2. */
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- §6.12 Encabezado ---- */
+.enc { height: 56px; display: flex; align-items: center; gap: var(--e-2);
+       padding: 0 var(--e-2); background: var(--bg); border-bottom: 1px solid var(--borde);
+       position: relative; }
+/* El título de la app se centra en la barra, no en el hueco que dejan los
+   íconos: con dos a la derecha y ninguno a la izquierda, `text-align: center`
+   lo deja corrido casi 50 px. */
+.enc .tit.app { position: absolute; left: 50%; transform: translateX(-50%); }
+.enc .der { margin-left: auto; display: flex; align-items: center; }
+/* El total va al otro extremo: con el título centrado en absoluto, nada lo
+   empuja y queda pegado al borde izquierdo. */
+.enc .tot { margin-left: auto; }
+/* Fijo arriba, en la receta abierta y en el editor. El título que toma se
+   recorta: hay de 86 caracteres. */
+.enc.peg { position: sticky; top: 0; z-index: 3; }
+.enc.peg .tit { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.enc .tit { flex: 1; font-size: var(--txt-base); font-weight: 600; text-align: center; }
+.enc .tit.izq { text-align: left; padding-left: var(--e-2); }
+/* El ícono de un tag especial, antes del título de su lista: el trazo y el
+   tamaño de los íconos del encabezado, alineado con la línea del texto. */
+.enc .tit svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none;
+                stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+                vertical-align: -4px; margin-right: var(--e-2); }
+.ico { width: 48px; height: 48px; display: grid; place-items: center; flex: 0 0 48px;
+       color: var(--fg); background: none; border: 0; cursor: pointer; border-radius: var(--r-medio); }
+.ico svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none; stroke-width: 1.5;
+           stroke-linecap: round; stroke-linejoin: round; }
+.cuenta { position: relative; }
+.cuenta .n { position: absolute; top: 6px; right: 4px; min-width: 18px; height: 18px; padding: 0 4px;
+             background: var(--surface-alta); border: 1px solid var(--borde-fuerte); border-radius: 9px;
+             font-size: var(--txt-micro); font-weight: 600; color: var(--fg-2);
+             display: grid; place-items: center; }
+
+/* ---- El cuerpo de una pantalla ---- */
+.cuerpo { padding: var(--e-4); display: flex; flex-direction: column; gap: var(--e-5);
+          /* C05.10.1 — una columna con máximo. */
+          max-width: 680px; margin: 0 auto; }
+.cuerpo.denso { gap: var(--e-3); }
+
+/* ---- §6.6 Ficha ---- */
+.ficha { background: var(--surface); border: 1px solid var(--borde);
+         border-radius: var(--r-ficha); padding: var(--e-4); }
+/* El título de sección va en el tamaño del cuerpo de la receta y se separa de
+   él por peso, divisor y aire: en 20 compite con el título de la receta. */
+.ficha > h2 { font-size: var(--txt-lectura); font-weight: 600; line-height: 1.3; margin: 0 0 var(--e-3);
+              padding-bottom: var(--e-3); border-bottom: 1px solid var(--borde-fuerte); }
+
+/* ---- §6.7 Botón ---- */
+.btn { min-height: 48px; padding: 0 var(--e-4); border-radius: var(--r-medio);
+       font: 600 var(--txt-base)/1 var(--tipo); display: inline-flex; align-items: center;
+       justify-content: center; gap: var(--e-2); cursor: pointer; border: 1px solid transparent; }
+.btn.prim { background: var(--acento); color: var(--bg); }
+.btn.sec  { background: none; color: var(--fg); border-color: var(--borde-fuerte); }
+.btn.pel  { background: none; color: var(--error); border-color: var(--error); }
+.btn[disabled] { color: var(--fg-3); background: none; border-color: var(--borde); cursor: default; }
+.btn.compacto { min-height: 40px; }   /* §6.7 — solo dentro del encabezado */
+.btn svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none; stroke-width: 1.5;
+           stroke-linecap: round; stroke-linejoin: round; }
+.acciones { display: flex; gap: var(--e-2); }
+.acciones .btn { flex: 1; }
+
+/* ---- Cómo responden al toque y al puntero ----
+   En el teléfono el hover no existe: el fondo queda pegado después de tocar,
+   hasta que se toca otra cosa. Lo que sirve ahí es el presionado —mientras el
+   dedo está apoyado—, y el hover queda para los punteros de verdad. */
+:is(.ico, .btn.sec, .btn.pel, .tarjeta, .bor, .lat a):active { background: var(--surface-alta); }
+.btn.prim:active { background: color-mix(in srgb, var(--acento) 78%, var(--fg)); }
+.btn[disabled]:active { background: none; }
+
+@media (hover: hover) {
+  :is(.ico, .btn.sec, .btn.pel, .tarjeta, .bor, .lat a):hover { background: var(--surface-alta); }
+  .btn.prim:hover { background: color-mix(in srgb, var(--acento) 88%, var(--fg)); }
+  .btn[disabled]:hover { background: none; }
+}
+
+/* ---- §6.1 Tarjeta miniatura ---- */
+.tarjeta { position: relative; display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
+           background: var(--surface); border: 1px solid var(--borde);
+           border-radius: var(--r-ficha); text-decoration: none; color: inherit; }
+.tarjeta .txt { flex: 1; min-width: 0; }
+.tarjeta .n { font-size: var(--txt-base); font-weight: 600; line-height: 1.3;
+              display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tarjeta .ctx { font-size: var(--txt-chico); color: var(--fg-2); margin-top: var(--e-1);
+                display: flex; align-items: center; gap: var(--e-2); }
+.tarjeta .motivo { color: var(--acento); }
+.pin { width: 8px; height: 8px; border-radius: var(--r-chico); flex: 0 0 8px; background: var(--cat-otros); }
+
+/* La duración va en la misma línea de texto, con el relojito pegado. */
+.ctx-txt { min-width: 0; }
+.dur { white-space: nowrap; }
+.dur svg { width: 15px; height: 15px; vertical-align: -3px; margin-right: 3px; stroke: currentColor; fill: none;
+           stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* §6.1 — Las marcas de los tags especiales, juntas en la esquina de la tarjeta.
+   `--marcas` es cuántas hay: la reserva de ancho del título crece con ellas, y
+   una tarjeta sin marcas no pierde nada. */
+.tarjeta .txt { padding-right: calc(var(--marcas, 0) * 20px); }
+.marcas-esq { position: absolute; top: 6px; right: 8px; display: flex; gap: 4px; line-height: 0; }
+.marca { display: grid; place-items: center; width: 16px; height: 16px; color: var(--acento); }
+.marca svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5;
+             stroke-linecap: round; stroke-linejoin: round; }
+.marca.favorita svg { fill: color-mix(in srgb, var(--acento) 35%, transparent); }
+
+/* ---- §6.2 Placeholder / foto de tarjeta ---- */
+.foto { width: 56px; height: 56px; flex: 0 0 56px; border-radius: var(--r-foto);
+        object-fit: cover; background: var(--surface-alta); }
+.ph { width: 56px; height: 56px; flex: 0 0 56px; border-radius: var(--r-foto);
+      position: relative; overflow: hidden; background: var(--c, var(--cat-otros));
+      background-image: var(--img); background-size: cover; background-position: center; }
+.ph::after { content: ''; position: absolute; inset: 0;
+             background: var(--c, var(--cat-otros)); opacity: .25; mix-blend-mode: multiply; }
+.ph::before { content: ''; position: absolute; inset: 0; background: #000; opacity: .45; }
+
+/* ---- §6.5 Marca de incompleta ---- */
+/* Un círculo a medio llenar: un aro vacío se lee como viñeta, no como
+   «hecha a medias». Va en el acento —es lo único tocable de su fila y lleva al
+   editor—, y nunca en `--error`: a la receta le falta algo, no está rota. */
+.inc { width: 12px; height: 12px; border: 1.5px solid currentColor; border-radius: 50%; flex: 0 0 12px;
+       color: var(--acento);
+       background: linear-gradient(to right, currentColor 50%, transparent 50%); }
+
+/* ---- §6.10 Chip ---- */
+/* Un tono más claro que `--surface-alta`: en el editor lo separa del campo de
+   agregar, que comparte ese fondo, y en la receta lo despega de la ficha. */
+.chip { display: inline-flex; align-items: center; gap: var(--e-1); height: 32px; padding: 0 var(--e-2);
+        background: color-mix(in srgb, var(--surface-alta) 86%, var(--fg));
+        border: 1px solid var(--borde-fuerte); border-radius: var(--r-chico);
+        font-size: var(--txt-chico); color: var(--fg); }
+.chip.act { background: var(--acento-suave); border-color: var(--acento); color: var(--acento); }
+/* La incompleta, dicha con palabras: un chip más de la fila de tags, que abre
+   el editor. Los valores del chip activo; la clase es otra porque significan
+   cosas distintas. */
+.chip.pend { background: var(--acento-suave); border-color: var(--acento); color: var(--acento); }
+/* El chip de un tag del editor se saca: es botón y lleva su cruz. */
+button.chip { cursor: pointer; }
+.chip svg { width: 14px; height: 14px; stroke: currentColor; fill: none;
+            stroke-linecap: round; opacity: .7; }
+/* El trazo de los íconos de chip vale 1.5 en todos lados (§3.4): la estrella,
+   el marcador y el calendario de los tags especiales del carrusel, y la cruz
+   del chip del editor. */
+.chip svg { stroke-width: 1.5; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+
+/* ---- §6.9 Campo ---- */
+.campo { display: block; margin-bottom: var(--e-4); }
+.campo > span { display: block; font-size: var(--txt-chico); color: var(--fg-2); margin-bottom: var(--e-1); }
+.campo input, .campo textarea, .campo select {
+  width: 100%; min-height: 48px; padding: var(--e-3); background: var(--surface-alta);
+  border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio);
+  color: var(--fg); font: 400 var(--txt-base)/1.5 var(--tipo); resize: vertical; }
+.campo textarea { min-height: calc(1.5em * 3 + var(--e-3) * 2); }
+/* El chevron del desplegable es propio: el del navegador ignora el padding y
+   quedaba pegado al borde derecho. Es el trazo de los íconos (§3.4), a 16 px
+   del borde. El color es `--fg-2` escrito a mano: adentro de un `url()` no
+   llegan las variables. */
+.campo select { -webkit-appearance: none; appearance: none; cursor: pointer;
+                padding-right: calc(var(--e-4) + 16px + var(--e-2));
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B3A99B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+                background-repeat: no-repeat; background-size: 16px;
+                background-position: right var(--e-4) center; }
+.campo input:focus, .campo textarea:focus { outline: none; border: 2px solid var(--acento); }
+.campo ::placeholder { color: var(--fg-3); }
+
+/* ---- §6.8 Aviso ---- */
+.aviso { display: flex; gap: var(--e-3); align-items: center; flex-wrap: wrap;
+         background: var(--error-suave); border: 1px solid var(--error);
+         border-radius: var(--r-ficha); padding: var(--e-4); }
+.aviso p { margin: 0; flex: 1; min-width: 12ch; }
+/* Las notas de una oración son prosa, y la prosa no baja de 16 (§1). */
+.aviso-mudo { font-size: var(--txt-base); color: var(--fg-2); }
+
+/* ---- §6.11 Ítem de ingrediente ---- */
+.ing { display: flex; gap: var(--e-3); align-items: baseline;
+       padding: var(--e-2) 0; border-bottom: 1px solid var(--borde);
+       /* Cuerpo de la receta, como los pasos: 18 (§1). */
+       font-size: var(--txt-lectura); line-height: 1.6; }
+.ing:last-child { border-bottom: 0; }
+.ing .n { flex: 1; }
+.ing .c { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
+.grupo { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
+         letter-spacing: .06em; margin-top: var(--e-4); margin-bottom: var(--e-1); }
+.grupo:first-child { margin-top: 0; }
+
+/* ---- Prosa de la receta ---- */
+.lee { font-size: var(--txt-lectura); line-height: 1.6; }
+.lee p { margin: 0 0 var(--e-3); }
+.pasos { list-style: none; margin: 0; padding: 0; counter-reset: p; }
+.pasos li { counter-increment: p; display: flex; gap: var(--e-3); padding: var(--e-2) 0;
+            font-size: var(--txt-lectura); line-height: 1.6; }
+/* Un paso es una línea, no un párrafo con aire propio: el margen del <p> que
+   deja el markdown desalinea el número de la lista. */
+.pasos li p { margin: 0; }
+.pasos li::before { content: counter(p) '.'; color: var(--fg-3); font-variant-numeric: tabular-nums;
+                    font-weight: 600; flex: 0 0 1.6em; }
+
+/* ---- §5.1 Spinner ---- */
+.spin { width: 24px; height: 24px; border: 2px solid var(--borde-fuerte);
+        border-top-color: var(--fg-3); border-radius: 50%; animation: g .9s linear infinite; margin: var(--e-6) auto; }
+@keyframes g { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
+/* ---- Estado vacío ---- */
+.vacio { color: var(--fg-2); text-align: center; padding: var(--e-7) var(--e-4); line-height: 1.6; }
+/* Recetario — lo que es de una pantalla. Lo que es sistema —encabezado, ficha,
+   botón, tarjeta, chip, campo, aviso— está en tokens.css, de donde también
+   salen los `§`, que son de product-design/ux/design-system.md. */
+
+/* ---- Recetario ---- */
+.buscar { display: flex; align-items: center; gap: var(--e-2); min-height: 48px;
+          padding: 0 var(--e-3); background: var(--surface-alta);
+          border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio); }
+.buscar svg { width: var(--ico); height: var(--ico); stroke: var(--fg-3); fill: none; stroke-width: 1.5; }
+.buscar input { flex: 1; background: none; border: 0; color: var(--fg);
+                font: 400 var(--txt-base) var(--tipo); }
+.buscar input:focus { outline: none; }
+.grilla { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--e-3); }
+.tile { position: relative; aspect-ratio: 4/3; border-radius: var(--r-ficha); overflow: hidden;
+        border: 1px solid var(--c); background: var(--surface); display: block;
+        text-decoration: none; color: var(--fg); }
+.tile .im { position: absolute; inset: 0; background: var(--c); opacity: 1;
+            background-size: cover; background-position: center; }
+.tile .im::after { content: ''; position: absolute; inset: 0; background: var(--c);
+                   opacity: .28; mix-blend-mode: overlay; }
+.tile .cu { position: absolute; top: var(--e-2); right: var(--e-2); z-index: 1;
+            min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
+            /* Casi opaco y con el texto claro: el badge cae sobre fotos de
+               cualquier luminosidad, y una foto clara se comía al número. */
+            background: color-mix(in srgb, var(--velo) 92%, transparent);
+            border: 1px solid var(--borde-fuerte);
+            font-size: var(--txt-micro); font-weight: 600; color: var(--fg);
+            display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.tile .im.trama { background:
+    repeating-linear-gradient(135deg, var(--c) 0 6px, transparent 6px 14px); opacity: .22; }
+.tile .nm { position: absolute; inset: auto 0 0 0; padding: var(--e-6) var(--e-2) var(--e-2);
+            font-size: var(--txt-chico); font-weight: 600; color: var(--fg);
+            background: linear-gradient(to top,
+                        color-mix(in srgb, var(--velo) 96%, transparent) 0%,
+                        color-mix(in srgb, var(--velo) 88%, transparent) 40%,
+                        transparent 100%); }
+
+/* ---- Rótulo de sección y listas ---- */
+.rot { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
+       letter-spacing: .06em; display: flex; justify-content: space-between; margin-bottom: var(--e-3); }
+.lista { display: flex; flex-direction: column; gap: var(--e-2); }
+
+/* ---- Categoría ---- */
+.tot { font-size: var(--txt-chico); color: var(--fg-2); font-variant-numeric: tabular-nums;
+       padding-right: var(--e-3); }
+
+/* ---- Resultados ---- */
+.cajaenc { display: flex; align-items: center; gap: var(--e-2); padding: var(--e-2);
+           border-bottom: 1px solid var(--borde); }
+.cajaenc .buscar { flex: 1; }
+.grupo-res + .grupo-res { margin-top: var(--e-5); }
+
+/* ---- Receta en lectura ---- */
+/* El link al `.md` en Drive: un dato al margen, no un botón. Sin caja, y más
+   chico que los controles del encabezado. */
+.archivo { display: inline-flex; align-items: center; gap: var(--e-1);
+           padding: 0 var(--e-2); font-size: var(--txt-chico); color: var(--fg-2); }
+.archivo .logo { width: 16px; height: 16px; object-fit: contain; flex: 0 0 auto; }
+.rec-tit { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0 0 var(--e-3); }
+.rec-ctx { font-size: var(--txt-chico); color: var(--fg-2); display: flex; align-items: center;
+           gap: var(--e-2); flex-wrap: wrap; margin-bottom: var(--e-4); }
+/* La fuente cierra la ficha, separada por un divisor: es procedencia, no un
+   dato de la receta, y pegada al contexto no se leía ni una ni otra. */
+.rec-fuente { margin-top: var(--e-4); padding-top: var(--e-3); border-top: 1px solid var(--borde);
+              font-size: var(--txt-micro); color: var(--fg-3); }
+.rec-fuente a { color: var(--fg-2); }
+/* El emoji se come el espacio que le sigue: el aire va por margen. Vale para
+   la receta y para el borrador, que rotulan su fuente igual. */
+.emo { margin-right: var(--e-2); font-style: normal; }
+/* La descripción cierra el bloque de la receta; el margen del último párrafo
+   sumaría al del divisor de la fuente. */
+.rec-desc { margin-top: var(--e-4); }
+.rec-desc p:last-child { margin-bottom: 0; }
+.rec-ctx:last-child, .chips:last-child { margin-bottom: 0; }
+.rec-foto { width: 100%; aspect-ratio: 16/9; max-height: 200px; object-fit: cover;
+            border-radius: var(--r-foto); display: block; margin-bottom: var(--e-4); }
+.var { padding: var(--e-3) 0; border-bottom: 1px solid var(--borde); }
+.var:last-child { border-bottom: 0; }
+.var h3 { font-size: var(--txt-lectura); font-weight: 600; line-height: 1.3; margin: 0 0 var(--e-1); }
+.var .f { font-size: var(--txt-chico); color: var(--fg-3); font-style: italic; }
+.var p { margin: var(--e-1) 0 0; font-size: var(--txt-lectura); line-height: 1.6; }
+.tramo { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
+         letter-spacing: .06em; margin: var(--e-4) 0 var(--e-1); }
+.tramo:first-child { margin-top: 0; }
+.pie { position: sticky; bottom: 0; background: var(--bg);
+       border-top: 1px solid var(--borde); padding: var(--e-4); }
+/* El pie sigue el ancho del cuerpo: en pantalla ancha no se va a los bordes. */
+.pie .acciones { max-width: 680px; margin: 0 auto; }
+
+/* §6.22 — La estrella de favorito del encabezado: el contorno y la llena,
+   superpuestas. Mientras se escribe en Drive, la llena se descubre de izquierda
+   a derecha en loop; el resultado se dibuja recién con la respuesta. */
+.fav { position: relative; display: inline-grid; place-items: center; line-height: 0; }
+.fav svg { grid-area: 1 / 1; width: var(--ico); height: var(--ico); fill: none; stroke-width: 1.5;
+           stroke-linejoin: round; }
+.fav svg:first-child { stroke: currentColor; }
+.fav svg:last-child { stroke: var(--acento); fill: color-mix(in srgb, var(--acento) 45%, transparent);
+                      clip-path: inset(0 100% 0 0); }
+.fav.on { color: var(--acento); }
+.fav.on svg:last-child { clip-path: inset(0); }
+.fav.cargando { color: var(--acento); }
+.fav.cargando svg:last-child { animation: llenar 2s linear infinite; }
+@keyframes llenar { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .fav.cargando svg:last-child { animation: none; clip-path: inset(0 50% 0 0); }
+}
+
+/* ---- Ficha de compartir (§6.23) ---- */
+.velo { position: fixed; inset: 0; z-index: 30; background: var(--velo); opacity: .6; }
+.hoja-compartir { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-width: 680px; margin: 0 auto;
+                  display: flex; flex-direction: column; gap: var(--e-2);
+                  background: var(--surface); border-top: 1px solid var(--borde);
+                  border-radius: var(--r-ficha) var(--r-ficha) 0 0;
+                  padding: var(--e-4) var(--e-4) calc(var(--e-4) + env(safe-area-inset-bottom)); }
+.hoja-compartir h2 { font-size: var(--txt-base); font-weight: 600; margin: 0 0 var(--e-2); }
+.hoja-compartir p { margin: 0 0 var(--e-2); }
+.hoja-compartir .btn { width: 100%; }
+.hoja-compartir .copia { font-size: var(--txt-chico); color: var(--fg-2); background: var(--bg);
+                         border: 1px solid var(--borde); border-radius: var(--r-medio); padding: var(--e-3);
+                         max-height: 40vh; overflow: auto; white-space: pre-wrap; word-break: break-all;
+                         user-select: all; }
+.spin.en-boton { width: 16px; height: 16px; margin: 0 var(--e-2) 0 0; }
+/* Con la ficha abierta, la página de atrás no se desplaza: el velo la tapa y
+   moverla deja la ficha flotando sobre otra cosa. Lo único que desplaza es el
+   cuadro del link o el texto, y no arrastra a la página. */
+html:has(.hoja-compartir) { overflow: hidden; }
+.hoja-compartir .copia { overscroll-behavior: contain; }
+
+/* ---- Modo cocina ---- */
+/* Un paso es un <li>, no un botón: Chrome en Android sube hasta el primer
+   ancestro que responde al toque —#app, que tiene el único listener de clics—
+   y resalta la pantalla entera mientras Drive tarda en devolver la receta. El
+   resaltado se lee del elemento resaltado, así que va en #app, y sólo mientras
+   muestra la cocina. */
+#app:has(.coc) { -webkit-tap-highlight-color: transparent; }
+/* 64 de alto: cada control del encabezado tiene 64 × 64 de área táctil, como
+   pide §1 en cocina. Sin `gap`: el aire entre el sol y *Salir* lo pone el
+   margen interno del sol, que dibuja su caja a 40 dentro de sus 64. */
+.encoc { height: 64px; display: flex; align-items: center; padding: 0 var(--e-2);
+         border-bottom: 1px solid var(--borde); }
+.encoc .ico { width: 64px; height: 64px; flex-basis: 64px; }
+/* Centrado como el encabezado del resto de la app, y recortado: el chevron y
+   Salir no miden lo mismo, así que sin `min-width: 0` un título largo empuja
+   el botón fuera de la pantalla. */
+.encoc .tit { flex: 1; font-weight: 600; text-align: center; min-width: 0;
+              white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conm { position: sticky; top: 0; z-index: 2; display: flex; background: var(--surface);
+        border-bottom: 1px solid var(--borde); }
+/* El ícono va al lado de la palabra, no en su lugar (§3.4), al tamaño de cocina. */
+.conm button { flex: 1; height: 64px; background: none; border: 0; cursor: pointer;
+               color: var(--fg-2); font: 600 var(--txt-base)/1 var(--tipo);
+               border-bottom: 3px solid transparent;
+               display: inline-flex; align-items: center; justify-content: center; gap: var(--e-2); }
+.conm button.on { background: var(--surface-alta); color: var(--fg); border-bottom-color: var(--acento); }
+.conm svg { width: var(--ico-cocina); height: var(--ico-cocina); stroke: currentColor; fill: none;
+            stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
+.coc { padding: var(--e-4); }
+.coc .grupo { font-size: var(--txt-base); margin-top: var(--e-6); margin-bottom: var(--e-2); }
+.coc .grupo:first-child { margin-top: 0; }
+.coc .ing { font-size: var(--txt-cocina); line-height: 1.65; padding: var(--e-cocina) 0; }
+/* Tocar un paso lo marca: en Android el toque selecciona el texto. Copiar un
+   paso sigue pudiéndose desde la receta abierta, que no está bajo `.coc`. */
+.coc .pasos li { font-size: var(--txt-cocina); line-height: 1.65; padding: var(--e-cocina) 0;
+                 border-bottom: 1px solid var(--borde);
+                 -webkit-user-select: none; user-select: none; }
+.coc .pasos li:last-child { border-bottom: 0; }
+.coc .tramo { font-size: var(--txt-base); color: var(--fg-2); text-transform: uppercase;
+              letter-spacing: .06em; margin: var(--e-6) 0 var(--e-2); }
+.coc .pasos li.aqui { background: var(--acento-suave); margin: 0 calc(-1 * var(--e-3));
+                      padding-left: var(--e-3); padding-right: var(--e-3);
+                      border-radius: var(--r-medio); border-bottom-color: transparent; }
+.coc .pasos li.hecho { color: var(--fg-3); }
+.coc .pasos li.hecho::before { content: '✓'; color: var(--fg-3); }
+/* El sol y *Salir* tocan en 64 × 64 pero se dibujan más chicos: la caja con
+   reborde, de 40 de alto, es un pseudo-elemento adentro del botón. Sin reborde
+   un ícono suelto no se lee como algo que se toca. El sol encendido se
+   invierte, como el estado elegido del editor. */
+.encoc [data-accion="wake"], .encoc .btn.compacto { position: relative; isolation: isolate;
+                                                    background: none; border-color: transparent; }
+.encoc [data-accion="wake"]::before, .encoc .btn.compacto::before {
+  content: ''; position: absolute; z-index: -1; border-radius: var(--r-medio);
+  border: 1px solid var(--borde-fuerte); }
+.encoc [data-accion="wake"]::before { inset: 12px; }
+.encoc .btn.compacto { min-height: 64px; min-width: 64px; }
+.encoc .btn.compacto::before { inset: 12px 0; }
+.encoc :is([data-accion="wake"], .btn.compacto):active::before { background: var(--surface-alta); }
+@media (hover: hover) {
+  .encoc :is([data-accion="wake"], .btn.compacto):hover::before { background: var(--surface-alta); }
+}
+.encoc [data-accion="wake"].on { color: var(--bg); }
+.encoc [data-accion="wake"].on::before { background: var(--fg); border-color: var(--fg); }
+
+/* ---- Editor ---- */
+/* Los cuatro tags especiales, un botón cada uno. Apretado se invierte
+   —fondo claro, texto oscuro—, la convención del estado elegido de la app: el
+   acento sobre un estado se lee como alerta. Deshabilitado, el apagado de un
+   botón sin acción disponible. */
+.tags-esp { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-2); margin-bottom: var(--e-3); }
+.tag-esp { min-height: 48px; padding: 0 var(--e-3); display: inline-flex; align-items: center;
+           justify-content: center; gap: var(--e-2); cursor: pointer;
+           background: var(--surface-alta); color: var(--fg-2);
+           border: 1px solid var(--borde); border-radius: var(--r-medio);
+           font: 600 var(--txt-base)/1 var(--tipo); }
+.tag-esp svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5;
+               stroke-linecap: round; stroke-linejoin: round; }
+.tag-esp .inc { color: inherit; }
+@media (hover: hover) {
+  .tag-esp:hover:not([disabled]):not([aria-pressed="true"]) { color: var(--fg); }
+}
+.tag-esp[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.tag-esp[disabled] { cursor: default; opacity: .6; }
+.leyenda-incompleta { line-height: 1.5; margin: 0 0 var(--e-3); }
+
+/* La duración: cinco botones con relojito, en tres columnas. Apretado se
+   invierte, como los tags especiales; el reloj de `>1 día` corta con el fondo
+   del botón. */
+.duraciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e-2); }
+.dur-btn { --fondo-reloj: var(--surface-alta); min-height: 72px; padding: var(--e-2) var(--e-1);
+           display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+           background: var(--surface-alta); color: var(--fg-2); border: 1px solid var(--borde);
+           border-radius: var(--r-medio); font: 600 var(--txt-chico)/1.2 var(--tipo); cursor: pointer; }
+.dur-btn svg { width: 24px; height: 24px; color: var(--fg); stroke: currentColor; fill: none;
+               stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.dur-btn[aria-pressed="true"] { --fondo-reloj: var(--fg); background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.dur-btn[aria-pressed="true"] svg { color: var(--bg); }
+[data-duraciones] .aviso-mudo { margin: var(--e-2) 0 0; font-size: var(--txt-chico); }
+
+/* Un tag que la app se reserva: el aviso es una línea, sin caja ni botón. */
+.error-tag { margin: var(--e-1) 0 0; font-size: var(--txt-chico); color: var(--error); }
+/* Y un poco de aire entre los tags puestos y el campo para sumar otro. */
+[data-pills]:not(:empty) { margin-bottom: var(--e-3); }
+
+/* ---- Captura ---- */
+/* El ayuda memoria de la nota: es referencia mientras se escribe, no prosa.
+   En micro, que es el piso de la escala, y en el color de los rótulos de los
+   campos. */
+.esbozo { margin-bottom: var(--e-5); }
+.esbozo summary { font-size: var(--txt-chico); color: var(--fg-2);
+                  cursor: pointer; padding: 0 0 var(--e-2); }
+.esbozo pre { margin: 0; padding: 0 0 var(--e-2);
+              /* Sin caja: con borde parecía un campo editable, y con fondo
+                 propio se veía distinto según dónde estuviera —invisible sobre
+                 la ficha del editor, un recuadro gris sobre la hoja de la
+                 captura—. Es sólo texto de referencia. */
+              background: none; border: 0;
+              font-size: var(--txt-micro); line-height: 1.6; color: var(--fg-2);
+              white-space: pre-wrap; word-break: break-word; }
+.hoja { min-height: 100%; display: flex; flex-direction: column; padding: var(--e-5) var(--e-4); }
+.hoja h1 { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0 0 var(--e-5); }
+.fnt { font-size: var(--txt-chico); color: var(--fg-2); background: var(--surface);
+       border: 1px solid var(--borde); border-radius: var(--r-medio); padding: var(--e-3);
+       word-break: break-all; margin-bottom: var(--e-5); }
+.pie2 { margin-top: auto; display: flex; gap: var(--e-2); justify-content: flex-end; padding-top: var(--e-5); }
+
+/* ---- Borradores ---- */
+.bor { display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
+       background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha);
+       /* Es un <a>: sin esto lleva el subrayado y el violeta de link visitado. */
+       text-decoration: none; color: inherit; }
+.bor .txt { flex: 1; min-width: 0; }
+.bor .n { font-weight: 600; }
+.bor .f { font-size: var(--txt-chico); color: var(--fg-2); white-space: nowrap;
+          overflow: hidden; text-overflow: ellipsis; margin-top: var(--e-1); }
+.bor .d { font-size: var(--txt-micro); color: var(--fg-3); white-space: nowrap; }
+
+/* ---- Ajustes ---- */
+.fila-a { display: flex; align-items: center; gap: var(--e-3); min-height: 48px; }
+.fila-a .t { flex: 1; }
+.barra { height: 8px; background: var(--surface-alta); border-radius: var(--r-chico); overflow: hidden; }
+.barra i { display: block; height: 100%; background: var(--acento); }
+
+/* ---- Conexión ---- */
+.arr { min-height: 100%; display: flex; flex-direction: column; justify-content: center;
+       padding: var(--e-6) var(--e-4); gap: var(--e-5); }
+.arr h1 { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0; }
+.arr p { font-size: var(--txt-lectura); line-height: 1.6; color: var(--fg-2); margin: 0; }
+
+/* ---- Pantalla ancha (C05.10.1) ---- */
+@media (min-width: 900px) {
+  .grilla { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ---- El menú lateral: navegación primaria (IA §4.6) ---- */
+/* En el teléfono se despliega sobre el contenido; desde 900 px queda fijo y el
+   contenido se corre, que es el ancho donde la grilla ya pasa a cuatro
+   columnas. La hamburguesa sólo existe mientras el lateral se esconde. */
+.lat { position: fixed; inset: 0 auto 0 0; width: 260px; z-index: 20;
+       background: var(--surface); border-right: 1px solid var(--borde);
+       padding: var(--e-4); display: flex; flex-direction: column; gap: var(--e-1);
+       transform: translateX(-100%); transition: transform .2s; }
+.lat.abierto { transform: none; }
+.lat .marca { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25;
+              margin: 0 0 var(--e-4); padding: 0 var(--e-2); }
+.lat a { display: flex; align-items: center; gap: var(--e-3); min-height: 48px;
+         padding: 0 var(--e-2); border-radius: var(--r-medio);
+         color: var(--fg); text-decoration: none; font-weight: 600; }
+.lat a.act { background: var(--acento-suave); color: var(--acento); }
+.lat .version { margin-top: auto; padding: 0 var(--e-2); font-size: var(--txt-micro);
+                color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.lat a .cu { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px;
+             border-radius: 10px; background: var(--surface-alta);
+             border: 1px solid var(--borde-fuerte); color: var(--fg-2);
+             font-size: var(--txt-micro); font-weight: 600;
+             display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.lat svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none;
+           stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.velo-lat { position: fixed; inset: 0; z-index: 19; background: var(--velo);
+            opacity: 0; pointer-events: none; transition: opacity .2s; }
+.velo-lat.on { opacity: .6; pointer-events: auto; }
+
+/* El velo de la escritura en curso: mientras dura, ningún control de abajo
+   recibe el toque. Sin transición: aparece con la escritura y se va con ella. */
+#velo-escritura { position: fixed; inset: 0; z-index: 30; background: var(--velo);
+                  opacity: .6; pointer-events: auto; display: grid; place-items: center; }
+#velo-escritura[hidden] { display: none; }
+
+@media (min-width: 900px) {
+  .lat { transform: none; }
+  .velo-lat { display: none; }
+  .menu-lat { display: none; }
+  .conten { padding-left: 260px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lat { transition: none; }
+  .velo-lat { transition: none; }
+}
+
+/* Gestión de categorías: la muestra de arriba, las muestras de color y de foto. */
+.tile.muestra { display: block; }
+.cat-fila .tile.muestra { width: 56px; aspect-ratio: 4/3; flex: 0 0 56px; }
+.cat-fila .tile.muestra .nm { display: none; }
+.muestras { display: grid; grid-template-columns: repeat(8, 1fr); gap: var(--e-2); }
+.muestras.fotos { grid-template-columns: repeat(4, 1fr); }
+.muestra-color { aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent; }
+.muestra-foto { aspect-ratio: 4/3; border-radius: var(--r-medio); border: 2px solid transparent;
+                background-size: cover; background-position: center; }
+.muestra-foto.trama { background:
+    repeating-linear-gradient(135deg, var(--cat-otros) 0 6px, transparent 6px 14px); }
+.muestra-color[aria-pressed="true"], .muestra-foto[aria-pressed="true"] { border-color: var(--fg); }
+
+/* ---- El carrusel de tags (§6.21) ---- */
+.carrusel-marco { position: relative; margin-bottom: var(--e-3); }
+.carrusel { display: flex; gap: var(--e-2); overflow-x: auto; padding-bottom: var(--e-1);
+            scrollbar-width: none; scroll-behavior: smooth; }
+.carrusel::-webkit-scrollbar { display: none; }
+.carrusel .chip { flex: 0 0 auto; }
+.chip .cuenta { color: var(--fg-3); font-variant-numeric: tabular-nums; margin-left: 2px; }
+.chip.act .cuenta { color: inherit; opacity: .8; }
+
+/* El degradé dice que sigue. A la derecha mientras quede algo; a la izquierda,
+   sólo cuando ya se corrió. La opacidad se ata a la posición del carrusel sin
+   JavaScript; donde no haya soporte, los dos se ven siempre, que no rompe nada. */
+.carrusel-marco::before, .carrusel-marco::after {
+  content: ''; position: absolute; top: 0; bottom: var(--e-1); width: 40px; pointer-events: none; }
+/* Sin desborde no hay nada que correr, y la timeline de scroll queda inactiva:
+   la animación no se aplica y se ve el valor base. Por eso, dentro del
+   @supports, los dos lados arrancan ocultos y es la animación la que los
+   muestra mientras quede algo por ver. */
+.carrusel-marco::after { right: 0; background: linear-gradient(to right, transparent, var(--bg)); }
+.carrusel-marco::before { left: 0; background: linear-gradient(to left, transparent, var(--bg)); }
+@supports (animation-timeline: scroll()) {
+  .carrusel-marco { timeline-scope: --tags; }
+  .carrusel { scroll-timeline: --tags inline; }
+  .carrusel-marco::before { opacity: 0; animation: aparecer linear both;
+                            animation-timeline: --tags; animation-range: 0 40px; }
+  .carrusel-marco::after { opacity: 0; animation: desaparecer linear both;
+                           animation-timeline: --tags; animation-range: calc(100% - 40px) 100%; }
+  /* Las flechas siguen la misma timeline, con el mismo rango que su degradé:
+     la izquierda aparece recién al correrse, la derecha desaparece al llegar
+     al final. `visibility` y no `opacity`: mientras está oculta, tampoco se
+     puede tocar (a diferencia del degradé, que no es interactivo). */
+  .carrusel-flecha.izq { visibility: hidden; animation: aparecer-flecha linear both;
+                         animation-timeline: --tags; animation-range: 0 40px; }
+  .carrusel-flecha.der { visibility: hidden; animation: desaparecer-flecha linear both;
+                        animation-timeline: --tags; animation-range: calc(100% - 40px) 100%; }
+}
+@keyframes aparecer { to { opacity: 1; } }
+@keyframes desaparecer { from { opacity: 1; } to { opacity: 0; } }
+@keyframes aparecer-flecha { to { visibility: visible; } }
+@keyframes desaparecer-flecha { from { visibility: visible; } to { visibility: hidden; } }
+
+/* Las flechas, sólo con mouse o trackpad: en el teléfono se desliza con el dedo. */
+.carrusel-flecha { display: none; position: absolute; top: 50%; transform: translateY(-50%); z-index: 1;
+  width: 32px; height: 32px; place-items: center; cursor: pointer; color: var(--fg);
+  background: var(--surface-alta); border: 1px solid var(--borde-fuerte); border-radius: 50%; }
+.carrusel-flecha svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.carrusel-flecha.izq { left: 0; }
+.carrusel-flecha.der { right: 0; }
+@media (hover: hover) and (pointer: fine) {
+  .carrusel-flecha { display: grid; }
+  .carrusel { padding-inline: 40px; }
+}
+@media (prefers-reduced-motion: reduce) { .carrusel { scroll-behavior: auto; } }
+
+/* La fila de duraciones: chips con relojito que se deslizan como el
+   carrusel, sin degradé ni flechas; y el conmutador de orden, a la derecha. */
+.fila-dur { display: flex; gap: var(--e-2); overflow-x: auto; scrollbar-width: none;
+            margin-inline: calc(-1 * var(--e-4)); padding-inline: var(--e-4); margin-bottom: var(--e-3); }
+.fila-dur::-webkit-scrollbar { display: none; }
+.fila-dur .chip { flex: 0 0 auto; --fondo-reloj: color-mix(in srgb, var(--surface-alta) 86%, var(--fg)); }
+.fila-dur .chip.act { --fondo-reloj: var(--acento-suave); }
+.orden { display: flex; justify-content: flex-end; margin-bottom: var(--e-3); }
+.orden-seg { display: inline-grid; grid-template-columns: auto auto; border: 1px solid var(--borde);
+             border-radius: var(--r-medio); overflow: hidden; }
+.orden-seg button { min-height: 40px; padding: 0 var(--e-3); border: 0; background: none; color: var(--fg-2);
+                    font: 600 var(--txt-chico)/1 var(--tipo); cursor: pointer; display: inline-flex;
+                    align-items: center; gap: 6px; }
+.orden-seg button + button { border-left: 1px solid var(--borde); }
+.orden-seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.orden-seg svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5;
+                 stroke-linecap: round; stroke-linejoin: round; }
+
+html:has(.hoja-compartir) { overflow: auto !important; }
+body { margin: 0; padding: 24px 16px 48px; background: #0d0b0a; color-scheme: dark; } :root { background: #0d0b0a; }
+.pagina > h1 { font-size: var(--txt-titulo); margin: 0 0 4px; }
+.pagina > h2 { font-size: var(--txt-lectura); margin: 32px 0 4px; }
+.pagina > p { color: var(--fg-2); font-size: var(--txt-chico); max-width: 62ch; margin: 0 0 24px; line-height: 1.6; }
+.fila { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+.caso { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.caso figcaption { font-size: var(--txt-chico); color: var(--fg-2); max-width: 390px; line-height: 1.5; }
+.caso figcaption b { color: var(--fg); }
+.tel { width: 390px; max-width: 100%; height: 780px; overflow: hidden auto; background: var(--bg); border: 1px solid var(--borde); border-radius: 24px; position: relative; margin: 0 auto; }
+.tel .conten { max-width: none; padding-left: 0 !important; }
+.tel .menu-lat { display: inline-flex !important; }
+.tel .grilla { grid-template-columns: repeat(2, 1fr) !important; }
+.tel .tile .im.trama { background-color: var(--c); }
+.tel .lat, .tel .velo-lat, .tel .velo, .tel .hoja-compartir, .tel .pie { position: absolute; }
+.tel .velo-lat { display: block; }
+.tel .enc.peg { position: sticky; }
+/* pie común */
+.pie-plan { position: sticky; bottom: 0; padding: var(--e-3) 0 var(--e-2); background: linear-gradient(to top, var(--bg) 70%, transparent); margin-top: var(--e-4); }
+.pie-plan { display: flex; flex-direction: column; gap: var(--e-2); }
+.pie-plan .btn { width: 100%; }
+.grilla-sem .d span { color: var(--acento); }
+/* B: grilla */
+.grilla-sem { display: grid; grid-template-columns: 52px 1fr 1fr; gap: var(--e-2); align-items: stretch; }
+.grilla-sem .cab { font-size: var(--txt-micro); color: var(--fg-3); text-transform: uppercase; letter-spacing: .06em; text-align: center; }
+.grilla-sem .d { display: flex; flex-direction: column; justify-content: center; line-height: 1.1; color: var(--fg-2); }
+.grilla-sem .d b { font-weight: 600; color: var(--fg); } .grilla-sem .d span { font-size: var(--txt-chico); }
+.grilla-sem .d.hoy b, .grilla-sem .d.hoy span { color: var(--acento); }
+.celda { min-height: 56px; display: flex; align-items: center; padding: var(--e-2) var(--e-3); font-size: var(--txt-chico); line-height: 1.25;
+  color: inherit; text-decoration: none; background: var(--surface); border: 1px solid var(--borde); border-left: 3px solid var(--c, var(--borde)); border-radius: var(--r-medio); font: inherit; font-size: var(--txt-chico); text-align: left; }
+.celda.libre { justify-content: center; border: 1px dashed var(--borde); background: transparent; color: var(--fg-3); cursor: pointer; }
+.celda.libre svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.celda.ida { color: var(--fg-3); border-left-color: var(--error); }
+.celda { flex-direction: column; align-items: stretch; gap: var(--e-1); padding: var(--e-1); border-left: 1px solid var(--borde); }
+.celda .it { display: block; padding: 4px var(--e-2); border-left: 3px solid var(--c, var(--borde)); border-radius: var(--r-chico); background: var(--surface-alta); color: inherit; text-decoration: none; font-size: var(--txt-micro); line-height: 1.25; }
+.celda .it.ida { color: var(--fg-3); border-left-color: var(--error); }
+.celda .mas { height: 28px; border: 0; background: transparent; color: var(--fg-3); cursor: pointer; display: grid; place-items: center; border-radius: var(--r-chico); }
+.celda .mas svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.celda.libre { padding: 0; } .celda.libre .mas { height: 100%; min-height: 56px; }
+.lin.cab-l { min-height: 40px; } .lin.cab-l .h { color: var(--fg-2); }
+.slot-g.libre.chico { min-height: 48px; font-size: var(--txt-chico); }
+.mini { display: flex; align-items: center; gap: var(--e-1); } .mini .n { margin-left: auto; color: var(--acento); font-weight: 600; }
+/* C: fichas por día */
+.fichas-sem .ficha { padding: var(--e-3) var(--e-4); }
+.fichas-sem .ficha > h2 { margin-bottom: var(--e-2); }
+.fichas-sem .ficha.hoy > h2 { color: var(--acento); }
+.lin { display: flex; align-items: center; gap: var(--e-3); min-height: 44px; }
+.lin .h { font-size: var(--txt-chico); color: var(--fg-3); width: 64px; flex: 0 0 64px; }
+.lin .r { flex: 1; display: flex; align-items: center; gap: var(--e-2); color: inherit; text-decoration: none; }
+.lin .r .pin { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; }
+.lin .btn { margin-left: auto; }
+.lin.ida .r { color: var(--fg-3); } .lin .ya { font-size: var(--txt-chico); color: var(--error); }
+.ico.chico { width: 40px; height: 40px; color: var(--fg-3); }
+/* D: un día por vez */
+.tira { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--e-1); }
+.dia-t { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--e-2) 0; border-radius: var(--r-medio); border: 1px solid transparent; background: transparent; color: var(--fg-2); font: inherit; cursor: pointer; }
+.dia-t span { font-size: var(--txt-micro); text-transform: uppercase; letter-spacing: .04em; } .dia-t b { font-size: var(--txt-lectura); color: var(--fg); }
+.dia-t i { width: 5px; height: 5px; border-radius: 50%; background: transparent; } .dia-t.lleno i { background: var(--fg-3); }
+.dia-t.on { background: var(--fg); color: var(--bg); } .dia-t.on b { color: var(--bg); } .dia-t.on i { background: var(--bg); }
+.slot-g { display: flex; align-items: center; gap: var(--e-2); } .slot-g .tarjeta { flex: 1; }
+.slot-g.libre { min-height: 80px; justify-content: center; border: 1px dashed var(--borde); border-radius: var(--r-medio); color: var(--fg-2); font: inherit; background: transparent; width: 100%; cursor: pointer; }
+.slot-g.libre svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+/* ficha ¿Cuándo? */
+.conm.sem { margin: 0 0 var(--e-3); }
+.mini-sem { display: grid; grid-template-columns: 64px 1fr 1fr; gap: var(--e-1); align-items: center; }
+.mini-sem .cab { font-size: var(--txt-micro); color: var(--fg-3); text-transform: uppercase; letter-spacing: .06em; text-align: center; }
+.mini-sem .d { font-size: var(--txt-chico); color: var(--fg-2); } .mini-sem .d.hoy { color: var(--acento); font-weight: 600; }
+.mini { min-height: 40px; border-radius: var(--r-medio); border: 1px solid var(--borde); border-left: 3px solid var(--c, var(--borde)); background: var(--bg); color: var(--fg-2);
+  font: inherit; font-size: var(--txt-micro); padding: 0 var(--e-2); text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer; }
+.mini.libre { border: 1px dashed var(--borde-fuerte); color: var(--acento); display: grid; place-items: center; }
+.mini.libre svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.meta-h { font-size: var(--txt-chico); color: var(--fg-2); margin: var(--e-2) 0 0 !important; }
+</style></head><body>
+<div class="pagina">
+<h1>12 — Plan de la semana y lista de compras</h1>
+<p>Lo mínimo: un plan de siete días sin fechas, que arranca en el día de hoy. Cada comida es una lista de recetas. Los días cargados se mantienen hasta que se cambien o se reinicie el plan.</p>
+
+<h2>1. La entrada, en el menú</h2>
+<div class="fila"><figure class="caso"><div class="tel"><div class="velo-lat on"></div><nav class="lat abierto"><div class="marca">Recetario</div><a class="act" href="#/"><svg viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-8z"/></svg>Inicio</a><a class="" href="#/borradores"><svg viewBox="0 0 24 24"><path d="M4 13l2.5-7h11L20 13v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5z"/><path d="M4 13h5l1 2h4l1-2h5"/></svg>Borradores<span class="cu">2</span></a><a href="#/plan"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Plan de la semana</a><a href="#/nueva"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nueva receta</a><a class="" href="#/ajustes"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg>Ajustes</a><div class="version">c6cf84d · 17/09 21:23</div></nav><div class="conten"><div class="enc"><button class="ico cuenta menu-lat" data-accion="abrir-menu" aria-label="Menú"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span class="n">2</span></button><span class="tit app" style="font-size:var(--txt-titulo)">Recetario</span></div><div class="cuerpo"><div class="buscar"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input data-accion="buscar" placeholder="Buscar receta o ingrediente"></div><div class="carrusel-marco"><div class="carrusel" data-carrusel><button class="chip" data-tag="favorito"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/></svg>favorito<span class="cuenta">6</span></button><button class="chip" data-tag="menú diario"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>menú diario<span class="cuenta">9</span></button><button class="chip" data-tag="horno">horno<span class="cuenta">11</span></button></div><button class="carrusel-flecha izq" data-accion="carrusel-izq" aria-label="Tags anteriores"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button><button class="carrusel-flecha der" data-accion="carrusel-der" aria-label="Más tags"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button></div><div><div class="rot">Categorías</div><div class="grilla"><a class="tile" style="--c:var(--cat-carnes)" href="#/c/Carnes" data-slug="carnes"><span class="im trama"></span><span class="cu">12</span><span class="nm">Carnes</span></a><a class="tile" style="--c:var(--cat-pastas)" href="#/c/Pastas" data-slug="pastas"><span class="im trama"></span><span class="cu">7</span><span class="nm">Pastas</span></a><a class="tile" style="--c:var(--cat-pescados)" href="#/c/Pescados%20y%20mariscos" data-slug="pescados-y-mariscos"><span class="im trama"></span><span class="cu">24</span><span class="nm">Pescados y mariscos</span></a><a class="tile" style="--c:var(--cat-postres)" href="#/c/Postres" data-slug="postres"><span class="im trama"></span><span class="cu">5</span><span class="nm">Postres</span></a></div></div></div></div></div><figcaption><b>Menú lateral.</b> «Plan de la semana» entre Borradores y Nueva receta, con el ícono del calendario. El Recetario no cambia.</figcaption></figure></div>
+
+<h2>2. El plan</h2>
+<div class="fila">
+<figure class="caso"><div class="tel"><div class="enc"><button class="ico" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button><span class="tit">Plan de la semana</span><span class="der"></span></div><div class="cuerpo denso"><div class="grilla-sem"><div class="cab"></div><div class="cab">Mediodía</div><div class="cab">Noche</div><div class="d hoy"><b>Mar</b><span>hoy</span></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda"><a class="it" href="#" style="--c:var(--cat-pescados)">Rabas</a><a class="it" href="#" style="--c:var(--cat-ensaladas)">Ensalada verde</a><a class="it" href="#" style="--c:var(--cat-postres)">Flan casero</a><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="d"><b>Mié</b></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="d"><b>Jue</b></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda"><a class="it" href="#" style="--c:var(--cat-pastas)">Ñoquis de papa</a><a class="it" href="#" style="--c:var(--cat-postres)">Tiramisú</a><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="d"><b>Vie</b></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="d"><b>Sáb</b></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda"><a class="it ida" href="#"><s>Tarta de ricota</s></a><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="d"><b>Dom</b></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="d"><b>Lun</b></div><div class="celda"><a class="it" href="#" style="--c:var(--cat-carnes)">Milanesas napolitanas</a><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda"><a class="it" href="#" style="--c:var(--cat-otros)">Sopa de calabaza</a><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div></div><div class="pie-plan"><button class="btn prim">Lista de compras</button><button class="btn sec">Reiniciar el plan</button></div></div></div><figcaption><b>Siete días desde hoy.</b> Martes primero, con «hoy» al lado; el lunes queda último. Cada celda es una lista: una línea por receta con el color de su categoría, y el + para agregar otra. <i>Tarta de ricota</i> ya no está en el índice y se ve tachada. Al pie, <i>Lista de compras</i> y <i>Reiniciar el plan</i>.</figcaption></figure>
+<figure class="caso"><div class="tel"><div class="enc"><button class="ico" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button><span class="tit">Plan de la semana</span><span class="der"></span></div><div class="cuerpo denso"><div class="grilla-sem"><div class="cab"></div><div class="cab">Mediodía</div><div class="cab">Noche</div><div class="d hoy"><b>Mar</b><span>hoy</span></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda"><a class="it" href="#" style="--c:var(--cat-pescados)">Rabas</a><a class="it" href="#" style="--c:var(--cat-ensaladas)">Ensalada verde</a><a class="it" href="#" style="--c:var(--cat-postres)">Flan casero</a><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="d"><b>Mié</b></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="d"><b>Jue</b></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda"><a class="it" href="#" style="--c:var(--cat-pastas)">Ñoquis de papa</a><a class="it" href="#" style="--c:var(--cat-postres)">Tiramisú</a><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="d"><b>Vie</b></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="d"><b>Sáb</b></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda"><a class="it ida" href="#"><s>Tarta de ricota</s></a><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="d"><b>Dom</b></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda libre"><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="d"><b>Lun</b></div><div class="celda"><a class="it" href="#" style="--c:var(--cat-carnes)">Milanesas napolitanas</a><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div><div class="celda"><a class="it" href="#" style="--c:var(--cat-otros)">Sopa de calabaza</a><button class="mas" aria-label="Agregar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div></div><div class="pie-plan"><div class="ficha" style="border-color:var(--error)"><p class="lee" style="margin:0 0 var(--e-3)">¿Reiniciar el plan? Se vacían los siete días.</p><div class="acciones"><button class="btn sec">Cancelar</button><button class="btn prim">Reiniciar</button></div></div></div></div></div><figcaption><b>Reiniciar pide confirmación,</b> en el lugar de los botones, como borrar una receta: vacía los siete días y deja el archivo vacío.</figcaption></figure>
+<figure class="caso"><div class="tel"><div class="enc"><button class="ico" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button><span class="tit">Martes al mediodía</span><span class="der"></span></div><div class="cuerpo denso"><div class="buscar"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input placeholder="Buscar receta o ingrediente"></div><div><div class="rot">Menú diario</div><div class="lista"><a class="tarjeta" href="#" style="--marcas:1"><span class="ph" style="--c:var(--cat-carnes)"></span><span class="txt"><span class="n">Milanesas napolitanas</span><span class="ctx"><span class="pin" style="background:var(--cat-carnes)"></span><span class="ctx-txt">Carnes · ~30 min · 4 porciones</span></span></span><span class="marcas-esq"><span class="marca" role="img" aria-label="Menú diario"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span></span></a><a class="tarjeta" href="#" style="--marcas:1"><span class="ph" style="--c:var(--cat-aves)"></span><span class="txt"><span class="n">Pollo al horno con papas</span><span class="ctx"><span class="pin" style="background:var(--cat-aves)"></span><span class="ctx-txt">Aves · ~60 min · 4 porciones</span></span></span><span class="marcas-esq"><span class="marca" role="img" aria-label="Menú diario"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span></span></a><a class="tarjeta" href="#" style="--marcas:1"><span class="ph" style="--c:var(--cat-otros)"></span><span class="txt"><span class="n">Tortilla de papas</span><span class="ctx"><span class="pin" style="background:var(--cat-otros)"></span><span class="ctx-txt">Otros · ~30 min · 2 porciones</span></span></span><span class="marcas-esq"><span class="marca" role="img" aria-label="Menú diario"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span></span></a><a class="tarjeta" href="#" style="--marcas:1"><span class="ph" style="--c:var(--cat-pastas)"></span><span class="txt"><span class="n">Fideos con tuco</span><span class="ctx"><span class="pin" style="background:var(--cat-pastas)"></span><span class="ctx-txt">Pastas · ~30 min · 4 porciones</span></span></span><span class="marcas-esq"><span class="marca" role="img" aria-label="Menú diario"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span></span></a></div></div></div></div><figcaption><b>Agregar.</b> El título dice para qué comida. Búsqueda arriba; debajo, el bloque <i>Menú diario</i>. Tocar una tarjeta la suma a esa comida y vuelve al plan.</figcaption></figure>
+<figure class="caso"><div class="tel"><div class="enc"><button class="ico" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button><span class="tit">Lista de compras</span><span class="der"><button class="ico" aria-label="Compartir"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button></span></div><div class="cuerpo"><div class="ficha"><h2>Con cantidad</h2><div class="ing"><span class="n">Aceite de oliva</span><span class="c">6 cucharadas</span></div><div class="ing"><span class="n">Calabaza</span><span class="c">1 kg</span></div><div class="ing"><span class="n">Harina</span><span class="c">500 g</span></div><div class="ing"><span class="n">Harina</span><span class="c">2 tazas</span></div><div class="ing"><span class="n">Huevos</span><span class="c">5</span></div><div class="ing"><span class="n">Leche</span><span class="c">750 ml</span></div><div class="ing"><span class="n">Papa</span><span class="c">2 kg</span></div><div class="ing"><span class="n">Queso rallado</span><span class="c">200 g</span></div></div><div class="ficha"><h2>Sin cantidad</h2><div class="ing"><span class="n">Perejil</span></div><div class="ing"><span class="n">Sal</span></div><div class="ing"><span class="n">Sal, pimienta</span></div><div class="ing"><span class="n">Pan rallado</span></div></div></div></div><figcaption><b>Compras.</b> Derivada del plan entero, en dos fichas. <i>Harina</i> dos veces porque las unidades no coinciden. Compartir la manda como texto. No se guarda en Drive.</figcaption></figure>
+</div>
+</div></body></html>

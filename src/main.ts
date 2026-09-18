@@ -144,6 +144,29 @@ const porQueNoGuardo = (err: unknown): string =>
 /** El aviso de «Pegar receta» cuando lo copiado no sirve, para Borradores y el borrador. */
 let avisoBorradores = '';
 
+/** Cuántas escrituras hay en curso, y la pantalla que las lanzó. */
+let escrituras = 0;
+let hashEscritura = '';
+
+/** El velo, con `aria-busy` en `#app`. Los tests corren sobre un DOM mínimo: puede no estar. */
+function mostrarVelo(mostrar: boolean): void {
+  const velo = document.querySelector<HTMLElement>('#velo-escritura');
+  if (velo) velo.hidden = !mostrar;
+  if (mostrar) app?.setAttribute('aria-busy', 'true');
+  else app?.removeAttribute('aria-busy');
+}
+
+/**
+ * Envuelve la promesa de una escritura: el velo mientras dura, y se suelta
+ * siempre, termine bien o mal. Envuelve sólo la llamada que escribe y no el
+ * manejador entero, para que éste pueda navegar o redibujar al terminar.
+ */
+async function escribiendo<T>(p: Promise<T>): Promise<T> {
+  if (escrituras++ === 0) { hashEscritura = location.hash; mostrarVelo(true); }
+  try { return await p; }
+  finally { if (--escrituras === 0) mostrarVelo(false); }
+}
+
 /** El borrador de la pantalla: de Drive la primera vez, de memoria mientras no se salga. */
 async function borradorDePantalla(id: string): Promise<Borrador> {
   if (borradorLeido?.id !== id) borradorLeido = await store.borrador(id);
@@ -398,6 +421,12 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     location.replace('#/carpeta');
     return;
   }
+
+  // Con una escritura en curso no se navega: el resultado o el error tienen que
+  // llegar a la pantalla que la lanzó. Como el `hashchange` no se puede
+  // cancelar, la URL vuelve a la de esa pantalla, igual que con el editor. El
+  // hash es el de cuando arrancó la escritura: acá `location.hash` ya es el destino.
+  if (escrituras && cambiaDePantalla) { history.pushState(null, '', hashEscritura); return; }
 
   // Salir del editor con cambios pregunta antes (C04.1.1). El `hashchange` no
   // se puede cancelar: cuando llega, el volver del encabezado o el gesto de
@@ -785,6 +814,9 @@ const irCerrando = (hash: string): void => { location.replace(hash); };
 const router = crearRouter(render);
 
 app.addEventListener('click', async (e) => {
+  // Con una escritura en curso la pantalla no responde: el velo ya tapa los
+  // controles, y esto cubre lo que llegue igual.
+  if (escrituras) return;
   // Todo el manejo de clicks es delegación desde #app, así que el destino
   // llega como EventTarget y hay que estrecharlo una sola vez, acá.
   const destino = conClosest(e.target);
@@ -970,7 +1002,7 @@ app.addEventListener('click', async (e) => {
   if (accion === 'carpeta-crear-confirmado') {
     const nombre = document.querySelector<HTMLInputElement>('#app input[name="nombre-carpeta"]')?.value.trim() || 'Recetario';
     try {
-      selector.confirmando = await store.crearCarpeta(nombre, vistaActual?.params['id'] ?? 'root');
+      selector.confirmando = await escribiendo(store.crearCarpeta(nombre, vistaActual?.params['id'] ?? 'root'));
       selector.creando = false;
       selector.nivel = null;   // el nivel ganó una carpeta
     } catch (err) {
@@ -1022,7 +1054,7 @@ app.addEventListener('click', async (e) => {
   if (accion === 'descartar-confirmado') {
     const id = idActual();
     try {
-      await store.descartarBorrador(id);
+      await escribiendo(store.descartarBorrador(id));
       // El borrador que se acaba de descartar no tiene que quedar en el
       // historial: volver ahí mostraría algo que ya no existe.
       irCerrando('#/borradores');
@@ -1064,7 +1096,7 @@ app.addEventListener('click', async (e) => {
     try {
       if (editandoBorrador) {
         const id = idActual();
-        await store.editarBorrador(id, { titulo: tituloCaptura, fuente, nota: notaCaptura });
+        await escribiendo(store.editarBorrador(id, { titulo: tituloCaptura, fuente, nota: notaCaptura }));
         // Lo guardado es lo que se muestra: volver al borrador no relee el `.md`.
         if (borradorLeido?.id === id) borradorLeido = { ...borradorLeido, titulo: tituloCaptura, fuente, nota: notaCaptura };
         editandoBorrador = false;
@@ -1073,7 +1105,7 @@ app.addEventListener('click', async (e) => {
         notaCaptura = '';
         return render();
       }
-      await store.agregarBorrador({ titulo: tituloCaptura, fuente, nota: notaCaptura });
+      await escribiendo(store.agregarBorrador({ titulo: tituloCaptura, fuente, nota: notaCaptura }));
     } catch (err) {
       console.error(err);
       // Nada queda esperando: el texto sigue en pantalla y se reintenta a mano.
@@ -1231,8 +1263,8 @@ app.addEventListener('click', async (e) => {
     const valores = { nombre: datos['nombre'] ?? '', color: datos['color'] ?? '', foto: datos['foto'] ?? '' };
     const id = vistaActual?.params['id'] ?? 'nueva';
     try {
-      if (id === 'nueva') await store.crearCategoria(valores);
-      else await store.editarCategoria(id, valores);
+      if (id === 'nueva') await escribiendo(store.crearCategoria(valores));
+      else await escribiendo(store.editarCategoria(id, valores));
       registrarCategorias(store.categorias());
       editorAbierto = null;
       return history.back();
@@ -1261,7 +1293,7 @@ app.addEventListener('click', async (e) => {
   if (accion === 'borrar-categoria-confirmado') {
     const id = idActual();
     try {
-      await store.borrarCategoria(id);
+      await escribiendo(store.borrarCategoria(id));
       registrarCategorias(store.categorias());
       editorAbierto = null;
       irCerrando('#/categorias');
@@ -1312,11 +1344,11 @@ app.addEventListener('click', async (e) => {
       let creada: { id: string } | null = null;
       if (esNueva && borradorId) {
         // Convertir es una sola operación: el .md, la fila y el borrador (C01.7.1).
-        creada = await convertirBorrador({ store, convertidos }, { borradorId, receta: nueva, carpetaId });
+        creada = await escribiendo(convertirBorrador({ store, convertidos }, { borradorId, receta: nueva, carpetaId }));
       } else if (esNueva) {
-        creada = await store.crear(nueva, { carpetaId: carpetaId || undefined });
+        creada = await escribiendo(store.crear(nueva, { carpetaId: carpetaId || undefined }));
       } else {
-        await store.guardar(id, nueva, { carpetaDestino: carpetaId });
+        await escribiendo(store.guardar(id, nueva, { carpetaDestino: carpetaId }));
         // Lo guardado es la copia: volver a la receta la muestra sin releer.
         recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: nueva };
       }
@@ -1347,7 +1379,7 @@ app.addEventListener('click', async (e) => {
   if (accion === 'borrar-confirmado') {
     const id = idActual();
     try {
-      await store.borrar(id);
+      await escribiendo(store.borrar(id));
       editorAbierto = null;
       // Vuelve a la lista de donde se venía; el archivo queda en la papelera
       // de Drive, que es la red de seguridad y es del usuario. Y la receta
@@ -1378,6 +1410,7 @@ app.addEventListener('click', async (e) => {
  * habilita tocándolo directo, sin volver a pintar la pantalla.
  */
 app.addEventListener('input', (e) => {
+  if (escrituras) return;
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria();
   // En el editor, cada tecla puede habilitar o bloquear el botón de `incompleta`.
   if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') return revisarIncompleta();
@@ -1428,6 +1461,7 @@ function sobreFilaDeslizable(destino: EventTarget | null): boolean {
 // Deslizar para abrir o cerrar el menú, como en una app nativa. Los listeners
 // son pasivos: un deslizamiento vertical tiene que seguir desplazando la página.
 app.addEventListener('touchstart', (e) => {
+  if (escrituras) return;
   deslizando = null;
   const toques = (e as TouchEvent).touches;
   const toque = toques[0];
@@ -1438,6 +1472,7 @@ app.addEventListener('touchstart', (e) => {
 }, { passive: true });
 
 app.addEventListener('touchmove', (e) => {
+  if (escrituras) return;
   const toque = (e as TouchEvent).touches[0];
   if (!deslizando || !toque) return;
   const dx = toque.clientX - deslizando.x;
@@ -1450,7 +1485,7 @@ app.addEventListener('touchmove', (e) => {
 }, { passive: true });
 
 const soltarDeslizamiento = (): void => {
-  if (!deslizando) return;
+  if (escrituras || !deslizando) return;
   const { decidido, p } = deslizando;
   deslizando = null;
   if (decidido !== 'horizontal') return;
@@ -1465,6 +1500,7 @@ app.addEventListener('touchend', soltarDeslizamiento);
 app.addEventListener('touchcancel', soltarDeslizamiento);
 
 app.addEventListener('keydown', (e) => {
+  if (escrituras) return;
   const campo = (e.target as HTMLInputElement | null);
   if (!campo?.dataset || !('tagNuevo' in campo.dataset)) return;
   // Seguir escribiendo borra el aviso del intento anterior.
@@ -1480,12 +1516,14 @@ app.addEventListener('keydown', (e) => {
 // Salir del campo con algo escrito lo agrega igual: no se pierde por
 // distraerse y tocar Guardar.
 app.addEventListener('focusout', (e) => {
+  if (escrituras) return;
   const campo = (e.target as HTMLInputElement | null);
   if (!campo?.dataset || !('tagNuevo' in campo.dataset)) return;
   if (agregarTag(campo.value)) campo.value = '';
 });
 
 app.addEventListener('change', (e) => {
+  if (escrituras) return;
   // La categoría es un select: cambia por `change`, no por `input`.
   if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') revisarIncompleta();
   // Mismo motivo que en `conClosest`: nada de instanceof contra globales del

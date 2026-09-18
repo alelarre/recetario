@@ -127,4 +127,4 @@ Lo pendiente está en [`BACKLOG.md`](../BACKLOG.md), en la raíz del repo.
 | [Brand Identity](ux/brand-identity.md) | Cinco adjetivos con lo que descarta cada uno, dirección visual, tono de voz y vocabulario canónico. | 8 → 11 |
 | [Design System](ux/design-system.md) | Tokens con su contraste medido, paleta de categorías, tipografía, iconografía, motion y 15 componentes core. | 8 → 9 → 11 |
 | [Auditoría tipográfica](ux/auditoria-tipografica.md) | Informe: criterios, la tipografía de las once pantallas medida sobre la app implementada, y una propuesta de cambios. | — |
-| [Mockups](ux/mockups/) | Trece pantallas en HTML+CSS, una sola versión de cada una, más su [README](ux/mockups/README.md) con los hallazgos. Son la especificación de cuando se diseñó: lo decidido después usando la app vive en `src/ui/tokens.css`. | 9 → 11 |
+| [Mockups](ux/mockups/) | Doce pantallas en HTML+CSS, una sola versión de cada una, más su [README](ux/mockups/README.md) con los hallazgos. Son la especificación de cuando se diseñó: lo decidido después usando la app vive en `src/ui/tokens.css`. | 9 → 11 |
