@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   tarjeta, placeholder, aviso, encabezado, chipsSueltos, chipTag, iconoDeTag, vacio, tile, carruselTags,
-  filaDuraciones, conmutadorOrden
+  filaDuraciones, conmutadorOrden, lateral
 } from '../src/ui/componentes.js';
 import { entradaFalsa } from './dobles.js';
 import { registrarCategorias } from '../src/ui/categorias.js';
@@ -281,5 +281,28 @@ describe('tile', () => {
   it('en cero no se dibuja: una categoría vacía se muestra igual, sin un 0 encima', () => {
     expect(tile('Carnes', 0)).not.toContain('class="cu"');
     expect(tile('Carnes')).not.toContain('class="cu"');
+  });
+});
+
+describe('el menú lateral', () => {
+  it('lleva las cinco entradas, con el plan entre Borradores y Nueva receta', () => {
+    const html = lateral({ activo: 'recetario', borradores: 0 });
+    const orden = ['Inicio', 'Borradores', 'Plan de la semana', 'Nueva receta', 'Ajustes']
+      .map(t => html.indexOf(t));
+    expect(orden.every((n, i) => n >= 0 && (i === 0 || n > (orden[i - 1] ?? -1)))).toBe(true);
+    expect(html).toContain('href="#/plan"');
+  });
+
+  it('en el plan, su entrada queda marcada', () => {
+    expect(lateral({ activo: 'plan', borradores: 0 })).toContain('<a class="act" href="#/plan">');
+  });
+});
+
+describe('la tarjeta con acción', () => {
+  it('es un botón que lleva el id, y no un link a la receta', () => {
+    const html = tarjeta(entradaFalsa({ id_archivo: 'f1', titulo: 'Rabas' }), { accion: 'elegir-para-el-plan' });
+    expect(html).toContain('<button class="tarjeta" type="button" data-accion="elegir-para-el-plan" data-id="f1"');
+    expect(html).not.toContain('href=');
+    expect(html.trimEnd().endsWith('</button>')).toBe(true);
   });
 });

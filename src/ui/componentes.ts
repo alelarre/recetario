@@ -100,6 +100,12 @@ export function placeholder(categoria: unknown, foto?: string): string {
 export interface OpcionesTarjeta {
   /** En los resultados por ingrediente, por qué apareció (C02.3.2). */
   motivo?: string;
+  /**
+   * Con acción, la tarjeta es un botón que la dispara con el id de la receta,
+   * en vez de un link que la abre: es lo que pide la pantalla de agregar al
+   * plan, donde tocar una receta la suma a una comida.
+   */
+  accion?: string;
 }
 
 /** Cómo dice cada marca lo que es, para quien no la ve. */
@@ -108,7 +114,7 @@ const NOMBRE_DE_MARCA: Record<TagEspecial, string> = {
 };
 
 /** Foto, título y una línea de contexto. Alto total 80 px. */
-export function tarjeta(e: Entrada, { motivo }: OpcionesTarjeta = {}): string {
+export function tarjeta(e: Entrada, { motivo, accion }: OpcionesTarjeta = {}): string {
   const dur = duracionConReloj(e.tiempo);
   const contexto = motivo
     ? `<span class="ctx-txt"><span class="motivo">${escapar(motivo)}</span>${dur ? ` · ${dur}` : ''}</span>`
@@ -124,13 +130,16 @@ export function tarjeta(e: Entrada, { motivo }: OpcionesTarjeta = {}): string {
         `${iconoDeTag(t)}</span>`).join('') +
       '</span>'
     : '';
-  return `<a class="tarjeta" href="#/r/${encodeURIComponent(e.id_archivo)}"` +
-    `${puestas.length ? ` style="--marcas:${puestas.length}"` : ''}>` +
+  const estilo = puestas.length ? ` style="--marcas:${puestas.length}"` : '';
+  const apertura = accion
+    ? `<button class="tarjeta" type="button" data-accion="${escapar(accion)}" data-id="${escapar(e.id_archivo)}"${estilo}>`
+    : `<a class="tarjeta" href="#/r/${encodeURIComponent(e.id_archivo)}"${estilo}>`;
+  return apertura +
     placeholder(e.categoria, e.foto) +
     '<span class="txt">' +
       `<span class="n">${escapar(e.titulo)}</span>` +
       `<span class="ctx">${contexto}</span>` +
-    '</span>' + marcas + '</a>';
+    '</span>' + marcas + (accion ? '</button>' : '</a>');
 }
 
 export interface OpcionesAviso {
@@ -253,8 +262,8 @@ export function vacio(texto: string): string {
   return `<div class="vacio">${escapar(texto)}</div>`;
 }
 
-/** Los tres destinos del menú lateral. Es la navegación primaria de la app. */
-export type DestinoLateral = 'recetario' | 'borradores' | 'ajustes';
+/** Los destinos del menú lateral. Es la navegación primaria de la app. */
+export type DestinoLateral = 'recetario' | 'borradores' | 'plan' | 'ajustes';
 
 export interface OpcionesLateral {
   /** Cuál de los tres se está mirando: se marca con el acento. */
@@ -284,6 +293,8 @@ export function lateral({ activo, borradores, abierto }: OpcionesLateral): strin
       // «Inicio» y no «Recetario»: ese nombre ya es la marca de arriba del menú.
       item('recetario', '#/', ICO.casa, 'Inicio') +
       item('borradores', '#/borradores', ICO.bandeja, 'Borradores', borradores) +
+      // El plan es su única entrada: el Recetario no lo nombra.
+      item('plan', '#/plan', ICO.calendario, 'Plan de la semana') +
       // Nueva receta es una acción y no un lugar: nunca queda marcada, porque
       // el editor al que lleva no dibuja el menú. Está acá porque es el único
       // sitio desde donde se alcanza sin pasar por un borrador.

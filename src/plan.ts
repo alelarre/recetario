@@ -24,6 +24,10 @@ export const MOMENTOS = ['mediodia', 'noche'] as const;
 /** Cómo se escribe cada momento en el archivo y en la pantalla. */
 export const NOMBRE_DEL_MOMENTO: Record<Momento, string> = { mediodia: 'Mediodía', noche: 'Noche' };
 
+/** «Martes al mediodía», «Martes a la noche»: el título de la pantalla de agregar. */
+export const tituloDeComida = (dia: number, momento: Momento): string =>
+  `${DIAS[dia] ?? ''} ${momento === 'mediodia' ? 'al mediodía' : 'a la noche'}`;
+
 const indiceDeDia = (nombre: string): number =>
   DIAS.findIndex(d => normalizar(d) === normalizar(nombre));
 
