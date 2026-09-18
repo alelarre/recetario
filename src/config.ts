@@ -8,6 +8,8 @@ export const NOMBRE_RAIZ = 'Recetario';
 export const NOMBRE_INDICE = '_indice';
 /** La carpeta de los borradores, un `.md` por borrador. El `_` la deja fuera de las categorías. */
 export const NOMBRE_BORRADORES = '_borradores';
+/** El plan de la semana: un solo archivo en la carpeta base, al lado de `_indice`. */
+export const NOMBRE_PLAN = '_plan.md';
 
 /**
  * La marca de la carpeta base en sus `appProperties`. La app la encuentra por

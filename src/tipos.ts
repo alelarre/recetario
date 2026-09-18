@@ -145,6 +145,30 @@ export interface EntradaBorrador {
   capturado: string;
 }
 
+/** Las dos comidas de un día. */
+export type Momento = 'mediodia' | 'noche';
+
+/**
+ * Una receta cargada en una comida del plan. `dia` va de 0 a 6 con lunes en 0:
+ * el plan no tiene fechas, y el único lugar donde entra hoy es el orden en que
+ * la pantalla dibuja los días.
+ */
+export interface Comida {
+  dia: number;
+  momento: Momento;
+  /** El id del `.md` en Drive: es lo que usa la app. El título está para leerlo. */
+  id: string;
+  titulo: string;
+}
+
+/**
+ * El plan de la semana: `Recetario/_plan.md`. Una comida puede tener varias
+ * recetas, y el orden dentro de cada una es el del archivo.
+ */
+export interface Plan {
+  comidas: Comida[];
+}
+
 /** Los filtros de la vista de categoría. Todos opcionales y combinables. */
 export interface Filtros {
   texto?: string | null;
