@@ -145,6 +145,9 @@ body {
 .tarjeta { position: relative; display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
            background: var(--surface); border: 1px solid var(--borde);
            border-radius: var(--r-ficha); text-decoration: none; color: inherit; }
+/* En el plan, tocar una tarjeta suma la receta a una comida en vez de abrirla:
+   ahí es un <button>, que no hereda ni la tipografía ni el ancho. */
+button.tarjeta { width: 100%; font: inherit; text-align: left; cursor: pointer; }
 .tarjeta .txt { flex: 1; min-width: 0; }
 .tarjeta .n { font-size: var(--txt-base); font-weight: 600; line-height: 1.3;
               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
