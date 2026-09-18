@@ -92,7 +92,8 @@ export function renderPlan(
     '<div class="conten">' +
       encabezado({ titulo: 'Plan de la semana', volver: true }) +
       '<div class="cuerpo denso">' +
-        (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'reintentar' } }) : '') +
+        // Sin control de reintento: reintentar es volver a tocar lo que falló (R1).
+        (error ? aviso({ texto: error }) : '') +
         grilla +
         `<div class="pie-plan">${confirmandoReinicio ? confirmacion : botones}</div>` +
       '</div>' +

@@ -521,9 +521,10 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     if (!(ruta.vista === 'recibida' || (ruta.vista === 'nueva' && ruta.params['recibida']))) recibida = null;
     if (!PANTALLAS_DE_RECETA.includes(ruta.vista)) recetaLeida = null;
     if (!PANTALLAS_DE_BORRADOR.includes(ruta.vista)) borradorLeido = null;
-    if (!PANTALLAS_DE_PLAN.includes(ruta.vista)) { planLeido = null; comprasLeidas = null; }
+    // El aviso de una escritura que falló sobrevive a la navegación entre las
+    // pantallas del plan: agregar escribe y cierra, y el aviso va en el plan.
+    if (!PANTALLAS_DE_PLAN.includes(ruta.vista)) { planLeido = null; comprasLeidas = null; errorPlan = ''; }
     confirmandoReinicio = false;
-    errorPlan = '';
     consultaPlan = '';
     tagsActivos = [];
     duracionesActivas = [];

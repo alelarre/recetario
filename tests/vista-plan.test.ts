@@ -107,9 +107,9 @@ describe('el pie del plan', () => {
     expect(html).not.toContain('data-accion="ir-a-compras"');
   });
 
-  it('un error de escritura avisa arriba, con reintentar', () => {
+  it('un error de escritura avisa arriba, sin control: reintentar es volver a tocar', () => {
     const html = dibujar({ error: 'No se pudo guardar el plan. Revisá la conexión.' });
     expect(html).toContain('No se pudo guardar el plan. Revisá la conexión.');
-    expect(html).toContain('data-accion="reintentar"');
+    expect(html).not.toContain('data-accion="reintentar"');
   });
 });

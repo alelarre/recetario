@@ -1900,6 +1900,19 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('data-accion="reiniciar-plan"');
     });
 
+    it('si falla al sumar, el aviso llega al plan: agregar cierra su pantalla igual', async () => {
+      estado.fallaGuardarPlan = 1;
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/plan/agregar?dia=2&momento=noche');
+      await tocar('elegir-para-el-plan', { id: 'f1' });
+      expect(app.innerHTML).toContain('class="grilla-sem"');
+      expect(app.innerHTML).toContain('No se pudo guardar el plan.');
+      // Y salir del plan lo limpia: no se arrastra a la próxima visita.
+      await abrir('#/');
+      await abrir('#/plan');
+      expect(app.innerHTML).not.toContain('No se pudo guardar el plan.');
+    });
+
     it('un fallo al escribir avisa en el plan y la grilla no cambia', async () => {
       estado.plan = conDos();
       estado.fallaGuardarPlan = 1;
