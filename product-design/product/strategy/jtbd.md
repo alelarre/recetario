@@ -1,7 +1,7 @@
 # Recetario — Jobs to be Done
 
-**Versión:** 1.0
-**Fecha:** 2026-09-05
+**Versión:** 1.1
+**Fecha:** 2026-09-18
 **Estado:** Final — Hito 2 cerrado
 
 ---
@@ -38,7 +38,7 @@ real, cómo lo resuelve el producto y qué pasa si no lo resuelve.
 | J6 | Seguir una receta mientras cocino | Cocinar | Baja | ✅ | Sí |
 | J7 | Corregir una receta que estaba mal | Cocinar | Baja | ✅ | Sí |
 | J8 | Que el recetario sea legible sin la app | Transversal | Permanente | ✅ | Sí |
-| J9 | Planificar la semana y armar la compra | Planificar | — | 🔬 | **No existe** |
+| J9 | Planificar la semana y armar la compra | Planificar | Baja | ✅ | Sí |
 
 ---
 
@@ -215,9 +215,9 @@ receta que ya se tiene en la cabeza; no componer desde una fuente.
 
 ---
 
-### Contexto: Planificar *(hipotético)*
+### Contexto: Planificar
 
-#### J9 — Planificar la semana y armar la compra 🔬
+#### J9 — Planificar la semana y armar la compra ✅
 
 > **Cuando** empieza la semana,
 > **quiero** decidir **qué comida concreta va cada día** y que de ahí salga la
@@ -226,17 +226,17 @@ receta que ya se tiene en la cabeza; no componer desde una fuente.
 
 **Granularidad:** comidas concretas por día. Confirmado explícitamente, no es
 una planificación floja tipo "esta semana quiero hacer estas cuatro cosas".
-**Frecuencia:** desconocida. No hay conducta previa que lo respalde.
-**Hoy:** no existe, ni en la app ni fuera de ella.
-**Estado:** 🔬 hipótesis del usuario — *"no es principal, pero me gustaría
-probar a ver si me resulta"*.
+**Frecuencia:** baja.
+**Hoy:** el plan de siete días sin fechas, que arranca en el día de hoy, con dos
+comidas por día y una lista de recetas en cada una; de ahí sale la lista de
+compras (`E06-Planificar.md`). El plan es un archivo, `_plan.md`.
 
 > ⚠️ **Tensión declarada.** Este job apunta a *más variedad de comidas durante
 > la semana*, pero entre semana el usuario cocina de memoria, sencillo y sin
 > receta. No es una feature que se acople a la conducta actual: **es una feature
-> que la cambiaría.** Eso no la descalifica —puede ser exactamente lo que hace
-> valiosa una herramienta— pero es una apuesta más grande de lo que "secundario"
-> sugiere, y hay que tratarla como apuesta, no como requerimiento.
+> que la cambiaría.** Por eso se construyó con costo de retiro bajo (principio
+> 6): una entrada en el menú lateral, ninguna entidad nueva en el núcleo, y
+> sacarla es borrar tres pantallas y un archivo.
 
 ---
 
@@ -270,11 +270,13 @@ Por eso las define el usuario, desde *Ajustes → Recetario*, y van debajo de la
 búsqueda.
 
 **6. Todo entregable tiene que ser reconstruible desde archivos.**
-J8 no es solo sobre las recetas: alcanza al índice, al plan semanal de J9 y a la
-lista de compras. Un plan semanal es un archivo en Drive, no un dato de la app.
+J8 no es solo sobre las recetas: alcanza al índice y al plan de J9. El plan es un
+archivo en Drive, no un dato de la app; la lista de compras no se guarda en
+ningún lado, porque se deriva del plan cada vez.
 Es la restricción más dura, y es el principio 1 de `product-principles.md`.
 
-**⚠️ Advertencia sobre J9.** Es el único job hipotético y el único que pediría
-inventar entidades nuevas (plan semanal, lista de compras, quizás despensa).
-Diseñarlo al mismo nivel que los validados sería construir sobre una
-suposición. Va tratado como exploración explícita.
+**⚠️ Advertencia sobre J9.** Es el único job que cambiaría la conducta en vez de
+acompañarla, y el único que pedía inventar entidades nuevas. Está construido con
+lo mínimo que lo resuelve —un plan, un archivo, y la lista derivada del plan— y
+con costo de retiro bajo: si el uso no lo confirma, se saca sin rediseñar nada
+(principio 6).

@@ -4,7 +4,7 @@ import { crearSheets, ErrorDeSheets } from './sheets.js';
 import { crearStore } from './store.js';
 import * as indiceLocal from './indice-local.js';
 import { parse, slugArchivo } from './recipe.js';
-import { tagReservado, conEspecial, esFavorita, contarDuraciones, filtrarPorDuracion, ordenarRecetas } from './catalogo.js';
+import { tagReservado, conEspecial, esFavorita, tieneEspecial, contarDuraciones, filtrarPorDuracion, ordenarRecetas } from './catalogo.js';
 import type { Orden } from './catalogo.js';
 import { sePuedeTerminar } from './recipe.js';
 import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado } from './ui/router.js';
@@ -16,6 +16,12 @@ import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
 import { renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado } from './ui/editor.js';
 import { renderBorradores, renderBorrador, renderPreguntaBorrador } from './ui/borradores.js';
+import { renderPlan } from './ui/plan.js';
+import { renderPlanAgregar, bloqueDeAgregar } from './ui/plan-agregar.js';
+import { renderCompras } from './ui/compras.js';
+import { diaDeHoy } from './plan.js';
+import { listaDeCompras, textoCompras } from './compras.js';
+import type { ListaDeCompras } from './compras.js';
 import { renderCaptura } from './ui/captura.js';
 import { renderAjustes } from './ui/ajustes.js';
 import { renderConexion } from './ui/conexion.js';
@@ -42,7 +48,7 @@ import type { RecetaCreada } from './compartido.js';
 import type { Ruta } from './ui/router.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { ResultadoArranque, Progreso } from './store.js';
-import type { Borrador, Entrada, Receta } from './tipos.js';
+import type { Borrador, Entrada, Momento, Plan, Receta } from './tipos.js';
 
 type Store = ReturnType<typeof crearStore>;
 
@@ -147,6 +153,25 @@ let borradorLeido: Borrador | null = null;
 const PANTALLAS_DE_BORRADOR: readonly Ruta['vista'][] = ['borrador', 'nueva'];
 
 /**
+ * El plan de la semana, leído de su `.md` una vez. Mismo criterio que la receta
+ * y el borrador: se conserva mientras se navega entre las tres pantallas del
+ * plan y se descarta al salir a cualquier otra.
+ */
+let planLeido: Plan | null = null;
+const PANTALLAS_DE_PLAN: readonly Ruta['vista'][] = ['plan', 'plan-agregar', 'plan-compras'];
+/** Reiniciar el plan pregunta antes: vacía los siete días. */
+let confirmandoReinicio = false;
+/** Lo último que falló al escribir el plan. La grilla sigue mostrando lo que dice Drive. */
+let errorPlan = '';
+/** Lo escrito en la caja de la pantalla de agregar. Vive acá y no en el DOM: el bloque se redibuja solo. */
+let consultaPlan = '';
+/**
+ * La lista de compras ya armada, con la clave del plan del que salió:
+ * redibujar —abrir la ficha de compartir— no vuelve a leer las recetas.
+ */
+let comprasLeidas: { clave: string; lista: ListaDeCompras } | null = null;
+
+/**
  * La receta que llegó de Claude —compartida o pegada— mientras se decide a qué
  * borrador va y se revisa en el editor. Vive en memoria: el `.md` puede ser
  * largo para el hash.
@@ -206,6 +231,49 @@ async function recetaDePantalla(id: string): Promise<{ entrada: Entrada | null; 
     recetaLeida = { id, entrada, receta };
   }
   return recetaLeida;
+}
+
+/** El plan de la pantalla: de Drive la primera vez, de memoria mientras no se salga. */
+async function planDePantalla(): Promise<Plan> {
+  if (!planLeido) planLeido = await store.plan();
+  return planLeido;
+}
+
+/** Las recetas con el tag `menú diario`: lo que la pantalla de agregar ofrece sin buscar nada. */
+const delMenuDiario = (): Entrada[] => store.entradas().filter(e => tieneEspecial(e, 'menú diario'));
+
+/**
+ * La lista de compras del plan. Las recetas se leen de Drive al entrar, una por
+ * receta distinta; una que ya no se puede leer se saltea. Después cuentan una
+ * vez por aparición: la misma receta en dos comidas cuenta dos veces.
+ */
+async function comprasDelPlan(plan: Plan): Promise<ListaDeCompras> {
+  const clave = plan.comidas.map(c => c.id).join(',');
+  if (comprasLeidas?.clave === clave) return comprasLeidas.lista;
+  const leidas = new Map<string, Receta>();
+  for (const id of new Set(plan.comidas.map(c => c.id))) {
+    const leida = await store.receta(id).catch(err => { console.error(err); return null; });
+    if (leida) leidas.set(id, leida.receta);
+  }
+  const recetas = plan.comidas.flatMap(c => {
+    const receta = leidas.get(c.id);
+    return receta ? [receta] : [];
+  });
+  const lista = listaDeCompras(recetas);
+  comprasLeidas = { clave, lista };
+  return lista;
+}
+
+/** Escribe el plan entero y lo deja en memoria; si falla, la grilla no cambia y el aviso lo dice (R1). */
+async function guardarPlan(nuevo: Plan): Promise<void> {
+  try {
+    await escribiendo(store.guardarPlan(nuevo));
+    planLeido = nuevo;
+    errorPlan = '';
+  } catch (err) {
+    console.error(err);
+    errorPlan = 'No se pudo guardar el plan. Revisá la conexión.';
+  }
 }
 
 /** Lo que el reindexado dejó afuera, para la sección de avisos de Ajustes. */
@@ -316,7 +384,7 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
 function dibujarAjustes(): void {
   pintar(renderAjustes({
     cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
-    indiceDuplicado: indiceDuplicado(), reindexando,
+    indiceDuplicado: indiceDuplicado(), planDuplicado: store.planDuplicado(), reindexando,
     borradores: store.borradores().length, menuAbierto,
     informe: informeArranque(), recetas: store.entradas().length, categorias: store.categorias().length,
     carpeta: store.carpeta().nombre
@@ -476,6 +544,11 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     if (!(ruta.vista === 'recibida' || (ruta.vista === 'nueva' && ruta.params['recibida']))) recibida = null;
     if (!PANTALLAS_DE_RECETA.includes(ruta.vista)) recetaLeida = null;
     if (!PANTALLAS_DE_BORRADOR.includes(ruta.vista)) borradorLeido = null;
+    // El aviso de una escritura que falló sobrevive a la navegación entre las
+    // pantallas del plan: agregar escribe y cierra, y el aviso va en el plan.
+    if (!PANTALLAS_DE_PLAN.includes(ruta.vista)) { planLeido = null; comprasLeidas = null; errorPlan = ''; }
+    confirmandoReinicio = false;
+    consultaPlan = '';
     tagsActivos = [];
     duracionesActivas = [];
     orden = 'alfa';
@@ -625,6 +698,39 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // ejemplo— no hay qué preguntar: se vuelve a Borradores.
       if (!recibida) { irCerrando('#/borradores'); return; }
       return pintar(renderPreguntaBorrador({ borradores: store.borradores() }));
+
+    case 'plan':
+      try {
+        const plan = await planDePantalla();
+        return pintar(renderPlan({
+          plan, entradas: store.entradas(), hoy: diaDeHoy(),
+          borradores: store.borradores().length, menuAbierto,
+          ...(confirmandoReinicio ? { confirmandoReinicio: true } : {}),
+          ...(errorPlan ? { error: errorPlan } : {})
+        }));
+      } catch (err) {
+        console.error(err);
+        return enPantalla('No se pudo leer el plan.');
+      }
+
+    case 'plan-agregar':
+      // El día y el momento ya vienen validados por el router: sin una comida
+      // a la que sumar, la ruta cae en el plan.
+      return pintar(renderPlanAgregar({
+        dia: Number(ruta.params['dia'] ?? 0),
+        momento: (ruta.params['momento'] ?? 'noche') as Momento,
+        menuDiario: delMenuDiario(),
+        consulta: consultaPlan, grupos: store.buscarPorTexto(consultaPlan)
+      }));
+
+    case 'plan-compras':
+      try {
+        const lista = await comprasDelPlan(await planDePantalla());
+        return pintar(renderCompras({ lista, ...(compartiendo ? { compartir: compartiendo } : {}) }));
+      } catch (err) {
+        console.error(err);
+        return enPantalla('No se pudo armar la lista de compras.');
+      }
 
     case 'borradores':
       return pintar(renderBorradores({
@@ -907,6 +1013,24 @@ app.addEventListener('click', async (e) => {
     if (!compartiendo) pdfListo = null;
     return render();
   }
+  if (accion === 'compartir-compras') {
+    // La lista se comparte sólo como texto: no es una receta y no tiene link.
+    compartiendo = { paso: 'opciones', solo: 'texto' };
+    return render();
+  }
+  if (accion === 'compartir-texto' && vistaActual?.vista === 'plan-compras') {
+    const contenido = textoCompras(comprasLeidas?.lista ?? { conCantidad: [], sinCantidad: [] });
+    try {
+      const r = await compartirTexto(plataformaDelNavegador(), contenido);
+      compartiendo = r === 'copiado' ? { paso: 'copiado', que: 'texto' }
+        : r === 'sin-portapapeles' ? { paso: 'mostrar', que: 'texto', contenido }
+        : null;
+    } catch (err) {
+      console.error(err);
+      compartiendo = { paso: 'mostrar', que: 'texto', contenido };
+    }
+    return render();
+  }
   if (accion === 'compartir-link' || accion === 'compartir-texto') {
     if (!recetaLeida) return;
     const { entrada, receta } = recetaLeida;
@@ -986,6 +1110,49 @@ app.addEventListener('click', async (e) => {
     });
     return;
   }
+
+  // El plan: el `+` de una celda, la tarjeta que suma, la cruz que saca una
+  // línea, y reiniciar. Cada cambio escribe en el momento.
+  if (accion === 'agregar-al-plan') {
+    const dia = boton.dataset['dia'] ?? '';
+    const momento = boton.dataset['momento'] ?? '';
+    location.hash = `#/plan/agregar?dia=${encodeURIComponent(dia)}&momento=${encodeURIComponent(momento)}`;
+    return;
+  }
+  if (accion === 'elegir-para-el-plan') {
+    const id = boton.dataset['id'] ?? '';
+    const entrada = store.entradas().find(e => e.id_archivo === id);
+    if (!entrada) return;
+    const dia = Number(vistaActual?.params['dia'] ?? 0);
+    const momento: Momento = vistaActual?.params['momento'] === 'mediodia' ? 'mediodia' : 'noche';
+    try {
+      const plan = await planDePantalla();
+      // Agregar suma al final: la misma receta dos veces se permite, y cada
+      // línea tiene su cruz.
+      await guardarPlan({ comidas: [...plan.comidas, { dia, momento, id, titulo: entrada.titulo }] });
+    } catch (err) {
+      console.error(err);
+      errorPlan = 'No se pudo guardar el plan. Revisá la conexión.';
+    }
+    // Esta pantalla se cierra al elegir: volver tiene que dejar el plan.
+    irCerrando('#/plan');
+    return render();
+  }
+  if (accion === 'sacar-del-plan') {
+    const i = Number(boton.dataset['i'] ?? -1);
+    const plan = planLeido;
+    if (!plan || !Number.isInteger(i) || i < 0 || i >= plan.comidas.length) return;
+    await guardarPlan({ comidas: plan.comidas.filter((_, n) => n !== i) });
+    return render();
+  }
+  if (accion === 'reiniciar-plan') { confirmandoReinicio = true; return render(); }
+  if (accion === 'cancelar-reinicio') { confirmandoReinicio = false; return render(); }
+  if (accion === 'reiniciar-plan-confirmado') {
+    await guardarPlan({ comidas: [] });
+    confirmandoReinicio = false;
+    return render();
+  }
+  if (accion === 'ir-a-compras') { location.hash = '#/plan/compras'; return; }
 
   if (accion === 'abrir-menu') { menuAbierto = true; return render(); }
   if (accion === 'cerrar-menu') { menuAbierto = false; return render(); }
@@ -1418,6 +1585,21 @@ app.addEventListener('click', async (e) => {
  */
 app.addEventListener('input', (e) => {
   if (escrituras) return;
+  // En la pantalla de agregar al plan se redibuja sólo el bloque de abajo:
+  // repintar la pantalla entera perdería el foco del teclado.
+  if (vistaActual?.vista === 'plan-agregar') {
+    const caja = e.target as HTMLInputElement | null;
+    if (caja?.dataset?.['accion'] !== 'buscar-en-plan') return;
+    consultaPlan = caja.value;
+    const bloque = document.querySelector('[data-resultados-plan]');
+    if (bloque) {
+      bloque.innerHTML = bloqueDeAgregar({
+        menuDiario: delMenuDiario(), consulta: consultaPlan,
+        grupos: store.buscarPorTexto(consultaPlan)
+      });
+    }
+    return;
+  }
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria();
   // En el editor, cada tecla puede habilitar o bloquear el botón de `incompleta`.
   if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') return revisarIncompleta();
@@ -1432,7 +1614,7 @@ app.addEventListener('input', (e) => {
 });
 
 /** Las pantallas que dibujan el menú lateral: sólo ahí se desliza para abrirlo. */
-const PANTALLAS_CON_MENU: readonly Ruta['vista'][] = ['recetario', 'borradores', 'ajustes'];
+const PANTALLAS_CON_MENU: readonly Ruta['vista'][] = ['recetario', 'borradores', 'plan', 'ajustes'];
 
 /** El deslizamiento en curso: dónde empezó, si ya se sabe que es gesto, y cuánto va abierto. */
 let deslizando: { x: number; y: number; decidido: 'indeciso' | 'horizontal' | 'vertical'; p: number } | null = null;

@@ -1,110 +1,184 @@
-# E06 — Planificar `[exploración]`
+# E06 — Planificar
 
-**Versión:** 3.1 · **Fecha:** 2026-09-17 · **Estado:** En el backlog
-**Job:** J9 · **Prioridad:** sin comprometer · **Flujo:** F13
+**Versión:** 4.0 · **Fecha:** 2026-09-18 · **Estado:** Final
+**Job:** J9 · **Prioridad:** Baja · **Flujo:** F13
 
-> La épica entera está en el backlog ([`BACKLOG.md`](../../../BACKLOG.md), en la
-> raíz del repo): diseñada y mockupeada, sin comprometer. El nivel de detalle es
-> deliberadamente menor que el de las otras cinco épicas: es exploración, y
-> detallarla al mismo nivel la instalaría, que es justo lo que el principio 6
-> evita.
-
-**Reglas transversales:** ver `E05-Cimientos.md` §Reglas.
+**Reglas transversales:** ver `E05-Cimientos.md` §Reglas. Acá se anota solo lo
+que se aparta o lo que necesita precisarse.
 
 ---
 
 ## La épica
 
-Decidir qué comida concreta va cada día de la semana, y que de ahí salga la lista
-de compras.
+Decidir qué comida concreta va cada día, y que de ahí salga la lista de compras.
 
-**Es exploración, no producto comprometido.** J9 es el único job hipotético del
-proyecto y el único que **cambiaría** la conducta del usuario en vez de
-acompañarla.
+Es lo mínimo que resuelve el job: **siete días sin fechas** que arrancan en hoy,
+dos comidas por día, y cada comida una lista de recetas del recetario. No hay
+semana siguiente ni historial: un día cargado se mantiene hasta que se cambie o
+se reinicie el plan.
 
-El principio 6 fija las condiciones: no entra en la navegación primaria, no
-define entidades nuevas en el núcleo, y **sacarla tiene que costar borrar una
-pantalla, no rediseñar el producto**.
-
-Y el mercado no ayuda: AnyList, Mealie, Tandoor y Recipe Box tienen todos
-planificador y lista de compras. Recetario llega último y sin diferencial.
+J9 es el único job del proyecto que **cambiaría** la conducta del usuario en vez
+de acompañarla, así que la épica se construye con costo de retiro bajo
+(principio 6): **sacarla cuesta borrar una entrada del menú, tres pantallas, dos
+módulos y un archivo de Drive**. No define entidades en el núcleo —`_indice` no
+cambia, ni hoja ni columna, y el esquema del `.md` de receta tampoco— y ninguna
+otra épica la nombra.
 
 ---
 
 ## Features
 
-### F06.1 — La grilla de la semana
+### F06.1 — El plan de la semana
 
-Dos comidas por día, los siete días. Granularidad de comida concreta.
+Una grilla de siete filas y dos columnas. Es la pantalla de la épica: todo lo
+demás se alcanza desde acá.
 
-#### C06.1.1 — La grilla *(J9)*
+#### C06.1.1 — Siete días desde hoy *(J9)*
 
-- [ ] Siete días, dos espacios cada uno: mediodía y noche.
-- [ ] La semana se identifica por sus fechas y se muestra en el encabezado.
-- [ ] Un espacio vacío muestra un control para asignar; uno ocupado muestra el título de la receta.
-- [ ] Estados: semana vacía · semana parcial, que es el caso normal.
-- [ ] La semana parcial **no se señala como incompleta**: no llenarla es normal.
+- [ ] Siete filas, **hoy primero**, y los demás en orden hasta dar la vuelta.
+- [ ] La fila de hoy dice *hoy* debajo del nombre del día, en el acento.
+- [ ] Los nombres van abreviados: *Lun*, *Mar*, *Mié*, *Jue*, *Vie*, *Sáb*, *Dom*.
+- [ ] Dos columnas: **Mediodía** y **Noche**.
+- [ ] **No hay fechas.** El día de hoy es el único lugar donde entra el
+  calendario, y sale del teléfono: al día siguiente el plan arranca en el nuevo
+  hoy con lo que tuviera cargado.
+- [ ] El plan parcial es el caso normal y **no se señala como incompleto**.
+- [ ] El plan vacío no lleva aviso: las catorce celdas con su `+` ya lo dicen.
 
-### F06.2 — Asignar una receta a un espacio
+#### C06.1.2 — Cada comida es una lista de recetas *(J9)*
 
-Solo entran recetas del recetario. Que una comida se cocine de memoria no
+- [ ] Una comida tiene **cuantas recetas se quiera**, sin tipos: una entrada, un
+  principal y un postre, o dos principales.
+- [ ] Cada línea muestra el título de la receta, con el color de su categoría en
+  el borde izquierdo, y lleva a la receta.
+- [ ] El orden de las líneas es aquel en que se agregaron.
+- [ ] Una comida vacía es sólo el control de agregar, con borde punteado.
+- [ ] **La misma receta se puede cargar dos veces** en la misma comida: cada
+  línea es propia.
+
+**Edge case:** la receta cargada ya no está en el índice → la línea se ve
+tachada, con el borde en `--error`. **No se borra sola**, y sigue teniendo su
+control para sacarla.
+
+#### C06.1.3 — Sacar una receta *(J9)*
+
+- [ ] Cada línea tiene una `×` a la derecha que **saca esa línea y nada más**.
+- [ ] No pide confirmación: sacar una receta de una comida no borra nada de Drive.
+- [ ] No existe «reemplazar»: se saca una y se agrega otra.
+
+#### C06.1.4 — Reiniciar el plan *(J9)*
+
+- [ ] Al pie, pegados: **Lista de compras** (primario) y **Reiniciar el plan**
+  (secundario). Con el plan vacío los dos están deshabilitados.
+- [ ] Reiniciar pregunta antes, en el lugar de los dos botones y con borde de
+  error, como borrar una receta: *«¿Reiniciar el plan? Se vacían los siete
+  días.»*, *Cancelar* y *Reiniciar*.
+- [ ] Confirmado, vacía los siete días y deja el archivo vacío.
+
+### F06.2 — Agregar una receta a una comida
+
+**Solo entran recetas del recetario.** Que una comida se cocine de memoria no
 significa que la receta no esté registrada.
 
-#### C06.2.1 — Asignar *(J9)*
+#### C06.2.1 — La pantalla de agregar *(J9)*
 
-- [ ] Tocar un espacio vacío abre la búsqueda del Recetario, con los mismos criterios (C02.3.1).
-- [ ] Elegir un resultado lo asigna y vuelve a la grilla.
-- [ ] **No se puede asignar texto libre:** solo recetas del recetario.
-- [ ] Un espacio ocupado se puede vaciar o reemplazar.
-- [ ] La misma receta puede estar en varios espacios.
-- [ ] Tocar una receta asignada lleva a la receta, no al editor.
-
-**Edge case:** la receta asignada se borró → el espacio muestra que la receta ya
-no está y ofrece vaciarlo. No se borra solo.
+- [ ] Se llega tocando el `+` de una comida, y el título dice para cuál es:
+  *Martes al mediodía*, *Martes a la noche*.
+- [ ] Arriba, la caja de búsqueda del Recetario; debajo, el bloque **Menú
+  diario** con las recetas de ese tag, alfabético. Sin ninguna, el bloque no se
+  dibuja.
+- [ ] Al escribir, el bloque se reemplaza por los resultados agrupados por
+  nombre, ingrediente y tag (C02.3.2).
+- [ ] Tocar una tarjeta **suma la receta a esa comida**, escribe y vuelve al plan.
+- [ ] En esta pantalla las tarjetas no llevan a la receta.
+- [ ] **No se puede cargar texto libre:** sólo recetas del recetario.
+- [ ] **Asignar es sólo desde acá.** La receta abierta no ofrece planificar.
 
 ### F06.3 — El plan es un archivo
 
-Un archivo en Drive, como todo lo demás. Por homogeneidad y por el principio 1.
+Un solo archivo en Drive, legible sin la app (principio 1, J8).
 
-#### C06.3.1 — El plan en Drive *(J9, J8)*
+#### C06.3.1 — `_plan.md` *(J9, J8)*
 
-- [ ] Un archivo por semana, legible sin la app.
-- [ ] Referencia a las recetas por `fileId` **y** por título, para que siga siendo legible si el índice no está (R5).
-- [ ] Cada cambio en la grilla se guarda; si falla, avisa y se reintenta (R1, R2).
+- [ ] Un solo plan y un solo archivo: **`_plan.md`**, en la carpeta base, al
+  lado de `_indice`. Como `_borradores/`, el `_` lo deja fuera de las categorías
+  y del reindexado.
+- [ ] Sin frontmatter. Un `## <Día>` por día con algo cargado, de lunes a
+  domingo; una línea por receta, con la comida como prefijo y un link
+  `[título](drive:<fileId>)`.
+- [ ] **El título está para leerlo; el id es lo que usa la app** (R5): el archivo
+  sigue siendo legible aunque el índice no esté.
+- [ ] Un día sin nada no se escribe. El plan reiniciado es un archivo vacío.
+- [ ] El formato es propio, como el del borrador: no comparte parser con el `.md`
+  de una receta.
+
+**Edge case:** `_plan.md` editado a mano → se lee tal cual, y **lo que no se
+entiende se ignora** —un día que no existe, una línea sin link, una comida que
+no es *Mediodía* ni *Noche*— y se pierde al próximo guardado. Los nombres de día
+y de momento se comparan sin acentos ni mayúsculas.
+
+#### C06.3.2 — Cómo se encuentra y cómo se escribe *(J9)*
+
+- [ ] `_plan.md` **no está en el índice**: se lo busca por nombre en la carpeta
+  base la primera vez que se abre el plan en la sesión, y el id queda en memoria.
+- [ ] Si no existe, se crea vacío al primer cambio.
+- [ ] Si hay más de uno, manda el más reciente y queda el aviso en
+  *Ajustes → Avisos*, como el `_indice` repetido.
+- [ ] **Cada cambio se escribe en el momento**, reescribiendo el archivo entero,
+  con el velo de escritura (R8). Reintentar reescribe todo (R2).
+- [ ] **`_indice` no cambia:** ni hoja ni columna. `SCHEMA_VERSION` no sube y el
+  reindexado no mira `_plan.md`.
+
+**Edge case:** sin red al escribir → el aviso va en el plan y reintentar es
+volver a tocar (R1). La grilla sigue mostrando lo que dice Drive.
 
 ### F06.4 — La lista de compras
 
-Recopila los ingredientes de todo lo planificado.
+Recopila los ingredientes de todo lo cargado. **Deriva del plan y no se escribe
+en Drive:** se lee en la app y se comparte como texto.
 
-#### C06.4.1 — Degrada con gracia, y lo muestra *(J9)*
+#### C06.4.1 — Cómo se arma *(J9)*
 
-- [ ] Junta los ingredientes de todas las recetas asignadas en la semana.
-- [ ] Dos bloques: **con cantidad** y **sin cantidad**.
-- [ ] Con cantidad: los ingredientes de mismo nombre y misma unidad se suman.
-- [ ] Distinta unidad para el mismo nombre → **no se convierte**: se listan las dos, una debajo de la otra.
-- [ ] Sin cantidad: se listan tal cual, como recordatorio, sin intentar deducir nada.
-- [ ] Los nombres se comparan **tal como están escritos** (C05.4b.1): dos escrituras distintas del mismo ingrediente son dos ítems, y eso es esperado.
+- [ ] Toma los ingredientes de cada receta cargada, **una vez por aparición**:
+  una receta en dos comidas cuenta dos veces.
+- [ ] Las recetas se leen de Drive al entrar, una por receta distinta del plan;
+  una que ya no se puede leer se saltea.
+- [ ] Dos bloques: **Con cantidad** y **Sin cantidad** (C05.1.3).
+- [ ] **Se suman** las cantidades de mismo nombre cuando las dos empiezan con un
+  número y el resto del texto —recortado y en minúsculas— coincide:
+  `250 g` + `250 g` = `500 g`. Coma o punto como decimal; el resultado se escribe
+  con punto y sin ceros de más.
+- [ ] **No se convierte nada:** `500 g` y `2 tazas` del mismo nombre son dos
+  ítems, uno debajo del otro.
+- [ ] Una cantidad que no empieza con número —`½`, `un puñado`, `c/n`— no se suma
+  con nada: queda como ítem propio.
+- [ ] Sin cantidad: una vez por nombre, como recordatorio, sin deducir nada.
+- [ ] Los nombres se comparan **tal como están escritos** (C05.4b.1): dos
+  escrituras del mismo ingrediente son dos ítems, y eso es esperado.
+- [ ] Orden alfabético por nombre en los dos bloques; para el mismo nombre, el
+  orden en que aparecieron.
 
-### F06.5 — La lista también es un archivo
+#### C06.4.2 — Cómo se ve y cómo se comparte *(J9)*
 
-Deriva del plan y se escribe en Drive.
+- [ ] Los dos bloques son fichas, con las filas de ingredientes de la receta:
+  nombre a la izquierda, cantidad a la derecha. Un bloque vacío no se dibuja.
+- [ ] **No se tilda nada.** La lista se lee en el supermercado y no guarda
+  estado: sin ítems tachados, sin progreso, sin nada que sincronizar.
+- [ ] El ícono de compartir del encabezado abre la ficha de compartir con
+  **Texto** como única opción, con la negrita de WhatsApp (§6.23).
+- [ ] La lista no se guarda en Drive ni en el navegador: se arma cada vez que se
+  entra.
 
-#### C06.5.1 — La lista en Drive *(J9, J8)*
+### F06.5 — La entrada
 
-- [ ] Se escribe como archivo, legible sin la app.
-- [ ] Se regenera desde el plan cada vez que el plan cambia.
-- [ ] **No se puede tildar nada:** la lista se lee en el supermercado y no guarda estado. Sin ítems tachados, sin progreso, sin nada que sincronizar.
+#### C06.5.1 — Una entrada, en el menú lateral *(J9)*
 
-### F06.6 — Entrada en el Recetario
-
-La entrada vive **en el Recetario, debajo de las categorías**: visible y
-alcanzable en dos toques, sin ser uno de los lugares primarios.
-
-#### C06.6.1 — La entrada *(J9)*
-
-- [ ] Un bloque debajo de las categorías, en el Recetario.
-- [ ] No hay barra de navegación ni tercer lugar primario.
-- [ ] **Sacar la épica cuesta borrar ese bloque y dos pantallas**, y nada más del producto cambia.
+- [ ] **Plan de la semana**, con el ícono del calendario, entre *Borradores* y
+  *Nueva receta* (IA §4.6).
+- [ ] Es la única entrada: el Recetario no cambia, y la receta no ofrece
+  planificar.
+- [ ] **Sacar la épica cuesta borrar esa entrada, tres pantallas, dos módulos y
+  un archivo de Drive**, y nada más del producto cambia.
 
 ---
 
@@ -112,8 +186,7 @@ alcanzable en dos toques, sin ser uno de los lugares primarios.
 
 | Capacidad | Job |
 |---|---|
-| C06.1.1, C06.2.1, C06.4.1, C06.6.1 | J9 |
-| C06.3.1, C06.5.1 | J9, J8 |
+| C06.1.1, C06.1.2, C06.1.3, C06.1.4, C06.2.1, C06.3.2, C06.4.1, C06.4.2, C06.5.1 | J9 |
+| C06.3.1 | J9, J8 |
 
-Todas las capacidades de esta épica dependen de J9, que es **hipotético**: la
-épica entera está marcada `[exploración]` y no se compromete.
+Ninguna capacidad de esta épica quedó sin job.

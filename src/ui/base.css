@@ -274,6 +274,60 @@ html:has(.hoja-compartir) { overflow: hidden; }
               stroke: currentColor; fill: none; stroke-width: 1.5;
               stroke-linecap: round; stroke-linejoin: round; }
 
+/* ---- El plan de la semana ---- */
+/* Tres columnas: el día y sus dos comidas. 52 px alcanzan para «Mié» y para
+   «hoy» debajo, y dejan el resto del ancho para las dos celdas, que son lo
+   que se lee. */
+.grilla-sem { display: grid; grid-template-columns: 52px 1fr 1fr; gap: var(--e-2); align-items: stretch; }
+.grilla-sem .cab { font-size: var(--txt-micro); color: var(--fg-3); text-transform: uppercase;
+                   letter-spacing: .06em; text-align: center; }
+.grilla-sem .d { display: flex; flex-direction: column; justify-content: center; line-height: 1.1;
+                 color: var(--fg-2); }
+.grilla-sem .d b { font-weight: 600; color: var(--fg); }
+.grilla-sem .d span { font-size: var(--txt-chico); }
+/* Hoy es la única fila marcada: el plan no tiene fechas, y esto es lo que dice
+   dónde estás parado. */
+.grilla-sem .d.hoy b, .grilla-sem .d.hoy span { color: var(--acento); }
+
+/* Una celda es una lista de líneas y el `+` al pie. Sin nada cargada es sólo el
+   `+`, punteada: el borde lleno se leería como una comida vacía elegida. */
+.celda { min-height: 56px; display: flex; flex-direction: column; align-items: stretch; gap: var(--e-1);
+         padding: var(--e-1); font-size: var(--txt-chico); line-height: 1.25; color: inherit;
+         background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-medio); }
+.celda.libre { justify-content: center; padding: 0;
+               border: 1px dashed var(--borde); background: transparent; color: var(--fg-3); }
+.celda.libre .mas { height: 100%; min-height: 56px; }
+
+/* La línea: el título, que lleva a la receta, y su cruz. Es un contenedor y no
+   el link entero porque la cruz es otro control —saca esa línea nada más— y un
+   botón no puede vivir adentro de un <a>. */
+.celda .it { display: flex; align-items: center; gap: var(--e-1);
+             padding: 4px var(--e-1) 4px var(--e-2);
+             border-left: 3px solid var(--c, var(--borde)); border-radius: var(--r-chico);
+             background: var(--surface-alta); font-size: var(--txt-micro); line-height: 1.25; }
+.celda .it .t { flex: 1; min-width: 0; color: inherit; text-decoration: none; }
+/* La receta ya no está en el índice: tachada y con el borde en error. No se
+   borra sola —el archivo puede seguir estando—, y la cruz sigue ahí. */
+.celda .it.ida { color: var(--fg-3); border-left-color: var(--error); }
+.celda .it .x { flex: 0 0 20px; height: 20px; padding: 0; border: 0; background: none;
+                color: var(--fg-3); cursor: pointer; display: grid; place-items: center;
+                border-radius: var(--r-chico); }
+.celda .it .x svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.celda .mas { height: 28px; border: 0; background: transparent; color: var(--fg-3); cursor: pointer;
+              display: grid; place-items: center; border-radius: var(--r-chico); }
+.celda .mas svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.celda :is(.mas, .x):active { background: var(--borde); }
+@media (hover: hover) {
+  .celda :is(.mas, .x):hover { background: var(--borde); }
+}
+
+/* Los dos botones del pie quedan a la vista con la grilla scrolleada: el
+   degradé los despega de las celdas sin dibujar una barra. */
+.pie-plan { position: sticky; bottom: 0; margin-top: var(--e-4); padding: var(--e-3) 0 var(--e-2);
+            background: linear-gradient(to top, var(--bg) 70%, transparent);
+            display: flex; flex-direction: column; gap: var(--e-2); }
+.pie-plan .btn { width: 100%; }
+
 /* ---- Ajustes ---- */
 .fila-a { display: flex; align-items: center; gap: var(--e-3); min-height: 48px; }
 .fila-a .t { flex: 1; }

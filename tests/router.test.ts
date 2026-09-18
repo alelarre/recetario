@@ -51,6 +51,19 @@ describe('parsearHash', () => {
     expect(parsearHash('#/t/menú%20diario')).toEqual({ vista: 'tag', params: { nombre: 'menú diario' } });
   });
 
+  it('las tres pantallas del plan de la semana', () => {
+    expect(parsearHash('#/plan')).toEqual({ vista: 'plan', params: {} });
+    expect(parsearHash('#/plan/compras')).toEqual({ vista: 'plan-compras', params: {} });
+    expect(parsearHash('#/plan/agregar?dia=1&momento=noche'))
+      .toEqual({ vista: 'plan-agregar', params: { dia: '1', momento: 'noche' } });
+  });
+
+  it('agregar sin día ni momento cae en el plan: no hay comida a la que sumar', () => {
+    expect(parsearHash('#/plan/agregar')).toEqual({ vista: 'plan', params: {} });
+    expect(parsearHash('#/plan/agregar?dia=9&momento=noche')).toEqual({ vista: 'plan', params: {} });
+    expect(parsearHash('#/plan/agregar?dia=1&momento=merienda')).toEqual({ vista: 'plan', params: {} });
+  });
+
   it('la carpeta base, y desde Ajustes con el cambio en la query', () => {
     expect(parsearHash('#/carpeta')).toEqual({ vista: 'carpeta', params: {} });
     expect(parsearHash('#/carpeta?cambiando=1')).toEqual({ vista: 'carpeta', params: { cambiando: '1' } });

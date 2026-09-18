@@ -1,7 +1,7 @@
 # Recetario — Design System
 
-**Versión:** 2.4
-**Fecha:** 2026-09-16
+**Versión:** 2.5
+**Fecha:** 2026-09-18
 **Estado:** Vigente
 
 > Los valores de este documento están implementados en `src/ui/tokens.css`
@@ -977,6 +977,9 @@ con `--e-2` entre sí: **PDF**, **Link**, **Texto** y **Cancelar**.
 **Con la ficha abierta, la página de atrás no se desplaza.** La cierran
 *Cancelar*, el velo y volver. Es estado de la pantalla, no una ruta.
 
+**En la lista de compras la ficha ofrece sólo *Texto***: no es una receta, así
+que no hay PDF ni link.
+
 **El PDF** es una hoja de **105 × 180 mm** con 8 mm de margen, **en el tema
 oscuro**: los neutros de §2.1 —`--bg` de fondo, `--surface` y los dos bordes
 para las fichas, `--fg`, `--fg-2` y `--fg-3` para el texto—, sin acento ni color
@@ -984,6 +987,32 @@ de categoría. Lleva **Inter embebida** —regular, semibold e itálica— porqu
 PDF no puede usar la fuente del sistema, y Inter tiene ⅓ y ⅔. La escala es la de
 la receta abierta, reducida a la hoja: título, título de sección con su divisor,
 cuerpo y texto chico para el contexto, la fuente y los rótulos de grupo.
+
+### 6.24 Grilla del plan de la semana
+
+Tres columnas —`52px 1fr 1fr`— con `--e-2` de separación: la del día, *Mediodía*
+y *Noche*. Los encabezados de columna van en *micro* `--fg-3`, en versalita con
+`.06em` y centrados; la columna del día lleva el nombre abreviado en *chico
+fuerte* `--fg` y, sólo en la fila de hoy, la palabra *hoy* debajo. **La fila de
+hoy es lo único marcado**, entera en `--acento`: el plan no tiene fechas, y es
+lo que dice dónde estás parado.
+
+**La celda** es una comida: `--surface`, borde 1 px `--borde`, `--r-medio`, 56 px
+de alto mínimo, y adentro una línea por receta más el `+` al pie. Vacía se dibuja
+**punteada y sin fondo**, con el `+` ocupando el alto entero: un borde lleno se
+leería como una comida ya elegida.
+
+**La línea** es `--surface-alta`, `--r-chico` y texto *micro*, con **3 px de
+borde izquierdo en el color de su categoría**: el mismo hilo de color que el pin
+de la tarjeta y el filo del tile (§2.3). Lleva el título, que abre la receta, y
+una `×` de 12 px en `--fg-3` que saca esa línea y nada más. Una receta que ya no
+está en el índice va tachada, en `--fg-3`, y su borde izquierdo pasa a `--error`.
+
+**El pie** queda pegado abajo, con un degradé a `--bg` que lo despega de la
+grilla, y sus dos botones ocupan el ancho: *Lista de compras* primario y
+*Reiniciar el plan* secundario, deshabilitados con el plan vacío. La
+confirmación de reiniciar va en su lugar, en una ficha con borde `--error`, como
+borrar una receta.
 
 ---
 

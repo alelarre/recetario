@@ -150,8 +150,8 @@ PDF de 24 recetas, documentos temáticos y fotos de páginas de libro.
 Registrado para que la visión no prometa lo que no tiene: **el planificador y la
 lista de compras están resueltos hasta el aburrimiento.** AnyList, Mealie,
 Tandoor y Recipe Box lo hacen todos, y AnyList es el mejor del rubro. Recetario
-llega último y sin diferencial en ese terreno — lo cual es coherente con
-tratarlo como exploración (principio 6) y no como promesa.
+llega último y sin diferencial en ese terreno: por eso su plan es lo mínimo que
+resuelve el job, con costo de retiro bajo (principio 6), y no una promesa.
 
 ---
 
@@ -205,8 +205,8 @@ permanente, y crece con el tamaño del archivo.
 | **Ingrediente** | Tiene que ser **filtrable**: J4 —buscar qué cocinar con lo que hay— exige poder consultar los ingredientes de mil recetas sin que "berenjena" traiga ruido. En el `.md` es un ítem de lista con nombre, separador y cantidad; el nombre entra al índice, y sobre él se busca. | Cuerpo del `.md`, y una columna del índice |
 | **Fuente** | De dónde salió la receta. **Campo opcional de texto libre:** a veces una URL, a veces una referencia como *"libro de pescados, pág. 84"*, a veces nada. Nace en el borrador y sobrevive en la receta convertida. | Frontmatter del `.md` |
 | **Índice** | Cache derivado de todas las recetas, para listar y buscar sin leer cada `.md`. Reconstruible y **reemplazable**: existe para que la PWA escale, no por decisión de producto. | Google Sheet |
-| **Plan semanal** *(condicional)* | Qué comida concreta va cada día. **Existe solo si J9 se construye.** | Archivo en Drive |
-| **Lista de compras** *(condicional)* | Deriva del plan semanal. **Existe solo si J9 se construye.** | Archivo en Drive |
+| **Plan de la semana** | Qué recetas van cada día, al mediodía y a la noche. **Siete días sin fechas**, que arrancan en hoy. Uno solo, y se reinicia entero. | Archivo en Drive, `_plan.md` |
+| **Lista de compras** | Los ingredientes de todo lo que el plan tiene cargado, en dos bloques. **Deriva del plan y no se guarda**: se lee en la app y se comparte como texto. | En ningún lado |
 
 ### 4.2 Matriz de relaciones
 
@@ -220,8 +220,8 @@ permanente, y crece con el tamaño del archivo.
 | Receta | Fuente | Tiene cero o una |
 | Borrador | Fuente | Tiene cero o una |
 | Borrador | Índice | Tiene su fila en la hoja `borradores`, aparte de las recetas. No se clasifica ni entra en la búsqueda: solo espera. |
-| Plan semanal | Receta | Referencia una por día |
-| Lista de compras | Plan semanal | Deriva de él, agregando ingredientes |
+| Plan de la semana | Receta | Cada comida referencia cuantas quiera, por `fileId` y por título |
+| Lista de compras | Plan de la semana | Deriva de él, sumando los ingredientes de sus recetas |
 
 ### 4.3 La decisión de clasificación
 
@@ -248,6 +248,6 @@ Registrado para que el documento pueda arbitrar por exclusión:
 | Una app de descubrimiento | El usuario generalmente ya sabe qué quiere cocinar. Sugerir es una ayuda secundaria posible; empujar está descartado. |
 | Un editor de recetas | Se puede corregir y escribir una receta corta, pero nadie va a transcribir un PDF ahí adentro: eso es trabajo del agente. |
 | Un registro de lo cocinado | Sin `ultima_vez`, sin `veces`, sin puntaje. *"No es necesario saber qué cociné."* La novedad se resuelve mostrando, no registrando. |
-| Un planificador de comidas | Todavía no, y quizás nunca. Es el único job hipotético y el terreno donde el mercado ya está resuelto. |
+| Un planificador de comidas como los del mercado | El plan de la semana es lo mínimo que resuelve J9: siete días sin fechas, sin semana siguiente, sin historial y sin despensa. El terreno ya está resuelto por AnyList y compañía, y Recetario no compite ahí. |
 | Una app offline | Sin Drive no hay app. Es consecuencia aceptada de que el archivo sea la única fuente de verdad. |
 | Un producto | No se monetiza, no tiene usuarios que convencer, no tiene roadmap que defender. |

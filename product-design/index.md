@@ -115,7 +115,7 @@ Lo pendiente está en [`BACKLOG.md`](../BACKLOG.md), en la raíz del repo.
 | [E03 — Leer y cocinar](product/specs/E03-LeerYCocinar.md) | La receta a la vista, con las manos ocupadas. | 5 → 7 → 11 |
 | [E04 — Corregir](product/specs/E04-Corregir.md) | El editor: arreglar un error, crear una receta mínima. | 5 → 7 → 11 |
 | [E05 — Cimientos](product/specs/E05-Cimientos.md) | Drive, el índice, el esquema del `.md`, los estados degradados. | 5 → 7 → 11 |
-| [E06 — Planificar](product/specs/E06-Planificar.md) | Plan semanal y lista de compras. *Exploración.* | 5 → 7 → 11 |
+| [E06 — Planificar](product/specs/E06-Planificar.md) | El plan de siete días sin fechas y la lista de compras que sale de él. | 5 → 7 → 11 |
 
 ## UX
 

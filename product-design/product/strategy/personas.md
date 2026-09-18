@@ -170,7 +170,7 @@ modo cocina (`src/cocina-control.ts`, Wake Lock API), intencionalmente como
 botón manual —el sol del encabezado— porque no siempre es necesario que quede
 prendida. Una vez encendido, se vuelve a pedir solo al volver de segundo plano.
 
-### 2.4 Planificar la semana — *"me gustaría probar"* 🔬 Hipotético
+### 2.4 Planificar la semana — *"me gustaría probar"*
 
 | | |
 |---|---|
@@ -179,14 +179,14 @@ prendida. Una vez encendido, se vuelve a pedir solo al volver de segundo plano.
 | **Atención** | Completa. |
 | **Objetivo** | Facilitar la compra semanal y ganar variedad entre semana. |
 
-**No es un contexto observado: es una hipótesis del usuario.** Sus palabras:
-*"no es principal, pero me gustaría probar a ver si me resulta"*.
+**No es un contexto observado: nace de una hipótesis del usuario.** Sus
+palabras: *"no es principal, pero me gustaría probar a ver si me resulta"*.
 
 Tiene una tensión que hay que dejar escrita: apunta a **más variedad de comidas
 durante la semana**, pero entre semana hoy cocina de memoria y sin receta. O sea
 que no es una feature que se acople a la conducta actual — **es una feature que
-la cambiaría**. Eso no la descalifica, pero es una apuesta más grande de lo que
-"secundario" sugiere, y conviene tratarla como tal.
+la cambiaría**. Por eso el plan es lo mínimo que resuelve el job, y sacarlo
+cuesta borrar una entrada del menú y tres pantallas (principio 6).
 
 ---
 
@@ -196,8 +196,7 @@ Tres cosas que salieron de la entrevista y condicionan todo lo que venga:
 
 **3.1 Todo tiene que ser reconstruible desde archivos.**
 Textual: *"todo tiene que ser reconstruible por `.md` o archivos de Drive como
-soporte"*. No es solo el recetario: alcanza al índice, al plan semanal y a la
-lista de compras. **Nada que importe puede vivir solo dentro de la app.** Es la
+soporte"*. No es solo el recetario: alcanza al índice y al plan de la semana. **Nada que importe puede vivir solo dentro de la app.** Es la
 consecuencia literal de que el producto sea el repositorio y la app una vista
 sobre él. Es el principio 1 de `product-principles.md`.
 

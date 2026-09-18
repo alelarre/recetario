@@ -1,15 +1,16 @@
-import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_BORRADORES, MARCA_RAIZ, SCHEMA_VERSION } from './config.js';
+import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_BORRADORES, NOMBRE_PLAN, MARCA_RAIZ, SCHEMA_VERSION } from './config.js';
 import { COLUMNAS, entradaDesdeFila, filaDesde } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, HOJA_BORRADORES, HOJA_CATEGORIAS, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 import { COLUMNAS_BORRADORES, entradaBorradorDesdeFila, filaDeBorrador, parseBorrador, serializeBorrador } from './borrador.js';
 import { COLUMNAS_CATEGORIAS, PREDEFINIDAS, categoriaDesdeFila, filaDeCategoria, predefinidaPorNombre, problemaDelNombre } from './categorias.js';
+import { parsePlan, serializePlan } from './plan.js';
 import type { Drive } from './drive.js';
 import type { Sheets } from './sheets.js';
 import type { CopiaIndice, IndiceLocal } from './indice-local.js';
 import type {
   Receta, Ubicacion, Entrada, Filtros, Coincidencia, Coincidencias, ArchivoDrive,
-  Borrador, EntradaBorrador, Categoria
+  Borrador, EntradaBorrador, Categoria, Plan
 } from './tipos.js';
 
 const CATEGORIA_RAIZ = 'Sin categorizar';
@@ -55,7 +56,10 @@ async function conConcurrencia<T, R>(
 
 export type { Categoria } from './tipos.js';
 
-/** Hay más de una planilla `_indice`: cuántas, y la fecha de la que se usa (la más reciente). */
+/**
+ * Hay más de un archivo con el mismo nombre —`_indice` o `_plan.md`—: cuántos,
+ * y la fecha del que se usa (el más reciente).
+ */
 export interface IndiceDuplicado {
   cantidad: number;
   modifiedTime: string;
@@ -167,6 +171,15 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
   let filas = new Map<string, number>();
   let entradasBorradores: EntradaBorrador[] = [];
   let filasBorradores = new Map<string, number>();
+  /**
+   * El plan de la semana: el id de `_plan.md` y lo último que se leyó o
+   * escribió. `buscado` distingue «todavía no lo busqué» de «no existe»: la
+   * búsqueda en Drive es una sola por sesión.
+   */
+  const plan = {
+    buscado: false, id: '', contenido: { comidas: [] } as Plan,
+    duplicado: null as IndiceDuplicado | null
+  };
 
   async function leerMeta(): Promise<Record<string, string>> {
     const filas = await sheets.leer(ctx.indiceId, `${HOJA_META}!A1:B20`);
@@ -625,8 +638,11 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     usarCategorias(categorias);
     ctx.borradoresId = borradoresId;
 
+    // Lo que empieza con `_` es de la app y no es una receta: `_plan.md` vive
+    // en la carpeta base, al lado de `_indice`, y sin esto entraría al índice
+    // como una receta suelta.
     const esMd = (a: ArchivoDrive): boolean =>
-      a.mimeType !== MIME_CARPETA && /\.md$/i.test(a.name ?? '');
+      a.mimeType !== MIME_CARPETA && /\.md$/i.test(a.name ?? '') && !(a.name ?? '').startsWith('_');
 
     const lugares = [
       { id: ctx.raizId, categoria: CATEGORIA_RAIZ },
@@ -993,7 +1009,53 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     return { id, ...parseBorrador(await drive.leerTexto(id)) };
   }
 
-  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, escribirFila, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, recetasDe, crearCategoria, editarCategoria, borrarCategoria, carpeta, crearCarpeta, prepararCarpeta, marcarReemplazada, categorias, borradores, borrador, agregarBorrador, editarBorrador, descartarBorrador, _ctx: ctx };
+  /**
+   * El plan de la semana. `_plan.md` no está en el índice: se lo busca por
+   * nombre en la carpeta base la primera vez y el id queda en memoria. Con más
+   * de uno manda el más reciente, y el aviso va a *Ajustes → Avisos*, como el
+   * `_indice` repetido.
+   */
+  async function planSemanal(): Promise<Plan> {
+    if (plan.buscado) return plan.contenido;
+    const archivos = await drive.buscarPorNombre(NOMBRE_PLAN, ctx.raizId);
+    plan.buscado = true;
+    const ordenados = [...archivos].sort(
+      (a, b) => Date.parse(b.modifiedTime ?? '') - Date.parse(a.modifiedTime ?? ''));
+    const elegido = ordenados[0];
+    plan.duplicado = archivos.length > 1
+      ? { cantidad: archivos.length, modifiedTime: elegido?.modifiedTime ?? '' }
+      : null;
+    if (!elegido) return plan.contenido;
+    plan.id = elegido.id;
+    plan.contenido = parsePlan(await drive.leerTexto(elegido.id));
+    return plan.contenido;
+  }
+
+  /**
+   * El plan entero, reescrito. Se crea al primer cambio si no existía; el plan
+   * vacío es un archivo vacío. Reintentar vuelve a escribir todo (R2).
+   */
+  async function guardarPlan(nuevo: Plan): Promise<void> {
+    // Sin haberlo buscado no se sabe si ya existe, y crearlo de nuevo dejaría
+    // dos archivos con el mismo nombre.
+    if (!plan.buscado) await planSemanal();
+    const texto = serializePlan(nuevo);
+    if (plan.id) {
+      await drive.actualizar(plan.id, texto);
+    } else {
+      const archivo = await drive.crear({ nombre: NOMBRE_PLAN, contenido: texto, padre: ctx.raizId });
+      plan.id = archivo.id;
+    }
+    // Escrito el archivo, lo que hay en memoria es lo que dice Drive: la
+    // pantalla no vuelve a leer para redibujarse.
+    plan.buscado = true;
+    plan.contenido = nuevo;
+  }
+
+  /** Hay más de un `_plan.md` en la carpeta base, para Ajustes. */
+  const planDuplicado = (): IndiceDuplicado | null => plan.duplicado;
+
+  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, escribirFila, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, recetasDe, crearCategoria, editarCategoria, borrarCategoria, carpeta, crearCarpeta, prepararCarpeta, marcarReemplazada, categorias, borradores, borrador, agregarBorrador, editarBorrador, descartarBorrador, plan: planSemanal, guardarPlan, planDuplicado, _ctx: ctx };
 }
 
 /** El objeto que devuelve `crearStore`. Lo consumen `compartido`, `main` y los tests. */

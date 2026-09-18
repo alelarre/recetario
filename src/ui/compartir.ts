@@ -6,7 +6,8 @@ import { escapar } from './markdown.js';
 import { aviso } from './componentes.js';
 
 export type EstadoCompartir =
-  | { paso: 'opciones' }
+  /** La lista de compras se comparte sólo como texto: `solo` recorta las opciones. */
+  | { paso: 'opciones'; solo?: 'texto' }
   | { paso: 'generando' }
   | { paso: 'pdf-listo' }
   | { paso: 'error-pdf' }
@@ -22,7 +23,10 @@ const listo = boton('cerrar-compartir', 'Listo');
 function cuerpo(estado: EstadoCompartir): string {
   switch (estado.paso) {
     case 'opciones':
-      return boton('compartir-pdf', 'PDF') + boton('compartir-link', 'Link') + boton('compartir-texto', 'Texto') + cancelar;
+      return (estado.solo === 'texto'
+        ? boton('compartir-texto', 'Texto')
+        : boton('compartir-pdf', 'PDF') + boton('compartir-link', 'Link') + boton('compartir-texto', 'Texto')) +
+        cancelar;
     case 'generando':
       return '<button class="btn sec" disabled><span class="spin en-boton"></span>Armando el PDF…</button>' +
         '<button class="btn sec" disabled>Link</button><button class="btn sec" disabled>Texto</button>';

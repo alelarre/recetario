@@ -2,7 +2,8 @@
 export type Vista =
   | 'recetario' | 'categoria' | 'resultados' | 'receta' | 'cocinar'
   | 'editar' | 'nueva' | 'borradores' | 'borrador' | 'capturar' | 'ajustes' | 'carpeta'
-  | 'categorias' | 'editar-categoria' | 'tag' | 'recibida';
+  | 'categorias' | 'editar-categoria' | 'tag' | 'recibida'
+  | 'plan' | 'plan-agregar' | 'plan-compras';
 
 export interface Ruta {
   vista: Vista;
@@ -72,6 +73,22 @@ export function parsearHash(hash: unknown): Ruta {
       vista: 'carpeta',
       params: params['cambiando'] ? { cambiando: params['cambiando'] } : {}
     };
+  }
+
+  // El plan de la semana y sus dos pantallas. Agregar necesita saber a qué
+  // comida suma: sin un día y un momento válidos no hay nada que hacer ahí, y
+  // se cae en el plan.
+  if (partes[0] === 'plan') {
+    if (partes[1] === 'compras') return { vista: 'plan-compras', params: {} };
+    if (partes[1] === 'agregar') {
+      const dia = Number(params['dia']);
+      const momento = params['momento'] ?? '';
+      const valido = Number.isInteger(dia) && dia >= 0 && dia <= 6 && (momento === 'mediodia' || momento === 'noche');
+      return valido
+        ? { vista: 'plan-agregar', params: { dia: String(dia), momento } }
+        : { vista: 'plan', params: {} };
+    }
+    if (!partes[1]) return { vista: 'plan', params: {} };
   }
 
   // La lista por tag: se llega tocando un chip del carrusel del Recetario.
