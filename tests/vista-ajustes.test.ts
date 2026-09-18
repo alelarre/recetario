@@ -49,6 +49,13 @@ describe('Ajustes', () => {
     expect(html).not.toContain('No hay nada para avisar.');
   });
 
+  it('con más de un `_plan.md`, el aviso dice cuántos hay y cuál se usa', () => {
+    const modifiedTime = new Date(2026, 8, 18, 9, 5).toISOString();
+    const html = renderAjustes({ ...base, planDuplicado: { cantidad: 2, modifiedTime } });
+    expect(html).toContain('Hay 2 archivos _plan.md en Drive. Se usa el modificado el 18/09 a las 09:05.');
+    expect(html).not.toContain('No hay nada para avisar.');
+  });
+
   it('el aviso del duplicado convive con los archivos ignorados', () => {
     const modifiedTime = new Date(2026, 8, 12, 14, 30).toISOString();
     const html = renderAjustes({ ...base, ignorados: ['suelta.md'], indiceDuplicado: { cantidad: 3, modifiedTime } });

@@ -361,7 +361,7 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
 function dibujarAjustes(): void {
   pintar(renderAjustes({
     cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
-    indiceDuplicado: indiceDuplicado(), reindexando,
+    indiceDuplicado: indiceDuplicado(), planDuplicado: store.planDuplicado(), reindexando,
     borradores: store.borradores().length, menuAbierto,
     informe: informeArranque(), recetas: store.entradas().length, categorias: store.categorias().length,
     carpeta: store.carpeta().nombre
