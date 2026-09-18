@@ -43,7 +43,7 @@ escritura en curso:
 | Descartar un borrador | `descartar-confirmado` | Sí |
 | Crear o editar una categoría | `guardar-categoria` | Sí |
 | Borrar una categoría | `borrar-categoria-confirmado` | Sí |
-| Crear una carpeta desde el selector | `carpeta-crear-confirmado` | Sí |
+| Crear la carpeta «Recetario» desde la pantalla de carpeta | `carpeta-crear` | Sí |
 | Marcar o quitar favorito | `favorito` | **No.** Ya tiene su estrella animada, y no debe trabar la lectura de la receta. |
 | Reindexar | `reindexar` | **No.** Ya oculta sus controles y muestra el avance; no se puede cancelar y no cambia. |
 | Preparar la carpeta base (setup) | `carpeta-confirmar` | **No.** Dibuja su propia pantalla de progreso y termina navegando. |
