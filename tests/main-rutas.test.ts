@@ -11,7 +11,7 @@ import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 import { entradaFalsa } from './dobles.js';
 import { parse } from '../src/recipe.js';
 import { DURACIONES } from '../src/catalogo.js';
-import type { Coincidencias } from '../src/tipos.js';
+import type { Coincidencias, Plan } from '../src/tipos.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
 vi.mock('../src/ui/base.css', () => ({}));
@@ -71,7 +71,15 @@ const estadoInicial = () => ({
   /** Cuántas veces más falla `guardar` antes de andar, para probar el aviso de la estrella. */
   fallaGuardar: 0,
   /** Lo que devuelve `store.tagsDe()`, ya ordenado por cantidad. */
-  tags: [] as { tag: string; cantidad: number }[]
+  tags: [] as { tag: string; cantidad: number }[],
+  /** El plan que hay en Drive. */
+  plan: { comidas: [] } as Plan,
+  /** Cada plan que se escribió, en orden. */
+  planesGuardados: [] as Plan[],
+  /** Cuántas veces se leyó el plan de Drive. */
+  lecturasPlan: 0,
+  /** Cuántas veces más falla `guardarPlan` antes de andar. */
+  fallaGuardarPlan: 0
 });
 
 const estado = estadoInicial();
@@ -128,7 +136,14 @@ const storeFake = {
   descartarBorrador: async (id: string) => {
     if (estado.fallasAlDescartar > 0) { estado.fallasAlDescartar--; throw new Error('red'); }
     estado.descartados.push(id);
-  }
+  },
+  plan: async () => { estado.lecturasPlan++; return estado.plan; },
+  guardarPlan: async (p: Plan) => {
+    if (estado.fallaGuardarPlan > 0) { estado.fallaGuardarPlan--; throw new Error('red'); }
+    estado.plan = p;
+    estado.planesGuardados.push(p);
+  },
+  planDuplicado: () => null
 };
 vi.mock('../src/store.js', () => ({ crearStore: () => storeFake }));
 vi.mock('../src/indice-local.js', () => ({
@@ -155,6 +170,9 @@ describe('main.ts: las rutas', () => {
   } = {}) => {
     const clicks: ((e: unknown) => unknown)[] = [];
     const cambios: ((e: unknown) => unknown)[] = [];
+    const tecleos: ((e: unknown) => unknown)[] = [];
+    /** Lo que se escribió en `[data-resultados-plan]` sin repintar la pantalla. */
+    const resultadosPlan: string[] = [];
     /** Los atributos de `#app`: el único que se pone desde `main` es `aria-busy`. */
     const atributosApp: Record<string, string> = {};
     const app = {
@@ -164,6 +182,7 @@ describe('main.ts: las rutas', () => {
       addEventListener: (ev: string, fn: (e: unknown) => unknown) => {
         if (ev === 'click') clicks.push(fn);
         if (ev === 'change') cambios.push(fn);
+        if (ev === 'input') tecleos.push(fn);
       }
     };
     /** El velo de la escritura en curso, hermano de `#app` en `index.html`. */
@@ -233,6 +252,12 @@ describe('main.ts: las rutas', () => {
           };
         }
         if (sel === '#app input[name="tiempo"]') return campoTiempoDuracion;
+        // El bloque de la pantalla de agregar al plan: se redibuja solo, para
+        // no perder el foco del teclado.
+        if (sel === '[data-resultados-plan]') {
+          return app.innerHTML.includes('data-resultados-plan')
+            ? { set innerHTML(html: string) { resultadosPlan.push(html); } } : null;
+        }
         // El spinner del pie de una lista: lo que mira el observador del tramo.
         if (sel === '#app .spin') return app.innerHTML.includes('class="spin"') ? {} : null;
         return null;
@@ -296,6 +321,13 @@ describe('main.ts: las rutas', () => {
       abrir: async (hash: string) => {
         global.location.hash = hash;
         listeners['hashchange']?.();
+        await esperar();
+      },
+      resultadosPlan,
+      /** Una tecla en un campo, como la caja de la pantalla de agregar al plan. */
+      tipear: async (accion: string, valor: string) => {
+        const campo = { dataset: { accion }, value: valor, name: '' };
+        for (const fn of tecleos) await fn({ target: campo });
         await esperar();
       },
       /** Un `change` en la caja de búsqueda, con el valor que tenga. */
@@ -1773,6 +1805,245 @@ describe('main.ts: las rutas', () => {
 
       expect(vueltasAtras).toEqual([]);
       expect(reemplazos).toContain('#/borradores');
+    });
+  });
+
+
+  describe('el plan de la semana', () => {
+    /** Un plan con dos recetas en la misma comida. */
+    const conDos = (): Plan => ({
+      comidas: [
+        { dia: 1, momento: 'noche', id: 'f1', titulo: 'Milanesas' },
+        { dia: 1, momento: 'noche', id: 'f9', titulo: 'Flan' }
+      ]
+    });
+
+    it('las tres rutas dibujan su pantalla', async () => {
+      estado.plan = conDos();
+      const { app, abrir } = await montar();
+      for (const [hash, marca] of [
+        ['#/plan', 'class="grilla-sem"'],
+        ['#/plan/agregar?dia=1&momento=noche', 'Martes a la noche'],
+        ['#/plan/compras', 'Lista de compras']
+      ] as const) {
+        await abrir(hash);
+        expect(app.innerHTML, hash).toContain(marca);
+      }
+    });
+
+    it('el plan lleva el menú lateral, y su entrada queda marcada', async () => {
+      const { app, abrir } = await montar();
+      await abrir('#/plan');
+      expect(app.innerHTML).toContain('<a class="act" href="#/plan">');
+    });
+
+    it('la copia del plan se conserva entre las tres pantallas y se descarta al salir', async () => {
+      estado.plan = conDos();
+      const { abrir } = await montar();
+      await abrir('#/plan');
+      await abrir('#/plan/compras');
+      await abrir('#/plan');
+      expect(estado.lecturasPlan).toBe(1);
+      await abrir('#/');
+      await abrir('#/plan');
+      expect(estado.lecturasPlan).toBe(2);
+    });
+
+    it('el + lleva a agregar, con el día y el momento de esa celda', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/plan');
+      await tocar('agregar-al-plan', { dia: '3', momento: 'mediodia' });
+      expect(global.location.hash).toBe('#/plan/agregar?dia=3&momento=mediodia');
+    });
+
+    it('tocar una tarjeta suma la receta a esa comida, escribe y cierra a #/plan', async () => {
+      const { abrir, tocar, reemplazos } = await montar();
+      await abrir('#/plan/agregar?dia=2&momento=noche');
+      await tocar('elegir-para-el-plan', { id: 'f1' });
+      expect(estado.planesGuardados).toEqual([
+        { comidas: [{ dia: 2, momento: 'noche', id: 'f1', titulo: 'Milanesas' }] }
+      ]);
+      expect(reemplazos).toContain('#/plan');
+    });
+
+    it('la cruz saca esa línea nada más, y escribe', async () => {
+      estado.plan = conDos();
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/plan');
+      await tocar('sacar-del-plan', { i: '0' });
+      expect(estado.planesGuardados).toEqual([
+        { comidas: [{ dia: 1, momento: 'noche', id: 'f9', titulo: 'Flan' }] }
+      ]);
+      expect(app.innerHTML).not.toContain('Milanesas');
+      expect(app.innerHTML).toContain('Flan');
+    });
+
+    it('reiniciar pregunta antes, y confirmado vacía los siete días', async () => {
+      estado.plan = conDos();
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/plan');
+      await tocar('reiniciar-plan');
+      expect(app.innerHTML).toContain('¿Reiniciar el plan?');
+      expect(estado.planesGuardados).toEqual([]);
+      await tocar('reiniciar-plan-confirmado');
+      expect(estado.planesGuardados).toEqual([{ comidas: [] }]);
+      expect(app.innerHTML).not.toContain('¿Reiniciar el plan?');
+    });
+
+    it('cancelar no escribe nada', async () => {
+      estado.plan = conDos();
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/plan');
+      await tocar('reiniciar-plan');
+      await tocar('cancelar-reinicio');
+      expect(estado.planesGuardados).toEqual([]);
+      expect(app.innerHTML).toContain('data-accion="reiniciar-plan"');
+    });
+
+    it('un fallo al escribir avisa en el plan y la grilla no cambia', async () => {
+      estado.plan = conDos();
+      estado.fallaGuardarPlan = 1;
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/plan');
+      await tocar('sacar-del-plan', { i: '0' });
+      expect(app.innerHTML).toContain('No se pudo guardar el plan.');
+      expect(app.innerHTML).toContain('Milanesas');
+    });
+
+    it('mientras se escribe el plan, el velo tapa la pantalla y se va al terminar (R8)', async () => {
+      estado.plan = conDos();
+      let soltar!: () => void;
+      const original = storeFake.guardarPlan;
+      storeFake.guardarPlan = (p: Plan) =>
+        new Promise<void>(r => { soltar = () => { void original(p); r(); }; });
+      try {
+        const { abrir, tocar, velo } = await montar();
+        await abrir('#/plan');
+        // Sin await: el toque queda colgado hasta que el test lo suelte.
+        const sacando = tocar('sacar-del-plan', { i: '0' });
+        await esperar();
+        expect(velo.hidden).toBe(false);
+        soltar();
+        await sacando;
+        expect(velo.hidden).toBe(true);
+        expect(estado.planesGuardados).toHaveLength(1);
+      } finally {
+        storeFake.guardarPlan = original;
+      }
+    });
+
+    it('escribir en la caja reemplaza el bloque sin repintar la pantalla', async () => {
+      const original = storeFake.buscarPorTexto;
+      storeFake.buscarPorTexto = (): Coincidencias => ({
+        porNombre: [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })],
+        porIngrediente: [], porTag: []
+      });
+      try {
+        const { abrir, tipear, resultadosPlan } = await montar();
+        await abrir('#/plan/agregar?dia=1&momento=noche');
+        await tipear('buscar-en-plan', 'mila');
+        expect(resultadosPlan.at(-1)).toContain('Por nombre');
+        expect(resultadosPlan.at(-1)).toContain('data-accion="elegir-para-el-plan" data-id="f1"');
+      } finally {
+        storeFake.buscarPorTexto = original;
+      }
+    });
+
+    it('el bloque Menú diario sale de las recetas con ese tag', async () => {
+      const original = storeFake.entradas;
+      storeFake.entradas = () => [
+        entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags: ['menú diario'] }),
+        entradaFalsa({ id_archivo: 'f2', titulo: 'Rabas', categoria: 'Carnes' })
+      ];
+      try {
+        const { abrir, app } = await montar();
+        await abrir('#/plan/agregar?dia=1&momento=noche');
+        expect(app.innerHTML).toContain('Menú diario');
+        expect(app.innerHTML).toContain('Milanesas');
+        expect(app.innerHTML).not.toContain('Rabas');
+      } finally {
+        storeFake.entradas = original;
+      }
+    });
+  });
+
+  describe('la lista de compras', () => {
+    const conDosRecetas = (): Plan => ({
+      comidas: [
+        { dia: 0, momento: 'noche', id: 'f1', titulo: 'Milanesas' },
+        { dia: 1, momento: 'noche', id: 'f2', titulo: 'Tarta' }
+      ]
+    });
+
+    it('lee una vez cada receta distinta del plan y junta los ingredientes', async () => {
+      estado.plan = conDosRecetas();
+      const original = storeFake.receta;
+      storeFake.receta = async (id: string) => {
+        estado.lecturas++;
+        return {
+          entrada: entradaFalsa({ id_archivo: id }),
+          receta: parse(`---\ntitulo: ${id}\n---\n\n## Ingredientes\n- Harina - 250 g\n`)
+        };
+      };
+      try {
+        const { abrir, app } = await montar();
+        await abrir('#/plan/compras');
+        expect(estado.lecturas).toBe(2);
+        expect(app.innerHTML).toContain('Harina');
+        expect(app.innerHTML).toContain('500 g');
+      } finally {
+        storeFake.receta = original;
+      }
+    });
+
+    it('una receta que ya no se puede leer se saltea', async () => {
+      estado.plan = conDosRecetas();
+      const original = storeFake.receta;
+      storeFake.receta = async (id: string) => {
+        if (id === 'f2') throw new Error('borrada');
+        return {
+          entrada: entradaFalsa({ id_archivo: id }),
+          receta: parse('---\ntitulo: A\n---\n\n## Ingredientes\n- Harina - 250 g\n')
+        };
+      };
+      try {
+        const { abrir, app } = await montar();
+        await abrir('#/plan/compras');
+        expect(app.innerHTML).toContain('250 g');
+      } finally {
+        storeFake.receta = original;
+      }
+    });
+
+    it('redibujar no vuelve a leer las recetas', async () => {
+      estado.plan = conDosRecetas();
+      const { abrir, tocar } = await montar();
+      await abrir('#/plan/compras');
+      const antes = estado.lecturas;
+      await tocar('compartir-compras');
+      expect(estado.lecturas).toBe(antes);
+    });
+
+    it('compartir ofrece Texto solamente, y lo manda como texto', async () => {
+      estado.plan = conDosRecetas();
+      const original = storeFake.receta;
+      storeFake.receta = async (id: string) => ({
+        entrada: entradaFalsa({ id_archivo: id }),
+        receta: parse('---\ntitulo: A\n---\n\n## Ingredientes\n- Harina - 250 g\n- Sal\n')
+      });
+      const compartidos: ShareData[] = [];
+      vi.stubGlobal('navigator', { share: async (d: ShareData) => { compartidos.push(d); } });
+      try {
+        const { abrir, tocar, app } = await montar();
+        await abrir('#/plan/compras');
+        await tocar('compartir-compras');
+        expect(app.innerHTML).toContain('hoja-compartir');
+        expect(app.innerHTML).not.toContain('data-accion="compartir-pdf"');
+        await tocar('compartir-texto');
+        expect(compartidos[0]?.text).toBe('*Con cantidad*\n- Harina: 500 g\n\n*Sin cantidad*\n- Sal');
+      } finally {
+        storeFake.receta = original;
+      }
     });
   });
 
