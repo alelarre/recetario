@@ -140,7 +140,7 @@ export interface Progreso {
  */
 export type DriveDelStore = Pick<Drive,
   'buscarPorNombre' | 'listarCarpetas' | 'listarHijos' | 'leerTexto' | 'metadatos' | 'propiedades' |
-  'carpetasMarcadas' | 'carpetasPropias' | 'carpetasPropiasPorNombre' |
+  'carpetasMarcadas' | 'carpetasPropiasPorNombre' |
   'crear' | 'actualizar' | 'renombrar' | 'mover' | 'borrar'>;
 
 export type SheetsDelStore = Pick<Sheets,
@@ -830,14 +830,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     await persistir();
   }
 
-  /** Las carpetas propias de un nivel, por nombre: lo que lista el selector. */
-  async function carpetasDe(id: string): Promise<{ id: string; nombre: string }[]> {
-    return (await drive.carpetasPropias(id))
-      .map(c => ({ id: c.id, nombre: c.name ?? '' }))
-      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-  }
-
-  /** «Crear una carpeta nueva acá», en el selector. */
+  /** La carpeta base nueva: «Crear la carpeta Recetario en Mi unidad». */
   async function crearCarpeta(nombre: string, padre: string): Promise<{ id: string; nombre: string }> {
     const creada = await drive.crear({ nombre, padre, mime: MIME_CARPETA });
     return { id: creada.id, nombre };
@@ -1000,7 +993,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     return { id, ...parseBorrador(await drive.leerTexto(id)) };
   }
 
-  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, escribirFila, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, recetasDe, crearCategoria, editarCategoria, borrarCategoria, carpeta, carpetasDe, crearCarpeta, prepararCarpeta, marcarReemplazada, categorias, borradores, borrador, agregarBorrador, editarBorrador, descartarBorrador, _ctx: ctx };
+  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, escribirFila, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, recetasDe, crearCategoria, editarCategoria, borrarCategoria, carpeta, crearCarpeta, prepararCarpeta, marcarReemplazada, categorias, borradores, borrador, agregarBorrador, editarBorrador, descartarBorrador, _ctx: ctx };
 }
 
 /** El objeto que devuelve `crearStore`. Lo consumen `compartido`, `main` y los tests. */

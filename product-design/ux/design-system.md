@@ -586,8 +586,9 @@ Alto 48 px (64 en cocina), padding lateral `--e-4`, `--r-medio`,
 **Variante compacta: 40 px de alto.** Existe para **un botón dentro de otra
 barra**: el encabezado de pantalla, que mide 56 px y no puede contener uno de 48
 con aire alrededor —*Guardar* en el editor, *Editar* en el borrador, *Salir* en
-cocina, *+ Nueva* en Categorías—, el botón de un aviso con acción (§6.8) y el de
-una fila de Ajustes —*Salir*, *Cambiar carpeta*, *Categorías ›*—. **Su área
+cocina, *+ Nueva* en Categorías—, el botón de un aviso con acción (§6.8), el de
+una fila de Ajustes —*Salir*, *Cambiar carpeta*, *Categorías ›*— y el *Usar* de
+una carpeta encontrada, en la pantalla de la carpeta base. **Su área
 táctil sigue siendo de 48 px**, porque el alto de la barra la completa; en
 cocina, de 64 (§6.12). Suelto en el cuerpo de una pantalla no se usa.
 

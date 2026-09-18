@@ -56,11 +56,6 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       if (fallas.has('carpetasMarcadas')) throw fallas.get('carpetasMarcadas');
       return vivos().filter(a => a.mimeType === MIME_CARPETA && !a.ajena && a.appProperties?.['recetario'] === 'raiz');
     },
-    async carpetasPropias(padre: string) {
-      api.llamadas.push(['carpetasPropias', padre]);
-      if (fallas.has('carpetasPropias')) throw fallas.get('carpetasPropias');
-      return vivos().filter(a => a.mimeType === MIME_CARPETA && !a.ajena && (a.parents ?? []).includes(padre));
-    },
     async carpetasPropiasPorNombre(nombre: string) {
       return vivos().filter(a => a.mimeType === MIME_CARPETA && !a.ajena && a.name === nombre);
     },

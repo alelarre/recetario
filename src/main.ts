@@ -23,6 +23,8 @@ import { renderListaCategorias, renderEdicionCategoria, confirmacionBorrarCatego
 import { colorLibre, problemaDelNombre } from './categorias.js';
 import { colorDeClave, urlDeFoto } from './ui/categorias.js';
 import { renderSelector } from './ui/carpeta.js';
+import { elegirCarpeta } from './picker.js';
+import { API_KEY, NOMBRE_RAIZ } from './config.js';
 import { puedeEmpezar, direccion, progreso, seAbre } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
 import { aviso, SIN_SESION } from './ui/componentes.js';
@@ -74,18 +76,39 @@ let visibles = TRAMO;
 let observadorTramo: IntersectionObserver | null = null;
 
 /**
- * El selector de la carpeta base. Las sugerencias vienen del arranque; el nivel
- * que se mira, de la ruta. Lo leído de cada nivel se reutiliza en sus
- * redibujados —confirmar, crear, cancelar—.
+ * La pantalla de la carpeta base. Las sugerencias vienen del arranque; que se
+ * esté cambiando la carpeta, de la ruta. La app no lista nada del Drive: la
+ * carpeta se crea, o se elige con el Picker de Google.
  */
 const selector = {
   sugerencias: [] as CarpetaSimple[],
-  nivel: null as null | { id: string; carpetas: CarpetaSimple[] },
   confirmando: null as CarpetaSimple | null,
-  creando: false,
-  cambiando: false,
   error: ''
 };
+
+/** Se entró desde Ajustes a cambiar la carpeta, y no por no tener ninguna. */
+const cambiandoCarpeta = (): boolean => vistaActual?.params['cambiando'] === '1';
+
+/**
+ * El setup de la carpeta elegida o recién creada, con su progreso, y la recarga
+ * al terminar. Si falla, el aviso reemplaza los botones y Reintentar vuelve a
+ * ofrecer la misma carpeta: repetir el setup no duplica nada.
+ */
+async function usarCarpeta(elegida: CarpetaSimple): Promise<void> {
+  try {
+    // La anotación es para los otros dispositivos: si falla, el cambio sigue.
+    if (cambiandoCarpeta()) await store.marcarReemplazada().catch(err => console.error(err));
+    pintar(renderConexion({ estado: 'creando-indice' }));
+    await store.prepararCarpeta(elegida, progreso => pintar(renderConexion({ estado: 'creando-indice', progreso })));
+    // La copia ya es la de la carpeta elegida: recargar abre con un pedido.
+    location.replace('#/');
+    location.reload();
+  } catch (err) {
+    console.error(err);
+    selector.error = 'No se pudo preparar la carpeta. Revisá la conexión.';
+    await render();
+  }
+}
 
 /** El menú lateral desplegado. Sólo aplica en pantalla angosta: desde 900 px es fijo. */
 let menuAbierto = false;
@@ -461,10 +484,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     menuAbierto = false;
     confirmandoDescarte = false;
     editandoBorrador = false;
-    // Salir del selector lo cierra: lo que se estaba por usar o crear no sigue.
-    if (ruta.vista !== 'carpeta') selector.cambiando = false;
+    // Salir de la pantalla de la carpeta la cierra: lo que se estaba por usar no sigue.
     selector.confirmando = null;
-    selector.creando = false;
     selector.error = '';
     if (ruta.vista !== 'capturar' && ruta.vista !== 'borrador') {
       tituloCaptura = ''; notaCaptura = ''; guardandoCaptura = false; errorCaptura = '';
@@ -556,20 +577,13 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       return dibujarAjustes();
 
     case 'carpeta': {
-      const nivel = { id: ruta.params['id'] ?? 'root', nombre: ruta.params['nombre'] ?? '' };
-      if (selector.nivel?.id !== nivel.id) {
-        selector.nivel = null;
-        pintar(renderSelector({ ...selector, nivel, carpetas: null }));
-        try {
-          selector.nivel = { id: nivel.id, carpetas: await store.carpetasDe(nivel.id) };
-        } catch (err) {
-          console.error(err);
-          return pintar(renderSelector({ ...selector, nivel, carpetas: [], error: 'No se pudieron leer las carpetas.' }));
-        }
-      }
       const { error, ...resto } = selector;
       return pintar(renderSelector({
-        ...resto, nivel, carpetas: selector.nivel?.carpetas ?? [], ...(error ? { error } : {})
+        ...resto,
+        cambiando: ruta.params['cambiando'] === '1',
+        // Sin API key el Picker no abre: queda sólo crear.
+        conPicker: Boolean(API_KEY),
+        ...(error ? { error } : {})
       }));
     }
 
@@ -985,49 +999,42 @@ app.addEventListener('click', async (e) => {
   if (accion === 'reindexar') return reconstruir({ enAjustes: true });
   if (accion === 'conectar') return arrancar({ pidiendoPermiso: true });
   if (accion === 'cambiar-carpeta') {
-    selector.cambiando = true;
-    location.hash = '#/carpeta';
+    location.hash = '#/carpeta?cambiando=1';
     return;
   }
   if (accion === 'carpeta-sugerida') {
     selector.confirmando = { id: boton.dataset['id'] ?? '', nombre: boton.dataset['nombre'] ?? '' };
     return render();
   }
-  if (accion === 'carpeta-usar') {
-    selector.confirmando = { id: idActual(), nombre: vistaActual?.params['nombre'] ?? '' };
+  if (accion === 'carpeta-elegir') {
+    try {
+      const elegida = await elegirCarpeta(await auth.token());
+      // Cerró la ventana sin elegir: nada cambia, ni siquiera la pantalla.
+      if (!elegida) return;
+      selector.confirmando = elegida;
+    } catch (err) {
+      console.error(err);
+      selector.error = 'No se pudo abrir el selector de Google.';
+    }
     return render();
   }
-  if (accion === 'carpeta-crear') { selector.creando = true; return render(); }
-  if (accion === 'carpeta-cancelar') { selector.confirmando = null; selector.creando = false; return render(); }
-  if (accion === 'carpeta-crear-confirmado') {
-    const nombre = document.querySelector<HTMLInputElement>('#app input[name="nombre-carpeta"]')?.value.trim() || 'Recetario';
+  if (accion === 'carpeta-cancelar') { selector.confirmando = null; return render(); }
+  // Crear no confirma: el botón ya dice qué carpeta y dónde. Queda como
+  // `confirmando` igual, para que un fallo del setup se pueda reintentar sobre
+  // la carpeta que ya se creó y no cree otra.
+  if (accion === 'carpeta-crear') {
     try {
-      selector.confirmando = await escribiendo(store.crearCarpeta(nombre, vistaActual?.params['id'] ?? 'root'));
-      selector.creando = false;
-      selector.nivel = null;   // el nivel ganó una carpeta
+      selector.confirmando = await escribiendo(store.crearCarpeta(NOMBRE_RAIZ, 'root'));
     } catch (err) {
       console.error(err);
       selector.error = 'No se pudo crear la carpeta.';
+      return render();
     }
-    return render();
+    return usarCarpeta(selector.confirmando);
   }
   if (accion === 'carpeta-confirmar') {
-    const elegida = selector.confirmando;
-    if (!elegida) return;
-    try {
-      // La anotación es para los otros dispositivos: si falla, el cambio sigue.
-      if (selector.cambiando) await store.marcarReemplazada().catch(err => console.error(err));
-      pintar(renderConexion({ estado: 'creando-indice' }));
-      await store.prepararCarpeta(elegida, progreso => pintar(renderConexion({ estado: 'creando-indice', progreso })));
-      // La copia ya es la de la carpeta elegida: recargar abre con un pedido.
-      location.replace('#/');
-      location.reload();
-    } catch (err) {
-      console.error(err);
-      selector.error = 'No se pudo preparar la carpeta. Revisá la conexión.';
-      await render();
-    }
-    return;
+    if (!selector.confirmando) return;
+    return usarCarpeta(selector.confirmando);
   }
   if (accion === 'borrar-datos-locales') {
     // Recargar y no seguir: lo que hay en memoria salió de esa copia, y la
@@ -1398,7 +1405,7 @@ app.addEventListener('click', async (e) => {
 
   // Reintentar es volver a pedir: lo leído no se reutiliza.
   if (accion === 'reintentar') {
-    recetaLeida = null; borradorLeido = null; selector.nivel = null; selector.error = '';
+    recetaLeida = null; borradorLeido = null; selector.error = '';
     return render();
   }
 });

@@ -4,6 +4,13 @@ export const CLIENT_ID = '670194416271-psq474ahahgia41v9frctqaom4to7cio.apps.goo
 // agentes por fuera de la app.
 export const SCOPE = 'https://www.googleapis.com/auth/drive';
 
+/**
+ * La API key del Google Picker, la ventana con la que se elige una carpeta que
+ * ya existe. No es un secreto: va restringida por referente —`localhost:8080` y
+ * el origen de Pages— y a la Picker API. Vacía, la app sólo ofrece crear.
+ */
+export const API_KEY = '';
+
 export const NOMBRE_RAIZ = 'Recetario';
 export const NOMBRE_INDICE = '_indice';
 /** La carpeta de los borradores, un `.md` por borrador. El `_` la deja fuera de las categorías. */

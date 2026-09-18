@@ -18,9 +18,6 @@ export const q = {
   marcadas: (): string =>
     `appProperties has { key='${MARCA_RAIZ.clave}' and value='${MARCA_RAIZ.valor}' } and ` +
     `'me' in owners and mimeType='${MIME_CARPETA}' and trashed=false`,
-  /** Las carpetas propias dentro de otra: un nivel del selector. */
-  carpetasPropiasDe: (id: string): string =>
-    `'${escapar(id)}' in parents and mimeType='${MIME_CARPETA}' and 'me' in owners and trashed=false`,
   carpetasPropiasPorNombre: (nombre: string): string =>
     `name='${escapar(nombre)}' and mimeType='${MIME_CARPETA}' and 'me' in owners and trashed=false`
 };
@@ -97,7 +94,6 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
     listarCarpetas: (id: string) => listar(q.carpetasDe(id), 'files(id,name,appProperties)'),
     listarHijos: (id: string) => listar(q.hijosDe(id)),
     carpetasMarcadas: () => listar(q.marcadas(), 'files(id,name,modifiedTime)'),
-    carpetasPropias: (padre: string) => listar(q.carpetasPropiasDe(padre), 'files(id,name)'),
     carpetasPropiasPorNombre: (nombre: string) => listar(q.carpetasPropiasPorNombre(nombre), 'files(id,name)'),
     metadatos: (id: string, campos = 'id,name,parents,modifiedTime') =>
       pedir<ArchivoDrive>(`/files/${id}?fields=${campos}`),

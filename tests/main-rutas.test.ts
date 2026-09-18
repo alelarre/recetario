@@ -23,6 +23,22 @@ vi.mock('../src/auth.js', async original => ({
 }));
 vi.mock('../src/drive.js', async original => ({ ...await original<typeof import('../src/drive.js')>(), crearDrive: () => ({ cuenta: async () => 'alguien@gmail.com' }) }));
 vi.mock('../src/sheets.js', async original => ({ ...await original<typeof import('../src/sheets.js')>(), crearSheets: () => ({}) }));
+// Con una API key, la pantalla de la carpeta ofrece el Picker; el Picker mismo
+// es un doble: `elegida` es lo que devuelve, `null` es cancelar y `falla` tira.
+vi.mock('../src/config.js', async original => ({
+  ...await original<typeof import('../src/config.js')>(),
+  API_KEY: 'key-de-prueba'
+}));
+const picker = vi.hoisted(() => ({
+  elegida: null as null | { id: string; nombre: string },
+  falla: false
+}));
+vi.mock('../src/picker.js', () => ({
+  elegirCarpeta: async () => {
+    if (picker.falla) throw new Error('no cargó');
+    return picker.elegida;
+  }
+}));
 /** `espera`, si está, es una promesa que el test resuelve a mano: el PDF tarda lo que el test quiera. */
 const pdfs = vi.hoisted(() => ({ generados: 0, espera: null as Promise<void> | null }));
 vi.mock('../src/pdf/generar.js', () => ({
@@ -60,6 +76,8 @@ const estadoInicial = () => ({
   eligiendo: null as null | { id: string; name: string }[],
   /** Las carpetas que se prepararon con el setup, en orden. */
   preparadas: [] as string[],
+  /** Las carpetas que se crearon desde la pantalla de la carpeta base. */
+  carpetasCreadas: [] as { nombre: string; padre: string }[],
   /** Cuántas veces se anotó la carpeta anterior como reemplazada. */
   reemplazadas: 0,
   /** Lo que se guardó desde la gestión de categorías, en orden. */
@@ -84,8 +102,10 @@ const storeFake = {
         categorias: [{ id: 'c1', nombre: 'Carnes' }], indiceDuplicado: estado.indiceDuplicado
       },
   carpeta: () => ({ id: 'raiz', nombre: 'Recetario' }),
-  carpetasDe: async () => [{ id: 'a1', nombre: 'Cocina' }],
-  crearCarpeta: async (nombre: string) => ({ id: 'nueva', nombre }),
+  crearCarpeta: async (nombre: string, padre: string) => {
+    estado.carpetasCreadas.push({ nombre, padre });
+    return { id: 'nueva', nombre };
+  },
   prepararCarpeta: async (c: { id: string }) => { estado.preparadas.push(c.id); return { ignorados: [] }; },
   marcarReemplazada: async () => { estado.reemplazadas++; },
   recetasDe: (id: string) => id === 'c1' ? [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', carpeta_id: 'c1' })] : [],
@@ -145,6 +165,7 @@ describe('main.ts: las rutas', () => {
   afterEach(() => {
     limpiarGlobales();
     Object.assign(estado, estadoInicial());
+    Object.assign(picker, { elegida: null, falla: false });
     vi.unstubAllGlobals();
     delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
@@ -691,22 +712,22 @@ describe('main.ts: las rutas', () => {
   });
 
   describe('la carpeta base', () => {
-    it('sin carpeta marcada, el arranque lleva al selector con las sugerencias', async () => {
+    it('sin carpeta marcada, el arranque lleva a la pantalla con las encontradas', async () => {
       estado.eligiendo = [{ id: 'r1', name: 'Recetario' }];
       const { app, reemplazos } = await montar();
       expect(reemplazos).toContain('#/carpeta');
-      expect(app.innerHTML).toContain('Elegí la carpeta de tus recetas');
+      expect(app.innerHTML).toContain('Tus recetas en Drive');
       expect(app.innerHTML).toContain('data-id="r1"');
     });
 
-    it('mientras no hay carpeta, otra ruta vuelve al selector', async () => {
+    it('mientras no hay carpeta, otra ruta vuelve a la pantalla', async () => {
       estado.eligiendo = [];
       const { abrir, reemplazos } = await montar();
       await abrir('#/ajustes');
       expect(reemplazos.at(-1)).toBe('#/carpeta');
     });
 
-    it('elegir una sugerencia confirma, prepara la carpeta y recarga', async () => {
+    it('elegir una encontrada confirma, prepara la carpeta y recarga', async () => {
       estado.eligiendo = [{ id: 'r1', name: 'Recetario' }];
       const { app, tocar, recargas } = await montar();
       await tocar('carpeta-sugerida', { id: 'r1', nombre: 'Recetario' });
@@ -717,12 +738,50 @@ describe('main.ts: las rutas', () => {
       expect(recargas).toHaveLength(1);
     });
 
+    it('crear no pregunta: crea la carpeta en Mi unidad, la prepara y recarga', async () => {
+      estado.eligiendo = [];
+      const { tocar, recargas } = await montar();
+      await tocar('carpeta-crear');
+      expect(estado.carpetasCreadas).toEqual([{ nombre: 'Recetario', padre: 'root' }]);
+      expect(estado.preparadas).toEqual(['nueva']);
+      expect(recargas).toHaveLength(1);
+    });
+
+    it('con el Picker, elegir una carpeta confirma y prepara', async () => {
+      estado.eligiendo = [];
+      picker.elegida = { id: 'p1', nombre: 'Mis recetas' };
+      const { app, tocar } = await montar();
+      await tocar('carpeta-elegir');
+      expect(app.innerHTML).toContain('Voy a usar <b>Mis recetas</b>.');
+      await tocar('carpeta-confirmar');
+      expect(estado.preparadas).toEqual(['p1']);
+    });
+
+    it('cancelar el Picker no cambia nada', async () => {
+      estado.eligiendo = [];
+      const { app, tocar } = await montar();
+      await tocar('carpeta-elegir');
+      expect(app.innerHTML).not.toContain('Voy a usar');
+      expect(estado.preparadas).toEqual([]);
+    });
+
+    it('si el Picker no abre, lo dice y deja reintentar', async () => {
+      estado.eligiendo = [];
+      picker.falla = true;
+      const { app, tocar } = await montar();
+      await tocar('carpeta-elegir');
+      expect(app.innerHTML).toContain('No se pudo abrir el selector de Google.');
+      expect(app.innerHTML).toContain('data-accion="reintentar"');
+    });
+
     it('cambiar de carpeta desde Ajustes anota la anterior antes de preparar la nueva', async () => {
-      const { abrir, tocar } = await montar();
+      picker.elegida = { id: 'a1', nombre: 'Cocina' };
+      const { app, abrir, tocar } = await montar();
       await abrir('#/ajustes');
       await tocar('cambiar-carpeta');
-      await abrir('#/carpeta?id=a1&nombre=Cocina');
-      await tocar('carpeta-usar');
+      await abrir('#/carpeta?cambiando=1');
+      expect(app.innerHTML).toContain('Cambiar carpeta');
+      await tocar('carpeta-elegir');
       await tocar('carpeta-confirmar');
       expect(estado.reemplazadas).toBe(1);
       expect(estado.preparadas).toEqual(['a1']);

@@ -263,6 +263,17 @@ html:has(.hoja-compartir) { overflow: hidden; }
           overflow: hidden; text-overflow: ellipsis; margin-top: var(--e-1); }
 .bor .d { font-size: var(--txt-micro); color: var(--fg-3); white-space: nowrap; }
 
+/* ---- Carpeta base ---- */
+/* Una carpeta encontrada. La ficha no es un control: el que se toca es el Usar
+   de la derecha, así que no lleva ni fondo de toque ni cursor. */
+.carp { display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
+        background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha); }
+.carp .n { flex: 1; min-width: 0; font-weight: 600;
+           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.carp > svg { flex: 0 0 var(--ico); width: var(--ico); height: var(--ico); color: var(--fg-2);
+              stroke: currentColor; fill: none; stroke-width: 1.5;
+              stroke-linecap: round; stroke-linejoin: round; }
+
 /* ---- Ajustes ---- */
 .fila-a { display: flex; align-items: center; gap: var(--e-3); min-height: 48px; }
 .fila-a .t { flex: 1; }

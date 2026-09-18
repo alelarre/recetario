@@ -95,7 +95,7 @@ la pantalla que lanzó la escritura sigue siendo la que está.
 - [ ] **No se navega:** un cambio de hash —un link, el volver del encabezado, el gesto de atrás de Android— no dibuja la pantalla nueva, y la URL vuelve a la de la pantalla que está escribiendo.
 - [ ] **No se repite la acción:** volver a tocar el control no hace nada.
 - [ ] El velo se suelta siempre, termine bien o mal; después la operación sigue su camino —navega, redibuja o muestra su aviso con lo escrito todavía en pantalla (R1)—.
-- [ ] Entran: guardar y crear una receta —también desde un borrador o desde Claude—, borrarla, guardar una captura, descartar un borrador, crear, editar y borrar una categoría, y crear una carpeta desde el selector.
+- [ ] Entran: guardar y crear una receta —también desde un borrador o desde Claude—, borrarla, guardar una captura, descartar un borrador, crear, editar y borrar una categoría, y crear la carpeta base.
 - [ ] Quedan afuera cuatro, cada una con su propia señal: marcar favorito, que ya tiene su estrella animada y no debe trabar la lectura de la receta; reindexar, que oculta sus controles y muestra el avance; preparar la carpeta base, que dibuja su propia pantalla de progreso; y conectar de nuevo con Google, donde el usuario está en el popup y el velo taparía la pantalla desde otra ventana.
 - [ ] Los botones que dicen «Guardando…» se quedan como están: el velo se suma, no los reemplaza.
 
@@ -371,11 +371,14 @@ verificada" una vez, que es inevitable con el scope `drive`.
 #### C05.7.4 — Elegir la carpeta base *(transversal)*
 
 - [ ] La app encuentra su carpeta por una marca en sus `appProperties` (`recetario=raiz`), no por el nombre: la carpeta puede llamarse como el usuario quiera y estar en cualquier lugar de su Drive.
-- [ ] Sin una carpeta marcada, o con más de una, abre el selector (`#/carpeta`): «Elegí la carpeta de tus recetas». Arriba muestra las **Encontradas** —las marcadas, o si no hay ninguna las propias que se llamen `Recetario`— y abajo deja recorrer «Mi unidad». Sólo lista carpetas propias.
-- [ ] En cualquier nivel se puede **Usar esta carpeta** o **Crear una carpeta nueva acá**, que propone el nombre `Recetario`.
-- [ ] Antes de usarla confirma: «Voy a usar *nombre*. Si faltan categorías, las creo, y después indexo lo que haya adentro.»
-- [ ] El setup, en este orden: crea las predefinidas que falten —comparando nombres sin mirar tildes ni mayúsculas—, cada una con su color y su foto; crea `_indice` si no está; reindexa, con la barra de C05.5.2; y **recién al final pone la marca** y se la saca a cualquier otra carpeta. Si algo falla antes, la carpeta queda sin marcar y el selector la vuelve a ofrecer. Repetirlo no duplica nada.
-- [ ] La carpeta se cambia desde Ajustes (C05.9b.4).
+- [ ] **La app no lista las carpetas del usuario en ninguna pantalla.** Lo único de Drive que muestra son las **Encontradas**: las que ya sabe que le pertenecen.
+- [ ] Sin una carpeta marcada, o con más de una, abre `#/carpeta` —«Tus recetas en Drive»—: una explicación de dos frases y dos opciones, **Crear la carpeta «Recetario» en Mi unidad**, primaria, y **Ya tengo una carpeta**. No tiene volver: no hay a dónde.
+- [ ] **Encontradas**, si las hay, va arriba de las dos opciones: las marcadas, o si no hay ninguna las propias que se llamen `Recetario`, cada una con su *Usar*.
+- [ ] **Ya tengo una carpeta** abre el Google Picker —la ventana de Google, con su navegación y su búsqueda—, limitado a carpetas propias. Sin API key configurada el botón no se dibuja y queda sólo crear.
+- [ ] Antes de usar una carpeta que ya existe confirma: «Voy a usar *nombre*. Si faltan categorías, las creo, y después indexo lo que haya adentro.» Crear no confirma: el botón ya dice qué carpeta y dónde.
+- [ ] El setup, en este orden: crea las predefinidas que falten —comparando nombres sin mirar tildes ni mayúsculas—, cada una con su color y su foto; crea `_indice` si no está; reindexa, con la barra de C05.5.2; y **recién al final pone la marca** y se la saca a cualquier otra carpeta. Si algo falla antes, la carpeta queda sin marcar y la pantalla la vuelve a ofrecer. Repetirlo no duplica nada.
+- [ ] Un fallo —el Picker que no abre, la carpeta que no se pudo crear, el setup que se cortó— se avisa en el lugar de los botones, con **Reintentar** (R1).
+- [ ] La carpeta se cambia desde Ajustes (C05.9b.4): la misma pantalla, con el título *Cambiar carpeta*, volver, y la aclaración de que la carpeta actual queda como está en Drive.
 
 ### F05.8 — Sin red
 
@@ -442,7 +445,7 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 
 #### C05.9b.4 — Recetario: la carpeta y las categorías *(transversal)*
 
-- [ ] La ficha muestra el nombre de la carpeta base en uso y ofrece **Cambiar carpeta**, que abre el selector de C05.7.4. La carpeta anterior queda como está en Drive, sin la marca.
+- [ ] La ficha muestra el nombre de la carpeta base en uso y ofrece **Cambiar carpeta**, que abre la pantalla de C05.7.4. La carpeta anterior queda como está en Drive, sin la marca.
 - [ ] Muestra cuántas categorías hay y lleva a **Categorías** (`#/categorias`), donde se gestionan: crear, renombrar, elegir color de la paleta y foto del catálogo, y borrar. Las predefinidas no tienen trato especial.
 - [ ] Cada cambio escribe en el momento la carpeta en Drive —su nombre y sus propiedades— y su fila en la hoja `categorias`.
 - [ ] Una categoría nueva nace con el primer color de la paleta que nadie usa.
