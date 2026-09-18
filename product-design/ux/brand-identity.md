@@ -176,7 +176,7 @@ la interfaz**, y no tienen sinónimos.
 | La pantalla principal, en el menú lateral | **Inicio** | — (sólo ahí: «Recetario» ya es la marca, arriba del menú) |
 | Un `.md` con una comida | **receta** | "plato", "ficha", "entrada" |
 | La carpeta de Drive donde vive | **categoría** | "sección", "colección" |
-| La carpeta de Drive que contiene todo el Recetario | **carpeta** — *"Carpeta: Recetario"*, **Cambiar carpeta**, *Usar esta carpeta*, *Crear una carpeta nueva acá* | "raíz", "directorio", "ubicación" |
+| La carpeta de Drive que contiene todo el Recetario | **carpeta** — *"Carpeta: Recetario"*, **Cambiar carpeta**, *Crear la carpeta «Recetario» en Mi unidad*, *Ya tengo una carpeta* | "raíz", "directorio", "ubicación" |
 | Lo capturado que espera conversión | **borrador** | "pendiente", "captura", "item" |
 | El lugar donde esperan | **Borradores** | **"bandeja"**, "inbox", "por procesar" |
 | Guardar algo desde otra app | **capturar** —la pantalla se titula **Nuevo borrador**, y el botón de Borradores, **Nuevo**— | "importar", "agregar", "compartir a" |

@@ -117,9 +117,14 @@ Todo `src/` y `tests/` es TypeScript con `strict`, más
 ## Drive y Google Cloud
 
 - **La carpeta base se encuentra por su marca** en `appProperties`
-  (`recetario=raiz`), no por nombre. Si no hay ninguna, la app ofrece elegirla o
-  crearla y arma la estructura con las 16 categorías predefinidas. Se cambia
-  desde Ajustes. La app no hardcodea ningún id de Drive.
+  (`recetario=raiz`), no por nombre. Si no hay ninguna, la app ofrece crearla en
+  Mi unidad o elegir una que ya exista, y arma la estructura con las 16
+  categorías predefinidas. Se cambia desde Ajustes. La app no hardcodea ningún id
+  de Drive.
+- **La app no explora el Drive:** no lista las carpetas del usuario en ninguna
+  pantalla. Lo único de Drive que muestra son las carpetas marcadas —o las
+  propias llamadas `Recetario`—; elegir otra es el **Google Picker**
+  (`src/picker.ts`, tipos a mano en `src/gapi.d.ts`).
 - **Las categorías son las subcarpetas.** El color y la foto de cada una son sus
   `appProperties` (`foto=catalogo:<clave>`); se gestionan desde *Ajustes →
   Recetario*. Una carpeta creada a mano en Drive aparece al reindexar; sin foto
@@ -127,13 +132,16 @@ Todo `src/` y `tests/` es TypeScript con `strict`, más
 - La carpeta del usuario es `Recetario/` (`1B2nNmy0qOAuZT9lomrSdompYta7uuJ7B`).
   `Carnes/milanesas-napolitanas.md` es un fixture escrito por fuera de la app y
   sirve de ejemplo canónico del formato.
-- **Cliente OAuth:** tipo *Aplicación web*, sin API key ni client secret; el
-  client ID está en `src/config.ts` y no es un secreto. Orígenes autorizados:
+- **Cliente OAuth:** tipo *Aplicación web*, sin client secret; el client ID está
+  en `src/config.ts` y no es un secreto. Orígenes autorizados:
   `http://localhost:8080` y `https://alelarre.github.io`. APIs habilitadas:
-  Drive y Sheets. La app está sin verificar, con tipo de usuario *Externo* y
+  Drive, Sheets y Picker. La app está sin verificar, con tipo de usuario *Externo* y
   usuarios de prueba (hasta 100): la primera vez Google muestra «Google no
   verificó esta app». Un `Error 403: org_internal` es que el tipo quedó en
   *Interno*.
+- **La API key del Picker** (`API_KEY` en `src/config.ts`) tampoco es un secreto:
+  va restringida por referente a esos dos orígenes y a la Picker API. Vacía, la
+  app sólo ofrece crear la carpeta.
 
 ## No proponer
 
@@ -180,8 +188,9 @@ Cada una se midió o se discutió a fondo.
 - **La vista de invitado como un modo de la receta:** tiene controlador propio y
   una lista cerrada de acciones, para que lo que se agregue a la receta no
   aparezca ahí sin querer.
-- **El Google Picker** para elegir carpeta: pide API key, se ve con el estilo
-  claro de Google y no crea carpetas.
+- **Un explorador propio del Drive para elegir la carpeta base:** listar las
+  carpetas del usuario dentro de la app no genera confianza. Se crea la carpeta,
+  o se elige con el Picker de Google.
 
 ## Lo sabido y no arreglado
 

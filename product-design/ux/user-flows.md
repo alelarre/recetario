@@ -316,24 +316,25 @@ Abro la app por primera vez
   ▸ la app busca la carpeta marcada (recetario=raiz)
   ⚑ ¿cuántas hay?
       una       → es la carpeta base
-      ninguna   → Selector, con las carpetas propias llamadas Recetario como «Encontradas»
-      varias    → Selector, con las marcadas como «Encontradas»
+      ninguna   → «Tus recetas en Drive», con las propias llamadas Recetario como «Encontradas»
+      varias    → «Tus recetas en Drive», con las marcadas como «Encontradas»
   ⚑ ¿existe _indice adentro?
       sí  → arranca
       no  → lo crea, leyendo los .md, con progreso: «Creando el índice: 12 de 60.»
   ▸ Recetario
 ```
 
-**El selector — «Elegí la carpeta de tus recetas»:**
+**La pantalla — «Tus recetas en Drive»:**
 
 ```
-Selector
-  ▸ «Encontradas», si hay; y «Mi unidad» con sus carpetas propias
-  → toco una carpeta: entro a su nivel        ⚑ volver sube un nivel
+Carpeta base
+  ▸ «Recetario guarda cada receta como un archivo en una carpeta de tu Google
+    Drive. Podés crearla ahora o elegir una que ya tengas.»
+  ▸ «Encontradas», si hay: una ficha por carpeta, con su Usar
   ⚑ tres maneras de elegir
-      toco una de «Encontradas»
-      Usar esta carpeta                       ⚑ no se ofrece en «Mi unidad»
-      Crear una carpeta nueva acá → nombre (precargado: Recetario) → Crear
+      Usar, en una de «Encontradas»          → confirmación
+      Crear la carpeta «Recetario» en Mi unidad  ⚑ no confirma: crea y prepara
+      Ya tengo una carpeta → Picker de Google → confirmación
   ▸ confirmación: «Voy a usar <carpeta>. Si faltan categorías, las creo, y
     después indexo lo que haya adentro.»
   → Usar
@@ -345,12 +346,19 @@ Selector
   ▸ la app recarga en el Recetario
 ```
 
-Sólo aparecen carpetas propias: ni las compartidas ni las unidades compartidas.
+**La app no lista las carpetas del usuario.** Lo único de Drive que muestra son
+las «Encontradas», que son las que ya sabe que le pertenecen; elegir otra es el
+Picker de Google, que sólo ofrece carpetas propias —ni las compartidas ni las
+unidades compartidas—. El Picker se ve con el estilo claro de Google y necesita
+una API key: sin ella, *Ya tengo una carpeta* no se dibuja y queda sólo crear.
+
 **La marca va última:** si algo falla antes, la carpeta queda sin marcar y la
-próxima apertura vuelve al selector. Repetir el setup no duplica nada: cada paso
-hace sólo lo que falta.
+próxima apertura vuelve a esta pantalla. Repetir el setup no duplica nada: cada
+paso hace sólo lo que falta.
 
 ```
+  ✗ el Picker no abre
+  ▸ aviso: «No se pudo abrir el selector de Google.», con Reintentar
   ✗ el setup falla a mitad
   ▸ aviso con Reintentar, que lo repite sobre la misma carpeta
 ```
@@ -671,9 +679,9 @@ Menú → Ajustes → ficha Recetario → Categorías
 
 ```
 Menú → Ajustes → ficha Recetario → Cambiar carpeta
-  ▸ el Selector de F8
+  ▸ la pantalla de F8, con el título «Cambiar carpeta», volver, y el párrafo
+    «La carpeta actual queda como está en Drive. La app va a usar la que elijas.»
   → elijo o creo otra carpeta → Usar
-  ▸ confirmación, con una línea más: «Tu carpeta actual queda como está en Drive.»
   ▸ el mismo setup de F8
   ▸ el _indice de la carpeta anterior queda anotado como reemplazado
   ▸ la app recarga en el Recetario, sobre la carpeta nueva

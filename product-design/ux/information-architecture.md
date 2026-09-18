@@ -200,7 +200,7 @@ versiones que el formato no aguanta sin dejar de ser legible.
 
 | Entidad | Dónde vive | Nace | Muere |
 |---|---|---|---|
-| **Carpeta base** | Una carpeta propia del Drive, marcada con `appProperties` `recetario=raiz` | Al elegirla o crearla en el selector del primer arranque | Al elegir otra desde Ajustes: pierde la marca y queda en Drive como estaba |
+| **Carpeta base** | Una carpeta propia del Drive, marcada con `appProperties` `recetario=raiz` | Al crearla o elegirla en el primer arranque | Al elegir otra desde Ajustes: pierde la marca y queda en Drive como estaba |
 | **Receta** | Un `.md` en una carpeta de categoría | Al guardar una receta nueva, al convertir un borrador, o cuando un agente la escribe directo | Al borrarla desde el editor: va a la papelera de Drive |
 | **Borrador** | Un **`.md` en `_borradores/`**, dentro de la carpeta base, con su fila en la hoja `borradores` del índice | Al capturar | **Al convertirse**, o al descartarse: va a la papelera de Drive |
 | **Categoría** | Una carpeta dentro de la carpeta base, con su color y su foto en `appProperties`, y su fila en la hoja `categorias` del índice | En el setup de la carpeta base —las 16 predefinidas—, o al crearla desde *Ajustes → Recetario → Categorías* | Al borrarla desde ahí: va a la papelera de Drive con sus recetas |
@@ -217,8 +217,8 @@ versiones que el formato no aguanta sin dejar de ser legible.
 
 **La carpeta base se encuentra por su marca, no por su nombre ni por un id
 escrito en el código.** Si no hay ninguna carpeta marcada —o hay más de una—, la
-app ofrece elegirla. Todo lo demás —categorías, `_borradores/`, `_indice`— vive
-adentro.
+app ofrece crearla o elegir una que ya exista; **no lista las carpetas del
+usuario**. Todo lo demás —categorías, `_borradores/`, `_indice`— vive adentro.
 
 **Una receta vive en exactamente una carpeta.** La carpeta dice *dónde está el
 archivo*. Los tags dicen *cómo se lo encuentra*, y son varios. La navegación
@@ -343,7 +343,7 @@ se reconoce abre el Recetario.
 | **Ajustes** | `#/ajustes` | Seis fichas, en este orden: Cuenta, Recetario, Índice, Archivos locales, Avisos y Registro de actividad. Ver §4.7. | Transversal | — |
 | **Categorías** | `#/categorias` | La lista de categorías con cuántas recetas tiene cada una, y *+ Nueva*. | Transversal | — |
 | **Editar categoría** | `#/categorias/<id>` · `#/categorias/nueva` | Nombre, color y foto de una categoría, y *Borrar categoría*. | Transversal | — |
-| **Selector de carpeta** | `#/carpeta?id=&nombre=` | Elegir o crear la carpeta base. Aparece sola cuando no hay una carpeta marcada, o hay más de una, y desde *Ajustes → Recetario → Cambiar carpeta*. | Transversal | — |
+| **Carpeta base** | `#/carpeta` · `#/carpeta?cambiando=1` | Crear la carpeta, o elegir una que ya exista con el Picker de Google. **No lista nada del Drive.** Aparece sola cuando no hay una carpeta marcada, o hay más de una; con `cambiando=1` se llega desde *Ajustes → Recetario → Cambiar carpeta*. | Transversal | — |
 | **Conexión** | *(sin ruta: es el arranque)* | Primer arranque y consentimiento de Google; también el progreso de crear el índice. | Transversal | — |
 | **Vista de invitado** | `#/ver?r=<receta>` · `#/ver/cocinar?r=<receta>` | La receta que viaja en un link compartido, sin login: se lee y se cocina, y nada más. No muestra tags. | Compartir | — |
 | **Planificador** `[condicional]` | — | Dos comidas por día, siete días. | Planificar | J9 |
