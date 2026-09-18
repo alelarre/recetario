@@ -43,7 +43,9 @@ export const ICO = {
   /** Favorito: la misma estrella en la receta, en la tarjeta y en el carrusel. */
   estrella: svg('<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/>'),
   /** El chevron hacia adelante: la flecha derecha del carrusel. */
-  chevron: svg('<path d="M9 18l6-6-6-6"/>')
+  chevron: svg('<path d="M9 18l6-6-6-6"/>'),
+  /** Una carpeta de Drive: la ficha de cada carpeta encontrada. */
+  carpeta: svg('<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>')
 } as const satisfies Record<string, string>;
 
 /**

@@ -65,13 +65,13 @@ export function parsearHash(hash: unknown): Ruta {
       : { vista: 'categorias', params: {} };
   }
 
-  // El selector de la carpeta base: el nivel que se mira viaja en la query, y
-  // volver un nivel es el historial.
+  // La carpeta base. Entrar desde Ajustes lo dice en la query: la pantalla
+  // cambia de título y aclara que la carpeta actual queda como está.
   if (partes[0] === 'carpeta') {
-    const nivel: Record<string, string> = {};
-    if (params['id']) nivel['id'] = params['id'];
-    if (params['nombre']) nivel['nombre'] = params['nombre'];
-    return { vista: 'carpeta', params: nivel };
+    return {
+      vista: 'carpeta',
+      params: params['cambiando'] ? { cambiando: params['cambiando'] } : {}
+    };
   }
 
   // La lista por tag: se llega tocando un chip del carrusel del Recetario.

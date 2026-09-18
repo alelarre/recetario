@@ -32,12 +32,18 @@ interface ConfigClienteToken {
   error_callback: (err: unknown) => void;
 }
 
-interface Window {
-  google?: {
-    accounts?: {
-      oauth2?: {
-        initTokenClient(config: ConfigClienteToken): ClienteToken;
-      };
+/**
+ * El global que comparten los SDK de Google. `accounts` lo pone Identity
+ * Services; `picker.d.ts` le suma `picker` por su lado.
+ */
+interface GoogleGlobal {
+  accounts?: {
+    oauth2?: {
+      initTokenClient(config: ConfigClienteToken): ClienteToken;
     };
   };
+}
+
+interface Window {
+  google?: GoogleGlobal;
 }

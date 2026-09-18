@@ -215,19 +215,8 @@ describe('el setup de una carpeta', () => {
   });
 });
 
-describe('lo que usa el selector', () => {
-  it('carpetasDe da las propias de un nivel, por nombre', async () => {
-    const drive = driveFalso([
-      { id: 'b', name: 'Libros', mimeType: CARPETA, parents: ['root'] },
-      { id: 'a', name: 'Cocina', mimeType: CARPETA, parents: ['root'] },
-      { id: 'x', name: 'Ajena', mimeType: CARPETA, parents: ['root'], ajena: true },
-      { id: 'f', name: 'nota.md', parents: ['root'] }
-    ]);
-    const store = crearStore({ drive, sheets: sheetsFalso(), indiceLocal: indiceLocalFalso() });
-    expect(await store.carpetasDe('root')).toEqual([{ id: 'a', nombre: 'Cocina' }, { id: 'b', nombre: 'Libros' }]);
-  });
-
-  it('crearCarpeta la crea en el nivel', async () => {
+describe('crear la carpeta base', () => {
+  it('crearCarpeta la crea donde se le dice', async () => {
     const drive = driveFalso([{ id: 'a', name: 'Cocina', mimeType: CARPETA, parents: ['root'] }]);
     const store = crearStore({ drive, sheets: sheetsFalso(), indiceLocal: indiceLocalFalso() });
     const nueva = await store.crearCarpeta('Recetario', 'a');

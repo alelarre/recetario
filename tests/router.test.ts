@@ -51,9 +51,9 @@ describe('parsearHash', () => {
     expect(parsearHash('#/t/menú%20diario')).toEqual({ vista: 'tag', params: { nombre: 'menú diario' } });
   });
 
-  it('el selector de carpeta, con el nivel en la query', () => {
+  it('la carpeta base, y desde Ajustes con el cambio en la query', () => {
     expect(parsearHash('#/carpeta')).toEqual({ vista: 'carpeta', params: {} });
-    expect(parsearHash('#/carpeta?id=a1&nombre=Cocina')).toEqual({ vista: 'carpeta', params: { id: 'a1', nombre: 'Cocina' } });
+    expect(parsearHash('#/carpeta?cambiando=1')).toEqual({ vista: 'carpeta', params: { cambiando: '1' } });
   });
 
   it('reconoce las rutas nuevas', () => {

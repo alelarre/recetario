@@ -25,12 +25,6 @@ describe('las consultas de carpetas propias', () => {
     expect(consulta()).toContain('trashed=false');
   });
 
-  it('las de un nivel: hijas de esa carpeta y propias', async () => {
-    await drive.carpetasPropias('root');
-    expect(consulta()).toContain("'root' in parents");
-    expect(consulta()).toContain("'me' in owners");
-  });
-
   it('por nombre: propias y carpetas', async () => {
     await drive.carpetasPropiasPorNombre('Recetario');
     expect(consulta()).toContain("name='Recetario'");
