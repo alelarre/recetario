@@ -36,7 +36,7 @@ que escriben otros.
 | F10 | Sin conexión | Transversal | Alta |
 | F11 | Índice corrupto o incompleto | Transversal | Alta |
 | F12 | Un `.md` que no cumple el esquema | J8 | Media |
-| F13 | Planificar la semana `[condicional]` | J9 | — |
+| F13 | Planificar la semana y armar la compra | J9 | Baja |
 | F14 | Compartir una receta | — | Media |
 | F15 | Abrir una receta compartida, como invitado | — | Media |
 | F16 | Marcar una receta como favorita | J5 | Media |
@@ -487,28 +487,38 @@ porque nació con él o porque el usuario se lo puso.
 
 ---
 
-## F13 — Planificar la semana `[condicional]`
+## F13 — Planificar la semana y armar la compra
 
-**Job:** J9, el único hipotético. **Este flujo existe solo si J9 se construye**
-—está fuera de alcance, `../../BACKLOG.md`—, y su entrada es secundaria: no ocupa
-navegación primaria (principio 6).
+**Job:** J9. La entrada es una sola —el menú lateral— y no ocupa navegación
+primaria (principio 6).
 
 ```
-Recetario           ⚑ entrada debajo de las categorías, no en un lugar primario
-  → Planificador
-  ▸ dos comidas por día, siete días
-  → toco un espacio
-  → busco una receta del recetario     ⚑ solo recetas del recetario
-  ▸ queda asignada
-  → Generar lista de compras
-  ▸ recopila los ingredientes de todo lo planificado
-  ⚑ los estructurados se suman y agrupan
-  ⚑ los que están en prosa se listan tal cual, como recordatorio
-  ▸ el plan y la lista se escriben como archivos en Drive
+Menú lateral → Plan de la semana
+▸ siete días desde hoy, dos comidas cada uno   ⚑ sin fechas: hoy primero y da la vuelta
+  → toco el + de una comida
+  → Martes a la noche
+  ▸ la búsqueda arriba, el bloque «Menú diario» debajo
+  → toco una receta                            ⚑ sólo recetas del recetario
+  ▸ se suma a esa comida, se escribe `_plan.md` y vuelvo al plan
+  → toco el + de la misma comida y sumo otra   ⚑ una comida es una lista, sin límite ni tipos
+  → toco la × de una línea
+  ▸ sale esa línea nada más, y se reescribe el archivo
+  → Lista de compras
+  ▸ los ingredientes de todo lo cargado, en dos bloques
+  ⚑ los de mismo nombre y misma unidad se suman; distinta unidad, dos ítems
+  ⚑ los que no tienen cantidad se listan como recordatorio
+  → Compartir → Texto                          ⚑ la lista no se guarda en ningún lado
 ```
 
-**Solo entran recetas del recetario.** Que una comida se cocine de memoria no
-significa que la receta no esté registrada.
+**Cada cambio se escribe en el momento**, reescribiendo `_plan.md` entero, con el
+velo mientras dura (R8). Si falla, el aviso va en el plan, la grilla sigue
+mostrando lo que dice Drive, y reintentar es volver a tocar (R1).
+
+**Reiniciar el plan** está al pie, junto a la lista de compras, y pregunta antes:
+vacía los siete días y deja el archivo vacío.
+
+**La receta cargada que ya no está** en el índice se ve tachada, con su × para
+sacarla; la lista de compras la saltea. No se borra sola.
 
 **La lista degrada con gracia:** si los ingredientes están estructurados es útil;
 si no, es un recordatorio. Eso es lo que evitó que J9 forzara un formato de
@@ -700,7 +710,7 @@ app se abre hasta que el job está cumplido.
 | J6 — Seguir la receta cocinando | F6 | Receta → Modo cocina |
 | J7 — Corregir | F7 | Receta → Editor → Receta |
 | J8 — Legible sin la app | F9, F12 | *(fuera de la app: los `.md` en Drive)* |
-| J9 — Planificar `[condicional]` | F13 | Recetario → Planificador → Lista de compras |
+| J9 — Planificar | F13 | Menú → Plan de la semana → Agregar al plan · Lista de compras |
 
 Los nueve jobs tienen camino. J8 es el único que no se cumple **en** la app: se
 cumple porque el archivo existe afuera y la app no lo estorba.

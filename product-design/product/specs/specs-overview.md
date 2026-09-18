@@ -1,7 +1,7 @@
 # Recetario — Índice de Épicas
 
-**Versión:** 3.0
-**Fecha:** 2026-09-17
+**Versión:** 3.1
+**Fecha:** 2026-09-18
 **Estado:** Vigente
 
 ---
@@ -32,7 +32,7 @@ varias pantallas.
 | **E03** | [Leer y cocinar](E03-LeerYCocinar.md) | La receta a la vista, el modo cocina con las manos ocupadas, la estrella de favorito, y compartir la receta (PDF, link a la vista de invitado, texto) | J6 | Media |
 | **E04** | [Corregir](E04-Corregir.md) | El editor: arreglar un error, anotar una variación, crear una receta, poner los tags especiales y la duración | J7 | Baja |
 | **E05** | [Cimientos](E05-Cimientos.md) | El esquema del `.md`, la carpeta base y las categorías en Drive, el índice y su copia local, los estados degradados, Ajustes | J8, transversal | Alta |
-| **E06** | [Planificar](E06-Planificar.md) `[exploración]` | Plan semanal y lista de compras | J9 | **Fuera de la primera implementación** |
+| **E06** | [Planificar](E06-Planificar.md) | El plan de siete días sin fechas y la lista de compras que sale de él | J9 | Baja |
 
 ---
 
@@ -52,12 +52,11 @@ todo se resuelve contra el índice, sin abrir ningún `.md`.
 editor existe para corregir, no para componer, porque el input principal son las
 sesiones con agentes.
 
-**E06 es exploración** y está escrita con menos detalle que las otras cinco a
-propósito: especificarla al mismo nivel la instalaría. No compromete nada y no
-está implementada: figura en [`BACKLOG.md`](../../../BACKLOG.md), en la raíz del
-repo. El principio 6 la mantiene fuera de la navegación primaria y con costo de
-retiro bajo: sacarla tiene que costar borrar una pantalla, no rediseñar el
-producto.
+**E06 se construyó con costo de retiro bajo.** J9 es el único job que cambiaría
+la conducta del usuario en vez de acompañarla, así que el plan entra por una
+sola entrada del menú lateral, no toca el índice ni el esquema del `.md`, y
+ninguna otra épica lo nombra: sacarlo cuesta borrar una entrada, tres pantallas,
+dos módulos y un archivo de Drive (principio 6).
 
 ---
 

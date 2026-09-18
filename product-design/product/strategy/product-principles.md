@@ -29,15 +29,15 @@ real del producto que desempata.
 | 3 | Se lee lo que llega, y se dice qué le falta | Rigor del esquema vs. tolerancia al dato ajeno | Qué hace la app con una receta sin ingredientes estructurados |
 | 4 | Avisa, ofrece la salida, y no insiste | Automatismo silencioso vs. control del usuario | Qué pasa cuando se corta la red al guardar |
 | 5 | Se navega para llegar y para pasear | Clasificar vs. acceder | Qué ocupa la pantalla principal |
-| 6 | Lo hipotético se explora; no se instala | Ambición del producto vs. evidencia de conducta | Si el planificador entra en la navegación primaria |
+| 6 | Lo hipotético se explora; no se instala | Ambición del producto vs. evidencia de conducta | Cuánto del producto ocupa el plan de la semana |
 | 7 | La misma app en cualquier pantalla | Optimizar para un contexto vs. servir a todos | Para qué ancho se diseña, y qué tamaño tiene un control |
 
 ---
 
 ## 1. El archivo es el producto; la app es una vista
 
-Todo dato que le importe al usuario —receta, borrador, plan semanal, lista de
-compras— **nace como archivo en Drive**, no como estado de la app que después se
+Todo dato que le importe al usuario —receta, borrador, plan de la semana—
+**nace como archivo en Drive**, no como estado de la app que después se
 sincroniza. La app puede desaparecer entera y no se pierde nada.
 
 La regla cae sobre **el dato del usuario**, no sobre el mecanismo. El índice en
@@ -52,7 +52,7 @@ vive primero adentro.
 **En la práctica, esto significa:**
 
 - Un borrador es un `.md` en Drive desde el primer momento, no una nota local que sube después. No es solo doctrina: es lo que permite empezar en el Android y seguir en la Mac.
-- Un plan semanal, si J9 alguna vez se construye, es un archivo. Por homogeneidad y simplicidad, aunque ahí la portabilidad importe menos.
+- El plan de la semana es un archivo, `_plan.md`. Por homogeneidad y simplicidad, aunque ahí la portabilidad importe menos.
 - Cualquier estructura derivada —el índice, su copia en el navegador— tiene que poder borrarse y reconstruirse sin pérdida.
 - No existe un dato que solo la app sepa leer. Si hace falta inventar un formato, se elige el más aburrido que funcione.
 - **Sin red no hay captura.** No hay cola local ni copia offline que espere para subir: si Drive no está, la operación falla y se avisa (principio 4). Es la consecuencia dura de este principio y se acepta como tal.
@@ -190,15 +190,17 @@ receta.
 
 **En la práctica, esto significa:**
 
-- J9 no entra en la navegación primaria, no define entidades nuevas en el núcleo, y no condiciona el diseño de los jobs validados.
-- Si se construye, cumple igual el principio 1: el plan semanal es un archivo.
-- Sacarlo tiene que costar borrar una pantalla, no rediseñar el producto.
+- J9 no define entidades nuevas en el núcleo ni condiciona el diseño de los jobs validados: `_indice` no cambia —ni hoja ni columna— y el esquema del `.md` de receta tampoco.
+- Cumple igual el principio 1: el plan de la semana es un archivo, `_plan.md`.
+- Sacarlo cuesta borrar una entrada del menú, tres pantallas, dos módulos y un archivo de Drive. Nada más del producto cambia.
 - Lo mismo vale para cualquier job futuro que aparezca sin conducta observada.
 
-**Ejemplo de arbitraje:** si el planificador entra o no en la barra de
-navegación primaria. Este principio dice que no: la navegación primaria la
-ocupan los jobs validados. El planificador se explora por una entrada
-secundaria, y se promueve si el uso lo justifica.
+**Ejemplo de arbitraje:** desde dónde se llega al plan. Es **una sola entrada,
+en el menú lateral**, entre Borradores y Nueva receta: alcanzable de un toque,
+sin gastar lugar en el Recetario y sin que la receta abierta ofrezca
+planificar. Lo que este principio exige no es que esté escondido, sino que
+sacarlo sea borrar una línea; un bloque en el home o un botón en la receta lo
+hubieran repartido por el producto.
 
 ---
 
@@ -238,7 +240,7 @@ Los principios tienen que desempatar decisiones reales del producto.
 | Decisión | Principio | Cómo desempata |
 |---|---|---|
 | ¿Qué ocupa la pantalla principal? | **5** | Búsqueda arriba, categorías abajo. La grilla de tiles no tiene el primer lugar. |
-| ¿El planificador entra en la navegación primaria? | **6** | No. Es el único job hipotético; entra como exploración por una entrada secundaria y con costo de retiro bajo. |
+| ¿Cuánto del producto ocupa el plan de la semana? | **6** | Una sola entrada en el menú lateral. Es el único job que cambiaría la conducta: se construye con costo de retiro bajo, sin tocar el índice ni el esquema del `.md`. |
 | ¿Cuánto muestra la receta? | **3** + **7** | La lectura muestra la receta entera tal como está en el archivo, incluido el tag `incompleta`: la app no decide qué esconder de un dato que no controla. El modo cocina muestra sólo ingredientes y pasos, con un conmutador; los tamaños salen de la regla de controles del principio 7. |
 | ¿Qué pide el Share Target al capturar? | **2** | El título, escrito por el usuario. Nada más. |
 | ¿Qué pasa si se comparte sin red? | **1** + **4** | Falla y avisa. No hay cola local. Está aceptado explícitamente, aun sabiendo que es el riesgo que J2 existe para eliminar. |

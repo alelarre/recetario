@@ -48,8 +48,8 @@ después las cinco restantes.
 
 - **Las tres variantes que el Hito 6 marcó para comparar están resueltas** en el
   Hito 11: la receta es una pila de fichas con la foto dentro de la primera; el
-  Recetario mantiene el contador como ícono y el planificador al pie; la lista de
-  categoría usa la tarjeta de 80 px. Las descartadas se sacaron.
+  Recetario mantiene el contador como ícono; la lista de categoría usa la
+  tarjeta de 80 px. Las descartadas se sacaron.
 - **1280 px** en Recetario, Editor y Borradores, que son los tres contextos
   reales de escritorio. El resto, solo 390 px.
 - **Dos estados no felices**: sin resultados e incompleta. El resto queda

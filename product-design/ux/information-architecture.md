@@ -210,8 +210,8 @@ versiones que el formato no aguanta sin dejar de ser legible.
 | **Índice** | Google Sheet `_indice` en la carpeta base, con cuatro hojas: `recetas`, `meta`, `borradores` y `categorias` | Al primer arranque, o al reindexar | Se puede borrar en cualquier momento: se reconstruye |
 | **Copia local del índice** | `localStorage` del navegador | Al cargar o reindexar; cada escritura la deja al día | Con *Borrar datos locales*, o cuando deja de coincidir con `_indice` |
 | **Receta compartida** | En ningún lado: un PDF, un texto o un link que lleva la receta comprimida en el fragmento | Al compartir | Es una copia del momento; nada queda publicado en Drive |
-| **Plan semanal** *(condicional)* | Archivo en Drive | Solo si J9 se construye | |
-| **Lista de compras** *(condicional)* | Archivo en Drive | Deriva del plan | |
+| **Plan de la semana** | **`_plan.md`** en la carpeta base, al lado de `_indice` | Al primer cambio, si el archivo no existía | Con *Reiniciar el plan*, que lo deja vacío. El archivo queda |
+| **Lista de compras** | En ningún lado: se arma al entrar, desde el plan y los `.md` de sus recetas | Al abrirla | Al salir de la pantalla |
 
 ### 2.1 Las reglas del modelo
 
@@ -240,6 +240,14 @@ la nota como cuerpo entero—, y el índice tiene una hoja `borradores` con lo q
 la lista y el contador necesitan: id, nombre del archivo, título y cuándo se
 capturó. No es una receta: el formato es otro, la hoja es otra, y buscar recetas
 no lo encuentra.
+
+**El plan es un solo archivo y no está en el índice.** `_plan.md` vive en la
+carpeta base, al lado de `_indice`, y se lo busca por nombre la primera vez que
+se abre el plan en la sesión. Es texto plano —un `## <Día>` por día con algo
+cargado, y una línea `- <Momento>: [título](drive:<fileId>)` por receta—, sin
+frontmatter y sin fechas. `_indice` no cambia por él: ni hoja ni columna. Como
+`_borradores/`, el `_` lo deja fuera de las categorías y del reindexado. **La
+lista de compras no se guarda en ningún lado:** deriva del plan cada vez.
 
 **Una receta se identifica por su `fileId` de Drive.** Ni la ruta ni el nombre
 del archivo son identidad: cambiar la categoría mueve el archivo entre carpetas y
@@ -346,8 +354,9 @@ se reconoce abre el Recetario.
 | **Selector de carpeta** | `#/carpeta?id=&nombre=` | Elegir o crear la carpeta base. Aparece sola cuando no hay una carpeta marcada, o hay más de una, y desde *Ajustes → Recetario → Cambiar carpeta*. | Transversal | — |
 | **Conexión** | *(sin ruta: es el arranque)* | Primer arranque y consentimiento de Google; también el progreso de crear el índice. | Transversal | — |
 | **Vista de invitado** | `#/ver?r=<receta>` · `#/ver/cocinar?r=<receta>` | La receta que viaja en un link compartido, sin login: se lee y se cocina, y nada más. No muestra tags. | Compartir | — |
-| **Planificador** `[condicional]` | — | Dos comidas por día, siete días. | Planificar | J9 |
-| **Lista de compras** `[condicional]` | — | Los ingredientes de lo planificado. | Planificar | J9 |
+| **Plan de la semana** | `#/plan` | Siete días desde hoy, dos comidas cada uno, y cada comida una lista de recetas. Al pie, la lista de compras y reiniciar. | Planificar | J9 |
+| **Agregar al plan** | `#/plan/agregar?dia=&momento=` | La búsqueda del Recetario y el bloque *Menú diario*: tocar una receta la suma a esa comida y vuelve. | Planificar | J9 |
+| **Lista de compras** | `#/plan/compras` | Los ingredientes de todo lo cargado, en dos bloques, y compartir como texto. | Planificar | J9 |
 
 **La ficha de compartir no es una pantalla**: es estado de la Receta, se abre al
 pie y volver la cierra.
@@ -360,9 +369,6 @@ pantalla encendida—. Lo que se agregue a la Receta no aparece ahí sin querer.
 **El Share Target llega por la query**, antes del `#`: la app pasa `url` y `text`
 a `#/capturar`. El título de la página compartida no viaja: el de la receta lo
 escribe el usuario.
-
-Las dos últimas pantallas existen solo si J9 se construye
-(`../../BACKLOG.md`).
 
 ---
 
@@ -379,10 +385,10 @@ otro.
 
 **Ajustes** es secundario, y se llega desde el menú lateral, como los otros dos.
 
-**Planificador**, si existe, tiene su entrada **en el Recetario, debajo de las
-categorías** — visible, alcanzable, y sin ser uno de los lugares primarios. El
-principio 6 pide que no ocupe navegación primaria y que sacarlo cueste borrar una
-pantalla; una entrada en el home cumple las dos cosas.
+**El plan de la semana** se alcanza desde el menú lateral, como Ajustes, y no es
+uno de los dos lugares primarios: es una entrada sola, que es lo que el
+principio 6 pide para que sacarlo cueste borrar una línea. El Recetario no lo
+nombra y la receta abierta tampoco.
 
 **Capturar no es un lugar.** La captura entra por el Share Target del sistema
 operativo, desde la app donde estabas. No hay botón de "capturar" en la
@@ -413,7 +419,9 @@ acción asociada, así que no interrumpe (principio 4).
 | Compartir una receta | 2 | Receta → Compartir → PDF, Link o Texto |
 | Un borrador | 2 | Menú → Borradores → borrador |
 | Corregir la receta que estoy leyendo | 1 | Receta → editar |
-| El planificador `[condicional]` | 2 | Recetario → planificador |
+| El plan de la semana | 2 | Menú → Plan de la semana |
+| Cargar una receta en una comida | 4 | Plan → `+` → elegir la receta |
+| La lista de compras | 3 | Menú → Plan → Lista de compras |
 | Reindexar | 3 | Menú → Ajustes → Reindexar |
 | Gestionar categorías | 3 | Menú → Ajustes → Categorías |
 
@@ -440,13 +448,14 @@ regla del sistema, no una decisión por pantalla.
 
 ### 4.6 Un menú lateral, sin barra inferior
 
-La navegación primaria vive en un **menú lateral** con cuatro entradas, cada una
+La navegación primaria vive en un **menú lateral** con cinco entradas, cada una
 con su nombre y su ícono:
 
 | | |
 |---|---|
 | **Inicio** | El punto de entrada: la pantalla del Recetario. Se llama *Inicio* porque «Recetario» ya es la marca de arriba del menú |
 | **Borradores** | La cola, con su contador |
+| **Plan de la semana** | La única entrada al plan, con el ícono del calendario |
 | **Nueva receta** | Una acción, no un lugar: nunca queda marcada |
 | **Ajustes** | Secundario, pero alcanzable desde cualquier parte |
 
@@ -466,7 +475,7 @@ CSS.
 menú, y sobre la hamburguesa cuando está cerrado. Sin eso, con el menú cerrado no
 habría manera de saber que hay algo esperando.
 
-**No hay barra inferior.** El lateral resuelve las cuatro entradas sin gastar
+**No hay barra inferior.** El lateral resuelve las cinco entradas sin gastar
 pantalla en el teléfono y sin desperdiciar el ancho en escritorio.
 
 **Capturar sigue sin estar en la navegación** (§4.1): entra por el Share Target.
@@ -483,7 +492,7 @@ Seis fichas, en este orden: lo de la cuenta y el índice primero, lo raro al fin
 | **Recetario** | La carpeta base en uso con *Cambiar carpeta*, y cuántas categorías hay con el link a *Categorías* |
 | **Índice** | Cuándo fue el último reindexado y *Reindexar*; mientras reindexa, el progreso |
 | **Archivos locales** | *Borrar datos locales*: descarta la copia del índice y recarga |
-| **Avisos** | Lo que no interrumpe: los `.md` ignorados por no tener título, con su nombre, y si hay más de una planilla `_indice` |
+| **Avisos** | Lo que no interrumpe: los `.md` ignorados por no tener título, con su nombre, y si hay más de una planilla `_indice` o más de un `_plan.md` |
 | **Registro de actividad** | Lo que pasó al abrir: cuándo, la fecha de `_indice`, si la copia local coincidió, cuántas recetas, borradores y categorías hay, y si se reindexó y por qué |
 
 Mientras reindexa no se ofrece *Cambiar carpeta*, *Categorías*, *Reindexar* ni

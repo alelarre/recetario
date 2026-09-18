@@ -29,6 +29,11 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   sirve para funcionar sin conexión.
 - **Los borradores son `.md` aparte**, uno por archivo en `_borradores/`, con
   formato propio: título, fuente, capturado y la nota. Borrar manda a la papelera.
+- **El plan de la semana es otro `.md`**, `_plan.md`, en la carpeta base y al
+  lado de `_indice`: siete días sin fechas que arrancan en hoy, con dos comidas
+  cada uno y una lista de recetas en cada comida. No está en el índice —se lo
+  busca por nombre— y cada cambio lo reescribe entero. La lista de compras
+  deriva del plan y no se guarda en ningún lado.
 - **El input principal no es el editor**, son sesiones con agentes que reciben
   una fuente (PDF, foto, video, sitio web) y escriben el `.md`. El editor existe
   para corregir. Desde un borrador, «Convertir con Claude» arma el pedido y lo
@@ -64,7 +69,7 @@ Nada del código depende de `product-design/`. **Todo el producto vive en `src/`
 |---|---|
 | Entrada | `inicio.ts` decide entre `main.ts` (la app, con login) e `invitado.ts` (la vista de una receta compartida, sin login). `main.ts` cablea rutas, acciones y pantallas. |
 | Google | `auth.ts`, `drive.ts`, `sheets.ts`; los tipos de Google Identity Services están escritos a mano en `gis.d.ts` (el SDK se carga por `<script>`). `config.ts` tiene el client ID, el scope, los nombres fijos y `SCHEMA_VERSION`. |
-| Dominio | `recipe.ts` (parsear y escribir el `.md`), `borrador.ts`, `catalogo.ts` (la fila del índice, tags reservados, búsqueda), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts`, `conversion.ts` (el pedido a Claude y lo que vuelve), `tipos.ts`. |
+| Dominio | `recipe.ts` (parsear y escribir el `.md`), `borrador.ts`, `plan.ts` (el `.md` del plan de la semana), `compras.ts` (la lista que sale del plan, y su texto), `catalogo.ts` (la fila del índice, tags reservados, búsqueda), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts`, `conversion.ts` (el pedido a Claude y lo que vuelve), `tipos.ts`. |
 | Compartir | `compartir.ts` (menú Compartir del sistema y portapapeles, con sus respaldos), `link-receta.ts` (la receta comprimida en el fragmento del link), `texto-receta.ts`, `pdf/` (pdfmake con Inter embebida), `cocina-control.ts` (modo cocina y pantalla encendida, compartido entre receta e invitado). |
 | UI | `src/ui/`: una pantalla por archivo, sobre `componentes.ts`, `iconos.ts`, `pintar.ts` y `fichas-receta.ts`; `router.ts` tiene las rutas. **`tokens.css` es el sistema del producto** —tokens y componentes— y se edita directamente; `base.css` es lo propio de cada pantalla. |
 | Imágenes | `src/categorias/*.webp`, el catálogo de fotos de categoría, importado con `import.meta.glob`: el nombre del archivo es la clave. |

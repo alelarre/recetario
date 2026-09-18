@@ -32,8 +32,8 @@ de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 - [ ] La caja de búsqueda está arriba, visible y ocupando lugar. **No detrás de un ícono.** Su texto de ayuda es *"Buscar receta o ingrediente"*.
 - [ ] Debajo de la búsqueda, el carrusel de tags (C02.6.4).
 - [ ] Las categorías van debajo, en grilla, bajo el rótulo *Categorías*.
-- [ ] Los destinos —Inicio, Borradores, Nueva receta y Ajustes— viven en el menú lateral (C02.1.3). El encabezado lleva sólo el título y, a la izquierda, el botón del menú con el contador de borradores encima (C01.5.1).
-- [ ] La entrada al planificador, si J9 existe, **debajo de todo** (C06.6.1).
+- [ ] Los destinos —Inicio, Borradores, Plan de la semana, Nueva receta y Ajustes— viven en el menú lateral (C02.1.3). El encabezado lleva sólo el título y, a la izquierda, el botón del menú con el contador de borradores encima (C01.5.1).
+- [ ] **El Recetario no nombra el plan de la semana:** su única entrada es la del menú (C06.5.1).
 - [ ] No hay barra de navegación inferior.
 
 #### C02.1.2 — Estados del Recetario *(J1, J5)*
