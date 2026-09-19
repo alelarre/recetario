@@ -46,4 +46,10 @@ describe('cómo responden los controles al toque', () => {
     expect(BASE).toContain('html:has(.hoja-compartir) { overflow: hidden; }');
     expect(BASE).toContain('.hoja-compartir .copia { overscroll-behavior: contain; }');
   });
+
+  it('el formulario del borrador tiene el ancho de la receta y del editor en pantalla ancha (C05.10.1)', () => {
+    const regla = BASE.slice(BASE.indexOf('.hoja {'), BASE.indexOf('}', BASE.indexOf('.hoja {')));
+    expect(regla).toContain('max-width: 680px');
+    expect(regla).toContain('margin: 0 auto');
+  });
 });

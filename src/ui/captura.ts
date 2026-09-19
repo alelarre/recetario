@@ -109,7 +109,10 @@ export function renderCaptura(
     (compartido ? '<h1>Guardar en Recetario</h1>' : '') +
     (error ? avisoAlGuardar(error) : '') +
     (aviso ? avisoSinAccion({ texto: aviso }) : '') +
-    campos +
+    // Un formulario para poder compararlo al salir: editando un borrador, salir
+    // con cambios pregunta antes (C04.1.1). `display: contents` no le cambia
+    // nada a la disposición.
+    '<form data-formulario style="display:contents" onsubmit="return false">' + campos + '</form>' +
     '<div class="pie2">' +
       '<button class="btn sec" data-accion="cancelar-captura">Cancelar</button>' +
       `<button class="btn prim" data-accion="guardar-captura"${vacio || guardando ? ' disabled' : ''}>` +

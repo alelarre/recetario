@@ -245,7 +245,9 @@ html:has(.hoja-compartir) { overflow: hidden; }
               background: none; border: 0;
               font-size: var(--txt-micro); line-height: 1.6; color: var(--fg-2);
               white-space: pre-wrap; word-break: break-word; }
-.hoja { min-height: 100%; display: flex; flex-direction: column; padding: var(--e-5) var(--e-4); }
+/* El mismo ancho máximo que el cuerpo de la receta y del editor (C05.10.1). */
+.hoja { min-height: 100%; display: flex; flex-direction: column; padding: var(--e-5) var(--e-4);
+        max-width: 680px; margin: 0 auto; }
 .hoja h1 { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0 0 var(--e-5); }
 .fnt { font-size: var(--txt-chico); color: var(--fg-2); background: var(--surface);
        border: 1px solid var(--borde); border-radius: var(--r-medio); padding: var(--e-3);

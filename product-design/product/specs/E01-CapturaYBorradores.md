@@ -180,6 +180,7 @@ mano. La conversión desde la fuente ocurre afuera, en una sesión con Claude.
 - [ ] Título, fuente, cuándo se capturó, la nota, si tiene, y debajo, **Fotos** (C01.6.4).
 - [ ] **Ir a la fuente** abre la URL fuera de la app. Si la fuente no es una URL, el control no aparece.
 - [ ] **Editar** abre el mismo formulario con el que se creó, precargado: título, fuente y nota, los tres editables. Va arriba a la derecha, en el encabezado.
+- [ ] Salir de la edición con cambios sin guardar —el volver del encabezado o el gesto de atrás— pregunta *«¿Salir sin guardar los cambios?»*, como el editor de recetas (C04.1.1). Desde el volver, salir deja el borrador en pantalla; desde el gesto de atrás, sigue a donde iba. *Cancelar* no pregunta.
 - [ ] **Crear la receta** abre el editor con lo que el borrador tenía (C01.6.3).
 - [ ] **La app no llama a ningún modelo**: **«Convertir con Claude»** arma el
   pedido y lo manda afuera, a una sesión de Claude, y **«Pegar receta»** trae

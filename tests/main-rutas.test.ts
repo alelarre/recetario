@@ -1459,6 +1459,59 @@ describe('main.ts: las rutas', () => {
     expect(app.innerHTML).toContain('data-accion="crear-receta"');
   });
 
+  describe('editar un borrador con cambios pregunta antes de salir', () => {
+    const FOCACCIA = { id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' };
+    const abrirEdicion = async () => {
+      estado.borradores = [FOCACCIA];
+      estado.formulario = { titulo: 'Focaccia', fuente: '', nota: '' };
+      const m = await montar();
+      await m.abrir('#/borradores/b1');
+      await m.tocar('editar-borrador');
+      return m;
+    };
+
+    it('con cambios, el atrás no se va: vuelve a la edición y pregunta', async () => {
+      const { abrir, app, empujados, preguntas } = await abrirEdicion();
+      estado.formulario = { titulo: 'Focaccia de romero', fuente: '', nota: '' };
+      await abrir('#/borradores');
+      expect(empujados).toEqual(['#/borradores/b1']);
+      expect(app.innerHTML).toContain('Editar borrador');
+      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
+    });
+
+    it('con cambios, el volver del encabezado pregunta en vez de cerrar la edición', async () => {
+      const { tocar, app, preguntas } = await abrirEdicion();
+      estado.formulario = { titulo: 'Focaccia de romero', fuente: '', nota: '' };
+      await tocar('volver');
+      expect(app.innerHTML).toContain('Editar borrador');
+      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
+    });
+
+    it('salir sin guardar desde el volver del encabezado muestra el borrador, no la lista', async () => {
+      const { tocar, app, vueltasAtras } = await abrirEdicion();
+      estado.formulario = { titulo: 'Focaccia de romero', fuente: '', nota: '' };
+      await tocar('volver');
+      await tocar('salir-sin-guardar');
+      expect(vueltasAtras).toHaveLength(0);
+      expect(app.innerHTML).toContain('data-accion="crear-receta"');
+    });
+
+    it('sin cambios, el volver cierra la edición sin preguntar', async () => {
+      const { tocar, app, preguntas } = await abrirEdicion();
+      await tocar('volver');
+      expect(preguntas).toEqual([]);
+      expect(app.innerHTML).toContain('data-accion="crear-receta"');
+    });
+
+    it('cancelar no pregunta: es descartar lo escrito a propósito', async () => {
+      const { tocar, app, preguntas } = await abrirEdicion();
+      estado.formulario = { titulo: 'Focaccia de romero', fuente: '', nota: '' };
+      await tocar('cancelar-captura');
+      expect(preguntas).toEqual([]);
+      expect(app.innerHTML).toContain('data-accion="crear-receta"');
+    });
+  });
+
   it('cancelar un borrador nuevo vuelve: `close()` no alcanza cuando la pestaña no la abrió un script', async () => {
     const { abrir, tocar, vueltasAtras } = await montar();
     await abrir('#/borradores');

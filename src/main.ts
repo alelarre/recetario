@@ -129,6 +129,18 @@ let confirmandoDescarte = false;
 /** El borrador se edita con el mismo formulario con el que se creó, precargado. */
 let editandoBorrador = false;
 /**
+ * La pregunta de salir sin guardar vino del volver del encabezado, que cierra
+ * la edición y deja el borrador, y no del gesto de atrás, que se va de él.
+ */
+let cerrandoEdicion = false;
+
+/** Deja de editar el borrador: sin foto del formulario, ya no hay cambios que cuidar. */
+const cerrarEdicion = (): void => {
+  editandoBorrador = false;
+  cerrandoEdicion = false;
+  editorAbierto = null;
+};
+/**
  * El editor abierto: su hash y cómo estaba el formulario al dibujarlo. Salir
  * con el formulario distinto pregunta antes (C04.1.1). La comparación es contra
  * esta foto, no contra el `.md` de Drive: no se lee nada para decidir.
@@ -670,6 +682,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     menuAbierto = false;
     confirmandoDescarte = false;
     editandoBorrador = false;
+    cerrandoEdicion = false;
     // Salir de la pantalla de la carpeta la cierra: lo que se estaba por usar no sigue.
     selector.confirmando = null;
     selector.error = '';
@@ -884,11 +897,14 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         const borrador = await borradorDePantalla(id);
         // Editar es el mismo formulario con el que se creó, precargado.
         if (editandoBorrador) {
-          return pintar(renderCaptura({
+          const html = renderCaptura({
             fuente: borrador.fuente, titulo: borrador.titulo, nota: borrador.nota,
             edicion: true, guardando: guardandoCaptura,
             ...(errorCaptura ? { error: errorCaptura } : {})
-          }));
+          });
+          // La foto contra la que se comparan los cambios se saca al entrar a
+          // editar; un redibujado —un error al guardar— no la reemplaza.
+          return editorAbierto ? pintar(html) : abrirEditor(html);
         }
         const fotos = await fotosDeBorrador(borrador);
         const visor = fotos.find(f => f.id === fotoAbierta)?.url;
@@ -1389,8 +1405,9 @@ app.addEventListener('click', async (e) => {
     fuenteCaptura = '';
     notaCaptura = '';
     fotosCaptura = [];
-    // Editando, cancelar vuelve al borrador sin tocarlo.
-    if (editandoBorrador) { editandoBorrador = false; return render(); }
+    // Editando, cancelar vuelve al borrador sin tocarlo, y sin preguntar:
+    // es descartar lo escrito a propósito.
+    if (editandoBorrador) { cerrarEdicion(); return render(); }
     // Compartida desde otra app, cerrar la pestaña es volver a donde estabas
     // (C01.2.2). Pero `close()` sólo funciona si la abrió un script: si no
     // —y si la captura se abrió a mano desde Borradores—, hay que volver por
@@ -1425,7 +1442,7 @@ app.addEventListener('click', async (e) => {
         await escribiendo(store.editarBorrador(id, { titulo, fuente, nota: notaCaptura }));
         // Lo guardado es lo que se muestra: volver al borrador no relee el `.md`.
         if (borradorLeido?.id === id) borradorLeido = { ...borradorLeido, titulo, fuente, nota: notaCaptura };
-        editandoBorrador = false;
+        cerrarEdicion();
         guardandoCaptura = false;
         tituloCaptura = '';
         notaCaptura = '';
@@ -1456,7 +1473,7 @@ app.addEventListener('click', async (e) => {
     irCerrando('#/borradores');
     return;
   }
-  if (accion === 'editar-borrador') { editandoBorrador = true; return render(); }
+  if (accion === 'editar-borrador') { editandoBorrador = true; editorAbierto = null; return render(); }
 
   // Las fotos. En la captura viven en memoria hasta Guardar; en el borrador,
   // sacar una la manda a la papelera y reescribe el `.md` en el momento, sin
@@ -1556,7 +1573,19 @@ app.addEventListener('click', async (e) => {
     // Editar un borrador no cambia la URL: es estado de la pantalla. Volver
     // cierra la edición y muestra el borrador, en vez de irse a la lista, que
     // es la entrada anterior del historial.
-    if (editandoBorrador) { editandoBorrador = false; return render(); }
+    if (editandoBorrador) {
+      // Con cambios, pregunta antes, igual que el gesto de atrás (C04.1.1).
+      if (editorAbierto && formularioActual() !== editorAbierto.formulario) {
+        cerrandoEdicion = true;
+        if (!document.querySelector('[data-salida]')) {
+          document.querySelector('[data-formulario]')?.insertAdjacentHTML('afterbegin', confirmacionSalida);
+        }
+        window.scrollTo?.(0, 0);
+        return;
+      }
+      cerrarEdicion();
+      return render();
+    }
     if (vistaActual?.vista === 'cocinar') await cocina.soltarPantalla();
     if (history.length <= 1) {
       // Sin entrada previa —por ejemplo, la pregunta «¿De qué borrador…»
@@ -1572,8 +1601,15 @@ app.addEventListener('click', async (e) => {
     return history.back();
   }
   if (accion === 'editar') { location.hash = `#/r/${idActual()}/editar`; return; }
-  if (accion === 'seguir-editando') { document.querySelector('[data-salida]')?.remove(); return; }
+  if (accion === 'seguir-editando') {
+    cerrandoEdicion = false;
+    document.querySelector('[data-salida]')?.remove();
+    return;
+  }
   if (accion === 'salir-sin-guardar') {
+    // Desde el volver del encabezado, salir es dejar de editar: el borrador
+    // sigue en pantalla, como cuando no había cambios.
+    if (editandoBorrador && cerrandoEdicion) { cerrarEdicion(); return render(); }
     editorAbierto = null;
     // Mismo caso que arriba: sin entrada previa —el editor de una receta
     // recibida por Share, abierto con `replace`— volver no puede intentar
