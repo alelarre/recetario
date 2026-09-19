@@ -1,4 +1,5 @@
 import type { Content, ContentText } from 'pdfmake/interfaces';
+import { idDeDrive } from '../fotos-receta.js';
 
 export function escapar(texto: unknown): string {
   return String(texto ?? '')
@@ -22,6 +23,8 @@ export interface TramoEnLinea {
   link?: string;
   /** El destino de una imagen, ya validado; `texto` queda vacío. */
   imagen?: string;
+  /** El texto entre corchetes de una imagen (`![epígrafe](…)`), si lo trae. */
+  epigrafe?: string;
 }
 
 export type Bloque =
@@ -33,7 +36,7 @@ type BloqueLista = Extract<Bloque, { items: unknown }>;
 // Imagen, link, negrita, itálica: en cada posición gana el primero que calza, y
 // adentro de la negrita y la itálica se vuelve a buscar. Nota: URLs con
 // paréntesis anidados (ej: alert(1)) se truncan en el primer ), limitación conocida.
-const EN_LINEA = /!\[[^\]]*\]\(([^)\s]+)\)|\[([^\]]+)\]\(([^)\s]+)\)|\*\*(.+?)\*\*|\*(.+?)\*/g;
+const EN_LINEA = /!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]+)\]\(([^)\s]+)\)|\*\*(.+?)\*\*|\*(.+?)\*/g;
 
 function enLinea(fuente: string, formato: Pick<TramoEnLinea, 'negrita' | 'italica'>): TramoEnLinea[] {
   const salida: TramoEnLinea[] = [];
@@ -43,9 +46,9 @@ function enLinea(fuente: string, formato: Pick<TramoEnLinea, 'negrita' | 'italic
     const inicio = m.index ?? 0;
     suelto(fuente.slice(desde, inicio));
     desde = inicio + m[0].length;
-    const [entero, imagen, textoLink, destino, negrita, italica] = m;
+    const [entero, epigrafe, imagen, textoLink, destino, negrita, italica] = m;
     if (imagen !== undefined) {
-      if (esDestinoSeguro(imagen)) salida.push({ texto: '', imagen, ...formato });
+      if (esDestinoSeguro(imagen)) salida.push({ texto: '', imagen, ...(epigrafe ? { epigrafe } : {}), ...formato });
       else suelto(entero);
     } else if (textoLink !== undefined && destino !== undefined) {
       if (esDestinoSeguro(destino)) salida.push({ texto: textoLink, link: destino, ...formato });
@@ -99,9 +102,26 @@ export function bloques(texto: unknown): Bloque[] {
   return salida;
 }
 
+/**
+ * El `<img>` para una URL ya resuelta (nunca `foto:N`, eso lo resuelve
+ * `resolverReceta`): de Drive lleva `data-drive` y sin `src`, así se dibuja
+ * como el recuadro de `imagenes.ts` hasta que llegue el blob; cualquier otra
+ * URL se usa tal cual, con carga diferida.
+ */
+export function imgDe(url: string, clase?: string): string {
+  const claseAttr = clase ? ` class="${escapar(clase)}"` : '';
+  const id = idDeDrive(url);
+  return id !== null
+    ? `<img data-drive="${escapar(id)}" alt=""${claseAttr}>`
+    : `<img src="${escapar(url)}" alt="" loading="lazy"${claseAttr}>`;
+}
+
 export function tramosAHtml(tramos: TramoEnLinea[]): string {
   return tramos.map(t => {
-    if (t.imagen) return `<img src="${escapar(t.imagen)}" alt="" loading="lazy">`;
+    if (t.imagen) {
+      const epigrafe = t.epigrafe ? `<span class="epigrafe">${escapar(t.epigrafe)}</span>` : '';
+      return `<span class="foto-linea">${imgDe(t.imagen)}${epigrafe}</span>`;
+    }
     let html = escapar(t.texto);
     if (t.link) html = `<a href="${escapar(t.link)}" target="_blank" rel="noopener">${html}</a>`;
     if (t.italica) html = `<em>${html}</em>`;

@@ -76,6 +76,25 @@ describe('filaDesde', () => {
     expect(fila[COLUMNAS.indexOf('foto')]).toBe('https://x/y.jpg');
   });
 
+  it('la fila resuelve foto:N a la URL de su línea en el depósito', () => {
+    const receta = parse(`---
+titulo: A
+foto: foto:3
+---
+
+## Fotos
+- 3: https://drive.google.com/file/d/XYZ/view
+`);
+    const fila = filaDesde(receta, { id: 'f1' });
+    expect(fila[COLUMNAS.indexOf('foto')]).toBe('https://drive.google.com/file/d/XYZ/view');
+  });
+
+  it('foto:N sin depósito da cadena vacía, no "foto:N"', () => {
+    const receta = parse('---\ntitulo: A\nfoto: foto:9\n---\n');
+    const fila = filaDesde(receta, { id: 'f1' });
+    expect(fila[COLUMNAS.indexOf('foto')]).toBe('');
+  });
+
   it('los ingredientes van tal como están escritos, sin bajar a minúsculas', () => {
     const receta = parse('---\ntitulo: A\n---\n## Ingredientes\n- Merluza o pescadilla — 1 kg');
     expect(filaDesde(receta, { id: 'f1' })[COLUMNAS.indexOf('ingredientes')]).toBe('Merluza o pescadilla');

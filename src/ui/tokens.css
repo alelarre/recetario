@@ -264,6 +264,14 @@ button.chip { cursor: pointer; }
 .pasos li::before { content: counter(p) '.'; color: var(--fg-3); font-variant-numeric: tabular-nums;
                     font-weight: 600; flex: 0 0 1.6em; }
 
+/* ---- Foto en línea del cuerpo de la receta (spec §3, §6) ---- */
+.foto-linea { display: block; width: 100%; margin: var(--e-2) 0; border-radius: var(--r-foto); overflow: hidden; }
+.foto-linea img { display: block; width: 100%; }
+.foto-linea .epigrafe { display: block; margin-top: var(--e-1); font-size: var(--txt-chico); color: var(--fg-3); }
+/* Una imagen de Drive sin resolver todavía —o que ya no está—: el recuadro
+   del tamaño que va a tener, hasta que `imagenes.ts` le ponga el `src`. */
+img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; background: var(--surface); }
+
 /* ---- §5.1 Spinner ---- */
 .spin { width: 24px; height: 24px; border: 2px solid var(--borde-fuerte);
         border-top-color: var(--fg-3); border-radius: 50%; animation: g .9s linear infinite; margin: var(--e-6) auto; }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { aHtml, escapar, aTexto, aPdf, tramosEnLinea, tramosDeFuente } from '../src/ui/markdown.js';
+import { aHtml, escapar, aTexto, aPdf, tramosEnLinea, tramosDeFuente, imgDe } from '../src/ui/markdown.js';
 
 describe('aHtml', () => {
   it('escapa el HTML de entrada', () => {
@@ -17,6 +17,29 @@ describe('aHtml', () => {
 
   it('convierte imágenes', () => {
     expect(aHtml('![](https://a/1)')).toContain('<img src="https://a/1"');
+  });
+
+  it('una imagen va en su span .foto-linea, sin epígrafe si no lo trae', () => {
+    expect(aHtml('![](https://a/1.jpg)')).toBe(
+      '<p><span class="foto-linea"><img src="https://a/1.jpg" alt="" loading="lazy"></span></p>'
+    );
+  });
+
+  it('con epígrafe, suma el span .epigrafe con el texto entre corchetes', () => {
+    expect(aHtml('![Así tiene que quedar](https://a/1.jpg)')).toBe(
+      '<p><span class="foto-linea"><img src="https://a/1.jpg" alt="" loading="lazy">'
+      + '<span class="epigrafe">Así tiene que quedar</span></span></p>'
+    );
+  });
+
+  it('una imagen de Drive dibuja data-drive, no src', () => {
+    const html = aHtml('![](https://drive.google.com/file/d/ABC123/view)');
+    expect(html).toContain('<img data-drive="ABC123" alt="">');
+    expect(html).not.toContain('src=');
+  });
+
+  it('el epígrafe escapa HTML', () => {
+    expect(aHtml('![<script>](https://a/1.jpg)')).toContain('<span class="epigrafe">&lt;script&gt;</span>');
   });
 
   it('convierte párrafos', () => {
@@ -131,8 +154,8 @@ describe('aHtml', () => {
     });
 
     it('aceptan https://', () => {
-      const html = aHtml('![](https://drive.google.com/file/d/ABC/view)');
-      expect(html).toContain('<img src="https://drive.google.com/file/d/ABC/view"');
+      const html = aHtml('![](https://ejemplo.com/foto.jpg)');
+      expect(html).toContain('<img src="https://ejemplo.com/foto.jpg"');
     });
 
     it('aceptan http://', () => {
@@ -171,6 +194,30 @@ describe('tramosEnLinea', () => {
   });
   it('un destino inseguro queda como texto', () => {
     expect(tramosEnLinea('[a](javascript:alert(1))')).toEqual([{ texto: '[a](javascript:alert(1)' }, { texto: ')' }]);
+  });
+  it('una imagen con epígrafe lo captura aparte de la URL', () => {
+    expect(tramosEnLinea('![Así tiene que quedar](https://y.com/i.png)')).toEqual([
+      { texto: '', imagen: 'https://y.com/i.png', epigrafe: 'Así tiene que quedar' }
+    ]);
+  });
+});
+
+describe('imgDe', () => {
+  it('un link de Drive da data-drive, sin src', () => {
+    expect(imgDe('https://drive.google.com/file/d/ABC123/view')).toBe('<img data-drive="ABC123" alt="">');
+  });
+  it('cualquier otra URL da src con loading lazy', () => {
+    expect(imgDe('https://ejemplo.com/foto.jpg')).toBe('<img src="https://ejemplo.com/foto.jpg" alt="" loading="lazy">');
+  });
+  it('con clase, el <img> la lleva en class', () => {
+    expect(imgDe('https://ejemplo.com/foto.jpg', 'foto-cabecera'))
+      .toBe('<img src="https://ejemplo.com/foto.jpg" alt="" loading="lazy" class="foto-cabecera">');
+    expect(imgDe('https://drive.google.com/file/d/ABC123/view', 'foto-cabecera'))
+      .toBe('<img data-drive="ABC123" alt="" class="foto-cabecera">');
+  });
+  it('escapa el id de Drive y la URL externa', () => {
+    expect(imgDe('https://drive.google.com/file/d/ab"c/view')).toBe('<img data-drive="ab&quot;c" alt="">');
+    expect(imgDe('https://ejemplo.com/"><script>.jpg')).not.toContain('<script>');
   });
 });
 
