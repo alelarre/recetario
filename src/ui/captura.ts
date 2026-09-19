@@ -1,20 +1,27 @@
 /**
  * La captura del Share Target (mockup 07).
  *
- * El flujo más crítico del producto y la pantalla más simple: la fuente ya
- * viene cargada y no se edita, el único campo es el título, y guardar escribe
- * el `.md` del borrador y cierra. Sin categoría, sin tags y
- * sin notas: cada campo de más es una razón para no capturar (C01.2.1).
+ * El flujo más crítico del producto y la pantalla más simple: lo compartido
+ * ya viene cargado —el link como fuente, que no se edita, y el resto del
+ * texto en la nota—, el título es opcional, y guardar escribe el `.md` del
+ * borrador y cierra. Sin categoría ni tags: cada campo de más es una razón
+ * para no capturar (C01.2.1).
  *
- * Sin fuente es «Agregar a mano» desde Borradores: ahí la fuente sí se
- * escribe, porque no vino de ningún lado (C01.4.3).
+ * Agregado a mano desde Borradores, la fuente sí se escribe, porque no vino
+ * de ningún lado (C01.4.3).
  */
 import { escapar } from './markdown.js';
 import { avisoAlGuardar, encabezado } from './componentes.js';
+import { sePuedeGuardar } from '../borrador.js';
 
 export interface OpcionesCaptura {
-  /** Lo que compartió la app de origen. Vacío cuando se agrega a mano. */
+  /** El link que compartió la app de origen. Vacío cuando se agrega a mano, o si lo compartido no traía link. */
   fuente: string;
+  /**
+   * Llegó del menú Compartir. Sin decirlo, se deduce de la fuente; hay que
+   * decirlo cuando lo compartido es un texto sin link.
+   */
+  compartido?: boolean;
   titulo: string;
   /** Texto libre, opcional: lo que haya que recordar del borrador. */
   nota?: string;
@@ -28,17 +35,17 @@ export interface OpcionesCaptura {
 }
 
 export function renderCaptura(
-  { fuente, titulo, nota = '', edicion, guardando, error }: OpcionesCaptura
+  { fuente, titulo, nota = '', compartido: vinoCompartido, edicion, guardando, error }: OpcionesCaptura
 ): string {
-  const sinTitulo = !titulo.trim();
+  const vacio = !sePuedeGuardar({ fuente, nota });
   const fuenteVisible = fuente.replace(/^https?:\/\//i, '');
   // Compartido desde otra app: pantalla efímera encima de lo que el usuario
   // estaba haciendo, sin encabezado ni volver, y se sale con Cancelar
   // (C01.2.2). Agregado a mano o editado desde Borradores es una pantalla más
   // de la app, y lleva encabezado y volver como todas.
-  const compartido = !!fuente && !edicion;
+  const compartido = (vinoCompartido ?? !!fuente) && !edicion;
 
-  const campoTitulo = '<label class="campo"><span>Título</span>' +
+  const campoTitulo = '<label class="campo"><span>Título (opcional)</span>' +
     `<input name="titulo" value="${escapar(titulo)}" autofocus placeholder="Pasta con berenjenas"></label>`;
   // Lo que haya que recordar y no entre en el título: «la versión sin
   // lactosa», «probarla con menos sal». Opcional.
@@ -78,7 +85,7 @@ export function renderCaptura(
   // único que hay que escribir. Escribiendo o editando, el título va primero,
   // que es lo que identifica al borrador.
   const campos = compartido
-    ? `<div class="fnt">${escapar(fuenteVisible)}</div>` + campoTitulo + campoNota
+    ? (fuente ? `<div class="fnt">${escapar(fuenteVisible)}</div>` : '') + campoTitulo + campoNota
     : campoTitulo +
       '<label class="campo"><span>Fuente</span>' +
       `<input name="fuente" value="${escapar(fuente)}" placeholder="Una URL, o dónde está anotada"></label>` +
@@ -93,7 +100,7 @@ export function renderCaptura(
     campos +
     '<div class="pie2">' +
       '<button class="btn sec" data-accion="cancelar-captura">Cancelar</button>' +
-      `<button class="btn prim" data-accion="guardar-captura"${sinTitulo || guardando ? ' disabled' : ''}>` +
+      `<button class="btn prim" data-accion="guardar-captura"${vacio || guardando ? ' disabled' : ''}>` +
         `${guardando ? 'Guardando…' : 'Guardar'}</button>` +
     '</div>' +
   '</div>';

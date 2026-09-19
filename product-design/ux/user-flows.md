@@ -61,16 +61,17 @@ Estoy viendo un reel / una página / un video
   ▸ lo compartido llega en la query y la app lo pasa a #/capturar
   ⚑ ¿lo compartido es una receta en .md?
       sí  → no es una captura: sigue en F2, «La vuelta»
-  ▸ se abre la pantalla Captura —«Guardar en Recetario»—, con la fuente ya cargada
-  → escribo el título          ⚑ único campo obligatorio; la nota es opcional
-  → Guardar
+  ▸ se abre la pantalla Captura —«Guardar en Recetario»—: el link como fuente,
+    y lo que sobró del texto en la nota
+  → escribo el título, si quiero   ⚑ opcional: sin título, «Borrador dd/mm hh:mm»
+  → Guardar                        ⚑ hace falta fuente o nota
   ▸ se escribe el .md del borrador en _borradores/ y su fila en la hoja borradores
   ▸ la app se cierra y vuelvo a donde estaba
 ```
 
 **Decisiones que este flujo fija:**
 
-- **Un solo campo obligatorio.** No pide categoría, ni tags (principio 2). La fuente viene de lo compartido y no se escribe a mano: muchas apps mandan el link en el texto, así que viajan los dos. El título de la página no viaja: el de la receta lo escribe el usuario. La nota está para lo que haga falta anotar, y no se exige.
+- **Compartir y guardar alcanza.** No pide categoría, ni tags (principio 2), y el título es opcional. Lo único que se exige es fuente o nota, y lo compartido ya trae una. La fuente es el link —`url`, o el primero que haya en el texto, porque muchas apps lo mandan ahí— y no se escribe a mano; el resto del texto va a la nota. El título de la página no viaja: el de la receta lo escribe el usuario, si quiere.
 - **La app no queda abierta.** La captura termina donde empezó: en la app donde estaba. Si el navegador no deja cerrar la pestaña, queda en Borradores, que es donde está el borrador nuevo.
 - **Se escribe en Drive, no local.** Principio 1.
 

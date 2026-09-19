@@ -46,6 +46,7 @@ import { textoReceta } from './texto-receta.js';
 import type { EstadoCompartir } from './ui/compartir.js';
 import type { RecetaCreada } from './compartido.js';
 import type { Ruta } from './ui/router.js';
+import { desdeCompartido, tituloPorDefecto, sePuedeGuardar } from './borrador.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { ResultadoArranque, Progreso } from './store.js';
 import type { Borrador, Entrada, Momento, Plan, Receta } from './tipos.js';
@@ -284,6 +285,10 @@ let cuenta = '';
 let reindexando: Progreso | null = null;
 
 /** La captura: lo escrito sobrevive al error y a la reautenticación (R3). */
+/** Lo que llegó del menú Compartir en la ruta de la captura. */
+const compartidoDe = (ruta: Ruta): { url: string; text: string } =>
+  ({ url: ruta.params['url'] ?? '', text: ruta.params['text'] ?? '' });
+
 let tituloCaptura = '';
 let notaCaptura = '';
 let guardandoCaptura = false;
@@ -563,6 +568,11 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     if (ruta.vista !== 'capturar' && ruta.vista !== 'borrador') {
       tituloCaptura = ''; notaCaptura = ''; guardandoCaptura = false; errorCaptura = '';
     }
+    // Lo compartido llega con la nota ya escrita: el texto que acompañaba al link.
+    if (ruta.vista === 'capturar') {
+      tituloCaptura = ''; guardandoCaptura = false; errorCaptura = '';
+      notaCaptura = desdeCompartido(compartidoDe(ruta)).nota;
+    }
     cocina.reiniciar();
     compartiendo = null;
     pdfListo = null;
@@ -686,9 +696,10 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // pantalla es la única entrada del historial que dejó el Share Target, y
       // sin reemplazarla, volver caería de nuevo acá y reabriría la misma receta.
       if (esRecetaEnMd(textoCompartido)) { recibirReceta(textoCompartido, undefined, true); return; }
-      const fuente = ruta.params['url'] || ruta.params['text'] || '';
+      const llegado = compartidoDe(ruta);
       return pintar(renderCaptura({
-        fuente, titulo: tituloCaptura, nota: notaCaptura, guardando: guardandoCaptura,
+        fuente: desdeCompartido(llegado).fuente, compartido: !!(llegado.url || llegado.text),
+        titulo: tituloCaptura, nota: notaCaptura, guardando: guardandoCaptura,
         ...(errorCaptura ? { error: errorCaptura } : {})
       }));
     }
@@ -1262,13 +1273,15 @@ app.addEventListener('click', async (e) => {
     const campoNota = document.querySelector<HTMLTextAreaElement>('textarea[name="nota"]');
     tituloCaptura = campoTitulo?.value.trim() ?? '';
     notaCaptura = campoNota?.value.trim() ?? '';
-    if (!tituloCaptura) return;
-    // Compartida, la captura no dibuja el campo: la fuente viene en la URL,
-    // y el router deja `''` en lo que no llegó, así que va `||` y no `??`
-    // —casi todas las apps mandan el link en `text`, con `url` vacío—.
+    // Compartida, la captura no dibuja el campo: la fuente es el link que
+    // vino en la URL.
     const fuente = campoFuente
       ? campoFuente.value.trim()
-      : vistaActual?.params['url'] || vistaActual?.params['text'] || '';
+      : vistaActual ? desdeCompartido(compartidoDe(vistaActual)).fuente : '';
+    if (!sePuedeGuardar({ fuente, nota: notaCaptura })) return;
+    // El título es opcional: sin él, el borrador se llama por cuándo se capturó.
+    const titulo = tituloCaptura
+      || tituloPorDefecto(editandoBorrador && borradorLeido?.capturado ? new Date(borradorLeido.capturado) : new Date());
 
     guardandoCaptura = true;
     errorCaptura = '';
@@ -1276,16 +1289,16 @@ app.addEventListener('click', async (e) => {
     try {
       if (editandoBorrador) {
         const id = idActual();
-        await escribiendo(store.editarBorrador(id, { titulo: tituloCaptura, fuente, nota: notaCaptura }));
+        await escribiendo(store.editarBorrador(id, { titulo, fuente, nota: notaCaptura }));
         // Lo guardado es lo que se muestra: volver al borrador no relee el `.md`.
-        if (borradorLeido?.id === id) borradorLeido = { ...borradorLeido, titulo: tituloCaptura, fuente, nota: notaCaptura };
+        if (borradorLeido?.id === id) borradorLeido = { ...borradorLeido, titulo, fuente, nota: notaCaptura };
         editandoBorrador = false;
         guardandoCaptura = false;
         tituloCaptura = '';
         notaCaptura = '';
         return render();
       }
-      await escribiendo(store.agregarBorrador({ titulo: tituloCaptura, fuente, nota: notaCaptura }));
+      await escribiendo(store.agregarBorrador({ titulo, fuente, nota: notaCaptura }));
     } catch (err) {
       console.error(err);
       // Nada queda esperando: el texto sigue en pantalla y se reintenta a mano.
@@ -1612,11 +1625,14 @@ app.addEventListener('input', (e) => {
   if (vistaActual?.vista !== 'capturar' && !editandoBorrador) return;
   const campo = e.target as HTMLInputElement | HTMLTextAreaElement | null;
   if (!campo?.name) return;
-  if (campo.name === 'nota') { notaCaptura = campo.value; return; }
-  if (campo.name !== 'titulo') return;
-  tituloCaptura = campo.value;
+  if (campo.name === 'titulo') { tituloCaptura = campo.value; return; }
+  if (campo.name === 'nota') notaCaptura = campo.value;
+  else if (campo.name !== 'fuente') return;
+  // Guardar vale con fuente o con nota: el título es opcional.
+  const fuente = document.querySelector<HTMLInputElement>('#app input[name="fuente"]')?.value
+    ?? (vistaActual ? desdeCompartido(compartidoDe(vistaActual)).fuente : '');
   const boton = document.querySelector<HTMLButtonElement>('#app [data-accion="guardar-captura"]');
-  if (boton) boton.toggleAttribute('disabled', !tituloCaptura.trim());
+  if (boton) boton.toggleAttribute('disabled', !sePuedeGuardar({ fuente, nota: notaCaptura }));
 });
 
 /** Las pantallas que dibujan el menú lateral: sólo ahí se desliza para abrirlo. */

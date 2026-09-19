@@ -47,3 +47,31 @@ export const filaDeBorrador = (e: EntradaBorrador): string[] =>
 export const entradaBorradorDesdeFila = (f: string[]): EntradaBorrador => ({
   id_archivo: f[0] ?? '', nombre_archivo: f[1] ?? '', titulo: f[2] ?? '', capturado: f[3] ?? ''
 });
+
+/** El primer link de un texto: lo que casi todas las apps mandan compartido. */
+const LINK = /https?:\/\/\S+/i;
+
+/**
+ * Lo que llega del menú Compartir, repartido entre la fuente y la nota: la
+ * fuente es el link —`url` si vino; si no, el primero que haya en el texto— y
+ * la nota es lo que sobra del texto. Un texto sin link —una receta copiada de
+ * un chat— va entero a la nota, que es lo que después se convierte.
+ */
+export function desdeCompartido({ url, text }: { url: string; text: string }): { fuente: string; nota: string } {
+  const fuente = url.trim() || (text.match(LINK)?.[0] ?? '');
+  const nota = (fuente ? text.split(fuente).join(' ') : text)
+    .split('\n').map(l => l.replace(/[ \t]+/g, ' ').trim()).join('\n').trim();
+  return { fuente, nota };
+}
+
+const dosCifras = (n: number): string => String(n).padStart(2, '0');
+
+/** El título de un borrador que se guardó sin uno: el día y la hora. */
+export function tituloPorDefecto(fecha: Date): string {
+  return `Borrador ${dosCifras(fecha.getDate())}/${dosCifras(fecha.getMonth() + 1)} ` +
+    `${dosCifras(fecha.getHours())}:${dosCifras(fecha.getMinutes())}`;
+}
+
+/** Un borrador necesita algo de dónde salir: la fuente o la nota. El título, no. */
+export const sePuedeGuardar = ({ fuente, nota }: { fuente: string; nota: string }): boolean =>
+  !!(fuente.trim() || nota.trim());

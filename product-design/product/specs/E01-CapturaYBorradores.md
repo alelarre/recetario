@@ -35,39 +35,43 @@ ya cargada, sin salir de donde estabas.
 #### C01.1.1 — La app se registra como destino de compartir *(J2)*
 
 - [ ] Recetario aparece en la hoja de compartir de Android una vez instalada como PWA.
-- [ ] Acepta texto y URLs. Lo que llegue se toma como la fuente.
+- [ ] Acepta texto y URLs. **La fuente es el link**: `url` si vino; si no, el primer link que aparezca en el texto. **Lo que sobra del texto va a la nota**, sin el link. El título que manda la app de origen se ignora: suele ser el de la página, no el de la receta.
 - [ ] Compartir abre la pantalla de captura, no la app entera.
 - [ ] **Lo compartido puede ser una receta entera en `.md`**: en ese caso no
   se toma como fuente de un borrador, sigue la regla de C01.9.2.
 
 **Nota técnica:** es la Share Target API del manifest, que funciona en una PWA
 sin backend. Lo compartido llega por `GET`, en la query —`title`, `text` y
-`url`—, y la app lo pasa a `#/capturar`. **iOS no se soporta** (R7): no existe
+`url`, cada uno en su propio parámetro—, y la app pasa `text` y `url` a
+`#/capturar`. Casi todas las apps mandan el link dentro de `text`. El
+manifest lo lee Android al instalar la PWA: un cambio ahí pide reinstalarla. **iOS no se soporta** (R7): no existe
 el equivalente y el Atajo queda fuera del alcance.
 
-**Edge cases:** se comparte contenido sin URL —un texto pegado— → la fuente es
-ese texto · se comparte una imagen → se toma su nombre o se deja la fuente vacía,
-y el usuario la escribe.
+**Edge cases:** se comparte un texto sin link —una receta copiada de un
+chat— → no hay fuente y el texto entero va a la nota · se comparte un texto
+que es sólo el link → la nota queda vacía · imágenes y archivos no se aceptan:
+Recetario no aparece en la hoja de compartir para ellos.
 
 ### F01.2 — La pantalla de captura
 
-Un campo obligatorio: **el título**, que escribe el usuario. La fuente viene de
-lo compartido. Guardar agrega el borrador y devuelve a la app donde estabas.
+Ningún campo es obligatorio por sí solo: **el borrador necesita fuente o
+nota**, algo de dónde salir. Lo compartido ya trae una de las dos, así que
+compartir y tocar Guardar alcanza. Guardar agrega el borrador y devuelve a la
+app donde estabas.
 
-No pide categoría, ni tags, ni dificultad. El presupuesto de la captura es un
-campo y está gastado en el título, que es lo único que vuelve al borrador
-recuperable.
+No pide categoría, ni tags, ni dificultad. **El título es opcional**: si queda
+vacío, el borrador se llama por cuándo se capturó —*Borrador 19/09 14:30*— y
+se le puede poner uno después, con *Editar*.
 
-**Y una nota opcional**, para lo que se sabe en el
-momento y no entra en el título. No cuesta fricción —no bloquea Guardar— y es
-lo que después se reparte en la receta (C01.7.1).
+**La nota** es lo que se sabe en el momento: llega precargada con el texto que
+acompañaba al link, y es lo que después se reparte en la receta (C01.7.1).
 
-#### C01.2.1 — Un campo obligatorio, con el foco puesto *(J2)*
+#### C01.2.1 — Fuente o nota, y el título con el foco puesto *(J2)*
 
-- [ ] La pantalla muestra la fuente ya cargada, sin permitir editarla acá.
-- [ ] El título recibe el foco con el teclado abierto al abrirse la pantalla.
-- [ ] El título es obligatorio: con el campo vacío, Guardar no está disponible.
-- [ ] Debajo, un campo de **nota** opcional, de texto libre.
+- [ ] La pantalla muestra la fuente ya cargada, sin permitir editarla acá. Sin link, no hay fuente que mostrar.
+- [ ] El título, **opcional**, recibe el foco con el teclado abierto al abrirse la pantalla. Guardado vacío, el borrador se titula *Borrador dd/mm hh:mm*, con el momento en que se guardó.
+- [ ] Debajo, un campo de **nota**, de texto libre, precargado con lo que sobró del texto compartido.
+- [ ] Guardar está disponible con fuente o con nota; sin ninguna de las dos, no.
 - [ ] No hay ningún otro campo: ni categoría, ni tags, ni dificultad.
 - [ ] Junto a la nota, un **esbozo plegado** —*Estructura básica*— muestra cómo se estructura para que se reparta sola al convertir. Es referencia, no obligación: sin encabezados todo cae en la descripción.
 
@@ -90,7 +94,7 @@ alguien contó— se puede crear un borrador a mano desde la app.
 
 - [ ] Borradores tiene un control para agregar a mano, **Nuevo**, visible también con la lista vacía.
 - [ ] El formulario es el mismo de la captura, con la fuente **escrita a mano** y como texto libre: una URL o *"libro de pescados, pág. 84"*.
-- [ ] El título es obligatorio; la fuente no.
+- [ ] Hace falta fuente o nota; el título es opcional, con la misma regla que la captura (C01.2.1). Editar un borrador sigue la misma regla, y un título borrado vuelve a ser el de su fecha de captura.
 - [ ] Guardar deja el borrador en Borradores y vuelve a la lista, que ya lo muestra.
 - [ ] Agregado a mano, el formulario es una pantalla más de la app: lleva encabezado y volver. Compartido desde otra app, no —es efímero sobre lo que estabas haciendo (C01.2.2)—.
 

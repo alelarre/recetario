@@ -24,7 +24,7 @@ describe('Captura', () => {
     expect(html).not.toContain('name="fuente"');
   });
 
-  it('el título tiene el foco, y es el único campo obligatorio', () => {
+  it('el título tiene el foco, y es opcional', () => {
     const html = renderCaptura(base);
     // Un input —el título— más el textarea de la nota, que es opcional.
     expect(html.match(/<input/g)).toHaveLength(1);
@@ -73,12 +73,24 @@ describe('Captura', () => {
     for (const c of ['categoria', 'tags', 'notas']) expect(html).not.toContain(`name="${c}"`);
   });
 
-  it('con el título vacío, Guardar no está disponible', () => {
-    expect(renderCaptura(base)).toContain('disabled');
+  it('con fuente y sin título, Guardar está disponible: el título se arma solo', () => {
+    expect(renderCaptura(base)).not.toContain('disabled');
   });
 
-  it('con título, Guardar está disponible', () => {
-    expect(renderCaptura({ ...base, titulo: 'Focaccia' })).not.toContain('disabled');
+  it('sin fuente ni nota, Guardar no está disponible aunque haya título', () => {
+    expect(renderCaptura({ ...base, fuente: '', titulo: 'Focaccia' })).toContain('disabled');
+  });
+
+  it('con sólo nota, Guardar está disponible', () => {
+    expect(renderCaptura({ ...base, fuente: '', nota: 'Harina 500 g' })).not.toContain('disabled');
+  });
+
+  it('compartido sin link —una receta copiada— es la pantalla de lo compartido, con el texto en la nota', () => {
+    const html = renderCaptura({ ...base, fuente: '', nota: 'Harina 500 g', compartido: true });
+    expect(html).toContain('Guardar en Recetario');
+    expect(html).not.toContain('class="enc"');
+    expect(html).not.toContain('class="fnt"');
+    expect(html).toContain('Harina 500 g');
   });
 
   it('mientras guarda, el botón lo dice y no se puede tocar dos veces', () => {

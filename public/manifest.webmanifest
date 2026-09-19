@@ -15,6 +15,6 @@
   "share_target": {
     "action": "/recetario/",
     "method": "GET",
-    "params": { "title": "text", "text": "text", "url": "url" }
+    "params": { "title": "title", "text": "text", "url": "url" }
   }
 }

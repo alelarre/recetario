@@ -1655,7 +1655,7 @@ describe('main.ts: las rutas', () => {
       try {
         const { abrir, tocar, app, velo, empujados, reemplazos, vueltasAtras } = await montar();
         await abrir('#/capturar');
-        estado.formulario = { titulo: 'Focaccia' };
+        estado.formulario = { titulo: 'Focaccia', fuente: 'libro de la abuela' };
         const guardando = tocar('guardar-captura');
         await esperar();
 
@@ -1701,12 +1701,35 @@ describe('main.ts: las rutas', () => {
       expect(estado.capturados[0]?.fuente).toBe('https://sitio.com/receta');
     });
 
-    it('agregando a mano, la fuente es la del campo, aunque quede vacía', async () => {
+    it('agregando a mano, la fuente es la del campo', async () => {
       const { abrir, tocar } = await montar();
       await abrir('#/capturar');
-      estado.formulario = { titulo: 'Guiso', fuente: '' };
+      estado.formulario = { titulo: 'Guiso', fuente: 'libro de la abuela', nota: '' };
       await tocar('guardar-captura');
-      expect(estado.capturados[0]?.fuente).toBe('');
+      expect(estado.capturados[0]?.fuente).toBe('libro de la abuela');
+    });
+
+    it('el texto que acompaña al link llega precargado en la nota', async () => {
+      const { app, abrir } = await montar();
+      await abrir('#/capturar?text=' + encodeURIComponent('Mirá este reel https://instagram.com/reel/abc'));
+      expect(app.innerHTML).toContain('>Mirá este reel</textarea>');
+      expect(app.innerHTML).toContain('instagram.com/reel/abc');
+    });
+
+    it('sin título, se guarda con uno armado con la fecha', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/capturar?text=' + encodeURIComponent('https://instagram.com/reel/abc'));
+      estado.formulario = {};
+      await tocar('guardar-captura');
+      expect(estado.capturados[0]?.titulo).toMatch(/^Borrador \d\d\/\d\d \d\d:\d\d$/);
+    });
+
+    it('sin fuente ni nota no se guarda, aunque haya título', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/capturar');
+      estado.formulario = { titulo: 'Guiso', fuente: '', nota: '' };
+      await tocar('guardar-captura');
+      expect(estado.capturados).toEqual([]);
     });
   });
 
@@ -1799,7 +1822,8 @@ describe('main.ts: las rutas', () => {
       // La pantalla de captura compartida en sí, no sólo el texto: el título
       // y el botón de guardar del borrador.
       expect(app.innerHTML).toContain('<h1>Guardar en Recetario</h1>');
-      expect(app.innerHTML).toContain('<div class="fnt">hola</div>');
+      // Un texto sin link no es una fuente: va a la nota.
+      expect(app.innerHTML).toContain('>hola</textarea>');
       expect(app.innerHTML).toContain('data-accion="guardar-captura"');
       expect(app.innerHTML).not.toContain('¿De qué borrador');
     });
