@@ -12,7 +12,8 @@ function cachesFalso() {
       const cache = c;
       return {
         match: async (clave: string) => cache.get(clave)?.clone(),
-        put: async (clave: string, r: Response) => { cache.set(clave, r); }
+        put: async (clave: string, r: Response) => { cache.set(clave, r); },
+        delete: async (clave: string) => cache.delete(clave)
       };
     },
     delete: async (nombre: string) => cachés.delete(nombre)
@@ -20,7 +21,10 @@ function cachesFalso() {
   return { almacen, cachés };
 }
 
-function armar({ faltan = [] as string[] } = {}) {
+function armar({ faltan = [] as string[], conexion }: {
+  faltan?: string[];
+  conexion?: () => { saveData?: boolean } | undefined;
+} = {}) {
   const { almacen, cachés } = cachesFalso();
   const pedidas: string[] = [];
   const revocadas: string[] = [];
@@ -33,10 +37,14 @@ function armar({ faltan = [] as string[] } = {}) {
     },
     caches: () => almacen,
     crearUrl: () => `blob:${++n}`,
-    revocarUrl: (u: string) => { revocadas.push(u); }
+    revocarUrl: (u: string) => { revocadas.push(u); },
+    ...(conexion ? { conexion } : {})
   });
   return { imagenes, cachés, pedidas, revocadas, almacen };
 }
+
+/** Deja correr las tareas ya encoladas antes de seguir. */
+const tic = (): Promise<void> => new Promise(resolver => setTimeout(resolver, 0));
 
 describe('mostrar una foto de Drive', () => {
   it('la primera vez la pide a Drive y la guarda en el caché por id', async () => {
@@ -116,5 +124,138 @@ describe('las fotos que llegaron compartidas', () => {
   it('lo que falta no está: con el caché vacío no hay fotos', async () => {
     const { imagenes } = armar();
     expect(await imagenes.fotosCompartidas(3)).toEqual([]);
+  });
+});
+
+describe('guardarImagen', () => {
+  it('guarda con la misma clave que usa imagenDe: después no pide a Drive', async () => {
+    const { imagenes, pedidas } = armar();
+    await imagenes.guardarImagen('f1', new Blob(['recién subida'], { type: 'image/jpeg' }));
+    expect(await (await imagenes.imagenDe('f1'))?.text()).toBe('recién subida');
+    expect(pedidas).toEqual([]);
+  });
+
+  it('sin Cache Storage no rompe', async () => {
+    const imagenes = crearImagenes({
+      leerBlob: async () => new Blob(['x']), caches: () => undefined,
+      crearUrl: () => 'blob:1', revocarUrl: () => {}
+    });
+    await expect(imagenes.guardarImagen('f1', new Blob(['x']))).resolves.toBeUndefined();
+  });
+});
+
+describe('olvidarImagen', () => {
+  it('la saca del caché: la próxima vez se vuelve a pedir a Drive', async () => {
+    const { imagenes, cachés, pedidas } = armar();
+    await imagenes.urlDeImagen('f1');
+    await imagenes.olvidarImagen('f1');
+    expect(cachés.get(CACHE_IMAGENES)?.has('imagen/f1')).toBe(false);
+    await imagenes.urlDeImagen('f1');
+    expect(pedidas).toEqual(['f1', 'f1']);
+  });
+
+  it('revoca y olvida el object URL de la pantalla, si había uno', async () => {
+    const { imagenes, revocadas } = armar();
+    const url = await imagenes.urlDeImagen('f1');
+    await imagenes.olvidarImagen('f1');
+    expect(revocadas).toEqual([url]);
+  });
+
+  it('sin object URL en pantalla, no intenta revocar nada', async () => {
+    const { imagenes, revocadas, cachés } = armar();
+    await imagenes.guardarImagen('f1', new Blob(['x']));
+    await imagenes.olvidarImagen('f1');
+    expect(revocadas).toEqual([]);
+    expect(cachés.get(CACHE_IMAGENES)?.has('imagen/f1')).toBe(false);
+  });
+
+  it('sin Cache Storage no rompe', async () => {
+    const imagenes = crearImagenes({
+      leerBlob: async () => new Blob(['x']), caches: () => undefined,
+      crearUrl: () => 'blob:1', revocarUrl: () => {}
+    });
+    await expect(imagenes.olvidarImagen('f1')).resolves.toBeUndefined();
+  });
+});
+
+describe('precargar', () => {
+  it('pide sólo lo que falta: lo que ya está en el caché no se vuelve a pedir', async () => {
+    const { imagenes, pedidas } = armar();
+    await imagenes.guardarImagen('f1', new Blob(['x']));
+    await imagenes.precargar(['f1', 'f2', 'f3']);
+    expect(pedidas.sort()).toEqual(['f2', 'f3']);
+  });
+
+  it('de a dos por default: nunca más de dos pedidos en vuelo', async () => {
+    const enVuelo: string[] = [];
+    let maxEnVuelo = 0;
+    const resolutores: Array<() => void> = [];
+    const almacen = cachesFalso().almacen;
+    const imagenes = crearImagenes({
+      leerBlob: (id: string) => {
+        enVuelo.push(id);
+        maxEnVuelo = Math.max(maxEnVuelo, enVuelo.length);
+        return new Promise<Blob>(resolver => {
+          resolutores.push(() => { enVuelo.splice(enVuelo.indexOf(id), 1); resolver(new Blob([id])); });
+        });
+      },
+      caches: () => almacen
+    });
+
+    const p = imagenes.precargar(['f1', 'f2', 'f3', 'f4']);
+    await tic();
+    expect(enVuelo.sort()).toEqual(['f1', 'f2']);
+
+    resolutores.shift()!();
+    await tic();
+    expect(enVuelo.length).toBe(2);
+
+    while (resolutores.length) { resolutores.shift()!(); await tic(); }
+    await p;
+    expect(maxEnVuelo).toBeLessThanOrEqual(2);
+  });
+
+  it('un tope explícito cambia cuántos pedidos van en vuelo', async () => {
+    const enVuelo: string[] = [];
+    let maxEnVuelo = 0;
+    const resolutores: Array<() => void> = [];
+    const almacen = cachesFalso().almacen;
+    const imagenes = crearImagenes({
+      leerBlob: (id: string) => {
+        enVuelo.push(id);
+        maxEnVuelo = Math.max(maxEnVuelo, enVuelo.length);
+        return new Promise<Blob>(resolver => {
+          resolutores.push(() => { enVuelo.splice(enVuelo.indexOf(id), 1); resolver(new Blob([id])); });
+        });
+      },
+      caches: () => almacen
+    });
+
+    const p = imagenes.precargar(['f1', 'f2', 'f3'], { tope: 1 });
+    await tic();
+    expect(enVuelo).toEqual(['f1']);
+    while (resolutores.length) { resolutores.shift()!(); await tic(); }
+    await p;
+    expect(maxEnVuelo).toBe(1);
+  });
+
+  it('un error en una foto —red o 404— no corta las demás ni rechaza la promesa', async () => {
+    const { imagenes, pedidas } = armar({ faltan: ['f1'] });
+    await expect(imagenes.precargar(['f1', 'f2'])).resolves.toBeUndefined();
+    expect(pedidas.sort()).toEqual(['f1', 'f2']);
+  });
+
+  it('con saveData no se precarga nada', async () => {
+    const { imagenes, pedidas } = armar({ conexion: () => ({ saveData: true }) });
+    await imagenes.precargar(['f1', 'f2']);
+    expect(pedidas).toEqual([]);
+  });
+
+  it('sin Cache Storage no rompe', async () => {
+    const imagenes = crearImagenes({
+      leerBlob: async (id: string) => new Blob([id]), caches: () => undefined,
+      crearUrl: () => 'blob:1', revocarUrl: () => {}
+    });
+    await expect(imagenes.precargar(['f1'])).resolves.toBeUndefined();
   });
 });
