@@ -24,7 +24,7 @@ const armar = async ({ borradores: lista = [] as { id: string; titulo: string }[
     { id: 'bc', name: '_borradores', mimeType: CARPETA, parents: ['raiz'] },
     ...lista.map(b => ({
       id: b.id, name: `${b.id}.md`, parents: ['bc'],
-      contenido: serializeBorrador({ titulo: b.titulo, fuente: '', nota: '', capturado: CAPTURADO })
+      contenido: serializeBorrador({ titulo: b.titulo, fuente: '', nota: '', capturado: CAPTURADO, fotos: [] })
     }))
   ]);
   const sheets = sheetsFalso();

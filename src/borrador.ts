@@ -1,6 +1,6 @@
 /**
- * El `.md` de un borrador: título, fuente y cuándo se capturó en el
- * frontmatter, y la nota como cuerpo entero. Es un formato propio —un borrador
+ * El `.md` de un borrador: título, fuente, cuándo se capturó y los ids de sus
+ * fotos en el frontmatter, y la nota como cuerpo entero. Es un formato propio —un borrador
  * no es una receta incompleta—, y no comparte parser con `recipe.ts`.
  *
  * También vive acá su fila de la hoja `borradores` del índice.
@@ -16,8 +16,15 @@ const CLAVES = ['titulo', 'fuente', 'capturado'] as const;
 type Clave = (typeof CLAVES)[number];
 const esClave = (c: string): c is Clave => (CLAVES as readonly string[]).includes(c);
 
+/** Un borrador lleva hasta cinco fotos. */
+export const MAXIMO_FOTOS = 5;
+
+/** `[a, b]`, la misma sintaxis de lista que los `tags` de la receta. */
+const lista = (valor: string): string[] =>
+  (valor.match(/^\[(.*)\]$/)?.[1] ?? '').split(',').map(s => s.trim()).filter(Boolean);
+
 export function parseBorrador(texto: string): ContenidoBorrador {
-  const borrador: ContenidoBorrador = { titulo: '', fuente: '', capturado: '', nota: '' };
+  const borrador: ContenidoBorrador = { titulo: '', fuente: '', capturado: '', nota: '', fotos: [] };
   const lineas = texto.replace(/\r\n/g, '\n').split('\n');
   let cuerpo = lineas;
   if (lineas[0] === '---') {
@@ -26,8 +33,10 @@ export function parseBorrador(texto: string): ContenidoBorrador {
       for (const linea of lineas.slice(1, cierre)) {
         const m = linea.match(/^([A-Za-z_]+)\s*:\s*(.*)$/);
         const clave = m?.[1] ?? '';
+        const valor = (m?.[2] ?? '').trim();
         // Lo que no es de un borrador se ignora: no se conserva al reescribir.
-        if (esClave(clave)) borrador[clave] = (m?.[2] ?? '').trim();
+        if (esClave(clave)) borrador[clave] = valor;
+        else if (clave === 'fotos') borrador.fotos = lista(valor);
       }
       cuerpo = lineas.slice(cierre + 1);
     }
@@ -37,7 +46,8 @@ export function parseBorrador(texto: string): ContenidoBorrador {
 }
 
 export function serializeBorrador(b: ContenidoBorrador): string {
-  const frontmatter = `---\ntitulo: ${b.titulo}\nfuente: ${b.fuente}\ncapturado: ${b.capturado}\n---\n`;
+  const fotos = b.fotos.length ? `fotos: [${b.fotos.join(', ')}]\n` : '';
+  const frontmatter = `---\ntitulo: ${b.titulo}\nfuente: ${b.fuente}\ncapturado: ${b.capturado}\n${fotos}---\n`;
   return b.nota ? `${frontmatter}\n${b.nota}\n` : frontmatter;
 }
 
@@ -72,6 +82,19 @@ export function tituloPorDefecto(fecha: Date): string {
     `${dosCifras(fecha.getHours())}:${dosCifras(fecha.getMinutes())}`;
 }
 
-/** Un borrador necesita algo de dónde salir: la fuente o la nota. El título, no. */
-export const sePuedeGuardar = ({ fuente, nota }: { fuente: string; nota: string }): boolean =>
-  !!(fuente.trim() || nota.trim());
+/** Un borrador necesita algo de dónde salir: la fuente, la nota o una foto. El título, no. */
+export const sePuedeGuardar = (
+  { fuente, nota, fotos = 0 }: { fuente: string; nota: string; fotos?: number }
+): boolean => !!(fuente.trim() || nota.trim() || fotos > 0);
+
+/**
+ * El nombre de una foto nueva: el del `.md` con el primer número libre. El
+ * número es para que en Drive se lean juntas; el orden es el de `fotos`.
+ */
+export function nombreDeFoto(nombreMd: string, hermanos: readonly string[]): string {
+  const base = nombreMd.replace(/\.md$/i, '');
+  const tomados = new Set(hermanos.map(n => n.toLowerCase()));
+  let n = 1;
+  while (tomados.has(`${base}-${n}.jpg`.toLowerCase())) n++;
+  return `${base}-${n}.jpg`;
+}

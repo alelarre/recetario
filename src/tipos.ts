@@ -123,7 +123,7 @@ export interface Entrada {
 
 /**
  * Un borrador: un `.md` en `Recetario/_borradores/`. Es su propia entidad —título,
- * fuente y nota—, no una receta incompleta.
+ * fuente, nota y fotos—, no una receta incompleta.
  */
 export interface Borrador {
   /** El id del archivo en Drive. */
@@ -135,6 +135,8 @@ export interface Borrador {
   nota: string;
   /** ISO. El orden de la lista es por acá, lo más viejo primero. */
   capturado: string;
+  /** Los ids de Drive de sus fotos, en orden. Van al lado del `.md`, en `_borradores/`. */
+  fotos: string[];
 }
 
 /** Una fila de la hoja `borradores` del índice: lo que alcanza para la lista y el contador. */

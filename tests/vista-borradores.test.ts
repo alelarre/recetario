@@ -4,7 +4,7 @@ import { ICO } from '../src/ui/iconos.js';
 import type { Borrador, EntradaBorrador } from '../src/tipos.js';
 
 const borradorFalso = (p: Partial<Borrador> = {}): Borrador =>
-  ({ id: 'b1', titulo: 'A', fuente: '', nota: '', capturado: '', ...p });
+  ({ id: 'b1', titulo: 'A', fuente: '', nota: '', capturado: '', fotos: [], ...p });
 
 const entradaFalsa = (p: Partial<EntradaBorrador> = {}): EntradaBorrador =>
   ({ id_archivo: 'b1', nombre_archivo: 'a.md', titulo: 'A', capturado: '', ...p });
