@@ -37,6 +37,35 @@ describe('el pedido para Claude', () => {
   });
 });
 
+describe('el pedido con fotos', () => {
+  const conFotos = { ...borrador, fotos: ['1AbC', '1DeF'] };
+
+  it('dice cuántas van, en orden, qué pueden ser y cómo tratarlas, después del borrador', () => {
+    const p = pedidoDeConversion(conFotos);
+    expect(p).toContain('Fotos: van 2, en orden.');
+    expect(p).toContain('sin inventar cantidades ni pasos que no estén');
+    expect(p).toContain('Una foto del plato sirve para el título y la descripción, no para la receta.');
+    expect(p.indexOf('Nota: La de la abuela')).toBeLessThan(p.indexOf('Fotos: van 2'));
+    expect(p.indexOf('Fotos: van 2')).toBeLessThan(p.indexOf('Formato:'));
+  });
+
+  it('una sola foto se dice en singular', () => {
+    expect(pedidoDeConversion({ ...borrador, fotos: ['1AbC'] })).toContain('Fotos: va 1, en orden.');
+  });
+
+  it('sin fotos no dice nada de fotos', () => {
+    expect(pedidoDeConversion({ ...borrador, fotos: [] })).not.toContain('Fotos:');
+  });
+
+  it('con los links de Drive, una línea por foto y cómo leerlas', () => {
+    const p = pedidoDeConversion(conFotos, { links: true });
+    expect(p).toContain('Foto 1: https://drive.google.com/file/d/1AbC/view');
+    expect(p).toContain('Foto 2: https://drive.google.com/file/d/1DeF/view');
+    expect(p).toContain('Las fotos están en mi Google Drive: leelas con el conector de Drive.');
+    expect(pedidoDeConversion(conFotos)).not.toContain('drive.google.com');
+  });
+});
+
 describe('reconocer una receta en .md', () => {
   it('una receta con frontmatter y titulo', () => {
     expect(esRecetaEnMd('---\ntitulo: Pan\n---\n\n## Ingredientes\n- Harina — 500 g\n')).toBe(true);

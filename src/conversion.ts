@@ -8,7 +8,31 @@ import { DURACIONES, DIFICULTADES, TAGS_RESERVADOS } from './catalogo.js';
 import { parse } from './recipe.js';
 import type { Receta, Borrador } from './tipos.js';
 
-export function pedidoDeConversion({ id, titulo, fuente, nota }: Pick<Borrador, 'id' | 'titulo' | 'fuente' | 'nota'>): string {
+/** El link de Drive de una foto, para quien la lea con el conector de Drive. */
+export const linkDeFoto = (id: string): string => `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
+
+/**
+ * Qué son las fotos y cómo tratarlas. Con `links`, una línea por foto con su
+ * link de Drive: es el pedido que no puede llevar las fotos como archivos.
+ */
+function parrafoDeFotos(fotos: readonly string[], links: boolean): string[] {
+  if (!fotos.length) return [];
+  return [
+    '',
+    `Fotos: ${fotos.length === 1 ? 'va 1' : `van ${fotos.length}`}, en orden. Pueden ser páginas de un libro, una receta escrita a ` +
+      'mano, una captura de pantalla o el plato terminado. Transcribí lo que se lee, sin inventar cantidades ni pasos ' +
+      'que no estén. Una foto del plato sirve para el título y la descripción, no para la receta.',
+    ...(links
+      ? [...fotos.map((id, i) => `Foto ${i + 1}: ${linkDeFoto(id)}`),
+        'Las fotos están en mi Google Drive: leelas con el conector de Drive.']
+      : [])
+  ];
+}
+
+export function pedidoDeConversion(
+  { id, titulo, fuente, nota, fotos = [] }: Pick<Borrador, 'id' | 'titulo' | 'fuente' | 'nota'> & { fotos?: readonly string[] },
+  { links = false }: { links?: boolean } = {}
+): string {
   const lista = (xs: readonly string[]): string => xs.map(x => `\`${x}\``).join(', ');
   return [
     'Convertí este borrador en una receta para mi Recetario. Leé la fuente y escribí la receta en el formato de abajo.',
@@ -17,6 +41,7 @@ export function pedidoDeConversion({ id, titulo, fuente, nota }: Pick<Borrador, 
     `Título: ${titulo}`,
     ...(fuente ? [`Fuente: ${fuente}`] : []),
     ...(nota ? [`Nota: ${nota}`] : []),
+    ...parrafoDeFotos(fotos, links),
     '',
     'Formato:',
     '- Frontmatter entre `---`, con estas claves y ninguna otra: `titulo` (obligatoria), `tags` como lista `[a, b]`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`.',

@@ -61,24 +61,34 @@ export const compartirTexto = (p: Plataforma, texto: string): Promise<Resultado>
 
 export const LARGO_MAXIMO_DEL_LINK = 8000;
 
+/** Las fotos del borrador para el pedido: como archivos, y el pedido que las nombra por su link de Drive. */
+export interface FotosDelPedido {
+  archivos: File[];
+  conLinks: string;
+}
+
 /**
  * El pedido hacia Claude. Con el menú Compartir del sistema (Android)
- * se elige Claude ahí. Sin él, un link a claude.ai con el pedido cargado; si
- * el pedido no entra en el link, se copia y se abre Claude vacío para pegarlo.
+ * se elige Claude ahí, y las fotos viajan como archivos junto al texto. Sin
+ * él —o sin poder compartir archivos—, un link a claude.ai con el pedido
+ * cargado, y las fotos por su link de Drive; si el pedido no entra en el
+ * link, se copia y se abre Claude vacío para pegarlo.
  */
-export async function enviarAClaude(p: Plataforma, pedido: string): Promise<Resultado> {
-  if (p.share) {
-    const r = await mandar(p.share, { text: pedido });
+export async function enviarAClaude(p: Plataforma, pedido: string, fotos: FotosDelPedido | null = null): Promise<Resultado> {
+  const conArchivos = !!fotos?.archivos.length && !!p.canShare?.({ files: fotos.archivos });
+  if (p.share && (!fotos || conArchivos)) {
+    const r = await mandar(p.share, conArchivos && fotos ? { text: pedido, files: fotos.archivos } : { text: pedido });
     if (r !== 'sin-activacion') return r;
   }
-  const link = `https://claude.ai/new?q=${encodeURIComponent(pedido)}`;
+  const texto = fotos ? fotos.conLinks : pedido;
+  const link = `https://claude.ai/new?q=${encodeURIComponent(texto)}`;
   if (link.length <= LARGO_MAXIMO_DEL_LINK) {
     p.abrir?.(link);
     return 'abierto';
   }
   if (!p.copiar) return 'sin-portapapeles';
   try {
-    await p.copiar(pedido);
+    await p.copiar(texto);
   } catch {
     return 'sin-portapapeles';
   }

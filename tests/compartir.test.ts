@@ -113,6 +113,54 @@ describe('enviar el pedido a Claude', () => {
   });
 });
 
+describe('el pedido a Claude con fotos', () => {
+  const foto = (n: number) => new File(['jpeg'], `foto-${n}.jpg`, { type: 'image/jpeg' });
+  const base: Plataforma = { descargar: () => {} };
+
+  it('con canShare de archivos, viajan el texto y las fotos', async () => {
+    const compartidos: ShareData[] = [];
+    const r = await enviarAClaude(
+      { ...base, share: async d => { compartidos.push(d); }, canShare: d => !!d.files?.length },
+      'pedido', { archivos: [foto(1), foto(2)], conLinks: 'pedido con links' });
+    expect(r).toBe('compartido');
+    expect(compartidos[0]?.text).toBe('pedido');
+    expect(compartidos[0]?.files?.map(f => f.name)).toEqual(['foto-1.jpg', 'foto-2.jpg']);
+  });
+
+  it('sin canShare de archivos, el link a Claude lleva el pedido con los links de Drive', async () => {
+    const abiertos: string[] = [];
+    const compartidos: ShareData[] = [];
+    const r = await enviarAClaude(
+      { ...base, share: async d => { compartidos.push(d); }, canShare: () => false, abrir: u => abiertos.push(u) },
+      'pedido', { archivos: [foto(1)], conLinks: 'pedido con links' });
+    expect(r).toBe('abierto');
+    expect(compartidos).toEqual([]);
+    expect(abiertos).toEqual([`https://claude.ai/new?q=${encodeURIComponent('pedido con links')}`]);
+  });
+
+  it('sin menú Compartir, también', async () => {
+    const abiertos: string[] = [];
+    await enviarAClaude({ ...base, abrir: u => abiertos.push(u) }, 'pedido', { archivos: [foto(1)], conLinks: 'con links' });
+    expect(abiertos).toEqual([`https://claude.ai/new?q=${encodeURIComponent('con links')}`]);
+  });
+
+  it('si no se pudieron leer las fotos, van los links', async () => {
+    const abiertos: string[] = [];
+    await enviarAClaude({ ...base, share: async () => {}, canShare: () => true, abrir: u => abiertos.push(u) },
+      'pedido', { archivos: [], conLinks: 'con links' });
+    expect(abiertos).toHaveLength(1);
+  });
+
+  it('si Chrome perdió el toque, cae a los links', async () => {
+    const abiertos: string[] = [];
+    const sinToque = async () => { throw Object.assign(new Error('x'), { name: 'NotAllowedError' }); };
+    const r = await enviarAClaude({ ...base, share: sinToque, canShare: () => true, abrir: u => abiertos.push(u) },
+      'pedido', { archivos: [foto(1)], conLinks: 'con links' });
+    expect(r).toBe('abierto');
+    expect(abiertos[0]).toContain(encodeURIComponent('con links'));
+  });
+});
+
 describe('leer el portapapeles', () => {
   it('devuelve el texto, o null si no se puede', async () => {
     expect(await leerPortapapeles({ descargar: () => {}, leer: async () => 'hola' })).toBe('hola');
