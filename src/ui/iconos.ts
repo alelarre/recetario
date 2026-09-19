@@ -45,7 +45,10 @@ export const ICO = {
   /** El chevron hacia adelante: la flecha derecha del carrusel. */
   chevron: svg('<path d="M9 18l6-6-6-6"/>'),
   /** Una carpeta de Drive: la ficha de cada carpeta encontrada. */
-  carpeta: svg('<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>')
+  carpeta: svg('<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>'),
+  /** La cámara: agregar una foto al borrador. */
+  camara: svg('<path d="M4 8a2 2 0 012-2h2l1.5-2h5L16 6h2a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/>' +
+    '<circle cx="12" cy="13" r="3.5"/>')
 } as const satisfies Record<string, string>;
 
 /**

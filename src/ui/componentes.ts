@@ -326,3 +326,38 @@ export function tile(nombre: string, cantidad?: number): string {
     `href="#/c/${encodeURIComponent(nombre)}" data-slug="${escapar(slugCategoria(nombre))}">` +
     `${fondo}${cuenta}<span class="nm">${escapar(nombre)}</span></a>`;
 }
+
+/** Una miniatura de la fila de fotos. `url` en `null` es una foto que ya no está en Drive. */
+export interface Miniatura {
+  url: string | null;
+  /** La acción de la × y su valor. */
+  sacar: { accion: string; valor: string };
+  /** Tocarla abre el visor; sin esto, la miniatura no se toca. */
+  ver?: { accion: string; valor: string };
+}
+
+/**
+ * La fila de fotos de un borrador: miniaturas cuadradas con su ×, y al final
+ * *Agregar foto*, que abre el selector del sistema —en el teléfono, la cámara
+ * o la galería—. El `input` va dentro del `label`: tocarlo lo abre sin script.
+ */
+export function filaDeFotos({ fotos, agregar }: { fotos: Miniatura[]; agregar: boolean }): string {
+  const miniaturas = fotos.map((f, i) => {
+    const imagen = f.url === null
+      ? '<span class="miniatura-vacia">La foto ya no está en Drive.</span>'
+      : `<img src="${escapar(f.url)}" alt="Foto ${i + 1}">`;
+    const cuerpo = f.ver && f.url !== null
+      ? `<button class="miniatura-ver" data-accion="${escapar(f.ver.accion)}" data-valor="${escapar(f.ver.valor)}" ` +
+        `aria-label="Ver la foto ${i + 1}">${imagen}</button>`
+      : imagen;
+    return `<div class="miniatura">${cuerpo}` +
+      `<button class="miniatura-sacar" data-accion="${escapar(f.sacar.accion)}" data-valor="${escapar(f.sacar.valor)}" ` +
+      `aria-label="Sacar la foto ${i + 1}">${ICO.cerrar}</button></div>`;
+  }).join('');
+  const boton = agregar
+    ? `<label class="btn sec miniatura-agregar">${ICO.camara}Agregar foto` +
+      '<input type="file" accept="image/*" multiple data-fotos hidden></label>'
+    : '';
+  return `<div class="miniaturas">${miniaturas}${boton}</div>`;
+}
+

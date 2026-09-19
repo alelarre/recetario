@@ -11,8 +11,8 @@
  * de ningún lado (C01.4.3).
  */
 import { escapar } from './markdown.js';
-import { avisoAlGuardar, encabezado } from './componentes.js';
-import { sePuedeGuardar } from '../borrador.js';
+import { aviso as avisoSinAccion, avisoAlGuardar, encabezado, filaDeFotos } from './componentes.js';
+import { MAXIMO_FOTOS, sePuedeGuardar } from '../borrador.js';
 
 export interface OpcionesCaptura {
   /** El link que compartió la app de origen. Vacío cuando se agrega a mano, o si lo compartido no traía link. */
@@ -30,14 +30,21 @@ export interface OpcionesCaptura {
    * —incluida la fuente— y el encabezado lo dice.
    */
   edicion?: boolean;
+  /**
+   * Las fotos, ya achicadas, en memoria hasta Guardar: sus object URLs.
+   * Editando no se dibujan: se manejan en la vista del borrador.
+   */
+  fotos?: string[];
   guardando: boolean;
   error?: string;
+  /** Un aviso sin control, como «Llegaron 8 fotos: se guardan las primeras 5.». */
+  aviso?: string;
 }
 
 export function renderCaptura(
-  { fuente, titulo, nota = '', compartido: vinoCompartido, edicion, guardando, error }: OpcionesCaptura
+  { fuente, titulo, nota = '', compartido: vinoCompartido, edicion, fotos = [], guardando, error, aviso }: OpcionesCaptura
 ): string {
-  const vacio = !sePuedeGuardar({ fuente, nota });
+  const vacio = !sePuedeGuardar({ fuente, nota, fotos: edicion ? 0 : fotos.length });
   const fuenteVisible = fuente.replace(/^https?:\/\//i, '');
   // Compartido desde otra app: pantalla efímera encima de lo que el usuario
   // estaba haciendo, sin encabezado ni volver, y se sale con Cancelar
@@ -79,7 +86,11 @@ export function renderCaptura(
     '<details class="esbozo">' +
       '<summary>Estructura básica</summary>' +
       `<pre>${escapar(ESBOZO)}</pre>` +
-    '</details>';
+    '</details>' +
+    (edicion ? '' : '<div class="campo"><span>Fotos</span>' + filaDeFotos({
+      fotos: fotos.map((url, i) => ({ url, sacar: { accion: 'sacar-foto-captura', valor: String(i) } })),
+      agregar: fotos.length < MAXIMO_FOTOS
+    }) + '</div>');
 
   // Compartida, la fuente va arriba: es el dato que ya vino y el título es lo
   // único que hay que escribir. Escribiendo o editando, el título va primero,
@@ -97,6 +108,7 @@ export function renderCaptura(
     '<div class="hoja">' +
     (compartido ? '<h1>Guardar en Recetario</h1>' : '') +
     (error ? avisoAlGuardar(error) : '') +
+    (aviso ? avisoSinAccion({ texto: aviso }) : '') +
     campos +
     '<div class="pie2">' +
       '<button class="btn sec" data-accion="cancelar-captura">Cancelar</button>' +

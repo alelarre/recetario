@@ -12,7 +12,8 @@
  * reconoce la receta que vuelve.
  */
 import { escapar } from './markdown.js';
-import { encabezado, aviso, vacio, lateral, botonMenu } from './componentes.js';
+import { encabezado, aviso, vacio, lateral, botonMenu, filaDeFotos } from './componentes.js';
+import { MAXIMO_FOTOS } from '../borrador.js';
 import { ICO } from './iconos.js';
 import type { Borrador, EntradaBorrador } from '../tipos.js';
 
@@ -32,6 +33,10 @@ export interface OpcionesBorrador {
   error?: string;
   /** Un aviso sin acción de reintentar, como «Lo copiado no es una receta en .md.». */
   aviso?: string;
+  /** Las fotos, en el orden del `.md`, con su object URL; `null` si ya no está en Drive. */
+  fotos?: { id: string; url: string | null }[];
+  /** La foto abierta a pantalla completa: su object URL. */
+  visor?: string;
 }
 
 const DIA = 86400000;
@@ -104,7 +109,7 @@ export function renderBorradores(
 }
 
 export function renderBorrador(
-  { borrador, confirmando, error, aviso: avisoTexto }: OpcionesBorrador
+  { borrador, confirmando, error, aviso: avisoTexto, fotos = [], visor }: OpcionesBorrador
 ): string {
   const ficha = '<div class="ficha">' +
     `<div style="font-size:var(--txt-titulo);font-weight:600;line-height:1.25">${escapar(borrador.titulo)}</div>` +
@@ -121,6 +126,16 @@ export function renderBorrador(
     (borrador.nota
       ? `<p class="lee" style="margin:var(--e-4) 0 0;padding-top:var(--e-3);border-top:1px solid var(--borde)">${escapar(borrador.nota)}</p>`
       : '') +
+    // Las fotos se agregan al final y se sacan de a una: no se reordenan.
+    '<div class="campo" style="margin:var(--e-4) 0 0;padding-top:var(--e-3);border-top:1px solid var(--borde)">' +
+      '<span>Fotos</span>' +
+      filaDeFotos({
+        fotos: fotos.map(f => ({
+          url: f.url, sacar: { accion: 'sacar-foto', valor: f.id }, ver: { accion: 'ver-foto', valor: f.id }
+        })),
+        agregar: fotos.length < MAXIMO_FOTOS
+      }) +
+    '</div>' +
   '</div>';
 
   // Es destructivo —el .md va a la papelera de Drive—: la confirmación nombra el borrador.
@@ -152,7 +167,9 @@ export function renderBorrador(
       (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'reintentar' } }) : '') +
       (avisoTexto ? aviso({ texto: avisoTexto }) : '') +
       (confirmando ? ficha + confirmacion : ficha + acciones) +
-    '</div>';
+    '</div>' +
+    // A pantalla completa, sobre un velo; se cierra tocando cualquier lado.
+    (visor ? `<div class="visor" data-accion="cerrar-visor"><img src="${escapar(visor)}" alt="Foto"></div>` : '');
 }
 
 /** A qué borrador corresponde una receta que llegó sin id, o con uno que ya no existe. */

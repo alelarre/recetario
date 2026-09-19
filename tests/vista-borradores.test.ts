@@ -147,6 +147,48 @@ describe('Borrador', () => {
   });
 });
 
+describe('las fotos del borrador', () => {
+  const conFotos = borradorFalso({ nota: 'Página 84.', fotos: ['f1', 'f2'] });
+  const fotos = [{ id: 'f1', url: 'blob:1' }, { id: 'f2', url: null }];
+
+  it('debajo de la nota, las miniaturas: tocarla abre el visor, y cada una tiene su ×', () => {
+    const html = renderBorrador({ borrador: conFotos, confirmando: false, fotos });
+    expect(html.indexOf('Página 84.')).toBeLessThan(html.indexOf('class="miniaturas"'));
+    expect(html).toContain('data-accion="ver-foto" data-valor="f1"');
+    expect(html).toContain('<img src="blob:1"');
+    expect(html).toContain('data-accion="sacar-foto" data-valor="f1"');
+    expect(html).toContain('data-accion="sacar-foto" data-valor="f2"');
+  });
+
+  it('una foto que ya no está en Drive es un recuadro que lo dice, sin visor', () => {
+    const html = renderBorrador({ borrador: conFotos, confirmando: false, fotos });
+    expect(html).toContain('La foto ya no está en Drive.');
+    expect(html).not.toContain('data-accion="ver-foto" data-valor="f2"');
+  });
+
+  it('Agregar foto al final mientras haya menos de cinco', () => {
+    const html = renderBorrador({ borrador: conFotos, confirmando: false, fotos });
+    expect(html).toContain('Agregar foto');
+    const cinco = Array.from({ length: 5 }, (_, i) => ({ id: `f${i}`, url: `blob:${i}` }));
+    expect(renderBorrador({ borrador: conFotos, confirmando: false, fotos: cinco })).not.toContain('Agregar foto');
+  });
+
+  it('el visor muestra la foto sobre un velo y se cierra tocando cualquier lado', () => {
+    const html = renderBorrador({ borrador: conFotos, confirmando: false, fotos, visor: 'blob:1' });
+    expect(html).toContain('<div class="visor" data-accion="cerrar-visor"><img src="blob:1"');
+  });
+
+  it('sin fotos, igual se ofrece agregar', () => {
+    expect(renderBorrador({ borrador: borradorFalso(), confirmando: false })).toContain('Agregar foto');
+  });
+
+  it('los ids se escapan', () => {
+    const html = renderBorrador({ borrador: conFotos, confirmando: false, fotos: [{ id: 'a"b', url: 'blob:"x' }] });
+    expect(html).toContain('data-valor="a&quot;b"');
+    expect(html).not.toContain('blob:"x');
+  });
+});
+
 describe('renderPreguntaBorrador', () => {
   it('la pregunta lista los borradores y «Ninguno»', () => {
     const html = renderPreguntaBorrador({

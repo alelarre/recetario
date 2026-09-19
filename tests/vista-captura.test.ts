@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderCaptura } from '../src/ui/captura.js';
+import { ICO } from '../src/ui/iconos.js';
 
 const base = { fuente: 'https://x/1', titulo: '', guardando: false };
 
@@ -26,8 +27,9 @@ describe('Captura', () => {
 
   it('el título tiene el foco, y es opcional', () => {
     const html = renderCaptura(base);
-    // Un input —el título— más el textarea de la nota, que es opcional.
-    expect(html.match(/<input/g)).toHaveLength(1);
+    // Un input de texto —el título— más el textarea de la nota, que es
+    // opcional. El otro input es el de las fotos, que no se escribe.
+    expect(html.match(/<input(?! type="file")/g)).toHaveLength(1);
     expect(html).toContain('autofocus');
     expect(html).toContain('name="nota"');
   });
@@ -113,4 +115,40 @@ describe('Captura', () => {
     expect(sinSesion).toContain('value="Focaccia"');
     expect(renderCaptura({ ...base, error: 'No se pudo guardar. Revisá la conexión.' })).not.toContain('conectar-de-nuevo');
   });
+
+  describe('las fotos', () => {
+    it('debajo de la nota, las miniaturas con su × y Agregar foto con la cámara', () => {
+      const html = renderCaptura({ ...base, fotos: ['blob:1', 'blob:2'] });
+      expect(html.indexOf('name="nota"')).toBeLessThan(html.indexOf('class="miniaturas"'));
+      expect(html).toContain('<img src="blob:1"');
+      expect(html).toContain('data-accion="sacar-foto-captura" data-valor="1"');
+      expect(html).toContain(`${ICO.camara}Agregar foto`);
+      expect(html).toContain('<input type="file" accept="image/*" multiple data-fotos hidden>');
+    });
+
+    it('sin fotos, igual se ofrece agregar', () => {
+      expect(renderCaptura(base)).toContain('Agregar foto');
+    });
+
+    it('con cinco fotos, el botón no se dibuja', () => {
+      const html = renderCaptura({ ...base, fotos: ['a', 'b', 'c', 'd', 'e'] });
+      expect(html).not.toContain('Agregar foto');
+      expect(html.match(/sacar-foto-captura/g)).toHaveLength(5);
+    });
+
+    it('con sólo fotos, Guardar está disponible', () => {
+      expect(renderCaptura({ ...base, fuente: '', fotos: ['blob:1'] })).not.toContain('disabled');
+    });
+
+    it('editando un borrador no están: se manejan en la vista del borrador', () => {
+      expect(renderCaptura({ ...base, edicion: true })).not.toContain('Agregar foto');
+    });
+
+    it('un aviso se muestra sin control', () => {
+      const html = renderCaptura({ ...base, aviso: 'Llegaron 8 fotos: se guardan las primeras 5.' });
+      expect(html).toContain('Llegaron 8 fotos: se guardan las primeras 5.');
+      expect(html).not.toContain('data-accion="reintentar"');
+    });
+  });
 });
+
