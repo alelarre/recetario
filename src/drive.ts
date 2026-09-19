@@ -45,7 +45,8 @@ export interface ArchivoCreado {
 
 export interface OpcionesCrear {
   nombre: string;
-  contenido?: string;
+  /** Un texto, o un `Blob` —una foto— que viaja tal cual. */
+  contenido?: string | Blob;
   padre?: string;
   mime?: string;
 }
@@ -58,6 +59,13 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
    * hasta probar lo contrario.
    */
   async function pedir<T>(ruta: string, opciones: RequestInit = {}, base = API): Promise<T> {
+    const r = await responder(ruta, opciones, base);
+    const tipo = r.headers.get('content-type') ?? '';
+    return (tipo.includes('json') ? r.json() : r.text()) as Promise<T>;
+  }
+
+  /** El pedido con el token; un status de error es un `ErrorDeDrive`. */
+  async function responder(ruta: string, opciones: RequestInit = {}, base = API): Promise<Response> {
     const token = await obtenerToken();
     const esJson = typeof opciones.body === 'string';
     const r = await fetch(base + ruta, {
@@ -69,8 +77,7 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
       }
     });
     if (!r.ok) throw new ErrorDeDrive(await r.text(), r.status);
-    const tipo = r.headers.get('content-type') ?? '';
-    return (tipo.includes('json') ? r.json() : r.text()) as Promise<T>;
+    return r;
   }
 
   const listar = async (
@@ -105,6 +112,9 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
 
     /** Devuelve el `.md` crudo: `alt=media` no responde JSON. */
     leerTexto: (id: string) => pedir<string>(`/files/${id}?alt=media`),
+
+    /** El contenido como `Blob`: una foto. */
+    leerBlob: async (id: string): Promise<Blob> => (await responder(`/files/${encodeURIComponent(id)}?alt=media`)).blob(),
 
     crear: ({ nombre, contenido = '', padre, mime = 'text/markdown' }: OpcionesCrear): Promise<ArchivoCreado> => {
       const meta = { name: nombre, mimeType: mime, ...(padre ? { parents: [padre] } : {}) };

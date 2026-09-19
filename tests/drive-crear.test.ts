@@ -88,4 +88,44 @@ describe('drive.crear()', () => {
     expect(body.parents).toEqual(['root-id']);
     expect(resultado.id).toBe('folder-id');
   });
+
+  it('sube un Blob tal cual, con su mime', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      headers: new Map([['content-type', 'application/json']]),
+      json: async () => ({ id: 'foto-id', name: 'tarta-1.jpg' })
+    });
+    const foto = new Blob(['jpeg'], { type: 'image/jpeg' });
+
+    await drive.crear({ nombre: 'tarta-1.jpg', contenido: foto, padre: 'bc', mime: 'image/jpeg' });
+
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toContain('uploadType=multipart');
+    const archivo = (options.body as FormData).get('file') as Blob;
+    expect(await archivo.text()).toBe('jpeg');
+    expect(archivo.type).toBe('image/jpeg');
+    const meta = JSON.parse(await ((options.body as FormData).get('metadata') as Blob).text());
+    expect(meta).toEqual({ name: 'tarta-1.jpg', mimeType: 'image/jpeg', parents: ['bc'] });
+  });
+});
+
+describe('drive.leerBlob()', () => {
+  it('pide alt=media con el token y devuelve el Blob', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response(new Blob(['jpeg'], { type: 'image/jpeg' })));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const drive = crearDrive(() => Promise.resolve('token-test'));
+
+    const blob = await drive.leerBlob('f1');
+
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://www.googleapis.com/drive/v3/files/f1?alt=media');
+    expect(options.headers.Authorization).toBe('Bearer token-test');
+    expect(await blob.text()).toBe('jpeg');
+  });
+
+  it('un archivo que no está es un ErrorDeDrive con su status', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce(new Response('no', { status: 404 })) as unknown as typeof fetch;
+    const drive = crearDrive(() => Promise.resolve('token-test'));
+    await expect(drive.leerBlob('f1')).rejects.toMatchObject({ status: 404 });
+  });
 });
