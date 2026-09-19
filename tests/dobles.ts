@@ -20,6 +20,8 @@ interface ArchivoFalso {
   modifiedTime?: string;
   trashed?: boolean;
   contenido?: string;
+  /** Lo que se subió como `Blob`: una foto. */
+  blob?: Blob;
   appProperties?: Record<string, string>;
   /** De otra persona, compartida con el usuario: `'me' in owners` la deja afuera. */
   ajena?: boolean;
@@ -37,7 +39,10 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
 
   const api = {
     llamadas: [] as unknown[][],
-    fallar(operacion: string, error: unknown) { fallas.set(operacion, error); },
+    /** Sin error, la operación vuelve a andar. */
+    fallar(operacion: string, error: unknown) {
+      if (error === undefined) fallas.delete(operacion); else fallas.set(operacion, error);
+    },
     _store: store,
 
     async buscarPorNombre(nombre: string, padre?: string) {
@@ -73,11 +78,14 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       return store.get(id)?.contenido ?? '';
     },
     async crear({ nombre, contenido = '', padre, mime = 'text/markdown' }: {
-      nombre: string; contenido?: string; padre?: string; mime?: string;
+      nombre: string; contenido?: string | Blob; padre?: string; mime?: string;
     }) {
+      api.llamadas.push(['crear', nombre]);
+      if (fallas.has(`crear:${nombre}`)) throw fallas.get(`crear:${nombre}`);
       const a: ArchivoFalso = {
         id: `nuevo${siguiente++}`, name: nombre, mimeType: mime,
-        parents: padre ? [padre] : [], modifiedTime: new Date().toISOString(), contenido
+        parents: padre ? [padre] : [], modifiedTime: new Date().toISOString(),
+        ...(typeof contenido === 'string' ? { contenido } : { blob: contenido })
       };
       store.set(a.id, a);
       return a as ArchivoFalso & { id: string };
@@ -108,9 +116,20 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       a.parents = [destino, ...(a.parents ?? []).filter(p => p !== de && p !== destino)].slice(0, 1);
       return a;
     },
+    async leerBlob(id: string) {
+      const a = store.get(id);
+      if (!a?.blob) throw Object.assign(new Error(`El doble de Drive no tiene la foto ${id}`), { status: 404 });
+      return a.blob;
+    },
     // Como el real: a la papelera, no fuera de `_store`. `vivos()` ya lo
-    // saca de búsquedas y listados.
-    async borrar(id: string) { const a = exigir(id); a.trashed = true; return a; }
+    // saca de búsquedas y listados. Un id que no existe es un 404.
+    async borrar(id: string) {
+      api.llamadas.push(['borrar', id]);
+      const a = store.get(id);
+      if (!a) throw Object.assign(new Error(`El doble de Drive no tiene el archivo ${id}`), { status: 404 });
+      a.trashed = true;
+      return a;
+    }
   } satisfies DriveDelStore & Record<string, unknown>;
 
   /** Los mutadores del doble asumen que el archivo existe: si no, es un test mal armado. */
