@@ -6,10 +6,8 @@
  */
 import { DURACIONES, DIFICULTADES, TAGS_RESERVADOS } from './catalogo.js';
 import { parse } from './recipe.js';
+import { linkDeFoto } from './fotos-receta.js';
 import type { Receta, Borrador } from './tipos.js';
-
-/** El link de Drive de una foto, para quien la lea con el conector de Drive. */
-export const linkDeFoto = (id: string): string => `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
 
 /**
  * Qué son las fotos y cómo tratarlas. Con `links`, una línea por foto con su

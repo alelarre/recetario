@@ -76,6 +76,32 @@ describe('parse — cuerpo', () => {
     expect(r.notas).toBe('Unica nota.');
     expect(r.avisos).not.toContain('seccion-duplicada');
   });
+
+  it('parse("") da fotos: [], como el resto de las secciones', () => {
+    expect(parse('').fotos).toEqual([]);
+  });
+});
+
+describe('parse — ## Fotos', () => {
+  it('lee la sección como el depósito', () => {
+    const r = parse(`---\ntitulo: X\n---\n\n## Fotos\n- 1: https://drive.google.com/file/d/abc/view\n- 3: https://ejemplo.com/c.jpg\n`);
+    expect(r.fotos).toEqual([
+      { n: 1, url: 'https://drive.google.com/file/d/abc/view' },
+      { n: 3, url: 'https://ejemplo.com/c.jpg' }
+    ]);
+    expect(r.otras).toEqual([]);
+  });
+
+  it('mal formada, cae en otras tal cual y la receta queda sin depósito', () => {
+    const r = parse(`---\ntitulo: X\n---\n\n## Fotos\n- 1: https://ejemplo.com/a.jpg\nesto no calza\n`);
+    expect(r.fotos).toEqual([]);
+    expect(r.otras).toEqual([{ encabezado: 'Fotos', cuerpo: '- 1: https://ejemplo.com/a.jpg\nesto no calza' }]);
+  });
+
+  it('reconoce el encabezado normalizando, como las demás secciones', () => {
+    const r = parse(`---\ntitulo: X\n---\n\n## FOTOS\n- 1: https://ejemplo.com/a.jpg\n`);
+    expect(r.fotos).toEqual([{ n: 1, url: 'https://ejemplo.com/a.jpg' }]);
+  });
 });
 
 describe('gruposDe', () => {

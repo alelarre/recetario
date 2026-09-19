@@ -98,6 +98,10 @@ foto: https://ejemplo/foto.jpg
     expect(parse('---\ntitulo: A\nfoto: no-es-url\n---\n').foto).toBe('no-es-url');
   });
 
+  it('foto acepta foto:N, la referencia a una línea del depósito', () => {
+    expect(parse('---\ntitulo: A\nfoto: foto:2\n---\n').foto).toBe('foto:2');
+  });
+
   it('dificultad fuera de las tres se muestra tal cual, sin corregir', () => {
     expect(parse('---\ntitulo: A\ndificultad: imposible\n---\n').dificultad).toBe('imposible');
   });

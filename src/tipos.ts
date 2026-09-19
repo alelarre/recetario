@@ -52,8 +52,43 @@ export interface Receta {
   variaciones: string;
   notas: string;
   otras: OtraSeccion[];
+  /** El depósito de fotos: la sección `## Fotos`, ya parseada. Vacío si no hay. */
+  fotos: FotoDeReceta[];
   avisos: Aviso[];
 }
+
+/** Una foto del depósito: la línea `- N: URL` de `## Fotos` (`src/fotos-receta.ts`). */
+export interface FotoDeReceta {
+  n: number;
+  url: string;
+}
+
+/**
+ * Los cambios de fotos que hizo el editor, para que el store los aplique al
+ * guardar (C04.1.1): subir las nuevas, mover las que vienen de un borrador y
+ * mandar a la papelera las que se sacaron.
+ */
+export interface CambiosDeFotos {
+  /** Se suben a `_fotos/`; su URL de Drive va en la línea `n` del depósito. */
+  nuevas: Map<number, Blob>;
+  /** Ids en `_borradores/` que se mueven a `_fotos/`. */
+  deBorrador: string[];
+  /** URLs que estaban en el `.md` y ya no. */
+  sacadas: string[];
+  /** Avisa cada foto que el store ya subió, para que un reintento no la resuba. */
+  alSubir?: (n: number, id: string) => void;
+}
+
+/**
+ * Un lugar de la receta donde *Poner en…* puede escribir una referencia a una
+ * foto (`src/fotos-receta.ts`, `lineasDeLaReceta`). En ingredientes y pasos
+ * `linea` ubica la línea exacta dentro del texto de la sección, la que recibe
+ * `ponerEn`; en las demás la referencia va en un renglón nuevo al final, sin
+ * línea que apuntar.
+ */
+export type Lugar =
+  | { seccion: 'ingredientes' | 'preparacion'; linea: number; texto: string; grupo: string }
+  | { seccion: 'descripcion' | 'variaciones' | 'notas'; linea: null; texto: string; grupo: string };
 
 /**
  * Un ingrediente parseado: nombre primero, cantidad después del separador

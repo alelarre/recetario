@@ -121,4 +121,21 @@ describe('serialize', () => {
   it('si completa venía, la conserva como a cualquier clave desconocida', () => {
     expect(serialize(parse('---\ntitulo: Pan\ncompleta: no\n---\n'))).toContain('completa: no');
   });
+
+  it('sin fotos, la sección no se escribe', () => {
+    expect(serialize(parse('---\ntitulo: Pan\n---\n\n## Notas\n- Ojo.\n'))).not.toContain('## Fotos');
+  });
+
+  it('con fotos, la sección va última, después de Notas y de las ajenas', () => {
+    const r = parse(`---\ntitulo: X\n---\n\n## Maridaje\nMalbec.\n\n## Notas\n- a\n\n## Fotos\n- 1: https://ejemplo.com/a.jpg\n`);
+    const texto = serialize(r);
+    expect(texto.indexOf('## Notas')).toBeLessThan(texto.indexOf('## Maridaje'));
+    expect(texto.indexOf('## Maridaje')).toBeLessThan(texto.indexOf('## Fotos'));
+    expect(texto).toContain('## Fotos\n- 1: https://ejemplo.com/a.jpg\n');
+  });
+
+  it('hace round-trip con fotos', () => {
+    const original = '---\ntitulo: Pan\n---\n\n## Notas\n- Ojo.\n\n## Fotos\n- 1: https://ejemplo.com/a.jpg\n- 3: https://ejemplo.com/c.jpg\n';
+    expect(serialize(parse(original))).toBe(original);
+  });
 });

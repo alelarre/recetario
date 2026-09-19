@@ -2,6 +2,7 @@ import type {
   Receta, Ingrediente, ClaveSeccion,
   GrupoIngredientes, TramoPreparacion, Variacion
 } from './tipos.js';
+import { parsearFotos, serializarFotos } from './fotos-receta.js';
 
 /** Las claves del frontmatter que se escriben tal cual, sin `tags`, que es lista. */
 const CLAVES = ['titulo', 'rinde', 'tiempo', 'dificultad', 'fuente', 'foto'] as const;
@@ -39,7 +40,7 @@ function recetaVacia(): Receta {
     foto: null,
     extras: {},
     descripcion: '', ingredientes: '', preparacion: '', variaciones: '', notas: '',
-    otras: [], avisos: []
+    otras: [], fotos: [], avisos: []
   };
 }
 
@@ -114,8 +115,12 @@ const SECCIONES: Record<string, ClaveSeccion> = {
   notas: 'notas'
 };
 
-/** Dónde se está acumulando texto: una sección conocida, la descripción, o una ajena. */
-type Destino = ClaveSeccion | 'descripcion' | 'otra';
+/**
+ * Dónde se está acumulando texto: una sección conocida, la descripción, el
+ * depósito de fotos —que no es texto, y por eso se resuelve aparte—, o una
+ * sección ajena.
+ */
+type Destino = ClaveSeccion | 'descripcion' | 'fotos' | 'otra';
 
 function parsearCuerpo(cuerpo: string, receta: Receta): void {
   const lineas = String(cuerpo).split('\n');
@@ -127,7 +132,11 @@ function parsearCuerpo(cuerpo: string, receta: Receta): void {
     const texto = buffer.join('\n').trim();
     buffer = [];
     if (!texto) { encabezadoOtra = null; return; }
-    if (destino === 'otra') {
+    if (destino === 'fotos') {
+      // Mal formada, cae como ajena tal cual (§3): nada se pierde por pasar por el editor.
+      const fotos = parsearFotos(texto);
+      if (fotos) { receta.fotos = fotos; } else { receta.otras.push({ encabezado: encabezadoOtra ?? 'Fotos', cuerpo: texto }); }
+    } else if (destino === 'otra') {
       receta.otras.push({ encabezado: encabezadoOtra ?? '', cuerpo: texto });
     } else if (receta[destino]) {
       receta[destino] = receta[destino] + '\n\n' + texto;
@@ -149,7 +158,15 @@ function parsearCuerpo(cuerpo: string, receta: Receta): void {
         continue;
       }
       const clave = SECCIONES[normalizar(encabezadoTrimado)];
-      if (clave) { destino = clave; } else { destino = 'otra'; encabezadoOtra = encabezadoTrimado; }
+      if (clave) {
+        destino = clave;
+      } else if (normalizar(encabezadoTrimado) === 'fotos') {
+        destino = 'fotos';
+        encabezadoOtra = encabezadoTrimado;
+      } else {
+        destino = 'otra';
+        encabezadoOtra = encabezadoTrimado;
+      }
       continue;
     }
     buffer.push(linea);
@@ -191,6 +208,9 @@ export function serialize(receta?: Partial<Receta> | null): string {
     if (!otra?.encabezado || typeof otra.encabezado !== 'string') continue;
     partes.push(`## ${otra.encabezado}\n${otra.cuerpo}`);
   }
+  // Va última, después de Notas y de las secciones ajenas (§3). Sin fotos, no se escribe.
+  const fotos = Array.isArray(r.fotos) ? r.fotos : [];
+  if (fotos.length) partes.push(`## Fotos\n${serializarFotos(fotos)}`);
 
   const cabecera = fm.length ? `---\n${fm.join('\n')}\n---\n` : '';
   const cuerpo = partes.length ? `\n${partes.join('\n\n')}\n` : '';

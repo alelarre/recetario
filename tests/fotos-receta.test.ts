@@ -1,0 +1,211 @@
+import { describe, it, expect } from 'vitest';
+import { recetaFalsa } from './dobles.js';
+import {
+  linkDeFoto, idDeDrive, parsearFotos, serializarFotos, siguienteNumero,
+  resolver, resolverReceta, sinFotosDeDrive, lineasDeLaReceta, ponerEn, sacarReferencias
+} from '../src/fotos-receta.js';
+
+describe('linkDeFoto / idDeDrive', () => {
+  it('idDeDrive reconoce un link armado por linkDeFoto, con caracteres que necesitan escapar', () => {
+    const link = linkDeFoto('1AbC_dé f');
+    expect(link).toBe('https://drive.google.com/file/d/1AbC_d%C3%A9%20f/view');
+    expect(idDeDrive(link)).toBe('1AbC_dé f');
+  });
+
+  it('una URL que no es de Drive da null', () => {
+    expect(idDeDrive('https://ejemplo.com/pan.jpg')).toBeNull();
+  });
+
+  it('un link de Drive con otra forma —preview en vez de view— no se reconoce', () => {
+    expect(idDeDrive('https://drive.google.com/file/d/abc123/preview')).toBeNull();
+  });
+});
+
+describe('parsearFotos / serializarFotos', () => {
+  it('hace ida y vuelta, con huecos en la numeración', () => {
+    const cuerpo = '- 1: https://ejemplo.com/a.jpg\n- 3: https://ejemplo.com/c.jpg';
+    const fotos = parsearFotos(cuerpo);
+    expect(fotos).toEqual([
+      { n: 1, url: 'https://ejemplo.com/a.jpg' },
+      { n: 3, url: 'https://ejemplo.com/c.jpg' }
+    ]);
+    expect(serializarFotos(fotos!)).toBe(cuerpo);
+  });
+
+  it('una línea sin la forma "- N: url" da null', () => {
+    expect(parsearFotos('- 1: https://ejemplo.com/a.jpg\nesto no calza')).toBeNull();
+  });
+
+  it('una URL que no es http(s) también da null', () => {
+    expect(parsearFotos('- 1: drive://algo')).toBeNull();
+  });
+});
+
+describe('siguienteNumero', () => {
+  it('vacío empieza en 1', () => {
+    expect(siguienteNumero([])).toBe(1);
+  });
+
+  it('con huecos toma el más alto más uno', () => {
+    expect(siguienteNumero([{ n: 1, url: 'x' }, { n: 3, url: 'y' }])).toBe(4);
+  });
+});
+
+describe('resolver', () => {
+  const fotos = [{ n: 1, url: 'https://a.com/1.jpg' }, { n: 2, url: 'https://b.com/2.jpg' }];
+
+  it('foto:N da la URL de su línea', () => {
+    expect(resolver('foto:2', fotos)).toBe('https://b.com/2.jpg');
+  });
+
+  it('un número que no está da null', () => {
+    expect(resolver('foto:9', fotos)).toBeNull();
+  });
+
+  it('una URL da la misma URL', () => {
+    expect(resolver('https://externa.com/x.jpg', fotos)).toBe('https://externa.com/x.jpg');
+  });
+
+  it('null da null', () => {
+    expect(resolver(null, fotos)).toBeNull();
+  });
+});
+
+describe('resolverReceta', () => {
+  const fotos = [{ n: 1, url: 'https://a.com/1.jpg' }, { n: 2, url: 'https://b.com/2.jpg' }];
+
+  it('resuelve la cabecera y las referencias, con epígrafe y sin él', () => {
+    const receta = recetaFalsa({
+      foto: 'foto:2',
+      descripcion: 'Textura: ![](foto:1) acá.',
+      ingredientes: '- Harina — 1kg ![Bien picada](foto:2)',
+      fotos
+    });
+    const resuelta = resolverReceta(receta);
+    expect(resuelta.foto).toBe('https://b.com/2.jpg');
+    expect(resuelta.descripcion).toBe('Textura: ![](https://a.com/1.jpg) acá.');
+    expect(resuelta.ingredientes).toBe('- Harina — 1kg ![Bien picada](https://b.com/2.jpg)');
+  });
+
+  it('una referencia a un número que no está en el depósito se borra', () => {
+    const receta = recetaFalsa({ preparacion: '1. Paso ![](foto:9)', fotos });
+    const resuelta = resolverReceta(receta);
+    expect(resuelta.preparacion).not.toContain('foto:9');
+    expect(resuelta.preparacion).not.toContain('![');
+  });
+
+  it('no muta la receta original y conserva el depósito', () => {
+    const receta = recetaFalsa({ foto: 'foto:1', fotos });
+    const resuelta = resolverReceta(receta);
+    expect(receta.foto).toBe('foto:1');
+    expect(resuelta.fotos).toEqual(fotos);
+  });
+
+  it('recorre variaciones, notas y las secciones ajenas', () => {
+    const receta = recetaFalsa({
+      variaciones: 'Con queso ![](foto:1)',
+      notas: 'Ojo ![](foto:2)',
+      otras: [{ encabezado: 'Maridaje', cuerpo: 'Un malbec ![](foto:1)' }],
+      fotos
+    });
+    const resuelta = resolverReceta(receta);
+    expect(resuelta.variaciones).toBe('Con queso ![](https://a.com/1.jpg)');
+    expect(resuelta.notas).toBe('Ojo ![](https://b.com/2.jpg)');
+    expect(resuelta.otras).toEqual([{ encabezado: 'Maridaje', cuerpo: 'Un malbec ![](https://a.com/1.jpg)' }]);
+  });
+});
+
+describe('sinFotosDeDrive', () => {
+  const idDrive = 'abc123';
+  const linkDrive = linkDeFoto(idDrive);
+  const fotos = [{ n: 1, url: linkDrive }, { n: 2, url: 'https://externa.com/x.jpg' }];
+
+  it('saca la de Drive de la cabecera, del texto y del depósito', () => {
+    const receta = recetaFalsa({
+      foto: 'foto:1',
+      descripcion: 'Ver ![](foto:1) y ![](foto:2).',
+      fotos
+    });
+    const limpia = sinFotosDeDrive(receta);
+    expect(limpia.foto).toBeNull();
+    expect(limpia.descripcion).not.toContain(linkDrive);
+    expect(limpia.descripcion).toContain('https://externa.com/x.jpg');
+    expect(limpia.fotos).toEqual([{ n: 2, url: 'https://externa.com/x.jpg' }]);
+  });
+
+  it('deja las externas como están', () => {
+    const receta = recetaFalsa({
+      foto: 'https://externa.com/portada.jpg',
+      fotos: [{ n: 1, url: 'https://externa.com/x.jpg' }]
+    });
+    const limpia = sinFotosDeDrive(receta);
+    expect(limpia.foto).toBe('https://externa.com/portada.jpg');
+    expect(limpia.fotos).toEqual([{ n: 1, url: 'https://externa.com/x.jpg' }]);
+  });
+});
+
+describe('lineasDeLaReceta', () => {
+  it('numera ingredientes y pasos por su línea, agrupados por ###, y agrega descripción, variaciones y notas', () => {
+    const receta = recetaFalsa({
+      descripcion: 'Una intro.',
+      ingredientes: '### Salsa\n- Tomate — 1\n\n### Masa\n- Harina — 1kg',
+      preparacion: '1. Hervir\n2. Colar',
+      variaciones: '- Con queso',
+      notas: '- Ojo con el horno'
+    });
+    expect(lineasDeLaReceta(receta)).toEqual([
+      { seccion: 'descripcion', linea: null, texto: 'Una intro.', grupo: 'Descripción' },
+      { seccion: 'ingredientes', linea: 1, texto: '- Tomate — 1', grupo: 'Salsa' },
+      { seccion: 'ingredientes', linea: 4, texto: '- Harina — 1kg', grupo: 'Masa' },
+      { seccion: 'preparacion', linea: 0, texto: '1. Hervir', grupo: 'Preparación' },
+      { seccion: 'preparacion', linea: 1, texto: '2. Colar', grupo: 'Preparación' },
+      { seccion: 'variaciones', linea: null, texto: '- Con queso', grupo: 'Variaciones' },
+      { seccion: 'notas', linea: null, texto: '- Ojo con el horno', grupo: 'Notas' }
+    ]);
+  });
+
+  it('una receta sin nada da una lista vacía', () => {
+    expect(lineasDeLaReceta(recetaFalsa())).toEqual([]);
+  });
+});
+
+describe('ponerEn', () => {
+  it('en un ingrediente, agrega la referencia al final de esa línea', () => {
+    const texto = '- Harina — 1kg\n- Sal — 1 cda';
+    expect(ponerEn(texto, 0, 5)).toBe('- Harina — 1kg ![](foto:5)\n- Sal — 1 cda');
+  });
+
+  it('en un paso, agrega la referencia al final de esa línea', () => {
+    const texto = '1. Hervir\n2. Colar';
+    expect(ponerEn(texto, 1, 5)).toBe('1. Hervir\n2. Colar ![](foto:5)');
+  });
+
+  it('en las notas, agrega un renglón nuevo al final', () => {
+    expect(ponerEn('- Ojo con el horno', null, 5)).toBe('- Ojo con el horno\n![](foto:5)');
+  });
+
+  it('no repite la referencia si la línea ya la tiene', () => {
+    const conFoto = ponerEn('1. Hervir', 0, 5);
+    expect(ponerEn(conFoto, 0, 5)).toBe(conFoto);
+  });
+
+  it('no repite en el renglón nuevo si el texto ya la tiene', () => {
+    const conFoto = ponerEn('- Ojo con el horno', null, 5);
+    expect(ponerEn(conFoto, null, 5)).toBe(conFoto);
+  });
+
+  it('con línea, sólo mira esa línea: la misma foto en otra línea no bloquea agregarla', () => {
+    const texto = '- Harina — 1kg ![](foto:5)\n- Sal — 1 cda';
+    expect(ponerEn(texto, 1, 5)).toBe('- Harina — 1kg ![](foto:5)\n- Sal — 1 cda ![](foto:5)');
+  });
+});
+
+describe('sacarReferencias', () => {
+  it('borra todas las referencias a un número, y deja las demás', () => {
+    expect(sacarReferencias('A ![](foto:1) B ![Así](foto:2) C', 2)).toBe('A ![](foto:1) B C');
+  });
+
+  it('sin referencias a ese número no cambia nada', () => {
+    expect(sacarReferencias('Sin fotos acá.', 3)).toBe('Sin fotos acá.');
+  });
+});
