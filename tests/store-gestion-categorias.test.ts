@@ -5,7 +5,7 @@ import { COLUMNAS_BORRADORES } from '../src/borrador.js';
 import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 import { SCHEMA_VERSION } from '../src/config.js';
 import type { CopiaIndice } from '../src/indice-local.js';
-import { driveFalso, sheetsFalso, indiceLocalFalso, recetaFalsa } from './dobles.js';
+import { driveFalso, sheetsFalso, indiceLocalFalso, recetaFalsa, imagenesFalsas } from './dobles.js';
 import type { SheetsFalso } from './dobles.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
@@ -42,11 +42,12 @@ async function abierta() {
     [...COLUMNAS_CATEGORIAS], ['c1', 'Pastas', 'pastas', 'catalogo:pastas'], ['c2', 'Aves', 'aves', 'catalogo:aves']
   ]);
   const indiceLocal = indiceLocalFalso();
-  const store = crearStore({ drive, sheets, indiceLocal });
+  const imagenes = imagenesFalsas();
+  const store = crearStore({ drive, sheets, indiceLocal, imagenes });
   await store.arrancar();
   await store.cargarIndice();
   drive._store.get('i1')!.modifiedTime = '2026-09-13T11:00:00.000Z';
-  return { drive, sheets, indiceLocal, store };
+  return { drive, sheets, indiceLocal, store, imagenes };
 }
 
 /** Las filas de la copia apuntan a las de la planilla, en las dos hojas. */
@@ -168,6 +169,62 @@ describe('borrar una categoría', () => {
     const recetas = await sheets.leer('i1', 'recetas!A1:L100');
     expect(recetas.filter(f => f[0] === 'r2')).toHaveLength(1);
     expect(recetas.find(f => f[0] === 'r2')?.[2]).toBe('Pollo al horno');
+  });
+});
+
+describe('la foto propia de una categoría', () => {
+  const foto = (texto: string): Blob => new Blob([texto], { type: 'image/jpeg' });
+
+  it('crear la sube a _fotos/ como categoria-<nombre>.jpg y la nombra drive:<id>', async () => {
+    const { store, drive, imagenes } = await abierta();
+    const blob = foto('x');
+    const c = await store.crearCategoria({ nombre: 'Fiambres Caseros', color: 'bebidas', foto: '', fotoPropia: blob });
+
+    const subida = [...drive._store.values()].find(a => a.name === 'categoria-fiambres-caseros.jpg')!;
+    const fotos = [...drive._store.values()].find(a => a.name === '_fotos')!;
+    expect(subida).toMatchObject({ parents: [fotos.id], mimeType: 'image/jpeg' });
+    expect(c.foto).toBe(`drive:${subida.id}`);
+    expect(drive._store.get(c.id)?.appProperties).toEqual({ color: 'bebidas', foto: `drive:${subida.id}` });
+    expect(store.categorias().find(x => x.id === c.id)?.foto).toBe(`drive:${subida.id}`);
+    expect(imagenes.guardadas).toEqual([[subida.id, blob]]);
+  });
+
+  it('editar con otra foto propia sube la nueva y manda la anterior a la papelera', async () => {
+    const { store, drive, imagenes } = await abierta();
+    const c = await store.crearCategoria({ nombre: 'Fiambres', color: 'bebidas', foto: '', fotoPropia: foto('a') });
+    const anterior = c.foto.slice('drive:'.length);
+
+    await store.editarCategoria(c.id, { nombre: 'Fiambres', color: 'bebidas', foto: c.foto, fotoPropia: foto('b') });
+
+    const nueva = store.categorias().find(x => x.id === c.id)!.foto;
+    expect(nueva).toMatch(/^drive:/);
+    expect(nueva).not.toBe(c.foto);
+    expect(drive._store.get(nueva.slice('drive:'.length))?.name).toBe('categoria-fiambres.jpg');
+    expect(drive._store.get(anterior)?.trashed).toBe(true);
+    expect(imagenes.olvidadas).toEqual([anterior]);
+  });
+
+  it('elegir una del catálogo manda la propia anterior a la papelera', async () => {
+    const { store, drive } = await abierta();
+    const c = await store.crearCategoria({ nombre: 'Fiambres', color: 'bebidas', foto: '', fotoPropia: foto('a') });
+    await store.editarCategoria(c.id, { nombre: 'Fiambres', color: 'bebidas', foto: 'catalogo:pastas' });
+    expect(drive._store.get(c.foto.slice('drive:'.length))?.trashed).toBe(true);
+  });
+
+  it('editar sin tocar la foto no la manda a la papelera', async () => {
+    const { store, drive } = await abierta();
+    const c = await store.crearCategoria({ nombre: 'Fiambres', color: 'bebidas', foto: '', fotoPropia: foto('a') });
+    await store.editarCategoria(c.id, { nombre: 'Fiambres y quesos', color: 'bebidas', foto: c.foto });
+    expect(drive._store.get(c.foto.slice('drive:'.length))?.trashed).toBeFalsy();
+  });
+
+  it('borrar la categoría se lleva su foto propia', async () => {
+    const { store, drive, imagenes } = await abierta();
+    const c = await store.crearCategoria({ nombre: 'Fiambres', color: 'bebidas', foto: '', fotoPropia: foto('a') });
+    await store.borrarCategoria(c.id);
+    const id = c.foto.slice('drive:'.length);
+    expect(drive._store.get(id)?.trashed).toBe(true);
+    expect(imagenes.olvidadas).toEqual([id]);
   });
 });
 

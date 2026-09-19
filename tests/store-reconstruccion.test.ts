@@ -42,6 +42,18 @@ describe('reconstruir', () => {
     expect(titulos).toEqual(['Asado', 'Bife', 'Suelta']);
   });
 
+  it('_fotos/ no es categoría: la reconoce, la anota en meta y no la lee', async () => {
+    drive._store.set('fc', { id: 'fc', name: '_fotos', mimeType: CARPETA, parents: ['raiz'] });
+    drive._store.set('fv', { id: 'fv', name: 'otra.md', parents: ['fc'], contenido: md('No es receta') });
+    await store.reconstruir();
+    expect(store.categorias().map(c => c.nombre)).toEqual(['Carnes']);
+    expect(store.entradas().map(e => e.titulo)).not.toContain('No es receta');
+    expect(drive.llamadas).not.toContainEqual(['leerTexto', 'fv']);
+    expect(store._ctx.fotosId).toBe('fc');
+    const meta = await sheets.leer('i1', 'meta!A1:B20');
+    expect(meta).toContainEqual(['carpeta_fotos', 'fc']);
+  });
+
   it('las recetas de la raíz quedan como Sin categorizar', async () => {
     await store.reconstruir();
     expect(store.entradas().find(e => e.titulo === 'Suelta')!.categoria).toBe('Sin categorizar');

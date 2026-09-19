@@ -15,6 +15,11 @@ export const NOMBRE_RAIZ = 'Recetario';
 export const NOMBRE_INDICE = '_indice';
 /** La carpeta de los borradores, un `.md` por borrador. El `_` la deja fuera de las categorías. */
 export const NOMBRE_BORRADORES = '_borradores';
+/**
+ * Las fotos de las recetas y de las categorías, en la carpeta base. Se crea con
+ * la primera foto. El `_` la deja fuera de las categorías y del reindexado.
+ */
+export const NOMBRE_FOTOS = '_fotos';
 /** El plan de la semana: un solo archivo en la carpeta base, al lado de `_indice`. */
 export const NOMBRE_PLAN = '_plan.md';
 

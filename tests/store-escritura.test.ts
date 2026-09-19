@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { crearStore } from '../src/store.js';
-import { driveFalso, sheetsFalso, recetaFalsa, indiceLocalFalso } from './dobles.js';
+import { driveFalso, sheetsFalso, recetaFalsa, indiceLocalFalso, imagenesFalsas } from './dobles.js';
 import type { DriveFalso, SheetsFalso } from './dobles.js';
 import { parse } from '../src/recipe.js';
 import { COLUMNAS } from '../src/catalogo.js';
 import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
+import { SCHEMA_VERSION } from '../src/config.js';
+import { linkDeFoto } from '../src/fotos-receta.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
@@ -253,5 +255,173 @@ describe('borrar', () => {
     const deOtra = filas.filter(f => f[0] === otra.id);
     expect(deOtra).toHaveLength(1);
     expect(deOtra[0]?.[2]).toBe('Otra actualizada');
+  });
+});
+
+describe('guardar y crear con fotos', () => {
+  const foto = (texto: string): Blob => new Blob([texto], { type: 'image/jpeg' });
+  const PAN = `---\ntitulo: Pan de campo\n---\n\n## Preparación\n1. Amasar\n\n## Fotos\n- 1: ${linkDeFoto('fv')}\n`;
+
+  /**
+   * Un Recetario con `_fotos/` (fc), `_borradores/` (bc), una receta con una
+   * foto en `_fotos/`, una foto en un borrador y una foto ajena en otra
+   * carpeta. `conCarpetaFotos: false` lo arma sin `_fotos/`.
+   */
+  async function conFotos({ conCarpetaFotos = true } = {}) {
+    const drive = driveFalso([
+      { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
+      { id: 'c1', name: 'Panes', mimeType: CARPETA, parents: ['raiz'] },
+      { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },
+      { id: 'bc', name: '_borradores', mimeType: CARPETA, parents: ['raiz'] },
+      ...(conCarpetaFotos ? [{ id: 'fc', name: '_fotos', mimeType: CARPETA, parents: ['raiz'] }] : []),
+      { id: 'r1', name: 'pan-de-campo.md', parents: ['c1'], contenido: PAN },
+      { id: 'fv', name: 'pan-de-campo-1.jpg', mimeType: 'image/jpeg', parents: ['fc'] },
+      { id: 'fb', name: 'pan-1.jpg', mimeType: 'image/jpeg', parents: ['bc'] },
+      { id: 'ajena', name: 'mia.jpg', mimeType: 'image/jpeg', parents: ['otra'] }
+    ]);
+    const sheets = sheetsFalso();
+    sheets.crearPlanilla('i1', ['recetas', 'meta', 'borradores', 'categorias']);
+    sheets.cargar('i1', 'recetas', [[...COLUMNAS], ['r1', 'pan-de-campo.md', 'Pan de campo', 'Panes', 'c1', '', '', '', '', '', '', '1000']]);
+    sheets.cargar('i1', 'meta', [
+      ['schemaVersion', String(SCHEMA_VERSION)], ['carpeta_borradores', 'bc'],
+      ...(conCarpetaFotos ? [['carpeta_fotos', 'fc']] : [])
+    ]);
+    sheets.cargar('i1', 'categorias', [[...COLUMNAS_CATEGORIAS], ['c1', 'Panes', 'panes', 'catalogo:panes']]);
+    const imagenes = imagenesFalsas();
+    const indiceLocal = indiceLocalFalso();
+    const store = crearStore({ drive, sheets, indiceLocal, imagenes });
+    await store.arrancar();
+    await store.cargarIndice();
+    drive.llamadas.length = 0;
+    return { drive, sheets, store, imagenes, indiceLocal };
+  }
+
+  const sinCambios = { nuevas: new Map<number, Blob>(), deBorrador: [], sacadas: [] };
+
+  it('sube, mueve, escribe el .md y recién después manda a la papelera', async () => {
+    const { store, drive } = await conFotos();
+    const receta = { ...parse(PAN), fotos: [{ n: 2, url: '' }, { n: 3, url: linkDeFoto('fb') }] };
+
+    await store.guardar('r1', receta, {
+      fotos: { nuevas: new Map([[2, foto('nueva')]]), deBorrador: ['fb'], sacadas: [linkDeFoto('fv')] }
+    });
+
+    const escrituras = drive.llamadas.filter(l => ['crear', 'mover', 'renombrar', 'actualizar', 'borrar'].includes(String(l[0])));
+    expect(escrituras).toEqual([
+      ['crear', 'pan-de-campo-2.jpg'],
+      ['mover', 'fb', 'bc', 'fc'],
+      ['renombrar', 'fb', 'pan-de-campo-3.jpg'],
+      ['actualizar', 'r1'],
+      ['borrar', 'fv']
+    ]);
+  });
+
+  it('la foto nueva va a _fotos/, su link queda en su línea, entra al caché y se avisa', async () => {
+    const { store, drive, imagenes } = await conFotos();
+    const subidas: [number, string][] = [];
+    const blob = foto('nueva');
+
+    await store.guardar('r1', { ...parse(PAN), fotos: [{ n: 1, url: linkDeFoto('fv') }, { n: 2, url: '' }] }, {
+      fotos: { ...sinCambios, nuevas: new Map([[2, blob]]), alSubir: (n, id) => { subidas.push([n, id]); } }
+    });
+
+    const [[n, id] = [0, '']] = subidas;
+    expect(n).toBe(2);
+    expect(drive._store.get(id)).toMatchObject({ name: 'pan-de-campo-2.jpg', parents: ['fc'], mimeType: 'image/jpeg' });
+    expect(parse(drive._store.get('r1')?.contenido ?? '').fotos).toEqual([
+      { n: 1, url: linkDeFoto('fv') }, { n: 2, url: linkDeFoto(id) }
+    ]);
+    expect(imagenes.guardadas).toEqual([[id, blob]]);
+  });
+
+  it('la portada foto:N de una foto nueva llega resuelta a la fila del índice', async () => {
+    const { store } = await conFotos();
+    await store.guardar('r1', { ...parse(PAN), foto: 'foto:2', fotos: [{ n: 2, url: '' }] }, {
+      fotos: { ...sinCambios, nuevas: new Map([[2, foto('x')]]) }
+    });
+    expect(store.entradas().find(e => e.id_archivo === 'r1')?.foto).toMatch(/^https:\/\/drive\.google\.com\/file\/d\/nuevo\d+\/view$/);
+  });
+
+  it('una foto de borrador que ya está en _fotos/ no se vuelve a mover, pero se renombra', async () => {
+    const { store, drive } = await conFotos();
+    drive._store.get('fb')!.parents = ['fc'];   // un reintento: ya se movió
+    await store.guardar('r1', { ...parse(PAN), fotos: [{ n: 4, url: linkDeFoto('fb') }] }, {
+      fotos: { ...sinCambios, deBorrador: ['fb'] }
+    });
+    expect(drive.llamadas.filter(l => l[0] === 'mover')).toEqual([]);
+    expect(drive._store.get('fb')?.name).toBe('pan-de-campo-4.jpg');
+  });
+
+  it('una foto de borrador que ya no está en Drive no corta el guardado', async () => {
+    const { store, drive } = await conFotos();
+    await store.guardar('r1', { ...parse(PAN), fotos: [{ n: 4, url: linkDeFoto('borrada') }] }, {
+      fotos: { ...sinCambios, deBorrador: ['borrada'] }
+    });
+    expect(parse(drive._store.get('r1')?.contenido ?? '').fotos).toEqual([{ n: 4, url: linkDeFoto('borrada') }]);
+  });
+
+  it('una sacada fuera de _fotos/ o externa no va a la papelera; una que ya no está no es un error', async () => {
+    const { store, drive, imagenes } = await conFotos();
+    await store.guardar('r1', { ...parse(PAN), fotos: [] }, {
+      fotos: { ...sinCambios, sacadas: [linkDeFoto('ajena'), 'https://ejemplo.com/pan.jpg', linkDeFoto('borrada'), linkDeFoto('fv')] }
+    });
+    expect(drive._store.get('ajena')?.trashed).toBeFalsy();
+    expect(drive._store.get('fv')?.trashed).toBe(true);
+    expect(drive.llamadas.filter(l => l[0] === 'borrar')).toEqual([['borrar', 'fv']]);
+    expect(imagenes.olvidadas).toEqual(['borrada', 'fv']);
+  });
+
+  it('un error del caché no falla la escritura', async () => {
+    const { store, drive, imagenes } = await conFotos();
+    imagenes.guardarImagen = async () => { throw new Error('cuota'); };
+    imagenes.olvidarImagen = async () => { throw new Error('cuota'); };
+    await store.guardar('r1', { ...parse(PAN), fotos: [{ n: 2, url: '' }] }, {
+      fotos: { ...sinCambios, nuevas: new Map([[2, foto('x')]]), sacadas: [linkDeFoto('fv')] }
+    });
+    expect(drive._store.get('fv')?.trashed).toBe(true);
+  });
+
+  it('la primera foto crea _fotos/ y la anota en meta', async () => {
+    const { store, drive, sheets, indiceLocal } = await conFotos({ conCarpetaFotos: false });
+    const r = await store.crear({ ...recetaFalsa({ titulo: 'Pan de campo' }), fotos: [{ n: 1, url: '' }] }, {
+      carpetaId: 'c1', fotos: { ...sinCambios, nuevas: new Map([[1, foto('x')]]) }
+    });
+
+    // El nombre del `.md` se calcula antes de subir: ya hay un pan-de-campo.md.
+    expect(drive.llamadas.filter(l => l[0] === 'crear').map(l => l[1])).toEqual(['_fotos', 'pan-de-campo-2-1.jpg', 'pan-de-campo-2.md']);
+    expect(r.nombre_archivo).toBe('pan-de-campo-2.md');
+    const carpeta = [...drive._store.values()].find(a => a.name === '_fotos')!;
+    expect(carpeta).toMatchObject({ mimeType: CARPETA, parents: ['raiz'] });
+    const meta = await sheets.leer('i1', 'meta!A1:B20');
+    expect(meta).toContainEqual(['carpeta_fotos', carpeta.id]);
+    expect(indiceLocal.actual()?.meta['carpeta_fotos']).toBe(carpeta.id);
+    const subida = [...drive._store.values()].find(a => a.name === 'pan-de-campo-2-1.jpg')!;
+    expect(subida.parents).toEqual([carpeta.id]);
+    expect(parse(drive._store.get(r.id)?.contenido ?? '').fotos).toEqual([{ n: 1, url: linkDeFoto(subida.id) }]);
+
+    // La segunda no crea otra carpeta.
+    await store.crear({ ...recetaFalsa({ titulo: 'Otro' }), fotos: [{ n: 1, url: '' }] }, {
+      fotos: { ...sinCambios, nuevas: new Map([[1, foto('y')]]) }
+    });
+    expect([...drive._store.values()].filter(a => a.name === '_fotos')).toHaveLength(1);
+  });
+
+  it('sin fotos que subir ni mover, no crea _fotos/', async () => {
+    const { store, drive } = await conFotos({ conCarpetaFotos: false });
+    await store.guardar('r1', parse(PAN), { fotos: { ...sinCambios, sacadas: [linkDeFoto('fv')] } });
+    expect([...drive._store.values()].some(a => a.name === '_fotos')).toBe(false);
+    expect(drive._store.get('fv')?.trashed).toBeFalsy();
+  });
+
+  it('borrar lee el .md, lo manda a la papelera y después sus fotos de _fotos/', async () => {
+    const { store, drive, imagenes } = await conFotos();
+    drive._store.get('r1')!.contenido = PAN.replace('\n- 1:', `\n- 2: ${linkDeFoto('ajena')}\n- 3: https://ejemplo.com/pan.jpg\n- 1:`);
+
+    await store.borrar('r1');
+
+    expect(drive.llamadas.filter(l => l[0] === 'borrar')).toEqual([['borrar', 'r1'], ['borrar', 'fv']]);
+    expect(drive._store.get('ajena')?.trashed).toBeFalsy();
+    expect(imagenes.olvidadas).toEqual(['fv']);
+    expect(store.entradas()).toHaveLength(0);
   });
 });

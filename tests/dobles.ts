@@ -6,7 +6,7 @@
 import type { PropiedadesHoja } from '../src/sheets.js';
 import type { Entrada, Receta } from '../src/tipos.js';
 import { parse } from '../src/recipe.js';
-import type { DriveDelStore, SheetsDelStore } from '../src/store.js';
+import type { DriveDelStore, ImagenesDelStore, SheetsDelStore } from '../src/store.js';
 import type { CopiaIndice, IndiceLocal } from '../src/indice-local.js';
 
 const MIME_CARPETA = 'application/vnd.google-apps.folder';
@@ -91,12 +91,14 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       return a as ArchivoFalso & { id: string };
     },
     async actualizar(id: string, contenido: string) {
+      api.llamadas.push(['actualizar', id]);
       const a = exigir(id);
       a.contenido = contenido;
       a.modifiedTime = new Date().toISOString();
       return a as ArchivoFalso & { id: string };
     },
     async renombrar(id: string, nombre: string) {
+      api.llamadas.push(['renombrar', id, nombre]);
       const a = exigir(id);
       a.name = nombre;
       return a;
@@ -112,6 +114,7 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       return a;
     },
     async mover(id: string, { de, a: destino }: { de: string; a: string }) {
+      api.llamadas.push(['mover', id, de, destino]);
       const a = exigir(id);
       a.parents = [destino, ...(a.parents ?? []).filter(p => p !== de && p !== destino)].slice(0, 1);
       return a;
@@ -296,6 +299,19 @@ export function indiceLocalFalso(inicial: CopiaIndice | null = null) {
     },
     borrar: (): void => { copia = null; api.borradas++; }
   } satisfies IndiceLocal & Record<string, unknown>;
+  return api;
+}
+
+/** El caché de imágenes, en memoria: registra lo que el store guarda y olvida. */
+export function imagenesFalsas() {
+  const api = {
+    /** Cada foto que el store guardó, con su blob, en orden. */
+    guardadas: [] as [string, Blob][],
+    /** Cada id que el store sacó del caché, en orden. */
+    olvidadas: [] as string[],
+    async guardarImagen(id: string, blob: Blob) { api.guardadas.push([id, blob]); },
+    async olvidarImagen(id: string) { api.olvidadas.push(id); }
+  } satisfies ImagenesDelStore & Record<string, unknown>;
   return api;
 }
 

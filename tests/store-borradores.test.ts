@@ -376,6 +376,14 @@ describe('las fotos de un borrador', () => {
     expect(papelera).toEqual(['f1', 'f2', 'b1']);
   });
 
+  it('descartar con conservar no manda esas fotos a la papelera: ya pasaron a la receta', async () => {
+    const { store, drive } = await conFotos();
+    await store.descartarBorrador('b1', { conservar: ['f2'] });
+    expect(drive._store.get('f1')?.trashed).toBe(true);
+    expect(drive._store.get('f2')?.trashed).toBeFalsy();
+    expect(drive._store.get('b1')?.trashed).toBe(true);
+  });
+
   it('editar conserva las fotos', async () => {
     const { store, drive } = await conFotos();
     await store.editarBorrador('b1', { titulo: 'Focaccia', fuente: '', nota: 'Otra.' });
