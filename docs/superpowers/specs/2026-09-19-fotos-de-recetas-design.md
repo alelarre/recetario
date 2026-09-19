@@ -86,9 +86,11 @@ sirve pegado a mano o escrito por un agente. `linkDeFoto` y su inversa
 **Las referencias**
 - `![epígrafe](foto:N)` en cualquier sección del cuerpo. El epígrafe es
   opcional.
-- `markdown.ts` acepta `foto:N` como destino de una imagen; como link
-  (`[x](foto:2)`) no significa nada y se deja como texto.
-- Una referencia a un número que no está en el depósito no se dibuja.
+- **Antes de dibujarse, la receta se resuelve** (`resolverReceta`): cada
+  `foto:N` se cambia por la URL de su línea, y una referencia a un número que
+  no está en el depósito se borra. Así `markdown.ts`, el texto y el PDF sólo
+  ven URLs, como hoy. Como link (`[x](foto:2)`) no significa nada y queda
+  como texto.
 
 **La cabecera:** `foto` acepta una URL, como hoy, o `foto:N`. Cualquier otro
 valor se lee como ausente, igual que hoy.
@@ -109,6 +111,11 @@ depósito no es texto.
 - `resolver(valor, fotos)`: lo que dibujar para una `foto` o un destino de
   imagen. `foto:N` da la URL de su línea, o `null` si no está; una URL da la
   misma URL.
+- `resolverReceta(receta)`: la receta con la cabecera y cada referencia ya
+  resueltas (§3). La consumen la lectura, la cocina, el texto y el PDF.
+- `sinFotosDeDrive(receta)`: la receta resuelta sin ninguna URL de Drive, ni
+  en la cabecera, ni en el texto, ni en el depósito. La consumen el link y el
+  texto.
 - `lineasDeLaReceta(receta)`: los lugares donde se puede poner una foto, para
   *Poner en…*. Son la descripción, cada ingrediente, cada paso, las
   variaciones y las notas, con el texto de la línea y dónde está.
@@ -339,7 +346,8 @@ propia se elige de nuevo como cualquier otra del catálogo.
 - `tests/recipe-frontmatter.test.ts`: `foto: foto:2` se lee.
 - `tests/recipe-cuerpo.test.ts` y `tests/recipe-serialize.test.ts`: la
   sección Fotos se lee; va última al serializar; sin fotos no se escribe.
-- `tests/markdown.test.ts`: `foto:N` como imagen; como link queda texto.
+- `tests/markdown.test.ts`: la imagen con epígrafe; una de Drive sale como
+  recuadro con `data-drive`.
 - `tests/catalogo-fila.test.ts`: la columna `foto` guarda la cabecera
   resuelta.
 - `tests/imagenes.test.ts`: `guardarImagen` y `olvidarImagen`; la precarga
