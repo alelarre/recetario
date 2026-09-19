@@ -28,7 +28,12 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   coincide, no se lee Sheets. Parte de que nunca hay escritura concurrente. No
   sirve para funcionar sin conexión.
 - **Los borradores son `.md` aparte**, uno por archivo en `_borradores/`, con
-  formato propio: título, fuente, capturado y la nota. Borrar manda a la papelera.
+  formato propio: título, fuente, capturado, la nota y los ids de hasta cinco
+  fotos. Las fotos van al lado del `.md`, achicadas a JPEG; se muestran
+  pidiéndolas a Drive con el token y quedan en Cache Storage por id de archivo
+  (`src/imagenes.ts`). Llegan de la cámara, la galería o el menú Compartir: el
+  Share Target es un `POST` que atiende `public/sw.js`. Descartar o convertir
+  manda el borrador y sus fotos a la papelera.
 - **El plan de la semana es otro `.md`**, `_plan.md`, en la carpeta base y al
   lado de `_indice`: siete días sin fechas que arrancan en hoy, con dos comidas
   cada uno y una lista de recetas en cada comida. No está en el índice —se lo
@@ -69,10 +74,10 @@ Nada del código depende de `product-design/`. **Todo el producto vive en `src/`
 |---|---|
 | Entrada | `inicio.ts` decide entre `main.ts` (la app, con login) e `invitado.ts` (la vista de una receta compartida, sin login). `main.ts` cablea rutas, acciones y pantallas. |
 | Google | `auth.ts`, `drive.ts`, `sheets.ts`; los tipos de Google Identity Services están escritos a mano en `gis.d.ts` (el SDK se carga por `<script>`). `config.ts` tiene el client ID, el scope, los nombres fijos y `SCHEMA_VERSION`. |
-| Dominio | `recipe.ts` (parsear y escribir el `.md`), `borrador.ts`, `plan.ts` (el `.md` del plan de la semana), `compras.ts` (la lista que sale del plan, y su texto), `catalogo.ts` (la fila del índice, tags reservados, búsqueda), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts`, `conversion.ts` (el pedido a Claude y lo que vuelve), `tipos.ts`. |
+| Dominio | `recipe.ts` (parsear y escribir el `.md`), `borrador.ts`, `plan.ts` (el `.md` del plan de la semana), `compras.ts` (la lista que sale del plan, y su texto), `catalogo.ts` (la fila del índice, tags reservados, búsqueda), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts`, `conversion.ts` (el pedido a Claude y lo que vuelve), `fotos.ts` (achicar una foto antes de subirla), `tipos.ts`. |
 | Compartir | `compartir.ts` (menú Compartir del sistema y portapapeles, con sus respaldos), `link-receta.ts` (la receta comprimida en el fragmento del link), `texto-receta.ts`, `pdf/` (pdfmake con Inter embebida), `cocina-control.ts` (modo cocina y pantalla encendida, compartido entre receta e invitado). |
 | UI | `src/ui/`: una pantalla por archivo, sobre `componentes.ts`, `iconos.ts`, `pintar.ts` y `fichas-receta.ts`; `router.ts` tiene las rutas. **`tokens.css` es el sistema del producto** —tokens y componentes— y se edita directamente; `base.css` es lo propio de cada pantalla. |
-| Imágenes | `src/categorias/*.webp`, el catálogo de fotos de categoría, importado con `import.meta.glob`: el nombre del archivo es la clave. |
+| Imágenes | `src/categorias/*.webp`, el catálogo de fotos de categoría, importado con `import.meta.glob`: el nombre del archivo es la clave. `imagenes.ts` muestra las imágenes de Drive —las fotos de los borradores— desde Cache Storage, y lee las fotos que el service worker dejó del menú Compartir. |
 
 ## Comandos
 
@@ -168,8 +173,9 @@ Cada una se midió o se discutió a fondo.
 - **Claves nuevas en el frontmatter** (`ultima_vez`, `veces`, `puntaje`,
   porciones numéricas) y **datos nutricionales:** si la fuente los trae, se
   descartan.
-- **Fotos de receta guardadas en Drive, miniaturas o portadas:** sólo URLs
-  externas.
+- **Fotos de receta guardadas en Drive, miniaturas o portadas:** la receta usa
+  sólo URLs externas. Las fotos de los borradores sí van en Drive: son la
+  fuente que Claude lee, no la receta.
 - **Los borradores como receta incompleta o en una planilla propia.**
 
 **Producto y UI**

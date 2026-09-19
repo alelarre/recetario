@@ -202,13 +202,15 @@ versiones que el formato no aguanta sin dejar de ser legible.
 |---|---|---|---|
 | **Carpeta base** | Una carpeta propia del Drive, marcada con `appProperties` `recetario=raiz` | Al crearla o elegirla en el primer arranque | Al elegir otra desde Ajustes: pierde la marca y queda en Drive como estaba |
 | **Receta** | Un `.md` en una carpeta de categoría | Al guardar una receta nueva, al convertir un borrador, o cuando un agente la escribe directo | Al borrarla desde el editor: va a la papelera de Drive |
-| **Borrador** | Un **`.md` en `_borradores/`**, dentro de la carpeta base, con su fila en la hoja `borradores` del índice | Al capturar | **Al convertirse**, o al descartarse: va a la papelera de Drive |
+| **Borrador** | Un **`.md` en `_borradores/`**, dentro de la carpeta base, con su fila en la hoja `borradores` del índice | Al capturar | **Al convertirse**, o al descartarse: va a la papelera de Drive con sus fotos |
+| **Foto de borrador** | Un `.jpg` en `_borradores/`, al lado del `.md`, nombrado en su clave `fotos` | Al capturar, o al agregarla en el borrador | Al sacarla, o con su borrador: va a la papelera de Drive |
 | **Categoría** | Una carpeta dentro de la carpeta base, con su color y su foto en `appProperties`, y su fila en la hoja `categorias` del índice | En el setup de la carpeta base —las 16 predefinidas—, o al crearla desde *Ajustes → Recetario → Categorías* | Al borrarla desde ahí: va a la papelera de Drive con sus recetas |
 | **Tag** | La lista `tags` del frontmatter | Al escribirlo, o al apretar el botón de un especial | Cuando ninguna receta lo usa |
 | **Fuente** | Frontmatter, o línea en itálica en una variación | Con el borrador o la receta | Con ella |
 | **Variación** | Sección `###` o bullet bajo `## Variaciones` | Al escribirla | Al borrarla |
 | **Índice** | Google Sheet `_indice` en la carpeta base, con cuatro hojas: `recetas`, `meta`, `borradores` y `categorias` | Al primer arranque, o al reindexar | Se puede borrar en cualquier momento: se reconstruye |
 | **Copia local del índice** | `localStorage` del navegador | Al cargar o reindexar; cada escritura la deja al día | Con *Borrar datos locales*, o cuando deja de coincidir con `_indice` |
+| **Imágenes guardadas** | Cache Storage del navegador: `recetario-imagenes`, por id de archivo | La primera vez que se muestra una foto de Drive | Con *Borrar datos locales* o *Salir*. Un id de Drive no cambia de contenido: no vence |
 | **Receta compartida** | En ningún lado: un PDF, un texto o un link que lleva la receta comprimida en el fragmento | Al compartir | Es una copia del momento; nada queda publicado en Drive |
 | **Plan de la semana** | **`_plan.md`** en la carpeta base, al lado de `_indice` | Al primer cambio, si el archivo no existía | Con *Reiniciar el plan*, que lo deja vacío. El archivo queda |
 | **Lista de compras** | En ningún lado: se arma al entrar, desde el plan y los `.md` de sus recetas | Al abrirla | Al salir de la pantalla |
@@ -235,11 +237,30 @@ tratan igual, predefinidas o no. Una carpeta creada a mano en Drive aparece al
 reindexar; sin foto se dibuja con su color, y sin color con el neutro.
 
 **El borrador es un `.md` propio, con su hoja en el índice.** Cada borrador es un
-archivo en `_borradores/` —`titulo`, `fuente` y `capturado` en el frontmatter,
-la nota como cuerpo entero—, y el índice tiene una hoja `borradores` con lo que
-la lista y el contador necesitan: id, nombre del archivo, título y cuándo se
-capturó. No es una receta: el formato es otro, la hoja es otra, y buscar recetas
-no lo encuentra.
+archivo en `_borradores/` —`titulo`, `fuente`, `capturado` y `fotos` en el
+frontmatter, la nota como cuerpo entero—, y el índice tiene una hoja
+`borradores` con lo que la lista y el contador necesitan: id, nombre del
+archivo, título y cuándo se capturó. No es una receta: el formato es otro, la
+hoja es otra, y buscar recetas no lo encuentra.
+
+```md
+---
+titulo: Tarta de la abuela
+fuente:
+capturado: 2026-09-19T10:30:00.000Z
+fotos: [1AbC…, 1DeF…]
+---
+
+Página 84 del libro de tartas.
+```
+
+**Un borrador lleva hasta cinco fotos**, achicadas a 1600 px de lado mayor en
+JPEG. Van al lado del `.md` —`tarta-de-la-abuela-1.jpg`, `-2.jpg`…, con el
+primer número libre— y `fotos` lista sus ids en orden, con la sintaxis de los
+`tags` de la receta; sin fotos, la clave no se escribe. El número del archivo
+es sólo para que en Drive se lean juntas: el orden es el de `fotos`. Las fotos
+no entran al índice ni al reindexado. Se muestran pidiéndolas a Drive con el
+token, y quedan en Cache Storage por id de archivo.
 
 **El plan es un solo archivo y no está en el índice.** `_plan.md` vive en la
 carpeta base, al lado de `_indice`, y se lo busca por nombre la primera vez que
@@ -263,7 +284,7 @@ store de la app.
 | Operación | Qué hace | Dónde vive |
 |---|---|---|
 | **Crear y guardar una receta** | Escribe el `.md` y escribe o reemplaza su fila del índice | `src/store.ts` |
-| **Convertir borrador en receta** | Lo anterior, y **descarta el borrador**: su `.md` a la papelera y su fila afuera | `src/compartido.ts` |
+| **Convertir borrador en receta** | Lo anterior, y **descarta el borrador**: sus fotos y su `.md` a la papelera y su fila afuera | `src/compartido.ts` |
 | **Leer y parsear un `.md`** | Aplica el esquema: lo ausente llega vacío, y un `tiempo` o una `dificultad` fuera de sus valores se lee como sin dato | `src/recipe.ts` |
 
 Así no hay dos implementaciones del mismo formato que se separen con el tiempo.
@@ -325,7 +346,8 @@ concurrente.
 
 **No sirve para abrir sin red:** la consulta a Drive va antes que la copia, y sin
 esa respuesta no se dibuja nada. *Ajustes → Archivos locales → Borrar datos
-locales* la descarta; *Registro de actividad* dice si se usó.
+locales* la descarta —con las imágenes guardadas en Cache Storage—; *Registro de
+actividad* dice si se usó.
 
 ---
 
@@ -345,8 +367,8 @@ se reconoce abre el Recetario.
 | **Editor** | `#/r/<id>/editar` | Corregir un error, anotar una variación, poner y sacar los tags especiales, cambiar la categoría, borrar la receta. | Cocinar | J7 |
 | **Nueva receta** | `#/nueva` | El mismo editor, vacío. Con `?borrador=<id>` abre con el título y la fuente del borrador y guardar lo convierte; con `?recibida=1` abre con la receta que llegó compartida o pegada. | Archivar | J3, J7 |
 | **Borradores** | `#/borradores` | Los borradores esperando conversión, con *Nuevo* y *Pegar receta*. | Archivar | J2, J3 |
-| **Borrador** | `#/borradores/<id>` | Una entrada: su título, su fuente y su nota, y qué hacer con ella: *Convertir con Claude*, *Pegar receta*, *Crear la receta*, *Editar*, *Descartar*. | Archivar | J3 |
-| **Captura** | `#/capturar?url=&text=` | Lo que abre el Share Target: la fuente ya cargada, el título y una nota opcional. Sin parámetros es *Nuevo borrador*, y desde un borrador es *Editar borrador*. | Archivar | J2 |
+| **Borrador** | `#/borradores/<id>` | Una entrada: su título, su fuente, su nota y sus fotos —tocar una la abre en el visor—, y qué hacer con ella: *Convertir con Claude*, *Pegar receta*, *Crear la receta*, *Editar*, *Descartar*. | Archivar | J3 |
+| **Captura** | `#/capturar?url=&text=&fotos=` | Lo que abre el Share Target: la fuente ya cargada, el título, una nota opcional y las fotos. `fotos` es cuántas dejó el service worker en su caché. Sin parámetros es *Nuevo borrador*, y desde un borrador es *Editar borrador*. | Archivar | J2 |
 | **¿De qué borrador es esta receta?** | `#/recibida` | Aparece cuando llega una receta en `.md` sin un id de borrador que exista: la lista de borradores y *Ninguno*. | Archivar | J3 |
 | **Ajustes** | `#/ajustes` | Seis fichas, en este orden: Cuenta, Recetario, Índice, Archivos locales, Avisos y Registro de actividad. Ver §4.7. | Transversal | — |
 | **Categorías** | `#/categorias` | La lista de categorías con cuántas recetas tiene cada una, y *+ Nueva*. | Transversal | — |
@@ -366,8 +388,11 @@ de cargar nada: un `#/ver…` carga sólo `src/invitado.ts`, sin token ni store,
 una lista cerrada de acciones —cocinar, volver, conmutar, marcar un paso, la
 pantalla encendida—. Lo que se agregue a la Receta no aparece ahí sin querer.
 
-**El Share Target llega por la query**, antes del `#`: la app pasa `url` y `text`
-a `#/capturar`. El título de la página compartida no viaja: el de la receta lo
+**El Share Target llega por `POST`** a `/recetario/compartir`, y lo atiende el
+service worker: guarda las fotos en su caché `recetario-compartido` y redirige a
+`#/capturar` con `url`, `text` y cuántas fotos llegaron. Una instalación vieja
+manda por `GET`, en la query antes del `#`, y la app pasa `url` y `text` a
+`#/capturar`. El título de la página compartida no viaja: el de la receta lo
 escribe el usuario.
 
 ---

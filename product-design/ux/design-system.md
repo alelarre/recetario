@@ -282,7 +282,8 @@ carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chi
 | `marcador` | El tag *probar*. |
 | `calendario` | El tag *menú diario*. |
 | `tacho` | Las acciones destructivas: *Borrar receta* y *Descartar* un borrador. |
-| `cerrar` | La cruz: la del chip removible del editor y la que limpia la búsqueda. |
+| `cerrar` | La cruz: la del chip removible del editor, la que limpia la búsqueda y la que saca una foto del borrador. |
+| `camara` | *Agregar foto*, en la captura y en el borrador (§6.25). |
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `zanahoria`, `listaNumerada` | Las dos posiciones del conmutador de cocina —*Ingredientes* y *Pasos*—, al lado de la palabra. |
 | Los cinco relojitos | Uno por valor de la duración, el mismo mapa en el editor (§6.18), la tarjeta, la receta, la búsqueda, el filtro (§6.19) y el orden (§6.20). |
@@ -1013,6 +1014,24 @@ grilla, y sus dos botones ocupan el ancho: *Lista de compras* primario y
 *Reiniciar el plan* secundario, deshabilitados con el plan vacío. La
 confirmación de reiniciar va en su lugar, en una ficha con borde `--error`, como
 borrar una receta.
+
+### 6.25 Fotos del borrador y visor
+
+**La fila** va debajo de la nota, en la captura y en el borrador, con el rótulo
+*Fotos* de un campo (§6.9): miniaturas **cuadradas de 64 px** con `--e-2` entre
+sí, que bajan de renglón si no entran. Cada una es la foto recortada al cuadrado
+(`object-fit: cover`) sobre `--surface-alta`, con `--r-foto`. **La ×** va en la
+esquina de arriba a la derecha: un círculo de 24 px de `--velo` al 75 % con el
+ícono `cerrar` de 14 px en `--fg`, que se lee sobre cualquier foto. Al final de
+la fila, **Agregar foto**: un botón secundario de 64 px de alto con el ícono
+`camara`, que no se dibuja con cinco fotos. **Una foto que ya no está en Drive**
+es el mismo cuadrado con borde punteado `--borde-fuerte` y *"La foto ya no está
+en Drive."* en *micro* `--fg-3`, centrado; conserva su ×.
+
+**El visor** abre la foto tocada en el borrador: fija sobre toda la pantalla,
+encima de todo, sobre `--velo` al 94 %, con la foto entera al ancho —o al alto—
+de la pantalla, sin recortar. Se cierra tocando cualquier lado. Es estado de la
+pantalla, no una ruta.
 
 ---
 

@@ -55,17 +55,22 @@ cosa, con una mano.
 **No empieza en Recetario.** Empieza en Instagram, en el navegador, en YouTube.
 
 ```
-Estoy viendo un reel / una página / un video
+Estoy viendo un reel / una página / un video / fotos de una receta
   → Compartir del sistema
   → elijo Recetario en la hoja de compartir
-  ▸ lo compartido llega en la query y la app lo pasa a #/capturar
+  ▸ el service worker recibe el POST: guarda las fotos en su caché y
+    redirige a #/capturar con el link, el texto y cuántas fotos llegaron
   ⚑ ¿lo compartido es una receta en .md?
       sí  → no es una captura: sigue en F2, «La vuelta»
   ▸ se abre la pantalla Captura —«Guardar en Recetario»—: el link como fuente,
-    y lo que sobró del texto en la nota
+    lo que sobró del texto en la nota, y las fotos, achicadas, como miniaturas
+  ⚑ ¿llegaron más de 5 fotos?
+      sí  ▸ aviso: «Llegaron 8 fotos: se guardan las primeras 5.»
   → escribo el título, si quiero   ⚑ opcional: sin título, «Borrador dd/mm hh:mm»
-  → Guardar                        ⚑ hace falta fuente o nota
-  ▸ se escribe el .md del borrador en _borradores/ y su fila en la hoja borradores
+  → saco una foto con su ×, o agrego otra con la cámara o la galería, si quiero
+  → Guardar                        ⚑ hace falta fuente, nota o una foto
+  ▸ se suben las fotos al lado del .md, en orden
+  ▸ se escribe el .md del borrador en _borradores/, con sus ids, y su fila en la hoja borradores
   ▸ la app se cierra y vuelvo a donde estaba
 ```
 
@@ -81,7 +86,8 @@ Estoy viendo un reel / una página / un video
   → Guardar
   ✗ no hay red
   ▸ aviso: «No se pudo guardar. Revisá la conexión.»
-  ⚑ el texto queda en pantalla para reintentar con Guardar
+  ⚑ el texto y las fotos quedan en pantalla para reintentar con Guardar
+  ⚑ las fotos que ya se subieron no se vuelven a subir
   ✗ si cierro, se pierde
 ```
 
@@ -89,7 +95,8 @@ Está aceptado explícitamente (principio 1 + 4): no hay cola local. Es el únic
 punto donde el producto acepta a sabiendas un riesgo sobre el job huérfano.
 
 **La captura a mano** es la misma pantalla, desde *Borradores → Nuevo*: título,
-fuente y nota, y al guardar queda en Borradores.
+fuente, nota y fotos —la página de un libro, sacada con la cámara—, y al
+guardar queda en Borradores.
 
 **iOS no se soporta:** no tiene Share Target y el Atajo equivalente queda fuera
 del alcance. Android es la plataforma (`E05-Cimientos.md` R7).
@@ -103,7 +110,8 @@ cocinar** — no cuando se encontró la receta.
 
 Hay tres caminos, y los tres terminan en la misma operación de la capa
 compartida (`information-architecture.md` §2.2): escribe el `.md`, escribe la
-fila del índice y descarta el borrador —su `.md` a la papelera, su fila afuera—.
+fila del índice y descarta el borrador —sus fotos y su `.md` a la papelera, su
+fila afuera—.
 Nadie borra el borrador por separado.
 
 **1. Convertir con Claude.** La app no llama a ningún modelo: arma el pedido, y
@@ -112,16 +120,20 @@ recibe de vuelta la receta para revisarla y guardarla.
 ```
 Menú → Borradores           ⚑ el contador dice cuántos esperan
   → toco una entrada
-  ▸ Borrador: título, fuente y nota
+  ▸ Borrador: título, fuente, nota y fotos
   → Convertir con Claude
-  ▸ la app arma el pedido: el borrador, su id y las reglas del formato
-  ⚑ ¿hay menú Compartir del sistema?
-      sí (Android)  → se abre con el pedido como texto; elijo Claude
-      no (la Mac)   ⚑ ¿el pedido entra en un link de 8.000 caracteres?
+  ▸ la app arma el pedido: el borrador, su id, las reglas del formato y, si
+    tiene fotos, cuántas van y cómo leerlas
+  ⚑ ¿hay menú Compartir del sistema que comparta archivos?
+      sí (Android)  → se abre con el pedido como texto y las fotos como
+                      archivos; elijo Claude
+      no (la Mac)   ▸ el pedido suma el link de Drive de cada foto, para que
+                      Claude las lea con su conector de Drive
+                    ⚑ ¿el pedido entra en un link de 8.000 caracteres?
                         sí  → se abre claude.ai/new con el pedido cargado
                         no  → se copia, se abre claude.ai/new
                               ▸ aviso: «Pedido copiado: pegalo en Claude»
-  ▸ Claude lee la fuente y responde sólo con el .md de la receta
+  ▸ Claude lee la fuente y las fotos, y responde sólo con el .md de la receta
 ```
 
 **La vuelta** no depende de la ida: cualquier receta en `.md` que llegue a la
