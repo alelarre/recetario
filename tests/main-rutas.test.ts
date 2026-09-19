@@ -53,7 +53,7 @@ vi.mock('../src/pdf/generar.js', () => ({
 /** Lo que los dobles le dan a main. `falla` enciende el error de lectura. */
 const estadoInicial = () => ({
   falla: false as boolean | Error,
-  borradores: [] as { id: string; titulo: string; fuente: string; nota: string; capturado: string }[],
+  borradores: [] as { id: string; titulo: string; fuente: string; nota: string; capturado: string; fotos?: string[] }[],
   /** Los ids que se pidió descartar, en orden. */
   descartados: [] as string[],
   /** Cuántas veces más va a fallar `descartar` antes de andar. */
@@ -65,7 +65,21 @@ const estadoInicial = () => ({
   /** Lo que el editor o la captura tienen escrito cuando se toca Guardar. */
   formulario: {} as Record<string, string>,
   /** Lo que llegó a `agregarBorrador`. */
-  capturados: [] as { titulo: string; fuente: string; nota: string }[],
+  capturados: [] as { titulo: string; fuente: string; nota: string; fotos?: (Blob | string)[] }[],
+  /** Cada foto que se agregó a un borrador: el id del borrador y el texto del Blob. */
+  fotosAgregadas: [] as { id: string; foto: Blob }[],
+  /** Las fotos que se sacaron de un borrador, como `borrador:foto`. */
+  fotosSacadas: [] as string[],
+  /** Cuántas veces más falla subir una foto antes de andar. */
+  fallaFoto: 0,
+  /** Las fotos que el service worker dejó del menú Compartir. */
+  compartidas: [] as Blob[],
+  /** Cuántas veces se descartó el caché de lo compartido. */
+  compartidasDescartadas: 0,
+  /** Cuántas veces se borró el caché de las imágenes. */
+  imagenesBorradas: 0,
+  /** Los ids de las fotos que ya no están en Drive. */
+  fotosPerdidas: [] as string[],
   /** Cuántas veces se leyó un `.md` de Drive: cada una es un pedido de red. */
   lecturas: 0,
   /** Cuántas veces se leyó el .md de un borrador. */
@@ -151,11 +165,28 @@ const storeFake = {
     estado.lecturasBorradores++;
     const b = estado.borradores.find(x => x.id === id);
     if (!b) throw new Error(`no hay borrador ${id}`);
-    return b;
+    return { fotos: [], ...b };
   },
-  agregarBorrador: async (b: { titulo: string; fuente: string; nota: string }) => {
+  agregarBorrador: async (
+    b: { titulo: string; fuente: string; nota: string; fotos?: (Blob | string)[] },
+    alSubirFoto?: (i: number, id: string) => void
+  ) => {
     estado.capturados.push(b);
+    (b.fotos ?? []).forEach((f, i) => { if (typeof f !== 'string') alSubirFoto?.(i, `subida-${i}`); });
     return { id: 'b1', ...b, capturado: '' };
+  },
+  agregarFotoABorrador: async (id: string, foto: Blob) => {
+    if (estado.fallaFoto > 0) { estado.fallaFoto--; throw new Error('red'); }
+    estado.fotosAgregadas.push({ id, foto });
+    const b = estado.borradores.find(x => x.id === id)!;
+    b.fotos = [...(b.fotos ?? []), `nueva-${estado.fotosAgregadas.length}`];
+    return { ...b, fotos: b.fotos };
+  },
+  sacarFotoDeBorrador: async (id: string, fotoId: string) => {
+    estado.fotosSacadas.push(`${id}:${fotoId}`);
+    const b = estado.borradores.find(x => x.id === id)!;
+    b.fotos = (b.fotos ?? []).filter(f => f !== fotoId);
+    return { ...b, fotos: b.fotos };
   },
   editarBorrador: async () => {},
   descartarBorrador: async (id: string) => {
@@ -171,6 +202,26 @@ const storeFake = {
   planDuplicado: () => null
 };
 vi.mock('../src/store.js', () => ({ crearStore: () => storeFake }));
+// Achicar necesita un canvas: acá devuelve la foto tal cual, y una foto
+// que dice «roto» no se decodifica.
+vi.mock('../src/fotos.js', () => ({
+  achicar: async (b: Blob) => {
+    if (await b.text() === 'roto') throw new Error('no se decodifica');
+    return b;
+  }
+}));
+// Cache Storage y los object URL no existen en Node.
+vi.mock('../src/imagenes.js', () => ({
+  crearImagenes: () => ({
+    imagenDe: async (id: string) => estado.fotosPerdidas.includes(id) ? null : new Blob([id], { type: 'image/jpeg' }),
+    urlDeImagen: async (id: string) => estado.fotosPerdidas.includes(id) ? null : `blob:${id}`,
+    urlDeBlob: (b: Blob) => `blob:memoria-${b.size}`,
+    soltarImagenes: () => {},
+    fotosCompartidas: async (n: number) => estado.compartidas.slice(0, n),
+    descartarCompartidas: async () => { estado.compartidasDescartadas++; },
+    borrarImagenes: async () => { estado.imagenesBorradas++; }
+  })
+}));
 vi.mock('../src/indice-local.js', () => ({
   leer: () => null,
   guardar: () => {},
@@ -364,6 +415,11 @@ describe('main.ts: las rutas', () => {
         const campo = { dataset: { accion: 'buscar' }, value: valor, focus: () => {} };
         for (const fn of cambios) await fn({ target: campo });
         await esperar();
+      },
+      /** El selector de *Agregar foto* devuelve estos archivos. */
+      elegirFotos: async (archivos: Blob[]) => {
+        for (const fn of cambios) await fn({ target: { dataset: { fotos: '' }, files: archivos } });
+        await esperar(20);
       },
       /** Un click en un control con esta acción, como lo entrega la delegación. */
       tocar: async (accion: string, datos: Record<string, string> = {}, atributos: Record<string, string> = {}) => {
@@ -1690,7 +1746,7 @@ describe('main.ts: las rutas', () => {
       await abrir('#/capturar?text=' + encodeURIComponent('https://instagram.com/reel/abc'));
       estado.formulario = { titulo: 'Reel de pasta' };
       await tocar('guardar-captura');
-      expect(estado.capturados).toEqual([{ titulo: 'Reel de pasta', fuente: 'https://instagram.com/reel/abc', nota: '' }]);
+      expect(estado.capturados).toEqual([{ titulo: 'Reel de pasta', fuente: 'https://instagram.com/reel/abc', nota: '', fotos: [] }]);
     });
 
     it('si viene en url, manda url', async () => {
@@ -1730,6 +1786,196 @@ describe('main.ts: las rutas', () => {
       estado.formulario = { titulo: 'Guiso', fuente: '', nota: '' };
       await tocar('guardar-captura');
       expect(estado.capturados).toEqual([]);
+    });
+  });
+
+  describe('las fotos de los borradores', () => {
+    const foto = (texto: string): Blob => new Blob([texto], { type: 'image/jpeg' });
+
+    it('lo compartido con fotos las saca del caché, las muestra en la captura y lo borra', async () => {
+      estado.compartidas = [foto('a'), foto('bb')];
+      const { abrir, app } = await montar();
+      await abrir('#/capturar?fotos=2');
+      expect(app.innerHTML).toContain('Guardar en Recetario');
+      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(2);
+      expect(estado.compartidasDescartadas).toBe(1);
+      // Con sólo fotos, Guardar está disponible.
+      expect(app.innerHTML).not.toMatch(/data-accion="guardar-captura" disabled/);
+    });
+
+    it('si llegan más de cinco, se guardan las primeras cinco y se avisa', async () => {
+      estado.compartidas = Array.from({ length: 8 }, (_, i) => foto(`f${i}`));
+      const { abrir, app, tocar } = await montar();
+      await abrir('#/capturar?fotos=8');
+      expect(app.innerHTML).toContain('Llegaron 8 fotos: se guardan las primeras 5.');
+      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(5);
+      expect(app.innerHTML).not.toContain('Agregar foto');
+
+      await tocar('guardar-captura');
+      expect(estado.capturados[0]?.fotos).toHaveLength(5);
+    });
+
+    it('una foto que no se decodifica no se agrega, y se avisa', async () => {
+      estado.compartidas = [foto('roto'), foto('bien')];
+      const { abrir, app } = await montar();
+      await abrir('#/capturar?fotos=2');
+      expect(app.innerHTML).toContain('No se pudo leer una de las fotos.');
+      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(1);
+    });
+
+    it('en la captura, agregar y sacar fotos, y guardar con sólo fotos', async () => {
+      const { abrir, app, tocar, elegirFotos } = await montar();
+      await abrir('#/capturar');
+      await elegirFotos([foto('a'), foto('bb')]);
+      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(2);
+
+      await tocar('sacar-foto-captura', { valor: '0' });
+      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(1);
+
+      await tocar('guardar-captura');
+      expect(estado.capturados).toHaveLength(1);
+      expect(await (estado.capturados[0]?.fotos?.[0] as Blob).text()).toBe('bb');
+    });
+
+    it('elegir más de las que entran agrega las primeras y avisa', async () => {
+      const { abrir, app, elegirFotos } = await montar();
+      await abrir('#/capturar');
+      await elegirFotos(Array.from({ length: 7 }, (_, i) => foto(`f${i}`)));
+      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(5);
+      expect(app.innerHTML).toContain('Un borrador lleva hasta 5 fotos: se agregaron las primeras 5.');
+    });
+
+    it('al reintentar, las fotos que ya subieron van por su id', async () => {
+      const original = storeFake.agregarBorrador;
+      let intentos = 0;
+      storeFake.agregarBorrador = async (b, alSubirFoto) => {
+        estado.capturados.push(b);
+        if (intentos++ === 0) { alSubirFoto?.(0, 'ya-subida'); throw new Error('red'); }
+        return { id: 'b1', ...b, capturado: '' };
+      };
+      try {
+        const { abrir, app, tocar, elegirFotos } = await montar();
+        await abrir('#/capturar');
+        await elegirFotos([foto('a'), foto('bb')]);
+        await tocar('guardar-captura');
+        expect(app.innerHTML).toContain('No se pudo guardar.');
+
+        await tocar('guardar-captura');
+        expect(estado.capturados[1]?.fotos?.[0]).toBe('ya-subida');
+        expect(typeof estado.capturados[1]?.fotos?.[1]).not.toBe('string');
+      } finally {
+        storeFake.agregarBorrador = original;
+      }
+    });
+
+    it('el borrador muestra sus fotos, y la que ya no está en Drive', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: ['f1', 'f2'] }];
+      estado.fotosPerdidas = ['f2'];
+      const { abrir, app } = await montar();
+      await abrir('#/borradores/b1');
+      expect(app.innerHTML).toContain('<img src="blob:f1"');
+      expect(app.innerHTML).toContain('La foto ya no está en Drive.');
+    });
+
+    it('tocar una miniatura abre el visor, y tocarlo lo cierra', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: ['f1'] }];
+      const { abrir, app, tocar } = await montar();
+      await abrir('#/borradores/b1');
+      await tocar('ver-foto', { valor: 'f1' });
+      expect(app.innerHTML).toContain('<div class="visor" data-accion="cerrar-visor"><img src="blob:f1"');
+      await tocar('cerrar-visor');
+      expect(app.innerHTML).not.toContain('class="visor"');
+    });
+
+    it('agregar una foto al borrador la sube con el velo y la muestra', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: [] }];
+      const original = storeFake.agregarFotoABorrador;
+      let soltar!: () => void;
+      const espera = new Promise<void>(r => { soltar = r; });
+      storeFake.agregarFotoABorrador = async (id, f) => { await espera; return original(id, f); };
+      try {
+        const { abrir, app, velo, elegirFotos } = await montar();
+        await abrir('#/borradores/b1');
+        const eligiendo = elegirFotos([foto('a')]);
+        await esperar(10);
+        expect(velo.hidden).toBe(false);
+        soltar();
+        await eligiendo;
+        expect(velo.hidden).toBe(true);
+        expect(estado.fotosAgregadas.map(f => f.id)).toEqual(['b1']);
+        expect(app.innerHTML).toContain('blob:nueva-1');
+      } finally {
+        storeFake.agregarFotoABorrador = original;
+      }
+    });
+
+    it('si subir la foto falla, avisa y el borrador sigue', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: [] }];
+      estado.fallaFoto = 1;
+      const { abrir, app, elegirFotos } = await montar();
+      await abrir('#/borradores/b1');
+      await elegirFotos([foto('a')]);
+      expect(app.innerHTML).toContain('No se pudo guardar. Revisá la conexión.');
+      expect(app.innerHTML).toContain('Tarta');
+    });
+
+    it('sacar una foto del borrador, con el velo y sin confirmación', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: ['f1', 'f2'] }];
+      const original = storeFake.sacarFotoDeBorrador;
+      let soltar!: () => void;
+      const espera = new Promise<void>(r => { soltar = r; });
+      storeFake.sacarFotoDeBorrador = async (id, f) => { await espera; return original(id, f); };
+      try {
+        const { abrir, app, velo, tocar } = await montar();
+        await abrir('#/borradores/b1');
+        const sacando = tocar('sacar-foto', { valor: 'f1' });
+        await esperar();
+        expect(velo.hidden).toBe(false);
+        soltar();
+        await sacando;
+        expect(velo.hidden).toBe(true);
+        expect(estado.fotosSacadas).toEqual(['b1:f1']);
+        expect(app.innerHTML).not.toContain('blob:f1');
+        expect(app.innerHTML).toContain('blob:f2');
+      } finally {
+        storeFake.sacarFotoDeBorrador = original;
+      }
+    });
+
+    it('Convertir con Claude sin menú Compartir lleva los links de Drive de las fotos', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: ['f1'] }];
+      vi.stubGlobal('navigator', {});
+      const { abrir, tocar } = await montar();
+      const aperturas: string[] = [];
+      (global.window as unknown as Record<string, unknown>)['open'] = (u: string) => { aperturas.push(u); };
+      await abrir('#/borradores/b1');
+      await tocar('convertir-con-claude');
+      expect(decodeURIComponent(aperturas[0] ?? '')).toContain('Foto 1: https://drive.google.com/file/d/f1/view');
+    });
+
+    it('Convertir con Claude con menú Compartir manda las fotos como archivos', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: ['f1', 'f2'] }];
+      const compartidos: ShareData[] = [];
+      vi.stubGlobal('navigator', {
+        share: async (d: ShareData) => { compartidos.push(d); },
+        canShare: (d: ShareData) => !!d.files
+      });
+      const { abrir, tocar } = await montar();
+      await abrir('#/borradores/b1');
+      await tocar('convertir-con-claude');
+      expect(compartidos[0]?.files?.map(f => f.name)).toEqual(['foto-1.jpg', 'foto-2.jpg']);
+      expect(compartidos[0]?.text).toContain('Fotos: van 2, en orden.');
+    });
+
+    it('Borrar datos locales y Salir borran las fotos guardadas en el navegador', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/ajustes');
+      await tocar('borrar-datos-locales');
+      expect(estado.imagenesBorradas).toBe(1);
+      expect(estado.compartidasDescartadas).toBe(1);
+      await tocar('salir');
+      expect(estado.imagenesBorradas).toBe(2);
+      expect(estado.compartidasDescartadas).toBe(2);
     });
   });
 

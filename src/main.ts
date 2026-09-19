@@ -46,7 +46,9 @@ import { textoReceta } from './texto-receta.js';
 import type { EstadoCompartir } from './ui/compartir.js';
 import type { RecetaCreada } from './compartido.js';
 import type { Ruta } from './ui/router.js';
-import { desdeCompartido, tituloPorDefecto, sePuedeGuardar } from './borrador.js';
+import { desdeCompartido, tituloPorDefecto, sePuedeGuardar, MAXIMO_FOTOS } from './borrador.js';
+import { achicar } from './fotos.js';
+import { crearImagenes } from './imagenes.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { ResultadoArranque, Progreso } from './store.js';
 import type { Borrador, Entrada, Momento, Plan, Receta } from './tipos.js';
@@ -58,6 +60,8 @@ if (!app) throw new Error('Falta #app en el documento');
 const auth = crearAuth();
 const drive = crearDrive(() => auth.token());
 const sheets = crearSheets(() => auth.token());
+/** Las fotos de Drive, pedidas con el token y guardadas en Cache Storage. */
+const imagenes = crearImagenes({ leerBlob: id => drive.leerBlob(id) });
 
 let store: Store;
 /**
@@ -290,9 +294,113 @@ const compartidoDe = (ruta: Ruta): { url: string; text: string } =>
   ({ url: ruta.params['url'] ?? '', text: ruta.params['text'] ?? '' });
 
 let tituloCaptura = '';
+/** La fuente escrita a mano: agregar una foto redibuja la captura. */
+let fuenteCaptura = '';
 let notaCaptura = '';
 let guardandoCaptura = false;
 let errorCaptura = '';
+/** Un aviso de las fotos de la captura, sin control. */
+let avisoCaptura = '';
+/**
+ * Las fotos de la captura, ya achicadas, en memoria hasta Guardar. `id` es el
+ * de Drive cuando ya se subió en un intento que falló después: reintentar no
+ * la vuelve a subir.
+ */
+let fotosCaptura: { blob: Blob; url: string; id?: string }[] = [];
+/** Cuántas fotos dejó el service worker para esta captura, todavía sin leer. */
+let compartidasPorLeer = 0;
+/** La foto del borrador abierta en el visor, por id. */
+let fotoAbierta: string | null = null;
+
+/** La foto achicada; rechaza si el navegador no la decodifica. */
+const achicarFoto = (archivo: Blob): Promise<Blob> => achicar(archivo, () => document.createElement('canvas'));
+
+const NO_SE_LEYO_UNA_FOTO = 'No se pudo leer una de las fotos.';
+
+/**
+ * Suma fotos a la captura, achicadas, hasta el máximo. Devuelve el aviso que
+ * corresponda, o vacío.
+ */
+async function sumarFotosACaptura(archivos: Blob[]): Promise<string> {
+  const lugar = MAXIMO_FOTOS - fotosCaptura.length;
+  let noSeLeyo = false;
+  for (const archivo of archivos.slice(0, Math.max(lugar, 0))) {
+    try {
+      const blob = await escribiendo(achicarFoto(archivo));
+      fotosCaptura.push({ blob, url: imagenes.urlDeBlob(blob) });
+    } catch (err) {
+      console.error(err);
+      noSeLeyo = true;
+    }
+  }
+  return [
+    archivos.length > lugar ? fotosDeMas(lugar) : '',
+    noSeLeyo ? NO_SE_LEYO_UNA_FOTO : ''
+  ].filter(Boolean).join(' ');
+}
+
+/** Se eligieron más de las que entran. */
+const fotosDeMas = (lugar: number): string => lugar > 0
+  ? `Un borrador lleva hasta ${MAXIMO_FOTOS} fotos: se agregaron las primeras ${lugar}.`
+  : `Un borrador lleva hasta ${MAXIMO_FOTOS} fotos.`;
+
+/**
+ * Las fotos que llegaron del menú Compartir: el service worker las dejó en su
+ * caché. Se toman las primeras cinco, se achican y el caché se borra.
+ */
+async function leerCompartidas(cantidad: number): Promise<void> {
+  const llegadas = await imagenes.fotosCompartidas(Math.min(cantidad, MAXIMO_FOTOS));
+  await imagenes.descartarCompartidas();
+  const noSeLeyo = (await sumarFotosACaptura(llegadas)).includes(NO_SE_LEYO_UNA_FOTO);
+  avisoCaptura = [
+    llegadas.length && cantidad > MAXIMO_FOTOS ? `Llegaron ${cantidad} fotos: se guardan las primeras ${MAXIMO_FOTOS}.` : '',
+    noSeLeyo ? NO_SE_LEYO_UNA_FOTO : ''
+  ].filter(Boolean).join(' ');
+}
+
+/** Las fotos del borrador para dibujarlo: el object URL de cada una, o `null` si ya no está en Drive. */
+const fotosDeBorrador = (b: Borrador): Promise<{ id: string; url: string | null }[]> =>
+  Promise.all(b.fotos.map(async id => ({ id, url: await imagenes.urlDeImagen(id) })));
+
+/**
+ * Sube fotos al borrador abierto, de a una y con el velo (R8): cada una
+ * reescribe el `.md` en el momento. Lo que no se pudo queda en el aviso.
+ */
+async function agregarFotosABorrador(id: string, archivos: Blob[]): Promise<void> {
+  const lugar = MAXIMO_FOTOS - (borradorLeido?.fotos.length ?? 0);
+  const avisos: string[] = archivos.length > lugar ? [fotosDeMas(lugar)] : [];
+  let noSeLeyo = false;
+  for (const archivo of archivos.slice(0, Math.max(lugar, 0))) {
+    let blob: Blob;
+    try {
+      blob = await escribiendo(achicarFoto(archivo));
+    } catch (err) {
+      console.error(err);
+      noSeLeyo = true;
+      continue;
+    }
+    try {
+      borradorLeido = await escribiendo(store.agregarFotoABorrador(id, blob));
+    } catch (err) {
+      console.error(err);
+      avisos.push(porQueNoGuardo(err));
+      break;
+    }
+  }
+  if (noSeLeyo) avisos.push(NO_SE_LEYO_UNA_FOTO);
+  avisoBorradores = avisos.join(' ');
+}
+
+/** Las fotos del borrador como archivos, para mandarlas a Claude. Si no se pueden leer, ninguna. */
+async function archivosDeFotos(ids: string[]): Promise<File[]> {
+  try {
+    const blobs = await Promise.all(ids.map(id => imagenes.imagenDe(id)));
+    return blobs.flatMap((b, i) => b ? [new File([b], `foto-${i + 1}.jpg`, { type: b.type || 'image/jpeg' })] : []);
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+}
 
 /** El modo cocina: paso actual, marcados, conmutador y pantalla encendida. */
 const cocina = crearControlCocina();
@@ -566,12 +674,20 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     selector.confirmando = null;
     selector.error = '';
     if (ruta.vista !== 'capturar' && ruta.vista !== 'borrador') {
-      tituloCaptura = ''; notaCaptura = ''; guardandoCaptura = false; errorCaptura = '';
+      tituloCaptura = ''; fuenteCaptura = ''; notaCaptura = ''; guardandoCaptura = false; errorCaptura = '';
     }
+    // Las imágenes de la pantalla anterior se sueltan: las fotos de la
+    // captura en memoria son de esa captura, y el visor, de ese borrador.
+    imagenes.soltarImagenes();
+    fotosCaptura = [];
+    avisoCaptura = '';
+    compartidasPorLeer = 0;
+    fotoAbierta = null;
     // Lo compartido llega con la nota ya escrita: el texto que acompañaba al link.
     if (ruta.vista === 'capturar') {
-      tituloCaptura = ''; guardandoCaptura = false; errorCaptura = '';
+      tituloCaptura = ''; fuenteCaptura = ''; guardandoCaptura = false; errorCaptura = '';
       notaCaptura = desdeCompartido(compartidoDe(ruta)).nota;
+      compartidasPorLeer = Number(ruta.params['fotos'] ?? 0) || 0;
     }
     cocina.reiniciar();
     compartiendo = null;
@@ -697,10 +813,18 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // sin reemplazarla, volver caería de nuevo acá y reabriría la misma receta.
       if (esRecetaEnMd(textoCompartido)) { recibirReceta(textoCompartido, undefined, true); return; }
       const llegado = compartidoDe(ruta);
+      if (compartidasPorLeer) {
+        const cantidad = compartidasPorLeer;
+        compartidasPorLeer = 0;
+        await leerCompartidas(cantidad);
+      }
       return pintar(renderCaptura({
-        fuente: desdeCompartido(llegado).fuente, compartido: !!(llegado.url || llegado.text),
+        fuente: desdeCompartido(llegado).fuente || fuenteCaptura,
+        compartido: !!(llegado.url || llegado.text || ruta.params['fotos']),
         titulo: tituloCaptura, nota: notaCaptura, guardando: guardandoCaptura,
-        ...(errorCaptura ? { error: errorCaptura } : {})
+        fotos: fotosCaptura.map(f => f.url),
+        ...(errorCaptura ? { error: errorCaptura } : {}),
+        ...(avisoCaptura ? { aviso: avisoCaptura } : {})
       }));
     }
 
@@ -766,8 +890,11 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
             ...(errorCaptura ? { error: errorCaptura } : {})
           }));
         }
+        const fotos = await fotosDeBorrador(borrador);
+        const visor = fotos.find(f => f.id === fotoAbierta)?.url;
         return pintar(renderBorrador({
-          borrador, confirmando: confirmandoDescarte,
+          borrador, confirmando: confirmandoDescarte, fotos,
+          ...(visor ? { visor } : {}),
           ...(avisoBorradores ? { aviso: avisoBorradores } : {})
         }));
       } catch (err) {
@@ -1218,6 +1345,7 @@ app.addEventListener('click', async (e) => {
     // Recargar y no seguir: lo que hay en memoria salió de esa copia, y la
     // próxima escritura la volvería a guardar igual.
     indiceLocal.borrar();
+    await Promise.all([imagenes.borrarImagenes(), imagenes.descartarCompartidas()]);
     location.reload();
     return;
   }
@@ -1226,8 +1354,10 @@ app.addEventListener('click', async (e) => {
     // La copia tiene títulos e ingredientes: después de Salir no queda nada
     // del usuario en el navegador. Y se recarga, porque el índice, la receta
     // abierta y los borradores también viven en memoria: sin recargar, la
-    // próxima pantalla los volvería a dibujar.
+    // próxima pantalla los volvería a dibujar. Las fotos guardadas en el
+    // navegador tampoco quedan.
     indiceLocal.borrar();
+    await Promise.all([imagenes.borrarImagenes(), imagenes.descartarCompartidas()]);
     irCerrando('#/');
     location.reload();
     return;
@@ -1249,20 +1379,23 @@ app.addEventListener('click', async (e) => {
     } catch (err) {
       console.error(err);
       if (!borradorLeido) return;
-      return pintar(renderBorrador({ borrador: borradorLeido, confirmando: true, error: 'No se pudo descartar.' }));
+      const fotos = await fotosDeBorrador(borradorLeido).catch(() => []);
+      return pintar(renderBorrador({ borrador: borradorLeido, confirmando: true, fotos, error: 'No se pudo descartar.' }));
     }
   }
   if (accion === 'agregar-borrador') { location.hash = '#/capturar'; return; }
   if (accion === 'cancelar-captura') {
     tituloCaptura = '';
+    fuenteCaptura = '';
     notaCaptura = '';
+    fotosCaptura = [];
     // Editando, cancelar vuelve al borrador sin tocarlo.
     if (editandoBorrador) { editandoBorrador = false; return render(); }
     // Compartida desde otra app, cerrar la pestaña es volver a donde estabas
     // (C01.2.2). Pero `close()` sólo funciona si la abrió un script: si no
     // —y si la captura se abrió a mano desde Borradores—, hay que volver por
     // la app, o Cancelar no hacía nada.
-    const compartida = !!(vistaActual?.params['url'] || vistaActual?.params['text']);
+    const compartida = !!(vistaActual?.params['url'] || vistaActual?.params['text'] || vistaActual?.params['fotos']);
     if (compartida) window.close();
     if (history.length <= 1) { irCerrando('#/borradores'); return; }
     return history.back();
@@ -1278,7 +1411,7 @@ app.addEventListener('click', async (e) => {
     const fuente = campoFuente
       ? campoFuente.value.trim()
       : vistaActual ? desdeCompartido(compartidoDe(vistaActual)).fuente : '';
-    if (!sePuedeGuardar({ fuente, nota: notaCaptura })) return;
+    if (!sePuedeGuardar({ fuente, nota: notaCaptura, fotos: editandoBorrador ? 0 : fotosCaptura.length })) return;
     // El título es opcional: sin él, el borrador se llama por cuándo se capturó.
     const titulo = tituloCaptura
       || tituloPorDefecto(editandoBorrador && borradorLeido?.capturado ? new Date(borradorLeido.capturado) : new Date());
@@ -1298,7 +1431,12 @@ app.addEventListener('click', async (e) => {
         notaCaptura = '';
         return render();
       }
-      await escribiendo(store.agregarBorrador({ titulo, fuente, nota: notaCaptura }));
+      // Cada foto que sube queda anotada con su id: si algo falla después,
+      // reintentar no la vuelve a subir.
+      await escribiendo(store.agregarBorrador(
+        { titulo, fuente, nota: notaCaptura, fotos: fotosCaptura.map(f => f.id ?? f.blob) },
+        (i, id) => { const foto = fotosCaptura[i]; if (foto) foto.id = id; }
+      ));
     } catch (err) {
       console.error(err);
       // Nada queda esperando: el texto sigue en pantalla y se reintenta a mano.
@@ -1308,7 +1446,9 @@ app.addEventListener('click', async (e) => {
     }
     guardandoCaptura = false;
     tituloCaptura = '';
+    fuenteCaptura = '';
     notaCaptura = '';
+    fotosCaptura = [];
     // Volver a donde estabas, con Recetario sin quedar abierto (C01.2.2). Si
     // la pestaña no la abrió un script, `close()` no hace nada: ahí queda la
     // lista, que es el lugar donde el borrador nuevo está.
@@ -1318,10 +1458,35 @@ app.addEventListener('click', async (e) => {
   }
   if (accion === 'editar-borrador') { editandoBorrador = true; return render(); }
 
+  // Las fotos. En la captura viven en memoria hasta Guardar; en el borrador,
+  // sacar una la manda a la papelera y reescribe el `.md` en el momento, sin
+  // confirmación: se recupera desde la papelera de Drive.
+  if (accion === 'sacar-foto-captura') {
+    fotosCaptura.splice(Number(boton.dataset['valor'] ?? -1), 1);
+    avisoCaptura = '';
+    return render();
+  }
+  if (accion === 'sacar-foto') {
+    const id = idActual();
+    try {
+      borradorLeido = await escribiendo(store.sacarFotoDeBorrador(id, boton.dataset['valor'] ?? ''));
+      avisoBorradores = '';
+    } catch (err) {
+      console.error(err);
+      avisoBorradores = porQueNoGuardo(err);
+    }
+    return render();
+  }
+  if (accion === 'ver-foto') { fotoAbierta = boton.dataset['valor'] ?? null; return render(); }
+  if (accion === 'cerrar-visor') { fotoAbierta = null; return render(); }
+
   if (accion === 'convertir-con-claude') {
     const b = borradorLeido;
     if (!b) return;
-    const r = await enviarAClaude(plataformaDelNavegador(), pedidoDeConversion(b));
+    const fotos = b.fotos.length
+      ? { archivos: await archivosDeFotos(b.fotos), conLinks: pedidoDeConversion(b, { links: true }) }
+      : null;
+    const r = await enviarAClaude(plataformaDelNavegador(), pedidoDeConversion(b), fotos);
     if (r === 'copiado') { avisoBorradores = 'Pedido copiado: pegalo en Claude'; return render(); }
     if (r === 'sin-portapapeles') { avisoBorradores = 'No se pudo abrir Claude ni copiar el pedido.'; return render(); }
     return;
@@ -1627,12 +1792,14 @@ app.addEventListener('input', (e) => {
   if (!campo?.name) return;
   if (campo.name === 'titulo') { tituloCaptura = campo.value; return; }
   if (campo.name === 'nota') notaCaptura = campo.value;
-  else if (campo.name !== 'fuente') return;
-  // Guardar vale con fuente o con nota: el título es opcional.
+  else if (campo.name === 'fuente') fuenteCaptura = campo.value;
+  else return;
+  // Guardar vale con fuente, con nota o con fotos: el título es opcional.
   const fuente = document.querySelector<HTMLInputElement>('#app input[name="fuente"]')?.value
     ?? (vistaActual ? desdeCompartido(compartidoDe(vistaActual)).fuente : '');
   const boton = document.querySelector<HTMLButtonElement>('#app [data-accion="guardar-captura"]');
-  if (boton) boton.toggleAttribute('disabled', !sePuedeGuardar({ fuente, nota: notaCaptura }));
+  const fotos = editandoBorrador ? 0 : fotosCaptura.length;
+  if (boton) boton.toggleAttribute('disabled', !sePuedeGuardar({ fuente, nota: notaCaptura, fotos }));
 });
 
 /** Las pantallas que dibujan el menú lateral: sólo ahí se desliza para abrirlo. */
@@ -1735,6 +1902,22 @@ app.addEventListener('focusout', (e) => {
 
 app.addEventListener('change', (e) => {
   if (escrituras) return;
+  // *Agregar foto*: el selector del sistema devolvió los archivos.
+  const campoFotos = e.target as HTMLInputElement | null;
+  if (campoFotos?.dataset && 'fotos' in campoFotos.dataset) {
+    const archivos: Blob[] = Array.from(campoFotos.files ?? []);
+    void (async () => {
+      if (vistaActual?.vista === 'capturar') {
+        avisoCaptura = await sumarFotosACaptura(archivos);
+      } else if (vistaActual?.vista === 'borrador' && !editandoBorrador) {
+        await agregarFotosABorrador(idActual(), archivos);
+      } else {
+        return;
+      }
+      await render();
+    })();
+    return;
+  }
   // La categoría es un select: cambia por `change`, no por `input`.
   if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') revisarIncompleta();
   // Mismo motivo que en `conClosest`: nada de instanceof contra globales del

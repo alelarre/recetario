@@ -55,9 +55,13 @@ export function parsearHash(hash: unknown): Ruta {
   }
   if (partes[0] === 'ajustes') return { vista: 'ajustes', params: {} };
   // El Share Target manda lo que la app de origen le dio: los dos campos
-  // pueden venir vacíos y la captura igual se abre (F01.2).
+  // pueden venir vacíos y la captura igual se abre (F01.2). `fotos` es
+  // cuántas dejó el service worker en su caché.
   if (partes[0] === 'capturar') {
-    return { vista: 'capturar', params: { url: params['url'] ?? '', text: params['text'] ?? '' } };
+    return {
+      vista: 'capturar',
+      params: { url: params['url'] ?? '', text: params['text'] ?? '', ...(params['fotos'] ? { fotos: params['fotos'] } : {}) }
+    };
   }
 
   if (partes[0] === 'categorias') {

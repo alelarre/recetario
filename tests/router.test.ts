@@ -81,6 +81,10 @@ describe('parsearHash', () => {
       .toEqual({ vista: 'capturar', params: { url: 'https://x/1', text: 'Focaccia' } });
   });
 
+  it('capturar lee cuántas fotos dejó el service worker', () => {
+    expect(parsearHash('#/capturar?fotos=3')).toEqual({ vista: 'capturar', params: { url: '', text: '', fotos: '3' } });
+  });
+
   it('capturar sin nada es capturar igual: el Share Target puede no mandar campos', () => {
     expect(parsearHash('#/capturar')).toEqual({ vista: 'capturar', params: { url: '', text: '' } });
   });
