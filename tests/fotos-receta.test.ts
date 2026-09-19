@@ -164,8 +164,12 @@ describe('lineasDeLaReceta', () => {
     ]);
   });
 
-  it('una receta sin nada da una lista vacía', () => {
-    expect(lineasDeLaReceta(recetaFalsa())).toEqual([]);
+  it('descripción, variaciones y notas dan su lugar aunque estén vacías; sin ingredientes ni pasos, ninguno', () => {
+    expect(lineasDeLaReceta(recetaFalsa())).toEqual([
+      { seccion: 'descripcion', linea: null, texto: '', grupo: 'Descripción' },
+      { seccion: 'variaciones', linea: null, texto: '', grupo: 'Variaciones' },
+      { seccion: 'notas', linea: null, texto: '', grupo: 'Notas' }
+    ]);
   });
 });
 
@@ -182,6 +186,10 @@ describe('ponerEn', () => {
 
   it('en las notas, agrega un renglón nuevo al final', () => {
     expect(ponerEn('- Ojo con el horno', null, 5)).toBe('- Ojo con el horno\n![](foto:5)');
+  });
+
+  it('en una sección vacía, la referencia queda sola, sin renglón vacío adelante', () => {
+    expect(ponerEn('', null, 5)).toBe('![](foto:5)');
   });
 
   it('no repite la referencia si la línea ya la tiene', () => {

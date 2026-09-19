@@ -151,19 +151,19 @@ function lineasDeSeccion(texto: string, seccion: 'ingredientes' | 'preparacion')
 /**
  * Los lugares donde se puede poner una foto, para *Poner en…*: la
  * descripción, cada ingrediente, cada paso, las variaciones y las notas, en
- * ese orden. Una sección vacía no aporta lugares.
+ * ese orden (spec §4, sin condición). Descripción, variaciones y notas dan
+ * su lugar aunque estén vacías —poner la primera foto ahí es un caso real,
+ * y `ponerEn` con texto vacío no deja un renglón en blanco adelante—;
+ * ingredientes y pasos sólo dan uno por línea existente.
  */
 export function lineasDeLaReceta(receta: Receta): Lugar[] {
-  const lugares: Lugar[] = [];
-  const descripcion = receta.descripcion.trim();
-  if (descripcion) lugares.push({ seccion: 'descripcion', linea: null, texto: descripcion, grupo: NOMBRE_SECCION.descripcion });
-  lugares.push(...lineasDeSeccion(receta.ingredientes, 'ingredientes'));
-  lugares.push(...lineasDeSeccion(receta.preparacion, 'preparacion'));
-  const variaciones = receta.variaciones.trim();
-  if (variaciones) lugares.push({ seccion: 'variaciones', linea: null, texto: variaciones, grupo: NOMBRE_SECCION.variaciones });
-  const notas = receta.notas.trim();
-  if (notas) lugares.push({ seccion: 'notas', linea: null, texto: notas, grupo: NOMBRE_SECCION.notas });
-  return lugares;
+  return [
+    { seccion: 'descripcion', linea: null, texto: receta.descripcion.trim(), grupo: NOMBRE_SECCION.descripcion },
+    ...lineasDeSeccion(receta.ingredientes, 'ingredientes'),
+    ...lineasDeSeccion(receta.preparacion, 'preparacion'),
+    { seccion: 'variaciones', linea: null, texto: receta.variaciones.trim(), grupo: NOMBRE_SECCION.variaciones },
+    { seccion: 'notas', linea: null, texto: receta.notas.trim(), grupo: NOMBRE_SECCION.notas }
+  ];
 }
 
 /** Si ya tiene esta referencia, en cualquier epígrafe. */
