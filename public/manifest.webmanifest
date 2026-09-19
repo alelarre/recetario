@@ -13,8 +13,12 @@
     { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "share_target": {
-    "action": "/recetario/",
-    "method": "GET",
-    "params": { "title": "title", "text": "text", "url": "url" }
+    "action": "/recetario/compartir",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title", "text": "text", "url": "url",
+      "files": [{ "name": "fotos", "accept": ["image/*"] }]
+    }
   }
 }
