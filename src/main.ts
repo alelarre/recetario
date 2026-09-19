@@ -1213,11 +1213,13 @@ app.addEventListener('click', async (e) => {
   if (accion === 'salir') {
     auth.olvidar();
     // La copia tiene títulos e ingredientes: después de Salir no queda nada
-    // del usuario en el navegador.
+    // del usuario en el navegador. Y se recarga, porque el índice, la receta
+    // abierta y los borradores también viven en memoria: sin recargar, la
+    // próxima pantalla los volvería a dibujar.
     indiceLocal.borrar();
-    cuenta = '';
     irCerrando('#/');
-    return pintar(renderConexion({ estado: 'inicial' }));
+    location.reload();
+    return;
   }
   if (accion === 'crear-receta') {
     location.hash = `#/nueva?borrador=${encodeURIComponent(idActual())}`;

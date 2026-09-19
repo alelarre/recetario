@@ -832,6 +832,13 @@ describe('main.ts: las rutas', () => {
     expect(estado.copiasBorradas).toBe(1);
   });
 
+  it('Salir recarga la página: lo que quedó en memoria no se vuelve a dibujar', async () => {
+    const { abrir, tocar, recargas } = await montar();
+    await abrir('#/ajustes');
+    await tocar('salir');
+    expect(recargas).toHaveLength(1);
+  });
+
   it('el aviso de la planilla _indice duplicada llega a Ajustes', async () => {
     estado.indiceDuplicado = { cantidad: 2, modifiedTime: new Date(2026, 8, 12, 14, 30).toISOString() };
     const { app, abrir } = await montar();

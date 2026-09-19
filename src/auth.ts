@@ -93,6 +93,13 @@ export function crearAuth() {
     conectar: () => pedir('consent'),
     /** Renovación silenciosa mientras haya sesión de Google; si no, hay que reconectar. */
     token: async () => (token && Date.now() < vence) ? token : pedir(''),
-    olvidar: () => { token = null; vence = 0; borrarDeStorage(); }
+    /**
+     * Además de borrarlo acá, lo revoca en Google: un token que alguien copió
+     * mientras estaba guardado deja de servir, en vez de durar hasta que vence.
+     */
+    olvidar: () => {
+      if (token) window.google?.accounts?.oauth2?.revoke?.(token);
+      token = null; vence = 0; borrarDeStorage();
+    }
   };
 }

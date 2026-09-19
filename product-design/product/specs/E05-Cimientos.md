@@ -428,7 +428,7 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 #### C05.9b.1 — Cuenta *(transversal)*
 
 - [ ] Muestra con qué cuenta de Google está conectada la app.
-- [ ] Ofrece **Salir**, que descarta la sesión y vuelve a la pantalla de conexión.
+- [ ] Ofrece **Salir**, que revoca el token en Google, borra la copia local del índice y recarga la app: vuelve a la pantalla de conexión sin nada del usuario en memoria.
 - [ ] Salir no borra nada de Drive y lo dice.
 
 #### C05.9b.2 — Índice *(J8)*

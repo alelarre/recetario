@@ -9,7 +9,7 @@ export const SCOPE = 'https://www.googleapis.com/auth/drive';
  * ya existe. No es un secreto: va restringida por referente —`localhost:8080` y
  * el origen de Pages— y a la Picker API. Vacía, la app sólo ofrece crear.
  */
-export const API_KEY = '';
+export const API_KEY = 'AIzaSyC0T7P6AqTmoUeZk8Kcm5pbeqXg7jZx6BI';
 
 export const NOMBRE_RAIZ = 'Recetario';
 export const NOMBRE_INDICE = '_indice';

@@ -57,6 +57,24 @@ describe('auth.js: persistencia del token entre aperturas', () => {
     expect(global.localStorage.getItem('recetario-auth')).toBeNull();
   });
 
+  it('olvidar() revoca el token en Google: un token copiado deja de servir', async () => {
+    const revocados: string[] = [];
+    global.window.google!.accounts!.oauth2!.revoke = (t: string) => { revocados.push(t); };
+    const auth = crearAuth();
+    await auth.token();
+    auth.olvidar();
+
+    expect(revocados).toEqual(['tok-123']);
+  });
+
+  it('olvidar() sin token no le pide nada a Google', () => {
+    const revocados: string[] = [];
+    global.window.google!.accounts!.oauth2!.revoke = (t: string) => { revocados.push(t); };
+    crearAuth().olvidar();
+
+    expect(revocados).toEqual([]);
+  });
+
   it('si localStorage no existe o está deshabilitado, sigue funcionando solo en memoria', async () => {
     // Sin global.localStorage: simula un navegador en modo privado que lo bloquea,
     // o un entorno (como Node en CI) que directamente no lo tiene.

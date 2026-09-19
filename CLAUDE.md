@@ -199,6 +199,14 @@ Cada una se midió o se discutió a fondo.
 
 ## Lo sabido y no arreglado
 
+- **El token de Drive vive en `localStorage` de `alelarre.github.io`**, para no
+  abrir el popup de Google en cada apertura. Ese origen lo comparten todos los
+  proyectos de GitHub Pages de la cuenta: un script ajeno en otro de ellos
+  podría leerlo durante su hora de vida. No publicar ahí nada con código de
+  terceros; la salida de fondo es un dominio propio.
+- **Un id que llega en un link a `#/r/<id>` puede ser cualquier archivo del
+  Drive:** por eso `store.guardar` y `store.borrar` rechazan un archivo sin
+  fila que no esté en la carpeta base o en una categoría.
 - **El conector de Google Drive de claude.ai es limitado:** crea, lee, mueve y
   renombra archivos, pero no escribe planillas ni reescribe el contenido de un
   archivo existente.

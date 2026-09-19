@@ -40,6 +40,7 @@ interface GoogleGlobal {
   accounts?: {
     oauth2?: {
       initTokenClient(config: ConfigClienteToken): ClienteToken;
+      revoke?(token: string, listo?: () => void): void;
     };
   };
 }

@@ -1,7 +1,9 @@
 // Service worker: solo cachea el app shell. Los datos no se cachean acá —la
 // copia del índice vive en localStorage—: si este archivo cacheara respuestas
 // de las APIs de Google, la app mostraría datos viejos sin forma de saberlo.
-const CACHE = 'recetario-v1';
+// El nombre cambia cuando cambia lo que se guarda: `activate` borra los
+// cachés con otro nombre.
+const CACHE = 'recetario-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
@@ -25,6 +27,17 @@ function guardar(request, resp) {
 /** Caché primero: para lo que ya trae la prueba de que es correcto en el propio nombre. */
 function cachePrimero(request) {
   return caches.match(request).then(hit => hit ?? fetch(request).then(resp => guardar(request, resp)));
+}
+
+/**
+ * La navegación se guarda siempre como `index.html`, sin la query: todas
+ * las rutas son el mismo documento, y la query del Share Target trae el
+ * texto que se compartió, que no tiene que quedar guardado en el navegador.
+ */
+function navegar(request) {
+  return fetch(request)
+    .then(resp => guardar('./index.html', resp))
+    .catch(() => caches.match('./index.html'));
 }
 
 /** Red primero: para lo que puede cambiar de contenido sin cambiar de nombre. */
@@ -53,7 +66,7 @@ self.addEventListener('fetch', (e) => {
   // para siempre, porque sw.js tampoco cambia de bytes entre deploys y el
   // navegador no reinstala el service worker.
   if (e.request.mode === 'navigate') {
-    return e.respondWith(redPrimero(e.request));
+    return e.respondWith(navegar(e.request));
   }
 
   // Todo lo que llega hasta acá —manifest.webmanifest, los íconos— tampoco

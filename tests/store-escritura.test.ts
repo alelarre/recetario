@@ -10,24 +10,34 @@ const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
 const MD = `---\ntitulo: Milanesas\n---\n\n## Notas\n- ojo\n`;
 
+/**
+ * Un Drive con la carpeta base marcada y `f1` adentro, sin fila en el índice:
+ * guardar un archivo sin fila exige que esté en la carpeta del Recetario.
+ */
+const conRaiz = () => driveFalso([
+  { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
+  { id: 'f1', name: 'f1.md', parents: ['raiz'] }
+]);
+
 describe('guardar: escritura sincrónica, sin cola', () => {
   it('escribe la fila del índice en el momento, sin cola', async () => {
     const sheets = sheetsFalso();
-    const store = crearStore({ drive: driveFalso([{ id: 'f1' }]), sheets, indiceLocal: indiceLocalFalso() });
+    const store = crearStore({ drive: conRaiz(), sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();
     await store.cargarIndice();
+    const antes = sheets.escrituras.length;   // el arranque ya escribió el índice
 
     await store.guardar('f1', recetaFalsa({ titulo: 'Milanesas' }));
 
-    expect(sheets.escrituras).toHaveLength(1);
-    expect(sheets.escrituras[0]?.valores[0]).toContain('Milanesas');
+    expect(sheets.escrituras).toHaveLength(antes + 1);
+    expect(sheets.escrituras.at(-1)?.valores[0]).toContain('Milanesas');
   });
 
   it('el guardado termina recién cuando Sheets confirmó', async () => {
     const sheets = sheetsFalso();
     let confirmado = false;
     sheets.alEscribir = async () => { await Promise.resolve(); confirmado = true; };
-    const store = crearStore({ drive: driveFalso([{ id: 'f1' }]), sheets, indiceLocal: indiceLocalFalso() });
+    const store = crearStore({ drive: conRaiz(), sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();
     await store.cargarIndice();
 
@@ -37,7 +47,7 @@ describe('guardar: escritura sincrónica, sin cola', () => {
 
   it('guardar dos veces la misma receta deja una sola fila (R2)', async () => {
     const sheets = sheetsFalso();
-    const store = crearStore({ drive: driveFalso([{ id: 'f1' }]), sheets, indiceLocal: indiceLocalFalso() });
+    const store = crearStore({ drive: conRaiz(), sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();
     await store.cargarIndice();
 
@@ -145,6 +155,33 @@ describe('guardar', () => {
     const entrada = store.entradas().find(e => e.id_archivo === 'suelta');
     expect(entrada?.categoria).toBe('Carnes');
     expect(entrada?.nombre_archivo).toBe('suelta.md');
+  });
+});
+
+describe('un archivo fuera del Recetario', () => {
+  // Con el permiso `drive`, un id que llega en un link a `#/r/<id>` puede ser
+  // cualquier archivo del usuario: guardar y borrar lo tienen que rechazar.
+  const conAjeno = () => driveFalso([
+    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
+    { id: 'ajeno', name: 'notas.md', parents: ['otra-carpeta'], contenido: 'mis notas' }
+  ]);
+
+  it('guardar lo rechaza sin reescribirlo', async () => {
+    const drive = conAjeno();
+    const store = crearStore({ drive, sheets: sheetsFalso(), indiceLocal: indiceLocalFalso() });
+    await store.arrancar();
+
+    await expect(store.guardar('ajeno', recetaFalsa({ titulo: 'Pisada' }))).rejects.toThrow();
+    expect(await drive.leerTexto('ajeno')).toBe('mis notas');
+  });
+
+  it('borrar lo rechaza sin mandarlo a la papelera', async () => {
+    const drive = conAjeno();
+    const store = crearStore({ drive, sheets: sheetsFalso(), indiceLocal: indiceLocalFalso() });
+    await store.arrancar();
+
+    await expect(store.borrar('ajeno')).rejects.toThrow();
+    expect(drive._store.get('ajeno')?.trashed).toBeFalsy();
   });
 });
 

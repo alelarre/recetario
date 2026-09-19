@@ -518,6 +518,19 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
     if (await borrarDeHoja(HOJA_RECETAS, filas, id)) await persistir();
   }
 
+  /**
+   * La carpeta y el nombre de un archivo que no está en el índice, si está en
+   * la carpeta base o en una categoría. Si no, falla: con el permiso `drive`,
+   * un id que llegó en un link a `#/r/<id>` podría ser cualquier archivo del
+   * usuario, y guardar o borrar lo reescribiría o lo mandaría a la papelera.
+   */
+  async function delRecetario(id: string): Promise<{ carpeta: string; nombre: string }> {
+    const meta = await drive.metadatos(id, 'name,parents');
+    const carpeta = (meta.parents ?? []).find(p => ctx.carpetas.has(p));
+    if (!carpeta) throw new Error('El archivo no está en la carpeta del Recetario.');
+    return { carpeta, nombre: meta.name ?? '' };
+  }
+
   async function guardar(
     id: string,
     receta: Receta,
@@ -525,23 +538,24 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
   ): Promise<void> {
     const entrada = entradas.find(e => e.id_archivo === id);
 
-    const texto = serialize(receta);
-    const actualizado = await drive.actualizar(id, texto);
-
     // Sin fila —por ejemplo, una receta abierta por link directo y marcada
     // favorita ahí mismo— no hay de dónde sacar su carpeta real ni su nombre
     // de archivo: caer en la raíz la mandaría a «Sin categorizar» aunque esté
-    // en una categoría. Se le pregunta a Drive, y sólo en este caso.
+    // en una categoría. Se le pregunta a Drive, y sólo en este caso, antes de
+    // escribir: un id que llegó en un link puede ser cualquier archivo.
     let carpeta_id: string;
     let nombre_archivo: string;
     if (entrada) {
       carpeta_id = entrada.carpeta_id;
       nombre_archivo = entrada.nombre_archivo;
     } else {
-      const meta = await drive.metadatos(id, 'name,parents');
-      carpeta_id = meta.parents?.[0] ?? ctx.raizId;
-      nombre_archivo = meta.name ?? '';
+      const meta = await delRecetario(id);
+      carpeta_id = meta.carpeta;
+      nombre_archivo = meta.nombre;
     }
+
+    const texto = serialize(receta);
+    const actualizado = await drive.actualizar(id, texto);
 
     if (carpetaDestino && carpetaDestino !== carpeta_id) {
       await drive.mover(id, { de: carpeta_id, a: carpetaDestino });
@@ -579,6 +593,7 @@ export function crearStore({ drive, sheets, indiceLocal }: Dependencias) {
   }
 
   async function borrar(id: string): Promise<void> {
+    if (!entradas.some(e => e.id_archivo === id)) await delRecetario(id);
     await drive.borrar(id);
     await borrarDelIndice(id);
   }
