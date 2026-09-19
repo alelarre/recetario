@@ -64,6 +64,8 @@ const estadoInicial = () => ({
   md: '---\ntitulo: Milanesas\n---\n',
   /** Lo que el editor o la captura tienen escrito cuando se toca Guardar. */
   formulario: {} as Record<string, string>,
+  /** Lo que llegó a `agregarBorrador`. */
+  capturados: [] as { titulo: string; fuente: string; nota: string }[],
   /** Cuántas veces se leyó un `.md` de Drive: cada una es un pedido de red. */
   lecturas: 0,
   /** Cuántas veces se leyó el .md de un borrador. */
@@ -151,7 +153,10 @@ const storeFake = {
     if (!b) throw new Error(`no hay borrador ${id}`);
     return b;
   },
-  agregarBorrador: async () => ({ id: 'b1', titulo: '', fuente: '', nota: '', capturado: '' }),
+  agregarBorrador: async (b: { titulo: string; fuente: string; nota: string }) => {
+    estado.capturados.push(b);
+    return { id: 'b1', ...b, capturado: '' };
+  },
   editarBorrador: async () => {},
   descartarBorrador: async (id: string) => {
     if (estado.fallasAlDescartar > 0) { estado.fallasAlDescartar--; throw new Error('red'); }
@@ -253,7 +258,10 @@ describe('main.ts: las rutas', () => {
         if (sel === '[data-formulario]') return formulario;
         // Los campos de la captura: lo que el test dejó escrito en `formulario`.
         if (sel === 'input[name="titulo"]') return { value: estado.formulario['titulo'] ?? '' };
-        if (sel === 'input[name="fuente"]') return { value: estado.formulario['fuente'] ?? '' };
+        // La captura compartida no dibuja el campo fuente: la trae la URL.
+        if (sel === 'input[name="fuente"]') {
+          return estado.formulario['fuente'] === undefined ? null : { value: estado.formulario['fuente'] };
+        }
         if (sel === 'textarea[name="nota"]') return { value: estado.formulario['nota'] ?? '' };
         if (sel === '[data-salida]') return preguntas.length ? { remove: () => { preguntas.length = 0; } } : null;
         if (sel === '[data-confirmar-borrado]') {
@@ -1673,6 +1681,33 @@ describe('main.ts: las rutas', () => {
     const { app, abrir } = await montar();
     await abrir('#/r/f1');
     expect(app.innerHTML).not.toMatch(/guardad|listo|éxito/i);
+  });
+
+  describe('la fuente de lo compartido desde otra app', () => {
+    // Casi todas las apps de Android mandan el link en `text` y no en `url`.
+    it('se guarda como fuente del borrador aunque llegue en text', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/capturar?text=' + encodeURIComponent('https://instagram.com/reel/abc'));
+      estado.formulario = { titulo: 'Reel de pasta' };
+      await tocar('guardar-captura');
+      expect(estado.capturados).toEqual([{ titulo: 'Reel de pasta', fuente: 'https://instagram.com/reel/abc', nota: '' }]);
+    });
+
+    it('si viene en url, manda url', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/capturar?url=' + encodeURIComponent('https://sitio.com/receta') + '&text=' + encodeURIComponent('Mirá esto'));
+      estado.formulario = { titulo: 'Tarta' };
+      await tocar('guardar-captura');
+      expect(estado.capturados[0]?.fuente).toBe('https://sitio.com/receta');
+    });
+
+    it('agregando a mano, la fuente es la del campo, aunque quede vacía', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/capturar');
+      estado.formulario = { titulo: 'Guiso', fuente: '' };
+      await tocar('guardar-captura');
+      expect(estado.capturados[0]?.fuente).toBe('');
+    });
   });
 
   describe('convertir con Claude', () => {

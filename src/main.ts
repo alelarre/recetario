@@ -1263,8 +1263,12 @@ app.addEventListener('click', async (e) => {
     tituloCaptura = campoTitulo?.value.trim() ?? '';
     notaCaptura = campoNota?.value.trim() ?? '';
     if (!tituloCaptura) return;
-    const fuente = campoFuente?.value.trim()
-      ?? vistaActual?.params['url'] ?? vistaActual?.params['text'] ?? '';
+    // Compartida, la captura no dibuja el campo: la fuente viene en la URL,
+    // y el router deja `''` en lo que no llegó, así que va `||` y no `??`
+    // —casi todas las apps mandan el link en `text`, con `url` vacío—.
+    const fuente = campoFuente
+      ? campoFuente.value.trim()
+      : vistaActual?.params['url'] || vistaActual?.params['text'] || '';
 
     guardandoCaptura = true;
     errorCaptura = '';
