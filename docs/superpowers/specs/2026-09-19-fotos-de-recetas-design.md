@@ -219,6 +219,24 @@ principio, **Subir foto**, con el mismo selector de archivo. La foto elegida
 se ve en la muestra en el momento; se sube al guardar la categoría. Una foto
 propia se elige de nuevo como cualquier otra del catálogo.
 
+**El velo de escritura** (`index.html`, `src/ui/base.css`)
+- En lugar del spinner, un **libro de recetas abierto que se está
+  escribiendo**: un SVG en línea de unos 96 px, con los trazos en `--fg-2`,
+  y un lápiz en `--acento` que recorre un renglón de izquierda a derecha
+  mientras el renglón se va dibujando (`stroke-dashoffset`). Al terminar el
+  renglón vuelve a empezar, en loop de 1,6 s.
+- Es el mismo velo para todas las escrituras (R8): guardar, descartar un
+  borrador, borrar una categoría. Con fotos, guardar tarda más, y ahí es
+  donde se ve.
+- El velo deja de usar `opacity` sobre el elemento entero y pasa a
+  `background: color-mix(in srgb, var(--velo) 60%, transparent)`, para que el
+  libro se vea a pleno y no al 60 %.
+- Aparece y se va como hoy: con la escritura, sin transición.
+- Con `prefers-reduced-motion: reduce`, el libro queda quieto, con el renglón
+  a medio escribir y el lápiz apoyado.
+- Es la segunda animación en bucle del sistema, junto al spinner, que sigue
+  en las cargas y en *«Armando el PDF…»*. `design-system.md` §5.1 lo dice.
+
 ## 8. El store
 
 - **`guardar(id, receta, { carpetaDestino, fotos })`** y
@@ -364,7 +382,7 @@ propia se elige de nuevo como cualquier otra del catálogo.
   de receta* y la foto propia de categoría en la tabla de entidades; §1.7.
 - `user-flows.md`: corregir con fotos, convertir con fotos.
 - `design-system.md`: la ficha de acciones de una foto, la galería, la foto
-  en línea.
+  en línea; §5.1 con el libro del velo de escritura.
 - `CLAUDE.md`: en «Lo esencial», el depósito de fotos y `_fotos/`; en «No
   proponer», las fotos de receta en Drive dejan de estar descartadas —las
   miniaturas y las portadas aparte siguen—; el mapa de `src/` con
@@ -383,6 +401,8 @@ propia se elige de nuevo como cualquier otra del catálogo.
 - *Sacar* una foto que está en un paso: desaparece la referencia; al guardar,
   va a la papelera de Drive.
 - Salir sin guardar con fotos nuevas: `_fotos/` no cambia.
+- Guardar con fotos: el libro con el lápiz escribiendo mientras sube, y el
+  loop no salta.
 - El visor: desliza entre todas y se cierra tocando.
 - Convertir un borrador con fotos por Claude: la receta vuelve con
   `foto:N`, el depósito tiene las del borrador, se sacan dos, y al guardar
