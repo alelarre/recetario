@@ -46,6 +46,19 @@ titulo: Anchoítas
 1. Servir.
 `);
 
+const CON_FOTOS = parse(`---
+titulo: Rabas
+foto: foto:1
+---
+
+## Preparación
+1. Freír. ![](foto:2)
+
+## Fotos
+- 1: https://drive.google.com/file/d/abc/view
+- 2: https://x/paso.jpg
+`);
+
 describe('Receta en lectura', () => {
   it('el orden es foto, título, contexto, fuente, descripción, ingredientes, preparación, variaciones, notas', () => {
     const html = renderReceta({ entrada: null, receta: COMPLETA });
@@ -254,6 +267,53 @@ describe('Receta en lectura', () => {
   it('un tiempo inválido no aparece en la receta', () => {
     const r = parse('---\ntitulo: Pan\ntiempo: 55 min\n---\n');
     expect(renderReceta({ entrada: entradaFalsa(), receta: r })).not.toContain('55 min');
+  });
+});
+
+describe('Las fotos de la receta', () => {
+  it('la cabecera resuelve foto:N y la hace tocable, con su número del depósito', () => {
+    const html = renderReceta({ entrada: null, receta: CON_FOTOS });
+    expect(html).toContain('data-drive="abc"');
+    expect(html).toMatch(/data-accion="ver-foto" data-n="1"[^>]*>[^<]*<img[^>]*data-drive="abc"/);
+  });
+
+  it('una cabecera externa que no está en el depósito se abre sin data-n', () => {
+    const html = renderReceta({ entrada: null, receta: COMPLETA });
+    expect(html).toContain('data-accion="ver-foto"');
+    expect(html).not.toMatch(/data-accion="ver-foto" data-n=/);
+  });
+
+  it('sin foto no hay botón para verla', () => {
+    expect(renderReceta({ entrada: null, receta: MINIMA })).not.toContain('data-accion="ver-foto"');
+  });
+
+  it('la referencia en un paso se resuelve y se dibuja debajo de su línea', () => {
+    const html = renderReceta({ entrada: null, receta: CON_FOTOS });
+    expect(html).toContain('class="foto-linea"');
+    expect(html).toContain('src="https://x/paso.jpg"');
+  });
+
+  it('la ficha Fotos va después de Notas, con la grilla del depósito entero', () => {
+    const html = renderReceta({ entrada: null, receta: CON_FOTOS });
+    expect(html).toContain('<h2>Fotos</h2>');
+    expect(html).toContain('class="galeria"');
+    expect(html.match(/data-accion="ver-foto"/g)).toHaveLength(3); // cabecera + 2 miniaturas
+    expect(html).toContain('data-n="1"');
+    expect(html).toContain('data-n="2"');
+  });
+
+  it('sin depósito, la ficha Fotos no se dibuja', () => {
+    expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('<h2>Fotos</h2>');
+  });
+
+  it('el visor dibuja la foto actual sobre el velo cuando está abierto', () => {
+    const html = renderReceta({ entrada: null, receta: COMPLETA, visor: { urls: ['https://x/1.jpg'], i: 0 } });
+    expect(html).toContain('class="visor"');
+    expect(html).toContain('src="https://x/1.jpg"');
+  });
+
+  it('sin visor abierto, no se dibuja', () => {
+    expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('class="visor"');
   });
 });
 

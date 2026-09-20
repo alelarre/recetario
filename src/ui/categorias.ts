@@ -1,5 +1,6 @@
 import { slugArchivo } from '../recipe.js';
 import { CLAVES_COLOR } from '../categorias.js';
+import { linkDeFoto } from '../fotos-receta.js';
 import type { Categoria } from '../tipos.js';
 
 /**
@@ -62,9 +63,15 @@ export function colorDeClave(color: string): string {
   return (CLAVES_COLOR as readonly string[]).includes(color) ? `var(--cat-${color})` : NEUTRO;
 }
 
-/** La URL de una foto del catálogo (`catalogo:<clave>`); cualquier otro valor da null. */
+/**
+ * La URL de una foto de categoría: del catálogo (`catalogo:<clave>`) o propia,
+ * subida a `_fotos/` (`drive:<id>`, spec §8) y resuelta a su link de Drive,
+ * igual que la de una receta. Cualquier otro valor da null.
+ */
 export function urlDeFoto(foto: string): string | null {
-  return foto.startsWith('catalogo:') ? CATALOGO.get(foto.slice('catalogo:'.length)) ?? null : null;
+  if (foto.startsWith('catalogo:')) return CATALOGO.get(foto.slice('catalogo:'.length)) ?? null;
+  if (foto.startsWith('drive:')) return linkDeFoto(foto.slice('drive:'.length));
+  return null;
 }
 
 /** El color de una categoría registrada. Sin clave válida cae en el neutro, sin romper nada. */

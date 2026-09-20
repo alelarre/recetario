@@ -37,8 +37,15 @@ describe('tarjeta', () => {
 
   it('una receta con foto propia la dibuja', () => {
     const html = tarjeta(entradaFalsa({ foto: 'https://x/1.jpg' }));
-    expect(html).toContain('<img class="foto" src="https://x/1.jpg"');
+    expect(html).toContain('<img src="https://x/1.jpg"');
+    expect(html).toContain('class="foto"');
     expect(html).not.toContain('class="ph"');
+  });
+
+  it('una foto propia de Drive se dibuja como recuadro, con data-drive', () => {
+    const html = tarjeta(entradaFalsa({ foto: 'https://drive.google.com/file/d/abc/view' }));
+    expect(html).toContain('data-drive="abc"');
+    expect(html).toContain('class="foto"');
   });
 
   it('el placeholder ocupa el mismo espacio que una foto', () => {
@@ -50,7 +57,12 @@ describe('tarjeta', () => {
     registrarCategorias([{ id: 'c1', nombre: 'Pescados y mariscos', color: 'pescados', foto: 'catalogo:pescados-y-mariscos' }]);
     const html = placeholder('Pescados y mariscos');
     expect(html).toContain('--c:var(--cat-pescados)');
-    expect(html).toContain('--img:url(');
+    expect(html).toMatch(/<img src="[^"]*pescados-y-mariscos/);
+  });
+
+  it('la foto propia de una categoría, si es de Drive, se dibuja como recuadro', () => {
+    registrarCategorias([{ id: 'c1', nombre: 'Rara', color: 'fucsia', foto: 'drive:abc' }]);
+    expect(placeholder('Rara')).toContain('data-drive="abc"');
   });
 
   it('una receta incompleta lleva la marca, sin color de error', () => {
@@ -266,12 +278,17 @@ describe('tile', () => {
     registrarCategorias([{ id: 'c1', nombre: 'Pescados y mariscos', color: 'pescados', foto: 'catalogo:pescados-y-mariscos' }]);
     const html = tile('Pescados y mariscos');
     expect(html).toContain('--c:var(--cat-pescados)');
-    expect(html).toContain('background-image:url(');
+    expect(html).toMatch(/<img src="[^"]*pescados-y-mariscos/);
     expect(html).toContain('href="#/c/Pescados%20y%20mariscos"');
   });
 
   it('una categoría sin foto cae en la trama, no en un hueco', () => {
     expect(tile('Fiambres caseros')).toContain('class="im trama"');
+  });
+
+  it('una foto propia de Drive se dibuja como recuadro, con data-drive', () => {
+    registrarCategorias([{ id: 'c1', nombre: 'Rara', color: 'fucsia', foto: 'drive:abc' }]);
+    expect(tile('Rara')).toContain('data-drive="abc"');
   });
 
   it('el contador aparece cuando la categoría tiene recetas', () => {

@@ -40,8 +40,8 @@ describe('categorias', () => {
     expect(colorCategoria('Sin categorizar')).toBe('var(--cat-otros)');
   });
 
-  it('una foto de Drive todavía no se dibuja', () => {
-    expect(fotoCategoria('Rara')).toBeNull();
+  it('una foto propia de Drive resuelve a su link, como la de una receta', () => {
+    expect(fotoCategoria('Rara')).toBe('https://drive.google.com/file/d/abc/view');
   });
 
   it('defendé: sin nombre no lanza', () => {
@@ -54,6 +54,6 @@ describe('categorias', () => {
     expect(colorDeClave('fucsia')).toBe('var(--cat-otros)');
     expect(urlDeFoto('catalogo:pastas')).toMatch(/pastas/);
     expect(urlDeFoto('')).toBeNull();
-    expect(urlDeFoto('drive:abc')).toBeNull();
+    expect(urlDeFoto('drive:abc')).toBe('https://drive.google.com/file/d/abc/view');
   });
 });

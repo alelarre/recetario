@@ -14,8 +14,9 @@
 .tile { position: relative; aspect-ratio: 4/3; border-radius: var(--r-ficha); overflow: hidden;
         border: 1px solid var(--c); background: var(--surface); display: block;
         text-decoration: none; color: var(--fg); }
-.tile .im { position: absolute; inset: 0; background: var(--c); opacity: 1;
-            background-size: cover; background-position: center; }
+.tile .im { position: absolute; inset: 0; background: var(--c); opacity: 1; overflow: hidden; }
+/* La foto de la categoría: propia (Drive) o del catálogo, siempre con `imgDe`. */
+.tile .im img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .tile .im::after { content: ''; position: absolute; inset: 0; background: var(--c);
                    opacity: .28; mix-blend-mode: overlay; }
 .tile .cu { position: absolute; top: var(--e-2); right: var(--e-2); z-index: 1;
@@ -74,6 +75,9 @@
 .rec-ctx:last-child, .chips:last-child { margin-bottom: 0; }
 .rec-foto { width: 100%; aspect-ratio: 16/9; max-height: 200px; object-fit: cover;
             border-radius: var(--r-foto); display: block; margin-bottom: var(--e-4); }
+/* La cabecera es tocable: abre el visor (spec §7). El botón no agrega nada
+   visual, sólo el cursor; `.rec-foto` sigue puesta en el `<img>` de adentro. */
+.rec-foto-boton { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
 .var { padding: var(--e-3) 0; border-bottom: 1px solid var(--borde); }
 .var:last-child { border-bottom: 0; }
 .var h3 { font-size: var(--txt-lectura); font-weight: 600; line-height: 1.3; margin: 0 0 var(--e-1); }

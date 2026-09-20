@@ -16,6 +16,17 @@ titulo: Rabas
 2. Freír.
 `);
 
+const CON_FOTO_EN_PASO = parse(`---
+titulo: Rabas
+---
+
+## Preparación
+1. Freír. ![](foto:1)
+
+## Fotos
+- 1: https://x/paso.jpg
+`);
+
 const CON_TODO = parse(`---
 titulo: Rabas
 ---
@@ -123,5 +134,12 @@ describe('Modo cocina', () => {
     const html = renderCocina({ ...base, receta: COMPLETA, salidas: 'solo-volver' });
     expect(html).not.toContain('salir-cocina');
     expect(html).toContain('data-accion="volver-receta"');
+  });
+
+  it('el paso resuelve su foto y la dibuja debajo, sin data-accion: acá un toque marca el paso', () => {
+    const html = renderCocina({ ...base, receta: CON_FOTO_EN_PASO });
+    expect(html).toContain('class="foto-linea"');
+    expect(html).toContain('src="https://x/paso.jpg"');
+    expect(html).not.toContain('data-accion="ver-foto"');
   });
 });

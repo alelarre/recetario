@@ -176,8 +176,10 @@ button.tarjeta { width: 100%; font: inherit; text-align: left; cursor: pointer; 
 .foto { width: 56px; height: 56px; flex: 0 0 56px; border-radius: var(--r-foto);
         object-fit: cover; background: var(--surface-alta); }
 .ph { width: 56px; height: 56px; flex: 0 0 56px; border-radius: var(--r-foto);
-      position: relative; overflow: hidden; background: var(--c, var(--cat-otros));
-      background-image: var(--img); background-size: cover; background-position: center; }
+      position: relative; overflow: hidden; background: var(--c, var(--cat-otros)); }
+/* La foto de la categoría, adentro: una propia de Drive (`imgDe`) llega sin
+   `src` y con el mismo tamaño, hasta que se resuelva. */
+.ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .ph::after { content: ''; position: absolute; inset: 0;
              background: var(--c, var(--cat-otros)); opacity: .25; mix-blend-mode: multiply; }
 .ph::before { content: ''; position: absolute; inset: 0; background: #000; opacity: .45; }
@@ -301,3 +303,10 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
 .visor { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
          background: color-mix(in srgb, var(--velo) 94%, transparent); cursor: zoom-out; }
 .visor img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+/* ---- Galería de fotos de la receta (spec §7): el depósito entero, cuadradas
+   y de a tres por fila. La usan la receta y, después, el editor. ---- */
+.galeria { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e-2); }
+.galeria-item { display: block; padding: 0; border: 0; background: var(--surface-alta);
+                border-radius: var(--r-foto); overflow: hidden; aspect-ratio: 1; cursor: pointer; }
+.galeria-item img { display: block; width: 100%; height: 100%; object-fit: cover; }

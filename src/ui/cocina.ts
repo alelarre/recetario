@@ -9,6 +9,7 @@ import { escapar, aHtml } from './markdown.js';
 import { ICO } from './iconos.js';
 import { listaIngredientes } from './fichas-receta.js';
 import { gruposDe, tramosDe } from '../recipe.js';
+import { resolverReceta } from '../fotos-receta.js';
 import type { Receta } from '../tipos.js';
 
 export type PosicionCocina = 'ingredientes' | 'pasos';
@@ -34,8 +35,12 @@ const hayWakeLock = (): boolean =>
   typeof navigator !== 'undefined' && 'wakeLock' in navigator;
 
 export function renderCocina(
-  { receta, posicion, aqui, hechos, wakeActivo = false, salidas }: OpcionesCocina
+  { receta: sinResolver, posicion, aqui, hechos, wakeActivo = false, salidas }: OpcionesCocina
 ): string {
+  // Resuelve `foto:N`: el paso dibuja su foto igual que en la lectura, ya
+  // convertida en su `<img>` (§3), sólo que acá un toque marca el paso, no
+  // abre el visor —por eso las fotos no llevan `data-accion` (spec §7)—.
+  const receta = resolverReceta(sinResolver);
   const grupos = gruposDe(receta.ingredientes).filter(g => g.items.length);
   const tramos = tramosDe(receta.preparacion).filter(t => t.pasos.length);
   const marcados = Array.isArray(hechos) ? hechos : [];

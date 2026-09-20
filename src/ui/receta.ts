@@ -13,7 +13,9 @@ import { encabezado, chipsSueltos, aviso } from './componentes.js';
 import { ICO } from './iconos.js';
 import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones } from './fichas-receta.js';
 import { renderFichaCompartir } from './compartir.js';
+import { renderVisor } from './visor.js';
 import { esFavorita, tagEspecial } from '../catalogo.js';
+import { resolverReceta } from '../fotos-receta.js';
 // El logo de Drive, en el repo y no pedido a `gstatic.com`: una dependencia de
 // red para 513 bytes es una dependencia de más, y así entra a `/assets/`, que es
 // lo único que el service worker sirve caché-primero. Es el favicon que publica
@@ -22,6 +24,7 @@ import { esFavorita, tagEspecial } from '../catalogo.js';
 import logoDrive from './drive.png';
 import type { Entrada, Receta } from '../tipos.js';
 import type { EstadoCompartir } from './compartir.js';
+import type { EstadoVisor } from './visor.js';
 
 export interface OpcionesReceta {
   /** La fila del índice, para la categoría. Falta si la receta no está indexada. */
@@ -33,6 +36,8 @@ export interface OpcionesReceta {
   favorito?: 'escribiendo';
   /** Lo último que falló al marcar favorito. Se dibuja arriba de la ficha. */
   error?: string;
+  /** El visor de fotos abierto, en su foto actual. Sin esto no se dibuja. */
+  visor?: EstadoVisor;
 }
 
 /**
@@ -49,7 +54,10 @@ function botonFavorito(receta: Receta, escribiendo: boolean): string {
     `<span class="${clase}">${ICO.estrella}${ICO.estrella}</span></button>`;
 }
 
-export function renderReceta({ entrada, receta, compartir, favorito, error }: OpcionesReceta): string {
+export function renderReceta({ entrada, receta: sinResolver, compartir, favorito, error, visor }: OpcionesReceta): string {
+  // La cabecera y el cuerpo sólo ven la receta resuelta (§3): ni `fichaCabecera`
+  // ni `fichasDelCuerpo` saben de `foto:N`, eso es cosa de acá.
+  const receta = resolverReceta(sinResolver);
   const categoria = entrada?.categoria ?? '';
   // Los tags, con los especiales primero y con su ícono. Incompleta es
   // uno más: su chip abre el editor. Favorito no va: ya lo dice la estrella del
@@ -79,5 +87,6 @@ export function renderReceta({ entrada, receta, compartir, favorito, error }: Op
       fichaCabecera({ receta, categoria, marcas }) + fichasDelCuerpo(receta) +
     '</div>' +
     pieDeAcciones(botonCocinar(receta) + `<button class="btn sec" data-accion="editar">${ICO.lapiz}Editar</button>`) +
-    (compartir ? renderFichaCompartir(compartir) : '');
+    (compartir ? renderFichaCompartir(compartir) : '') +
+    (visor ? renderVisor(visor) : '');
 }

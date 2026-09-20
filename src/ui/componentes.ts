@@ -6,7 +6,7 @@
  * escribe cualquiera —un agente, el usuario, un PDF mal convertido— y ninguno
  * es confiable.
  */
-import { escapar } from './markdown.js';
+import { escapar, imgDe } from './markdown.js';
 import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
 import { ICO, ICONO_DE_DURACION } from './iconos.js';
 import { textoVersion } from '../version.js';
@@ -88,13 +88,15 @@ export function encabezado(
 
 /**
  * La foto de la receta si la tiene; si no, la de la categoría oscurecida y
- * teñida. Ocupa exactamente el mismo espacio en los dos casos.
+ * teñida. Ocupa exactamente el mismo espacio en los dos casos. Las dos pasan
+ * por `imgDe`: una propia de Drive, o la propia de la categoría (spec §8),
+ * se dibujan como recuadro hasta que la Tarea 8 les ponga el `src`.
  */
 export function placeholder(categoria: unknown, foto?: string): string {
-  if (foto) return `<img class="foto" src="${escapar(foto)}" alt="" loading="lazy">`;
+  if (foto) return imgDe(foto, 'foto');
   const imagen = fotoCategoria(categoria);
-  const estilo = `--c:${colorCategoria(categoria)}` + (imagen ? `;--img:url(${imagen})` : '');
-  return `<span class="ph" style="${escapar(estilo)}"></span>`;
+  const estilo = `--c:${colorCategoria(categoria)}`;
+  return `<span class="ph" style="${escapar(estilo)}">${imagen ? imgDe(imagen) : ''}</span>`;
 }
 
 export interface OpcionesTarjeta {
@@ -318,8 +320,10 @@ export function botonMenu(borradores: number): string {
 /** El tile de una categoría en la grilla del Recetario (mockup 03). */
 export function tile(nombre: string, cantidad?: number): string {
   const imagen = fotoCategoria(nombre);
+  // Con `imgDe`, una foto propia de Drive también se dibuja: como recuadro
+  // hasta que la Tarea 8 le ponga el `src`.
   const fondo = imagen
-    ? `<span class="im" style="background-image:url(${imagen})"></span>`
+    ? `<span class="im">${imgDe(imagen)}</span>`
     : '<span class="im trama"></span>';   // las que no tienen foto
   const cuenta = cantidad ? `<span class="cu">${cantidad}</span>` : '';
   return `<a class="tile" style="--c:${colorCategoria(nombre)}" ` +
