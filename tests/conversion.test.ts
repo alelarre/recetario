@@ -64,6 +64,24 @@ describe('el pedido con fotos', () => {
     expect(p).toContain('Las fotos están en mi Google Drive: leelas con el conector de Drive.');
     expect(pedidoDeConversion(conFotos)).not.toContain('drive.google.com');
   });
+
+  it('dice cómo referenciarlas en la receta, después del párrafo de las fotos (spec §9)', () => {
+    const p = pedidoDeConversion(conFotos);
+    expect(p).toContain('En la receta, esas fotos son foto:1, foto:2…, en el mismo orden.');
+    expect(p).toContain('Si una muestra el plato terminado, poné `foto: foto:N`.');
+    expect(p).toContain('Si una muestra un paso, sumá `![](foto:N)` al final de ese paso.');
+    expect(p).toContain('No escribas la sección Fotos: la arma la app.');
+    expect(p.indexOf('Fotos: van 2')).toBeLessThan(p.indexOf('En la receta, esas fotos son'));
+    expect(p.indexOf('En la receta, esas fotos son')).toBeLessThan(p.indexOf('Formato:'));
+  });
+
+  it('esa guía también va cuando el pedido lleva los links de Drive', () => {
+    expect(pedidoDeConversion(conFotos, { links: true })).toContain('En la receta, esas fotos son foto:1, foto:2…');
+  });
+
+  it('sin fotos no dice nada de cómo referenciarlas', () => {
+    expect(pedidoDeConversion({ ...borrador, fotos: [] })).not.toContain('En la receta, esas fotos son');
+  });
 });
 
 describe('reconocer una receta en .md', () => {

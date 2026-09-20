@@ -23,7 +23,14 @@ function parrafoDeFotos(fotos: readonly string[], links: boolean): string[] {
     ...(links
       ? [...fotos.map((id, i) => `Foto ${i + 1}: ${linkDeFoto(id)}`),
         'Las fotos están en mi Google Drive: leelas con el conector de Drive.']
-      : [])
+      : []),
+    '',
+    // Cómo se referencian en la receta que vuelve (spec §9): el depósito del
+    // editor las resuelve, así que la receta ya trae la portada y las
+    // referencias apenas se pega o se comparte.
+    'En la receta, esas fotos son foto:1, foto:2…, en el mismo orden. Si una muestra el plato terminado, poné ' +
+      '`foto: foto:N`. Si una muestra un paso, sumá `![](foto:N)` al final de ese paso. No escribas la sección ' +
+      'Fotos: la arma la app.'
   ];
 }
 

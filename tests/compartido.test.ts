@@ -6,6 +6,8 @@ import { COLUMNAS } from '../src/catalogo.js';
 import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 import { COLUMNAS_BORRADORES, serializeBorrador } from '../src/borrador.js';
 import { SCHEMA_VERSION } from '../src/config.js';
+import { linkDeFoto } from '../src/fotos-receta.js';
+import type { CambiosDeFotos } from '../src/tipos.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
@@ -16,7 +18,7 @@ const CAPTURADO = '2026-09-01T10:00:00Z';
  * tiene que probar es que las escrituras pasan, y en qué orden, no que un
  * doble del store devuelva lo que el test quiere.
  */
-const armar = async ({ borradores: lista = [] as { id: string; titulo: string }[] } = {}) => {
+const armar = async ({ borradores: lista = [] as { id: string; titulo: string; fotos?: string[] }[] } = {}) => {
   const drive = driveFalso([
     { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
     { id: 'c1', name: 'Pescados y mariscos', mimeType: CARPETA, parents: ['raiz'] },
@@ -24,13 +26,17 @@ const armar = async ({ borradores: lista = [] as { id: string; titulo: string }[
     { id: 'bc', name: '_borradores', mimeType: CARPETA, parents: ['raiz'] },
     ...lista.map(b => ({
       id: b.id, name: `${b.id}.md`, parents: ['bc'],
-      contenido: serializeBorrador({ titulo: b.titulo, fuente: '', nota: '', capturado: CAPTURADO, fotos: [] })
-    }))
+      contenido: serializeBorrador({ titulo: b.titulo, fuente: '', nota: '', capturado: CAPTURADO, fotos: b.fotos ?? [] })
+    })),
+    // Las fotos del borrador, al lado del `.md`, como en `_borradores/` de verdad.
+    ...lista.flatMap(b => (b.fotos ?? []).map(f => (
+      { id: f, name: `${f}.jpg`, mimeType: 'image/jpeg', parents: ['bc'] }
+    )))
   ]);
   const sheets = sheetsFalso();
   sheets.crearPlanilla('i1', ['recetas', 'meta', 'borradores', 'categorias']);
   sheets.cargar('i1', 'recetas', [[...COLUMNAS]]);
-  sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)]]);
+  sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)], ['carpeta_borradores', 'bc']]);
   sheets.cargar('i1', 'borradores', [
     [...COLUMNAS_BORRADORES], ...lista.map(b => [b.id, `${b.id}.md`, b.titulo, CAPTURADO])
   ]);
@@ -130,5 +136,80 @@ describe('convertirBorrador', () => {
     // Y tampoco quedó un segundo .md: el reintento reescribe el que ya estaba.
     expect(await drive.listarHijos('c1')).toHaveLength(1);
     expect(store.borradores()).toEqual([]);
+  });
+});
+
+describe('convertirBorrador con fotos', () => {
+  const sinFotos: CambiosDeFotos = { nuevas: new Map(), deBorrador: [], sacadas: [] };
+
+  it('pasa las fotos tal cual al crear la receta', async () => {
+    const { deps, store } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
+    const fotos: CambiosDeFotos = { ...sinFotos, deBorrador: ['fb'] };
+    const espia = vi.spyOn(store, 'crear');
+
+    await convertirBorrador(deps, {
+      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1', fotos
+    });
+
+    expect(espia).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ carpetaId: 'c1', fotos }));
+  });
+
+  it('descarta el borrador conservando las fotos que ya se movieron a la receta', async () => {
+    const { deps, store } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
+    const fotos: CambiosDeFotos = { ...sinFotos, deBorrador: ['fb', 'fb2'] };
+    const espia = vi.spyOn(store, 'descartarBorrador');
+
+    await convertirBorrador(deps, {
+      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1', fotos
+    });
+
+    expect(espia).toHaveBeenCalledWith('b1', { conservar: ['fb', 'fb2'] });
+  });
+
+  it('sin fotos, no conserva ninguna al descartar', async () => {
+    const { deps, store } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
+    const espia = vi.spyOn(store, 'descartarBorrador');
+
+    await convertirBorrador(deps, {
+      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1'
+    });
+
+    expect(espia).toHaveBeenCalledWith('b1', { conservar: [] });
+  });
+
+  it('el reintento pasa las fotos a guardar, no a crear', async () => {
+    const { deps, store } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
+    vi.spyOn(store, 'descartarBorrador').mockRejectedValueOnce(new Error('red'));
+    const fotos: CambiosDeFotos = { ...sinFotos, deBorrador: ['fb'] };
+
+    await expect(convertirBorrador(deps, {
+      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1', fotos
+    })).rejects.toThrow('red');
+
+    const espia = vi.spyOn(store, 'guardar');
+    await convertirBorrador(deps, {
+      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1', fotos
+    });
+
+    expect(espia).toHaveBeenCalledWith(expect.any(String), expect.anything(), expect.objectContaining({ fotos }));
+  });
+
+  it('la foto del borrador termina en _fotos/, sin ir a la papelera con el borrador (spec §9)', async () => {
+    const { deps, store, drive } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas', fotos: ['fb'] }] });
+    const fotos: CambiosDeFotos = { ...sinFotos, deBorrador: ['fb'] };
+
+    await convertirBorrador(deps, {
+      borradorId: 'b1',
+      receta: recetaFalsa({ titulo: 'Rabas', fotos: [{ n: 1, url: linkDeFoto('fb') }] }),
+      carpetaId: 'c1',
+      fotos
+    });
+
+    const carpetaFotos = [...drive._store.values()].find(a => a.name === '_fotos');
+    expect(carpetaFotos).toBeDefined();
+    expect(drive._store.get('fb')).toMatchObject({ parents: [carpetaFotos?.id] });
+    expect(drive._store.get('fb')?.trashed).not.toBe(true);
+    expect(store.borradores()).toEqual([]);
+    expect(drive._store.get('b1')?.trashed).toBe(true);
   });
 });

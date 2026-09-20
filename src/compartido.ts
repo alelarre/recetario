@@ -4,7 +4,7 @@
  * además descarta el borrador, y que es una sola y no tres.
  */
 import type { Store } from './store.js';
-import type { Receta } from './tipos.js';
+import type { CambiosDeFotos, Receta } from './tipos.js';
 
 /** Lo que una receta recién creada devuelve: su identidad en Drive (R5). */
 export interface RecetaCreada {
@@ -33,10 +33,17 @@ export interface DependenciasCompartido {
  *
  * La `fuente` del borrador llega en la receta: la pone quien la arma —el
  * editor, que abre con el título y la fuente del borrador—, no esta función.
+ *
+ * `fotos` pasa tal cual al store: esta función no arma ni deduce qué fotos
+ * del borrador se conservan, eso lo decide quien llama (el editor). Lo único
+ * que hace acá es descartar el borrador conservando `fotos.deBorrador`, que
+ * ya se movieron a la receta (spec §9).
  */
 export async function convertirBorrador(
   deps: DependenciasCompartido,
-  { borradorId, receta, carpetaId }: { borradorId: string; receta: Receta; carpetaId: string }
+  { borradorId, receta, carpetaId, fotos }: {
+    borradorId: string; receta: Receta; carpetaId: string; fotos?: CambiosDeFotos | undefined
+  }
 ): Promise<RecetaCreada> {
   const convertidos = deps.convertidos ??= new Map<string, RecetaCreada>();
 
@@ -44,16 +51,17 @@ export async function convertirBorrador(
   const anterior = convertidos.get(borradorId);
   let creada: RecetaCreada;
   if (anterior) {
-    await deps.store.guardar(anterior.id, receta, { carpetaDestino: carpetaId });
+    await deps.store.guardar(anterior.id, receta, { carpetaDestino: carpetaId, fotos });
     creada = anterior;
   } else {
-    creada = await deps.store.crear(receta, { carpetaId });
+    creada = await deps.store.crear(receta, { carpetaId, fotos });
   }
   convertidos.set(borradorId, creada);
 
-  // El borrador: su `.md` a la papelera y su fila afuera. Que ya no esté no es
-  // un error (edge case de F01.7).
-  await deps.store.descartarBorrador(borradorId);
+  // El borrador: su `.md` a la papelera y su fila afuera, sin llevarse las
+  // fotos que el store ya movió a `_fotos/`. Que ya no esté no es un error
+  // (edge case de F01.7).
+  await deps.store.descartarBorrador(borradorId, { conservar: fotos?.deBorrador ?? [] });
 
   convertidos.delete(borradorId);
   return creada;
