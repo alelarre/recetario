@@ -352,6 +352,30 @@ describe('guardar y crear con fotos', () => {
     expect(drive._store.get('fb')?.name).toBe('pan-de-campo-4.jpg');
   });
 
+  it('una línea del depósito que quedó sin URL no se escribe: dejaría la sección ilegible', async () => {
+    const { store, drive } = await conFotos();
+    // La 3 no está en `nuevas`: si se escribiera como `- 3: `, `## Fotos` no
+    // parsearía más y la receta perdería el depósito entero.
+    await store.guardar('r1', { ...parse(PAN), fotos: [{ n: 1, url: linkDeFoto('fv') }, { n: 3, url: '' }] }, {
+      fotos: { ...sinCambios }
+    });
+    expect(drive._store.get('r1')?.contenido).not.toContain('- 3: ');
+    expect(parse(drive._store.get('r1')?.contenido ?? '').fotos).toEqual([{ n: 1, url: linkDeFoto('fv') }]);
+
+    // Y sin `fotos`, que es como guardan las pantallas que no las tocan.
+    await store.guardar('r1', { ...parse(PAN), fotos: [{ n: 4, url: '' }] });
+    expect(parse(drive._store.get('r1')?.contenido ?? '').fotos).toEqual([]);
+  });
+
+  it('si ninguna foto del borrador está, no queda una _fotos/ vacía', async () => {
+    const { store, drive, sheets } = await conFotos({ conCarpetaFotos: false });
+    await store.guardar('r1', { ...parse(PAN), fotos: [{ n: 1, url: linkDeFoto('borrada') }] }, {
+      fotos: { ...sinCambios, deBorrador: ['borrada'] }
+    });
+    expect([...drive._store.values()].some(a => a.name === '_fotos')).toBe(false);
+    expect(await sheets.leer('i1', 'meta!A1:B20')).not.toContainEqual(['carpeta_fotos', expect.anything()]);
+  });
+
   it('una foto de borrador que ya no está en Drive no corta el guardado', async () => {
     const { store, drive } = await conFotos();
     await store.guardar('r1', { ...parse(PAN), fotos: [{ n: 4, url: linkDeFoto('borrada') }] }, {

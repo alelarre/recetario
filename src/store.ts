@@ -584,34 +584,39 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
    * termina, para que un reintento no la resuba.
    */
   async function subirYMover(nombreMd: string, receta: Receta, fotos: CambiosDeFotos | undefined): Promise<Receta> {
-    if (!fotos) return receta;
     const base = nombreMd.replace(/\.md$/i, '');
     const links = new Map<number, string>();
-    for (const [n, blob] of fotos.nuevas) {
+    for (const [n, blob] of fotos?.nuevas ?? []) {
       const id = await subirAFotos(`${base}-${n}.jpg`, blob);
-      fotos.alSubir?.(n, id);
+      fotos?.alSubir?.(n, id);
       links.set(n, linkDeFoto(id));
     }
-    for (const id of fotos.deBorrador) {
-      const destino = await carpetaDeFotos();
+    for (const id of fotos?.deBorrador ?? []) {
       let padres: string[];
       try {
         padres = (await drive.metadatos(id, 'parents')).parents ?? [];
       } catch (e) {
         // Borrada a mano en Drive: la receta la nombra igual y la galería
-        // dibuja el recuadro de «ya no está».
+        // dibuja el recuadro de «ya no está». `_fotos/` se pide recién al
+        // mover, para no crearla si no queda ninguna.
         if (noEsta(e)) continue;
         throw e;
       }
       // En un reintento ya puede estar movida; renombrar dos veces no cambia nada.
       if (ctx.borradoresId && padres.includes(ctx.borradoresId)) {
-        await drive.mover(id, { de: ctx.borradoresId, a: destino });
+        await drive.mover(id, { de: ctx.borradoresId, a: await carpetaDeFotos() });
       }
       const n = receta.fotos.find(f => idDeDrive(f.url) === id)?.n;
       if (n !== undefined) await drive.renombrar(id, `${base}-${n}.jpg`);
     }
-    if (!links.size) return receta;
-    return { ...receta, fotos: receta.fotos.map(f => ({ ...f, url: links.get(f.n) ?? f.url })) };
+    // Una línea sin URL —una foto nueva que no llegó a subirse— dejaría la
+    // sección `## Fotos` sin la forma que `parsearFotos` exige, y la receta
+    // perdería el depósito entero al leerla. Antes que eso, la línea no se
+    // escribe: el editor la vuelve a poner con la foto que sigue en memoria.
+    return { ...receta, fotos: receta.fotos.flatMap(f => {
+      const url = links.get(f.n) ?? f.url;
+      return url.trim() ? [{ ...f, url }] : [];
+    }) };
   }
 
   /** Los ids de las URLs que son links de Drive; las externas quedan afuera. */
