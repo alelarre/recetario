@@ -28,6 +28,7 @@ import { renderConexion } from './ui/conexion.js';
 import { renderListaCategorias, renderEdicionCategoria, confirmacionBorrarCategoria, botonBorrarCategoria } from './ui/gestion-categorias.js';
 import { colorLibre, problemaDelNombre } from './categorias.js';
 import { colorDeClave, urlDeFoto } from './ui/categorias.js';
+import { imgDe } from './ui/markdown.js';
 import { renderSelector } from './ui/carpeta.js';
 import { elegirCarpeta } from './picker.js';
 import { API_KEY, NOMBRE_RAIZ } from './config.js';
@@ -1031,9 +1032,11 @@ function revisarCategoria(): void {
   const muestra = form.querySelector<HTMLElement>('[data-muestra]');
   if (muestra) {
     muestra.style.setProperty('--c', colorDeClave(valor('color')));
+    // Como `muestraCategoria` (`gestion-categorias.ts`): con `imgDe`, para
+    // que una foto propia de Drive también se pueda mostrar.
     const im = muestra.querySelector<HTMLElement>('.im');
     const url = urlDeFoto(valor('foto'));
-    if (im) { im.classList.toggle('trama', !url); im.style.backgroundImage = url ? `url(${url})` : ''; }
+    if (im) { im.classList.toggle('trama', !url); im.innerHTML = url ? imgDe(url) : ''; }
     const nm = muestra.querySelector<HTMLElement>('.nm');
     if (nm) nm.textContent = valor('nombre');
   }

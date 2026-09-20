@@ -19,6 +19,18 @@ describe('la lista de categorías', () => {
   it('una sin foto lleva la trama en la miniatura', () => {
     expect(renderListaCategorias({ categorias: [{ categoria: fiambres, recetas: 0 }] })).toContain('trama');
   });
+
+  it('la foto del catálogo se dibuja con un <img>, no con background-image', () => {
+    const html = renderListaCategorias({ categorias: [{ categoria: pastas, recetas: 1 }] });
+    expect(html).toMatch(/<img src="[^"]*pastas/);
+    expect(html).not.toContain('background-image');
+  });
+
+  it('una foto propia de Drive se dibuja como recuadro, con data-drive', () => {
+    const rara = { id: 'c3', nombre: 'Rara', color: 'fucsia', foto: 'drive:abc' };
+    const html = renderListaCategorias({ categorias: [{ categoria: rara, recetas: 0 }] });
+    expect(html).toContain('data-drive="abc"');
+  });
 });
 
 describe('la edición de una categoría', () => {

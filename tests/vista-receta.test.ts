@@ -54,6 +54,9 @@ foto: foto:1
 ## Preparación
 1. Freír. ![](foto:2)
 
+## Notas
+Servir bien caliente.
+
 ## Fotos
 - 1: https://drive.google.com/file/d/abc/view
 - 2: https://x/paso.jpg
@@ -296,6 +299,7 @@ describe('Las fotos de la receta', () => {
   it('la ficha Fotos va después de Notas, con la grilla del depósito entero', () => {
     const html = renderReceta({ entrada: null, receta: CON_FOTOS });
     expect(html).toContain('<h2>Fotos</h2>');
+    expect(html.indexOf('<h2>Notas</h2>')).toBeLessThan(html.indexOf('<h2>Fotos</h2>'));
     expect(html).toContain('class="galeria"');
     expect(html.match(/data-accion="ver-foto"/g)).toHaveLength(3); // cabecera + 2 miniaturas
     expect(html).toContain('data-n="1"');

@@ -5,7 +5,7 @@
  * formulario —color y foto viajan en campos ocultos— para que «salir sin
  * guardar» funcione como en el editor de recetas.
  */
-import { escapar } from './markdown.js';
+import { escapar, imgDe } from './markdown.js';
 import { encabezado, aviso } from './componentes.js';
 import { colorDeClave, urlDeFoto, fotosDelCatalogo } from './categorias.js';
 import { CLAVES_COLOR } from '../categorias.js';
@@ -17,12 +17,15 @@ interface Valores {
   foto: string;
 }
 
-/** El tile de una categoría con estos valores: la miniatura de la lista y la muestra de la edición. */
+/**
+ * El tile de una categoría con estos valores: la miniatura de la lista y la
+ * muestra de la edición. Con `imgDe`, como `componentes.ts`: una foto propia
+ * de Drive (`drive:<id>`) se dibuja como recuadro, `background-image` no
+ * podría mostrarla nunca.
+ */
 function muestraCategoria({ nombre, color, foto }: Valores, extra = ''): string {
   const imagen = urlDeFoto(foto);
-  const fondo = imagen
-    ? `<span class="im" style="background-image:url(${imagen})"></span>`
-    : '<span class="im trama"></span>';
+  const fondo = imagen ? `<span class="im">${imgDe(imagen)}</span>` : '<span class="im trama"></span>';
   return `<span class="tile muestra" style="--c:${colorDeClave(color)}"${extra}>` +
     `${fondo}<span class="nm">${escapar(nombre)}</span></span>`;
 }
