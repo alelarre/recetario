@@ -399,9 +399,13 @@ número, barra; sin número, spinner.
 
 **`prefers-reduced-motion: reduce` elimina los cinco movimientos:** el menú
 aparece sin transición, el carrusel salta, el spinner queda quieto, la estrella
-se dibuja llena a la mitad, fija, y el libro queda con el renglón a medio
-escribir y el lápiz apoyado. No hay ninguna información que dependa del
-movimiento.
+se dibuja llena a la mitad, fija, y la olla queda con la cuchara apoyada y el
+vapor detenido. No hay ninguna información que dependa del movimiento.
+
+**El cierre del velo tampoco se mueve, pero dura lo mismo:** la tapa aparece
+abajo y el tilde entero, sin dibujarse, y el velo se va a los mismos 500 ms. Lo
+que se saca es el movimiento, no el tiempo: el cierre no se atrasa ni se
+acorta.
 
 ---
 
@@ -884,7 +888,9 @@ vapor detenido (§5.1).
 **El cierre, sólo cuando la escritura salió bien:** la cuchara y el vapor se
 van, la tapa baja sobre la olla y encima se dibuja un tilde en `--exito`. Todo
 en medio segundo, y recién ahí se va el velo. Si la escritura falla no hay
-cierre: el velo se va de una y queda el aviso.
+cierre: el velo se va de una y queda el aviso. Con
+`prefers-reduced-motion: reduce` la tapa y el tilde aparecen sin dibujarse,
+pero el medio segundo es el mismo: se saca el movimiento, no el tiempo (§5.1).
 
 **El cierre no hace esperar a nadie.** Desde que arranca, la pantalla ya está
 destapada: el velo deja pasar el toque, deja scrollear y `aria-busy` se saca,

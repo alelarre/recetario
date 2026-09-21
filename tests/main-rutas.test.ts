@@ -1906,6 +1906,43 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('Milanesas');
     });
 
+    it('una escritura nueva durante el cierre lo corta y vuelve a tapar (P43)', async () => {
+      const original = storeFake.plan;
+      try {
+        const { promesa, resolver } = pendiente<Plan>();
+        storeFake.plan = () => { estado.lecturasPlan++; return promesa; };
+        const { abrir, tocar, velo, atributosApp } = await montar();
+        await abrir('#/nueva');
+        estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+
+        await tocar('guardar');
+        expect(velo.classList.contains('exito')).toBe(true);
+
+        // Sin esperar a que el tilde termine, otra escritura: el velo vuelve a
+        // tapar, sin el dibujo del cierre y con la pantalla otra vez ocupada.
+        await abrir('#/plan/agregar?dia=1&momento=noche');
+        const eligiendo = tocar('elegir-para-el-plan', { id: 'f1' });
+        await esperar();
+
+        expect(velo.hidden).toBe(false);
+        expect(velo.classList.contains('exito')).toBe(false);
+        expect(atributosApp['aria-busy']).toBe('true');
+
+        // Y el temporizador del cierre anterior quedó cancelado: pasado su
+        // medio segundo, el velo de esta escritura sigue tapando.
+        await new Promise(r => setTimeout(r, 600));
+        expect(velo.hidden).toBe(false);
+        expect(velo.classList.contains('exito')).toBe(false);
+
+        resolver({ comidas: [] });
+        await eligiendo;
+
+        expect(velo.hidden).toBe(true);
+      } finally {
+        storeFake.plan = original;
+      }
+    });
+
     it('si la escritura falla, el velo se va sin tilde y queda el aviso con lo escrito', async () => {
       const original = storeFake.crear;
       storeFake.crear = async () => { throw new Error('red'); };
