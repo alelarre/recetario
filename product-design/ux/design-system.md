@@ -1120,9 +1120,10 @@ esquina de arriba a la derecha: un círculo de 24 px de `--velo` al 75 % con el
 borrador la × saca la foto; en el editor de recetas no va, porque *Sacar* es una
 de las acciones de la ficha (§6.26). Al final de la fila, dos botones
 secundarios de 64 px de alto: **Cámara**, con el ícono `camara`, que saca una
-foto por vez; y **Galería**, sin ícono, que abre el selector del sistema y
-acepta varias a la vez. Los dos bajan de renglón como cualquier miniatura si
-no entran, y ninguno se dibuja en el borrador con cinco fotos ni tienen tope
+foto por vez; y **Galería**, con el ícono `galeria` —dos fotos, una detrás de
+la otra—, que abre el selector del sistema y acepta varias a la vez. **Los dos
+van en su propia fila, debajo de las miniaturas**, y bajan de renglón entre
+ellos si no entran, y ninguno se dibuja en el borrador con cinco fotos ni tienen tope
 en el editor. **Una foto que ya no está en Drive** es el mismo cuadrado con
 borde punteado `--borde-fuerte` y *"La foto ya no está en Drive."* en *micro*
 `--fg-3`, centrado.
@@ -1142,9 +1143,9 @@ extremos, y ese gesto no la cierra. Es estado de la pantalla, no una ruta.
 
 **El carrusel de fotos** es el depósito entero dentro de la primera ficha,
 debajo de la descripción y arriba del divisor de la fuente. Es el carrusel de
-§6.21 con las fotos adentro: cada una un cuadrado de **132 px**
-(`object-fit: cover`) sobre `--surface-alta`, con `--r-foto` —entran dos y media
-en el ancho de un teléfono, que es lo que hace falta para verlas—, y el degradé
+§6.21 con las fotos adentro: cada una un cuadrado de **66 px**
+(`object-fit: cover`) sobre `--surface-alta`, con `--r-foto` —entran cinco en el
+ancho de un teléfono, y el visor es el que las muestra grandes—, y el degradé
 va a `--surface`, que es el fondo de la ficha. Cada foto abre el visor en la
 suya. Sin depósito no se dibuja.
 

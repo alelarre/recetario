@@ -54,7 +54,12 @@ export const ICO = {
    * del depósito, no el que agrega una nueva. De Lucide (image).
    */
   imagen: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.6"/>' +
-    '<path d="M21 15l-4-4a2 2 0 00-2.8 0L6 19.2"/>')
+    '<path d="M21 15l-4-4a2 2 0 00-2.8 0L6 19.2"/>'),
+
+  /** *Galería*: dos fotos, una detrás de la otra. Es el botón que elige una del teléfono. De Lucide (images). */
+  galeria: svg('<path d="M8 3h11a2 2 0 012 2v11"/>' +
+    '<rect x="3" y="7" width="14" height="14" rx="2"/><circle cx="8" cy="12" r="1.3"/>' +
+    '<path d="M3 18.5l3.2-3.2a2 2 0 012.8 0L17 21"/>')
 } as const satisfies Record<string, string>;
 
 /**

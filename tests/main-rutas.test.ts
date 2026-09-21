@@ -496,7 +496,7 @@ describe('main.ts: las rutas', () => {
         const nombre = sel.match(/^#app (?:input)?\[name="([\w-]+)"\]$/)?.[1];
         if (nombre) return campo(nombre);
         if (sel === '#app [data-url-portada]') return campo('url-portada');
-        if (sel === '#app .miniaturas') return { set outerHTML(html: string) { filasDeFotos.push(html); } };
+        if (sel === '#app .fotos-campo') return { set outerHTML(html: string) { filasDeFotos.push(html); } };
         if (sel === '#app .portada-boton') return { set innerHTML(html: string) { portadas.push(html); } };
         if (sel === '#app .poner-foto') {
           return botonDeFoto === null ? null : { remove: () => { botonDeFoto = null; } };

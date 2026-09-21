@@ -1240,7 +1240,7 @@ const portadaDelEditor = (): string => campoDelEditor('foto')?.value ?? '';
 function escribirDeposito(fotos: FotoDeReceta[]): void {
   const campo = campoDelEditor('fotos');
   if (campo) campo.value = JSON.stringify(fotos);
-  const fila = document.querySelector<HTMLElement>('#app .miniaturas');
+  const fila = document.querySelector<HTMLElement>('#app .fotos-campo');
   if (fila) fila.outerHTML = filaDeFotosEditor(fotos);
   // Sacar la última foto deja el botón de poner sin nada que ofrecer.
   acomodarBotonDeFoto();

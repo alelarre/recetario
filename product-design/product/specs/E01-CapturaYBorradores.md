@@ -101,8 +101,8 @@ acompañaba al link, y es lo que después se reparte en la receta (C01.7.1).
 
 - [ ] Un borrador lleva **hasta 5 fotos**: una página de un libro, una receta
   escrita a mano, una captura de pantalla.
-- [ ] Se ven como una fila de miniaturas cuadradas, cada una con su ×, y al
-  final dos botones, **Cámara** y **Galería**: el primero lleva directo a
+- [ ] Se ven como una fila de miniaturas cuadradas, cada una con su ×, y
+  debajo, en su propia fila, dos botones, **Cámara** y **Galería**: el primero lleva directo a
   sacar una foto nueva, con una foto por vez; el segundo abre el selector del
   sistema y acepta varias a la vez. Con 5 fotos, ninguno de los dos se
   dibuja; si se eligen más de las que entran, se agregan las primeras y se

@@ -436,12 +436,17 @@ export function filaDeFotos({ fotos, agregar }: { fotos: Miniatura[]; agregar: b
       : '';
     return `<div class="miniatura">${cuerpo}${sacar}</div>`;
   }).join('');
+  // Los dos botones van en su propia fila, abajo: con las miniaturas al lado
+  // se mezclaban con las fotos y costaba ver dónde terminaba una cosa y
+  // empezaba la otra.
   const botones = agregar
-    ? `<label class="btn sec miniatura-agregar">${ICO.camara}Cámara` +
+    ? '<div class="fotos-botones">' +
+      `<label class="btn sec miniatura-agregar">${ICO.camara}Cámara` +
       '<input type="file" accept="image/*" capture="environment" data-fotos hidden></label>' +
-      '<label class="btn sec miniatura-agregar">Galería' +
-      '<input type="file" accept="image/*" multiple data-fotos hidden></label>'
+      `<label class="btn sec miniatura-agregar">${ICO.galeria}Galería` +
+      '<input type="file" accept="image/*" multiple data-fotos hidden></label>' +
+      '</div>'
     : '';
-  return `<div class="miniaturas">${miniaturas}${botones}</div>`;
+  return `<div class="fotos-campo"><div class="miniaturas">${miniaturas}</div>${botones}</div>`;
 }
 

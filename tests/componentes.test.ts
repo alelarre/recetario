@@ -381,6 +381,21 @@ describe('filaDeFotos: Cámara y Galería (P50)', () => {
     expect(html).toContain('Galería');
   });
 
+  it('los dos botones van en su propia fila, debajo de las miniaturas', () => {
+    const html = filaDeFotos({ fotos: [{ url: 'https://ejemplo/a.jpg', n: 1 }], agregar: true });
+    expect(html.indexOf('class="miniaturas"')).toBeLessThan(html.indexOf('class="fotos-botones"'));
+    // Los botones quedan afuera de la fila de fotos, no mezclados con ellas.
+    const fila = html.slice(html.indexOf('class="miniaturas"'), html.indexOf('class="fotos-botones"'));
+    expect(fila).not.toContain('type="file"');
+  });
+
+  it('Galería también lleva ícono, y no es el de la foto del depósito', () => {
+    const html = filaDeFotos({ fotos: [], agregar: true });
+    expect(html).toContain(`${ICO.galeria}Galería`);
+    expect(html).toContain(`${ICO.camara}Cámara`);
+    expect(ICO.galeria).not.toBe(ICO.imagen);
+  });
+
   it('sin agregar, no hay ningún input', () => {
     const html = filaDeFotos({ fotos: [], agregar: false });
     expect(html).not.toContain('type="file"');

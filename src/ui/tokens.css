@@ -386,6 +386,9 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
 
 /* ---- Fotos del borrador: la fila de miniaturas y el visor ---- */
 .miniaturas { display: flex; flex-wrap: wrap; gap: var(--e-2); align-items: center; }
+/* Las fotos arriba y los dos botones de agregar abajo, en su propia fila. */
+.fotos-campo { display: flex; flex-direction: column; gap: var(--e-2); align-items: flex-start; }
+.fotos-botones { display: flex; flex-wrap: wrap; gap: var(--e-2); }
 .miniatura { position: relative; width: 64px; height: 64px; flex: 0 0 64px;
              border-radius: var(--r-foto); overflow: hidden; background: var(--surface-alta); }
 .miniatura img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -414,10 +417,10 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
 /* ---- §6.26 El carrusel de fotos de la receta ----
    El depósito entero en la primera ficha, debajo de la descripción. Vive sobre
    la ficha y no sobre el fondo de la pantalla, así que el degradé va a
-   `--surface`. Cada foto mide 132 px: dos y media entran en el ancho de un
-   teléfono, que es lo que hace falta para verlas y no leerlas como miniaturas. */
+   `--surface`. Cada foto mide 66 px: entran cinco en el ancho de un teléfono,
+   y el visor es el que las muestra grandes. */
 .carrusel-fotos { --carrusel-fondo: var(--surface); margin-top: var(--e-3); }
-.carrusel-foto { display: block; width: 132px; padding: 0; border: 0; background: var(--surface-alta);
+.carrusel-foto { display: block; width: 66px; padding: 0; border: 0; background: var(--surface-alta);
                  border-radius: var(--r-foto); overflow: hidden; aspect-ratio: 1; cursor: pointer; }
 .carrusel-foto img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
