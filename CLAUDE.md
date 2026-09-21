@@ -105,7 +105,10 @@ Nada del código depende de `product-design/`. **Todo el producto vive en `src/`
 - En esas features, el código no se commitea hasta que el usuario revisa el diff.
 - Los cambios de UI se prueban en el teléfono sobre GitHub Pages: commitear y
   pushear a `main`.
-- `BACKLOG.md` sólo tiene pendientes abiertos: lo resuelto se borra de la tabla.
+- `BACKLOG.md` sólo tiene pendientes abiertos, con su estado. **Al empezar a
+  trabajar una entrada se le pone `Implementando`**, para que otra sesión no la
+  tome; la fila se borra recién cuando el trabajo está terminado y listo para
+  que el usuario lo pruebe. Una entrada que quedó a medias vuelve a `Abierto`.
 
 ## TypeScript
 

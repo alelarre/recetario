@@ -1,10 +1,19 @@
 # Backlog
 
-Sólo pendientes abiertos. Lo que se resuelve se borra de la tabla.
+Sólo pendientes. El **estado** dice en qué anda cada uno:
+
+- `Abierto` — nadie lo está tocando.
+- `Implementando` — hay una sesión trabajándolo: no lo tomes.
+- `Falta probar` — hecho, esperando la prueba en el teléfono.
+
+Una entrada se borra de la tabla recién cuando está terminada y lista para
+probar; una que quedó a medias vuelve a `Abierto`.
 
 | ID | Descripción | Detalle | Estado |
 |---|---|---|---|
 | P14 | Rehacer el skill del agente (`skills/recetario/`) | Quedó en un esquema viejo: escribe la clave `completa` en vez del tag `incompleta`, tiene su propia lista de tags reservados —le falta `menú diario`—, no conoce los cinco valores de `tiempo` y tampoco el depósito de fotos: la sección `## Fotos`, las referencias `![](foto:N)` y `foto: foto:N` como cabecera. El skill nuevo no repite reglas que ya están en `src/`. Tampoco escribe la fila del índice: después de cargar recetas directo a Drive hay que tocar *Ajustes → Reindexar*. Para una receta suelta alcanza con que el skill devuelva el `.md` y la app lo reciba compartido o pegado: la app lo guarda con su fila. Lo que sigue sin resolver es la carga en masa, porque el conector de Google Drive de claude.ai no escribe planillas ni reescribe archivos. | Abierto |
+| P47 | El velo tiene que aparecer al tocar Guardar | Hecho en la rama `backlog-fotos`: el velo se muestra desde el toque en Guardar, la captura y agregar al plan, y la página de atrás no scrollea mientras dura. Lo que tarda no era código: el `.md` de base se lee de Drive en 260–290 ms. Sale de la tabla cuando la rama llegue a `main` y se pueda probar. | Implementando |
+| P52 | El velo parpadea al agregar varias fotos | Al elegir varias fotos de una, el velo se apaga y se prende entre una y otra: cada foto achica y sube por separado, y cada paso es su propia escritura. Tendría que quedar tapado de punta a punta. Visto al hacer P47, que no lo cubría. | Abierto |
 | P43 | Iterar la animación de guardar | El libro del velo (`index.html`, `#velo-escritura` en `src/ui/base.css`) funciona pero el dibujo no convence: hay que rehacer el ícono y repasar el movimiento. Y le falta un final: hoy el velo desaparece de golpe cuando la escritura termina. **Decidido:** al terminar bien, la tapa gira sobre el lomo, el libro queda cerrado y encima aparece un tilde verde; la transición dura unos 500 ms y recién ahí se va el velo. El caso de error ya tiene su aviso y no cambia. `main.ts` sabe cuándo terminó (`escribiendo`), así que el estado nuevo es del velo, no de cada pantalla. | Abierto |
 | P44 | Las fotos de la receta, en un carrusel en la primera ficha | Hoy la galería es una ficha aparte al final, con una grilla de a tres (C03.5.2). Tiene que ser un **carrusel dentro de la primera ficha**, debajo de la descripción, con el mismo estilo que el de tags: deslizamiento de costado, degradé que dice que sigue, y flechas con mouse o trackpad. **El carrusel no está componentizado**: `carruselTags` (`src/ui/componentes.ts`) arma el marco, la pista y las dos flechas adentro de la misma función, y `main.ts` cablea `carrusel-izq`/`carrusel-der` por acción. Hay que sacar el marco a un componente que reciba lo que va adentro, y que tags y fotos lo usen. | Abierto |
 | P48 | En Editar, el primer «Foto» se llama «Portada» | El campo de la cabecera en el editor (`campoPortada`, `src/ui/editor.ts`) dice *Foto*, y abajo está la ficha *Fotos* del depósito: son dos cosas distintas con el mismo nombre. El de arriba pasa a llamarse **Portada**, que además es como ya se llama la acción en la ficha de una foto. Tocar `E04-Corregir.md` C04.2.1 y C04.2.1d. | Abierto |
