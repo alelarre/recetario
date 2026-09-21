@@ -1,5 +1,5 @@
 // El HTML no lo cubre ningún otro test: `#velo-escritura` es el único lugar
-// donde vive el SVG del libro que se escribe, y perderlo no lo nota nada más
+// donde vive el SVG de la olla que se revuelve, y perderlo no lo nota nada más
 // que el teléfono. La animación en sí se prueba ahí, no acá.
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -23,10 +23,20 @@ describe('el velo de escritura en index.html', () => {
     expect(etiqueta).toContain('aria-hidden="true"');
   });
 
-  it('tiene el contorno del libro, el renglón que se escribe y el lápiz que lo recorre', () => {
+  it('tiene la olla, el vapor, la cuchara con su parte redonda y la tapa (P43)', () => {
     const bloque = veloEscritura();
-    expect(bloque).toContain('libro');
-    expect(bloque).toContain('renglon');
-    expect(bloque).toContain('lapiz');
+    expect(bloque).toContain('olla');
+    expect(bloque).toContain('vapor');
+    expect(bloque).toContain('cuchara');
+    // La parte redonda de la cuchara: el óvalo que se hunde en la olla.
+    expect(bloque).toContain('<ellipse');
+    expect(bloque).toContain('tapa');
+  });
+
+  it('tiene el tilde del cierre, y ya no el libro que se escribía', () => {
+    const bloque = veloEscritura();
+    expect(bloque).toContain('tilde');
+    expect(bloque).not.toContain('libro');
+    expect(bloque).not.toContain('lapiz');
   });
 });

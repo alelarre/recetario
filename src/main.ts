@@ -274,25 +274,57 @@ let avisoBorradores = '';
 let tapadas = 0;
 let hashEscritura = '';
 
+/** Lo que tarda el cierre con el tilde en dibujarse, antes de sacar el velo (§6.17b). */
+const MS_CIERRE = 500;
+
+/** El temporizador del cierre con el tilde, mientras se dibuja. */
+let cierreEnCurso: ReturnType<typeof setTimeout> | null = null;
+
 /** El velo, con `aria-busy` en `#app`. Los tests corren sobre un DOM mínimo: puede no estar. */
 function mostrarVelo(mostrar: boolean): void {
+  // Una escritura nueva corta el cierre de la anterior: el velo vuelve a tapar.
+  if (cierreEnCurso !== null) { clearTimeout(cierreEnCurso); cierreEnCurso = null; }
   const velo = document.querySelector<HTMLElement>('#velo-escritura');
-  if (velo) velo.hidden = !mostrar;
+  if (velo) { velo.hidden = !mostrar; velo.classList.remove('exito'); }
   if (mostrar) app?.setAttribute('aria-busy', 'true');
   else app?.removeAttribute('aria-busy');
 }
 
 /**
- * Tapa la pantalla y devuelve cómo destaparla. Destapar dos veces no descuenta
- * de más: el manejador que la tapó puede soltarla por varios caminos.
+ * El cierre de una escritura que salió bien: la tapa baja sobre la olla y se
+ * dibuja el tilde, y recién después se va el velo. Desde acá la pantalla ya no
+ * está tapada —el contador quedó en cero y el velo deja pasar el toque—, así
+ * que el manejador que guardó puede navegar mientras el dibujo termina.
  */
-function tapar(): () => void {
+function cerrarConExito(): void {
+  const velo = document.querySelector<HTMLElement>('#velo-escritura');
+  if (!velo) { mostrarVelo(false); return; }
+  velo.classList.add('exito');
+  app?.removeAttribute('aria-busy');
+  // El temporizador se queda con el velo y no vuelve a buscarlo: para cuando
+  // salta, la pantalla de abajo puede haberse redibujado varias veces.
+  cierreEnCurso = setTimeout(() => {
+    cierreEnCurso = null;
+    velo.hidden = true;
+    velo.classList.remove('exito');
+  }, MS_CIERRE);
+}
+
+/**
+ * Tapa la pantalla y devuelve cómo destaparla. Destapar dos veces no descuenta
+ * de más: el manejador que la tapó puede soltarla por varios caminos. Con
+ * `{ exito: true }` el velo no se va de golpe: se queda los milisegundos del
+ * cierre con el tilde, ya sin tapar nada.
+ */
+function tapar(): (opciones?: { exito?: boolean }) => void {
   if (tapadas++ === 0) { hashEscritura = location.hash; mostrarVelo(true); }
   let soltado = false;
-  return () => {
+  return opciones => {
     if (soltado) return;
     soltado = true;
-    if (--tapadas === 0) mostrarVelo(false);
+    if (--tapadas > 0) return;
+    if (opciones?.exito) cerrarConExito();
+    else mostrarVelo(false);
   };
 }
 
@@ -2213,11 +2245,14 @@ app.addEventListener('click', async (e) => {
         return conError(porQueNoGuardo(err));
       }
     } finally {
-      destapar();
+      // El tilde sólo cuando se escribió: `cerrar` se asigna en el único camino
+      // que llegó a guardar, y ni la validación ni el error pasan por ahí.
+      destapar({ exito: cerrar !== null });
     }
     // Recién acá, con el velo soltado: mientras la pantalla está tapada no se
     // navega, y el cierre del editor es una navegación como cualquier otra. Sin
     // `cerrar` no se guardó nada —validación o error—, y ya se pintó el aviso.
+    // El tilde se termina de dibujar encima de la pantalla a la que se vuelve.
     cerrar?.();
     return;
   }

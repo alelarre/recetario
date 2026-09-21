@@ -384,37 +384,61 @@ html:has(.hoja-compartir), html:has(.hoja-foto) { overflow: hidden; }
    recibe el toque. Sin transición: aparece con el toque que lanza la escritura
    y se va cuando termina.
    El fondo usa color-mix en vez de opacity sobre todo el elemento, para que
-   el libro se vea a pleno y no lavado al 60%. */
+   la olla se vea a pleno y no lavada al 60%. */
 #velo-escritura { position: fixed; inset: 0; z-index: 30;
                   background: color-mix(in srgb, var(--velo) 60%, transparent);
                   pointer-events: auto; display: grid; place-items: center; }
 #velo-escritura[hidden] { display: none; }
 /* Y la página de atrás no se desplaza mientras dura, como con las fichas al
-   pie: el velo tapa el toque, pero no el desplazamiento. */
-html:has(#velo-escritura:not([hidden])) { overflow: hidden; }
+   pie: el velo tapa el toque, pero no el desplazamiento. Mientras dibuja el
+   cierre ya no tapa nada, así que tampoco frena el scroll. */
+html:has(#velo-escritura:not([hidden]):not(.exito)) { overflow: hidden; }
 
-/* El libro que se escribe: dos páginas separadas por el lomo —el hueco entre
-   las dos, no una línea—, tres renglones ya escritos y fijos a la izquierda,
-   y a la derecha el renglón en curso, que se dibuja con stroke-dashoffset
-   mientras el lápiz lo recorre de izquierda a derecha. El lápiz es un grupo
-   —punta fina y cuerpo grueso— para que las dos partes se trasladen juntas.
-   El renglón y el lápiz miden lo mismo (22) y animan con la misma duración,
-   para que no se despeguen. Al terminar, las dos vuelven a empezar de un
-   salto (sin alternate): es el mismo renglón, otra vez. */
+/* La olla que se revuelve: la cuchara va de lado a lado sin girar, y el vapor
+   sube escalonado —los tres hilos animan lo mismo, cada uno arrancado antes
+   con un retraso negativo, para que el velo no aparezca con el vapor en cero—.
+   La cuchara es un grupo —el palo y la parte redonda— para que las dos partes
+   se trasladen juntas. La tapa queda levantada sobre la olla: el cierre la baja
+   los 6 px que la separan del borde. */
 #velo-escritura svg { width: 96px; height: 96px; fill: none; stroke-width: 3;
                        stroke-linecap: round; stroke-linejoin: round; }
-#velo-escritura .libro { stroke: var(--fg-2); }
-#velo-escritura .renglon-fijo { stroke: var(--fg-3); stroke-width: 2; }
-#velo-escritura .renglon { stroke: var(--fg-2); stroke-dasharray: 22; stroke-dashoffset: 22;
-                            animation: escribir-renglon 1.6s linear infinite; }
-#velo-escritura .lapiz { animation: mover-lapiz 1.6s linear infinite; }
-#velo-escritura .lapiz .punta { stroke: var(--fg-2); stroke-width: 2; }
-#velo-escritura .lapiz .cuerpo { stroke: var(--acento); stroke-width: 4; }
-@keyframes escribir-renglon { to { stroke-dashoffset: 0; } }
-@keyframes mover-lapiz { to { transform: translateX(22px); } }
+#velo-escritura :is(.olla, .tapa) { stroke: var(--fg-2); }
+#velo-escritura .vapores { stroke: var(--fg-2); stroke-width: 2;
+                           transition: opacity .15s linear; }
+#velo-escritura .vapores path { animation: vapor 1.2s linear infinite; }
+#velo-escritura .vapor1 { animation-delay: -.8s; }
+#velo-escritura .vapor2 { animation-delay: -.4s; }
+#velo-escritura .cuchara { stroke: var(--acento); stroke-width: 3.5;
+                           animation: revolver 1.6s ease-in-out infinite;
+                           transition: opacity .15s linear; }
+#velo-escritura .cuchara ellipse { fill: var(--acento); stroke: none; }
+#velo-escritura .tapa { transition: transform .18s ease-in; }
+/* El tilde mide 34: se guarda entero fuera del trazo hasta que el cierre lo
+   dibuja. Oculto además por opacidad, para que el extremo redondo no asome
+   como un punto mientras no le toca. */
+#velo-escritura .tilde { stroke: var(--exito); stroke-width: 5; opacity: 0;
+                          stroke-dasharray: 35; stroke-dashoffset: 35; }
+@keyframes revolver { 0% { transform: translateX(-8px); } 25% { transform: translateX(8px); }
+                      50% { transform: translateX(-8px); } 75% { transform: translateX(8px); }
+                      100% { transform: translateX(-8px); } }
+@keyframes vapor { 0% { opacity: 0; transform: translateY(4px); } 40% { opacity: 1; }
+                   100% { opacity: 0; transform: translateY(-8px); } }
+@keyframes dibujar-tilde { from { opacity: 1; stroke-dashoffset: 35; }
+                           to { opacity: 1; stroke-dashoffset: 0; } }
+
+/* El cierre, cuando la escritura salió bien: la cuchara y el vapor se van, la
+   tapa baja y el tilde se dibuja. Dura menos de lo que el velo tarda en irse
+   (500 ms en main.ts), y mientras tanto no tapa: el toque pasa de largo. */
+#velo-escritura.exito { pointer-events: none; }
+#velo-escritura.exito :is(.cuchara, .vapores) { animation: none; opacity: 0; }
+#velo-escritura.exito .vapores path { animation: none; }
+#velo-escritura.exito .tapa { transform: translateY(6px); }
+#velo-escritura.exito .tilde { animation: dibujar-tilde .3s .15s ease-out forwards; }
+
 @media (prefers-reduced-motion: reduce) {
-  #velo-escritura .renglon { animation: none; stroke-dashoffset: 11; }
-  #velo-escritura .lapiz { animation: none; transform: translateX(11px); }
+  #velo-escritura :is(.cuchara, .vapores, .tapa) { animation: none; transition: none; }
+  #velo-escritura .vapores path { animation: none; }
+  #velo-escritura.exito .tilde { animation: none; opacity: 1; stroke-dashoffset: 0; }
 }
 
 @media (min-width: 900px) {

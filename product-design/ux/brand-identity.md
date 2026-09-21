@@ -133,7 +133,7 @@ habla de sí misma en primera persona.
 | **Falta información** | Lo que falta, no lo que está mal. | *"Se va a poder sacar incompleta cuando se cargue: título, categoría, ingredientes y pasos."* |
 | **Explicación de un control** | Una oración, debajo, sólo donde el control no se explica solo. | *"Salir no borra nada de Drive."* · *"Hasta comer, con reposo y horno incluidos."* |
 | **Resultado de copiar o armar algo para compartir** | El hecho, porque no deja nada a la vista que lo diga. | *"Link copiado."* · *"El PDF está listo."* |
-| **Éxito** | **No existe.** Nada confirma que guardar, borrar o reindexar salió bien: lo dice la pantalla. | — |
+| **Éxito** | **No se escribe.** Ningún cartel confirma que guardar, borrar o reindexar salió bien: lo dice la pantalla. Lo único que lo dice sin palabras es el tilde con el que cierra el velo al guardar una receta (`design-system.md` §6.17b). | — |
 
 ### 3.3 Correcto e incorrecto
 

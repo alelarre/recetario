@@ -319,16 +319,29 @@ describe('main.ts: las rutas', () => {
     /** Los atributos de `#app`: el único que se pone desde `main` es `aria-busy`. */
     const atributosApp: Record<string, string> = {};
     /** El velo de la escritura en curso, hermano de `#app` en `index.html`. */
-    const velo = { hidden: true };
+    const clasesVelo = new Set<string>();
+    const velo = {
+      hidden: true,
+      classList: {
+        add: (c: string) => { clasesVelo.add(c); },
+        remove: (c: string) => { clasesVelo.delete(c); },
+        contains: (c: string) => clasesVelo.has(c)
+      }
+    };
     /**
-     * Cada vez que se pintó `#app`, con el velo como estaba en ese momento: es
-     * la forma de ver el orden entre tapar la pantalla y redibujarla (P47).
+     * Si la pantalla está tapada: el velo puesto y todavía tapando. Mientras
+     * dibuja el cierre con el tilde sigue en pantalla, pero ya no tapa (P43).
+     */
+    const tapado = () => !velo.hidden && !clasesVelo.has('exito');
+    /**
+     * Cada vez que se pintó `#app`, con la pantalla tapada o no en ese momento:
+     * es la forma de ver el orden entre tapar la pantalla y redibujarla (P47).
      */
     const pinturas: { html: string; velo: boolean }[] = [];
     let htmlApp = '';
     const app = {
       get innerHTML() { return htmlApp; },
-      set innerHTML(html: string) { htmlApp = html; pinturas.push({ html, velo: !velo.hidden }); },
+      set innerHTML(html: string) { htmlApp = html; pinturas.push({ html, velo: tapado() }); },
       insertAdjacentHTML: () => {},
       setAttribute: (n: string, v: string) => { atributosApp[n] = v; },
       removeAttribute: (n: string) => { delete atributosApp[n]; },
@@ -374,8 +387,8 @@ describe('main.ts: las rutas', () => {
     /** Lo que se puso en lugar de un elemento, con `outerHTML`, sin redibujar. */
     const enLugar: string[] = [];
     const vueltasAtras: number[] = [];
-    /** Si el velo estaba puesto en cada vuelta atrás: con la pantalla tapada no se navega. */
-    const veloAlVolver: boolean[] = [];
+    /** Si la pantalla estaba tapada en cada vuelta atrás: tapada no se navega. */
+    const tapadoAlVolver: boolean[] = [];
     const scrolls: number[] = [];
     /** Lo que la flecha del carrusel le pidió desplazar a `scrollBy`. */
     const desplazamientos: number[] = [];
@@ -488,7 +501,7 @@ describe('main.ts: las rutas', () => {
       [Symbol.iterator]() { return Object.entries(estado.formulario)[Symbol.iterator](); }
     };
     global.history = comoGlobal<History>({
-      back: () => { vueltasAtras.push(1); veloAlVolver.push(!velo.hidden); }, length: 5,
+      back: () => { vueltasAtras.push(1); tapadoAlVolver.push(tapado()); }, length: 5,
       replaceState: (_estado: unknown, _titulo: string, url: string) => {
         const i = url.indexOf('#');
         if (i >= 0) global.location.hash = url.slice(i);
@@ -506,7 +519,7 @@ describe('main.ts: las rutas', () => {
       atributosApp,
       recargas,
       vueltasAtras,
-      veloAlVolver,
+      tapadoAlVolver,
       scrolls,
       reemplazos,
       empujados,
@@ -1853,22 +1866,47 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('al terminar, el velo se va y el guardado sigue su camino', async () => {
-      const { abrir, tocar, velo, vueltasAtras, veloAlVolver } = await montar();
+    it('al terminar bien, el velo cierra con el tilde y el guardado sigue su camino (P43)', async () => {
+      const { abrir, tocar, velo, vueltasAtras, tapadoAlVolver, atributosApp } = await montar();
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
 
       await tocar('guardar');
 
-      expect(velo.hidden).toBe(true);
       expect(estado.creadas).toEqual(['Pan']);
+      // El velo sigue dibujado, en el estado de éxito, pero la pantalla ya no
+      // está tapada ni ocupada: el tilde se dibuja encima de lo que quedó.
+      expect(velo.hidden).toBe(false);
+      expect(velo.classList.contains('exito')).toBe(true);
+      expect(atributosApp['aria-busy']).toBeUndefined();
+      // El cierre del editor es una navegación, y no espera al dibujo.
       expect(vueltasAtras).toHaveLength(1);
-      // El cierre del editor es una navegación, y con la pantalla tapada no se
-      // navega: sale con el velo ya soltado.
-      expect(veloAlVolver).toEqual([false]);
+      expect(tapadoAlVolver).toEqual([false]);
+
+      // Y cuando el dibujo termina, el velo se va solo.
+      await new Promise(r => setTimeout(r, 600));
+      expect(velo.hidden).toBe(true);
+      expect(velo.classList.contains('exito')).toBe(false);
     });
 
-    it('si la escritura falla, el velo se va y queda el aviso con lo escrito', async () => {
+    it('con el cierre a medio dibujar, la pantalla responde y navega (P43)', async () => {
+      const { abrir, tocar, app, velo, empujados } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+
+      await tocar('guardar');
+      expect(velo.classList.contains('exito')).toBe(true);
+
+      // Con la pantalla tapada, un cambio de hash vuelve a la que escribía; acá
+      // no: la receta se dibuja.
+      const antes = empujados.length;
+      await abrir('#/r/f1');
+      expect(empujados).toHaveLength(antes);
+      expect(global.location.hash).toBe('#/r/f1');
+      expect(app.innerHTML).toContain('Milanesas');
+    });
+
+    it('si la escritura falla, el velo se va sin tilde y queda el aviso con lo escrito', async () => {
       const original = storeFake.crear;
       storeFake.crear = async () => { throw new Error('red'); };
       try {
@@ -1879,6 +1917,7 @@ describe('main.ts: las rutas', () => {
         await tocar('guardar');
 
         expect(velo.hidden).toBe(true);
+        expect(velo.classList.contains('exito')).toBe(false);
         expect(app.innerHTML).toContain('No se pudo guardar.');
         expect(app.innerHTML).toContain('Pan');
       } finally {
@@ -1905,7 +1944,8 @@ describe('main.ts: las rutas', () => {
         resolver({ entrada: entradaFalsa({ id_archivo: 'f1' }), receta: parse(estado.md) });
         await guardando;
 
-        expect(velo.hidden).toBe(true);
+        // Guardó: el velo se queda dibujando el cierre con el tilde (P43).
+        expect(velo.classList.contains('exito')).toBe(true);
         expect(estado.guardados).toHaveLength(1);
       } finally {
         storeFake.receta = original;
@@ -1919,7 +1959,9 @@ describe('main.ts: las rutas', () => {
 
       await tocar('guardar');
 
+      // No se escribió nada: el velo se va como siempre, sin tilde.
       expect(velo.hidden).toBe(true);
+      expect(velo.classList.contains('exito')).toBe(false);
       expect(app.innerHTML).toContain('Ponele un título antes de guardar.');
       expect(estado.creadas).toEqual([]);
     });

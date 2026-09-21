@@ -49,7 +49,12 @@ describe('cómo responden los controles al toque', () => {
   });
 
   it('con el velo de escritura puesto, la página de atrás tampoco se desplaza (R8)', () => {
-    expect(BASE).toContain('html:has(#velo-escritura:not([hidden])) { overflow: hidden; }');
+    // Menos mientras dibuja el cierre con el tilde: ahí ya no tapa nada (P43).
+    expect(BASE).toContain('html:has(#velo-escritura:not([hidden]):not(.exito)) { overflow: hidden; }');
+  });
+
+  it('mientras dibuja el cierre, el velo deja pasar el toque (P43)', () => {
+    expect(BASE).toContain('#velo-escritura.exito { pointer-events: none; }');
   });
 
   it('el formulario del borrador tiene el ancho de la receta y del editor en pantalla ancha (C05.10.1)', () => {

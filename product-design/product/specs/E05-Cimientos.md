@@ -85,8 +85,8 @@ se soporta:** no hay Share Target y el Atajo equivalente sale del alcance.
 
 ### R8 — Una escritura por vez
 
-Mientras una operación escribe en Drive o en Sheets, **un velo con el libro que
-se está escribiendo cubre la pantalla** (`ux/design-system.md` §6.17b), desde el
+Mientras una operación escribe en Drive o en Sheets, **un velo con la olla que
+se revuelve cubre la pantalla** (`ux/design-system.md` §6.17b), desde el
 toque que la lanza hasta que termina. Es un solo mecanismo para todas las
 operaciones, y no uno por pantalla. Mientras dura, el resultado y el error tienen a dónde llegar:
 la pantalla que lanzó la escritura sigue siendo la que está.
@@ -97,6 +97,8 @@ la pantalla que lanzó la escritura sigue siendo la que está.
 - [ ] **No se navega:** un cambio de hash —un link, el volver del encabezado, el gesto de atrás de Android— no dibuja la pantalla nueva, y la URL vuelve a la de la pantalla que está escribiendo.
 - [ ] **No se repite la acción:** volver a tocar el control no hace nada.
 - [ ] El velo se suelta siempre, termine bien o mal; después la operación sigue su camino —navega, redibuja o muestra su aviso con lo escrito todavía en pantalla (R1)—.
+- [ ] **Guardar una receta cierra con el tilde:** cuando el `.md` y su fila quedaron escritos —una receta nueva, una editada o una convertida desde un borrador—, el velo tarda medio segundo más en irse, tapando la olla y dibujando el tilde (§6.17b). Es la escritura que el usuario confirma con un botón y de la que la pantalla se va; las demás sueltan el velo de una. Si no se llegó a escribir —falta el título, falta la categoría, falló Drive— no hay tilde.
+- [ ] **El cierre no hace esperar:** desde que arranca, la pantalla ya está destapada —se toca, se desplaza y se navega—, y el editor se cierra mientras el tilde se termina de dibujar encima. Una escritura nueva durante ese medio segundo corta el dibujo y vuelve a tapar.
 - [ ] Entran: guardar y crear una receta —también desde un borrador o desde Claude—, borrarla, guardar una captura, descartar un borrador, agregarle y sacarle una foto, crear, editar y borrar una categoría, escribir el plan de la semana —sumarle una receta, sacarle una, reiniciarlo— y crear la carpeta base.
 - [ ] Entra también **achicar una foto** recién elegida, en el editor de recetas, en la captura, en el borrador y en la foto propia de una categoría. Es la única del velo que no escribe nada: es una operación local que tarda, y mientras dura vale lo mismo —no se toca y no se navega—. Las fotos del editor no llegan a Drive hasta Guardar (`E04-Corregir.md` F04.3d).
 - [ ] Quedan afuera cuatro, cada una con su propia señal: marcar favorito, que ya tiene su estrella animada y no debe trabar la lectura de la receta; reindexar, que oculta sus controles y muestra el avance; preparar la carpeta base, que dibuja su propia pantalla de progreso; y conectar de nuevo con Google, donde el usuario está en el popup y el velo taparía la pantalla desde otra ventana.

@@ -81,10 +81,16 @@ identidad prohíbe.
 | `--acento-suave` | `#39291D` | El fondo de un elemento con el acento aplicado. | — |
 | `--error` | `#D95F52` | **Solo para operaciones que fallaron.** | **4.6:1** |
 | `--error-suave` | `#33191A` | El fondo del aviso con acción. | — |
+| `--exito` | `#53DA6E` | **Solo el tilde con el que cierra el velo de escritura** (§6.17b). | **9.3:1** |
 
-**No hay token de éxito ni de advertencia.** El éxito no se comunica
-(`brand-identity.md` §3.2), y lo que en otro producto sería una advertencia —una
-receta incompleta— acá no es un problema y usa `--fg-3`.
+**`--exito` es el hermano verde del error:** la misma saturación y la misma
+luminosidad, a 126° de matiz. Sobre el velo, que es donde se lo ve, da 10.7:1.
+No es ninguno de los verdes de categoría —son de otra paleta y viven en otra
+pantalla— y no se usa en ningún texto ni en ningún control: el éxito no se
+escribe (`brand-identity.md` §3.2), se dibuja una sola vez y se va.
+
+**No hay token de advertencia:** lo que en otro producto sería una advertencia
+—una receta incompleta— acá no es un problema y usa `--fg-3`.
 
 **El acento y el error se tienen que distinguir de reojo:** una distancia
 percibida (CIEDE2000) de al menos 12 entre los dos. La arcilla está a 14.6 del
@@ -379,9 +385,13 @@ Un **spinner** de 24 px en `--fg-3`, centrado en el lugar donde va a aparecer el
 contenido — nunca una pantalla de carga completa. Existe porque un bloque quieto
 y vacío no se distingue de un bloque vacío de verdad.
 
-**El velo de escritura no usa spinner: usa el libro** (§6.17b). Son las dos
+**El velo de escritura no usa spinner: usa la olla** (§6.17b). Son las dos
 únicas animaciones en bucle del sistema, y se reparten así: el spinner dice que
-se está esperando algo, el libro dice que la app está escribiendo.
+se está esperando algo, la olla dice que la app está escribiendo.
+
+**Y es la única que tiene final:** cuando la escritura sale bien, la olla se
+tapa y aparece un tilde antes de que el velo se vaya (§6.17b). Es la única
+excepción a que todo lo demás sea instantáneo, y dura medio segundo.
 
 **El reindexado no usa ninguno de los dos:** usa barra de progreso, porque ahí
 hay un número que decir (`E05-Cimientos.md` C05.5.2). La regla es esa — con
@@ -860,29 +870,39 @@ del mismo lado.
 ### 6.17b Velo de escritura
 
 Mientras la app escribe en Drive o en Sheets, un velo de `--velo` al 60 % cubre
-la pantalla entera con **el libro que se está escribiendo** centrado. Sin
-transición: aparece con el toque que lanza la escritura —no cuando la escritura
-arranca— y se va cuando termina, bien o mal.
+la pantalla entera con **la olla que se revuelve** centrada. Sin transición:
+aparece con el toque que lanza la escritura —no cuando la escritura arranca— y
+se va cuando termina, bien o mal.
 
-**El libro** es un dibujo de unos 96 px: dos páginas abiertas en `--fg-2` —el
-lomo es el hueco entre las dos, no una línea—, tres renglones ya escritos y
-fijos en `--fg-3` a la izquierda, y a la derecha el renglón en curso, que se
-dibuja de izquierda a derecha mientras un lápiz en `--acento` lo recorre. Al
-terminar vuelve a empezar, en un loop de 1,6 s. Con
-`prefers-reduced-motion: reduce` queda quieto, con el renglón a medio escribir
-y el lápiz apoyado (§5.1).
+**La olla** es un dibujo de unos 96 px en `--fg-2`: el cuerpo y el borde, tres
+hilos de vapor que suben escalonados, y la tapa levantada unos milímetros sobre
+el borde. Adentro, una cuchara en `--acento` —el palo y la parte redonda— va de
+lado a lado sin girar, en un loop de 1,6 s. Con
+`prefers-reduced-motion: reduce` queda quieta, con la cuchara apoyada y el
+vapor detenido (§5.1).
 
-**El velo tiñe el fondo y no al libro:** es `color-mix` sobre el fondo, no
+**El cierre, sólo cuando la escritura salió bien:** la cuchara y el vapor se
+van, la tapa baja sobre la olla y encima se dibuja un tilde en `--exito`. Todo
+en medio segundo, y recién ahí se va el velo. Si la escritura falla no hay
+cierre: el velo se va de una y queda el aviso.
+
+**El cierre no hace esperar a nadie.** Desde que arranca, la pantalla ya está
+destapada: el velo deja pasar el toque, deja scrollear y `aria-busy` se saca,
+así que lo que sigue a la escritura —cerrar el editor, volver a la receta—
+ocurre mientras el tilde se termina de dibujar encima.
+
+**El velo tiñe el fondo y no a la olla:** es `color-mix` sobre el fondo, no
 `opacity` sobre el elemento entero, así el dibujo se ve a pleno.
 
 **Recibe el toque**, así que ningún control de abajo responde, y el contenido
 queda marcado como ocupado (`aria-busy`). **Y frena el scroll:** mientras está,
 la página de atrás no se desplaza, con la misma regla que las fichas al pie
-(`html:has(...) { overflow: hidden }`). No es una pantalla de carga: lo que
-estaba sigue dibujado debajo, incluido el botón que dice «Guardando…».
+(`html:has(...) { overflow: hidden }`). Las dos cosas valen mientras escribe, no
+mientras cierra. No es una pantalla de carga: lo que estaba sigue dibujado
+debajo, incluido el botón que dice «Guardando…».
 
-Qué operaciones lo muestran y cuáles no está en `product/specs/E05-Cimientos.md`
-R8.
+Qué operaciones lo muestran, cuáles lo cierran con el tilde y cuáles no lo
+muestran está en `product/specs/E05-Cimientos.md` R8.
 
 ### 6.18 Botones de duración, en el editor
 
