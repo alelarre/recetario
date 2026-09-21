@@ -198,9 +198,13 @@ va el placeholder de la categoría.
 
 **El editor** (`src/ui/editor.ts`)
 - **La ficha Fotos**, después de Contenido: la fila de miniaturas de
-  `filaDeFotos`, cada una con su número en un badge, y **Agregar foto** al
-  final, sin tope. Abre el mismo selector que el borrador (cámara o
-  galería, varias a la vez).
+  `filaDeFotos`, cada una con su número en un badge, y **Cámara**, **Galería**
+  y **Por URL** al final, sin tope. Las dos primeras son las del borrador; la
+  tercera abre una ficha con un campo y **Traer**: la app baja la foto, la
+  achica y la suma al depósito como una más. Si el sitio no la deja bajar, la
+  URL entra como link externo con un aviso que lo dice; una dirección que no es
+  una foto —o que no es una `https://` sin espacios— no entra y la ficha queda
+  abierta con lo escrito. El pedido se corta solo a los 20 s.
 - **Tocar una miniatura abre una ficha al pie** con cuatro acciones:
   - **Ver** abre el visor.
   - **Portada** la pone de cabecera (`foto: foto:N`). Si ya es la portada, la
@@ -213,8 +217,10 @@ va el placeholder de la categoría.
   - **Sacar** la saca del depósito y **borra sus referencias** del texto con
     `sacarReferencias`. Si era la portada, la cabecera queda vacía.
 - **El campo Foto** de los datos pasa a ser un selector: la miniatura de la
-  cabecera actual y, al tocarla, una ficha con el depósito para elegir, el
-  campo de URL de hoy y **Sin foto**.
+  cabecera actual y, al tocarla, una ficha con el depósito para elegir y **Sin
+  foto**. **Desde ahí no se agrega nada**: una foto nueva entra por la ficha
+  Fotos. Una cabecera que es una URL suelta se muestra adelante como la actual,
+  marcada y sin poder tocarse, y se conserva hasta elegir otra cosa.
 - **Las fotos nuevas viven en memoria**, ya achicadas, con su número asignado,
   hasta Guardar. Su miniatura sale de `urlDeBlob`.
 - **Escribir `![](foto:2)` a mano sigue valiendo:** los campos de texto no

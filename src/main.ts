@@ -1432,10 +1432,25 @@ function sumarFotoAlEditor(url: string, blob?: Blob): void {
 }
 
 const NO_ES_UNA_FOTO = 'Esa URL no es una foto.';
-const QUEDA_COMO_LINK = 'No se pudo traer la foto: queda como link, y si el sitio la borra se pierde.';
+const SOLO_HTTPS = 'La dirección tiene que empezar con https://.';
+const QUEDA_COMO_LINK =
+  'No se pudo traer la foto —el sitio no lo permite o no hay conexión—: ' +
+  'queda como link, y si el sitio la borra se pierde.';
+
+/**
+ * La forma que tiene que tener una dirección para poder ser una línea del
+ * depósito: **el mismo patrón que la parsea** (`fotos-receta.ts`). Una URL con
+ * un espacio adentro se escribiría igual y al releer el `.md` dejaría toda la
+ * sección `## Fotos` como sección ajena: la receta perdería sus fotos
+ * (C05.1.5).
+ */
+const URL_DE_FOTO = /^https?:\/\/\S+$/i;
 
 /** Lo que devolvió una dirección: la foto, algo que no es una foto, o nada. */
 type FotoTraida = { que: 'foto'; blob: Blob } | { que: 'no-es-foto' } | { que: 'no-se-pudo' };
+
+/** Lo que se espera a un sitio ajeno antes de darlo por perdido. */
+const CORTE_DE_TRAIDA = 20_000;
 
 /**
  * Baja la foto de una dirección. Una página que contesta 200 con HTML no es
@@ -1445,16 +1460,24 @@ type FotoTraida = { que: 'foto'; blob: Blob } | { que: 'no-es-foto' } | { que: '
  * y tantos otros—, y sin red pasa lo mismo: no hay forma de distinguirlos
  * desde el navegador, y en los dos casos la salida es la misma, quedarse con
  * la URL como link.
+ *
+ * **El pedido se corta solo.** Es el único pedido a un sitio ajeno que tapa la
+ * pantalla (R8), y un servidor que acepta y nunca contesta dejaría el editor
+ * tapado sin salida: salir sería recargar, y con eso se va lo escrito.
  */
 async function traerFoto(url: string): Promise<FotoTraida> {
+  const corte = new AbortController();
+  const reloj = setTimeout(() => { corte.abort(); }, CORTE_DE_TRAIDA);
   try {
-    const r = await fetch(url);
+    const r = await fetch(url, { signal: corte.signal });
     if (!r.ok) return { que: 'no-es-foto' };
     if (!(r.headers.get('Content-Type') ?? '').startsWith('image/')) return { que: 'no-es-foto' };
     return { que: 'foto', blob: await r.blob() };
   } catch (err) {
     console.error(err);
     return { que: 'no-se-pudo' };
+  } finally {
+    clearTimeout(reloj);
   }
 }
 
@@ -1465,9 +1488,14 @@ async function traerFoto(url: string): Promise<FotoTraida> {
  * foto no entra y deja la ficha abierta con lo escrito.
  */
 async function agregarFotoPorUrl(url: string): Promise<void> {
-  // Una URL que no es `http(s)` no es una línea del depósito (spec §3), así
-  // que ni se la pide.
-  if (!/^https?:\/\//i.test(url)) return abrirFichaFoto(renderFotoPorUrl(url, NO_ES_UNA_FOTO));
+  // Cada intento empieza sin el aviso del anterior: dos avisos a la vez no
+  // dicen cuál es el de ahora.
+  avisarEnElFormulario('');
+  // Lo que no puede ser una línea del depósito ni se pide.
+  if (!URL_DE_FOTO.test(url)) return abrirFichaFoto(renderFotoPorUrl(url, NO_ES_UNA_FOTO));
+  // Desde Pages, una `http://` es contenido mixto: el pedido falla siempre y
+  // la imagen tampoco cargaría después. Entra como link y no sirve de nada.
+  if (/^http:/i.test(url)) return abrirFichaFoto(renderFotoPorUrl(url, SOLO_HTTPS));
   const traida = await escribiendo(traerFoto(url));
   if (traida.que === 'no-es-foto') return abrirFichaFoto(renderFotoPorUrl(url, NO_ES_UNA_FOTO));
   if (traida.que === 'no-se-pudo') {
@@ -1485,7 +1513,6 @@ async function agregarFotoPorUrl(url: string): Promise<void> {
   }
   sumarFotoAlEditor('', blob);
   cerrarFichaFoto();
-  avisarEnElFormulario('');
 }
 
 /**

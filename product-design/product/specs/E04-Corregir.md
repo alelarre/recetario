@@ -174,8 +174,11 @@ cuando el sitio la borra.
 
 - [ ] **Por URL** abre una ficha al pie con un campo para la dirección y **Traer**.
 - [ ] Lo que trae **es una foto más del depósito**: se achica y se sube al guardar, igual que una de la cámara (C04.3d.1). Nada toca Drive hasta Guardar.
-- [ ] **Si el sitio no la deja bajar** —CORS, que es lo habitual—, la URL **entra igual al depósito como link externo** (C05.1.5), y el aviso lo dice: *«No se pudo traer la foto: queda como link, y si el sitio la borra se pierde.»* No es un error: la foto entró, y el aviso va sin control, arriba del formulario y a la vista (R1). Sin red pasa lo mismo: desde el navegador no se distinguen.
-- [ ] **Una dirección que no es una foto** —una página, un archivo que no existe, algo que no es `http(s)`— **no entra**: el aviso va en la ficha, que queda abierta con lo escrito (R1).
+- [ ] **Mientras la baja y la achica, el velo cubre la pantalla** (R8), y el pedido se corta solo si el sitio no contesta.
+- [ ] **Si el sitio no la deja bajar** —CORS, que es lo habitual—, la URL **entra igual al depósito como link externo** (C05.1.5), y el aviso lo dice: *«No se pudo traer la foto —el sitio no lo permite o no hay conexión—: queda como link, y si el sitio la borra se pierde.»* No es un error: la foto entró, y el aviso va sin control, arriba del formulario y a la vista (R1). Sin red pasa lo mismo: desde el navegador no se distinguen.
+- [ ] **Una dirección que no es una foto** —una página, un archivo que no existe, algo que no empieza con `http(s)://` o que lleva un espacio adentro— **no entra**: el aviso va en la ficha, que queda abierta con lo escrito (R1). **Una `http://` tampoco**, y su aviso lo dice: *«La dirección tiene que empezar con https://.»* Desde Pages es contenido mixto, así que no se puede bajar y la imagen tampoco cargaría después.
+- [ ] **Sólo entra al depósito una URL que se pueda volver a leer**: la línea es `- <n>: <url>` sin espacios, y una que no tenga esa forma dejaría toda la sección `## Fotos` como sección ajena al reabrir la receta (C05.1.5).
+- [ ] **Cada intento limpia el aviso del anterior**: nunca quedan dos a la vez.
 - [ ] Una foto bajada que el navegador no puede decodificar no se agrega, con el aviso de C04.3d.1.
 
 #### C04.3d.2 — Qué se hace con una foto *(J7)*

@@ -3111,6 +3111,8 @@ describe('main.ts: las rutas', () => {
       expect(preguntas.some(h => h.includes('data-foto-url'))).toBe(false);
       const avisado = preguntas.find(h => h.includes('data-aviso-fotos'));
       expect(avisado).toContain('queda como link');
+      // El mismo camino es el de estar sin conexión, y el aviso lo nombra.
+      expect(avisado).toContain('conexión');
       // No es un error del usuario: el aviso no ofrece nada que hacer.
       expect(avisado).not.toContain('<button');
 
@@ -3138,6 +3140,95 @@ describe('main.ts: las rutas', () => {
       expect(preguntas.at(-1)).toContain('data-foto-url');
       expect(preguntas.at(-1)).toContain('value="https://ejemplo/pagina"');
       expect(preguntas.at(-1)).toContain('no es una foto');
+    });
+
+    it('una URL con un espacio no entra ni como link: rompería la sección Fotos entera', async () => {
+      estado.md = MD_CON_FOTOS;
+      // El depósito es `- <n>: <url>` sin espacios: escribir una así deja la
+      // sección como ajena, y la receta pierde todas sus fotos (C05.1.5).
+      let pedidos = 0;
+      vi.stubGlobal('fetch', async () => { pedidos++; throw new TypeError('bloqueado'); });
+      const montada = await montar();
+      const { abrir, preguntas } = montada;
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await traer(montada, 'https://sitio/mi foto.jpg');
+
+      expect(JSON.parse(estado.formulario['fotos'] ?? '')).toEqual([
+        { n: 1, url: linkDeFoto('f9') }, { n: 2, url: EXTERNA }
+      ]);
+      // Ni se la pide: la descarta la forma.
+      expect(pedidos).toBe(0);
+      expect(preguntas.at(-1)).toContain('data-foto-url');
+      expect(preguntas.at(-1)).toContain('no es una foto');
+    });
+
+    it('lo que no es una dirección de la web tampoco entra', async () => {
+      estado.md = MD_CON_FOTOS;
+      let pedidos = 0;
+      vi.stubGlobal('fetch', async () => { pedidos++; return respuestaDeFoto('x'); });
+      const montada = await montar();
+      const { abrir, preguntas } = montada;
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await traer(montada, 'javascript:alert(1)');
+
+      expect(JSON.parse(estado.formulario['fotos'] ?? '')).toHaveLength(2);
+      expect(pedidos).toBe(0);
+      expect(preguntas.at(-1)).toContain('no es una foto');
+    });
+
+    it('una `http://` se rechaza por su cuenta: desde Pages es contenido mixto', async () => {
+      estado.md = MD_CON_FOTOS;
+      let pedidos = 0;
+      vi.stubGlobal('fetch', async () => { pedidos++; return respuestaDeFoto('x'); });
+      const montada = await montar();
+      const { abrir, preguntas } = montada;
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await traer(montada, 'http://sitio/foto.jpg');
+
+      expect(JSON.parse(estado.formulario['fotos'] ?? '')).toHaveLength(2);
+      expect(pedidos).toBe(0);
+      expect(preguntas.at(-1)).toContain('https://');
+    });
+
+    it('el pedido lleva un corte: un sitio que acepta y no contesta no deja el editor tapado', async () => {
+      estado.md = MD_CON_FOTOS;
+      const señales: (AbortSignal | undefined)[] = [];
+      vi.stubGlobal('fetch', async (_u: string, o?: { signal?: AbortSignal }) => {
+        señales.push(o?.signal);
+        return respuestaDeFoto('bajada');
+      });
+      const montada = await montar();
+      const { abrir } = montada;
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await traer(montada, 'https://ejemplo/3.jpg');
+
+      expect(señales.at(-1)).toBeInstanceOf(AbortSignal);
+    });
+
+    it('cada intento limpia el aviso del anterior: nunca quedan dos', async () => {
+      estado.md = MD_CON_FOTOS;
+      vi.stubGlobal('fetch', async () => { throw new TypeError('bloqueado'); });
+      const montada = await montar();
+      const { abrir, preguntas } = montada;
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      // La primera entra como link y deja su aviso arriba del formulario.
+      await traer(montada, 'https://instagram/3.jpg');
+      expect(preguntas.filter(h => h.includes('data-aviso-fotos'))).toHaveLength(1);
+
+      // La segunda ni llega a pedirse: su aviso va en la ficha, y el de arriba
+      // se va.
+      await traer(montada, 'https://sitio/mi foto.jpg');
+      expect(preguntas.filter(h => h.includes('data-aviso-fotos'))).toHaveLength(0);
     });
 
     it('una que no existe tampoco entra', async () => {
