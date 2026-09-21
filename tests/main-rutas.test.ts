@@ -124,7 +124,12 @@ const estadoInicial = () => ({
   /** Cuántas veces se leyó el plan de Drive. */
   lecturasPlan: 0,
   /** Cuántas veces más falla `guardarPlan` antes de andar. */
-  fallaGuardarPlan: 0
+  fallaGuardarPlan: 0,
+  /**
+   * Si está, cada `urlDeImagen` se queda esperando y deja acá su resolutor: el
+   * test ve cuántas van en vuelo a la vez.
+   */
+  frenoDeImagen: null as null | Array<() => void>
 });
 
 const estado = estadoInicial();
@@ -240,11 +245,16 @@ vi.mock('../src/fotos.js', () => ({
     return b;
   }
 }));
-// Cache Storage y los object URL no existen en Node.
-vi.mock('../src/imagenes.js', () => ({
+// Cache Storage y los object URL no existen en Node; `conTope` sí es el real,
+// que es lo que reparte el trabajo de completar las fotos.
+vi.mock('../src/imagenes.js', async original => ({
+  ...await original<typeof import('../src/imagenes.js')>(),
   crearImagenes: () => ({
     imagenDe: async (id: string) => estado.fotosPerdidas.includes(id) ? null : new Blob([id], { type: 'image/jpeg' }),
-    urlDeImagen: async (id: string) => estado.fotosPerdidas.includes(id) ? null : `blob:${id}`,
+    urlDeImagen: async (id: string) => {
+      if (estado.frenoDeImagen) await new Promise<void>(seguir => estado.frenoDeImagen?.push(seguir));
+      return estado.fotosPerdidas.includes(id) ? null : `blob:${id}`;
+    },
     urlDeBlob: (b: Blob) => `blob:memoria-${b.size}`,
     soltarImagenes: () => {},
     guardarImagen: async () => {},
@@ -2864,6 +2874,22 @@ describe('main.ts: las rutas', () => {
       expect(imgs[0]?.atributos['src']).toBe('blob:f9');
       expect(imgs[1]?.reemplazo).toContain('La foto ya no está en Drive.');
       expect(imgs[2]?.sacada).toBe(true);
+    });
+
+    it('las imágenes de Drive se completan de a dos, no de a una', async () => {
+      estado.md = MD_CON_FOTOS;
+      const freno: Array<() => void> = [];
+      estado.frenoDeImagen = freno;
+      const { abrir, imgs } = await montar();
+      imgs.push(imgFalsa({ drive: 'f1' }), imgFalsa({ drive: 'f2' }), imgFalsa({ drive: 'f3' }), imgFalsa({ drive: 'f4' }));
+
+      await abrir('#/r/f1');
+      await esperar();
+      expect(freno).toHaveLength(2);
+
+      while (freno.length) { freno.shift()!(); await esperar(); }
+      estado.frenoDeImagen = null;
+      expect(imgs.map(i => i.atributos['src'])).toEqual(['blob:f1', 'blob:f2', 'blob:f3', 'blob:f4']);
     });
 
     it('dibujado el home se precargan las fotos del índice y de las categorías', async () => {

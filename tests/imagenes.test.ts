@@ -99,6 +99,35 @@ describe('mostrar una foto de Drive', () => {
     expect(await imagenes.urlDeImagen('f1')).toBe('blob:1');
   });
 
+  it('dos pedidos a la vez de la misma foto la bajan una sola vez', async () => {
+    const { imagenes, pedidas } = armar();
+    const [a, b] = await Promise.all([imagenes.imagenDe('f1'), imagenes.imagenDe('f1')]);
+    expect(pedidas).toEqual(['f1']);
+    expect(await a?.text()).toBe('foto f1');
+    expect(await b?.text()).toBe('foto f1');
+  });
+
+  it('terminado el pedido, la foto se vuelve a poder pedir —también si falló—', async () => {
+    const { imagenes, pedidas } = armar();
+    await Promise.all([imagenes.imagenDe('f1'), imagenes.imagenDe('f1')]);
+    imagenes.soltarImagenes();
+    await imagenes.olvidarImagen('f1');
+    await imagenes.imagenDe('f1');
+    expect(pedidas).toEqual(['f1', 'f1']);
+
+    let falla = true;
+    const rota = crearImagenes({
+      leerBlob: async () => {
+        if (falla) throw Object.assign(new Error('red'), { status: 500 });
+        return new Blob(['al fin']);
+      },
+      caches: () => undefined
+    });
+    await expect(Promise.all([rota.imagenDe('f1'), rota.imagenDe('f1')])).rejects.toThrow('red');
+    falla = false;
+    expect(await (await rota.imagenDe('f1'))?.text()).toBe('al fin');
+  });
+
   it('borrarImagenes borra el caché entero', async () => {
     const { imagenes, cachés } = armar();
     await imagenes.urlDeImagen('f1');

@@ -57,7 +57,7 @@ import type { Ruta } from './ui/router.js';
 import { desdeCompartido, tituloPorDefecto, sePuedeGuardar, MAXIMO_FOTOS } from './borrador.js';
 import { achicar } from './fotos.js';
 import type { OpcionesAchicar } from './fotos.js';
-import { crearImagenes } from './imagenes.js';
+import { crearImagenes, conTope } from './imagenes.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { EstadoVisor } from './ui/visor.js';
 import type { ResultadoArranque, Progreso } from './store.js';
@@ -91,21 +91,23 @@ const pintar = (html: string): void => {
  * Las fotos que la pantalla dejó pedidas. Las del editor salen del blob que
  * está en memoria; las de Drive, del caché o de la red. Una de Drive que ya no
  * está pasa al recuadro de aviso si es de una grilla, y no se dibuja en
- * ningún otro lado (spec §6).
+ * ningún otro lado (spec §6). Las de Drive van de a dos, como la precarga: de
+ * a una, una lista entera se completa de arriba a abajo y se ve llegar.
  */
 async function completarFotos(): Promise<void> {
   for (const img of document.querySelectorAll<HTMLElement>('#app img[data-n]:not([src])')) {
     const url = fotosEditor.urls.get(Number(img.dataset['n']));
     if (url) img.setAttribute('src', url);
   }
-  for (const img of document.querySelectorAll<HTMLElement>('#app img[data-drive]:not([src])')) {
+  const deDrive = [...document.querySelectorAll<HTMLElement>('#app img[data-drive]:not([src])')];
+  await conTope(deDrive, 2, async img => {
     const id = img.dataset['drive'];
-    if (!id) continue;
+    if (!id) return;
     const url = await imagenes.urlDeImagen(id).catch(err => { console.error(err); return null; });
     if (url) img.setAttribute('src', url);
     else if (img.closest('.galeria-item, .miniatura')) img.outerHTML = FOTO_AUSENTE;
     else img.remove();
-  }
+  });
 }
 
 let store: Store;
