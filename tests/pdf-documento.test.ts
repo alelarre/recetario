@@ -11,8 +11,14 @@ titulo: Rabas
 foto: https://x/portada.jpg
 ---
 
+## Ingredientes
+- Calamar — 500 g ![Fresco](https://x/otra.jpg)
+
 ## Preparación
 1. Freír. ![Así queda](https://x/paso.jpg)
+
+## Sobras
+Al día siguiente, al horno.
 
 ## Fotos
 - 1: https://x/portada.jpg
@@ -112,11 +118,27 @@ describe('el documento del PDF', () => {
     expect(textoDe(bloque)).not.toContain('https://x/paso.jpg');
   });
 
-  it('la galería va al final, de a dos por fila', () => {
+  it('la foto de un ingrediente va debajo de su línea, en el mismo bloque que no se parte', () => {
+    const bloque = contenido(CON_FOTOS, MAPA)
+      .flatMap(n => ((n['stack'] as Nodo[] | undefined) ?? [n]))
+      .find(n => textoDe(n).includes('Calamar'));
+    expect(bloque?.['unbreakable']).toBe(true);
+    const pila = bloque?.['stack'] as Nodo[];
+    expect('ul' in (pila[0] as Nodo)).toBe(true);
+    expect(textoDe(pila[0])).toContain('500 g');
+    expect(pila[1]).toMatchObject({ image: 'data:image/jpeg;base64,OTRA' });
+    expect(textoDe(pila[2])).toContain('Fresco');
+    expect(textoDe(bloque)).not.toContain('https://x/otra.jpg');
+  });
+
+  it('la galería va antes de las secciones ajenas, de a dos por fila', () => {
     const nodos = contenido(CON_FOTOS, MAPA);
-    const titulo = nodos.findIndex(n => textoDe((n['stack'] as unknown[] | undefined)?.[0]).includes('"Fotos"'));
+    const indiceDe = (t: string) =>
+      nodos.findIndex(n => textoDe((n['stack'] as unknown[] | undefined)?.[0]).includes(`"${t}"`));
+    const titulo = indiceDe('Fotos');
     expect(titulo).toBeGreaterThan(0);
-    expect(titulo).toBe(nodos.length - 2);    // el título con la primera fila, y la segunda fila suelta
+    // Como en la pantalla: la ficha Fotos va después de Notas y antes de las ajenas.
+    expect(titulo).toBeLessThan(indiceDe('Sobras'));
     const filas = nodos.slice(titulo).flatMap(n =>
       'columns' in n ? [n] : ((n['stack'] as Nodo[] | undefined) ?? []).filter(x => 'columns' in x));
     expect(filas).toHaveLength(2);

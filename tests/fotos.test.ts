@@ -37,7 +37,7 @@ describe('achicar', () => {
     let cerrada = false;
     const imagen = { width: 4000, height: 3000, close: () => { cerrada = true; } };
 
-    const blob = await achicar(new Blob(['x']), () => lienzo, async () => imagen);
+    const blob = await achicar(new Blob(['x']), () => lienzo, { decodificar: async () => imagen });
 
     expect(lienzo.width).toBe(1600);
     expect(lienzo.height).toBe(1200);
@@ -47,15 +47,22 @@ describe('achicar', () => {
     expect(cerrada).toBe(true);
   });
 
+  it('con otro máximo —el del PDF— achica hasta ahí', async () => {
+    const { lienzo } = lienzoFalso();
+    await achicar(new Blob(['x']), () => lienzo, { maximo: 800, decodificar: async () => ({ width: 4000, height: 3000 }) });
+    expect(lienzo.width).toBe(800);
+    expect(lienzo.height).toBe(600);
+  });
+
   it('lo que no se decodifica rechaza', async () => {
     const { lienzo } = lienzoFalso();
-    await expect(achicar(new Blob(['heic']), () => lienzo, async () => { throw new Error('no'); }))
+    await expect(achicar(new Blob(['heic']), () => lienzo, { decodificar: async () => { throw new Error('no'); } }))
       .rejects.toThrow();
   });
 
   it('si el canvas no exporta, rechaza', async () => {
     const { lienzo } = lienzoFalso(null);
-    await expect(achicar(new Blob(['x']), () => lienzo, async () => ({ width: 10, height: 10 })))
+    await expect(achicar(new Blob(['x']), () => lienzo, { decodificar: async () => ({ width: 10, height: 10 }) }))
       .rejects.toThrow();
   });
 });

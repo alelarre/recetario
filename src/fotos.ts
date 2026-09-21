@@ -31,16 +31,21 @@ export function medidas(ancho: number, alto: number, maximo = LADO_MAXIMO): { an
   return { ancho: Math.round(ancho * escala), alto: Math.round(alto * escala) };
 }
 
+export interface OpcionesAchicar {
+  /** El lado mayor. Por defecto el de Drive; el PDF las quiere más chicas (spec §10). */
+  maximo?: number;
+  /** Cómo decodificar la foto; los tests corren en Node, donde no hay `createImageBitmap`. */
+  decodificar?: (b: Blob) => Promise<Imagen>;
+}
+
 /**
  * La foto achicada, en JPEG. Rechaza si el navegador no la puede decodificar
- * —HEIC, un archivo roto—: esa foto no se agrega. El `maximo` se elige para el
- * PDF, que las quiere más chicas que las que van a Drive (spec §10).
+ * —HEIC, un archivo roto—: esa foto no se agrega.
  */
 export async function achicar(
   archivo: Blob,
   lienzo: () => Lienzo,
-  decodificar: (b: Blob) => Promise<Imagen> = b => createImageBitmap(b),
-  maximo = LADO_MAXIMO
+  { maximo = LADO_MAXIMO, decodificar = b => createImageBitmap(b) }: OpcionesAchicar = {}
 ): Promise<Blob> {
   const imagen = await decodificar(archivo);
   try {

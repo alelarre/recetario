@@ -29,7 +29,10 @@ const sinFotos = {
 };
 
 describe('generar el PDF', () => {
-  afterEach(() => { vi.unstubAllGlobals(); vi.resetModules(); llamadas.setFonts = []; llamadas.createPdf = []; });
+  afterEach(() => {
+    vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.resetModules();
+    llamadas.setFonts = []; llamadas.createPdf = [];
+  });
 
   it('precargar pide las tres fuentes una sola vez y registra Inter con URLs absolutas', async () => {
     const pedidas: string[] = [];
@@ -86,6 +89,8 @@ describe('generar el PDF', () => {
   });
 
   it('la foto que falla se omite, y el PDF se arma igual', async () => {
+    // El `console.error` de cada foto omitida queda, pero acá es ruido esperado.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.stubGlobal('location', { href: 'https://h/recetario/' });
     vi.stubGlobal('fetch', async (u: string) =>
       (u.startsWith('https://x/') ? { ok: false, status: 403 } : { ok: true }));

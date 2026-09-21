@@ -247,12 +247,15 @@ button.chip { cursor: pointer; }
 .aviso-mudo { font-size: var(--txt-base); color: var(--fg-2); }
 
 /* ---- §6.11 Ítem de ingrediente ---- */
-.ing { display: flex; gap: var(--e-3); align-items: baseline;
+.ing { display: flex; flex-wrap: wrap; gap: var(--e-3); align-items: baseline;
        padding: var(--e-2) 0; border-bottom: 1px solid var(--borde);
        /* Cuerpo de la receta, como los pasos: 18 (§1). */
        font-size: var(--txt-lectura); line-height: 1.6; }
 .ing:last-child { border-bottom: 0; }
 .ing .n { flex: 1; }
+/* La foto de un ingrediente va en su propio renglón, abajo y al ancho de la
+   ficha: al lado del nombre quedaría apretada y desalinearía la cantidad. */
+.ing .foto-linea { flex: 0 0 100%; }
 .ing .c { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
 .grupo { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
          letter-spacing: .06em; margin-top: var(--e-4); margin-bottom: var(--e-1); }

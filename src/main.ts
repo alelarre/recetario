@@ -56,6 +56,7 @@ import type { RecetaCreada } from './compartido.js';
 import type { Ruta } from './ui/router.js';
 import { desdeCompartido, tituloPorDefecto, sePuedeGuardar, MAXIMO_FOTOS } from './borrador.js';
 import { achicar } from './fotos.js';
+import type { OpcionesAchicar } from './fotos.js';
 import { crearImagenes } from './imagenes.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { EstadoVisor } from './ui/visor.js';
@@ -420,9 +421,9 @@ let fotosDelBorrador: string[] = [];
 /** La foto propia recién elegida para una categoría: se sube al guardarla (§7). */
 let fotoPropia: { blob: Blob; url: string } | null = null;
 
-/** La foto achicada; rechaza si el navegador no la decodifica. Sin `maximo`, el de Drive. */
-const achicarFoto = (archivo: Blob, maximo?: number): Promise<Blob> =>
-  achicar(archivo, () => document.createElement('canvas'), undefined, maximo);
+/** La foto achicada; rechaza si el navegador no la decodifica. Sin opciones, al lado de Drive. */
+const achicarFoto = (archivo: Blob, opciones?: OpcionesAchicar): Promise<Blob> =>
+  achicar(archivo, () => document.createElement('canvas'), opciones);
 
 const NO_SE_LEYO_UNA_FOTO = 'No se pudo leer una de las fotos.';
 
@@ -1468,7 +1469,7 @@ app.addEventListener('click', async (e) => {
         // `imagenes`, y el canvas para achicarlas es el mismo de siempre (§10).
         const blob = await generar(receta, entrada?.categoria ?? '', {
           imagenDe: id => imagenes.imagenDe(id),
-          achicar: (foto, maximo) => achicarFoto(foto, maximo)
+          achicar: (foto, maximo) => achicarFoto(foto, { maximo })
         });
         if (!sigueGenerando()) return;
         pdfListo = new File([blob], slugArchivo(receta.titulo).replace(/\.md$/, '.pdf'), { type: 'application/pdf' });

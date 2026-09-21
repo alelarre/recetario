@@ -290,6 +290,29 @@ describe('Las fotos de la receta', () => {
     expect(renderReceta({ entrada: null, receta: MINIMA })).not.toContain('data-accion="ver-foto-receta"');
   });
 
+  it('la referencia en un ingrediente se dibuja debajo de su línea, y no como texto', () => {
+    const r = parse(`---
+titulo: Pan
+---
+
+## Ingredientes
+- Masa madre — 200 g ![Activa](foto:1)
+- Sal
+
+## Fotos
+- 1: https://x/masa.jpg
+`);
+    const html = renderReceta({ entrada: null, receta: r });
+    const item = html.slice(html.indexOf('class="ing"'), html.indexOf('Sal'));
+    expect(item).toContain('<span class="n">Masa madre</span>');
+    expect(item).toContain('<span class="c">200 g </span>');
+    // La foto va adentro del ítem, después del texto: envuelta se acomoda sola
+    // abajo, al ancho de la ficha.
+    expect(item).toContain('<span class="foto-linea"><img src="https://x/masa.jpg"');
+    expect(item).toContain('Activa');
+    expect(html).not.toContain('![');
+  });
+
   it('la referencia en un paso se resuelve y se dibuja debajo de su línea', () => {
     const html = renderReceta({ entrada: null, receta: CON_FOTOS });
     expect(html).toContain('class="foto-linea"');

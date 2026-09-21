@@ -3,23 +3,37 @@
  * vista de invitado. Cada pantalla arma su encabezado, sus marcas y sus
  * acciones: lo que se sume a una no aparece en la otra salvo que se pase a propósito.
  */
-import { escapar, aHtml, tramosAHtml, tramosDeFuente, imgDe } from './markdown.js';
+import { escapar, aHtml, tramosAHtml, tramosDeFuente, tramosEnLinea, imgDe } from './markdown.js';
 import { colorCategoria } from './categorias.js';
 import { duracionConReloj } from './componentes.js';
 import { gruposDe, tramosDe, variacionesDe } from '../recipe.js';
 import type { Receta, GrupoIngredientes, TramoPreparacion, FotoDeReceta } from '../tipos.js';
+import type { TramoEnLinea } from './markdown.js';
 
 export const ficha = (contenido: string, titulo?: string): string =>
   contenido ? `<div class="ficha">${titulo ? `<h2>${escapar(titulo)}</h2>` : ''}${contenido}</div>` : '';
 
-/** La lista de ingredientes, con sus grupos. La misma en la receta y en el modo cocina. */
+/** El texto de unos tramos, sin las imágenes: esas se dibujan aparte. */
+const textoDe = (tramos: TramoEnLinea[]): string => tramosAHtml(tramos.filter(t => !t.imagen));
+
+/**
+ * La lista de ingredientes, con sus grupos. La misma en la receta y en el modo
+ * cocina. El nombre y la cantidad son texto en línea como cualquier otra
+ * línea: pueden traer negrita, un link o la referencia a una foto, que va
+ * adentro del ítem y se acomoda sola abajo, al ancho de la ficha (§7).
+ */
 export const listaIngredientes = (grupos: GrupoIngredientes[]): string =>
   grupos.map(g =>
     (g.nombre ? `<div class="grupo">${escapar(g.nombre)}</div>` : '') +
-    g.items.map(i =>
-      `<div class="ing"><span class="n">${escapar(i.nombre)}</span>` +
-      (i.cantidad ? `<span class="c">${escapar(i.cantidad)}</span>` : '') +
-      '</div>').join('')
+    g.items.map(i => {
+      const nombre = tramosEnLinea(i.nombre);
+      const cantidad = i.cantidad ? tramosEnLinea(i.cantidad) : [];
+      const c = textoDe(cantidad);
+      return `<div class="ing"><span class="n">${textoDe(nombre)}</span>` +
+        (c ? `<span class="c">${c}</span>` : '') +
+        tramosAHtml([...nombre, ...cantidad].filter(t => t.imagen)) +
+        '</div>';
+    }).join('')
   ).join('');
 
 const preparacion = (tramos: TramoPreparacion[]): string =>

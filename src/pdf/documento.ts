@@ -73,7 +73,7 @@ function fotoDeCabecera(receta: Receta, imagenes: Map<string, string>): Content[
   return dataUrl ? [{ image: dataUrl, fit: [ANCHO_UTIL, ALTO_FOTO], margin: [0, 0, 0, 6] }] : [];
 }
 
-/** El depósito entero al final, de a dos por fila (§10), en su orden. */
+/** El depósito entero, de a dos por fila (§10), en su orden. */
 function galeria(receta: Receta, imagenes: Map<string, string>): Content[] {
   const lado = (ANCHO_UTIL - AIRE_GALERIA) / 2;
   const fotos = receta.fotos.flatMap((f): Content[] => {
@@ -120,12 +120,23 @@ function cabecera(receta: Receta, categoria: string, imagenes: Map<string, strin
   };
 }
 
-function ingredientes(receta: Receta): Content[] {
+function ingredientes(receta: Receta, fotoDe: FotoDeTramo): Content[] {
   return gruposDe(receta.ingredientes).filter(g => g.items.length).flatMap(g => {
-    const items: Content[] = g.items.map(i => ({
-      ul: [{ text: [{ text: i.nombre }, ...(i.cantidad ? [{ text: `  ${i.cantidad}`, bold: true } as ContentText] : [])] }],
-      style: 'lista', unbreakable: true
-    }));
+    const items: Content[] = g.items.map(i => {
+      // El nombre y la cantidad son texto en línea como cualquier otra línea:
+      // pueden traer negrita, un link o la referencia a una foto.
+      const nombre = tramosEnLinea(i.nombre);
+      const cantidad = i.cantidad ? tramosEnLinea(i.cantidad) : [];
+      // La cantidad va en negrita y separada del nombre por dos espacios, que
+      // se pegan al primer tramo con texto: así sigue siendo un solo renglón.
+      const enNegrita = tramosAPdf(cantidad.filter(t => !t.imagen).map((t, n) => (n ? t : { ...t, texto: `  ${t.texto}` })))
+        .map((t): ContentText => ({ ...t, bold: true }));
+      const item: Content = {
+        ul: [{ text: [...tramosAPdf(nombre), ...enNegrita] }],
+        style: 'lista', unbreakable: true
+      };
+      return conFotos(item, fotosDeTramos([...nombre, ...cantidad], fotoDe));
+    });
     return g.nombre ? juntoAlPrimero([{ text: g.nombre.toUpperCase(), style: 'grupo' }], items) : items;
   });
 }
@@ -190,12 +201,13 @@ export function documentoPdf(receta: Receta, categoria: string, imagenes: Map<st
     content: [
       ...fotoDeCabecera(receta, imagenes),
       cabecera(receta, categoria, imagenes),
-      ...seccion('Ingredientes', ingredientes(receta)),
+      ...seccion('Ingredientes', ingredientes(receta, fotoDe)),
       ...seccion('Preparación', preparacion(receta, fotoDe)),
       ...seccion('Variaciones', variaciones(receta, fotoDe)),
       ...seccion('Notas', aPdf(receta.notas, fotoDe)),
-      ...receta.otras.flatMap(o => seccion(o.encabezado, aPdf(o.cuerpo, fotoDe))),
-      ...seccion('Fotos', galeria(receta, imagenes))
+      // Como en la pantalla: después de Notas y antes de las secciones ajenas.
+      ...seccion('Fotos', galeria(receta, imagenes)),
+      ...receta.otras.flatMap(o => seccion(o.encabezado, aPdf(o.cuerpo, fotoDe)))
     ]
   };
 }
