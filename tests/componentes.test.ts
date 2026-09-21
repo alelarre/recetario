@@ -427,4 +427,16 @@ describe('filaDeFotos: Cámara y Galería (P50)', () => {
     expect(filaDeFotos({ fotos: [], agregar: true })).not.toContain('Por URL');
     expect(filaDeFotos({ fotos: [], agregar: false, porUrl: true })).not.toContain('Por URL');
   });
+
+  it('las marcas de uso son de la receta: sin uso, la miniatura no lleva ninguna (P54)', () => {
+    const sinUso = filaDeFotos({ fotos: [{ url: 'https://ejemplo/a.jpg', n: 1 }], agregar: false });
+    expect(sinUso).not.toContain('miniatura-usos');
+    const conUso = filaDeFotos({
+      fotos: [{ url: 'https://ejemplo/a.jpg', n: 1, uso: { portada: true, enElTexto: false } }], agregar: false
+    });
+    expect(conUso).toContain(`<span class="miniatura-usos">${ICO.portada}</span>`);
+    expect(conUso).not.toContain(ICO.enElTexto);
+    // El número no se mueve de su esquina: la marca va arriba a la derecha.
+    expect(conUso).toContain('<span class="miniatura-n">#1</span>');
+  });
 });

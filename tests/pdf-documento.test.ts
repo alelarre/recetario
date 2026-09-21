@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parse } from '../src/recipe.js';
 import { documentoPdf } from '../src/pdf/documento.js';
+import type { FotoDeReceta } from '../src/tipos.js';
 
 const BABA = parse(readFileSync(new URL('./fixtures/baba-ganush.md', import.meta.url), 'utf8'));
 
@@ -25,12 +26,18 @@ Al día siguiente, al horno.
 - 2: https://x/paso.jpg
 - 3: https://x/otra.jpg
 - 4: https://x/sin-mapa.jpg
+- 5: https://x/suelta1.jpg
+- 6: https://x/suelta2.jpg
+- 7: https://x/suelta3.jpg
 `);
 
 const MAPA = new Map([
   ['https://x/portada.jpg', 'data:image/jpeg;base64,PORTADA'],
   ['https://x/paso.jpg', 'data:image/jpeg;base64,PASO'],
-  ['https://x/otra.jpg', 'data:image/jpeg;base64,OTRA']
+  ['https://x/otra.jpg', 'data:image/jpeg;base64,OTRA'],
+  ['https://x/suelta1.jpg', 'data:image/jpeg;base64,SUELTA1'],
+  ['https://x/suelta2.jpg', 'data:image/jpeg;base64,SUELTA2'],
+  ['https://x/suelta3.jpg', 'data:image/jpeg;base64,SUELTA3']
 ]);
 
 const mm = (v: number) => v * 72 / 25.4;
@@ -38,8 +45,14 @@ type Nodo = Record<string, unknown>;
 // `content` tipa como `Content`, cuyo union incluye variantes que no son
 // array (además de `Content[]`): la aserción directa a `Nodo[]` no
 // «sobrepone lo suficiente» para TS.
-const contenido = (r = BABA, imagenes = new Map<string, string>()) =>
-  documentoPdf(r, 'Entradas y picadas', imagenes).content as unknown as Nodo[];
+const contenido = (r = BABA, imagenes = new Map<string, string>(), galeria: FotoDeReceta[] = []) =>
+  documentoPdf(r, 'Entradas y picadas', imagenes, galeria).content as unknown as Nodo[];
+
+/** Las sin uso de `CON_FOTOS`: la portada, el paso y el ingrediente ya se dibujan en su lugar. */
+const SIN_USO: FotoDeReceta[] = [
+  { n: 4, url: 'https://x/sin-mapa.jpg' }, { n: 5, url: 'https://x/suelta1.jpg' },
+  { n: 6, url: 'https://x/suelta2.jpg' }, { n: 7, url: 'https://x/suelta3.jpg' }
+];
 // `JSON.stringify(undefined)` es `undefined`, no la cadena "undefined": los
 // nodos sin `stack` (la cabecera, que es una `table`) devuelven `undefined` en
 // `n['stack']?.[0]`, y sin este resguardo el `.includes()` de quien llama
@@ -48,7 +61,7 @@ const textoDe = (n: unknown): string => JSON.stringify(n) ?? '';
 
 describe('el documento del PDF', () => {
   it('página de 105 × 180 mm con fondo en todas las páginas', () => {
-    const d = documentoPdf(BABA, '', new Map());
+    const d = documentoPdf(BABA, '', new Map(), []);
     expect(d.pageSize).toEqual({ width: mm(105), height: mm(180) });
     expect(typeof d.background).toBe('function');
     expect(d.defaultStyle).toMatchObject({ font: 'Inter' });
@@ -132,7 +145,7 @@ describe('el documento del PDF', () => {
   });
 
   it('la galería va antes de las secciones ajenas, de a dos por fila', () => {
-    const nodos = contenido(CON_FOTOS, MAPA);
+    const nodos = contenido(CON_FOTOS, MAPA, SIN_USO);
     const indiceDe = (t: string) =>
       nodos.findIndex(n => textoDe((n['stack'] as unknown[] | undefined)?.[0]).includes(`"${t}"`));
     const titulo = indiceDe('Fotos');
@@ -146,10 +159,24 @@ describe('el documento del PDF', () => {
     expect((filas[1]?.['columns'] as unknown[]).length).toBe(1);
   });
 
+  it('la galería lleva sólo las sin uso: la portada y las de una línea no se repiten', () => {
+    const json = textoDe(contenido(CON_FOTOS, MAPA, SIN_USO));
+    const veces = (s: string) => json.split(s).length - 1;
+    // La portada, el paso y el ingrediente se dibujan una sola vez, en su lugar.
+    expect(veces('base64,PORTADA')).toBe(1);
+    expect(veces('base64,PASO')).toBe(1);
+    expect(veces('base64,OTRA')).toBe(1);
+    expect(veces('base64,SUELTA1')).toBe(1);
+  });
+
+  it('sin ninguna sin uso, la sección Fotos no se dibuja', () => {
+    expect(textoDe(contenido(CON_FOTOS, MAPA, []))).not.toContain('"Fotos"');
+  });
+
   it('una URL sin data URL no se dibuja', () => {
-    const json = textoDe(contenido(CON_FOTOS, MAPA));
+    const json = textoDe(contenido(CON_FOTOS, MAPA, SIN_USO));
     expect(json).not.toContain('sin-mapa');
-    expect(textoDe(contenido(CON_FOTOS))).not.toContain('"image"');
+    expect(textoDe(contenido(CON_FOTOS, new Map(), SIN_USO))).not.toContain('"image"');
   });
 
   it('los tramos de preparación con subtítulo reinician la numeración', () => {

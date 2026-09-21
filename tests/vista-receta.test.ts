@@ -62,6 +62,22 @@ Servir bien caliente.
 - 2: https://x/paso.jpg
 `);
 
+/** Con una foto ubicada en cada lado y dos que no están en ninguno: las del carrusel. */
+const CON_SOBRANTES = parse(`---
+titulo: Rabas
+foto: foto:1
+---
+
+## Ingredientes
+- Calamar — 500 g ![](foto:2)
+
+## Fotos
+- 1: https://x/portada.jpg
+- 2: https://x/ingrediente.jpg
+- 3: https://x/suelta.jpg
+- 4: https://x/otra.jpg
+`);
+
 describe('Receta en lectura', () => {
   it('el orden es foto, título, contexto, fuente, descripción, ingredientes, preparación, variaciones, notas', () => {
     const html = renderReceta({ entrada: null, receta: COMPLETA });
@@ -331,7 +347,7 @@ titulo: Pan
     expect(html).toContain('src="https://x/paso.jpg"');
   });
 
-  it('el depósito entero va en un carrusel dentro de la primera ficha, y no hay ficha Fotos al final', () => {
+  it('el carrusel va en un carrusel dentro de la primera ficha, y no hay ficha Fotos al final', () => {
     const conDesc = parse(
       '---\ntitulo: Rabas\nfuente: Un libro\n---\n\nUna entrada clásica.\n\n## Ingredientes\n- Sal\n\n' +
       '## Fotos\n- 1: https://x/a.jpg\n- 2: https://x/b.jpg\n'
@@ -346,10 +362,29 @@ titulo: Pan
   });
 
   it('cada foto del carrusel es un botón que abre el visor, con su número del depósito', () => {
-    const html = renderReceta({ entrada: null, receta: CON_FOTOS });
+    const html = renderReceta({ entrada: null, receta: CON_SOBRANTES });
     expect(html.match(/data-accion="ver-foto-receta"/g)).toHaveLength(3); // cabecera + 2 del carrusel
-    expect(html).toContain('data-n="1"');
-    expect(html).toContain('data-n="2"');
+    expect(html).toContain('data-n="3"');
+    expect(html).toContain('data-n="4"');
+  });
+
+  it('el carrusel lleva sólo las sin uso: la portada y la de un ingrediente no se repiten', () => {
+    const html = renderReceta({ entrada: null, receta: CON_SOBRANTES });
+    const carrusel = html.slice(html.indexOf('carrusel-fotos'), html.indexOf('carrusel-flecha'));
+    expect(carrusel).toContain('https://x/suelta.jpg');
+    expect(carrusel).toContain('https://x/otra.jpg');
+    expect(carrusel).not.toContain('https://x/portada.jpg');
+    expect(carrusel).not.toContain('https://x/ingrediente.jpg');
+    // Cada una sigue estando una sola vez en la pantalla entera.
+    expect(html.match(/https:\/\/x\/portada\.jpg/g)).toHaveLength(1);
+    expect(html.match(/https:\/\/x\/ingrediente\.jpg/g)).toHaveLength(1);
+  });
+
+  it('con todas ubicadas, el carrusel no se dibuja', () => {
+    const html = renderReceta({ entrada: null, receta: CON_FOTOS });
+    expect(html).not.toContain('carrusel-fotos');
+    // La ficha queda como antes de que existiera el carrusel.
+    expect(html.match(/data-accion="ver-foto-receta"/g)).toHaveLength(1);
   });
 
   it('cada foto del carrusel se llama por su número, no por su posición', () => {

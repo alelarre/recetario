@@ -88,6 +88,49 @@ describe('generar el PDF', () => {
     expect(json).toContain(`data:image/jpeg;base64,${btoa('externa')}`);
   });
 
+  it('la galería del final lleva sólo las sin uso: el uso se calcula sobre el `.md`, antes de resolver', async () => {
+    const conSuelta = parse(`---
+titulo: Rabas
+foto: foto:1
+---
+
+## Preparación
+1. Servir. ![](foto:2)
+
+## Fotos
+- 1: https://drive.google.com/file/d/abc/view
+- 2: https://x/plato.jpg
+- 3: https://x/suelta.jpg
+`);
+    vi.stubGlobal('location', { href: 'https://h/recetario/' });
+    vi.stubGlobal('fetch', async (u: string) => ({
+      ok: true, blob: async () => new Blob([u], { type: 'image/jpeg' })
+    }));
+    const { generar } = await import('../src/pdf/generar.js');
+    await generar(conSuelta, 'Pescados', {
+      imagenDe: async (id: string) => new Blob([`drive:${id}`], { type: 'image/jpeg' }),
+      achicar: async (b: Blob) => b
+    });
+    const json = JSON.stringify(llamadas.createPdf[0]);
+    const veces = (s: string) => json.split(s).length - 1;
+    // La portada y la del paso, una sola vez cada una; la suelta, en la galería.
+    expect(veces(btoa('drive:abc'))).toBe(1);
+    expect(veces(btoa('https://x/plato.jpg'))).toBe(1);
+    expect(veces(btoa('https://x/suelta.jpg'))).toBe(1);
+    expect(json).toContain('"Fotos"');
+  });
+
+  it('con todas ubicadas, la sección Fotos no se dibuja', async () => {
+    vi.stubGlobal('location', { href: 'https://h/recetario/' });
+    vi.stubGlobal('fetch', async () => ({ ok: true, blob: async () => new Blob(['x'], { type: 'image/jpeg' }) }));
+    const { generar } = await import('../src/pdf/generar.js');
+    await generar(CON_FOTOS, 'Pescados', {
+      imagenDe: async () => new Blob(['d'], { type: 'image/jpeg' }),
+      achicar: async (b: Blob) => b
+    });
+    expect(JSON.stringify(llamadas.createPdf[0])).not.toContain('"Fotos"');
+  });
+
   it('la foto que falla se omite, y el PDF se arma igual', async () => {
     // El `console.error` de cada foto omitida queda, pero acá es ruido esperado.
     vi.spyOn(console, 'error').mockImplementation(() => {});

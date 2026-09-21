@@ -8,7 +8,7 @@ import fuenteSemibold from './fuentes/Inter-SemiBold.ttf?url';
 import fuenteItalica from './fuentes/Inter-Italic.ttf?url';
 import { documentoPdf } from './documento.js';
 import { bloques } from '../ui/markdown.js';
-import { idDeDrive, resolverReceta } from '../fotos-receta.js';
+import { fotosSinUso, idDeDrive, resolverReceta } from '../fotos-receta.js';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import type { Receta } from '../tipos.js';
 
@@ -110,6 +110,8 @@ async function fotosDelPdf(receta: Receta, fotos: FotosDelPdf): Promise<Map<stri
 export async function generar(receta: Receta, categoria: string, fotos: FotosDelPdf): Promise<Blob> {
   // El documento se arma con la receta resuelta: `foto:N` es cosa del `.md`.
   const resuelta = resolverReceta(receta);
+  // El uso, sobre la receta cruda: en la resuelta ya no hay `foto:N` (P54).
+  const sinUso = fotosSinUso(receta);
   const [pdfMake, imagenes] = await Promise.all([precargar(), fotosDelPdf(resuelta, fotos)]);
-  return pdfMake.createPdf(documentoPdf(resuelta, categoria, imagenes)).getBlob();
+  return pdfMake.createPdf(documentoPdf(resuelta, categoria, imagenes, sinUso)).getBlob();
 }

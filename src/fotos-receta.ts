@@ -7,7 +7,7 @@
  * Módulo puro: no toca Drive ni el DOM. Lo consumen `recipe.ts` (parsear y
  * serializar la sección) y las pantallas que necesitan la receta ya resuelta.
  */
-import type { FotoDeReceta, Receta } from './tipos.js';
+import type { FotoDeReceta, Receta, UsoDeFoto } from './tipos.js';
 
 /** El link de Drive de una foto, para quien la lea con el conector de Drive. */
 export const linkDeFoto = (id: string): string =>
@@ -106,6 +106,44 @@ export function resolverReceta(receta: Receta): Receta {
     notas: resolverTexto(receta.notas, receta.fotos),
     otras: receta.otras.map(o => ({ ...o, cuerpo: resolverTexto(o.cuerpo, receta.fotos) }))
   };
+}
+
+/** Cada sección del cuerpo, las ajenas incluidas: donde puede haber una referencia. */
+const textosDe = (receta: Receta): string[] =>
+  [receta.descripcion, receta.ingredientes, receta.preparacion, receta.variaciones, receta.notas,
+    ...receta.otras.map(o => o.cuerpo)];
+
+/**
+ * En qué se usa cada foto del depósito, por número. **Va sobre la receta
+ * cruda**, la que salió de `parse`: después de `resolverReceta` no queda
+ * ninguna `foto:N` que buscar. Es lo único que decide el uso; nadie más
+ * vuelve a buscar referencias por su cuenta.
+ *
+ * Una `foto:` o una referencia que apuntan a un número que no está en el
+ * depósito no marcan nada: el mapa tiene una entrada por foto y ninguna más.
+ */
+export function usosDeFotos(receta: Receta): Map<number, UsoDeFoto> {
+  const portada = receta.foto?.match(PATRON_FOTO_N)?.[1];
+  const enElTexto = new Set<number>();
+  for (const texto of textosDe(receta))
+    for (const m of texto.matchAll(PATRON_REFERENCIA)) enElTexto.add(Number(m[2]));
+  return new Map(receta.fotos.map(f => [f.n, {
+    portada: portada !== undefined && Number(portada) === f.n,
+    enElTexto: enElTexto.has(f.n)
+  }]));
+}
+
+/**
+ * Las fotos que no usa ni la cabecera ni el texto, en el orden del depósito:
+ * las únicas que se muestran aparte —el carrusel de la receta, la galería del
+ * PDF—, porque las demás ya se ven donde van.
+ */
+export function fotosSinUso(receta: Receta): FotoDeReceta[] {
+  const usos = usosDeFotos(receta);
+  return receta.fotos.filter(f => {
+    const uso = usos.get(f.n);
+    return !uso || (!uso.portada && !uso.enElTexto);
+  });
 }
 
 /** Una imagen markdown con destino `http(s)`, ya resuelta: `![epígrafe](url)`. */

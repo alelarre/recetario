@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { recetaFalsa } from './dobles.js';
 import {
   linkDeFoto, idDeDrive, parsearFotos, serializarFotos, siguienteNumero,
-  resolver, resolverReceta, sinFotosDeDrive, lineaDelCursor, ponerEn, sacarReferencias
+  resolver, resolverReceta, sinFotosDeDrive, lineaDelCursor, ponerEn, sacarReferencias,
+  usosDeFotos, fotosSinUso
 } from '../src/fotos-receta.js';
 
 describe('linkDeFoto / idDeDrive', () => {
@@ -161,6 +162,74 @@ describe('sinFotosDeDrive', () => {
     const limpia = sinFotosDeDrive(receta);
     expect(limpia.foto).toBe('https://externa.com/portada.jpg');
     expect(limpia.fotos).toEqual([{ n: 1, url: 'https://externa.com/x.jpg' }]);
+  });
+});
+
+describe('usosDeFotos', () => {
+  const fotos = [
+    { n: 1, url: 'https://a.com/1.jpg' }, { n: 2, url: 'https://a.com/2.jpg' },
+    { n: 3, url: 'https://a.com/3.jpg' }, { n: 4, url: 'https://a.com/4.jpg' }
+  ];
+
+  it('portada, en el texto, las dos, y ninguna', () => {
+    const receta = recetaFalsa({
+      foto: 'foto:1',
+      ingredientes: '- Harina — 1kg ![](foto:2)',
+      preparacion: '1. Mezclar ![Así queda](foto:1)',
+      fotos
+    });
+    const usos = usosDeFotos(receta);
+    expect(usos.get(1)).toEqual({ portada: true, enElTexto: true });
+    expect(usos.get(2)).toEqual({ portada: false, enElTexto: true });
+    expect(usos.get(3)).toEqual({ portada: false, enElTexto: false });
+  });
+
+  it('mira todas las secciones: descripción, notas, variaciones y las ajenas', () => {
+    const receta = recetaFalsa({
+      descripcion: 'Mirá ![](foto:1)',
+      variaciones: '- Con queso ![](foto:2)',
+      notas: 'Ojo ![](foto:3)',
+      otras: [{ encabezado: 'Maridaje', cuerpo: 'Un malbec ![](foto:4)' }],
+      fotos
+    });
+    const usos = usosDeFotos(receta);
+    for (const n of [1, 2, 3, 4]) expect(usos.get(n)?.enElTexto, `foto ${n}`).toBe(true);
+  });
+
+  it('una cabecera con una URL externa no marca a ninguna del depósito', () => {
+    const usos = usosDeFotos(recetaFalsa({ foto: 'https://externa.com/x.jpg', fotos }));
+    expect([...usos.values()].every(u => !u.portada)).toBe(true);
+  });
+
+  it('una `foto:` que apunta a un número que no está no agrega nada al mapa', () => {
+    const usos = usosDeFotos(recetaFalsa({ foto: 'foto:9', preparacion: '1. Paso ![](foto:8)', fotos }));
+    expect([...usos.keys()]).toEqual([1, 2, 3, 4]);
+    expect([...usos.values()].every(u => !u.portada && !u.enElTexto)).toBe(true);
+  });
+
+  it('sin depósito, el mapa queda vacío', () => {
+    expect(usosDeFotos(recetaFalsa({ foto: 'foto:1' })).size).toBe(0);
+  });
+});
+
+describe('fotosSinUso', () => {
+  const fotos = [
+    { n: 1, url: 'https://a.com/1.jpg' }, { n: 2, url: 'https://a.com/2.jpg' },
+    { n: 3, url: 'https://a.com/3.jpg' }
+  ];
+
+  it('deja las que no nombra ni la cabecera ni el texto, en el orden del depósito', () => {
+    const receta = recetaFalsa({ foto: 'foto:2', notas: 'Ver ![](foto:1)', fotos });
+    expect(fotosSinUso(receta)).toEqual([{ n: 3, url: 'https://a.com/3.jpg' }]);
+  });
+
+  it('con todas ubicadas no queda ninguna', () => {
+    const receta = recetaFalsa({ foto: 'foto:1', preparacion: '1. a ![](foto:2)\n2. b ![](foto:3)', fotos });
+    expect(fotosSinUso(receta)).toEqual([]);
+  });
+
+  it('sin cabecera ni referencias, son todas', () => {
+    expect(fotosSinUso(recetaFalsa({ fotos }))).toEqual(fotos);
   });
 });
 

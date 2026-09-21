@@ -4,7 +4,7 @@
  * de su lista; una acción nueva de la app no llega acá aunque use el mismo nombre.
  */
 import { pintar, conClosest, desplazarCarrusel } from './ui/pintar.js';
-import { renderInvitado, renderLinkRoto } from './ui/invitado.js';
+import { renderInvitado, renderLinkRoto, carruselDeInvitado } from './ui/invitado.js';
 import { renderCocina } from './ui/cocina.js';
 import { rutaDeInvitado } from './ui/router.js';
 import { pasoDelVisor } from './ui/visor.js';
@@ -25,8 +25,13 @@ export const ACCIONES_DE_INVITADO = [
 
 export function iniciarInvitado(): void {
   const cocina = crearControlCocina();
-  /** La receta decodificada, por carga: los redibujados no vuelven a descomprimir. */
-  let leida: { carga: string; receta: Receta; categoria: string } | null = null;
+  /**
+   * La receta decodificada, por carga: los redibujados no vuelven a
+   * descomprimir. `cruda` es la del link, con sus `foto:N`: es sobre esa que
+   * se calcula el uso de cada foto. `receta` es la misma ya resuelta y sin
+   * nada de Drive, que es lo que se dibuja.
+   */
+  let leida: { carga: string; cruda: Receta; receta: Receta; categoria: string } | null = null;
   let vistaAnterior: 'lectura' | 'cocina' | null = null;
   /** El visor de fotos abierto, o nada. Sólo en la lectura: en la cocina un toque marca el paso. */
   let visor: EstadoVisor | null = null;
@@ -36,14 +41,17 @@ export function iniciarInvitado(): void {
   let deslizoElVisor = false;
 
   /**
-   * Abre el visor en la foto `n` del depósito, para deslizar entre todas. Sin
-   * número —o con uno que no está—, una cabecera externa se abre sola (§7).
+   * Abre el visor con lo que se tocó (§7): una foto del carrusel desliza entre
+   * las del carrusel; la portada —que nunca está ahí— se abre sola.
    */
-  function abrirVisor(receta: Receta, marca: string | undefined): void {
+  function abrirVisor(marca: string | undefined): void {
+    if (!leida) return;
+    const carrusel = carruselDeInvitado(leida.cruda);
     const n = marca === undefined ? undefined : Number(marca);
-    const i = n === undefined ? -1 : receta.fotos.findIndex(f => f.n === n);
-    if (i >= 0) visor = { urls: receta.fotos.map(f => f.url), i };
-    else if (receta.foto) visor = { urls: [receta.foto], i: 0 };
+    const i = n === undefined ? -1 : carrusel.findIndex(f => f.n === n);
+    if (i >= 0) { visor = { urls: carrusel.map(f => f.url), i }; return; }
+    const sola = (n === undefined ? undefined : leida.receta.fotos.find(f => f.n === n)?.url) ?? leida.receta.foto;
+    if (sola) visor = { urls: [sola], i: 0 };
   }
 
   async function render(): Promise<void> {
@@ -56,7 +64,9 @@ export function iniciarInvitado(): void {
       const datos = await decodificar(ruta.carga);
       // Sin fotos de Drive desde el arranque (§10): ni la lectura, ni la
       // cocina, ni el visor tienen después nada que pedirle a Drive.
-      leida = datos ? { carga: ruta.carga, ...datos, receta: sinFotosDeDrive(datos.receta) } : null;
+      leida = datos
+        ? { carga: ruta.carga, ...datos, cruda: datos.receta, receta: sinFotosDeDrive(datos.receta) }
+        : null;
       visor = null;
     }
     if (!leida) {
@@ -72,7 +82,9 @@ export function iniciarInvitado(): void {
       visor = null;
     }
     if (ruta.vista === 'lectura') {
-      return pintar(renderInvitado({ receta: leida.receta, categoria: leida.categoria, ...(visor ? { visor } : {}) }));
+      // La cruda: `renderInvitado` resuelve y limpia, y necesita las `foto:N`
+      // para saber cuáles están ubicadas y cuáles van al carrusel (P54).
+      return pintar(renderInvitado({ receta: leida.cruda, categoria: leida.categoria, ...(visor ? { visor } : {}) }));
     }
     return pintar(renderCocina({ receta: leida.receta, ...cocina.estado(), salidas: 'solo-volver' }));
   }
@@ -115,7 +127,7 @@ export function iniciarInvitado(): void {
     // Las fotos que viajaron en el link (§7): la cabecera y las del carrusel
     // abren el visor, y se cierra tocando en cualquier parte.
     if (accion === 'ver-foto-receta') {
-      abrirVisor(leida.receta, boton.dataset['n']);
+      abrirVisor(boton.dataset['n']);
       return render();
     }
     if (accion === 'carrusel-izq' || accion === 'carrusel-der') {

@@ -18,7 +18,7 @@ import {
   DURACIONES, duracionValida
 } from '../catalogo.js';
 import { sePuedeTerminar } from '../recipe.js';
-import { resolver } from '../fotos-receta.js';
+import { resolver, usosDeFotos } from '../fotos-receta.js';
 import type { Receta, Entrada, FotoDeReceta } from '../tipos.js';
 import type { Categoria } from '../store.js';
 
@@ -128,20 +128,42 @@ function campoPortada(foto: string | null, fotos: FotoDeReceta[]): string {
  * `filaDeFotosEditor` va aparte porque `main` la redibuja sola —al agregar o
  * sacar una foto— sin tocar el resto del formulario.
  */
-export const filaDeFotosEditor = (fotos: FotoDeReceta[]): string =>
-  filaDeFotos({
-    fotos: fotos.map(f => ({
+export const filaDeFotosEditor = (receta: Receta): string => {
+  // El uso sale de la receta entera —la cabecera y todas las secciones—, no
+  // del depósito: por eso esto recibe la receta y no la lista de fotos (P54).
+  const usos = usosDeFotos(receta);
+  return filaDeFotos({
+    fotos: receta.fotos.map(f => ({
       url: f.url, n: f.n,
+      uso: usos.get(f.n) ?? { portada: false, enElTexto: false },
       ver: { accion: 'acciones-foto', etiqueta: `Qué hacer con la foto ${f.n}` }
     })),
     agregar: true,
     porUrl: true
   });
+};
 
-function fichaFotos(fotos: FotoDeReceta[]): string {
+/** Un ícono en línea con el texto del epígrafe, no en una fila aparte. */
+const enLinea = (ico: string): string => `<span class="ico-linea">${ico}</span>`;
+
+/**
+ * Qué quiere decir cada marca de la fila, debajo de ella. Es **un párrafo**
+ * con los íconos adentro: la última línea corta como cualquier texto, en vez
+ * de estirarse o partir una palabra como lo haría una fila de flex.
+ */
+const AYUDA_DE_FOTOS =
+  '<p class="fotos-ayuda">' +
+  `${enLinea(ICO.portada)} es la portada<br>` +
+  `${enLinea(ICO.enElTexto)} está en un paso o un ingrediente<br>` +
+  'Las que no tienen marca solo se ven en el carrusel de la receta: para poner una en un paso, tocá el ' +
+  `${enLinea(ICO.imagen)} que aparece al costado del renglón que estás escribiendo.` +
+  '</p>';
+
+function fichaFotos(receta: Receta): string {
   return '<div class="ficha"><h2>Fotos</h2>' +
-    filaDeFotosEditor(fotos) +
-    `<input type="hidden" name="fotos" value="${escapar(JSON.stringify(fotos))}">` +
+    filaDeFotosEditor(receta) +
+    AYUDA_DE_FOTOS +
+    `<input type="hidden" name="fotos" value="${escapar(JSON.stringify(receta.fotos))}">` +
   '</div>';
 }
 
@@ -402,7 +424,7 @@ export function renderEditor(
     // esto Enter en cualquier campo de texto recargaría la página.
     '<form class="cuerpo" data-formulario onsubmit="return false">' +
       (error ? avisoAlGuardar(error) : '') +
-      datos + contenido + fichaFotos(receta.fotos) + borrar +
+      datos + contenido + fichaFotos(receta) + borrar +
     '</form>';
 }
 

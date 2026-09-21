@@ -15,7 +15,7 @@ import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones } from './f
 import { renderFichaCompartir } from './compartir.js';
 import { renderVisor } from './visor.js';
 import { esFavorita, tagEspecial } from '../catalogo.js';
-import { resolverReceta } from '../fotos-receta.js';
+import { fotosSinUso, resolverReceta } from '../fotos-receta.js';
 // El logo de Drive, en el repo y no pedido a `gstatic.com`: una dependencia de
 // red para 513 bytes es una dependencia de más, y así entra a `/assets/`, que es
 // lo único que el service worker sirve caché-primero. Es el favicon que publica
@@ -61,6 +61,9 @@ export function renderReceta({ entrada, receta: sinResolver, compartir, favorito
   // La cabecera y el cuerpo sólo ven la receta resuelta (§3): ni `fichaCabecera`
   // ni `fichasDelCuerpo` saben de `foto:N`, eso es cosa de acá.
   const receta = resolverReceta(sinResolver);
+  // El uso se calcula antes de resolver: después ya no hay ninguna `foto:N`
+  // que buscar, ni en la cabecera ni en el texto (P54).
+  const carrusel = fotosSinUso(sinResolver);
   const categoria = entrada?.categoria ?? '';
   // Los tags, con los especiales primero y con su ícono. Incompleta es
   // uno más: su chip abre el editor. Favorito no va: ya lo dice la estrella del
@@ -89,7 +92,7 @@ export function renderReceta({ entrada, receta: sinResolver, compartir, favorito
   return encabezado({ titulo: '', volver: true, pegajoso: true, derecha: estrella + botonCompartir + alArchivo }) +
     '<div class="cuerpo">' +
       (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'favorito' } }) : '') +
-      fichaCabecera({ receta, categoria, marcas }) + fichasDelCuerpo(receta) +
+      fichaCabecera({ receta, categoria, marcas, carrusel }) + fichasDelCuerpo(receta) +
     '</div>' +
     pieDeAcciones(botonCocinar(receta) + `<button class="btn sec" data-accion="editar">${ICO.lapiz}Editar</button>`) +
     (compartir ? renderFichaCompartir(compartir) : '') +

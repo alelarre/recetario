@@ -323,6 +323,10 @@ Masa madre, 24 horas.
 - 3: https://ejemplo.com/pan.jpg
 `;
 
+/** El contenido de cada `.miniatura` de la fila, en su orden. */
+const miniaturas = (html: string): string[] =>
+  html.split('<div class="miniatura">').slice(1).map(s => s.slice(0, s.indexOf('</div>')));
+
 describe('las fotos en el editor', () => {
   const conFotos = parse(MD_CON_FOTOS);
   const dibujarFotos = (receta = conFotos) =>
@@ -335,7 +339,7 @@ describe('las fotos en el editor', () => {
     expect(html).toContain('data-accion="acciones-foto" data-n="3"');
     // El badge lleva el número del depósito, no la posición en la fila, y va
     // adentro del botón: tocarlo es tocar la foto.
-    expect(html).toContain('<span class="miniatura-n">#3</span></button>');
+    expect(html).toContain('<span class="miniatura-n">#3</span>');
     // La foto 3 se anuncia como la 3, y la etiqueta dice que abre las acciones.
     expect(html).toContain('aria-label="Qué hacer con la foto 3"');
     expect(html).toContain('Cámara');
@@ -343,6 +347,57 @@ describe('las fotos en el editor', () => {
     // El tercer control: agregar una foto por URL, que la app baja y guarda.
     expect(html).toContain('data-accion="abrir-foto-url"');
     expect(html).toContain('Por URL');
+  });
+
+  it('cada miniatura lleva un ícono por uso, y las dos si es las dos cosas (P54)', () => {
+    const r = parse(`---
+titulo: Pan
+foto: foto:1
+---
+
+## Ingredientes
+- Harina — 1 kg ![](foto:1)
+
+## Preparación
+1. Mezclar ![](foto:2)
+
+## Fotos
+- 1: https://x/a.jpg
+- 2: https://x/b.jpg
+- 3: https://x/c.jpg
+`);
+    const minis = miniaturas(dibujarFotos(r));
+    expect(minis).toHaveLength(3);
+    // La 1 es portada y está en un ingrediente; la 2, sólo en un paso.
+    expect(minis[0]).toContain(ICO.portada);
+    expect(minis[0]).toContain(ICO.enElTexto);
+    expect(minis[1]).not.toContain(ICO.portada);
+    expect(minis[1]).toContain(ICO.enElTexto);
+    // La 3 no se usa en ningún lado: sin marca.
+    expect(minis[2]).not.toContain('miniatura-usos');
+    // El número sigue igual, y las marcas van sobre el mismo fondo oscuro.
+    expect(minis[0]).toContain('<span class="miniatura-n">#1</span>');
+    expect(minis[0]).toContain('<span class="miniatura-usos">');
+  });
+
+  it('una sección ajena también cuenta: una foto puesta ahí no queda sin marca', () => {
+    const r = parse('---\ntitulo: Pan\n---\n\n## Maridaje\nUn malbec ![](foto:1)\n\n## Fotos\n- 1: https://x/a.jpg\n');
+    expect(miniaturas(dibujarFotos(r))[0]).toContain(ICO.enElTexto);
+  });
+
+  it('debajo de la fila va el epígrafe, con los íconos en línea con el texto', () => {
+    const html = dibujarFotos();
+    expect(html.indexOf('class="fotos-campo"')).toBeLessThan(html.indexOf('class="fotos-ayuda"'));
+    const ayuda = html.slice(html.indexOf('class="fotos-ayuda"'));
+    expect(ayuda).toContain(`<span class="ico-linea">${ICO.portada}</span> es la portada`);
+    expect(ayuda).toContain(`<span class="ico-linea">${ICO.enElTexto}</span> está en un paso o un ingrediente`);
+    expect(ayuda).toContain(
+      'Las que no tienen marca solo se ven en el carrusel de la receta: para poner una en un paso, tocá el ' +
+      `<span class="ico-linea">${ICO.imagen}</span> que aparece al costado del renglón que estás escribiendo.`
+    );
+    // Un párrafo, no una fila de flex: la última línea corta como cualquier texto.
+    expect(ayuda.slice(0, ayuda.indexOf('>'))).toContain('fotos-ayuda');
+    expect(html).toContain('<p class="fotos-ayuda">');
   });
 
   it('nada del formulario lo manda: ni los botones de la fila ni Enter en un campo', () => {

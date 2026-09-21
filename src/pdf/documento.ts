@@ -10,7 +10,7 @@ import type { Content, ContentCanvas, ContentText, TDocumentDefinitions } from '
 import { aPdf, conFotos, fotosDeTramos, tramosAPdf, tramosDeFuente, tramosEnLinea } from '../ui/markdown.js';
 import { contextoDe, gruposDe, tramosDe, variacionesDe } from '../recipe.js';
 import type { FotoDeTramo } from '../ui/markdown.js';
-import type { Receta } from '../tipos.js';
+import type { FotoDeReceta, Receta } from '../tipos.js';
 
 const mm = (v: number): number => v * 72 / 25.4;
 const ANCHO = mm(105);
@@ -73,10 +73,14 @@ function fotoDeCabecera(receta: Receta, imagenes: Map<string, string>): Content[
   return dataUrl ? [{ image: dataUrl, fit: [ANCHO_UTIL, ALTO_FOTO], margin: [0, 0, 0, 6] }] : [];
 }
 
-/** El depósito entero, de a dos por fila (§10), en su orden. */
-function galeria(receta: Receta, imagenes: Map<string, string>): Content[] {
+/**
+ * Las fotos sin uso, de a dos por fila (§10), en el orden del depósito. La
+ * portada ya está arriba y las de una línea están en su línea: repetirlas acá
+ * sería dibujarlas dos veces (P54). Sin ninguna, `seccion` no dibuja nada.
+ */
+function galeria(sinUso: FotoDeReceta[], imagenes: Map<string, string>): Content[] {
   const lado = (ANCHO_UTIL - AIRE_GALERIA) / 2;
-  const fotos = receta.fotos.flatMap((f): Content[] => {
+  const fotos = sinUso.flatMap((f): Content[] => {
     const dataUrl = imagenes.get(f.url);
     return dataUrl ? [{ image: dataUrl, fit: [lado, lado] }] : [];
   });
@@ -175,8 +179,14 @@ function variaciones(receta: Receta, fotoDe: FotoDeTramo): Content[] {
 /**
  * `imagenes` es una URL de la receta resuelta por su data URL, ya achicada
  * (`generar`). Una URL que no está no se dibuja: no se pudo bajar (§10).
+ *
+ * `sinUso` son las fotos de la galería del final: las calcula `generar` sobre
+ * el `.md` crudo (`fotosSinUso`), porque acá la receta ya viene resuelta y no
+ * queda ninguna `foto:N` que buscar.
  */
-export function documentoPdf(receta: Receta, categoria: string, imagenes: Map<string, string>): TDocumentDefinitions {
+export function documentoPdf(
+  receta: Receta, categoria: string, imagenes: Map<string, string>, sinUso: FotoDeReceta[]
+): TDocumentDefinitions {
   const fotoDe = fotoEnLinea(imagenes, ANCHO_UTIL);
   return {
     pageSize: { width: ANCHO, height: ALTO },
@@ -206,7 +216,7 @@ export function documentoPdf(receta: Receta, categoria: string, imagenes: Map<st
       ...seccion('Variaciones', variaciones(receta, fotoDe)),
       ...seccion('Notas', aPdf(receta.notas, fotoDe)),
       // Como en la pantalla: después de Notas y antes de las secciones ajenas.
-      ...seccion('Fotos', galeria(receta, imagenes)),
+      ...seccion('Fotos', galeria(sinUso, imagenes)),
       ...receta.otras.flatMap(o => seccion(o.encabezado, aPdf(o.cuerpo, fotoDe)))
     ]
   };

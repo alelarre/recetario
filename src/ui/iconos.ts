@@ -60,6 +60,16 @@ export const ICO = {
   link: svg('<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>' +
     '<path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>'),
 
+  /**
+   * Las dos marcas de uso de una foto del depósito (P54). **Portada** es la
+   * ficha con un señalador adentro, y no una estrella: en esta app la estrella
+   * es favorita. **En el texto** son tres renglones: la foto está puesta en una
+   * línea, un paso o un ingrediente.
+   */
+  portada: svg('<path d="M9 4h6v9l-3-2-3 2z" fill="currentColor" stroke="none"/>' +
+    '<rect x="4" y="4" width="16" height="16" rx="2"/>'),
+  enElTexto: svg('<path d="M4 7h10M4 12h16M4 17h7"/>'),
+
   /** *Galería*: dos fotos, una detrás de la otra. Es el botón que elige una del teléfono. De Lucide (images). */
   galeria: svg('<path d="M8 3h11a2 2 0 012 2v11"/>' +
     '<rect x="3" y="7" width="14" height="14" rx="2"/><circle cx="8" cy="12" r="1.3"/>' +

@@ -38,6 +38,21 @@ foto: foto:2
 - 2: https://x/plato.jpg
 `);
 
+/** Dos sin uso: una externa, que viaja, y una de Drive, que no. */
+const CON_SOBRANTES = parse(`---
+titulo: Rabas
+foto: foto:2
+---
+
+## Preparación
+1. Freír.
+
+## Fotos
+- 1: https://drive.google.com/file/d/abc/view
+- 2: https://x/plato.jpg
+- 3: https://x/suelta.jpg
+`);
+
 const acciones = (html: string): string[] => [...html.matchAll(/data-accion="([^"]+)"/g)].map(m => m[1] ?? '');
 
 describe('La vista de invitado', () => {
@@ -91,12 +106,19 @@ describe('La vista de invitado', () => {
     expect(html).not.toContain('drive.google.com');
   });
 
-  it('el carrusel de la primera ficha es el de las fotos que viajaron', () => {
-    const html = renderInvitado({ receta: CON_FOTOS, categoria: '' });
+  it('el carrusel de la primera ficha lleva sólo las sin uso que viajaron', () => {
+    const html = renderInvitado({ receta: CON_SOBRANTES, categoria: '' });
     expect(html).not.toContain('<h2>Fotos</h2>');
     expect(html).toContain('carrusel-fotos');
+    // Ni la portada —que ya está arriba— ni la de Drive, que no viajó.
     expect(html.match(/class="carrusel-foto"/g)).toHaveLength(1);
+    expect(html).toContain('src="https://x/suelta.jpg"');
+    expect(html).not.toContain('data-drive');
     expect(html.indexOf('carrusel-fotos')).toBeLessThan(html.indexOf('<h2>Preparación</h2>'));
+  });
+
+  it('con todas ubicadas, el carrusel no se dibuja', () => {
+    expect(renderInvitado({ receta: CON_FOTOS, categoria: '' })).not.toContain('carrusel-fotos');
   });
 
   it('sin fotos no hay carrusel', () => {

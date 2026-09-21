@@ -291,6 +291,8 @@ carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chi
 | `cerrar` | La cruz: la del chip removible del editor, la que limpia la búsqueda y la que saca una foto del borrador. |
 | `camara` | *Cámara*, en la fila de fotos de la captura, el borrador y el editor de recetas (§6.25), y *Subir foto* al elegir la de una categoría (§6.4). |
 | `imagen` | El botón que pone en una línea una foto que ya está en el depósito (§6.9b). Es una foto sacada y no la cámara: no agrega ninguna. |
+| `portada` | La marca de la foto que es la portada, en la fila de fotos del editor (§6.25). Una ficha con un señalador adentro; el señalador va relleno con `currentColor`. **No es una estrella:** en esta app la estrella es favorito. |
+| `enElTexto` | La marca de la foto que está puesta en un paso o un ingrediente (§6.25). Tres renglones de largo distinto. |
 | `link` | *Por URL*, en la fila de fotos del editor de recetas (§6.25): agregar una foto pegando su dirección. Dos eslabones. |
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `zanahoria`, `listaNumerada` | Las dos posiciones del conmutador de cocina —*Ingredientes* y *Pasos*—, al lado de la palabra. |
@@ -1145,21 +1147,39 @@ la miniatura, adentro del botón: un badge de `--velo` al 75 %, `--r-chico`,
 *micro* en `--fg`, de 18 px de alto, con el numeral delante —`#3`—. Es con el
 que se nombra a la foto en el texto, así que se lee sobre cualquiera.
 
+**Las marcas de uso** van en la esquina de enfrente, arriba a la derecha, y
+sólo en la ficha *Fotos* de una receta: el mismo badge de `--velo` al 75 % y
+`--r-chico`, de 18 px de alto, con los íconos `portada` y `enElTexto` (§3.4) a
+13 px en `--fg` —los dos si la foto es las dos cosas, ninguno si no se usa—.
+Van arriba a la derecha porque es la esquina que queda libre: la × de sacar,
+que ocupa ese lugar en el borrador, no existe en la ficha *Fotos*.
+
+**El epígrafe de la ficha *Fotos*** va debajo de la fila, en *micro* `--fg-3`,
+con `--e-3` arriba y un interlineado de 1,8. Es **un párrafo**, no una fila de
+flex: los íconos van en línea con el texto —`inline-block` de 1,15 em con
+`vertical-align: -0.22em`—, así el párrafo corta como cualquier texto y la
+última línea no queda ni estirada ni partida a la mitad de una palabra.
+
 **El visor** abre la foto tocada: fija sobre toda la pantalla, encima de todo,
 sobre `--velo` al 94 %, con la foto entera al ancho —o al alto— de la pantalla,
-sin recortar. Se cierra tocando cualquier lado. **En una receta desliza**: el
-dedo pasa a la foto siguiente o a la anterior, sin dar la vuelta en los
-extremos, y ese gesto no la cierra. Es estado de la pantalla, no una ruta.
+sin recortar. Se cierra tocando cualquier lado. **Desliza entre lo que se
+tocó**: desde el carrusel de una receta, entre las del carrusel; desde la fila
+de fotos del editor o de un borrador, entre las de la fila; una foto que no es
+de una tira —la portada, la de un paso— se abre sola. El dedo pasa a la
+siguiente o a la anterior, sin dar la vuelta en los extremos, y ese gesto no la
+cierra. Es estado de la pantalla, no una ruta.
 
 ### 6.26 Las fotos de la receta
 
-**El carrusel de fotos** es el depósito entero dentro de la primera ficha,
+**El carrusel de fotos** son las fotos **sin uso** dentro de la primera ficha,
 debajo de la descripción y arriba del divisor de la fuente. Es el carrusel de
 §6.21 con las fotos adentro: cada una un cuadrado de **66 px**
 (`object-fit: cover`) sobre `--surface-alta`, con `--r-foto` —entran cinco en el
 ancho de un teléfono, y el visor es el que las muestra grandes—, y el degradé
-va a `--surface`, que es el fondo de la ficha. Cada foto abre el visor en la
-suya. Sin depósito no se dibuja.
+va a `--surface`, que es el fondo de la ficha. Cada foto abre el visor
+recorriendo las del carrusel. **Sólo las sin uso:** la portada está arriba y
+las puestas en una línea están en su línea, así que ninguna se dibuja dos
+veces. Sin ninguna sin uso —o sin depósito— no se dibuja.
 
 **La galería** es una grilla de **tres columnas** con `--e-2` de separación,
 cada foto cuadrada (`object-fit: cover`) sobre `--surface-alta`, con

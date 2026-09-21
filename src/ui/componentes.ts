@@ -11,7 +11,7 @@ import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
 import { ICO, ICONO_DE_DURACION } from './iconos.js';
 import { textoVersion } from '../version.js';
 import { tagEspecial, ordenarTags, tieneEspecial, TAGS_ESPECIALES, duracionValida, DURACIONES } from '../catalogo.js';
-import type { Entrada } from '../tipos.js';
+import type { Entrada, UsoDeFoto } from '../tipos.js';
 import type { TagEspecial, Duracion, Orden } from '../catalogo.js';
 
 /** La duración con su relojito, o nada si el tiempo no es uno de los cinco valores. */
@@ -386,6 +386,11 @@ export interface Miniatura {
   ver?: AccionDeMiniatura;
   /** Su número en el depósito de la receta: el badge, y `data-n` en los botones. */
   n?: number;
+  /**
+   * En qué se usa la foto (`usosDeFotos`): una marca por uso, arriba a la
+   * derecha. Es de la receta; las de un borrador no tienen uso.
+   */
+  uso?: UsoDeFoto;
 }
 
 /**
@@ -430,8 +435,12 @@ export function filaDeFotos(
       // Sin URL, el `<img>` queda vacío y marcado con su número: recién
       // subida no hay nada que pedirle a Drive todavía.
       : f.url === '' ? `<img data-n="${f.n}" alt="Foto ${cual}">` : imgDe(f.url);
+    // Las marcas de uso, arriba a la derecha y sobre el mismo fondo oscuro que
+    // el número: una foto sin uso no lleva ninguna, y la esquina queda limpia.
+    const marcas = (f.uso?.portada ? ICO.portada : '') + (f.uso?.enElTexto ? ICO.enElTexto : '');
     // El número va adentro del botón: encima de la foto, tocarlo es tocarla.
-    const contenido = imagen + (f.n === undefined ? '' : `<span class="miniatura-n">#${f.n}</span>`);
+    const contenido = imagen + (f.n === undefined ? '' : `<span class="miniatura-n">#${f.n}</span>`) +
+      (marcas ? `<span class="miniatura-usos">${marcas}</span>` : '');
     const cuerpo = f.ver && f.url !== null
       ? `<button type="button" class="miniatura-ver"${datosDeAccion(f.ver, f.n)} ` +
         `aria-label="${escapar(f.ver.etiqueta ?? `Ver la foto ${cual}`)}">${contenido}</button>`

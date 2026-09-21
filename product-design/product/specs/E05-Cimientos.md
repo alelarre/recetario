@@ -141,7 +141,7 @@ receta no tiene cabecera.
 - [ ] Se reconocen `## Ingredientes`, `## Preparación`, `## Variaciones` y `## Notas`.
 - [ ] Los `###` dentro de Ingredientes son grupos; dentro de Variaciones, variaciones; **dentro de Preparación, tramos con nombre**, y la numeración de los pasos vuelve a empezar en cada uno.
 - [ ] `## Variaciones` puede traer una lista de bullets en vez de secciones `###`, y entonces se muestra como lista.
-- [ ] **`## Fotos` es el depósito** (C05.1.5) y no texto: no se muestra como sección de la receta —sus fotos se dibujan en el carrusel de la receta (`E03-LeerYCocinar.md` C03.5.2)— ni se edita como un campo más del editor.
+- [ ] **`## Fotos` es el depósito** (C05.1.5) y no texto: no se muestra como sección de la receta —cada foto se dibuja donde la usan, y las sin uso en el carrusel (`E03-LeerYCocinar.md` C03.5.2)— ni se edita como un campo más del editor.
 - [ ] Cualquier otra sección se conserva y se muestra tal cual, sin interpretarse.
 - [ ] El texto antes de la primera sección es la descripción.
 - [ ] Al reescribir, el orden es siempre el mismo: la descripción, Ingredientes, Preparación, Variaciones y Notas, después las otras secciones en el orden en que estaban, y `## Fotos` al final de todo. Un `.md` que las traía en otro orden queda en éste la primera vez que se guarda.
@@ -177,6 +177,9 @@ pescados usa `Anchoítas — 18-20 medianas` y el recetario original usa
 - [ ] **Si alguna línea no tiene esa forma** —o su URL no es `http(s)`—, la sección entera se lee como una sección ajena y se conserva tal cual: la receta queda sin depósito y nada se pierde (C04.3c.1).
 - [ ] **El texto nombra una foto con `![epígrafe](foto:N)`**, en cualquier sección del cuerpo. El epígrafe es opcional. Como link (`[x](foto:2)`) no significa nada y queda como texto.
 - [ ] **Antes de dibujarse, la receta se resuelve:** cada `foto:N` se cambia por la URL de su línea, y una referencia a un número que no está en el depósito se borra. La lectura, la cocina, el texto y el PDF sólo ven URLs.
+- [ ] **Cada foto tiene un uso, que se calcula al leer el `.md` y no se guarda:** *portada* si la nombra la `foto:` del frontmatter, *en el texto* si la nombra un `![](foto:N)` de **cualquier** sección del cuerpo —las ajenas incluidas—, y *sin uso* si ninguna de las dos. Las dos primeras **no se excluyen**: una foto puede ser las dos cosas.
+- [ ] El uso se calcula **sobre la receta cruda**, antes de resolverla: después ya no hay ninguna `foto:N` que buscar. Una `foto:` o una referencia a un número que no está en el depósito no marcan nada.
+- [ ] **Las sin uso son las únicas que se muestran aparte** —el carrusel de la receta (`E03-LeerYCocinar.md` C03.5.2), la galería del PDF (C03.7.2)—, para que ninguna foto se dibuje dos veces. El editor marca el uso de cada una en su miniatura (`E04-Corregir.md` C04.3d.1).
 - [ ] **Las fotos que sube la app van a `_fotos/`**, en la carpeta base, achicadas a JPEG como las de los borradores. La carpeta se crea con la primera foto y su id queda en `meta` como `carpeta_fotos`. El `_` la deja fuera de las categorías y del reindexado.
 - [ ] El nombre del archivo es el del `.md` con el número —`pan-de-campo-3.jpg`—, para que en Drive se lean juntas. No se verifica que sea único: lo que manda es el id.
 - [ ] Cambiar la receta de categoría no mueve sus fotos: el link es por id.

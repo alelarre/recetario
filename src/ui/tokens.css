@@ -414,6 +414,22 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
                border-radius: var(--r-chico); text-align: center;
                background: color-mix(in srgb, var(--velo) 75%, transparent); color: var(--fg);
                font-size: var(--txt-micro); line-height: 18px; }
+/* Las marcas de uso (P54): en qué está usada la foto —portada, en el texto, o
+   las dos—. Van en la esquina de enfrente del número y sobre el mismo fondo,
+   para que se lean sobre cualquier foto. Una sin uso no lleva ninguna. */
+.miniatura-usos { position: absolute; top: 2px; right: 2px; display: flex; gap: 2px; align-items: center;
+                  height: 18px; padding: 0 3px; border-radius: var(--r-chico);
+                  background: color-mix(in srgb, var(--velo) 75%, transparent); color: var(--fg); }
+.miniatura-usos svg { display: block; width: 13px; height: 13px; stroke: currentColor; fill: none;
+                      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* ---- §6.25 Un ícono en línea con el texto ----
+   El epígrafe de la ficha Fotos es un párrafo con íconos adentro, no una fila
+   de flex: el texto corta donde le toca y la última línea se acomoda sola. Por
+   eso el ícono es `inline-block` con el alto de la línea, y no un `flex`. */
+.ico-linea { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.22em; }
+.ico-linea svg { display: block; width: 100%; height: 100%; stroke: currentColor; fill: none;
+                 stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fotos-ayuda { margin: var(--e-3) 0 0; font-size: var(--txt-micro); line-height: 1.8; color: var(--fg-3); }
 .visor { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
          background: color-mix(in srgb, var(--velo) 94%, transparent); cursor: zoom-out; }
 .visor img { max-width: 100%; max-height: 100%; object-fit: contain; }

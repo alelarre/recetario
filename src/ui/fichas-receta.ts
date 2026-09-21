@@ -53,6 +53,12 @@ export interface OpcionesCabecera {
    * el invitado no lo conoce, y sin él saldría el neutro, que se lee como `Otros`.
    */
   pin?: boolean;
+  /**
+   * Las fotos del carrusel: las **sin uso** (`fotosSinUso`), ya calculadas
+   * sobre la receta cruda por quien llama —acá la receta llega resuelta y no
+   * queda ninguna `foto:N` que buscar—. Sin ninguna, el carrusel no se dibuja.
+   */
+  carrusel?: FotoDeReceta[];
 }
 
 /**
@@ -68,10 +74,13 @@ function botonFoto(url: string, n: number | undefined): string {
 }
 
 /**
- * El depósito entero en un carrusel, en su orden: se desliza de costado y cada
- * foto abre el visor en la suya, con `data-n` su número. Va en la primera ficha
- * y no en una al final: las fotos son de la receta, no una sección más, y ahí
- * se ven al abrirla sin tener que buscarlas abajo de todo.
+ * Las fotos sin uso en un carrusel, en el orden del depósito: se desliza de
+ * costado y cada foto abre el visor en la suya, con `data-n` su número. Va en
+ * la primera ficha y no en una al final: las fotos son de la receta, no una
+ * sección más, y ahí se ven al abrirla sin tener que buscarlas abajo de todo.
+ *
+ * La portada ya está arriba y las puestas en una línea están en su línea: si
+ * todas están ubicadas no queda ninguna y el carrusel no se dibuja (P54).
  */
 function carruselDeFotos(fotos: FotoDeReceta[]): string {
   const items = fotos.map(f =>
@@ -87,7 +96,7 @@ function carruselDeFotos(fotos: FotoDeReceta[]): string {
  * ninguno. Recibe la receta ya resuelta (`resolverReceta`): `receta.foto` es una
  * URL, nunca `foto:N`, y `receta.fotos` es el depósito para saber su número.
  */
-export function fichaCabecera({ receta, categoria, marcas = '', pin = true }: OpcionesCabecera): string {
+export function fichaCabecera({ receta, categoria, marcas = '', pin = true, carrusel = [] }: OpcionesCabecera): string {
   const partes = [escapar(categoria), escapar(receta.rinde ?? ''), duracionConReloj(receta.tiempo), escapar(receta.dificultad ?? '')]
     .filter(Boolean);
   const fuente = receta.fuente ? tramosAHtml(tramosDeFuente(receta.fuente)) : '';
@@ -101,7 +110,7 @@ export function fichaCabecera({ receta, categoria, marcas = '', pin = true }: Op
     // La descripción es de la receta, no una sección aparte: va en la misma
     // ficha, después de los datos y antes de la procedencia.
     (receta.descripcion ? `<div class="lee rec-desc">${aHtml(receta.descripcion)}</div>` : '') +
-    carruselDeFotos(receta.fotos) +
+    carruselDeFotos(carrusel) +
     (fuente ? `<div class="rec-fuente"><span class="emo">📖</span>fuente: ${fuente}</div>` : '')
   );
 }

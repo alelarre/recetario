@@ -64,6 +64,18 @@ export interface FotoDeReceta {
 }
 
 /**
+ * En qué se usa una foto del depósito. Se calcula al leer el `.md` y no se
+ * guarda: es lo que decide dónde se dibuja cada una, para que ninguna aparezca
+ * dos veces (`usosDeFotos`, `src/fotos-receta.ts`). Las dos no se excluyen.
+ */
+export interface UsoDeFoto {
+  /** La nombra la `foto:` del frontmatter. */
+  portada: boolean;
+  /** La nombra un `![](foto:N)` de alguna sección del cuerpo. */
+  enElTexto: boolean;
+}
+
+/**
  * Los cambios de fotos que hizo el editor, para que el store los aplique al
  * guardar (C04.1.1): subir las nuevas, mover las que vienen de un borrador y
  * mandar a la papelera las que se sacaron.

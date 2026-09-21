@@ -3533,13 +3533,20 @@ describe('main.ts: las rutas', () => {
       expect(estado.conservadas.at(-1)).toEqual(['fa']);
     });
 
-    it('el visor abre en la foto tocada, desliza y se cierra tocando', async () => {
-      estado.md = MD_CON_FOTOS;
+    /** Con dos fotos sin uso: las del carrusel, que es lo que el visor recorre (P54). */
+    const MD_CON_SUELTAS = [
+      '---', 'titulo: Milanesas', 'foto: foto:1', '---', '',
+      '## Fotos', '', `- 1: ${linkDeFoto('f9')}`, `- 2: ${EXTERNA}`, '- 3: https://ejemplo/otra.jpg', ''
+    ].join('\n');
+
+    it('desde el carrusel, el visor recorre las del carrusel, y se cierra tocando', async () => {
+      estado.md = MD_CON_SUELTAS;
       const { abrir, app, tocar } = await montar();
       await abrir('#/r/f1');
 
-      await tocar('ver-foto-receta', { n: '2' });
+      await tocar('ver-foto-receta', { n: '3' });
       expect(app.innerHTML).toContain('class="visor"');
+      // La portada no está en la tira: son las dos sin uso, y ésta es la segunda.
       expect(app.innerHTML).toContain('data-i="1"');
       expect(app.innerHTML).toContain('data-total="2"');
 
@@ -3547,7 +3554,17 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).not.toContain('class="visor"');
     });
 
-    it('tocar una foto en línea del texto abre el visor en esa foto', async () => {
+    it('desde la portada, el visor la abre sola: no recorre el depósito', async () => {
+      estado.md = MD_CON_SUELTAS;
+      const { abrir, app, tocar } = await montar();
+      await abrir('#/r/f1');
+
+      await tocar('ver-foto-receta', { n: '1' });
+      expect(app.innerHTML).toContain('data-i="0"');
+      expect(app.innerHTML).toContain('data-total="1"');
+    });
+
+    it('tocar una foto en línea del texto la abre sola', async () => {
       estado.md = MD_CON_FOTOS;
       const { abrir, app, tocarFotoEnLinea } = await montar();
       await abrir('#/r/f1');
@@ -3555,7 +3572,8 @@ describe('main.ts: las rutas', () => {
       await tocarFotoEnLinea({ src: EXTERNA });
 
       expect(app.innerHTML).toContain('class="visor"');
-      expect(app.innerHTML).toContain('data-i="1"');
+      expect(app.innerHTML).toContain('data-i="0"');
+      expect(app.innerHTML).toContain('data-total="1"');
     });
 
     it('una foto en línea que no está en el depósito se abre sola', async () => {

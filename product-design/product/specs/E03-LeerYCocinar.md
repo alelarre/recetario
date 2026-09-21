@@ -174,9 +174,10 @@ todas juntas al final. **El diseño no depende de ninguna.**
 #### C03.5.2 — Las fotos del cuerpo y el carrusel *(J6)*
 
 - [ ] Una referencia `![epígrafe](foto:N)` en un ingrediente, un paso o una nota se dibuja **debajo del texto de esa línea**, al ancho de la ficha, con su epígrafe si lo tiene.
-- [ ] El depósito entero va en un **carrusel** dentro de la primera ficha, en su orden, **debajo de la descripción y arriba del divisor de la fuente**: son fotos de la receta, no una sección más, y se ven al abrirla sin buscarlas abajo de todo.
+- [ ] Las fotos **sin uso** (`E05-Cimientos.md` C05.1.5) van en un **carrusel** dentro de la primera ficha, en el orden del depósito, **debajo de la descripción y arriba del divisor de la fuente**: son fotos de la receta, no una sección más, y se ven al abrirla sin buscarlas abajo de todo.
+- [ ] **Sólo las sin uso:** la portada ya está arriba y las puestas en una línea están en su línea, así que **ninguna foto se muestra dos veces**.
 - [ ] El carrusel se desliza de costado como el de tags: cuadradas, entran dos y media en el ancho del teléfono, el degradé dice que sigue y las flechas aparecen sólo con mouse o trackpad (`design-system.md` §6.21, §6.26).
-- [ ] Sin depósito, el carrusel no se dibuja.
+- [ ] **Si no queda ninguna sin uso, el carrusel no se dibuja** y la ficha queda como si no existiera. Tampoco se dibuja sin depósito.
 - [ ] **En el modo cocina**, cada paso y cada ingrediente dibujan su foto debajo, igual que en la lectura. Tocarlas no abre el visor: en la cocina un toque marca el paso (C03.2.4).
 - [ ] Una foto de Drive que ya no está se dibuja en el carrusel como un recuadro con *«La foto ya no está en Drive.»*; en la cabecera o en una línea, no se dibuja.
 - [ ] Una foto externa cuya URL no carga sigue la misma regla, con su propio motivo: en el carrusel, *«No se pudo cargar la foto.»*; en cualquier otro lado, no se dibuja.
@@ -184,9 +185,9 @@ todas juntas al final. **El diseño no depende de ninguna.**
 #### C03.5.3 — El visor *(J6)*
 
 - [ ] Tocar cualquier foto —la cabecera, una en línea o una del carrusel— abre el **visor**: la foto entera sobre un velo, encima de todo.
-- [ ] El visor **desliza entre las fotos del depósito**, en su orden, empezando por la que se tocó. En los extremos no da la vuelta.
+- [ ] **El visor recorre lo que se tocó**, no el depósito entero: desde el carrusel desliza entre las del carrusel, en su orden y empezando por la que se tocó; desde la cabecera, la portada sola; desde una foto de un paso o de un ingrediente, esa sola.
+- [ ] Deslizando no da la vuelta en los extremos.
 - [ ] Se cierra tocando, en cualquier parte. Es estado de la pantalla, no una ruta.
-- [ ] Una cabecera externa que no está en el depósito se abre sola, sin deslizar.
 
 ### F03.6 — Tamaños para la distancia del brazo
 
@@ -217,7 +218,7 @@ revocar.
 
 - [ ] Se arma en el teléfono, con pdfmake e **Inter** embebida —tiene ⅓ y ⅔, que un PDF no puede tomar de otra fuente—. La librería y las fuentes se empiezan a cargar al abrir la ficha, no al arrancar la app.
 - [ ] Página de **105 × 180 mm**, con el tema oscuro de la app en todas las páginas. La cabecera es un bloque con título, contexto, descripción y fuente; después las secciones, con el formato en línea del markdown.
-- [ ] **Lleva las fotos:** la de la cabecera arriba del título, al ancho de la página y con el alto topado a 90 mm; cada referencia debajo de su línea; y la galería del depósito al final, después de Notas y antes de las secciones ajenas, de a dos por fila.
+- [ ] **Lleva las fotos:** la de la cabecera arriba del título, al ancho de la página y con el alto topado a 90 mm; cada referencia debajo de su línea; y la galería de las **sin uso** al final, después de Notas y antes de las secciones ajenas, de a dos por fila. Como en la pantalla, ninguna se dibuja dos veces, y **sin ninguna sin uso la sección no se dibuja**.
 - [ ] Las fotos se achican a 800 px de lado mayor y viajan adentro del archivo. Las de Drive salen del caché o se piden con el token; una externa se pide con `fetch`, y si falla —CORS, red— se omite sin aviso. *«Armando el PDF…»* ya cubre esa espera.
 - [ ] No lleva tags, link al `.md` ni botones. Una sección vacía no se dibuja.
 - [ ] Ningún ingrediente, paso, variación ni ítem de nota se parte entre páginas —tampoco una línea con su foto—, y un título de sección nunca queda solo al pie.

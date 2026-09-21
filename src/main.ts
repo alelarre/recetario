@@ -42,7 +42,7 @@ import { aviso, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js'
 import { pintar as pintarEnPantalla, conClosest, desplazarCarrusel, movimientoReducido } from './ui/pintar.js';
 import { renderVisor, pasoDelVisor } from './ui/visor.js';
 import {
-  linkDeFoto, idDeDrive, resolverReceta, siguienteNumero, lineaDelCursor, ponerEn, sacarReferencias
+  linkDeFoto, idDeDrive, resolverReceta, fotosSinUso, siguienteNumero, lineaDelCursor, ponerEn, sacarReferencias
 } from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
 import { registrarCategorias } from './ui/categorias.js';
@@ -1315,16 +1315,34 @@ const depositoDelEditor = (): FotoDeReceta[] =>
 const portadaDelEditor = (): string => campoDelEditor('foto')?.value ?? '';
 
 /**
+ * La receta como está escrita **ahora** en el formulario. La necesita lo que
+ * depende de todo el texto y no de un campo solo: el uso de cada foto, que
+ * mira la cabecera y todas las secciones (P54).
+ */
+const recetaDelEditor = (): Receta =>
+  recetaDesdeFormulario(datosDelFormulario(), recetaLeida?.receta ?? parse(''));
+
+/**
  * Escribe el depósito y redibuja sólo su fila de miniaturas: redibujar el
- * formulario entero perdería lo que se venía escribiendo.
+ * formulario entero perdería lo que se venía escribiendo. El campo se escribe
+ * primero, así la fila sale con el uso de las fotos que quedaron.
  */
 function escribirDeposito(fotos: FotoDeReceta[]): void {
   const campo = campoDelEditor('fotos');
   if (campo) campo.value = JSON.stringify(fotos);
-  const fila = document.querySelector<HTMLElement>('#app .fotos-campo');
-  if (fila) fila.outerHTML = filaDeFotosEditor(fotos);
+  redibujarFilaDeFotos();
   // Sacar la última foto deja el botón de poner sin nada que ofrecer.
   acomodarBotonDeFoto();
+}
+
+/**
+ * La fila de miniaturas de nuevo, con el uso de cada foto según lo que está
+ * escrito ahora: la marca tiene que aparecer al elegir una portada o al poner
+ * una foto en una línea, sin salir del editor (P54).
+ */
+function redibujarFilaDeFotos(): void {
+  const fila = document.querySelector<HTMLElement>('#app .fotos-campo');
+  if (fila) fila.outerHTML = filaDeFotosEditor(recetaDelEditor());
   void completarFotos();
 }
 
@@ -1334,7 +1352,8 @@ function escribirPortada(valor: string): void {
   if (campo) campo.value = valor;
   const boton = document.querySelector<HTMLElement>('#app .portada-boton');
   if (boton) boton.innerHTML = muestraDePortada(valor || null, depositoDelEditor());
-  void completarFotos();
+  // La marca de portada de la fila cambia de foto junto con la cabecera.
+  redibujarFilaDeFotos();
 }
 
 /**
@@ -1591,8 +1610,10 @@ const fotosMostrables = (fotos: FotoDeReceta[]): { n: number; url: string }[] =>
   });
 
 /**
- * Abre el visor en la foto `n` del depósito, para deslizar entre todas. Sin
- * número —o con uno que no está—, una cabecera externa se abre sola (spec §7).
+ * Abre el visor con **lo que se tocó** (spec §7, P54): `fotos` es la tira que
+ * recorre —las del carrusel en la lectura, el depósito entero en el editor—.
+ * Una foto que no está en esa tira —la portada, la de un paso— se abre sola,
+ * con la URL que venga en `suelta`.
  */
 function abrirVisor(fotos: FotoDeReceta[], n: number | undefined, suelta?: string | undefined): void {
   const lista = fotosMostrables(fotos);
@@ -1710,17 +1731,17 @@ app.addEventListener('click', async (e) => {
   const destino = conClosest(e.target);
   const boton = destino?.closest<HTMLElement>('[data-accion], [data-tag]') ?? null;
   // Una foto en línea del texto no lleva `data-accion` —la dibuja el markdown,
-  // que no sabe de acciones— y abre el visor igual (§7). En el modo cocina no:
-  // ahí la foto está adentro del paso, que sí lleva acción, y un toque marca
-  // dónde voy.
+  // que no sabe de acciones— y abre el visor igual (§7). Se abre **sola**: lo
+  // que se tocó es esa foto, no una tira (P54). En el modo cocina no: ahí la
+  // foto está adentro del paso, que sí lleva acción, y un toque marca dónde voy.
   if (!boton && destino && recetaLeida) {
     const enLinea = destino.closest<HTMLElement>('.foto-linea');
     const img = enLinea?.querySelector<HTMLElement>('img');
     if (!img) return;
     const id = img.dataset['drive'] ?? '';
     const suelta = id ? linkDeFoto(id) : img.getAttribute('src') ?? '';
-    const receta = resolverReceta(recetaLeida.receta);
-    abrirVisor(receta.fotos, receta.fotos.find(f => f.url === suelta)?.n, suelta || undefined);
+    if (!suelta) return;
+    visor = { urls: [suelta], i: 0 };
     return render();
   }
   if (!boton) return;
@@ -2153,7 +2174,10 @@ app.addEventListener('click', async (e) => {
     }
     if (!recetaLeida) return;
     const receta = resolverReceta(recetaLeida.receta);
-    abrirVisor(receta.fotos, n, receta.foto ?? undefined);
+    // El carrusel son las sin uso, calculadas sobre la cruda: desde ahí el
+    // visor las recorre. La portada no está ahí y se abre sola (P54).
+    const sola = (n === undefined ? undefined : receta.fotos.find(f => f.n === n)?.url) ?? receta.foto ?? undefined;
+    abrirVisor(fotosSinUso(recetaLeida.receta), n, sola);
     return render();
   }
   if (accion === 'cerrar-ficha-foto') {
@@ -2197,18 +2221,21 @@ app.addEventListener('click', async (e) => {
     if (campo) {
       campo.value = ponerEn(campo.value, Number(boton.dataset['linea'] ?? 0), Number(boton.dataset['n'] ?? 0));
     }
+    // Ahora está en el texto, y su miniatura lo dice.
+    redibujarFilaDeFotos();
     cerrarFichaFoto();
     return;
   }
   if (accion === 'sacar-foto-editor') {
     const n = Number(boton.dataset['n'] ?? 0);
-    escribirDeposito(depositoDelEditor().filter(f => f.n !== n));
-    // La foto se va del depósito y de todo el texto que la nombraba.
+    // La foto se va del depósito y de todo el texto que la nombraba. El texto
+    // primero: la fila se redibuja con el uso de las que quedaron.
     for (const seccion of SECCIONES) {
       const campo = campoDelEditor(seccion);
       if (campo) campo.value = sacarReferencias(campo.value, n);
     }
     if (portadaDelEditor() === `foto:${n}`) escribirPortada('');
+    escribirDeposito(depositoDelEditor().filter(f => f.n !== n));
     fotosEditor.nuevas.delete(n);
     fotosEditor.urls.delete(n);
     cerrarFichaFoto();
