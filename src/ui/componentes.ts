@@ -331,32 +331,54 @@ export function tile(nombre: string, cantidad?: number): string {
     `${fondo}${cuenta}<span class="nm">${escapar(nombre)}</span></a>`;
 }
 
-/** Una miniatura de la fila de fotos. `url` en `null` es una foto que ya no está en Drive. */
-export interface Miniatura {
-  url: string | null;
-  /** La acción de la × y su valor. */
-  sacar: { accion: string; valor: string };
-  /** Tocarla abre el visor; sin esto, la miniatura no se toca. */
-  ver?: { accion: string; valor: string };
-}
+/** Qué acción dispara un botón de la miniatura, y con qué valor si lo lleva. */
+interface AccionDeMiniatura { accion: string; valor?: string }
 
 /**
- * La fila de fotos de un borrador: miniaturas cuadradas con su ×, y al final
- * *Agregar foto*, que abre el selector del sistema —en el teléfono, la cámara
- * o la galería—. El `input` va dentro del `label`: tocarlo lo abre sin script.
+ * Una miniatura de la fila de fotos. `url` en `null` es una foto que ya no
+ * está en Drive; en `''`, una foto nueva que todavía no se subió y de la que
+ * sólo se sabe su número —la miniatura se la pone quien la tenga en memoria,
+ * buscándola por `data-n`—.
+ */
+export interface Miniatura {
+  url: string | null;
+  /** La × que la saca. Sin esto, desde la fila no se saca. */
+  sacar?: AccionDeMiniatura;
+  /** Tocarla; sin esto, la miniatura no se toca. */
+  ver?: AccionDeMiniatura;
+  /** Su número en el depósito de la receta: el badge, y `data-n` en los botones. */
+  n?: number;
+}
+
+/** `data-accion`, y el valor o el número con los que viaja. */
+const datosDeAccion = (a: AccionDeMiniatura, n: number | undefined): string =>
+  ` data-accion="${escapar(a.accion)}"` +
+  (a.valor === undefined ? '' : ` data-valor="${escapar(a.valor)}"`) +
+  (n === undefined ? '' : ` data-n="${n}"`);
+
+/**
+ * La fila de fotos de un borrador o del editor: miniaturas cuadradas y, al
+ * final, *Agregar foto*, que abre el selector del sistema —en el teléfono, la
+ * cámara o la galería—. El `input` va dentro del `label`: tocarlo lo abre sin
+ * script.
  */
 export function filaDeFotos({ fotos, agregar }: { fotos: Miniatura[]; agregar: boolean }): string {
   const miniaturas = fotos.map((f, i) => {
     const imagen = f.url === null
       ? '<span class="miniatura-vacia">La foto ya no está en Drive.</span>'
-      : `<img src="${escapar(f.url)}" alt="Foto ${i + 1}">`;
+      // Sin URL, el `<img>` queda vacío y marcado con su número: recién
+      // subida no hay nada que pedirle a Drive todavía.
+      : f.url === '' ? `<img data-n="${f.n}" alt="Foto ${i + 1}">` : imgDe(f.url);
     const cuerpo = f.ver && f.url !== null
-      ? `<button class="miniatura-ver" data-accion="${escapar(f.ver.accion)}" data-valor="${escapar(f.ver.valor)}" ` +
+      ? `<button class="miniatura-ver"${datosDeAccion(f.ver, f.n)} ` +
         `aria-label="Ver la foto ${i + 1}">${imagen}</button>`
       : imagen;
-    return `<div class="miniatura">${cuerpo}` +
-      `<button class="miniatura-sacar" data-accion="${escapar(f.sacar.accion)}" data-valor="${escapar(f.sacar.valor)}" ` +
-      `aria-label="Sacar la foto ${i + 1}">${ICO.cerrar}</button></div>`;
+    const badge = f.n === undefined ? '' : `<span class="miniatura-n">${f.n}</span>`;
+    const sacar = f.sacar
+      ? `<button class="miniatura-sacar"${datosDeAccion(f.sacar, f.n)} ` +
+        `aria-label="Sacar la foto ${i + 1}">${ICO.cerrar}</button>`
+      : '';
+    return `<div class="miniatura">${cuerpo}${badge}${sacar}</div>`;
   }).join('');
   const boton = agregar
     ? `<label class="btn sec miniatura-agregar">${ICO.camara}Agregar foto` +

@@ -10,15 +10,16 @@
  * reescribe el `.md` entero y lo que el editor no preservara se perdería
  * (C04.3c.1).
  */
-import { escapar } from './markdown.js';
-import { encabezado, avisoAlGuardar, iconoDeTag } from './componentes.js';
+import { escapar, imgDe } from './markdown.js';
+import { encabezado, avisoAlGuardar, iconoDeTag, filaDeFotos } from './componentes.js';
 import { ICO, ICONO_DE_DURACION } from './iconos.js';
 import {
   DIFICULTADES, dificultadValida, tagReservado, TAGS_ESPECIALES, tagEspecial, tieneEspecial,
   DURACIONES, duracionValida
 } from '../catalogo.js';
 import { sePuedeTerminar } from '../recipe.js';
-import type { Receta, Entrada } from '../tipos.js';
+import { resolver } from '../fotos-receta.js';
+import type { Receta, Entrada, FotoDeReceta, Lugar } from '../tipos.js';
 import type { Categoria } from '../store.js';
 
 export interface ArgsEditor {
@@ -76,6 +77,133 @@ const campo = (nombre: string, etiqueta: string, valor?: string | null, ph = '')
 export const pillTag = (tag: string): string =>
   `<button type="button" class="chip" data-accion="tag-quitar" data-valor="${escapar(tag)}">` +
   `${iconoDeTag(tag)}${escapar(tag)}${ICO.cerrar}</button>`;
+
+/**
+ * Una foto del depósito, dibujada. Una foto nueva todavía no tiene URL —se
+ * sube al guardar—: el `<img>` queda vacío y marcado con su número, y quien
+ * la tenga en memoria le pone su object URL buscándolo por `data-n`.
+ */
+const imagenDeFoto = (f: FotoDeReceta): string =>
+  f.url ? imgDe(f.url) : `<img data-n="${f.n}" alt="">`;
+
+/**
+ * La cabecera dejó de ser un campo de texto (spec §7): es la miniatura de lo
+ * que hay hoy y abre el selector. El valor sigue viajando crudo en el
+ * `hidden`, que es lo que se guarda: `foto:N` o la URL externa. Una `foto:N`
+ * que no está en el depósito se lee como ausente, igual que cualquier otro
+ * valor inválido.
+ */
+function campoPortada(foto: string | null, fotos: FotoDeReceta[]): string {
+  const delDeposito = fotos.find(f => `foto:${f.n}` === foto);
+  const url = resolver(foto, fotos);
+  const muestra = delDeposito ? imagenDeFoto(delDeposito)
+    : url === null ? '<span class="portada-vacia">Sin foto</span>'
+    : imgDe(url);
+  return '<div class="campo" data-portada><span>Foto</span>' +
+    `<button type="button" class="portada-boton" data-accion="abrir-portada" ` +
+      `aria-label="Elegir la foto de portada">${muestra}</button>` +
+    `<input type="hidden" name="foto" value="${escapar(foto ?? '')}">` +
+  '</div>';
+}
+
+/**
+ * La ficha Fotos: el depósito entero con el número de cada una, y *Agregar
+ * foto* sin tope. Tocar una abre sus acciones (`renderAccionesFoto`).
+ *
+ * El depósito viaja en el `hidden` como JSON —las nuevas con `url: ''`—: así
+ * agregar, sacar o renumerar una cuenta como cambio sin guardar igual que
+ * cualquier otro campo (C04.1.1), y `recetaDesdeFormulario` lo devuelve sin
+ * tener que mirar a ningún lado más.
+ */
+function fichaFotos(fotos: FotoDeReceta[]): string {
+  return '<div class="ficha"><h2>Fotos</h2>' +
+    filaDeFotos({
+      fotos: fotos.map(f => ({ url: f.url, n: f.n, ver: { accion: 'acciones-foto' } })),
+      agregar: true
+    }) +
+    `<input type="hidden" name="fotos" value="${escapar(JSON.stringify(fotos))}">` +
+  '</div>';
+}
+
+/**
+ * Lo que una foto del depósito deja hacer, al pie y sin redibujar el
+ * formulario. *Portada* no se dibuja si ya lo es: no tendría nada que hacer.
+ */
+export function renderAccionesFoto(n: number, { portada }: { portada: boolean }): string {
+  const boton = (accion: string, etiqueta: string, clase = 'sec'): string =>
+    `<button class="btn ${clase}" data-accion="${accion}" data-n="${n}" type="button">${etiqueta}</button>`;
+  return `<div class="ficha" data-acciones-foto data-n="${n}">` +
+    `<p class="lee" style="margin:0 0 var(--e-4)">Foto ${n}</p>` +
+    '<div class="acciones acciones-foto">' +
+      boton('ver-foto', 'Ver') +
+      (portada ? '' : boton('elegir-portada', 'Portada')) +
+      boton('abrir-poner-en', 'Poner en…') +
+      boton('sacar-foto', 'Sacar', 'pel') +
+    '</div></div>';
+}
+
+/** Lo que entra en el botón de un lugar; lo que sobra se corta. */
+const TOPE_LUGAR = 44;
+
+/** El texto de un lugar, en una línea. Vacío igual se ofrece: ahí va la primera foto. */
+function unaLinea(texto: string): string {
+  const limpio = texto.trim();
+  if (!limpio) return '(sin texto)';
+  return limpio.length > TOPE_LUGAR ? `${limpio.slice(0, TOPE_LUGAR - 1).trimEnd()}…` : limpio;
+}
+
+/**
+ * Dónde poner la foto `n`: los lugares de `lineasDeLaReceta`, agrupados por
+ * su `###` o por su sección. Se agrupa de corrido y no por nombre: dos `###`
+ * que se llaman igual en secciones distintas son dos grupos, no uno.
+ *
+ * `data-linea` vacío es el lugar que no tiene línea —la descripción, las
+ * variaciones, las notas—, donde la referencia va al final del texto.
+ */
+export function renderPonerEn(lugares: Lugar[], n: number): string {
+  const grupos: { nombre: string; lugares: Lugar[] }[] = [];
+  for (const l of lugares) {
+    const ultimo = grupos[grupos.length - 1];
+    if (ultimo && ultimo.nombre === l.grupo) ultimo.lugares.push(l);
+    else grupos.push({ nombre: l.grupo, lugares: [l] });
+  }
+  const bloques = grupos.map(g =>
+    `<h3>${escapar(g.nombre)}</h3>` +
+    g.lugares.map(l =>
+      '<button class="btn sec lugar" type="button" data-accion="poner-en" ' +
+      `data-seccion="${l.seccion}" data-linea="${l.linea ?? ''}" data-n="${n}">` +
+      `${escapar(unaLinea(l.texto))}</button>`
+    ).join('')
+  ).join('');
+  return `<div class="ficha lugares" data-poner-en data-n="${n}">` +
+    `<h2>Poner la foto ${n} en…</h2>${bloques}</div>`;
+}
+
+/**
+ * De dónde sale la cabecera: una del depósito, una URL pegada a mano —el
+ * campo de siempre— o ninguna. La actual queda marcada.
+ */
+export function renderSelectorPortada(fotos: FotoDeReceta[], actual: string | null): string {
+  const grilla = fotos.length
+    ? `<div class="galeria">${fotos.map(f =>
+        '<button type="button" class="galeria-item" data-accion="elegir-portada" ' +
+        `data-n="${f.n}" aria-pressed="${actual === `foto:${f.n}`}" ` +
+        `aria-label="La foto ${f.n} de portada">${imagenDeFoto(f)}</button>`
+      ).join('')}</div>`
+    : '';
+  // `resolver` devuelve una URL tal cual, y para un `foto:N` devuelve la del
+  // depósito o `null`: que vuelva igual es justamente que hoy hay una URL.
+  const urlDeHoy = actual !== null && resolver(actual, fotos) === actual ? actual : '';
+  return '<div class="ficha" data-selector-portada>' +
+    '<h2>Foto de portada</h2>' +
+    grilla +
+    '<label class="campo"><span>URL</span>' +
+      `<input data-url-portada value="${escapar(urlDeHoy)}" placeholder="https://…"></label>` +
+    '<div class="acciones">' +
+      '<button class="btn sec" type="button" data-accion="portada-url">Usar la URL</button>' +
+      '<button class="btn sec" type="button" data-accion="sin-portada">Sin foto</button>' +
+    '</div></div>';
+}
 
 const area = (
   nombre: string, etiqueta: string, valor?: string | null, filas = 4, estilo = ''
@@ -165,7 +293,7 @@ export function renderEditor(
     campoDuracion(receta.tiempo) +
     `<label class="campo"><span>Dificultad</span><select name="dificultad">${opcionesDificultad}</select></label>` +
     campo('fuente', 'Fuente', receta.fuente) +
-    campo('foto', 'Foto', receta.foto, 'https://…') +
+    campoPortada(receta.foto, receta.fotos) +
   '</div>';
 
   // Cómo se escribe un ingrediente para que el filtro por ingrediente lo
@@ -216,7 +344,7 @@ export function renderEditor(
   }) +
     '<form class="cuerpo" data-formulario>' +
       (error ? avisoAlGuardar(error) : '') +
-      datos + contenido + borrar +
+      datos + contenido + fichaFotos(receta.fotos) + borrar +
     '</form>';
 }
 
@@ -233,12 +361,34 @@ export function formularioDesde(receta: Receta): DatosFormulario {
     dificultad: receta.dificultad ?? '',
     fuente: receta.fuente ?? '',
     foto: receta.foto ?? '',
+    fotos: JSON.stringify(receta.fotos),
     descripcion: receta.descripcion,
     ingredientes: receta.ingredientes,
     preparacion: receta.preparacion,
     variaciones: receta.variaciones,
     notas: receta.notas
   };
+}
+
+const esFoto = (f: unknown): f is FotoDeReceta =>
+  typeof f === 'object' && f !== null &&
+  typeof (f as FotoDeReceta).n === 'number' && typeof (f as FotoDeReceta).url === 'string';
+
+/**
+ * El depósito que viaja en el campo oculto. Cualquier cosa que no sea el
+ * arreglo que escribió el editor se lee como depósito vacío: una receta sin
+ * fotos es un resultado válido, y quedarse sin poder guardar por un JSON
+ * ilegible no.
+ */
+function fotosDesde(crudo: string): FotoDeReceta[] {
+  try {
+    const leido: unknown = JSON.parse(crudo);
+    if (!Array.isArray(leido)) return [];
+    const fotos = leido.filter(esFoto);
+    return fotos.length === leido.length ? fotos : [];
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -259,6 +409,9 @@ export function recetaDesdeFormulario(datos: DatosFormulario, base: Receta): Rec
     dificultad: dificultadValida(datos['dificultad']) || null,
     fuente: texto('fuente'),
     foto: texto('foto'),
+    // Sin el campo no hay nada que decir del depósito: es un formulario que no
+    // lo trae, y el de la receta de base queda como estaba.
+    fotos: datos['fotos'] === undefined ? base.fotos : fotosDesde(datos['fotos']),
     descripcion: datos['descripcion'] ?? base.descripcion,
     ingredientes: datos['ingredientes'] ?? base.ingredientes,
     preparacion: datos['preparacion'] ?? base.preparacion,
