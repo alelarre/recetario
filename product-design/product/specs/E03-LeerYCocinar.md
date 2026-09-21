@@ -164,7 +164,8 @@ todas juntas al final. **El diseño no depende de ninguna.**
 #### C03.5.1 — La foto de la cabecera *(J6)*
 
 - [ ] Se dibuja `foto` **ya resuelta** (C05.1.5): la URL externa tal cual, o la foto del depósito que nombra `foto:N`.
-- [ ] Si es de Drive, se pide con el token: mientras llega, un recuadro del tamaño que va a ocupar. Si no llega —o si la URL externa no carga—, la receta se dibuja sin bloque de foto. Sin ícono roto y sin aviso.
+- [ ] Si es de Drive, se pide con el token: mientras llega, un recuadro del tamaño que va a ocupar. **Si ya no está en Drive, el bloque se saca** y la receta queda sin foto, sin ícono roto y sin aviso.
+- [ ] **Una URL externa que no carga deja su bloque vacío**, del tamaño que iba a ocupar: la app no se entera de que falló. No hay ícono roto ni aviso (`../../../BACKLOG.md`, P42).
 - [ ] La receta sin foto se ve completa igual: empieza por el título.
 - [ ] No se muestra en modo cocina.
 

@@ -88,8 +88,10 @@ código y el documento se corrige.
 
 Las dos decisiones que el diseño había dejado abiertas están resueltas. El
 agente no se embebe en la PWA: la app arma el pedido, lo manda a Claude y recibe
-la respuesta compartida o pegada. Las fotos de receta son sólo URLs externas: la
-app no guarda imágenes de receta en Drive.
+la respuesta compartida o pegada. Y la receta sí guarda fotos en Drive: tiene un
+depósito propio —la sección `## Fotos` del `.md`— y las que suben desde el
+editor viven en `_fotos/`, al lado de las de los borradores. Una URL externa
+sigue valiendo (`ux/information-architecture.md` §1.7).
 
 Lo pendiente está en [`BACKLOG.md`](../BACKLOG.md), en la raíz del repo.
 

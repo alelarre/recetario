@@ -96,6 +96,7 @@ la pantalla que lanzó la escritura sigue siendo la que está.
 - [ ] **No se repite la acción:** volver a tocar el control no hace nada.
 - [ ] El velo se suelta siempre, termine bien o mal; después la operación sigue su camino —navega, redibuja o muestra su aviso con lo escrito todavía en pantalla (R1)—.
 - [ ] Entran: guardar y crear una receta —también desde un borrador o desde Claude—, borrarla, guardar una captura, descartar un borrador, crear, editar y borrar una categoría, y crear la carpeta base.
+- [ ] Entra también **achicar una foto** recién elegida, en el editor de recetas, en la captura, en el borrador y en la foto propia de una categoría. Es la única del velo que no escribe nada: es una operación local que tarda, y mientras dura vale lo mismo —no se toca y no se navega—. Las fotos del editor no llegan a Drive hasta Guardar (`E04-Corregir.md` F04.3d).
 - [ ] Quedan afuera cuatro, cada una con su propia señal: marcar favorito, que ya tiene su estrella animada y no debe trabar la lectura de la receta; reindexar, que oculta sus controles y muestra el avance; preparar la carpeta base, que dibuja su propia pantalla de progreso; y conectar de nuevo con Google, donde el usuario está en el popup y el velo taparía la pantalla desde otra ventana.
 - [ ] Los botones que dicen «Guardando…» se quedan como están: el velo se suma, no los reemplaza.
 
@@ -134,7 +135,7 @@ receta no tiene cabecera.
 - [ ] Se reconocen `## Ingredientes`, `## Preparación`, `## Variaciones` y `## Notas`.
 - [ ] Los `###` dentro de Ingredientes son grupos; dentro de Variaciones, variaciones; **dentro de Preparación, tramos con nombre**, y la numeración de los pasos vuelve a empezar en cada uno.
 - [ ] `## Variaciones` puede traer una lista de bullets en vez de secciones `###`, y entonces se muestra como lista.
-- [ ] **`## Fotos` es el depósito** (C05.1.5), no texto: no se dibuja como sección ni se edita como tal.
+- [ ] **`## Fotos` es el depósito** (C05.1.5) y no texto: no se muestra como sección de la receta —sus fotos se dibujan en la galería (`E03-LeerYCocinar.md` C03.5.2)— ni se edita como un campo más del editor.
 - [ ] Cualquier otra sección se conserva y se muestra tal cual, sin interpretarse.
 - [ ] El texto antes de la primera sección es la descripción.
 - [ ] Al reescribir, el orden es siempre el mismo: la descripción, Ingredientes, Preparación, Variaciones y Notas, después las otras secciones en el orden en que estaban, y `## Fotos` al final de todo. Un `.md` que las traía en otro orden queda en éste la primera vez que se guarda.

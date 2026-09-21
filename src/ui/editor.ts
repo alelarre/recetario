@@ -296,7 +296,7 @@ export function renderEditor(
   const especiales = TAGS_ESPECIALES.filter(t =>
     (t === 'incompleta' && !puede) || tieneEspecial({ tags }, t));
 
-  // Las dos fichas llevan título: el formulario es largo, y al hacer scroll es lo
+  // Las tres fichas llevan título: el formulario es largo, y al hacer scroll es lo
   // que dice en qué parte se está.
   const datos = '<div class="ficha"><h2>Datos</h2>' +
     campo('titulo', 'Título', receta.titulo) +

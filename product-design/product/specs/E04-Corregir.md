@@ -157,6 +157,7 @@ ya achicadas y con su número asignado.
 - [ ] La fila de miniaturas del depósito, en su orden, **cada una con su número**, que es con el que se la nombra en el texto.
 - [ ] **Agregar foto** al final, sin tope: abre el mismo selector del sistema que las fotos de un borrador —cámara o galería—, y acepta varias a la vez.
 - [ ] Cada foto nueva toma el número más alto más uno; ninguno se reusa, ni siquiera el de una que se sacó.
+- [ ] Mientras se achica, el velo cubre la pantalla (R8): tarda, aunque no escriba nada en Drive.
 - [ ] Una foto que el navegador no puede decodificar —HEIC, un archivo roto— no se agrega, y el aviso lo dice: *«No se pudo leer una de las fotos.»*
 - [ ] Escribir `![](foto:2)` a mano en un campo de texto sigue valiendo: los campos no cambian.
 - [ ] Salir sin guardar no deja nada en Drive: las fotos nuevas nunca llegaron.
