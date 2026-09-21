@@ -1439,12 +1439,20 @@ const QUEDA_COMO_LINK =
 
 /**
  * La forma que tiene que tener una dirección para poder ser una línea del
- * depósito: **el mismo patrón que la parsea** (`fotos-receta.ts`). Una URL con
- * un espacio adentro se escribiría igual y al releer el `.md` dejaría toda la
- * sección `## Fotos` como sección ajena: la receta perdería sus fotos
- * (C05.1.5).
+ * depósito, **tal cual la parsea `fotos-receta.ts`**: esquema en minúsculas y
+ * ni un espacio. Una que no la cumpla se escribiría igual y al releer el `.md`
+ * dejaría toda la sección `## Fotos` como sección ajena: la receta perdería
+ * sus fotos (C05.1.5).
  */
-const URL_DE_FOTO = /^https?:\/\/\S+$/i;
+const URL_DE_FOTO = /^https?:\/\/\S+$/;
+
+/**
+ * La dirección con el esquema en minúsculas, que es lo único que se normaliza:
+ * el resto distingue mayúsculas y cambiarlo daría otra foto. El teclado del
+ * teléfono manda `Https://` solo, y quien lo escribió quiso lo evidente.
+ */
+const conEsquemaEnMinuscula = (url: string): string =>
+  url.replace(/^[A-Za-z]+:\/\//, e => e.toLowerCase());
 
 /** Lo que devolvió una dirección: la foto, algo que no es una foto, o nada. */
 type FotoTraida = { que: 'foto'; blob: Blob } | { que: 'no-es-foto' } | { que: 'no-se-pudo' };
@@ -1487,17 +1495,20 @@ async function traerFoto(url: string): Promise<FotoTraida> {
  * link externo —no se pierde lo que la app ya sabía hacer—, y lo que no es una
  * foto no entra y deja la ficha abierta con lo escrito.
  */
-async function agregarFotoPorUrl(url: string): Promise<void> {
+async function agregarFotoPorUrl(escrita: string): Promise<void> {
   // Cada intento empieza sin el aviso del anterior: dos avisos a la vez no
   // dicen cuál es el de ahora.
   avisarEnElFormulario('');
+  // El aviso vuelve con lo que se escribió, y no con lo normalizado: lo que el
+  // usuario escribió sigue en pantalla (R1).
+  const url = conEsquemaEnMinuscula(escrita);
   // Lo que no puede ser una línea del depósito ni se pide.
-  if (!URL_DE_FOTO.test(url)) return abrirFichaFoto(renderFotoPorUrl(url, NO_ES_UNA_FOTO));
+  if (!URL_DE_FOTO.test(url)) return abrirFichaFoto(renderFotoPorUrl(escrita, NO_ES_UNA_FOTO));
   // Desde Pages, una `http://` es contenido mixto: el pedido falla siempre y
   // la imagen tampoco cargaría después. Entra como link y no sirve de nada.
-  if (/^http:/i.test(url)) return abrirFichaFoto(renderFotoPorUrl(url, SOLO_HTTPS));
+  if (url.startsWith('http://')) return abrirFichaFoto(renderFotoPorUrl(escrita, SOLO_HTTPS));
   const traida = await escribiendo(traerFoto(url));
-  if (traida.que === 'no-es-foto') return abrirFichaFoto(renderFotoPorUrl(url, NO_ES_UNA_FOTO));
+  if (traida.que === 'no-es-foto') return abrirFichaFoto(renderFotoPorUrl(escrita, NO_ES_UNA_FOTO));
   if (traida.que === 'no-se-pudo') {
     sumarFotoAlEditor(url);
     cerrarFichaFoto();
@@ -1509,7 +1520,7 @@ async function agregarFotoPorUrl(url: string): Promise<void> {
     blob = await escribiendo(achicarFoto(traida.blob));
   } catch (err) {
     console.error(err);
-    return abrirFichaFoto(renderFotoPorUrl(url, NO_SE_LEYO_UNA_FOTO));
+    return abrirFichaFoto(renderFotoPorUrl(escrita, NO_SE_LEYO_UNA_FOTO));
   }
   sumarFotoAlEditor('', blob);
   cerrarFichaFoto();

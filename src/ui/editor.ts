@@ -240,8 +240,11 @@ export function renderFotoPorUrl(url = '', error = ''): string {
     '<div class="ficha hoja-foto" data-foto-url>' +
     '<h2>Foto por URL</h2>' +
     (error ? aviso({ texto: error }) : '') +
+    // Sin `autocapitalize`, el teclado del teléfono manda la primera letra en
+    // mayúscula, y el esquema del link del depósito se escribe en minúsculas.
     '<label class="campo"><span>Dirección de la foto</span>' +
-      `<input data-url-foto value="${escapar(url)}" placeholder="https://…"></label>` +
+      `<input data-url-foto type="url" value="${escapar(url)}" placeholder="https://…" ` +
+      'autocapitalize="off" autocorrect="off" spellcheck="false"></label>' +
     '<div class="acciones">' +
       '<button class="btn sec" type="button" data-accion="traer-foto-url">Traer</button>' +
     '</div></div>';

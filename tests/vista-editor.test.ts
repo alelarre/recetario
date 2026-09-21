@@ -562,8 +562,14 @@ describe('renderSelectorPortada', () => {
 describe('renderFotoPorUrl', () => {
   it('un campo de texto y *Traer*, y nada más', () => {
     const html = renderFotoPorUrl();
-    expect(html).toContain('<input data-url-foto value=""');
+    expect(html).toContain('<input data-url-foto type="url"');
+    expect(html).toContain('value=""');
     expect(html).toContain('placeholder="https://…"');
+    // El teclado del teléfono no toca lo pegado: una mayúscula de más en el
+    // esquema rompería la línea del depósito.
+    expect(html).toContain('autocapitalize="off"');
+    expect(html).toContain('autocorrect="off"');
+    expect(html).toContain('spellcheck="false"');
     expect(html).toContain('data-accion="traer-foto-url"');
     expect(html).toContain('>Traer</button>');
     // La ficha se encuentra por su marca, como las otras tres.

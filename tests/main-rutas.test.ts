@@ -11,7 +11,7 @@ import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 import { entradaFalsa } from './dobles.js';
 import { parse } from '../src/recipe.js';
 import { DURACIONES } from '../src/catalogo.js';
-import { linkDeFoto } from '../src/fotos-receta.js';
+import { linkDeFoto, parsearFotos, serializarFotos } from '../src/fotos-receta.js';
 import type { CambiosDeFotos, Coincidencias, Plan } from '../src/tipos.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
@@ -3180,6 +3180,26 @@ describe('main.ts: las rutas', () => {
       expect(preguntas.at(-1)).toContain('no es una foto');
     });
 
+    it('el esquema en mayúsculas se escribe en minúsculas, así la línea se relee', async () => {
+      estado.md = MD_CON_FOTOS;
+      // El teclado del teléfono pone la primera letra en mayúscula solo, y el
+      // depósito se parsea con `https?` sin `/i`: cruda, la línea dejaría toda
+      // la sección `## Fotos` como ajena (C05.1.5).
+      vi.stubGlobal('fetch', async () => { throw new TypeError('bloqueado'); });
+      const montada = await montar();
+      const { abrir } = montada;
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await traer(montada, 'Https://instagram/MiFoto.jpg');
+
+      const fotos = JSON.parse(estado.formulario['fotos'] ?? '');
+      // Sólo el esquema: el resto de la dirección distingue mayúsculas.
+      expect(fotos.at(-1)).toEqual({ n: 3, url: 'https://instagram/MiFoto.jpg' });
+      // Y la sección que se va a escribir vuelve a leerse entera.
+      expect(parsearFotos(serializarFotos(fotos))).toEqual(fotos);
+    });
+
     it('una `http://` se rechaza por su cuenta: desde Pages es contenido mixto', async () => {
       estado.md = MD_CON_FOTOS;
       let pedidos = 0;
@@ -3191,6 +3211,12 @@ describe('main.ts: las rutas', () => {
 
       await traer(montada, 'http://sitio/foto.jpg');
 
+      expect(JSON.parse(estado.formulario['fotos'] ?? '')).toHaveLength(2);
+      expect(pedidos).toBe(0);
+      expect(preguntas.at(-1)).toContain('https://');
+
+      // Y en mayúsculas es la misma dirección: el chequeo la ve igual.
+      await traer(montada, 'HTTP://sitio/foto.jpg');
       expect(JSON.parse(estado.formulario['fotos'] ?? '')).toHaveLength(2);
       expect(pedidos).toBe(0);
       expect(preguntas.at(-1)).toContain('https://');
