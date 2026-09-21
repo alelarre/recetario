@@ -441,7 +441,11 @@ export function filaDeFotos({ fotos, agregar }: { fotos: Miniatura[]; agregar: b
   // empezaba la otra.
   const botones = agregar
     ? '<div class="fotos-botones">' +
-      `<label class="btn sec miniatura-agregar">${ICO.camara}Cámara` +
+      // *Cámara* sólo donde hay una de mano: el `capture` no hace nada en una
+      // computadora —abre el mismo selector que *Galería*— y sacar una foto con
+      // la webcam de la Mac no es algo que se use. Lo esconde el CSS, por
+      // puntero, que es lo mismo que decide las flechas del carrusel.
+      `<label class="btn sec miniatura-agregar solo-tactil">${ICO.camara}Cámara` +
       '<input type="file" accept="image/*" capture="environment" data-fotos hidden></label>' +
       `<label class="btn sec miniatura-agregar">${ICO.galeria}Galería` +
       '<input type="file" accept="image/*" multiple data-fotos hidden></label>' +

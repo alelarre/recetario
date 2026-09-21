@@ -381,6 +381,15 @@ describe('filaDeFotos: Cámara y Galería (P50)', () => {
     expect(html).toContain('Galería');
   });
 
+  it('Cámara no se dibuja con mouse: lo esconde el CSS por puntero', () => {
+    const html = filaDeFotos({ fotos: [], agregar: true });
+    const camara = html.slice(html.indexOf('Cámara') - 200, html.indexOf('Cámara'));
+    expect(camara).toContain('solo-tactil');
+    // Galería sí se usa en los dos lados.
+    const galeria = html.slice(html.indexOf('Galería') - 200, html.indexOf('Galería'));
+    expect(galeria).not.toContain('solo-tactil');
+  });
+
   it('los dos botones van en su propia fila, debajo de las miniaturas', () => {
     const html = filaDeFotos({ fotos: [{ url: 'https://ejemplo/a.jpg', n: 1 }], agregar: true });
     expect(html.indexOf('class="miniaturas"')).toBeLessThan(html.indexOf('class="fotos-botones"'));

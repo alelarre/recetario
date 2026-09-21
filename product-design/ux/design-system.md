@@ -1125,7 +1125,10 @@ borrador la × saca la foto; en el editor de recetas no va, porque *Sacar* es un
 de las acciones de la ficha (§6.26). Al final de la fila, dos botones
 secundarios de 64 px de alto: **Cámara**, con el ícono `camara`, que saca una
 foto por vez; y **Galería**, con el ícono `galeria` —dos fotos, una detrás de
-la otra—, que abre el selector del sistema y acepta varias a la vez. **Los dos
+la otra—, que abre el selector del sistema y acepta varias a la vez. **Con
+mouse o trackpad, *Cámara* no se dibuja**: ahí el `capture` no hace nada y
+abriría el mismo selector que *Galería*. Es la consulta de puntero con la que
+aparecen las flechas del carrusel (§6.21), al revés. **Los dos
 van en su propia fila, debajo de las miniaturas**, y bajan de renglón entre
 ellos si no entran, y ninguno se dibuja en el borrador con cinco fotos ni tienen tope
 en el editor. **Una foto que ya no está en Drive** es el mismo cuadrado con

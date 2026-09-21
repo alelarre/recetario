@@ -53,6 +53,10 @@ describe('cómo responden los controles al toque', () => {
     expect(BASE).toContain('html:has(#velo-escritura:not([hidden])) { overflow: hidden; }');
   });
 
+  it('lo que es sólo de un dedo no se dibuja con mouse o trackpad (P50)', () => {
+    expect(TOKENS).toContain('@media (hover: hover) and (pointer: fine) { .solo-tactil { display: none; } }');
+  });
+
   it('el velo tapa también mientras dibuja el cierre (P43)', () => {
     // El tilde se dibuja antes de navegar: ahí abajo sigue estando el editor,
     // y un toque suelto no puede llegarle.

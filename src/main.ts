@@ -39,7 +39,7 @@ import { API_KEY, NOMBRE_RAIZ } from './config.js';
 import { puedeEmpezar, direccion, progreso, seAbre } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
 import { aviso, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js';
-import { pintar as pintarEnPantalla, conClosest, desplazarCarrusel } from './ui/pintar.js';
+import { pintar as pintarEnPantalla, conClosest, desplazarCarrusel, movimientoReducido } from './ui/pintar.js';
 import { renderVisor, pasoDelVisor } from './ui/visor.js';
 import {
   linkDeFoto, idDeDrive, resolverReceta, siguienteNumero, lineaDelCursor, ponerEn, sacarReferencias
@@ -88,8 +88,19 @@ const pintar = (html: string): void => {
   // El velo del cierre espera a que la pantalla de destino esté dibujada: si
   // se fuera antes, se vería el repintado por debajo (§6.17b).
   if (veloEsperaPintado) sacarVeloDelCierre();
+  mirarElAviso();
   void completarFotos();
 };
+
+/**
+ * Un aviso que queda fuera de pantalla no avisa: el que falla al guardar con la
+ * pantalla scrolleada al fondo se dibuja arriba de todo y no se ve. Con
+ * `nearest` sólo se mueve lo justo, y no se mueve nada si ya estaba a la vista.
+ */
+function mirarElAviso(): void {
+  const aviso = document.querySelector<HTMLElement>('#app .aviso');
+  aviso?.scrollIntoView?.({ block: 'nearest', behavior: movimientoReducido() ? 'auto' : 'smooth' });
+}
 
 /**
  * Las fotos que la pantalla dejó pedidas. Las del editor salen del blob que

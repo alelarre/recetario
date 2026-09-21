@@ -16,8 +16,8 @@ export function pintar(html: string): void {
 export const conClosest = (t: EventTarget | null): Element | null =>
   t && typeof (t as Element).closest === 'function' ? t as Element : null;
 
-/** Sin animaciones: el CSS ya lo respeta con `scroll-behavior`, `scrollBy` no. */
-const movimientoReducido = (): boolean =>
+/** Sin animaciones: el CSS ya lo respeta con `scroll-behavior`, `scrollBy` y `scrollIntoView` no. */
+export const movimientoReducido = (): boolean =>
   typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**

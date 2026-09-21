@@ -31,6 +31,7 @@ reconciliación de estados a medias.
 - [ ] Ningún error muestra el mensaje crudo de Google.
 - [ ] Ningún aviso de error se cierra solo.
 - [ ] Lo que el usuario escribió sigue en pantalla después del error.
+- [ ] **El aviso se trae a la vista.** Un aviso fuera de pantalla no avisa: con la pantalla scrolleada al fondo, el que se dibuja arriba se desplaza hasta verse, y sólo lo justo —si ya estaba a la vista, nada se mueve—.
 
 ### R2 — El reintento reescribe todo, porque escribir es idempotente
 

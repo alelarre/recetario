@@ -419,6 +419,8 @@ describe('main.ts: las rutas', () => {
       preguntas.flatMap(html => html.includes(marca)
         ? [{ remove: () => { const i = preguntas.indexOf(html); if (i >= 0) preguntas.splice(i, 1); } }]
         : []);
+    /** Cada vez que un aviso se trajo a la vista, con cómo se lo alineó. */
+    const avisosALaVista: string[] = [];
     /** Los `<img>` que la pantalla dejó pedidos; los pone el test. */
     const imgs: ReturnType<typeof imgFalsa>[] = [];
     /** Cada vez que `main` redibujó la fila de miniaturas del editor. */
@@ -498,6 +500,12 @@ describe('main.ts: las rutas', () => {
         if (sel === '#app [data-url-portada]') return campo('url-portada');
         if (sel === '#app .fotos-campo') return { set outerHTML(html: string) { filasDeFotos.push(html); } };
         if (sel === '#app .portada-boton') return { set innerHTML(html: string) { portadas.push(html); } };
+        // El aviso que se trae a la vista cuando algo falla con la pantalla scrolleada.
+        if (sel === '#app .aviso') {
+          return app.innerHTML.includes('class="aviso"')
+            ? { scrollIntoView: (o: { block?: string }) => { avisosALaVista.push(o?.block ?? ''); } }
+            : null;
+        }
         if (sel === '#app .poner-foto') {
           return botonDeFoto === null ? null : { remove: () => { botonDeFoto = null; } };
         }
@@ -567,6 +575,7 @@ describe('main.ts: las rutas', () => {
       velo,
       pinturas,
       atributosApp,
+      avisosALaVista,
       recargas,
       vueltasAtras,
       tapadoAlVolver,
@@ -2073,6 +2082,25 @@ describe('main.ts: las rutas', () => {
         expect(velo.hidden).toBe(true);
       } finally {
         storeFake.plan = original;
+      }
+    });
+
+    it('el aviso de un guardado que falló se trae a la vista (P54)', async () => {
+      const original = storeFake.crear;
+      storeFake.crear = async () => { throw new Error('red'); };
+      try {
+        const { abrir, tocar, app, avisosALaVista } = await montar();
+        await abrir('#/nueva');
+        estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+
+        await tocar('guardar');
+
+        expect(app.innerHTML).toContain('No se pudo guardar.');
+        // Scrolleado al fondo, el aviso de arriba no se ve: se lo trae, y sólo
+        // lo justo —`nearest` no mueve nada si ya estaba a la vista—.
+        expect(avisosALaVista).toContain('nearest');
+      } finally {
+        storeFake.crear = original;
       }
     });
 
