@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  tarjeta, placeholder, aviso, encabezado, chipsSueltos, chipTag, iconoDeTag, vacio, tile, carruselTags,
+  tarjeta, placeholder, aviso, encabezado, chipsSueltos, chipTag, iconoDeTag, vacio, tile, carrusel, carruselTags,
   filaDuraciones, conmutadorOrden, lateral
 } from '../src/ui/componentes.js';
 import { entradaFalsa } from './dobles.js';
@@ -207,6 +207,31 @@ describe('vacio', () => {
     const html = vacio('Ninguna receta se llama así.');
     expect(html).toContain('Ninguna receta se llama así.');
     expect(html).not.toContain('<button');
+  });
+});
+
+describe('el carrusel: el marco que comparten los tags y las fotos', () => {
+  const opciones = { etiquetaIzq: 'Anteriores', etiquetaDer: 'Más' };
+
+  it('envuelve lo que recibe en la pista, adentro del marco', () => {
+    const html = carrusel('<span class="x">uno</span>', opciones);
+    expect(html).toContain('<div class="carrusel-marco">');
+    expect(html).toContain('<div class="carrusel" data-carrusel><span class="x">uno</span></div>');
+  });
+
+  it('lleva las dos flechas, con las etiquetas que le pasan', () => {
+    const html = carrusel('<span></span>', opciones);
+    expect(html).toContain('data-accion="carrusel-izq" aria-label="Anteriores"');
+    expect(html).toContain('data-accion="carrusel-der" aria-label="Más"');
+  });
+
+  it('sin contenido no dibuja nada', () => {
+    expect(carrusel('', opciones)).toBe('');
+  });
+
+  it('la clase propia de cada carrusel se suma al marco', () => {
+    expect(carrusel('<span></span>', { ...opciones, clase: 'carrusel-fotos' }))
+      .toContain('<div class="carrusel-marco carrusel-fotos">');
   });
 });
 

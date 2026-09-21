@@ -226,6 +226,32 @@ export function chipsSueltos(tags: string[]): string {
     : chipTag(tag, { quieto: true })).join('');
 }
 
+export interface OpcionesMarcoCarrusel {
+  /** Qué dicen las flechas cuando no se las ve: cambia con lo que lleva adentro. */
+  etiquetaIzq: string;
+  etiquetaDer: string;
+  /** Una clase más en el marco, para lo propio de cada carrusel. */
+  clase?: string;
+}
+
+/**
+ * El marco que se desliza de costado: la pista con lo que le den adentro, el
+ * degradé que dice que sigue, y las dos flechas, que aparecen sólo con mouse o
+ * trackpad. Lo usan los tags y las fotos de la receta.
+ *
+ * Cada marco es independiente: la flecha mueve la pista de su propio marco
+ * (`desplazarCarrusel` en `ui/pintar.ts`), así que dos carruseles pueden
+ * convivir en la misma pantalla. Sin contenido no hay carrusel.
+ */
+export function carrusel(contenido: string, { etiquetaIzq, etiquetaDer, clase }: OpcionesMarcoCarrusel): string {
+  if (!contenido) return '';
+  return `<div class="carrusel-marco${clase ? ` ${clase}` : ''}">` +
+    `<div class="carrusel" data-carrusel>${contenido}</div>` +
+    `<button class="carrusel-flecha izq" data-accion="carrusel-izq" aria-label="${escapar(etiquetaIzq)}">${ICO.volver}</button>` +
+    `<button class="carrusel-flecha der" data-accion="carrusel-der" aria-label="${escapar(etiquetaDer)}">${ICO.chevron}</button>` +
+    '</div>';
+}
+
 export interface OpcionesCarrusel {
   activos?: string[];
   /** Cuántos tags comunes entran. Los especiales no cuentan y van siempre. */
@@ -238,8 +264,7 @@ export interface OpcionesCarrusel {
  * El carrusel de tags que filtra: los especiales primero y en su orden,
  * después los demás por cantidad. `store.tagsDe()` ya entrega los comunes así
  * de ordenados, pero se reordena igual acá: el carrusel no debe depender de
- * que quien lo llame respete ese contrato. Se desliza de costado; el degradé
- * dice que sigue, y las flechas aparecen sólo con mouse o trackpad.
+ * que quien lo llame respete ese contrato.
  */
 export function carruselTags(
   tags: { tag: string; cantidad: number }[], { activos = [], tope, fijo }: OpcionesCarrusel = {}
@@ -260,11 +285,7 @@ export function carruselTags(
       ? chipTag(tag, { cantidad, fijo: true })
       : chipTag(tag, { cantidad, activo: activos.includes(tag) }))
     .join('');
-  return '<div class="carrusel-marco">' +
-    `<div class="carrusel" data-carrusel>${chips}</div>` +
-    `<button class="carrusel-flecha izq" data-accion="carrusel-izq" aria-label="Tags anteriores">${ICO.volver}</button>` +
-    `<button class="carrusel-flecha der" data-accion="carrusel-der" aria-label="Más tags">${ICO.chevron}</button>` +
-    '</div>';
+  return carrusel(chips, { etiquetaIzq: 'Tags anteriores', etiquetaDer: 'Más tags' });
 }
 
 /** Una frase y nada más: sin ilustración y sin sugerencias (mockup 05). */

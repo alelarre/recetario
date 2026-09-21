@@ -33,11 +33,11 @@ receta entera.
 
 #### C03.1.1 — El orden de lectura *(J6)*
 
-- [ ] En la primera ficha: foto si la hay, título, línea de contexto, tags, descripción y, al pie tras un divisor, la fuente. Después ingredientes, preparación, variaciones y notas, cada una en su ficha, y al final la ficha **Fotos** si la receta tiene depósito (C03.5.2).
+- [ ] En la primera ficha: foto si la hay, título, línea de contexto, tags, descripción, el **carrusel de fotos** si la receta tiene depósito (C03.5.2) y, al pie tras un divisor, la fuente. Después ingredientes, preparación, variaciones y notas, cada una en su ficha.
 - [ ] La línea de contexto lleva el color y el nombre de la categoría, lo que rinde, **la duración con su relojito** y la dificultad. La duración sólo se dibuja si `tiempo` es uno de los cinco valores (`E05-Cimientos.md` C05.1.1).
 - [ ] Los tags van como chips, los especiales primero y con su ícono. **Se leen y no se tocan** (C02.6.3); el único tocable es *incompleta* (C03.1.3). **`favorito` no lleva chip:** ya lo dice la estrella del encabezado (C03.1.2b).
 - [ ] Una sección ausente no se dibuja: no queda encabezado vacío.
-- [ ] Una sección desconocida del `.md` se muestra tal cual, después de Fotos, sin interpretarse (C05.1.2).
+- [ ] Una sección desconocida del `.md` se muestra tal cual, después de Notas, sin interpretarse (C05.1.2).
 - [ ] Toda la receta se lee scrolleando, sin ningún toque.
 
 #### C03.1.2 — Las acciones *(J6, J7)*
@@ -169,18 +169,19 @@ todas juntas al final. **El diseño no depende de ninguna.**
 - [ ] La receta sin foto se ve completa igual: empieza por el título.
 - [ ] No se muestra en modo cocina.
 
-#### C03.5.2 — Las fotos del cuerpo y la galería *(J6)*
+#### C03.5.2 — Las fotos del cuerpo y el carrusel *(J6)*
 
 - [ ] Una referencia `![epígrafe](foto:N)` en un ingrediente, un paso o una nota se dibuja **debajo del texto de esa línea**, al ancho de la ficha, con su epígrafe si lo tiene.
-- [ ] Al final, después de Notas y antes de las secciones ajenas, una ficha **Fotos** con el depósito entero, en su orden, cuadradas y de a tres por fila.
-- [ ] Sin depósito, la ficha no se dibuja.
+- [ ] El depósito entero va en un **carrusel** dentro de la primera ficha, en su orden, **debajo de la descripción y arriba del divisor de la fuente**: son fotos de la receta, no una sección más, y se ven al abrirla sin buscarlas abajo de todo.
+- [ ] El carrusel se desliza de costado como el de tags: cuadradas, entran dos y media en el ancho del teléfono, el degradé dice que sigue y las flechas aparecen sólo con mouse o trackpad (`design-system.md` §6.21, §6.26).
+- [ ] Sin depósito, el carrusel no se dibuja.
 - [ ] **En el modo cocina**, cada paso y cada ingrediente dibujan su foto debajo, igual que en la lectura. Tocarlas no abre el visor: en la cocina un toque marca el paso (C03.2.4).
-- [ ] Una foto de Drive que ya no está se dibuja en la galería como un recuadro con *«La foto ya no está en Drive.»*; en la cabecera o en una línea, no se dibuja.
-- [ ] Una foto externa cuya URL no carga sigue la misma regla, con su propio motivo: en la galería, *«No se pudo cargar la foto.»*; en cualquier otro lado, no se dibuja.
+- [ ] Una foto de Drive que ya no está se dibuja en el carrusel como un recuadro con *«La foto ya no está en Drive.»*; en la cabecera o en una línea, no se dibuja.
+- [ ] Una foto externa cuya URL no carga sigue la misma regla, con su propio motivo: en el carrusel, *«No se pudo cargar la foto.»*; en cualquier otro lado, no se dibuja.
 
 #### C03.5.3 — El visor *(J6)*
 
-- [ ] Tocar cualquier foto —la cabecera, una en línea o una de la grilla— abre el **visor**: la foto entera sobre un velo, encima de todo.
+- [ ] Tocar cualquier foto —la cabecera, una en línea o una del carrusel— abre el **visor**: la foto entera sobre un velo, encima de todo.
 - [ ] El visor **desliza entre las fotos del depósito**, en su orden, empezando por la que se tocó. En los extremos no da la vuelta.
 - [ ] Se cierra tocando, en cualquier parte. Es estado de la pantalla, no una ruta.
 - [ ] Una cabecera externa que no está en el depósito se abre sola, sin deslizar.
@@ -244,7 +245,7 @@ revocar.
 
 - [ ] Quien abre el link ve la receta **sin conectar con Google**. La vista no lee ni escribe Drive, no pide el token, no guarda nada en el navegador y no ofrece guardar la receta.
 - [ ] Lectura (`#/ver?r=…`): la misma pila de fichas de la receta, con el contexto sin el color de la categoría —es de la carpeta del dueño—. **No tiene encabezado** —ni volver, ni estrella, ni compartir, ni `.md`—, ni fila de tags. Al pie, sólo **Cocinar**, si hay ingredientes o pasos.
-- [ ] **Dibuja sólo las fotos externas** —las que viajaron en el link—, con su galería y su visor; sin ninguna, la ficha Fotos no se dibuja. Nunca le pide nada a Drive.
+- [ ] **Dibuja sólo las fotos externas** —las que viajaron en el link—, con su carrusel en la primera ficha y su visor; sin ninguna, el carrusel no se dibuja. Nunca le pide nada a Drive. Las dos flechas del carrusel son de su lista cerrada de acciones y sólo lo desplazan.
 - [ ] Cocinar (`#/ver/cocinar?r=…`): el mismo modo cocina de la app —conmutador, paso actual, pasos hechos, sol—. **La única salida es el chevron**, que vuelve a la lectura; *Salir* no se dibuja.
 - [ ] El título de la pestaña es el de la receta.
 - [ ] Si la carga no se puede leer —cortada, alterada, de otra versión—, la pantalla dice *"Este link está roto o incompleto."* y nada más.

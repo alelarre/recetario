@@ -319,25 +319,38 @@ titulo: Pan
     expect(html).toContain('src="https://x/paso.jpg"');
   });
 
-  it('la ficha Fotos va después de Notas, con la grilla del depósito entero', () => {
+  it('el depósito entero va en un carrusel dentro de la primera ficha, y no hay ficha Fotos al final', () => {
+    const conDesc = parse(
+      '---\ntitulo: Rabas\nfuente: Un libro\n---\n\nUna entrada clásica.\n\n## Ingredientes\n- Sal\n\n' +
+      '## Fotos\n- 1: https://x/a.jpg\n- 2: https://x/b.jpg\n'
+    );
+    const html = renderReceta({ entrada: null, receta: conDesc });
+    expect(html).not.toContain('<h2>Fotos</h2>');
+    expect(html).toContain('carrusel-fotos');
+    // Debajo de la descripción y arriba del divisor de la fuente, en la primera ficha.
+    expect(html.indexOf('rec-desc')).toBeLessThan(html.indexOf('carrusel-fotos'));
+    expect(html.indexOf('carrusel-fotos')).toBeLessThan(html.indexOf('rec-fuente'));
+    expect(html.indexOf('carrusel-fotos')).toBeLessThan(html.indexOf('<h2>Ingredientes</h2>'));
+  });
+
+  it('cada foto del carrusel es un botón que abre el visor, con su número del depósito', () => {
     const html = renderReceta({ entrada: null, receta: CON_FOTOS });
-    expect(html).toContain('<h2>Fotos</h2>');
-    expect(html.indexOf('<h2>Notas</h2>')).toBeLessThan(html.indexOf('<h2>Fotos</h2>'));
-    expect(html).toContain('class="galeria"');
-    expect(html.match(/data-accion="ver-foto-receta"/g)).toHaveLength(3); // cabecera + 2 miniaturas
+    expect(html.match(/data-accion="ver-foto-receta"/g)).toHaveLength(3); // cabecera + 2 del carrusel
     expect(html).toContain('data-n="1"');
     expect(html).toContain('data-n="2"');
   });
 
-  it('cada miniatura de la grilla se llama por su número, no por su posición', () => {
+  it('cada foto del carrusel se llama por su número, no por su posición', () => {
     const conHueco = parse('---\ntitulo: Rabas\n---\n\n## Fotos\n- 3: https://x/a.jpg\n- 7: https://x/b.jpg\n');
     const html = renderReceta({ entrada: null, receta: conHueco });
     expect(html).toContain('data-n="3" aria-label="Ver la foto 3"');
     expect(html).toContain('data-n="7" aria-label="Ver la foto 7"');
   });
 
-  it('sin depósito, la ficha Fotos no se dibuja', () => {
-    expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('<h2>Fotos</h2>');
+  it('sin depósito, el carrusel no se dibuja', () => {
+    const html = renderReceta({ entrada: null, receta: COMPLETA });
+    expect(html).not.toContain('<h2>Fotos</h2>');
+    expect(html).not.toContain('carrusel-fotos');
   });
 
   it('el visor dibuja la foto actual sobre el velo cuando está abierto', () => {

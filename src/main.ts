@@ -38,7 +38,7 @@ import { API_KEY, NOMBRE_RAIZ } from './config.js';
 import { puedeEmpezar, direccion, progreso, seAbre } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
 import { aviso, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js';
-import { pintar as pintarEnPantalla, conClosest } from './ui/pintar.js';
+import { pintar as pintarEnPantalla, conClosest, desplazarCarrusel } from './ui/pintar.js';
 import { renderVisor, pasoDelVisor } from './ui/visor.js';
 import {
   linkDeFoto, idDeDrive, resolverReceta, siguienteNumero, lineasDeLaReceta, ponerEn, sacarReferencias
@@ -110,12 +110,14 @@ async function completarFotos(): Promise<void> {
 }
 
 /**
- * La foto que no se va a ver: en una grilla deja su recuadro con el motivo, y
- * en cualquier otro lado —la cabecera, un paso, una lista— el bloque no se
- * dibuja. En una lista, abajo queda el placeholder de la categoría.
+ * La foto que no se va a ver: donde tiene su propio cuadrado —el carrusel de la
+ * receta, la grilla de portada del editor, la fila de miniaturas— deja el
+ * recuadro con el motivo, y en cualquier otro lado —la cabecera, un paso, una
+ * lista— el bloque no se dibuja. En una lista, abajo queda el placeholder de la
+ * categoría.
  */
 function sacarFoto(img: Element, recuadro: string): void {
-  if (img.closest('.galeria-item, .miniatura')) img.outerHTML = recuadro;
+  if (img.closest('.carrusel-foto, .galeria-item, .miniatura')) img.outerHTML = recuadro;
   else img.remove();
 }
 
@@ -1636,17 +1638,8 @@ app.addEventListener('click', async (e) => {
     return render();
   }
 
-  // Las flechas sólo existen con mouse o trackpad (el CSS las esconde): el
-  // teléfono desliza con el dedo. Se mueve el 80% de lo que se ve, para que
-  // quede un chip de referencia entre una vista y la siguiente.
   if (accion === 'carrusel-izq' || accion === 'carrusel-der') {
-    const carrusel = document.querySelector<HTMLElement>('#app [data-carrusel]');
-    if (!carrusel) return;
-    const paso = Math.round(carrusel.clientWidth * 0.8);
-    carrusel.scrollBy?.({
-      left: accion === 'carrusel-der' ? paso : -paso,
-      behavior: movimientoReducido() ? 'auto' : 'smooth'
-    });
+    desplazarCarrusel(boton, accion);
     return;
   }
 
@@ -2343,10 +2336,6 @@ let deslizando: { x: number; y: number; decidido: 'indeciso' | 'horizontal' | 'v
 /** Desde 900 px el menú es fijo (`base.css`): no hay nada que abrir. */
 const menuFijo = (): boolean =>
   typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 900px)').matches;
-
-/** Sin animaciones: el CSS ya lo respeta con `scroll-behavior`, `scrollBy` no. */
-const movimientoReducido = (): boolean =>
-  typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** El menú y el velo al ritmo del dedo, sin transición; con `null` vuelven a lo que diga el CSS. */
 function seguirDedo(p: number | null): void {

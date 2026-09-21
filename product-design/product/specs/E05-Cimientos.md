@@ -139,7 +139,7 @@ receta no tiene cabecera.
 - [ ] Se reconocen `## Ingredientes`, `## Preparación`, `## Variaciones` y `## Notas`.
 - [ ] Los `###` dentro de Ingredientes son grupos; dentro de Variaciones, variaciones; **dentro de Preparación, tramos con nombre**, y la numeración de los pasos vuelve a empezar en cada uno.
 - [ ] `## Variaciones` puede traer una lista de bullets en vez de secciones `###`, y entonces se muestra como lista.
-- [ ] **`## Fotos` es el depósito** (C05.1.5) y no texto: no se muestra como sección de la receta —sus fotos se dibujan en la galería (`E03-LeerYCocinar.md` C03.5.2)— ni se edita como un campo más del editor.
+- [ ] **`## Fotos` es el depósito** (C05.1.5) y no texto: no se muestra como sección de la receta —sus fotos se dibujan en el carrusel de la receta (`E03-LeerYCocinar.md` C03.5.2)— ni se edita como un campo más del editor.
 - [ ] Cualquier otra sección se conserva y se muestra tal cual, sin interpretarse.
 - [ ] El texto antes de la primera sección es la descripción.
 - [ ] Al reescribir, el orden es siempre el mismo: la descripción, Ingredientes, Preparación, Variaciones y Notas, después las otras secciones en el orden en que estaban, y `## Fotos` al final de todo. Un `.md` que las traía en otro orden queda en éste la primera vez que se guarda.
@@ -169,7 +169,7 @@ pescados usa `Anchoítas — 18-20 medianas` y el recetario original usa
 #### C05.1.5 — El depósito de fotos *(J8)*
 
 - [ ] **Las fotos de una receta viven en una sección `## Fotos` del cuerpo**, una línea por foto: `- <número>: <url>`. No hay claves nuevas en el frontmatter.
-- [ ] **El número es estable:** una foto nueva toma el más alto más uno, y un número no se reusa nunca. Los números pueden tener huecos, y el orden de las líneas es el de la galería.
+- [ ] **El número es estable:** una foto nueva toma el más alto más uno, y un número no se reusa nunca. Los números pueden tener huecos, y el orden de las líneas es el del carrusel.
 - [ ] La URL es **un archivo de Drive** —`https://drive.google.com/file/d/<id>/view`, el único formato que se reconoce como tal— **o una externa**. La de Drive se pide con el token; la externa va a un `<img>` directo.
 - [ ] Sin fotos, la sección no se escribe.
 - [ ] **Si alguna línea no tiene esa forma** —o su URL no es `http(s)`—, la sección entera se lee como una sección ajena y se conserva tal cual: la receta queda sin depósito y nada se pierde (C04.3c.1).

@@ -280,7 +280,12 @@ const esperar = async (vueltas = 5) => {
  * (`data-drive`) y los de una foto nueva del editor (`data-n`). El test los
  * pone en la lista y después mira qué les pasó.
  */
-function imgFalsa(dataset: { drive?: string; n?: string }, enGrilla = false, tagName = 'IMG') {
+function imgFalsa(
+  dataset: { drive?: string; n?: string },
+  /** El recuadro del que cuelga, si la foto va a dejar su motivo en lugar del `<img>`. */
+  recuadro: false | '.carrusel-foto' | '.galeria-item' = false,
+  tagName = 'IMG'
+) {
   const img = {
     dataset,
     tagName,
@@ -289,7 +294,7 @@ function imgFalsa(dataset: { drive?: string; n?: string }, enGrilla = false, tag
     reemplazo: '',
     sacada: false,
     setAttribute: (n: string, v: string) => { img.atributos[n] = v; },
-    closest: (sel: string) => (enGrilla && sel.includes('galeria-item') ? {} : null),
+    closest: (sel: string) => (recuadro && sel.includes(recuadro) ? {} : null),
     remove: () => { img.sacada = true; },
     set outerHTML(html: string) { img.reemplazo = html; }
   };
@@ -394,6 +399,17 @@ describe('main.ts: las rutas', () => {
     const desplazamientos: number[] = [];
     /** El `behavior` de cada desplazamiento: 'auto' con reduced motion, si no 'smooth'. */
     const comportamientos: string[] = [];
+    // La pista del carrusel: 400 px visibles, como para que el 80% dé un número
+    // redondo. Se llega a ella desde el marco de la flecha tocada y no desde el
+    // documento: en la receta hay dos carruseles y cada flecha mueve el suyo.
+    const pistaDeCarrusel = {
+      clientWidth: 400,
+      scrollBy: (o: { left: number; behavior?: string }) => {
+        desplazamientos.push(o.left);
+        comportamientos.push(o.behavior ?? '');
+      }
+    };
+    const marcoDeCarrusel = { querySelector: (sel: string) => (sel === '[data-carrusel]' ? pistaDeCarrusel : null) };
     // La duración del editor: sin HTML real que releer, cada botón
     // guarda su propio `aria-pressed` en este mapa, y el campo oculto su
     // propio valor en una variable aparte —dos estados independientes, como
@@ -436,16 +452,6 @@ describe('main.ts: las rutas', () => {
         }
         // El sol encendido, tal como lo dibuja la cocina.
         if (sel === '[data-accion="wake"].on') return app.innerHTML.includes('class="ico on" data-accion="wake"') ? {} : null;
-        // El carrusel: 400 px visibles, como para que el 80% dé un número redondo.
-        if (sel === '#app [data-carrusel]') {
-          return {
-            clientWidth: 400,
-            scrollBy: (o: { left: number; behavior?: string }) => {
-              desplazamientos.push(o.left);
-              comportamientos.push(o.behavior ?? '');
-            }
-          };
-        }
         if (sel === '#app input[name="tiempo"]') return campoTiempoDuracion;
         // El editor y la edición de una categoría escriben en sus campos sin
         // redibujar: el depósito de fotos, la portada, las secciones de texto.
@@ -589,7 +595,9 @@ describe('main.ts: las rutas', () => {
           ? botonesDuracion.get(datos['valor']!)!
           : {
               dataset: { accion, ...datos }, classList: { contains: () => false },
-              closest: () => null, tagName: 'BUTTON', remove: () => {},
+              // La flecha del carrusel sale de su propio marco.
+              closest: (sel: string) => (sel === '.carrusel-marco' ? marcoDeCarrusel : null),
+              tagName: 'BUTTON', remove: () => {},
               setAttribute: (n: string, v: string) => { attrs[n] = v; },
               getAttribute: (n: string) => attrs[n] ?? null,
               hasAttribute: (n: string) => n in attrs,
@@ -639,6 +647,17 @@ describe('main.ts: las rutas', () => {
     await tocar('carrusel-izq');
 
     expect(desplazamientos).toEqual([320, -320]);
+  });
+
+  it('en la receta, la flecha mueve el carrusel de las fotos', async () => {
+    estado.md = '---\ntitulo: Milanesas\n---\n\n## Fotos\n\n- 1: https://ejemplo/1.jpg\n- 2: https://ejemplo/2.jpg\n';
+    const { abrir, tocar, app, desplazamientos } = await montar();
+    await abrir('#/r/f1');
+
+    expect(app.innerHTML).toContain('carrusel-fotos');
+    await tocar('carrusel-der');
+
+    expect(desplazamientos).toEqual([320]);
   });
 
   it('la flecha respeta prefers-reduced-motion: sin animación al desplazar', async () => {
@@ -3043,7 +3062,7 @@ describe('main.ts: las rutas', () => {
       estado.md = MD_CON_FOTOS;
       estado.fotosPerdidas = ['f8', 'f7'];
       const { abrir, imgs } = await montar();
-      imgs.push(imgFalsa({ drive: 'f9' }), imgFalsa({ drive: 'f8' }, true), imgFalsa({ drive: 'f7' }));
+      imgs.push(imgFalsa({ drive: 'f9' }), imgFalsa({ drive: 'f8' }, '.carrusel-foto'), imgFalsa({ drive: 'f7' }));
 
       await abrir('#/r/f1');
 
@@ -3052,18 +3071,18 @@ describe('main.ts: las rutas', () => {
       expect(imgs[2]?.sacada).toBe(true);
     });
 
-    it('una foto externa que no carga se saca; en una grilla deja su recuadro (P42)', async () => {
+    it('una foto externa que no carga se saca; en el carrusel deja su recuadro (P42)', async () => {
       estado.md = MD_CON_FOTOS;
       const { abrir, fallarFoto } = await montar();
       await abrir('#/r/f1');
 
       const enLaCabecera = imgFalsa({});
-      const enLaGaleria = imgFalsa({}, true);
+      const enElCarrusel = imgFalsa({}, '.carrusel-foto');
       await fallarFoto(enLaCabecera);
-      await fallarFoto(enLaGaleria);
+      await fallarFoto(enElCarrusel);
 
       expect(enLaCabecera.sacada).toBe(true);
-      expect(enLaGaleria.reemplazo).toContain('No se pudo cargar la foto.');
+      expect(enElCarrusel.reemplazo).toContain('No se pudo cargar la foto.');
     });
 
     it('el error de algo que no es una imagen no toca nada', async () => {

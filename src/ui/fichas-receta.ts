@@ -5,7 +5,7 @@
  */
 import { escapar, aHtml, tramosAHtml, tramosDeFuente, tramosEnLinea, imgDe } from './markdown.js';
 import { colorCategoria } from './categorias.js';
-import { duracionConReloj } from './componentes.js';
+import { carrusel, duracionConReloj } from './componentes.js';
 import { gruposDe, tramosDe, variacionesDe } from '../recipe.js';
 import type { Receta, GrupoIngredientes, TramoPreparacion, FotoDeReceta } from '../tipos.js';
 import type { TramoEnLinea } from './markdown.js';
@@ -68,11 +68,24 @@ function botonFoto(url: string, n: number | undefined): string {
 }
 
 /**
- * La primera ficha: foto, título, contexto, marcas, descripción y fuente.
- * Arriba, qué es y cómo se clasifica; la fuente al pie, tras un divisor: es
- * dato de procedencia y con los cuatro bloques pegados no se leía ninguno.
- * Recibe la receta ya resuelta (`resolverReceta`): `receta.foto` es una URL,
- * nunca `foto:N`, y `receta.fotos` es el depósito para saber su número.
+ * El depósito entero en un carrusel, en su orden: se desliza de costado y cada
+ * foto abre el visor en la suya, con `data-n` su número. Va en la primera ficha
+ * y no en una al final: las fotos son de la receta, no una sección más, y ahí
+ * se ven al abrirla sin tener que buscarlas abajo de todo.
+ */
+function carruselDeFotos(fotos: FotoDeReceta[]): string {
+  const items = fotos.map(f =>
+    `<button type="button" class="carrusel-foto" data-accion="ver-foto-receta" data-n="${f.n}" ` +
+    `aria-label="Ver la foto ${f.n}">${imgDe(f.url)}</button>`).join('');
+  return carrusel(items, { etiquetaIzq: 'Fotos anteriores', etiquetaDer: 'Más fotos', clase: 'carrusel-fotos' });
+}
+
+/**
+ * La primera ficha: foto, título, contexto, marcas, descripción, el carrusel de
+ * fotos y la fuente. Arriba, qué es y cómo se clasifica; la fuente al pie, tras
+ * un divisor: es dato de procedencia y con los cuatro bloques pegados no se leía
+ * ninguno. Recibe la receta ya resuelta (`resolverReceta`): `receta.foto` es una
+ * URL, nunca `foto:N`, y `receta.fotos` es el depósito para saber su número.
  */
 export function fichaCabecera({ receta, categoria, marcas = '', pin = true }: OpcionesCabecera): string {
   const partes = [escapar(categoria), escapar(receta.rinde ?? ''), duracionConReloj(receta.tiempo), escapar(receta.dificultad ?? '')]
@@ -88,27 +101,16 @@ export function fichaCabecera({ receta, categoria, marcas = '', pin = true }: Op
     // La descripción es de la receta, no una sección aparte: va en la misma
     // ficha, después de los datos y antes de la procedencia.
     (receta.descripcion ? `<div class="lee rec-desc">${aHtml(receta.descripcion)}</div>` : '') +
+    carruselDeFotos(receta.fotos) +
     (fuente ? `<div class="rec-fuente"><span class="emo">📖</span>fuente: ${fuente}</div>` : '')
   );
 }
 
 /**
- * La grilla del depósito entero, en su orden, cuadradas y de a tres por fila
- * (spec §7). Cada una abre el visor en su foto, con `data-n` su número.
- */
-function galeria(fotos: FotoDeReceta[]): string {
-  if (!fotos.length) return '';
-  return `<div class="galeria">${fotos.map(f =>
-    `<button type="button" class="galeria-item" data-accion="ver-foto-receta" data-n="${f.n}" ` +
-    `aria-label="Ver la foto ${f.n}">${imgDe(f.url)}</button>`
-  ).join('')}</div>`;
-}
-
-/**
- * Ingredientes, Preparación, Variaciones, Notas, Fotos y las secciones que la
- * app no conoce. Ninguna vacía; Fotos, además, sólo si hay depósito. Recibe
- * la receta ya resuelta: las referencias en línea ya son URLs, y `.fotos`
- * sigue siendo el depósito para la grilla.
+ * Ingredientes, Preparación, Variaciones, Notas y las secciones que la app no
+ * conoce. Ninguna vacía. Las fotos del depósito no están acá: van en el
+ * carrusel de la primera ficha. Recibe la receta ya resuelta: las referencias
+ * en línea ya son URLs.
  */
 export function fichasDelCuerpo(receta: Receta): string {
   const grupos = gruposDe(receta.ingredientes).filter(g => g.items.length);
@@ -125,7 +127,6 @@ export function fichasDelCuerpo(receta: Receta): string {
     ficha(preparacion(tramos), 'Preparación') +
     ficha(variaciones, 'Variaciones') +
     ficha(receta.notas ? `<div class="lee">${aHtml(receta.notas)}</div>` : '', 'Notas') +
-    ficha(galeria(receta.fotos), 'Fotos') +
     receta.otras.map(o => ficha(`<div class="lee">${aHtml(o.cuerpo)}</div>`, o.encabezado)).join('');
 }
 

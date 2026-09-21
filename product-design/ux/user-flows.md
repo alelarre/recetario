@@ -288,9 +288,10 @@ volver se pide de nuevo. Si el navegador no lo soporta, el sol no se muestra.
 fuente.
 
 **Las fotos se leen donde el texto las nombra:** debajo del paso o del
-ingrediente, en la receta y también en el modo cocina; todas juntas, en la ficha
-*Fotos* del final. Tocar cualquiera abre el visor, que desliza entre todas y se
-cierra tocando. En la cocina no: ahí un toque marca el paso.
+ingrediente, en la receta y también en el modo cocina; todas juntas, en el
+carrusel de la primera ficha, debajo de la descripción. Tocar cualquiera abre el
+visor, que desliza entre todas y se cierra tocando. En la cocina no: ahí un
+toque marca el paso.
 
 ---
 

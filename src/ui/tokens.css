@@ -224,6 +224,67 @@ button.chip { cursor: pointer; }
    del chip del editor. */
 .chip svg { stroke-width: 1.5; }
 .chips { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+.chip .cuenta { color: var(--fg-3); font-variant-numeric: tabular-nums; margin-left: 2px; }
+.chip.act .cuenta { color: inherit; opacity: .8; }
+
+/* ---- §6.21 Carrusel ----
+   El marco que se desliza de costado: la pista con lo que le pongan adentro, el
+   degradé y las dos flechas. Lo comparten el carrusel de tags y el de fotos de
+   la receta, y puede haber más de uno en la misma pantalla: cada marco lleva su
+   propia timeline y su propio fondo. */
+.carrusel-marco { position: relative; margin-bottom: var(--e-3);
+                  /* A qué color va el degradé: el fondo de atrás del carrusel.
+                     Lo redefine quien no viva sobre el fondo de la pantalla. */
+                  --carrusel-fondo: var(--bg); }
+.carrusel { display: flex; gap: var(--e-2); overflow-x: auto; padding-bottom: var(--e-1);
+            scrollbar-width: none; scroll-behavior: smooth; }
+.carrusel::-webkit-scrollbar { display: none; }
+.carrusel > * { flex: 0 0 auto; }
+
+/* El degradé dice que sigue. A la derecha mientras quede algo; a la izquierda,
+   sólo cuando ya se corrió. La opacidad se ata a la posición del carrusel sin
+   JavaScript; donde no haya soporte, los dos se ven siempre, que no rompe nada. */
+.carrusel-marco::before, .carrusel-marco::after {
+  content: ''; position: absolute; top: 0; bottom: var(--e-1); width: 40px; pointer-events: none; }
+/* Sin desborde no hay nada que correr, y la timeline de scroll queda inactiva:
+   la animación no se aplica y se ve el valor base. Por eso, dentro del
+   @supports, los dos lados arrancan ocultos y es la animación la que los
+   muestra mientras quede algo por ver. */
+.carrusel-marco::after { right: 0; background: linear-gradient(to right, transparent, var(--carrusel-fondo)); }
+.carrusel-marco::before { left: 0; background: linear-gradient(to left, transparent, var(--carrusel-fondo)); }
+@supports (animation-timeline: scroll()) {
+  .carrusel-marco { timeline-scope: --carrusel; }
+  .carrusel { scroll-timeline: --carrusel inline; }
+  .carrusel-marco::before { opacity: 0; animation: aparecer linear both;
+                            animation-timeline: --carrusel; animation-range: 0 40px; }
+  .carrusel-marco::after { opacity: 0; animation: desaparecer linear both;
+                           animation-timeline: --carrusel; animation-range: calc(100% - 40px) 100%; }
+  /* Las flechas siguen la misma timeline, con el mismo rango que su degradé:
+     la izquierda aparece recién al correrse, la derecha desaparece al llegar
+     al final. `visibility` y no `opacity`: mientras está oculta, tampoco se
+     puede tocar (a diferencia del degradé, que no es interactivo). */
+  .carrusel-flecha.izq { visibility: hidden; animation: aparecer-flecha linear both;
+                         animation-timeline: --carrusel; animation-range: 0 40px; }
+  .carrusel-flecha.der { visibility: hidden; animation: desaparecer-flecha linear both;
+                        animation-timeline: --carrusel; animation-range: calc(100% - 40px) 100%; }
+}
+@keyframes aparecer { to { opacity: 1; } }
+@keyframes desaparecer { from { opacity: 1; } to { opacity: 0; } }
+@keyframes aparecer-flecha { to { visibility: visible; } }
+@keyframes desaparecer-flecha { from { visibility: visible; } to { visibility: hidden; } }
+
+/* Las flechas, sólo con mouse o trackpad: en el teléfono se desliza con el dedo. */
+.carrusel-flecha { display: none; position: absolute; top: 50%; transform: translateY(-50%); z-index: 1;
+  width: 32px; height: 32px; place-items: center; cursor: pointer; color: var(--fg);
+  background: var(--surface-alta); border: 1px solid var(--borde-fuerte); border-radius: 50%; }
+.carrusel-flecha svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.carrusel-flecha.izq { left: 0; }
+.carrusel-flecha.der { right: 0; }
+@media (hover: hover) and (pointer: fine) {
+  .carrusel-flecha { display: grid; }
+  .carrusel { padding-inline: 40px; }
+}
+@media (prefers-reduced-motion: reduce) { .carrusel { scroll-behavior: auto; } }
 
 /* ---- §6.9 Campo ---- */
 .campo { display: block; margin-bottom: var(--e-4); }
@@ -324,8 +385,18 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
          background: color-mix(in srgb, var(--velo) 94%, transparent); cursor: zoom-out; }
 .visor img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
-/* ---- Galería de fotos de la receta (spec §7): el depósito entero, cuadradas
-   y de a tres por fila. La usan la receta y, después, el editor. ---- */
+/* ---- §6.26 El carrusel de fotos de la receta ----
+   El depósito entero en la primera ficha, debajo de la descripción. Vive sobre
+   la ficha y no sobre el fondo de la pantalla, así que el degradé va a
+   `--surface`. Cada foto mide 132 px: dos y media entran en el ancho de un
+   teléfono, que es lo que hace falta para verlas y no leerlas como miniaturas. */
+.carrusel-fotos { --carrusel-fondo: var(--surface); margin-top: var(--e-3); }
+.carrusel-foto { display: block; width: 132px; padding: 0; border: 0; background: var(--surface-alta);
+                 border-radius: var(--r-foto); overflow: hidden; aspect-ratio: 1; cursor: pointer; }
+.carrusel-foto img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ---- Galería de fotos (spec §7): una grilla de cuadradas de a tres por fila.
+   La usa el selector de portada del editor. ---- */
 .galeria { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e-2); }
 .galeria-item { display: block; padding: 0; border: 0; background: var(--surface-alta);
                 border-radius: var(--r-foto); overflow: hidden; aspect-ratio: 1; cursor: pointer; }

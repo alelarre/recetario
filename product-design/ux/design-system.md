@@ -277,8 +277,8 @@ carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chi
 
 | Ícono | Dónde |
 |---|---|
-| `volver` | El volver del encabezado, el de cocina y el de la búsqueda; y la flecha izquierda del carrusel de tags. |
-| `chevron` | La flecha derecha del carrusel de tags. |
+| `volver` | El volver del encabezado, el de cocina y el de la búsqueda; y la flecha izquierda del carrusel. |
+| `chevron` | La flecha derecha del carrusel. |
 | `buscar` | La caja de búsqueda. |
 | `menu` | La hamburguesa que abre el menú lateral, con el contador de borradores encima. |
 | `casa`, `bandeja`, `mas`, `ajustes` | Los destinos del menú lateral: Inicio, Borradores, Nueva receta y Ajustes. `mas` va también en *Nuevo*, en Borradores. |
@@ -370,7 +370,7 @@ para los controles y los separadores internos.
 | Qué | Duración | Curva |
 |---|---|---|
 | El menú lateral que entra y sale, y su velo | 200 ms | la del navegador |
-| El desplazamiento del carrusel de tags al tocar una flecha | el del navegador (`scroll-behavior: smooth`) | — |
+| El desplazamiento de un carrusel al tocar una flecha | el del navegador (`scroll-behavior: smooth`) | — |
 | La estrella de favorito que se llena mientras Drive contesta (§6.22) | 2 s, en bucle | lineal |
 | Giro del indicador de carga | 900 ms, en bucle | lineal |
 
@@ -412,9 +412,9 @@ acorta.
 ## 6. Componentes core
 
 Con tokens aplicados. Los que son sistema —encabezado, ficha, botón, tarjeta,
-placeholder, marca de incompleta, chip, campo, aviso, ítem de ingrediente,
-spinner, miniatura, galería y foto en línea— están en `src/ui/tokens.css`; los
-que son de una pantalla, en `src/ui/base.css`.
+placeholder, marca de incompleta, chip, carrusel, campo, aviso, ítem de
+ingrediente, spinner, miniatura, galería y foto en línea— están en
+`src/ui/tokens.css`; los que son de una pantalla, en `src/ui/base.css`.
 
 ### 6.0 Cómo responde un control
 
@@ -966,11 +966,19 @@ arriba—: es un patrón propio, más chico y dentro de la fila de orden.
 Vuelve a A–Z al cambiar de pantalla, y no se dibuja si ninguna receta de la
 lista tiene duración.
 
-### 6.21 Carrusel de tags
+### 6.21 Carrusel
 
-Una fila de chips (§6.10) que se desliza de costado, con `--e-2` entre sí y sin
-barra de scroll. Vive entre la búsqueda y las categorías en el Recetario, y
-arriba de la lista en la categoría y en la lista por tag.
+**El marco es un componente reusable:** una pista que se desliza de costado con
+lo que le pongan adentro, `--e-2` entre ítem e ítem, sin barra de scroll, el
+degradé a los lados y las dos flechas. Lo usan el **carrusel de tags** y el
+**carrusel de fotos de la receta** (§6.26), y puede haber más de uno en la misma
+pantalla: cada marco lleva su propia timeline de scroll, y una flecha mueve la
+pista de su marco. Cada uno define a qué color va su degradé según el fondo que
+tenga atrás.
+
+**El carrusel de tags** es una fila de chips (§6.10). Vive entre la búsqueda y
+las categorías en el Recetario, y arriba de la lista en la categoría y en la
+lista por tag.
 
 **El orden:** los tags especiales primero, en su orden —favorito, menú diario,
 probar, incompleta— y sólo los que tienen alguna receta; después los comunes,
@@ -981,8 +989,9 @@ veinte comunes.
 **Qué hace un toque:** en la categoría y en la lista por tag, enciende el chip y
 filtra la lista; en el Recetario, abre la lista de ese tag.
 
-**Un degradé de 40 px a `--bg` dice que sigue:** a la derecha mientras quede
-algo por ver, a la izquierda sólo cuando ya se corrió. Se ata a la posición del
+**Un degradé de 40 px al fondo de atrás dice que sigue** —`--bg` en el de tags,
+`--surface` en el de fotos, que vive sobre una ficha—: a la derecha mientras
+quede algo por ver, a la izquierda sólo cuando ya se corrió. Se ata a la posición del
 scroll con `animation-timeline`, sin JavaScript; sin desborde no se dibuja
 ninguno, y donde no haya soporte se ven los dos siempre.
 
@@ -1101,11 +1110,18 @@ extremos, y ese gesto no la cierra. Es estado de la pantalla, no una ruta.
 
 ### 6.26 Las fotos de la receta
 
-**La galería** es la ficha *Fotos* del final de la receta: una grilla de **tres
-columnas** con `--e-2` de separación, cada foto cuadrada
-(`object-fit: cover`) sobre `--surface-alta`, con `--r-foto`. La misma grilla
-es la del selector de portada del editor, donde la elegida lleva un contorno de
-2 px en `--acento`.
+**El carrusel de fotos** es el depósito entero dentro de la primera ficha,
+debajo de la descripción y arriba del divisor de la fuente. Es el carrusel de
+§6.21 con las fotos adentro: cada una un cuadrado de **132 px**
+(`object-fit: cover`) sobre `--surface-alta`, con `--r-foto` —entran dos y media
+en el ancho de un teléfono, que es lo que hace falta para verlas—, y el degradé
+va a `--surface`, que es el fondo de la ficha. Cada foto abre el visor en la
+suya. Sin depósito no se dibuja.
+
+**La galería** es una grilla de **tres columnas** con `--e-2` de separación,
+cada foto cuadrada (`object-fit: cover`) sobre `--surface-alta`, con
+`--r-foto`. Es la del selector de portada del editor, donde la elegida lleva un
+contorno de 2 px en `--acento`.
 
 **La foto en línea** va debajo del texto que la nombra —un ingrediente, un paso,
 una nota—, al ancho de la ficha, con `--r-foto` y `--e-2` arriba y abajo. Si

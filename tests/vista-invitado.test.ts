@@ -91,14 +91,16 @@ describe('La vista de invitado', () => {
     expect(html).not.toContain('drive.google.com');
   });
 
-  it('la galería es la de las fotos que viajaron', () => {
+  it('el carrusel de la primera ficha es el de las fotos que viajaron', () => {
     const html = renderInvitado({ receta: CON_FOTOS, categoria: '' });
-    expect(html).toContain('<h2>Fotos</h2>');
-    expect(html.match(/class="galeria-item"/g)).toHaveLength(1);
+    expect(html).not.toContain('<h2>Fotos</h2>');
+    expect(html).toContain('carrusel-fotos');
+    expect(html.match(/class="carrusel-foto"/g)).toHaveLength(1);
+    expect(html.indexOf('carrusel-fotos')).toBeLessThan(html.indexOf('<h2>Preparación</h2>'));
   });
 
-  it('sin fotos no hay galería', () => {
-    expect(renderInvitado({ receta: RECETA, categoria: '' })).not.toContain('class="galeria"');
+  it('sin fotos no hay carrusel', () => {
+    expect(renderInvitado({ receta: RECETA, categoria: '' })).not.toContain('carrusel-fotos');
   });
 
   it('el visor abierto se dibuja sobre la receta', () => {

@@ -3,7 +3,7 @@
  * ni token, ni el manejador de acciones de `main.ts`. Escucha sólo las acciones
  * de su lista; una acción nueva de la app no llega acá aunque use el mismo nombre.
  */
-import { pintar, conClosest } from './ui/pintar.js';
+import { pintar, conClosest, desplazarCarrusel } from './ui/pintar.js';
 import { renderInvitado, renderLinkRoto } from './ui/invitado.js';
 import { renderCocina } from './ui/cocina.js';
 import { rutaDeInvitado } from './ui/router.js';
@@ -16,9 +16,12 @@ import type { EstadoVisor } from './ui/visor.js';
 
 // `ver-foto-receta` y `cerrar-visor` llegan por `fichaCabecera`/`fichasDelCuerpo`
 // y por el visor, que comparte con la receta: acá abren y cierran el visor de
-// las fotos que viajaron en el link, y nada más.
-export const ACCIONES_DE_INVITADO =
-  ['cocinar', 'volver-receta', 'conmutar', 'paso', 'wake', 'ver-foto-receta', 'cerrar-visor'] as const;
+// las fotos que viajaron en el link, y nada más. Las dos flechas son las del
+// carrusel de fotos de la primera ficha, y sólo lo desplazan.
+export const ACCIONES_DE_INVITADO = [
+  'cocinar', 'volver-receta', 'conmutar', 'paso', 'wake', 'ver-foto-receta', 'cerrar-visor',
+  'carrusel-izq', 'carrusel-der'
+] as const;
 
 export function iniciarInvitado(): void {
   const cocina = crearControlCocina();
@@ -114,6 +117,10 @@ export function iniciarInvitado(): void {
     if (accion === 'ver-foto-receta') {
       abrirVisor(leida.receta, boton.dataset['n']);
       return render();
+    }
+    if (accion === 'carrusel-izq' || accion === 'carrusel-der') {
+      desplazarCarrusel(boton, accion);
+      return;
     }
     if (accion === 'cerrar-visor') {
       // Un deslizamiento termina en un click: ese no cierra, ya cambió de foto.

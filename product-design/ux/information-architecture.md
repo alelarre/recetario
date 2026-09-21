@@ -178,7 +178,7 @@ línea por foto, y no suma ninguna clave al frontmatter.
 
 - **El número es la identidad de la foto**, y es estable: una nueva toma el más
   alto más uno, ninguno se reusa, y puede haber huecos. El orden de las líneas
-  es el de la galería.
+  es el del carrusel.
 - **La URL es un archivo de Drive o una externa.** La de Drive es
   `https://drive.google.com/file/d/<id>/view`, el único formato que la app
   reconoce como tal, y se pide con el token; la externa va a un `<img>`
@@ -187,8 +187,9 @@ línea por foto, y no suma ninguna clave al frontmatter.
   sección ajena** y se conserva tal cual: la receta queda sin depósito y nada se
   pierde por pasar por el editor. Sin fotos, la sección no se escribe.
 - **La sección va última en el archivo**, después de las secciones ajenas. En
-  pantalla y en el PDF, en cambio, la galería va después de Notas y antes de
-  ellas.
+  pantalla, en cambio, el depósito se dibuja como un carrusel en la primera
+  ficha (`E03-LeerYCocinar.md` C03.5.2), y en el PDF la galería va al final,
+  después de Notas y antes de las secciones ajenas.
 
 **El texto nombra una foto con `![epígrafe](foto:N)`**, en cualquier sección, y
 la cabecera acepta `foto: foto:N` además de una URL. **Antes de dibujarse, la
@@ -411,7 +412,7 @@ se reconoce abre el Recetario.
 | **Resultados** | `#/buscar?q=` | Lo que devuelve la búsqueda, agrupado por título, ingrediente y tag. Se ordena A–Z o por duración dentro de cada grupo. | Recuperar | J1, J4 |
 | **Categoría** | `#/c/<nombre>` | Las recetas de una carpeta, con el carrusel de tags, la fila de duraciones y el conmutador de orden. | Recuperar | J5 |
 | **Lista por tag** | `#/t/<tag>` | Las recetas del recetario entero con ese tag. Se llega tocando un chip del carrusel del Recetario. Mismos filtros que la categoría. | Recuperar | J5 |
-| **Receta** | `#/r/<id>` | La receta entera, en una columna de fichas, con sus fotos donde el texto las nombra y la galería al final —tocar una abre el visor—. En el encabezado, la estrella de favorito y Compartir; al pie, *Cocinar* y *Editar*. | Recuperar | J6 |
+| **Receta** | `#/r/<id>` | La receta entera, en una columna de fichas, con el carrusel de sus fotos en la primera y cada una donde el texto la nombra —tocar una abre el visor—. En el encabezado, la estrella de favorito y Compartir; al pie, *Cocinar* y *Editar*. | Recuperar | J6 |
 | **Modo cocina** | `#/r/<id>/cocinar` | Letra grande, conmutador Ingredientes / Pasos, el paso actual realzado, y la pantalla encendida. | Cocinar | J6 |
 | **Editor** | `#/r/<id>/editar` | Corregir un error, anotar una variación, poner y sacar los tags especiales, agregar fotos y ponerlas en el texto, cambiar la categoría, borrar la receta. | Cocinar | J7 |
 | **Nueva receta** | `#/nueva` | El mismo editor, vacío. Con `?borrador=<id>` abre con el título y la fuente del borrador y guardar lo convierte; con `?recibida=1` abre con la receta que llegó compartida o pegada. | Archivar | J3, J7 |
