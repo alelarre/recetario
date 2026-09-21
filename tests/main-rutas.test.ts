@@ -331,8 +331,15 @@ describe('main.ts: las rutas', () => {
     const atributosApp: Record<string, string> = {};
     /** El velo de la escritura en curso, hermano de `#app` en `index.html`. */
     const clasesVelo = new Set<string>();
+    /** Cada vez que el velo se puso o se sacó, en orden: sirve para ver si parpadea. */
+    const idasYVueltasDelVelo: boolean[] = [];
     const velo = {
-      hidden: true,
+      _hidden: true,
+      get hidden(): boolean { return this._hidden; },
+      set hidden(v: boolean) {
+        if (v !== this._hidden) idasYVueltasDelVelo.push(v);
+        this._hidden = v;
+      },
       classList: {
         add: (c: string) => { clasesVelo.add(c); },
         remove: (c: string) => { clasesVelo.delete(c); },
@@ -577,6 +584,7 @@ describe('main.ts: las rutas', () => {
       pinturas,
       atributosApp,
       avisosALaVista,
+      idasYVueltasDelVelo,
       recargas,
       vueltasAtras,
       tapadoAlVolver,
@@ -2354,6 +2362,26 @@ describe('main.ts: las rutas', () => {
       // La cámara devuelve de a una foto.
       await elegirFotos([foto('de-la-camara')]);
       expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(1);
+    });
+
+    it('con varias fotos, el velo se pone una vez y no parpadea (P52)', async () => {
+      const { abrir, elegirFotos, idasYVueltasDelVelo } = await montar();
+      await abrir('#/capturar');
+
+      await elegirFotos([foto('a'), foto('bb'), foto('ccc')]);
+
+      // Una sola ida y una sola vuelta: puesto al empezar, sacado al terminar.
+      expect(idasYVueltasDelVelo).toEqual([false, true]);
+    });
+
+    it('en el editor, tres fotos tampoco hacen parpadear el velo (P52)', async () => {
+      const { abrir, elegirFotos, idasYVueltasDelVelo } = await montar();
+      await abrir('#/r/f1/editar');
+      idasYVueltasDelVelo.length = 0;
+
+      await elegirFotos([foto('a'), foto('bb'), foto('ccc')]);
+
+      expect(idasYVueltasDelVelo).toEqual([false, true]);
     });
 
     it('en la captura, agregar y sacar fotos, y guardar con sólo fotos', async () => {

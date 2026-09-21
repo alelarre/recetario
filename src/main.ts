@@ -567,14 +567,22 @@ const NO_SE_LEYO_UNA_FOTO = 'No se pudo leer una de las fotos.';
 async function sumarFotosACaptura(archivos: Blob[]): Promise<string> {
   const lugar = MAXIMO_FOTOS - fotosCaptura.length;
   let noSeLeyo = false;
-  for (const archivo of archivos.slice(0, Math.max(lugar, 0))) {
-    try {
-      const blob = await escribiendo(achicarFoto(archivo));
-      fotosCaptura.push({ blob, url: imagenes.urlDeBlob(blob) });
-    } catch (err) {
-      console.error(err);
-      noSeLeyo = true;
+  // Tapa una vez para todas y no una por foto: con varias, el velo se prendía
+  // y se apagaba entre una y otra (P52). Lo de adentro suma sobre el mismo
+  // contador, así que el velo no parpadea.
+  const destapar = tapar();
+  try {
+    for (const archivo of archivos.slice(0, Math.max(lugar, 0))) {
+      try {
+        const blob = await escribiendo(achicarFoto(archivo));
+        fotosCaptura.push({ blob, url: imagenes.urlDeBlob(blob) });
+      } catch (err) {
+        console.error(err);
+        noSeLeyo = true;
+      }
     }
+  } finally {
+    destapar();
   }
   return [
     archivos.length > lugar ? fotosDeMas(lugar) : '',
@@ -606,29 +614,35 @@ const fotosDeBorrador = (b: Borrador): Promise<{ id: string; url: string | null 
   Promise.all(b.fotos.map(async id => ({ id, url: await imagenes.urlDeImagen(id) })));
 
 /**
- * Sube fotos al borrador abierto, de a una y con el velo (R8): cada una
- * reescribe el `.md` en el momento. Lo que no se pudo queda en el aviso.
+ * Sube fotos al borrador abierto: cada una reescribe el `.md` en el momento.
+ * El velo se pone una vez para todas y no una por foto (P52); lo que no se
+ * pudo queda en el aviso.
  */
 async function agregarFotosABorrador(id: string, archivos: Blob[]): Promise<void> {
   const lugar = MAXIMO_FOTOS - (borradorLeido?.fotos.length ?? 0);
   const avisos: string[] = archivos.length > lugar ? [fotosDeMas(lugar)] : [];
   let noSeLeyo = false;
-  for (const archivo of archivos.slice(0, Math.max(lugar, 0))) {
-    let blob: Blob;
-    try {
-      blob = await escribiendo(achicarFoto(archivo));
-    } catch (err) {
-      console.error(err);
-      noSeLeyo = true;
-      continue;
+  const destapar = tapar();
+  try {
+    for (const archivo of archivos.slice(0, Math.max(lugar, 0))) {
+      let blob: Blob;
+      try {
+        blob = await escribiendo(achicarFoto(archivo));
+      } catch (err) {
+        console.error(err);
+        noSeLeyo = true;
+        continue;
+      }
+      try {
+        borradorLeido = await escribiendo(store.agregarFotoABorrador(id, blob));
+      } catch (err) {
+        console.error(err);
+        avisos.push(porQueNoGuardo(err));
+        break;
+      }
     }
-    try {
-      borradorLeido = await escribiendo(store.agregarFotoABorrador(id, blob));
-    } catch (err) {
-      console.error(err);
-      avisos.push(porQueNoGuardo(err));
-      break;
-    }
+  } finally {
+    destapar();
   }
   if (noSeLeyo) avisos.push(NO_SE_LEYO_UNA_FOTO);
   avisoBorradores = avisos.join(' ');
@@ -1401,19 +1415,25 @@ function avisarEnElFormulario(texto: string): void {
 async function agregarFotosAlEditor(archivos: Blob[]): Promise<void> {
   let deposito = depositoDelEditor();
   let noSeLeyo = false;
-  for (const archivo of archivos) {
-    let blob: Blob;
-    try {
-      blob = await escribiendo(achicarFoto(archivo));
-    } catch (err) {
-      console.error(err);
-      noSeLeyo = true;
-      continue;
+  // Una sola vez el velo, aunque se elijan cinco fotos (P52).
+  const destapar = tapar();
+  try {
+    for (const archivo of archivos) {
+      let blob: Blob;
+      try {
+        blob = await escribiendo(achicarFoto(archivo));
+      } catch (err) {
+        console.error(err);
+        noSeLeyo = true;
+        continue;
+      }
+      const n = siguienteNumero(deposito);
+      deposito = [...deposito, { n, url: '' }];
+      fotosEditor.nuevas.set(n, blob);
+      fotosEditor.urls.set(n, imagenes.urlDeBlob(blob));
     }
-    const n = siguienteNumero(deposito);
-    deposito = [...deposito, { n, url: '' }];
-    fotosEditor.nuevas.set(n, blob);
-    fotosEditor.urls.set(n, imagenes.urlDeBlob(blob));
+  } finally {
+    destapar();
   }
   escribirDeposito(deposito);
   avisarEnElFormulario(noSeLeyo ? NO_SE_LEYO_UNA_FOTO : '');
