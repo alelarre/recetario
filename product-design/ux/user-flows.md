@@ -110,8 +110,8 @@ cocinar** — no cuando se encontró la receta.
 
 Hay tres caminos, y los tres terminan en la misma operación de la capa
 compartida (`information-architecture.md` §2.2): escribe el `.md`, escribe la
-fila del índice y descarta el borrador —sus fotos y su `.md` a la papelera, su
-fila afuera—.
+fila del índice y descarta el borrador —su `.md` a la papelera, su fila afuera, y
+las fotos que la receta no se quedó—.
 Nadie borra el borrador por separado.
 
 **1. Convertir con Claude.** La app no llama a ningún modelo: arma el pedido, y
@@ -123,7 +123,7 @@ Menú → Borradores           ⚑ el contador dice cuántos esperan
   ▸ Borrador: título, fuente, nota y fotos
   → Convertir con Claude
   ▸ la app arma el pedido: el borrador, su id, las reglas del formato y, si
-    tiene fotos, cuántas van y cómo leerlas
+    tiene fotos, cuántas van, cómo leerlas y cómo nombrarlas —foto:1, foto:2…—
   ⚑ ¿hay menú Compartir del sistema que comparta archivos?
       sí (Android)  → se abre con el pedido como texto y las fotos como
                       archivos; elijo Claude
@@ -154,9 +154,13 @@ La respuesta de Claude
       si no  ▸ «¿De qué borrador es esta receta?»: la lista, y Ninguno
              → elijo uno, o Ninguno            ⚑ volver descarta lo recibido
   ▸ el editor abre con la receta cargada, sin categoría y con el tag incompleta
+  ▸ atado a un borrador, el depósito ya trae sus fotos: 1, 2, 3… en su orden,
+    y la receta que volvió ya las nombra como foto:N
   → reviso, elijo la categoría           ⚑ la clasificación es siempre mía
+  → saco las fotos que no sirven                  ⚑ de a una, con sus acciones
   → Guardar
-  ▸ atada a un borrador: la operación de conversión
+  ▸ atada a un borrador: la operación de conversión, y las fotos que quedaron
+    se mudan de _borradores/ a _fotos/ con el nombre del .md
   ▸ con Ninguno: se crea como cualquier receta nueva
 ```
 
@@ -176,7 +180,7 @@ cambios sin guardar: salir pregunta.
 
 ```
 Borradores → toco una entrada → Crear la receta
-  ▸ el editor abre con título y fuente cargados
+  ▸ el editor abre con título y fuente cargados, y el depósito con sus fotos
   → elijo la categoría y escribo la receta
   → Guardar
   ▸ la misma operación: escribe el .md, escribe la fila, descarta el borrador
@@ -283,6 +287,11 @@ volver se pide de nuevo. Si el navegador no lo soporta, el sol no se muestra.
 **Las variaciones se leen en la receta**, en la misma columna, cada una con su
 fuente.
 
+**Las fotos se leen donde el texto las nombra:** debajo del paso o del
+ingrediente, en la receta y también en el modo cocina; todas juntas, en la ficha
+*Fotos* del final. Tocar cualquiera abre el visor, que desliza entre todas y se
+cierra tocando. En la cocina no: ahí un toque marca el paso.
+
 ---
 
 ## F7 — Corregir una receta
@@ -292,7 +301,7 @@ fuente.
 ```
 Receta
   → Editar
-  ▸ Editor
+  ▸ Editor: tres fichas, Datos, Contenido y Fotos
   → corrijo el error, o agrego una variación
   ⚑ también acá: la categoría, la duración —cinco botones—, los cuatro tags
     especiales —un botón cada uno— y Borrar receta
@@ -300,6 +309,31 @@ Receta
   ▸ se reescribe el .md
   ▸ se actualiza su fila en el índice
 ```
+
+**Las fotos de la receta se manejan en la ficha Fotos**, y nada toca Drive hasta
+Guardar.
+
+```
+Editor → ficha Fotos
+  → Agregar foto            ⚑ cámara o galería, varias a la vez, sin tope
+  ▸ la foto se achica y espera en memoria, con su número
+  → toco una miniatura
+  ⚑ ¿qué hago con ella?
+      Ver        → el visor, que desliza entre todas
+      Portada    → pasa a ser la foto de la receta
+      Poner en…  ▸ los lugares de la receta, agrupados por sección
+                 → elijo un paso, un ingrediente o una nota
+                 ▸ la referencia se escribe al final de esa línea
+      Sacar      ▸ sale del depósito y sus referencias se borran del texto
+  → Guardar
+  ▸ suben las fotos nuevas a _fotos/
+  ▸ se escribe el .md, con la sección Fotos, y su fila
+  ▸ recién ahí van a la papelera las que saqué
+```
+
+**El campo «Foto» de Datos es la portada**: la miniatura de lo que hay, y al
+tocarla, el depósito para elegir, una URL externa o *Sin foto*. **Salir sin
+guardar no deja nada en Drive:** las fotos nuevas nunca llegaron.
 
 **El editor corrige, no compone.** Componer es trabajo del agente
 (`product-vision.md` §1).
@@ -568,9 +602,9 @@ Receta
       ✗ sin portapapeles: «Copialo desde acá:», con el contenido a la vista
 ```
 
-- **El PDF** se arma en el teléfono: 105 × 180 mm, tema oscuro, con texto de verdad. El menú Compartir sólo se abre desde un toque del usuario: si el toque ya venció cuando el PDF termina, *Enviar PDF* es el segundo.
-- **El link** lleva la receta comprimida en el fragmento, sin los tags. No usa Drive ni pide login a quien lo abre: ver F15.
-- **El texto** conserva `*negrita*`, `_itálica_`, `- ` y `1. `, que WhatsApp entiende.
+- **El PDF** se arma en el teléfono: 105 × 180 mm, tema oscuro, con texto de verdad. Lleva las fotos —la cabecera arriba del título, cada una debajo de su línea, y la galería al final—, achicadas para que pese poco. El menú Compartir sólo se abre desde un toque del usuario: si el toque ya venció cuando el PDF termina, *Enviar PDF* es el segundo.
+- **El link** lleva la receta comprimida en el fragmento, sin los tags y **sin las fotos de Drive**: quien lo abre no tiene token. Las externas sí viajan. No usa Drive ni pide login a quien lo abre: ver F15.
+- **El texto** conserva `*negrita*`, `_itálica_`, `- ` y `1. `, que WhatsApp entiende. Una foto externa se escribe como su URL; una de Drive no se escribe.
 - **La ficha es estado de la pantalla, no una ruta:** volver, *Cancelar* o tocar el velo la cierran, y mientras está abierta la página de atrás no se desplaza.
 
 ```
@@ -589,14 +623,14 @@ Recibo un link por WhatsApp
   → lo toco
   ▸ la app mira el hash antes de cargar nada: #/ver… es la vista de invitado
   ▸ sin login, sin Drive: la receta sale del link
-  ▸ Vista de invitado: la receta entera, sin tags
+  ▸ Vista de invitado: la receta entera, sin tags y con las fotos externas
   → Cocinar
   ▸ Modo cocina, igual que en F6, con una sola salida: volver a la receta
 ```
 
 **Es una pantalla con su propio controlador y una lista cerrada de acciones:**
-cocinar, volver, conmutar, marcar un paso y la pantalla encendida. No hay editar,
-ni favorito, ni compartir, ni menú.
+cocinar, volver, conmutar, marcar un paso, la pantalla encendida y el visor de
+las fotos que viajaron. No hay editar, ni favorito, ni compartir, ni menú.
 
 ```
   ✗ el link llegó cortado o no se puede leer
@@ -685,7 +719,7 @@ Menú → Ajustes → ficha Recetario → Categorías
 
 - **Todas las categorías se tratan igual**, predefinidas o no.
 - **El nombre de la categoría de una receta sale de su carpeta:** renombrar no reescribe ningún `.md`.
-- **El color** se elige entre los quince de la paleta y el neutro; **la foto**, entre las del catálogo. La muestra del tile se actualiza mientras se elige.
+- **El color** se elige entre los quince de la paleta y el neutro; **la foto**, entre las del catálogo o una propia, con *Subir foto*: se ve en la muestra en el momento y se sube a `_fotos/` recién al guardar. La muestra del tile se actualiza mientras se elige.
 - **Lo borrado se recupera desde la papelera de Drive**, y después hay que reindexar.
 - **Salir sin guardar pregunta**, como en el editor de recetas.
 

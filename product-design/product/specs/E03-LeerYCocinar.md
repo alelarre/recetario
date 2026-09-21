@@ -33,11 +33,11 @@ receta entera.
 
 #### C03.1.1 — El orden de lectura *(J6)*
 
-- [ ] En la primera ficha: foto si la hay, título, línea de contexto, tags, descripción y, al pie tras un divisor, la fuente. Después ingredientes, preparación, variaciones y notas, cada una en su ficha.
+- [ ] En la primera ficha: foto si la hay, título, línea de contexto, tags, descripción y, al pie tras un divisor, la fuente. Después ingredientes, preparación, variaciones y notas, cada una en su ficha, y al final la ficha **Fotos** si la receta tiene depósito (C03.5.2).
 - [ ] La línea de contexto lleva el color y el nombre de la categoría, lo que rinde, **la duración con su relojito** y la dificultad. La duración sólo se dibuja si `tiempo` es uno de los cinco valores (`E05-Cimientos.md` C05.1.1).
 - [ ] Los tags van como chips, los especiales primero y con su ícono. **Se leen y no se tocan** (C02.6.3); el único tocable es *incompleta* (C03.1.3). **`favorito` no lleva chip:** ya lo dice la estrella del encabezado (C03.1.2b).
 - [ ] Una sección ausente no se dibuja: no queda encabezado vacío.
-- [ ] Una sección desconocida del `.md` se muestra tal cual, al final, sin interpretarse (C05.1.2).
+- [ ] Una sección desconocida del `.md` se muestra tal cual, después de Fotos, sin interpretarse (C05.1.2).
 - [ ] Toda la receta se lee scrolleando, sin ningún toque.
 
 #### C03.1.2 — Las acciones *(J6, J7)*
@@ -155,16 +155,33 @@ versiones es una receta, no tres.
 ingrediente de la receta entera, sin distinguir de cuál son. Es una imprecisión
 aceptada (IA §1.8).
 
-### F03.5 — La foto, si la hay
+### F03.5 — Las fotos, si las hay
 
-Se dibuja donde esté, desde una URL externa. **El diseño no depende de ella.**
+Una receta puede tener un depósito de fotos (C05.1.5): la del plato, la de un
+paso, la de cómo tiene que quedar la masa. Se leen donde el texto las nombra, y
+todas juntas al final. **El diseño no depende de ninguna.**
 
-#### C03.5.1 — La foto de la receta *(J6)*
+#### C03.5.1 — La foto de la cabecera *(J6)*
 
-- [ ] Se carga desde la URL externa de `foto`, tal cual.
-- [ ] Si no carga, la receta se dibuja sin bloque de foto. Sin ícono roto y sin aviso.
+- [ ] Se dibuja `foto` **ya resuelta** (C05.1.5): la URL externa tal cual, o la foto del depósito que nombra `foto:N`.
+- [ ] Si es de Drive, se pide con el token: mientras llega, un recuadro del tamaño que va a ocupar. Si no llega —o si la URL externa no carga—, la receta se dibuja sin bloque de foto. Sin ícono roto y sin aviso.
 - [ ] La receta sin foto se ve completa igual: empieza por el título.
 - [ ] No se muestra en modo cocina.
+
+#### C03.5.2 — Las fotos del cuerpo y la galería *(J6)*
+
+- [ ] Una referencia `![epígrafe](foto:N)` en un ingrediente, un paso o una nota se dibuja **debajo del texto de esa línea**, al ancho de la ficha, con su epígrafe si lo tiene.
+- [ ] Al final, después de Notas y antes de las secciones ajenas, una ficha **Fotos** con el depósito entero, en su orden, cuadradas y de a tres por fila.
+- [ ] Sin depósito, la ficha no se dibuja.
+- [ ] **En el modo cocina**, cada paso y cada ingrediente dibujan su foto debajo, igual que en la lectura. Tocarlas no abre el visor: en la cocina un toque marca el paso (C03.2.4).
+- [ ] Una foto de Drive que ya no está se dibuja en la galería como un recuadro con *«La foto ya no está en Drive.»*; en la cabecera o en una línea, no se dibuja.
+
+#### C03.5.3 — El visor *(J6)*
+
+- [ ] Tocar cualquier foto —la cabecera, una en línea o una de la grilla— abre el **visor**: la foto entera sobre un velo, encima de todo.
+- [ ] El visor **desliza entre las fotos del depósito**, en su orden, empezando por la que se tocó. En los extremos no da la vuelta.
+- [ ] Se cierra tocando, en cualquier parte. Es estado de la pantalla, no una ruta.
+- [ ] Una cabecera externa que no está en el depósito se abre sola, sin deslizar.
 
 ### F03.6 — Tamaños para la distancia del brazo
 
@@ -195,8 +212,10 @@ revocar.
 
 - [ ] Se arma en el teléfono, con pdfmake e **Inter** embebida —tiene ⅓ y ⅔, que un PDF no puede tomar de otra fuente—. La librería y las fuentes se empiezan a cargar al abrir la ficha, no al arrancar la app.
 - [ ] Página de **105 × 180 mm**, con el tema oscuro de la app en todas las páginas. La cabecera es un bloque con título, contexto, descripción y fuente; después las secciones, con el formato en línea del markdown.
-- [ ] No lleva foto, tags, link al `.md` ni botones. Una sección vacía no se dibuja.
-- [ ] Ningún ingrediente, paso, variación ni ítem de nota se parte entre páginas, y un título de sección nunca queda solo al pie.
+- [ ] **Lleva las fotos:** la de la cabecera arriba del título, al ancho de la página y con el alto topado a 90 mm; cada referencia debajo de su línea; y la galería del depósito al final, después de Notas y antes de las secciones ajenas, de a dos por fila.
+- [ ] Las fotos se achican a 800 px de lado mayor y viajan adentro del archivo. Las de Drive salen del caché o se piden con el token; una externa se pide con `fetch`, y si falla —CORS, red— se omite sin aviso. *«Armando el PDF…»* ya cubre esa espera.
+- [ ] No lleva tags, link al `.md` ni botones. Una sección vacía no se dibuja.
+- [ ] Ningún ingrediente, paso, variación ni ítem de nota se parte entre páginas —tampoco una línea con su foto—, y un título de sección nunca queda solo al pie.
 - [ ] El archivo se llama como el `.md` de la receta, con extensión `.pdf`.
 - [ ] Mientras se arma, *PDF* muestra el spinner con *"Armando el PDF…"* y la ficha no acepta otro toque.
 - [ ] Si armarlo tardó más de lo que dura el permiso del toque, la ficha pasa a *"El PDF está listo."* con **Enviar PDF**, que manda el archivo ya armado.
@@ -207,6 +226,7 @@ revocar.
 
 - [ ] El link abre la vista de invitado (C03.7.5): `…/#/ver?r=<carga>`.
 - [ ] **La receta viaja entera en el fragmento del link**, comprimida: el `.md` sin tags ni claves extra, más el nombre de la categoría, que el `.md` no lleva. No llega a ningún servidor.
+- [ ] **Las fotos de Drive no viajan:** el depósito va resuelto y sólo con las externas, la cabecera sólo si es externa, y las referencias a fotos que no viajaron no se dibujan (C05.1.5). Quien abre el link no tiene token.
 - [ ] La carga empieza con la versión del formato; una carga de otra versión se trata como link roto.
 - [ ] Sin menú Compartir, el link se copia y la ficha avisa *"Link copiado."*. Sin portapapeles, la ficha lo muestra seleccionable: *"Copialo desde acá:"*.
 
@@ -214,6 +234,7 @@ revocar.
 
 - [ ] La receta casi como está en el `.md`: el título, debajo el contexto (categoría · rinde · duración · dificultad), la descripción, cada sección con su nombre sin los `#`, y al final *Fuente: …*.
 - [ ] Conserva el formato que WhatsApp entiende: `*negrita*`, `_itálica_`, `- ` y `1. `. Un link queda como *texto (url)*; una imagen, como su URL.
+- [ ] **Una referencia a una foto externa se escribe como su URL; una de Drive no se escribe**, porque nadie más la puede abrir. La sección Fotos no va: el depósito no es texto.
 - [ ] Nunca hay dos renglones en blanco seguidos, y una sección vacía no aparece.
 - [ ] Sin menú Compartir, se copia y avisa *"Texto copiado."*; sin portapapeles, se muestra seleccionable, como el link.
 
@@ -221,6 +242,7 @@ revocar.
 
 - [ ] Quien abre el link ve la receta **sin conectar con Google**. La vista no lee ni escribe Drive, no pide el token, no guarda nada en el navegador y no ofrece guardar la receta.
 - [ ] Lectura (`#/ver?r=…`): la misma pila de fichas de la receta, con el contexto sin el color de la categoría —es de la carpeta del dueño—. **No tiene encabezado** —ni volver, ni estrella, ni compartir, ni `.md`—, ni fila de tags. Al pie, sólo **Cocinar**, si hay ingredientes o pasos.
+- [ ] **Dibuja sólo las fotos externas** —las que viajaron en el link—, con su galería y su visor; sin ninguna, la ficha Fotos no se dibuja. Nunca le pide nada a Drive.
 - [ ] Cocinar (`#/ver/cocinar?r=…`): el mismo modo cocina de la app —conmutador, paso actual, pasos hechos, sol—. **La única salida es el chevron**, que vuelve a la lectura; *Salir* no se dibuja.
 - [ ] El título de la pestaña es el de la receta.
 - [ ] Si la carga no se puede leer —cortada, alterada, de otra versión—, la pantalla dice *"Este link está roto o incompleto."* y nada más.
@@ -232,7 +254,7 @@ revocar.
 
 | Capacidad | Job |
 |---|---|
-| C03.1.1, C03.1.2b, C03.1.3, C03.2.1, C03.2.2, C03.2.3, C03.2.4, C03.3.1, C03.4.1, C03.5.1, C03.6.1, C03.7.1, C03.7.2, C03.7.3, C03.7.4, C03.7.5 | J6 |
+| C03.1.1, C03.1.2b, C03.1.3, C03.2.1, C03.2.2, C03.2.3, C03.2.4, C03.3.1, C03.4.1, C03.5.1, C03.5.2, C03.5.3, C03.6.1, C03.7.1, C03.7.2, C03.7.3, C03.7.4, C03.7.5 | J6 |
 | C03.1.2 | J6, J7 |
 
 Ninguna capacidad de esta épica quedó sin job.

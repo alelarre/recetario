@@ -33,7 +33,8 @@ error.
 - [ ] El editor abre con todos los campos cargados con lo que dice el `.md`.
 - [ ] El encabezado —volver, título y *Guardar*— queda fijo arriba al hacer scroll, como en la receta abierta (C03.1.2b): *Guardar* queda a mano aunque se esté escribiendo al fondo del formulario.
 - [ ] Salir sin guardar con cambios pendientes **pregunta antes**: *"¿Salir sin guardar los cambios?"*, con *Seguir editando* y *Salir*. Vale para el volver del encabezado y para el gesto de atrás de Android. La pregunta se inserta arriba del formulario sin redibujarlo, para no perder lo escrito.
-- [ ] El formulario va en dos fichas con título, **Datos** y **Contenido**.
+- [ ] El formulario va en tres fichas con título: **Datos**, **Contenido** y **Fotos** (F04.3d).
+- [ ] Agregar, sacar o poner una foto cuenta como cambio sin guardar, igual que escribir en un campo.
 - [ ] Salir sin cambios no pregunta nada.
 
 ### F04.2 — Un formulario de campos separados
@@ -44,7 +45,7 @@ y el archivo se arma solo al guardar.
 
 #### C04.2.1 — Los campos del frontmatter *(J7)*
 
-- [ ] Un control por clave: título (texto), tags (lista editable), rinde, fuente y foto (texto), dificultad (elección de tres), `tiempo` con los cinco botones de duración (C04.2.1c).
+- [ ] Un control por clave: título (texto), tags (lista editable), rinde y fuente (texto), dificultad (elección de tres), `tiempo` con los cinco botones de duración (C04.2.1c) y foto con el selector de portada (C04.2.1d).
 - [ ] **El YAML no se muestra en ningún momento.**
 - [ ] Solo el título es obligatorio.
 - [ ] Un campo que se deja vacío **no se escribe** en el frontmatter: no quedan claves vacías.
@@ -67,6 +68,13 @@ y el archivo se arma solo al guardar.
 - [ ] Debajo de la grilla, en chico: *"Hasta comer, con reposo y horno incluidos."*
 - [ ] **Un valor inválido en el archivo** abre el editor sin ningún botón apretado.
 - [ ] El valor viaja en un campo oculto `tiempo`, que es lo que lee el formulario, y entra en la foto de «cambios sin guardar» como cualquier campo (C04.1.1).
+
+#### C04.2.1d — El campo «Foto» *(J7)*
+
+- [ ] **No es un campo de texto: es la miniatura de la cabecera actual**, y tocarla abre una ficha al pie con el depósito para elegir, el campo de URL y **Sin foto**.
+- [ ] Elegir una del depósito escribe `foto: foto:N`; la URL se usa tal cual; *Sin foto* deja la cabecera vacía. La actual queda marcada en la grilla, y el campo de URL trae la de hoy si la cabecera es una URL.
+- [ ] Sin cabecera, el botón dice *Sin foto*. Una `foto:N` que no está en el depósito se lee como ausente (C05.1.1).
+- [ ] El valor viaja crudo —`foto:N` o la URL— en un campo oculto, que es lo que se guarda.
 
 #### C04.2.2 — El título no renombra el archivo *(J7)*
 
@@ -114,7 +122,7 @@ El mismo formulario, con los campos vacíos.
 - [ ] Guardar crea el `.md` en la carpeta elegida y escribe su fila del índice, por el store (C05.4.1).
 - [ ] El nombre del archivo se deriva del título **una sola vez, al crearlo**, y no vuelve a cambiar (C04.2.2): el título en minúsculas, sin acentos y con guiones — `milanesas-napolitanas.md`.
 - [ ] Si ya existe un archivo con ese nombre en la carpeta, se usa un nombre distinto sin preguntar: la identidad es el `fileId`, no el nombre.
-- [ ] **Desde un borrador** (C01.6.3), el editor abre con el título y la `fuente` cargados, y guardar descarta el borrador —su `.md` a la papelera y su fila afuera— en la misma operación (C01.7.1). Lo mismo con una receta que llegó de Claude atada a un borrador (C01.9.2).
+- [ ] **Desde un borrador** (C01.6.3), el editor abre con el título, la `fuente` y **el depósito ya cargado con las fotos del borrador**, y guardar descarta el borrador —su `.md` a la papelera y su fila afuera— en la misma operación (C01.7.1). Lo mismo con una receta que llegó de Claude atada a un borrador (C01.9.2).
 - [ ] **Nace con el tag `incompleta` puesto** (C04.4.1, C05.3.1): terminar es una declaración explícita, no el estado inicial. Una receta creada desde un borrador también.
 
 ### F04.3c — Lo desconocido se conserva
@@ -127,12 +135,40 @@ usuario escribieron afuera.
 
 - [ ] Las claves desconocidas del frontmatter se reescriben tal cual.
 - [ ] Las secciones desconocidas del cuerpo se reescriben tal cual, en su posición.
+- [ ] Un `## Fotos` mal formado —escrito afuera— es una sección desconocida más: se conserva tal cual y la receta queda sin depósito (C05.1.5).
 - [ ] El editor no las muestra ni permite editarlas: no son suyas.
 - [ ] Guardar una receta sin tocar ningún campo produce un archivo equivalente al original.
 
 **Nota técnica:** Drive no tiene escritura parcial — guardar reescribe el `.md`
 entero. Por eso conservar lo desconocido no es una mejora: si el editor no lo
 conserva, lo borra.
+
+### F04.3d — Las fotos de la receta
+
+La ficha **Fotos**, después de Contenido: el depósito de la receta (C05.1.5),
+donde se agregan, se sacan y se mandan al texto. **Una foto se pone en el texto
+desde la foto**, no ubicando el cursor.
+
+**Nada toca Drive hasta Guardar** (C04.5.1): las fotos nuevas viven en memoria,
+ya achicadas y con su número asignado.
+
+#### C04.3d.1 — La ficha Fotos *(J7)*
+
+- [ ] La fila de miniaturas del depósito, en su orden, **cada una con su número**, que es con el que se la nombra en el texto.
+- [ ] **Agregar foto** al final, sin tope: abre el mismo selector del sistema que las fotos de un borrador —cámara o galería—, y acepta varias a la vez.
+- [ ] Cada foto nueva toma el número más alto más uno; ninguno se reusa, ni siquiera el de una que se sacó.
+- [ ] Una foto que el navegador no puede decodificar —HEIC, un archivo roto— no se agrega, y el aviso lo dice: *«No se pudo leer una de las fotos.»*
+- [ ] Escribir `![](foto:2)` a mano en un campo de texto sigue valiendo: los campos no cambian.
+- [ ] Salir sin guardar no deja nada en Drive: las fotos nuevas nunca llegaron.
+
+#### C04.3d.2 — Qué se hace con una foto *(J7)*
+
+- [ ] Tocar una miniatura abre una ficha al pie con cuatro acciones: **Ver**, **Portada**, **Poner en…** y **Sacar**. El velo o tocar afuera la cierran.
+- [ ] **Ver** abre el visor (C03.5.3). **Portada** la pone de cabecera; si ya lo es, la acción no se dibuja.
+- [ ] **Poner en…** abre una segunda ficha con los lugares de la receta —la descripción, cada ingrediente, cada paso, las variaciones y las notas—, agrupados por sección y por sus `###`, con el texto de cada línea cortado a una. Elegir uno escribe la referencia y cierra la ficha.
+- [ ] La referencia va al final de la línea de un ingrediente o un paso, y en un renglón nuevo al final de la descripción, las variaciones o las notas. Si esa línea ya la tiene, no se repite.
+- [ ] **Los lugares salen de lo que está escrito en ese momento en el formulario**, no del `.md` guardado.
+- [ ] **Sacar** la saca del depósito y **borra sus referencias del texto**. Si era la portada, la cabecera queda vacía.
 
 ### F04.4 — Declarar una receta terminada
 
@@ -177,13 +213,15 @@ Reescribe el `.md` en Drive y actualiza su fila en el índice.
 #### C04.5.1 — Las dos escrituras *(J7)*
 
 - [ ] Guardar escribe el `.md` entero y después la fila del índice, sincrónicamente (C05.4.1).
+- [ ] **Con fotos, en este orden:** sube a `_fotos/` las nuevas y pone su link en su línea; escribe el `.md` y su fila; y recién después manda a la papelera las que se sacaron. Si algo falla en el medio, lo peor que queda es una foto huérfana en `_fotos/`, nunca una receta que nombra una foto borrada.
+- [ ] **El reintento no resube:** una foto que ya se subió conserva su link y se escribe como está (R2).
 - [ ] El guardado se declara exitoso recién cuando las dos terminaron.
 - [ ] Mientras guarda, el botón indica que está trabajando y no se puede tocar dos veces.
 - [ ] Al terminar, vuelve a la receta, ya con lo guardado.
 
 #### C04.5.2 — Cuando falla *(J7)*
 
-- [ ] Avisa (R1) y **todo lo escrito queda en pantalla**.
+- [ ] Avisa (R1) y **todo lo escrito queda en pantalla**, con las fotos nuevas que todavía viven en memoria.
 - [ ] El reintento repite las dos escrituras (R2).
 - [ ] Si falló la segunda, el `.md` ya está guardado y el reintento lo reescribe igual: no hay reparación parcial.
 - [ ] Sesión vencida: el aviso ofrece reconectar y, al volver, el usuario reintenta a mano (R3).
@@ -197,7 +235,7 @@ sobre contenido del usuario.
 
 - [ ] *Borrar receta*, con su tacho, va suelto al pie del formulario, a lo ancho y fuera de las fichas: es una acción destructiva, no un campo. En una receta nueva no aparece.
 - [ ] Pide confirmación, y la confirmación nombra la receta. Toma el lugar del botón sin redibujar el formulario.
-- [ ] Borra el `.md` de Drive y la fila del índice.
+- [ ] Borra el `.md` de Drive y la fila del índice, y después manda a la papelera **sus fotos de `_fotos/`** (C05.1.5). Las externas y las que viven en otra carpeta no se tocan.
 - [ ] Al terminar, vuelve a la lista de donde se venía.
 - [ ] Si falla, avisa y la receta sigue estando (R1).
 - [ ] Si el `.md` ya no existía, se borra la fila igual y no es un error.
@@ -211,7 +249,7 @@ ofrece deshacer: la papelera de Drive es la red de seguridad, y es del usuario.
 
 | Capacidad | Job |
 |---|---|
-| C04.1.1, C04.2.1, C04.2.1b, C04.2.1c, C04.2.2, C04.2.3, C04.3.1, C04.3b.1, C04.4.1, C04.5.1, C04.5.2, C04.6.1 | J7 |
+| C04.1.1, C04.2.1, C04.2.1b, C04.2.1c, C04.2.1d, C04.2.2, C04.2.3, C04.3.1, C04.3b.1, C04.3d.1, C04.3d.2, C04.4.1, C04.5.1, C04.5.2, C04.6.1 | J7 |
 | C04.3.2 | J4, J7 |
 | C04.3.3 | J7, J8 |
 | C04.3c.1 | J8 |

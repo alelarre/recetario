@@ -16,6 +16,13 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   `dificultad`, `fuente`, `foto` y `tags`. `tiempo` es uno de cinco valores
   (`~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`); `foto` es una URL
   externa. Un valor inválido de `tiempo` o `dificultad` se lee como ausente.
+- **Las fotos de la receta son un depósito**, la sección `## Fotos` del cuerpo:
+  una línea `- <número>: <url>` por foto, con el número estable y nunca reusado.
+  El texto las nombra con `![epígrafe](foto:N)` en cualquier sección y `foto`
+  acepta `foto:N`; antes de dibujarse, la receta se resuelve a URLs. Las que
+  sube la app van a `_fotos/` (`carpeta_fotos` en `meta`), achicadas a JPEG, y
+  se piden con el token como las de los borradores. La foto propia de una
+  categoría vive ahí también.
 - **Cuatro tags especiales**, reservados y con forma propia: `favorito`,
   `menú diario`, `probar` e `incompleta` (la completitud de la receta). Van en
   la lista `tags` como cualquier otro.
@@ -74,10 +81,10 @@ Nada del código depende de `product-design/`. **Todo el producto vive en `src/`
 |---|---|
 | Entrada | `inicio.ts` decide entre `main.ts` (la app, con login) e `invitado.ts` (la vista de una receta compartida, sin login). `main.ts` cablea rutas, acciones y pantallas. |
 | Google | `auth.ts`, `drive.ts`, `sheets.ts`; los tipos de Google Identity Services están escritos a mano en `gis.d.ts` (el SDK se carga por `<script>`). `config.ts` tiene el client ID, el scope, los nombres fijos y `SCHEMA_VERSION`. |
-| Dominio | `recipe.ts` (parsear y escribir el `.md`), `borrador.ts`, `plan.ts` (el `.md` del plan de la semana), `compras.ts` (la lista que sale del plan, y su texto), `catalogo.ts` (la fila del índice, tags reservados, búsqueda), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts`, `conversion.ts` (el pedido a Claude y lo que vuelve), `fotos.ts` (achicar una foto antes de subirla), `tipos.ts`. |
+| Dominio | `recipe.ts` (parsear y escribir el `.md`), `borrador.ts`, `plan.ts` (el `.md` del plan de la semana), `compras.ts` (la lista que sale del plan, y su texto), `catalogo.ts` (la fila del índice, tags reservados, búsqueda), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts`, `conversion.ts` (el pedido a Claude y lo que vuelve), `fotos.ts` (achicar una foto antes de subirla), `fotos-receta.ts` (el depósito: parsear y escribir `## Fotos`, resolver `foto:N`, poner y sacar referencias), `tipos.ts`. |
 | Compartir | `compartir.ts` (menú Compartir del sistema y portapapeles, con sus respaldos), `link-receta.ts` (la receta comprimida en el fragmento del link), `texto-receta.ts`, `pdf/` (pdfmake con Inter embebida), `cocina-control.ts` (modo cocina y pantalla encendida, compartido entre receta e invitado). |
-| UI | `src/ui/`: una pantalla por archivo, sobre `componentes.ts`, `iconos.ts`, `pintar.ts` y `fichas-receta.ts`; `router.ts` tiene las rutas. **`tokens.css` es el sistema del producto** —tokens y componentes— y se edita directamente; `base.css` es lo propio de cada pantalla. |
-| Imágenes | `src/categorias/*.webp`, el catálogo de fotos de categoría, importado con `import.meta.glob`: el nombre del archivo es la clave. `imagenes.ts` muestra las imágenes de Drive —las fotos de los borradores— desde Cache Storage, y lee las fotos que el service worker dejó del menú Compartir. |
+| UI | `src/ui/`: una pantalla por archivo, sobre `componentes.ts`, `iconos.ts`, `pintar.ts`, `fichas-receta.ts` y `visor.ts` (la foto a pantalla completa, compartida entre receta, editor e invitado); `router.ts` tiene las rutas. **`tokens.css` es el sistema del producto** —tokens y componentes— y se edita directamente; `base.css` es lo propio de cada pantalla. |
+| Imágenes | `src/categorias/*.webp`, el catálogo de fotos de categoría, importado con `import.meta.glob`: el nombre del archivo es la clave. `imagenes.ts` muestra las imágenes de Drive —las fotos de los borradores, las de las recetas y las propias de las categorías— desde Cache Storage, las precarga en segundo plano, y lee las fotos que el service worker dejó del menú Compartir. |
 
 ## Comandos
 
@@ -136,9 +143,10 @@ Todo `src/` y `tests/` es TypeScript con `strict`, más
   propias llamadas `Recetario`—; elegir otra es el **Google Picker**
   (`src/picker.ts`, tipos a mano en `src/gapi.d.ts`).
 - **Las categorías son las subcarpetas.** El color y la foto de cada una son sus
-  `appProperties` (`foto=catalogo:<clave>`); se gestionan desde *Ajustes →
-  Recetario*. Una carpeta creada a mano en Drive aparece al reindexar; sin foto
-  se dibuja con la trama sobre su color. Lo que empieza con `_` no es categoría.
+  `appProperties` (`foto=catalogo:<clave>`, o `foto=drive:<id>` si es una propia
+  subida a `_fotos/`); se gestionan desde *Ajustes → Recetario*. Una carpeta
+  creada a mano en Drive aparece al reindexar; sin foto se dibuja con la trama
+  sobre su color. Lo que empieza con `_` no es categoría.
 - La carpeta del usuario es `Recetario/` (`1B2nNmy0qOAuZT9lomrSdompYta7uuJ7B`).
   `Carnes/milanesas-napolitanas.md` es un fixture escrito por fuera de la app y
   sirve de ejemplo canónico del formato.
@@ -173,9 +181,8 @@ Cada una se midió o se discutió a fondo.
 - **Claves nuevas en el frontmatter** (`ultima_vez`, `veces`, `puntaje`,
   porciones numéricas) y **datos nutricionales:** si la fuente los trae, se
   descartan.
-- **Fotos de receta guardadas en Drive, miniaturas o portadas:** la receta usa
-  sólo URLs externas. Las fotos de los borradores sí van en Drive: son la
-  fuente que Claude lee, no la receta.
+- **Miniaturas, o una portada guardada aparte:** se dibuja la foto entera, y un
+  `thumbnailLink` de Drive caduca. Las fotos sí van en Drive, en `_fotos/`.
 - **Los borradores como receta incompleta o en una planilla propia.**
 
 **Producto y UI**

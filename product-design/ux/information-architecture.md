@@ -94,7 +94,7 @@ rinde: 4 porciones
 tiempo: ~60 min
 dificultad: fácil
 fuente: Cuaderno de mamá, p. 12
-foto: https://…
+foto: foto:2
 ---
 
 Un clásico de los domingos en casa.
@@ -116,6 +116,10 @@ Cambiar la salsa y la muzzarella por salsa blanca y gruyere.
 
 ## Notas
 - El horno de casa calienta de más: bajar a 180 °C.
+
+## Fotos
+- 1: https://drive.google.com/file/d/1AbC…/view
+- 2: https://ejemplo.com/milanesas.jpg
 ````
 
 **Frontmatter.** Siete claves, todas opcionales menos `titulo`. El esquema es
@@ -130,11 +134,12 @@ guardar.
 | `tiempo` | enumerado | no | La duración hasta comer, con reposo y horno: `~15 min` · `~30 min` · `~60 min` · `>60 min` · `>1 día`. Cualquier otro texto se lee como sin duración |
 | `dificultad` | enumerado | no | `fácil` · `media` · `difícil`. Otro valor se lee como sin dificultad |
 | `fuente` | texto | no | **Texto libre:** URL o *"libro de pescados, pág. 84"* |
-| `foto` | URL | no | Solo URL externa. Ver §1.7 |
+| `foto` | URL o `foto:N` | no | La cabecera: una URL externa, o una foto del depósito. Ver §1.7 |
 
 **Cuerpo.** Cuatro secciones conocidas, todas opcionales: `## Ingredientes`
 —con subtítulos `###` como grupos—, `## Preparación`, `## Variaciones` y
-`## Notas`. Cualquier otra sección se muestra tal cual y no se interpreta.
+`## Notas`, más **`## Fotos`, que es el depósito de fotos y no texto** (§1.7).
+Cualquier otra sección se muestra tal cual y no se interpreta.
 
 **`## Preparación` también puede traer `###`**, y en el
 contenido real los trae: el libro de pescados divide la preparación en "Para el
@@ -159,15 +164,53 @@ decide **cuándo se puede sacar**: hace falta título, categoría, al menos un
 ingrediente y al menos un paso. Esa condición no filtra, no corrige y no escribe
 nada por su cuenta.
 
-### 1.7 Foto
+### 1.7 Las fotos
 
-`foto` es una URL externa y se dibuja donde esté. Es lo único viable sin
-backend: una imagen guardada en Drive necesita pedirse con el token y armar un
-object URL, y las miniaturas obligan a mantener un mapa de `thumbnailLink` que
-caduca.
+Una receta tiene un **depósito de fotos**: la del plato, la de un paso, la de
+cómo tiene que quedar la masa. Vive en la sección `## Fotos` del cuerpo, una
+línea por foto, y no suma ninguna clave al frontmatter.
 
-**El diseño la contempla y no depende de ella.** Una receta sin foto se dibuja
-completa igual: su lugar lo ocupa la foto de su categoría.
+```md
+## Fotos
+- 1: https://drive.google.com/file/d/1AbC…/view
+- 2: https://ejemplo.com/pan.jpg
+```
+
+- **El número es la identidad de la foto**, y es estable: una nueva toma el más
+  alto más uno, ninguno se reusa, y puede haber huecos. El orden de las líneas
+  es el de la galería.
+- **La URL es un archivo de Drive o una externa.** La de Drive es
+  `https://drive.google.com/file/d/<id>/view`, el único formato que la app
+  reconoce como tal, y se pide con el token; la externa va a un `<img>`
+  directo.
+- **Si alguna línea no tiene esa forma, la sección entera se lee como una
+  sección ajena** y se conserva tal cual: la receta queda sin depósito y nada se
+  pierde por pasar por el editor. Sin fotos, la sección no se escribe.
+- **La sección va última en el archivo**, después de las secciones ajenas. En
+  pantalla y en el PDF, en cambio, la galería va después de Notas y antes de
+  ellas.
+
+**El texto nombra una foto con `![epígrafe](foto:N)`**, en cualquier sección, y
+la cabecera acepta `foto: foto:N` además de una URL. **Antes de dibujarse, la
+receta se resuelve:** cada `foto:N` se cambia por la URL de su línea, y una
+referencia a un número que no está en el depósito se borra. Así la lectura, la
+cocina, el texto y el PDF sólo ven URLs.
+
+**Dónde viven los archivos.** Las fotos que sube la app van a **`_fotos/`**, en
+la carpeta base, al lado de `_borradores/`: se crea con la primera foto y su id
+queda en `meta` como `carpeta_fotos`. El `_` la deja fuera de las categorías y
+del reindexado. El nombre es el del `.md` con el número —`pan-de-campo-3.jpg`—,
+sólo para que en Drive se lean juntas. Cambiar la receta de categoría no las
+mueve: el link es por id. **La app sólo manda a la papelera fotos que están en
+`_fotos/`**; un link pegado a mano que apunta a otra carpeta se saca del
+depósito y el archivo no se toca.
+
+**Se muestran pidiéndolas a Drive con el token** y quedan en Cache Storage por
+id de archivo, sin vencimiento. La pantalla no las espera: cada una se dibuja
+como un recuadro del mismo tamaño y se completa cuando llega.
+
+**El diseño las contempla y no depende de ninguna.** Una receta sin foto se
+dibuja completa igual: su lugar en las listas lo ocupa la foto de su categoría.
 
 ### 1.8 Variaciones y versiones del mismo plato
 
@@ -203,14 +246,15 @@ versiones que el formato no aguanta sin dejar de ser legible.
 | **Carpeta base** | Una carpeta propia del Drive, marcada con `appProperties` `recetario=raiz` | Al crearla o elegirla en el primer arranque | Al elegir otra desde Ajustes: pierde la marca y queda en Drive como estaba |
 | **Receta** | Un `.md` en una carpeta de categoría | Al guardar una receta nueva, al convertir un borrador, o cuando un agente la escribe directo | Al borrarla desde el editor: va a la papelera de Drive |
 | **Borrador** | Un **`.md` en `_borradores/`**, dentro de la carpeta base, con su fila en la hoja `borradores` del índice | Al capturar | **Al convertirse**, o al descartarse: va a la papelera de Drive con sus fotos |
-| **Foto de borrador** | Un `.jpg` en `_borradores/`, al lado del `.md`, nombrado en su clave `fotos` | Al capturar, o al agregarla en el borrador | Al sacarla, o con su borrador: va a la papelera de Drive |
-| **Categoría** | Una carpeta dentro de la carpeta base, con su color y su foto en `appProperties`, y su fila en la hoja `categorias` del índice | En el setup de la carpeta base —las 16 predefinidas—, o al crearla desde *Ajustes → Recetario → Categorías* | Al borrarla desde ahí: va a la papelera de Drive con sus recetas |
+| **Foto de borrador** | Un `.jpg` en `_borradores/`, al lado del `.md`, nombrado en su clave `fotos` | Al capturar, o al agregarla en el borrador | Al sacarla, o con su borrador: va a la papelera de Drive. **Al convertir, la que la receta se queda no muere: se muda a `_fotos/`** |
+| **Foto de receta** | Una línea de la sección `## Fotos` del `.md` (§1.7). El archivo, si lo subió la app, es un `.jpg` en `_fotos/`; si no, es una URL externa | Al agregarla en el editor, al convertir un borrador con fotos, o escrita a mano en el `.md` | Al sacarla del depósito, o con su receta: el archivo de `_fotos/` va a la papelera de Drive |
+| **Categoría** | Una carpeta dentro de la carpeta base, con su color y su foto en `appProperties`, y su fila en la hoja `categorias` del índice | En el setup de la carpeta base —las 16 predefinidas—, o al crearla desde *Ajustes → Recetario → Categorías* | Al borrarla desde ahí: va a la papelera de Drive con sus recetas, y su foto propia con ella |
 | **Tag** | La lista `tags` del frontmatter | Al escribirlo, o al apretar el botón de un especial | Cuando ninguna receta lo usa |
 | **Fuente** | Frontmatter, o línea en itálica en una variación | Con el borrador o la receta | Con ella |
 | **Variación** | Sección `###` o bullet bajo `## Variaciones` | Al escribirla | Al borrarla |
 | **Índice** | Google Sheet `_indice` en la carpeta base, con cuatro hojas: `recetas`, `meta`, `borradores` y `categorias` | Al primer arranque, o al reindexar | Se puede borrar en cualquier momento: se reconstruye |
 | **Copia local del índice** | `localStorage` del navegador | Al cargar o reindexar; cada escritura la deja al día | Con *Borrar datos locales*, o cuando deja de coincidir con `_indice` |
-| **Imágenes guardadas** | Cache Storage del navegador: `recetario-imagenes`, por id de archivo | La primera vez que se muestra una foto de Drive | Con *Borrar datos locales* o *Salir*. Un id de Drive no cambia de contenido: no vence |
+| **Imágenes guardadas** | Cache Storage del navegador: `recetario-imagenes`, por id de archivo | La primera vez que se muestra una foto de Drive, o al subirla —entra con el blob que ya está en memoria—; también por precarga en segundo plano | Con *Borrar datos locales* o *Salir*, o al mandar esa foto a la papelera. Un id de Drive no cambia de contenido: no vence |
 | **Receta compartida** | En ningún lado: un PDF, un texto o un link que lleva la receta comprimida en el fragmento | Al compartir | Es una copia del momento; nada queda publicado en Drive |
 | **Plan de la semana** | **`_plan.md`** en la carpeta base, al lado de `_indice` | Al primer cambio, si el archivo no existía | Con *Reiniciar el plan*, que lo deja vacío. El archivo queda |
 | **Lista de compras** | En ningún lado: se arma al entrar, desde el plan y los `.md` de sus recetas | Al abrirla | Al salir de la pantalla |
@@ -220,7 +264,8 @@ versiones que el formato no aguanta sin dejar de ser legible.
 **La carpeta base se encuentra por su marca, no por su nombre ni por un id
 escrito en el código.** Si no hay ninguna carpeta marcada —o hay más de una—, la
 app ofrece crearla o elegir una que ya exista; **no lista las carpetas del
-usuario**. Todo lo demás —categorías, `_borradores/`, `_indice`— vive adentro.
+usuario**. Todo lo demás —categorías, `_borradores/`, `_fotos/`, `_indice`—
+vive adentro.
 
 **Una receta vive en exactamente una carpeta.** La carpeta dice *dónde está el
 archivo*. Los tags dicen *cómo se lo encuentra*, y son varios. La navegación
@@ -230,11 +275,13 @@ Una receta suelta en la carpeta base, o en una carpeta que no es categoría, se
 lista como **Sin categorizar**.
 
 **La categoría es la carpeta, y su color y su foto son propiedades de la
-carpeta** (`appProperties` `color` y `foto`; la foto es `catalogo:<clave>`, una
-de las imágenes de `src/categorias/`). Las 16 predefinidas —nombre, color y
-foto— están en `src/categorias.ts`; la app no guarda el id de ninguna. Todas se
-tratan igual, predefinidas o no. Una carpeta creada a mano en Drive aparece al
-reindexar; sin foto se dibuja con su color, y sin color con el neutro.
+carpeta** (`appProperties` `color` y `foto`). La foto es `catalogo:<clave>`, una
+de las imágenes de `src/categorias/`, o `drive:<id>`, una propia subida a
+`_fotos/` con el mismo mecanismo que las de las recetas. Las 16 predefinidas
+—nombre, color y foto— están en `src/categorias.ts`; la app no guarda el id de
+ninguna. Todas se tratan igual, predefinidas o no. Una carpeta creada a mano en
+Drive aparece al reindexar; sin foto se dibuja con su color, y sin color con el
+neutro.
 
 **El borrador es un `.md` propio, con su hoja en el índice.** Cada borrador es un
 archivo en `_borradores/` —`titulo`, `fuente`, `capturado` y `fotos` en el
@@ -283,8 +330,8 @@ store de la app.
 
 | Operación | Qué hace | Dónde vive |
 |---|---|---|
-| **Crear y guardar una receta** | Escribe el `.md` y escribe o reemplaza su fila del índice | `src/store.ts` |
-| **Convertir borrador en receta** | Lo anterior, y **descarta el borrador**: sus fotos y su `.md` a la papelera y su fila afuera | `src/compartido.ts` |
+| **Crear y guardar una receta** | Sube a `_fotos/` las fotos nuevas, escribe el `.md` y escribe o reemplaza su fila del índice, y recién después manda a la papelera las que se sacaron | `src/store.ts` |
+| **Convertir borrador en receta** | Lo anterior —con las fotos del borrador mudadas de `_borradores/` a `_fotos/`—, y **descarta el borrador**: las fotos que quedaron afuera y su `.md` a la papelera, su fila afuera | `src/compartido.ts` |
 | **Leer y parsear un `.md`** | Aplica el esquema: lo ausente llega vacío, y un `tiempo` o una `dificultad` fuera de sus valores se lee como sin dato | `src/recipe.ts` |
 
 Así no hay dos implementaciones del mismo formato que se separen con el tiempo.
@@ -313,8 +360,10 @@ una vez con una sola pestaña abierta. La reparación siempre es reindexar, desd
 
 **La fila de una receta es completa.** Id y nombre del archivo, título,
 categoría y id de su carpeta, rinde, tiempo, dificultad, fuente, tags, **la lista
-de nombres de ingredientes**, fecha de modificación y foto. Los tags especiales
-—la completitud incluida— van en la columna `tags`, sin columna propia.
+de nombres de ingredientes**, fecha de modificación y foto —la cabecera ya
+resuelta a su URL, para que las listas la dibujen sin leer el `.md`—. Los tags
+especiales —la completitud incluida— van en la columna `tags`, sin columna
+propia.
 
 Los ingredientes están ahí porque la búsqueda de J4 tiene que resolverse sin leer
 mil `.md`. Se guardan **tal como están escritos en la receta**, sin normalizar:
@@ -362,9 +411,9 @@ se reconoce abre el Recetario.
 | **Resultados** | `#/buscar?q=` | Lo que devuelve la búsqueda, agrupado por título, ingrediente y tag. Se ordena A–Z o por duración dentro de cada grupo. | Recuperar | J1, J4 |
 | **Categoría** | `#/c/<nombre>` | Las recetas de una carpeta, con el carrusel de tags, la fila de duraciones y el conmutador de orden. | Recuperar | J5 |
 | **Lista por tag** | `#/t/<tag>` | Las recetas del recetario entero con ese tag. Se llega tocando un chip del carrusel del Recetario. Mismos filtros que la categoría. | Recuperar | J5 |
-| **Receta** | `#/r/<id>` | La receta entera, en una columna de fichas. En el encabezado, la estrella de favorito y Compartir; al pie, *Cocinar* y *Editar*. | Recuperar | J6 |
+| **Receta** | `#/r/<id>` | La receta entera, en una columna de fichas, con sus fotos donde el texto las nombra y la galería al final —tocar una abre el visor—. En el encabezado, la estrella de favorito y Compartir; al pie, *Cocinar* y *Editar*. | Recuperar | J6 |
 | **Modo cocina** | `#/r/<id>/cocinar` | Letra grande, conmutador Ingredientes / Pasos, el paso actual realzado, y la pantalla encendida. | Cocinar | J6 |
-| **Editor** | `#/r/<id>/editar` | Corregir un error, anotar una variación, poner y sacar los tags especiales, cambiar la categoría, borrar la receta. | Cocinar | J7 |
+| **Editor** | `#/r/<id>/editar` | Corregir un error, anotar una variación, poner y sacar los tags especiales, agregar fotos y ponerlas en el texto, cambiar la categoría, borrar la receta. | Cocinar | J7 |
 | **Nueva receta** | `#/nueva` | El mismo editor, vacío. Con `?borrador=<id>` abre con el título y la fuente del borrador y guardar lo convierte; con `?recibida=1` abre con la receta que llegó compartida o pegada. | Archivar | J3, J7 |
 | **Borradores** | `#/borradores` | Los borradores esperando conversión, con *Nuevo* y *Pegar receta*. | Archivar | J2, J3 |
 | **Borrador** | `#/borradores/<id>` | Una entrada: su título, su fuente, su nota y sus fotos —tocar una la abre en el visor—, y qué hacer con ella: *Convertir con Claude*, *Pegar receta*, *Crear la receta*, *Editar*, *Descartar*. | Archivar | J3 |
@@ -372,10 +421,10 @@ se reconoce abre el Recetario.
 | **¿De qué borrador es esta receta?** | `#/recibida` | Aparece cuando llega una receta en `.md` sin un id de borrador que exista: la lista de borradores y *Ninguno*. | Archivar | J3 |
 | **Ajustes** | `#/ajustes` | Seis fichas, en este orden: Cuenta, Recetario, Índice, Archivos locales, Avisos y Registro de actividad. Ver §4.7. | Transversal | — |
 | **Categorías** | `#/categorias` | La lista de categorías con cuántas recetas tiene cada una, y *+ Nueva*. | Transversal | — |
-| **Editar categoría** | `#/categorias/<id>` · `#/categorias/nueva` | Nombre, color y foto de una categoría, y *Borrar categoría*. | Transversal | — |
+| **Editar categoría** | `#/categorias/<id>` · `#/categorias/nueva` | Nombre, color y foto de una categoría —del catálogo o una propia, con *Subir foto*—, y *Borrar categoría*. | Transversal | — |
 | **Carpeta base** | `#/carpeta` · `#/carpeta?cambiando=1` | Crear la carpeta, o elegir una que ya exista con el Picker de Google. **No lista nada del Drive.** Aparece sola cuando no hay una carpeta marcada, o hay más de una; con `cambiando=1` se llega desde *Ajustes → Recetario → Cambiar carpeta*. | Transversal | — |
 | **Conexión** | *(sin ruta: es el arranque)* | Primer arranque y consentimiento de Google; también el progreso de crear el índice. | Transversal | — |
-| **Vista de invitado** | `#/ver?r=<receta>` · `#/ver/cocinar?r=<receta>` | La receta que viaja en un link compartido, sin login: se lee y se cocina, y nada más. No muestra tags. | Compartir | — |
+| **Vista de invitado** | `#/ver?r=<receta>` · `#/ver/cocinar?r=<receta>` | La receta que viaja en un link compartido, sin login: se lee y se cocina, y nada más. No muestra tags, y de las fotos sólo las externas: las de Drive no viajan. | Compartir | — |
 | **Plan de la semana** | `#/plan` | Siete días desde hoy, dos comidas cada uno, y cada comida una lista de recetas. Al pie, la lista de compras y reiniciar. | Planificar | J9 |
 | **Agregar al plan** | `#/plan/agregar?dia=&momento=` | La búsqueda del Recetario y el bloque *Menú diario*: tocar una receta la suma a esa comida y vuelve. | Planificar | J9 |
 | **Lista de compras** | `#/plan/compras` | Los ingredientes de todo lo cargado, en dos bloques, y compartir como texto. | Planificar | J9 |
@@ -386,7 +435,8 @@ pie y volver la cierra.
 **La vista de invitado es una entrada aparte.** `src/inicio.ts` mira el hash antes
 de cargar nada: un `#/ver…` carga sólo `src/invitado.ts`, sin token ni store, con
 una lista cerrada de acciones —cocinar, volver, conmutar, marcar un paso, la
-pantalla encendida—. Lo que se agregue a la Receta no aparece ahí sin querer.
+pantalla encendida, abrir y cerrar el visor—. Lo que se agregue a la Receta no
+aparece ahí sin querer.
 
 **El Share Target llega por `POST`** a `/recetario/compartir`, y lo atiende el
 service worker: guarda las fotos en su caché `recetario-compartido` y redirige a
@@ -536,8 +586,8 @@ su color y su foto—, un número que se recorre de un vistazo en una grilla.
 **Las categorías son del usuario:** desde *Ajustes → Recetario → Categorías* se
 crean, se renombran, se les cambia el color y la foto, y se borran. El color se
 elige entre los quince de la paleta más el neutro; la foto, entre las del
-catálogo de `src/categorias/`. Las imágenes propias están pendientes
-(`../../BACKLOG.md`, P19 etapa 3b).
+catálogo de `src/categorias/` o una propia, con *Subir foto*: se sube a
+`_fotos/` al guardar la categoría y la carpeta la nombra `drive:<id>`.
 
 En el Recetario van **en orden alfabético** —la posición es lo que se aprende, y
 ordenar por cantidad la movería—, debajo de la búsqueda y del carrusel de tags,

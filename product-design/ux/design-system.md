@@ -283,7 +283,7 @@ carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chi
 | `calendario` | El tag *menú diario*. |
 | `tacho` | Las acciones destructivas: *Borrar receta* y *Descartar* un borrador. |
 | `cerrar` | La cruz: la del chip removible del editor, la que limpia la búsqueda y la que saca una foto del borrador. |
-| `camara` | *Agregar foto*, en la captura y en el borrador (§6.25). |
+| `camara` | *Agregar foto*, en la captura, en el borrador y en el editor de recetas (§6.25), y *Subir foto* al elegir la de una categoría (§6.4). |
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `zanahoria`, `listaNumerada` | Las dos posiciones del conmutador de cocina —*Ingredientes* y *Pasos*—, al lado de la palabra. |
 | Los cinco relojitos | Uno por valor de la duración, el mismo mapa en el editor (§6.18), la tarjeta, la receta, la búsqueda, el filtro (§6.19) y el orden (§6.20). |
@@ -376,18 +376,21 @@ carrusel aparecen y desaparecen atados a la posición del scroll, no al tiempo.
 ### 5.1 El indicador de carga
 
 Un **spinner** de 24 px en `--fg-3`, centrado en el lugar donde va a aparecer el
-contenido — nunca una pantalla de carga completa.
+contenido — nunca una pantalla de carga completa. Existe porque un bloque quieto
+y vacío no se distingue de un bloque vacío de verdad.
 
-Es la única animación en bucle del sistema, y existe porque un bloque quieto y
-vacío no se distingue de un bloque vacío de verdad.
+**El velo de escritura no usa spinner: usa el libro** (§6.17b). Son las dos
+únicas animaciones en bucle del sistema, y se reparten así: el spinner dice que
+se está esperando algo, el libro dice que la app está escribiendo.
 
-**El reindexado no usa spinner:** usa barra de progreso, porque ahí hay un número
-que decir (`E05-Cimientos.md` C05.5.2). La regla es esa — con número, barra; sin
-número, spinner.
+**El reindexado no usa ninguno de los dos:** usa barra de progreso, porque ahí
+hay un número que decir (`E05-Cimientos.md` C05.5.2). La regla es esa — con
+número, barra; sin número, spinner.
 
-**`prefers-reduced-motion: reduce` elimina los cuatro movimientos:** el menú
-aparece sin transición, el carrusel salta, el spinner queda quieto y la estrella
-se dibuja llena a la mitad, fija. No hay ninguna información que dependa del
+**`prefers-reduced-motion: reduce` elimina los cinco movimientos:** el menú
+aparece sin transición, el carrusel salta, el spinner queda quieto, la estrella
+se dibuja llena a la mitad, fija, y el libro queda con el renglón a medio
+escribir y el lápiz apoyado. No hay ninguna información que dependa del
 movimiento.
 
 ---
@@ -396,8 +399,8 @@ movimiento.
 
 Con tokens aplicados. Los que son sistema —encabezado, ficha, botón, tarjeta,
 placeholder, marca de incompleta, chip, campo, aviso, ítem de ingrediente,
-spinner— están en `src/ui/tokens.css`; los que son de una pantalla, en
-`src/ui/base.css`.
+spinner, miniatura, galería y foto en línea— están en `src/ui/tokens.css`; los
+que son de una pantalla, en `src/ui/base.css`.
 
 ### 6.0 Cómo responde un control
 
@@ -464,6 +467,10 @@ categoría encima al 25 %.**
 - **No necesita ningún asset nuevo:** reutiliza los `.webp` de categoría que ya
   existen. Una categoría sin foto usa su color plano; una sin color usa
   `#99907F`.
+- **Está siempre, también con foto:** la de la receta va encima, en la misma
+  caja. Una cabecera de Drive llega con el token y tarda, y mientras tanto
+  —o para siempre, si ya no está— abajo queda la categoría. El hueco no existe
+  en ningún momento.
 - Una `foto` de receta cuya URL no carga cae acá, sin error visible.
 
 **Por qué oscurecida y teñida, y no la foto tal cual:** todas las recetas de una
@@ -487,6 +494,9 @@ pantalla: la estructura es de ficha y una foto a sangre la rompe.
 
 **Por qué 200 px de tope:** más alto empuja el título fuera de la pantalla, y el
 título es lo que confirma que abriste la receta que querías.
+
+**Es tocable y abre el visor** (§6.26). El botón no agrega nada visual: la foto
+se ve igual.
 
 **Sin `foto`:** el bloque no se dibuja y la receta empieza por el título. **No**
 se usa el placeholder acá — a este tamaño, un bloque de color teñido ocuparía
@@ -534,6 +544,11 @@ porque es el único donde la categoría es el contenido y no un dato de otra cos
 **Sin foto:** una trama de rayas diagonales del color de la categoría, al 22 %
 sobre `--surface`, con el nombre. No se rompe. La misma trama es la muestra «sin
 foto» al elegir la foto de una categoría.
+
+**La foto propia** —una subida por el usuario, no del catálogo— se dibuja igual,
+pero se pide a Drive con el token: hasta que llega, el tile queda con su color.
+Al elegirla, *Subir foto* es la primera muestra de la fila: un botón de
+`--surface-alta` con el ícono `camara`, del mismo tamaño que las demás.
 
 ### 6.5 Marca de incompleta
 
@@ -845,9 +860,19 @@ del mismo lado.
 ### 6.17b Velo de escritura
 
 Mientras la app escribe en Drive o en Sheets, un velo de `--velo` al 60 % cubre
-la pantalla entera con el spinner de 24 px (§5.1) centrado. Es el mismo velo del
-menú lateral y de la ficha de compartir, sin transición: aparece con la escritura
-y se va con ella, termine bien o mal.
+la pantalla entera con **el libro que se está escribiendo** centrado. Sin
+transición: aparece con la escritura y se va con ella, termine bien o mal.
+
+**El libro** es un dibujo de unos 96 px: dos páginas abiertas en `--fg-2` —el
+lomo es el hueco entre las dos, no una línea—, tres renglones ya escritos y
+fijos en `--fg-3` a la izquierda, y a la derecha el renglón en curso, que se
+dibuja de izquierda a derecha mientras un lápiz en `--acento` lo recorre. Al
+terminar vuelve a empezar, en un loop de 1,6 s. Con
+`prefers-reduced-motion: reduce` queda quieto, con el renglón a medio escribir
+y el lápiz apoyado (§5.1).
+
+**El velo tiñe el fondo y no al libro:** es `color-mix` sobre el fondo, no
+`opacity` sobre el elemento entero, así el dibujo se ve a pleno.
 
 **Recibe el toque**, así que ningún control de abajo responde, y el contenido
 queda marcado como ocupado (`aria-busy`). No es una pantalla de carga: lo que
@@ -987,7 +1012,10 @@ para las fichas, `--fg`, `--fg-2` y `--fg-3` para el texto—, sin acento ni col
 de categoría. Lleva **Inter embebida** —regular, semibold e itálica— porque un
 PDF no puede usar la fuente del sistema, y Inter tiene ⅓ y ⅔. La escala es la de
 la receta abierta, reducida a la hoja: título, título de sección con su divisor,
-cuerpo y texto chico para el contexto, la fuente y los rótulos de grupo.
+cuerpo y texto chico para el contexto, la fuente y los rótulos de grupo. **Las
+fotos van adentro del archivo**, achicadas: la cabecera arriba del título, al
+ancho útil y con el alto topado a 90 mm; cada una debajo de su línea, con el
+epígrafe en texto chico `--fg-3`; y la galería al final, de a dos por fila.
 
 ### 6.24 Grilla del plan de la semana
 
@@ -1015,23 +1043,66 @@ grilla, y sus dos botones ocupan el ancho: *Lista de compras* primario y
 confirmación de reiniciar va en su lugar, en una ficha con borde `--error`, como
 borrar una receta.
 
-### 6.25 Fotos del borrador y visor
+### 6.25 Fila de miniaturas y visor
 
-**La fila** va debajo de la nota, en la captura y en el borrador, con el rótulo
+**La fila** va debajo de la nota, en la captura y en el borrador, y es la ficha
+*Fotos* del editor de recetas (§6.26). Lleva el rótulo
 *Fotos* de un campo (§6.9): miniaturas **cuadradas de 64 px** con `--e-2` entre
 sí, que bajan de renglón si no entran. Cada una es la foto recortada al cuadrado
 (`object-fit: cover`) sobre `--surface-alta`, con `--r-foto`. **La ×** va en la
 esquina de arriba a la derecha: un círculo de 24 px de `--velo` al 75 % con el
-ícono `cerrar` de 14 px en `--fg`, que se lee sobre cualquier foto. Al final de
-la fila, **Agregar foto**: un botón secundario de 64 px de alto con el ícono
-`camara`, que no se dibuja con cinco fotos. **Una foto que ya no está en Drive**
-es el mismo cuadrado con borde punteado `--borde-fuerte` y *"La foto ya no está
-en Drive."* en *micro* `--fg-3`, centrado; conserva su ×.
+ícono `cerrar` de 14 px en `--fg`, que se lee sobre cualquier foto. En el
+borrador la × saca la foto; en el editor de recetas no va, porque *Sacar* es una
+de las acciones de la ficha (§6.26). Al final de la fila, **Agregar foto**: un
+botón secundario de 64 px de alto con el ícono `camara`, que en el borrador no
+se dibuja con cinco fotos y en el editor no tiene tope. **Una foto que ya no
+está en Drive** es el mismo cuadrado con borde punteado `--borde-fuerte` y
+*"La foto ya no está en Drive."* en *micro* `--fg-3`, centrado.
 
-**El visor** abre la foto tocada en el borrador: fija sobre toda la pantalla,
-encima de todo, sobre `--velo` al 94 %, con la foto entera al ancho —o al alto—
-de la pantalla, sin recortar. Se cierra tocando cualquier lado. Es estado de la
-pantalla, no una ruta.
+**El número del depósito** (§6.26) va en la esquina de abajo a la izquierda de
+la miniatura, adentro del botón: un badge de `--velo` al 75 %, `--r-chico`,
+*micro* en `--fg`, de 18 px de alto. Es con el que se nombra a la foto en el
+texto, así que se lee sobre cualquiera.
+
+**El visor** abre la foto tocada: fija sobre toda la pantalla, encima de todo,
+sobre `--velo` al 94 %, con la foto entera al ancho —o al alto— de la pantalla,
+sin recortar. Se cierra tocando cualquier lado. **En una receta desliza**: el
+dedo pasa a la foto siguiente o a la anterior, sin dar la vuelta en los
+extremos, y ese gesto no la cierra. Es estado de la pantalla, no una ruta.
+
+### 6.26 Las fotos de la receta
+
+**La galería** es la ficha *Fotos* del final de la receta: una grilla de **tres
+columnas** con `--e-2` de separación, cada foto cuadrada
+(`object-fit: cover`) sobre `--surface-alta`, con `--r-foto`. La misma grilla
+es la del selector de portada del editor, donde la elegida lleva un contorno de
+2 px en `--acento`.
+
+**La foto en línea** va debajo del texto que la nombra —un ingrediente, un paso,
+una nota—, al ancho de la ficha, con `--r-foto` y `--e-2` arriba y abajo. Si
+trae epígrafe, va abajo en *chico* `--fg-3`. En un ingrediente ocupa su propio
+renglón, para no apretar el nombre ni desalinear la cantidad.
+
+**Una foto de Drive que todavía no llegó** es un recuadro de `--surface` del
+ancho disponible, en 4:3: el mismo lugar que va a ocupar, así nada salta cuando
+aparece.
+
+**Las fichas de foto del editor** se abren al pie, sobre el velo de `--velo` al
+60 %, como la ficha de compartir (§6.23): `--surface`, `--r-ficha` en las dos
+esquinas de arriba, ancho máximo 680 px, hasta 80 % del alto de la pantalla, y
+el padding de abajo con el área segura. Tocar el velo las cierra, y por eso
+ninguna tiene *Cancelar*. Mientras una está abierta, la página de atrás no se
+desplaza. Son tres:
+
+| Ficha | Qué muestra |
+|---|---|
+| **Acciones** | *Foto N* y cuatro botones secundarios en dos columnas —cuatro no entran en una fila de teléfono—: **Ver**, **Portada**, **Poner en…** y **Sacar**, este último con la variante de peligro (§6.7). *Portada* no se dibuja si ya lo es. |
+| **Poner en…** | *Poner la foto N en…* y, agrupados por sección y por sus `###` en *micro* `--fg-2`, un botón secundario por línea, a lo ancho, alineado a la izquierda y con el texto cortado a una línea. Una línea vacía se ofrece igual, como *(sin texto)*. |
+| **Foto de portada** | La galería del depósito con la actual marcada, el campo de URL, y **Usar la URL** y **Sin foto**. |
+
+**El botón de portada**, en el campo *Foto* de Datos, es un cuadrado de 96 px
+con `--r-foto`: la miniatura de la cabecera actual, o un recuadro punteado de
+`--borde-fuerte` que dice *Sin foto* en *micro* `--fg-3`.
 
 ---
 

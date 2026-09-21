@@ -198,6 +198,7 @@ mano. La conversión desde la fuente ocurre afuera, en una sesión con Claude.
 #### C01.6.3 — Crear la receta desde el borrador *(J3)*
 
 - [ ] Abre el editor de receta nueva (C04.3b.1) con el título y la `fuente` del borrador ya cargados.
+- [ ] **El depósito de la receta abre con las fotos del borrador**, todas, en su orden, como `1`, `2`, `3`… (C05.1.5). Las que no sirven se sacan de a una, como cualquier otra (C04.3d.2).
 - [ ] **La nota se lee como si fuera el `.md` de la receta**: lo que esté bajo `## Ingredientes`, `## Preparación`, `## Variaciones` o `## Notas` cae en su campo, y el texto suelto de arriba queda como descripción. Sin encabezados, todo va a la descripción.
 - [ ] Hay que elegir la categoría, como en cualquier receta nueva.
 - [ ] Guardar invoca la operación de conversión de la capa compartida (C01.7.1): escribe el `.md`, escribe la fila del índice y **descarta el borrador**, en una sola operación.
@@ -226,14 +227,16 @@ mano. La conversión desde la fuente ocurre afuera, en una sesión con Claude.
 ### F01.7 — El borrador desaparece al convertirse
 
 Convertir es **una sola operación de la capa compartida**: escribe el `.md`,
-escribe la fila del índice y descarta el borrador —sus fotos y su `.md` a la papelera y su fila afuera—. La invocan tanto la app
-como el agente, y nadie borra el borrador por separado.
+escribe la fila del índice y descarta el borrador —sus fotos y su `.md` a la
+papelera y su fila afuera—, salvo las fotos que la receta se quedó. La invocan
+tanto la app como el agente, y nadie borra el borrador por separado.
 
 Su fuente sobrevive en la receta; no queda copia.
 
 #### C01.7.1 — Convertir es una operación, no tres *(J3)*
 
 - [ ] La operación escribe el `.md`, escribe la fila del índice, manda las fotos y el `.md` del borrador a la papelera y borra su fila, en ese orden.
+- [ ] **Las fotos del borrador que siguen en el depósito de la receta no se descartan: se mudan.** Antes de escribir el `.md` pasan de `_borradores/` a `_fotos/` y se renombran con el nombre del `.md` y su número; el id no cambia, así que el link y el caché siguen valiendo. Sólo van a la papelera las que se sacaron.
 - [ ] La `fuente` del borrador pasa al frontmatter de la receta, y la nota a los campos que nombra (C01.6.3).
 - [ ] Si alguno de los pasos falla, el reintento repite todos (R2): reescribir el `.md`, reemplazar la fila y borrar el borrador son idempotentes.
 - [ ] Nadie borra un borrador convertido "a mano" desde otro lado.
@@ -285,6 +288,11 @@ un borrador detrás.
   captura, el plato terminado—, que se transcriba lo que se lee sin inventar
   cantidades ni pasos, y que una foto del plato sirve para el título y la
   descripción, no para la receta.
+- [ ] **Y le dice cómo nombrarlas en la receta:** esas fotos son `foto:1`,
+  `foto:2`… en el mismo orden; la del plato terminado va como `foto: foto:N`;
+  la de un paso, como `![](foto:N)` al final de ese paso; y la sección Fotos no
+  la escribe él, la arma la app (C05.1.5). Así la receta que vuelve ya trae la
+  portada y las referencias, y el depósito del editor las resuelve.
 - [ ] **Con el menú Compartir del sistema** (Android): se abre con el pedido
   como texto, y las fotos como archivos (`foto-1.jpg`…), y se elige Claude.
 - [ ] **Sin menú Compartir, o sin poder compartir archivos**, el pedido suma

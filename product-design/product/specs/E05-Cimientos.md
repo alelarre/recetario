@@ -85,10 +85,10 @@ se soporta:** no hay Share Target y el Atajo equivalente sale del alcance.
 
 ### R8 — Una escritura por vez
 
-Mientras una operación escribe en Drive o en Sheets, **un velo con el spinner
-cubre la pantalla** (`ux/design-system.md` §6.17b), desde que la escritura
-arranca hasta que termina. Es un solo mecanismo para todas las operaciones, y no
-uno por pantalla. Mientras dura, el resultado y el error tienen a dónde llegar:
+Mientras una operación escribe en Drive o en Sheets, **un velo con el libro que
+se está escribiendo cubre la pantalla** (`ux/design-system.md` §6.17b), desde
+que la escritura arranca hasta que termina. Es un solo mecanismo para todas las
+operaciones, y no uno por pantalla. Mientras dura, el resultado y el error tienen a dónde llegar:
 la pantalla que lanzó la escritura sigue siendo la que está.
 
 - [ ] **No se toca:** ningún control responde, ni el gesto del menú lateral.
@@ -106,8 +106,8 @@ la pantalla que lanzó la escritura sigue siendo la que está.
 ### F05.1 — El esquema del `.md`
 
 Frontmatter de siete claves, solo `titulo` obligatorio; cuerpo markdown con cuatro
-secciones conocidas y opcionales. Los ingredientes llevan el nombre primero y la
-cantidad después de un separador.
+secciones conocidas y opcionales, más el depósito de fotos. Los ingredientes
+llevan el nombre primero y la cantidad después de un separador.
 
 Es lo que permite J4 sin ensuciar el archivo. Definido en
 `ux/information-architecture.md` §1.
@@ -120,21 +120,24 @@ Es lo que permite J4 sin ensuciar el archivo. Definido en
 - [ ] `dificultad` fuera de `fácil` · `media` · `difícil` se muestra tal cual y no se corrige.
 - [ ] **`tiempo` es uno de cinco valores:** `~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`. Cuenta el tiempo hasta comer, con reposo y horno incluidos. Cualquier otro texto se lee como sin duración —no se muestra, no filtra y no ordena— y el `.md` no se corrige. La validación es al leer.
 - [ ] **Hay tags reservados** (C05.1.4): viven en la lista `tags` como cualquier otro, y la app los dibuja y los carga con forma propia.
+- [ ] **`foto` es una URL externa o una foto del depósito**, escrita `foto:N` (C05.1.5). Un `foto:N` cuyo número no está en el depósito se lee como ausente.
 - [ ] Un archivo sin bloque de frontmatter es válido si el cuerpo permite deducir el título; si no, cae en C05.2.3.
 
 **Edge cases:** frontmatter con YAML inválido → el archivo se trata como sin
 frontmatter, y si no hay título se ignora y se cuenta (C05.2.3) · `tags` escrito
 como texto suelto, sin corchetes ni guiones → se lee como sin tags · `foto` que no es una URL
-→ se conserva y no se dibuja.
+→ se conserva y no se dibuja · `foto: foto:9` sin el 9 en el depósito → la
+receta no tiene cabecera.
 
 #### C05.1.2 — Parsear el cuerpo *(J8)*
 
 - [ ] Se reconocen `## Ingredientes`, `## Preparación`, `## Variaciones` y `## Notas`.
 - [ ] Los `###` dentro de Ingredientes son grupos; dentro de Variaciones, variaciones; **dentro de Preparación, tramos con nombre**, y la numeración de los pasos vuelve a empezar en cada uno.
 - [ ] `## Variaciones` puede traer una lista de bullets en vez de secciones `###`, y entonces se muestra como lista.
+- [ ] **`## Fotos` es el depósito** (C05.1.5), no texto: no se dibuja como sección ni se edita como tal.
 - [ ] Cualquier otra sección se conserva y se muestra tal cual, sin interpretarse.
 - [ ] El texto antes de la primera sección es la descripción.
-- [ ] Al reescribir, el orden es siempre el mismo: la descripción, Ingredientes, Preparación, Variaciones y Notas, y después las otras secciones en el orden en que estaban. Un `.md` que las traía en otro orden queda en éste la primera vez que se guarda.
+- [ ] Al reescribir, el orden es siempre el mismo: la descripción, Ingredientes, Preparación, Variaciones y Notas, después las otras secciones en el orden en que estaban, y `## Fotos` al final de todo. Un `.md` que las traía en otro orden queda en éste la primera vez que se guarda.
 
 #### C05.1.3 — Separar nombre y cantidad en un ingrediente *(J4)*
 
@@ -157,6 +160,30 @@ pescados usa `Anchoítas — 18-20 medianas` y el recetario original usa
 - [ ] Se reconocen sin mirar mayúsculas ni tildes. `favorito` se reconoce además como `favorita`, `favoritos` y `favoritas`; `incompleta`, como `incompleto`, `incompletos` e `incompletas`. Al escribir, la app usa siempre la forma canónica.
 - [ ] Ninguno se escribe a mano en el campo de tags: cada uno tiene su botón en el editor (`E04-Corregir.md`). Tampoco se acepta `terminado` ni sus formas de género y número, que contradicen a `incompleta`.
 - [ ] No suman claves al frontmatter ni columnas al índice: son valores de `tags`.
+
+#### C05.1.5 — El depósito de fotos *(J8)*
+
+- [ ] **Las fotos de una receta viven en una sección `## Fotos` del cuerpo**, una línea por foto: `- <número>: <url>`. No hay claves nuevas en el frontmatter.
+- [ ] **El número es estable:** una foto nueva toma el más alto más uno, y un número no se reusa nunca. Los números pueden tener huecos, y el orden de las líneas es el de la galería.
+- [ ] La URL es **un archivo de Drive** —`https://drive.google.com/file/d/<id>/view`, el único formato que se reconoce como tal— **o una externa**. La de Drive se pide con el token; la externa va a un `<img>` directo.
+- [ ] Sin fotos, la sección no se escribe.
+- [ ] **Si alguna línea no tiene esa forma** —o su URL no es `http(s)`—, la sección entera se lee como una sección ajena y se conserva tal cual: la receta queda sin depósito y nada se pierde (C04.3c.1).
+- [ ] **El texto nombra una foto con `![epígrafe](foto:N)`**, en cualquier sección del cuerpo. El epígrafe es opcional. Como link (`[x](foto:2)`) no significa nada y queda como texto.
+- [ ] **Antes de dibujarse, la receta se resuelve:** cada `foto:N` se cambia por la URL de su línea, y una referencia a un número que no está en el depósito se borra. La lectura, la cocina, el texto y el PDF sólo ven URLs.
+- [ ] **Las fotos que sube la app van a `_fotos/`**, en la carpeta base, achicadas a JPEG como las de los borradores. La carpeta se crea con la primera foto y su id queda en `meta` como `carpeta_fotos`. El `_` la deja fuera de las categorías y del reindexado.
+- [ ] El nombre del archivo es el del `.md` con el número —`pan-de-campo-3.jpg`—, para que en Drive se lean juntas. No se verifica que sea único: lo que manda es el id.
+- [ ] Cambiar la receta de categoría no mueve sus fotos: el link es por id.
+- [ ] **La app sólo manda a la papelera fotos que están en `_fotos/`.** Un link de Drive pegado a mano que apunta a otra carpeta se saca del depósito y el archivo no se toca.
+- [ ] **Una foto de Drive se muestra pidiéndola con el token** y queda en Cache Storage por id de archivo, sin vencimiento: un id de Drive no cambia de contenido. *Borrar datos locales* y *Salir* borran ese caché.
+- [ ] **La pantalla no espera las fotos:** una de Drive se dibuja como un recuadro del mismo tamaño y se completa cuando llega. Abrir una receta no tarda más por tenerlas.
+- [ ] **Se cachea todo lo posible:** al arrancar se pide almacenamiento persistente, una vez y sin mirar el resultado; dibujado el Recetario, se precargan en segundo plano las cabeceras de Drive del índice y las fotos propias de las categorías que falten, de a dos; y al abrir una receta se pide el depósito entero, no sólo lo que está a la vista. Con `saveData` no se precarga nada.
+- [ ] Una foto recién subida entra al caché con el blob que ya está en memoria, y una que va a la papelera sale del caché.
+
+**Edge cases:** un `.md` escrito por fuera con un `## Fotos` mal formado → se
+conserva como sección ajena y la receta no tiene depósito · dos recetas que
+nombran el mismo link de Drive —pegado a mano en las dos— → sacarlo de una lo
+manda a la papelera si está en `_fotos/`; la app nunca escribe el mismo link en
+dos recetas · reindexar no lee `_fotos/` y no toca el caché.
 
 ### F05.2 — Leer tolerante
 
@@ -263,7 +290,7 @@ y sesiones que no se solapan el riesgo es bajo, y la reparación es reindexar
 #### C05.4.4 — Las categorías salen del índice *(J1, J8)*
 
 - [ ] Una categoría es una subcarpeta de la carpeta base. Las carpetas que empiezan con `_` no son categorías.
-- [ ] **El color y la foto son propiedades de la carpeta** (`appProperties` `color` y `foto`, esta última como `catalogo:<clave>`). La hoja `categorias` las copia; la carpeta es la verdad.
+- [ ] **El color y la foto son propiedades de la carpeta** (`appProperties` `color` y `foto`). La foto es una del catálogo, `catalogo:<clave>`, o una propia subida a `_fotos/`, `drive:<id>` (C05.9b.4). La hoja `categorias` las copia; la carpeta es la verdad.
 - [ ] La app no tiene escrito ningún id de carpeta. Las 16 predefinidas —nombre, color y foto— están en `src/categorias.ts` y sólo sirven para el setup (C05.7.4) y para darle color y foto, al reindexar, a una carpeta con nombre de predefinida que todavía no tiene propiedades.
 - [ ] Una carpeta creada a mano en Drive aparece como categoría al reindexar. Sin color ni foto se dibuja con el neutro y la trama, y no rompe nada.
 - [ ] El nombre de la categoría de cada receta sale de su carpeta, no de un texto guardado aparte.
@@ -282,6 +309,7 @@ es una fuente de divergencia.
 
 - [ ] En este orden: `fileId`, nombre del archivo, título, categoría, id de la carpeta, rinde, tiempo, dificultad, fuente, tags, nombres de ingredientes, fecha de modificación y foto. No hay columna de completitud: se sabe por `tags`.
 - [ ] `tiempo` se guarda como está en el `.md` y se valida al leer la fila (C05.1.1); una `dificultad` inválida se guarda vacía.
+- [ ] La columna `foto` guarda la cabecera **ya resuelta a su URL** (C05.1.5), así las listas la dibujan sin leer el `.md`.
 - [ ] La categoría se deriva de la carpeta que contiene al archivo, no del frontmatter.
 - [ ] Los nombres de ingredientes se guardan tal como están escritos: sin singularizar, sin bajar a minúsculas, sin quitar acentos.
 - [ ] Nada de lo que se guarda se usa para dibujar la receta abierta: eso sale del `.md`.
@@ -446,7 +474,8 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 #### C05.9b.4 — Recetario: la carpeta y las categorías *(transversal)*
 
 - [ ] La ficha muestra el nombre de la carpeta base en uso y ofrece **Cambiar carpeta**, que abre la pantalla de C05.7.4. La carpeta anterior queda como está en Drive, sin la marca.
-- [ ] Muestra cuántas categorías hay y lleva a **Categorías** (`#/categorias`), donde se gestionan: crear, renombrar, elegir color de la paleta y foto del catálogo, y borrar. Las predefinidas no tienen trato especial.
+- [ ] Muestra cuántas categorías hay y lleva a **Categorías** (`#/categorias`), donde se gestionan: crear, renombrar, elegir color de la paleta y foto —del catálogo o una propia—, y borrar. Las predefinidas no tienen trato especial.
+- [ ] **La foto propia** se elige con *Subir foto*, primera entre las muestras: se ve en la muestra en el momento y se sube a `_fotos/` recién al guardar la categoría, como `drive:<id>`. Reemplazar la foto manda la propia anterior a la papelera, y borrar la categoría también se lleva la suya.
 - [ ] Cada cambio escribe en el momento la carpeta en Drive —su nombre y sus propiedades— y su fila en la hoja `categorias`.
 - [ ] Una categoría nueva nace con el primer color de la paleta que nadie usa.
 - [ ] Un nombre vacío, que empiece con `_` o repetido sin mirar tildes ni mayúsculas no se acepta, y se dice por qué.
@@ -483,7 +512,7 @@ azar del CSS.
 
 | Capacidad | Job |
 |---|---|
-| C05.1.1, C05.1.2, C05.1.4, C05.2.1, C05.2.2, C05.2.3, C05.3.1 | J8 |
+| C05.1.1, C05.1.2, C05.1.4, C05.1.5, C05.2.1, C05.2.2, C05.2.3, C05.3.1 | J8 |
 | C05.3.2 | J1, J8 |
 | C05.3.3 | J7 |
 | C05.1.3, C05.4b.1 | J4 (y J1, J5 para la fila) |

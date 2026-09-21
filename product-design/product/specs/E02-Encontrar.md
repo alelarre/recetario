@@ -122,7 +122,7 @@ carpeta, y después se crean, renombran y borran desde *Ajustes → Recetario*.
 - [ ] Las categorías son las subcarpetas de la carpeta base y se leen de la hoja `categorias` del índice: **la app no tiene escrito el id de ninguna**.
 - [ ] El orden es alfabético y estable: la posición de cada categoría se aprende. **No se ordena por cantidad de recetas:** reacomodaría la grilla cada vez que entra una.
 - [ ] Una carpeta creada a mano en Drive aparece como categoría al reindexar.
-- [ ] Cada tile lleva la foto y el color de su carpeta, con el nombre completo. Una categoría sin foto se dibuja con la trama sobre su color.
+- [ ] Cada tile lleva la foto y el color de su carpeta, con el nombre completo. La foto puede ser del catálogo o una propia, subida a `_fotos/` (C05.4.4), que se pide con el token y se completa cuando llega. Una categoría sin foto se dibuja con la trama sobre su color.
 - [ ] Una categoría sin recetas se muestra igual.
 - [ ] **Cada tile dice cuántas recetas tiene**, en un badge sobre la foto y sólo si tiene alguna: una categoría vacía no lleva un cero encima. Sobre foto clara el badge necesita fondo casi opaco.
 - [ ] La grilla pasa de dos a cuatro columnas en pantalla ancha (C05.10.1).
@@ -170,7 +170,9 @@ muestran la foto de la receta. **Una receta sin foto lleva un placeholder genér
 
 - [ ] Una receta sin `foto` muestra un placeholder —la foto de su categoría, oscurecida y teñida con su color—, no un hueco ni un ícono roto.
 - [ ] El placeholder **ocupa exactamente el mismo espacio que una foto**: la lista no se desalinea.
-- [ ] Una `foto` cuya URL no carga muestra el placeholder, sin error visible.
+- [ ] **El placeholder se dibuja siempre, también con foto, y la foto va encima**: una cabecera de Drive (C05.1.5) llega con el token y se completa cuando está, así que abajo nunca hay un hueco.
+- [ ] Una `foto` cuya URL no carga, o una de Drive que ya no está, deja a la vista el placeholder, sin error visible.
+- [ ] La cabecera sale de la columna `foto` del índice, ya resuelta (C05.4b.1): listar no lee ningún `.md`.
 
 ### F02.6 — Los tags como cruce
 
