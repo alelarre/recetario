@@ -37,7 +37,7 @@ import { elegirCarpeta } from './picker.js';
 import { API_KEY, NOMBRE_RAIZ } from './config.js';
 import { puedeEmpezar, direccion, progreso, seAbre } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
-import { aviso, SIN_SESION, FOTO_AUSENTE } from './ui/componentes.js';
+import { aviso, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js';
 import { pintar as pintarEnPantalla, conClosest } from './ui/pintar.js';
 import { renderVisor, pasoDelVisor } from './ui/visor.js';
 import {
@@ -105,9 +105,18 @@ async function completarFotos(): Promise<void> {
     if (!id) return;
     const url = await imagenes.urlDeImagen(id).catch(err => { console.error(err); return null; });
     if (url) img.setAttribute('src', url);
-    else if (img.closest('.galeria-item, .miniatura')) img.outerHTML = FOTO_AUSENTE;
-    else img.remove();
+    else sacarFoto(img, FOTO_AUSENTE);
   });
+}
+
+/**
+ * La foto que no se va a ver: en una grilla deja su recuadro con el motivo, y
+ * en cualquier otro lado —la cabecera, un paso, una lista— el bloque no se
+ * dibuja. En una lista, abajo queda el placeholder de la categoría.
+ */
+function sacarFoto(img: Element, recuadro: string): void {
+  if (img.closest('.galeria-item, .miniatura')) img.outerHTML = recuadro;
+  else img.remove();
 }
 
 let store: Store;
@@ -2362,6 +2371,17 @@ app.addEventListener('focusout', (e) => {
   if (!campo?.dataset || !('tagNuevo' in campo.dataset)) return;
   if (agregarTag(campo.value)) campo.value = '';
 });
+
+/**
+ * Una foto externa cuya URL no carga (P42): la app se entera por el `error`
+ * del `<img>`, que no burbujea —de ahí la escucha en captura— y se trata como
+ * una de Drive que ya no está. Las de Drive no pasan por acá: salen sin `src`
+ * y las resuelve `completarFotos`.
+ */
+app.addEventListener('error', (e) => {
+  const img = conClosest(e.target);
+  if (img?.tagName === 'IMG') sacarFoto(img, FOTO_ROTA);
+}, true);
 
 app.addEventListener('change', (e) => {
   if (escrituras) return;

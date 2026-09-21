@@ -370,6 +370,9 @@ export interface Miniatura {
  */
 export const FOTO_AUSENTE = '<span class="miniatura-vacia">La foto ya no está en Drive.</span>';
 
+/** El recuadro de una foto externa cuya URL no carga (P42). Mismo lugar, otro motivo. */
+export const FOTO_ROTA = '<span class="miniatura-vacia">No se pudo cargar la foto.</span>';
+
 /** `data-accion`, y el valor o el número con los que viaja. */
 const datosDeAccion = (a: AccionDeMiniatura, n: number | undefined): string =>
   ` data-accion="${escapar(a.accion)}"` +

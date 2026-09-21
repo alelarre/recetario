@@ -280,9 +280,10 @@ const esperar = async (vueltas = 5) => {
  * (`data-drive`) y los de una foto nueva del editor (`data-n`). El test los
  * pone en la lista y después mira qué les pasó.
  */
-function imgFalsa(dataset: { drive?: string; n?: string }, enGrilla = false) {
+function imgFalsa(dataset: { drive?: string; n?: string }, enGrilla = false, tagName = 'IMG') {
   const img = {
     dataset,
+    tagName,
     atributos: {} as Record<string, string>,
     /** Lo que quedó en su lugar cuando la foto ya no está en Drive. */
     reemplazo: '',
@@ -310,6 +311,8 @@ describe('main.ts: las rutas', () => {
   } = {}) => {
     const clicks: ((e: unknown) => unknown)[] = [];
     const cambios: ((e: unknown) => unknown)[] = [];
+    /** Los oyentes de `error` en captura: una foto externa que no carga (P42). */
+    const errores: ((e: unknown) => unknown)[] = [];
     const tecleos: ((e: unknown) => unknown)[] = [];
     /** Lo que se escribió en `[data-resultados-plan]` sin repintar la pantalla. */
     const resultadosPlan: string[] = [];
@@ -323,6 +326,7 @@ describe('main.ts: las rutas', () => {
         if (ev === 'click') clicks.push(fn);
         if (ev === 'change') cambios.push(fn);
         if (ev === 'input') tecleos.push(fn);
+        if (ev === 'error') errores.push(fn);
       }
     };
     /** El velo de la escritura en curso, hermano de `#app` en `index.html`. */
@@ -500,6 +504,8 @@ describe('main.ts: las rutas', () => {
       comportamientos,
       /** La app vuelve a primer plano. */
       volverAPrimerPlano: async () => { listenersDoc['visibilitychange']?.(); await esperar(); },
+      /** Una foto externa que no carga avisa con su evento `error`. */
+      fallarFoto: async (img: unknown) => { for (const fn of errores) await fn({ target: img }); },
       /** El evento `load` de `window`, para lo que quedó pendiente de él. */
       dispararLoad: async () => { listeners['load']?.(); await esperar(); },
       abrir: async (hash: string) => {
@@ -2874,6 +2880,32 @@ describe('main.ts: las rutas', () => {
       expect(imgs[0]?.atributos['src']).toBe('blob:f9');
       expect(imgs[1]?.reemplazo).toContain('La foto ya no está en Drive.');
       expect(imgs[2]?.sacada).toBe(true);
+    });
+
+    it('una foto externa que no carga se saca; en una grilla deja su recuadro (P42)', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, fallarFoto } = await montar();
+      await abrir('#/r/f1');
+
+      const enLaCabecera = imgFalsa({});
+      const enLaGaleria = imgFalsa({}, true);
+      await fallarFoto(enLaCabecera);
+      await fallarFoto(enLaGaleria);
+
+      expect(enLaCabecera.sacada).toBe(true);
+      expect(enLaGaleria.reemplazo).toContain('No se pudo cargar la foto.');
+    });
+
+    it('el error de algo que no es una imagen no toca nada', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, fallarFoto } = await montar();
+      await abrir('#/r/f1');
+
+      const script = imgFalsa({}, false, 'SCRIPT');
+      await fallarFoto(script);
+
+      expect(script.sacada).toBe(false);
+      expect(script.reemplazo).toBe('');
     });
 
     it('las imágenes de Drive se completan de a dos, no de a una', async () => {

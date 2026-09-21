@@ -165,7 +165,7 @@ todas juntas al final. **El diseño no depende de ninguna.**
 
 - [ ] Se dibuja `foto` **ya resuelta** (C05.1.5): la URL externa tal cual, o la foto del depósito que nombra `foto:N`.
 - [ ] Si es de Drive, se pide con el token: mientras llega, un recuadro del tamaño que va a ocupar. **Si ya no está en Drive, el bloque se saca** y la receta queda sin foto, sin ícono roto y sin aviso.
-- [ ] **Una URL externa que no carga deja su bloque vacío**, del tamaño que iba a ocupar: la app no se entera de que falló. No hay ícono roto ni aviso (`../../../BACKLOG.md`, P42).
+- [ ] **Una URL externa que no carga se trata igual**: el bloque se saca, sin ícono roto y sin aviso. La app se entera por el `error` del `<img>`, que no burbujea y por eso se escucha en captura.
 - [ ] La receta sin foto se ve completa igual: empieza por el título.
 - [ ] No se muestra en modo cocina.
 
@@ -176,6 +176,7 @@ todas juntas al final. **El diseño no depende de ninguna.**
 - [ ] Sin depósito, la ficha no se dibuja.
 - [ ] **En el modo cocina**, cada paso y cada ingrediente dibujan su foto debajo, igual que en la lectura. Tocarlas no abre el visor: en la cocina un toque marca el paso (C03.2.4).
 - [ ] Una foto de Drive que ya no está se dibuja en la galería como un recuadro con *«La foto ya no está en Drive.»*; en la cabecera o en una línea, no se dibuja.
+- [ ] Una foto externa cuya URL no carga sigue la misma regla, con su propio motivo: en la galería, *«No se pudo cargar la foto.»*; en cualquier otro lado, no se dibuja.
 
 #### C03.5.3 — El visor *(J6)*
 
