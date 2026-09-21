@@ -2550,7 +2550,7 @@ app.addEventListener('error', (e) => {
 
 app.addEventListener('change', (e) => {
   if (tapadas) return;
-  // *Agregar foto*: el selector del sistema devolvió los archivos.
+  // *Cámara* o *Galería*: el selector del sistema devolvió los archivos.
   const campoFotos = e.target as HTMLInputElement | null;
   if (campoFotos?.dataset && 'fotos' in campoFotos.dataset) {
     const archivos: Blob[] = Array.from(campoFotos.files ?? []);

@@ -116,8 +116,8 @@ function campoPortada(foto: string | null, fotos: FotoDeReceta[]): string {
 }
 
 /**
- * La ficha Fotos: el depósito entero con el número de cada una, y *Agregar
- * foto* sin tope. Tocar una abre sus acciones (`renderAccionesFoto`).
+ * La ficha Fotos: el depósito entero con el número de cada una, y *Cámara* y
+ * *Galería* sin tope. Tocar una abre sus acciones (`renderAccionesFoto`).
  *
  * El depósito viaja en el `hidden` como JSON —las nuevas con `url: ''`—: así
  * agregar, sacar o renumerar una cuenta como cambio sin guardar igual que

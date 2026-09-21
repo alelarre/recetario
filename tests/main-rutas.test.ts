@@ -650,7 +650,7 @@ describe('main.ts: las rutas', () => {
       imgs,
       filasDeFotos,
       portadas,
-      /** El selector de *Agregar foto* devuelve estos archivos. */
+      /** El selector de *Cámara* o *Galería* devuelve estos archivos. */
       elegirFotos: async (archivos: Blob[]) => {
         for (const fn of cambios) await fn({ target: { dataset: { fotos: '' }, files: archivos } });
         await esperar(20);
