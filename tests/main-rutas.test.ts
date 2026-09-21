@@ -1980,39 +1980,61 @@ describe('main.ts: las rutas', () => {
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
 
-      await tocar('guardar');
+      const guardando = tocar('guardar');
+      await esperar();
 
       expect(estado.creadas).toEqual(['Pan']);
-      // El velo sigue dibujado, en el estado de éxito, pero la pantalla ya no
-      // está tapada ni ocupada: el tilde se dibuja encima de lo que quedó.
+      // Primero el tilde: el velo sigue puesto, la pantalla ya no está ocupada
+      // y **todavía no se navegó**, para que el repintado no se vea en el medio.
       expect(velo.hidden).toBe(false);
       expect(velo.classList.contains('exito')).toBe(true);
       expect(atributosApp['aria-busy']).toBeUndefined();
-      // El cierre del editor es una navegación, y no espera al dibujo.
+      expect(vueltasAtras).toHaveLength(0);
+
+      await guardando;
+
+      // Dibujado el tilde, recién ahí se cierra el editor, y con la pantalla
+      // sin tapar: la navegación no la frena nadie.
       expect(vueltasAtras).toHaveLength(1);
       expect(tapadoAlVolver).toEqual([false]);
+      // El velo espera a que la pantalla de destino se pinte.
+      expect(velo.hidden).toBe(false);
+      await abrir('#/r/f1');
+      expect(velo.hidden).toBe(true);
+      expect(velo.classList.contains('exito')).toBe(false);
+    });
 
-      // Y cuando el dibujo termina, el velo se va solo.
+    it('si nadie dibuja nada después del tilde, el velo se va igual (P43)', async () => {
+      const { abrir, tocar, velo } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+
+      await tocar('guardar');
+      expect(velo.hidden).toBe(false);
+
+      // El respaldo: sin pantalla nueva que lo saque, el velo no se queda puesto.
       await new Promise(r => setTimeout(r, 600));
       expect(velo.hidden).toBe(true);
       expect(velo.classList.contains('exito')).toBe(false);
     });
 
-    it('con el cierre a medio dibujar, la pantalla responde y navega (P43)', async () => {
+    it('con el cierre a medio dibujar, un cambio de hash dibuja igual (P43)', async () => {
       const { abrir, tocar, app, velo, empujados } = await montar();
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
 
-      await tocar('guardar');
+      const guardando = tocar('guardar');
+      await esperar();
       expect(velo.classList.contains('exito')).toBe(true);
 
       // Con la pantalla tapada, un cambio de hash vuelve a la que escribía; acá
-      // no: la receta se dibuja.
+      // no: la receta se dibuja, aunque el tilde todavía se esté dibujando.
       const antes = empujados.length;
       await abrir('#/r/f1');
       expect(empujados).toHaveLength(antes);
       expect(global.location.hash).toBe('#/r/f1');
       expect(app.innerHTML).toContain('Milanesas');
+      await guardando;
     });
 
     it('una escritura nueva durante el cierre lo corta y vuelve a tapar (P43)', async () => {
@@ -2024,7 +2046,8 @@ describe('main.ts: las rutas', () => {
         await abrir('#/nueva');
         estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
 
-        await tocar('guardar');
+        const guardando = tocar('guardar');
+        await esperar();
         expect(velo.classList.contains('exito')).toBe(true);
 
         // Sin esperar a que el tilde termine, otra escritura: el velo vuelve a
@@ -2045,6 +2068,7 @@ describe('main.ts: las rutas', () => {
 
         resolver({ comidas: [] });
         await eligiendo;
+        await guardando;
 
         expect(velo.hidden).toBe(true);
       } finally {
@@ -2088,11 +2112,12 @@ describe('main.ts: las rutas', () => {
         expect(estado.guardados).toEqual([]);
 
         resolver({ entrada: entradaFalsa({ id_archivo: 'f1' }), receta: parse(estado.md) });
-        await guardando;
+        await esperar();
 
         // Guardó: el velo se queda dibujando el cierre con el tilde (P43).
         expect(velo.classList.contains('exito')).toBe(true);
         expect(estado.guardados).toHaveLength(1);
+        await guardando;
       } finally {
         storeFake.receta = original;
       }

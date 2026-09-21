@@ -85,6 +85,9 @@ const imagenes = crearImagenes({ leerBlob: id => drive.leerBlob(id) });
  */
 const pintar = (html: string): void => {
   pintarEnPantalla(html);
+  // El velo del cierre espera a que la pantalla de destino esté dibujada: si
+  // se fuera antes, se vería el repintado por debajo (§6.17b).
+  if (veloEsperaPintado) sacarVeloDelCierre();
   void completarFotos();
 };
 
@@ -281,13 +284,27 @@ let hashEscritura = '';
 /** Lo que tarda el cierre con el tilde en dibujarse, antes de sacar el velo (§6.17b). */
 const MS_CIERRE = 500;
 
+/** Lo que se espera a que la pantalla de destino se dibuje antes de sacar el velo igual. */
+const MS_RESPALDO_CIERRE = 400;
+
 /** El temporizador del cierre con el tilde, mientras se dibuja. */
 let cierreEnCurso: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Cómo dar por terminado el dibujo del cierre. Una escritura nueva lo corta, y
+ * ahí también hay que soltar al que lo espera: si no, el manejador que guardó
+ * se queda esperando un dibujo que ya no va a pasar.
+ */
+let terminarCierre: (() => void) | null = null;
 
 /** El velo, con `aria-busy` en `#app`. Los tests corren sobre un DOM mínimo: puede no estar. */
 function mostrarVelo(mostrar: boolean): void {
   // Una escritura nueva corta el cierre de la anterior: el velo vuelve a tapar.
   if (cierreEnCurso !== null) { clearTimeout(cierreEnCurso); cierreEnCurso = null; }
+  if (terminarCierre) { const listo = terminarCierre; terminarCierre = null; listo(); }
+  veloEsperaPintado = false;
+  veloDelCierre = null;
+  if (respaldoDelCierre !== null) { clearTimeout(respaldoDelCierre); respaldoDelCierre = null; }
   const velo = document.querySelector<HTMLElement>('#velo-escritura');
   if (velo) { velo.hidden = !mostrar; velo.classList.remove('exito'); }
   if (mostrar) app?.setAttribute('aria-busy', 'true');
@@ -296,22 +313,56 @@ function mostrarVelo(mostrar: boolean): void {
 
 /**
  * El cierre de una escritura que salió bien: la tapa baja sobre la olla y se
- * dibuja el tilde, y recién después se va el velo. Desde acá la pantalla ya no
- * está tapada —el contador quedó en cero y el velo deja pasar el toque—, así
- * que el manejador que guardó puede navegar mientras el dibujo termina.
+ * dibuja el tilde. La promesa termina cuando el dibujo terminó, **con el velo
+ * todavía puesto**: así el que guardó navega recién después del tilde, y el
+ * repintado de la pantalla de destino queda tapado (§6.17b). Del velo se
+ * encarga `sacarVeloDelCierre`, cuando esa pantalla ya está dibujada.
+ *
+ * La pantalla, eso sí, ya no está tapada: el contador quedó en cero y el velo
+ * deja pasar el toque.
  */
-function cerrarConExito(): void {
+function cerrarConExito(): Promise<void> {
   const velo = document.querySelector<HTMLElement>('#velo-escritura');
-  if (!velo) { mostrarVelo(false); return; }
+  if (!velo) { mostrarVelo(false); return Promise.resolve(); }
   velo.classList.add('exito');
+  veloDelCierre = velo;
   app?.removeAttribute('aria-busy');
-  // El temporizador se queda con el velo y no vuelve a buscarlo: para cuando
-  // salta, la pantalla de abajo puede haberse redibujado varias veces.
-  cierreEnCurso = setTimeout(() => {
-    cierreEnCurso = null;
-    velo.hidden = true;
-    velo.classList.remove('exito');
-  }, MS_CIERRE);
+  return new Promise(listo => {
+    terminarCierre = listo;
+    cierreEnCurso = setTimeout(() => {
+      cierreEnCurso = null;
+      terminarCierre = null;
+      listo();
+    }, MS_CIERRE);
+  });
+}
+
+/**
+ * El velo del cierre se va cuando la pantalla de destino está dibujada. El
+ * respaldo es para el guardado que no navega a ningún lado: sin él, el velo se
+ * quedaría puesto esperando un dibujo que no viene.
+ */
+let veloEsperaPintado = false;
+let respaldoDelCierre: ReturnType<typeof setTimeout> | null = null;
+/**
+ * El velo que está dibujando el cierre. Se guarda en vez de volver a buscarlo:
+ * para cuando toca sacarlo, la pantalla de abajo ya se redibujó, y el que lo
+ * tiene que esconder es el mismo elemento que lo empezó a dibujar.
+ */
+let veloDelCierre: HTMLElement | null = null;
+
+function esperarPintadoParaSacarElVelo(): void {
+  veloEsperaPintado = true;
+  if (respaldoDelCierre !== null) clearTimeout(respaldoDelCierre);
+  respaldoDelCierre = setTimeout(sacarVeloDelCierre, MS_RESPALDO_CIERRE);
+}
+
+function sacarVeloDelCierre(): void {
+  veloEsperaPintado = false;
+  if (respaldoDelCierre !== null) { clearTimeout(respaldoDelCierre); respaldoDelCierre = null; }
+  const velo = veloDelCierre;
+  veloDelCierre = null;
+  if (velo) { velo.hidden = true; velo.classList.remove('exito'); }
 }
 
 /**
@@ -320,15 +371,16 @@ function cerrarConExito(): void {
  * `{ exito: true }` el velo no se va de golpe: se queda los milisegundos del
  * cierre con el tilde, ya sin tapar nada.
  */
-function tapar(): (opciones?: { exito?: boolean }) => void {
+function tapar(): (opciones?: { exito?: boolean }) => Promise<void> {
   if (tapadas++ === 0) { hashEscritura = location.hash; mostrarVelo(true); }
   let soltado = false;
   return opciones => {
-    if (soltado) return;
+    if (soltado) return Promise.resolve();
     soltado = true;
-    if (--tapadas > 0) return;
-    if (opciones?.exito) cerrarConExito();
-    else mostrarVelo(false);
+    if (--tapadas > 0) return Promise.resolve();
+    if (opciones?.exito) return cerrarConExito();
+    mostrarVelo(false);
+    return Promise.resolve();
   };
 }
 
@@ -2230,6 +2282,8 @@ app.addEventListener('click', async (e) => {
     const destapar = tapar();
     /** Cómo se cierra el editor si el guardado sale bien; corre con el velo ya soltado. */
     let cerrar: (() => void) | null = null;
+    /** El dibujo del tilde: se espera antes de navegar, para que no se pisen. */
+    let dibujado: Promise<void> = Promise.resolve();
     try {
       const datos = datosDelFormulario();
       const carpetaId = datos['carpeta'] || '';
@@ -2293,13 +2347,16 @@ app.addEventListener('click', async (e) => {
     } finally {
       // El tilde sólo cuando se escribió: `cerrar` se asigna en el único camino
       // que llegó a guardar, y ni la validación ni el error pasan por ahí.
-      destapar({ exito: cerrar !== null });
+      dibujado = destapar({ exito: cerrar !== null });
     }
-    // Recién acá, con el velo soltado: mientras la pantalla está tapada no se
-    // navega, y el cierre del editor es una navegación como cualquier otra. Sin
-    // `cerrar` no se guardó nada —validación o error—, y ya se pintó el aviso.
-    // El tilde se termina de dibujar encima de la pantalla a la que se vuelve.
-    cerrar?.();
+    // El orden que se ve: la olla revolviendo, el tilde, y recién después la
+    // pantalla nueva. Por eso se espera a que el tilde esté dibujado antes de
+    // navegar —la pantalla ya no está tapada, así que navegar se puede— y el
+    // velo se saca cuando esa pantalla ya se pintó, con el repintado tapado.
+    // Sin `cerrar` no se guardó nada —validación o error—, y ya se pintó el
+    // aviso: ahí el velo se fue solo y no hay a dónde ir.
+    await dibujado;
+    if (cerrar) { esperarPintadoParaSacarElVelo(); cerrar(); }
     return;
   }
 

@@ -49,12 +49,15 @@ describe('cómo responden los controles al toque', () => {
   });
 
   it('con el velo de escritura puesto, la página de atrás tampoco se desplaza (R8)', () => {
-    // Menos mientras dibuja el cierre con el tilde: ahí ya no tapa nada (P43).
-    expect(BASE).toContain('html:has(#velo-escritura:not([hidden]):not(.exito)) { overflow: hidden; }');
+    // También mientras dibuja el cierre con el tilde: recién después navega (P43).
+    expect(BASE).toContain('html:has(#velo-escritura:not([hidden])) { overflow: hidden; }');
   });
 
-  it('mientras dibuja el cierre, el velo deja pasar el toque (P43)', () => {
-    expect(BASE).toContain('#velo-escritura.exito { pointer-events: none; }');
+  it('el velo tapa también mientras dibuja el cierre (P43)', () => {
+    // El tilde se dibuja antes de navegar: ahí abajo sigue estando el editor,
+    // y un toque suelto no puede llegarle.
+    const regla = BASE.match(/#velo-escritura\.exito\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(regla).not.toContain('pointer-events');
   });
 
   it('el formulario del borrador tiene el ancho de la receta y del editor en pantalla ancha (C05.10.1)', () => {

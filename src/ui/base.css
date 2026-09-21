@@ -398,7 +398,7 @@ html:has(.hoja-compartir), html:has(.hoja-foto) { overflow: hidden; }
 /* Y la página de atrás no se desplaza mientras dura, como con las fichas al
    pie: el velo tapa el toque, pero no el desplazamiento. Mientras dibuja el
    cierre ya no tapa nada, así que tampoco frena el scroll. */
-html:has(#velo-escritura:not([hidden]):not(.exito)) { overflow: hidden; }
+html:has(#velo-escritura:not([hidden])) { overflow: hidden; }
 
 /* La olla que se revuelve: la cuchara va de lado a lado sin girar, y el vapor
    sube escalonado —los tres hilos animan lo mismo, cada uno arrancado antes
@@ -435,7 +435,6 @@ html:has(#velo-escritura:not([hidden]):not(.exito)) { overflow: hidden; }
 /* El cierre, cuando la escritura salió bien: la cuchara y el vapor se van, la
    tapa baja y el tilde se dibuja. Dura menos de lo que el velo tarda en irse
    (500 ms en main.ts), y mientras tanto no tapa: el toque pasa de largo. */
-#velo-escritura.exito { pointer-events: none; }
 #velo-escritura.exito :is(.cuchara, .vapores) { animation: none; opacity: 0; }
 #velo-escritura.exito .vapores path { animation: none; }
 #velo-escritura.exito .tapa { transform: translateY(6px); }

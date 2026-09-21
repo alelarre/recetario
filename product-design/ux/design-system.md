@@ -919,10 +919,14 @@ cierre: el velo se va de una y queda el aviso. Con
 `prefers-reduced-motion: reduce` la tapa y el tilde aparecen sin dibujarse,
 pero el medio segundo es el mismo: se saca el movimiento, no el tiempo (§5.1).
 
-**El cierre no hace esperar a nadie.** Desde que arranca, la pantalla ya está
-destapada: el velo deja pasar el toque, deja scrollear y `aria-busy` se saca,
-así que lo que sigue a la escritura —cerrar el editor, volver a la receta—
-ocurre mientras el tilde se termina de dibujar encima.
+**El orden se ve entero, y en este orden:** la olla revolviendo mientras se
+escribe, el tilde cuando terminó, y recién después la pantalla a la que se va
+—cerrar el editor, volver a la receta—. El velo sigue tapando mientras dibuja
+el tilde, así que el repintado de esa pantalla queda por debajo y no se ve
+pasar; se va cuando esa pantalla ya está dibujada. Lo que sí se suelta apenas
+arranca el cierre es la espera: `aria-busy` se saca y la pantalla deja de estar
+ocupada, así que navegar no lo frena nadie. Si nadie dibuja nada —un guardado
+que no lleva a ningún lado— el velo se va solo un rato después.
 
 **El velo tiñe el fondo y no a la olla:** es `color-mix` sobre el fondo, no
 `opacity` sobre el elemento entero, así el dibujo se ve a pleno.
