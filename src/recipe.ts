@@ -224,14 +224,30 @@ export function serialize(receta?: Partial<Receta> | null): string {
  */
 const SEPARADORES = ['-', '—', ';', ',', '|'] as const;
 
+/**
+ * Dónde caen `![texto](destino)` y `[texto](destino)`: adentro, un guión del
+ * id de Drive o del propio destino no es un separador (P45).
+ */
+function rangosDeMarkdown(texto: string): Array<readonly [number, number]> {
+  const rangos: Array<readonly [number, number]> = [];
+  for (const m of texto.matchAll(/!?\[[^\]]*\]\([^)]*\)/g)) {
+    rangos.push([m.index, m.index + m[0].length]);
+  }
+  return rangos;
+}
+
 export function parseIngrediente(linea: unknown): Ingrediente | null {
   if (typeof linea !== 'string') return null;
   const crudo = linea;
   const limpia = crudo.replace(/^\s*[-*]\s+/, '').trim();
   if (!limpia || limpia.startsWith('#')) return null;
 
+  const rangos = rangosDeMarkdown(limpia);
+  const dentroDeMarkdown = (i: number) => rangos.some(([ini, fin]) => i >= ini && i < fin);
+
   let corte = -1;
   for (let i = 0; i < limpia.length; i++) {
+    if (dentroDeMarkdown(i)) continue;
     const c = limpia[i];
     if (!c || !(SEPARADORES as readonly string[]).includes(c)) continue;
     // La coma pide un dígito después, salteando espacios.

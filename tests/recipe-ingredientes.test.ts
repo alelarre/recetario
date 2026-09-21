@@ -54,6 +54,34 @@ describe('parseIngrediente', () => {
     expect(parseIngrediente(42)).toBe(null);
     expect(parseIngrediente(null)).toBe(null);
   });
+
+  it('una foto no se corta por el guión del id de Drive (P45)', () => {
+    const linea = '- ⅓ taza de aceite de oliva, más un poco para decorar ![](https://drive.google.com/file/d/1Zo4OUmWt1g0z5N2k4Ocwn3xLjm-IQBgO/view)';
+    expect(parseIngrediente(linea)).toMatchObject({
+      nombre: '⅓ taza de aceite de oliva, más un poco para decorar ![](https://drive.google.com/file/d/1Zo4OUmWt1g0z5N2k4Ocwn3xLjm-IQBgO/view)',
+      cantidad: null
+    });
+  });
+
+  it('con foto y cantidad, el separador real —afuera de la imagen— sigue cortando', () => {
+    expect(parseIngrediente('- Masa madre — 200 g ![](https://drive.google.com/file/d/1Zo4OUmWt1g0z5N2k4Ocwn3xLjm-IQBgO/view)'))
+      .toMatchObject({
+        nombre: 'Masa madre',
+        cantidad: '200 g ![](https://drive.google.com/file/d/1Zo4OUmWt1g0z5N2k4Ocwn3xLjm-IQBgO/view)'
+      });
+  });
+
+  it('un link de markdown en el nombre tampoco cuenta sus guiones como separador', () => {
+    expect(parseIngrediente('Manteca [derretida](https://www.recetas.com/manteca-derretida-facil) - 50 g'))
+      .toMatchObject({
+        nombre: 'Manteca [derretida](https://www.recetas.com/manteca-derretida-facil)',
+        cantidad: '50 g'
+      });
+  });
+
+  it('un guión de verdad sigue cortando igual', () => {
+    expect(parseIngrediente('Sal - a gusto')).toMatchObject({ nombre: 'Sal', cantidad: 'a gusto' });
+  });
 });
 
 describe('ingredientesIndexables', () => {
@@ -70,5 +98,12 @@ describe('ingredientesIndexables', () => {
   it('no repite un nombre que aparece dos veces', () => {
     const receta = { ingredientes: '- Aceite de oliva — 6 cdas\n- Aceite de oliva | 50 cc' };
     expect(ingredientesIndexables(receta)).toEqual(['Aceite de oliva']);
+  });
+
+  it('un ingrediente con foto y sin cantidad indexa el nombre con la referencia adentro (P45)', () => {
+    const receta = { ingredientes: '- ⅓ taza de aceite de oliva, más un poco para decorar ![](https://drive.google.com/file/d/1Zo4OUmWt1g0z5N2k4Ocwn3xLjm-IQBgO/view)' };
+    expect(ingredientesIndexables(receta)).toEqual([
+      '⅓ taza de aceite de oliva, más un poco para decorar ![](https://drive.google.com/file/d/1Zo4OUmWt1g0z5N2k4Ocwn3xLjm-IQBgO/view)'
+    ]);
   });
 });
