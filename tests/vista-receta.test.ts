@@ -329,6 +329,13 @@ titulo: Pan
     expect(html).toContain('data-n="2"');
   });
 
+  it('cada miniatura de la grilla se llama por su número, no por su posición', () => {
+    const conHueco = parse('---\ntitulo: Rabas\n---\n\n## Fotos\n- 3: https://x/a.jpg\n- 7: https://x/b.jpg\n');
+    const html = renderReceta({ entrada: null, receta: conHueco });
+    expect(html).toContain('data-n="3" aria-label="Ver la foto 3"');
+    expect(html).toContain('data-n="7" aria-label="Ver la foto 7"');
+  });
+
   it('sin depósito, la ficha Fotos no se dibuja', () => {
     expect(renderReceta({ entrada: null, receta: COMPLETA })).not.toContain('<h2>Fotos</h2>');
   });

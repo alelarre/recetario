@@ -16,8 +16,28 @@ describe('linkDeFoto / idDeDrive', () => {
     expect(idDeDrive('https://ejemplo.com/pan.jpg')).toBeNull();
   });
 
-  it('un link de Drive con otra forma —preview en vez de view— no se reconoce', () => {
-    expect(idDeDrive('https://drive.google.com/file/d/abc123/preview')).toBeNull();
+  it('reconoce las formas en que Drive reparte un link, pegadas a mano', () => {
+    for (const url of [
+      'https://drive.google.com/file/d/abc123/view',
+      'https://drive.google.com/file/d/abc123/view?usp=sharing',
+      'https://drive.google.com/file/d/abc123/view?usp=drive_link#algo',
+      'https://drive.google.com/file/d/abc123/edit',
+      'https://drive.google.com/file/d/abc123/preview',
+      'https://drive.google.com/file/d/abc123',
+      'https://drive.google.com/file/d/abc123/',
+      'https://drive.google.com/file/d/abc123?usp=sharing'
+    ]) expect(idDeDrive(url), url).toBe('abc123');
+  });
+
+  it('otro dominio u otra forma del camino no se reconocen', () => {
+    for (const url of [
+      'https://ejemplo.com/file/d/abc123/view',
+      'http://drive.google.com/file/d/abc123/view',
+      'https://docs.google.com/file/d/abc123/view',
+      'https://drive.google.com/file/d/abc123/view/otra',
+      'https://drive.google.com/uc?id=abc123',
+      'https://drive.google.com/file/d//view'
+    ]) expect(idDeDrive(url), url).toBeNull();
   });
 });
 

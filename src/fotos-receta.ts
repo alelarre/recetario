@@ -13,8 +13,15 @@ import type { FotoDeReceta, Lugar, Receta } from './tipos.js';
 export const linkDeFoto = (id: string): string =>
   `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
 
-/** Sólo reconoce el formato que escribe `linkDeFoto`; cualquier otro da `null`. */
-const PATRON_LINK_DRIVE = /^https:\/\/drive\.google\.com\/file\/d\/([^/]+)\/view$/;
+/**
+ * El link a un archivo de Drive, en las formas en que Drive lo reparte y en
+ * las que quedan al pegarlo a mano: con `/view`, `/edit`, `/preview` o nada, y
+ * con la query o el fragmento que venga (`?usp=sharing`). Otro dominio u otro
+ * camino no son un link de foto: la URL se usa tal cual, como cualquier
+ * externa.
+ */
+const PATRON_LINK_DRIVE =
+  /^https:\/\/drive\.google\.com\/file\/d\/([^/?#]+)(?:\/(?:view|edit|preview))?\/?(?:[?#].*)?$/;
 
 export function idDeDrive(url: string): string | null {
   const id = url.match(PATRON_LINK_DRIVE)?.[1];

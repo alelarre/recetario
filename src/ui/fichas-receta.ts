@@ -98,9 +98,9 @@ export function fichaCabecera({ receta, categoria, marcas = '', pin = true }: Op
  */
 function galeria(fotos: FotoDeReceta[]): string {
   if (!fotos.length) return '';
-  return `<div class="galeria">${fotos.map((f, i) =>
+  return `<div class="galeria">${fotos.map(f =>
     `<button type="button" class="galeria-item" data-accion="ver-foto-receta" data-n="${f.n}" ` +
-    `aria-label="Ver la foto ${i + 1}">${imgDe(f.url)}</button>`
+    `aria-label="Ver la foto ${f.n}">${imgDe(f.url)}</button>`
   ).join('')}</div>`;
 }
 

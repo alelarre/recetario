@@ -184,6 +184,10 @@ button.tarjeta { width: 100%; font: inherit; text-align: left; cursor: pointer; 
 /* La foto de la categoría, adentro: una propia de Drive (`imgDe`) llega sin
    `src` y con el mismo tamaño, hasta que se resuelva. */
 .ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Adentro del placeholder, el recuadro de carga de una foto de Drive tiene que
+   ser transparente: el fondo gris que lleva afuera taparía la foto de la
+   categoría hasta que la de Drive llegue. */
+.ph img[data-drive]:not([src]) { background: transparent; }
 .ph::after { content: ''; position: absolute; inset: 0;
              background: var(--c, var(--cat-otros)); opacity: .25; mix-blend-mode: multiply; }
 .ph::before { content: ''; position: absolute; inset: 0; background: #000; opacity: .45; }
