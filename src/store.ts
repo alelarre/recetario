@@ -720,7 +720,10 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
    */
   async function borrar(id: string): Promise<void> {
     if (!entradas.some(e => e.id_archivo === id)) await delRecetario(id);
-    const { fotos } = parse(await drive.leerTexto(id));
+    // Si el `.md` no se puede leer, se borra igual y sus fotos quedan
+    // huérfanas en `_fotos/`: no poder borrar una receta es peor que dejar una
+    // foto de más, y es el mismo lado seguro que el resto de la feature.
+    const fotos = await drive.leerTexto(id).then(texto => parse(texto).fotos).catch(() => []);
     await drive.borrar(id);
     await borrarDelIndice(id);
     await tirarFotos(idsDeDrive(fotos.map(f => f.url)));
@@ -1056,12 +1059,26 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
    * vuelve a mandar a la papelera lo que ya está ahí, que no falla.
    *
    * `conservar` son las fotos que convertir ya pasó a la receta: esas no se
-   * tocan (spec §9).
+   * tocan (spec §9). Y como convertir puede haberlas movido sin llegar a
+   * descartar el borrador, tampoco se toca ninguna que ya no esté en
+   * `_borradores/`: el `.md` del borrador las sigue nombrando, pero son de la
+   * receta.
    */
   async function descartarBorrador(id: string, { conservar = [] }: { conservar?: readonly string[] } = {}): Promise<void> {
     if (!filasBorradores.has(id)) return;
     const { fotos } = parseBorrador(await drive.leerTexto(id));
-    for (const foto of fotos) if (!conservar.includes(foto)) await aLaPapelera(foto);
+    for (const foto of fotos) {
+      if (conservar.includes(foto)) continue;
+      let padres: string[];
+      try {
+        padres = (await drive.metadatos(foto, 'parents')).parents ?? [];
+      } catch (e) {
+        if (!noEsta(e)) throw e;
+        continue;   // borrada a mano en Drive: no hay nada que mandar a la papelera
+      }
+      if (!padres.includes(ctx.borradoresId)) continue;
+      await aLaPapelera(foto);
+    }
     await drive.borrar(id);
     entradasBorradores = entradasBorradores.filter(e => e.id_archivo !== id);
     await borrarDeHoja(HOJA_BORRADORES, filasBorradores, id);

@@ -448,4 +448,15 @@ describe('guardar y crear con fotos', () => {
     expect(imagenes.olvidadas).toEqual(['fv']);
     expect(store.entradas()).toHaveLength(0);
   });
+
+  it('si el .md no se puede leer, la receta se borra igual y sus fotos quedan huérfanas', async () => {
+    const { store, drive } = await conFotos();
+    drive.leerTexto = async () => { throw new Error('red'); };
+
+    await expect(store.borrar('r1')).resolves.toBeUndefined();
+
+    expect(drive._store.get('r1')?.trashed).toBe(true);
+    expect(drive._store.get('fv')?.trashed).toBeFalsy();
+    expect(store.entradas()).toHaveLength(0);
+  });
 });
