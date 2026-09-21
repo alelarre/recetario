@@ -51,6 +51,7 @@ receta entera.
 - [ ] Arranca **sin texto**: el título está abajo, grande y entero, y repetirlo arriba es decir dos veces lo mismo.
 - [ ] Queda **fijo al scrollear**, y cuando el título grande sale de pantalla lo toma **recortado con elipsis**, sin llegar a pisar lo que tenga a la derecha.
 - [ ] A la derecha van, en este orden, la estrella de favorito, el ícono de compartir y el link al `.md`.
+- [ ] **Los tres dicen qué son al apoyar el mouse**: *Marcar como favorita* —o *Sacar de favoritos*, según cómo esté—, *Compartir* y *Ver el archivo en Drive*. En el teléfono no hay dónde apoyar el dedo: ahí lo que los nombra es el lector de pantalla.
 - [ ] El **link al `.md` en Drive** va con el logo de Drive y la etiqueta `.md`, que abre en otra pestaña. Es un dato al margen y no un botón: sin caja y más chico que los controles.
 - [ ] El link sólo aparece si la receta está en el índice: sin fila no se conoce su id de archivo.
 - [ ] **La estrella de favorito** vive en el encabezado, a la izquierda de compartir. Un toque pone el tag `favorito` y otro lo saca; mientras se escribe en Drive se llena de izquierda a derecha en loop, y el resultado se dibuja recién con la respuesta —si falla, vuelve como estaba y avisa arriba de la receta, con *Reintentar*. Mientras escribe no acepta otro toque.

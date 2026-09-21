@@ -49,7 +49,10 @@ export interface OpcionesReceta {
 function botonFavorito(receta: Receta, escribiendo: boolean): string {
   const puesta = esFavorita(receta);
   const clase = escribiendo ? 'fav cargando' : puesta ? 'fav on' : 'fav';
-  return `<button class="ico" data-accion="favorito" aria-label="Favorito" ` +
+  // El `title` dice lo mismo que el `aria-label`, y cambia con el estado: en
+  // la computadora es el globito que explica el ícono.
+  const que = puesta ? 'Sacar de favoritos' : 'Marcar como favorita';
+  return `<button class="ico" data-accion="favorito" aria-label="Favorito" title="${que}" ` +
     `aria-pressed="${puesta}"${escribiendo ? ' disabled' : ''}>` +
     `<span class="${clase}">${ICO.estrella}${ICO.estrella}</span></button>`;
 }
@@ -69,7 +72,8 @@ export function renderReceta({ entrada, receta: sinResolver, compartir, favorito
   // índice: sin fila no se conoce su id de archivo.
   const alArchivo = entrada?.id_archivo
     ? `<a class="archivo" href="https://drive.google.com/file/d/${encodeURIComponent(entrada.id_archivo)}/view" ` +
-      'target="_blank" rel="noopener" aria-label="Ver el archivo en Drive">' +
+      'target="_blank" rel="noopener" aria-label="Ver el archivo en Drive" ' +
+      'title="Ver el archivo en Drive">' +
       `<img class="logo" src="${escapar(logoDrive)}" ` +
       // Sin `lazy`: son 513 bytes y está en pantalla desde el primer momento.
       'alt="" width="16" height="16">.md</a>'
@@ -79,7 +83,8 @@ export function renderReceta({ entrada, receta: sinResolver, compartir, favorito
   // repetirlo arriba —o poner la categoría, que ya está en el contexto— era
   // decir dos veces lo mismo. `main` le pone el título recortado cuando el
   // grande sale de pantalla, y ahí se corta antes de llegar al link.
-  const botonCompartir = `<button class="ico" data-accion="compartir" aria-label="Compartir">${ICO.compartir}</button>`;
+  const botonCompartir =
+    `<button class="ico" data-accion="compartir" aria-label="Compartir" title="Compartir">${ICO.compartir}</button>`;
   const estrella = botonFavorito(receta, favorito === 'escribiendo');
   return encabezado({ titulo: '', volver: true, pegajoso: true, derecha: estrella + botonCompartir + alArchivo }) +
     '<div class="cuerpo">' +

@@ -252,8 +252,20 @@ describe('Receta en lectura', () => {
   it('el encabezado lleva compartir, antes del .md', () => {
     const html = renderReceta({ entrada: entradaFalsa({ id_archivo: 'f1' }), receta: COMPLETA });
     const enc = html.slice(0, html.indexOf('class="cuerpo'));
-    expect(enc).toContain('data-accion="compartir" aria-label="Compartir"');
+    expect(enc).toContain('data-accion="compartir" aria-label="Compartir" title="Compartir"');
     expect(enc.indexOf('data-accion="compartir"')).toBeLessThan(enc.indexOf('class="archivo"'));
+  });
+
+  it('los tres controles del encabezado dicen qué son al apoyar el mouse', () => {
+    const html = renderReceta({ entrada: entradaFalsa({ id_archivo: 'f1' }), receta: COMPLETA });
+    expect(html).toContain('title="Marcar como favorita"');
+    expect(html).toContain('title="Compartir"');
+    expect(html).toContain('title="Ver el archivo en Drive"');
+  });
+
+  it('con la receta ya favorita, el globito de la estrella ofrece sacarla', () => {
+    const html = renderReceta({ entrada: entradaFalsa(), receta: parse('---\ntitulo: A\ntags: [favorito]\n---\n') });
+    expect(html).toContain('title="Sacar de favoritos"');
   });
 
   it('sin estado de compartir no hay ficha; con estado, sí', () => {
