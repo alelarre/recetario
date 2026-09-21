@@ -381,10 +381,30 @@ html:has(.hoja-compartir), html:has(.hoja-foto) { overflow: hidden; }
 .velo-lat.on { opacity: .6; pointer-events: auto; }
 
 /* El velo de la escritura en curso: mientras dura, ningún control de abajo
-   recibe el toque. Sin transición: aparece con la escritura y se va con ella. */
-#velo-escritura { position: fixed; inset: 0; z-index: 30; background: var(--velo);
-                  opacity: .6; pointer-events: auto; display: grid; place-items: center; }
+   recibe el toque. Sin transición: aparece con la escritura y se va con ella.
+   El fondo usa color-mix en vez de opacity sobre todo el elemento, para que
+   el libro se vea a pleno y no lavado al 60%. */
+#velo-escritura { position: fixed; inset: 0; z-index: 30;
+                  background: color-mix(in srgb, var(--velo) 60%, transparent);
+                  pointer-events: auto; display: grid; place-items: center; }
 #velo-escritura[hidden] { display: none; }
+
+/* El libro que se escribe: un renglón se dibuja con stroke-dashoffset
+   mientras el lápiz lo recorre de izquierda a derecha, las dos con la misma
+   duración para que no se despeguen. Al terminar, las dos vuelven a
+   empezar de un salto (sin alternate): es el mismo renglón, otra vez. */
+#velo-escritura svg { width: 96px; height: 96px; fill: none; stroke-width: 3;
+                       stroke-linecap: round; stroke-linejoin: round; }
+#velo-escritura .libro { stroke: var(--fg-2); }
+#velo-escritura .renglon { stroke: var(--fg-2); stroke-dasharray: 20; stroke-dashoffset: 20;
+                            animation: escribir-renglon 1.6s linear infinite; }
+#velo-escritura .lapiz { stroke: var(--acento); animation: mover-lapiz 1.6s linear infinite; }
+@keyframes escribir-renglon { to { stroke-dashoffset: 0; } }
+@keyframes mover-lapiz { to { transform: translateX(20px); } }
+@media (prefers-reduced-motion: reduce) {
+  #velo-escritura .renglon { animation: none; stroke-dashoffset: 10; }
+  #velo-escritura .lapiz { animation: none; transform: translateX(10px); }
+}
 
 @media (min-width: 900px) {
   .lat { transform: none; }
