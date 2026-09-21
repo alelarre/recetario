@@ -58,8 +58,14 @@
            padding: 0 var(--e-2); font-size: var(--txt-chico); color: var(--fg-2); }
 .archivo .logo { width: 16px; height: 16px; object-fit: contain; flex: 0 0 auto; }
 .rec-tit { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0 0 var(--e-3); }
-.rec-ctx { font-size: var(--txt-chico); color: var(--fg-2); display: flex; align-items: center;
-           gap: var(--e-2); flex-wrap: wrap; margin-bottom: var(--e-4); }
+/* El punto de la categoría y el texto, en una sola línea de flex: con
+   `wrap`, en una pantalla angosta el texto no entra al lado del punto y se va
+   entero al renglón siguiente, dejando el punto solo. Sin `wrap` el texto
+   encoge —`.ctx-txt` tiene `min-width: 0`— y corta adentro, que es lo que
+   tiene que pasar. El punto se alinea con el primer renglón. */
+.rec-ctx { font-size: var(--txt-chico); color: var(--fg-2); display: flex; align-items: flex-start;
+           gap: var(--e-2); margin-bottom: var(--e-4); }
+.rec-ctx .pin { margin-top: 6px; }
 /* La fuente cierra la ficha, separada por un divisor: es procedencia, no un
    dato de la receta, y pegada al contexto no se leía ni una ni otra. */
 .rec-fuente { margin-top: var(--e-4); padding-top: var(--e-3); border-top: 1px solid var(--borde);

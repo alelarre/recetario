@@ -35,6 +35,7 @@ receta entera.
 
 - [ ] En la primera ficha: foto si la hay, título, línea de contexto, tags, descripción, el **carrusel de fotos** si la receta tiene depósito (C03.5.2) y, al pie tras un divisor, la fuente. Después ingredientes, preparación, variaciones y notas, cada una en su ficha.
 - [ ] La línea de contexto lleva el color y el nombre de la categoría, lo que rinde, **la duración con su relojito** y la dificultad. La duración sólo se dibuja si `tiempo` es uno de los cinco valores (`E05-Cimientos.md` C05.1.1).
+- [ ] **El punto del color va siempre pegado al texto:** en una pantalla angosta el texto corta en varios renglones y el punto queda al lado del primero, nunca solo en un renglón propio.
 - [ ] Los tags van como chips, los especiales primero y con su ícono. **Se leen y no se tocan** (C02.6.3); el único tocable es *incompleta* (C03.1.3). **`favorito` no lleva chip:** ya lo dice la estrella del encabezado (C03.1.2b).
 - [ ] Una sección ausente no se dibuja: no queda encabezado vacío.
 - [ ] Una sección desconocida del `.md` se muestra tal cual, después de Notas, sin interpretarse (C05.1.2).
