@@ -277,17 +277,17 @@ describe('Las fotos de la receta', () => {
   it('la cabecera resuelve foto:N y la hace tocable, con su número del depósito', () => {
     const html = renderReceta({ entrada: null, receta: CON_FOTOS });
     expect(html).toContain('data-drive="abc"');
-    expect(html).toMatch(/data-accion="ver-foto" data-n="1"[^>]*>[^<]*<img[^>]*data-drive="abc"/);
+    expect(html).toMatch(/data-accion="ver-foto-receta" data-n="1"[^>]*>[^<]*<img[^>]*data-drive="abc"/);
   });
 
   it('una cabecera externa que no está en el depósito se abre sin data-n', () => {
     const html = renderReceta({ entrada: null, receta: COMPLETA });
-    expect(html).toContain('data-accion="ver-foto"');
-    expect(html).not.toMatch(/data-accion="ver-foto" data-n=/);
+    expect(html).toContain('data-accion="ver-foto-receta"');
+    expect(html).not.toMatch(/data-accion="ver-foto-receta" data-n=/);
   });
 
   it('sin foto no hay botón para verla', () => {
-    expect(renderReceta({ entrada: null, receta: MINIMA })).not.toContain('data-accion="ver-foto"');
+    expect(renderReceta({ entrada: null, receta: MINIMA })).not.toContain('data-accion="ver-foto-receta"');
   });
 
   it('la referencia en un paso se resuelve y se dibuja debajo de su línea', () => {
@@ -301,7 +301,7 @@ describe('Las fotos de la receta', () => {
     expect(html).toContain('<h2>Fotos</h2>');
     expect(html.indexOf('<h2>Notas</h2>')).toBeLessThan(html.indexOf('<h2>Fotos</h2>'));
     expect(html).toContain('class="galeria"');
-    expect(html.match(/data-accion="ver-foto"/g)).toHaveLength(3); // cabecera + 2 miniaturas
+    expect(html.match(/data-accion="ver-foto-receta"/g)).toHaveLength(3); // cabecera + 2 miniaturas
     expect(html).toContain('data-n="1"');
     expect(html).toContain('data-n="2"');
   });

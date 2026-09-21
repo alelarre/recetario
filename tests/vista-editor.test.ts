@@ -334,9 +334,21 @@ describe('las fotos en el editor', () => {
     expect(html.indexOf('<h2>Contenido</h2>')).toBeLessThan(html.indexOf('<h2>Fotos</h2>'));
     expect(html).toContain('data-accion="acciones-foto" data-n="1"');
     expect(html).toContain('data-accion="acciones-foto" data-n="3"');
-    // El badge lleva el número del depósito, no la posición en la fila.
-    expect(html).toContain('<span class="miniatura-n">3</span>');
+    // El badge lleva el número del depósito, no la posición en la fila, y va
+    // adentro del botón: tocarlo es tocar la foto.
+    expect(html).toContain('<span class="miniatura-n">3</span></button>');
+    // La foto 3 se anuncia como la 3, y la etiqueta dice que abre las acciones.
+    expect(html).toContain('aria-label="Qué hacer con la foto 3"');
     expect(html).toContain('Agregar foto');
+  });
+
+  it('nada del formulario lo manda: ni los botones de la fila ni Enter en un campo', () => {
+    const html = dibujarFotos();
+    expect(html).toContain('<form class="cuerpo" data-formulario onsubmit="return false">');
+    // Un <button> sin type dentro de un form es un submit. Guardar queda
+    // afuera, en el encabezado.
+    const form = html.slice(html.indexOf('<form'));
+    expect(form).not.toMatch(/<button(?![^>]*type=)[^>]*>/);
   });
 
   it('una foto de Drive espera su blob, y una nueva queda marcada por su número', () => {
@@ -355,9 +367,14 @@ describe('las fotos en el editor', () => {
     expect(formularioDesde(conFotos)['fotos']).toBe(JSON.stringify(conFotos.fotos));
   });
 
-  it('un JSON ilegible se lee como depósito vacío, sin romper nada', () => {
-    expect(recetaDesdeFormulario({ titulo: 'A', fotos: '{roto' }, conFotos).fotos).toEqual([]);
-    expect(recetaDesdeFormulario({ titulo: 'A', fotos: '[{"n":"a"}]' }, conFotos).fotos).toEqual([]);
+  it('un JSON ilegible deja el depósito de la receta, no uno vacío', () => {
+    // Vaciarlo sería «las saqué a todas», y el store manda esas fotos a la
+    // papelera de Drive: un error de escritura no puede querer decir eso.
+    expect(recetaDesdeFormulario({ titulo: 'A', fotos: '{roto' }, conFotos).fotos).toEqual(conFotos.fotos);
+    expect(recetaDesdeFormulario({ titulo: 'A', fotos: '[{"n":"a"}]' }, conFotos).fotos).toEqual(conFotos.fotos);
+    expect(recetaDesdeFormulario({ titulo: 'A', fotos: '{"n":1}' }, conFotos).fotos).toEqual(conFotos.fotos);
+    // Sacarlas a todas sí se puede: es el arreglo vacío, bien escrito.
+    expect(recetaDesdeFormulario({ titulo: 'A', fotos: '[]' }, conFotos).fotos).toEqual([]);
   });
 
   it('sin el campo, el depósito sigue siendo el de la receta de base', () => {
@@ -386,8 +403,8 @@ describe('renderAccionesFoto', () => {
   it('las cuatro acciones, cada una con su número', () => {
     const html = renderAccionesFoto(2, { portada: false });
     const acciones: [string, string][] = [
-      ['Ver', 'ver-foto'], ['Portada', 'elegir-portada'],
-      ['Poner en…', 'abrir-poner-en'], ['Sacar', 'sacar-foto']
+      ['Ver', 'ver-foto-receta'], ['Portada', 'elegir-portada'],
+      ['Poner en…', 'abrir-poner-en'], ['Sacar', 'sacar-foto-editor']
     ];
     for (const [etiqueta, accion] of acciones) {
       expect(html).toContain(`data-accion="${accion}" data-n="2"`);
@@ -399,11 +416,33 @@ describe('renderAccionesFoto', () => {
     const html = renderAccionesFoto(2, { portada: true });
     expect(html).not.toContain('elegir-portada');
     expect(html).not.toContain('>Portada</button>');
-    expect(html).toContain('data-accion="sacar-foto" data-n="2"');
+    expect(html).toContain('data-accion="sacar-foto-editor" data-n="2"');
+  });
+
+  it('las acciones de las fotos del borrador no se pisan con las del editor', () => {
+    // `ver-foto` y `sacar-foto` son las del borrador, con `data-valor` y una
+    // escritura a Drive de por medio; el despachador de `main` es plano.
+    const html = renderAccionesFoto(2, { portada: false });
+    expect(html).not.toContain('data-accion="ver-foto"');
+    expect(html).not.toContain('data-accion="sacar-foto"');
   });
 
   it('la ficha se encuentra por su marca: se saca del DOM sin redibujar', () => {
     expect(renderAccionesFoto(2, { portada: false })).toContain('data-acciones-foto');
+  });
+});
+
+describe('las fichas de fotos se cierran con el velo', () => {
+  it('cada una arranca con el velo, como la hoja de Compartir', () => {
+    const velo = '<div class="velo" data-accion="cerrar-ficha-foto"></div>';
+    expect(renderAccionesFoto(1, { portada: false }).startsWith(velo)).toBe(true);
+    expect(renderPonerEn([], 1).startsWith(velo)).toBe(true);
+    expect(renderSelectorPortada([], null).startsWith(velo)).toBe(true);
+  });
+
+  it('ninguna suma un Cancelar: se cierran tocando afuera', () => {
+    expect(renderAccionesFoto(1, { portada: false })).not.toContain('Cancelar');
+    expect(renderSelectorPortada([], null)).not.toContain('Cancelar');
   });
 });
 

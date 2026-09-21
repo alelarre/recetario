@@ -332,7 +332,12 @@ export function tile(nombre: string, cantidad?: number): string {
 }
 
 /** Qué acción dispara un botón de la miniatura, y con qué valor si lo lleva. */
-interface AccionDeMiniatura { accion: string; valor?: string }
+interface AccionDeMiniatura {
+  accion: string;
+  valor?: string;
+  /** Qué dice el botón cuando no se lo ve. Sin esto, lo que hace por defecto. */
+  etiqueta?: string;
+}
 
 /**
  * Una miniatura de la fila de fotos. `url` en `null` es una foto que ya no
@@ -364,21 +369,25 @@ const datosDeAccion = (a: AccionDeMiniatura, n: number | undefined): string =>
  */
 export function filaDeFotos({ fotos, agregar }: { fotos: Miniatura[]; agregar: boolean }): string {
   const miniaturas = fotos.map((f, i) => {
+    // Con depósito, la foto se nombra por su número —el que va en el texto de
+    // la receta—; sin depósito, por su posición en la fila.
+    const cual = f.n ?? i + 1;
     const imagen = f.url === null
       ? '<span class="miniatura-vacia">La foto ya no está en Drive.</span>'
       // Sin URL, el `<img>` queda vacío y marcado con su número: recién
       // subida no hay nada que pedirle a Drive todavía.
-      : f.url === '' ? `<img data-n="${f.n}" alt="Foto ${i + 1}">` : imgDe(f.url);
+      : f.url === '' ? `<img data-n="${f.n}" alt="Foto ${cual}">` : imgDe(f.url);
+    // El número va adentro del botón: encima de la foto, tocarlo es tocarla.
+    const contenido = imagen + (f.n === undefined ? '' : `<span class="miniatura-n">${f.n}</span>`);
     const cuerpo = f.ver && f.url !== null
-      ? `<button class="miniatura-ver"${datosDeAccion(f.ver, f.n)} ` +
-        `aria-label="Ver la foto ${i + 1}">${imagen}</button>`
-      : imagen;
-    const badge = f.n === undefined ? '' : `<span class="miniatura-n">${f.n}</span>`;
+      ? `<button type="button" class="miniatura-ver"${datosDeAccion(f.ver, f.n)} ` +
+        `aria-label="${escapar(f.ver.etiqueta ?? `Ver la foto ${cual}`)}">${contenido}</button>`
+      : contenido;
     const sacar = f.sacar
-      ? `<button class="miniatura-sacar"${datosDeAccion(f.sacar, f.n)} ` +
-        `aria-label="Sacar la foto ${i + 1}">${ICO.cerrar}</button>`
+      ? `<button type="button" class="miniatura-sacar"${datosDeAccion(f.sacar, f.n)} ` +
+        `aria-label="${escapar(f.sacar.etiqueta ?? `Sacar la foto ${cual}`)}">${ICO.cerrar}</button>`
       : '';
-    return `<div class="miniatura">${cuerpo}${badge}${sacar}</div>`;
+    return `<div class="miniatura">${cuerpo}${sacar}</div>`;
   }).join('');
   const boton = agregar
     ? `<label class="btn sec miniatura-agregar">${ICO.camara}Agregar foto` +

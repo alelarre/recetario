@@ -42,8 +42,9 @@ describe('cómo responden los controles al toque', () => {
     expect(BASE).toContain('.encoc :is([data-accion="wake"], .btn.compacto):active::before');
   });
 
-  it('con la ficha de compartir abierta, la página de atrás no se desplaza', () => {
-    expect(BASE).toContain('html:has(.hoja-compartir) { overflow: hidden; }');
+  it('con una ficha al pie abierta, la página de atrás no se desplaza', () => {
+    // Compartir y, con la misma forma, las fichas de fotos del editor.
+    expect(BASE).toContain('html:has(.hoja-compartir), html:has(.hoja-foto) { overflow: hidden; }');
     expect(BASE).toContain('.hoja-compartir .copia { overscroll-behavior: contain; }');
   });
 

@@ -127,7 +127,7 @@
 /* Con la ficha abierta, la página de atrás no se desplaza: el velo la tapa y
    moverla deja la ficha flotando sobre otra cosa. Lo único que desplaza es el
    cuadro del link o el texto, y no arrastra a la página. */
-html:has(.hoja-compartir) { overflow: hidden; }
+html:has(.hoja-compartir), html:has(.hoja-foto) { overflow: hidden; }
 .hoja-compartir .copia { overscroll-behavior: contain; }
 
 /* ---- Modo cocina ---- */

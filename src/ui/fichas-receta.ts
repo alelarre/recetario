@@ -48,7 +48,7 @@ export interface OpcionesCabecera {
  * sin ese número (spec §7).
  */
 function botonFoto(url: string, n: number | undefined): string {
-  return `<button type="button" class="rec-foto-boton" data-accion="ver-foto"` +
+  return `<button type="button" class="rec-foto-boton" data-accion="ver-foto-receta"` +
     (n !== undefined ? ` data-n="${n}"` : '') +
     ` aria-label="Ver la foto">${imgDe(url, 'rec-foto')}</button>`;
 }
@@ -85,7 +85,7 @@ export function fichaCabecera({ receta, categoria, marcas = '', pin = true }: Op
 function galeria(fotos: FotoDeReceta[]): string {
   if (!fotos.length) return '';
   return `<div class="galeria">${fotos.map((f, i) =>
-    `<button type="button" class="galeria-item" data-accion="ver-foto" data-n="${f.n}" ` +
+    `<button type="button" class="galeria-item" data-accion="ver-foto-receta" data-n="${f.n}" ` +
     `aria-label="Ver la foto ${i + 1}">${imgDe(f.url)}</button>`
   ).join('')}</div>`;
 }

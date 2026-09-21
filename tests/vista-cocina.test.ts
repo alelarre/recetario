@@ -140,6 +140,6 @@ describe('Modo cocina', () => {
     const html = renderCocina({ ...base, receta: CON_FOTO_EN_PASO });
     expect(html).toContain('class="foto-linea"');
     expect(html).toContain('src="https://x/paso.jpg"');
-    expect(html).not.toContain('data-accion="ver-foto"');
+    expect(html).not.toContain('data-accion="ver-foto-receta"');
   });
 });

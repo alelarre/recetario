@@ -318,7 +318,14 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
 .galeria-item img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .galeria-item[aria-pressed="true"] { outline: 2px solid var(--acento); outline-offset: -2px; }
 
-/* ---- Las fichas de fotos del editor (spec §7) ---- */
+/* ---- Las fichas de fotos del editor (spec §7) ----
+   Se abren al pie y sobre el velo, como la hoja de Compartir: tocar afuera las
+   cierra. Por eso van fijas y por arriba del velo, esté donde esté el scroll
+   del formulario. */
+.hoja-foto { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31;
+             max-width: 680px; margin: 0 auto; max-height: 80vh; overflow: auto;
+             border-radius: var(--r-ficha) var(--r-ficha) 0 0;
+             padding-bottom: calc(var(--e-4) + env(safe-area-inset-bottom)); }
 /* Cuatro acciones no entran en una fila del teléfono: van de a dos. */
 .acciones-foto { display: grid; grid-template-columns: 1fr 1fr; }
 /* Cada lugar de «Poner en…» es una línea de la receta: se lee de izquierda a

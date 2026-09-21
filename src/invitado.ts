@@ -11,10 +11,10 @@ import { decodificar } from './link-receta.js';
 import { crearControlCocina } from './cocina-control.js';
 import type { Receta } from './tipos.js';
 
-// `ver-foto` puede llegar por `fichaCabecera`/`fichasDelCuerpo`, que comparte con
+// `ver-foto-receta` puede llegar por `fichaCabecera`/`fichasDelCuerpo`, que comparte con
 // la receta: no tiene manejador acá —abrir el visor del invitado es Tarea 9—,
 // pero está en la lista porque el HTML compartido sí puede traerlo.
-export const ACCIONES_DE_INVITADO = ['cocinar', 'volver-receta', 'conmutar', 'paso', 'wake', 'ver-foto'] as const;
+export const ACCIONES_DE_INVITADO = ['cocinar', 'volver-receta', 'conmutar', 'paso', 'wake', 'ver-foto-receta'] as const;
 
 export function iniciarInvitado(): void {
   const cocina = crearControlCocina();

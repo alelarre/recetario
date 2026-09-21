@@ -118,12 +118,21 @@ function campoPortada(foto: string | null, fotos: FotoDeReceta[]): string {
 function fichaFotos(fotos: FotoDeReceta[]): string {
   return '<div class="ficha"><h2>Fotos</h2>' +
     filaDeFotos({
-      fotos: fotos.map(f => ({ url: f.url, n: f.n, ver: { accion: 'acciones-foto' } })),
+      fotos: fotos.map(f => ({
+        url: f.url, n: f.n,
+        ver: { accion: 'acciones-foto', etiqueta: `Qué hacer con la foto ${f.n}` }
+      })),
       agregar: true
     }) +
     `<input type="hidden" name="fotos" value="${escapar(JSON.stringify(fotos))}">` +
   '</div>';
 }
+
+/**
+ * El velo con el que se cierra una ficha al pie, como la hoja de Compartir:
+ * tocar afuera la cierra, y por eso ninguna necesita un *Cancelar*.
+ */
+const VELO_DE_FICHA = '<div class="velo" data-accion="cerrar-ficha-foto"></div>';
 
 /**
  * Lo que una foto del depósito deja hacer, al pie y sin redibujar el
@@ -132,13 +141,14 @@ function fichaFotos(fotos: FotoDeReceta[]): string {
 export function renderAccionesFoto(n: number, { portada }: { portada: boolean }): string {
   const boton = (accion: string, etiqueta: string, clase = 'sec'): string =>
     `<button class="btn ${clase}" data-accion="${accion}" data-n="${n}" type="button">${etiqueta}</button>`;
-  return `<div class="ficha" data-acciones-foto data-n="${n}">` +
+  return VELO_DE_FICHA +
+    `<div class="ficha hoja-foto" data-acciones-foto data-n="${n}">` +
     `<p class="lee" style="margin:0 0 var(--e-4)">Foto ${n}</p>` +
     '<div class="acciones acciones-foto">' +
-      boton('ver-foto', 'Ver') +
+      boton('ver-foto-receta', 'Ver') +
       (portada ? '' : boton('elegir-portada', 'Portada')) +
       boton('abrir-poner-en', 'Poner en…') +
-      boton('sacar-foto', 'Sacar', 'pel') +
+      boton('sacar-foto-editor', 'Sacar', 'pel') +
     '</div></div>';
 }
 
@@ -175,7 +185,8 @@ export function renderPonerEn(lugares: Lugar[], n: number): string {
       `${escapar(unaLinea(l.texto))}</button>`
     ).join('')
   ).join('');
-  return `<div class="ficha lugares" data-poner-en data-n="${n}">` +
+  return VELO_DE_FICHA +
+    `<div class="ficha hoja-foto lugares" data-poner-en data-n="${n}">` +
     `<h2>Poner la foto ${n} en…</h2>${bloques}</div>`;
 }
 
@@ -194,7 +205,8 @@ export function renderSelectorPortada(fotos: FotoDeReceta[], actual: string | nu
   // `resolver` devuelve una URL tal cual, y para un `foto:N` devuelve la del
   // depósito o `null`: que vuelva igual es justamente que hoy hay una URL.
   const urlDeHoy = actual !== null && resolver(actual, fotos) === actual ? actual : '';
-  return '<div class="ficha" data-selector-portada>' +
+  return VELO_DE_FICHA +
+    '<div class="ficha hoja-foto" data-selector-portada>' +
     '<h2>Foto de portada</h2>' +
     grilla +
     '<label class="campo"><span>URL</span>' +
@@ -342,7 +354,9 @@ export function renderEditor(
     pegajoso: true,
     derecha: '<button class="btn prim compacto" data-accion="guardar">Guardar</button>'
   }) +
-    '<form class="cuerpo" data-formulario>' +
+    // Nada acá manda el formulario: guardar es un botón del encabezado, y sin
+    // esto Enter en cualquier campo de texto recargaría la página.
+    '<form class="cuerpo" data-formulario onsubmit="return false">' +
       (error ? avisoAlGuardar(error) : '') +
       datos + contenido + fichaFotos(receta.fotos) + borrar +
     '</form>';
@@ -376,18 +390,19 @@ const esFoto = (f: unknown): f is FotoDeReceta =>
 
 /**
  * El depósito que viaja en el campo oculto. Cualquier cosa que no sea el
- * arreglo que escribió el editor se lee como depósito vacío: una receta sin
- * fotos es un resultado válido, y quedarse sin poder guardar por un JSON
- * ilegible no.
+ * arreglo que escribió el editor —o que el campo no esté— deja el depósito de
+ * la receta que se abrió: un depósito vacío significa «las saqué a todas», y
+ * el store manda esas fotos a la papelera de Drive (§8). Un JSON que no se
+ * entiende no puede querer decir eso.
  */
-function fotosDesde(crudo: string): FotoDeReceta[] {
+function fotosDesde(crudo: string, base: FotoDeReceta[]): FotoDeReceta[] {
   try {
     const leido: unknown = JSON.parse(crudo);
-    if (!Array.isArray(leido)) return [];
+    if (!Array.isArray(leido)) return base;
     const fotos = leido.filter(esFoto);
-    return fotos.length === leido.length ? fotos : [];
+    return fotos.length === leido.length ? fotos : base;
   } catch {
-    return [];
+    return base;
   }
 }
 
@@ -409,9 +424,7 @@ export function recetaDesdeFormulario(datos: DatosFormulario, base: Receta): Rec
     dificultad: dificultadValida(datos['dificultad']) || null,
     fuente: texto('fuente'),
     foto: texto('foto'),
-    // Sin el campo no hay nada que decir del depósito: es un formulario que no
-    // lo trae, y el de la receta de base queda como estaba.
-    fotos: datos['fotos'] === undefined ? base.fotos : fotosDesde(datos['fotos']),
+    fotos: fotosDesde(datos['fotos'] ?? '', base.fotos),
     descripcion: datos['descripcion'] ?? base.descripcion,
     ingredientes: datos['ingredientes'] ?? base.ingredientes,
     preparacion: datos['preparacion'] ?? base.preparacion,
