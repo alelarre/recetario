@@ -374,6 +374,8 @@ describe('main.ts: las rutas', () => {
     /** Lo que se puso en lugar de un elemento, con `outerHTML`, sin redibujar. */
     const enLugar: string[] = [];
     const vueltasAtras: number[] = [];
+    /** Si el velo estaba puesto en cada vuelta atrás: con la pantalla tapada no se navega. */
+    const veloAlVolver: boolean[] = [];
     const scrolls: number[] = [];
     /** Lo que la flecha del carrusel le pidió desplazar a `scrollBy`. */
     const desplazamientos: number[] = [];
@@ -486,7 +488,7 @@ describe('main.ts: las rutas', () => {
       [Symbol.iterator]() { return Object.entries(estado.formulario)[Symbol.iterator](); }
     };
     global.history = comoGlobal<History>({
-      back: () => { vueltasAtras.push(1); }, length: 5,
+      back: () => { vueltasAtras.push(1); veloAlVolver.push(!velo.hidden); }, length: 5,
       replaceState: (_estado: unknown, _titulo: string, url: string) => {
         const i = url.indexOf('#');
         if (i >= 0) global.location.hash = url.slice(i);
@@ -504,6 +506,7 @@ describe('main.ts: las rutas', () => {
       atributosApp,
       recargas,
       vueltasAtras,
+      veloAlVolver,
       scrolls,
       reemplazos,
       empujados,
@@ -1851,7 +1854,7 @@ describe('main.ts: las rutas', () => {
     });
 
     it('al terminar, el velo se va y el guardado sigue su camino', async () => {
-      const { abrir, tocar, velo, vueltasAtras } = await montar();
+      const { abrir, tocar, velo, vueltasAtras, veloAlVolver } = await montar();
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
 
@@ -1860,6 +1863,9 @@ describe('main.ts: las rutas', () => {
       expect(velo.hidden).toBe(true);
       expect(estado.creadas).toEqual(['Pan']);
       expect(vueltasAtras).toHaveLength(1);
+      // El cierre del editor es una navegación, y con la pantalla tapada no se
+      // navega: sale con el velo ya soltado.
+      expect(veloAlVolver).toEqual([false]);
     });
 
     it('si la escritura falla, el velo se va y queda el aviso con lo escrito', async () => {
@@ -1916,6 +1922,31 @@ describe('main.ts: las rutas', () => {
       expect(velo.hidden).toBe(true);
       expect(app.innerHTML).toContain('Ponele un título antes de guardar.');
       expect(estado.creadas).toEqual([]);
+    });
+
+    it('al sumar una receta al plan tapa la pantalla antes de leer `_plan.md` (P47)', async () => {
+      const original = storeFake.plan;
+      try {
+        const { promesa, resolver } = pendiente<Plan>();
+        // Sin pasar por el plan, el `.md` no está leído todavía: elegir una
+        // receta lo lee de Drive y recién después escribe.
+        storeFake.plan = () => { estado.lecturasPlan++; return promesa; };
+        const { abrir, tocar, velo } = await montar();
+        await abrir('#/plan/agregar?dia=1&momento=noche');
+        const eligiendo = tocar('elegir-para-el-plan', { id: 'f1' });
+        await esperar();
+
+        expect(velo.hidden).toBe(false);
+        expect(estado.planesGuardados).toEqual([]);
+
+        resolver({ comidas: [] });
+        await eligiendo;
+
+        expect(velo.hidden).toBe(true);
+        expect(estado.planesGuardados).toHaveLength(1);
+      } finally {
+        storeFake.plan = original;
+      }
     });
 
     it('la captura se redibuja con la pantalla ya tapada (P47)', async () => {

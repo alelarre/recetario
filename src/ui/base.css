@@ -381,7 +381,8 @@ html:has(.hoja-compartir), html:has(.hoja-foto) { overflow: hidden; }
 .velo-lat.on { opacity: .6; pointer-events: auto; }
 
 /* El velo de la escritura en curso: mientras dura, ningún control de abajo
-   recibe el toque. Sin transición: aparece con la escritura y se va con ella.
+   recibe el toque. Sin transición: aparece con el toque que lanza la escritura
+   y se va cuando termina.
    El fondo usa color-mix en vez de opacity sobre todo el elemento, para que
    el libro se vea a pleno y no lavado al 60%. */
 #velo-escritura { position: fixed; inset: 0; z-index: 30;

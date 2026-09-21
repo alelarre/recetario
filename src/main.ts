@@ -2150,6 +2150,8 @@ app.addEventListener('click', async (e) => {
     // devolver el editor sin escribir nada (P47). Se suelta por cualquier
     // camino, así que no queda pegado.
     const destapar = tapar();
+    /** Cómo se cierra el editor si el guardado sale bien; corre con el velo ya soltado. */
+    let cerrar: (() => void) | null = null;
     try {
       const datos = datosDelFormulario();
       const carpetaId = datos['carpeta'] || '';
@@ -2201,11 +2203,11 @@ app.addEventListener('click', async (e) => {
         recibida = null;
         // Atada a la receta recibida, `history.back()` caería en `#/capturar`
         // —o en `#/recibida`— y reabriría lo mismo que se acaba de guardar: se
-        // cierra directo a la receta creada.
-        if (recibidaBase && creada) { irCerrando(`#/r/${encodeURIComponent(creada.id)}`); return; }
-        // Nada más confirma el éxito: al terminar, vuelve a la receta. Lo
-        // escrito ya está en Drive, así que salir no tiene nada que preguntar.
-        return history.back();
+        // cierra directo a la receta creada. Si no, nada más confirma el éxito:
+        // vuelve a la receta, y lo escrito ya está en Drive, así que salir no
+        // tiene nada que preguntar.
+        const aLaCreada = recibidaBase && creada ? `#/r/${encodeURIComponent(creada.id)}` : '';
+        cerrar = aLaCreada ? () => irCerrando(aLaCreada) : () => history.back();
       } catch (err) {
         console.error(err);
         return conError(porQueNoGuardo(err));
@@ -2213,6 +2215,11 @@ app.addEventListener('click', async (e) => {
     } finally {
       destapar();
     }
+    // Recién acá, con el velo soltado: mientras la pantalla está tapada no se
+    // navega, y el cierre del editor es una navegación como cualquier otra. Sin
+    // `cerrar` no se guardó nada —validación o error—, y ya se pintó el aviso.
+    cerrar?.();
+    return;
   }
 
   // La confirmación toma el lugar del botón, y el botón el de la confirmación:

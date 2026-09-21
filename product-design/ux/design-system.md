@@ -861,7 +861,8 @@ del mismo lado.
 
 Mientras la app escribe en Drive o en Sheets, un velo de `--velo` al 60 % cubre
 la pantalla entera con **el libro que se está escribiendo** centrado. Sin
-transición: aparece con la escritura y se va con ella, termine bien o mal.
+transición: aparece con el toque que lanza la escritura —no cuando la escritura
+arranca— y se va cuando termina, bien o mal.
 
 **El libro** es un dibujo de unos 96 px: dos páginas abiertas en `--fg-2` —el
 lomo es el hueco entre las dos, no una línea—, tres renglones ya escritos y
@@ -875,7 +876,9 @@ y el lápiz apoyado (§5.1).
 `opacity` sobre el elemento entero, así el dibujo se ve a pleno.
 
 **Recibe el toque**, así que ningún control de abajo responde, y el contenido
-queda marcado como ocupado (`aria-busy`). No es una pantalla de carga: lo que
+queda marcado como ocupado (`aria-busy`). **Y frena el scroll:** mientras está,
+la página de atrás no se desplaza, con la misma regla que las fichas al pie
+(`html:has(...) { overflow: hidden }`). No es una pantalla de carga: lo que
 estaba sigue dibujado debajo, incluido el botón que dice «Guardando…».
 
 Qué operaciones lo muestran y cuáles no está en `product/specs/E05-Cimientos.md`
