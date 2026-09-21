@@ -195,8 +195,10 @@ button.tarjeta { width: 100%; font: inherit; text-align: left; cursor: pointer; 
 /* ---- §6.5 Marca de incompleta ---- */
 /* Un círculo a medio llenar: un aro vacío se lee como viñeta, no como
    «hecha a medias». Va en el acento —es lo único tocable de su fila y lleva al
-   editor—, y nunca en `--error`: a la receta le falta algo, no está rota. */
-.inc { width: 12px; height: 12px; border: 1.5px solid currentColor; border-radius: 50%; flex: 0 0 12px;
+   editor—, y nunca en `--error`: a la receta le falta algo, no está rota.
+   `inline-block` con su tamaño propio: como `<span>` es `inline` por default,
+   sin esto el ancho se ignora fuera de un ítem flex o grid y queda cortado. */
+.inc { display: inline-block; width: 12px; height: 12px; border: 1.5px solid currentColor; border-radius: 50%;
        color: var(--acento);
        background: linear-gradient(to right, currentColor 50%, transparent 50%); }
 
