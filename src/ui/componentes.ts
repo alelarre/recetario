@@ -403,9 +403,12 @@ const datosDeAccion = (a: AccionDeMiniatura, n: number | undefined): string =>
 
 /**
  * La fila de fotos de un borrador o del editor: miniaturas cuadradas y, al
- * final, *Agregar foto*, que abre el selector del sistema —en el teléfono, la
- * cámara o la galería—. El `input` va dentro del `label`: tocarlo lo abre sin
- * script.
+ * final, dos botones —*Cámara* y *Galería*— para agregar (P50). El `capture`
+ * de un input es lo único que lleva directo a la cámara, y saca la galería:
+ * por eso hacen falta dos inputs, cada uno en su propio `label` —tocarlo lo
+ * abre sin script—, los dos con `data-fotos` para llegar al mismo manejador
+ * de `change` en `main.ts`. La cámara entrega una foto a la vez; la galería
+ * sigue aceptando varias.
  */
 export function filaDeFotos({ fotos, agregar }: { fotos: Miniatura[]; agregar: boolean }): string {
   const miniaturas = fotos.map((f, i) => {
@@ -429,10 +432,12 @@ export function filaDeFotos({ fotos, agregar }: { fotos: Miniatura[]; agregar: b
       : '';
     return `<div class="miniatura">${cuerpo}${sacar}</div>`;
   }).join('');
-  const boton = agregar
-    ? `<label class="btn sec miniatura-agregar">${ICO.camara}Agregar foto` +
+  const botones = agregar
+    ? `<label class="btn sec miniatura-agregar">${ICO.camara}Cámara` +
+      '<input type="file" accept="image/*" capture="environment" data-fotos hidden></label>' +
+      '<label class="btn sec miniatura-agregar">Galería' +
       '<input type="file" accept="image/*" multiple data-fotos hidden></label>'
     : '';
-  return `<div class="miniaturas">${miniaturas}${boton}</div>`;
+  return `<div class="miniaturas">${miniaturas}${botones}</div>`;
 }
 

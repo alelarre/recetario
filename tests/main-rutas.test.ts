@@ -320,6 +320,10 @@ describe('main.ts: las rutas', () => {
     const errores: ((e: unknown) => unknown)[] = [];
     /** Los oyentes de `focusin`: el botón de poner una foto sigue al foco. */
     const focos: ((e: unknown) => unknown)[] = [];
+    /** Los oyentes de `scroll` en captura: el botón sigue al scroll del campo. */
+    const desplazos: ((e: unknown) => unknown)[] = [];
+    /** Los oyentes de `pointerdown`: el toque sobre el botón no mueve el foco. */
+    const punteos: ((e: unknown) => unknown)[] = [];
     const tecleos: ((e: unknown) => unknown)[] = [];
     /** Lo que se escribió en `[data-resultados-plan]` sin repintar la pantalla. */
     const resultadosPlan: string[] = [];
@@ -358,6 +362,8 @@ describe('main.ts: las rutas', () => {
         if (ev === 'input') tecleos.push(fn);
         if (ev === 'error') errores.push(fn);
         if (ev === 'focusin') focos.push(fn);
+        if (ev === 'scroll') desplazos.push(fn);
+        if (ev === 'pointerdown') punteos.push(fn);
       }
     };
     /** Lo que se insertó en el formulario sin redibujarlo: las preguntas y las fichas de fotos. */
@@ -398,6 +404,7 @@ describe('main.ts: las rutas', () => {
     /** Lo que tiene el foco: el doble de `document.activeElement`. */
     let campoActivo: {
       name?: string; value?: string; selectionStart?: number; dataset?: Record<string, string>;
+      scrollTop?: number; clientHeight?: number;
     } | null = null;
     const formulario = {
       dataset: { otros: '[]' },
@@ -577,32 +584,43 @@ describe('main.ts: las rutas', () => {
        * El cursor cae en un campo de texto del editor, como al tocarlo: el
        * navegador avisa con `selectionchange`.
        */
-      posarCursor: async (seccion: string, posicion: number) => {
+      posarCursor: async (seccion: string, posicion: number, scrollTop = 0) => {
         const c = campo(seccion);
         campoActivo = {
           name: seccion,
           get value() { return c.value; },
           set value(v: string) { c.value = v; },
-          selectionStart: posicion
+          selectionStart: posicion,
+          scrollTop,
+          // Seis renglones de 24, como la Preparación del editor.
+          clientHeight: 144
         };
         listenersDoc['selectionchange']?.();
         await esperar();
       },
+      /** El dedo corre el texto del campo sin mover el cursor. */
+      desplazarCampo: async (scrollTop: number) => {
+        if (campoActivo) campoActivo.scrollTop = scrollTop;
+        for (const fn of desplazos) await fn({ target: campoActivo });
+        await esperar();
+      },
+      /** El toque sobre el botón, antes del click: devuelve si se lo frenó. */
+      tocarBotonDeFoto: async () => {
+        let frenado = false;
+        const destino = { closest: (sel: string) => (sel === '.poner-foto' ? {} : null) };
+        for (const fn of punteos) {
+          await fn({ target: destino, preventDefault: () => { frenado = true; } });
+        }
+        await esperar();
+        return frenado;
+      },
+      /** El campo pierde el foco sin que nadie avise, como al tocar el velo. */
+      sacarElFoco: () => { campoActivo = null; },
       /** El foco se va del campo a algo que no es una sección. */
       soltarCursor: async () => {
         campoActivo = null;
         listenersDoc['selectionchange']?.();
         for (const fn of focos) await fn({ target: null });
-        await esperar();
-      },
-      /**
-       * El foco cae en el botón de poner una foto, que es lo que hace el
-       * navegador al tocarlo, antes del click.
-       */
-      enfocarBotonDeFoto: async () => {
-        campoActivo = { dataset: { accion: 'abrir-elegir-foto' } };
-        listenersDoc['selectionchange']?.();
-        for (const fn of focos) await fn({ target: campoActivo });
         await esperar();
       },
       /** La app vuelve a primer plano. */
@@ -2256,7 +2274,8 @@ describe('main.ts: las rutas', () => {
       await abrir('#/capturar?fotos=8');
       expect(app.innerHTML).toContain('Llegaron 8 fotos: se guardan las primeras 5.');
       expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(5);
-      expect(app.innerHTML).not.toContain('Agregar foto');
+      expect(app.innerHTML).not.toContain('Cámara');
+      expect(app.innerHTML).not.toContain('Galería');
 
       await tocar('guardar-captura');
       expect(estado.capturados[0]?.fotos).toHaveLength(5);
@@ -2267,6 +2286,18 @@ describe('main.ts: las rutas', () => {
       const { abrir, app } = await montar();
       await abrir('#/capturar?fotos=2');
       expect(app.innerHTML).toContain('No se pudo leer una de las fotos.');
+      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(1);
+    });
+
+    it('una foto que llega por el input de la cámara entra igual que una de la galería (P50)', async () => {
+      const { abrir, app, elegirFotos } = await montar();
+      await abrir('#/capturar');
+      // Los dos inputs —cámara y galería— llevan `data-fotos` y llegan al
+      // mismo manejador de `change`; acá no importa cuál los mandó.
+      expect(app.innerHTML).toContain('<input type="file" accept="image/*" capture="environment" data-fotos hidden>');
+      expect(app.innerHTML).toContain('<input type="file" accept="image/*" multiple data-fotos hidden>');
+      // La cámara devuelve de a una foto.
+      await elegirFotos([foto('de-la-camara')]);
       expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(1);
     });
 
@@ -3009,16 +3040,56 @@ describe('main.ts: las rutas', () => {
       expect(hayBotonDeFoto()).toBe(false);
     });
 
-    it('el foco en el botón no lo saca: el toque tiene que llegar al click', async () => {
+    it('tocar el botón no mueve el foco, así el toque llega al click', async () => {
       estado.md = MD_CON_FOTOS;
-      const { abrir, posarCursor, enfocarBotonDeFoto, hayBotonDeFoto } = await montar();
+      const { abrir, posarCursor, tocarBotonDeFoto, hayBotonDeFoto } = await montar();
       await abrir('#/r/f1/editar');
       estado.formulario = formularioConFotos();
 
       await posarCursor('preparacion', 0);
-      await enfocarBotonDeFoto();
-
+      // Sin frenar el toque, el navegador le saca el foco al campo y el botón
+      // se va del DOM antes de que llegue el click.
+      expect(await tocarBotonDeFoto()).toBe(true);
       expect(hayBotonDeFoto()).toBe(true);
+    });
+
+    it('el botón sigue al scroll del campo, y no se dibuja si el renglón quedó fuera', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, posarCursor, desplazarCampo, botonesDeFoto, hayBotonDeFoto } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = {
+        ...formularioConFotos(),
+        preparacion: Array.from({ length: 12 }, (_, i) => `${i + 1}. Paso`).join('\n')
+      };
+
+      // El cursor en el renglón 8, con el campo sin correr: 192 px, afuera de
+      // los 144 que se ven.
+      await posarCursor('preparacion', '1. Paso\n'.repeat(8).length);
+      expect(hayBotonDeFoto()).toBe(false);
+
+      // El dedo corre el texto y el renglón entra: el botón aparece donde va.
+      await desplazarCampo(96);
+      expect(botonesDeFoto.at(-1)).toContain('style="top:96px"');
+
+      // Sigue corriendo y el renglón se va por arriba.
+      await desplazarCampo(240);
+      expect(hayBotonDeFoto()).toBe(false);
+    });
+
+    it('cerrar la ficha con el velo no deja el botón colgado', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, tocar, posarCursor, sacarElFoco, hayBotonDeFoto } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await posarCursor('preparacion', 0);
+      await tocar('abrir-elegir-foto', { seccion: 'preparacion', linea: '0' });
+      // Tocar el velo le sacó el foco al campo, y eso no avisa por su cuenta.
+      sacarElFoco();
+
+      await tocar('cerrar-ficha-foto');
+
+      expect(hayBotonDeFoto()).toBe(false);
     });
 
     it('elegir una foto la escribe en la línea del cursor sin redibujar el formulario', async () => {

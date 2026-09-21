@@ -328,7 +328,7 @@ describe('las fotos en el editor', () => {
   const dibujarFotos = (receta = conFotos) =>
     renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta, categorias });
 
-  it('la ficha Fotos va después de Contenido, con el número de cada una y Agregar foto sin tope', () => {
+  it('la ficha Fotos va después de Contenido, con el número de cada una y Cámara/Galería sin tope (P50)', () => {
     const html = dibujarFotos();
     expect(html.indexOf('<h2>Contenido</h2>')).toBeLessThan(html.indexOf('<h2>Fotos</h2>'));
     expect(html).toContain('data-accion="acciones-foto" data-n="1"');
@@ -338,7 +338,8 @@ describe('las fotos en el editor', () => {
     expect(html).toContain('<span class="miniatura-n">#3</span></button>');
     // La foto 3 se anuncia como la 3, y la etiqueta dice que abre las acciones.
     expect(html).toContain('aria-label="Qué hacer con la foto 3"');
-    expect(html).toContain('Agregar foto');
+    expect(html).toContain('Cámara');
+    expect(html).toContain('Galería');
   });
 
   it('nada del formulario lo manda: ni los botones de la fila ni Enter en un campo', () => {

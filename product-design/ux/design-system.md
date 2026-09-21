@@ -289,7 +289,7 @@ carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chi
 | `calendario` | El tag *menú diario*. |
 | `tacho` | Las acciones destructivas: *Borrar receta* y *Descartar* un borrador. |
 | `cerrar` | La cruz: la del chip removible del editor, la que limpia la búsqueda y la que saca una foto del borrador. |
-| `camara` | *Agregar foto*, en la captura, en el borrador y en el editor de recetas (§6.25), y *Subir foto* al elegir la de una categoría (§6.4). |
+| `camara` | *Cámara*, en la fila de fotos de la captura, el borrador y el editor de recetas (§6.25), y *Subir foto* al elegir la de una categoría (§6.4). |
 | `imagen` | El botón que pone en una línea una foto que ya está en el depósito (§6.9b). Es una foto sacada y no la cámara: no agrega ninguna. |
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `zanahoria`, `listaNumerada` | Las dos posiciones del conmutador de cocina —*Ingredientes* y *Pasos*—, al lado de la palabra. |
@@ -685,6 +685,10 @@ campo: la escritura pasa por debajo y el botón se ve entero.
 
 **No es la cámara** (§3.4): pone una foto que ya está en el depósito, no agrega
 una nueva.
+
+**Sigue al campo por dentro:** desplazar el texto con el dedo lo mueve con su
+renglón, y si el renglón del cursor se fue de la vista el botón no se dibuja.
+**Tocarlo no mueve el foco**, para que el toque no se pierda en el camino.
 
 La altura sale de un **espejo** del campo: un calco invisible, con el mismo
 tipo, la misma interlínea y el mismo ancho de texto, al que se le escribe lo
@@ -1114,11 +1118,14 @@ sí, que bajan de renglón si no entran. Cada una es la foto recortada al cuadra
 esquina de arriba a la derecha: un círculo de 24 px de `--velo` al 75 % con el
 ícono `cerrar` de 14 px en `--fg`, que se lee sobre cualquier foto. En el
 borrador la × saca la foto; en el editor de recetas no va, porque *Sacar* es una
-de las acciones de la ficha (§6.26). Al final de la fila, **Agregar foto**: un
-botón secundario de 64 px de alto con el ícono `camara`, que en el borrador no
-se dibuja con cinco fotos y en el editor no tiene tope. **Una foto que ya no
-está en Drive** es el mismo cuadrado con borde punteado `--borde-fuerte` y
-*"La foto ya no está en Drive."* en *micro* `--fg-3`, centrado.
+de las acciones de la ficha (§6.26). Al final de la fila, dos botones
+secundarios de 64 px de alto: **Cámara**, con el ícono `camara`, que saca una
+foto por vez; y **Galería**, sin ícono, que abre el selector del sistema y
+acepta varias a la vez. Los dos bajan de renglón como cualquier miniatura si
+no entran, y ninguno se dibuja en el borrador con cinco fotos ni tienen tope
+en el editor. **Una foto que ya no está en Drive** es el mismo cuadrado con
+borde punteado `--borde-fuerte` y *"La foto ya no está en Drive."* en *micro*
+`--fg-3`, centrado.
 
 **El número del depósito** (§6.26) va en la esquina de abajo a la izquierda de
 la miniatura, adentro del botón: un badge de `--velo` al 75 %, `--r-chico`,

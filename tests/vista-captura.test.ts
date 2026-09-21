@@ -28,7 +28,8 @@ describe('Captura', () => {
   it('el título tiene el foco, y es opcional', () => {
     const html = renderCaptura(base);
     // Un input de texto —el título— más el textarea de la nota, que es
-    // opcional. El otro input es el de las fotos, que no se escribe.
+    // opcional. Los otros dos inputs son los de las fotos (Cámara y
+    // Galería), que no se escriben.
     expect(html.match(/<input(?! type="file")/g)).toHaveLength(1);
     expect(html).toContain('autofocus');
     expect(html).toContain('name="nota"');
@@ -117,22 +118,26 @@ describe('Captura', () => {
   });
 
   describe('las fotos', () => {
-    it('debajo de la nota, las miniaturas con su × y Agregar foto con la cámara', () => {
+    it('debajo de la nota, las miniaturas con su × y los dos botones para agregar (P50)', () => {
       const html = renderCaptura({ ...base, fotos: ['blob:1', 'blob:2'] });
       expect(html.indexOf('name="nota"')).toBeLessThan(html.indexOf('class="miniaturas"'));
       expect(html).toContain('<img src="blob:1"');
       expect(html).toContain('data-accion="sacar-foto-captura" data-valor="1"');
-      expect(html).toContain(`${ICO.camara}Agregar foto`);
+      expect(html).toContain(`${ICO.camara}Cámara`);
+      expect(html).toContain('Galería');
+      expect(html).toContain('<input type="file" accept="image/*" capture="environment" data-fotos hidden>');
       expect(html).toContain('<input type="file" accept="image/*" multiple data-fotos hidden>');
     });
 
     it('sin fotos, igual se ofrece agregar', () => {
-      expect(renderCaptura(base)).toContain('Agregar foto');
+      expect(renderCaptura(base)).toContain('Cámara');
+      expect(renderCaptura(base)).toContain('Galería');
     });
 
-    it('con cinco fotos, el botón no se dibuja', () => {
+    it('con cinco fotos, los botones no se dibujan', () => {
       const html = renderCaptura({ ...base, fotos: ['a', 'b', 'c', 'd', 'e'] });
-      expect(html).not.toContain('Agregar foto');
+      expect(html).not.toContain('Cámara');
+      expect(html).not.toContain('Galería');
       expect(html.match(/sacar-foto-captura/g)).toHaveLength(5);
     });
 
@@ -141,7 +146,8 @@ describe('Captura', () => {
     });
 
     it('editando un borrador no están: se manejan en la vista del borrador', () => {
-      expect(renderCaptura({ ...base, edicion: true })).not.toContain('Agregar foto');
+      expect(renderCaptura({ ...base, edicion: true })).not.toContain('Cámara');
+      expect(renderCaptura({ ...base, edicion: true })).not.toContain('Galería');
     });
 
     it('un aviso se muestra sin control', () => {

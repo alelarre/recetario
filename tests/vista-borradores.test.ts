@@ -166,11 +166,14 @@ describe('las fotos del borrador', () => {
     expect(html).not.toContain('data-accion="ver-foto" data-valor="f2"');
   });
 
-  it('Agregar foto al final mientras haya menos de cinco', () => {
+  it('Cámara y Galería al final mientras haya menos de cinco (P50)', () => {
     const html = renderBorrador({ borrador: conFotos, confirmando: false, fotos });
-    expect(html).toContain('Agregar foto');
+    expect(html).toContain('Cámara');
+    expect(html).toContain('Galería');
     const cinco = Array.from({ length: 5 }, (_, i) => ({ id: `f${i}`, url: `blob:${i}` }));
-    expect(renderBorrador({ borrador: conFotos, confirmando: false, fotos: cinco })).not.toContain('Agregar foto');
+    const llena = renderBorrador({ borrador: conFotos, confirmando: false, fotos: cinco });
+    expect(llena).not.toContain('Cámara');
+    expect(llena).not.toContain('Galería');
   });
 
   it('el visor muestra la foto sobre un velo y se cierra tocando cualquier lado', () => {
@@ -179,7 +182,9 @@ describe('las fotos del borrador', () => {
   });
 
   it('sin fotos, igual se ofrece agregar', () => {
-    expect(renderBorrador({ borrador: borradorFalso(), confirmando: false })).toContain('Agregar foto');
+    const html = renderBorrador({ borrador: borradorFalso(), confirmando: false });
+    expect(html).toContain('Cámara');
+    expect(html).toContain('Galería');
   });
 
   it('los ids se escapan', () => {

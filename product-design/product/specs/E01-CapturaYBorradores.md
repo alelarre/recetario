@@ -102,10 +102,11 @@ acompañaba al link, y es lo que después se reparte en la receta (C01.7.1).
 - [ ] Un borrador lleva **hasta 5 fotos**: una página de un libro, una receta
   escrita a mano, una captura de pantalla.
 - [ ] Se ven como una fila de miniaturas cuadradas, cada una con su ×, y al
-  final **Agregar foto**, con el ícono de la cámara: abre el selector del
-  sistema, que en el teléfono ofrece la cámara o la galería. Con 5 fotos, el
-  botón no se dibuja; si se eligen más de las que entran, se agregan las
-  primeras y se avisa.
+  final dos botones, **Cámara** y **Galería**: el primero lleva directo a
+  sacar una foto nueva, con una foto por vez; el segundo abre el selector del
+  sistema y acepta varias a la vez. Con 5 fotos, ninguno de los dos se
+  dibuja; si se eligen más de las que entran, se agregan las primeras y se
+  avisa.
 - [ ] **Antes de guardar, se achican**: el lado mayor a 1600 px, en JPEG. Viven
   en memoria hasta Guardar.
 - [ ] Editando un borrador, la pantalla no las muestra: se manejan en la vista
@@ -208,7 +209,7 @@ mano. La conversión desde la fuente ocurre afuera, en una sesión con Claude.
 #### C01.6.4 — Las fotos del borrador *(J3)*
 
 - [ ] Las miniaturas en una fila, en el orden de `fotos`, cada una con su ×, y
-  **Agregar foto** al final mientras haya menos de 5.
+  **Cámara** y **Galería** al final mientras haya menos de 5 (C01.2.4).
 - [ ] Tocar una miniatura abre el **visor**: la foto al ancho de la pantalla,
   sobre un velo. Se cierra tocando cualquier lado.
 - [ ] Agregar achica la foto, la sube al lado del `.md` y lo reescribe con la

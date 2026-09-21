@@ -316,7 +316,8 @@ Guardar.
 
 ```
 Editor → ficha Fotos
-  → Agregar foto            ⚑ cámara o galería, varias a la vez, sin tope
+  → Cámara o Galería        ⚑ la cámara saca una por vez; la galería, varias a
+                              la vez —las dos sin tope
   ▸ la foto se achica y espera en memoria, con su número
   → toco una miniatura
   ⚑ ¿qué hago con ella?

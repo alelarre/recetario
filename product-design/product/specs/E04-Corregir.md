@@ -157,7 +157,7 @@ ya achicadas y con su número asignado.
 #### C04.3d.1 — La ficha Fotos *(J7)*
 
 - [ ] La fila de miniaturas del depósito, en su orden, **cada una con su número** —`#3`—, que es con el que se la nombra en el texto.
-- [ ] **Agregar foto** al final, sin tope: abre el mismo selector del sistema que las fotos de un borrador —cámara o galería—, y acepta varias a la vez.
+- [ ] **Cámara** y **Galería** al final, sin tope, como en las fotos de un borrador (C01.2.4): la primera saca una foto nueva de a una, la segunda abre el selector del sistema y acepta varias a la vez.
 - [ ] Cada foto nueva toma el número más alto más uno; ninguno se reusa, ni siquiera el de una que se sacó.
 - [ ] Mientras se achica, el velo cubre la pantalla (R8): tarda, aunque no escriba nada en Drive.
 - [ ] Una foto que el navegador no puede decodificar —HEIC, un archivo roto— no se agrega, y el aviso lo dice: *«No se pudo leer una de las fotos.»*
@@ -174,7 +174,9 @@ ya achicadas y con su número asignado.
 
 - [ ] En un campo de contenido con el foco aparece **un botón sin texto, con el ícono de foto, a la altura de la línea donde está el cursor**, pegado al borde derecho del campo (`design-system.md` §6.9b).
 - [ ] **Con el depósito vacío el botón no se dibuja:** no hay foto que poner.
-- [ ] El botón se va cuando el foco pasa a otro control, y se acomoda solo a medida que el cursor cambia de línea.
+- [ ] El botón se va cuando el foco pasa a otro control, y se acomoda solo a medida que el cursor cambia de línea y a medida que el campo se desplaza por dentro.
+- [ ] **Si el renglón del cursor quedó fuera de lo que se ve del campo**, el botón no se dibuja; el renglón a medio entrar lo corre para que quede adentro.
+- [ ] **Tocar el botón no le saca el foco al campo:** el toque tiene que llegar al botón, y no perderse en el cambio de foco.
 - [ ] Tocarlo abre una ficha al pie con **la galería del depósito y nada más**: elegir una escribe `![](foto:N)` al final de esa línea y cierra la ficha. **Desde ahí no se agregan fotos**: agregar es la ficha *Fotos* (C04.3d.1).
 - [ ] En una línea vacía la referencia queda sola. Si la línea ya la tiene, no se repite.
 - [ ] La línea es la que tenía el cursor cuando apareció el botón, y el texto es el que está escrito en ese momento en el formulario, no el del `.md` guardado.

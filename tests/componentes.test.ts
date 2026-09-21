@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   tarjeta, placeholder, aviso, encabezado, chipsSueltos, chipTag, iconoDeTag, vacio, tile, carrusel, carruselTags,
-  filaDuraciones, conmutadorOrden, lateral
+  filaDuraciones, conmutadorOrden, lateral, filaDeFotos
 } from '../src/ui/componentes.js';
 import { entradaFalsa } from './dobles.js';
 import { registrarCategorias } from '../src/ui/categorias.js';
@@ -356,5 +356,29 @@ describe('la tarjeta con acción', () => {
     expect(html).toContain('<button class="tarjeta" type="button" data-accion="elegir-para-el-plan" data-id="f1"');
     expect(html).not.toContain('href=');
     expect(html.trimEnd().endsWith('</button>')).toBe(true);
+  });
+});
+
+describe('filaDeFotos: Cámara y Galería (P50)', () => {
+  it('con agregar, hay dos inputs de archivo: uno directo a la cámara y otro a la galería', () => {
+    const html = filaDeFotos({ fotos: [], agregar: true });
+    const inputs = html.match(/<input type="file"[^>]*>/g) ?? [];
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0]).toContain('capture="environment"');
+    expect(inputs[0]).not.toContain('multiple');
+    expect(inputs[1]).not.toContain('capture');
+    expect(inputs[1]).toContain('multiple');
+    // Los dos llegan al mismo manejador de `change` en `main.ts`.
+    expect(inputs[0]).toContain('data-fotos');
+    expect(inputs[1]).toContain('data-fotos');
+    expect(html).toContain('Cámara');
+    expect(html).toContain('Galería');
+  });
+
+  it('sin agregar, no hay ningún input', () => {
+    const html = filaDeFotos({ fotos: [], agregar: false });
+    expect(html).not.toContain('type="file"');
+    expect(html).not.toContain('Cámara');
+    expect(html).not.toContain('Galería');
   });
 });
