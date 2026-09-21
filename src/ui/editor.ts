@@ -87,21 +87,28 @@ const imagenDeFoto = (f: FotoDeReceta): string =>
   f.url ? imgDe(f.url) : `<img data-n="${f.n}" alt="">`;
 
 /**
- * La cabecera dejó de ser un campo de texto (spec §7): es la miniatura de lo
- * que hay hoy y abre el selector. El valor sigue viajando crudo en el
- * `hidden`, que es lo que se guarda: `foto:N` o la URL externa. Una `foto:N`
- * que no está en el depósito se lee como ausente, igual que cualquier otro
- * valor inválido.
+ * Lo que se ve adentro del botón de la cabecera: la foto del depósito, la URL
+ * pegada a mano, o «Sin foto». Una `foto:N` que no está en el depósito se lee
+ * como ausente, igual que cualquier otro valor inválido. Se exporta porque
+ * `main` la reemplaza al elegir otra portada, sin redibujar el formulario.
  */
-function campoPortada(foto: string | null, fotos: FotoDeReceta[]): string {
+export function muestraDePortada(foto: string | null, fotos: FotoDeReceta[]): string {
   const delDeposito = fotos.find(f => `foto:${f.n}` === foto);
   const url = resolver(foto, fotos);
-  const muestra = delDeposito ? imagenDeFoto(delDeposito)
+  return delDeposito ? imagenDeFoto(delDeposito)
     : url === null ? '<span class="portada-vacia">Sin foto</span>'
     : imgDe(url);
+}
+
+/**
+ * La cabecera dejó de ser un campo de texto (spec §7): es la miniatura de lo
+ * que hay hoy y abre el selector. El valor sigue viajando crudo en el
+ * `hidden`, que es lo que se guarda: `foto:N` o la URL externa.
+ */
+function campoPortada(foto: string | null, fotos: FotoDeReceta[]): string {
   return '<div class="campo" data-portada><span>Foto</span>' +
     `<button type="button" class="portada-boton" data-accion="abrir-portada" ` +
-      `aria-label="Elegir la foto de portada">${muestra}</button>` +
+      `aria-label="Elegir la foto de portada">${muestraDePortada(foto, fotos)}</button>` +
     `<input type="hidden" name="foto" value="${escapar(foto ?? '')}">` +
   '</div>';
 }
@@ -114,16 +121,22 @@ function campoPortada(foto: string | null, fotos: FotoDeReceta[]): string {
  * agregar, sacar o renumerar una cuenta como cambio sin guardar igual que
  * cualquier otro campo (C04.1.1), y `recetaDesdeFormulario` lo devuelve sin
  * tener que mirar a ningún lado más.
+ *
+ * `filaDeFotosEditor` va aparte porque `main` la redibuja sola —al agregar o
+ * sacar una foto— sin tocar el resto del formulario.
  */
+export const filaDeFotosEditor = (fotos: FotoDeReceta[]): string =>
+  filaDeFotos({
+    fotos: fotos.map(f => ({
+      url: f.url, n: f.n,
+      ver: { accion: 'acciones-foto', etiqueta: `Qué hacer con la foto ${f.n}` }
+    })),
+    agregar: true
+  });
+
 function fichaFotos(fotos: FotoDeReceta[]): string {
   return '<div class="ficha"><h2>Fotos</h2>' +
-    filaDeFotos({
-      fotos: fotos.map(f => ({
-        url: f.url, n: f.n,
-        ver: { accion: 'acciones-foto', etiqueta: `Qué hacer con la foto ${f.n}` }
-      })),
-      agregar: true
-    }) +
+    filaDeFotosEditor(fotos) +
     `<input type="hidden" name="fotos" value="${escapar(JSON.stringify(fotos))}">` +
   '</div>';
 }
@@ -395,7 +408,7 @@ const esFoto = (f: unknown): f is FotoDeReceta =>
  * el store manda esas fotos a la papelera de Drive (§8). Un JSON que no se
  * entiende no puede querer decir eso.
  */
-function fotosDesde(crudo: string, base: FotoDeReceta[]): FotoDeReceta[] {
+export function fotosDesde(crudo: string, base: FotoDeReceta[]): FotoDeReceta[] {
   try {
     const leido: unknown = JSON.parse(crudo);
     if (!Array.isArray(leido)) return base;

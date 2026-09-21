@@ -44,7 +44,7 @@ const storeFake = {
   categorias: () => [],
   receta: async (id: string) => ({
     entrada: { id_archivo: id, titulo: id },
-    receta: { titulo: id, ingredientes: 'a', preparacion: 'b', notas: 'c' }
+    receta: { titulo: id, ingredientes: 'a', preparacion: 'b', notas: 'c', fotos: [] }
   }),
   buscar: () => [],
   tagsDe: () => [],

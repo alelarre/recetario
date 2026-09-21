@@ -11,7 +11,8 @@ import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 import { entradaFalsa } from './dobles.js';
 import { parse } from '../src/recipe.js';
 import { DURACIONES } from '../src/catalogo.js';
-import type { Coincidencias, Plan } from '../src/tipos.js';
+import { linkDeFoto } from '../src/fotos-receta.js';
+import type { CambiosDeFotos, Coincidencias, Plan } from '../src/tipos.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
 vi.mock('../src/ui/base.css', () => ({}));
@@ -98,6 +99,16 @@ const estadoInicial = () => ({
   reemplazadas: 0,
   /** Lo que se guardó desde la gestión de categorías, en orden. */
   categoriasGuardadas: [] as string[],
+  /** La foto propia que llegó con cada categoría guardada, o `null`. */
+  fotosDeCategoria: [] as (Blob | null)[],
+  /** Los `CambiosDeFotos` que llegaron a `crear` y a `guardar`, en orden. */
+  cambiosDeFotos: [] as (CambiosDeFotos | null)[],
+  /** Las recetas escritas, con su depósito: lo que quedaría en el `.md`. */
+  depositos: [] as { n: number; url: string }[][],
+  /** Las fotos que cada descarte de borrador conservó. */
+  conservadas: [] as string[][],
+  /** Los ids que se pidieron precargar, por tanda. */
+  precargados: [] as string[][],
   /** Los ids de las categorías borradas. */
   categoriasBorradas: [] as string[],
   /** Los tags con los que se guardó cada vez que se tocó la estrella, en orden. */
@@ -133,8 +144,15 @@ const storeFake = {
   prepararCarpeta: async (c: { id: string }) => { estado.preparadas.push(c.id); return { ignorados: [] }; },
   marcarReemplazada: async () => { estado.reemplazadas++; },
   recetasDe: (id: string) => id === 'c1' ? [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', carpeta_id: 'c1' })] : [],
-  crearCategoria: async (d: { nombre: string }) => { estado.categoriasGuardadas.push(`nueva:${d.nombre}`); return { id: 'c9', nombre: d.nombre, color: '', foto: '' }; },
-  editarCategoria: async (id: string, d: { nombre: string }) => { estado.categoriasGuardadas.push(`${id}:${d.nombre}`); },
+  crearCategoria: async (d: { nombre: string; fotoPropia?: Blob }) => {
+    estado.categoriasGuardadas.push(`nueva:${d.nombre}`);
+    estado.fotosDeCategoria.push(d.fotoPropia ?? null);
+    return { id: 'c9', nombre: d.nombre, color: '', foto: '' };
+  },
+  editarCategoria: async (id: string, d: { nombre: string; fotoPropia?: Blob }) => {
+    estado.categoriasGuardadas.push(`${id}:${d.nombre}`);
+    estado.fotosDeCategoria.push(d.fotoPropia ?? null);
+  },
   borrarCategoria: async (id: string) => { estado.categoriasBorradas.push(id); },
   cargarIndice: async () => [],
   guardarMeta: async () => {},
@@ -145,13 +163,24 @@ const storeFake = {
   buscar: () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })],
   buscarPorTexto: (): Coincidencias => ({ porNombre: [], porIngrediente: [], porTag: [] }),
   tagsDe: () => estado.tags,
-  crear: async (receta: { titulo: string | null }) => {
+  crear: async (
+    receta: { titulo: string | null; fotos?: { n: number; url: string }[] },
+    opciones?: { fotos?: CambiosDeFotos }
+  ) => {
     estado.creadas.push(receta.titulo ?? '');
+    estado.cambiosDeFotos.push(opciones?.fotos ?? null);
+    estado.depositos.push(receta.fotos ?? []);
     return { id: `nuevo-${estado.creadas.length}`, nombre_archivo: 'receta.md' };
   },
-  guardar: async (_id: string, receta: { tags: string[] }) => {
+  guardar: async (
+    _id: string,
+    receta: { tags: string[]; fotos?: { n: number; url: string }[] },
+    opciones?: { fotos?: CambiosDeFotos }
+  ) => {
     if (estado.fallaGuardar > 0) { estado.fallaGuardar--; throw new Error('red'); }
     estado.guardados.push({ tags: receta.tags });
+    estado.cambiosDeFotos.push(opciones?.fotos ?? null);
+    estado.depositos.push(receta.fotos ?? []);
   },
   receta: async (id: string) => {
     estado.lecturas++;
@@ -189,9 +218,10 @@ const storeFake = {
     return { ...b, fotos: b.fotos };
   },
   editarBorrador: async () => {},
-  descartarBorrador: async (id: string) => {
+  descartarBorrador: async (id: string, opciones?: { conservar?: readonly string[] }) => {
     if (estado.fallasAlDescartar > 0) { estado.fallasAlDescartar--; throw new Error('red'); }
     estado.descartados.push(id);
+    estado.conservadas.push([...(opciones?.conservar ?? [])]);
   },
   plan: async () => { estado.lecturasPlan++; return estado.plan; },
   guardarPlan: async (p: Plan) => {
@@ -217,6 +247,9 @@ vi.mock('../src/imagenes.js', () => ({
     urlDeImagen: async (id: string) => estado.fotosPerdidas.includes(id) ? null : `blob:${id}`,
     urlDeBlob: (b: Blob) => `blob:memoria-${b.size}`,
     soltarImagenes: () => {},
+    guardarImagen: async () => {},
+    olvidarImagen: async () => {},
+    precargar: async (ids: string[]) => { estado.precargados.push(ids); },
     fotosCompartidas: async (n: number) => estado.compartidas.slice(0, n),
     descartarCompartidas: async () => { estado.compartidasDescartadas++; },
     borrarImagenes: async () => { estado.imagenesBorradas++; }
@@ -231,6 +264,26 @@ vi.mock('../src/indice-local.js', () => ({
 const esperar = async (vueltas = 5) => {
   for (let i = 0; i < vueltas; i++) await new Promise(r => setTimeout(r, 0));
 };
+
+/**
+ * Un `<img>` de los que `main` completa después de pintar: los de Drive
+ * (`data-drive`) y los de una foto nueva del editor (`data-n`). El test los
+ * pone en la lista y después mira qué les pasó.
+ */
+function imgFalsa(dataset: { drive?: string; n?: string }, enGrilla = false) {
+  const img = {
+    dataset,
+    atributos: {} as Record<string, string>,
+    /** Lo que quedó en su lugar cuando la foto ya no está en Drive. */
+    reemplazo: '',
+    sacada: false,
+    setAttribute: (n: string, v: string) => { img.atributos[n] = v; },
+    closest: (sel: string) => (enGrilla && sel.includes('galeria-item') ? {} : null),
+    remove: () => { img.sacada = true; },
+    set outerHTML(html: string) { img.reemplazo = html; }
+  };
+  return img;
+}
 
 describe('main.ts: las rutas', () => {
   afterEach(() => {
@@ -264,11 +317,36 @@ describe('main.ts: las rutas', () => {
     };
     /** El velo de la escritura en curso, hermano de `#app` en `index.html`. */
     const velo = { hidden: true };
-    /** Lo que se insertó arriba del formulario sin redibujarlo. */
+    /** Lo que se insertó en el formulario sin redibujarlo: las preguntas y las fichas de fotos. */
     const preguntas: string[] = [];
+    /**
+     * Cualquier campo del formulario. Lo que el test dejó escrito en
+     * `estado.formulario` es lo que el campo tiene, y lo que `main` le escriba
+     * queda ahí: es el mismo lugar del que sale el `FormData` al guardar.
+     */
+    const campo = (nombre: string) => ({
+      get value() { return estado.formulario[nombre] ?? ''; },
+      set value(v: string) { estado.formulario[nombre] = v; }
+    });
     const formulario = {
-      insertAdjacentHTML: (_donde: string, html: string) => { preguntas.push(html); }
+      dataset: { otros: '[]' },
+      insertAdjacentHTML: (_donde: string, html: string) => { preguntas.push(html); },
+      querySelector: (sel: string) => {
+        const nombre = sel.match(/^\[name="([\w-]+)"\]$/)?.[1];
+        return nombre ? campo(nombre) : null;
+      }
     };
+    /** Saca del formulario lo que se había insertado: la ficha, el velo o el visor. */
+    const quitarInsertado = (marca: string) =>
+      preguntas.flatMap(html => html.includes(marca)
+        ? [{ remove: () => { const i = preguntas.indexOf(html); if (i >= 0) preguntas.splice(i, 1); } }]
+        : []);
+    /** Los `<img>` que la pantalla dejó pedidos; los pone el test. */
+    const imgs: ReturnType<typeof imgFalsa>[] = [];
+    /** Cada vez que `main` redibujó la fila de miniaturas del editor. */
+    const filasDeFotos: string[] = [];
+    /** Cada vez que `main` cambió la miniatura del campo Foto. */
+    const portadas: string[] = [];
     const listeners: Record<string, () => void> = {};
     const listenersDoc: Record<string, () => void> = {};
     /** Lo que se puso en lugar de un elemento, con `outerHTML`, sin redibujar. */
@@ -332,6 +410,15 @@ describe('main.ts: las rutas', () => {
           };
         }
         if (sel === '#app input[name="tiempo"]') return campoTiempoDuracion;
+        // El editor y la edición de una categoría escriben en sus campos sin
+        // redibujar: el depósito de fotos, la portada, las secciones de texto.
+        const nombre = sel.match(/^#app (?:input)?\[name="([\w-]+)"\]$/)?.[1];
+        if (nombre) return campo(nombre);
+        if (sel === '#app [data-url-portada]') return campo('url-portada');
+        if (sel === '#app .miniaturas') return { set outerHTML(html: string) { filasDeFotos.push(html); } };
+        if (sel === '#app .portada-boton') return { set innerHTML(html: string) { portadas.push(html); } };
+        if (sel === '#app .visor') return quitarInsertado('class="visor"')[0] ?? null;
+        if (sel === '#app [data-aviso-fotos]') return quitarInsertado('data-aviso-fotos')[0] ?? null;
         // El bloque de la pantalla de agregar al plan: se redibuja solo, para
         // no perder el foco del teclado.
         if (sel === '[data-resultados-plan]') {
@@ -342,8 +429,15 @@ describe('main.ts: las rutas', () => {
         if (sel === '#app .spin') return app.innerHTML.includes('class="spin"') ? {} : null;
         return null;
       },
-      querySelectorAll: (sel: string) =>
-        sel === '#app [data-accion="elegir-duracion"]' ? [...botonesDuracion.values()] : [],
+      querySelectorAll: (sel: string) => {
+        if (sel === '#app [data-accion="elegir-duracion"]') return [...botonesDuracion.values()];
+        // Las imágenes que la pantalla dejó pedidas, cada una por su marca.
+        if (sel.includes('img[data-drive]')) return imgs.filter(i => i.dataset.drive && !i.atributos['src']);
+        if (sel.includes('img[data-n]')) return imgs.filter(i => i.dataset.n && !i.atributos['src']);
+        // Las fichas de fotos del editor y su velo, que se sacan del DOM.
+        if (sel.includes('data-acciones-foto')) return quitarInsertado('hoja-foto');
+        return [];
+      },
       addEventListener: (ev: string, fn: () => void) => { listenersDoc[ev] = fn; },
       visibilityState: 'visible',
       readyState
@@ -416,10 +510,33 @@ describe('main.ts: las rutas', () => {
         for (const fn of cambios) await fn({ target: campo });
         await esperar();
       },
+      imgs,
+      filasDeFotos,
+      portadas,
       /** El selector de *Agregar foto* devuelve estos archivos. */
       elegirFotos: async (archivos: Blob[]) => {
         for (const fn of cambios) await fn({ target: { dataset: { fotos: '' }, files: archivos } });
         await esperar(20);
+      },
+      /** *Subir foto* en la edición de una categoría: un archivo. */
+      elegirFotoDeCategoria: async (archivo: Blob) => {
+        for (const fn of cambios) await fn({ target: { dataset: { fotoPropia: '' }, files: [archivo] } });
+        await esperar(20);
+      },
+      /**
+       * Un toque sobre una foto en línea del texto: no lleva `data-accion`, así
+       * que llega a la delegación como el `<span class="foto-linea">` que la envuelve.
+       */
+      tocarFotoEnLinea: async (datos: { drive?: string; src?: string }) => {
+        const img = {
+          dataset: datos.drive === undefined ? {} : { drive: datos.drive },
+          getAttribute: (n: string) => (n === 'src' ? datos.src ?? null : null)
+        };
+        const linea = { querySelector: () => img };
+        for (const fn of clicks) {
+          await fn({ target: { closest: (sel: string) => (sel.includes('foto-linea') ? linea : null) } });
+        }
+        await esperar();
       },
       /** Un click en un control con esta acción, como lo entrega la delegación. */
       tocar: async (accion: string, datos: Record<string, string> = {}, atributos: Record<string, string> = {}) => {
@@ -2481,6 +2598,268 @@ describe('main.ts: las rutas', () => {
       } finally {
         storeFake.receta = original;
       }
+    });
+  });
+
+  describe('las fotos de la receta (spec §6 a §9)', () => {
+    const EXTERNA = 'https://ejemplo/2.jpg';
+    const foto = (texto: string): Blob => new Blob([texto], { type: 'image/jpeg' });
+    /** El depósito tal como lo deja `renderEditor` en su campo oculto. */
+    const deposito = (fotos: { n: number; url: string }[]): string => JSON.stringify(fotos);
+    const MD_CON_FOTOS = [
+      '---', 'titulo: Milanesas', 'foto: foto:1', '---', '',
+      '## Preparación', '', '1. Freír. ![](foto:2)', '',
+      '## Fotos', '', `- 1: ${linkDeFoto('f9')}`, `- 2: ${EXTERNA}`, ''
+    ].join('\n');
+    /** Lo que el formulario del editor tiene escrito al abrir ese `.md`. */
+    const formularioConFotos = () => ({
+      titulo: 'Milanesas', carpeta: 'c1', foto: 'foto:1',
+      preparacion: '1. Freír. ![](foto:2)',
+      fotos: deposito([{ n: 1, url: linkDeFoto('f9') }, { n: 2, url: EXTERNA }])
+    });
+
+    it('el editor abre con el depósito del `.md` en su campo oculto', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, app } = await montar();
+      await abrir('#/r/f1/editar');
+      expect(app.innerHTML).toContain('<h2>Fotos</h2>');
+      expect(app.innerHTML).toContain('name="fotos"');
+      expect(app.innerHTML).toContain(`&quot;n&quot;:2,&quot;url&quot;:&quot;${EXTERNA}&quot;`);
+    });
+
+    it('agregar una foto la suma al depósito con el número siguiente y redibuja la fila', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, elegirFotos, filasDeFotos } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await elegirFotos([foto('a')]);
+
+      expect(JSON.parse(estado.formulario['fotos'] ?? '')).toEqual([
+        { n: 1, url: linkDeFoto('f9') }, { n: 2, url: EXTERNA }, { n: 3, url: '' }
+      ]);
+      expect(filasDeFotos.at(-1)).toContain('data-n="3"');
+    });
+
+    it('guardar manda las fotos nuevas y las sacadas', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, tocar, elegirFotos } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await elegirFotos([foto('nueva')]);
+      await tocar('sacar-foto-editor', { n: '2' });
+      await tocar('guardar');
+
+      const cambios = estado.cambiosDeFotos.at(-1);
+      expect([...(cambios?.nuevas.keys() ?? [])]).toEqual([3]);
+      expect(await (cambios?.nuevas.get(3) as Blob).text()).toBe('nueva');
+      expect(cambios?.sacadas).toEqual([EXTERNA]);
+      expect(cambios?.deBorrador).toEqual([]);
+      // Sacarla también borró su referencia del texto.
+      expect(estado.formulario['preparacion']).toBe('1. Freír.');
+    });
+
+    it('sacar la foto de portada deja la cabecera vacía', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, tocar, portadas } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await tocar('sacar-foto-editor', { n: '1' });
+
+      expect(estado.formulario['foto']).toBe('');
+      expect(JSON.parse(estado.formulario['fotos'] ?? '')).toEqual([{ n: 2, url: EXTERNA }]);
+      expect(portadas.at(-1)).toContain('Sin foto');
+    });
+
+    it('elegir una foto de portada la escribe como `foto:N`', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, tocar, preguntas, portadas } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await tocar('abrir-portada');
+      expect(preguntas.at(-1)).toContain('data-selector-portada');
+
+      await tocar('elegir-portada', { n: '2' });
+      expect(estado.formulario['foto']).toBe('foto:2');
+      expect(portadas.at(-1)).toContain(EXTERNA);
+      // Elegir cierra la ficha.
+      expect(preguntas.some(h => h.includes('data-selector-portada'))).toBe(false);
+    });
+
+    it('*Poner en…* ofrece los lugares de lo que está escrito y escribe la referencia', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, tocar, preguntas } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = { ...formularioConFotos(), preparacion: 'Freír.\nServir.' };
+
+      await tocar('abrir-poner-en', { n: '2' });
+      expect(preguntas.at(-1)).toContain('data-poner-en');
+      expect(preguntas.at(-1)).toContain('Servir.');
+
+      await tocar('poner-en', { seccion: 'preparacion', linea: '1', n: '2' });
+
+      expect(estado.formulario['preparacion']).toBe('Freír.\nServir. ![](foto:2)');
+      expect(preguntas.some(h => h.includes('data-poner-en'))).toBe(false);
+    });
+
+    it('el velo cierra la ficha de acciones sin tocar el formulario', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, tocar, preguntas } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await tocar('acciones-foto', { n: '1' });
+      expect(preguntas.at(-1)).toContain('data-acciones-foto');
+      // La 1 es la portada: esa acción no se ofrece.
+      expect(preguntas.at(-1)).not.toContain('elegir-portada');
+
+      await tocar('cerrar-ficha-foto');
+      expect(preguntas.some(h => h.includes('data-acciones-foto'))).toBe(false);
+      expect(estado.formulario).toEqual(formularioConFotos());
+    });
+
+    it('al reintentar, la foto que ya se subió va por su link y no se vuelve a subir', async () => {
+      const original = storeFake.guardar;
+      let intentos = 0;
+      storeFake.guardar = async (
+        id: string,
+        receta: { tags: string[]; fotos?: { n: number; url: string }[] },
+        opciones?: { fotos?: CambiosDeFotos }
+      ) => {
+        if (intentos++ === 0) {
+          opciones?.fotos?.alSubir?.(1, 'subida-1');
+          throw new Error('red');
+        }
+        return original(id, receta, opciones);
+      };
+      try {
+        const { abrir, app, tocar, elegirFotos } = await montar();
+        await abrir('#/r/f1/editar');
+        estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', fotos: deposito([]) };
+        await elegirFotos([foto('a')]);
+
+        await tocar('guardar');
+        expect(app.innerHTML).toContain('No se pudo guardar.');
+
+        await tocar('guardar');
+        expect(estado.cambiosDeFotos.at(-1)?.nuevas.size).toBe(0);
+        expect(estado.depositos.at(-1)).toEqual([{ n: 1, url: linkDeFoto('subida-1') }]);
+      } finally {
+        storeFake.guardar = original;
+      }
+    });
+
+    it('el editor de un borrador abre con sus fotos, y convertir mueve las que quedaron', async () => {
+      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: ['fa', 'fb'] }];
+      const { abrir, app, tocar } = await montar();
+      await abrir('#/nueva?borrador=b1');
+      expect(app.innerHTML).toContain(linkDeFoto('fa'));
+      estado.formulario = {
+        titulo: 'Tarta', carpeta: 'c1',
+        fotos: deposito([{ n: 1, url: linkDeFoto('fa') }, { n: 2, url: linkDeFoto('fb') }])
+      };
+
+      await tocar('sacar-foto-editor', { n: '2' });
+      await tocar('guardar');
+
+      expect(estado.cambiosDeFotos.at(-1)?.deBorrador).toEqual(['fa']);
+      expect(estado.conservadas.at(-1)).toEqual(['fa']);
+    });
+
+    it('el visor abre en la foto tocada, desliza y se cierra tocando', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, app, tocar } = await montar();
+      await abrir('#/r/f1');
+
+      await tocar('ver-foto-receta', { n: '2' });
+      expect(app.innerHTML).toContain('class="visor"');
+      expect(app.innerHTML).toContain('data-i="1"');
+      expect(app.innerHTML).toContain('data-total="2"');
+
+      await tocar('cerrar-visor');
+      expect(app.innerHTML).not.toContain('class="visor"');
+    });
+
+    it('tocar una foto en línea del texto abre el visor en esa foto', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, app, tocarFotoEnLinea } = await montar();
+      await abrir('#/r/f1');
+
+      await tocarFotoEnLinea({ src: EXTERNA });
+
+      expect(app.innerHTML).toContain('class="visor"');
+      expect(app.innerHTML).toContain('data-i="1"');
+    });
+
+    it('una foto en línea que no está en el depósito se abre sola', async () => {
+      estado.md = '---\ntitulo: Milanesas\n---\n\n## Notas\n\n![](https://ejemplo/suelta.jpg)\n';
+      const { abrir, app, tocarFotoEnLinea } = await montar();
+      await abrir('#/r/f1');
+
+      await tocarFotoEnLinea({ src: 'https://ejemplo/suelta.jpg' });
+
+      expect(app.innerHTML).toContain('data-i="0"');
+      expect(app.innerHTML).toContain('data-total="1"');
+    });
+
+    it('las imágenes de Drive se completan al llegar; la que no está deja el recuadro', async () => {
+      estado.md = MD_CON_FOTOS;
+      estado.fotosPerdidas = ['f8', 'f7'];
+      const { abrir, imgs } = await montar();
+      imgs.push(imgFalsa({ drive: 'f9' }), imgFalsa({ drive: 'f8' }, true), imgFalsa({ drive: 'f7' }));
+
+      await abrir('#/r/f1');
+
+      expect(imgs[0]?.atributos['src']).toBe('blob:f9');
+      expect(imgs[1]?.reemplazo).toContain('La foto ya no está en Drive.');
+      expect(imgs[2]?.sacada).toBe(true);
+    });
+
+    it('dibujado el home se precargan las fotos del índice y de las categorías', async () => {
+      const original = storeFake.entradas;
+      storeFake.entradas = () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', foto: linkDeFoto('f9') })];
+      const conFoto = storeFake.categorias;
+      storeFake.categorias = () => [{ id: 'c1', nombre: 'Carnes', color: 'carnes', foto: 'drive:cf1' }];
+      try {
+        const { abrir } = await montar();
+        await abrir('#/');
+        expect(estado.precargados[0]).toEqual(['f9', 'cf1']);
+      } finally {
+        storeFake.entradas = original;
+        storeFake.categorias = conFoto;
+      }
+    });
+
+    it('al abrir una receta se precarga su depósito entero', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir } = await montar();
+      await abrir('#/r/f1');
+      expect(estado.precargados.at(-1)).toEqual(['f9']);
+    });
+
+    it('en una categoría, la foto subida se ve en la muestra y se manda al guardar', async () => {
+      const { abrir, tocar, elegirFotoDeCategoria } = await montar();
+      await abrir('#/categorias/c1');
+      estado.formulario = { nombre: 'Carnes', color: 'carnes', foto: 'catalogo:carnes' };
+
+      await elegirFotoDeCategoria(foto('propia'));
+      expect(estado.formulario['foto']).toMatch(/^propia:blob:/);
+
+      await tocar('guardar-categoria');
+      expect(await (estado.fotosDeCategoria.at(-1) as Blob).text()).toBe('propia');
+    });
+
+    it('sin foto nueva, guardar la categoría no manda ninguna', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/categorias/c1');
+      estado.formulario = { nombre: 'Carnes', color: 'otros', foto: 'catalogo:carnes' };
+
+      await tocar('guardar-categoria');
+
+      expect(estado.fotosDeCategoria.at(-1)).toBe(null);
     });
   });
 

@@ -7,6 +7,7 @@
  */
 import { escapar, imgDe } from './markdown.js';
 import { encabezado, aviso } from './componentes.js';
+import { ICO } from './iconos.js';
 import { colorDeClave, urlDeFoto, fotosDelCatalogo } from './categorias.js';
 import { CLAVES_COLOR } from '../categorias.js';
 import type { Categoria } from '../tipos.js';
@@ -50,6 +51,16 @@ export function renderListaCategorias({ categorias }: { categorias: { categoria:
     `<div class="cuerpo denso"><div class="lista">${filas}</div></div>`;
 }
 
+/**
+ * *Subir foto*, primero entre las muestras (spec §7): el mismo selector del
+ * sistema que las fotos de una receta, de a una. El `input` va adentro del
+ * `label`, así se abre sin script; el `Blob` achicado vive en `main` hasta que
+ * se guarda la categoría.
+ */
+const subirFoto =
+  '<label class="muestra-foto subir" aria-label="Subir una foto">' +
+  `${ICO.camara}<input type="file" accept="image/*" data-foto-propia hidden></label>`;
+
 export const botonBorrarCategoria =
   '<button class="btn pel" type="button" data-accion="borrar-categoria">Borrar categoría</button>';
 
@@ -87,12 +98,20 @@ export function renderEdicionCategoria(
     `aria-pressed="${clave === valores.color}" style="background:${colorDeClave(clave)}" aria-label="${clave}"></button>`
   ).join('');
 
-  const fotos = ['', ...fotosDelCatalogo().map(f => `catalogo:${f}`)].map(foto => {
+  const delCatalogo = ['', ...fotosDelCatalogo().map(f => `catalogo:${f}`)].map(foto => {
     const imagen = urlDeFoto(foto);
     return `<button type="button" class="muestra-foto${imagen ? '' : ' trama'}" data-accion="elegir-foto" data-valor="${escapar(foto)}" ` +
       `aria-pressed="${foto === valores.foto}"${imagen ? ` style="background-image:url(${imagen})"` : ''} ` +
       `aria-label="${foto ? escapar(foto.slice('catalogo:'.length)) : 'sin foto'}"></button>`;
   }).join('');
+  // La foto propia de la categoría se elige de nuevo como cualquiera del
+  // catálogo (spec §7). Va con `imgDe` y no con `background-image`: la de
+  // Drive se pide con el token, y una URL suelta no la mostraría nunca.
+  const propia = valores.foto.startsWith('drive:') || valores.foto.startsWith('propia:')
+    ? `<button type="button" class="muestra-foto" data-accion="elegir-foto" data-valor="${escapar(valores.foto)}" ` +
+      `aria-pressed="true" aria-label="la foto subida">${imgDe(urlDeFoto(valores.foto) ?? '')}</button>`
+    : '';
+  const fotos = subirFoto + propia + delCatalogo;
 
   return encabezado({
     titulo: categoria ? categoria.nombre : 'Nueva categoría', volver: true,

@@ -355,6 +355,13 @@ export interface Miniatura {
   n?: number;
 }
 
+/**
+ * El recuadro de una foto de Drive que ya no está (spec §6). Lo dibuja la fila
+ * de miniaturas, y `main` lo pone en lugar de una imagen de una grilla cuando
+ * Drive contesta que el archivo no existe.
+ */
+export const FOTO_AUSENTE = '<span class="miniatura-vacia">La foto ya no está en Drive.</span>';
+
 /** `data-accion`, y el valor o el número con los que viaja. */
 const datosDeAccion = (a: AccionDeMiniatura, n: number | undefined): string =>
   ` data-accion="${escapar(a.accion)}"` +
@@ -373,7 +380,7 @@ export function filaDeFotos({ fotos, agregar }: { fotos: Miniatura[]; agregar: b
     // la receta—; sin depósito, por su posición en la fila.
     const cual = f.n ?? i + 1;
     const imagen = f.url === null
-      ? '<span class="miniatura-vacia">La foto ya no está en Drive.</span>'
+      ? FOTO_AUSENTE
       // Sin URL, el `<img>` queda vacío y marcado con su número: recién
       // subida no hay nada que pedirle a Drive todavía.
       : f.url === '' ? `<img data-n="${f.n}" alt="Foto ${cual}">` : imgDe(f.url);

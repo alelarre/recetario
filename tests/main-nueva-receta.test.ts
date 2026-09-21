@@ -51,6 +51,8 @@ describe('main.ts: navegar a "nueva receta"', () => {
     const listeners: Record<string, () => void> = {};
     global.document = comoGlobal<Document>({
       querySelector: (sel: string) => (sel === '#app' ? app : null),
+      // Después de cada `pintar`, `main` busca las fotos que quedaron pedidas.
+      querySelectorAll: () => [],
       addEventListener: () => {}
     });
     global.window = comoGlobal<Window & typeof globalThis>({

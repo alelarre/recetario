@@ -14,7 +14,10 @@ import { renderTag } from './ui/tag.js';
 import { renderResultados } from './ui/resultados.js';
 import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
-import { renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado } from './ui/editor.js';
+import {
+  renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado,
+  renderAccionesFoto, renderPonerEn, renderSelectorPortada, filaDeFotosEditor, muestraDePortada, fotosDesde
+} from './ui/editor.js';
 import { renderBorradores, renderBorrador, renderPreguntaBorrador } from './ui/borradores.js';
 import { renderPlan } from './ui/plan.js';
 import { renderPlanAgregar, bloqueDeAgregar } from './ui/plan-agregar.js';
@@ -34,8 +37,12 @@ import { elegirCarpeta } from './picker.js';
 import { API_KEY, NOMBRE_RAIZ } from './config.js';
 import { puedeEmpezar, direccion, progreso, seAbre } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
-import { aviso, SIN_SESION } from './ui/componentes.js';
-import { pintar, conClosest } from './ui/pintar.js';
+import { aviso, SIN_SESION, FOTO_AUSENTE } from './ui/componentes.js';
+import { pintar as pintarEnPantalla, conClosest } from './ui/pintar.js';
+import { renderVisor, pasoDelVisor } from './ui/visor.js';
+import {
+  linkDeFoto, idDeDrive, resolverReceta, siguienteNumero, lineasDeLaReceta, ponerEn, sacarReferencias
+} from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
 import { registrarCategorias } from './ui/categorias.js';
 import { convertirBorrador } from './compartido.js';
@@ -51,8 +58,9 @@ import { desdeCompartido, tituloPorDefecto, sePuedeGuardar, MAXIMO_FOTOS } from 
 import { achicar } from './fotos.js';
 import { crearImagenes } from './imagenes.js';
 import type { DatosFormulario } from './ui/editor.js';
+import type { EstadoVisor } from './ui/visor.js';
 import type { ResultadoArranque, Progreso } from './store.js';
-import type { Borrador, Entrada, Momento, Plan, Receta } from './tipos.js';
+import type { Borrador, CambiosDeFotos, Entrada, FotoDeReceta, Momento, Plan, Receta } from './tipos.js';
 
 type Store = ReturnType<typeof crearStore>;
 
@@ -63,6 +71,41 @@ const drive = crearDrive(() => auth.token());
 const sheets = crearSheets(() => auth.token());
 /** Las fotos de Drive, pedidas con el token y guardadas en Cache Storage. */
 const imagenes = crearImagenes({ leerBlob: id => drive.leerBlob(id) });
+
+/**
+ * Dibuja la pantalla y completa las fotos que quedaron pedidas.
+ *
+ * Nada espera a una imagen para dibujarse (spec §6): una foto de Drive sale
+ * como `<img data-drive>` sin `src` —un recuadro del mismo tamaño— y una foto
+ * nueva del editor como `<img data-n>`, y acá se les pone el `src` cuando el
+ * blob está. Envuelve a `pintar` en vez de repetirse en cada pantalla: son
+ * treinta llamadas y ninguna tiene que acordarse.
+ */
+const pintar = (html: string): void => {
+  pintarEnPantalla(html);
+  void completarFotos();
+};
+
+/**
+ * Las fotos que la pantalla dejó pedidas. Las del editor salen del blob que
+ * está en memoria; las de Drive, del caché o de la red. Una de Drive que ya no
+ * está pasa al recuadro de aviso si es de una grilla, y no se dibuja en
+ * ningún otro lado (spec §6).
+ */
+async function completarFotos(): Promise<void> {
+  for (const img of document.querySelectorAll<HTMLElement>('#app img[data-n]:not([src])')) {
+    const url = fotosEditor.urls.get(Number(img.dataset['n']));
+    if (url) img.setAttribute('src', url);
+  }
+  for (const img of document.querySelectorAll<HTMLElement>('#app img[data-drive]:not([src])')) {
+    const id = img.dataset['drive'];
+    if (!id) continue;
+    const url = await imagenes.urlDeImagen(id).catch(err => { console.error(err); return null; });
+    if (url) img.setAttribute('src', url);
+    else if (img.closest('.galeria-item, .miniatura')) img.outerHTML = FOTO_AUSENTE;
+    else img.remove();
+  }
+}
 
 let store: Store;
 /**
@@ -247,6 +290,10 @@ async function recetaDePantalla(id: string): Promise<{ entrada: Entrada | null; 
   if (recetaLeida?.id !== id) {
     const { entrada, receta } = await store.receta(id);
     recetaLeida = { id, entrada, receta };
+    // El depósito entero, no sólo lo que está a la vista: así el visor
+    // desliza sin esperar (spec §6).
+    const ids = idsDeDrive(receta.fotos.map(f => f.url));
+    if (ids.length) void imagenes.precargar(ids);
   }
   return recetaLeida;
 }
@@ -255,6 +302,28 @@ async function recetaDePantalla(id: string): Promise<{ entrada: Entrada | null; 
 async function planDePantalla(): Promise<Plan> {
   if (!planLeido) planLeido = await store.plan();
   return planLeido;
+}
+
+/** Los ids de Drive de estas URLs; las externas quedan afuera. */
+const idsDeDrive = (urls: readonly string[]): string[] =>
+  urls.flatMap(url => { const id = idDeDrive(url); return id ? [id] : []; });
+
+/** Ya se precargaron las fotos del home: es una sola vez por sesión. */
+let precargado = false;
+
+/**
+ * Dibujado el home, en segundo plano: las cabeceras de Drive del índice y las
+ * fotos propias de las categorías (spec §6). Lo que ya está en el caché no se
+ * vuelve a pedir, y con `saveData` no se pide nada.
+ */
+function precargarElHome(): void {
+  if (precargado) return;
+  precargado = true;
+  const deLasRecetas = idsDeDrive(store.entradas().map(e => e.foto));
+  const deLasCategorias = store.categorias()
+    .flatMap(c => c.foto.startsWith('drive:') ? [c.foto.slice('drive:'.length)] : []);
+  const ids = [...deLasRecetas, ...deLasCategorias];
+  if (ids.length) void imagenes.precargar(ids);
 }
 
 /** Las recetas con el tag `menú diario`: lo que la pantalla de agregar ofrece sin buscar nada. */
@@ -324,6 +393,32 @@ let fotosCaptura: { blob: Blob; url: string; id?: string }[] = [];
 let compartidasPorLeer = 0;
 /** La foto del borrador abierta en el visor, por id. */
 let fotoAbierta: string | null = null;
+
+/** El visor de fotos de una receta abierto: las URLs que recorre y en cuál está. */
+let visor: EstadoVisor | null = null;
+/**
+ * El deslizamiento cambió de foto: el click que viene después del `touchend`
+ * no cierra el visor, que si no se cerraría en cada gesto.
+ */
+let deslizoElVisor = false;
+/** Dónde empezó el deslizamiento sobre el visor, o `null`. */
+let visorDesde: number | null = null;
+
+/**
+ * Las fotos que el editor tiene en memoria hasta Guardar (spec §7): el blob de
+ * cada número nuevo, su object URL para la miniatura, y el id de Drive de la
+ * que ya se subió en un intento que falló después —reintentar no la vuelve a
+ * subir (§8), igual que la captura—.
+ */
+const fotosEditor = {
+  nuevas: new Map<number, Blob>(),
+  urls: new Map<number, string>(),
+  subidas: new Map<number, string>()
+};
+/** Los ids de las fotos del borrador que abrió el editor: las que queden se mueven a `_fotos/` (§9). */
+let fotosDelBorrador: string[] = [];
+/** La foto propia recién elegida para una categoría: se sube al guardarla (§7). */
+let fotoPropia: { blob: Blob; url: string } | null = null;
 
 /** La foto achicada; rechaza si el navegador no la decodifica. */
 const achicarFoto = (archivo: Blob): Promise<Blob> => achicar(archivo, () => document.createElement('canvas'));
@@ -441,6 +536,17 @@ const formularioActual = (): string => {
   return form ? JSON.stringify([...new FormData(form)]) : '';
 };
 
+/**
+ * Los valores crudos del formulario. `FormData` da `string | File`; los campos
+ * del editor son todos de texto, y un `File` acá sería un campo que alguien
+ * agregó sin pasar por el editor.
+ */
+function datosDelFormulario(): DatosFormulario {
+  const form = document.querySelector<HTMLFormElement>('[data-formulario]');
+  if (!form) return {};
+  return Object.fromEntries([...new FormData(form)].map(([k, v]) => [k, typeof v === 'string' ? v : undefined]));
+}
+
 /** Recién dibujado, el editor no tiene cambios: su formulario es la foto contra la que se compara. */
 const abrirEditor = (html: string): void => {
   pintar(html);
@@ -479,7 +585,9 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
       return pintar(renderConexion({ estado: 'cancelado' }));
     }
   }
-  store = crearStore({ drive, sheets, indiceLocal });
+  // Con `imagenes`, una foto recién subida entra al caché con el blob que ya
+  // está en memoria, y una que va a la papelera sale (spec §6).
+  store = crearStore({ drive, sheets, indiceLocal, imagenes });
   estadoArranque = await store.arrancar();
 
   // Los tres estados que no llegan a 'listo' avisan en castellano, con su
@@ -697,6 +805,14 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     avisoCaptura = '';
     compartidasPorLeer = 0;
     fotoAbierta = null;
+    visor = null;
+    // Las fotos del editor viven lo que la pantalla: salir sin guardar no deja
+    // nada en Drive, y volver a entrar abre con lo que dice el `.md`.
+    fotosEditor.nuevas.clear();
+    fotosEditor.urls.clear();
+    fotosEditor.subidas.clear();
+    fotosDelBorrador = [];
+    fotoPropia = null;
     // Lo compartido llega con la nota ya escrita: el texto que acompañaba al link.
     if (ruta.vista === 'capturar') {
       tituloCaptura = ''; fuenteCaptura = ''; guardandoCaptura = false; errorCaptura = '';
@@ -722,10 +838,11 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
 
   switch (ruta.vista) {
     case 'recetario':
-      return pintar(renderRecetario({
+      pintar(renderRecetario({
         categorias: store.categoriasConConteo(), borradores: store.borradores().length,
         menuAbierto, tags: store.tagsDe()
       }));
+      return precargarElHome();
 
     case 'categoria': {
       const nombre = ruta.params['nombre'] ?? '';
@@ -764,6 +881,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         const { entrada, receta } = await recetaDePantalla(ruta.params['id'] ?? '');
         pintar(renderReceta({
           entrada, receta,
+          ...(visor ? { visor } : {}),
           ...(compartiendo ? { compartir: compartiendo } : {}),
           ...(marcandoFavorito ? { favorito: 'escribiendo' as const } : {}),
           ...(errorFavorito ? { error: errorFavorito } : {})
@@ -908,10 +1026,10 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
           return editorAbierto ? pintar(html) : abrirEditor(html);
         }
         const fotos = await fotosDeBorrador(borrador);
-        const visor = fotos.find(f => f.id === fotoAbierta)?.url;
+        const abierta = fotos.find(f => f.id === fotoAbierta)?.url;
         return pintar(renderBorrador({
           borrador, confirmando: confirmandoDescarte, fotos,
-          ...(visor ? { visor } : {}),
+          ...(abierta ? { visor: abierta } : {}),
           ...(avisoBorradores ? { aviso: avisoBorradores } : {})
         }));
       } catch (err) {
@@ -944,6 +1062,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // usa la receta de Claude como, más abajo, si cuenta como cambios sin
       // guardar desde que se abre.
       const deClaude = ruta.params['recibida'] ? recibida : null;
+      const borrador = borradorId ? await borradorDePantalla(borradorId).catch(() => null) : null;
       let receta: Receta;
       if (deClaude) {
         // Copia: `recibida` sigue viva hasta que se guarda o se navega a otra
@@ -952,20 +1071,24 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         receta = { ...deClaude };
       } else {
         receta = parse('');
-        if (borradorId) {
-          const borrador = await borradorDePantalla(borradorId).catch(() => null);
-          if (borrador) {
-            // La nota se lee como si fuera el `.md` de la receta: lo que esté
-            // bajo `## Ingredientes`, `## Preparación`, `## Variaciones` o
-            // `## Notas` cae en su campo, y el texto suelto de arriba queda como
-            // descripción. Escribirla así es opcional.
-            const deLaNota = parse(borrador.nota);
-            Object.assign(receta, deLaNota, {
-              titulo: borrador.titulo || deLaNota.titulo,
-              fuente: borrador.fuente || deLaNota.fuente
-            });
-          }
+        if (borrador) {
+          // La nota se lee como si fuera el `.md` de la receta: lo que esté
+          // bajo `## Ingredientes`, `## Preparación`, `## Variaciones` o
+          // `## Notas` cae en su campo, y el texto suelto de arriba queda como
+          // descripción. Escribirla así es opcional.
+          const deLaNota = parse(borrador.nota);
+          Object.assign(receta, deLaNota, {
+            titulo: borrador.titulo || deLaNota.titulo,
+            fuente: borrador.fuente || deLaNota.fuente
+          });
         }
+      }
+      if (borrador) {
+        // El editor atado a un borrador abre con el depósito ya cargado: sus
+        // fotos, en su orden, como 1, 2, 3…, con sus links de Drive (spec §9).
+        // La receta que vuelve de Claude ya las nombra como `foto:N`.
+        fotosDelBorrador = borrador.fotos;
+        receta.fotos = borrador.fotos.map((id, i) => ({ n: i + 1, url: linkDeFoto(id) }));
       }
       // Una receta nace incompleta: sacar el tag es la declaración explícita de
       // que está terminada (C04.3b.1).
@@ -1017,6 +1140,156 @@ function revisarIncompleta(): void {
   }
 }
 
+/** Las cinco secciones de texto del editor, las que pueden nombrar una foto. */
+const SECCIONES = ['descripcion', 'ingredientes', 'preparacion', 'variaciones', 'notas'] as const;
+
+/** Se está en el editor de una receta, la que sea: ahí nada se redibuja sin perder lo escrito. */
+const enElEditor = (): boolean => vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva';
+
+/** Un campo del formulario por su `name`, como lo hace `revisarIncompleta`. */
+const campoDelEditor = (nombre: string) =>
+  document.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#app [name="${nombre}"]`);
+
+/** El depósito que el editor tiene escrito ahora: el campo oculto es la única fuente. */
+const depositoDelEditor = (): FotoDeReceta[] => fotosDesde(campoDelEditor('fotos')?.value ?? '', []);
+
+/** El valor crudo de la cabecera: `foto:N`, una URL, o vacío. */
+const portadaDelEditor = (): string => campoDelEditor('foto')?.value ?? '';
+
+/**
+ * Escribe el depósito y redibuja sólo su fila de miniaturas: redibujar el
+ * formulario entero perdería lo que se venía escribiendo.
+ */
+function escribirDeposito(fotos: FotoDeReceta[]): void {
+  const campo = campoDelEditor('fotos');
+  if (campo) campo.value = JSON.stringify(fotos);
+  const fila = document.querySelector<HTMLElement>('#app .miniaturas');
+  if (fila) fila.outerHTML = filaDeFotosEditor(fotos);
+  void completarFotos();
+}
+
+/** Escribe la cabecera y cambia su miniatura, también sin redibujar. */
+function escribirPortada(valor: string): void {
+  const campo = campoDelEditor('foto');
+  if (campo) campo.value = valor;
+  const boton = document.querySelector<HTMLElement>('#app .portada-boton');
+  if (boton) boton.innerHTML = muestraDePortada(valor || null, depositoDelEditor());
+  void completarFotos();
+}
+
+/** Las fichas al pie del editor y el velo con el que se cierran. */
+const FICHAS_DE_FOTO =
+  '#app [data-acciones-foto], #app [data-poner-en], #app [data-selector-portada], ' +
+  '#app .velo[data-accion="cerrar-ficha-foto"]';
+
+/** Saca del DOM la ficha que esté abierta, sin tocar el formulario. */
+function cerrarFichaFoto(): void {
+  for (const e of document.querySelectorAll(FICHAS_DE_FOTO)) e.remove();
+}
+
+/** Abre una ficha al pie: siempre una sola, como la hoja de Compartir. */
+function abrirFichaFoto(html: string): void {
+  cerrarFichaFoto();
+  document.querySelector('[data-formulario]')?.insertAdjacentHTML('beforeend', html);
+  void completarFotos();
+}
+
+/** Un aviso de las fotos, que aparece y se va sin redibujar el formulario. */
+function avisarEnElEditor(texto: string): void {
+  document.querySelector('#app [data-aviso-fotos]')?.remove();
+  if (!texto) return;
+  document.querySelector('[data-formulario]')
+    ?.insertAdjacentHTML('afterbegin', `<div data-aviso-fotos>${aviso({ texto })}</div>`);
+}
+
+/**
+ * Suma fotos al depósito del editor, achicadas y en memoria hasta Guardar.
+ * Cada una toma el número siguiente: ninguno se reusa, ni siquiera el de una
+ * que se sacó.
+ */
+async function agregarFotosAlEditor(archivos: Blob[]): Promise<void> {
+  let deposito = depositoDelEditor();
+  let noSeLeyo = false;
+  for (const archivo of archivos) {
+    let blob: Blob;
+    try {
+      blob = await escribiendo(achicarFoto(archivo));
+    } catch (err) {
+      console.error(err);
+      noSeLeyo = true;
+      continue;
+    }
+    const n = siguienteNumero(deposito);
+    deposito = [...deposito, { n, url: '' }];
+    fotosEditor.nuevas.set(n, blob);
+    fotosEditor.urls.set(n, imagenes.urlDeBlob(blob));
+  }
+  escribirDeposito(deposito);
+  avisarEnElEditor(noSeLeyo ? NO_SE_LEYO_UNA_FOTO : '');
+}
+
+/**
+ * La receta con el link de cada foto que un intento anterior ya subió (§8).
+ * Su línea deja de estar vacía, así que el reintento la escribe en el `.md` y
+ * no la vuelve a mandar como nueva.
+ */
+const conSubidas = (receta: Receta): Receta => ({
+  ...receta,
+  fotos: receta.fotos.map(f => {
+    const id = f.url ? undefined : fotosEditor.subidas.get(f.n);
+    return id ? { ...f, url: linkDeFoto(id) } : f;
+  })
+});
+
+/**
+ * Lo que el depósito cambió respecto del `.md` que el editor abrió: las que
+ * hay que subir, las del borrador que siguen estando y las URLs que ya no
+ * están. Cada subida se anota apenas el store avisa, para el reintento.
+ */
+function cambiosDeFotos(nueva: Receta, base: Receta): CambiosDeFotos {
+  const nuevas = new Map<number, Blob>();
+  for (const f of nueva.fotos) {
+    const blob = f.url ? undefined : fotosEditor.nuevas.get(f.n);
+    if (blob) nuevas.set(f.n, blob);
+  }
+  const urls = new Set(nueva.fotos.map(f => f.url));
+  return {
+    nuevas,
+    deBorrador: fotosDelBorrador.filter(id => urls.has(linkDeFoto(id))),
+    sacadas: base.fotos.map(f => f.url).filter(url => !urls.has(url)),
+    alSubir: (n, id) => { fotosEditor.subidas.set(n, id); }
+  };
+}
+
+/** Las fotos del depósito que se pueden mostrar: la subida, o la que está en memoria. */
+const fotosMostrables = (fotos: FotoDeReceta[]): { n: number; url: string }[] =>
+  fotos.flatMap(f => {
+    const url = f.url || fotosEditor.urls.get(f.n) || '';
+    return url ? [{ n: f.n, url }] : [];
+  });
+
+/**
+ * Abre el visor en la foto `n` del depósito, para deslizar entre todas. Sin
+ * número —o con uno que no está—, una cabecera externa se abre sola (spec §7).
+ */
+function abrirVisor(fotos: FotoDeReceta[], n: number | undefined, suelta?: string | undefined): void {
+  const lista = fotosMostrables(fotos);
+  const i = n === undefined ? -1 : lista.findIndex(f => f.n === n);
+  if (i >= 0) visor = { urls: lista.map(f => f.url), i };
+  else if (suelta) visor = { urls: [suelta], i: 0 };
+}
+
+/**
+ * El visor en pantalla. En el editor se agrega y se saca del DOM, como las
+ * fichas: redibujar el formulario perdería lo escrito.
+ */
+function dibujarVisor(): void {
+  if (!enElEditor()) { void render(); return; }
+  document.querySelector('#app .visor')?.remove();
+  if (visor) document.querySelector('[data-formulario]')?.insertAdjacentHTML('beforeend', renderVisor(visor));
+  void completarFotos();
+}
+
 /**
  * La edición de una categoría, en cada tecla y en cada elección: la muestra de
  * arriba, la línea del nombre inválido y si Guardar se puede tocar. Toca el DOM
@@ -1044,6 +1317,22 @@ function revisarCategoria(): void {
   if (linea) { linea.hidden = !problema; linea.textContent = problema; }
   const guardar = document.querySelector<HTMLButtonElement>('#app [data-accion="guardar-categoria"]');
   if (guardar) guardar.disabled = !!problema || formularioActual() === editorAbierto?.formulario;
+}
+
+/** Lo que el formulario de la categoría tiene escrito. */
+const valoresDeCategoria = (): { nombre: string; color: string; foto: string } => {
+  const datos = datosDelFormulario();
+  return { nombre: datos['nombre'] ?? '', color: datos['color'] ?? '', foto: datos['foto'] ?? '' };
+};
+
+/** La edición de la categoría con lo que está escrito y, si hay, un aviso. */
+function dibujarCategoria(valores: { nombre: string; color: string; foto: string }, error: string): void {
+  const id = vistaActual?.params['id'] ?? 'nueva';
+  pintar(renderEdicionCategoria({
+    categoria: id === 'nueva' ? null : store.categorias().find(c => c.id === id) ?? null,
+    valores, otros: store.categorias().filter(c => c.id !== id).map(c => c.nombre),
+    ...(error ? { error } : {})
+  }));
 }
 
 /** Elegir un color o una foto: el campo oculto, la marca y la muestra, sin redibujar. */
@@ -1098,6 +1387,20 @@ app.addEventListener('click', async (e) => {
   // llega como EventTarget y hay que estrecharlo una sola vez, acá.
   const destino = conClosest(e.target);
   const boton = destino?.closest<HTMLElement>('[data-accion], [data-tag]') ?? null;
+  // Una foto en línea del texto no lleva `data-accion` —la dibuja el markdown,
+  // que no sabe de acciones— y abre el visor igual (§7). En el modo cocina no:
+  // ahí la foto está adentro del paso, que sí lleva acción, y un toque marca
+  // dónde voy.
+  if (!boton && destino && recetaLeida) {
+    const enLinea = destino.closest<HTMLElement>('.foto-linea');
+    const img = enLinea?.querySelector<HTMLElement>('img');
+    if (!img) return;
+    const id = img.dataset['drive'] ?? '';
+    const suelta = id ? linkDeFoto(id) : img.getAttribute('src') ?? '';
+    const receta = resolverReceta(recetaLeida.receta);
+    abrirVisor(receta.fotos, receta.fotos.find(f => f.url === suelta)?.n, suelta || undefined);
+    return render();
+  }
   if (!boton) return;
 
   if (boton.dataset['tag']) {
@@ -1498,7 +1801,81 @@ app.addEventListener('click', async (e) => {
     return render();
   }
   if (accion === 'ver-foto') { fotoAbierta = boton.dataset['valor'] ?? null; return render(); }
-  if (accion === 'cerrar-visor') { fotoAbierta = null; return render(); }
+  if (accion === 'cerrar-visor') {
+    // Un deslizamiento termina en un click: ese no cierra, ya cambió de foto.
+    if (deslizoElVisor) { deslizoElVisor = false; return; }
+    fotoAbierta = null;
+    visor = null;
+    if (enElEditor()) { document.querySelector('#app .visor')?.remove(); return; }
+    return render();
+  }
+
+  // Las fotos de una receta (spec §7). El depósito sale del campo oculto en el
+  // editor y de la receta leída en la lectura: son la misma acción y el mismo
+  // `data-n` en la cabecera, la galería y la ficha de acciones.
+  if (accion === 'ver-foto-receta') {
+    const marca = boton.dataset['n'];
+    const n = marca === undefined ? undefined : Number(marca);
+    if (enElEditor()) {
+      cerrarFichaFoto();
+      abrirVisor(depositoDelEditor(), n);
+      dibujarVisor();
+      return;
+    }
+    if (!recetaLeida) return;
+    const receta = resolverReceta(recetaLeida.receta);
+    abrirVisor(receta.fotos, n, receta.foto ?? undefined);
+    return render();
+  }
+  if (accion === 'cerrar-ficha-foto') { cerrarFichaFoto(); return; }
+  if (accion === 'acciones-foto') {
+    const n = boton.dataset['n'] ?? '';
+    abrirFichaFoto(renderAccionesFoto(Number(n), { portada: portadaDelEditor() === `foto:${n}` }));
+    return;
+  }
+  if (accion === 'abrir-portada') {
+    abrirFichaFoto(renderSelectorPortada(depositoDelEditor(), portadaDelEditor() || null));
+    return;
+  }
+  if (accion === 'elegir-portada') {
+    escribirPortada(`foto:${boton.dataset['n'] ?? ''}`);
+    cerrarFichaFoto();
+    return;
+  }
+  if (accion === 'portada-url') {
+    escribirPortada(document.querySelector<HTMLInputElement>('#app [data-url-portada]')?.value.trim() ?? '');
+    cerrarFichaFoto();
+    return;
+  }
+  if (accion === 'sin-portada') { escribirPortada(''); cerrarFichaFoto(); return; }
+  if (accion === 'abrir-poner-en') {
+    // Los lugares salen de lo que está escrito ahora en el formulario, no del
+    // `.md` guardado: la foto va a la línea que el usuario está viendo.
+    const receta = recetaDesdeFormulario(datosDelFormulario(), parse(''));
+    abrirFichaFoto(renderPonerEn(lineasDeLaReceta(receta), Number(boton.dataset['n'] ?? 0)));
+    return;
+  }
+  if (accion === 'poner-en') {
+    const campo = campoDelEditor(boton.dataset['seccion'] ?? '');
+    const marca = boton.dataset['linea'] ?? '';
+    if (campo) campo.value = ponerEn(campo.value, marca === '' ? null : Number(marca), Number(boton.dataset['n'] ?? 0));
+    cerrarFichaFoto();
+    return;
+  }
+  if (accion === 'sacar-foto-editor') {
+    const n = Number(boton.dataset['n'] ?? 0);
+    escribirDeposito(depositoDelEditor().filter(f => f.n !== n));
+    // La foto se va del depósito y de todo el texto que la nombraba.
+    for (const seccion of SECCIONES) {
+      const campo = campoDelEditor(seccion);
+      if (campo) campo.value = sacarReferencias(campo.value, n);
+    }
+    if (portadaDelEditor() === `foto:${n}`) escribirPortada('');
+    fotosEditor.nuevas.delete(n);
+    fotosEditor.urls.delete(n);
+    cerrarFichaFoto();
+    return;
+  }
 
   if (accion === 'convertir-con-claude') {
     const b = borradorLeido;
@@ -1654,24 +2031,29 @@ app.addEventListener('click', async (e) => {
   if (accion === 'elegir-foto') { elegirEnCategoria('foto', boton.dataset['valor'] ?? ''); return; }
 
   if (accion === 'guardar-categoria') {
-    const form = document.querySelector<HTMLFormElement>('[data-formulario]');
-    if (!form) return;
-    const datos = Object.fromEntries([...new FormData(form)].map(([k, v]) => [k, typeof v === 'string' ? v : '']));
-    const valores = { nombre: datos['nombre'] ?? '', color: datos['color'] ?? '', foto: datos['foto'] ?? '' };
+    if (!document.querySelector('[data-formulario]')) return;
+    const valores = valoresDeCategoria();
     const id = vistaActual?.params['id'] ?? 'nueva';
+    // La foto propia se manda sólo si se eligió un archivo en esta pantalla:
+    // cambiar el color o el nombre no vuelve a subir nada (§8).
+    const propia = valores.foto.startsWith('propia:') ? fotoPropia?.blob : undefined;
+    const datos = {
+      ...valores,
+      foto: valores.foto.startsWith('propia:') ? '' : valores.foto,
+      ...(propia ? { fotoPropia: propia } : {})
+    };
     try {
-      if (id === 'nueva') await escribiendo(store.crearCategoria(valores));
-      else await escribiendo(store.editarCategoria(id, valores));
+      if (id === 'nueva') await escribiendo(store.crearCategoria(datos));
+      else await escribiendo(store.editarCategoria(id, datos));
       registrarCategorias(store.categorias());
       editorAbierto = null;
       return history.back();
     } catch (err) {
       console.error(err);
-      const categoria = id === 'nueva' ? null : store.categorias().find(c => c.id === id) ?? null;
       const otros = store.categorias().filter(c => c.id !== id).map(c => c.nombre);
       // El motivo del nombre se dice tal cual; lo demás, sin el mensaje de Google (R1).
       const mensaje = err instanceof Error && problemaDelNombre(valores.nombre, otros) ? err.message : 'No se pudo guardar. Revisá la conexión.';
-      pintar(renderEdicionCategoria({ categoria, valores, otros, error: mensaje }));
+      dibujarCategoria(valores, mensaje);
       return;
     }
   }
@@ -1704,13 +2086,8 @@ app.addEventListener('click', async (e) => {
   }
 
   if (accion === 'guardar') {
-    const form = document.querySelector<HTMLFormElement>('[data-formulario]');
-    if (!form) return;
-    // FormData da string | File; los campos del editor son todos de texto, y
-    // un File acá sería un campo que alguien agregó sin pasar por el editor.
-    const datos: DatosFormulario = Object.fromEntries(
-      [...new FormData(form)].map(([k, v]) => [k, typeof v === 'string' ? v : undefined])
-    );
+    if (!document.querySelector('[data-formulario]')) return;
+    const datos = datosDelFormulario();
     const carpetaId = datos['carpeta'] || '';
     const esNueva = vistaActual?.vista === 'nueva';
     const id = idActual();
@@ -1724,12 +2101,14 @@ app.addEventListener('click', async (e) => {
     // vacía: así se conservan sus claves desconocidas.
     const recibidaBase = vistaActual?.params['recibida'] && recibida ? recibida : null;
     const base = esNueva ? (recibidaBase ?? parse('')) : (await store.receta(id)).receta;
-    const nueva = recetaDesdeFormulario(datos, base);
+    const nueva = conSubidas(recetaDesdeFormulario(datos, base));
 
     /** El editor otra vez, con lo que el usuario tenía escrito y el aviso (C04.5.2). */
     const conError = (mensaje: string) => pintar(renderEditor({
       entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
-      receta: nueva, categorias: store.categorias(),
+      // Con las fotos que este intento alcanzó a subir ya en sus líneas: el
+      // reintento las manda por su link en vez de volver a subirlas (§8).
+      receta: conSubidas(nueva), categorias: store.categorias(),
       tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje
     }));
 
@@ -1737,17 +2116,22 @@ app.addEventListener('click', async (e) => {
     // Sin categoría no se sabe en qué carpeta de Drive va el archivo (C04.3b.1).
     if (esNueva && !carpetaId) return conError('Elegí una categoría antes de guardar.');
 
+    // Lo que el depósito cambió respecto del `.md` que se abrió: el store sube,
+    // mueve y manda a la papelera (§8).
+    const fotos = cambiosDeFotos(nueva, base);
+
     try {
       let creada: { id: string } | null = null;
       if (esNueva && borradorId) {
         // Convertir es una sola operación: el .md, la fila y el borrador (C01.7.1).
-        creada = await escribiendo(convertirBorrador({ store, convertidos }, { borradorId, receta: nueva, carpetaId }));
+        creada = await escribiendo(convertirBorrador({ store, convertidos }, { borradorId, receta: nueva, carpetaId, fotos }));
       } else if (esNueva) {
-        creada = await escribiendo(store.crear(nueva, { carpetaId: carpetaId || undefined }));
+        creada = await escribiendo(store.crear(nueva, { carpetaId: carpetaId || undefined, fotos }));
       } else {
-        await escribiendo(store.guardar(id, nueva, { carpetaDestino: carpetaId }));
-        // Lo guardado es la copia: volver a la receta la muestra sin releer.
-        recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: nueva };
+        await escribiendo(store.guardar(id, nueva, { carpetaDestino: carpetaId, fotos }));
+        // Lo guardado es la copia: volver a la receta la muestra sin releer, y
+        // con el link de cada foto que se acaba de subir en su línea.
+        recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: conSubidas(nueva) };
       }
       editorAbierto = null;
       recibida = null;
@@ -1880,9 +2264,14 @@ function sobreFilaDeslizable(destino: EventTarget | null): boolean {
 app.addEventListener('touchstart', (e) => {
   if (escrituras) return;
   deslizando = null;
+  visorDesde = null;
+  deslizoElVisor = false;
   const toques = (e as TouchEvent).touches;
   const toque = toques[0];
   if (!toque || toques.length !== 1) return;
+  // Con el visor abierto, el dedo pasa de una foto a la siguiente y no abre
+  // el menú: es lo único que se puede hacer ahí.
+  if (visor) { visorDesde = toque.clientX; return; }
   if (!vistaActual || !PANTALLAS_CON_MENU.includes(vistaActual.vista) || menuFijo()) return;
   if (!puedeEmpezar(toque.clientX, menuAbierto, sobreFilaDeslizable(e.target))) return;
   deslizando = { x: toque.clientX, y: toque.clientY, decidido: 'indeciso', p: menuAbierto ? 1 : 0 };
@@ -1915,6 +2304,22 @@ const soltarDeslizamiento = (): void => {
 };
 app.addEventListener('touchend', soltarDeslizamiento);
 app.addEventListener('touchcancel', soltarDeslizamiento);
+
+// El visor pasa de una foto a la otra con el dedo (spec §7). Va aparte del
+// gesto del menú: ahí el deslizamiento arrastra el panel al ritmo del dedo, y
+// acá la foto cambia de una vez, al soltar.
+app.addEventListener('touchend', (e) => {
+  if (escrituras || visorDesde === null || !visor) return;
+  const toque = (e as TouchEvent).changedTouches[0];
+  const desde = visorDesde;
+  visorDesde = null;
+  if (!toque) return;
+  const i = pasoDelVisor(visor.i, toque.clientX - desde, visor.urls.length);
+  if (i === visor.i) return;
+  visor = { ...visor, i };
+  deslizoElVisor = true;
+  dibujarVisor();
+});
 
 app.addEventListener('keydown', (e) => {
   if (escrituras) return;
@@ -1950,10 +2355,32 @@ app.addEventListener('change', (e) => {
         avisoCaptura = await sumarFotosACaptura(archivos);
       } else if (vistaActual?.vista === 'borrador' && !editandoBorrador) {
         await agregarFotosABorrador(idActual(), archivos);
+      } else if (enElEditor()) {
+        // El editor no se redibuja: perdería lo escrito. La fila de
+        // miniaturas se rehace sola.
+        return agregarFotosAlEditor(archivos);
       } else {
         return;
       }
       await render();
+    })();
+    return;
+  }
+  // *Subir foto* en una categoría: una sola, y se sube recién al guardar (§7).
+  if (campoFotos?.dataset && 'fotoPropia' in campoFotos.dataset) {
+    const archivo = Array.from(campoFotos.files ?? [])[0];
+    if (!archivo) return;
+    void (async () => {
+      try {
+        const blob = await escribiendo(achicarFoto(archivo));
+        fotoPropia = { blob, url: imagenes.urlDeBlob(blob) };
+        // Queda elegida como cualquier otra: el campo oculto la nombra, y de
+        // ahí salen la muestra de arriba y «cambios sin guardar».
+        elegirEnCategoria('foto', `propia:${fotoPropia.url}`);
+      } catch (err) {
+        console.error(err);
+        dibujarCategoria(valoresDeCategoria(), NO_SE_LEYO_UNA_FOTO);
+      }
     })();
     return;
   }
@@ -1981,6 +2408,11 @@ arrancar().catch(err => {
     accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
   }) + '</div>');
 });
+
+// El caché de fotos deja de ser desalojable con la PWA instalada: en Android,
+// Chrome lo concede solo. Se pide una vez y no se mira el resultado —que no se
+// conceda no cambia nada— ni se espera (spec §6).
+if (typeof navigator !== 'undefined') void navigator.storage?.persist?.().catch(() => {});
 
 // `main.ts` se carga con `import()` desde `inicio.ts`, no con un `<script>`
 // directo: puede llegar después de `load`, y ahí `addEventListener('load', …)`
