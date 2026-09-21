@@ -292,8 +292,12 @@ let avisoBorradores = '';
 let tapadas = 0;
 let hashEscritura = '';
 
-/** Lo que tarda el cierre con el tilde en dibujarse, antes de sacar el velo (§6.17b). */
-const MS_CIERRE = 500;
+/**
+ * Lo que dura el cierre con el tilde antes de navegar (§6.17b): el tilde
+ * termina de dibujarse a los 450 ms —0,15 s de espera y 0,3 s de trazo— y se
+ * queda 200 ms más quieto, para que se llegue a ver que salió bien.
+ */
+const MS_CIERRE = 650;
 
 /** Lo que se espera a que la pantalla de destino se dibuje antes de sacar el velo igual. */
 const MS_RESPALDO_CIERRE = 400;

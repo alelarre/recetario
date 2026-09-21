@@ -2023,7 +2023,8 @@ describe('main.ts: las rutas', () => {
       expect(velo.hidden).toBe(false);
 
       // El respaldo: sin pantalla nueva que lo saque, el velo no se queda puesto.
-      await new Promise(r => setTimeout(r, 600));
+      // Espera el cierre entero (650 ms) más el respaldo (400 ms).
+      await new Promise(r => setTimeout(r, 1200));
       expect(velo.hidden).toBe(true);
       expect(velo.classList.contains('exito')).toBe(false);
     });
@@ -2070,9 +2071,9 @@ describe('main.ts: las rutas', () => {
         expect(velo.classList.contains('exito')).toBe(false);
         expect(atributosApp['aria-busy']).toBe('true');
 
-        // Y el temporizador del cierre anterior quedó cancelado: pasado su
-        // medio segundo, el velo de esta escritura sigue tapando.
-        await new Promise(r => setTimeout(r, 600));
+        // Y el temporizador del cierre anterior quedó cancelado: pasado el rato
+        // que habría durado, el velo de esta escritura sigue tapando.
+        await new Promise(r => setTimeout(r, 800));
         expect(velo.hidden).toBe(false);
         expect(velo.classList.contains('exito')).toBe(false);
 

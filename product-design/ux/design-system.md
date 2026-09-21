@@ -393,7 +393,7 @@ se está esperando algo, la olla dice que la app está escribiendo.
 
 **Y es la única que tiene final:** cuando la escritura sale bien, la olla se
 tapa y aparece un tilde antes de que el velo se vaya (§6.17b). Es la única
-excepción a que todo lo demás sea instantáneo, y dura medio segundo.
+excepción a que todo lo demás sea instantáneo, y dura 650 ms.
 
 **El reindexado no usa ninguno de los dos:** usa barra de progreso, porque ahí
 hay un número que decir (`E05-Cimientos.md` C05.5.2). La regla es esa — con
@@ -405,7 +405,7 @@ se dibuja llena a la mitad, fija, y la olla queda con la cuchara apoyada y el
 vapor detenido. No hay ninguna información que dependa del movimiento.
 
 **El cierre del velo tampoco se mueve, pero dura lo mismo:** la tapa aparece
-abajo y el tilde entero, sin dibujarse, y el velo se va a los mismos 500 ms. Lo
+abajo y el tilde entero, sin dibujarse, y el cierre dura los mismos 650 ms. Lo
 que se saca es el movimiento, no el tiempo: el cierre no se atrasa ni se
 acorta.
 
@@ -915,10 +915,12 @@ vapor detenido (§5.1).
 
 **El cierre, sólo cuando la escritura salió bien:** la cuchara y el vapor se
 van, la tapa baja sobre la olla y encima se dibuja un tilde en `--exito`. Todo
-en medio segundo, y recién ahí se va el velo. Si la escritura falla no hay
+en 650 ms: el trazo del tilde termina a los 450 y el dibujo se queda quieto
+200 ms más, que es lo que hace falta para llegar a verlo. Recién ahí sigue lo
+que venía. Si la escritura falla no hay
 cierre: el velo se va de una y queda el aviso. Con
 `prefers-reduced-motion: reduce` la tapa y el tilde aparecen sin dibujarse,
-pero el medio segundo es el mismo: se saca el movimiento, no el tiempo (§5.1).
+pero los 650 ms son los mismos: se saca el movimiento, no el tiempo (§5.1).
 
 **El orden se ve entero, y en este orden:** la olla revolviendo mientras se
 escribe, el tilde cuando terminó, y recién después la pantalla a la que se va
