@@ -19,7 +19,7 @@ import {
 } from '../catalogo.js';
 import { sePuedeTerminar } from '../recipe.js';
 import { resolver } from '../fotos-receta.js';
-import type { Receta, Entrada, FotoDeReceta, Lugar } from '../tipos.js';
+import type { Receta, Entrada, FotoDeReceta } from '../tipos.js';
 import type { Categoria } from '../store.js';
 
 export interface ArgsEditor {
@@ -106,7 +106,9 @@ export function muestraDePortada(foto: string | null, fotos: FotoDeReceta[]): st
  * `hidden`, que es lo que se guarda: `foto:N` o la URL externa.
  */
 function campoPortada(foto: string | null, fotos: FotoDeReceta[]): string {
-  return '<div class="campo" data-portada><span>Foto</span>' +
+  // *Portada* y no *Foto*: abajo está la ficha Fotos, que es el depósito, y
+  // dos cosas distintas no se llaman igual (P48).
+  return '<div class="campo" data-portada><span>Portada</span>' +
     `<button type="button" class="portada-boton" data-accion="abrir-portada" ` +
       `aria-label="Elegir la foto de portada">${muestraDePortada(foto, fotos)}</button>` +
     `<input type="hidden" name="foto" value="${escapar(foto ?? '')}">` +
@@ -160,47 +162,37 @@ export function renderAccionesFoto(n: number, { portada }: { portada: boolean })
     '<div class="acciones acciones-foto">' +
       boton('ver-foto-receta', 'Ver') +
       (portada ? '' : boton('elegir-portada', 'Portada')) +
-      boton('abrir-poner-en', 'Poner en…') +
       boton('sacar-foto-editor', 'Sacar', 'pel') +
     '</div></div>';
 }
 
-/** Lo que entra en el botón de un lugar; lo que sobra se corta. */
-const TOPE_LUGAR = 44;
-
-/** El texto de un lugar, en una línea. Vacío igual se ofrece: ahí va la primera foto. */
-function unaLinea(texto: string): string {
-  const limpio = texto.trim();
-  if (!limpio) return '(sin texto)';
-  return limpio.length > TOPE_LUGAR ? `${limpio.slice(0, TOPE_LUGAR - 1).trimEnd()}…` : limpio;
-}
+/**
+ * El botón que pone una foto en la línea donde está el cursor (P46): sin
+ * texto, del alto de un renglón y colgado del marco del campo, a `altura`
+ * píxeles de su borde de arriba. La línea viaja con él porque es la que había
+ * cuando se lo dibujó: el cursor puede haberse ido para cuando se elige la
+ * foto.
+ */
+export const botonPonerFoto = (seccion: string, linea: number, altura: number): string =>
+  '<button type="button" class="poner-foto" data-accion="abrir-elegir-foto" ' +
+  `data-seccion="${escapar(seccion)}" data-linea="${linea}" style="top:${altura}px" ` +
+  `aria-label="Poner una foto en esta línea">${ICO.imagen}</button>`;
 
 /**
- * Dónde poner la foto `n`: los lugares de `lineasDeLaReceta`, agrupados por
- * su `###` o por su sección. Se agrupa de corrido y no por nombre: dos `###`
- * que se llaman igual en secciones distintas son dos grupos, no uno.
- *
- * `data-linea` vacío es el lugar que no tiene línea —la descripción, las
- * variaciones, las notas—, donde la referencia va al final del texto.
+ * Qué foto poner en esa línea: la galería del depósito, y nada más. **Agregar
+ * una sigue siendo la ficha Fotos**: acá se elige entre las que ya están, que
+ * es lo único que hace falta para seguir escribiendo el paso.
  */
-export function renderPonerEn(lugares: Lugar[], n: number): string {
-  const grupos: { nombre: string; lugares: Lugar[] }[] = [];
-  for (const l of lugares) {
-    const ultimo = grupos[grupos.length - 1];
-    if (ultimo && ultimo.nombre === l.grupo) ultimo.lugares.push(l);
-    else grupos.push({ nombre: l.grupo, lugares: [l] });
-  }
-  const bloques = grupos.map(g =>
-    `<h3>${escapar(g.nombre)}</h3>` +
-    g.lugares.map(l =>
-      '<button class="btn sec lugar" type="button" data-accion="poner-en" ' +
-      `data-seccion="${l.seccion}" data-linea="${l.linea ?? ''}" data-n="${n}">` +
-      `${escapar(unaLinea(l.texto))}</button>`
-    ).join('')
+export function renderElegirFoto(fotos: FotoDeReceta[], seccion: string, linea: number): string {
+  const grilla = fotos.map(f =>
+    '<button type="button" class="galeria-item" data-accion="poner-en" ' +
+    `data-seccion="${escapar(seccion)}" data-linea="${linea}" data-n="${f.n}" ` +
+    `aria-label="Poner la foto ${f.n}">${imagenDeFoto(f)}</button>`
   ).join('');
   return VELO_DE_FICHA +
-    `<div class="ficha hoja-foto lugares" data-poner-en data-n="${n}">` +
-    `<h2>Poner la foto ${n} en…</h2>${bloques}</div>`;
+    '<div class="ficha hoja-foto" data-elegir-foto>' +
+    '<h2>Poner una foto</h2>' +
+    `<div class="galeria">${grilla}</div></div>`;
 }
 
 /**
@@ -230,11 +222,22 @@ export function renderSelectorPortada(fotos: FotoDeReceta[], actual: string | nu
     '</div></div>';
 }
 
+/**
+ * Un campo de sección. El `textarea` va en un marco propio porque el botón de
+ * la foto se cuelga encima de él (P46), y con él viaja el **espejo**: un
+ * calco del campo, invisible, donde `main` escribe el texto hasta el cursor
+ * para leer a qué altura quedó el renglón. Un `textarea` no deja poner nada
+ * adentro ni preguntar dónde está el cursor en pantalla; el espejo es la única
+ * forma de saberlo sin medir el ajuste de línea a mano.
+ */
 const area = (
   nombre: string, etiqueta: string, valor?: string | null, filas = 4, estilo = ''
 ): string =>
   `<label class="campo"${estilo ? ` style="${estilo}"` : ''}><span>${escapar(etiqueta)}</span>` +
-  `<textarea name="${nombre}" rows="${filas}">${escapar(valor ?? '')}</textarea></label>`;
+  `<div class="campo-texto" data-campo-texto="${nombre}">` +
+    `<textarea name="${nombre}" rows="${filas}">${escapar(valor ?? '')}</textarea>` +
+    '<div class="espejo" aria-hidden="true"><span data-antes></span><span data-marca>&#8203;</span></div>' +
+  '</div></label>';
 
 /**
  * Los cuatro tags especiales, un botón cada uno: apretado si la receta

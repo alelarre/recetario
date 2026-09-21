@@ -48,7 +48,13 @@ export const ICO = {
   carpeta: svg('<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>'),
   /** La cámara: agregar una foto al borrador. */
   camara: svg('<path d="M4 8a2 2 0 012-2h2l1.5-2h5L16 6h2a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/>' +
-    '<circle cx="12" cy="13" r="3.5"/>')
+    '<circle cx="12" cy="13" r="3.5"/>'),
+  /**
+   * Una foto ya sacada, y no la cámara: es el botón que pone en la línea una
+   * del depósito, no el que agrega una nueva. De Lucide (image).
+   */
+  imagen: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.6"/>' +
+    '<path d="M21 15l-4-4a2 2 0 00-2.8 0L6 19.2"/>')
 } as const satisfies Record<string, string>;
 
 /**

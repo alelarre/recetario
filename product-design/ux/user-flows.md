@@ -322,9 +322,6 @@ Editor → ficha Fotos
   ⚑ ¿qué hago con ella?
       Ver        → el visor, que desliza entre todas
       Portada    → pasa a ser la foto de la receta
-      Poner en…  ▸ los lugares de la receta, agrupados por sección
-                 → elijo un paso, un ingrediente o una nota
-                 ▸ la referencia se escribe al final de esa línea
       Sacar      ▸ sale del depósito y sus referencias se borran del texto
   → Guardar
   ▸ suben las fotos nuevas a _fotos/
@@ -332,9 +329,22 @@ Editor → ficha Fotos
   ▸ recién ahí van a la papelera las que saqué
 ```
 
-**El campo «Foto» de Datos es la portada**: la miniatura de lo que hay, y al
-tocarla, el depósito para elegir, una URL externa o *Sin foto*. **Salir sin
-guardar no deja nada en Drive:** las fotos nuevas nunca llegaron.
+**Una foto se pone en el texto desde el lugar**, que es lo que estoy mirando
+mientras escribo el paso:
+
+```
+Editor → escribo un paso
+  ▸ a la derecha del campo, a la altura de mi línea, el botón de foto
+    ⚑ sólo con el campo enfocado, y sólo si el depósito tiene algo
+  → lo toco
+  ⚑ la galería del depósito, y nada más: agregar es la ficha Fotos
+  → elijo una
+  ▸ ![](foto:N) se escribe al final de esa línea
+```
+
+**El campo «Portada» de Datos es la foto de la cabecera**: la miniatura de lo
+que hay, y al tocarla, el depósito para elegir, una URL externa o *Sin foto*.
+**Salir sin guardar no deja nada en Drive:** las fotos nuevas nunca llegaron.
 
 **El editor corrige, no compone.** Componer es trabajo del agente
 (`product-vision.md` §1).

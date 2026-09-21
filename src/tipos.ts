@@ -80,17 +80,6 @@ export interface CambiosDeFotos {
 }
 
 /**
- * Un lugar de la receta donde *Poner en…* puede escribir una referencia a una
- * foto (`src/fotos-receta.ts`, `lineasDeLaReceta`). En ingredientes y pasos
- * `linea` ubica la línea exacta dentro del texto de la sección, la que recibe
- * `ponerEn`; en las demás la referencia va en un renglón nuevo al final, sin
- * línea que apuntar.
- */
-export type Lugar =
-  | { seccion: 'ingredientes' | 'preparacion'; linea: number; texto: string; grupo: string }
-  | { seccion: 'descripcion' | 'variaciones' | 'notas'; linea: null; texto: string; grupo: string };
-
-/**
  * Un ingrediente parseado: nombre primero, cantidad después del separador
  * (C05.1.3). La cantidad es texto libre y no se normaliza nunca.
  */

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { recetaFalsa } from './dobles.js';
 import {
   linkDeFoto, idDeDrive, parsearFotos, serializarFotos, siguienteNumero,
-  resolver, resolverReceta, sinFotosDeDrive, lineasDeLaReceta, ponerEn, sacarReferencias
+  resolver, resolverReceta, sinFotosDeDrive, lineaDelCursor, ponerEn, sacarReferencias
 } from '../src/fotos-receta.js';
 
 describe('linkDeFoto / idDeDrive', () => {
@@ -164,32 +164,31 @@ describe('sinFotosDeDrive', () => {
   });
 });
 
-describe('lineasDeLaReceta', () => {
-  it('numera ingredientes y pasos por su línea, agrupados por ###, y agrega descripción, variaciones y notas', () => {
-    const receta = recetaFalsa({
-      descripcion: 'Una intro.',
-      ingredientes: '### Salsa\n- Tomate — 1\n\n### Masa\n- Harina — 1kg',
-      preparacion: '1. Hervir\n2. Colar',
-      variaciones: '- Con queso',
-      notas: '- Ojo con el horno'
-    });
-    expect(lineasDeLaReceta(receta)).toEqual([
-      { seccion: 'descripcion', linea: null, texto: 'Una intro.', grupo: 'Descripción' },
-      { seccion: 'ingredientes', linea: 1, texto: '- Tomate — 1', grupo: 'Salsa' },
-      { seccion: 'ingredientes', linea: 4, texto: '- Harina — 1kg', grupo: 'Masa' },
-      { seccion: 'preparacion', linea: 0, texto: '1. Hervir', grupo: 'Preparación' },
-      { seccion: 'preparacion', linea: 1, texto: '2. Colar', grupo: 'Preparación' },
-      { seccion: 'variaciones', linea: null, texto: '- Con queso', grupo: 'Variaciones' },
-      { seccion: 'notas', linea: null, texto: '- Ojo con el horno', grupo: 'Notas' }
-    ]);
+describe('lineaDelCursor', () => {
+  it('cuenta los saltos de línea que quedan antes del cursor', () => {
+    const texto = '1. Hervir\n2. Colar\n3. Servir';
+    expect(lineaDelCursor(texto, 0)).toBe(0);
+    expect(lineaDelCursor(texto, '1. Her'.length)).toBe(0);
+    expect(lineaDelCursor(texto, '1. Hervir\n'.length)).toBe(1);
+    expect(lineaDelCursor(texto, '1. Hervir\n2. Colar'.length)).toBe(1);
   });
 
-  it('descripción, variaciones y notas dan su lugar aunque estén vacías; sin ingredientes ni pasos, ninguno', () => {
-    expect(lineasDeLaReceta(recetaFalsa())).toEqual([
-      { seccion: 'descripcion', linea: null, texto: '', grupo: 'Descripción' },
-      { seccion: 'variaciones', linea: null, texto: '', grupo: 'Variaciones' },
-      { seccion: 'notas', linea: null, texto: '', grupo: 'Notas' }
-    ]);
+  it('al final del texto, la última línea', () => {
+    const texto = '1. Hervir\n2. Colar';
+    expect(lineaDelCursor(texto, texto.length)).toBe(1);
+    // Un texto que termina en salto tiene una línea vacía más, y ahí cae.
+    expect(lineaDelCursor('1. Hervir\n', 10)).toBe(1);
+  });
+
+  it('en una línea vacía del medio, esa línea', () => {
+    expect(lineaDelCursor('Uno\n\nDos', 4)).toBe(1);
+  });
+
+  it('un texto vacío es la línea 0, y una posición fuera de rango se recorta', () => {
+    expect(lineaDelCursor('', 0)).toBe(0);
+    expect(lineaDelCursor('', 9)).toBe(0);
+    expect(lineaDelCursor('Uno\nDos', -3)).toBe(0);
+    expect(lineaDelCursor('Uno\nDos', 999)).toBe(1);
   });
 });
 
@@ -204,22 +203,18 @@ describe('ponerEn', () => {
     expect(ponerEn(texto, 1, 5)).toBe('1. Hervir\n2. Colar ![](foto:5)');
   });
 
-  it('en las notas, agrega un renglón nuevo al final', () => {
-    expect(ponerEn('- Ojo con el horno', null, 5)).toBe('- Ojo con el horno\n![](foto:5)');
+  it('en una línea vacía, la referencia queda sola, sin el espacio adelante', () => {
+    expect(ponerEn('', 0, 5)).toBe('![](foto:5)');
+    expect(ponerEn('Uno\n\nDos', 1, 5)).toBe('Uno\n![](foto:5)\nDos');
   });
 
-  it('en una sección vacía, la referencia queda sola, sin renglón vacío adelante', () => {
-    expect(ponerEn('', null, 5)).toBe('![](foto:5)');
+  it('una línea que no existe deja el texto como está', () => {
+    expect(ponerEn('1. Hervir', 4, 5)).toBe('1. Hervir');
   });
 
   it('no repite la referencia si la línea ya la tiene', () => {
     const conFoto = ponerEn('1. Hervir', 0, 5);
     expect(ponerEn(conFoto, 0, 5)).toBe(conFoto);
-  });
-
-  it('no repite en el renglón nuevo si el texto ya la tiene', () => {
-    const conFoto = ponerEn('- Ojo con el horno', null, 5);
-    expect(ponerEn(conFoto, null, 5)).toBe(conFoto);
   });
 
   it('con línea, sólo mira esa línea: la misma foto en otra línea no bloquea agregarla', () => {

@@ -290,6 +290,7 @@ carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chi
 | `tacho` | Las acciones destructivas: *Borrar receta* y *Descartar* un borrador. |
 | `cerrar` | La cruz: la del chip removible del editor, la que limpia la búsqueda y la que saca una foto del borrador. |
 | `camara` | *Agregar foto*, en la captura, en el borrador y en el editor de recetas (§6.25), y *Subir foto* al elegir la de una categoría (§6.4). |
+| `imagen` | El botón que pone en una línea una foto que ya está en el depósito (§6.9b). Es una foto sacada y no la cámara: no agrega ninguna. |
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `zanahoria`, `listaNumerada` | Las dos posiciones del conmutador de cocina —*Ingredientes* y *Pasos*—, al lado de la palabra. |
 | Los cinco relojitos | Uno por valor de la duración, el mismo mapa en el editor (§6.18), la tarjeta, la receta, la búsqueda, el filtro (§6.19) y el orden (§6.20). |
@@ -668,6 +669,28 @@ Placeholder en `--fg-3`, y **nunca reemplaza a la etiqueta**.
 
 Los campos de contenido —ingredientes, preparación, notas— son `textarea` que
 crecen con el contenido, con un mínimo de tres renglones.
+
+### 6.9b Botón de poner una foto
+
+Vive **encima de un campo de contenido del editor**, pegado a su borde derecho
+—a `--e-2`— y **a la altura de la línea donde está el cursor**. Se dibuja sólo
+con el campo enfocado y con algo en el depósito.
+
+Sin texto: el ícono `imagen` de 18 px en `--fg-2`, en una caja de 36 × 32 px de
+`--surface` —más oscuro que el campo, que es `--surface-alta`— con borde 1 px
+`--borde-fuerte` y `--r-chico`. Presionado, `--surface-alta` (§6.0). Es de
+32 px y no de 24 para poder tocarlo, y se sube 4 px para quedar centrado sobre
+el renglón. Tapa el final de la línea, que es el precio de estar adentro del
+campo: la escritura pasa por debajo y el botón se ve entero.
+
+**No es la cámara** (§3.4): pone una foto que ya está en el depósito, no agrega
+una nueva.
+
+La altura sale de un **espejo** del campo: un calco invisible, con el mismo
+tipo, la misma interlínea y el mismo ancho de texto, al que se le escribe lo
+que hay hasta el cursor para leer dónde quedó el renglón. Un `textarea` no sabe
+decir en qué renglón está el cursor, y contar líneas por el alto de línea falla
+en cuanto una línea larga ocupa dos renglones.
 
 ### 6.10 Chip
 
@@ -1120,8 +1143,9 @@ suya. Sin depósito no se dibuja.
 
 **La galería** es una grilla de **tres columnas** con `--e-2` de separación,
 cada foto cuadrada (`object-fit: cover`) sobre `--surface-alta`, con
-`--r-foto`. Es la del selector de portada del editor, donde la elegida lleva un
-contorno de 2 px en `--acento`.
+`--r-foto`. La usan las dos fichas del editor que hacen elegir una foto: la de
+la portada, donde la elegida lleva un contorno de 2 px en `--acento`, y la de
+poner una en una línea (§6.9b).
 
 **La foto en línea** va debajo del texto que la nombra —un ingrediente, un paso,
 una nota—, al ancho de la ficha, con `--r-foto` y `--e-2` arriba y abajo. Si
@@ -1141,13 +1165,13 @@ desplaza. Son tres:
 
 | Ficha | Qué muestra |
 |---|---|
-| **Acciones** | *Foto N* y cuatro botones secundarios en dos columnas —cuatro no entran en una fila de teléfono—: **Ver**, **Portada**, **Poner en…** y **Sacar**, este último con la variante de peligro (§6.7). *Portada* no se dibuja si ya lo es. |
-| **Poner en…** | *Poner la foto N en…* y, agrupados por sección y por sus `###` en *micro* `--fg-2`, un botón secundario por línea, a lo ancho, alineado a la izquierda y con el texto cortado a una línea. Una línea vacía se ofrece igual, como *(sin texto)*. |
+| **Acciones** | *Foto N* y botones secundarios en dos columnas —no entran todos en una fila de teléfono—: **Ver**, **Portada** y **Sacar**, este último con la variante de peligro (§6.7). *Portada* no se dibuja si ya lo es, y el último botón, si queda solo en su fila, la ocupa entera. |
+| **Poner una foto** | La galería del depósito, y nada más: es la que abre el botón de §6.9b. **No ofrece agregar**, que es la ficha *Fotos*. |
 | **Foto de portada** | La galería del depósito con la actual marcada, el campo de URL, y **Usar la URL** y **Sin foto**. |
 
-**El botón de portada**, en el campo *Foto* de Datos, es un cuadrado de 96 px
-con `--r-foto`: la miniatura de la cabecera actual, o un recuadro punteado de
-`--borde-fuerte` que dice *Sin foto* en *micro* `--fg-3`.
+**El botón de portada**, en el campo *Portada* de Datos, es un cuadrado de
+96 px con `--r-foto`: la miniatura de la cabecera actual, o un recuadro
+punteado de `--borde-fuerte` que dice *Sin foto* en *micro* `--fg-3`.
 
 ---
 

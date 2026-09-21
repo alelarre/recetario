@@ -45,7 +45,7 @@ y el archivo se arma solo al guardar.
 
 #### C04.2.1 — Los campos del frontmatter *(J7)*
 
-- [ ] Un control por clave: título (texto), tags (lista editable), rinde y fuente (texto), dificultad (elección de tres), `tiempo` con los cinco botones de duración (C04.2.1c) y foto con el selector de portada (C04.2.1d).
+- [ ] Un control por clave: título (texto), tags (lista editable), rinde y fuente (texto), dificultad (elección de tres), `tiempo` con los cinco botones de duración (C04.2.1c) y `foto` con el selector de **Portada** (C04.2.1d).
 - [ ] **El YAML no se muestra en ningún momento.**
 - [ ] Solo el título es obligatorio.
 - [ ] Un campo que se deja vacío **no se escribe** en el frontmatter: no quedan claves vacías.
@@ -69,8 +69,9 @@ y el archivo se arma solo al guardar.
 - [ ] **Un valor inválido en el archivo** abre el editor sin ningún botón apretado.
 - [ ] El valor viaja en un campo oculto `tiempo`, que es lo que lee el formulario, y entra en la foto de «cambios sin guardar» como cualquier campo (C04.1.1).
 
-#### C04.2.1d — El campo «Foto» *(J7)*
+#### C04.2.1d — El campo «Portada» *(J7)*
 
+- [ ] **Se llama «Portada»**, y no «Foto»: abajo está la ficha *Fotos*, que es el depósito, y son dos cosas distintas.
 - [ ] **No es un campo de texto: es la miniatura de la cabecera actual**, y tocarla abre una ficha al pie con el depósito para elegir, el campo de URL y **Sin foto**.
 - [ ] Elegir una del depósito escribe `foto: foto:N`; la URL se usa tal cual; *Sin foto* deja la cabecera vacía. La actual queda marcada en la grilla, y el campo de URL trae la de hoy si la cabecera es una URL.
 - [ ] Sin cabecera, el botón dice *Sin foto*. Una `foto:N` que no está en el depósito se lee como ausente (C05.1.1).
@@ -146,8 +147,9 @@ conserva, lo borra.
 ### F04.3d — Las fotos de la receta
 
 La ficha **Fotos**, después de Contenido: el depósito de la receta (C05.1.5),
-donde se agregan, se sacan y se mandan al texto. **Una foto se pone en el texto
-desde la foto**, no ubicando el cursor.
+donde se agregan y se sacan. **Una foto se pone en el texto desde el lugar**:
+se pone el cursor en la línea y se elige la foto, que es el orden en que se
+piensa mientras se escribe el paso.
 
 **Nada toca Drive hasta Guardar** (C04.5.1): las fotos nuevas viven en memoria,
 ya achicadas y con su número asignado.
@@ -164,12 +166,19 @@ ya achicadas y con su número asignado.
 
 #### C04.3d.2 — Qué se hace con una foto *(J7)*
 
-- [ ] Tocar una miniatura abre una ficha al pie con cuatro acciones: **Ver**, **Portada**, **Poner en…** y **Sacar**. El velo o tocar afuera la cierran.
+- [ ] Tocar una miniatura abre una ficha al pie con tres acciones: **Ver**, **Portada** y **Sacar**. El velo o tocar afuera la cierran.
 - [ ] **Ver** abre el visor (C03.5.3). **Portada** la pone de cabecera; si ya lo es, la acción no se dibuja.
-- [ ] **Poner en…** abre una segunda ficha con los lugares de la receta —la descripción, cada ingrediente, cada paso, las variaciones y las notas—, agrupados por sección y por sus `###`, con el texto de cada línea cortado a una. Elegir uno escribe la referencia y cierra la ficha.
-- [ ] La referencia va al final de la línea de un ingrediente o un paso, y en un renglón nuevo al final de la descripción, las variaciones o las notas. Si esa línea ya la tiene, no se repite.
-- [ ] **Los lugares salen de lo que está escrito en ese momento en el formulario**, no del `.md` guardado.
 - [ ] **Sacar** la saca del depósito y **borra sus referencias del texto**. Si era la portada, la cabecera queda vacía.
+
+#### C04.3d.3 — Poner una foto en una línea *(J7)*
+
+- [ ] En un campo de contenido con el foco aparece **un botón sin texto, con el ícono de foto, a la altura de la línea donde está el cursor**, pegado al borde derecho del campo (`design-system.md` §6.9b).
+- [ ] **Con el depósito vacío el botón no se dibuja:** no hay foto que poner.
+- [ ] El botón se va cuando el foco pasa a otro control, y se acomoda solo a medida que el cursor cambia de línea.
+- [ ] Tocarlo abre una ficha al pie con **la galería del depósito y nada más**: elegir una escribe `![](foto:N)` al final de esa línea y cierra la ficha. **Desde ahí no se agregan fotos**: agregar es la ficha *Fotos* (C04.3d.1).
+- [ ] En una línea vacía la referencia queda sola. Si la línea ya la tiene, no se repite.
+- [ ] La línea es la que tenía el cursor cuando apareció el botón, y el texto es el que está escrito en ese momento en el formulario, no el del `.md` guardado.
+- [ ] El botón y la ficha se agregan y se sacan del DOM **sin redibujar el formulario**: redibujarlo perdería lo escrito (C04.1.1).
 
 ### F04.4 — Declarar una receta terminada
 
@@ -251,7 +260,7 @@ ofrece deshacer: la papelera de Drive es la red de seguridad, y es del usuario.
 
 | Capacidad | Job |
 |---|---|
-| C04.1.1, C04.2.1, C04.2.1b, C04.2.1c, C04.2.1d, C04.2.2, C04.2.3, C04.3.1, C04.3b.1, C04.3d.1, C04.3d.2, C04.4.1, C04.5.1, C04.5.2, C04.6.1 | J7 |
+| C04.1.1, C04.2.1, C04.2.1b, C04.2.1c, C04.2.1d, C04.2.2, C04.2.3, C04.3.1, C04.3b.1, C04.3d.1, C04.3d.2, C04.3d.3, C04.4.1, C04.5.1, C04.5.2, C04.6.1 | J7 |
 | C04.3.2 | J4, J7 |
 | C04.3.3 | J7, J8 |
 | C04.3c.1 | J8 |

@@ -1,13 +1,13 @@
 /**
  * El depósito de fotos de una receta (spec `2026-09-19-fotos-de-recetas-design.md`
  * §3-4): la sección `## Fotos` del cuerpo, las referencias `![epígrafe](foto:N)`
- * que la nombran desde cualquier parte del texto, y los lugares donde el
- * editor puede escribir una de esas referencias con *Poner en…*.
+ * que la nombran desde cualquier parte del texto, y cómo el editor escribe una
+ * de esas referencias en la línea donde está el cursor.
  *
  * Módulo puro: no toca Drive ni el DOM. Lo consumen `recipe.ts` (parsear y
  * serializar la sección) y las pantallas que necesitan la receta ya resuelta.
  */
-import type { FotoDeReceta, Lugar, Receta } from './tipos.js';
+import type { FotoDeReceta, Receta } from './tipos.js';
 
 /** El link de Drive de una foto, para quien la lea con el conector de Drive. */
 export const linkDeFoto = (id: string): string =>
@@ -133,65 +133,31 @@ export function sinFotosDeDrive(receta: Receta): Receta {
   };
 }
 
-/** El nombre de cada sección cuando `lineasDeLaReceta` no tiene un `###` que la agrupe. */
-const NOMBRE_SECCION = {
-  descripcion: 'Descripción',
-  ingredientes: 'Ingredientes',
-  preparacion: 'Preparación',
-  variaciones: 'Variaciones',
-  notas: 'Notas'
-} as const;
-
-/** Los ingredientes o los pasos, línea por línea, agrupados por el `###` que los contiene. */
-function lineasDeSeccion(texto: string, seccion: 'ingredientes' | 'preparacion'): Lugar[] {
-  const lugares: Lugar[] = [];
-  let grupo: string = NOMBRE_SECCION[seccion];
-  texto.split('\n').forEach((linea, indice) => {
-    const encabezado = linea.match(/^###\s+(.+?)\s*$/)?.[1];
-    if (encabezado !== undefined) { grupo = encabezado.trim(); return; }
-    if (!linea.trim()) return;
-    lugares.push({ seccion, linea: indice, texto: linea.trim(), grupo });
-  });
-  return lugares;
-}
-
 /**
- * Los lugares donde se puede poner una foto, para *Poner en…*: la
- * descripción, cada ingrediente, cada paso, las variaciones y las notas, en
- * ese orden (spec §4, sin condición). Descripción, variaciones y notas dan
- * su lugar aunque estén vacías —poner la primera foto ahí es un caso real,
- * y `ponerEn` con texto vacío no deja un renglón en blanco adelante—;
- * ingredientes y pasos sólo dan uno por línea existente.
+ * En qué línea del texto está el cursor: las líneas son las lógicas —las que
+ * separa un `\n`—, así que el ajuste de línea en pantalla no cuenta. Una
+ * posición fuera del texto se recorta a sus extremos: el `selectionStart` de
+ * un campo que todavía no se tocó llega en 0.
  */
-export function lineasDeLaReceta(receta: Receta): Lugar[] {
-  return [
-    { seccion: 'descripcion', linea: null, texto: receta.descripcion.trim(), grupo: NOMBRE_SECCION.descripcion },
-    ...lineasDeSeccion(receta.ingredientes, 'ingredientes'),
-    ...lineasDeSeccion(receta.preparacion, 'preparacion'),
-    { seccion: 'variaciones', linea: null, texto: receta.variaciones.trim(), grupo: NOMBRE_SECCION.variaciones },
-    { seccion: 'notas', linea: null, texto: receta.notas.trim(), grupo: NOMBRE_SECCION.notas }
-  ];
+export function lineaDelCursor(texto: string, posicion: number): number {
+  const tope = Math.min(Math.max(posicion, 0), texto.length);
+  return texto.slice(0, tope).split('\n').length - 1;
 }
 
 /** Si ya tiene esta referencia, en cualquier epígrafe. */
 const tieneReferencia = (texto: string, n: number): boolean => texto.includes(`(foto:${n})`);
 
 /**
- * Agrega ` ![](foto:N)` al final de la línea de un ingrediente o un paso, o
- * un renglón nuevo al final del texto para la descripción, las variaciones o
- * las notas. Si la línea ya la tiene —o, sin línea, si el texto ya la
- * tiene—, no la repite.
+ * Agrega ` ![](foto:N)` al final de una línea del texto —la del cursor—. En
+ * una línea vacía la referencia queda sola, sin el espacio adelante. Si la
+ * línea ya la tiene, no la repite; si esa línea no existe, el texto no cambia.
  */
-export function ponerEn(texto: string, linea: number | null, n: number): string {
+export function ponerEn(texto: string, linea: number, n: number): string {
   const referencia = `![](foto:${n})`;
-  if (linea === null) {
-    if (tieneReferencia(texto, n)) return texto;
-    return texto ? `${texto}\n${referencia}` : referencia;
-  }
   const lineas = texto.split('\n');
   const actual = lineas[linea];
   if (actual === undefined || tieneReferencia(actual, n)) return texto;
-  lineas[linea] = `${actual} ${referencia}`;
+  lineas[linea] = actual ? `${actual} ${referencia}` : referencia;
   return lineas.join('\n');
 }
 

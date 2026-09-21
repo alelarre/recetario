@@ -307,6 +307,31 @@ button.chip { cursor: pointer; }
 .campo input:focus, .campo textarea:focus { outline: none; border: 2px solid var(--acento); }
 .campo ::placeholder { color: var(--fg-3); }
 
+/* El marco de un campo de sección del editor: el `textarea`, su espejo y el
+   botón de poner una foto, que se cuelga encima (§6.9b). */
+.campo-texto { position: relative; }
+/* En línea, el `textarea` deja abajo el hueco de la línea base, y el espejo
+   —que calca su caja— quedaría corrido. */
+.campo-texto > textarea { display: block; }
+/* El espejo es el calco del campo: mismo tipo, misma interlínea, mismo ancho
+   de texto y el mismo ajuste de línea. No se ve y no se toca; está sólo para
+   leer a qué altura quedó el renglón del cursor. El borde no se copia: se suma
+   al padding, así el texto arranca donde arranca el del campo con foco —2 px—,
+   que es el único momento en que se lo mira. */
+.espejo { position: absolute; inset: 0; visibility: hidden; pointer-events: none; overflow: hidden;
+          padding: calc(var(--e-3) + 2px); white-space: pre-wrap; overflow-wrap: break-word;
+          font: 400 var(--txt-base)/1.5 var(--tipo); }
+/* §6.9b — El botón de poner una foto: sin texto, a la altura del renglón del
+   cursor y pegado al borde derecho del campo. Se sube 4 px para quedar
+   centrado sobre el renglón, que mide 24. */
+.poner-foto { position: absolute; right: var(--e-2); margin-top: -4px;
+              width: 36px; height: 32px; display: grid; place-items: center; padding: 0;
+              background: var(--surface); border: 1px solid var(--borde-fuerte);
+              border-radius: var(--r-chico); color: var(--fg-2); cursor: pointer; }
+.poner-foto:active { background: var(--surface-alta); }
+.poner-foto svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5;
+                  stroke-linecap: round; stroke-linejoin: round; }
+
 /* ---- §6.8 Aviso ---- */
 .aviso { display: flex; gap: var(--e-3); align-items: center; flex-wrap: wrap;
          background: var(--error-suave); border: 1px solid var(--error);
@@ -412,15 +437,10 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
              max-width: 680px; margin: 0 auto; max-height: 80vh; overflow: auto;
              border-radius: var(--r-ficha) var(--r-ficha) 0 0;
              padding-bottom: calc(var(--e-4) + env(safe-area-inset-bottom)); }
-/* Cuatro acciones no entran en una fila del teléfono: van de a dos. */
+/* Las acciones no entran todas en una fila del teléfono: van de a dos, y la
+   última sola ocupa la fila entera en vez de dejar un hueco al costado. */
 .acciones-foto { display: grid; grid-template-columns: 1fr 1fr; }
-/* Cada lugar de «Poner en…» es una línea de la receta: se lee de izquierda a
-   derecha y lo que no entra se corta, como en la lista de la que sale. */
-.lugares h3 { font-size: var(--txt-micro); font-weight: 600; color: var(--fg-2);
-              margin: var(--e-4) 0 var(--e-2); }
-.lugares h3:first-of-type { margin-top: 0; }
-.lugar { width: 100%; justify-content: flex-start; text-align: left; font-weight: 400;
-         margin-bottom: var(--e-2); }
+.acciones-foto > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 /* La portada: la miniatura de lo que hay, o el recuadro que dice que no hay. */
 .portada-boton { display: block; width: 96px; height: 96px; padding: 0; border: 0;
                  border-radius: var(--r-foto); overflow: hidden;

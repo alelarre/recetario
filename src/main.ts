@@ -16,7 +16,8 @@ import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
 import {
   renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado,
-  renderAccionesFoto, renderPonerEn, renderSelectorPortada, filaDeFotosEditor, muestraDePortada, fotosDesde
+  renderAccionesFoto, renderElegirFoto, renderSelectorPortada, filaDeFotosEditor, muestraDePortada,
+  fotosDesde, botonPonerFoto
 } from './ui/editor.js';
 import { renderBorradores, renderBorrador, renderPreguntaBorrador } from './ui/borradores.js';
 import { renderPlan } from './ui/plan.js';
@@ -41,7 +42,7 @@ import { aviso, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js'
 import { pintar as pintarEnPantalla, conClosest, desplazarCarrusel } from './ui/pintar.js';
 import { renderVisor, pasoDelVisor } from './ui/visor.js';
 import {
-  linkDeFoto, idDeDrive, resolverReceta, siguienteNumero, lineasDeLaReceta, ponerEn, sacarReferencias
+  linkDeFoto, idDeDrive, resolverReceta, siguienteNumero, lineaDelCursor, ponerEn, sacarReferencias
 } from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
 import { registrarCategorias } from './ui/categorias.js';
@@ -1238,6 +1239,8 @@ function escribirDeposito(fotos: FotoDeReceta[]): void {
   if (campo) campo.value = JSON.stringify(fotos);
   const fila = document.querySelector<HTMLElement>('#app .miniaturas');
   if (fila) fila.outerHTML = filaDeFotosEditor(fotos);
+  // Sacar la última foto deja el botón de poner sin nada que ofrecer.
+  acomodarBotonDeFoto();
   void completarFotos();
 }
 
@@ -1250,9 +1253,43 @@ function escribirPortada(valor: string): void {
   void completarFotos();
 }
 
+/**
+ * El botón de poner una foto, a la altura de la línea donde está el cursor
+ * (P46). Se cuelga del marco del campo con foco y se saca de ahí en cada
+ * movimiento: el formulario no se redibuja nunca, que perdería lo escrito.
+ *
+ * La altura sale del **espejo** del campo (`area`, `src/ui/editor.ts`): se le
+ * escribe el texto hasta el cursor y se le pregunta dónde quedó la marca. Un
+ * `textarea` no sabe decir en qué renglón está el cursor, y calcularlo con el
+ * alto de línea daría mal en cuanto una línea larga ocupe dos renglones. Al
+ * alto del espejo se le resta el scroll del campo, que es lo que corre el
+ * texto cuando no entra entero.
+ */
+function acomodarBotonDeFoto(): void {
+  const campo = document.activeElement as HTMLTextAreaElement | null;
+  // **El foco en el botón mismo no lo toca.** Al tocarlo, el foco le llega
+  // antes que el click: sacarlo ahí dejaría el toque sin destino.
+  if (campo?.dataset?.['accion'] === 'abrir-elegir-foto') return;
+  document.querySelector('#app .poner-foto')?.remove();
+  if (!enElEditor()) return;
+  const seccion = campo?.name ?? '';
+  if (!(SECCIONES as readonly string[]).includes(seccion)) return;
+  // Sin depósito no hay nada que poner, y el botón no se dibuja.
+  if (!depositoDelEditor().length) return;
+  const marco = document.querySelector(`#app [data-campo-texto="${seccion}"]`);
+  const antes = marco?.querySelector('[data-antes]');
+  const marca = marco?.querySelector<HTMLElement>('[data-marca]');
+  if (!marco || !antes || !marca) return;
+  const texto = campo?.value ?? '';
+  const posicion = campo?.selectionStart ?? texto.length;
+  antes.textContent = texto.slice(0, posicion);
+  const altura = Math.round(marca.offsetTop - (campo?.scrollTop ?? 0));
+  marco.insertAdjacentHTML('beforeend', botonPonerFoto(seccion, lineaDelCursor(texto, posicion), altura));
+}
+
 /** Las fichas al pie del editor y el velo con el que se cierran. */
 const FICHAS_DE_FOTO =
-  '#app [data-acciones-foto], #app [data-poner-en], #app [data-selector-portada], ' +
+  '#app [data-acciones-foto], #app [data-elegir-foto], #app [data-selector-portada], ' +
   '#app .velo[data-accion="cerrar-ficha-foto"]';
 
 /** Saca del DOM la ficha que esté abierta, sin tocar el formulario. */
@@ -1932,17 +1969,19 @@ app.addEventListener('click', async (e) => {
     return;
   }
   if (accion === 'sin-portada') { escribirPortada(''); cerrarFichaFoto(); return; }
-  if (accion === 'abrir-poner-en') {
-    // Los lugares salen de lo que está escrito ahora en el formulario, no del
-    // `.md` guardado: la foto va a la línea que el usuario está viendo.
-    const receta = recetaDesdeFormulario(datosDelFormulario(), parse(''));
-    abrirFichaFoto(renderPonerEn(lineasDeLaReceta(receta), Number(boton.dataset['n'] ?? 0)));
+  if (accion === 'abrir-elegir-foto') {
+    // La sección y la línea son las que tenía el botón: las escribió
+    // `acomodarBotonDeFoto` con el cursor donde estaba.
+    abrirFichaFoto(renderElegirFoto(
+      depositoDelEditor(), boton.dataset['seccion'] ?? '', Number(boton.dataset['linea'] ?? 0)
+    ));
     return;
   }
   if (accion === 'poner-en') {
     const campo = campoDelEditor(boton.dataset['seccion'] ?? '');
-    const marca = boton.dataset['linea'] ?? '';
-    if (campo) campo.value = ponerEn(campo.value, marca === '' ? null : Number(marca), Number(boton.dataset['n'] ?? 0));
+    if (campo) {
+      campo.value = ponerEn(campo.value, Number(boton.dataset['linea'] ?? 0), Number(boton.dataset['n'] ?? 0));
+    }
     cerrarFichaFoto();
     return;
   }
@@ -2311,8 +2350,9 @@ app.addEventListener('input', (e) => {
     return;
   }
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria();
-  // En el editor, cada tecla puede habilitar o bloquear el botón de `incompleta`.
-  if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') return revisarIncompleta();
+  // En el editor, cada tecla puede habilitar o bloquear el botón de
+  // `incompleta`, y mueve el cursor de línea.
+  if (enElEditor()) { revisarIncompleta(); acomodarBotonDeFoto(); return; }
   if (vistaActual?.vista !== 'capturar' && !editandoBorrador) return;
   const campo = e.target as HTMLInputElement | HTMLTextAreaElement | null;
   if (!campo?.name) return;
@@ -2432,6 +2472,26 @@ app.addEventListener('keydown', (e) => {
   e.preventDefault();
   agregarTag(campo.value);
   campo.value = '';
+});
+
+/**
+ * El cursor se movió: el botón de la foto va a la línea nueva (P46). Es el
+ * único aviso que da el navegador cuando el cursor cambia de lugar, venga de
+ * un toque, de una tecla o de las manijas de la selección.
+ */
+document.addEventListener('selectionchange', () => {
+  if (tapadas) return;
+  acomodarBotonDeFoto();
+});
+
+/**
+ * El foco pasó a otro control: si no es una sección, el botón de la foto se
+ * va. No todo cambio de foco mueve el cursor, así que no alcanza con
+ * `selectionchange`.
+ */
+app.addEventListener('focusin', () => {
+  if (tapadas) return;
+  acomodarBotonDeFoto();
 });
 
 // Salir del campo con algo escrito lo agrega igual: no se pierde por

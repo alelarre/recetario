@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   renderEditor, recetaDesdeFormulario, formularioDesde, pillTag,
-  renderAccionesFoto, renderPonerEn, renderSelectorPortada
+  renderAccionesFoto, renderElegirFoto, renderSelectorPortada, botonPonerFoto
 } from '../src/ui/editor.js';
 import { ICO, ICONO_DE_DURACION } from '../src/ui/iconos.js';
 import { escapar } from '../src/ui/markdown.js';
 import { parse, serialize } from '../src/recipe.js';
-import { lineasDeLaReceta } from '../src/fotos-receta.js';
 import { DURACIONES } from '../src/catalogo.js';
 import { entradaFalsa } from './dobles.js';
 import type { Categoria } from '../src/store.js';
@@ -385,7 +384,13 @@ describe('las fotos en el editor', () => {
     expect(serialize(recetaDesdeFormulario(formularioDesde(conFotos), conFotos))).toBe(serialize(conFotos));
   });
 
-  it('el campo Foto es un oculto y un botón con la miniatura de la cabecera', () => {
+  it('el campo de la cabecera se llama Portada, y no Foto como la ficha del depósito (P48)', () => {
+    const html = dibujarFotos();
+    expect(html).toContain('<div class="campo" data-portada><span>Portada</span>');
+    expect(html).not.toContain('<span>Foto</span>');
+  });
+
+  it('el campo Portada es un oculto y un botón con la miniatura de la cabecera', () => {
     const html = dibujarFotos();
     expect(html).toContain('<input type="hidden" name="foto" value="foto:3">');
     expect(html).toContain('data-accion="abrir-portada"');
@@ -397,14 +402,24 @@ describe('las fotos en el editor', () => {
   it('sin cabecera, el botón lo dice', () => {
     expect(dibujarFotos({ ...conFotos, foto: null })).toContain('Sin foto');
   });
+
+  it('cada campo de texto va en un marco con su espejo, donde se cuelga el botón de la foto', () => {
+    const html = dibujarFotos();
+    for (const seccion of ['descripcion', 'ingredientes', 'preparacion', 'variaciones', 'notas']) {
+      expect(html).toContain(`<div class="campo-texto" data-campo-texto="${seccion}">`);
+    }
+    // El espejo copia el texto hasta el cursor para saber a qué altura quedó:
+    // no se ve, y el lector de pantalla no lo lee.
+    expect(html).toContain('<div class="espejo" aria-hidden="true"><span data-antes></span>');
+    expect(html).toContain('<span data-marca>&#8203;</span>');
+  });
 });
 
 describe('renderAccionesFoto', () => {
-  it('las cuatro acciones, cada una con su número', () => {
+  it('las tres acciones, cada una con su número', () => {
     const html = renderAccionesFoto(2, { portada: false });
     const acciones: [string, string][] = [
-      ['Ver', 'ver-foto-receta'], ['Portada', 'elegir-portada'],
-      ['Poner en…', 'abrir-poner-en'], ['Sacar', 'sacar-foto-editor']
+      ['Ver', 'ver-foto-receta'], ['Portada', 'elegir-portada'], ['Sacar', 'sacar-foto-editor']
     ];
     for (const [etiqueta, accion] of acciones) {
       expect(html).toContain(`data-accion="${accion}" data-n="2"`);
@@ -427,6 +442,12 @@ describe('renderAccionesFoto', () => {
     expect(html).not.toContain('data-accion="sacar-foto"');
   });
 
+  it('*Poner en…* ya no está: la foto se pone desde el paso (P46)', () => {
+    const html = renderAccionesFoto(2, { portada: false });
+    expect(html).not.toContain('Poner en');
+    expect(html).not.toContain('abrir-poner-en');
+  });
+
   it('la ficha se encuentra por su marca: se saca del DOM sin redibujar', () => {
     expect(renderAccionesFoto(2, { portada: false })).toContain('data-acciones-foto');
   });
@@ -436,51 +457,60 @@ describe('las fichas de fotos se cierran con el velo', () => {
   it('cada una arranca con el velo, como la hoja de Compartir', () => {
     const velo = '<div class="velo" data-accion="cerrar-ficha-foto"></div>';
     expect(renderAccionesFoto(1, { portada: false }).startsWith(velo)).toBe(true);
-    expect(renderPonerEn([], 1).startsWith(velo)).toBe(true);
+    expect(renderElegirFoto([], 'notas', 0).startsWith(velo)).toBe(true);
     expect(renderSelectorPortada([], null).startsWith(velo)).toBe(true);
   });
 
   it('ninguna suma un Cancelar: se cierran tocando afuera', () => {
     expect(renderAccionesFoto(1, { portada: false })).not.toContain('Cancelar');
+    expect(renderElegirFoto([], 'notas', 0)).not.toContain('Cancelar');
     expect(renderSelectorPortada([], null)).not.toContain('Cancelar');
   });
 });
 
-describe('renderPonerEn', () => {
-  const receta = parse('---\ntitulo: A\n---\n\nUna entrada clásica.\n\n' +
-    '## Ingredientes\n### Para la salsa\n- Tomate perita — 1 lata\n\n## Preparación\n1. Mezclar.\n');
-  const lugares = lineasDeLaReceta(receta);
-
-  it('los lugares agrupados, con su sección, su línea y el número de la foto', () => {
-    const html = renderPonerEn(lugares, 5);
-    expect(html).toContain('data-accion="poner-en" data-seccion="ingredientes" data-linea="1" data-n="5"');
-    expect(html).toContain('Tomate perita — 1 lata');
-    expect(html).toContain('<h3>Para la salsa</h3>');
-    expect(html).toContain('<h3>Descripción</h3>');
-    // El `###` agrupa y no es un lugar.
-    expect(html).not.toContain('>### Para la salsa<');
+describe('el botón de poner una foto, sobre el campo de texto', () => {
+  it('va donde está el cursor: su sección, su línea y la altura del renglón', () => {
+    const html = botonPonerFoto('preparacion', 2, 48);
+    expect(html).toContain('data-accion="abrir-elegir-foto"');
+    expect(html).toContain('data-seccion="preparacion"');
+    expect(html).toContain('data-linea="2"');
+    expect(html).toContain('style="top:48px"');
   });
 
-  it('un lugar sin línea —descripción, variaciones, notas— va con data-linea vacío', () => {
-    expect(renderPonerEn(lugares, 5))
-      .toContain('data-accion="poner-en" data-seccion="descripcion" data-linea="" data-n="5"');
+  it('no lleva texto: el ícono de foto y su nombre para el lector de pantalla', () => {
+    const html = botonPonerFoto('notas', 0, 0);
+    expect(html).toContain(ICO.imagen);
+    expect(html).toContain('aria-label="Poner una foto en esta línea"');
+    expect(html).toMatch(/>(<svg[\s\S]*<\/svg>)<\/button>$/);
   });
 
-  it('el texto de cada lugar se corta a una línea', () => {
-    const largo = 'Mezclar todo muy despacio hasta que quede una masa lisa y elástica, sin grumos.';
-    const html = renderPonerEn([{ seccion: 'preparacion', linea: 0, texto: largo, grupo: 'Preparación' }], 1);
-    expect(html).not.toContain(largo);
-    expect(html).toContain('Mezclar todo muy');
-    expect(html).toContain('…');
+  it('es de tipo button: adentro del formulario, un botón sin tipo lo manda', () => {
+    expect(botonPonerFoto('notas', 0, 0)).toContain('type="button"');
+  });
+});
+
+describe('renderElegirFoto', () => {
+  const fotos = [
+    { n: 1, url: 'https://drive.google.com/file/d/1AbC/view' },
+    { n: 3, url: 'https://ejemplo.com/pan.jpg' }
+  ];
+
+  it('sólo las fotos del depósito, cada una con la línea a la que va', () => {
+    const html = renderElegirFoto(fotos, 'preparacion', 2);
+    expect(html).toContain('data-accion="poner-en" data-seccion="preparacion" data-linea="2" data-n="1"');
+    expect(html).toContain('data-accion="poner-en" data-seccion="preparacion" data-linea="2" data-n="3"');
+    expect(html).toContain('data-drive="1AbC"');
+    expect(html).toContain('aria-label="Poner la foto 3"');
   });
 
-  it('un lugar vacío se ofrece igual: es donde va la primera foto', () => {
-    expect(renderPonerEn([{ seccion: 'notas', linea: null, texto: '', grupo: 'Notas' }], 1))
-      .toContain('(sin texto)');
+  it('desde acá no se agregan fotos: eso es la ficha Fotos', () => {
+    const html = renderElegirFoto(fotos, 'notas', 0);
+    expect(html).not.toContain('Agregar foto');
+    expect(html).not.toContain('type="file"');
   });
 
   it('la ficha se encuentra por su marca', () => {
-    expect(renderPonerEn(lugares, 5)).toContain('data-poner-en');
+    expect(renderElegirFoto(fotos, 'notas', 0)).toContain('data-elegir-foto');
   });
 });
 
