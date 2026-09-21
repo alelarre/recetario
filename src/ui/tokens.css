@@ -231,11 +231,8 @@ button.chip { cursor: pointer; }
    El marco que se desliza de costado: la pista con lo que le pongan adentro, el
    degradé y las dos flechas. Lo comparten el carrusel de tags y el de fotos de
    la receta, y puede haber más de uno en la misma pantalla: cada marco lleva su
-   propia timeline y su propio fondo. */
-.carrusel-marco { position: relative; margin-bottom: var(--e-3);
-                  /* A qué color va el degradé: el fondo de atrás del carrusel.
-                     Lo redefine quien no viva sobre el fondo de la pantalla. */
-                  --carrusel-fondo: var(--bg); }
+   propia timeline y su propio fondo de degradé. */
+.carrusel-marco { position: relative; margin-bottom: var(--e-3); }
 .carrusel { display: flex; gap: var(--e-2); overflow-x: auto; padding-bottom: var(--e-1);
             scrollbar-width: none; scroll-behavior: smooth; }
 .carrusel::-webkit-scrollbar { display: none; }
@@ -250,8 +247,12 @@ button.chip { cursor: pointer; }
    la animación no se aplica y se ve el valor base. Por eso, dentro del
    @supports, los dos lados arrancan ocultos y es la animación la que los
    muestra mientras quede algo por ver. */
-.carrusel-marco::after { right: 0; background: linear-gradient(to right, transparent, var(--carrusel-fondo)); }
-.carrusel-marco::before { left: 0; background: linear-gradient(to left, transparent, var(--carrusel-fondo)); }
+/* `--carrusel-fondo` es a qué color va el degradé: el fondo que el carrusel
+   tenga atrás. El default va en el `var()` y no en una declaración del marco,
+   que pesa lo mismo que `.carrusel-fotos` y ganaría o perdería según el orden
+   del archivo. Lo define quien no viva sobre el fondo de la pantalla. */
+.carrusel-marco::after { right: 0; background: linear-gradient(to right, transparent, var(--carrusel-fondo, var(--bg))); }
+.carrusel-marco::before { left: 0; background: linear-gradient(to left, transparent, var(--carrusel-fondo, var(--bg))); }
 @supports (animation-timeline: scroll()) {
   .carrusel-marco { timeline-scope: --carrusel; }
   .carrusel { scroll-timeline: --carrusel inline; }

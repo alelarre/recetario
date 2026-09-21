@@ -90,8 +90,9 @@ const pintar = (html: string): void => {
 /**
  * Las fotos que la pantalla dejó pedidas. Las del editor salen del blob que
  * está en memoria; las de Drive, del caché o de la red. Una de Drive que ya no
- * está pasa al recuadro de aviso si es de una grilla, y no se dibuja en
- * ningún otro lado (spec §6). Las de Drive van de a dos, como la precarga: de
+ * está pasa al recuadro de aviso si tiene su propio cuadrado —el carrusel de la
+ * receta, una grilla, una miniatura—, y no se dibuja en ningún otro lado
+ * (spec §6). Las de Drive van de a dos, como la precarga: de
  * a una, una lista entera se completa de arriba a abajo y se ve llegar.
  */
 async function completarFotos(): Promise<void> {
@@ -2351,7 +2352,7 @@ function seguirDedo(p: number | null): void {
   }
 }
 
-/** Las dos filas que se desplazan de costado (`base.css`). Una que entra entera no cuenta: no hay nada que mover. */
+/** Las dos filas que se desplazan de costado: el carrusel (`tokens.css`) y la fila de duraciones (`base.css`). Una que entra entera no cuenta: no hay nada que mover. */
 function sobreFilaDeslizable(destino: EventTarget | null): boolean {
   const fila = conClosest(destino)?.closest<HTMLElement>('.carrusel, .fila-dur');
   return !!fila && fila.scrollWidth > fila.clientWidth;

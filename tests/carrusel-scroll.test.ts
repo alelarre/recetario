@@ -27,10 +27,17 @@ describe('el carrusel es un componente del sistema: su CSS vive en tokens.css', 
   });
 
   it('el degradé va al fondo de atrás del carrusel, que cada uno define', () => {
-    expect(TOKENS).toContain('--carrusel-fondo: var(--bg);');
-    expect(TOKENS).toContain('linear-gradient(to right, transparent, var(--carrusel-fondo))');
+    expect(TOKENS).toContain('linear-gradient(to right, transparent, var(--carrusel-fondo, var(--bg)))');
+    expect(TOKENS).toContain('linear-gradient(to left, transparent, var(--carrusel-fondo, var(--bg)))');
     // El de fotos vive adentro de una ficha, no sobre el fondo de la pantalla.
     expect(TOKENS).toContain('.carrusel-fotos { --carrusel-fondo: var(--surface);');
+  });
+
+  it('el fondo por defecto es el del `var()`, no una declaración que dependa del orden', () => {
+    // `.carrusel-marco` y `.carrusel-fotos` pesan igual: si el default viviera
+    // en el marco, mover §6.26 arriba de §6.21 devolvería el degradé a `--bg`
+    // —un borrón negro sobre la ficha— sin que nada se queje.
+    expect(TOKENS).not.toContain('--carrusel-fondo: var(--bg)');
   });
 });
 

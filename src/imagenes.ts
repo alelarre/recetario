@@ -83,7 +83,7 @@ export function crearImagenes({
 
   /**
    * Los pedidos que están en vuelo, por id. La misma foto la piden a la vez la
-   * cabecera, la grilla y el visor: sin esto, cada uno la baja por su cuenta.
+   * cabecera, el carrusel y el visor: sin esto, cada uno la baja por su cuenta.
    */
   const enVuelo = new Map<string, Promise<Blob | null>>();
 

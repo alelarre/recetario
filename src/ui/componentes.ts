@@ -386,8 +386,9 @@ export interface Miniatura {
 
 /**
  * El recuadro de una foto de Drive que ya no está (spec §6). Lo dibuja la fila
- * de miniaturas, y `main` lo pone en lugar de una imagen de una grilla cuando
- * Drive contesta que el archivo no existe.
+ * de miniaturas, y `main` lo pone en lugar de una imagen que tenga su propio
+ * cuadrado —el carrusel de la receta, una grilla— cuando Drive contesta que el
+ * archivo no existe.
  */
 export const FOTO_AUSENTE = '<span class="miniatura-vacia">La foto ya no está en Drive.</span>';
 

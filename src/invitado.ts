@@ -112,7 +112,7 @@ export function iniciarInvitado(): void {
       await render();
       return;
     }
-    // Las fotos que viajaron en el link (§7): la cabecera y las de la grilla
+    // Las fotos que viajaron en el link (§7): la cabecera y las del carrusel
     // abren el visor, y se cierra tocando en cualquier parte.
     if (accion === 'ver-foto-receta') {
       abrirVisor(leida.receta, boton.dataset['n']);
