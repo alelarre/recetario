@@ -232,7 +232,8 @@ revocar.
 
 - [ ] El link abre la vista de invitado (C03.7.5): `…/#/ver?r=<carga>`.
 - [ ] **La receta viaja entera en el fragmento del link**, comprimida: el `.md` sin tags ni claves extra, más el nombre de la categoría, que el `.md` no lleva. No llega a ningún servidor.
-- [ ] **Las fotos de Drive no viajan:** el depósito va resuelto y sólo con las externas, la cabecera sólo si es externa, y las referencias a fotos que no viajaron no se dibujan (C05.1.5). Quien abre el link no tiene token.
+- [ ] **Las fotos de Drive no viajan:** el depósito va sólo con las externas, la cabecera sólo si apunta a una de ellas, y las referencias a las que no viajaron se sacan del texto (C05.1.5). Quien abre el link no tiene token.
+- [ ] **Lo que viaja va sin resolver:** las externas siguen siendo `foto:N` con su línea del depósito, y resuelve el lector. Así el invitado puede calcular el uso de cada foto y no dibujar ninguna dos veces (C05.1.5), y la URL de una foto usada viaja una sola vez en vez de repetirse en cada referencia.
 - [ ] La carga empieza con la versión del formato; una carga de otra versión se trata como link roto.
 - [ ] Sin menú Compartir, el link se copia y la ficha avisa *"Link copiado."*. Sin portapapeles, la ficha lo muestra seleccionable: *"Copialo desde acá:"*.
 
@@ -248,7 +249,9 @@ revocar.
 
 - [ ] Quien abre el link ve la receta **sin conectar con Google**. La vista no lee ni escribe Drive, no pide el token, no guarda nada en el navegador y no ofrece guardar la receta.
 - [ ] Lectura (`#/ver?r=…`): la misma pila de fichas de la receta, con el contexto sin el color de la categoría —es de la carpeta del dueño—. **No tiene encabezado** —ni volver, ni estrella, ni compartir, ni `.md`—, ni fila de tags. Al pie, sólo **Cocinar**, si hay ingredientes o pasos.
-- [ ] **Dibuja sólo las fotos externas** —las que viajaron en el link—, con su carrusel en la primera ficha y su visor; sin ninguna, el carrusel no se dibuja. Nunca le pide nada a Drive. Las dos flechas del carrusel son de su lista cerrada de acciones y sólo lo desplazan.
+- [ ] **Dibuja sólo las fotos externas** —las que viajaron en el link—, y las resuelve él. Nunca le pide nada a Drive.
+- [ ] **Sigue la misma regla de uso que la receta** (C03.5.2): el carrusel de la primera ficha lleva sólo las que viajaron y no usa ni la cabecera ni el texto, y si no queda ninguna no se dibuja. Las dos flechas del carrusel son de su lista cerrada de acciones y sólo lo desplazan.
+- [ ] El visor recorre lo mismo que en la receta (C03.5.3): desde el carrusel, las del carrusel; la portada, sola.
 - [ ] Cocinar (`#/ver/cocinar?r=…`): el mismo modo cocina de la app —conmutador, paso actual, pasos hechos, sol—. **La única salida es el chevron**, que vuelve a la lectura; *Salir* no se dibuja.
 - [ ] El título de la pestaña es el de la receta.
 - [ ] Si la carga no se puede leer —cortada, alterada, de otra versión—, la pantalla dice *"Este link está roto o incompleto."* y nada más.

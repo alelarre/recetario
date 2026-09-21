@@ -12,6 +12,7 @@ import { entradaFalsa } from './dobles.js';
 import { parse } from '../src/recipe.js';
 import { DURACIONES } from '../src/catalogo.js';
 import { linkDeFoto, parsearFotos, serializarFotos } from '../src/fotos-receta.js';
+import { ICO } from '../src/ui/iconos.js';
 import type { CambiosDeFotos, Coincidencias, Plan } from '../src/tipos.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
@@ -3066,7 +3067,7 @@ describe('main.ts: las rutas', () => {
 
     it('elegir una foto de portada la escribe como `foto:N`', async () => {
       estado.md = MD_CON_FOTOS;
-      const { abrir, tocar, preguntas, portadas } = await montar();
+      const { abrir, tocar, preguntas, portadas, filasDeFotos } = await montar();
       await abrir('#/r/f1/editar');
       estado.formulario = formularioConFotos();
 
@@ -3078,6 +3079,12 @@ describe('main.ts: las rutas', () => {
       expect(portadas.at(-1)).toContain(EXTERNA);
       // Elegir cierra la ficha.
       expect(preguntas.some(h => h.includes('data-selector-portada'))).toBe(false);
+      // Y la fila se redibuja con la marca de portada en la que se eligió, sin
+      // salir del editor (P54).
+      const fila = filasDeFotos.at(-1) ?? '';
+      const minis = fila.split('<div class="miniatura">').slice(1);
+      expect(minis[1]).toContain(ICO.portada);
+      expect(minis[0]).not.toContain(ICO.portada);
     });
 
     /** Lo que contesta un sitio que sí deja bajar la foto. */
@@ -3401,7 +3408,7 @@ describe('main.ts: las rutas', () => {
 
     it('elegir una foto la escribe en la línea del cursor sin redibujar el formulario', async () => {
       estado.md = MD_CON_FOTOS;
-      const { abrir, app, tocar, posarCursor, preguntas } = await montar();
+      const { abrir, app, tocar, posarCursor, preguntas, filasDeFotos } = await montar();
       await abrir('#/r/f1/editar');
       estado.formulario = { ...formularioConFotos(), preparacion: 'Freír.\nServir.' };
       const antes = app.innerHTML;
@@ -3419,6 +3426,10 @@ describe('main.ts: las rutas', () => {
       expect(estado.formulario['preparacion']).toBe('Freír.\nServir. ![](foto:2)');
       expect(preguntas.some(h => h.includes('data-elegir-foto'))).toBe(false);
       expect(app.innerHTML).toBe(antes);
+      // Ahora está en un paso, y la fila se redibuja diciéndolo (P54).
+      const minis = (filasDeFotos.at(-1) ?? '').split('<div class="miniatura">').slice(1);
+      expect(minis[1]).toContain(ICO.enElTexto);
+      expect(minis[0]).not.toContain(ICO.enElTexto);
     });
 
     it('en el editor, el visor se agrega y se saca del DOM sin redibujar el formulario', async () => {
@@ -3531,6 +3542,34 @@ describe('main.ts: las rutas', () => {
 
       expect(estado.cambiosDeFotos.at(-1)?.deBorrador).toEqual(['fa']);
       expect(estado.conservadas.at(-1)).toEqual(['fa']);
+    });
+
+    it('en Nueva receta las marcas ven las secciones ajenas de la receta recibida', async () => {
+      // El editor no muestra las secciones ajenas: el uso de una foto puesta
+      // ahí sólo se conoce por la receta de base. En el alta esa base es la que
+      // volvió de Claude, no una vacía.
+      const md = [
+        '---', 'titulo: Focaccia', '---', '',
+        '## Preparación', '1. Hornear.', '',
+        '## Maridaje', `Un tinto ![](foto:1)`, '',
+        '## Fotos', `- 1: ${EXTERNA}`, '- 2: https://ejemplo/otra.jpg', ''
+      ].join('\n');
+      const { abrir, tocar, filasDeFotos } = await montar();
+      await abrir('#/capturar?text=' + encodeURIComponent(md));
+      await tocar('elegir-borrador-recibido', { valor: '' });
+      expect(global.location.hash).toBe('#/nueva?recibida=1');
+      estado.formulario = {
+        titulo: 'Focaccia', carpeta: 'c1', foto: '', preparacion: '1. Hornear.',
+        fotos: deposito([{ n: 1, url: EXTERNA }, { n: 2, url: 'https://ejemplo/otra.jpg' }])
+      };
+
+      await tocar('abrir-portada');
+      await tocar('elegir-portada', { n: '2' });
+
+      const minis = (filasDeFotos.at(-1) ?? '').split('<div class="miniatura">').slice(1);
+      // La 1 la nombra la sección ajena, que no está en ningún campo.
+      expect(minis[0]).toContain(ICO.enElTexto);
+      expect(minis[1]).toContain(ICO.portada);
     });
 
     /** Con dos fotos sin uso: las del carrusel, que es lo que el visor recorre (P54). */

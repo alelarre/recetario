@@ -27,8 +27,11 @@ function deBase64url(texto: string): Uint8Array {
 }
 
 export async function codificar(receta: Receta, categoria: string): Promise<string> {
-  // Las fotos viajan resueltas y sólo las externas (§10): el invitado no tiene
-  // token, así que una de Drive sería una imagen rota del otro lado.
+  // Sólo las externas (§10): el invitado no tiene token, así que una de Drive
+  // sería una imagen rota del otro lado. **Sin resolver**: viajan como `foto:N`
+  // con su línea del depósito, para que del otro lado se pueda calcular el uso
+  // de cada una y ninguna se dibuje dos veces (P54). Resolver es cosa del
+  // lector (`resueltaSinFotosDeDrive`), no del que arma el link.
   const md = serialize({ ...sinFotosDeDrive(receta), tags: [], extras: {} });
   const json = new TextEncoder().encode(JSON.stringify({ c: categoria, md }));
   return VERSION + aBase64url(await pasarPor(json, new CompressionStream('deflate-raw')));

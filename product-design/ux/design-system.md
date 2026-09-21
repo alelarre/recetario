@@ -1164,10 +1164,10 @@ flex: los íconos van en línea con el texto —`inline-block` de 1,15 em con
 sobre `--velo` al 94 %, con la foto entera al ancho —o al alto— de la pantalla,
 sin recortar. Se cierra tocando cualquier lado. **Desliza entre lo que se
 tocó**: desde el carrusel de una receta, entre las del carrusel; desde la fila
-de fotos del editor o de un borrador, entre las de la fila; una foto que no es
-de una tira —la portada, la de un paso— se abre sola. El dedo pasa a la
-siguiente o a la anterior, sin dar la vuelta en los extremos, y ese gesto no la
-cierra. Es estado de la pantalla, no una ruta.
+de fotos del editor, entre las del depósito; una foto que no es de una tira —la
+portada, la de un paso, **y cualquiera de un borrador**— se abre sola. El dedo
+pasa a la siguiente o a la anterior, sin dar la vuelta en los extremos, y ese
+gesto no la cierra. Es estado de la pantalla, no una ruta.
 
 ### 6.26 Las fotos de la receta
 

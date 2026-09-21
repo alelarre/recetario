@@ -150,26 +150,46 @@ export function fotosSinUso(receta: Receta): FotoDeReceta[] {
 const PATRON_IMAGEN_RESUELTA = /!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g;
 
 /**
- * La receta resuelta sin ninguna URL de Drive: ni en la cabecera, ni en el
- * texto, ni en el depósito. La usan el link compartido y el texto plano, que
- * no llevan fotos que pidan el token de Drive.
+ * La receta **sin resolver** y sin nada de Drive: se van las líneas de Drive
+ * del depósito, las referencias que las nombraban, una cabecera que apunte a
+ * una de ellas y cualquier imagen con una URL de Drive escrita en el texto.
+ * Las externas quedan como estaban: `foto:N` en la cabecera y en el texto, con
+ * su línea en el depósito.
+ *
+ * **Sin resolver a propósito:** es lo que viaja en el link compartido (§10), y
+ * del otro lado el invitado tiene que poder calcular el uso de cada foto
+ * (`usosDeFotos`). Resolviéndola antes no quedaría ninguna `foto:N` que contar
+ * y el carrusel volvería a repetir la portada y las de una línea (P54).
  */
 export function sinFotosDeDrive(receta: Receta): Receta {
-  const resuelta = resolverReceta(receta);
-  const sinDrive = (texto: string) =>
-    texto.replace(PATRON_IMAGEN_RESUELTA, (imagen, _epigrafe, url: string) => idDeDrive(url) ? '' : imagen);
+  const deDrive = receta.fotos.filter(f => idDeDrive(f.url) !== null).map(f => f.n);
+  const sinDrive = (texto: string) => {
+    const sinReferencias = deDrive.reduce((t, n) => sacarReferencias(t, n), texto);
+    // Una URL de Drive escrita a mano en el texto, sin pasar por el depósito.
+    return sinReferencias.replace(PATRON_IMAGEN_RESUELTA, (imagen, _epigrafe, url: string) => idDeDrive(url) ? '' : imagen);
+  };
+  const n = receta.foto?.match(PATRON_FOTO_N)?.[1];
+  const fotos = receta.fotos.filter(f => idDeDrive(f.url) === null);
   return {
-    ...resuelta,
-    foto: resuelta.foto !== null && idDeDrive(resuelta.foto) ? null : resuelta.foto,
-    descripcion: sinDrive(resuelta.descripcion),
-    ingredientes: sinDrive(resuelta.ingredientes),
-    preparacion: sinDrive(resuelta.preparacion),
-    variaciones: sinDrive(resuelta.variaciones),
-    notas: sinDrive(resuelta.notas),
-    otras: resuelta.otras.map(o => ({ ...o, cuerpo: sinDrive(o.cuerpo) })),
-    fotos: resuelta.fotos.filter(f => !idDeDrive(f.url))
+    ...receta,
+    foto: receta.foto === null ? null
+      : n !== undefined ? (fotos.some(f => f.n === Number(n)) ? receta.foto : null)
+      : idDeDrive(receta.foto) ? null : receta.foto,
+    descripcion: sinDrive(receta.descripcion),
+    ingredientes: sinDrive(receta.ingredientes),
+    preparacion: sinDrive(receta.preparacion),
+    variaciones: sinDrive(receta.variaciones),
+    notas: sinDrive(receta.notas),
+    otras: receta.otras.map(o => ({ ...o, cuerpo: sinDrive(o.cuerpo) })),
+    fotos
   };
 }
+
+/**
+ * La misma, ya resuelta a URLs: lo que dibuja el invitado y lo que arma el
+ * texto plano, que no tienen token para pedirle nada a Drive.
+ */
+export const resueltaSinFotosDeDrive = (receta: Receta): Receta => resolverReceta(sinFotosDeDrive(receta));
 
 /**
  * En qué línea del texto está el cursor: las líneas son las lógicas —las que

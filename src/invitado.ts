@@ -9,7 +9,7 @@ import { renderCocina } from './ui/cocina.js';
 import { rutaDeInvitado } from './ui/router.js';
 import { pasoDelVisor } from './ui/visor.js';
 import { decodificar } from './link-receta.js';
-import { sinFotosDeDrive } from './fotos-receta.js';
+import { resueltaSinFotosDeDrive } from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
 import type { Receta } from './tipos.js';
 import type { EstadoVisor } from './ui/visor.js';
@@ -65,7 +65,7 @@ export function iniciarInvitado(): void {
       // Sin fotos de Drive desde el arranque (§10): ni la lectura, ni la
       // cocina, ni el visor tienen después nada que pedirle a Drive.
       leida = datos
-        ? { carga: ruta.carga, ...datos, cruda: datos.receta, receta: sinFotosDeDrive(datos.receta) }
+        ? { carga: ruta.carga, ...datos, cruda: datos.receta, receta: resueltaSinFotosDeDrive(datos.receta) }
         : null;
       visor = null;
     }

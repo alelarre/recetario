@@ -435,10 +435,11 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
 .visor img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
 /* ---- §6.26 El carrusel de fotos de la receta ----
-   El depósito entero en la primera ficha, debajo de la descripción. Vive sobre
-   la ficha y no sobre el fondo de la pantalla, así que el degradé va a
-   `--surface`. Cada foto mide 66 px: entran cinco en el ancho de un teléfono,
-   y el visor es el que las muestra grandes. */
+   Las fotos sin uso en la primera ficha, debajo de la descripción: la portada
+   está arriba y las de una línea, en su línea (P54). Vive sobre la ficha y no
+   sobre el fondo de la pantalla, así que el degradé va a `--surface`. Cada
+   foto mide 66 px: entran cinco en el ancho de un teléfono, y el visor es el
+   que las muestra grandes. */
 .carrusel-fotos { --carrusel-fondo: var(--surface); margin-top: var(--e-3); }
 .carrusel-foto { display: block; width: 66px; padding: 0; border: 0; background: var(--surface-alta);
                  border-radius: var(--r-foto); overflow: hidden; aspect-ratio: 1; cursor: pointer; }

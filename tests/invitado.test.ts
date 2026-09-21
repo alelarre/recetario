@@ -86,23 +86,39 @@ describe('el controlador del invitado', () => {
     expect(app.innerHTML).toContain('<li class="hecho" data-accion="paso" data-paso="0">');
   });
 
-  it('tocar una foto abre el visor, el dedo pasa a la siguiente y un toque lo cierra', async () => {
-    const carga = await codificar(parse(
-      '---\ntitulo: Rabas\nfoto: foto:1\n---\n\n## Preparación\n1. Freír.\n\n## Fotos\n- 1: https://x/1.jpg\n- 2: https://x/2.jpg\n'
-    ), 'Pescados');
+  /** La portada y dos sin uso: el carrusel es de esas dos (P54). */
+  const MD_CON_SUELTAS =
+    '---\ntitulo: Rabas\nfoto: foto:1\n---\n\n## Preparación\n1. Freír.\n\n' +
+    '## Fotos\n- 1: https://x/1.jpg\n- 2: https://x/2.jpg\n- 3: https://x/3.jpg\n';
+
+  it('tocar una foto del carrusel abre el visor, el dedo pasa a la siguiente y un toque lo cierra', async () => {
+    const carga = await codificar(parse(MD_CON_SUELTAS), 'Pescados');
     const { app, tocar, deslizar } = await montar(`#/ver?r=${carga}`);
-    await tocar('ver-foto-receta', { n: '1' });
+    await tocar('ver-foto-receta', { n: '2' });
     expect(app.innerHTML).toContain('class="visor"');
     expect(app.innerHTML).toContain('data-i="0"');
+    expect(app.innerHTML).toContain('data-total="2"');
     await deslizar(200, 100);
     expect(app.innerHTML).toContain('data-i="1"');
-    expect(app.innerHTML).toContain('src="https://x/2.jpg"');
+    expect(app.innerHTML).toContain('src="https://x/3.jpg"');
     // El click con el que termina el deslizamiento no cierra: ya cambió de foto.
     await tocar('cerrar-visor');
     expect(app.innerHTML).toContain('class="visor"');
     await deslizar(100, 100);
     await tocar('cerrar-visor');
     expect(app.innerHTML).not.toContain('class="visor"');
+  });
+
+  it('el carrusel del invitado no repite la portada, y tocarla la abre sola', async () => {
+    const carga = await codificar(parse(MD_CON_SUELTAS), 'Pescados');
+    const { app, tocar } = await montar(`#/ver?r=${carga}`);
+    const carrusel = app.innerHTML.slice(app.innerHTML.indexOf('carrusel-fotos'), app.innerHTML.indexOf('carrusel-flecha'));
+    expect(carrusel).not.toContain('https://x/1.jpg');
+    expect(app.innerHTML.match(/https:\/\/x\/1\.jpg/g)).toHaveLength(1);
+
+    await tocar('ver-foto-receta', { n: '1' });
+    expect(app.innerHTML).toContain('data-total="1"');
+    expect(app.innerHTML).toContain('src="https://x/1.jpg"');
   });
 
   it('el visor no queda abierto al ir a la cocina', async () => {

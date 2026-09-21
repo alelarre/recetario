@@ -396,7 +396,6 @@ foto: foto:1
       `<span class="ico-linea">${ICO.imagen}</span> que aparece al costado del renglón que estás escribiendo.`
     );
     // Un párrafo, no una fila de flex: la última línea corta como cualquier texto.
-    expect(ayuda.slice(0, ayuda.indexOf('>'))).toContain('fotos-ayuda');
     expect(html).toContain('<p class="fotos-ayuda">');
   });
 

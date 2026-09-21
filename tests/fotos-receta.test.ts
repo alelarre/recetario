@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { recetaFalsa } from './dobles.js';
 import {
   linkDeFoto, idDeDrive, parsearFotos, serializarFotos, siguienteNumero,
-  resolver, resolverReceta, sinFotosDeDrive, lineaDelCursor, ponerEn, sacarReferencias,
-  usosDeFotos, fotosSinUso
+  resolver, resolverReceta, sinFotosDeDrive, resueltaSinFotosDeDrive, lineaDelCursor,
+  ponerEn, sacarReferencias, usosDeFotos, fotosSinUso
 } from '../src/fotos-receta.js';
 
 describe('linkDeFoto / idDeDrive', () => {
@@ -150,8 +150,26 @@ describe('sinFotosDeDrive', () => {
     const limpia = sinFotosDeDrive(receta);
     expect(limpia.foto).toBeNull();
     expect(limpia.descripcion).not.toContain(linkDrive);
-    expect(limpia.descripcion).toContain('https://externa.com/x.jpg');
     expect(limpia.fotos).toEqual([{ n: 2, url: 'https://externa.com/x.jpg' }]);
+  });
+
+  it('**no resuelve**: la externa sigue siendo `foto:N`, en la cabecera y en el texto', () => {
+    // Es lo que hace posible calcular el uso del otro lado del link (P54).
+    const receta = recetaFalsa({ foto: 'foto:2', descripcion: 'Ver ![](foto:1) y ![](foto:2).', fotos });
+    const limpia = sinFotosDeDrive(receta);
+    expect(limpia.foto).toBe('foto:2');
+    expect(limpia.descripcion).toBe('Ver y ![](foto:2).');
+    expect(fotosSinUso(limpia)).toEqual([]);
+  });
+
+  it('una URL de Drive escrita a mano en el texto también se va', () => {
+    const receta = recetaFalsa({ notas: `Mirá ![](${linkDrive}) acá.`, fotos });
+    expect(sinFotosDeDrive(receta).notas).not.toContain(linkDrive);
+  });
+
+  it('una cabecera que apunta a una foto de Drive queda sin cabecera', () => {
+    expect(sinFotosDeDrive(recetaFalsa({ foto: linkDrive, fotos })).foto).toBeNull();
+    expect(sinFotosDeDrive(recetaFalsa({ foto: 'foto:9', fotos })).foto).toBeNull();
   });
 
   it('deja las externas como están', () => {
@@ -162,6 +180,25 @@ describe('sinFotosDeDrive', () => {
     const limpia = sinFotosDeDrive(receta);
     expect(limpia.foto).toBe('https://externa.com/portada.jpg');
     expect(limpia.fotos).toEqual([{ n: 1, url: 'https://externa.com/x.jpg' }]);
+  });
+});
+
+describe('resueltaSinFotosDeDrive', () => {
+  const linkDrive = linkDeFoto('abc123');
+  const fotos = [{ n: 1, url: linkDrive }, { n: 2, url: 'https://externa.com/x.jpg' }];
+
+  it('es la de arriba ya resuelta: las externas quedan como URL y de Drive no queda nada', () => {
+    const receta = recetaFalsa({ foto: 'foto:2', descripcion: 'Ver ![](foto:1) y ![](foto:2).', fotos });
+    const limpia = resueltaSinFotosDeDrive(receta);
+    expect(limpia.foto).toBe('https://externa.com/x.jpg');
+    expect(limpia.descripcion).toContain('![](https://externa.com/x.jpg)');
+    expect(limpia.descripcion).not.toContain('foto:');
+    expect(limpia.fotos).toEqual([{ n: 2, url: 'https://externa.com/x.jpg' }]);
+  });
+
+  it('sin ninguna de Drive, es lo mismo que resolver', () => {
+    const receta = recetaFalsa({ foto: 'foto:1', fotos: [{ n: 1, url: 'https://externa.com/x.jpg' }] });
+    expect(resueltaSinFotosDeDrive(receta)).toEqual(resolverReceta(receta));
   });
 });
 

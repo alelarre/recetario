@@ -4,7 +4,7 @@
  */
 import { aTexto, tramosATexto, tramosDeFuente } from './ui/markdown.js';
 import { contextoDe } from './recipe.js';
-import { sinFotosDeDrive } from './fotos-receta.js';
+import { resueltaSinFotosDeDrive } from './fotos-receta.js';
 import type { Receta } from './tipos.js';
 
 const SECCIONES = [
@@ -18,7 +18,7 @@ export function textoReceta(sinResolver: Receta, categoria: string): string {
   // Una referencia a una foto externa se escribe como su URL, como cualquier
   // imagen de hoy; una de Drive no se escribe, porque nadie más la puede abrir
   // (§10). La sección Fotos no va: el depósito no es texto.
-  const receta = sinFotosDeDrive(sinResolver);
+  const receta = resueltaSinFotosDeDrive(sinResolver);
   const partes: string[] = [[receta.titulo ?? 'Sin título', contextoDe(receta, categoria)].filter(Boolean).join('\n')];
   const descripcion = aTexto(receta.descripcion);
   if (descripcion) partes.push(descripcion);

@@ -1315,12 +1315,24 @@ const depositoDelEditor = (): FotoDeReceta[] =>
 const portadaDelEditor = (): string => campoDelEditor('foto')?.value ?? '';
 
 /**
+ * La receta sobre la que escribe el formulario: lo que el editor no muestra
+ * —`extras` y las secciones ajenas— sale de acá. En el alta es la receta que
+ * volvió de Claude, si hay una; editando, la que se leyó. Es la misma base que
+ * usa Guardar, salvo que ahí la de una receta existente se relee de Drive.
+ */
+const baseDelEditor = (): Receta => {
+  if (vistaActual?.vista === 'nueva') {
+    return (vistaActual.params['recibida'] && recibida ? recibida : null) ?? parse('');
+  }
+  return recetaLeida?.receta ?? parse('');
+};
+
+/**
  * La receta como está escrita **ahora** en el formulario. La necesita lo que
  * depende de todo el texto y no de un campo solo: el uso de cada foto, que
- * mira la cabecera y todas las secciones (P54).
+ * mira la cabecera y **todas** las secciones, las ajenas incluidas (P54).
  */
-const recetaDelEditor = (): Receta =>
-  recetaDesdeFormulario(datosDelFormulario(), recetaLeida?.receta ?? parse(''));
+const recetaDelEditor = (): Receta => recetaDesdeFormulario(datosDelFormulario(), baseDelEditor());
 
 /**
  * Escribe el depósito y redibuja sólo su fila de miniaturas: redibujar el

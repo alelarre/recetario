@@ -3,6 +3,7 @@ import { parse } from '../src/recipe.js';
 import { renderInvitado, renderLinkRoto } from '../src/ui/invitado.js';
 import { renderCocina } from '../src/ui/cocina.js';
 import { ACCIONES_DE_INVITADO } from '../src/invitado.js';
+import { codificar, decodificar } from '../src/link-receta.js';
 
 const RECETA = parse(`---
 titulo: Rabas
@@ -129,6 +130,43 @@ describe('La vista de invitado', () => {
     const html = renderInvitado({ receta: CON_FOTOS, categoria: '', visor: { urls: ['https://x/plato.jpg'], i: 0 } });
     expect(html).toContain('class="visor"');
     expect(html).toContain('data-total="1"');
+  });
+
+  it('por el camino real —codificar, decodificar, dibujar— ninguna foto sale dos veces', async () => {
+    // Los demás tests de acá arman la receta con `parse`, que es la forma cruda
+    // que el link nunca entregaba: el bug de P54 sólo se veía yendo por el
+    // camino de producción.
+    const r = parse(`---
+titulo: Rabas
+foto: foto:1
+---
+
+## Preparación
+1. Freír. ![](foto:2)
+
+## Fotos
+- 1: https://x/portada.jpg
+- 2: https://x/paso.jpg
+- 3: https://x/suelta.jpg
+`);
+    const vuelta = await decodificar(await codificar(r, 'Pescados'));
+    expect(vuelta).not.toBeNull();
+    const html = renderInvitado({ receta: vuelta!.receta, categoria: vuelta!.categoria });
+    const carrusel = html.slice(html.indexOf('carrusel-fotos'), html.indexOf('carrusel-flecha'));
+    expect(carrusel).toContain('https://x/suelta.jpg');
+    expect(carrusel).not.toContain('https://x/portada.jpg');
+    expect(carrusel).not.toContain('https://x/paso.jpg');
+    // Una sola vez cada una en la pantalla entera: la portada arriba y la del
+    // paso en su línea.
+    expect(html.match(/https:\/\/x\/portada\.jpg/g)).toHaveLength(1);
+    expect(html.match(/https:\/\/x\/paso\.jpg/g)).toHaveLength(1);
+  });
+
+  it('por el camino real, con todas ubicadas no hay carrusel', async () => {
+    const vuelta = await decodificar(await codificar(CON_FOTOS, 'Pescados'));
+    const html = renderInvitado({ receta: vuelta!.receta, categoria: '' });
+    expect(html).not.toContain('carrusel-fotos');
+    expect(html).not.toContain('data-drive');
   });
 
   it('el link roto lo dice y no ofrece nada', () => {
