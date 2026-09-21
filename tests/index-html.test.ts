@@ -18,14 +18,14 @@ describe('el velo de escritura en index.html', () => {
     expect(veloEscritura()).not.toContain('spin');
   });
 
-  it('lleva un SVG en línea, decorativo', () => {
-    const bloque = veloEscritura();
-    expect(bloque).toContain('<svg');
-    expect(bloque).toContain('aria-hidden="true"');
+  it('el SVG es decorativo: aria-hidden va en la propia etiqueta <svg>', () => {
+    const etiqueta = veloEscritura().match(/<svg[^>]*>/)?.[0] ?? '';
+    expect(etiqueta).toContain('aria-hidden="true"');
   });
 
-  it('el libro tiene el renglón que se escribe y el lápiz que lo recorre', () => {
+  it('tiene el contorno del libro, el renglón que se escribe y el lápiz que lo recorre', () => {
     const bloque = veloEscritura();
+    expect(bloque).toContain('libro');
     expect(bloque).toContain('renglon');
     expect(bloque).toContain('lapiz');
   });

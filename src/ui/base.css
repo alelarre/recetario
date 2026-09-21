@@ -389,21 +389,28 @@ html:has(.hoja-compartir), html:has(.hoja-foto) { overflow: hidden; }
                   pointer-events: auto; display: grid; place-items: center; }
 #velo-escritura[hidden] { display: none; }
 
-/* El libro que se escribe: un renglón se dibuja con stroke-dashoffset
-   mientras el lápiz lo recorre de izquierda a derecha, las dos con la misma
-   duración para que no se despeguen. Al terminar, las dos vuelven a
-   empezar de un salto (sin alternate): es el mismo renglón, otra vez. */
+/* El libro que se escribe: dos páginas separadas por el lomo —el hueco entre
+   las dos, no una línea—, tres renglones ya escritos y fijos a la izquierda,
+   y a la derecha el renglón en curso, que se dibuja con stroke-dashoffset
+   mientras el lápiz lo recorre de izquierda a derecha. El lápiz es un grupo
+   —punta fina y cuerpo grueso— para que las dos partes se trasladen juntas.
+   El renglón y el lápiz miden lo mismo (22) y animan con la misma duración,
+   para que no se despeguen. Al terminar, las dos vuelven a empezar de un
+   salto (sin alternate): es el mismo renglón, otra vez. */
 #velo-escritura svg { width: 96px; height: 96px; fill: none; stroke-width: 3;
                        stroke-linecap: round; stroke-linejoin: round; }
 #velo-escritura .libro { stroke: var(--fg-2); }
-#velo-escritura .renglon { stroke: var(--fg-2); stroke-dasharray: 20; stroke-dashoffset: 20;
+#velo-escritura .renglon-fijo { stroke: var(--fg-3); stroke-width: 2; }
+#velo-escritura .renglon { stroke: var(--fg-2); stroke-dasharray: 22; stroke-dashoffset: 22;
                             animation: escribir-renglon 1.6s linear infinite; }
-#velo-escritura .lapiz { stroke: var(--acento); animation: mover-lapiz 1.6s linear infinite; }
+#velo-escritura .lapiz { animation: mover-lapiz 1.6s linear infinite; }
+#velo-escritura .lapiz .punta { stroke: var(--fg-2); stroke-width: 2; }
+#velo-escritura .lapiz .cuerpo { stroke: var(--acento); stroke-width: 4; }
 @keyframes escribir-renglon { to { stroke-dashoffset: 0; } }
-@keyframes mover-lapiz { to { transform: translateX(20px); } }
+@keyframes mover-lapiz { to { transform: translateX(22px); } }
 @media (prefers-reduced-motion: reduce) {
-  #velo-escritura .renglon { animation: none; stroke-dashoffset: 10; }
-  #velo-escritura .lapiz { animation: none; transform: translateX(10px); }
+  #velo-escritura .renglon { animation: none; stroke-dashoffset: 11; }
+  #velo-escritura .lapiz { animation: none; transform: translateX(11px); }
 }
 
 @media (min-width: 900px) {

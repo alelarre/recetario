@@ -18,10 +18,19 @@
          en #app, que pone main.ts. -->
     <div id="velo-escritura" hidden>
       <svg viewBox="0 0 96 96" aria-hidden="true">
-        <path class="libro" d="M14,30 L48,22 L82,30 L82,74 L48,66 L14,74 Z"/>
-        <line class="libro" x1="48" y1="22" x2="48" y2="66"/>
-        <line class="renglon" x1="60" y1="48" x2="80" y2="48"/>
-        <line class="lapiz" x1="52" y1="34" x2="60" y2="48"/>
+        <!-- Las dos páginas: el lomo es el hueco entre las dos, no una línea. -->
+        <path class="libro" d="M12,34 L46,28 L46,72 L12,68 Z"/>
+        <path class="libro" d="M50,28 L84,34 L84,68 L50,72 Z"/>
+        <!-- Lo ya escrito, fijo, en la página izquierda. -->
+        <line class="renglon-fijo" x1="18" y1="44" x2="40" y2="44"/>
+        <line class="renglon-fijo" x1="18" y1="52" x2="40" y2="52"/>
+        <line class="renglon-fijo" x1="18" y1="60" x2="40" y2="60"/>
+        <!-- Lo que se está escribiendo, en la derecha, con el lápiz encima. -->
+        <line class="renglon" x1="56" y1="58" x2="78" y2="58"/>
+        <g class="lapiz">
+          <line class="punta" x1="56" y1="58" x2="61" y2="52"/>
+          <line class="cuerpo" x1="61" y1="52" x2="69" y2="42"/>
+        </g>
       </svg>
     </div>
     <script type="module" src="/src/inicio.ts"></script>
