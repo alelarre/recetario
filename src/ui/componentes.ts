@@ -396,7 +396,7 @@ export function filaDeFotos({ fotos, agregar }: { fotos: Miniatura[]; agregar: b
       // subida no hay nada que pedirle a Drive todavía.
       : f.url === '' ? `<img data-n="${f.n}" alt="Foto ${cual}">` : imgDe(f.url);
     // El número va adentro del botón: encima de la foto, tocarlo es tocarla.
-    const contenido = imagen + (f.n === undefined ? '' : `<span class="miniatura-n">${f.n}</span>`);
+    const contenido = imagen + (f.n === undefined ? '' : `<span class="miniatura-n">#${f.n}</span>`);
     const cuerpo = f.ver && f.url !== null
       ? `<button type="button" class="miniatura-ver"${datosDeAccion(f.ver, f.n)} ` +
         `aria-label="${escapar(f.ver.etiqueta ?? `Ver la foto ${cual}`)}">${contenido}</button>`

@@ -154,7 +154,7 @@ ya achicadas y con su número asignado.
 
 #### C04.3d.1 — La ficha Fotos *(J7)*
 
-- [ ] La fila de miniaturas del depósito, en su orden, **cada una con su número**, que es con el que se la nombra en el texto.
+- [ ] La fila de miniaturas del depósito, en su orden, **cada una con su número** —`#3`—, que es con el que se la nombra en el texto.
 - [ ] **Agregar foto** al final, sin tope: abre el mismo selector del sistema que las fotos de un borrador —cámara o galería—, y acepta varias a la vez.
 - [ ] Cada foto nueva toma el número más alto más uno; ninguno se reusa, ni siquiera el de una que se sacó.
 - [ ] Mientras se achica, el velo cubre la pantalla (R8): tarda, aunque no escriba nada en Drive.

@@ -336,7 +336,7 @@ describe('las fotos en el editor', () => {
     expect(html).toContain('data-accion="acciones-foto" data-n="3"');
     // El badge lleva el número del depósito, no la posición en la fila, y va
     // adentro del botón: tocarlo es tocar la foto.
-    expect(html).toContain('<span class="miniatura-n">3</span></button>');
+    expect(html).toContain('<span class="miniatura-n">#3</span></button>');
     // La foto 3 se anuncia como la 3, y la etiqueta dice que abre las acciones.
     expect(html).toContain('aria-label="Qué hacer con la foto 3"');
     expect(html).toContain('Agregar foto');

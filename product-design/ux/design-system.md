@@ -1061,8 +1061,8 @@ está en Drive** es el mismo cuadrado con borde punteado `--borde-fuerte` y
 
 **El número del depósito** (§6.26) va en la esquina de abajo a la izquierda de
 la miniatura, adentro del botón: un badge de `--velo` al 75 %, `--r-chico`,
-*micro* en `--fg`, de 18 px de alto. Es con el que se nombra a la foto en el
-texto, así que se lee sobre cualquiera.
+*micro* en `--fg`, de 18 px de alto, con el numeral delante —`#3`—. Es con el
+que se nombra a la foto en el texto, así que se lee sobre cualquiera.
 
 **El visor** abre la foto tocada: fija sobre toda la pantalla, encima de todo,
 sobre `--velo` al 94 %, con la foto entera al ancho —o al alto— de la pantalla,
