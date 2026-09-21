@@ -175,6 +175,10 @@ button.tarjeta { width: 100%; font: inherit; text-align: left; cursor: pointer; 
 /* ---- §6.2 Placeholder / foto de tarjeta ---- */
 .foto { width: 56px; height: 56px; flex: 0 0 56px; border-radius: var(--r-foto);
         object-fit: cover; background: var(--surface-alta); }
+/* La foto de la receta va adentro del placeholder y encima de todo: la de
+   Drive tarda o puede no estar, y abajo tiene que quedar la categoría. El
+   `z-index` la saca de abajo de las capas que oscurecen esa foto. */
+.ph .foto { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; flex: none; }
 .ph { width: 56px; height: 56px; flex: 0 0 56px; border-radius: var(--r-foto);
       position: relative; overflow: hidden; background: var(--c, var(--cat-otros)); }
 /* La foto de la categoría, adentro: una propia de Drive (`imgDe`) llega sin

@@ -2705,6 +2705,54 @@ describe('main.ts: las rutas', () => {
       expect(preguntas.some(h => h.includes('data-poner-en'))).toBe(false);
     });
 
+    it('en el editor, el visor se agrega y se saca del DOM sin redibujar el formulario', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, app, tocar, preguntas } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+      const antes = app.innerHTML;
+
+      await tocar('acciones-foto', { n: '2' });
+      await tocar('ver-foto-receta', { n: '2' });
+
+      expect(preguntas.at(-1)).toContain('class="visor"');
+      expect(preguntas.at(-1)).toContain('data-i="1"');
+      // Abrir el visor cierra la ficha, y el formulario no se vuelve a pintar.
+      expect(preguntas.some(h => h.includes('data-acciones-foto'))).toBe(false);
+      expect(app.innerHTML).toBe(antes);
+
+      await tocar('cerrar-visor');
+
+      expect(preguntas.some(h => h.includes('class="visor"'))).toBe(false);
+      expect(app.innerHTML).toBe(antes);
+    });
+
+    it('una foto que no se decodifica avisa en la categoría sin redibujarla', async () => {
+      const { abrir, app, elegirFotoDeCategoria, preguntas } = await montar();
+      await abrir('#/categorias/c1');
+      estado.formulario = { nombre: 'Carnes', color: 'carnes', foto: 'catalogo:carnes' };
+      const antes = app.innerHTML;
+
+      await elegirFotoDeCategoria(new Blob(['roto'], { type: 'image/jpeg' }));
+
+      expect(preguntas.at(-1)).toContain('No se pudo leer una de las fotos.');
+      expect(app.innerHTML).toBe(antes);
+      expect(estado.formulario['foto']).toBe('catalogo:carnes');
+    });
+
+    it('el depósito del editor cae en el de la receta abierta si el campo oculto no se entiende', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1/editar');
+      // Un JSON que no se entiende no puede querer decir «las saqué a todas»:
+      // el store mandaría esas fotos a la papelera (§8).
+      estado.formulario = { ...formularioConFotos(), fotos: 'no es json' };
+
+      await tocar('sacar-foto-editor', { n: '2' });
+
+      expect(JSON.parse(estado.formulario['fotos'] ?? '')).toEqual([{ n: 1, url: linkDeFoto('f9') }]);
+    });
+
     it('el velo cierra la ficha de acciones sin tocar el formulario', async () => {
       estado.md = MD_CON_FOTOS;
       const { abrir, tocar, preguntas } = await montar();

@@ -35,11 +35,21 @@ describe('tarjeta', () => {
     expect(html).not.toContain('<img');
   });
 
-  it('una receta con foto propia la dibuja', () => {
+  it('una receta con foto propia la dibuja encima del placeholder', () => {
     const html = tarjeta(entradaFalsa({ foto: 'https://x/1.jpg' }));
     expect(html).toContain('<img src="https://x/1.jpg"');
     expect(html).toContain('class="foto"');
-    expect(html).not.toContain('class="ph"');
+    // El placeholder de la categoría está siempre: si la foto no llega —o ya
+    // no está en Drive— abajo queda él, y la fila no se mueve (spec §7, F02.5b).
+    expect(html).toContain('class="ph"');
+  });
+
+  it('la foto de la receta va adentro del placeholder, y última: se dibuja encima', () => {
+    registrarCategorias([{ id: 'c1', nombre: 'Carnes', color: 'carnes', foto: 'catalogo:carnes' }]);
+    const html = placeholder('Carnes', 'https://drive.google.com/file/d/abc/view');
+    expect(html.indexOf('class="ph"')).toBeLessThan(html.indexOf('data-drive="abc"'));
+    expect(html.indexOf('catalogo')).toBeLessThan(html.indexOf('data-drive="abc"'));
+    expect(html.endsWith('</span>')).toBe(true);
   });
 
   it('una foto propia de Drive se dibuja como recuadro, con data-drive', () => {

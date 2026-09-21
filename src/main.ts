@@ -1150,8 +1150,14 @@ const enElEditor = (): boolean => vistaActual?.vista === 'editar' || vistaActual
 const campoDelEditor = (nombre: string) =>
   document.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#app [name="${nombre}"]`);
 
-/** El depósito que el editor tiene escrito ahora: el campo oculto es la única fuente. */
-const depositoDelEditor = (): FotoDeReceta[] => fotosDesde(campoDelEditor('fotos')?.value ?? '', []);
+/**
+ * El depósito que el editor tiene escrito ahora: el campo oculto es la única
+ * fuente. Un JSON que no se entiende cae en el depósito de la receta abierta y
+ * no en uno vacío: vacío significa «las saqué a todas», y el store mandaría
+ * esas fotos a la papelera (§8).
+ */
+const depositoDelEditor = (): FotoDeReceta[] =>
+  fotosDesde(campoDelEditor('fotos')?.value ?? '', recetaLeida?.receta.fotos ?? []);
 
 /** El valor crudo de la cabecera: `foto:N`, una URL, o vacío. */
 const portadaDelEditor = (): string => campoDelEditor('foto')?.value ?? '';
@@ -1194,8 +1200,12 @@ function abrirFichaFoto(html: string): void {
   void completarFotos();
 }
 
-/** Un aviso de las fotos, que aparece y se va sin redibujar el formulario. */
-function avisarEnElEditor(texto: string): void {
+/**
+ * Un aviso de las fotos arriba del formulario, que aparece y se va sin
+ * redibujarlo: en el editor redibujar perdería lo escrito, y en la categoría
+ * apagaría Guardar hasta la próxima tecla.
+ */
+function avisarEnElFormulario(texto: string): void {
   document.querySelector('#app [data-aviso-fotos]')?.remove();
   if (!texto) return;
   document.querySelector('[data-formulario]')
@@ -1225,7 +1235,7 @@ async function agregarFotosAlEditor(archivos: Blob[]): Promise<void> {
     fotosEditor.urls.set(n, imagenes.urlDeBlob(blob));
   }
   escribirDeposito(deposito);
-  avisarEnElEditor(noSeLeyo ? NO_SE_LEYO_UNA_FOTO : '');
+  avisarEnElFormulario(noSeLeyo ? NO_SE_LEYO_UNA_FOTO : '');
 }
 
 /**
@@ -2377,9 +2387,10 @@ app.addEventListener('change', (e) => {
         // Queda elegida como cualquier otra: el campo oculto la nombra, y de
         // ahí salen la muestra de arriba y «cambios sin guardar».
         elegirEnCategoria('foto', `propia:${fotoPropia.url}`);
+        avisarEnElFormulario('');
       } catch (err) {
         console.error(err);
-        dibujarCategoria(valoresDeCategoria(), NO_SE_LEYO_UNA_FOTO);
+        avisarEnElFormulario(NO_SE_LEYO_UNA_FOTO);
       }
     })();
     return;

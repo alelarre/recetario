@@ -87,16 +87,24 @@ export function encabezado(
 }
 
 /**
- * La foto de la receta si la tiene; si no, la de la categoría oscurecida y
- * teñida. Ocupa exactamente el mismo espacio en los dos casos. Las dos pasan
- * por `imgDe`: una propia de Drive, o la propia de la categoría (spec §8),
- * se dibujan como recuadro hasta que la Tarea 8 les ponga el `src`.
+ * El cuadro de 56 px de una fila: abajo, siempre, la categoría oscurecida y
+ * teñida; encima, la foto de la receta si la tiene.
+ *
+ * El placeholder se dibuja **siempre**, incluso con foto (spec §7): una
+ * cabecera de Drive llega como recuadro y se completa cuando el blob está, y
+ * si no está nunca —o si la foto ya no está en Drive— abajo queda la
+ * categoría. Así el hueco no existe en ningún momento y la lista no se
+ * reacomoda (F02.5b).
  */
 export function placeholder(categoria: unknown, foto?: string): string {
-  if (foto) return imgDe(foto, 'foto');
   const imagen = fotoCategoria(categoria);
   const estilo = `--c:${colorCategoria(categoria)}`;
-  return `<span class="ph" style="${escapar(estilo)}">${imagen ? imgDe(imagen) : ''}</span>`;
+  return `<span class="ph" style="${escapar(estilo)}">` +
+    (imagen ? imgDe(imagen) : '') +
+    // Última y con `z-index`: las capas que oscurecen la categoría son
+    // pseudo-elementos de `.ph` y no tienen que teñir la foto de la receta.
+    (foto ? imgDe(foto, 'foto') : '') +
+  '</span>';
 }
 
 export interface OpcionesTarjeta {
