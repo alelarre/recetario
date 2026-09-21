@@ -388,6 +388,9 @@ html:has(.hoja-compartir), html:has(.hoja-foto) { overflow: hidden; }
                   background: color-mix(in srgb, var(--velo) 60%, transparent);
                   pointer-events: auto; display: grid; place-items: center; }
 #velo-escritura[hidden] { display: none; }
+/* Y la página de atrás no se desplaza mientras dura, como con las fichas al
+   pie: el velo tapa el toque, pero no el desplazamiento. */
+html:has(#velo-escritura:not([hidden])) { overflow: hidden; }
 
 /* El libro que se escribe: dos páginas separadas por el lomo —el hueco entre
    las dos, no una línea—, tres renglones ya escritos y fijos a la izquierda,

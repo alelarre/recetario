@@ -218,6 +218,7 @@ Reescribe el `.md` en Drive y actualiza su fila en el índice.
 - [ ] **El reintento no resube:** una foto que ya se subió conserva su link y se escribe como está (R2).
 - [ ] El guardado se declara exitoso recién cuando las dos terminaron.
 - [ ] Mientras guarda, el botón indica que está trabajando y no se puede tocar dos veces.
+- [ ] El velo tapa la pantalla desde el toque (R8), antes de releer el `.md` de base para saber qué fotos se sacaron.
 - [ ] Al terminar, vuelve a la receta, ya con lo guardado.
 
 #### C04.5.2 — Cuando falla *(J7)*

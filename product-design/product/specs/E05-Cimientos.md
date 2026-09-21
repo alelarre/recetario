@@ -86,12 +86,14 @@ se soporta:** no hay Share Target y el Atajo equivalente sale del alcance.
 ### R8 — Una escritura por vez
 
 Mientras una operación escribe en Drive o en Sheets, **un velo con el libro que
-se está escribiendo cubre la pantalla** (`ux/design-system.md` §6.17b), desde
-que la escritura arranca hasta que termina. Es un solo mecanismo para todas las
+se está escribiendo cubre la pantalla** (`ux/design-system.md` §6.17b), desde el
+toque que la lanza hasta que termina. Es un solo mecanismo para todas las
 operaciones, y no uno por pantalla. Mientras dura, el resultado y el error tienen a dónde llegar:
 la pantalla que lanzó la escritura sigue siendo la que está.
 
+- [ ] **Aparece con el toque, no con la escritura:** entre uno y otra puede haber una lectura de Drive —el `.md` de base al guardar una receta, el plan al sumarle una— o un redibujado; todo eso pasa con la pantalla ya tapada. Si después nada llega a escribirse —falta el título, falta la categoría—, el velo se saca y queda el aviso.
 - [ ] **No se toca:** ningún control responde, ni el gesto del menú lateral.
+- [ ] **No se desplaza:** la página de atrás no scrollea mientras el velo está.
 - [ ] **No se navega:** un cambio de hash —un link, el volver del encabezado, el gesto de atrás de Android— no dibuja la pantalla nueva, y la URL vuelve a la de la pantalla que está escribiendo.
 - [ ] **No se repite la acción:** volver a tocar el control no hace nada.
 - [ ] El velo se suelta siempre, termine bien o mal; después la operación sigue su camino —navega, redibuja o muestra su aviso con lo escrito todavía en pantalla (R1)—.

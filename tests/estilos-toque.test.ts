@@ -48,6 +48,10 @@ describe('cómo responden los controles al toque', () => {
     expect(BASE).toContain('.hoja-compartir .copia { overscroll-behavior: contain; }');
   });
 
+  it('con el velo de escritura puesto, la página de atrás tampoco se desplaza (R8)', () => {
+    expect(BASE).toContain('html:has(#velo-escritura:not([hidden])) { overflow: hidden; }');
+  });
+
   it('el formulario del borrador tiene el ancho de la receta y del editor en pantalla ancha (C05.10.1)', () => {
     const regla = BASE.slice(BASE.indexOf('.hoja {'), BASE.indexOf('}', BASE.indexOf('.hoja {')));
     expect(regla).toContain('max-width: 680px');

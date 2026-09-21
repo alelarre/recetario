@@ -318,8 +318,18 @@ describe('main.ts: las rutas', () => {
     const resultadosPlan: string[] = [];
     /** Los atributos de `#app`: el único que se pone desde `main` es `aria-busy`. */
     const atributosApp: Record<string, string> = {};
+    /** El velo de la escritura en curso, hermano de `#app` en `index.html`. */
+    const velo = { hidden: true };
+    /**
+     * Cada vez que se pintó `#app`, con el velo como estaba en ese momento: es
+     * la forma de ver el orden entre tapar la pantalla y redibujarla (P47).
+     */
+    const pinturas: { html: string; velo: boolean }[] = [];
+    let htmlApp = '';
     const app = {
-      innerHTML: '', insertAdjacentHTML: () => {},
+      get innerHTML() { return htmlApp; },
+      set innerHTML(html: string) { htmlApp = html; pinturas.push({ html, velo: !velo.hidden }); },
+      insertAdjacentHTML: () => {},
       setAttribute: (n: string, v: string) => { atributosApp[n] = v; },
       removeAttribute: (n: string) => { delete atributosApp[n]; },
       addEventListener: (ev: string, fn: (e: unknown) => unknown) => {
@@ -329,8 +339,6 @@ describe('main.ts: las rutas', () => {
         if (ev === 'error') errores.push(fn);
       }
     };
-    /** El velo de la escritura en curso, hermano de `#app` en `index.html`. */
-    const velo = { hidden: true };
     /** Lo que se insertó en el formulario sin redibujarlo: las preguntas y las fichas de fotos. */
     const preguntas: string[] = [];
     /**
@@ -492,6 +500,7 @@ describe('main.ts: las rutas', () => {
     return {
       app,
       velo,
+      pinturas,
       atributosApp,
       recargas,
       vueltasAtras,
@@ -1869,6 +1878,57 @@ describe('main.ts: las rutas', () => {
       } finally {
         storeFake.crear = original;
       }
+    });
+
+    it('al tocar Guardar tapa la pantalla antes de releer el `.md` de base (P47)', async () => {
+      const original = storeFake.receta;
+      try {
+        const { abrir, tocar, velo } = await montar();
+        await abrir('#/r/f1/editar');
+        estado.formulario = { titulo: 'Milanesas', carpeta: 'c1' };
+        // La relectura de la base es un pedido a Drive: el velo no puede
+        // esperar a que conteste.
+        const { promesa, resolver } = pendiente<Awaited<ReturnType<typeof original>>>();
+        storeFake.receta = () => promesa;
+        const guardando = tocar('guardar');
+        await esperar();
+
+        expect(velo.hidden).toBe(false);
+        expect(estado.guardados).toEqual([]);
+
+        resolver({ entrada: entradaFalsa({ id_archivo: 'f1' }), receta: parse(estado.md) });
+        await guardando;
+
+        expect(velo.hidden).toBe(true);
+        expect(estado.guardados).toHaveLength(1);
+      } finally {
+        storeFake.receta = original;
+      }
+    });
+
+    it('si la validación falla, el velo no queda puesto', async () => {
+      const { abrir, tocar, app, velo } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: '', carpeta: 'c1' };
+
+      await tocar('guardar');
+
+      expect(velo.hidden).toBe(true);
+      expect(app.innerHTML).toContain('Ponele un título antes de guardar.');
+      expect(estado.creadas).toEqual([]);
+    });
+
+    it('la captura se redibuja con la pantalla ya tapada (P47)', async () => {
+      const { abrir, tocar, pinturas } = await montar();
+      await abrir('#/capturar');
+      estado.formulario = { titulo: 'Focaccia', fuente: 'libro de la abuela' };
+      const desde = pinturas.length;
+
+      await tocar('guardar-captura');
+
+      // Lo primero que se pinta después del toque es el «Guardando…» que va
+      // antes de escribir: para entonces el velo ya está.
+      expect(pinturas[desde]?.velo).toBe(true);
     });
 
     it('la estrella de favorito no lo muestra: no traba la lectura de la receta', async () => {

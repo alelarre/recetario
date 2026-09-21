@@ -265,8 +265,13 @@ const porQueNoGuardo = (err: unknown): string =>
 /** El aviso de «Pegar receta» cuando lo copiado no sirve, para Borradores y el borrador. */
 let avisoBorradores = '';
 
-/** Cuántas escrituras hay en curso, y la pantalla que las lanzó. */
-let escrituras = 0;
+/**
+ * Cuántos pedidos de tapar la pantalla hay abiertos, y la pantalla desde la
+ * que se tapó. Es la única verdad sobre el velo: cada escritura abre el suyo,
+ * y el manejador que tarda en llegar a escribir abre el suyo antes (P47). Con
+ * la pantalla tapada no se navega ni responde ningún control.
+ */
+let tapadas = 0;
 let hashEscritura = '';
 
 /** El velo, con `aria-busy` en `#app`. Los tests corren sobre un DOM mínimo: puede no estar. */
@@ -278,14 +283,28 @@ function mostrarVelo(mostrar: boolean): void {
 }
 
 /**
- * Envuelve la promesa de una escritura: el velo mientras dura, y se suelta
- * siempre, termine bien o mal. Envuelve sólo la llamada que escribe y no el
- * manejador entero, para que éste pueda navegar o redibujar al terminar.
+ * Tapa la pantalla y devuelve cómo destaparla. Destapar dos veces no descuenta
+ * de más: el manejador que la tapó puede soltarla por varios caminos.
+ */
+function tapar(): () => void {
+  if (tapadas++ === 0) { hashEscritura = location.hash; mostrarVelo(true); }
+  let soltado = false;
+  return () => {
+    if (soltado) return;
+    soltado = true;
+    if (--tapadas === 0) mostrarVelo(false);
+  };
+}
+
+/**
+ * Envuelve la promesa de una escritura: la pantalla tapada mientras dura, y se
+ * suelta siempre, termine bien o mal. Envuelve sólo la llamada que escribe y no
+ * el manejador entero, para que éste pueda navegar o redibujar al terminar.
  */
 async function escribiendo<T>(p: Promise<T>): Promise<T> {
-  if (escrituras++ === 0) { hashEscritura = location.hash; mostrarVelo(true); }
+  const destapar = tapar();
   try { return await p; }
-  finally { if (--escrituras === 0) mostrarVelo(false); }
+  finally { destapar(); }
 }
 
 /** El borrador de la pantalla: de Drive la primera vez, de memoria mientras no se salga. */
@@ -760,11 +779,11 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     return;
   }
 
-  // Con una escritura en curso no se navega: el resultado o el error tienen que
-  // llegar a la pantalla que la lanzó. Como el `hashchange` no se puede
-  // cancelar, la URL vuelve a la de esa pantalla, igual que con el editor. El
-  // hash es el de cuando arrancó la escritura: acá `location.hash` ya es el destino.
-  if (escrituras && cambiaDePantalla) { history.pushState(null, '', hashEscritura); return; }
+  // Con la pantalla tapada no se navega: el resultado o el error tienen que
+  // llegar a la pantalla que lanzó la escritura. Como el `hashchange` no se
+  // puede cancelar, la URL vuelve a la de esa pantalla, igual que con el
+  // editor. El hash es el de cuando se tapó: acá `location.hash` ya es el destino.
+  if (tapadas && cambiaDePantalla) { history.pushState(null, '', hashEscritura); return; }
 
   // Salir del editor con cambios pregunta antes (C04.1.1). El `hashchange` no
   // se puede cancelar: cuando llega, el volver del encabezado o el gesto de
@@ -1403,9 +1422,9 @@ const irCerrando = (hash: string): void => { location.replace(hash); };
 const router = crearRouter(render);
 
 app.addEventListener('click', async (e) => {
-  // Con una escritura en curso la pantalla no responde: el velo ya tapa los
-  // controles, y esto cubre lo que llegue igual.
-  if (escrituras) return;
+  // Con la pantalla tapada no responde nada: el velo ya tapa los controles, y
+  // esto cubre lo que llegue igual.
+  if (tapadas) return;
   // Todo el manejo de clicks es delegación desde #app, así que el destino
   // llega como EventTarget y hay que estrecharlo una sola vez, acá.
   const destino = conClosest(e.target);
@@ -1613,6 +1632,9 @@ app.addEventListener('click', async (e) => {
     if (!entrada) return;
     const dia = Number(vistaActual?.params['dia'] ?? 0);
     const momento: Momento = vistaActual?.params['momento'] === 'mediodia' ? 'mediodia' : 'noche';
+    // El plan puede no estar leído todavía, y leerlo es otro pedido a Drive
+    // antes de escribir: la pantalla se tapa desde el toque (P47).
+    const destapar = tapar();
     try {
       const plan = await planDePantalla();
       // Agregar suma al final: la misma receta dos veces se permite, y cada
@@ -1621,6 +1643,8 @@ app.addEventListener('click', async (e) => {
     } catch (err) {
       console.error(err);
       errorPlan = 'No se pudo guardar el plan. Revisá la conexión.';
+    } finally {
+      destapar();
     }
     // Esta pantalla se cierra al elegir: volver tiene que dejar el plan.
     irCerrando('#/plan');
@@ -1767,10 +1791,14 @@ app.addEventListener('click', async (e) => {
     const titulo = tituloCaptura
       || tituloPorDefecto(editandoBorrador && borradorLeido?.capturado ? new Date(borradorLeido.capturado) : new Date());
 
-    guardandoCaptura = true;
-    errorCaptura = '';
-    await render();
+    // El velo antes de redibujar con «Guardando…»: ese redibujado va antes de
+    // la escritura, y ya tiene que salir con la pantalla tapada (P47). Lo de
+    // arriba es leer el formulario: si no hay nada que guardar, no se tapa nada.
+    const destapar = tapar();
     try {
+      guardandoCaptura = true;
+      errorCaptura = '';
+      await render();
       if (editandoBorrador) {
         const id = idActual();
         await escribiendo(store.editarBorrador(id, { titulo, fuente, nota: notaCaptura }));
@@ -1794,6 +1822,8 @@ app.addEventListener('click', async (e) => {
       guardandoCaptura = false;
       errorCaptura = porQueNoGuardo(err);
       return render();
+    } finally {
+      destapar();
     }
     guardandoCaptura = false;
     tituloCaptura = '';
@@ -2115,64 +2145,73 @@ app.addEventListener('click', async (e) => {
 
   if (accion === 'guardar') {
     if (!document.querySelector('[data-formulario]')) return;
-    const datos = datosDelFormulario();
-    const carpetaId = datos['carpeta'] || '';
-    const esNueva = vistaActual?.vista === 'nueva';
-    const id = idActual();
-    const borradorId = vistaActual?.params['borrador'] ?? '';
-
-    // Mientras trabaja, el botón lo dice y no se puede tocar dos veces (C04.5.1).
-    boton.setAttribute('disabled', '');
-    boton.textContent = 'Guardando…';
-
-    // Atada a la receta que volvió de Claude, la base es esa receta y no una
-    // vacía: así se conservan sus claves desconocidas.
-    const recibidaBase = vistaActual?.params['recibida'] && recibida ? recibida : null;
-    const base = esNueva ? (recibidaBase ?? parse('')) : (await store.receta(id)).receta;
-    const nueva = conSubidas(recetaDesdeFormulario(datos, base));
-
-    /** El editor otra vez, con lo que el usuario tenía escrito y el aviso (C04.5.2). */
-    const conError = (mensaje: string) => pintar(renderEditor({
-      entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
-      // Con las fotos que este intento alcanzó a subir ya en sus líneas: el
-      // reintento las manda por su link en vez de volver a subirlas (§8).
-      receta: conSubidas(nueva), categorias: store.categorias(),
-      tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje
-    }));
-
-    if (!nueva.titulo) return conError('Ponele un título antes de guardar.');
-    // Sin categoría no se sabe en qué carpeta de Drive va el archivo (C04.3b.1).
-    if (esNueva && !carpetaId) return conError('Elegí una categoría antes de guardar.');
-
-    // Lo que el depósito cambió respecto del `.md` que se abrió: el store sube,
-    // mueve y manda a la papelera (§8).
-    const fotos = cambiosDeFotos(nueva, base);
-
+    // El velo antes que nada: entre el toque y la escritura hay una relectura
+    // del `.md` de base, que es un pedido a Drive, y la validación puede
+    // devolver el editor sin escribir nada (P47). Se suelta por cualquier
+    // camino, así que no queda pegado.
+    const destapar = tapar();
     try {
-      let creada: { id: string } | null = null;
-      if (esNueva && borradorId) {
-        // Convertir es una sola operación: el .md, la fila y el borrador (C01.7.1).
-        creada = await escribiendo(convertirBorrador({ store, convertidos }, { borradorId, receta: nueva, carpetaId, fotos }));
-      } else if (esNueva) {
-        creada = await escribiendo(store.crear(nueva, { carpetaId: carpetaId || undefined, fotos }));
-      } else {
-        await escribiendo(store.guardar(id, nueva, { carpetaDestino: carpetaId, fotos }));
-        // Lo guardado es la copia: volver a la receta la muestra sin releer, y
-        // con el link de cada foto que se acaba de subir en su línea.
-        recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: conSubidas(nueva) };
+      const datos = datosDelFormulario();
+      const carpetaId = datos['carpeta'] || '';
+      const esNueva = vistaActual?.vista === 'nueva';
+      const id = idActual();
+      const borradorId = vistaActual?.params['borrador'] ?? '';
+
+      // Mientras trabaja, el botón lo dice y no se puede tocar dos veces (C04.5.1).
+      boton.setAttribute('disabled', '');
+      boton.textContent = 'Guardando…';
+
+      // Atada a la receta que volvió de Claude, la base es esa receta y no una
+      // vacía: así se conservan sus claves desconocidas.
+      const recibidaBase = vistaActual?.params['recibida'] && recibida ? recibida : null;
+      const base = esNueva ? (recibidaBase ?? parse('')) : (await store.receta(id)).receta;
+      const nueva = conSubidas(recetaDesdeFormulario(datos, base));
+
+      /** El editor otra vez, con lo que el usuario tenía escrito y el aviso (C04.5.2). */
+      const conError = (mensaje: string) => pintar(renderEditor({
+        entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
+        // Con las fotos que este intento alcanzó a subir ya en sus líneas: el
+        // reintento las manda por su link en vez de volver a subirlas (§8).
+        receta: conSubidas(nueva), categorias: store.categorias(),
+        tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje
+      }));
+
+      if (!nueva.titulo) return conError('Ponele un título antes de guardar.');
+      // Sin categoría no se sabe en qué carpeta de Drive va el archivo (C04.3b.1).
+      if (esNueva && !carpetaId) return conError('Elegí una categoría antes de guardar.');
+
+      // Lo que el depósito cambió respecto del `.md` que se abrió: el store sube,
+      // mueve y manda a la papelera (§8).
+      const fotos = cambiosDeFotos(nueva, base);
+
+      try {
+        let creada: { id: string } | null = null;
+        if (esNueva && borradorId) {
+          // Convertir es una sola operación: el .md, la fila y el borrador (C01.7.1).
+          creada = await escribiendo(convertirBorrador({ store, convertidos }, { borradorId, receta: nueva, carpetaId, fotos }));
+        } else if (esNueva) {
+          creada = await escribiendo(store.crear(nueva, { carpetaId: carpetaId || undefined, fotos }));
+        } else {
+          await escribiendo(store.guardar(id, nueva, { carpetaDestino: carpetaId, fotos }));
+          // Lo guardado es la copia: volver a la receta la muestra sin releer, y
+          // con el link de cada foto que se acaba de subir en su línea.
+          recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: conSubidas(nueva) };
+        }
+        editorAbierto = null;
+        recibida = null;
+        // Atada a la receta recibida, `history.back()` caería en `#/capturar`
+        // —o en `#/recibida`— y reabriría lo mismo que se acaba de guardar: se
+        // cierra directo a la receta creada.
+        if (recibidaBase && creada) { irCerrando(`#/r/${encodeURIComponent(creada.id)}`); return; }
+        // Nada más confirma el éxito: al terminar, vuelve a la receta. Lo
+        // escrito ya está en Drive, así que salir no tiene nada que preguntar.
+        return history.back();
+      } catch (err) {
+        console.error(err);
+        return conError(porQueNoGuardo(err));
       }
-      editorAbierto = null;
-      recibida = null;
-      // Atada a la receta recibida, `history.back()` caería en `#/capturar`
-      // —o en `#/recibida`— y reabriría lo mismo que se acaba de guardar: se
-      // cierra directo a la receta creada.
-      if (recibidaBase && creada) { irCerrando(`#/r/${encodeURIComponent(creada.id)}`); return; }
-      // Nada más confirma el éxito: al terminar, vuelve a la receta. Lo
-      // escrito ya está en Drive, así que salir no tiene nada que preguntar.
-      return history.back();
-    } catch (err) {
-      console.error(err);
-      return conError(porQueNoGuardo(err));
+    } finally {
+      destapar();
     }
   }
 
@@ -2219,7 +2258,7 @@ app.addEventListener('click', async (e) => {
  * habilita tocándolo directo, sin volver a pintar la pantalla.
  */
 app.addEventListener('input', (e) => {
-  if (escrituras) return;
+  if (tapadas) return;
   // En la pantalla de agregar al plan se redibuja sólo el bloque de abajo:
   // repintar la pantalla entera perdería el foco del teclado.
   if (vistaActual?.vista === 'plan-agregar') {
@@ -2290,7 +2329,7 @@ function sobreFilaDeslizable(destino: EventTarget | null): boolean {
 // Deslizar para abrir o cerrar el menú, como en una app nativa. Los listeners
 // son pasivos: un deslizamiento vertical tiene que seguir desplazando la página.
 app.addEventListener('touchstart', (e) => {
-  if (escrituras) return;
+  if (tapadas) return;
   deslizando = null;
   visorDesde = null;
   deslizoElVisor = false;
@@ -2306,7 +2345,7 @@ app.addEventListener('touchstart', (e) => {
 }, { passive: true });
 
 app.addEventListener('touchmove', (e) => {
-  if (escrituras) return;
+  if (tapadas) return;
   const toque = (e as TouchEvent).touches[0];
   if (!deslizando || !toque) return;
   const dx = toque.clientX - deslizando.x;
@@ -2319,7 +2358,7 @@ app.addEventListener('touchmove', (e) => {
 }, { passive: true });
 
 const soltarDeslizamiento = (): void => {
-  if (escrituras || !deslizando) return;
+  if (tapadas || !deslizando) return;
   const { decidido, p } = deslizando;
   deslizando = null;
   if (decidido !== 'horizontal') return;
@@ -2337,7 +2376,7 @@ app.addEventListener('touchcancel', soltarDeslizamiento);
 // gesto del menú: ahí el deslizamiento arrastra el panel al ritmo del dedo, y
 // acá la foto cambia de una vez, al soltar.
 app.addEventListener('touchend', (e) => {
-  if (escrituras || visorDesde === null || !visor) return;
+  if (tapadas || visorDesde === null || !visor) return;
   const toque = (e as TouchEvent).changedTouches[0];
   const desde = visorDesde;
   visorDesde = null;
@@ -2350,7 +2389,7 @@ app.addEventListener('touchend', (e) => {
 });
 
 app.addEventListener('keydown', (e) => {
-  if (escrituras) return;
+  if (tapadas) return;
   const campo = (e.target as HTMLInputElement | null);
   if (!campo?.dataset || !('tagNuevo' in campo.dataset)) return;
   // Seguir escribiendo borra el aviso del intento anterior.
@@ -2366,7 +2405,7 @@ app.addEventListener('keydown', (e) => {
 // Salir del campo con algo escrito lo agrega igual: no se pierde por
 // distraerse y tocar Guardar.
 app.addEventListener('focusout', (e) => {
-  if (escrituras) return;
+  if (tapadas) return;
   const campo = (e.target as HTMLInputElement | null);
   if (!campo?.dataset || !('tagNuevo' in campo.dataset)) return;
   if (agregarTag(campo.value)) campo.value = '';
@@ -2384,7 +2423,7 @@ app.addEventListener('error', (e) => {
 }, true);
 
 app.addEventListener('change', (e) => {
-  if (escrituras) return;
+  if (tapadas) return;
   // *Agregar foto*: el selector del sistema devolvió los archivos.
   const campoFotos = e.target as HTMLInputElement | null;
   if (campoFotos?.dataset && 'fotos' in campoFotos.dataset) {
