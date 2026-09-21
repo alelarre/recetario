@@ -46,6 +46,15 @@ describe('renderEditor', () => {
     expect(html).not.toContain('---\ntitulo:');
   });
 
+  // *Nueva receta* se alcanza desde el Recetario y se sale volviendo: no está
+  // en `PANTALLAS_CON_MENU`, así que el encabezado no abre el menú (P55).
+  it('el encabezado lleva el volver, no la hamburguesa', () => {
+    const html = dibujar();
+    expect(html).toContain('Nueva receta');
+    expect(html).toContain('data-accion="volver"');
+    expect(html).not.toContain('data-accion="abrir-menu"');
+  });
+
   it('los tags son pills que se sacan de a una, más un campo para agregar', () => {
     const html = dibujar();
     expect(html).toContain('data-accion="tag-quitar"');

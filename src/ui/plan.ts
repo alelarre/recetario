@@ -8,7 +8,7 @@
  * su `+` ya lo dicen.
  */
 import { escapar } from './markdown.js';
-import { encabezado, aviso, lateral } from './componentes.js';
+import { encabezado, aviso, lateral, botonMenu } from './componentes.js';
 import { colorCategoria } from './categorias.js';
 import { ICO } from './iconos.js';
 import { DIAS_CORTOS, MOMENTOS, NOMBRE_DEL_MOMENTO, diasDesde, tituloDeComida } from '../plan.js';
@@ -86,11 +86,12 @@ export function renderPlan(
       '<button class="btn prim" data-accion="reiniciar-plan-confirmado">Reiniciar</button>' +
     '</div></div>';
 
-  // Se llega desde el menú, y el menú se sigue pudiendo deslizar acá; el
-  // encabezado lleva volver, que devuelve a la pantalla de donde se vino.
+  // Se llega desde el menú, así que el encabezado lo abre: la hamburguesa y no
+  // el volver, igual que en el Recetario, Borradores y Ajustes. El botón y el
+  // deslizamiento son la misma lista de pantallas (`PANTALLAS_CON_MENU`).
   return lateral({ activo: 'plan', borradores, ...(menuAbierto ? { abierto: true } : {}) }) +
     '<div class="conten">' +
-      encabezado({ titulo: 'Plan de la semana', volver: true }) +
+      encabezado({ titulo: 'Plan de la semana', izquierda: botonMenu(borradores) }) +
       '<div class="cuerpo denso">' +
         // Sin control de reintento: reintentar es volver a tocar lo que falló (R1).
         (error ? aviso({ texto: error }) : '') +

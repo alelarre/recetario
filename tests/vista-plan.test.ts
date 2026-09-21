@@ -74,10 +74,16 @@ describe('la grilla del plan', () => {
     expect([...dibujar().matchAll(/data-accion="agregar-al-plan"/g)]).toHaveLength(14);
   });
 
-  it('el título es Plan de la semana y se vuelve con el chevron', () => {
+  it('el título es Plan de la semana y el encabezado abre el menú, no vuelve', () => {
     const html = dibujar();
     expect(html).toContain('Plan de la semana');
-    expect(html).toContain('data-accion="volver"');
+    expect(html).toContain('data-accion="abrir-menu"');
+    expect(html).not.toContain('data-accion="volver"');
+  });
+
+  it('la hamburguesa lleva el contador de borradores, como en el Recetario', () => {
+    expect(dibujar({ borradores: 2 })).toContain('<span class="n">2</span>');
+    expect(dibujar({ borradores: 0 })).not.toContain('class="n"');
   });
 });
 

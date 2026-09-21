@@ -519,6 +519,12 @@ El botón de volver es un control de tamaño normal, no un chevron chico. El ges
 del sistema —swipe en Android, back del navegador— funciona igual y es el camino
 que la mayoría va a usar; el botón es el respaldo visible.
 
+**El volver es para las pantallas a las que se entra desde otra.** A las cuatro
+que se alcanzan desde el menú —Recetario, Borradores, el plan de la semana y
+Ajustes— se sale por el menú, así que su encabezado lo abre: hamburguesa, no
+volver. *Nueva receta* está en el menú como acción, pero se llega también desde
+el Recetario y se sale volviendo: lleva volver.
+
 Sale de la regla de tamaños del principio 7: el tamaño de los controles es una
 regla del sistema, no una decisión por pantalla.
 
@@ -539,10 +545,14 @@ con su nombre y su ícono:
 
 **En el teléfono se despliega desde una hamburguesa**, arriba a la izquierda —del
 lado por el que el panel entra—, y se cierra tocando el velo o cualquier destino.
+La hamburguesa está en las cuatro pantallas que se alcanzan desde el menú (§4.5),
+que son las mismas donde el gesto lo abre: el botón y el deslizamiento no se
+separan.
 **También se abre y se cierra deslizando.** Cerrado, el gesto empieza a 24 px del
 borde izquierdo: desde el borde mismo Android lo toma como «atrás». No arranca
 sobre el carrusel de tags ni sobre la fila de duraciones, que se deslizan en el
-mismo sentido.
+mismo sentido. **Abierto, la pantalla de atrás no se desplaza:** el velo la tapa,
+y moverla sería mover justo lo que está tapado.
 **Desde 900 px queda fijo** y el contenido se corre: el mismo ancho en que la
 grilla de categorías pasa a cuatro columnas. Es la misma pantalla; lo resuelve el
 CSS.

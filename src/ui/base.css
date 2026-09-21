@@ -385,6 +385,10 @@ html:has(.hoja-compartir), html:has(.hoja-foto) { overflow: hidden; }
 .velo-lat { position: fixed; inset: 0; z-index: 19; background: var(--velo);
             opacity: 0; pointer-events: none; transition: opacity .2s; }
 .velo-lat.on { opacity: .6; pointer-events: auto; }
+/* Con el menú desplegado, la página de atrás no se desplaza, como con las
+   fichas al pie: el velo tapa el toque, pero no el desplazamiento. En Android
+   un deslizamiento vertical scrolleaba justo lo que el velo tapa. */
+html:has(.velo-lat.on) { overflow: hidden; }
 
 /* El velo de la escritura en curso: mientras dura, ningún control de abajo
    recibe el toque. Sin transición: aparece con el toque que lanza la escritura
@@ -451,6 +455,9 @@ html:has(#velo-escritura:not([hidden])) { overflow: hidden; }
   .velo-lat { display: none; }
   .menu-lat { display: none; }
   .conten { padding-left: 260px; }
+  /* Acá el menú es fijo y el velo no se dibuja: no hay nada tapado, así que la
+     página se sigue desplazando. */
+  html:has(.velo-lat.on) { overflow: visible; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lat { transition: none; }

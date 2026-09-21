@@ -45,8 +45,10 @@ de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 
 #### C02.1.3 — El menú lateral *(J1, J5)*
 
-- [ ] Lo dibujan el Recetario, Borradores y Ajustes. Lleva Inicio, Borradores con su contador, Nueva receta y Ajustes, y al pie la versión de la app.
+- [ ] Lo dibujan las cuatro pantallas a las que se llega desde él: el Recetario, Borradores, el plan de la semana y Ajustes. Lleva Inicio, Borradores con su contador, Plan de la semana, Nueva receta y Ajustes, y al pie la versión de la app.
 - [ ] En el teléfono está cerrado: se abre con el botón del encabezado y se cierra tocando el velo o eligiendo un destino. Desde 900 px de ancho queda fijo y el botón no se dibuja.
+- [ ] **El botón está en esas cuatro y en ninguna otra**, en el lugar del volver: son las mismas donde el gesto abre el menú. *Nueva receta* no es una de ellas —se llega también desde el Recetario— y lleva volver.
+- [ ] **Abierto, la pantalla de atrás no se desplaza**: el velo la tapa. Desde 900 px el menú es fijo, no hay velo y nada se frena.
 - [ ] **Se abre y se cierra deslizando**, y acompaña al dedo mientras se desliza. Al soltar queda abierto si pasó la mitad.
 - [ ] Cerrado, el gesto tiene que empezar **a 24 px o más del borde izquierdo**: desde el borde Android lo toma como «atrás». Abierto, empieza desde cualquier lado.
 - [ ] Sólo cuenta un movimiento claramente horizontal: en diagonal gana el scroll de la página.

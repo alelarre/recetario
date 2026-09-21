@@ -799,9 +799,16 @@ Los grupos —los `###` del `.md`— son `--txt-chico` en `--fg-2`, en mayúscul
 Alto 56 px, fondo `--bg`, borde inferior 1 px `--borde`.
 
 Volver a la izquierda como control de 48 px —no un chevron chico—, título al
-medio en `--txt-base` peso 600, acciones a la derecha. En las pantallas de
-primer nivel, a la izquierda va la hamburguesa del menú (§6.17) y el título va en
-`--txt-titulo`, centrado en la barra y no en el hueco que dejan los controles.
+medio en `--txt-base` peso 600, acciones a la derecha.
+
+**El encabezado abre el menú en las cuatro pantallas a las que se llega desde el
+menú** —Recetario, Borradores, el plan de la semana y Ajustes—: ahí la
+hamburguesa (§6.17) ocupa el lugar del volver, que queda para las pantallas a las
+que se entra desde otra. *Nueva receta* es una de esas: está en el menú como
+acción, pero se sale de ella volviendo. En el Recetario, Borradores y Ajustes el
+título va además en `--txt-titulo`, centrado en la barra y no en el hueco que
+dejan los controles.
+
 El total de una lista —las recetas de una categoría, los borradores— va a la
 derecha, en `--txt-chico` `--fg-2` y cifras tabulares. En la lista por tag de un
 especial, su ícono va antes del título, a `--ico`.
@@ -896,6 +903,11 @@ que se deslizan en el mismo sentido.
 Desde 900 px queda fijo, el velo y la hamburguesa desaparecen, y el contenido se
 corre 260 px. **Es sólo CSS:** la misma marca dibujada, una consulta de medios
 decide. Con `prefers-reduced-motion` el cajón aparece sin transición.
+
+**Con el cajón abierto, la página de atrás no se desplaza:** el velo tapa el
+toque, pero sin eso un deslizamiento vertical scrollea justo lo que el velo
+tapa. Es la misma regla que las fichas al pie (§6.23) y el velo de escritura
+(§6.17b). Desde 900 px no aplica: ahí el menú es fijo y el velo no se dibuja.
 
 **A la izquierda, también en teléfono.** Es de donde vienen los cajones en
 Android, y el pulgar que lo abre es el mismo que toca la hamburguesa, que está
