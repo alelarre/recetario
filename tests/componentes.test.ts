@@ -411,4 +411,20 @@ describe('filaDeFotos: Cámara y Galería (P50)', () => {
     expect(html).not.toContain('Cámara');
     expect(html).not.toContain('Galería');
   });
+
+  it('*Por URL* es el tercer botón de la fila, y sólo donde se lo pide', () => {
+    const html = filaDeFotos({ fotos: [], agregar: true, porUrl: true });
+    expect(html).toContain(`${ICO.link}Por URL`);
+    expect(html).toContain('data-accion="abrir-foto-url"');
+    // Va en la misma fila que los otros dos, después de ellos.
+    const botones = html.slice(html.indexOf('class="fotos-botones"'));
+    expect(botones.indexOf('Galería')).toBeLessThan(botones.indexOf('Por URL'));
+    // No es un input de archivo: la foto la trae la app de la URL.
+    expect((html.match(/<input type="file"[^>]*>/g) ?? [])).toHaveLength(2);
+  });
+
+  it('en la captura y en el borrador no hay *Por URL*: es sólo de la receta', () => {
+    expect(filaDeFotos({ fotos: [], agregar: true })).not.toContain('Por URL');
+    expect(filaDeFotos({ fotos: [], agregar: false, porUrl: true })).not.toContain('Por URL');
+  });
 });

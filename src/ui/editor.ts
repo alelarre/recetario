@@ -11,7 +11,7 @@
  * (C04.3c.1).
  */
 import { escapar, imgDe } from './markdown.js';
-import { encabezado, avisoAlGuardar, iconoDeTag, filaDeFotos } from './componentes.js';
+import { encabezado, aviso, avisoAlGuardar, iconoDeTag, filaDeFotos } from './componentes.js';
 import { ICO, ICONO_DE_DURACION } from './iconos.js';
 import {
   DIFICULTADES, dificultadValida, tagReservado, TAGS_ESPECIALES, tagEspecial, tieneEspecial,
@@ -116,8 +116,9 @@ function campoPortada(foto: string | null, fotos: FotoDeReceta[]): string {
 }
 
 /**
- * La ficha Fotos: el depósito entero con el número de cada una, y *Cámara* y
- * *Galería* sin tope. Tocar una abre sus acciones (`renderAccionesFoto`).
+ * La ficha Fotos: el depósito entero con el número de cada una, y *Cámara*,
+ * *Galería* y *Por URL* sin tope. Tocar una abre sus acciones
+ * (`renderAccionesFoto`).
  *
  * El depósito viaja en el `hidden` como JSON —las nuevas con `url: ''`—: así
  * agregar, sacar o renumerar una cuenta como cambio sin guardar igual que
@@ -133,7 +134,8 @@ export const filaDeFotosEditor = (fotos: FotoDeReceta[]): string =>
       url: f.url, n: f.n,
       ver: { accion: 'acciones-foto', etiqueta: `Qué hacer con la foto ${f.n}` }
     })),
-    agregar: true
+    agregar: true,
+    porUrl: true
   });
 
 function fichaFotos(fotos: FotoDeReceta[]): string {
@@ -196,29 +198,52 @@ export function renderElegirFoto(fotos: FotoDeReceta[], seccion: string, linea: 
 }
 
 /**
- * De dónde sale la cabecera: una del depósito, una URL pegada a mano —el
- * campo de siempre— o ninguna. La actual queda marcada.
+ * De dónde sale la cabecera: una foto del depósito o ninguna. La actual queda
+ * marcada. **Acá no se agrega nada**: una foto nueva —de la cámara, de la
+ * galería o de una URL— entra por la ficha Fotos, y recién después se la puede
+ * poner de portada.
+ *
+ * Una cabecera que es una URL suelta —escrita afuera, o traída como link— se
+ * dibuja igual como la actual, adelante y sin tocar: se conserva mientras no
+ * se elija otra cosa (C04.2.1d).
  */
 export function renderSelectorPortada(fotos: FotoDeReceta[], actual: string | null): string {
-  const grilla = fotos.length
-    ? `<div class="galeria">${fotos.map(f =>
-        '<button type="button" class="galeria-item" data-accion="elegir-portada" ' +
-        `data-n="${f.n}" aria-pressed="${actual === `foto:${f.n}`}" ` +
-        `aria-label="La foto ${f.n} de portada">${imagenDeFoto(f)}</button>`
-      ).join('')}</div>`
-    : '';
   // `resolver` devuelve una URL tal cual, y para un `foto:N` devuelve la del
   // depósito o `null`: que vuelva igual es justamente que hoy hay una URL.
-  const urlDeHoy = actual !== null && resolver(actual, fotos) === actual ? actual : '';
+  const urlSuelta = actual !== null && resolver(actual, fotos) === actual ? actual : '';
+  const items =
+    (urlSuelta ? `<span class="galeria-item actual">${imgDe(urlSuelta)}</span>` : '') +
+    fotos.map(f =>
+      '<button type="button" class="galeria-item" data-accion="elegir-portada" ' +
+      `data-n="${f.n}" aria-pressed="${actual === `foto:${f.n}`}" ` +
+      `aria-label="La foto ${f.n} de portada">${imagenDeFoto(f)}</button>`
+    ).join('');
   return VELO_DE_FICHA +
     '<div class="ficha hoja-foto" data-selector-portada>' +
     '<h2>Foto de portada</h2>' +
-    grilla +
-    '<label class="campo"><span>URL</span>' +
-      `<input data-url-portada value="${escapar(urlDeHoy)}" placeholder="https://…"></label>` +
+    (items ? `<div class="galeria">${items}</div>` : '') +
     '<div class="acciones">' +
-      '<button class="btn sec" type="button" data-accion="portada-url">Usar la URL</button>' +
       '<button class="btn sec" type="button" data-accion="sin-portada">Sin foto</button>' +
+    '</div></div>';
+}
+
+/**
+ * Agregar una foto por su dirección: el campo y *Traer*. La app la baja, la
+ * achica y la suma al depósito como cualquier otra (C04.3d.1b); si el sitio no
+ * la deja bajar, la URL entra como link externo y el aviso lo dice.
+ *
+ * Con un aviso, la ficha se vuelve a dibujar con lo escrito adentro: lo que el
+ * usuario escribió sigue en pantalla después del error (R1).
+ */
+export function renderFotoPorUrl(url = '', error = ''): string {
+  return VELO_DE_FICHA +
+    '<div class="ficha hoja-foto" data-foto-url>' +
+    '<h2>Foto por URL</h2>' +
+    (error ? aviso({ texto: error }) : '') +
+    '<label class="campo"><span>Dirección de la foto</span>' +
+      `<input data-url-foto value="${escapar(url)}" placeholder="https://…"></label>` +
+    '<div class="acciones">' +
+      '<button class="btn sec" type="button" data-accion="traer-foto-url">Traer</button>' +
     '</div></div>';
 }
 

@@ -413,8 +413,14 @@ const datosDeAccion = (a: AccionDeMiniatura, n: number | undefined): string =>
  * abre sin script—, los dos con `data-fotos` para llegar al mismo manejador
  * de `change` en `main.ts`. La cámara entrega una foto a la vez; la galería
  * sigue aceptando varias.
+ *
+ * `porUrl` suma un tercer botón, **Por URL**, que no es un input de archivo:
+ * la app baja la foto de la dirección que se le escriba. Es de la receta y no
+ * de un borrador, donde las fotos salen siempre del teléfono.
  */
-export function filaDeFotos({ fotos, agregar }: { fotos: Miniatura[]; agregar: boolean }): string {
+export function filaDeFotos(
+  { fotos, agregar, porUrl = false }: { fotos: Miniatura[]; agregar: boolean; porUrl?: boolean }
+): string {
   const miniaturas = fotos.map((f, i) => {
     // Con depósito, la foto se nombra por su número —el que va en el texto de
     // la receta—; sin depósito, por su posición en la fila.
@@ -449,6 +455,10 @@ export function filaDeFotos({ fotos, agregar }: { fotos: Miniatura[]; agregar: b
       '<input type="file" accept="image/*" capture="environment" data-fotos hidden></label>' +
       `<label class="btn sec miniatura-agregar">${ICO.galeria}Galería` +
       '<input type="file" accept="image/*" multiple data-fotos hidden></label>' +
+      (porUrl
+        ? '<button type="button" class="btn sec miniatura-agregar" data-accion="abrir-foto-url">' +
+          `${ICO.link}Por URL</button>`
+        : '') +
       '</div>'
     : '';
   return `<div class="fotos-campo"><div class="miniaturas">${miniaturas}</div>${botones}</div>`;

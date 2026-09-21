@@ -72,8 +72,10 @@ y el archivo se arma solo al guardar.
 #### C04.2.1d — El campo «Portada» *(J7)*
 
 - [ ] **Se llama «Portada»**, y no «Foto»: abajo está la ficha *Fotos*, que es el depósito, y son dos cosas distintas.
-- [ ] **No es un campo de texto: es la miniatura de la cabecera actual**, y tocarla abre una ficha al pie con el depósito para elegir, el campo de URL y **Sin foto**.
-- [ ] Elegir una del depósito escribe `foto: foto:N`; la URL se usa tal cual; *Sin foto* deja la cabecera vacía. La actual queda marcada en la grilla, y el campo de URL trae la de hoy si la cabecera es una URL.
+- [ ] **No es un campo de texto: es la miniatura de la cabecera actual**, y tocarla abre una ficha al pie con el depósito para elegir y **Sin foto**.
+- [ ] **La portada sale de lo que ya está**: una foto del depósito o ninguna. **Desde acá no se agrega nada**: una foto nueva —de la cámara, de la galería o de una URL— entra por la ficha *Fotos* (C04.3d.1, C04.3d.1b), y recién después se la puede poner de portada.
+- [ ] Elegir una del depósito escribe `foto: foto:N` y la deja marcada en la grilla; *Sin foto* deja la cabecera vacía.
+- [ ] **Una cabecera que es una URL suelta** —escrita afuera— se dibuja adelante de la grilla, marcada como la actual y sin poder tocarse: no está en el depósito. Se conserva mientras no se elija otra cosa; elegir una del depósito o *Sin foto* la reemplaza.
 - [ ] Sin cabecera, el botón dice *Sin foto*. Una `foto:N` que no está en el depósito se lee como ausente (C05.1.1).
 - [ ] El valor viaja crudo —`foto:N` o la URL— en un campo oculto, que es lo que se guarda.
 
@@ -157,12 +159,24 @@ ya achicadas y con su número asignado.
 #### C04.3d.1 — La ficha Fotos *(J7)*
 
 - [ ] La fila de miniaturas del depósito, en su orden, **cada una con su número** —`#3`—, que es con el que se la nombra en el texto.
-- [ ] **Cámara** y **Galería** al final, sin tope, como en las fotos de un borrador (C01.2.4): la primera saca una foto nueva de a una, la segunda abre el selector del sistema y acepta varias a la vez.
+- [ ] **Cámara**, **Galería** y **Por URL** al final, sin tope: la primera saca una foto nueva de a una, la segunda abre el selector del sistema y acepta varias a la vez —las dos como en las fotos de un borrador (C01.2.4)—, y la tercera la trae de una dirección (C04.3d.1b).
 - [ ] Cada foto nueva toma el número más alto más uno; ninguno se reusa, ni siquiera el de una que se sacó.
 - [ ] Mientras se achica, el velo cubre la pantalla (R8): tarda, aunque no escriba nada en Drive.
 - [ ] Una foto que el navegador no puede decodificar —HEIC, un archivo roto— no se agrega, y el aviso lo dice: *«No se pudo leer una de las fotos.»*
 - [ ] Escribir `![](foto:2)` a mano en un campo de texto sigue valiendo: los campos no cambian.
 - [ ] Salir sin guardar no deja nada en Drive: las fotos nuevas nunca llegaron.
+
+#### C04.3d.1b — Una foto por URL *(J7)*
+
+Una receta que se está copiando de un sitio trae su foto de ahí. **La app la
+baja y la guarda como cualquier otra**: el link de un sitio ajeno se rompe
+cuando el sitio la borra.
+
+- [ ] **Por URL** abre una ficha al pie con un campo para la dirección y **Traer**.
+- [ ] Lo que trae **es una foto más del depósito**: se achica y se sube al guardar, igual que una de la cámara (C04.3d.1). Nada toca Drive hasta Guardar.
+- [ ] **Si el sitio no la deja bajar** —CORS, que es lo habitual—, la URL **entra igual al depósito como link externo** (C05.1.5), y el aviso lo dice: *«No se pudo traer la foto: queda como link, y si el sitio la borra se pierde.»* No es un error: la foto entró, y el aviso va sin control, arriba del formulario y a la vista (R1). Sin red pasa lo mismo: desde el navegador no se distinguen.
+- [ ] **Una dirección que no es una foto** —una página, un archivo que no existe, algo que no es `http(s)`— **no entra**: el aviso va en la ficha, que queda abierta con lo escrito (R1).
+- [ ] Una foto bajada que el navegador no puede decodificar no se agrega, con el aviso de C04.3d.1.
 
 #### C04.3d.2 — Qué se hace con una foto *(J7)*
 
@@ -262,7 +276,7 @@ ofrece deshacer: la papelera de Drive es la red de seguridad, y es del usuario.
 
 | Capacidad | Job |
 |---|---|
-| C04.1.1, C04.2.1, C04.2.1b, C04.2.1c, C04.2.1d, C04.2.2, C04.2.3, C04.3.1, C04.3b.1, C04.3d.1, C04.3d.2, C04.3d.3, C04.4.1, C04.5.1, C04.5.2, C04.6.1 | J7 |
+| C04.1.1, C04.2.1, C04.2.1b, C04.2.1c, C04.2.1d, C04.2.2, C04.2.3, C04.3.1, C04.3b.1, C04.3d.1, C04.3d.1b, C04.3d.2, C04.3d.3, C04.4.1, C04.5.1, C04.5.2, C04.6.1 | J7 |
 | C04.3.2 | J4, J7 |
 | C04.3.3 | J7, J8 |
 | C04.3c.1 | J8 |

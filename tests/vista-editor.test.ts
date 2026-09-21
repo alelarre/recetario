@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   renderEditor, recetaDesdeFormulario, formularioDesde, pillTag,
-  renderAccionesFoto, renderElegirFoto, renderSelectorPortada, botonPonerFoto
+  renderAccionesFoto, renderElegirFoto, renderSelectorPortada, renderFotoPorUrl, botonPonerFoto
 } from '../src/ui/editor.js';
 import { ICO, ICONO_DE_DURACION } from '../src/ui/iconos.js';
 import { escapar } from '../src/ui/markdown.js';
@@ -340,6 +340,9 @@ describe('las fotos en el editor', () => {
     expect(html).toContain('aria-label="Qué hacer con la foto 3"');
     expect(html).toContain('Cámara');
     expect(html).toContain('Galería');
+    // El tercer control: agregar una foto por URL, que la app baja y guarda.
+    expect(html).toContain('data-accion="abrir-foto-url"');
+    expect(html).toContain('Por URL');
   });
 
   it('nada del formulario lo manda: ni los botones de la fila ni Enter en un campo', () => {
@@ -460,12 +463,14 @@ describe('las fichas de fotos se cierran con el velo', () => {
     expect(renderAccionesFoto(1, { portada: false }).startsWith(velo)).toBe(true);
     expect(renderElegirFoto([], 'notas', 0).startsWith(velo)).toBe(true);
     expect(renderSelectorPortada([], null).startsWith(velo)).toBe(true);
+    expect(renderFotoPorUrl().startsWith(velo)).toBe(true);
   });
 
   it('ninguna suma un Cancelar: se cierran tocando afuera', () => {
     expect(renderAccionesFoto(1, { portada: false })).not.toContain('Cancelar');
     expect(renderElegirFoto([], 'notas', 0)).not.toContain('Cancelar');
     expect(renderSelectorPortada([], null)).not.toContain('Cancelar');
+    expect(renderFotoPorUrl()).not.toContain('Cancelar');
   });
 });
 
@@ -528,16 +533,53 @@ describe('renderSelectorPortada', () => {
     expect(html).toContain('data-drive="1AbC"');
   });
 
-  it('el campo de URL trae la cabecera de hoy cuando es una URL, y está Sin foto', () => {
-    const conUrl = renderSelectorPortada(fotos, 'https://ejemplo.com/otra.jpg');
-    expect(conUrl).toContain('value="https://ejemplo.com/otra.jpg"');
-    // Una URL suelta no marca ninguna del depósito.
-    expect(conUrl).not.toContain('aria-pressed="true"');
-    expect(renderSelectorPortada(fotos, 'foto:3')).toContain('<input data-url-portada value=""');
+  it('no hay campo de URL: la portada sale de lo que ya está, o de nada', () => {
+    const html = renderSelectorPortada(fotos, 'foto:3');
+    expect(html).not.toContain('data-url-portada');
+    expect(html).not.toContain('portada-url');
+    expect(html).not.toContain('Usar la URL');
+    expect(html).not.toContain('<input');
     expect(renderSelectorPortada(fotos, null)).toContain('data-accion="sin-portada"');
+  });
+
+  it('una cabecera que es una URL suelta se muestra como la actual, aunque no esté en el depósito', () => {
+    // La escribió un agente o quedó de antes: se conserva mientras no se elija
+    // otra cosa (C04.2.1d).
+    const conUrl = renderSelectorPortada(fotos, 'https://ejemplo.com/otra.jpg');
+    expect(conUrl).toContain('<img src="https://ejemplo.com/otra.jpg"');
+    expect(conUrl).toContain('class="galeria-item actual"');
+    // Y no marca ninguna del depósito.
+    expect(conUrl).not.toContain('aria-pressed="true"');
+    // La que sí está en el depósito se marca ahí y no se repite arriba.
+    expect(renderSelectorPortada(fotos, 'foto:3')).not.toContain('galeria-item actual');
   });
 
   it('la ficha se encuentra por su marca', () => {
     expect(renderSelectorPortada(fotos, null)).toContain('data-selector-portada');
+  });
+});
+
+describe('renderFotoPorUrl', () => {
+  it('un campo de texto y *Traer*, y nada más', () => {
+    const html = renderFotoPorUrl();
+    expect(html).toContain('<input data-url-foto value=""');
+    expect(html).toContain('placeholder="https://…"');
+    expect(html).toContain('data-accion="traer-foto-url"');
+    expect(html).toContain('>Traer</button>');
+    // La ficha se encuentra por su marca, como las otras tres.
+    expect(html).toContain('data-foto-url');
+    // Adentro del formulario, un botón sin tipo lo manda.
+    expect(html).not.toMatch(/<button(?![^>]*type=)[^>]*>/);
+  });
+
+  it('con un aviso, lo escrito sigue en el campo (R1)', () => {
+    const html = renderFotoPorUrl('https://ejemplo.com/pagina', 'Esa URL no es una foto.');
+    expect(html).toContain('value="https://ejemplo.com/pagina"');
+    expect(html).toContain('Esa URL no es una foto.');
+    expect(html).toContain('class="aviso"');
+  });
+
+  it('sin aviso no se dibuja ninguno', () => {
+    expect(renderFotoPorUrl('https://ejemplo.com/a.jpg')).not.toContain('class="aviso"');
   });
 });

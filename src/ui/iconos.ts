@@ -56,6 +56,10 @@ export const ICO = {
   imagen: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.6"/>' +
     '<path d="M21 15l-4-4a2 2 0 00-2.8 0L6 19.2"/>'),
 
+  /** *Por URL*: agregar una foto pegando su dirección. Dos eslabones, de Lucide (link). */
+  link: svg('<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>' +
+    '<path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>'),
+
   /** *Galería*: dos fotos, una detrás de la otra. Es el botón que elige una del teléfono. De Lucide (images). */
   galeria: svg('<path d="M8 3h11a2 2 0 012 2v11"/>' +
     '<rect x="3" y="7" width="14" height="14" rx="2"/><circle cx="8" cy="12" r="1.3"/>' +

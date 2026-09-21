@@ -16,8 +16,8 @@ import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
 import {
   renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado,
-  renderAccionesFoto, renderElegirFoto, renderSelectorPortada, filaDeFotosEditor, muestraDePortada,
-  fotosDesde, botonPonerFoto
+  renderAccionesFoto, renderElegirFoto, renderSelectorPortada, renderFotoPorUrl,
+  filaDeFotosEditor, muestraDePortada, fotosDesde, botonPonerFoto
 } from './ui/editor.js';
 import { renderBorradores, renderBorrador, renderPreguntaBorrador } from './ui/borradores.js';
 import { renderPlan } from './ui/plan.js';
@@ -1360,7 +1360,7 @@ function acomodarBotonDeFoto(): void {
 /** Las fichas al pie del editor y el velo con el que se cierran. */
 const FICHAS_DE_FOTO =
   '#app [data-acciones-foto], #app [data-elegir-foto], #app [data-selector-portada], ' +
-  '#app .velo[data-accion="cerrar-ficha-foto"]';
+  '#app [data-foto-url], #app .velo[data-accion="cerrar-ficha-foto"]';
 
 /** Saca del DOM la ficha que esté abierta, sin tocar el formulario. */
 function cerrarFichaFoto(): void {
@@ -1384,6 +1384,9 @@ function avisarEnElFormulario(texto: string): void {
   if (!texto) return;
   document.querySelector('[data-formulario]')
     ?.insertAdjacentHTML('afterbegin', `<div data-aviso-fotos>${aviso({ texto })}</div>`);
+  // Arriba del formulario, con la ficha Fotos al fondo, el aviso queda fuera de
+  // pantalla; nadie lo redibuja, así que se lo trae acá (R1).
+  mirarElAviso();
 }
 
 /**
@@ -1410,6 +1413,79 @@ async function agregarFotosAlEditor(archivos: Blob[]): Promise<void> {
   }
   escribirDeposito(deposito);
   avisarEnElFormulario(noSeLeyo ? NO_SE_LEYO_UNA_FOTO : '');
+}
+
+/**
+ * Suma una foto al depósito del editor con el número que le toca. Con `blob`
+ * es una foto que todavía no está en Drive —vive en memoria y sube al
+ * guardar—; sin él, la línea es un link externo, que el `.md` acepta como
+ * cualquier otra (spec §3).
+ */
+function sumarFotoAlEditor(url: string, blob?: Blob): void {
+  const deposito = depositoDelEditor();
+  const n = siguienteNumero(deposito);
+  if (blob) {
+    fotosEditor.nuevas.set(n, blob);
+    fotosEditor.urls.set(n, imagenes.urlDeBlob(blob));
+  }
+  escribirDeposito([...deposito, { n, url }]);
+}
+
+const NO_ES_UNA_FOTO = 'Esa URL no es una foto.';
+const QUEDA_COMO_LINK = 'No se pudo traer la foto: queda como link, y si el sitio la borra se pierde.';
+
+/** Lo que devolvió una dirección: la foto, algo que no es una foto, o nada. */
+type FotoTraida = { que: 'foto'; blob: Blob } | { que: 'no-es-foto' } | { que: 'no-se-pudo' };
+
+/**
+ * Baja la foto de una dirección. Una página que contesta 200 con HTML no es
+ * una foto, y por eso se mira el `Content-Type` antes que nada.
+ *
+ * Que `fetch` ni conteste es lo habitual —CORS, que es lo que hacen Instagram
+ * y tantos otros—, y sin red pasa lo mismo: no hay forma de distinguirlos
+ * desde el navegador, y en los dos casos la salida es la misma, quedarse con
+ * la URL como link.
+ */
+async function traerFoto(url: string): Promise<FotoTraida> {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return { que: 'no-es-foto' };
+    if (!(r.headers.get('Content-Type') ?? '').startsWith('image/')) return { que: 'no-es-foto' };
+    return { que: 'foto', blob: await r.blob() };
+  } catch (err) {
+    console.error(err);
+    return { que: 'no-se-pudo' };
+  }
+}
+
+/**
+ * *Traer* en la ficha de una foto por URL: la foto bajada entra al depósito
+ * por el mismo camino que una de la cámara. Lo que no se pudo bajar entra como
+ * link externo —no se pierde lo que la app ya sabía hacer—, y lo que no es una
+ * foto no entra y deja la ficha abierta con lo escrito.
+ */
+async function agregarFotoPorUrl(url: string): Promise<void> {
+  // Una URL que no es `http(s)` no es una línea del depósito (spec §3), así
+  // que ni se la pide.
+  if (!/^https?:\/\//i.test(url)) return abrirFichaFoto(renderFotoPorUrl(url, NO_ES_UNA_FOTO));
+  const traida = await escribiendo(traerFoto(url));
+  if (traida.que === 'no-es-foto') return abrirFichaFoto(renderFotoPorUrl(url, NO_ES_UNA_FOTO));
+  if (traida.que === 'no-se-pudo') {
+    sumarFotoAlEditor(url);
+    cerrarFichaFoto();
+    // No es un error del usuario: la foto entró, y el aviso dice con qué.
+    return avisarEnElFormulario(QUEDA_COMO_LINK);
+  }
+  let blob: Blob;
+  try {
+    blob = await escribiendo(achicarFoto(traida.blob));
+  } catch (err) {
+    console.error(err);
+    return abrirFichaFoto(renderFotoPorUrl(url, NO_SE_LEYO_UNA_FOTO));
+  }
+  sumarFotoAlEditor('', blob);
+  cerrarFichaFoto();
+  avisarEnElFormulario('');
 }
 
 /**
@@ -2039,12 +2115,13 @@ app.addEventListener('click', async (e) => {
     cerrarFichaFoto();
     return;
   }
-  if (accion === 'portada-url') {
-    escribirPortada(document.querySelector<HTMLInputElement>('#app [data-url-portada]')?.value.trim() ?? '');
-    cerrarFichaFoto();
+  if (accion === 'sin-portada') { escribirPortada(''); cerrarFichaFoto(); return; }
+  if (accion === 'abrir-foto-url') { abrirFichaFoto(renderFotoPorUrl()); return; }
+  if (accion === 'traer-foto-url') {
+    const url = document.querySelector<HTMLInputElement>('#app [data-url-foto]')?.value.trim() ?? '';
+    if (url) await agregarFotoPorUrl(url);
     return;
   }
-  if (accion === 'sin-portada') { escribirPortada(''); cerrarFichaFoto(); return; }
   if (accion === 'abrir-elegir-foto') {
     // La sección y la línea son las que tenía el botón: las escribió
     // `acomodarBotonDeFoto` con el cursor donde estaba.

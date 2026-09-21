@@ -497,7 +497,8 @@ describe('main.ts: las rutas', () => {
         // redibujar: el depósito de fotos, la portada, las secciones de texto.
         const nombre = sel.match(/^#app (?:input)?\[name="([\w-]+)"\]$/)?.[1];
         if (nombre) return campo(nombre);
-        if (sel === '#app [data-url-portada]') return campo('url-portada');
+        // La dirección escrita en la ficha de *Por URL*.
+        if (sel === '#app [data-url-foto]') return campo('url-foto');
         if (sel === '#app .fotos-campo') return { set outerHTML(html: string) { filasDeFotos.push(html); } };
         if (sel === '#app .portada-boton') return { set innerHTML(html: string) { portadas.push(html); } };
         // El aviso que se trae a la vista cuando algo falla con la pantalla scrolleada.
@@ -3048,6 +3049,113 @@ describe('main.ts: las rutas', () => {
       expect(portadas.at(-1)).toContain(EXTERNA);
       // Elegir cierra la ficha.
       expect(preguntas.some(h => h.includes('data-selector-portada'))).toBe(false);
+    });
+
+    /** Lo que contesta un sitio que sí deja bajar la foto. */
+    const respuestaDeFoto = (texto: string) => ({
+      ok: true,
+      headers: { get: (n: string) => (n.toLowerCase() === 'content-type' ? 'image/jpeg' : null) },
+      blob: async () => foto(texto)
+    });
+    /** Abre la ficha de *Por URL* con la dirección escrita y toca *Traer*. */
+    const traer = async (
+      montada: { tocar: (a: string, d?: Record<string, string>) => Promise<unknown> }, url: string
+    ) => {
+      await montada.tocar('abrir-foto-url');
+      estado.formulario['url-foto'] = url;
+      await montada.tocar('traer-foto-url');
+    };
+
+    it('traer una URL que responde una imagen la suma al depósito y la sube al guardar', async () => {
+      estado.md = MD_CON_FOTOS;
+      vi.stubGlobal('fetch', async () => respuestaDeFoto('bajada'));
+      const montada = await montar();
+      const { abrir, tocar, preguntas, filasDeFotos } = montada;
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await tocar('abrir-foto-url');
+      expect(preguntas.at(-1)).toContain('data-foto-url');
+      estado.formulario['url-foto'] = 'https://ejemplo/3.jpg';
+      await tocar('traer-foto-url');
+
+      // Entra por el mismo camino que una de la cámara: sin URL en el depósito
+      // y con su blob en memoria hasta Guardar.
+      expect(JSON.parse(estado.formulario['fotos'] ?? '')).toEqual([
+        { n: 1, url: linkDeFoto('f9') }, { n: 2, url: EXTERNA }, { n: 3, url: '' }
+      ]);
+      expect(filasDeFotos.at(-1)).toContain('data-n="3"');
+      // Traerla cierra la ficha.
+      expect(preguntas.some(h => h.includes('data-foto-url'))).toBe(false);
+
+      await tocar('guardar');
+      const cambios = estado.cambiosDeFotos.at(-1);
+      expect([...(cambios?.nuevas.keys() ?? [])]).toEqual([3]);
+      expect(await (cambios?.nuevas.get(3) as Blob).text()).toBe('bajada');
+    });
+
+    it('una que el sitio no deja bajar entra igual como link externo, con su aviso', async () => {
+      estado.md = MD_CON_FOTOS;
+      // Lo que hace CORS: `fetch` ni siquiera llega a contestar.
+      vi.stubGlobal('fetch', async () => { throw new TypeError('bloqueado'); });
+      const montada = await montar();
+      const { abrir, tocar, preguntas } = montada;
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await traer(montada, 'https://instagram/3.jpg');
+
+      expect(JSON.parse(estado.formulario['fotos'] ?? '')).toEqual([
+        { n: 1, url: linkDeFoto('f9') }, { n: 2, url: EXTERNA }, { n: 3, url: 'https://instagram/3.jpg' }
+      ]);
+      expect(preguntas.some(h => h.includes('data-foto-url'))).toBe(false);
+      const avisado = preguntas.find(h => h.includes('data-aviso-fotos'));
+      expect(avisado).toContain('queda como link');
+      // No es un error del usuario: el aviso no ofrece nada que hacer.
+      expect(avisado).not.toContain('<button');
+
+      // No hay nada que subir: la línea ya tiene su URL.
+      await tocar('guardar');
+      expect([...(estado.cambiosDeFotos.at(-1)?.nuevas.keys() ?? [])]).toEqual([]);
+    });
+
+    it('una URL que no es una foto no entra, y la ficha queda abierta con lo escrito', async () => {
+      estado.md = MD_CON_FOTOS;
+      // Una página que contesta 200 con HTML no es una foto.
+      vi.stubGlobal('fetch', async () => ({
+        ok: true, headers: { get: () => 'text/html; charset=utf-8' }, blob: async () => foto('<html>')
+      }));
+      const montada = await montar();
+      const { abrir, preguntas } = montada;
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await traer(montada, 'https://ejemplo/pagina');
+
+      expect(JSON.parse(estado.formulario['fotos'] ?? '')).toEqual([
+        { n: 1, url: linkDeFoto('f9') }, { n: 2, url: EXTERNA }
+      ]);
+      expect(preguntas.at(-1)).toContain('data-foto-url');
+      expect(preguntas.at(-1)).toContain('value="https://ejemplo/pagina"');
+      expect(preguntas.at(-1)).toContain('no es una foto');
+    });
+
+    it('una que no existe tampoco entra', async () => {
+      estado.md = MD_CON_FOTOS;
+      vi.stubGlobal('fetch', async () => ({
+        ok: false, headers: { get: () => null }, blob: async () => foto('')
+      }));
+      const montada = await montar();
+      const { abrir, preguntas } = montada;
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+
+      await traer(montada, 'https://ejemplo/no-esta.jpg');
+
+      expect(JSON.parse(estado.formulario['fotos'] ?? '')).toEqual([
+        { n: 1, url: linkDeFoto('f9') }, { n: 2, url: EXTERNA }
+      ]);
+      expect(preguntas.at(-1)).toContain('no es una foto');
     });
 
     it('el botón de la foto se cuelga del campo, a la altura de la línea del cursor', async () => {

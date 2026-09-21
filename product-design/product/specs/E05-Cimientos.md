@@ -126,7 +126,7 @@ Es lo que permite J4 sin ensuciar el archivo. Definido en
 - [ ] `dificultad` fuera de `fácil` · `media` · `difícil` se muestra tal cual y no se corrige.
 - [ ] **`tiempo` es uno de cinco valores:** `~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`. Cuenta el tiempo hasta comer, con reposo y horno incluidos. Cualquier otro texto se lee como sin duración —no se muestra, no filtra y no ordena— y el `.md` no se corrige. La validación es al leer.
 - [ ] **Hay tags reservados** (C05.1.4): viven en la lista `tags` como cualquier otro, y la app los dibuja y los carga con forma propia.
-- [ ] **`foto` es una URL externa o una foto del depósito**, escrita `foto:N` (C05.1.5). Un `foto:N` cuyo número no está en el depósito se lee como ausente.
+- [ ] **`foto` es una URL externa o una foto del depósito**, escrita `foto:N` (C05.1.5). Un `foto:N` cuyo número no está en el depósito se lee como ausente. **El editor sólo escribe `foto:N`** (C04.2.1d), pero el formato sigue aceptando la URL: un agente puede escribirla, y se conserva.
 - [ ] Un archivo sin bloque de frontmatter es válido si el cuerpo permite deducir el título; si no, cae en C05.2.3.
 
 **Edge cases:** frontmatter con YAML inválido → el archivo se trata como sin
@@ -171,7 +171,7 @@ pescados usa `Anchoítas — 18-20 medianas` y el recetario original usa
 
 - [ ] **Las fotos de una receta viven en una sección `## Fotos` del cuerpo**, una línea por foto: `- <número>: <url>`. No hay claves nuevas en el frontmatter.
 - [ ] **El número es estable:** una foto nueva toma el más alto más uno, y un número no se reusa nunca. Los números pueden tener huecos, y el orden de las líneas es el del carrusel.
-- [ ] La URL es **un archivo de Drive** —`https://drive.google.com/file/d/<id>/view`, el único formato que se reconoce como tal— **o una externa**. La de Drive se pide con el token; la externa va a un `<img>` directo.
+- [ ] La URL es **un archivo de Drive** —`https://drive.google.com/file/d/<id>/view`, el único formato que se reconoce como tal— **o una externa**. La de Drive se pide con el token; la externa va a un `<img>` directo. La app escribe una externa sólo cuando el sitio no dejó bajar la foto (C04.3d.1b); un agente puede escribir cualquiera de las dos.
 - [ ] Sin fotos, la sección no se escribe.
 - [ ] **Si alguna línea no tiene esa forma** —o su URL no es `http(s)`—, la sección entera se lee como una sección ajena y se conserva tal cual: la receta queda sin depósito y nada se pierde (C04.3c.1).
 - [ ] **El texto nombra una foto con `![epígrafe](foto:N)`**, en cualquier sección del cuerpo. El epígrafe es opcional. Como link (`[x](foto:2)`) no significa nada y queda como texto.
