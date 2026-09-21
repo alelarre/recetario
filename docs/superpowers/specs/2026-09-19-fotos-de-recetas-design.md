@@ -402,8 +402,10 @@ propia se elige de nuevo como cualquier otra del catálogo.
 
 - En una receta, agregar 3 fotos con la cámara y la galería; guardar; ver los
   `.jpg` en `_fotos/` y la sección Fotos en el `.md`.
-- *Poner en…* un paso y un ingrediente; ver la foto debajo de cada uno en la
-  receta y en el modo cocina.
+- Poner una foto en un paso y en un ingrediente desde el botón que aparece en
+  la línea del cursor —la ficha ofrece sólo las fotos que ya están cargadas—;
+  ver la foto debajo de cada uno en la receta y en el modo cocina. Probar
+  también con el campo desplazado por dentro y con el teclado abierto.
 - *Portada* desde una foto y desde el campo Foto; la lista muestra la
   cabecera.
 - *Sacar* una foto que está en un paso: desaparece la referencia; al guardar,

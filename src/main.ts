@@ -1211,6 +1211,9 @@ function revisarIncompleta(): void {
 /** Las cinco secciones de texto del editor, las que pueden nombrar una foto. */
 const SECCIONES = ['descripcion', 'ingredientes', 'preparacion', 'variaciones', 'notas'] as const;
 
+/** Lo que mide un renglón de un campo: `--txt-base` por la interlínea 1.5. */
+const ALTO_RENGLON = 24;
+
 /** Se está en el editor de una receta, la que sea: ahí nada se redibuja sin perder lo escrito. */
 const enElEditor = (): boolean => vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva';
 
@@ -1266,12 +1269,9 @@ function escribirPortada(valor: string): void {
  * texto cuando no entra entero.
  */
 function acomodarBotonDeFoto(): void {
-  const campo = document.activeElement as HTMLTextAreaElement | null;
-  // **El foco en el botón mismo no lo toca.** Al tocarlo, el foco le llega
-  // antes que el click: sacarlo ahí dejaría el toque sin destino.
-  if (campo?.dataset?.['accion'] === 'abrir-elegir-foto') return;
   document.querySelector('#app .poner-foto')?.remove();
   if (!enElEditor()) return;
+  const campo = document.activeElement as HTMLTextAreaElement | null;
   const seccion = campo?.name ?? '';
   if (!(SECCIONES as readonly string[]).includes(seccion)) return;
   // Sin depósito no hay nada que poner, y el botón no se dibuja.
@@ -1284,7 +1284,14 @@ function acomodarBotonDeFoto(): void {
   const posicion = campo?.selectionStart ?? texto.length;
   antes.textContent = texto.slice(0, posicion);
   const altura = Math.round(marca.offsetTop - (campo?.scrollTop ?? 0));
-  marco.insertAdjacentHTML('beforeend', botonPonerFoto(seccion, lineaDelCursor(texto, posicion), altura));
+  // El campo scrolleado puede dejar el renglón del cursor arriba o abajo de lo
+  // que se ve: ahí no hay dónde poner el botón, y dibujarlo lo tiraría encima
+  // de lo que haya afuera del campo.
+  const visible = campo?.clientHeight ?? 0;
+  if (altura + ALTO_RENGLON <= 0 || altura >= visible) return;
+  // Y el renglón a medio entrar se recorta, para que el botón quede adentro.
+  const tope = Math.min(Math.max(altura, 0), Math.max(visible - ALTO_RENGLON, 0));
+  marco.insertAdjacentHTML('beforeend', botonPonerFoto(seccion, lineaDelCursor(texto, posicion), tope));
 }
 
 /** Las fichas al pie del editor y el velo con el que se cierran. */
@@ -1948,7 +1955,13 @@ app.addEventListener('click', async (e) => {
     abrirVisor(receta.fotos, n, receta.foto ?? undefined);
     return render();
   }
-  if (accion === 'cerrar-ficha-foto') { cerrarFichaFoto(); return; }
+  if (accion === 'cerrar-ficha-foto') {
+    cerrarFichaFoto();
+    // Tocar el velo puede haberle sacado el foco al campo: el botón de la
+    // foto no puede quedar colgado de un campo que ya no lo tiene.
+    acomodarBotonDeFoto();
+    return;
+  }
   if (accion === 'acciones-foto') {
     const n = boton.dataset['n'] ?? '';
     abrirFichaFoto(renderAccionesFoto(Number(n), { portada: portadaDelEditor() === `foto:${n}` }));
@@ -2492,6 +2505,27 @@ document.addEventListener('selectionchange', () => {
 app.addEventListener('focusin', () => {
   if (tapadas) return;
   acomodarBotonDeFoto();
+});
+
+/**
+ * Deslizar adentro del campo corre el texto sin mover el cursor: el botón
+ * tiene que seguirlo, o queda clavado en un renglón que ya no es el suyo. El
+ * oyente va en captura porque el `scroll` de un campo no burbujea.
+ */
+app.addEventListener('scroll', () => {
+  if (tapadas) return;
+  acomodarBotonDeFoto();
+}, true);
+
+/**
+ * Tocar el botón de la foto **no mueve el foco**: sin esto, el navegador se lo
+ * saca al campo y el botón desaparece entre el toque y el click —en el Safari
+ * de iOS el foco ni siquiera llega al botón—, así que el toque se pierde.
+ */
+app.addEventListener('pointerdown', (e) => {
+  if (tapadas) return;
+  if (!conClosest(e.target)?.closest('.poner-foto')) return;
+  e.preventDefault();
 });
 
 // Salir del campo con algo escrito lo agrega igual: no se pierde por
