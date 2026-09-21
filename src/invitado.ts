@@ -7,20 +7,41 @@ import { pintar, conClosest } from './ui/pintar.js';
 import { renderInvitado, renderLinkRoto } from './ui/invitado.js';
 import { renderCocina } from './ui/cocina.js';
 import { rutaDeInvitado } from './ui/router.js';
+import { pasoDelVisor } from './ui/visor.js';
 import { decodificar } from './link-receta.js';
+import { sinFotosDeDrive } from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
 import type { Receta } from './tipos.js';
+import type { EstadoVisor } from './ui/visor.js';
 
-// `ver-foto-receta` puede llegar por `fichaCabecera`/`fichasDelCuerpo`, que comparte con
-// la receta: no tiene manejador acá —abrir el visor del invitado es Tarea 9—,
-// pero está en la lista porque el HTML compartido sí puede traerlo.
-export const ACCIONES_DE_INVITADO = ['cocinar', 'volver-receta', 'conmutar', 'paso', 'wake', 'ver-foto-receta'] as const;
+// `ver-foto-receta` y `cerrar-visor` llegan por `fichaCabecera`/`fichasDelCuerpo`
+// y por el visor, que comparte con la receta: acá abren y cierran el visor de
+// las fotos que viajaron en el link, y nada más.
+export const ACCIONES_DE_INVITADO =
+  ['cocinar', 'volver-receta', 'conmutar', 'paso', 'wake', 'ver-foto-receta', 'cerrar-visor'] as const;
 
 export function iniciarInvitado(): void {
   const cocina = crearControlCocina();
   /** La receta decodificada, por carga: los redibujados no vuelven a descomprimir. */
   let leida: { carga: string; receta: Receta; categoria: string } | null = null;
   let vistaAnterior: 'lectura' | 'cocina' | null = null;
+  /** El visor de fotos abierto, o nada. Sólo en la lectura: en la cocina un toque marca el paso. */
+  let visor: EstadoVisor | null = null;
+  /** Dónde empezó el deslizamiento sobre el visor, o `null`. */
+  let visorDesde: number | null = null;
+  /** Un deslizamiento termina en un click: ese no cierra el visor, que si no se cerraría en cada gesto. */
+  let deslizoElVisor = false;
+
+  /**
+   * Abre el visor en la foto `n` del depósito, para deslizar entre todas. Sin
+   * número —o con uno que no está—, una cabecera externa se abre sola (§7).
+   */
+  function abrirVisor(receta: Receta, marca: string | undefined): void {
+    const n = marca === undefined ? undefined : Number(marca);
+    const i = n === undefined ? -1 : receta.fotos.findIndex(f => f.n === n);
+    if (i >= 0) visor = { urls: receta.fotos.map(f => f.url), i };
+    else if (receta.foto) visor = { urls: [receta.foto], i: 0 };
+  }
 
   async function render(): Promise<void> {
     const ruta = rutaDeInvitado(location.hash);
@@ -30,7 +51,10 @@ export function iniciarInvitado(): void {
     if (!ruta) { location.reload(); return; }
     if (leida?.carga !== ruta.carga) {
       const datos = await decodificar(ruta.carga);
-      leida = datos ? { carga: ruta.carga, ...datos } : null;
+      // Sin fotos de Drive desde el arranque (§10): ni la lectura, ni la
+      // cocina, ni el visor tienen después nada que pedirle a Drive.
+      leida = datos ? { carga: ruta.carga, ...datos, receta: sinFotosDeDrive(datos.receta) } : null;
+      visor = null;
     }
     if (!leida) {
       document.title = 'Recetario';
@@ -42,12 +66,17 @@ export function iniciarInvitado(): void {
       cocina.reiniciar();
       window.scrollTo?.(0, 0);
       vistaAnterior = ruta.vista;
+      visor = null;
     }
-    if (ruta.vista === 'lectura') return pintar(renderInvitado({ receta: leida.receta, categoria: leida.categoria }));
+    if (ruta.vista === 'lectura') {
+      return pintar(renderInvitado({ receta: leida.receta, categoria: leida.categoria, ...(visor ? { visor } : {}) }));
+    }
     return pintar(renderCocina({ receta: leida.receta, ...cocina.estado(), salidas: 'solo-volver' }));
   }
 
-  document.querySelector('#app')?.addEventListener('click', async (e) => {
+  const app = document.querySelector('#app');
+
+  app?.addEventListener('click', async (e) => {
     const boton = conClosest(e.target)?.closest<HTMLElement>('[data-accion]') ?? null;
     if (!boton || !leida) return;
     const accion = boton.dataset['accion'];
@@ -78,7 +107,44 @@ export function iniciarInvitado(): void {
     if (accion === 'wake') {
       await cocina.alternarPantalla();
       await render();
+      return;
     }
+    // Las fotos que viajaron en el link (§7): la cabecera y las de la grilla
+    // abren el visor, y se cierra tocando en cualquier parte.
+    if (accion === 'ver-foto-receta') {
+      abrirVisor(leida.receta, boton.dataset['n']);
+      return render();
+    }
+    if (accion === 'cerrar-visor') {
+      // Un deslizamiento termina en un click: ese no cierra, ya cambió de foto.
+      if (deslizoElVisor) { deslizoElVisor = false; return; }
+      visor = null;
+      return render();
+    }
+  });
+
+  // El único gesto del invitado: con el visor abierto, el dedo pasa de una
+  // foto a la siguiente. La foto cambia de una vez, al soltar.
+  app?.addEventListener('touchstart', (e) => {
+    deslizoElVisor = false;
+    visorDesde = null;
+    const toques = (e as TouchEvent).touches;
+    const toque = toques[0];
+    if (!visor || !toque || toques.length !== 1) return;
+    visorDesde = toque.clientX;
+  }, { passive: true });
+
+  app?.addEventListener('touchend', (e) => {
+    if (visorDesde === null || !visor) return;
+    const toque = (e as TouchEvent).changedTouches[0];
+    const desde = visorDesde;
+    visorDesde = null;
+    if (!toque) return;
+    const i = pasoDelVisor(visor.i, toque.clientX - desde, visor.urls.length);
+    if (i === visor.i) return;
+    visor = { ...visor, i };
+    deslizoElVisor = true;
+    void render();
   });
 
   window.addEventListener('hashchange', () => { void render(); });

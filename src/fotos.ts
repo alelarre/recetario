@@ -33,16 +33,18 @@ export function medidas(ancho: number, alto: number, maximo = LADO_MAXIMO): { an
 
 /**
  * La foto achicada, en JPEG. Rechaza si el navegador no la puede decodificar
- * —HEIC, un archivo roto—: esa foto no se agrega.
+ * —HEIC, un archivo roto—: esa foto no se agrega. El `maximo` se elige para el
+ * PDF, que las quiere más chicas que las que van a Drive (spec §10).
  */
 export async function achicar(
   archivo: Blob,
   lienzo: () => Lienzo,
-  decodificar: (b: Blob) => Promise<Imagen> = b => createImageBitmap(b)
+  decodificar: (b: Blob) => Promise<Imagen> = b => createImageBitmap(b),
+  maximo = LADO_MAXIMO
 ): Promise<Blob> {
   const imagen = await decodificar(archivo);
   try {
-    const { ancho, alto } = medidas(imagen.width, imagen.height);
+    const { ancho, alto } = medidas(imagen.width, imagen.height, maximo);
     const canvas = lienzo();
     canvas.width = ancho;
     canvas.height = alto;

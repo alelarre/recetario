@@ -24,6 +24,20 @@ Una entrada clásica.
 Ojo con el aceite.
 `);
 
+const CON_FOTOS = parse(`---
+titulo: Rabas
+foto: foto:2
+---
+
+## Preparación
+1. Freír. ![Así queda](foto:2)
+2. Servir. ![](foto:1)
+
+## Fotos
+- 1: https://drive.google.com/file/d/abc/view
+- 2: https://x/plato.jpg
+`);
+
 const acciones = (html: string): string[] => [...html.matchAll(/data-accion="([^"]+)"/g)].map(m => m[1] ?? '');
 
 describe('La vista de invitado', () => {
@@ -31,7 +45,7 @@ describe('La vista de invitado', () => {
 
   it('sólo usa acciones de su lista cerrada, en la lectura y en la cocina', () => {
     vi.stubGlobal('navigator', { wakeLock: {} });
-    const lectura = renderInvitado({ receta: RECETA, categoria: 'Pescados' });
+    const lectura = renderInvitado({ receta: CON_FOTOS, categoria: 'Pescados', visor: { urls: ['https://x/plato.jpg'], i: 0 } });
     const cocina = renderCocina({ receta: RECETA, posicion: 'pasos', aqui: 0, hechos: [], salidas: 'solo-volver' });
     for (const a of [...acciones(lectura), ...acciones(cocina)]) {
       expect(ACCIONES_DE_INVITADO as readonly string[], a).toContain(a);
@@ -67,6 +81,30 @@ describe('La vista de invitado', () => {
 
   it('sin ingredientes ni pasos no hay pie', () => {
     expect(renderInvitado({ receta: parse('---\ntitulo: A\n---\n'), categoria: '' })).not.toContain('class="pie"');
+  });
+
+  it('dibuja la receta resuelta y nunca pide nada a Drive', () => {
+    const html = renderInvitado({ receta: CON_FOTOS, categoria: 'Pescados' });
+    expect(html).toContain('src="https://x/plato.jpg"');
+    expect(html).not.toContain('foto:2');
+    expect(html).not.toContain('data-drive');
+    expect(html).not.toContain('drive.google.com');
+  });
+
+  it('la galería es la de las fotos que viajaron', () => {
+    const html = renderInvitado({ receta: CON_FOTOS, categoria: '' });
+    expect(html).toContain('<h2>Fotos</h2>');
+    expect(html.match(/class="galeria-item"/g)).toHaveLength(1);
+  });
+
+  it('sin fotos no hay galería', () => {
+    expect(renderInvitado({ receta: RECETA, categoria: '' })).not.toContain('class="galeria"');
+  });
+
+  it('el visor abierto se dibuja sobre la receta', () => {
+    const html = renderInvitado({ receta: CON_FOTOS, categoria: '', visor: { urls: ['https://x/plato.jpg'], i: 0 } });
+    expect(html).toContain('class="visor"');
+    expect(html).toContain('data-total="1"');
   });
 
   it('el link roto lo dice y no ofrece nada', () => {

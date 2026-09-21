@@ -7,8 +7,9 @@
  * solo al pie de una página.
  */
 import type { Content, ContentCanvas, ContentText, TDocumentDefinitions } from 'pdfmake/interfaces';
-import { aPdf, tramosAPdf, tramosDeFuente, tramosEnLinea } from '../ui/markdown.js';
+import { aPdf, conFotos, fotosDeTramos, tramosAPdf, tramosDeFuente, tramosEnLinea } from '../ui/markdown.js';
 import { contextoDe, gruposDe, tramosDe, variacionesDe } from '../recipe.js';
+import type { FotoDeTramo } from '../ui/markdown.js';
 import type { Receta } from '../tipos.js';
 
 const mm = (v: number): number => v * 72 / 25.4;
@@ -16,6 +17,15 @@ const ANCHO = mm(105);
 const ALTO = mm(180);
 const MARGEN = mm(8);
 const RELLENO = 6;
+/** Lo más ancho que llega a ser algo: la página menos sus márgenes. */
+const ANCHO_UTIL = ANCHO - 2 * MARGEN;
+/**
+ * El alto máximo de una foto. La cabecera lo pide (§10), y una foto en línea
+ * sigue la misma regla: su bloque no se parte, así que tiene que entrar en una página.
+ */
+const ALTO_FOTO = mm(90);
+/** Lo que separa las dos columnas de la galería, y una fila de la siguiente. */
+const AIRE_GALERIA = 6;
 
 /** Los tokens de `src/ui/tokens.css` que usa el PDF. */
 const COLOR = {
@@ -43,14 +53,54 @@ function seccion(titulo: string, nodos: Content[]): Content[] {
   return juntoAlPrimero([encabezado], nodos);
 }
 
-function cabecera(receta: Receta, categoria: string): Content {
+/**
+ * Cómo dibujar la foto de una referencia, al ancho que le toque. Una URL que
+ * no está en el mapa no se dibuja: `generar` no la pudo bajar (§10).
+ */
+const fotoEnLinea = (imagenes: Map<string, string>, ancho: number): FotoDeTramo =>
+  (url, epigrafe) => {
+    const dataUrl = imagenes.get(url);
+    if (!dataUrl) return [];
+    return [
+      { image: dataUrl, fit: [ancho, ALTO_FOTO], margin: [0, 3, 0, epigrafe ? 1 : 3] },
+      ...(epigrafe ? [{ text: epigrafe, style: 'epigrafe' } as Content] : [])
+    ];
+  };
+
+/** La foto de la cabecera, arriba del título y al ancho de la página (§10). */
+function fotoDeCabecera(receta: Receta, imagenes: Map<string, string>): Content[] {
+  const dataUrl = receta.foto ? imagenes.get(receta.foto) : undefined;
+  return dataUrl ? [{ image: dataUrl, fit: [ANCHO_UTIL, ALTO_FOTO], margin: [0, 0, 0, 6] }] : [];
+}
+
+/** El depósito entero al final, de a dos por fila (§10), en su orden. */
+function galeria(receta: Receta, imagenes: Map<string, string>): Content[] {
+  const lado = (ANCHO_UTIL - AIRE_GALERIA) / 2;
+  const fotos = receta.fotos.flatMap((f): Content[] => {
+    const dataUrl = imagenes.get(f.url);
+    return dataUrl ? [{ image: dataUrl, fit: [lado, lado] }] : [];
+  });
+  const filas: Content[] = [];
+  for (let i = 0; i < fotos.length; i += 2) {
+    filas.push({
+      columns: fotos.slice(i, i + 2), columnGap: AIRE_GALERIA,
+      margin: [0, 0, 0, AIRE_GALERIA], unbreakable: true
+    });
+  }
+  return filas;
+}
+
+function cabecera(receta: Receta, categoria: string, imagenes: Map<string, string>): Content {
+  // La descripción va adentro de la tarjeta: sus fotos entran en lo que queda
+  // después del relleno, no en el ancho de la página.
+  const fotoDe = fotoEnLinea(imagenes, ANCHO_UTIL - 2 * RELLENO);
   const contexto = contextoDe(receta, categoria);
   const fuente = receta.fuente ? tramosDeFuente(receta.fuente) : [];
   const separador: ContentCanvas = { ...linea(ANCHO - 2 * MARGEN - 2 * RELLENO, COLOR.borde), margin: [0, 3, 0, 3] };
   const stack: Content[] = [
     { text: receta.titulo ?? 'Sin título', style: 'titulo' },
     ...(contexto ? [{ text: contexto, style: 'contexto' }] : []),
-    ...aPdf(receta.descripcion),
+    ...aPdf(receta.descripcion, fotoDe),
     ...(fuente.length
       ? [
           separador,
@@ -80,31 +130,43 @@ function ingredientes(receta: Receta): Content[] {
   });
 }
 
-function preparacion(receta: Receta): Content[] {
+function preparacion(receta: Receta, fotoDe: FotoDeTramo): Content[] {
   return tramosDe(receta.preparacion).filter(t => t.pasos.length).flatMap(t => {
-    const pasos: Content[] = t.pasos.map((p, n) => ({
-      ol: [{ text: tramosAPdf(tramosEnLinea(p)) }], start: n + 1, style: 'lista', markerColor: COLOR.fg3, unbreakable: true
-    }));
+    const pasos: Content[] = t.pasos.map((p, n) => {
+      const tramos = tramosEnLinea(p);
+      const paso: Content = {
+        ol: [{ text: tramosAPdf(tramos) }], start: n + 1, style: 'lista', markerColor: COLOR.fg3, unbreakable: true
+      };
+      return conFotos(paso, fotosDeTramos(tramos, fotoDe));
+    });
     return t.nombre ? juntoAlPrimero([{ text: t.nombre.toUpperCase(), style: 'grupo' }], pasos) : pasos;
   });
 }
 
-function variaciones(receta: Receta): Content[] {
+function variaciones(receta: Receta, fotoDe: FotoDeTramo): Content[] {
   const { lista, secciones } = variacionesDe(receta.variaciones);
   if (secciones.length) {
     return secciones.map(v => ({
       stack: [
         { text: v.nombre, style: 'subtitulo' },
         ...(v.fuente ? [{ text: v.fuente, style: 'fuente', italics: true } as Content] : []),
-        ...aPdf(v.cuerpo)
+        ...aPdf(v.cuerpo, fotoDe)
       ],
       unbreakable: true
     }));
   }
-  return lista.map(v => ({ ul: [{ text: tramosAPdf(tramosEnLinea(v)) }], style: 'lista', unbreakable: true }));
+  return lista.map(v => {
+    const tramos = tramosEnLinea(v);
+    return conFotos({ ul: [{ text: tramosAPdf(tramos) }], style: 'lista', unbreakable: true }, fotosDeTramos(tramos, fotoDe));
+  });
 }
 
-export function documentoPdf(receta: Receta, categoria: string): TDocumentDefinitions {
+/**
+ * `imagenes` es una URL de la receta resuelta por su data URL, ya achicada
+ * (`generar`). Una URL que no está no se dibuja: no se pudo bajar (§10).
+ */
+export function documentoPdf(receta: Receta, categoria: string, imagenes: Map<string, string>): TDocumentDefinitions {
+  const fotoDe = fotoEnLinea(imagenes, ANCHO_UTIL);
   return {
     pageSize: { width: ANCHO, height: ALTO },
     pageMargins: [MARGEN, MARGEN, MARGEN, MARGEN],
@@ -122,15 +184,18 @@ export function documentoPdf(receta: Receta, categoria: string): TDocumentDefini
       grupo: { fontSize: TXT.chico, color: COLOR.fg2, characterSpacing: 0.3, margin: [0, 3, 0, 1] },
       subtitulo: { bold: true, margin: [0, 2, 0, 1] },
       parrafo: { margin: [0, 0, 0, 3] },
-      lista: { margin: [0, 0, 0, 1.5] }
+      lista: { margin: [0, 0, 0, 1.5] },
+      epigrafe: { fontSize: TXT.chico, color: COLOR.fg3, margin: [0, 0, 0, 3] }
     },
     content: [
-      cabecera(receta, categoria),
+      ...fotoDeCabecera(receta, imagenes),
+      cabecera(receta, categoria, imagenes),
       ...seccion('Ingredientes', ingredientes(receta)),
-      ...seccion('Preparación', preparacion(receta)),
-      ...seccion('Variaciones', variaciones(receta)),
-      ...seccion('Notas', aPdf(receta.notas)),
-      ...receta.otras.flatMap(o => seccion(o.encabezado, aPdf(o.cuerpo)))
+      ...seccion('Preparación', preparacion(receta, fotoDe)),
+      ...seccion('Variaciones', variaciones(receta, fotoDe)),
+      ...seccion('Notas', aPdf(receta.notas, fotoDe)),
+      ...receta.otras.flatMap(o => seccion(o.encabezado, aPdf(o.cuerpo, fotoDe))),
+      ...seccion('Fotos', galeria(receta, imagenes))
     ]
   };
 }

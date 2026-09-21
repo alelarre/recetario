@@ -420,8 +420,9 @@ let fotosDelBorrador: string[] = [];
 /** La foto propia recién elegida para una categoría: se sube al guardarla (§7). */
 let fotoPropia: { blob: Blob; url: string } | null = null;
 
-/** La foto achicada; rechaza si el navegador no la decodifica. */
-const achicarFoto = (archivo: Blob): Promise<Blob> => achicar(archivo, () => document.createElement('canvas'));
+/** La foto achicada; rechaza si el navegador no la decodifica. Sin `maximo`, el de Drive. */
+const achicarFoto = (archivo: Blob, maximo?: number): Promise<Blob> =>
+  achicar(archivo, () => document.createElement('canvas'), undefined, maximo);
 
 const NO_SE_LEYO_UNA_FOTO = 'No se pudo leer una de las fotos.';
 
@@ -1463,7 +1464,12 @@ app.addEventListener('click', async (e) => {
       // de una pantalla que no está, y aplicarlo mostraría «listo» en otra receta.
       const sigueGenerando = (): boolean => compartiendo?.paso === 'generando';
       try {
-        const blob = await generar(receta, entrada?.categoria ?? '');
+        // El PDF lleva las fotos adentro: las de Drive salen del caché de
+        // `imagenes`, y el canvas para achicarlas es el mismo de siempre (§10).
+        const blob = await generar(receta, entrada?.categoria ?? '', {
+          imagenDe: id => imagenes.imagenDe(id),
+          achicar: (foto, maximo) => achicarFoto(foto, maximo)
+        });
         if (!sigueGenerando()) return;
         pdfListo = new File([blob], slugArchivo(receta.titulo).replace(/\.md$/, '.pdf'), { type: 'application/pdf' });
       } catch (err) {

@@ -3,6 +3,7 @@
  * el fragmento, comprimida: no hay nada publicado en Drive y nada que revocar.
  */
 import { parse, serialize } from './recipe.js';
+import { sinFotosDeDrive } from './fotos-receta.js';
 import type { Receta } from './tipos.js';
 
 /** La versión del formato. Cambiar la carga es cambiar este número. */
@@ -26,7 +27,9 @@ function deBase64url(texto: string): Uint8Array {
 }
 
 export async function codificar(receta: Receta, categoria: string): Promise<string> {
-  const md = serialize({ ...receta, tags: [], extras: {} });
+  // Las fotos viajan resueltas y sólo las externas (§10): el invitado no tiene
+  // token, así que una de Drive sería una imagen rota del otro lado.
+  const md = serialize({ ...sinFotosDeDrive(receta), tags: [], extras: {} });
   const json = new TextEncoder().encode(JSON.stringify({ c: categoria, md }));
   return VERSION + aBase64url(await pasarPor(json, new CompressionStream('deflate-raw')));
 }

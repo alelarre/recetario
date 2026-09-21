@@ -5,6 +5,20 @@ import { codificar, decodificar, urlDeLink } from '../src/link-receta.js';
 
 const BABA = parse(readFileSync(new URL('./fixtures/baba-ganush.md', import.meta.url), 'utf8'));
 
+const CON_FOTOS = parse(`---
+titulo: Rabas
+foto: foto:1
+---
+
+## Preparación
+1. Freír. ![Así queda](foto:1)
+2. Servir. ![](foto:2)
+
+## Fotos
+- 1: https://drive.google.com/file/d/abc/view
+- 2: https://x/plato.jpg
+`);
+
 describe('el link de una receta', () => {
   it('ida y vuelta: la receta y su categoría', async () => {
     const vuelta = await decodificar(await codificar(BABA, 'Entradas y picadas'));
@@ -21,6 +35,22 @@ describe('el link de una receta', () => {
     const vuelta = await decodificar(carga);
     expect(vuelta?.receta.tags).toEqual([]);
     expect(vuelta?.receta.extras).toEqual({});
+  });
+
+  it('las fotos de Drive no viajan: ni la cabecera, ni la referencia, ni el depósito', async () => {
+    const vuelta = await decodificar(await codificar(CON_FOTOS, 'Pescados'));
+    expect(vuelta?.receta.foto).toBeNull();
+    expect(vuelta?.receta.fotos).toEqual([{ n: 2, url: 'https://x/plato.jpg' }]);
+    expect(vuelta?.receta.preparacion).not.toContain('drive.google.com');
+    expect(vuelta?.receta.preparacion).not.toContain('Así queda');
+  });
+
+  it('las externas viajan resueltas: la referencia y la cabecera son su URL', async () => {
+    const portadaExterna = parse(`---\ntitulo: A\nfoto: foto:2\n---\n\n## Preparación\n1. Servir. ![](foto:2)\n\n## Fotos\n- 2: https://x/plato.jpg\n`);
+    const vuelta = await decodificar(await codificar(portadaExterna, ''));
+    expect(vuelta?.receta.foto).toBe('https://x/plato.jpg');
+    expect(vuelta?.receta.preparacion).toContain('![](https://x/plato.jpg)');
+    expect(vuelta?.receta.fotos).toEqual([{ n: 2, url: 'https://x/plato.jpg' }]);
   });
 
   it('empieza con la versión y usa sólo caracteres de URL', async () => {

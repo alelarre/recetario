@@ -5,11 +5,25 @@
  */
 import { vacio } from './componentes.js';
 import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones } from './fichas-receta.js';
+import { renderVisor } from './visor.js';
+import { sinFotosDeDrive } from '../fotos-receta.js';
 import type { Receta } from '../tipos.js';
+import type { EstadoVisor } from './visor.js';
 
-export function renderInvitado({ receta, categoria }: { receta: Receta; categoria: string }): string {
+export interface OpcionesInvitado {
+  receta: Receta;
+  categoria: string;
+  /** El visor de fotos abierto, en su foto actual. Sin esto no se dibuja. */
+  visor?: EstadoVisor;
+}
+
+export function renderInvitado({ receta: sinResolver, categoria, visor }: OpcionesInvitado): string {
+  // Resuelta y sin nada de Drive (§10): el invitado no tiene token, así que
+  // acá no puede quedar ni un `data-drive` ni una `foto:N` sin resolver.
+  const receta = sinFotosDeDrive(sinResolver);
   return '<div class="cuerpo">' + fichaCabecera({ receta, categoria, pin: false }) + fichasDelCuerpo(receta) + '</div>' +
-    pieDeAcciones(botonCocinar(receta));
+    pieDeAcciones(botonCocinar(receta)) +
+    (visor ? renderVisor(visor) : '');
 }
 
 export const renderLinkRoto = (): string =>

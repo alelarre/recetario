@@ -175,35 +175,55 @@ export function aTexto(texto: unknown): string {
   return partes.join('\n');
 }
 
-/** Los tramos como texto de pdfmake. Los estilos (`link`) los define el documento. */
+/**
+ * Los tramos como texto de pdfmake. Los estilos (`link`) los define el
+ * documento. Una imagen no es texto: la dibuja el documento debajo de su
+ * línea, y sólo si tiene su data URL (§10).
+ */
 export function tramosAPdf(tramos: TramoEnLinea[]): ContentText[] {
-  return tramos.map(t => {
-    const destino = t.link ?? t.imagen;
+  return tramos.filter(t => !t.imagen).map(t => {
     return {
-      text: t.imagen ?? t.texto,
+      text: t.texto,
       ...(t.negrita ? { bold: true } : {}),
       ...(t.italica ? { italics: true } : {}),
-      ...(destino ? { link: destino, style: 'link' } : {})
+      ...(t.link ? { link: t.link, style: 'link' } : {})
     };
   });
 }
 
+/** Lo que dibuja la foto de una referencia; vacío si esa URL no se pudo bajar. */
+export type FotoDeTramo = (url: string, epigrafe?: string) => Content[];
+
+/** Las fotos de una línea, en su orden. */
+export const fotosDeTramos = (tramos: TramoEnLinea[], fotoDe: FotoDeTramo): Content[] =>
+  tramos.flatMap(t => (t.imagen ? fotoDe(t.imagen, t.epigrafe) : []));
+
+/**
+ * Una línea con sus fotos debajo, en un bloque que no se parte entre páginas (§10).
+ */
+export const conFotos = (nodo: Content, fotos: Content[]): Content =>
+  fotos.length ? { stack: [nodo, ...fotos], unbreakable: true } : nodo;
+
 /**
  * Un nodo por párrafo y por ítem, para que el documento pueda juntar un título
- * con lo primero que le sigue. Ningún ítem se parte entre páginas.
+ * con lo primero que le sigue. Ningún ítem se parte entre páginas, y las fotos
+ * de una línea van adentro de su mismo bloque.
  */
-export function aPdf(texto: unknown): Content[] {
+export function aPdf(texto: unknown, fotoDe: FotoDeTramo = () => []): Content[] {
   const nodos: Content[] = [];
+  const conSusFotos = (nodo: Content, tramos: TramoEnLinea[]): void => {
+    nodos.push(conFotos(nodo, fotosDeTramos(tramos, fotoDe)));
+  };
   for (const b of bloques(texto)) {
     // Ídem `aHtml`: `'tramos' in b` es lo que angosta acá, no comparar `tipo`.
     if ('tramos' in b) {
-      nodos.push(b.tipo === 'subtitulo'
-        ? { text: tramosAPdf(b.tramos), style: 'subtitulo' }
-        : { text: tramosAPdf(b.tramos), style: 'parrafo', unbreakable: true });
+      if (b.tipo === 'subtitulo') nodos.push({ text: tramosAPdf(b.tramos), style: 'subtitulo' });
+      else conSusFotos({ text: tramosAPdf(b.tramos), style: 'parrafo', unbreakable: true }, b.tramos);
     } else if (b.tipo === 'lista') {
-      for (const i of b.items) nodos.push({ ul: [{ text: tramosAPdf(i) }], style: 'lista', unbreakable: true });
+      for (const i of b.items) conSusFotos({ ul: [{ text: tramosAPdf(i) }], style: 'lista', unbreakable: true }, i);
     } else {
-      b.items.forEach((i, n) => nodos.push({ ol: [{ text: tramosAPdf(i) }], start: n + 1, style: 'lista', unbreakable: true }));
+      b.items.forEach((i, n) =>
+        conSusFotos({ ol: [{ text: tramosAPdf(i) }], start: n + 1, style: 'lista', unbreakable: true }, i));
     }
   }
   return nodos;

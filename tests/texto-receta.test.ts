@@ -69,6 +69,28 @@ Fuente: Paladar (https://p.com/rabas)`);
     expect(t).not.toContain('#');
   });
 
+  it('una foto externa es su URL; la de Drive no se escribe, y la sección Fotos tampoco', () => {
+    const r = parse(`---
+titulo: Rabas
+foto: foto:1
+---
+
+## Preparación
+1. Freír. ![Así queda](foto:1)
+2. Servir. ![](foto:2)
+
+## Fotos
+- 1: https://drive.google.com/file/d/abc/view
+- 2: https://x/plato.jpg
+`);
+    const t = textoReceta(r, 'Pescados');
+    expect(t).toContain('2. Servir. https://x/plato.jpg');
+    expect(t).not.toContain('drive.google.com');
+    expect(t).not.toContain('Así queda');
+    expect(t).not.toContain('foto:');
+    expect(t).not.toContain('Fotos');
+  });
+
   it('una sección vacía no aparece', () => {
     expect(textoReceta(parse('---\ntitulo: A\n---\n## Notas\n'), '')).toBe('A');
   });
