@@ -453,7 +453,7 @@ Tres convenciones valen para todos los componentes:
 | Línea de contexto | `--txt-chico`, `--fg-2`, sólo datos: categoría · duración · rinde |
 | El relojito de la duración | 15 × 15 px, pegado al valor (`.dur`); mismo mapa de íconos que el editor (§6.18) |
 | El cuadrito `▪` de categoría | 8 × 8 px, `--r-chico`, el color de la categoría |
-| Marcas de los especiales, juntas en la esquina de arriba a la derecha | 16 × 16 px cada una, separadas 4 px, en el orden de los especiales —favorito, menú diario, probar, incompleta—, en `--acento`; ver §6.5. La estrella de favorito lleva además un relleno del acento al 35 %. El título reserva 20 px de ancho por marca, para no pasar por debajo; una tarjeta sin marcas no reserva nada. Sin texto, así que cada una se nombra para el lector de pantalla: *Favorita*, *Menú diario*, *Para probar*, *Incompleta* |
+| Marcas de los especiales, juntas en la esquina de arriba a la derecha | 16 × 16 px cada una, separadas 4 px, en el orden de los especiales —favorito, menú diario, probar, incompleta—, en `--acento`; ver §6.5. La estrella de favorito lleva además un relleno del acento al 35 %. El título reserva 20 px de ancho por marca, para no pasar por debajo; una tarjeta sin marcas no reserva nada. Sin texto, así que cada una se nombra para el lector de pantalla —*Favorita*, *Menú diario*, *Para probar*, *Incompleta*— y con el mismo nombre en el `title`, que en la computadora aparece como globito al apoyar el mouse |
 | Motivo, en resultados por ingrediente | `--txt-chico`, `--acento` |
 
 **Alto total: 80 px** con el título en un renglón. Entran ocho o nueve por
