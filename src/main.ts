@@ -1542,8 +1542,7 @@ async function traerFoto(url: string): Promise<FotoTraida> {
     if (!r.ok) return { que: 'no-es-foto' };
     if (!(r.headers.get('Content-Type') ?? '').startsWith('image/')) return { que: 'no-es-foto' };
     return { que: 'foto', blob: await r.blob() };
-  } catch (err) {
-    console.error(err);
+  } catch {
     return { que: 'no-se-pudo' };
   } finally {
     clearTimeout(reloj);
