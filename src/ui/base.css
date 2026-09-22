@@ -433,8 +433,9 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
    sube escalonado —los tres hilos animan lo mismo, cada uno arrancado antes
    con un retraso negativo, para que el velo no aparezca con el vapor en cero—.
    La cuchara es un grupo —el palo y la parte redonda— para que las dos partes
-   se trasladen juntas. La tapa queda levantada sobre la olla: el cierre la baja
-   los 6 px que la separan del borde. */
+   se trasladen juntas. La tapa no se dibuja mientras tanto —con ella puesta no
+   se podría revolver—: el cierre la trae, bajándola los 6 px que la separan
+   del borde, junto con el tilde. */
 #velo-escritura svg { width: 96px; height: 96px; fill: none; stroke-width: 3;
                        stroke-linecap: round; stroke-linejoin: round; }
 #velo-escritura :is(.olla, .tapa) { stroke: var(--fg-2); }
@@ -447,7 +448,7 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
                            animation: revolver 1.6s ease-in-out infinite;
                            transition: opacity .15s linear; }
 #velo-escritura .cuchara ellipse { fill: var(--acento); stroke: none; }
-#velo-escritura .tapa { transition: transform .18s ease-in; }
+#velo-escritura .tapa { opacity: 0; transition: transform .18s ease-in, opacity .18s ease-in; }
 /* El tilde mide 34: se guarda entero fuera del trazo hasta que el cierre lo
    dibuja. Oculto además por opacidad, para que el extremo redondo no asome
    como un punto mientras no le toca. */
@@ -466,7 +467,7 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
    (500 ms en main.ts), y mientras tanto no tapa: el toque pasa de largo. */
 #velo-escritura.exito :is(.cuchara, .vapores) { animation: none; opacity: 0; }
 #velo-escritura.exito .vapores path { animation: none; }
-#velo-escritura.exito .tapa { transform: translateY(6px); }
+#velo-escritura.exito .tapa { opacity: 1; transform: translateY(6px); }
 #velo-escritura.exito .tilde { animation: dibujar-tilde .3s .15s ease-out forwards; }
 
 @media (prefers-reduced-motion: reduce) {
