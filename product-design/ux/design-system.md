@@ -789,7 +789,11 @@ cantidades en columna —"¿cuánta muzzarella?"— y una columna alineada se re
 de un vistazo. El nombre queda del lado donde empieza la lectura.
 
 **Nombres largos:** el nombre puede ocupar dos renglones; la cantidad se mantiene
-arriba a la derecha, alineada con el primero.
+arriba a la derecha, alineada con el primero. **Nada estira la fila:** una
+palabra sin espacios —una URL, un nombre pegado— se parte en el ancho de la
+pantalla en vez de empujarla. La cantidad conserva su ancho mientras entre, así
+que `250 g` no se parte nunca; la que sola no entra en la fila baja a su propio
+renglón, a la derecha, y ahí sí se corta.
 
 Los grupos —los `###` del `.md`— son `--txt-chico` en `--fg-2`, en mayúsculas con
 `.06em` de espaciado, con `--e-4` arriba.
@@ -1088,6 +1092,12 @@ con `--e-2` entre sí: **PDF**, **Link**, **Texto** y **Cancelar**.
 
 **Con la ficha abierta, la página de atrás no se desplaza.** La cierran
 *Cancelar*, el velo y volver. Es estado de la pantalla, no una ruta.
+
+**La ficha nunca pasa el alto de la ventana**, y lo que no entra lo desplaza
+ella —igual que las fichas de fotos del editor, topadas al 80 %—. El alto se
+mide contra **la ventana chica**, la que se ve con la barra de direcciones
+puesta: medida contra la grande, la ficha puede quedar cortada arriba, y ahí no
+se llega porque la página está trabada.
 
 **En la lista de compras la ficha ofrece sólo *Texto***: no es una receta, así
 que no hay PDF ni link.

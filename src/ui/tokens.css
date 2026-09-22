@@ -346,11 +346,20 @@ button.chip { cursor: pointer; }
        /* Cuerpo de la receta, como los pasos: 18 (§1). */
        font-size: var(--txt-lectura); line-height: 1.6; }
 .ing:last-child { border-bottom: 0; }
-.ing .n { flex: 1; }
+/* Sin `min-width: 0` un ítem flex no baja del ancho mínimo de su contenido: un
+   nombre largo —o una palabra sin espacios, o una URL— estira la fila y le deja
+   scroll horizontal a la pantalla entera (P56). Achicado el ítem, la palabra
+   que no entra se corta en dos renglones en vez de salirse. */
+.ing .n { flex: 1; min-width: 0; overflow-wrap: break-word; }
 /* La foto de un ingrediente va en su propio renglón, abajo y al ancho de la
    ficha: al lado del nombre quedaría apretada y desalinearía la cantidad. */
 .ing .foto-linea { flex: 0 0 100%; }
-.ing .c { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
+/* La cantidad no se parte mientras entre: con el nombre en `flex: 1` desde
+   cero, le queda siempre su ancho natural y `250 g` no cae en dos renglones.
+   Lo que sí se corta es la cantidad que sola no entra en la fila —una nota
+   larga, o una URL—: ahí `nowrap` la dejaba salirse de la pantalla (P56). */
+.ing .c { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right;
+          min-width: 0; overflow-wrap: break-word; }
 .grupo { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
          letter-spacing: .06em; margin-top: var(--e-4); margin-bottom: var(--e-1); }
 .grupo:first-child { margin-top: 0; }
@@ -461,7 +470,10 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
    cierra. Por eso van fijas y por arriba del velo, esté donde esté el scroll
    del formulario. */
 .hoja-foto { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31;
-             max-width: 680px; margin: 0 auto; max-height: 80vh; overflow: auto;
+             max-width: 680px; margin: 0 auto; overflow: auto;
+             /* Como la de compartir: el tope es la ventana chica, la que se ve
+                con la barra de direcciones puesta (P58). */
+             max-height: 80vh; max-height: 80svh;
              border-radius: var(--r-ficha) var(--r-ficha) 0 0;
              padding-bottom: calc(var(--e-4) + env(safe-area-inset-bottom)); }
 /* Las acciones no entran todas en una fila del teléfono: van de a dos, y la

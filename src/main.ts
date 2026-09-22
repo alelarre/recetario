@@ -2627,8 +2627,13 @@ app.addEventListener('input', (e) => {
   if (boton) boton.toggleAttribute('disabled', !sePuedeGuardar({ fuente, nota: notaCaptura, fotos }));
 });
 
-/** Las pantallas que dibujan el menú lateral: sólo ahí se desliza para abrirlo. */
-const PANTALLAS_CON_MENU: readonly Ruta['vista'][] = ['recetario', 'borradores', 'plan', 'ajustes'];
+/**
+ * Las pantallas que dibujan el menú lateral: sólo ahí se desliza para abrirlo,
+ * y sólo ahí el encabezado lleva la hamburguesa en vez del volver. El botón lo
+ * decide a mano cada `ui/*.ts`, así que la lista se exporta para que un test
+ * recorra las cuatro y compruebe que ninguna se desalineó del gesto (P55).
+ */
+export const PANTALLAS_CON_MENU: readonly Ruta['vista'][] = ['recetario', 'borradores', 'plan', 'ajustes'];
 
 /** El deslizamiento en curso: dónde empezó, si ya se sabe que es gesto, y cuánto va abierto. */
 let deslizando: { x: number; y: number; decidido: 'indeciso' | 'horizontal' | 'vertical'; p: number } | null = null;

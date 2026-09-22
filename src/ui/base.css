@@ -117,8 +117,14 @@
 
 /* ---- Ficha de compartir (§6.23) ---- */
 .velo { position: fixed; inset: 0; z-index: 30; background: var(--velo); opacity: .6; }
+/* El tope de alto es `svh` —la ventana con la barra de direcciones a la vista,
+   la más chica—: `vh` en Android mide la ventana sin la barra, así que una
+   ficha calculada con `vh` puede quedar más alta que lo que se ve y cortada
+   arriba, sin forma de llegar ahí (la página está trabada). Lo que sobra lo
+   desplaza la ficha, como la de fotos (P58). `vh` queda de respaldo. */
 .hoja-compartir { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-width: 680px; margin: 0 auto;
                   display: flex; flex-direction: column; gap: var(--e-2);
+                  max-height: 100vh; max-height: 100svh; overflow: auto;
                   background: var(--surface); border-top: 1px solid var(--borde);
                   border-radius: var(--r-ficha) var(--r-ficha) 0 0;
                   padding: var(--e-4) var(--e-4) calc(var(--e-4) + env(safe-area-inset-bottom)); }
@@ -127,13 +133,17 @@
 .hoja-compartir .btn { width: 100%; }
 .hoja-compartir .copia { font-size: var(--txt-chico); color: var(--fg-2); background: var(--bg);
                          border: 1px solid var(--borde); border-radius: var(--r-medio); padding: var(--e-3);
-                         max-height: 40vh; overflow: auto; white-space: pre-wrap; word-break: break-all;
-                         user-select: all; }
+                         max-height: 40vh; max-height: 40svh; overflow: auto;
+                         white-space: pre-wrap; word-break: break-all; user-select: all; }
 .spin.en-boton { width: 16px; height: 16px; margin: 0 var(--e-2) 0 0; }
 /* Con la ficha abierta, la página de atrás no se desplaza: el velo la tapa y
-   moverla deja la ficha flotando sobre otra cosa. Lo único que desplaza es el
-   cuadro del link o el texto, y no arrastra a la página. */
-html:has(.hoja-compartir), html:has(.hoja-foto) { overflow: hidden; }
+   moverla deja la ficha flotando sobre otra cosa. Lo único que desplaza es la
+   ficha —el cuadro del link o el texto—, y no arrastra a la página.
+   Las tres reglas que traban la página —esta, la del menú lateral y la del
+   velo de escritura— van con la misma especificidad, `:where()` adentro del
+   `:has()`: lo que tapa traba, y ninguna puede pisarle la traba a otra el día
+   que dos convivan en el DOM. */
+html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
 .hoja-compartir .copia { overscroll-behavior: contain; }
 
 /* ---- Modo cocina ---- */
@@ -387,8 +397,13 @@ html:has(.hoja-compartir), html:has(.hoja-foto) { overflow: hidden; }
 .velo-lat.on { opacity: .6; pointer-events: auto; }
 /* Con el menú desplegado, la página de atrás no se desplaza, como con las
    fichas al pie: el velo tapa el toque, pero no el desplazamiento. En Android
-   un deslizamiento vertical scrolleaba justo lo que el velo tapa. */
-html:has(.velo-lat.on) { overflow: hidden; }
+   un deslizamiento vertical scrolleaba justo lo que el velo tapa.
+   Sólo mientras el menú se despliega: desde 900 px es fijo, no hay velo y no
+   hay nada tapado. Va acotado por la consulta y no con una regla que lo
+   destrabe, para que ninguna traba dependa de quién tiene más especificidad. */
+@media (max-width: 899.98px) {
+  html:has(:where(.velo-lat.on)) { overflow: hidden; }
+}
 
 /* El velo de la escritura en curso: mientras dura, ningún control de abajo
    recibe el toque. Sin transición: aparece con el toque que lanza la escritura
@@ -402,7 +417,7 @@ html:has(.velo-lat.on) { overflow: hidden; }
 /* Y la página de atrás no se desplaza mientras dura, como con las fichas al
    pie: el velo tapa el toque, pero no el desplazamiento. Mientras dibuja el
    cierre ya no tapa nada, así que tampoco frena el scroll. */
-html:has(#velo-escritura:not([hidden])) { overflow: hidden; }
+html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 
 /* La olla que se revuelve: la cuchara va de lado a lado sin girar, y el vapor
    sube escalonado —los tres hilos animan lo mismo, cada uno arrancado antes
@@ -455,9 +470,6 @@ html:has(#velo-escritura:not([hidden])) { overflow: hidden; }
   .velo-lat { display: none; }
   .menu-lat { display: none; }
   .conten { padding-left: 260px; }
-  /* Acá el menú es fijo y el velo no se dibuja: no hay nada tapado, así que la
-     página se sigue desplazando. */
-  html:has(.velo-lat.on) { overflow: visible; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lat { transition: none; }

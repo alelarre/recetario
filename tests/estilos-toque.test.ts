@@ -44,13 +44,29 @@ describe('cómo responden los controles al toque', () => {
 
   it('con una ficha al pie abierta, la página de atrás no se desplaza', () => {
     // Compartir y, con la misma forma, las fichas de fotos del editor.
-    expect(BASE).toContain('html:has(.hoja-compartir), html:has(.hoja-foto) { overflow: hidden; }');
+    expect(BASE).toContain('html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }');
     expect(BASE).toContain('.hoja-compartir .copia { overscroll-behavior: contain; }');
   });
 
   it('con el velo de escritura puesto, la página de atrás tampoco se desplaza (R8)', () => {
     // También mientras dibuja el cierre con el tilde: recién después navega (P43).
-    expect(BASE).toContain('html:has(#velo-escritura:not([hidden])) { overflow: hidden; }');
+    expect(BASE).toContain('html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }');
+  });
+
+  it('con el menú lateral desplegado tampoco, y sólo mientras se despliega (P57)', () => {
+    expect(BASE).toContain('html:has(:where(.velo-lat.on)) { overflow: hidden; }');
+    // Desde 900 px el menú es fijo: la regla no llega, en vez de destrabarse
+    // con otra que pueda pisar la de las fichas.
+    expect(BASE).toContain('@media (max-width: 899.98px) {\n  html:has(:where(.velo-lat.on))');
+    expect(BASE).not.toContain('overflow: visible');
+  });
+
+  it('las tres trabas de scroll pesan lo mismo: ninguna le gana a otra', () => {
+    // `:where()` adentro del `:has()` lleva las tres a la especificidad de
+    // `html`. Sin eso, la del menú —dos clases— le ganaba a la de las fichas.
+    const trabas = BASE.split('\n').filter(l => l.includes('overflow: hidden;') && l.includes('html:has'));
+    expect(trabas.length).toBe(3);
+    for (const traba of trabas) expect(traba).toContain('html:has(:where(');
   });
 
   it('lo que es sólo de un dedo no se dibuja con mouse o trackpad (P50)', () => {

@@ -576,10 +576,12 @@ describe('main.ts: las rutas', () => {
       pushState: (_estado: unknown, _titulo: string, url: string) => { empujados.push(url); global.location.hash = url; }
     });
 
-    await import('../src/main.js');
+    const { PANTALLAS_CON_MENU } = await import('../src/main.js');
     await esperar();
 
     return {
+      /** La lista con la que `main` decide el gesto del menú lateral. */
+      PANTALLAS_CON_MENU,
       app,
       velo,
       pinturas,
@@ -736,6 +738,22 @@ describe('main.ts: las rutas', () => {
     ] as const) {
       await abrir(hash);
       expect(app.innerHTML, hash).toContain(marca);
+    }
+  });
+
+  it('las cuatro pantallas del menú abren el menú desde su encabezado (P55)', async () => {
+    // El gesto sale de `PANTALLAS_CON_MENU`; el botón lo decide a mano cada
+    // pantalla, y esa divergencia fue P55. Acá se recorre la lista de verdad:
+    // si mañana entra una quinta y su encabezado sigue con el volver, falla.
+    const { abrir, app, PANTALLAS_CON_MENU } = await montar();
+    const hashes: Record<string, string> = {
+      recetario: '#/', borradores: '#/borradores', plan: '#/plan', ajustes: '#/ajustes'
+    };
+    expect(Object.keys(hashes).sort()).toEqual([...PANTALLAS_CON_MENU].sort());
+    for (const vista of PANTALLAS_CON_MENU) {
+      await abrir(hashes[vista]);
+      expect(app.innerHTML, vista).toContain('data-accion="abrir-menu"');
+      expect(app.innerHTML, vista).not.toContain('data-accion="volver"');
     }
   });
 
