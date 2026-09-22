@@ -80,3 +80,22 @@ describe('las fichas al pie se miden contra la ventana chica (P58)', () => {
     expect(html).toContain('viewport-fit=cover');
   });
 });
+
+describe('el título de un borrador no estira la pantalla (P79)', () => {
+  // El título de un borrador es lo que trajo Compartir: el texto de un reel,
+  // una URL, cualquier cosa sin espacios. El de una receta ya estaba recortado
+  // —`.tarjeta .n` con line-clamp y overflow— y el del borrador no, así que
+  // uno largo desbordaba, la página quedaba con scroll horizontal y Android se
+  // llevaba el deslizamiento: por eso el menú lateral no abría ahí.
+  it('se recorta como el de una receta en la lista', () => {
+    const n = regla(BASE, '.bor .n');
+    expect(n).toContain('overflow: hidden');
+    expect(n).toContain('-webkit-line-clamp: 2');
+    // Y una palabra sin espacios corta en vez de empujar el ancho.
+    expect(n).toContain('overflow-wrap: anywhere');
+  });
+
+  it('el contenedor del texto puede achicarse', () => {
+    expect(regla(BASE, '.bor .txt')).toContain('min-width: 0');
+  });
+});

@@ -383,6 +383,17 @@ describe('main.ts: las rutas', () => {
     const tecleos: ((e: unknown) => unknown)[] = [];
     /** Lo que se escribió en `[data-resultados-plan]` sin repintar la pantalla. */
     const resultadosPlan: string[] = [];
+    /**
+     * El menú lateral y su velo mientras el dedo los arrastra: `main` les
+     * escribe `transform` y `opacity` sin redibujar, para que sigan al dedo.
+     */
+    const panelLateral = { style: { transition: '', transform: '' } };
+    const veloLateral = { style: { transition: '', opacity: '' } };
+    /** Los oyentes del gesto del menú lateral: deslizar para abrirlo y cerrarlo. */
+    const toquesEmpiezan: ((e: unknown) => unknown)[] = [];
+    const toquesMueven: ((e: unknown) => unknown)[] = [];
+    const toquesTerminan: ((e: unknown) => unknown)[] = [];
+    const toquesCancelan: ((e: unknown) => unknown)[] = [];
     /** Los atributos de `#app`: el único que se pone desde `main` es `aria-busy`. */
     const atributosApp: Record<string, string> = {};
     /** El velo de la escritura en curso, hermano de `#app` en `index.html`. */
@@ -427,6 +438,10 @@ describe('main.ts: las rutas', () => {
         if (ev === 'focusin') focos.push(fn);
         if (ev === 'scroll') desplazos.push(fn);
         if (ev === 'pointerdown') punteos.push(fn);
+        if (ev === 'touchstart') toquesEmpiezan.push(fn);
+        if (ev === 'touchmove') toquesMueven.push(fn);
+        if (ev === 'touchend') toquesTerminan.push(fn);
+        if (ev === 'touchcancel') toquesCancelan.push(fn);
       }
     };
     /** Lo que se insertó en el formulario sin redibujarlo: las preguntas y las fichas de fotos. */
@@ -616,6 +631,10 @@ describe('main.ts: las rutas', () => {
         // El sol encendido, tal como lo dibuja la cocina.
         if (sel === '[data-accion="wake"].on') return app.innerHTML.includes('class="ico on" data-accion="wake"') ? {} : null;
         if (sel === '#app input[name="tiempo"]') return campoTiempoDuracion;
+        // El menú lateral y su velo, que el gesto mueve al ritmo del dedo.
+        // Salen de lo pintado: una pantalla sin menú no los tiene.
+        if (sel === '#app .lat') return app.innerHTML.includes('class="lat') ? panelLateral : null;
+        if (sel === '#app .velo-lat') return app.innerHTML.includes('class="velo-lat') ? veloLateral : null;
         if (sel === '#app [data-accion="guardar-categoria"]') {
           return app.innerHTML.includes('data-accion="guardar-categoria"') ? guardarCategoria : null;
         }
@@ -781,6 +800,30 @@ describe('main.ts: las rutas', () => {
         for (const fn of tecleos) await fn({ target: campo });
         await esperar();
       },
+      panelLateral,
+      /**
+       * El dedo cruza la pantalla, como para abrir o cerrar el menú lateral:
+       * apoya, arrastra en unos pasos y suelta. `cancelar` levanta el dedo con
+       * `touchcancel` en vez de `touchend`, que es lo que manda Android cuando
+       * se queda con el gesto —al arrastrar un enlace, por ejemplo—.
+       */
+      deslizar: async (
+        { desde, hasta, y = 300, sobre = {}, cancelar = false }:
+        { desde: number; hasta: number; y?: number; sobre?: Record<string, unknown>; cancelar?: boolean }
+      ) => {
+        const destino = { closest: () => null, ...sobre };
+        const toque = (x: number) => ({ clientX: x, clientY: y });
+        const evento = (x: number) => ({ touches: [toque(x)], changedTouches: [toque(x)], target: destino });
+
+        for (const fn of toquesEmpiezan) await fn(evento(desde));
+        // En pasos: el gesto decide si es horizontal recién con el primero.
+        for (const paso of [0.25, 0.6, 1]) {
+          const x = desde + (hasta - desde) * paso;
+          for (const fn of toquesMueven) await fn(evento(x));
+        }
+        for (const fn of (cancelar ? toquesCancelan : toquesTerminan)) await fn(evento(hasta));
+        await esperar();
+      },
       muestraDeCategoria,
       errorDeNombre,
       guardarCategoria,
@@ -917,6 +960,85 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML, vista).toContain('data-accion="abrir-menu"');
       expect(app.innerHTML, vista).not.toContain('data-accion="volver"');
     }
+  });
+
+  describe('el gesto del menú lateral', () => {
+    // Hasta P79 nada probaba el gesto entero: `ui/gesto-menu.ts` tiene sus
+    // tests unitarios y el de P55 mira el botón, así que una pantalla podía
+    // dejar de responder al dedo sin que nada avisara.
+    const HASHES: Record<string, string> = {
+      recetario: '#/', borradores: '#/borradores', plan: '#/plan', ajustes: '#/ajustes'
+    };
+
+    it('en las cuatro pantallas del menú, deslizar desde el borde lo abre', async () => {
+      const { abrir, app, deslizar, PANTALLAS_CON_MENU } = await montar();
+      expect(Object.keys(HASHES).sort()).toEqual([...PANTALLAS_CON_MENU].sort());
+
+      for (const vista of PANTALLAS_CON_MENU) {
+        await abrir(HASHES[vista]);
+        expect(app.innerHTML, vista).not.toContain('class="lat abierto"');
+
+        // Arranca pasado el margen que Android se reserva para «atrás», y
+        // cruza más de la mitad del menú, que mide 260.
+        await deslizar({ desde: 30, hasta: 220 });
+
+        expect(app.innerHTML, vista).toContain('class="lat abierto"');
+      }
+    });
+
+    it('abierto, deslizar para el otro lado lo cierra', async () => {
+      const { abrir, app, deslizar } = await montar();
+      await abrir('#/borradores');
+      await deslizar({ desde: 30, hasta: 220 });
+      expect(app.innerHTML).toContain('class="lat abierto"');
+
+      await deslizar({ desde: 200, hasta: 10 });
+
+      expect(app.innerHTML).not.toContain('class="lat abierto"');
+    });
+
+    it('un deslizamiento corto no alcanza: vuelve a donde estaba', async () => {
+      const { abrir, app, deslizar } = await montar();
+      await abrir('#/borradores');
+
+      // Menos de la mitad del menú.
+      await deslizar({ desde: 30, hasta: 100 });
+
+      expect(app.innerHTML).not.toContain('class="lat abierto"');
+    });
+
+    it('desde el borde mismo no arranca: esa franja es el «atrás» de Android', async () => {
+      const { abrir, app, deslizar } = await montar();
+      await abrir('#/borradores');
+
+      await deslizar({ desde: 5, hasta: 220 });
+
+      expect(app.innerHTML).not.toContain('class="lat abierto"');
+    });
+
+    it('en una pantalla sin menú el dedo no lo abre', async () => {
+      const { abrir, app, deslizar } = await montar();
+      await abrir('#/r/f1');
+
+      await deslizar({ desde: 30, hasta: 220 });
+
+      expect(app.innerHTML).not.toContain('class="lat abierto"');
+    });
+
+    it('un toque que el sistema cancela termina el gesto igual, sin dejarlo a medias', async () => {
+      // `touchcancel` es lo que manda Android cuando se queda con el gesto.
+      // Se trata como soltar: el menú queda abierto o cerrado según dónde
+      // llegó el dedo, y nunca a mitad de camino.
+      const { abrir, app, deslizar, panelLateral } = await montar();
+      await abrir('#/borradores');
+
+      await deslizar({ desde: 30, hasta: 220, cancelar: true });
+
+      expect(app.innerHTML).toContain('class="lat abierto"');
+      // El panel vuelve a lo que diga el CSS: el `transform` que le escribió
+      // el dedo no se queda pegado.
+      expect(panelLateral.style.transform).toBe('');
+    });
   });
 
   it('el Recetario corta el carrusel en veinte tags', async () => {

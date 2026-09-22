@@ -872,6 +872,10 @@ Ficha de `--e-3` de padding: título en `--txt-base` peso 600 y la fecha en
 `--txt-micro` `--fg-3` a la derecha. La fuente y la nota no van en la fila: están
 adentro del borrador, y acá competían con el título.
 
+**El título se recorta a dos renglones**, como el de una receta en una lista
+(§6.5): lo que trae Compartir puede ser el texto entero de un reel o una URL
+sin espacios, y sin recortarlo estira la pantalla a lo ancho.
+
 ### 6.17 Menú lateral
 
 La navegación primaria de la app: Inicio —la pantalla del Recetario, que no
