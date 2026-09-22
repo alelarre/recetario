@@ -1093,11 +1093,14 @@ con `--e-2` entre sí: **PDF**, **Link**, **Texto** y **Cancelar**.
 **Con la ficha abierta, la página de atrás no se desplaza.** La cierran
 *Cancelar*, el velo y volver. Es estado de la pantalla, no una ruta.
 
-**La ficha nunca pasa el alto de la ventana**, y lo que no entra lo desplaza
-ella —igual que las fichas de fotos del editor, topadas al 80 %—. El alto se
-mide contra **la ventana chica**, la que se ve con la barra de direcciones
-puesta: medida contra la grande, la ficha puede quedar cortada arriba, y ahí no
-se llega porque la página está trabada.
+**La ficha nunca pasa el alto de la ventana.** El alto se mide contra **la
+ventana chica**, la que se ve con la barra de direcciones puesta: medida contra
+la grande, la ficha puede quedar cortada arriba, y ahí no se llega porque la
+página está trabada. Lo único que se desplaza adentro es el cuadro del
+contenido, que se achica cuando la ficha llega a su tope: así *Listo* queda
+siempre a la vista, y el dedo nunca queda desplazando una cosa adentro de otra.
+Las fichas de fotos del editor se topan igual, al 80 %, y ahí el que se
+desplaza es la ficha: adentro no hay nada que se desplace solo.
 
 **En la lista de compras la ficha ofrece sólo *Texto***: no es una receta, así
 que no hay PDF ni link.

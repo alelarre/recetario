@@ -117,23 +117,33 @@
 
 /* ---- Ficha de compartir (§6.23) ---- */
 .velo { position: fixed; inset: 0; z-index: 30; background: var(--velo); opacity: .6; }
-/* El tope de alto es `svh` —la ventana con la barra de direcciones a la vista,
-   la más chica—: `vh` en Android mide la ventana sin la barra, así que una
-   ficha calculada con `vh` puede quedar más alta que lo que se ve y cortada
-   arriba, sin forma de llegar ahí (la página está trabada). Lo que sobra lo
-   desplaza la ficha, como la de fotos (P58). `vh` queda de respaldo. */
+/* El tope de alto va en `svh` —la ventana con la barra de direcciones a la
+   vista, la más chica—: `vh` en Android mide la ventana sin la barra, así que
+   una ficha calculada con `vh` puede quedar más alta que lo que se ve y cortada
+   arriba, sin forma de llegar ahí (la página está trabada). Sin respaldo en
+   `vh`: la app ya depende de `:has()` (Chrome 105) y `svh` llegó en la 108,
+   y una declaración repetida no sobrevive a la minificación (P58). */
+/* `flex-end` no se nota mientras la ficha entra, que es siempre: cuenta en la
+   ventana tan baja que ni el título, el botón y el aire entran —apaisado y con
+   algo más tapando—, y ahí lo que se sale por arriba es el título y no el
+   botón, que es lo que hay que poder tocar. */
 .hoja-compartir { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-width: 680px; margin: 0 auto;
-                  display: flex; flex-direction: column; gap: var(--e-2);
-                  max-height: 100vh; max-height: 100svh; overflow: auto;
+                  display: flex; flex-direction: column; justify-content: flex-end; gap: var(--e-2);
+                  max-height: 100svh;
                   background: var(--surface); border-top: 1px solid var(--borde);
                   border-radius: var(--r-ficha) var(--r-ficha) 0 0;
                   padding: var(--e-4) var(--e-4) calc(var(--e-4) + env(safe-area-inset-bottom)); }
 .hoja-compartir h2 { font-size: var(--txt-base); font-weight: 600; margin: 0 0 var(--e-2); }
 .hoja-compartir p { margin: 0 0 var(--e-2); }
 .hoja-compartir .btn { width: 100%; }
+/* El único que se desplaza adentro de la ficha es este cuadro: dos
+   contenedores de scroll anidados dejan el gesto de acá adentro sin mover la
+   ficha. Por eso la ficha no tiene scroll propio y el cuadro sí, con
+   `min-height: 0` para que se achique cuando la ficha llega a su tope: así
+   *Listo* queda siempre a la vista. */
 .hoja-compartir .copia { font-size: var(--txt-chico); color: var(--fg-2); background: var(--bg);
                          border: 1px solid var(--borde); border-radius: var(--r-medio); padding: var(--e-3);
-                         max-height: 40vh; max-height: 40svh; overflow: auto;
+                         max-height: 40svh; min-height: 0; overflow: auto;
                          white-space: pre-wrap; word-break: break-all; user-select: all; }
 .spin.en-boton { width: 16px; height: 16px; margin: 0 var(--e-2) 0 0; }
 /* Con la ficha abierta, la página de atrás no se desplaza: el velo la tapa y
@@ -401,7 +411,7 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
    Sólo mientras el menú se despliega: desde 900 px es fijo, no hay velo y no
    hay nada tapado. Va acotado por la consulta y no con una regla que lo
    destrabe, para que ninguna traba dependa de quién tiene más especificidad. */
-@media (max-width: 899.98px) {
+@media (width < 900px) {
   html:has(:where(.velo-lat.on)) { overflow: hidden; }
 }
 

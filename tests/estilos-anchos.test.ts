@@ -40,20 +40,38 @@ describe('la fila de ingredientes corta en vez de estirarse (P56)', () => {
 describe('las fichas al pie se miden contra la ventana chica (P58)', () => {
   // En Android `vh` mide la ventana sin la barra de direcciones: una ficha
   // calculada así puede quedar más alta que lo que se ve, y cortada arriba
-  // —la página está trabada, no hay forma de llegar—. `vh` va de respaldo,
-  // para el navegador que no tenga `svh`.
-  it('la de compartir: tope y desplazamiento propios', () => {
+  // —la página está trabada, no hay forma de llegar—.
+  it('la de compartir se topa en el alto de la ventana', () => {
+    expect(regla(BASE, '.hoja-compartir')).toContain('max-height: 100svh;');
+  });
+
+  it('el cuadro del texto adentro, en el 40 % (§6.23)', () => {
+    expect(regla(BASE, '.hoja-compartir .copia')).toContain('max-height: 40svh;');
+  });
+
+  it('la de fotos del editor, en el 80 %', () => {
+    expect(regla(TOKENS, '.hoja-foto')).toContain('max-height: 80svh;');
+  });
+
+  it('ningún tope en `vh`: repetir la declaración no sirve, la minificación la borra', () => {
+    // Medido en `dist/assets/index-*.css`: lightningcss descarta la
+    // declaración duplicada y no queda ni un `vh`. Un navegador sin `svh`
+    // —Chrome 105 a 107— se quedaría sin tope, peor que no topar nada. La app
+    // ya depende de `:has()`, de la 105, y corre en un Chrome al día.
+    for (const css of [BASE, TOKENS]) {
+      expect(css.split('\n').filter(l => /max-height:[^;]*\dvh/.test(l))).toEqual([]);
+    }
+  });
+
+  it('en la ficha de compartir se desplaza el cuadro, y sólo el cuadro', () => {
+    // Dos contenedores de scroll anidados dejan el gesto de adentro sin mover
+    // la ficha: el cuadro se achica cuando la ficha llega a su tope, así que
+    // no hace falta que la ficha se desplace y *Listo* queda siempre a la vista.
     const hoja = regla(BASE, '.hoja-compartir');
-    expect(hoja).toContain('max-height: 100vh; max-height: 100svh;');
-    expect(hoja).toContain('overflow: auto');
-  });
-
-  it('el cuadro del texto adentro, también', () => {
-    expect(regla(BASE, '.hoja-compartir .copia')).toContain('max-height: 40vh; max-height: 40svh;');
-  });
-
-  it('la de fotos del editor, igual', () => {
-    expect(regla(TOKENS, '.hoja-foto')).toContain('max-height: 80vh; max-height: 80svh;');
+    expect(hoja).not.toContain('overflow');
+    const copia = regla(BASE, '.hoja-compartir .copia');
+    expect(copia).toContain('overflow: auto');
+    expect(copia).toContain('min-height: 0');
   });
 
   it('el `env(safe-area-inset-bottom)` de la ficha sólo vale con viewport-fit=cover', () => {

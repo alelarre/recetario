@@ -472,8 +472,9 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
 .hoja-foto { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31;
              max-width: 680px; margin: 0 auto; overflow: auto;
              /* Como la de compartir: el tope es la ventana chica, la que se ve
-                con la barra de direcciones puesta (P58). */
-             max-height: 80vh; max-height: 80svh;
+                con la barra de direcciones puesta (P58). Acá el scroll es de
+                la ficha: adentro no hay nada que se desplace solo. */
+             max-height: 80svh;
              border-radius: var(--r-ficha) var(--r-ficha) 0 0;
              padding-bottom: calc(var(--e-4) + env(safe-area-inset-bottom)); }
 /* Las acciones no entran todas en una fila del teléfono: van de a dos, y la

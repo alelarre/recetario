@@ -23,6 +23,21 @@ function sinLosDePuntero(css: string): string {
   return salida;
 }
 
+/** Lo que hay adentro de una consulta de medios, con los espacios normalizados. */
+function enLaConsulta(css: string, consulta: string): string {
+  const i = css.indexOf(`@media ${consulta}`);
+  if (i < 0) return '';
+  const abre = css.indexOf('{', i);
+  let nivel = 0;
+  let j = abre;
+  do {
+    if (css[j] === '{') nivel++;
+    if (css[j] === '}') nivel--;
+    j++;
+  } while (nivel > 0 && j < css.length);
+  return css.slice(abre + 1, j - 1).replace(/\s+/g, ' ').trim();
+}
+
 describe('cómo responden los controles al toque', () => {
   const css = TOKENS + BASE;
 
@@ -55,10 +70,12 @@ describe('cómo responden los controles al toque', () => {
 
   it('con el menú lateral desplegado tampoco, y sólo mientras se despliega (P57)', () => {
     expect(BASE).toContain('html:has(:where(.velo-lat.on)) { overflow: hidden; }');
-    // Desde 900 px el menú es fijo: la regla no llega, en vez de destrabarse
-    // con otra que pueda pisar la de las fichas.
-    expect(BASE).toContain('@media (max-width: 899.98px) {\n  html:has(:where(.velo-lat.on))');
-    expect(BASE).not.toContain('overflow: visible');
+    // Desde 900 px el menú es fijo: la traba vive adentro del complemento
+    // exacto del `min-width: 900px` del resto del archivo, en vez de
+    // destrabarse con otra regla que pueda pisar la de las fichas.
+    expect(enLaConsulta(BASE, '(width < 900px)')).toContain('html:has(:where(.velo-lat.on))');
+    const destrabas = BASE.split('\n').filter(l => l.includes('html:has') && l.includes('overflow: visible'));
+    expect(destrabas).toEqual([]);
   });
 
   it('las tres trabas de scroll pesan lo mismo: ninguna le gana a otra', () => {
