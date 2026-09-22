@@ -911,7 +911,9 @@ abre con el botón de hamburguesa del encabezado o deslizando hacia la derecha; 
 velo lo cierra al tocarlo, y deslizar hacia la izquierda también. **El gesto
 empieza a 24 px del borde** —desde el borde mismo Android lo toma como «atrás»— y
 no arranca sobre el carrusel de tags (§6.21) ni la fila de duraciones (§6.19),
-que se deslizan en el mismo sentido.
+que se deslizan en el mismo sentido. **Vale en toda la pantalla, también donde
+no hay contenido:** una lista corta deja abajo un área vacía y el dedo tiene
+que abrir el menú ahí igual.
 Desde 900 px queda fijo, el velo y la hamburguesa desaparecen, y el contenido se
 corre 260 px. **Es sólo CSS:** la misma marca dibujada, una consulta de medios
 decide. Con `prefers-reduced-motion` el cajón aparece sin transición.

@@ -2829,7 +2829,12 @@ function sobreFilaDeslizable(destino: EventTarget | null): boolean {
 
 // Deslizar para abrir o cerrar el menú, como en una app nativa. Los listeners
 // son pasivos: un deslizamiento vertical tiene que seguir desplazando la página.
-app.addEventListener('touchstart', (e) => {
+//
+// Van en `document` y no en `#app`: el gesto es de la pantalla entera, y una
+// pantalla que no llega abajo —Borradores con pocos, sin ir más lejos— deja
+// debajo del contenido un área que ya no es de `#app`, donde el toque no
+// llegaba a ningún lado (P79).
+document.addEventListener('touchstart', (e) => {
   if (tapadas) return;
   deslizando = null;
   visorDesde = null;
@@ -2845,7 +2850,7 @@ app.addEventListener('touchstart', (e) => {
   deslizando = { x: toque.clientX, y: toque.clientY, decidido: 'indeciso', p: menuAbierto ? 1 : 0 };
 }, { passive: true });
 
-app.addEventListener('touchmove', (e) => {
+document.addEventListener('touchmove', (e) => {
   if (tapadas) return;
   const toque = (e as TouchEvent).touches[0];
   if (!deslizando || !toque) return;
@@ -2870,13 +2875,13 @@ const soltarDeslizamiento = (): void => {
   menuAbierto = abrir;
   void render();
 };
-app.addEventListener('touchend', soltarDeslizamiento);
-app.addEventListener('touchcancel', soltarDeslizamiento);
+document.addEventListener('touchend', soltarDeslizamiento);
+document.addEventListener('touchcancel', soltarDeslizamiento);
 
 // El visor pasa de una foto a la otra con el dedo (spec §7). Va aparte del
 // gesto del menú: ahí el deslizamiento arrastra el panel al ritmo del dedo, y
 // acá la foto cambia de una vez, al soltar.
-app.addEventListener('touchend', (e) => {
+document.addEventListener('touchend', (e) => {
   if (tapadas || visorDesde === null || !visor) return;
   const toque = (e as TouchEvent).changedTouches[0];
   const desde = visorDesde;

@@ -438,10 +438,6 @@ describe('main.ts: las rutas', () => {
         if (ev === 'focusin') focos.push(fn);
         if (ev === 'scroll') desplazos.push(fn);
         if (ev === 'pointerdown') punteos.push(fn);
-        if (ev === 'touchstart') toquesEmpiezan.push(fn);
-        if (ev === 'touchmove') toquesMueven.push(fn);
-        if (ev === 'touchend') toquesTerminan.push(fn);
-        if (ev === 'touchcancel') toquesCancelan.push(fn);
       }
     };
     /** Lo que se insertó en el formulario sin redibujarlo: las preguntas y las fichas de fotos. */
@@ -561,7 +557,7 @@ describe('main.ts: las rutas', () => {
     /** Cada vez que `main` cambió la miniatura del campo Foto. */
     const portadas: string[] = [];
     const listeners: Record<string, () => void> = {};
-    const listenersDoc: Record<string, () => void> = {};
+    const listenersDoc: Record<string, (e?: unknown) => unknown> = {};
     /** Lo que se puso en lugar de un elemento, con `outerHTML`, sin redibujar. */
     const enLugar: string[] = [];
     const vueltasAtras: number[] = [];
@@ -678,7 +674,17 @@ describe('main.ts: las rutas', () => {
         if (sel.includes('data-acciones-foto')) return quitarInsertado('hoja-foto');
         return [];
       },
-      addEventListener: (ev: string, fn: () => void) => { listenersDoc[ev] = fn; },
+      // Los gestos van en `document` y no en `#app`: una pantalla corta deja
+      // abajo un área que no es de `#app`, y ahí el toque no llegaba (P79).
+      // Por eso el doble los recoge sólo acá: si volvieran a `#app`, los tests
+      // del gesto se quedarían sin oyentes y fallarían.
+      addEventListener: (ev: string, fn: (e: unknown) => unknown) => {
+        if (ev === 'touchstart') toquesEmpiezan.push(fn);
+        else if (ev === 'touchmove') toquesMueven.push(fn);
+        else if (ev === 'touchend') toquesTerminan.push(fn);
+        else if (ev === 'touchcancel') toquesCancelan.push(fn);
+        else listenersDoc[ev] = fn;
+      },
       get activeElement() { return campoActivo; },
       visibilityState: 'visible',
       readyState
@@ -984,6 +990,20 @@ describe('main.ts: las rutas', () => {
 
         expect(app.innerHTML, vista).toContain('class="lat abierto"');
       }
+    });
+
+    // El caso de P79: con pocos borradores la pantalla no llega abajo, y
+    // debajo de los botones queda un área que no es de `#app`. Ahí el dedo
+    // tiene que abrir el menú igual, porque el gesto es de la pantalla.
+    it('también abre desde el área vacía debajo del contenido', async () => {
+      const { abrir, app, deslizar } = await montar();
+      await abrir('#/borradores');
+
+      // El toque no cae sobre nada de la pantalla: el destino no tiene
+      // `closest`, como el `<body>` debajo del contenido.
+      await deslizar({ desde: 30, hasta: 220, y: 700, sobre: { closest: undefined } });
+
+      expect(app.innerHTML).toContain('class="lat abierto"');
     });
 
     it('abierto, deslizar para el otro lado lo cierra', async () => {
