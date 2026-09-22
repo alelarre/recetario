@@ -243,7 +243,9 @@ export function renderSelectorPortada(fotos: FotoDeReceta[], actual: string | nu
   return VELO_DE_FICHA +
     '<div class="ficha hoja-foto" data-selector-portada>' +
     '<h2>Foto de portada</h2>' +
-    (items ? `<div class="galeria">${items}</div>` : '') +
+    (items
+      ? `<div class="galeria">${items}</div>`
+      : '<p class="aviso-mudo">Subí una foto en la ficha Fotos para poder elegirla de portada.</p>') +
     '<div class="acciones">' +
       '<button class="btn sec" type="button" data-accion="sin-portada">Sin foto</button>' +
     '</div></div>';
@@ -334,9 +336,11 @@ export function renderEditor(
   const sinElegir = !entrada?.carpeta_id;
   const opcionesCarpeta =
     (sinElegir ? '<option value="" disabled selected>Elegí una categoría</option>' : '') +
-    categorias.map(c =>
-      `<option value="${escapar(c.id)}"${c.id === entrada?.carpeta_id ? ' selected' : ''}>${escapar(c.nombre)}</option>`
-    ).join('');
+    [...categorias]
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+      .map(c =>
+        `<option value="${escapar(c.id)}"${c.id === entrada?.carpeta_id ? ' selected' : ''}>${escapar(c.nombre)}</option>`
+      ).join('');
 
   const actual = dificultadValida(receta.dificultad);
   const opcionesDificultad = ['', ...DIFICULTADES].map(d =>
@@ -362,7 +366,7 @@ export function renderEditor(
       botonesEspeciales(tags, puede) +
       `<div class="chips" data-pills>${comunes.map(pillTag).join('')}</div>` +
       `<input type="hidden" name="tags" value="${escapar([...especiales, ...comunes].join(', '))}">` +
-      '<input data-tag-nuevo list="tags-conocidos" placeholder="Agregar un tag y Enter">' +
+      '<input data-tag-nuevo list="tags-conocidos" placeholder="Agregar tags">' +
       // Los reservados no se sugieren: no se pueden escribir a mano.
       `<datalist id="tags-conocidos">${tagsConocidos.filter(t => !tagReservado(t))
         .map(t => `<option value="${escapar(t)}">`).join('')}</datalist>` +
@@ -371,7 +375,7 @@ export function renderEditor(
     campo('rinde', 'Rinde', receta.rinde) +
     campoDuracion(receta.tiempo) +
     `<label class="campo"><span>Dificultad</span><select name="dificultad">${opcionesDificultad}</select></label>` +
-    campo('fuente', 'Fuente', receta.fuente) +
+    campo('fuente', 'Fuente original', receta.fuente) +
     campoPortada(receta.foto, receta.fotos) +
   '</div>';
 
