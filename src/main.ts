@@ -1568,7 +1568,8 @@ type PedidoDeFoto =
  */
 async function pedirFotoPorUrl(escrita: string): Promise<PedidoDeFoto> {
   const url = conEsquemaEnMinuscula(escrita);
-  // Lo que no puede ser una línea del depósito ni se pide.
+  // Lo que ni siquiera tiene forma de dirección no se pide. En la receta, además,
+  // es lo único que se puede escribir como línea del depósito (C05.1.5).
   if (!URL_DE_FOTO.test(url)) return { que: 'error', mensaje: NO_ES_UNA_FOTO };
   // Desde Pages, una `http://` es contenido mixto: el pedido falla siempre y
   // la imagen tampoco cargaría después. Entra como link y no sirve de nada.
@@ -1584,11 +1585,32 @@ async function pedirFotoPorUrl(escrita: string): Promise<PedidoDeFoto> {
   }
 }
 
-/** *Traer* en la ficha de una foto por URL: cada pantalla la agrega a lo suyo. */
+/** El borrador abierto, que no es lo mismo que estar editándolo: ahí la pantalla es la captura. */
+const enElBorrador = (): boolean => vistaActual?.vista === 'borrador' && !editandoBorrador;
+
+/**
+ * *Traer* en la ficha de una foto por URL: cada pantalla la agrega a lo suyo.
+ * Las tres están nombradas —como en el manejador de *Cámara* y *Galería*—: la
+ * ficha no se dibuja en ninguna otra, y caer al editor desde una pantalla sin
+ * depósito sería escribir en un formulario que no existe.
+ */
 async function agregarFotoPorUrl(escrita: string): Promise<void> {
   if (vistaActual?.vista === 'capturar') return agregarFotoPorUrlACaptura(escrita);
-  if (vistaActual?.vista === 'borrador' && !editandoBorrador) return agregarFotoPorUrlABorrador(escrita);
-  return agregarFotoPorUrlAlEditor(escrita);
+  if (enElBorrador()) return agregarFotoPorUrlABorrador(escrita);
+  if (enElEditor()) return agregarFotoPorUrlAlEditor(escrita);
+  return;
+}
+
+/**
+ * Abre la ficha de *Por URL*. En el borrador y en la captura el aviso que haya
+ * arriba se va primero, y por eso la pantalla se redibuja antes de colgarla:
+ * con la ficha abierta, dos avisos a la vez no dicen cuál es el de ahora. En
+ * el editor eso lo hace `avisarEnElFormulario` sin redibujar nada.
+ */
+async function abrirFotoPorUrl(): Promise<void> {
+  if (vistaActual?.vista === 'capturar' && avisoCaptura) { avisoCaptura = ''; await render(); }
+  else if (enElBorrador() && avisoBorradores) { avisoBorradores = ''; await render(); }
+  abrirFichaFoto(renderFotoPorUrl());
 }
 
 /**
@@ -1624,7 +1646,7 @@ async function agregarFotoPorUrlAlEditor(escrita: string): Promise<void> {
  */
 const NO_SE_PUDO_TRAER =
   'No se pudo traer la foto —el sitio no lo permite o no hay conexión—. ' +
-  'Un borrador sólo guarda fotos bajadas: probá con otra dirección, o guardala y subila desde la galería.';
+  'Un borrador sólo guarda fotos bajadas.';
 
 /**
  * La foto de una dirección para un borrador, o `null` si no hay ninguna que
@@ -1651,13 +1673,16 @@ async function agregarFotoPorUrlABorrador(escrita: string): Promise<void> {
   try {
     const blob = await fotoDeUrlParaBorrador(escrita);
     if (!blob) return;
+    borradorLeido = await store.agregarFotoABorrador(idActual(), blob);
+    // La ficha se cierra recién con la foto en Drive: si la subida falla, lo
+    // escrito sigue ahí y reintentar es tocar *Traer* otra vez.
     cerrarFichaFoto();
     subida = true;
-    borradorLeido = await store.agregarFotoABorrador(idActual(), blob);
-    avisoBorradores = '';
   } catch (err) {
     console.error(err);
-    avisoBorradores = porQueNoGuardo(err);
+    // Como cualquier otra cosa que sale mal en esta ficha, el aviso va adentro
+    // y no arriba de la pantalla: así no quedan dos (R1).
+    abrirFichaFoto(renderFotoPorUrl(escrita, porQueNoGuardo(err)));
   } finally {
     await destapar();
   }
@@ -1666,6 +1691,9 @@ async function agregarFotoPorUrlABorrador(escrita: string): Promise<void> {
 
 /** En la captura, la foto bajada queda en memoria hasta Guardar, como las demás. */
 async function agregarFotoPorUrlACaptura(escrita: string): Promise<void> {
+  // El tope vale aunque el control no se dibuje con cinco: es lo mismo que
+  // hacen `sumarFotosACaptura` y `store.agregarFotoABorrador`.
+  if (fotosCaptura.length >= MAXIMO_FOTOS) return;
   // Como en el borrador: el velo una sola vez para bajarla y achicarla.
   const destapar = tapar();
   let traida = false;
@@ -1674,7 +1702,6 @@ async function agregarFotoPorUrlACaptura(escrita: string): Promise<void> {
     if (!blob) return;
     cerrarFichaFoto();
     fotosCaptura.push({ blob, url: imagenes.urlDeBlob(blob) });
-    avisoCaptura = '';
     traida = true;
   } finally {
     await destapar();
@@ -2315,7 +2342,7 @@ app.addEventListener('click', async (e) => {
     return;
   }
   if (accion === 'sin-portada') { escribirPortada(''); cerrarFichaFoto(); return; }
-  if (accion === 'abrir-foto-url') { abrirFichaFoto(renderFotoPorUrl()); return; }
+  if (accion === 'abrir-foto-url') return abrirFotoPorUrl();
   if (accion === 'traer-foto-url') {
     const url = document.querySelector<HTMLInputElement>('#app [data-url-foto]')?.value.trim() ?? '';
     if (url) await agregarFotoPorUrl(url);

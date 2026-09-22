@@ -129,12 +129,17 @@ borrador y en la receta.
   `.md` y lo reescribe en el momento (C01.6.4).
 - [ ] **Si el sitio no la deja bajar** —CORS, que es lo habitual— **no entra**,
   y el aviso lo dice: *«No se pudo traer la foto —el sitio no lo permite o no
-  hay conexión—. Un borrador sólo guarda fotos bajadas: probá con otra
-  dirección, o guardala y subila desde la galería.»* Un borrador guarda **ids
-  de archivos de Drive**, no direcciones: un link externo no tiene id, y la
-  receta —que sí lo acepta— lo guarda como link (C04.3d.1b). La ficha queda
-  abierta con lo escrito.
-- [ ] Con 5 fotos el control no se dibuja, como los otros dos.
+  hay conexión—. Un borrador sólo guarda fotos bajadas.»* Un borrador guarda
+  **ids de archivos de Drive**, no direcciones: un link externo no tiene id, y
+  la receta —que sí lo acepta— lo guarda como link (C04.3d.1b). La ficha queda
+  abierta con lo escrito, que es lo que invita a probar otra dirección.
+- [ ] **Todo lo que sale mal en esta ficha se avisa adentro de ella**, incluido
+  que no se pueda subir la foto al borrador: la ficha se cierra recién con la
+  foto en Drive, así reintentar es tocar *Traer* otra vez sin volver a escribir
+  la dirección (R1). Abrirla se lleva el aviso que hubiera arriba de la
+  pantalla: nunca quedan dos a la vez.
+- [ ] Con 5 fotos el control no se dibuja, como los otros dos, y el tope vale
+  igual aunque se lo alcance por otro camino.
 
 ### F01.3 — Registrar una fuente sin compartir
 
@@ -249,7 +254,9 @@ mano. La conversión desde la fuente ocurre afuera, en una sesión con Claude.
   borran ese caché y el de lo compartido.
 - [ ] Una foto que ya no está en Drive se dibuja como un recuadro vacío con
   **«La foto ya no está en Drive.»**; la × la saca de la lista.
-- [ ] Si subir o sacar falla, avisa y el borrador sigue como estaba (R1).
+- [ ] Si subir o sacar falla, avisa y el borrador sigue como estaba (R1). Si lo
+  que falló fue subir una que se trajo de una dirección, el aviso va adentro de
+  su ficha, que queda abierta con lo escrito (C01.2.4b).
 
 ### F01.7 — El borrador desaparece al convertirse
 

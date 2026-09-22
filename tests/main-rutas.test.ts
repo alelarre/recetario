@@ -422,6 +422,18 @@ describe('main.ts: las rutas', () => {
         return nombre ? campo(nombre) : null;
       }
     };
+    /**
+     * Lo que se colgó del cuerpo de la pantalla y no del formulario: la ficha
+     * de *Por URL* en el borrador, que no tiene ninguno. Va también a
+     * `preguntas`, que es donde los tests buscan las fichas.
+     */
+    const colgadasDelCuerpo: string[] = [];
+    const cuerpo = {
+      insertAdjacentHTML: (_donde: string, html: string) => {
+        colgadasDelCuerpo.push(html);
+        preguntas.push(html);
+      }
+    };
     /** Saca del formulario lo que se había insertado: la ficha, el velo o el visor. */
     const quitarInsertado = (marca: string) =>
       preguntas.flatMap(html => html.includes(marca)
@@ -485,7 +497,12 @@ describe('main.ts: las rutas', () => {
       querySelector: (sel: string) => {
         if (sel === '#app') return app;
         if (sel === '#velo-escritura') return velo;
-        if (sel === '[data-formulario]') return formulario;
+        // El formulario existe sólo donde la pantalla lo dibuja —el editor, la
+        // captura, la edición de una categoría—: el borrador abierto no tiene
+        // ninguno, y ahí las fichas se cuelgan del cuerpo. Sale de lo pintado,
+        // para que el doble no pueda decir que hay uno donde no lo hay.
+        if (sel === '[data-formulario]') return app.innerHTML.includes('data-formulario') ? formulario : null;
+        if (sel === '#app .cuerpo') return app.innerHTML.includes('class="cuerpo"') ? cuerpo : null;
         // Los campos de la captura: lo que el test dejó escrito en `formulario`.
         if (sel === 'input[name="titulo"]') return { value: estado.formulario['titulo'] ?? '' };
         // La captura compartida no dibuja el campo fuente: la trae la URL.
@@ -595,6 +612,7 @@ describe('main.ts: las rutas', () => {
       reemplazos,
       empujados,
       preguntas,
+      colgadasDelCuerpo,
       enLugar,
       desplazamientos,
       comportamientos,
@@ -2571,7 +2589,10 @@ describe('main.ts: las rutas', () => {
         expect(preguntas.at(-1)).toContain('data-foto-url');
         expect(preguntas.at(-1)).toContain('value="https://instagram/tarta.jpg"');
         expect(preguntas.at(-1)).toContain('No se pudo traer la foto');
-        expect(preguntas.at(-1)).toContain('galería');
+        expect(preguntas.at(-1)).toContain('Un borrador sólo guarda fotos bajadas.');
+        // Dice qué pasó y se corta: que la ficha siga abierta con lo escrito ya
+        // invita a probar otra dirección.
+        expect(preguntas.at(-1)).not.toContain('probá');
       });
 
       it('una URL que no es una foto no entra, con aviso', async () => {
@@ -2592,18 +2613,51 @@ describe('main.ts: las rutas', () => {
         expect(preguntas.at(-1)).toContain('no es una foto');
       });
 
-      it('si subirla al borrador falla, avisa y el borrador sigue', async () => {
+      it('si subirla al borrador falla, la ficha queda abierta con lo escrito', async () => {
         conUnBorrador();
         estado.fallaFoto = 1;
         vi.stubGlobal('fetch', async () => respuestaDeFoto('bajada'));
         const montada = await montar();
-        const { abrir, app } = montada;
+        const { abrir, app, preguntas } = montada;
         await abrir('#/borradores/b1');
 
         await traer(montada, 'https://ejemplo/tarta.jpg');
 
-        expect(app.innerHTML).toContain('No se pudo guardar. Revisá la conexión.');
+        // Reintentar es tocar *Traer* otra vez, sin volver a escribir la
+        // dirección: el aviso va adentro de la ficha, no arriba del borrador.
+        expect(preguntas.at(-1)).toContain('data-foto-url');
+        expect(preguntas.at(-1)).toContain('value="https://ejemplo/tarta.jpg"');
+        expect(preguntas.at(-1)).toContain('No se pudo guardar. Revisá la conexión.');
+        expect(app.innerHTML).not.toContain('No se pudo guardar.');
         expect(app.innerHTML).toContain('Tarta');
+      });
+
+      it('la ficha se cuelga del cuerpo: el borrador no tiene formulario', async () => {
+        conUnBorrador();
+        const montada = await montar();
+        const { abrir, tocar, colgadasDelCuerpo } = montada;
+        await abrir('#/borradores/b1');
+
+        await tocar('abrir-foto-url');
+
+        // En el editor y en la captura la cuelga `[data-formulario]`; acá no
+        // hay ninguno, y sin el respaldo *Por URL* no abriría nada.
+        expect(colgadasDelCuerpo.at(-1)).toContain('data-foto-url');
+      });
+
+      it('abrirla se lleva el aviso que hubiera arriba: nunca dos a la vez', async () => {
+        conUnBorrador();
+        estado.fallaFoto = 1;
+        const montada = await montar();
+        const { abrir, app, tocar, elegirFotos } = montada;
+        await abrir('#/borradores/b1');
+        // Falla subir una foto de la galería: queda su aviso arriba.
+        await elegirFotos([foto('a')]);
+        expect(app.innerHTML).toContain('No se pudo guardar. Revisá la conexión.');
+
+        await tocar('abrir-foto-url');
+
+        expect(app.innerHTML).not.toContain('No se pudo guardar.');
       });
 
       it('en la captura queda en memoria hasta Guardar, como las demás', async () => {
@@ -2622,6 +2676,33 @@ describe('main.ts: las rutas', () => {
         await tocar('guardar-captura');
         const guardada = estado.capturados[0].fotos?.[0];
         expect(await (guardada as Blob).text()).toBe('bajada');
+      });
+
+      it('en la captura, abrirla también se lleva el aviso de arriba', async () => {
+        estado.compartidas = [foto('roto'), foto('bien')];
+        const montada = await montar();
+        const { abrir, app, tocar } = montada;
+        await abrir('#/capturar?fotos=2');
+        expect(app.innerHTML).toContain('No se pudo leer una de las fotos.');
+
+        await tocar('abrir-foto-url');
+
+        expect(app.innerHTML).not.toContain('No se pudo leer una de las fotos.');
+      });
+
+      it('en la captura el tope vale aunque se llegue por acá', async () => {
+        estado.compartidas = Array.from({ length: 5 }, (_, i) => foto(`f${i}`));
+        let pedidos = 0;
+        vi.stubGlobal('fetch', async () => { pedidos++; return respuestaDeFoto('bajada'); });
+        const montada = await montar();
+        const { abrir, app } = montada;
+        await abrir('#/capturar?fotos=5');
+
+        await traer(montada, 'https://ejemplo/sexta.jpg');
+
+        // Ni se la pide: con cinco no entra ninguna más.
+        expect(pedidos).toBe(0);
+        expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(5);
       });
 
       it('en la captura, la que no se pudo bajar tampoco entra', async () => {
