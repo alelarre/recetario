@@ -75,6 +75,28 @@ describe('auth.js: persistencia del token entre aperturas', () => {
     expect(revocados).toEqual([]);
   });
 
+  it('con el token vencido, dos llamadas concurrentes a token() comparten una sola renovación', async () => {
+    global.localStorage = comoGlobal<Storage>(localStorageFalso());
+    global.localStorage.setItem('recetario-auth', JSON.stringify({ token: 'viejo', vence: Date.now() - 1000 }));
+
+    let pedidos = 0;
+    global.window.google!.accounts!.oauth2!.initTokenClient = () => {
+      const c: ClienteToken = {
+        callback: () => {},
+        error_callback: () => {},
+        requestAccessToken: () => { pedidos++; c.callback({ access_token: 'tok-123', expires_in: 3600 }); }
+      };
+      return c;
+    };
+
+    const auth = crearAuth();
+    const [a, b] = await Promise.all([auth.token(), auth.token()]);
+
+    expect(pedidos).toBe(1);
+    expect(a).toBe('tok-123');
+    expect(b).toBe('tok-123');
+  });
+
   it('si localStorage no existe o está deshabilitado, sigue funcionando solo en memoria', async () => {
     // Sin global.localStorage: simula un navegador en modo privado que lo bloquea,
     // o un entorno (como Node en CI) que directamente no lo tiene.

@@ -39,6 +39,10 @@ export function crearAuth() {
   let token: string | null = guardado?.token ?? null;
   let vence: number = guardado?.vence ?? 0;
   let cliente: ClienteToken | null = null;
+  // Sin esto, cada lectura concurrente con el token vencido —el reindexado
+  // lee hasta seis archivos a la vez— ve `vence` pasado antes de que ninguna
+  // actualice el estado, y cada una dispara su propio popup a Google.
+  let renovando: Promise<string> | null = null;
 
   // El script de Identity Services va con `async`, así que puede seguir
   // descargándose cuando este módulo ya corre: sin esperar acá, la carrera
@@ -92,7 +96,11 @@ export function crearAuth() {
   return {
     conectar: () => pedir('consent'),
     /** Renovación silenciosa mientras haya sesión de Google; si no, hay que reconectar. */
-    token: async () => (token && Date.now() < vence) ? token : pedir(''),
+    token: async () => {
+      if (token && Date.now() < vence) return token;
+      if (!renovando) renovando = pedir('').finally(() => { renovando = null; });
+      return renovando;
+    },
     /**
      * Además de borrarlo acá, lo revoca en Google: un token que alguien copió
      * mientras estaba guardado deja de servir, en vez de durar hasta que vence.
