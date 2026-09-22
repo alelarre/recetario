@@ -102,15 +102,39 @@ acompañaba al link, y es lo que después se reparte en la receta (C01.7.1).
 - [ ] Un borrador lleva **hasta 5 fotos**: una página de un libro, una receta
   escrita a mano, una captura de pantalla.
 - [ ] Se ven como una fila de miniaturas cuadradas, cada una con su ×, y
-  debajo, en su propia fila, dos botones, **Cámara** y **Galería**: el primero lleva directo a
-  sacar una foto nueva, con una foto por vez; el segundo abre el selector del
-  sistema y acepta varias a la vez. Con 5 fotos, ninguno de los dos se
+  debajo, en su propia fila, tres botones, **Cámara**, **Galería** y **Por
+  URL**: el primero lleva directo a sacar una foto nueva, con una foto por vez;
+  el segundo abre el selector del sistema y acepta varias a la vez; el tercero
+  la baja de una dirección (C01.2.4b). Con 5 fotos, ninguno de los tres se
   dibuja; si se eligen más de las que entran, se agregan las primeras y se
   avisa.
 - [ ] **Antes de guardar, se achican**: el lado mayor a 1600 px, en JPEG. Viven
   en memoria hasta Guardar.
 - [ ] Editando un borrador, la pantalla no las muestra: se manejan en la vista
   del borrador (C01.6.4).
+
+#### C01.2.4b — Una foto por URL *(J2)*
+
+Una receta que se está copiando de un sitio trae su foto de ahí, y la foto está
+en la web antes que en el teléfono: se agrega igual en la captura, en el
+borrador y en la receta.
+
+- [ ] **Por URL** abre la misma ficha al pie que la receta (C04.3d.1b), con el
+  campo para la dirección y **Traer**, y vale todo lo que dice esa capacidad:
+  el velo mientras baja y achica, el corte del pedido, `https://` obligatorio,
+  el esquema que se arregla solo, la dirección que no es una foto y el aviso
+  que va en la ficha, que queda abierta con lo escrito.
+- [ ] Lo que trae **es una foto más**, igual que una de la cámara: en la
+  captura vive en memoria hasta Guardar; en el borrador se sube al lado del
+  `.md` y lo reescribe en el momento (C01.6.4).
+- [ ] **Si el sitio no la deja bajar** —CORS, que es lo habitual— **no entra**,
+  y el aviso lo dice: *«No se pudo traer la foto —el sitio no lo permite o no
+  hay conexión—. Un borrador sólo guarda fotos bajadas: probá con otra
+  dirección, o guardala y subila desde la galería.»* Un borrador guarda **ids
+  de archivos de Drive**, no direcciones: un link externo no tiene id, y la
+  receta —que sí lo acepta— lo guarda como link (C04.3d.1b). La ficha queda
+  abierta con lo escrito.
+- [ ] Con 5 fotos el control no se dibuja, como los otros dos.
 
 ### F01.3 — Registrar una fuente sin compartir
 
@@ -209,12 +233,14 @@ mano. La conversión desde la fuente ocurre afuera, en una sesión con Claude.
 #### C01.6.4 — Las fotos del borrador *(J3)*
 
 - [ ] Las miniaturas en una fila, en el orden de `fotos`, cada una con su ×, y
-  **Cámara** y **Galería** al final mientras haya menos de 5 (C01.2.4).
+  **Cámara**, **Galería** y **Por URL** al final mientras haya menos de 5
+  (C01.2.4, C01.2.4b).
 - [ ] Tocar una miniatura abre el **visor**: la foto al ancho de la pantalla,
   sobre un velo. Se cierra tocando cualquier lado.
 - [ ] Agregar achica la foto, la sube al lado del `.md` y lo reescribe con la
   lista nueva, en el momento y con el velo de escritura (R8). Se agregan al
-  final; no se reordenan.
+  final; no se reordenan. Una que se bajó de una dirección sube por el mismo
+  camino, ahí mismo (C01.2.4b).
 - [ ] La × manda la foto a la papelera de Drive y reescribe el `.md`, también
   con el velo y sin confirmación: se recupera desde la papelera.
 - [ ] **Las fotos se piden a Drive con el token** y quedan en Cache Storage,
@@ -351,7 +377,7 @@ un borrador detrás.
 
 | Capacidad | Job |
 |---|---|
-| C01.1.1, C01.2.1, C01.2.2, C01.2.3, C01.2.4, C01.3.1, C01.4.2, C01.8.1, C01.8.2 | J2 |
+| C01.1.1, C01.2.1, C01.2.2, C01.2.3, C01.2.4, C01.2.4b, C01.3.1, C01.4.2, C01.8.1, C01.8.2 | J2 |
 | C01.4.1, C01.4.3, C01.5.1, C01.6.1, C01.6.2, C01.6.3, C01.6.4, C01.7.1, C01.9.1, C01.9.3 | J3 |
 | C01.9.2 | J2, J3 |
 

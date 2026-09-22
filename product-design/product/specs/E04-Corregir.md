@@ -162,7 +162,7 @@ ya achicadas y con su número asignado.
 - [ ] **Cada miniatura dice en qué se usa** (`E05-Cimientos.md` C05.1.5), con un ícono por uso arriba a la derecha, sobre el mismo fondo oscuro que el número: la ficha con un señalador si es la portada, los tres renglones si está en un paso o un ingrediente, **los dos si es las dos cosas**. Una foto sin uso no lleva ninguna marca.
 - [ ] **Debajo de la fila, el epígrafe dice qué significa cada marca**, con los íconos dibujados en línea con el texto: *«[portada] es la portada / [en el texto] está en un paso o un ingrediente / Las que no tienen marca solo se ven en el carrusel de la receta: para poner una en un paso, tocá el [imagen] que aparece al costado del renglón que estás escribiendo.»*
 - [ ] Las marcas se rehacen en el momento: poner una foto de portada o en una línea la marca sin salir del editor.
-- [ ] **Cámara**, **Galería** y **Por URL** al final, sin tope: la primera saca una foto nueva de a una, la segunda abre el selector del sistema y acepta varias a la vez —las dos como en las fotos de un borrador (C01.2.4)—, y la tercera la trae de una dirección (C04.3d.1b).
+- [ ] **Cámara**, **Galería** y **Por URL** al final, sin tope: la primera saca una foto nueva de a una, la segunda abre el selector del sistema y acepta varias a la vez, y la tercera la trae de una dirección (C04.3d.1b). Son los mismos tres de las fotos de un borrador (C01.2.4, C01.2.4b); lo único que cambia acá es que no hay tope.
 - [ ] Cada foto nueva toma el número más alto más uno; ninguno se reusa, ni siquiera el de una que se sacó.
 - [ ] Mientras se achica, el velo cubre la pantalla (R8): tarda, aunque no escriba nada en Drive.
 - [ ] Una foto que el navegador no puede decodificar —HEIC, un archivo roto— no se agrega, y el aviso lo dice: *«No se pudo leer una de las fotos.»*
@@ -175,10 +175,13 @@ Una receta que se está copiando de un sitio trae su foto de ahí. **La app la
 baja y la guarda como cualquier otra**: el link de un sitio ajeno se rompe
 cuando el sitio la borra.
 
+Es la misma ficha y el mismo camino en la captura y en el borrador
+(C01.2.4b); lo único que no comparten es la salida de la que no se pudo bajar.
+
 - [ ] **Por URL** abre una ficha al pie con un campo para la dirección y **Traer**.
 - [ ] Lo que trae **es una foto más del depósito**: se achica y se sube al guardar, igual que una de la cámara (C04.3d.1). Nada toca Drive hasta Guardar.
 - [ ] **Mientras la baja y la achica, el velo cubre la pantalla** (R8), y el pedido se corta solo si el sitio no contesta.
-- [ ] **Si el sitio no la deja bajar** —CORS, que es lo habitual—, la URL **entra igual al depósito como link externo** (C05.1.5), y el aviso lo dice: *«No se pudo traer la foto —el sitio no lo permite o no hay conexión—: queda como link, y si el sitio la borra se pierde.»* No es un error: la foto entró, y el aviso va sin control, arriba del formulario y a la vista (R1). Sin red pasa lo mismo: desde el navegador no se distinguen.
+- [ ] **Si el sitio no la deja bajar** —CORS, que es lo habitual—, la URL **entra igual al depósito como link externo** (C05.1.5), y el aviso lo dice: *«No se pudo traer la foto —el sitio no lo permite o no hay conexión—: queda como link, y si el sitio la borra se pierde.»* No es un error: la foto entró, y el aviso va sin control, arriba del formulario y a la vista (R1). Sin red pasa lo mismo: desde el navegador no se distinguen. **Esto es propio de la receta**: su `.md` escribe una URL ajena como cualquier otra foto, y el borrador, que guarda ids de Drive, no la agrega (C01.2.4b).
 - [ ] **Una dirección que no es una foto** —una página, un archivo que no existe, algo que no empieza con `http(s)://` o que lleva un espacio adentro— **no entra**: el aviso va en la ficha, que queda abierta con lo escrito (R1). **Una `http://` tampoco**, y su aviso lo dice: *«La dirección tiene que empezar con https://.»* Desde Pages es contenido mixto, así que no se puede bajar y la imagen tampoco cargaría después.
 - [ ] **Sólo entra al depósito una URL que se pueda volver a leer**: la línea es `- <n>: <url>` con el esquema en minúsculas y sin espacios, y una que no tenga esa forma dejaría toda la sección `## Fotos` como sección ajena al reabrir la receta (C05.1.5).
 - [ ] **El esquema en mayúsculas no se rechaza, se arregla:** `Https://` —lo que manda el teclado del teléfono con la primera letra— se escribe en minúsculas, y el chequeo de `http://` lo ve igual. El resto de la dirección se deja tal cual: distingue mayúsculas.

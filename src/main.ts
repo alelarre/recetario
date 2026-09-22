@@ -1416,10 +1416,16 @@ function cerrarFichaFoto(): void {
   for (const e of document.querySelectorAll(FICHAS_DE_FOTO)) e.remove();
 }
 
-/** Abre una ficha al pie: siempre una sola, como la hoja de Compartir. */
+/**
+ * Abre una ficha al pie: siempre una sola, como la hoja de Compartir. Se
+ * cuelga del formulario y, donde no hay ninguno —el borrador abierto—, del
+ * cuerpo de la pantalla: la ficha es fija (`tokens.css`), así que de dónde
+ * cuelgue no le cambia nada.
+ */
 function abrirFichaFoto(html: string): void {
   cerrarFichaFoto();
-  document.querySelector('[data-formulario]')?.insertAdjacentHTML('beforeend', html);
+  const donde = document.querySelector('[data-formulario]') ?? document.querySelector('#app .cuerpo');
+  donde?.insertAdjacentHTML('beforeend', html);
   void completarFotos();
 }
 
@@ -1545,40 +1551,135 @@ async function traerFoto(url: string): Promise<FotoTraida> {
 }
 
 /**
- * *Traer* en la ficha de una foto por URL: la foto bajada entra al depósito
- * por el mismo camino que una de la cámara. Lo que no se pudo bajar entra como
- * link externo —no se pierde lo que la app ya sabía hacer—, y lo que no es una
- * foto no entra y deja la ficha abierta con lo escrito.
+ * Lo que dio pedir una foto por su dirección: la foto ya achicada, la
+ * dirección que no se pudo bajar —normalizada, lista para escribirse donde el
+ * formato la acepte—, o el motivo por el que no sirve.
  */
+type PedidoDeFoto =
+  | { que: 'foto'; blob: Blob }
+  | { que: 'link'; url: string }
+  | { que: 'error'; mensaje: string };
+
+/**
+ * Pide la foto de una dirección escrita a mano y la deja lista para agregar.
+ * Es lo común a las tres pantallas que la agregan —la receta, el borrador y la
+ * captura (P59)—: las salidas son las mismas y lo único que cambia es qué hace
+ * cada una con cada una.
+ */
+async function pedirFotoPorUrl(escrita: string): Promise<PedidoDeFoto> {
+  const url = conEsquemaEnMinuscula(escrita);
+  // Lo que no puede ser una línea del depósito ni se pide.
+  if (!URL_DE_FOTO.test(url)) return { que: 'error', mensaje: NO_ES_UNA_FOTO };
+  // Desde Pages, una `http://` es contenido mixto: el pedido falla siempre y
+  // la imagen tampoco cargaría después. Entra como link y no sirve de nada.
+  if (url.startsWith('http://')) return { que: 'error', mensaje: SOLO_HTTPS };
+  const traida = await escribiendo(traerFoto(url));
+  if (traida.que === 'no-es-foto') return { que: 'error', mensaje: NO_ES_UNA_FOTO };
+  if (traida.que === 'no-se-pudo') return { que: 'link', url };
+  try {
+    return { que: 'foto', blob: await escribiendo(achicarFoto(traida.blob)) };
+  } catch (err) {
+    console.error(err);
+    return { que: 'error', mensaje: NO_SE_LEYO_UNA_FOTO };
+  }
+}
+
+/** *Traer* en la ficha de una foto por URL: cada pantalla la agrega a lo suyo. */
 async function agregarFotoPorUrl(escrita: string): Promise<void> {
+  if (vistaActual?.vista === 'capturar') return agregarFotoPorUrlACaptura(escrita);
+  if (vistaActual?.vista === 'borrador' && !editandoBorrador) return agregarFotoPorUrlABorrador(escrita);
+  return agregarFotoPorUrlAlEditor(escrita);
+}
+
+/**
+ * En el editor, la foto bajada entra al depósito por el mismo camino que una
+ * de la cámara. Lo que no se pudo bajar entra como link externo —el `.md` de
+ * la receta acepta una URL ajena como cualquier otra—, y lo que no es una foto
+ * no entra y deja la ficha abierta con lo escrito.
+ */
+async function agregarFotoPorUrlAlEditor(escrita: string): Promise<void> {
   // Cada intento empieza sin el aviso del anterior: dos avisos a la vez no
   // dicen cuál es el de ahora.
   avisarEnElFormulario('');
   // El aviso vuelve con lo que se escribió, y no con lo normalizado: lo que el
   // usuario escribió sigue en pantalla (R1).
-  const url = conEsquemaEnMinuscula(escrita);
-  // Lo que no puede ser una línea del depósito ni se pide.
-  if (!URL_DE_FOTO.test(url)) return abrirFichaFoto(renderFotoPorUrl(escrita, NO_ES_UNA_FOTO));
-  // Desde Pages, una `http://` es contenido mixto: el pedido falla siempre y
-  // la imagen tampoco cargaría después. Entra como link y no sirve de nada.
-  if (url.startsWith('http://')) return abrirFichaFoto(renderFotoPorUrl(escrita, SOLO_HTTPS));
-  const traida = await escribiendo(traerFoto(url));
-  if (traida.que === 'no-es-foto') return abrirFichaFoto(renderFotoPorUrl(escrita, NO_ES_UNA_FOTO));
-  if (traida.que === 'no-se-pudo') {
-    sumarFotoAlEditor(url);
+  const pedido = await pedirFotoPorUrl(escrita);
+  if (pedido.que === 'error') return abrirFichaFoto(renderFotoPorUrl(escrita, pedido.mensaje));
+  if (pedido.que === 'link') {
+    sumarFotoAlEditor(pedido.url);
     cerrarFichaFoto();
     // No es un error del usuario: la foto entró, y el aviso dice con qué.
     return avisarEnElFormulario(QUEDA_COMO_LINK);
   }
-  let blob: Blob;
+  sumarFotoAlEditor('', pedido.blob);
+  cerrarFichaFoto();
+}
+
+/**
+ * Lo que no se pudo bajar **no entra al borrador**: sus fotos son ids de
+ * Drive (`borrador.ts`) —así se las muestra, se las manda a Claude y se las
+ * pasa a `_fotos/` al convertirlo— y un link externo no tiene ninguno. Antes
+ * que cambiarle el formato o inventarle un id, se avisa que no se pudo traer.
+ * La receta sí la guarda como link, que es lo que su `.md` sabe escribir.
+ */
+const NO_SE_PUDO_TRAER =
+  'No se pudo traer la foto —el sitio no lo permite o no hay conexión—. ' +
+  'Un borrador sólo guarda fotos bajadas: probá con otra dirección, o guardala y subila desde la galería.';
+
+/**
+ * La foto de una dirección para un borrador, o `null` si no hay ninguna que
+ * agregar: ahí la ficha queda abierta con lo escrito y el aviso adentro, como
+ * con cualquier otra dirección que no sirve.
+ */
+async function fotoDeUrlParaBorrador(escrita: string): Promise<Blob | null> {
+  const pedido = await pedirFotoPorUrl(escrita);
+  if (pedido.que === 'foto') return pedido.blob;
+  abrirFichaFoto(renderFotoPorUrl(escrita, pedido.que === 'link' ? NO_SE_PUDO_TRAER : pedido.mensaje));
+  return null;
+}
+
+/**
+ * En el borrador abierto, la foto bajada sube a Drive en el momento, igual que
+ * una de la cámara: el `.md` del borrador se reescribe con cada foto.
+ */
+async function agregarFotoPorUrlABorrador(escrita: string): Promise<void> {
+  // Una sola vez el velo, aunque sean tres pasos —bajarla, achicarla y
+  // subirla—: si no, se prende y se apaga entre uno y otro (P52). El
+  // redibujado va después de soltarlo, que tapado no se navega.
+  const destapar = tapar();
+  let subida = false;
   try {
-    blob = await escribiendo(achicarFoto(traida.blob));
+    const blob = await fotoDeUrlParaBorrador(escrita);
+    if (!blob) return;
+    cerrarFichaFoto();
+    subida = true;
+    borradorLeido = await store.agregarFotoABorrador(idActual(), blob);
+    avisoBorradores = '';
   } catch (err) {
     console.error(err);
-    return abrirFichaFoto(renderFotoPorUrl(escrita, NO_SE_LEYO_UNA_FOTO));
+    avisoBorradores = porQueNoGuardo(err);
+  } finally {
+    await destapar();
   }
-  sumarFotoAlEditor('', blob);
-  cerrarFichaFoto();
+  if (subida) await render();
+}
+
+/** En la captura, la foto bajada queda en memoria hasta Guardar, como las demás. */
+async function agregarFotoPorUrlACaptura(escrita: string): Promise<void> {
+  // Como en el borrador: el velo una sola vez para bajarla y achicarla.
+  const destapar = tapar();
+  let traida = false;
+  try {
+    const blob = await fotoDeUrlParaBorrador(escrita);
+    if (!blob) return;
+    cerrarFichaFoto();
+    fotosCaptura.push({ blob, url: imagenes.urlDeBlob(blob) });
+    avisoCaptura = '';
+    traida = true;
+  } finally {
+    await destapar();
+  }
+  if (traida) await render();
 }
 
 /**

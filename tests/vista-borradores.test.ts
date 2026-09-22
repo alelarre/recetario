@@ -166,14 +166,20 @@ describe('las fotos del borrador', () => {
     expect(html).not.toContain('data-accion="ver-foto" data-valor="f2"');
   });
 
-  it('Cámara y Galería al final mientras haya menos de cinco (P50)', () => {
+  it('Cámara, Galería y Por URL al final mientras haya menos de cinco (P50, P59)', () => {
     const html = renderBorrador({ borrador: conFotos, confirmando: false, fotos });
     expect(html).toContain('Cámara');
     expect(html).toContain('Galería');
+    // Una foto que está en la web se agrega igual que en la receta: la ficha
+    // la abre `main.ts` con esta acción.
+    expect(html).toContain('data-accion="abrir-foto-url"');
+    expect(html).toContain('Por URL');
     const cinco = Array.from({ length: 5 }, (_, i) => ({ id: `f${i}`, url: `blob:${i}` }));
     const llena = renderBorrador({ borrador: conFotos, confirmando: false, fotos: cinco });
     expect(llena).not.toContain('Cámara');
     expect(llena).not.toContain('Galería');
+    // En el tope se va la fila entera, no dos de tres.
+    expect(llena).not.toContain('Por URL');
   });
 
   it('el visor muestra la foto sobre un velo y se cierra tocando cualquier lado', () => {
@@ -185,6 +191,7 @@ describe('las fotos del borrador', () => {
     const html = renderBorrador({ borrador: borradorFalso(), confirmando: false });
     expect(html).toContain('Cámara');
     expect(html).toContain('Galería');
+    expect(html).toContain('Por URL');
   });
 
   it('los ids se escapan', () => {

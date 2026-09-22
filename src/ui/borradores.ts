@@ -133,7 +133,8 @@ export function renderBorrador(
         fotos: fotos.map(f => ({
           url: f.url, sacar: { accion: 'sacar-foto', valor: f.id }, ver: { accion: 'ver-foto', valor: f.id }
         })),
-        agregar: fotos.length < MAXIMO_FOTOS
+        agregar: fotos.length < MAXIMO_FOTOS,
+        porUrl: true
       }) +
     '</div>' +
   '</div>';

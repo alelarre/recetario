@@ -118,13 +118,16 @@ describe('Captura', () => {
   });
 
   describe('las fotos', () => {
-    it('debajo de la nota, las miniaturas con su × y los dos botones para agregar (P50)', () => {
+    it('debajo de la nota, las miniaturas con su × y los tres botones para agregar (P50, P59)', () => {
       const html = renderCaptura({ ...base, fotos: ['blob:1', 'blob:2'] });
       expect(html.indexOf('name="nota"')).toBeLessThan(html.indexOf('class="miniaturas"'));
       expect(html).toContain('<img src="blob:1"');
       expect(html).toContain('data-accion="sacar-foto-captura" data-valor="1"');
       expect(html).toContain(`${ICO.camara}Cámara`);
       expect(html).toContain('Galería');
+      // La misma ficha de la receta y del borrador: la abre `main.ts`.
+      expect(html).toContain('data-accion="abrir-foto-url"');
+      expect(html).toContain('Por URL');
       expect(html).toContain('<input type="file" accept="image/*" capture="environment" data-fotos hidden>');
       expect(html).toContain('<input type="file" accept="image/*" multiple data-fotos hidden>');
     });
@@ -132,12 +135,14 @@ describe('Captura', () => {
     it('sin fotos, igual se ofrece agregar', () => {
       expect(renderCaptura(base)).toContain('Cámara');
       expect(renderCaptura(base)).toContain('Galería');
+      expect(renderCaptura(base)).toContain('Por URL');
     });
 
     it('con cinco fotos, los botones no se dibujan', () => {
       const html = renderCaptura({ ...base, fotos: ['a', 'b', 'c', 'd', 'e'] });
       expect(html).not.toContain('Cámara');
       expect(html).not.toContain('Galería');
+      expect(html).not.toContain('Por URL');
       expect(html.match(/sacar-foto-captura/g)).toHaveLength(5);
     });
 
@@ -148,6 +153,7 @@ describe('Captura', () => {
     it('editando un borrador no están: se manejan en la vista del borrador', () => {
       expect(renderCaptura({ ...base, edicion: true })).not.toContain('Cámara');
       expect(renderCaptura({ ...base, edicion: true })).not.toContain('Galería');
+      expect(renderCaptura({ ...base, edicion: true })).not.toContain('Por URL');
     });
 
     it('un aviso se muestra sin control', () => {

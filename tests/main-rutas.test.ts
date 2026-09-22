@@ -2358,6 +2358,8 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(5);
       expect(app.innerHTML).not.toContain('Cámara');
       expect(app.innerHTML).not.toContain('Galería');
+      // En el tope, *Por URL* se va con los otros dos: la fila de botones entera (P59).
+      expect(app.innerHTML).not.toContain('Por URL');
 
       await tocar('guardar-captura');
       expect(estado.capturados[0]?.fotos).toHaveLength(5);
@@ -2497,6 +2499,142 @@ describe('main.ts: las rutas', () => {
       await elegirFotos([foto('a')]);
       expect(app.innerHTML).toContain('No se pudo guardar. Revisá la conexión.');
       expect(app.innerHTML).toContain('Tarta');
+    });
+
+    // Agregar una foto por su dirección, igual que en la receta (P59). Lo que
+    // cambia es la salida de la que no se pudo bajar: en un borrador las fotos
+    // son ids de Drive, y un link externo no tiene ninguno.
+    describe('por URL (P59)', () => {
+      /** Lo que contesta un sitio que sí deja bajar la foto. */
+      const respuestaDeFoto = (texto: string) => ({
+        ok: true,
+        headers: { get: (n: string) => (n.toLowerCase() === 'content-type' ? 'image/jpeg' : null) },
+        blob: async () => foto(texto)
+      });
+      /** Abre la ficha de *Por URL* con la dirección escrita y toca *Traer*. */
+      const traer = async (
+        montada: { tocar: (a: string, d?: Record<string, string>) => Promise<unknown> }, url: string
+      ) => {
+        await montada.tocar('abrir-foto-url');
+        estado.formulario['url-foto'] = url;
+        await montada.tocar('traer-foto-url');
+      };
+      const conUnBorrador = () => {
+        estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: [] }];
+      };
+
+      it('la foto bajada se sube al borrador en el momento, como una de la cámara', async () => {
+        conUnBorrador();
+        vi.stubGlobal('fetch', async () => respuestaDeFoto('bajada'));
+        const montada = await montar();
+        const { abrir, app, preguntas } = montada;
+        await abrir('#/borradores/b1');
+        expect(app.innerHTML).toContain('data-accion="abrir-foto-url"');
+
+        await traer(montada, 'https://ejemplo/tarta.jpg');
+
+        // El `.md` del borrador se reescribe ahí mismo: no hay cola ni estado
+        // intermedio, y la foto ya está en Drive.
+        expect(estado.fotosAgregadas.map(f => f.id)).toEqual(['b1']);
+        expect(await estado.fotosAgregadas[0].foto.text()).toBe('bajada');
+        expect(app.innerHTML).toContain('blob:nueva-1');
+        // Traerla cierra la ficha.
+        expect(preguntas.some(h => h.includes('data-foto-url'))).toBe(false);
+      });
+
+      it('el velo se pone una vez para bajarla, achicarla y subirla (P52)', async () => {
+        conUnBorrador();
+        vi.stubGlobal('fetch', async () => respuestaDeFoto('bajada'));
+        const montada = await montar();
+        const { abrir, idasYVueltasDelVelo } = montada;
+        await abrir('#/borradores/b1');
+        idasYVueltasDelVelo.length = 0;
+
+        await traer(montada, 'https://ejemplo/tarta.jpg');
+
+        // Una sola ida y una sola vuelta: los tres pasos van bajo el mismo velo.
+        expect(idasYVueltasDelVelo).toEqual([false, true]);
+      });
+
+      it('la que el sitio no deja bajar no entra: un borrador no guarda links', async () => {
+        conUnBorrador();
+        // Lo que hace CORS: `fetch` ni siquiera llega a contestar.
+        vi.stubGlobal('fetch', async () => { throw new TypeError('bloqueado'); });
+        const montada = await montar();
+        const { abrir, preguntas } = montada;
+        await abrir('#/borradores/b1');
+
+        await traer(montada, 'https://instagram/tarta.jpg');
+
+        expect(estado.fotosAgregadas).toEqual([]);
+        // La ficha queda abierta con lo escrito, y el aviso dice por qué no entró.
+        expect(preguntas.at(-1)).toContain('data-foto-url');
+        expect(preguntas.at(-1)).toContain('value="https://instagram/tarta.jpg"');
+        expect(preguntas.at(-1)).toContain('No se pudo traer la foto');
+        expect(preguntas.at(-1)).toContain('galería');
+      });
+
+      it('una URL que no es una foto no entra, con aviso', async () => {
+        conUnBorrador();
+        // Una página que contesta 200 con HTML no es una foto.
+        vi.stubGlobal('fetch', async () => ({
+          ok: true, headers: { get: () => 'text/html; charset=utf-8' }, blob: async () => foto('<html>')
+        }));
+        const montada = await montar();
+        const { abrir, preguntas } = montada;
+        await abrir('#/borradores/b1');
+
+        await traer(montada, 'https://ejemplo/pagina');
+
+        expect(estado.fotosAgregadas).toEqual([]);
+        expect(preguntas.at(-1)).toContain('data-foto-url');
+        expect(preguntas.at(-1)).toContain('value="https://ejemplo/pagina"');
+        expect(preguntas.at(-1)).toContain('no es una foto');
+      });
+
+      it('si subirla al borrador falla, avisa y el borrador sigue', async () => {
+        conUnBorrador();
+        estado.fallaFoto = 1;
+        vi.stubGlobal('fetch', async () => respuestaDeFoto('bajada'));
+        const montada = await montar();
+        const { abrir, app } = montada;
+        await abrir('#/borradores/b1');
+
+        await traer(montada, 'https://ejemplo/tarta.jpg');
+
+        expect(app.innerHTML).toContain('No se pudo guardar. Revisá la conexión.');
+        expect(app.innerHTML).toContain('Tarta');
+      });
+
+      it('en la captura queda en memoria hasta Guardar, como las demás', async () => {
+        vi.stubGlobal('fetch', async () => respuestaDeFoto('bajada'));
+        const montada = await montar();
+        const { abrir, app, tocar } = montada;
+        await abrir('#/capturar');
+        expect(app.innerHTML).toContain('data-accion="abrir-foto-url"');
+
+        await traer(montada, 'https://ejemplo/tarta.jpg');
+
+        expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(1);
+        // Nada se subió todavía: el borrador no existe hasta Guardar.
+        expect(estado.fotosAgregadas).toEqual([]);
+
+        await tocar('guardar-captura');
+        const guardada = estado.capturados[0].fotos?.[0];
+        expect(await (guardada as Blob).text()).toBe('bajada');
+      });
+
+      it('en la captura, la que no se pudo bajar tampoco entra', async () => {
+        vi.stubGlobal('fetch', async () => { throw new TypeError('bloqueado'); });
+        const montada = await montar();
+        const { abrir, app, preguntas } = montada;
+        await abrir('#/capturar');
+
+        await traer(montada, 'https://instagram/tarta.jpg');
+
+        expect(app.innerHTML).not.toContain('data-accion="sacar-foto-captura"');
+        expect(preguntas.at(-1)).toContain('No se pudo traer la foto');
+      });
     });
 
     it('sacar una foto del borrador, con el velo y sin confirmación', async () => {

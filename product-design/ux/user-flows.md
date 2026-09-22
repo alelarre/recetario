@@ -67,7 +67,9 @@ Estoy viendo un reel / una página / un video / fotos de una receta
   ⚑ ¿llegaron más de 5 fotos?
       sí  ▸ aviso: «Llegaron 8 fotos: se guardan las primeras 5.»
   → escribo el título, si quiero   ⚑ opcional: sin título, «Borrador dd/mm hh:mm»
-  → saco una foto con su ×, o agrego otra con la cámara o la galería, si quiero
+  → saco una foto con su ×, o agrego otra con la cámara, la galería o su
+    dirección, si quiero   ⚑ la que el sitio no deja bajar no entra: un
+                             borrador guarda ids de Drive, no links
   → Guardar                        ⚑ hace falta fuente, nota o una foto
   ▸ se suben las fotos al lado del .md, en orden
   ▸ se escribe el .md del borrador en _borradores/, con sus ids, y su fila en la hoja borradores
@@ -318,6 +320,9 @@ Guardar.
 Editor → ficha Fotos
   → Cámara o Galería        ⚑ la cámara saca una por vez; la galería, varias a
                               la vez —las dos sin tope
+  → Por URL                 ⚑ la app la baja del sitio y la guarda como
+                              cualquier otra; la que el sitio no deja bajar
+                              queda como link externo
   ▸ la foto se achica y espera en memoria, con su número
   → toco una miniatura
   ⚑ ¿qué hago con ella?

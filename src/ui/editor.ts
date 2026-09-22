@@ -251,8 +251,9 @@ export function renderSelectorPortada(fotos: FotoDeReceta[], actual: string | nu
 
 /**
  * Agregar una foto por su dirección: el campo y *Traer*. La app la baja, la
- * achica y la suma al depósito como cualquier otra (C04.3d.1b); si el sitio no
- * la deja bajar, la URL entra como link externo y el aviso lo dice.
+ * achica y la suma como cualquier otra (C04.3d.1b). La misma ficha es la del
+ * borrador y la de la captura (P59); qué pasa con la que el sitio no deja
+ * bajar lo decide cada pantalla, y el aviso lo dice.
  *
  * Con un aviso, la ficha se vuelve a dibujar con lo escrito adentro: lo que el
  * usuario escribió sigue en pantalla después del error (R1).

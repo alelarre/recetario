@@ -420,8 +420,10 @@ const datosDeAccion = (a: AccionDeMiniatura, n: number | undefined): string =>
  * sigue aceptando varias.
  *
  * `porUrl` suma un tercer botón, **Por URL**, que no es un input de archivo:
- * la app baja la foto de la dirección que se le escriba. Es de la receta y no
- * de un borrador, donde las fotos salen siempre del teléfono.
+ * la app baja la foto de la dirección que se le escriba. Va en las tres —la
+ * receta, el borrador y la captura—: una foto que está en la web se agrega
+ * igual en todas (P59). Lo que cambia es qué pasa con la que no se pudo bajar,
+ * y eso lo decide `main.ts`.
  */
 export function filaDeFotos(
   { fotos, agregar, porUrl = false }: { fotos: Miniatura[]; agregar: boolean; porUrl?: boolean }

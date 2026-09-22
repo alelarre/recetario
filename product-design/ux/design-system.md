@@ -293,7 +293,7 @@ carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chi
 | `imagen` | El botón que pone en una línea una foto que ya está en el depósito (§6.9b). Es una foto sacada y no la cámara: no agrega ninguna. |
 | `portada` | La marca de la foto que es la portada, en la fila de fotos del editor (§6.25). Una ficha con un señalador adentro; el señalador va relleno con `currentColor`. **No es una estrella:** en esta app la estrella es favorito. |
 | `enElTexto` | La marca de la foto que está puesta en un paso o un ingrediente (§6.25). Tres renglones de largo distinto. |
-| `link` | *Por URL*, en la fila de fotos del editor de recetas (§6.25): agregar una foto pegando su dirección. Dos eslabones. |
+| `link` | *Por URL*, en la fila de fotos (§6.25): agregar una foto pegando su dirección. Dos eslabones. |
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `zanahoria`, `listaNumerada` | Las dos posiciones del conmutador de cocina —*Ingredientes* y *Pasos*—, al lado de la palabra. |
 | Los cinco relojitos | Uno por valor de la duración, el mismo mapa en el editor (§6.18), la tarjeta, la receta, la búsqueda, el filtro (§6.19) y el orden (§6.20). |
@@ -1155,15 +1155,16 @@ borrador la × saca la foto; en el editor de recetas no va, porque *Sacar* es un
 de las acciones de la ficha (§6.26). Al final de la fila, botones
 secundarios de 64 px de alto: **Cámara**, con el ícono `camara`, que saca una
 foto por vez; **Galería**, con el ícono `galeria` —dos fotos, una detrás de
-la otra—, que abre el selector del sistema y acepta varias a la vez; y, **sólo
-en la ficha *Fotos* de una receta**, **Por URL**, con el ícono `link`, que abre
-la ficha de §6.26. **Con mouse o trackpad, *Cámara* no se dibuja**: ahí el
-`capture` no hace nada y abriría el mismo selector que *Galería*. Es la
-consulta de puntero con la que aparecen las flechas del carrusel (§6.21), al
-revés. **Van en su propia fila, debajo de las miniaturas**, y bajan de renglón
-entre ellos si no entran —en un teléfono, los tres del editor entran de a dos—,
-y ninguno se dibuja en el borrador con cinco fotos ni tienen tope
-en el editor. **Una foto que ya no está en Drive** es el mismo cuadrado con
+la otra—, que abre el selector del sistema y acepta varias a la vez; y **Por
+URL**, con el ícono `link`, que abre la ficha de §6.26. Los tres van en las
+tres pantallas —la captura, el borrador y la ficha *Fotos* de una receta—:
+una foto que está en la web se agrega igual en todas. **Con mouse o trackpad,
+*Cámara* no se dibuja**: ahí el `capture` no hace nada y abriría el mismo
+selector que *Galería*. Es la consulta de puntero con la que aparecen las
+flechas del carrusel (§6.21), al revés. **Van en su propia fila, debajo de las
+miniaturas**, y bajan de renglón entre ellos si no entran —en un teléfono, los
+tres entran de a dos—, y ninguno se dibuja en el borrador con cinco fotos ni
+tienen tope en el editor. **Una foto que ya no está en Drive** es el mismo cuadrado con
 borde punteado `--borde-fuerte` y *"La foto ya no está en Drive."* en *micro*
 `--fg-3`, centrado.
 
@@ -1235,7 +1236,7 @@ desplaza. Son cuatro:
 | **Acciones** | *Foto N* y botones secundarios en dos columnas —no entran todos en una fila de teléfono—: **Ver**, **Portada** y **Sacar**, este último con la variante de peligro (§6.7). *Portada* no se dibuja si ya lo es, y el último botón, si queda solo en su fila, la ocupa entera. |
 | **Poner una foto** | La galería del depósito, y nada más: es la que abre el botón de §6.9b. **No ofrece agregar**, que es la ficha *Fotos*. |
 | **Foto de portada** | La galería del depósito con la actual marcada, y **Sin foto**. **No ofrece agregar**: la portada sale de lo que ya está. |
-| **Foto por URL** | El campo *Dirección de la foto*, con `https://…` de placeholder, y **Traer**. Si algo falla, el aviso (§6.12) va arriba del campo y la ficha queda abierta con lo escrito. |
+| **Foto por URL** | El campo *Dirección de la foto*, con `https://…` de placeholder, y **Traer**. Si algo falla, el aviso (§6.12) va arriba del campo y la ficha queda abierta con lo escrito. Es la única de las cuatro que también se abre en la captura y en el borrador, desde la misma fila de §6.25. |
 
 **El botón de portada**, en el campo *Portada* de Datos, es un cuadrado de
 96 px con `--r-foto`: la miniatura de la cabecera actual, o un recuadro

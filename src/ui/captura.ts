@@ -89,7 +89,8 @@ export function renderCaptura(
     '</details>' +
     (edicion ? '' : '<div class="campo"><span>Fotos</span>' + filaDeFotos({
       fotos: fotos.map((url, i) => ({ url, sacar: { accion: 'sacar-foto-captura', valor: String(i) } })),
-      agregar: fotos.length < MAXIMO_FOTOS
+      agregar: fotos.length < MAXIMO_FOTOS,
+      porUrl: true
     }) + '</div>');
 
   // Compartida, la fuente va arriba: es el dato que ya vino y el título es lo
