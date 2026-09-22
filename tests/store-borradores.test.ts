@@ -170,12 +170,15 @@ describe('reindexar los borradores', () => {
     expect(await sheets.leer('i1', 'borradores!A1:D100')).toHaveLength(1);
   });
 
-  it('el progreso cuenta recetas y borradores juntos', async () => {
+  it('el progreso cuenta recetas y borradores juntos: la barra no se pasa', async () => {
     const { store } = await armar();
     await store.arrancar();
     const vistos: number[] = [];
-    await store.reconstruir(p => vistos.push(p.total));
-    expect(vistos.at(-1)).toBe(2);
+    await store.reconstruir(p => vistos.push(p));
+    // Si los borradores no entraran en el total, leerlos empujaría la barra
+    // más allá del tramo de las lecturas y después volvería atrás.
+    expect(Math.max(...vistos)).toBe(1);
+    expect(vistos).toEqual([...vistos].sort((a, b) => a - b));
   });
 });
 

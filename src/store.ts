@@ -139,11 +139,28 @@ interface Contexto {
   modifiedTime: string;
 }
 
-/** Cuántos `.md` se leyeron de cuántos, para la barra de progreso. */
-export interface Progreso {
-  leidas: number;
-  total: number;
-}
+/**
+ * Cuánto del reindexado va hecho, de 0 a 1.
+ *
+ * Es una sola barra de punta a punta y no un conteo de archivos: con una
+ * carpeta recién creada no hay ningún `.md` que contar, y el rato largo se lo
+ * llevan las carpetas, la planilla y los listados (P76). Cada etapa avanza
+ * dentro de su tramo, con los pesos de `TRAMOS`.
+ */
+export type Progreso = number;
+
+/**
+ * Hasta dónde llega la barra al terminar cada etapa del reindexado. Los pesos
+ * son a ojo —lo que tarda cada una depende del Drive de cada uno—: lo único
+ * que importa es que la barra no se quede quieta ni vuelva atrás.
+ */
+const TRAMOS = { carpetas: 0.08, listados: 0.2, lecturas: 0.9, hojas: 0.95 };
+
+/** El setup de una carpeta base: sus dos etapas propias, antes de reindexar. */
+const TRAMOS_SETUP = { categorias: 0.2, indice: 0.25 };
+
+/** Lo que va de `desde` a `hasta` según la parte hecha, de 0 a 1. */
+const entre = (desde: number, hasta: number, parte: number): number => desde + (hasta - desde) * parte;
 
 /**
  * El store no necesita el cliente entero de Drive ni de Sheets, solo estas
@@ -768,20 +785,25 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     let borradoresId = '';
     let fotosId = '';
     const categorias: Categoria[] = [];
-    for (const carpeta of await drive.listarCarpetas(ctx.raizId)) {
+    // Cada carpeta mueve la barra: escribirle las propiedades a una
+    // predefinida es un viaje a Drive, y son hasta dieciséis.
+    const carpetas = await drive.listarCarpetas(ctx.raizId);
+    for (const [i, carpeta] of carpetas.entries()) {
       const nombre = carpeta.name ?? '';
-      if (nombre === NOMBRE_BORRADORES) { borradoresId = carpeta.id; continue; }
-      if (nombre === NOMBRE_FOTOS) { fotosId = carpeta.id; continue; }
-      if (nombre.startsWith('_')) continue;
-      let color = carpeta.appProperties?.['color'] ?? '';
-      let foto = carpeta.appProperties?.['foto'] ?? '';
-      const predefinida = !color && !foto ? predefinidaPorNombre(nombre) : null;
-      if (predefinida) {
-        color = predefinida.color;
-        foto = `catalogo:${predefinida.foto}`;
-        await drive.propiedades(carpeta.id, { color, foto });
+      if (nombre === NOMBRE_BORRADORES) borradoresId = carpeta.id;
+      else if (nombre === NOMBRE_FOTOS) fotosId = carpeta.id;
+      else if (!nombre.startsWith('_')) {
+        let color = carpeta.appProperties?.['color'] ?? '';
+        let foto = carpeta.appProperties?.['foto'] ?? '';
+        const predefinida = !color && !foto ? predefinidaPorNombre(nombre) : null;
+        if (predefinida) {
+          color = predefinida.color;
+          foto = `catalogo:${predefinida.foto}`;
+          await drive.propiedades(carpeta.id, { color, foto });
+        }
+        categorias.push({ id: carpeta.id, nombre, color, foto });
       }
-      categorias.push({ id: carpeta.id, nombre, color, foto });
+      alProgresar(TRAMOS.carpetas * ((i + 1) / carpetas.length));
     }
     usarCategorias(categorias);
     ctx.borradoresId = borradoresId;
@@ -798,9 +820,12 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       ...ctx.categorias.map(c => ({ id: c.id, categoria: c.nombre }))
     ];
 
+    // Un listado por lugar, uno detrás de otro: son otros tantos viajes a
+    // Drive antes de leer el primer archivo.
     const pendientes: { archivo: ArchivoDrive; lugar: { id: string; categoria: string } }[] = [];
-    for (const lugar of lugares) {
+    for (const [i, lugar] of lugares.entries()) {
       for (const archivo of (await drive.listarHijos(lugar.id)).filter(esMd)) pendientes.push({ archivo, lugar });
+      alProgresar(entre(TRAMOS.carpetas, TRAMOS.listados, (i + 1) / lugares.length));
     }
     const pendientesBorradores = ctx.borradoresId
       ? (await drive.listarHijos(ctx.borradoresId)).filter(esMd)
@@ -817,7 +842,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const leer = async (archivo: ArchivoDrive): Promise<string> => {
       const texto = await drive.leerTexto(archivo.id);
       leidas++;
-      alProgresar({ leidas, total });
+      alProgresar(entre(TRAMOS.listados, TRAMOS.lecturas, leidas / total));
       return texto;
     };
 
@@ -840,6 +865,9 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       nuevosBorradores.push({ id_archivo: archivo.id, nombre_archivo: archivo.name ?? '', titulo, capturado });
     }
 
+    // Leído todo, aunque no hubiera nada que leer: lo que queda es escribir.
+    alProgresar(TRAMOS.lecturas);
+
     const hojas = await sheets.hojas(ctx.indiceId);
     await asegurarHoja(hojas, HOJA_BORRADORES, ULTIMA_COLUMNA_BORRADORES, COLUMNAS_BORRADORES);
     await reemplazarFilas(HOJA_RECETAS, idDeHoja(hojas, HOJA_RECETAS), ULTIMA_COLUMNA, nuevas);
@@ -848,6 +876,8 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     await asegurarHoja(hojas, HOJA_CATEGORIAS, ULTIMA_COLUMNA_CATEGORIAS, COLUMNAS_CATEGORIAS);
     await reemplazarFilas(HOJA_CATEGORIAS, idDeHoja(hojas, HOJA_CATEGORIAS), ULTIMA_COLUMNA_CATEGORIAS,
       ctx.categorias.map(filaDeCategoria));
+
+    alProgresar(TRAMOS.hojas);
 
     entradas = nuevas.map(entradaDesdeFila).map(conCategoria);
     filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
@@ -867,6 +897,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     // cambió la fecha de _indice, y la próxima apertura baja la planilla y ve
     // la reconstrucción en curso.
     await persistir();
+    alProgresar(1);
 
     return { indexadas: entradas.length, ignorados };
   }
@@ -1104,12 +1135,15 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     ctx.raizNombre = carpeta.nombre;
     ctx.modifiedTime = '';
 
-    // 1. Las predefinidas que falten, con su color y su foto ya escritos.
+    // 1. Las predefinidas que falten, con su color y su foto ya escritos. Son
+    // dos viajes a Drive cada una y hasta dieciséis: sobre una carpeta recién
+    // creada, este paso es el rato largo del setup (P76).
     const existentes = new Set((await drive.listarCarpetas(carpeta.id)).map(c => normalizar(c.name ?? '')));
-    for (const p of PREDEFINIDAS) {
-      if (existentes.has(normalizar(p.nombre))) continue;
+    const faltan = PREDEFINIDAS.filter(p => !existentes.has(normalizar(p.nombre)));
+    for (const [i, p] of faltan.entries()) {
       const nueva = await drive.crear({ nombre: p.nombre, padre: carpeta.id, mime: MIME_CARPETA });
       await drive.propiedades(nueva.id, { color: p.color, foto: `catalogo:${p.foto}` });
+      alProgresar(TRAMOS_SETUP.categorias * ((i + 1) / faltan.length));
     }
 
     // 2. `_indice`, y sin la anotación de una carpeta que se había dejado.
@@ -1124,9 +1158,11 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       ctx.indiceId = await crearPlanilla();
       ctx.meta = { schemaVersion: String(SCHEMA_VERSION), ultima_reconstruccion: '' };
     }
+    alProgresar(TRAMOS_SETUP.indice);
 
-    // 3. Reindexar: escribe las propiedades que falten y guarda la copia.
-    const { ignorados } = await reconstruir(alProgresar);
+    // 3. Reindexar: escribe las propiedades que falten y guarda la copia. Su
+    // barra, que va de 0 a 1, entra comprimida en lo que queda de la de acá.
+    const { ignorados } = await reconstruir(p => alProgresar(entre(TRAMOS_SETUP.indice, 1, p)));
 
     // 4. La marca, y fuera de las otras.
     try {

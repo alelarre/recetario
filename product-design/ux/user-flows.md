@@ -384,7 +384,7 @@ Abro la app por primera vez
       varias    → «Tus recetas en Drive», con las marcadas como «Encontradas»
   ⚑ ¿existe _indice adentro?
       sí  → arranca
-      no  → lo crea, leyendo los .md, con progreso: «Creando el índice: 12 de 60.»
+      no  → lo crea, leyendo los .md, con progreso: «Creando el índice: 47%.»
   ▸ Recetario
 ```
 
@@ -512,7 +512,7 @@ Abro la app
       le faltan o le sobran filas        → Menú → Ajustes → Reindexar
       no se puede leer y la app no abre  → borro _indice en Drive; la próxima
                                            apertura lo crea de nuevo
-  ▸ progreso: «Reindexando: 12 de 60.»
+  ▸ progreso: «Reindexando: 47%.»
   ▸ Recetario
 ```
 

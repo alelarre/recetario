@@ -11,6 +11,7 @@ import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 import { entradaFalsa } from './dobles.js';
 import { parse } from '../src/recipe.js';
 import { DURACIONES } from '../src/catalogo.js';
+import { colorDeClave } from '../src/ui/categorias.js';
 import { linkDeFoto, parsearFotos, serializarFotos } from '../src/fotos-receta.js';
 import { ICO } from '../src/ui/iconos.js';
 import type { CambiosDeFotos, Coincidencias, Plan } from '../src/tipos.js';
@@ -272,8 +273,52 @@ vi.mock('../src/indice-local.js', () => ({
   borrar: () => { estado.copiasBorradas++; }
 }));
 
+/**
+ * Los dos tiempos del velo, como los tiene `main.ts`: lo que dura el cierre
+ * con el tilde y lo que se espera después, por si nadie dibuja la pantalla de
+ * destino. El reloj de estos tests es falso —esperar casi dos segundos de
+ * verdad en cada test que guarda una receta se llevaba la mitad de la suite
+ * (P74)—, así que se los adelanta a mano. Separados porque entre uno y otro
+ * hay un momento que se mira: el tilde ya dibujado y el velo todavía puesto.
+ */
+const MS_CIERRE = 1850;
+const MS_RESPALDO_CIERRE = 400;
+
+/**
+ * Todo el velo, con margen. No llega a los 20 s del corte de una traída por
+ * URL, que tiene su propio temporizador y no debe dispararse acá.
+ */
+const MS_HASTA_EL_FINAL = MS_CIERRE + MS_RESPALDO_CIERRE + 250;
+
+/**
+ * Las vueltas de microtareas que `main` necesita para terminar de pintar.
+ * Con el reloj falso, un `setTimeout(0)` sólo corre si alguien adelanta el
+ * reloj: por eso no se lo espera, se lo empuja de a cero milisegundos, que
+ * deja pasar lo inmediato sin disparar el cierre del velo.
+ */
 const esperar = async (vueltas = 5) => {
-  for (let i = 0; i < vueltas; i++) await new Promise(r => setTimeout(r, 0));
+  for (let i = 0; i < vueltas; i++) {
+    if (vi.isFakeTimers()) await vi.advanceTimersByTimeAsync(0);
+    else await new Promise(r => setTimeout(r, 0));
+  }
+};
+
+/**
+ * Espera a que un manejador termine, alternando microtareas y reloj: entre
+ * una lectura de Drive y el temporizador del cierre hay varias vueltas, y el
+ * temporizador recién se programa cuando la escritura salió. Seis vueltas de
+ * `MS_HASTA_EL_FINAL` no llegan a los 20 s del corte de una traída por URL.
+ */
+const dejarTerminar = async (corriendo: Promise<unknown>): Promise<void> => {
+  let listo = false;
+  const marcar = () => { listo = true; };
+  void corriendo.then(marcar, marcar);
+  for (let i = 0; i < 6 && !listo; i++) {
+    await esperar(3);
+    await vi.advanceTimersByTimeAsync(MS_HASTA_EL_FINAL);
+  }
+  await corriendo;
+  await esperar();
 };
 
 /**
@@ -310,11 +355,15 @@ describe('main.ts: las rutas', () => {
     vi.unstubAllGlobals();
     delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
+    vi.useRealTimers();
   });
 
   const montar = async ({
     search = '', readyState = 'complete' as DocumentReadyState, reducedMotion = false
   } = {}) => {
+    // Sólo los temporizadores: `Date` queda real, que es de donde salen las
+    // fechas de los borradores y del plan.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const clicks: ((e: unknown) => unknown)[] = [];
     const cambios: ((e: unknown) => unknown)[] = [];
     /** Los oyentes de `error` en captura: una foto externa que no carga (P42). */
@@ -414,12 +463,55 @@ describe('main.ts: las rutas', () => {
       name?: string; value?: string; selectionStart?: number; dataset?: Record<string, string>;
       scrollTop?: number; clientHeight?: number;
     } | null = null;
+    /**
+     * La muestra de la categoría que se edita: el cuadro de arriba que sigue
+     * en vivo lo que se escribe y se elige. `main` la toca por partes y sin
+     * redibujar, así que el doble guarda cada parte por separado.
+     */
+    const muestraDeCategoria = {
+      color: '',
+      /** Sin foto elegida, el cuadro va con la trama sobre el color. */
+      conTrama: true,
+      imagen: '',
+      nombre: '',
+      style: {
+        setProperty: (n: string, v: string) => { if (n === '--c') muestraDeCategoria.color = v; }
+      },
+      querySelector: (sel: string) => {
+        if (sel === '.im') {
+          return {
+            classList: {
+              toggle: (c: string, puesta: boolean) => { if (c === 'trama') muestraDeCategoria.conTrama = puesta; }
+            },
+            set innerHTML(html: string) { muestraDeCategoria.imagen = html; }
+          };
+        }
+        if (sel === '.nm') return { set textContent(t: string) { muestraDeCategoria.nombre = t; } };
+        return null;
+      }
+    };
+    /** La línea del nombre inválido, que aparece y se va sin redibujar. */
+    const errorDeNombre = { hidden: true, textContent: '' };
+    /** El botón *Guardar* del encabezado de la categoría. */
+    const guardarCategoria = { disabled: true };
+    /**
+     * Los nombres contra los que se valida el que se escribe. Salen de lo
+     * pintado —el `data-otros` del formulario—, y no de una constante: así el
+     * doble no puede decir que las otras categorías son otras.
+     */
+    const otrosPintados = (): string =>
+      (app.innerHTML.match(/data-otros="([^"]*)"/)?.[1] ?? '[]')
+        .replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
     const formulario = {
-      dataset: { otros: '[]' },
+      get dataset() { return { otros: otrosPintados() }; },
       insertAdjacentHTML: (_donde: string, html: string) => { preguntas.push(html); },
       querySelector: (sel: string) => {
         const nombre = sel.match(/^\[name="([\w-]+)"\]$/)?.[1];
-        return nombre ? campo(nombre) : null;
+        if (nombre) return campo(nombre);
+        // Las dos partes que la edición de una categoría actualiza en vivo.
+        if (sel === '[data-muestra]') return app.innerHTML.includes('data-muestra') ? muestraDeCategoria : null;
+        if (sel === '.error-nombre') return app.innerHTML.includes('error-nombre') ? errorDeNombre : null;
+        return null;
       }
     };
     /**
@@ -518,6 +610,9 @@ describe('main.ts: las rutas', () => {
         // El sol encendido, tal como lo dibuja la cocina.
         if (sel === '[data-accion="wake"].on') return app.innerHTML.includes('class="ico on" data-accion="wake"') ? {} : null;
         if (sel === '#app input[name="tiempo"]') return campoTiempoDuracion;
+        if (sel === '#app [data-accion="guardar-categoria"]') {
+          return app.innerHTML.includes('data-accion="guardar-categoria"') ? guardarCategoria : null;
+        }
         // El editor y la edición de una categoría escriben en sus campos sin
         // redibujar: el depósito de fotos, la portada, las secciones de texto.
         const nombre = sel.match(/^#app (?:input)?\[name="([\w-]+)"\]$/)?.[1];
@@ -680,6 +775,18 @@ describe('main.ts: las rutas', () => {
         for (const fn of tecleos) await fn({ target: campo });
         await esperar();
       },
+      muestraDeCategoria,
+      errorDeNombre,
+      guardarCategoria,
+      /**
+       * Una tecla en el formulario de la categoría. Lo escrito ya está en
+       * `estado.formulario`: el evento sólo avisa, como en el navegador.
+       */
+      tipearEnCategoria: async (nombre: string) => {
+        estado.formulario['nombre'] = nombre;
+        for (const fn of tecleos) await fn({ target: { dataset: {}, name: 'nombre', value: nombre } });
+        await esperar();
+      },
       /** Un `change` en la caja de búsqueda, con el valor que tenga. */
       escribir: async (valor: string) => {
         const campo = { dataset: { accion: 'buscar' }, value: valor, focus: () => {} };
@@ -714,6 +821,34 @@ describe('main.ts: las rutas', () => {
         }
         await esperar();
       },
+      /**
+       * Deja correr el reloj falso hasta pasado el cierre del velo. Lo usan
+       * los tests que tocan algo y quieren mirar el cierre a mitad de camino,
+       * con `tocarSinCerrar`.
+       */
+      correrElReloj: () => vi.advanceTimersByTimeAsync(MS_HASTA_EL_FINAL),
+      /**
+       * Sólo el cierre con el tilde, sin llegar al respaldo: deja el velo
+       * puesto, que es lo que hace mientras espera la pantalla de destino.
+       */
+      correrElCierre: () => vi.advanceTimersByTimeAsync(MS_CIERRE),
+      /**
+       * Como `tocar`, pero sin adelantar el reloj: la promesa queda pendiente
+       * mientras el cierre del velo se dibuja, y el test mira ese momento.
+       * Hay que terminarla con `correrElReloj` antes de esperarla.
+       */
+      tocarSinCerrar: (accion: string, datos: Record<string, string> = {}) => {
+        const boton = {
+          dataset: { accion, ...datos }, classList: { contains: () => false },
+          closest: () => null, tagName: 'BUTTON', remove: () => {},
+          setAttribute: () => {}, getAttribute: () => null, hasAttribute: () => false
+        };
+        return (async () => {
+          for (const fn of clicks) {
+            await fn({ target: { closest: (sel: string) => (sel.includes('data-accion') ? boton : null) } });
+          }
+        })();
+      },
       /** Un click en un control con esta acción, como lo entrega la delegación. */
       tocar: async (accion: string, datos: Record<string, string> = {}, atributos: Record<string, string> = {}) => {
         const attrs: Record<string, string> = { ...atributos };
@@ -732,10 +867,13 @@ describe('main.ts: las rutas', () => {
               hasAttribute: (n: string) => n in attrs,
               set outerHTML(html: string) { enLugar.push(html); }
             };
-        for (const fn of clicks) {
-          await fn({ target: { closest: (sel: string) => (sel.includes('data-accion') ? boton : null) } });
-        }
-        await esperar();
+        // El manejador puede quedarse esperando el cierre del velo: se lo
+        // lanza, se le adelanta el reloj y recién ahí se lo espera.
+        await dejarTerminar((async () => {
+          for (const fn of clicks) {
+            await fn({ target: { closest: (sel: string) => (sel.includes('data-accion') ? boton : null) } });
+          }
+        })());
         return attrs;
       }
     };
@@ -1067,17 +1205,17 @@ describe('main.ts: las rutas', () => {
     const { app, abrir, tocar } = await montar();
     let aMitad = '';
     const conReconstruir = storeFake as typeof storeFake & {
-      reconstruir?: (alProgresar: (p: { leidas: number; total: number }) => void) => Promise<{ ignorados: string[] }>;
+      reconstruir?: (alProgresar: (p: number) => void) => Promise<{ ignorados: string[] }>;
     };
     conReconstruir.reconstruir = async alProgresar => {
-      alProgresar({ leidas: 1, total: 2 });
+      alProgresar(0.5);
       aMitad = app.innerHTML;
       return { ignorados: [] };
     };
     try {
       await abrir('#/ajustes');
       await tocar('reindexar');
-      expect(aMitad).toContain('Reindexando: 1 de 2.');
+      expect(aMitad).toContain('Reindexando: 50%.');
       expect(aMitad).toContain('Carpeta: Recetario');
     } finally {
       delete conReconstruir.reconstruir;
@@ -1110,6 +1248,53 @@ describe('main.ts: las rutas', () => {
       estado.formulario = { nombre: 'Fiambres', color: 'bebidas', foto: '' };
       await tocar('guardar-categoria');
       expect(estado.categoriasGuardadas).toEqual(['nueva:Fiambres']);
+    });
+
+    // Lo que `revisarCategoria` actualiza en vivo, sin redibujar el
+    // formulario: redibujarlo perdería el foco y el cursor.
+    it('escribir el nombre lo lleva a la muestra y habilita Guardar', async () => {
+      const { abrir, tipearEnCategoria, muestraDeCategoria, guardarCategoria } = await montar();
+      await abrir('#/categorias/nueva');
+      // Recién dibujada, la nueva no tiene nada escrito: Guardar arranca apagado.
+      expect(guardarCategoria.disabled).toBe(true);
+
+      await tipearEnCategoria('Fiambres');
+
+      expect(muestraDeCategoria.nombre).toBe('Fiambres');
+      expect(guardarCategoria.disabled).toBe(false);
+    });
+
+    it('un nombre vacío o repetido avisa y deja Guardar apagado', async () => {
+      const { abrir, tipearEnCategoria, errorDeNombre, guardarCategoria } = await montar();
+      await abrir('#/categorias/nueva');
+
+      // «Carnes» es la otra categoría: la comparación no mira ni mayúsculas ni tildes.
+      await tipearEnCategoria('carnes');
+      expect(errorDeNombre.hidden).toBe(false);
+      expect(errorDeNombre.textContent).toBe('Ya hay una categoría con ese nombre.');
+      expect(guardarCategoria.disabled).toBe(true);
+
+      await tipearEnCategoria('');
+      expect(errorDeNombre.textContent).toBe('Ponele un nombre.');
+      expect(guardarCategoria.disabled).toBe(true);
+
+      await tipearEnCategoria('Fiambres');
+      expect(errorDeNombre.hidden).toBe(true);
+      expect(errorDeNombre.textContent).toBe('');
+    });
+
+    it('elegir un color y una foto los marca y los lleva a la muestra', async () => {
+      const { abrir, tocar, muestraDeCategoria } = await montar();
+      await abrir('#/categorias/nueva');
+
+      await tocar('elegir-color', { valor: 'pastas' });
+      expect(muestraDeCategoria.color).toBe(colorDeClave('pastas'));
+      // Sin foto elegida, la muestra va con la trama sobre el color.
+      expect(muestraDeCategoria.conTrama).toBe(true);
+
+      await tocar('elegir-foto', { valor: 'catalogo:pastas' });
+      expect(muestraDeCategoria.conTrama).toBe(false);
+      expect(muestraDeCategoria.imagen).toMatch(/<img src="[^"]*pastas/);
     });
 
     it('borrar pregunta con las recetas, y confirmar borra y vuelve a la lista', async () => {
@@ -2031,11 +2216,11 @@ describe('main.ts: las rutas', () => {
     });
 
     it('al terminar bien, el velo cierra con el tilde y el guardado sigue su camino (P43)', async () => {
-      const { abrir, tocar, velo, vueltasAtras, tapadoAlVolver, atributosApp } = await montar();
+      const { abrir, tocarSinCerrar, correrElCierre, velo, vueltasAtras, tapadoAlVolver, atributosApp } = await montar();
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
 
-      const guardando = tocar('guardar');
+      const guardando = tocarSinCerrar('guardar');
       await esperar();
 
       expect(estado.creadas).toEqual(['Pan']);
@@ -2046,6 +2231,7 @@ describe('main.ts: las rutas', () => {
       expect(atributosApp['aria-busy']).toBeUndefined();
       expect(vueltasAtras).toHaveLength(0);
 
+      await correrElCierre();
       await guardando;
 
       // Dibujado el tilde, recién ahí se cierra el editor, y con la pantalla
@@ -2060,26 +2246,28 @@ describe('main.ts: las rutas', () => {
     });
 
     it('si nadie dibuja nada después del tilde, el velo se va igual (P43)', async () => {
-      const { abrir, tocar, velo } = await montar();
+      const { abrir, tocarSinCerrar, correrElReloj, velo } = await montar();
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
 
-      await tocar('guardar');
+      const guardando = tocarSinCerrar('guardar');
+      await esperar();
       expect(velo.hidden).toBe(false);
 
-      // El respaldo: sin pantalla nueva que lo saque, el velo no se queda puesto.
-      // Espera el cierre entero (650 ms) más el respaldo (400 ms).
-      await new Promise(r => setTimeout(r, 1200));
+      // El respaldo: sin pantalla nueva que lo saque, el velo no se queda
+      // puesto. Pasado el cierre entero y su respaldo, se fue solo.
+      await correrElReloj();
+      await guardando;
       expect(velo.hidden).toBe(true);
       expect(velo.classList.contains('exito')).toBe(false);
     });
 
     it('con el cierre a medio dibujar, un cambio de hash dibuja igual (P43)', async () => {
-      const { abrir, tocar, app, velo, empujados } = await montar();
+      const { abrir, tocarSinCerrar, correrElReloj, app, velo, empujados } = await montar();
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
 
-      const guardando = tocar('guardar');
+      const guardando = tocarSinCerrar('guardar');
       await esperar();
       expect(velo.classList.contains('exito')).toBe(true);
 
@@ -2090,6 +2278,7 @@ describe('main.ts: las rutas', () => {
       expect(empujados).toHaveLength(antes);
       expect(global.location.hash).toBe('#/r/f1');
       expect(app.innerHTML).toContain('Milanesas');
+      await correrElReloj();
       await guardando;
     });
 
@@ -2098,18 +2287,18 @@ describe('main.ts: las rutas', () => {
       try {
         const { promesa, resolver } = pendiente<Plan>();
         storeFake.plan = () => { estado.lecturasPlan++; return promesa; };
-        const { abrir, tocar, velo, atributosApp } = await montar();
+        const { abrir, tocarSinCerrar, correrElReloj, velo, atributosApp } = await montar();
         await abrir('#/nueva');
         estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
 
-        const guardando = tocar('guardar');
+        const guardando = tocarSinCerrar('guardar');
         await esperar();
         expect(velo.classList.contains('exito')).toBe(true);
 
         // Sin esperar a que el tilde termine, otra escritura: el velo vuelve a
         // tapar, sin el dibujo del cierre y con la pantalla otra vez ocupada.
         await abrir('#/plan/agregar?dia=1&momento=noche');
-        const eligiendo = tocar('elegir-para-el-plan', { id: 'f1' });
+        const eligiendo = tocarSinCerrar('elegir-para-el-plan', { id: 'f1' });
         await esperar();
 
         expect(velo.hidden).toBe(false);
@@ -2118,11 +2307,13 @@ describe('main.ts: las rutas', () => {
 
         // Y el temporizador del cierre anterior quedó cancelado: pasado el rato
         // que habría durado, el velo de esta escritura sigue tapando.
-        await new Promise(r => setTimeout(r, 800));
+        await vi.advanceTimersByTimeAsync(MS_HASTA_EL_FINAL);
         expect(velo.hidden).toBe(false);
         expect(velo.classList.contains('exito')).toBe(false);
 
         resolver({ comidas: [] });
+        await esperar();
+        await correrElReloj();
         await eligiendo;
         await guardando;
 
@@ -2173,14 +2364,14 @@ describe('main.ts: las rutas', () => {
     it('al tocar Guardar tapa la pantalla antes de releer el `.md` de base (P47)', async () => {
       const original = storeFake.receta;
       try {
-        const { abrir, tocar, velo } = await montar();
+        const { abrir, tocarSinCerrar, correrElReloj, velo } = await montar();
         await abrir('#/r/f1/editar');
         estado.formulario = { titulo: 'Milanesas', carpeta: 'c1' };
         // La relectura de la base es un pedido a Drive: el velo no puede
         // esperar a que conteste.
         const { promesa, resolver } = pendiente<Awaited<ReturnType<typeof original>>>();
         storeFake.receta = () => promesa;
-        const guardando = tocar('guardar');
+        const guardando = tocarSinCerrar('guardar');
         await esperar();
 
         expect(velo.hidden).toBe(false);
@@ -2192,6 +2383,7 @@ describe('main.ts: las rutas', () => {
         // Guardó: el velo se queda dibujando el cierre con el tilde (P43).
         expect(velo.classList.contains('exito')).toBe(true);
         expect(estado.guardados).toHaveLength(1);
+        await correrElReloj();
         await guardando;
       } finally {
         storeFake.receta = original;

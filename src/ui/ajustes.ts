@@ -3,7 +3,7 @@
  * interrumpen. Está a tres toques a propósito: lo de acá es raro y caro.
  */
 import { escapar } from './markdown.js';
-import { encabezado, SPINNER, lateral, botonMenu } from './componentes.js';
+import { encabezado, lateral, botonMenu, barra, porCiento } from './componentes.js';
 import { cuando } from './borradores.js';
 import type { Progreso, IndiceDuplicado, InformeArranque } from '../store.js';
 
@@ -34,7 +34,9 @@ export interface OpcionesAjustes {
 export function renderAjustes(
   { cuenta, ultimaReindexado, ignorados, indiceDuplicado, planDuplicado, reindexando, borradores = 0, menuAbierto, informe, recetas = 0, categorias = 0, carpeta = '' }: OpcionesAjustes
 ): string {
-  const enCurso = !!reindexando;
+  // El progreso es un número de 0 a 1: recién arrancado vale 0, que no es «no
+  // está reindexando».
+  const enCurso = reindexando !== null && reindexando !== undefined;
 
   const seccionCuenta = '<div class="ficha"><h2>Cuenta</h2>' +
     `<div class="fila-a"><span class="t">${escapar(cuenta || 'Sin cuenta conectada')}</span>` +
@@ -53,14 +55,14 @@ export function renderAjustes(
       (enCurso ? '' : '<a class="btn sec compacto" href="#/categorias">Categorías ›</a>') + '</div>' +
   '</div>';
 
-  // Con número hay barra y sin número hay spinner (mockup 10): antes de la
-  // primera lectura el total todavía es 0, y «Reindexando: 0 de 0» no dice
-  // nada. No hay cancelar, porque cortar a mitad deja el índice en el estado
-  // que el reindexado existe para reparar (C05.5.2).
-  const avance = reindexando && reindexando.total > 0
-    ? `<p style="margin:0 0 var(--e-3);font-variant-numeric:tabular-nums">Reindexando: ${reindexando.leidas} de ${reindexando.total}.</p>` +
-      `<div class="barra"><i style="width:${porcentaje(reindexando)}%"></i></div>`
-    : '<p style="margin:0">Reindexando…</p>' + SPINNER;
+  // Una sola barra de punta a punta y nunca un spinner: leer los `.md` es una
+  // etapa entre otras, y las de antes también tardan (P76). No hay cancelar,
+  // porque cortar a mitad deja el índice en el estado que el reindexado existe
+  // para reparar (C05.5.2).
+  const parte = reindexando ?? 0;
+  const avance =
+    `<p style="margin:0 0 var(--e-3);font-variant-numeric:tabular-nums">Reindexando: ${porCiento(parte)}%.</p>` +
+    barra(parte);
 
   const seccionIndice = enCurso
     ? '<div class="ficha"><h2>Índice</h2>' + avance +
@@ -101,9 +103,6 @@ export function renderAjustes(
       '</div>' +
     '</div>';
 }
-
-const porcentaje = ({ leidas, total }: Progreso): number =>
-  total > 0 ? Math.min(100, Math.round((leidas / total) * 100)) : 0;
 
 /**
  * Borrar lo guardado en el navegador, sin salir de la cuenta: la salida para

@@ -296,10 +296,12 @@ let hashEscritura = '';
 
 /**
  * Lo que dura el cierre con el tilde antes de navegar (§6.17b): el tilde
- * termina de dibujarse a los 450 ms —0,15 s de espera y 0,3 s de trazo— y se
- * queda 200 ms más quieto, para que se llegue a ver que salió bien.
+ * termina de dibujarse a los 875 ms —0,3 s de espera y 0,575 s de trazo— y se
+ * queda 975 ms más quieto, para que se llegue a ver que salió bien. Los
+ * números se eligieron mirando la animación en el teléfono (P82): con el
+ * reparto anterior, el tilde aparecía y la pantalla ya había cambiado.
  */
-const MS_CIERRE = 650;
+const MS_CIERRE = 1850;
 
 /** Lo que se espera a que la pantalla de destino se dibuje antes de sacar el velo igual. */
 const MS_RESPALDO_CIERRE = 400;
@@ -786,10 +788,10 @@ function dibujarAjustes(): void {
  * borra nada (C05.5.2).
  */
 async function reconstruir({ enAjustes = false } = {}) {
-  reindexando = { leidas: 0, total: 0 };
+  reindexando = 0;
   const dibujar = () => enAjustes
     ? dibujarAjustes()
-    : pintar(renderConexion({ estado: 'creando-indice', ...(reindexando ? { progreso: reindexando } : {}) }));
+    : pintar(renderConexion({ estado: 'creando-indice', ...(reindexando !== null ? { progreso: reindexando } : {}) }));
 
   dibujar();
   try {
@@ -1785,7 +1787,9 @@ function dibujarVisor(): void {
  * en vez de redibujar, que perdería el foco y el cursor.
  */
 function revisarCategoria(): void {
-  const form = document.querySelector<HTMLFormElement>('#app [data-formulario]');
+  // Sin el `#app `: el formulario se busca igual que en `formularioActual` y
+  // en `dibujarVisor`, que es el mismo formulario.
+  const form = document.querySelector<HTMLFormElement>('[data-formulario]');
   if (!form) return;
   const valor = (n: string): string => form.querySelector<HTMLInputElement>(`[name="${n}"]`)?.value ?? '';
   const otros = JSON.parse(form.dataset['otros'] ?? '[]') as string[];

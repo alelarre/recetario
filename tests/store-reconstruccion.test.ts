@@ -82,11 +82,32 @@ describe('reconstruir', () => {
     expect(meta.schemaVersion).toBe(String(SCHEMA_VERSION));
   });
 
-  it('reporta progreso mientras lee', async () => {
+  // El progreso es una sola barra de punta a punta: la pantalla no sabe de
+  // etapas, sólo dibuja lo que va hecho.
+  it('el progreso avanza de 0 a 1, sin volver atrás, y termina en 1', async () => {
     const vistos: number[] = [];
-    await store.reconstruir(p => vistos.push(p.leidas));
+    await store.reconstruir(p => vistos.push(p));
+
     expect(vistos.length).toBeGreaterThan(0);
-    expect(vistos.at(-1)).toBe(4);
+    expect(Math.min(...vistos)).toBeGreaterThanOrEqual(0);
+    expect(vistos.at(-1)).toBe(1);
+    expect(vistos).toEqual([...vistos].sort((a, b) => a - b));
+  });
+
+  // Sin esto la barra se queda quieta mientras se recorren las carpetas y se
+  // lista lo que hay adentro, que con una carpeta recién creada es todo el
+  // proceso: no hay ningún `.md` para leer y parecía colgada (P76).
+  it('la barra ya se movió antes de leer el primer archivo', async () => {
+    let primerAviso: number | null = null;
+    let lecturasHastaAhi = -1;
+    await store.reconstruir(p => {
+      if (primerAviso !== null) return;
+      primerAviso = p;
+      lecturasHastaAhi = drive.llamadas.filter(([que]) => que === 'leerTexto').length;
+    });
+
+    expect(primerAviso).toBeGreaterThan(0);
+    expect(lecturasHastaAhi).toBe(0);
   });
 
   it('reemplaza la planilla entera en vez de agregar filas duplicadas', async () => {
@@ -209,16 +230,20 @@ describe('reconstruir lee varios .md a la vez', () => {
     expect(recetas.valores.map(f => f[titulo])).toEqual(TITULOS);
   });
 
-  it('el progreso avanza de a uno aunque las lecturas se solapen', async () => {
+  it('el progreso avanza de a una lectura aunque se solapen', async () => {
     const { store, pendientes } = armar();
     await store.arrancar();
 
     const vistos: number[] = [];
-    const reconstruccion = store.reconstruir(p => vistos.push(p.leidas));
+    const reconstruccion = store.reconstruir(p => vistos.push(p));
     await tic();
     while (pendientes.length) { pendientes.pop()!.soltar(); await tic(); }
     await reconstruccion;
 
-    expect(vistos).toEqual(TITULOS.map((_, i) => i + 1));
+    // Una lectura que contesta antes que otra no puede adelantar la barra más
+    // de lo suyo ni pisar lo ya avisado: siempre crece, y nunca se pasa.
+    expect(vistos).toEqual([...vistos].sort((a, b) => a - b));
+    expect(vistos.at(-1)).toBe(1);
+    expect(new Set(vistos).size).toBe(vistos.length);
   });
 });

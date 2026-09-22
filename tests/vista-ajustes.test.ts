@@ -63,24 +63,23 @@ describe('Ajustes', () => {
     expect(html).toContain('suelta.md');
   });
 
-  it('antes del primer archivo no hay números: spinner, no «0 de 0»', () => {
-    const html = renderAjustes({ ...base, reindexando: { leidas: 0, total: 0 } });
-    expect(html).toContain('Reindexando…');
-    expect(html).toContain('class="spin"');
-    expect(html).not.toContain('0 de 0');
-    expect(html).not.toContain('class="barra"');
+  // Una sola barra de punta a punta, igual que en el primer arranque (P76).
+  it('recién arrancando la barra está en cero, y no hay spinner', () => {
+    const html = renderAjustes({ ...base, reindexando: 0 });
+    expect(html).toContain('Reindexando');
+    expect(html).toContain('class="barra"');
+    expect(html).not.toContain('class="spin"');
   });
 
-  it('reindexando hay barra con cuántos van sobre el total, y no hay cancelar', () => {
-    const html = renderAjustes({ ...base, reindexando: { leidas: 40, total: 200 } });
-    expect(html).toContain('40');
-    expect(html).toContain('200');
-    expect(html).toContain('class="barra"');
+  it('reindexando hay barra con el porcentaje, y no hay cancelar', () => {
+    const html = renderAjustes({ ...base, reindexando: 0.2 });
+    expect(html).toContain('20%');
+    expect(html).toContain('width:20%');
     expect(html).not.toMatch(/cancelar/i);
   });
 
   it('mientras reindexa no se ofrece reindexar de nuevo', () => {
-    expect(renderAjustes({ ...base, reindexando: { leidas: 1, total: 2 } }))
+    expect(renderAjustes({ ...base, reindexando: 0.5 }))
       .not.toContain('data-accion="reindexar"');
   });
 });
@@ -153,7 +152,7 @@ describe('Ajustes: borrar los datos locales', () => {
   });
 
   it('mientras reindexa no se ofrece', () => {
-    expect(renderAjustes({ ...base, reindexando: { leidas: 1, total: 2 } }))
+    expect(renderAjustes({ ...base, reindexando: 0.5 }))
       .not.toContain('data-accion="borrar-datos-locales"');
   });
 });

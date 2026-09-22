@@ -98,7 +98,7 @@ la pantalla que lanzó la escritura sigue siendo la que está.
 - [ ] **No se navega:** un cambio de hash —un link, el volver del encabezado, el gesto de atrás de Android— no dibuja la pantalla nueva, y la URL vuelve a la de la pantalla que está escribiendo.
 - [ ] **No se repite la acción:** volver a tocar el control no hace nada.
 - [ ] El velo se suelta siempre, termine bien o mal; después la operación sigue su camino —navega, redibuja o muestra su aviso con lo escrito todavía en pantalla (R1)—.
-- [ ] **Guardar una receta cierra con el tilde:** cuando el `.md` y su fila quedaron escritos —una receta nueva, una editada o una convertida desde un borrador—, el velo tarda 650 ms más en irse, tapando la olla y dibujando el tilde, que queda quieto un momento para que se llegue a ver (§6.17b). Es la escritura que el usuario confirma con un botón y de la que la pantalla se va; las demás sueltan el velo de una. Si no se llegó a escribir —falta el título, falta la categoría, falló Drive— no hay tilde.
+- [ ] **Guardar una receta cierra con el tilde:** cuando el `.md` y su fila quedaron escritos —una receta nueva, una editada o una convertida desde un borrador—, el velo tarda 1850 ms más en irse, tapando la olla y dibujando el tilde, que queda quieto un momento para que se llegue a ver (§6.17b). Es la escritura que el usuario confirma con un botón y de la que la pantalla se va; las demás sueltan el velo de una. Si no se llegó a escribir —falta el título, falta la categoría, falló Drive— no hay tilde.
 - [ ] **El orden es olla, tilde y recién después la pantalla nueva:** el editor se cierra cuando el tilde ya está dibujado, y el velo se va cuando la pantalla a la que se vuelve está pintada, así el repintado no se ve pasar. Mientras dibuja el tilde el velo sigue tapando, pero la pantalla ya no está ocupada: navegar no lo frena nadie. Si el guardado no lleva a ninguna pantalla nueva, el velo se va solo. Una escritura nueva durante ese rato corta el dibujo y vuelve a tapar.
 - [ ] Entran: guardar y crear una receta —también desde un borrador o desde Claude—, borrarla, guardar una captura, descartar un borrador, agregarle y sacarle una foto, crear, editar y borrar una categoría, escribir el plan de la semana —sumarle una receta, sacarle una, reiniciarlo— y crear la carpeta base.
 - [ ] Entran también **dos operaciones que no escriben nada**, porque tardan y mientras duran vale lo mismo —no se toca y no se navega—: **achicar una foto** recién elegida, en el editor de recetas, en la captura, en el borrador y en la foto propia de una categoría; y **bajar la foto de una URL** en el editor de recetas (`E04-Corregir.md` C04.3d.1b). Las fotos del editor no llegan a Drive hasta Guardar (F04.3d). **Con varias fotos de una, el velo se pone una sola vez para todas**: prenderlo y apagarlo entre una y otra se ve como un parpadeo.
@@ -345,7 +345,8 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 
 #### C05.5.2 — El reindexado muestra progreso y no se cancela *(J8)*
 
-- [ ] Hay una barra de progreso con cuántos archivos van sobre el total.
+- [ ] Hay **una sola barra de punta a punta, con su porcentaje**, que cubre el proceso entero: recorrer las carpetas, listar lo que hay adentro, leer los `.md` y escribir las hojas. Cada etapa avanza dentro de su tramo, con pesos fijos.
+- [ ] **Nunca hay un indicador indeterminado.** Leer los `.md` es una etapa entre otras: con una carpeta recién creada no hay ninguno que leer y el rato se lo llevan las demás, que un spinner no distingue de colgado.
 - [ ] **No hay botón de cancelar.** Una vez empezada, termina.
 - [ ] Mientras corre, la app no permite guardar ni borrar recetas.
 - [ ] Si falla a mitad, avisa (R1) y ofrece volver a empezar; el índice queda como haya quedado y se repara volviendo a reindexar.
@@ -363,7 +364,9 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 vez, con un tope para no abrir cientos de pedidos juntos, y las filas se escriben
 igual en el orden en que Drive lista los archivos. Aun así puede tardar minutos:
 por eso vive a tres toques y por eso tiene barra de progreso y no un indicador
-indeterminado.
+indeterminado. El setup de una carpeta base (C05.7.4) suma sus dos etapas
+propias —crear las predefinidas que falten y `_indice`— adelante de la barra del
+reindexado, que entra comprimida en lo que queda.
 
 ### F05.6 — Un índice roto se recrea, no se repara
 

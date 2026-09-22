@@ -18,17 +18,19 @@ describe('Conexión', () => {
     expect(renderConexion({ estado: 'denegado' })).toMatch(/sin acceso a Drive/i);
   });
 
-  it('creando el índice, antes de saber cuántos son: spinner y ningún cero', () => {
-    const html = renderConexion({ estado: 'creando-indice', progreso: { leidas: 0, total: 0 } });
-    expect(html).toContain('Creando el índice…');
-    expect(html).toContain('class="spin"');
-    expect(html).not.toContain('0 de 0');
+  // Una sola barra de punta a punta: nunca un spinner mudo, que es lo que
+  // parecía colgado con una carpeta recién creada (P76).
+  it('creando el índice, recién arrancando: la barra en cero y no un spinner', () => {
+    const html = renderConexion({ estado: 'creando-indice', progreso: 0 });
+    expect(html).toContain('Creando el índice');
+    expect(html).toContain('class="barra"');
+    expect(html).not.toContain('class="spin"');
   });
 
-  it('creando el índice: número y no spinner', () => {
-    const html = renderConexion({ estado: 'creando-indice', progreso: { leidas: 128, total: 1012 } });
-    expect(html).toContain('128');
-    expect(html).toContain('1012');
+  it('creando el índice: el porcentaje y la barra', () => {
+    const html = renderConexion({ estado: 'creando-indice', progreso: 0.47 });
+    expect(html).toContain('47%');
+    expect(html).toContain('width:47%');
     expect(html).not.toContain('class="spin"');
   });
 });

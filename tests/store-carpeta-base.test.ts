@@ -132,6 +132,22 @@ describe('el setup de una carpeta', () => {
     expect(indiceLocal.actual()?.raizNombre).toBe('Nueva');
   });
 
+  // El caso de P76: una carpeta recién creada no tiene ningún `.md`, así que
+  // sin esto la barra pasaba de 0 a listo mientras se hacían las 16 carpetas,
+  // la planilla y los listados, y parecía colgada.
+  it('sobre una carpeta vacía la barra igual recorre todo el camino', async () => {
+    const drive = driveFalso([{ id: 'n1', name: 'Nueva', mimeType: CARPETA, parents: ['root'] }]);
+    const store = crearStore({ drive, sheets: sheetsFalso(), indiceLocal: indiceLocalFalso() });
+
+    const vistos: number[] = [];
+    await store.prepararCarpeta({ id: 'n1', nombre: 'Nueva' }, p => vistos.push(p));
+
+    expect(vistos).toEqual([...vistos].sort((a, b) => a - b));
+    expect(vistos.at(-1)).toBe(1);
+    // Las 16 carpetas mueven la barra mientras se crean, no de golpe al final.
+    expect(vistos.filter(p => p <= 0.2).length).toBeGreaterThanOrEqual(16);
+  });
+
   it('sobre una carpeta que ya tiene las 16, no crea ninguna', async () => {
     const drive = driveFalso([
       { id: 'r1', name: 'Recetario', mimeType: CARPETA, parents: ['root'] },
