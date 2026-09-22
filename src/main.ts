@@ -1,7 +1,7 @@
 import { crearAuth, ErrorDeAuth } from './auth.js';
 import { crearDrive, ErrorDeDrive } from './drive.js';
 import { crearSheets, ErrorDeSheets } from './sheets.js';
-import { crearStore } from './store.js';
+import { crearStore, conConcurrencia, TOPE_LECTURAS } from './store.js';
 import * as indiceLocal from './indice-local.js';
 import { parse, slugArchivo } from './recipe.js';
 import { tagReservado, conEspecial, esFavorita, tieneEspecial, contarDuraciones, filtrarPorDuracion, ordenarRecetas } from './catalogo.js';
@@ -474,14 +474,29 @@ const delaCategoria = (nombre: string): Entrada[] => store.entradas().filter(e =
  * La lista de compras del plan. Las recetas se leen de Drive al entrar, una por
  * receta distinta; una que ya no se puede leer se saltea. Después cuentan una
  * vez por aparición: la misma receta en dos comidas cuenta dos veces.
+ *
+ * Las lecturas se solapan, de a seis como el reindexado: en fila, un plan
+ * cargado eran catorce viajes uno detrás de otro (P81). Y tapan la pantalla
+ * mientras duran —no escriben nada, pero es la espera más larga de la app
+ * (R8)—; con la lista ya armada no se tapa nada, que sería un parpadeo.
  */
 async function comprasDelPlan(plan: Plan): Promise<ListaDeCompras> {
   const clave = plan.comidas.map(c => c.id).join(',');
   if (comprasLeidas?.clave === clave) return comprasLeidas.lista;
+  const ids = [...new Set(plan.comidas.map(c => c.id))];
   const leidas = new Map<string, Receta>();
-  for (const id of new Set(plan.comidas.map(c => c.id))) {
-    const leida = await store.receta(id).catch(err => { console.error(err); return null; });
-    if (leida) leidas.set(id, leida.receta);
+  const destapar = tapar();
+  try {
+    // El error se atrapa acá adentro y no afuera: `conConcurrencia` corta el
+    // reparto con el primero que falla, y una receta borrada sólo se saltea.
+    const traidas = await conConcurrencia(ids, TOPE_LECTURAS, (id: string) =>
+      store.receta(id).catch(err => { console.error(err); return null; }));
+    for (const [i, id] of ids.entries()) {
+      const leida = traidas[i];
+      if (leida) leidas.set(id, leida.receta);
+    }
+  } finally {
+    destapar();
   }
   const recetas = plan.comidas.flatMap(c => {
     const receta = leidas.get(c.id);

@@ -238,7 +238,13 @@ const storeFake = {
   },
   planDuplicado: () => null
 };
-vi.mock('../src/store.js', () => ({ crearStore: () => storeFake }));
+// El store es un doble entero, pero conserva sus utilidades sueltas:
+// `conConcurrencia` y `TOPE_LECTURAS`, con los que `main` lee las recetas del
+// plan para la lista de compras.
+vi.mock('../src/store.js', async original => ({
+  ...await original<typeof import('../src/store.js')>(),
+  crearStore: () => storeFake
+}));
 // Achicar necesita un canvas: acá devuelve la foto tal cual, y una foto
 // que dice «roto» no se decodifica.
 vi.mock('../src/fotos.js', () => ({
@@ -3378,6 +3384,74 @@ describe('main.ts: las rutas', () => {
         expect(estado.lecturas).toBe(2);
         expect(app.innerHTML).toContain('Harina');
         expect(app.innerHTML).toContain('500 g');
+      } finally {
+        storeFake.receta = original;
+      }
+    });
+
+    it('la misma receta dos veces en el plan se lee una sola vez', async () => {
+      estado.plan = {
+        comidas: [
+          { dia: 0, momento: 'noche', id: 'f1', titulo: 'Milanesas' },
+          { dia: 3, momento: 'mediodia', id: 'f1', titulo: 'Milanesas' }
+        ]
+      };
+      const original = storeFake.receta;
+      storeFake.receta = async (id: string) => {
+        estado.lecturas++;
+        return {
+          entrada: entradaFalsa({ id_archivo: id }),
+          receta: parse('---\ntitulo: A\n---\n\n## Ingredientes\n- Harina - 250 g\n')
+        };
+      };
+      try {
+        const { abrir, app } = await montar();
+        await abrir('#/plan/compras');
+
+        expect(estado.lecturas).toBe(1);
+        // Leída una vez, pero cuenta dos: se come dos días.
+        expect(app.innerHTML).toContain('500 g');
+      } finally {
+        storeFake.receta = original;
+      }
+    });
+
+    it('las lecturas se solapan, y la pantalla se tapa mientras tanto (P81)', async () => {
+      estado.plan = {
+        comidas: ['f1', 'f2', 'f3', 'f4'].map((id, i) => ({
+          dia: i, momento: 'noche' as const, id, titulo: id
+        }))
+      };
+      const original = storeFake.receta;
+      const soltar: (() => void)[] = [];
+      let enVuelo = 0;
+      let pico = 0;
+      storeFake.receta = async (id: string) => {
+        enVuelo++;
+        pico = Math.max(pico, enVuelo);
+        await new Promise<void>(listo => soltar.push(listo));
+        enVuelo--;
+        return {
+          entrada: entradaFalsa({ id_archivo: id }),
+          receta: parse('---\ntitulo: A\n---\n\n## Ingredientes\n- Harina - 250 g\n')
+        };
+      };
+      try {
+        const { abrir, app, velo } = await montar();
+        await abrir('#/plan/compras');
+
+        // Las cuatro salieron juntas —el tope son seis— y no una detrás de
+        // otra, que era lo que hacía esperar hasta catorce viajes en fila.
+        expect(pico).toBe(4);
+        // Y mientras lee, la pantalla está tapada: es la espera más larga de
+        // la app y antes no daba ninguna señal.
+        expect(velo.hidden).toBe(false);
+
+        for (const listo of soltar) listo();
+        await esperar();
+
+        expect(velo.hidden).toBe(true);
+        expect(app.innerHTML).toContain('1000 g');
       } finally {
         storeFake.receta = original;
       }

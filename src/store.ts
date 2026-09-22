@@ -38,7 +38,7 @@ export const TOPE_LECTURAS = 6;
  * resultados **en el orden de `items`**, no en el que fueron terminando. Un
  * error corta el reparto y se propaga, como cuando las lecturas eran en fila.
  */
-async function conConcurrencia<T, R>(
+export async function conConcurrencia<T, R>(
   items: readonly T[], tope: number, tarea: (item: T) => Promise<R>
 ): Promise<R[]> {
   const resultados: R[] = new Array<R>(items.length);

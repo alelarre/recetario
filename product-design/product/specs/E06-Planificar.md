@@ -141,8 +141,13 @@ en Drive:** se lee en la app y se comparte como texto.
 
 - [ ] Toma los ingredientes de cada receta cargada, **una vez por aparición**:
   una receta en dos comidas cuenta dos veces.
-- [ ] Las recetas se leen de Drive al entrar, una por receta distinta del plan;
-  una que ya no se puede leer se saltea.
+- [ ] Las recetas se leen de Drive al entrar, una por receta distinta del plan
+  —la misma en dos comidas se lee una sola vez—; una que ya no se puede leer se
+  saltea. **Se leen solapadas, de a seis como el reindexado, y con la pantalla
+  tapada** (`E05-Cimientos.md` R8): es la espera más larga de la app, y en fila
+  y sin señal parecía colgada.
+- [ ] La lista armada se guarda en memoria mientras el plan no cambie: volver a
+  entrar, o abrir la ficha de compartir, no vuelve a leer nada.
 - [ ] Dos bloques: **Con cantidad** y **Sin cantidad** (C05.1.3).
 - [ ] **Se suman** las cantidades de mismo nombre cuando las dos empiezan con un
   número y el resto del texto —recortado y en minúsculas— coincide:
