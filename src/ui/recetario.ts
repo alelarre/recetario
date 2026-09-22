@@ -31,7 +31,7 @@ export function renderRecetario(
   // vuelve a esconder.
   const grilla = [...categorias]
     .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
-    .map(c => tile(c.nombre, c.cantidad))
+    .map(c => tile(c.nombre, { cantidad: c.cantidad }))
     .join('');
 
   // Los tres destinos viven en el lateral: el encabezado sólo lleva la

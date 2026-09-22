@@ -256,6 +256,8 @@ let confirmandoReinicio = false;
 let errorPlan = '';
 /** Lo escrito en la caja de la pantalla de agregar. Vive acá y no en el DOM: el bloque se redibuja solo. */
 let consultaPlan = '';
+/** La categoría elegida en la grilla de la pantalla de agregar, si hay una. */
+let categoriaPlan: string | null = null;
 /**
  * La lista de compras ya armada, con la clave del plan del que salió:
  * redibujar —abrir la ficha de compartir— no vuelve a leer las recetas.
@@ -462,6 +464,9 @@ function precargarElHome(): void {
 
 /** Las recetas con el tag `menú diario`: lo que la pantalla de agregar ofrece sin buscar nada. */
 const delMenuDiario = (): Entrada[] => store.entradas().filter(e => tieneEspecial(e, 'menú diario'));
+
+/** Las recetas de una categoría, para cuando se la elige en la grilla de agregar al plan. */
+const delaCategoria = (nombre: string): Entrada[] => store.entradas().filter(e => e.categoria === nombre);
 
 /**
  * La lista de compras del plan. Las recetas se leen de Drive al entrar, una por
@@ -932,6 +937,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     if (!PANTALLAS_DE_PLAN.includes(ruta.vista)) { planLeido = null; comprasLeidas = null; errorPlan = ''; }
     confirmandoReinicio = false;
     consultaPlan = '';
+    categoriaPlan = null;
     tagsActivos = [];
     duracionesActivas = [];
     orden = 'alfa';
@@ -1135,7 +1141,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       return pintar(renderPlanAgregar({
         dia: Number(ruta.params['dia'] ?? 0),
         momento: (ruta.params['momento'] ?? 'noche') as Momento,
-        menuDiario: delMenuDiario(),
+        menuDiario: delMenuDiario(), categorias: store.categorias(),
+        categoriaElegida: categoriaPlan, deLaCategoria: categoriaPlan ? delaCategoria(categoriaPlan) : [],
         consulta: consultaPlan, grupos: store.buscarPorTexto(consultaPlan)
       }));
 
@@ -2057,6 +2064,14 @@ app.addEventListener('click', async (e) => {
     location.hash = `#/plan/agregar?dia=${encodeURIComponent(dia)}&momento=${encodeURIComponent(momento)}`;
     return;
   }
+  if (accion === 'elegir-categoria-plan') {
+    categoriaPlan = boton.dataset['nombre'] ?? '';
+    return render();
+  }
+  if (accion === 'volver-categorias-plan') {
+    categoriaPlan = null;
+    return render();
+  }
   if (accion === 'elegir-para-el-plan') {
     const id = boton.dataset['id'] ?? '';
     const entrada = store.entradas().find(e => e.id_archivo === id);
@@ -2726,11 +2741,15 @@ app.addEventListener('input', (e) => {
     const caja = e.target as HTMLInputElement | null;
     if (caja?.dataset?.['accion'] !== 'buscar-en-plan') return;
     consultaPlan = caja.value;
+    // Escribir es dejar la categoría elegida: son dos formas de filtrar y no
+    // conviven en el mismo bloque.
+    categoriaPlan = null;
     const bloque = document.querySelector('[data-resultados-plan]');
     if (bloque) {
       bloque.innerHTML = bloqueDeAgregar({
-        menuDiario: delMenuDiario(), consulta: consultaPlan,
-        grupos: store.buscarPorTexto(consultaPlan)
+        menuDiario: delMenuDiario(), categorias: store.categorias(),
+        categoriaElegida: null, deLaCategoria: [],
+        consulta: consultaPlan, grupos: store.buscarPorTexto(consultaPlan)
       });
     }
     return;

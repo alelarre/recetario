@@ -3148,6 +3148,18 @@ describe('main.ts: las rutas', () => {
         storeFake.entradas = original;
       }
     });
+
+    it('elegir una categoría de la grilla filtra a sus recetas, sin navegar a la categoría (P69)', async () => {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/plan/agregar?dia=1&momento=noche');
+      expect(app.innerHTML).toContain('data-accion="elegir-categoria-plan" data-nombre="Carnes"');
+      await tocar('elegir-categoria-plan', { nombre: 'Carnes' });
+      expect(app.innerHTML).toContain('Milanesas');
+      expect(app.innerHTML).toContain('data-accion="elegir-para-el-plan" data-id="f1"');
+      expect(app.innerHTML).not.toContain('data-accion="elegir-categoria-plan"');
+      await tocar('volver-categorias-plan');
+      expect(app.innerHTML).toContain('data-accion="elegir-categoria-plan" data-nombre="Carnes"');
+    });
   });
 
   describe('la lista de compras', () => {

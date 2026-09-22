@@ -360,6 +360,11 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
             display: flex; flex-direction: column; gap: var(--e-2); }
 .pie-plan .btn { width: 100%; }
 
+/* Agregar al plan, con una categoría elegida en la grilla: el volver y el
+   nombre, en la misma fila y a la altura del rótulo que reemplazan. */
+.rot-cat { display: flex; align-items: center; gap: var(--e-2); margin-bottom: var(--e-3); }
+.rot-cat span { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase; letter-spacing: .06em; }
+
 /* ---- Ajustes ---- */
 .fila-a { display: flex; align-items: center; gap: var(--e-3); min-height: 48px; }
 .fila-a .t { flex: 1; }

@@ -333,12 +333,21 @@ describe('tile', () => {
   });
 
   it('el contador aparece cuando la categoría tiene recetas', () => {
-    expect(tile('Carnes', 20)).toContain('<span class="cu">20</span>');
+    expect(tile('Carnes', { cantidad: 20 })).toContain('<span class="cu">20</span>');
   });
 
   it('en cero no se dibuja: una categoría vacía se muestra igual, sin un 0 encima', () => {
-    expect(tile('Carnes', 0)).not.toContain('class="cu"');
+    expect(tile('Carnes', { cantidad: 0 })).not.toContain('class="cu"');
     expect(tile('Carnes')).not.toContain('class="cu"');
+  });
+
+  it('con acción, es un botón que lleva el nombre, y no un link a la categoría', () => {
+    const html = tile('Carnes', { accion: 'elegir-categoria-plan' });
+    expect(html).toContain('<button type="button" class="tile"');
+    expect(html).toContain('data-accion="elegir-categoria-plan"');
+    expect(html).toContain('data-nombre="Carnes"');
+    expect(html).not.toContain('href=');
+    expect(html.trimEnd().endsWith('</button>')).toBe(true);
   });
 });
 
@@ -362,6 +371,16 @@ describe('la tarjeta con acción', () => {
     expect(html).toContain('<button class="tarjeta" type="button" data-accion="elegir-para-el-plan" data-id="f1"');
     expect(html).not.toContain('href=');
     expect(html.trimEnd().endsWith('</button>')).toBe(true);
+  });
+
+  it('marca con un «+» que tocarla agrega, y no abre la receta', () => {
+    const html = tarjeta(entradaFalsa({ id_archivo: 'f1', titulo: 'Rabas' }), { accion: 'elegir-para-el-plan' });
+    expect(html).toContain('class="mas-elegir"');
+  });
+
+  it('sin acción, es un link y no lleva el «+»', () => {
+    const html = tarjeta(entradaFalsa({ id_archivo: 'f1', titulo: 'Rabas' }));
+    expect(html).not.toContain('mas-elegir');
   });
 });
 

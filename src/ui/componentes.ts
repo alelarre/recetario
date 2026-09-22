@@ -148,12 +148,15 @@ export function tarjeta(e: Entrada, { motivo, accion }: OpcionesTarjeta = {}): s
   const apertura = accion
     ? `<button class="tarjeta" type="button" data-accion="${escapar(accion)}" data-id="${escapar(e.id_archivo)}"${estilo}>`
     : `<a class="tarjeta" href="#/r/${encodeURIComponent(e.id_archivo)}"${estilo}>`;
+  // Con acción la tarjeta agrega en vez de abrir la receta: el «+» lo dice
+  // para quien ve, y queda afuera de `.txt` para no competir con las marcas.
+  const masElegir = accion ? `<span class="mas-elegir" aria-hidden="true">${ICO.mas}</span>` : '';
   return apertura +
     placeholder(e.categoria, e.foto) +
     '<span class="txt">' +
       `<span class="n">${escapar(e.titulo)}</span>` +
       `<span class="ctx">${contexto}</span>` +
-    '</span>' + marcas + (accion ? '</button>' : '</a>');
+    '</span>' + marcas + masElegir + (accion ? '</button>' : '</a>');
 }
 
 export interface OpcionesAviso {
@@ -350,8 +353,18 @@ export function botonMenu(borradores: number): string {
   return `<button class="ico cuenta menu-lat" data-accion="abrir-menu" aria-label="Menú">${ICO.menu}${cuenta}</button>`;
 }
 
+export interface OpcionesTile {
+  cantidad?: number;
+  /**
+   * Con acción, el tile es un botón que la dispara con el nombre de la
+   * categoría, en vez de un link que navega a ella: es lo que pide la
+   * grilla de categorías al agregar al plan.
+   */
+  accion?: string;
+}
+
 /** El tile de una categoría en la grilla del Recetario (mockup 03). */
-export function tile(nombre: string, cantidad?: number): string {
+export function tile(nombre: string, { cantidad, accion }: OpcionesTile = {}): string {
   const imagen = fotoCategoria(nombre);
   // Con `imgDe`, una foto propia de Drive también se dibuja: como recuadro
   // hasta que la Tarea 8 le ponga el `src`.
@@ -359,9 +372,11 @@ export function tile(nombre: string, cantidad?: number): string {
     ? `<span class="im">${imgDe(imagen)}</span>`
     : '<span class="im trama"></span>';   // las que no tienen foto
   const cuenta = cantidad ? `<span class="cu">${cantidad}</span>` : '';
-  return `<a class="tile" style="--c:${colorCategoria(nombre)}" ` +
-    `href="#/c/${encodeURIComponent(nombre)}" data-slug="${escapar(slugCategoria(nombre))}">` +
-    `${fondo}${cuenta}<span class="nm">${escapar(nombre)}</span></a>`;
+  const atributos = `class="tile" style="--c:${colorCategoria(nombre)}" data-slug="${escapar(slugCategoria(nombre))}"`;
+  return (accion
+    ? `<button type="button" ${atributos} data-accion="${escapar(accion)}" data-nombre="${escapar(nombre)}">`
+    : `<a ${atributos} href="#/c/${encodeURIComponent(nombre)}">`) +
+    `${fondo}${cuenta}<span class="nm">${escapar(nombre)}</span>` + (accion ? '</button>' : '</a>');
 }
 
 /** Qué acción dispara un botón de la miniatura, y con qué valor si lo lleva. */
