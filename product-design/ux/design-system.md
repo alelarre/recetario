@@ -458,6 +458,7 @@ Tres convenciones valen para todos los componentes:
 | El cuadrito `▪` de categoría | 8 × 8 px, `--r-chico`, el color de la categoría |
 | Marcas de los especiales, juntas en la esquina de arriba a la derecha | 16 × 16 px cada una, separadas 4 px, en el orden de los especiales —favorito, menú diario, probar, incompleta—, en `--acento`; ver §6.5. La estrella de favorito lleva además un relleno del acento al 35 %. El título reserva 20 px de ancho por marca, para no pasar por debajo; una tarjeta sin marcas no reserva nada. Sin texto, así que cada una se nombra para el lector de pantalla —*Favorita*, *Menú diario*, *Para probar*, *Incompleta*— y con el mismo nombre en el `title`, que en la computadora aparece como globito al apoyar el mouse |
 | Motivo, en resultados por ingrediente | `--txt-chico`, `--acento` |
+| El «+» de agregar, sólo cuando la tarjeta suma en vez de abrir | Círculo de 28 px relleno en `--fg`, con el signo en `--bg` a 2,5 px de trazo. Es el contraste más alto que da la paleta, para que se lea como botón antes que como dato; el acento queda para las marcas de la esquina, que son otra cosa. Va al final de la fila, fuera del bloque de texto. Se usa en *Agregar al plan* (`E06-Planificar.md` F06.3) |
 
 **Alto total: 80 px** con el título en un renglón. Entran ocho o nueve por
 pantalla.

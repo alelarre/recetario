@@ -177,11 +177,12 @@ button.tarjeta { width: 100%; font: inherit; text-align: left; cursor: pointer; 
 .marca.favorita svg { fill: color-mix(in srgb, var(--acento) 35%, transparent); }
 
 /* Con acción, la tarjeta agrega en vez de abrir: el «+» va aparte de las
-   marcas de la esquina, en el flujo normal, a la derecha del todo. El reborde
-   sólido lo hace leer como un botón y no como un dato más de la tarjeta. */
+   marcas de la esquina, en el flujo normal, a la derecha del todo. Círculo
+   lleno y signo oscuro: es el contraste más alto que da la paleta, y deja el
+   acento para las marcas de la esquina, que son otra cosa. */
 .mas-elegir { display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 28px;
-              border: 1px solid var(--acento); border-radius: 50%; color: var(--acento); }
-.mas-elegir svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2;
+              border-radius: 50%; background: var(--fg); color: var(--bg); }
+.mas-elegir svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.5;
                   stroke-linecap: round; stroke-linejoin: round; }
 
 /* ---- §6.2 Placeholder / foto de tarjeta ---- */
