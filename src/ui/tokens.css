@@ -174,9 +174,11 @@ button.tarjeta { width: 100%; font: inherit; text-align: left; cursor: pointer; 
 .marca.favorita svg { fill: color-mix(in srgb, var(--acento) 35%, transparent); }
 
 /* Con acción, la tarjeta agrega en vez de abrir: el «+» va aparte de las
-   marcas de la esquina, en el flujo normal, a la derecha del todo. */
-.mas-elegir { display: grid; place-items: center; width: 20px; height: 20px; flex: 0 0 20px; color: var(--acento); }
-.mas-elegir svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2;
+   marcas de la esquina, en el flujo normal, a la derecha del todo. El reborde
+   sólido lo hace leer como un botón y no como un dato más de la tarjeta. */
+.mas-elegir { display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 28px;
+              border: 1px solid var(--acento); border-radius: 50%; color: var(--acento); }
+.mas-elegir svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2;
                   stroke-linecap: round; stroke-linejoin: round; }
 
 /* ---- §6.2 Placeholder / foto de tarjeta ---- */
