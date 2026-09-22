@@ -16,7 +16,6 @@ probar; una que quedó a medias vuelve a `Abierto`.
 | P61 | Simplificar el flujo de creación de recetas | Nuevo y borrador se solapan en funcionalidad. Revisar el flujo entero y simplificarlo. | Abierto |
 | P70 | Limpiar comentarios que referencian el backlog | Hay comentarios en el código que citan entradas del backlog o decisiones puntuales. Limitarlos a lo mínimo que explique qué hace el código. | Abierto |
 | P71 | Limpieza general de documentos del proyecto | Revisar y poner en orden los documentos del proyecto. | Abierto |
-| P72 | Borrar los artefactos de claude.ai | Sacar los Artifacts publicados en claude.ai que quedaron del desarrollo. | Abierto |
 | P73 | Actualizar la documentación de producto | Poner `product-design/` al día con el estado actual del producto. | Abierto |
 | P74 | Revisar cómo están construidos los tests | Repasar la estructura y los patrones de los tests actuales. | Abierto |
 | P78 | *Nueva receta* no tiene menú lateral | El menú ofrece *Nueva receta*, pero `nueva` no está en `PANTALLAS_CON_MENU` (`src/main.ts:2784`): ni el gesto la abre ni el encabezado lleva la hamburguesa. Los cambios sin guardar no son el problema —la pregunta al salir vive en el `hashchange` (`main.ts:917`), así que un link del menú ya dispararía la misma confirmación que el volver—; el nudo es la esquina izquierda del encabezado, donde hoy está el volver, que es cómo se sale del editor. **En espera de P61:** si el flujo de creación se simplifica, puede que *Nueva receta* deje de ser una entrada del menú y la pregunta desaparezca sola. | En espera |
