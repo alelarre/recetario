@@ -40,7 +40,7 @@ describe('tarjeta', () => {
     expect(html).toContain('<img src="https://x/1.jpg"');
     expect(html).toContain('class="foto"');
     // El placeholder de la categoría está siempre: si la foto no llega —o ya
-    // no está en Drive— abajo queda él, y la fila no se mueve (spec §7, F02.5b).
+    // no está en Drive— abajo queda él, y la fila no se mueve (F02.5b).
     expect(html).toContain('class="ph"');
   });
 
@@ -384,7 +384,7 @@ describe('la tarjeta con acción', () => {
   });
 });
 
-describe('filaDeFotos: Cámara y Galería (P50)', () => {
+describe('filaDeFotos: Cámara y Galería', () => {
   it('con agregar, hay dos inputs de archivo: uno directo a la cámara y otro a la galería', () => {
     const html = filaDeFotos({ fotos: [], agregar: true });
     const inputs = html.match(/<input type="file"[^>]*>/g) ?? [];
@@ -447,7 +447,7 @@ describe('filaDeFotos: Cámara y Galería (P50)', () => {
     expect(filaDeFotos({ fotos: [], agregar: false, porUrl: true })).not.toContain('Por URL');
   });
 
-  it('las marcas de uso son de la receta: sin uso, la miniatura no lleva ninguna (P54)', () => {
+  it('las marcas de uso son de la receta: sin uso, la miniatura no lleva ninguna', () => {
     const sinUso = filaDeFotos({ fotos: [{ url: 'https://ejemplo/a.jpg', n: 1 }], agregar: false });
     expect(sinUso).not.toContain('miniatura-usos');
     const conUso = filaDeFotos({

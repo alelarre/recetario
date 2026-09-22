@@ -18,8 +18,8 @@ describe('Conexión', () => {
     expect(renderConexion({ estado: 'denegado' })).toMatch(/sin acceso a Drive/i);
   });
 
-  // Una sola barra de punta a punta: nunca un spinner mudo, que es lo que
-  // parecía colgado con una carpeta recién creada (P76).
+  // Una sola barra de punta a punta: nunca un spinner mudo, que con una
+  // carpeta recién creada no se distingue de colgado.
   it('creando el índice, recién arrancando: la barra en cero y no un spinner', () => {
     const html = renderConexion({ estado: 'creando-indice', progreso: 0 });
     expect(html).toContain('Creando el índice');

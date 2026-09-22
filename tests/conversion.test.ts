@@ -65,7 +65,7 @@ describe('el pedido con fotos', () => {
     expect(pedidoDeConversion(conFotos)).not.toContain('drive.google.com');
   });
 
-  it('dice cómo referenciarlas en la receta, después del párrafo de las fotos (spec §9)', () => {
+  it('dice cómo referenciarlas en la receta, después del párrafo de las fotos', () => {
     const p = pedidoDeConversion(conFotos);
     expect(p).toContain('En la receta, esas fotos son foto:1, foto:2…, en el mismo orden.');
     expect(p).toContain('Si una muestra el plato terminado, poné `foto: foto:N`.');

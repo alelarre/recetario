@@ -32,7 +32,7 @@ export function medidas(ancho: number, alto: number, maximo = LADO_MAXIMO): { an
 }
 
 export interface OpcionesAchicar {
-  /** El lado mayor. Por defecto el de Drive; el PDF las quiere más chicas (spec §10). */
+  /** El lado mayor. Por defecto el de Drive; el PDF las quiere más chicas. */
   maximo?: number;
   /** Cómo decodificar la foto; los tests corren en Node, donde no hay `createImageBitmap`. */
   decodificar?: (b: Blob) => Promise<Imagen>;

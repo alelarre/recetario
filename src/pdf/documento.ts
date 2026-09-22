@@ -20,7 +20,7 @@ const RELLENO = 6;
 /** Lo más ancho que llega a ser algo: la página menos sus márgenes. */
 const ANCHO_UTIL = ANCHO - 2 * MARGEN;
 /**
- * El alto máximo de una foto. La cabecera lo pide (§10), y una foto en línea
+ * El alto máximo de una foto. La cabecera lo pide, y una foto en línea
  * sigue la misma regla: su bloque no se parte, así que tiene que entrar en una página.
  */
 const ALTO_FOTO = mm(90);
@@ -55,7 +55,7 @@ function seccion(titulo: string, nodos: Content[]): Content[] {
 
 /**
  * Cómo dibujar la foto de una referencia, al ancho que le toque. Una URL que
- * no está en el mapa no se dibuja: `generar` no la pudo bajar (§10).
+ * no está en el mapa no se dibuja: `generar` no la pudo bajar.
  */
 const fotoEnLinea = (imagenes: Map<string, string>, ancho: number): FotoDeTramo =>
   (url, epigrafe) => {
@@ -67,16 +67,16 @@ const fotoEnLinea = (imagenes: Map<string, string>, ancho: number): FotoDeTramo 
     ];
   };
 
-/** La foto de la cabecera, arriba del título y al ancho de la página (§10). */
+/** La foto de la cabecera, arriba del título y al ancho de la página. */
 function fotoDeCabecera(receta: Receta, imagenes: Map<string, string>): Content[] {
   const dataUrl = receta.foto ? imagenes.get(receta.foto) : undefined;
   return dataUrl ? [{ image: dataUrl, fit: [ANCHO_UTIL, ALTO_FOTO], margin: [0, 0, 0, 6] }] : [];
 }
 
 /**
- * Las fotos sin uso, de a dos por fila (§10), en el orden del depósito. La
+ * Las fotos sin uso, de a dos por fila, en el orden del depósito. La
  * portada ya está arriba y las de una línea están en su línea: repetirlas acá
- * sería dibujarlas dos veces (P54). Sin ninguna, `seccion` no dibuja nada.
+ * sería dibujarlas dos veces. Sin ninguna, `seccion` no dibuja nada.
  */
 function galeria(sinUso: FotoDeReceta[], imagenes: Map<string, string>): Content[] {
   const lado = (ANCHO_UTIL - AIRE_GALERIA) / 2;
@@ -178,7 +178,7 @@ function variaciones(receta: Receta, fotoDe: FotoDeTramo): Content[] {
 
 /**
  * `imagenes` es una URL de la receta resuelta por su data URL, ya achicada
- * (`generar`). Una URL que no está no se dibuja: no se pudo bajar (§10).
+ * (`generar`). Una URL que no está no se dibuja: no se pudo bajar.
  *
  * `sinUso` son las fotos de la galería del final: las calcula `generar` sobre
  * el `.md` crudo (`fotosSinUso`), porque acá la receta ya viene resuelta y no

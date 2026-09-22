@@ -154,7 +154,7 @@ describe('sinFotosDeDrive', () => {
   });
 
   it('**no resuelve**: la externa sigue siendo `foto:N`, en la cabecera y en el texto', () => {
-    // Es lo que hace posible calcular el uso del otro lado del link (P54).
+    // Es lo que hace posible calcular el uso del otro lado del link.
     const receta = recetaFalsa({ foto: 'foto:2', descripcion: 'Ver ![](foto:1) y ![](foto:2).', fotos });
     const limpia = sinFotosDeDrive(receta);
     expect(limpia.foto).toBe('foto:2');

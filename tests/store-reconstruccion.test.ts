@@ -96,7 +96,7 @@ describe('reconstruir', () => {
 
   // Sin esto la barra se queda quieta mientras se recorren las carpetas y se
   // lista lo que hay adentro, que con una carpeta recién creada es todo el
-  // proceso: no hay ningún `.md` para leer y parecía colgada (P76).
+  // proceso: no hay ningún `.md` para leer.
   it('la barra ya se movió antes de leer el primer archivo', async () => {
     let primerAviso: number | null = null;
     let lecturasHastaAhi = -1;

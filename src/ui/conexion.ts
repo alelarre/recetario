@@ -30,8 +30,7 @@ export function renderConexion({ estado, progreso }: OpcionesConexion): string {
       case 'creando-indice': {
         // Puede tardar minutos, así que barra y nunca spinner: con una carpeta
         // recién creada no hay un solo `.md` que leer y el rato se lo llevan
-        // las carpetas y los listados, que un spinner no distingue de colgado
-        // (P76).
+        // las carpetas y los listados, que un spinner no distingue de colgado.
         const parte = progreso ?? 0;
         return `<p style="font-variant-numeric:tabular-nums">Creando el índice: ${porCiento(parte)}%.</p>` +
           barra(parte);

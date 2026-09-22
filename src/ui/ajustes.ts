@@ -56,7 +56,7 @@ export function renderAjustes(
   '</div>';
 
   // Una sola barra de punta a punta y nunca un spinner: leer los `.md` es una
-  // etapa entre otras, y las de antes también tardan (P76). No hay cancelar,
+  // etapa entre otras, y las de antes también tardan. No hay cancelar,
   // porque cortar a mitad deja el índice en el estado que el reindexado existe
   // para reparar (C05.5.2).
   const parte = reindexando ?? 0;

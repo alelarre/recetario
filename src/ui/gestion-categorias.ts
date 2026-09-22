@@ -52,7 +52,7 @@ export function renderListaCategorias({ categorias }: { categorias: { categoria:
 }
 
 /**
- * *Subir foto*, primero entre las muestras (spec §7): el mismo selector del
+ * *Subir foto*, primero entre las muestras: el mismo selector del
  * sistema que las fotos de una receta, de a una. El `input` va adentro del
  * `label`, así se abre sin script; el `Blob` achicado vive en `main` hasta que
  * se guarda la categoría.
@@ -105,7 +105,7 @@ export function renderEdicionCategoria(
       `aria-label="${foto ? escapar(foto.slice('catalogo:'.length)) : 'sin foto'}"></button>`;
   }).join('');
   // La foto propia de la categoría se elige de nuevo como cualquiera del
-  // catálogo (spec §7). Va con `imgDe` y no con `background-image`: la de
+  // catálogo. Va con `imgDe` y no con `background-image`: la de
   // Drive se pide con el token, y una URL suelta no la mostraría nunca.
   const propia = valores.foto.startsWith('drive:') || valores.foto.startsWith('propia:')
     ? `<button type="button" class="muestra-foto" data-accion="elegir-foto" data-valor="${escapar(valores.foto)}" ` +

@@ -144,7 +144,7 @@ interface Contexto {
  *
  * Es una sola barra de punta a punta y no un conteo de archivos: con una
  * carpeta recién creada no hay ningún `.md` que contar, y el rato largo se lo
- * llevan las carpetas, la planilla y los listados (P76). Cada etapa avanza
+ * llevan las carpetas, la planilla y los listados. Cada etapa avanza
  * dentro de su tramo, con los pesos de `TRAMOS`.
  */
 export type Progreso = number;
@@ -595,7 +595,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   }
 
   /**
-   * Antes de escribir el `.md` (spec §8, §9): sube las fotos nuevas y pasa las
+   * Antes de escribir el `.md`: sube las fotos nuevas y pasa las
    * del borrador a `_fotos/`, con el nombre del `.md` y su número. Devuelve la
    * receta con el link de cada nueva en su línea. Cada subida se avisa apenas
    * termina, para que un reintento no la resuba.
@@ -643,7 +643,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   /**
    * A la papelera y fuera del caché, pero sólo las fotos que están en
    * `_fotos/`: un link de Drive pegado a mano que apunta a otra carpeta no se
-   * toca (spec §5). Una que ya no está no es un error.
+   * toca. Una que ya no está no es un error.
    */
   async function tirarFotos(ids: readonly string[]): Promise<void> {
     if (!ctx.fotosId) return;
@@ -1090,7 +1090,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
    * vuelve a mandar a la papelera lo que ya está ahí, que no falla.
    *
    * `conservar` son las fotos que convertir ya pasó a la receta: esas no se
-   * tocan (spec §9). Y como convertir puede haberlas movido sin llegar a
+   * tocan. Y como convertir puede haberlas movido sin llegar a
    * descartar el borrador, tampoco se toca ninguna que ya no esté en
    * `_borradores/`: el `.md` del borrador las sigue nombrando, pero son de la
    * receta.
@@ -1137,7 +1137,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
 
     // 1. Las predefinidas que falten, con su color y su foto ya escritos. Son
     // dos viajes a Drive cada una y hasta dieciséis: sobre una carpeta recién
-    // creada, este paso es el rato largo del setup (P76).
+    // creada, este paso es el rato largo del setup.
     const existentes = new Set((await drive.listarCarpetas(carpeta.id)).map(c => normalizar(c.name ?? '')));
     const faltan = PREDEFINIDAS.filter(p => !existentes.has(normalizar(p.nombre)));
     for (const [i, p] of faltan.entries()) {

@@ -20,7 +20,7 @@ const textoDe = (tramos: TramoEnLinea[]): string => tramosAHtml(tramos.filter(t 
  * La lista de ingredientes, con sus grupos. La misma en la receta y en el modo
  * cocina. El nombre y la cantidad son texto en línea como cualquier otra
  * línea: pueden traer negrita, un link o la referencia a una foto, que va
- * adentro del ítem y se acomoda sola abajo, al ancho de la ficha (§7).
+ * adentro del ítem y se acomoda sola abajo, al ancho de la ficha.
  */
 export const listaIngredientes = (grupos: GrupoIngredientes[]): string =>
   grupos.map(g =>
@@ -65,7 +65,7 @@ export interface OpcionesCabecera {
  * La foto de la cabecera, tocable: abre el visor. Si es una del depósito
  * lleva `data-n`, para que Tarea 8 sepa en qué foto abrirlo y deslizar entre
  * las demás; una cabecera externa que no está en el depósito se abre sola,
- * sin ese número (spec §7).
+ * sin ese número.
  */
 function botonFoto(url: string, n: number | undefined): string {
   return `<button type="button" class="rec-foto-boton" data-accion="ver-foto-receta"` +
@@ -80,7 +80,7 @@ function botonFoto(url: string, n: number | undefined): string {
  * sección más, y ahí se ven al abrirla sin tener que buscarlas abajo de todo.
  *
  * La portada ya está arriba y las puestas en una línea están en su línea: si
- * todas están ubicadas no queda ninguna y el carrusel no se dibuja (P54).
+ * todas están ubicadas no queda ninguna y el carrusel no se dibuja.
  */
 function carruselDeFotos(fotos: FotoDeReceta[]): string {
   const items = fotos.map(f =>

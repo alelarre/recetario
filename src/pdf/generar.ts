@@ -12,7 +12,7 @@ import { fotosSinUso, idDeDrive, resolverReceta } from '../fotos-receta.js';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import type { Receta } from '../tipos.js';
 
-/** El lado mayor de las fotos del PDF: entran a 105 mm de ancho, con esto sobra (spec §10). */
+/** El lado mayor de las fotos del PDF: entran a 105 mm de ancho, con esto sobra. */
 const LADO_PDF = 800;
 
 /** Lo que el PDF necesita para conseguir las fotos; lo pone `main`, que tiene el caché y el canvas. */
@@ -84,7 +84,7 @@ async function aDataUrl(blob: Blob): Promise<string> {
 /**
  * Cada foto de la receta como data URL, achicada. Las de Drive salen del
  * caché o se piden con el token; una externa se pide con `fetch`, y si falla
- * —CORS, red, un 404— se omite sin aviso (§10).
+ * —CORS, red, un 404— se omite sin aviso.
  */
 async function fotosDelPdf(receta: Receta, fotos: FotosDelPdf): Promise<Map<string, string>> {
   const pares = await Promise.all(urlsDeLaReceta(receta).map(async (url): Promise<[string, string][]> => {
@@ -110,7 +110,7 @@ async function fotosDelPdf(receta: Receta, fotos: FotosDelPdf): Promise<Map<stri
 export async function generar(receta: Receta, categoria: string, fotos: FotosDelPdf): Promise<Blob> {
   // El documento se arma con la receta resuelta: `foto:N` es cosa del `.md`.
   const resuelta = resolverReceta(receta);
-  // El uso, sobre la receta cruda: en la resuelta ya no hay `foto:N` (P54).
+  // El uso, sobre la receta cruda: en la resuelta ya no hay `foto:N`.
   const sinUso = fotosSinUso(receta);
   const [pdfMake, imagenes] = await Promise.all([precargar(), fotosDelPdf(resuelta, fotos)]);
   return pdfMake.createPdf(documentoPdf(resuelta, categoria, imagenes, sinUso)).getBlob();

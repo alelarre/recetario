@@ -349,18 +349,18 @@ button.chip { cursor: pointer; }
          background: var(--error-suave); border: 1px solid var(--error);
          border-radius: var(--r-ficha); padding: var(--e-4); }
 .aviso p { margin: 0; flex: 1; min-width: 12ch; }
-/* Las notas de una oración son prosa, y la prosa no baja de 16 (§1). */
+/* Las notas de una oración son prosa, y la prosa no baja de 16. */
 .aviso-mudo { font-size: var(--txt-base); color: var(--fg-2); }
 
 /* ---- §6.11 Ítem de ingrediente ---- */
 .ing { display: flex; flex-wrap: wrap; gap: var(--e-3); align-items: baseline;
        padding: var(--e-2) 0; border-bottom: 1px solid var(--borde);
-       /* Cuerpo de la receta, como los pasos: 18 (§1). */
+       /* Cuerpo de la receta, como los pasos: 18. */
        font-size: var(--txt-lectura); line-height: 1.6; }
 .ing:last-child { border-bottom: 0; }
 /* Sin `min-width: 0` un ítem flex no baja del ancho mínimo de su contenido: un
    nombre largo —o una palabra sin espacios, o una URL— estira la fila y le deja
-   scroll horizontal a la pantalla entera (P56). Achicado el ítem, la palabra
+   scroll horizontal a la pantalla entera. Achicado el ítem, la palabra
    que no entra se corta en dos renglones en vez de salirse. */
 .ing .n { flex: 1; min-width: 0; overflow-wrap: break-word; }
 /* La foto de un ingrediente va en su propio renglón, abajo y al ancho de la
@@ -369,7 +369,7 @@ button.chip { cursor: pointer; }
 /* La cantidad no se parte mientras entre: con el nombre en `flex: 1` desde
    cero, le queda siempre su ancho natural y `250 g` no cae en dos renglones.
    Lo que sí se corta es la cantidad que sola no entra en la fila —una nota
-   larga, o una URL—: ahí `nowrap` la dejaba salirse de la pantalla (P56). */
+   larga, o una URL—: ahí `nowrap` la dejaba salirse de la pantalla. */
 .ing .c { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right;
           min-width: 0; overflow-wrap: break-word; }
 .grupo { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
@@ -388,7 +388,7 @@ button.chip { cursor: pointer; }
 .pasos li::before { content: counter(p) '.'; color: var(--fg-3); font-variant-numeric: tabular-nums;
                     font-weight: 600; flex: 0 0 1.6em; }
 
-/* ---- Foto en línea del cuerpo de la receta (spec §3, §6) ---- */
+/* ---- Foto en línea del cuerpo de la receta ---- */
 .foto-linea { display: block; width: 100%; margin: var(--e-2) 0; border-radius: var(--r-foto); overflow: hidden; }
 .foto-linea img { display: block; width: 100%; }
 .foto-linea .epigrafe { display: block; margin-top: var(--e-1); font-size: var(--txt-chico); color: var(--fg-3); }
@@ -435,7 +435,7 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
                border-radius: var(--r-chico); text-align: center;
                background: color-mix(in srgb, var(--velo) 75%, transparent); color: var(--fg);
                font-size: var(--txt-micro); line-height: 18px; }
-/* Las marcas de uso (P54): en qué está usada la foto —portada, en el texto, o
+/* Las marcas de uso: en qué está usada la foto —portada, en el texto, o
    las dos—. Van en la esquina de enfrente del número y sobre el mismo fondo,
    para que se lean sobre cualquier foto. Una sin uso no lleva ninguna. */
 .miniatura-usos { position: absolute; top: 2px; right: 2px; display: flex; gap: 2px; align-items: center;
@@ -457,7 +457,7 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
 
 /* ---- §6.26 El carrusel de fotos de la receta ----
    Las fotos sin uso en la primera ficha, debajo de la descripción: la portada
-   está arriba y las de una línea, en su línea (P54). Vive sobre la ficha y no
+   está arriba y las de una línea, en su línea. Vive sobre la ficha y no
    sobre el fondo de la pantalla, así que el degradé va a `--surface`. Cada
    foto mide 66 px: entran cinco en el ancho de un teléfono, y el visor es el
    que las muestra grandes. */
@@ -466,7 +466,7 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
                  border-radius: var(--r-foto); overflow: hidden; aspect-ratio: 1; cursor: pointer; }
 .carrusel-foto img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
-/* ---- Galería de fotos (spec §7): una grilla de cuadradas de a tres por fila.
+/* ---- Galería de fotos: una grilla de cuadradas de a tres por fila.
    La usa el selector de portada del editor. ---- */
 .galeria { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e-2); }
 /* Separa la grilla —o su leyenda sin fotos— del botón de abajo, en el selector
@@ -480,14 +480,14 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
 .galeria-item.actual { cursor: default; }
 .galeria-item[aria-pressed="true"], .galeria-item.actual { outline: 2px solid var(--acento); outline-offset: -2px; }
 
-/* ---- Las fichas de fotos del editor (spec §7) ----
+/* ---- Las fichas de fotos del editor ----
    Se abren al pie y sobre el velo, como la hoja de Compartir: tocar afuera las
    cierra. Por eso van fijas y por arriba del velo, esté donde esté el scroll
    del formulario. */
 .hoja-foto { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31;
              max-width: 680px; margin: 0 auto; overflow: auto;
              /* Como la de compartir: el tope es la ventana chica, la que se ve
-                con la barra de direcciones puesta (P58). Acá el scroll es de
+                con la barra de direcciones puesta. Acá el scroll es de
                 la ficha: adentro no hay nada que se desplace solo. */
              max-height: 80svh;
              border-radius: var(--r-ficha) var(--r-ficha) 0 0;

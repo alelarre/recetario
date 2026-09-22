@@ -101,13 +101,13 @@ export function muestraDePortada(foto: string | null, fotos: FotoDeReceta[]): st
 }
 
 /**
- * La cabecera dejó de ser un campo de texto (spec §7): es la miniatura de lo
+ * La cabecera dejó de ser un campo de texto: es la miniatura de lo
  * que hay hoy y abre el selector. El valor sigue viajando crudo en el
  * `hidden`, que es lo que se guarda: `foto:N` o la URL externa.
  */
 function campoPortada(foto: string | null, fotos: FotoDeReceta[]): string {
   // *Portada* y no *Foto*: abajo está la ficha Fotos, que es el depósito, y
-  // dos cosas distintas no se llaman igual (P48).
+  // dos cosas distintas no se llaman igual.
   return '<div class="campo" data-portada><span>Portada</span>' +
     `<button type="button" class="portada-boton" data-accion="abrir-portada" ` +
       `aria-label="Elegir la foto de portada">${muestraDePortada(foto, fotos)}</button>` +
@@ -130,7 +130,7 @@ function campoPortada(foto: string | null, fotos: FotoDeReceta[]): string {
  */
 export const filaDeFotosEditor = (receta: Receta): string => {
   // El uso sale de la receta entera —la cabecera y todas las secciones—, no
-  // del depósito: por eso esto recibe la receta y no la lista de fotos (P54).
+  // del depósito: por eso esto recibe la receta y no la lista de fotos.
   const usos = usosDeFotos(receta);
   return filaDeFotos({
     fotos: receta.fotos.map(f => ({
@@ -191,7 +191,7 @@ export function renderAccionesFoto(n: number, { portada }: { portada: boolean })
 }
 
 /**
- * El botón que pone una foto en la línea donde está el cursor (P46): sin
+ * El botón que pone una foto en la línea donde está el cursor: sin
  * texto, del alto de un renglón y colgado del marco del campo, a `altura`
  * píxeles de su borde de arriba. La línea viaja con él porque es la que había
  * cuando se lo dibujó: el cursor puede haberse ido para cuando se elige la
@@ -254,7 +254,7 @@ export function renderSelectorPortada(fotos: FotoDeReceta[], actual: string | nu
 /**
  * Agregar una foto por su dirección: el campo y *Traer*. La app la baja, la
  * achica y la suma como cualquier otra (C04.3d.1b). La misma ficha es la del
- * borrador y la de la captura (P59); qué pasa con la que el sitio no deja
+ * borrador y la de la captura; qué pasa con la que el sitio no deja
  * bajar lo decide cada pantalla, y el aviso lo dice.
  *
  * Con un aviso, la ficha se vuelve a dibujar con lo escrito adentro: lo que el
@@ -277,7 +277,7 @@ export function renderFotoPorUrl(url = '', error = ''): string {
 
 /**
  * Un campo de sección. El `textarea` va en un marco propio porque el botón de
- * la foto se cuelga encima de él (P46), y con él viaja el **espejo**: un
+ * la foto se cuelga encima de él, y con él viaja el **espejo**: un
  * calco del campo, invisible, donde `main` escribe el texto hasta el cursor
  * para leer a qué altura quedó el renglón. Un `textarea` no deja poner nada
  * adentro ni preguntar dónde está el cursor en pantalla; el espejo es la única
@@ -463,7 +463,7 @@ const esFoto = (f: unknown): f is FotoDeReceta =>
  * El depósito que viaja en el campo oculto. Cualquier cosa que no sea el
  * arreglo que escribió el editor —o que el campo no esté— deja el depósito de
  * la receta que se abrió: un depósito vacío significa «las saqué a todas», y
- * el store manda esas fotos a la papelera de Drive (§8). Un JSON que no se
+ * el store manda esas fotos a la papelera de Drive. Un JSON que no se
  * entiende no puede querer decir eso.
  */
 export function fotosDesde(crudo: string, base: FotoDeReceta[]): FotoDeReceta[] {

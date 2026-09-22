@@ -25,7 +25,7 @@ function parrafoDeFotos(fotos: readonly string[], links: boolean): string[] {
         'Las fotos están en mi Google Drive: leelas con el conector de Drive.']
       : []),
     '',
-    // Cómo se referencian en la receta que vuelve (spec §9): el depósito del
+    // Cómo se referencian en la receta que vuelve: el depósito del
     // editor las resuelve, así que la receta ya trae la portada y las
     // referencias apenas se pega o se comparte.
     'En la receta, esas fotos son foto:1, foto:2…, en el mismo orden. Si una muestra el plato terminado, poné ' +

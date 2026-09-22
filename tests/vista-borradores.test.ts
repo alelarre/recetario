@@ -166,7 +166,7 @@ describe('las fotos del borrador', () => {
     expect(html).not.toContain('data-accion="ver-foto" data-valor="f2"');
   });
 
-  it('Cámara, Galería y Por URL al final mientras haya menos de cinco (P50, P59)', () => {
+  it('Cámara, Galería y Por URL al final mientras haya menos de cinco', () => {
     const html = renderBorrador({ borrador: conFotos, confirmando: false, fotos });
     expect(html).toContain('Cámara');
     expect(html).toContain('Galería');

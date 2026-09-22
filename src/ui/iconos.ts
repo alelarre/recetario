@@ -61,7 +61,7 @@ export const ICO = {
     '<path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>'),
 
   /**
-   * Las dos marcas de uso de una foto del depósito (P54). **Portada** es la
+   * Las dos marcas de uso de una foto del depósito. **Portada** es la
    * ficha con un señalador adentro, y no una estrella: en esta app la estrella
    * es favorita. **En el texto** son tres renglones: la foto está puesta en una
    * línea, un paso o un ingrediente.

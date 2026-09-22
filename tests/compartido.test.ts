@@ -194,7 +194,7 @@ describe('convertirBorrador con fotos', () => {
     expect(espia).toHaveBeenCalledWith(expect.any(String), expect.anything(), expect.objectContaining({ fotos }));
   });
 
-  it('la foto del borrador termina en _fotos/, sin ir a la papelera con el borrador (spec §9)', async () => {
+  it('la foto del borrador termina en _fotos/, sin ir a la papelera con el borrador', async () => {
     const { deps, store, drive } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas', fotos: ['fb'] }] });
     const fotos: CambiosDeFotos = { ...sinFotos, deBorrador: ['fb'] };
 

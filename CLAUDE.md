@@ -109,6 +109,14 @@ Nada del código depende de `product-design/`. **Todo el producto vive en `src/`
   trabajar una entrada se le pone `Implementando`**, para que otra sesión no la
   tome; la fila se borra recién cuando el trabajo está terminado y listo para
   que el usuario lo pruebe. Una entrada que quedó a medias vuelve a `Abierto`.
+  Un estado más: `En espera` es lo que se decidió no tocar hasta que se
+  resuelva otra entrada.
+- **Un comentario no cita lo que se borra.** Ni el número de una entrada del
+  backlog ni una sección de un spec de `docs/superpowers/`: las dos cosas
+  desaparecen al terminar el trabajo y dejan el comentario apuntando a nada.
+  Sí se cita `product-design/` —`C05.4b.1`, `R8`, `§6.17b`—, que se mantiene al
+  día. Y el comentario dice **la razón vigente, no el incidente**: qué pasa si
+  el código no está, no cuándo se rompió ni qué se vio en el teléfono.
 
 ## TypeScript
 

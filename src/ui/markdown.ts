@@ -178,7 +178,7 @@ export function aTexto(texto: unknown): string {
 /**
  * Los tramos como texto de pdfmake. Los estilos (`link`) los define el
  * documento. Una imagen no es texto: la dibuja el documento debajo de su
- * línea, y sólo si tiene su data URL (§10).
+ * línea, y sólo si tiene su data URL.
  */
 export function tramosAPdf(tramos: TramoEnLinea[]): ContentText[] {
   return tramos.filter(t => !t.imagen).map(t => {
@@ -199,7 +199,7 @@ export const fotosDeTramos = (tramos: TramoEnLinea[], fotoDe: FotoDeTramo): Cont
   tramos.flatMap(t => (t.imagen ? fotoDe(t.imagen, t.epigrafe) : []));
 
 /**
- * Una línea con sus fotos debajo, en un bloque que no se parte entre páginas (§10).
+ * Una línea con sus fotos debajo, en un bloque que no se parte entre páginas.
  */
 export const conFotos = (nodo: Content, fotos: Content[]): Content =>
   fotos.length ? { stack: [nodo, ...fotos], unbreakable: true } : nodo;

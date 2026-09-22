@@ -37,7 +37,7 @@ export interface DependenciasCompartido {
  * `fotos` pasa tal cual al store: esta función no arma ni deduce qué fotos
  * del borrador se conservan, eso lo decide quien llama (el editor). Lo único
  * que hace acá es descartar el borrador conservando `fotos.deBorrador`, que
- * ya se movieron a la receta (spec §9).
+ * ya se movieron a la receta.
  */
 export async function convertirBorrador(
   deps: DependenciasCompartido,

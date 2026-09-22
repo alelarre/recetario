@@ -41,7 +41,7 @@ export function iniciarInvitado(): void {
   let deslizoElVisor = false;
 
   /**
-   * Abre el visor con lo que se tocó (§7): una foto del carrusel desliza entre
+   * Abre el visor con lo que se tocó: una foto del carrusel desliza entre
    * las del carrusel; la portada —que nunca está ahí— se abre sola.
    */
   function abrirVisor(marca: string | undefined): void {
@@ -62,7 +62,7 @@ export function iniciarInvitado(): void {
     if (!ruta) { location.reload(); return; }
     if (leida?.carga !== ruta.carga) {
       const datos = await decodificar(ruta.carga);
-      // Sin fotos de Drive desde el arranque (§10): ni la lectura, ni la
+      // Sin fotos de Drive desde el arranque: ni la lectura, ni la
       // cocina, ni el visor tienen después nada que pedirle a Drive.
       leida = datos
         ? { carga: ruta.carga, ...datos, cruda: datos.receta, receta: resueltaSinFotosDeDrive(datos.receta) }
@@ -83,7 +83,7 @@ export function iniciarInvitado(): void {
     }
     if (ruta.vista === 'lectura') {
       // La cruda: `renderInvitado` resuelve y limpia, y necesita las `foto:N`
-      // para saber cuáles están ubicadas y cuáles van al carrusel (P54).
+      // para saber cuáles están ubicadas y cuáles van al carrusel.
       return pintar(renderInvitado({ receta: leida.cruda, categoria: leida.categoria, ...(visor ? { visor } : {}) }));
     }
     return pintar(renderCocina({ receta: leida.receta, ...cocina.estado(), salidas: 'solo-volver' }));
@@ -124,7 +124,7 @@ export function iniciarInvitado(): void {
       await render();
       return;
     }
-    // Las fotos que viajaron en el link (§7): la cabecera y las del carrusel
+    // Las fotos que viajaron en el link: la cabecera y las del carrusel
     // abren el visor, y se cierra tocando en cualquier parte.
     if (accion === 'ver-foto-receta') {
       abrirVisor(boton.dataset['n']);

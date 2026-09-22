@@ -77,7 +77,7 @@ const imagenes = crearImagenes({ leerBlob: id => drive.leerBlob(id) });
 /**
  * Dibuja la pantalla y completa las fotos que quedaron pedidas.
  *
- * Nada espera a una imagen para dibujarse (spec §6): una foto de Drive sale
+ * Nada espera a una imagen para dibujarse: una foto de Drive sale
  * como `<img data-drive>` sin `src` —un recuadro del mismo tamaño— y una foto
  * nueva del editor como `<img data-n>`, y acá se les pone el `src` cuando el
  * blob está. Envuelve a `pintar` en vez de repetirse en cada pantalla: son
@@ -106,8 +106,8 @@ function mirarElAviso(): void {
  * Las fotos que la pantalla dejó pedidas. Las del editor salen del blob que
  * está en memoria; las de Drive, del caché o de la red. Una de Drive que ya no
  * está pasa al recuadro de aviso si tiene su propio cuadrado —el carrusel de la
- * receta, una grilla, una miniatura—, y no se dibuja en ningún otro lado
- * (spec §6). Las de Drive van de a dos, como la precarga: de
+ * receta, una grilla, una miniatura—, y no se dibuja en ningún otro lado.
+ * Las de Drive van de a dos, como la precarga: de
  * a una, una lista entera se completa de arriba a abajo y se ve llegar.
  */
 async function completarFotos(): Promise<void> {
@@ -288,7 +288,7 @@ let avisoBorradores = '';
 /**
  * Cuántos pedidos de tapar la pantalla hay abiertos, y la pantalla desde la
  * que se tapó. Es la única verdad sobre el velo: cada escritura abre el suyo,
- * y el manejador que tarda en llegar a escribir abre el suyo antes (P47). Con
+ * y el manejador que tarda en llegar a escribir abre el suyo antes. Con
  * la pantalla tapada no se navega ni responde ningún control.
  */
 let tapadas = 0;
@@ -297,9 +297,9 @@ let hashEscritura = '';
 /**
  * Lo que dura el cierre con el tilde antes de navegar (§6.17b): el tilde
  * termina de dibujarse a los 875 ms —0,3 s de espera y 0,575 s de trazo— y se
- * queda 975 ms más quieto, para que se llegue a ver que salió bien. Los
- * números se eligieron mirando la animación en el teléfono (P82): con el
- * reparto anterior, el tilde aparecía y la pantalla ya había cambiado.
+ * queda 975 ms más quieto, para que se llegue a ver que salió bien. El
+ * reparto se elige mirando la animación en el teléfono: con menos, el tilde
+ * aparece y la pantalla ya cambió.
  */
 const MS_CIERRE = 1850;
 
@@ -429,7 +429,7 @@ async function recetaDePantalla(id: string): Promise<{ entrada: Entrada | null; 
     const { entrada, receta } = await store.receta(id);
     recetaLeida = { id, entrada, receta };
     // El depósito entero, no sólo lo que está a la vista: así el visor
-    // desliza sin esperar (spec §6).
+    // desliza sin esperar.
     const ids = idsDeDrive(receta.fotos.map(f => f.url));
     if (ids.length) void imagenes.precargar(ids);
   }
@@ -451,7 +451,7 @@ let precargado = false;
 
 /**
  * Dibujado el home, en segundo plano: las cabeceras de Drive del índice y las
- * fotos propias de las categorías (spec §6). Lo que ya está en el caché no se
+ * fotos propias de las categorías. Lo que ya está en el caché no se
  * vuelve a pedir, y con `saveData` no se pide nada.
  */
 function precargarElHome(): void {
@@ -476,7 +476,7 @@ const delaCategoria = (nombre: string): Entrada[] => store.entradas().filter(e =
  * vez por aparición: la misma receta en dos comidas cuenta dos veces.
  *
  * Las lecturas se solapan, de a seis como el reindexado: en fila, un plan
- * cargado eran catorce viajes uno detrás de otro (P81). Y tapan la pantalla
+ * cargado son catorce viajes uno detrás de otro. Y tapan la pantalla
  * mientras duran —no escriben nada, pero es la espera más larga de la app
  * (R8)—; con la lista ya armada no se tapa nada, que sería un parpadeo.
  */
@@ -561,19 +561,19 @@ let deslizoElVisor = false;
 let visorDesde: number | null = null;
 
 /**
- * Las fotos que el editor tiene en memoria hasta Guardar (spec §7): el blob de
+ * Las fotos que el editor tiene en memoria hasta Guardar: el blob de
  * cada número nuevo, su object URL para la miniatura, y el id de Drive de la
  * que ya se subió en un intento que falló después —reintentar no la vuelve a
- * subir (§8), igual que la captura—.
+ * subir, igual que la captura—.
  */
 const fotosEditor = {
   nuevas: new Map<number, Blob>(),
   urls: new Map<number, string>(),
   subidas: new Map<number, string>()
 };
-/** Los ids de las fotos del borrador que abrió el editor: las que queden se mueven a `_fotos/` (§9). */
+/** Los ids de las fotos del borrador que abrió el editor: las que queden se mueven a `_fotos/`. */
 let fotosDelBorrador: string[] = [];
-/** La foto propia recién elegida para una categoría: se sube al guardarla (§7). */
+/** La foto propia recién elegida para una categoría: se sube al guardarla. */
 let fotoPropia: { blob: Blob; url: string } | null = null;
 
 /** La foto achicada; rechaza si el navegador no la decodifica. Sin opciones, al lado de Drive. */
@@ -590,7 +590,7 @@ async function sumarFotosACaptura(archivos: Blob[]): Promise<string> {
   const lugar = MAXIMO_FOTOS - fotosCaptura.length;
   let noSeLeyo = false;
   // Tapa una vez para todas y no una por foto: con varias, el velo se prendía
-  // y se apagaba entre una y otra (P52). Lo de adentro suma sobre el mismo
+  // y se apagaba entre una y otra. Lo de adentro suma sobre el mismo
   // contador, así que el velo no parpadea.
   const destapar = tapar();
   try {
@@ -637,7 +637,7 @@ const fotosDeBorrador = (b: Borrador): Promise<{ id: string; url: string | null 
 
 /**
  * Sube fotos al borrador abierto: cada una reescribe el `.md` en el momento.
- * El velo se pone una vez para todas y no una por foto (P52); lo que no se
+ * El velo se pone una vez para todas y no una por foto; lo que no se
  * pudo queda en el aviso.
  */
 async function agregarFotosABorrador(id: string, archivos: Blob[]): Promise<void> {
@@ -757,7 +757,7 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
     }
   }
   // Con `imagenes`, una foto recién subida entra al caché con el blob que ya
-  // está en memoria, y una que va a la papelera sale (spec §6).
+  // está en memoria, y una que va a la papelera sale.
   store = crearStore({ drive, sheets, indiceLocal, imagenes });
   estadoArranque = await store.arrancar();
 
@@ -1258,7 +1258,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       }
       if (borrador) {
         // El editor atado a un borrador abre con el depósito ya cargado: sus
-        // fotos, en su orden, como 1, 2, 3…, con sus links de Drive (spec §9).
+        // fotos, en su orden, como 1, 2, 3…, con sus links de Drive.
         // La receta que vuelve de Claude ya las nombra como `foto:N`.
         fotosDelBorrador = borrador.fotos;
         receta.fotos = borrador.fotos.map((id, i) => ({ n: i + 1, url: linkDeFoto(id) }));
@@ -1330,7 +1330,7 @@ const campoDelEditor = (nombre: string) =>
  * El depósito que el editor tiene escrito ahora: el campo oculto es la única
  * fuente. Un JSON que no se entiende cae en el depósito de la receta abierta y
  * no en uno vacío: vacío significa «las saqué a todas», y el store mandaría
- * esas fotos a la papelera (§8).
+ * esas fotos a la papelera.
  */
 const depositoDelEditor = (): FotoDeReceta[] =>
   fotosDesde(campoDelEditor('fotos')?.value ?? '', recetaLeida?.receta.fotos ?? []);
@@ -1354,7 +1354,7 @@ const baseDelEditor = (): Receta => {
 /**
  * La receta como está escrita **ahora** en el formulario. La necesita lo que
  * depende de todo el texto y no de un campo solo: el uso de cada foto, que
- * mira la cabecera y **todas** las secciones, las ajenas incluidas (P54).
+ * mira la cabecera y **todas** las secciones, las ajenas incluidas.
  */
 const recetaDelEditor = (): Receta => recetaDesdeFormulario(datosDelFormulario(), baseDelEditor());
 
@@ -1374,7 +1374,7 @@ function escribirDeposito(fotos: FotoDeReceta[]): void {
 /**
  * La fila de miniaturas de nuevo, con el uso de cada foto según lo que está
  * escrito ahora: la marca tiene que aparecer al elegir una portada o al poner
- * una foto en una línea, sin salir del editor (P54).
+ * una foto en una línea, sin salir del editor.
  */
 function redibujarFilaDeFotos(): void {
   const fila = document.querySelector<HTMLElement>('#app .fotos-campo');
@@ -1393,8 +1393,8 @@ function escribirPortada(valor: string): void {
 }
 
 /**
- * El botón de poner una foto, a la altura de la línea donde está el cursor
- * (P46). Se cuelga del marco del campo con foco y se saca de ahí en cada
+ * El botón de poner una foto, a la altura de la línea donde está el cursor.
+ * Se cuelga del marco del campo con foco y se saca de ahí en cada
  * movimiento: el formulario no se redibuja nunca, que perdería lo escrito.
  *
  * La altura sale del **espejo** del campo (`area`, `src/ui/editor.ts`): se le
@@ -1476,7 +1476,7 @@ function avisarEnElFormulario(texto: string): void {
 async function agregarFotosAlEditor(archivos: Blob[]): Promise<void> {
   let deposito = depositoDelEditor();
   let noSeLeyo = false;
-  // Una sola vez el velo, aunque se elijan cinco fotos (P52).
+  // Una sola vez el velo, aunque se elijan cinco fotos.
   const destapar = tapar();
   try {
     for (const archivo of archivos) {
@@ -1504,7 +1504,7 @@ async function agregarFotosAlEditor(archivos: Blob[]): Promise<void> {
  * Suma una foto al depósito del editor con el número que le toca. Con `blob`
  * es una foto que todavía no está en Drive —vive en memoria y sube al
  * guardar—; sin él, la línea es un link externo, que el `.md` acepta como
- * cualquier otra (spec §3).
+ * cualquier otra.
  */
 function sumarFotoAlEditor(url: string, blob?: Blob): void {
   const deposito = depositoDelEditor();
@@ -1586,7 +1586,7 @@ type PedidoDeFoto =
 /**
  * Pide la foto de una dirección escrita a mano y la deja lista para agregar.
  * Es lo común a las tres pantallas que la agregan —la receta, el borrador y la
- * captura (P59)—: las salidas son las mismas y lo único que cambia es qué hace
+ * captura—: las salidas son las mismas y lo único que cambia es qué hace
  * cada una con cada una.
  */
 async function pedirFotoPorUrl(escrita: string): Promise<PedidoDeFoto> {
@@ -1689,7 +1689,7 @@ async function fotoDeUrlParaBorrador(escrita: string): Promise<Blob | null> {
  */
 async function agregarFotoPorUrlABorrador(escrita: string): Promise<void> {
   // Una sola vez el velo, aunque sean tres pasos —bajarla, achicarla y
-  // subirla—: si no, se prende y se apaga entre uno y otro (P52). El
+  // subirla—: si no, se prende y se apaga entre uno y otro. El
   // redibujado va después de soltarlo, que tapado no se navega.
   const destapar = tapar();
   let subida = false;
@@ -1733,7 +1733,7 @@ async function agregarFotoPorUrlACaptura(escrita: string): Promise<void> {
 }
 
 /**
- * La receta con el link de cada foto que un intento anterior ya subió (§8).
+ * La receta con el link de cada foto que un intento anterior ya subió.
  * Su línea deja de estar vacía, así que el reintento la escribe en el `.md` y
  * no la vuelve a mandar como nueva.
  */
@@ -1773,7 +1773,7 @@ const fotosMostrables = (fotos: FotoDeReceta[]): { n: number; url: string }[] =>
   });
 
 /**
- * Abre el visor con **lo que se tocó** (spec §7, P54): `fotos` es la tira que
+ * Abre el visor con **lo que se tocó**: `fotos` es la tira que
  * recorre —las del carrusel en la lectura, el depósito entero en el editor—.
  * Una foto que no está en esa tira —la portada, la de un paso— se abre sola,
  * con la URL que venga en `suelta`.
@@ -1896,8 +1896,8 @@ app.addEventListener('click', async (e) => {
   const destino = conClosest(e.target);
   const boton = destino?.closest<HTMLElement>('[data-accion], [data-tag]') ?? null;
   // Una foto en línea del texto no lleva `data-accion` —la dibuja el markdown,
-  // que no sabe de acciones— y abre el visor igual (§7). Se abre **sola**: lo
-  // que se tocó es esa foto, no una tira (P54). En el modo cocina no: ahí la
+  // que no sabe de acciones— y abre el visor igual. Se abre **sola**: lo
+  // que se tocó es esa foto, no una tira. En el modo cocina no: ahí la
   // foto está adentro del paso, que sí lleva acción, y un toque marca dónde voy.
   if (!boton && destino && recetaLeida) {
     const enLinea = destino.closest<HTMLElement>('.foto-linea');
@@ -1962,7 +1962,7 @@ app.addEventListener('click', async (e) => {
       const sigueGenerando = (): boolean => compartiendo?.paso === 'generando';
       try {
         // El PDF lleva las fotos adentro: las de Drive salen del caché de
-        // `imagenes`, y el canvas para achicarlas es el mismo de siempre (§10).
+        // `imagenes`, y el canvas para achicarlas es el mismo de siempre.
         const blob = await generar(receta, entrada?.categoria ?? '', {
           imagenDe: id => imagenes.imagenDe(id),
           achicar: (foto, maximo) => achicarFoto(foto, { maximo })
@@ -2098,7 +2098,7 @@ app.addEventListener('click', async (e) => {
     const dia = Number(vistaActual?.params['dia'] ?? 0);
     const momento: Momento = vistaActual?.params['momento'] === 'mediodia' ? 'mediodia' : 'noche';
     // El plan puede no estar leído todavía, y leerlo es otro pedido a Drive
-    // antes de escribir: la pantalla se tapa desde el toque (P47).
+    // antes de escribir: la pantalla se tapa desde el toque.
     const destapar = tapar();
     try {
       const plan = await planDePantalla();
@@ -2257,7 +2257,7 @@ app.addEventListener('click', async (e) => {
       || tituloPorDefecto(editandoBorrador && borradorLeido?.capturado ? new Date(borradorLeido.capturado) : new Date());
 
     // El velo antes de redibujar con «Guardando…»: ese redibujado va antes de
-    // la escritura, y ya tiene que salir con la pantalla tapada (P47). Lo de
+    // la escritura, y ya tiene que salir con la pantalla tapada. Lo de
     // arriba es leer el formulario: si no hay nada que guardar, no se tapa nada.
     const destapar = tapar();
     try {
@@ -2333,7 +2333,7 @@ app.addEventListener('click', async (e) => {
     return render();
   }
 
-  // Las fotos de una receta (spec §7). El depósito sale del campo oculto en el
+  // Las fotos de una receta. El depósito sale del campo oculto en el
   // editor y de la receta leída en la lectura: son la misma acción y el mismo
   // `data-n` en la cabecera, la galería y la ficha de acciones.
   if (accion === 'ver-foto-receta') {
@@ -2348,7 +2348,7 @@ app.addEventListener('click', async (e) => {
     if (!recetaLeida) return;
     const receta = resolverReceta(recetaLeida.receta);
     // El carrusel son las sin uso, calculadas sobre la cruda: desde ahí el
-    // visor las recorre. La portada no está ahí y se abre sola (P54).
+    // visor las recorre. La portada no está ahí y se abre sola.
     const sola = (n === undefined ? undefined : receta.fotos.find(f => f.n === n)?.url) ?? receta.foto ?? undefined;
     abrirVisor(fotosSinUso(recetaLeida.receta), n, sola);
     return render();
@@ -2573,7 +2573,7 @@ app.addEventListener('click', async (e) => {
     const valores = valoresDeCategoria();
     const id = vistaActual?.params['id'] ?? 'nueva';
     // La foto propia se manda sólo si se eligió un archivo en esta pantalla:
-    // cambiar el color o el nombre no vuelve a subir nada (§8).
+    // cambiar el color o el nombre no vuelve a subir nada.
     const propia = valores.foto.startsWith('propia:') ? fotoPropia?.blob : undefined;
     const datos = {
       ...valores,
@@ -2627,7 +2627,7 @@ app.addEventListener('click', async (e) => {
     if (!document.querySelector('[data-formulario]')) return;
     // El velo antes que nada: entre el toque y la escritura hay una relectura
     // del `.md` de base, que es un pedido a Drive, y la validación puede
-    // devolver el editor sin escribir nada (P47). Se suelta por cualquier
+    // devolver el editor sin escribir nada. Se suelta por cualquier
     // camino, así que no queda pegado.
     const destapar = tapar();
     /** Cómo se cierra el editor si el guardado sale bien; corre con el velo ya soltado. */
@@ -2655,7 +2655,7 @@ app.addEventListener('click', async (e) => {
       const conError = (mensaje: string) => pintar(renderEditor({
         entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
         // Con las fotos que este intento alcanzó a subir ya en sus líneas: el
-        // reintento las manda por su link en vez de volver a subirlas (§8).
+        // reintento las manda por su link en vez de volver a subirlas.
         receta: conSubidas(nueva), categorias: store.categorias(),
         tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje
       }));
@@ -2665,7 +2665,7 @@ app.addEventListener('click', async (e) => {
       if (esNueva && !carpetaId) return conError('Elegí una categoría antes de guardar.');
 
       // Lo que el depósito cambió respecto del `.md` que se abrió: el store sube,
-      // mueve y manda a la papelera (§8).
+      // mueve y manda a la papelera.
       const fotos = cambiosDeFotos(nueva, base);
 
       try {
@@ -2796,7 +2796,7 @@ app.addEventListener('input', (e) => {
  * Las pantallas que dibujan el menú lateral: sólo ahí se desliza para abrirlo,
  * y sólo ahí el encabezado lleva la hamburguesa en vez del volver. El botón lo
  * decide a mano cada `ui/*.ts`, así que la lista se exporta para que un test
- * recorra las cuatro y compruebe que ninguna se desalineó del gesto (P55).
+ * recorra las cuatro y compruebe que ninguna se desalineó del gesto.
  */
 export const PANTALLAS_CON_MENU: readonly Ruta['vista'][] = ['recetario', 'borradores', 'plan', 'ajustes'];
 
@@ -2832,8 +2832,8 @@ function sobreFilaDeslizable(destino: EventTarget | null): boolean {
 //
 // Van en `document` y no en `#app`: el gesto es de la pantalla entera, y una
 // pantalla que no llega abajo —Borradores con pocos, sin ir más lejos— deja
-// debajo del contenido un área que ya no es de `#app`, donde el toque no
-// llegaba a ningún lado (P79).
+// debajo del contenido un área que no es de `#app`, donde el toque no llegaría
+// a ningún lado.
 document.addEventListener('touchstart', (e) => {
   if (tapadas) return;
   deslizando = null;
@@ -2878,7 +2878,7 @@ const soltarDeslizamiento = (): void => {
 document.addEventListener('touchend', soltarDeslizamiento);
 document.addEventListener('touchcancel', soltarDeslizamiento);
 
-// El visor pasa de una foto a la otra con el dedo (spec §7). Va aparte del
+// El visor pasa de una foto a la otra con el dedo. Va aparte del
 // gesto del menú: ahí el deslizamiento arrastra el panel al ritmo del dedo, y
 // acá la foto cambia de una vez, al soltar.
 document.addEventListener('touchend', (e) => {
@@ -2909,7 +2909,7 @@ app.addEventListener('keydown', (e) => {
 });
 
 /**
- * El cursor se movió: el botón de la foto va a la línea nueva (P46). Es el
+ * El cursor se movió: el botón de la foto va a la línea nueva. Es el
  * único aviso que da el navegador cuando el cursor cambia de lugar, venga de
  * un toque, de una tecla o de las manijas de la selección.
  */
@@ -2959,7 +2959,7 @@ app.addEventListener('focusout', (e) => {
 });
 
 /**
- * Una foto externa cuya URL no carga (P42): la app se entera por el `error`
+ * Una foto externa cuya URL no carga: la app se entera por el `error`
  * del `<img>`, que no burbujea —de ahí la escucha en captura— y se trata como
  * una de Drive que ya no está. Las de Drive no pasan por acá: salen sin `src`
  * y las resuelve `completarFotos`.
@@ -2991,7 +2991,7 @@ app.addEventListener('change', (e) => {
     })();
     return;
   }
-  // *Subir foto* en una categoría: una sola, y se sube recién al guardar (§7).
+  // *Subir foto* en una categoría: una sola, y se sube recién al guardar.
   if (campoFotos?.dataset && 'fotoPropia' in campoFotos.dataset) {
     const archivo = Array.from(campoFotos.files ?? [])[0];
     if (!archivo) return;
@@ -3037,7 +3037,7 @@ arrancar().catch(err => {
 
 // El caché de fotos deja de ser desalojable con la PWA instalada: en Android,
 // Chrome lo concede solo. Se pide una vez y no se mira el resultado —que no se
-// conceda no cambia nada— ni se espera (spec §6).
+// conceda no cambia nada— ni se espera.
 if (typeof navigator !== 'undefined') void navigator.storage?.persist?.().catch(() => {});
 
 // `main.ts` se carga con `import()` desde `inicio.ts`, no con un `<script>`

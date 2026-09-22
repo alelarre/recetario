@@ -133,7 +133,7 @@ function parsearCuerpo(cuerpo: string, receta: Receta): void {
     buffer = [];
     if (!texto) { encabezadoOtra = null; return; }
     if (destino === 'fotos') {
-      // Mal formada, cae como ajena tal cual (§3): nada se pierde por pasar por el editor.
+      // Mal formada, cae como ajena tal cual: nada se pierde por pasar por el editor.
       const fotos = parsearFotos(texto);
       if (fotos) { receta.fotos = fotos; } else { receta.otras.push({ encabezado: encabezadoOtra ?? 'Fotos', cuerpo: texto }); }
     } else if (destino === 'otra') {
@@ -208,7 +208,7 @@ export function serialize(receta?: Partial<Receta> | null): string {
     if (!otra?.encabezado || typeof otra.encabezado !== 'string') continue;
     partes.push(`## ${otra.encabezado}\n${otra.cuerpo}`);
   }
-  // Va última, después de Notas y de las secciones ajenas (§3). Sin fotos, no se escribe.
+  // Va última, después de Notas y de las secciones ajenas. Sin fotos, no se escribe.
   const fotos = Array.isArray(r.fotos) ? r.fotos : [];
   if (fotos.length) partes.push(`## Fotos\n${serializarFotos(fotos)}`);
 
@@ -226,7 +226,7 @@ const SEPARADORES = ['-', '—', ';', ',', '|'] as const;
 
 /**
  * Dónde caen `![texto](destino)` y `[texto](destino)`: adentro, un guión del
- * id de Drive o del propio destino no es un separador (P45).
+ * id de Drive o del propio destino no es un separador.
  */
 function rangosDeMarkdown(texto: string): Array<readonly [number, number]> {
   const rangos: Array<readonly [number, number]> = [];

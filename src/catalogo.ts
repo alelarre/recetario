@@ -74,7 +74,7 @@ export function filaDesde(receta?: Partial<Receta> | null, ubicacion?: Partial<U
     tags: unirConBarra(Array.isArray(r.tags) ? r.tags : []),
     ingredientes: unirConBarra(ingredientesIndexables(r)),
     mtime: String(typeof u.mtime === 'number' ? u.mtime : 0),
-    // La cabecera ya resuelta a su URL (§4): las listas la dibujan sin leer el `.md`.
+    // La cabecera ya resuelta a su URL: las listas la dibujan sin leer el `.md`.
     foto: resolver(typeof r.foto === 'string' ? r.foto : null, Array.isArray(r.fotos) ? r.fotos : []) ?? ''
   };
 

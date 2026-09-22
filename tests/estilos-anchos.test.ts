@@ -1,5 +1,5 @@
-// Lo que no se puede pasar de ancho ni de alto: la fila de ingredientes (P56)
-// y las fichas al pie (P58). Las dos se ven sólo en el teléfono —una palabra
+// Lo que no se puede pasar de ancho ni de alto: la fila de ingredientes
+// y las fichas al pie. Las dos se ven sólo en el teléfono —una palabra
 // larga estirando la pantalla, una ficha más alta que la ventana—, así que las
 // decisiones quedan acá para que no se borren en silencio.
 import { describe, it, expect } from 'vitest';
@@ -12,7 +12,7 @@ const BASE = readFileSync(new URL('../src/ui/base.css', import.meta.url), 'utf8'
 const regla = (css: string, selector: string): string =>
   css.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
 
-describe('la fila de ingredientes corta en vez de estirarse (P56)', () => {
+describe('la fila de ingredientes corta en vez de estirarse', () => {
   it('el nombre puede achicarse, y la palabra que no entra se parte', () => {
     // Sin `min-width: 0` un ítem flex no baja del ancho mínimo de su
     // contenido: una palabra sin espacios —o una URL— estira la fila entera.
@@ -37,7 +37,7 @@ describe('la fila de ingredientes corta en vez de estirarse (P56)', () => {
   });
 });
 
-describe('las fichas al pie se miden contra la ventana chica (P58)', () => {
+describe('las fichas al pie se miden contra la ventana chica', () => {
   // En Android `vh` mide la ventana sin la barra de direcciones: una ficha
   // calculada así puede quedar más alta que lo que se ve, y cortada arriba
   // —la página está trabada, no hay forma de llegar—.
@@ -81,12 +81,11 @@ describe('las fichas al pie se miden contra la ventana chica (P58)', () => {
   });
 });
 
-describe('el título de un borrador no estira la pantalla (P79)', () => {
+describe('el título de un borrador no estira la pantalla', () => {
   // El título de un borrador es lo que trajo Compartir: el texto de un reel,
-  // una URL, cualquier cosa sin espacios. El de una receta ya estaba recortado
-  // —`.tarjeta .n` con line-clamp y overflow— y el del borrador no, así que
-  // uno largo desbordaba, la página quedaba con scroll horizontal y Android se
-  // llevaba el deslizamiento: por eso el menú lateral no abría ahí.
+  // una URL, cualquier cosa sin espacios. Sin recortarlo, uno largo desborda y
+  // la página queda con scroll horizontal, y ahí Android se lleva el
+  // deslizamiento del menú lateral antes que la página.
   it('se recorta como el de una receta en la lista', () => {
     const n = regla(BASE, '.bor .n');
     expect(n).toContain('overflow: hidden');

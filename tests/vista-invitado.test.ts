@@ -134,7 +134,7 @@ describe('La vista de invitado', () => {
 
   it('por el camino real —codificar, decodificar, dibujar— ninguna foto sale dos veces', async () => {
     // Los demás tests de acá arman la receta con `parse`, que es la forma cruda
-    // que el link nunca entregaba: el bug de P54 sólo se veía yendo por el
+    // que el link nunca entregaba: la falla sólo se veía yendo por el
     // camino de producción.
     const r = parse(`---
 titulo: Rabas

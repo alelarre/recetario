@@ -86,7 +86,7 @@ describe('el controlador del invitado', () => {
     expect(app.innerHTML).toContain('<li class="hecho" data-accion="paso" data-paso="0">');
   });
 
-  /** La portada y dos sin uso: el carrusel es de esas dos (P54). */
+  /** La portada y dos sin uso: el carrusel es de esas dos. */
   const MD_CON_SUELTAS =
     '---\ntitulo: Rabas\nfoto: foto:1\n---\n\n## Preparación\n1. Freír.\n\n' +
     '## Fotos\n- 1: https://x/1.jpg\n- 2: https://x/2.jpg\n- 3: https://x/3.jpg\n';

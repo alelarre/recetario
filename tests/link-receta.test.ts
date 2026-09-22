@@ -47,7 +47,7 @@ describe('el link de una receta', () => {
 
   it('las externas viajan **sin resolver**, como `foto:N` con su línea del depósito', async () => {
     // Resolverlas antes de mandarlas borraba las referencias, y del otro lado
-    // toda foto parecía sin uso: el carrusel del invitado las repetía (P54).
+    // toda foto parecía sin uso: el carrusel del invitado las repetía.
     const portadaExterna = parse(`---\ntitulo: A\nfoto: foto:2\n---\n\n## Preparación\n1. Servir. ![](foto:2)\n\n## Fotos\n- 2: https://x/plato.jpg\n`);
     const vuelta = await decodificar(await codificar(portadaExterna, ''));
     expect(vuelta?.receta.foto).toBe('foto:2');

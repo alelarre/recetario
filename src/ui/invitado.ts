@@ -15,7 +15,7 @@ import type { EstadoVisor } from './visor.js';
  * sobre la receta cruda —con sus `foto:N` todavía—, que es justamente la forma
  * en la que el link la entrega (`sinFotosDeDrive`). El filtro de las de Drive
  * es el mismo resguardo que el de `renderInvitado`: el link ya no las manda,
- * pero acá no puede quedar ni una aunque llegue de otro lado (§10). Lo usa
+ * pero acá no puede quedar ni una aunque llegue de otro lado. Lo usa
  * también su controlador, para saber qué recorre el visor.
  */
 export const carruselDeInvitado = (receta: Receta): FotoDeReceta[] =>
@@ -30,7 +30,7 @@ export interface OpcionesInvitado {
 }
 
 export function renderInvitado({ receta: sinResolver, categoria, visor }: OpcionesInvitado): string {
-  // Resuelta y sin nada de Drive (§10): el invitado no tiene token, así que
+  // Resuelta y sin nada de Drive: el invitado no tiene token, así que
   // acá no puede quedar ni un `data-drive` ni una `foto:N` sin resolver.
   const receta = resueltaSinFotosDeDrive(sinResolver);
   const carrusel = carruselDeInvitado(sinResolver);

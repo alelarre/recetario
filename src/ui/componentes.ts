@@ -98,7 +98,7 @@ export function encabezado(
  * El cuadro de 56 px de una fila: abajo, siempre, la categoría oscurecida y
  * teñida; encima, la foto de la receta si la tiene.
  *
- * El placeholder se dibuja **siempre**, incluso con foto (spec §7): una
+ * El placeholder se dibuja **siempre**, incluso con foto: una
  * cabecera de Drive llega como recuadro y se completa cuando el blob está, y
  * si no está nunca —o si la foto ya no está en Drive— abajo queda la
  * categoría. Así el hueco no existe en ningún momento y la lista no se
@@ -417,14 +417,14 @@ export interface Miniatura {
 }
 
 /**
- * El recuadro de una foto de Drive que ya no está (spec §6). Lo dibuja la fila
+ * El recuadro de una foto de Drive que ya no está. Lo dibuja la fila
  * de miniaturas, y `main` lo pone en lugar de una imagen que tenga su propio
  * cuadrado —el carrusel de la receta, una grilla— cuando Drive contesta que el
  * archivo no existe.
  */
 export const FOTO_AUSENTE = '<span class="miniatura-vacia">La foto ya no está en Drive.</span>';
 
-/** El recuadro de una foto externa cuya URL no carga (P42). Mismo lugar, otro motivo. */
+/** El recuadro de una foto externa cuya URL no carga. Mismo lugar, otro motivo. */
 export const FOTO_ROTA = '<span class="miniatura-vacia">No se pudo cargar la foto.</span>';
 
 /** `data-accion`, y el valor o el número con los que viaja. */
@@ -435,7 +435,7 @@ const datosDeAccion = (a: AccionDeMiniatura, n: number | undefined): string =>
 
 /**
  * La fila de fotos de un borrador o del editor: miniaturas cuadradas y, al
- * final, dos botones —*Cámara* y *Galería*— para agregar (P50). El `capture`
+ * final, dos botones —*Cámara* y *Galería*— para agregar. El `capture`
  * de un input es lo único que lleva directo a la cámara, y saca la galería:
  * por eso hacen falta dos inputs, cada uno en su propio `label` —tocarlo lo
  * abre sin script—, los dos con `data-fotos` para llegar al mismo manejador
@@ -445,7 +445,7 @@ const datosDeAccion = (a: AccionDeMiniatura, n: number | undefined): string =>
  * `porUrl` suma un tercer botón, **Por URL**, que no es un input de archivo:
  * la app baja la foto de la dirección que se le escriba. Va en las tres —la
  * receta, el borrador y la captura—: una foto que está en la web se agrega
- * igual en todas (P59). Lo que cambia es qué pasa con la que no se pudo bajar,
+ * igual en todas. Lo que cambia es qué pasa con la que no se pudo bajar,
  * y eso lo decide `main.ts`.
  */
 export function filaDeFotos(

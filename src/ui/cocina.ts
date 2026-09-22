@@ -38,8 +38,8 @@ export function renderCocina(
   { receta: sinResolver, posicion, aqui, hechos, wakeActivo = false, salidas }: OpcionesCocina
 ): string {
   // Resuelve `foto:N`: el paso dibuja su foto igual que en la lectura, ya
-  // convertida en su `<img>` (§3), sólo que acá un toque marca el paso, no
-  // abre el visor —por eso las fotos no llevan `data-accion` (spec §7)—.
+  // convertida en su `<img>`, sólo que acá un toque marca el paso, no
+  // abre el visor —por eso las fotos no llevan `data-accion`—.
   const receta = resolverReceta(sinResolver);
   const grupos = gruposDe(receta.ingredientes).filter(g => g.items.length);
   const tramos = tramosDe(receta.preparacion).filter(t => t.pasos.length);

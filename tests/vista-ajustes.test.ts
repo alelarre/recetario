@@ -63,7 +63,7 @@ describe('Ajustes', () => {
     expect(html).toContain('suelta.md');
   });
 
-  // Una sola barra de punta a punta, igual que en el primer arranque (P76).
+  // Una sola barra de punta a punta, igual que en el primer arranque.
   it('recién arrancando la barra está en cero, y no hay spinner', () => {
     const html = renderAjustes({ ...base, reindexando: 0 });
     expect(html).toContain('Reindexando');

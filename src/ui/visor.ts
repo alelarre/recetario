@@ -1,5 +1,5 @@
 /**
- * El visor de fotos de la receta (spec §7): la foto actual a pantalla
+ * El visor de fotos de la receta: la foto actual a pantalla
  * completa sobre el velo, entre las fotos del depósito, en su orden. Módulo
  * puro: no toca el DOM ni escucha gestos, eso lo cablea `main.ts` (Tarea 8).
  */

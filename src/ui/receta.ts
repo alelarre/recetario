@@ -58,11 +58,11 @@ function botonFavorito(receta: Receta, escribiendo: boolean): string {
 }
 
 export function renderReceta({ entrada, receta: sinResolver, compartir, favorito, error, visor }: OpcionesReceta): string {
-  // La cabecera y el cuerpo sólo ven la receta resuelta (§3): ni `fichaCabecera`
+  // La cabecera y el cuerpo sólo ven la receta resuelta: ni `fichaCabecera`
   // ni `fichasDelCuerpo` saben de `foto:N`, eso es cosa de acá.
   const receta = resolverReceta(sinResolver);
   // El uso se calcula antes de resolver: después ya no hay ninguna `foto:N`
-  // que buscar, ni en la cabecera ni en el texto (P54).
+  // que buscar, ni en la cabecera ni en el texto.
   const carrusel = fotosSinUso(sinResolver);
   const categoria = entrada?.categoria ?? '';
   // Los tags, con los especiales primero y con su ícono. Incompleta es

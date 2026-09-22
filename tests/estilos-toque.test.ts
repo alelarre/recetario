@@ -64,11 +64,11 @@ describe('cómo responden los controles al toque', () => {
   });
 
   it('con el velo de escritura puesto, la página de atrás tampoco se desplaza (R8)', () => {
-    // También mientras dibuja el cierre con el tilde: recién después navega (P43).
+    // También mientras dibuja el cierre con el tilde: recién después navega.
     expect(BASE).toContain('html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }');
   });
 
-  it('con el menú lateral desplegado tampoco, y sólo mientras se despliega (P57)', () => {
+  it('con el menú lateral desplegado tampoco, y sólo mientras se despliega', () => {
     expect(BASE).toContain('html:has(:where(.velo-lat.on)) { overflow: hidden; }');
     // Desde 900 px el menú es fijo: la traba vive adentro del complemento
     // exacto del `min-width: 900px` del resto del archivo, en vez de
@@ -86,11 +86,11 @@ describe('cómo responden los controles al toque', () => {
     for (const traba of trabas) expect(traba).toContain('html:has(:where(');
   });
 
-  it('lo que es sólo de un dedo no se dibuja con mouse o trackpad (P50)', () => {
+  it('lo que es sólo de un dedo no se dibuja con mouse o trackpad', () => {
     expect(TOKENS).toContain('@media (hover: hover) and (pointer: fine) { .solo-tactil { display: none; } }');
   });
 
-  it('el velo tapa también mientras dibuja el cierre (P43)', () => {
+  it('el velo tapa también mientras dibuja el cierre', () => {
     // El tilde se dibuja antes de navegar: ahí abajo sigue estando el editor,
     // y un toque suelto no puede llegarle.
     const regla = BASE.match(/#velo-escritura\.exito\s*\{([^}]*)\}/)?.[1] ?? '';

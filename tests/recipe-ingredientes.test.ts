@@ -55,7 +55,7 @@ describe('parseIngrediente', () => {
     expect(parseIngrediente(null)).toBe(null);
   });
 
-  it('una foto no se corta por el guión del id de Drive (P45)', () => {
+  it('una foto no se corta por el guión del id de Drive', () => {
     const linea = '- ⅓ taza de aceite de oliva, más un poco para decorar ![](https://drive.google.com/file/d/1Zo4OUmWt1g0z5N2k4Ocwn3xLjm-IQBgO/view)';
     expect(parseIngrediente(linea)).toMatchObject({
       nombre: '⅓ taza de aceite de oliva, más un poco para decorar ![](https://drive.google.com/file/d/1Zo4OUmWt1g0z5N2k4Ocwn3xLjm-IQBgO/view)',
@@ -100,7 +100,7 @@ describe('ingredientesIndexables', () => {
     expect(ingredientesIndexables(receta)).toEqual(['Aceite de oliva']);
   });
 
-  it('un ingrediente con foto y sin cantidad indexa el nombre con la referencia adentro (P45)', () => {
+  it('un ingrediente con foto y sin cantidad indexa el nombre con la referencia adentro', () => {
     const receta = { ingredientes: '- ⅓ taza de aceite de oliva, más un poco para decorar ![](https://drive.google.com/file/d/1Zo4OUmWt1g0z5N2k4Ocwn3xLjm-IQBgO/view)' };
     expect(ingredientesIndexables(receta)).toEqual([
       '⅓ taza de aceite de oliva, más un poco para decorar ![](https://drive.google.com/file/d/1Zo4OUmWt1g0z5N2k4Ocwn3xLjm-IQBgO/view)'

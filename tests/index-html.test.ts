@@ -23,7 +23,7 @@ describe('el velo de escritura en index.html', () => {
     expect(etiqueta).toContain('aria-hidden="true"');
   });
 
-  it('tiene la olla, el vapor, la cuchara con su parte redonda y la tapa (P43)', () => {
+  it('tiene la olla, el vapor, la cuchara con su parte redonda y la tapa', () => {
     const bloque = veloEscritura();
     expect(bloque).toContain('olla');
     expect(bloque).toContain('vapor');

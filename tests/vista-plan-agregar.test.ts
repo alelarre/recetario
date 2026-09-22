@@ -90,7 +90,7 @@ describe('agregar una receta a una comida', () => {
   });
 });
 
-describe('la grilla de categorías, para no tener que escribir (P69)', () => {
+describe('la grilla de categorías, para no tener que escribir', () => {
   it('ofrece las categorías, alfabéticas, cada una como un botón y no un link', () => {
     const html = bloqueDeAgregar({ menuDiario: [], consulta: '', grupos: sinResultados, ...sinCategoriaElegida });
     expect(html.indexOf('Aves')).toBeLessThan(html.indexOf('Carnes'));

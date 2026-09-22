@@ -118,7 +118,7 @@ describe('Captura', () => {
   });
 
   describe('las fotos', () => {
-    it('debajo de la nota, las miniaturas con su × y los tres botones para agregar (P50, P59)', () => {
+    it('debajo de la nota, las miniaturas con su × y los tres botones para agregar', () => {
       const html = renderCaptura({ ...base, fotos: ['blob:1', 'blob:2'] });
       expect(html.indexOf('name="nota"')).toBeLessThan(html.indexOf('class="miniaturas"'));
       expect(html).toContain('<img src="blob:1"');

@@ -33,7 +33,7 @@ export function idDeDrive(url: string): string | null {
   }
 }
 
-/** Una línea de `## Fotos`: `- <número>: <url>`, sin margen para nada más (§3). */
+/** Una línea de `## Fotos`: `- <número>: <url>`, sin margen para nada más. */
 const PATRON_LINEA_FOTO = /^- (\d+): (https?:\/\/\S+)$/;
 
 /**
@@ -91,7 +91,7 @@ function resolverTexto(texto: string, fotos: FotoDeReceta[]): string {
 }
 
 /**
- * La receta con la cabecera y cada referencia ya resueltas (§3): lo único que
+ * La receta con la cabecera y cada referencia ya resueltas: lo único que
  * ven la lectura, la cocina, el texto y el PDF. No muta la que recibe, y el
  * depósito sigue siendo el mismo.
  */
@@ -156,10 +156,10 @@ const PATRON_IMAGEN_RESUELTA = /!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g;
  * Las externas quedan como estaban: `foto:N` en la cabecera y en el texto, con
  * su línea en el depósito.
  *
- * **Sin resolver a propósito:** es lo que viaja en el link compartido (§10), y
+ * **Sin resolver a propósito:** es lo que viaja en el link compartido, y
  * del otro lado el invitado tiene que poder calcular el uso de cada foto
  * (`usosDeFotos`). Resolviéndola antes no quedaría ninguna `foto:N` que contar
- * y el carrusel volvería a repetir la portada y las de una línea (P54).
+ * y el carrusel volvería a repetir la portada y las de una línea.
  */
 export function sinFotosDeDrive(receta: Receta): Receta {
   const deDrive = receta.fotos.filter(f => idDeDrive(f.url) !== null).map(f => f.n);

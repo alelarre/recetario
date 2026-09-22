@@ -282,10 +282,10 @@ vi.mock('../src/indice-local.js', () => ({
 /**
  * Los dos tiempos del velo, como los tiene `main.ts`: lo que dura el cierre
  * con el tilde y lo que se espera después, por si nadie dibuja la pantalla de
- * destino. El reloj de estos tests es falso —esperar casi dos segundos de
- * verdad en cada test que guarda una receta se llevaba la mitad de la suite
- * (P74)—, así que se los adelanta a mano. Separados porque entre uno y otro
- * hay un momento que se mira: el tilde ya dibujado y el velo todavía puesto.
+ * destino. El reloj de estos tests es falso —esperarlos de verdad, en cada
+ * test que guarda una receta, se lleva la mitad de la suite—, así que se los
+ * adelanta a mano. Separados porque entre uno y otro hay un momento que se
+ * mira: el tilde ya dibujado y el velo todavía puesto.
  */
 const MS_CIERRE = 1850;
 const MS_RESPALDO_CIERRE = 400;
@@ -372,7 +372,7 @@ describe('main.ts: las rutas', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const clicks: ((e: unknown) => unknown)[] = [];
     const cambios: ((e: unknown) => unknown)[] = [];
-    /** Los oyentes de `error` en captura: una foto externa que no carga (P42). */
+    /** Los oyentes de `error` en captura: una foto externa que no carga. */
     const errores: ((e: unknown) => unknown)[] = [];
     /** Los oyentes de `focusin`: el botón de poner una foto sigue al foco. */
     const focos: ((e: unknown) => unknown)[] = [];
@@ -415,12 +415,12 @@ describe('main.ts: las rutas', () => {
     };
     /**
      * Si la pantalla está tapada: el velo puesto y todavía tapando. Mientras
-     * dibuja el cierre con el tilde sigue en pantalla, pero ya no tapa (P43).
+     * dibuja el cierre con el tilde sigue en pantalla, pero ya no tapa.
      */
     const tapado = () => !velo.hidden && !clasesVelo.has('exito');
     /**
      * Cada vez que se pintó `#app`, con la pantalla tapada o no en ese momento:
-     * es la forma de ver el orden entre tapar la pantalla y redibujarla (P47).
+     * es la forma de ver el orden entre tapar la pantalla y redibujarla.
      */
     const pinturas: { html: string; velo: boolean }[] = [];
     let htmlApp = '';
@@ -675,7 +675,7 @@ describe('main.ts: las rutas', () => {
         return [];
       },
       // Los gestos van en `document` y no en `#app`: una pantalla corta deja
-      // abajo un área que no es de `#app`, y ahí el toque no llegaba (P79).
+      // abajo un área que no es de `#app`, y ahí el toque no llegaba.
       // Por eso el doble los recoge sólo acá: si volvieran a `#app`, los tests
       // del gesto se quedarían sin oyentes y fallarían.
       addEventListener: (ev: string, fn: (e: unknown) => unknown) => {
@@ -952,9 +952,9 @@ describe('main.ts: las rutas', () => {
     }
   });
 
-  it('las cuatro pantallas del menú abren el menú desde su encabezado (P55)', async () => {
+  it('las cuatro pantallas del menú abren el menú desde su encabezado', async () => {
     // El gesto sale de `PANTALLAS_CON_MENU`; el botón lo decide a mano cada
-    // pantalla, y esa divergencia fue P55. Acá se recorre la lista de verdad:
+    // pantalla, y las dos se desalinearon una vez. Acá se recorre la lista:
     // si mañana entra una quinta y su encabezado sigue con el volver, falla.
     const { abrir, app, PANTALLAS_CON_MENU } = await montar();
     const hashes: Record<string, string> = {
@@ -969,9 +969,9 @@ describe('main.ts: las rutas', () => {
   });
 
   describe('el gesto del menú lateral', () => {
-    // Hasta P79 nada probaba el gesto entero: `ui/gesto-menu.ts` tiene sus
-    // tests unitarios y el de P55 mira el botón, así que una pantalla podía
-    // dejar de responder al dedo sin que nada avisara.
+    // El gesto entero, que no cubre ningún otro test: los de
+    // `ui/gesto-menu.ts` son unitarios y el del botón mira el encabezado. Sin
+    // esto, una pantalla puede dejar de responder al dedo sin que nada avise.
     const HASHES: Record<string, string> = {
       recetario: '#/', borradores: '#/borradores', plan: '#/plan', ajustes: '#/ajustes'
     };
@@ -992,7 +992,7 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    // El caso de P79: con pocos borradores la pantalla no llega abajo, y
+    // Con pocos borradores la pantalla no llega abajo, y
     // debajo de los botones queda un área que no es de `#app`. Ahí el dedo
     // tiene que abrir el menú igual, porque el gesto es de la pantalla.
     it('también abre desde el área vacía debajo del contenido', async () => {
@@ -2363,7 +2363,7 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('al terminar bien, el velo cierra con el tilde y el guardado sigue su camino (P43)', async () => {
+    it('al terminar bien, el velo cierra con el tilde y el guardado sigue su camino', async () => {
       const { abrir, tocarSinCerrar, correrElCierre, velo, vueltasAtras, tapadoAlVolver, atributosApp } = await montar();
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
@@ -2393,7 +2393,7 @@ describe('main.ts: las rutas', () => {
       expect(velo.classList.contains('exito')).toBe(false);
     });
 
-    it('si nadie dibuja nada después del tilde, el velo se va igual (P43)', async () => {
+    it('si nadie dibuja nada después del tilde, el velo se va igual', async () => {
       const { abrir, tocarSinCerrar, correrElReloj, velo } = await montar();
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
@@ -2410,7 +2410,7 @@ describe('main.ts: las rutas', () => {
       expect(velo.classList.contains('exito')).toBe(false);
     });
 
-    it('con el cierre a medio dibujar, un cambio de hash dibuja igual (P43)', async () => {
+    it('con el cierre a medio dibujar, un cambio de hash dibuja igual', async () => {
       const { abrir, tocarSinCerrar, correrElReloj, app, velo, empujados } = await montar();
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
@@ -2430,7 +2430,7 @@ describe('main.ts: las rutas', () => {
       await guardando;
     });
 
-    it('una escritura nueva durante el cierre lo corta y vuelve a tapar (P43)', async () => {
+    it('una escritura nueva durante el cierre lo corta y vuelve a tapar', async () => {
       const original = storeFake.plan;
       try {
         const { promesa, resolver } = pendiente<Plan>();
@@ -2471,7 +2471,7 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('el aviso de un guardado que falló se trae a la vista (P54)', async () => {
+    it('el aviso de un guardado que falló se trae a la vista', async () => {
       const original = storeFake.crear;
       storeFake.crear = async () => { throw new Error('red'); };
       try {
@@ -2509,7 +2509,7 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('al tocar Guardar tapa la pantalla antes de releer el `.md` de base (P47)', async () => {
+    it('al tocar Guardar tapa la pantalla antes de releer el `.md` de base', async () => {
       const original = storeFake.receta;
       try {
         const { abrir, tocarSinCerrar, correrElReloj, velo } = await montar();
@@ -2528,7 +2528,7 @@ describe('main.ts: las rutas', () => {
         resolver({ entrada: entradaFalsa({ id_archivo: 'f1' }), receta: parse(estado.md) });
         await esperar();
 
-        // Guardó: el velo se queda dibujando el cierre con el tilde (P43).
+        // Guardó: el velo se queda dibujando el cierre con el tilde.
         expect(velo.classList.contains('exito')).toBe(true);
         expect(estado.guardados).toHaveLength(1);
         await correrElReloj();
@@ -2552,7 +2552,7 @@ describe('main.ts: las rutas', () => {
       expect(estado.creadas).toEqual([]);
     });
 
-    it('al sumar una receta al plan tapa la pantalla antes de leer `_plan.md` (P47)', async () => {
+    it('al sumar una receta al plan tapa la pantalla antes de leer `_plan.md`', async () => {
       const original = storeFake.plan;
       try {
         const { promesa, resolver } = pendiente<Plan>();
@@ -2577,7 +2577,7 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('la captura se redibuja con la pantalla ya tapada (P47)', async () => {
+    it('la captura se redibuja con la pantalla ya tapada', async () => {
       const { abrir, tocar, pinturas } = await montar();
       await abrir('#/capturar');
       estado.formulario = { titulo: 'Focaccia', fuente: 'libro de la abuela' };
@@ -2716,7 +2716,7 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(5);
       expect(app.innerHTML).not.toContain('Cámara');
       expect(app.innerHTML).not.toContain('Galería');
-      // En el tope, *Por URL* se va con los otros dos: la fila de botones entera (P59).
+      // En el tope, *Por URL* se va con los otros dos: la fila de botones entera.
       expect(app.innerHTML).not.toContain('Por URL');
 
       await tocar('guardar-captura');
@@ -2731,7 +2731,7 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(1);
     });
 
-    it('una foto que llega por el input de la cámara entra igual que una de la galería (P50)', async () => {
+    it('una foto que llega por el input de la cámara entra igual que una de la galería', async () => {
       const { abrir, app, elegirFotos } = await montar();
       await abrir('#/capturar');
       // Los dos inputs —cámara y galería— llevan `data-fotos` y llegan al
@@ -2743,7 +2743,7 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(1);
     });
 
-    it('con varias fotos, el velo se pone una vez y no parpadea (P52)', async () => {
+    it('con varias fotos, el velo se pone una vez y no parpadea', async () => {
       const { abrir, elegirFotos, idasYVueltasDelVelo } = await montar();
       await abrir('#/capturar');
 
@@ -2753,7 +2753,7 @@ describe('main.ts: las rutas', () => {
       expect(idasYVueltasDelVelo).toEqual([false, true]);
     });
 
-    it('en el editor, tres fotos tampoco hacen parpadear el velo (P52)', async () => {
+    it('en el editor, tres fotos tampoco hacen parpadear el velo', async () => {
       const { abrir, elegirFotos, idasYVueltasDelVelo } = await montar();
       await abrir('#/r/f1/editar');
       idasYVueltasDelVelo.length = 0;
@@ -2859,10 +2859,10 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('Tarta');
     });
 
-    // Agregar una foto por su dirección, igual que en la receta (P59). Lo que
+    // Agregar una foto por su dirección, igual que en la receta. Lo que
     // cambia es la salida de la que no se pudo bajar: en un borrador las fotos
     // son ids de Drive, y un link externo no tiene ninguno.
-    describe('por URL (P59)', () => {
+    describe('por URL', () => {
       /** Lo que contesta un sitio que sí deja bajar la foto. */
       const respuestaDeFoto = (texto: string) => ({
         ok: true,
@@ -2900,7 +2900,7 @@ describe('main.ts: las rutas', () => {
         expect(preguntas.some(h => h.includes('data-foto-url'))).toBe(false);
       });
 
-      it('el velo se pone una vez para bajarla, achicarla y subirla (P52)', async () => {
+      it('el velo se pone una vez para bajarla, achicarla y subirla', async () => {
         conUnBorrador();
         vi.stubGlobal('fetch', async () => respuestaDeFoto('bajada'));
         const montada = await montar();
@@ -3489,7 +3489,7 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('elegir una categoría de la grilla filtra a sus recetas, sin navegar a la categoría (P69)', async () => {
+    it('elegir una categoría de la grilla filtra a sus recetas, sin navegar a la categoría', async () => {
       const { abrir, tocar, app } = await montar();
       await abrir('#/plan/agregar?dia=1&momento=noche');
       expect(app.innerHTML).toContain('data-accion="elegir-categoria-plan" data-nombre="Carnes"');
@@ -3558,7 +3558,7 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('las lecturas se solapan, y la pantalla se tapa mientras tanto (P81)', async () => {
+    it('las lecturas se solapan, y la pantalla se tapa mientras tanto', async () => {
       estado.plan = {
         comidas: ['f1', 'f2', 'f3', 'f4'].map((id, i) => ({
           dia: i, momento: 'noche' as const, id, titulo: id
@@ -3583,7 +3583,7 @@ describe('main.ts: las rutas', () => {
         await abrir('#/plan/compras');
 
         // Las cuatro salieron juntas —el tope son seis— y no una detrás de
-        // otra, que era lo que hacía esperar hasta catorce viajes en fila.
+        // otra, que con un plan cargado son catorce viajes en fila.
         expect(pico).toBe(4);
         // Y mientras lee, la pantalla está tapada: es la espera más larga de
         // la app y antes no daba ninguna señal.
@@ -3650,7 +3650,7 @@ describe('main.ts: las rutas', () => {
     });
   });
 
-  describe('las fotos de la receta (spec §6 a §9)', () => {
+  describe('las fotos de la receta', () => {
     const EXTERNA = 'https://ejemplo/2.jpg';
     const foto = (texto: string): Blob => new Blob([texto], { type: 'image/jpeg' });
     /** El depósito tal como lo deja `renderEditor` en su campo oculto. */
@@ -3737,7 +3737,7 @@ describe('main.ts: las rutas', () => {
       // Elegir cierra la ficha.
       expect(preguntas.some(h => h.includes('data-selector-portada'))).toBe(false);
       // Y la fila se redibuja con la marca de portada en la que se eligió, sin
-      // salir del editor (P54).
+      // salir del editor.
       const fila = filasDeFotos.at(-1) ?? '';
       const minis = fila.split('<div class="miniatura">').slice(1);
       expect(minis[1]).toContain(ICO.portada);
@@ -4083,7 +4083,7 @@ describe('main.ts: las rutas', () => {
       expect(estado.formulario['preparacion']).toBe('Freír.\nServir. ![](foto:2)');
       expect(preguntas.some(h => h.includes('data-elegir-foto'))).toBe(false);
       expect(app.innerHTML).toBe(antes);
-      // Ahora está en un paso, y la fila se redibuja diciéndolo (P54).
+      // Ahora está en un paso, y la fila se redibuja diciéndolo.
       const minis = (filasDeFotos.at(-1) ?? '').split('<div class="miniatura">').slice(1);
       expect(minis[1]).toContain(ICO.enElTexto);
       expect(minis[0]).not.toContain(ICO.enElTexto);
@@ -4129,7 +4129,7 @@ describe('main.ts: las rutas', () => {
       const { abrir, tocar } = await montar();
       await abrir('#/r/f1/editar');
       // Un JSON que no se entiende no puede querer decir «las saqué a todas»:
-      // el store mandaría esas fotos a la papelera (§8).
+      // el store mandaría esas fotos a la papelera.
       estado.formulario = { ...formularioConFotos(), fotos: 'no es json' };
 
       await tocar('sacar-foto-editor', { n: '2' });
@@ -4229,7 +4229,7 @@ describe('main.ts: las rutas', () => {
       expect(minis[1]).toContain(ICO.portada);
     });
 
-    /** Con dos fotos sin uso: las del carrusel, que es lo que el visor recorre (P54). */
+    /** Con dos fotos sin uso: las del carrusel, que es lo que el visor recorre. */
     const MD_CON_SUELTAS = [
       '---', 'titulo: Milanesas', 'foto: foto:1', '---', '',
       '## Fotos', '', `- 1: ${linkDeFoto('f9')}`, `- 2: ${EXTERNA}`, '- 3: https://ejemplo/otra.jpg', ''
@@ -4296,7 +4296,7 @@ describe('main.ts: las rutas', () => {
       expect(imgs[2]?.sacada).toBe(true);
     });
 
-    it('una foto externa que no carga se saca; en el carrusel deja su recuadro (P42)', async () => {
+    it('una foto externa que no carga se saca; en el carrusel deja su recuadro', async () => {
       estado.md = MD_CON_FOTOS;
       const { abrir, fallarFoto } = await montar();
       await abrir('#/r/f1');

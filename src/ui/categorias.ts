@@ -65,7 +65,7 @@ export function colorDeClave(color: string): string {
 
 /**
  * La URL de una foto de categoría: del catálogo (`catalogo:<clave>`) o propia,
- * subida a `_fotos/` (`drive:<id>`, spec §8) y resuelta a su link de Drive,
+ * subida a `_fotos/` (`drive:<id>`) y resuelta a su link de Drive,
  * igual que la de una receta. Cualquier otro valor da null.
  *
  * `propia:<url>` es la foto que se acaba de elegir en la pantalla de la

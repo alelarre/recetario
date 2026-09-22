@@ -47,7 +47,7 @@ describe('renderEditor', () => {
   });
 
   // *Nueva receta* se alcanza desde el Recetario y se sale volviendo: no está
-  // en `PANTALLAS_CON_MENU`, así que el encabezado no abre el menú (P55).
+  // en `PANTALLAS_CON_MENU`, así que el encabezado no abre el menú.
   it('el encabezado lleva el volver, no la hamburguesa', () => {
     const html = dibujar();
     expect(html).toContain('Nueva receta');
@@ -341,7 +341,7 @@ describe('las fotos en el editor', () => {
   const dibujarFotos = (receta = conFotos) =>
     renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta, categorias });
 
-  it('la ficha Fotos va después de Contenido, con el número de cada una y Cámara/Galería sin tope (P50)', () => {
+  it('la ficha Fotos va después de Contenido, con el número de cada una y Cámara/Galería sin tope', () => {
     const html = dibujarFotos();
     expect(html.indexOf('<h2>Contenido</h2>')).toBeLessThan(html.indexOf('<h2>Fotos</h2>'));
     expect(html).toContain('data-accion="acciones-foto" data-n="1"');
@@ -358,7 +358,7 @@ describe('las fotos en el editor', () => {
     expect(html).toContain('Por URL');
   });
 
-  it('cada miniatura lleva un ícono por uso, y las dos si es las dos cosas (P54)', () => {
+  it('cada miniatura lleva un ícono por uso, y las dos si es las dos cosas', () => {
     const r = parse(`---
 titulo: Pan
 foto: foto:1
@@ -451,7 +451,7 @@ foto: foto:1
     expect(serialize(recetaDesdeFormulario(formularioDesde(conFotos), conFotos))).toBe(serialize(conFotos));
   });
 
-  it('el campo de la cabecera se llama Portada, y no Foto como la ficha del depósito (P48)', () => {
+  it('el campo de la cabecera se llama Portada, y no Foto como la ficha del depósito', () => {
     const html = dibujarFotos();
     expect(html).toContain('<div class="campo" data-portada><span>Portada</span>');
     expect(html).not.toContain('<span>Foto</span>');
@@ -509,7 +509,7 @@ describe('renderAccionesFoto', () => {
     expect(html).not.toContain('data-accion="sacar-foto"');
   });
 
-  it('*Poner en…* ya no está: la foto se pone desde el paso (P46)', () => {
+  it('*Poner en…* ya no está: la foto se pone desde el paso', () => {
     const html = renderAccionesFoto(2, { portada: false });
     expect(html).not.toContain('Poner en');
     expect(html).not.toContain('abrir-poner-en');
