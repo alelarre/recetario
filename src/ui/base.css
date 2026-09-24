@@ -260,6 +260,11 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
 /* Y un poco de aire entre los tags puestos y el campo para sumar otro. */
 [data-pills]:not(:empty) { margin-bottom: var(--e-3); }
 
+/* Convertir con Agente y Guardar, al pie del formulario y a lo ancho: una
+   columna, no la fila a mitades de `.acciones`. */
+.acciones-editor { display: flex; flex-direction: column; gap: var(--e-2); margin-top: var(--e-4); }
+.acciones-editor .btn { width: 100%; }
+
 /* ---- Captura ---- */
 /* El ayuda memoria de la nota: es referencia mientras se escribe, no prosa.
    En micro, que es el piso de la escala, y en el color de los rótulos de los

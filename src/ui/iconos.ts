@@ -33,6 +33,9 @@ export const ICO = {
   compartir: svg('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>' +
     '<path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>'),
   mas: svg('<path d="M12 5v14M5 12h14"/>'),
+  /** Pegar una receta copiada: el botón del encabezado del editor. */
+  portapapeles: svg('<rect x="8" y="3" width="8" height="4" rx="1"/>' +
+    '<path d="M16 5h2a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h2"/>'),
   /** Los dos destinos del menú lateral que no tenían ícono propio. */
   casa: svg('<path d="M4 11l8-6 8 6v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-8z"/>'),
   bandeja: svg('<path d="M4 13l2.5-7h11L20 13v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5z"/>' +

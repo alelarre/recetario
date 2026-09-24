@@ -136,25 +136,38 @@ describe('renderEditor', () => {
     for (const d of ['fácil', 'media', 'difícil']) expect(html).toContain(d);
   });
 
-  it('en el alta la categoría arranca sin elegir, y hay que elegirla', () => {
+  it('el select tiene Sin categoría como opción elegible, no un placeholder', () => {
+    const html = dibujar({ carpeta: 'c1' });
+    expect(html).toContain('<option value="">Sin categoría</option>');
+    expect(html).not.toContain('<option value="" disabled');
+  });
+
+  it('sin carpeta ni entrada, queda elegida Sin categoría', () => {
     const html = dibujar();
-    expect(html).toContain('<option value="" disabled selected>Elegí una categoría</option>');
+    expect(html).toContain('<option value="" selected>Sin categoría</option>');
     // Y la primera categoría real no queda seleccionada por descarte.
     expect(html).not.toContain('<option value="c1" selected>');
   });
 
-  it('editando una receta no aparece el placeholder: ya tiene carpeta', () => {
-    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: cargada, categorias });
-    expect(html).not.toContain('Elegí una categoría');
+  it('con carpeta elegida, queda seleccionada esa categoría', () => {
+    const html = dibujar({ carpeta: 'c1' });
     expect(html).toContain('value="c1" selected');
   });
 
-  it('la categoría son las subcarpetas, y la actual viene elegida', () => {
+  it('la carpeta sale de la entrada cuando no se pasa `carpeta`', () => {
     const html = renderEditor({
       entrada: entradaFalsa({ carpeta_id: 'c2' }), receta: cargada, categorias
     });
     expect(html).toContain('Pescados y mariscos');
     expect(html).toContain('value="c2" selected');
+  });
+
+  it('con una entrada cuya carpeta no es una categoría de la lista, queda Sin categoría', () => {
+    // La raíz o `_sin-categoria/` no aparecen en `categorias`.
+    const html = renderEditor({
+      entrada: entradaFalsa({ carpeta_id: 'id-de-la-raiz' }), receta: cargada, categorias
+    });
+    expect(html).toContain('<option value="" selected>Sin categoría</option>');
   });
 
   it('hay cinco campos de contenido, y los ingredientes son uno más', () => {
@@ -187,14 +200,29 @@ describe('renderEditor', () => {
       .toContain('data-accion="borrar"');
   });
 
-  it('el encabezado queda fijo arriba, como en la receta abierta', () => {
-    expect(dibujar()).toContain('<div class="enc peg">');
+  it('el encabezado ya no queda fijo: arriba no hay nada que tenga que quedar a mano', () => {
+    expect(dibujar()).not.toContain('<div class="enc peg">');
   });
 
-  it('las dos fichas llevan título: Datos y Contenido', () => {
+  it('el encabezado lleva Pegar, principal compacto con el ícono de portapapeles, y no Guardar', () => {
     const html = dibujar();
-    expect(html.indexOf('<h2>Datos</h2>')).toBeLessThan(html.indexOf('name="titulo"'));
-    expect(html.indexOf('name="foto"')).toBeLessThan(html.indexOf('<h2>Contenido</h2>'));
+    expect(html).toContain(
+      `<button class="btn prim compacto" data-accion="pegar-receta">${ICO.portapapeles}Pegar</button>`
+    );
+    const encabezado = html.slice(0, html.indexOf('<form'));
+    expect(encabezado).not.toContain('data-accion="guardar"');
+  });
+
+  it('el orden de las marcas va de arriba a abajo', () => {
+    const html = dibujar({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['borrador'] } });
+    const marcas = [
+      'name="titulo"', 'name="carpeta"', 'name="fuente"', '<h2>Fotos</h2>', '<h2>Contenido</h2>',
+      'data-portada', 'name="descripcion"', 'name="notas"',
+      'data-accion="convertir-con-agente"', 'data-accion="guardar"'
+    ];
+    const indices = marcas.map(m => html.indexOf(m));
+    for (const i of indices) expect(i).toBeGreaterThan(-1);
+    expect(indices).toEqual([...indices].sort((a, b) => a - b));
   });
 
   it('borrar receta va suelto al pie, fuera de las fichas', () => {
@@ -220,8 +248,8 @@ describe('renderEditor', () => {
     const html = dibujar({ error: 'No se pudo guardar.' });
     expect(html).toContain('No se pudo guardar.');
     expect(html).toContain(cargada.titulo!);
-    // El reintento es Guardar, que sigue en el encabezado: el aviso no repite
-    // un control que ya está.
+    // El reintento es Guardar, al pie del formulario: el aviso no repite un
+    // control que ya está.
     expect(html).not.toContain('Reintentar');
   });
 });
@@ -273,6 +301,38 @@ describe('los tags especiales en el editor', () => {
     expect(html).not.toContain('data-completa');
     expect(html).not.toContain('conm-doble');
     expect(html).not.toContain('name="completa"');
+  });
+});
+
+describe('las acciones al pie del editor', () => {
+  it('Convertir con Agente aparece con el tag borrador puesto, y no sin él', () => {
+    const conBorrador = renderEditor({
+      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['borrador'] }, categorias
+    });
+    expect(conBorrador).toContain('data-accion="convertir-con-agente"');
+    expect(conBorrador).toContain(`${ICO.compartir}Convertir con Agente`);
+
+    const sinBorrador = renderEditor({
+      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: [] }, categorias
+    });
+    expect(sinBorrador).not.toContain('data-accion="convertir-con-agente"');
+  });
+
+  it('Convertir con Agente es secundario', () => {
+    const html = renderEditor({
+      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['borrador'] }, categorias
+    });
+    expect(html).toContain('<button class="btn sec" data-accion="convertir-con-agente" type="button">');
+  });
+
+  it('Guardar es principal, a lo ancho, y al final del formulario', () => {
+    const html = dibujar();
+    expect(html).toContain('<button class="btn prim" data-accion="guardar" type="button">Guardar</button>');
+  });
+
+  it('al editar, Borrar receta va después de Guardar', () => {
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: cargada, categorias });
+    expect(html.indexOf('data-accion="guardar"')).toBeLessThan(html.indexOf('data-accion="borrar"'));
   });
 });
 
@@ -341,9 +401,9 @@ describe('las fotos en el editor', () => {
   const dibujarFotos = (receta = conFotos) =>
     renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta, categorias });
 
-  it('la ficha Fotos va después de Contenido, con el número de cada una y Cámara/Galería sin tope', () => {
+  it('la ficha Fotos va antes de Contenido, con el número de cada una y Cámara/Galería sin tope', () => {
     const html = dibujarFotos();
-    expect(html.indexOf('<h2>Contenido</h2>')).toBeLessThan(html.indexOf('<h2>Fotos</h2>'));
+    expect(html.indexOf('<h2>Fotos</h2>')).toBeLessThan(html.indexOf('<h2>Contenido</h2>'));
     expect(html).toContain('data-accion="acciones-foto" data-n="1"');
     expect(html).toContain('data-accion="acciones-foto" data-n="3"');
     // El badge lleva el número del depósito, no la posición en la fila, y va
@@ -483,10 +543,10 @@ foto: foto:1
 });
 
 describe('renderAccionesFoto', () => {
-  it('las tres acciones, cada una con su número', () => {
-    const html = renderAccionesFoto(2, { portada: false });
+  it('Ver y Sacar, cada una con su número', () => {
+    const html = renderAccionesFoto(2);
     const acciones: [string, string][] = [
-      ['Ver', 'ver-foto-receta'], ['Portada', 'elegir-portada'], ['Sacar', 'sacar-foto-editor']
+      ['Ver', 'ver-foto-receta'], ['Sacar', 'sacar-foto-editor']
     ];
     for (const [etiqueta, accion] of acciones) {
       expect(html).toContain(`data-accion="${accion}" data-n="2"`);
@@ -494,43 +554,42 @@ describe('renderAccionesFoto', () => {
     }
   });
 
-  it('si ya es la portada, Portada no se dibuja', () => {
-    const html = renderAccionesFoto(2, { portada: true });
+  it('no ofrece Portada: se elige sólo desde el campo Portada', () => {
+    const html = renderAccionesFoto(2);
     expect(html).not.toContain('elegir-portada');
     expect(html).not.toContain('>Portada</button>');
-    expect(html).toContain('data-accion="sacar-foto-editor" data-n="2"');
   });
 
   it('las acciones de las fotos del borrador no se pisan con las del editor', () => {
     // `ver-foto` y `sacar-foto` son las del borrador, con `data-valor` y una
     // escritura a Drive de por medio; el despachador de `main` es plano.
-    const html = renderAccionesFoto(2, { portada: false });
+    const html = renderAccionesFoto(2);
     expect(html).not.toContain('data-accion="ver-foto"');
     expect(html).not.toContain('data-accion="sacar-foto"');
   });
 
   it('*Poner en…* ya no está: la foto se pone desde el paso', () => {
-    const html = renderAccionesFoto(2, { portada: false });
+    const html = renderAccionesFoto(2);
     expect(html).not.toContain('Poner en');
     expect(html).not.toContain('abrir-poner-en');
   });
 
   it('la ficha se encuentra por su marca: se saca del DOM sin redibujar', () => {
-    expect(renderAccionesFoto(2, { portada: false })).toContain('data-acciones-foto');
+    expect(renderAccionesFoto(2)).toContain('data-acciones-foto');
   });
 });
 
 describe('las fichas de fotos se cierran con el velo', () => {
   it('cada una arranca con el velo, como la hoja de Compartir', () => {
     const velo = '<div class="velo" data-accion="cerrar-ficha-foto"></div>';
-    expect(renderAccionesFoto(1, { portada: false }).startsWith(velo)).toBe(true);
+    expect(renderAccionesFoto(1).startsWith(velo)).toBe(true);
     expect(renderElegirFoto([], 'notas', 0).startsWith(velo)).toBe(true);
     expect(renderSelectorPortada([], null).startsWith(velo)).toBe(true);
     expect(renderFotoPorUrl().startsWith(velo)).toBe(true);
   });
 
   it('ninguna suma un Cancelar: se cierran tocando afuera', () => {
-    expect(renderAccionesFoto(1, { portada: false })).not.toContain('Cancelar');
+    expect(renderAccionesFoto(1)).not.toContain('Cancelar');
     expect(renderElegirFoto([], 'notas', 0)).not.toContain('Cancelar');
     expect(renderSelectorPortada([], null)).not.toContain('Cancelar');
     expect(renderFotoPorUrl()).not.toContain('Cancelar');

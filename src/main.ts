@@ -1822,7 +1822,7 @@ app.addEventListener('click', async (e) => {
   }
   if (accion === 'acciones-foto') {
     const n = boton.dataset['n'] ?? '';
-    abrirFichaFoto(renderAccionesFoto(Number(n), { portada: portadaDelEditor() === `foto:${n}` }));
+    abrirFichaFoto(renderAccionesFoto(Number(n)));
     return;
   }
   if (accion === 'abrir-portada') {

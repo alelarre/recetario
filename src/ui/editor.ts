@@ -26,6 +26,8 @@ export interface ArgsEditor {
   receta: Receta;
   /** Sin entrada es el alta: el archivo todavía no existe en Drive. */
   entrada: Entrada | null;
+  /** La carpeta elegida en el select; `''` es «Sin categoría». Sin ella sale de `entrada?.carpeta_id`. */
+  carpeta?: string;
   categorias?: Pick<Categoria, 'id' | 'nombre'>[];
   tagsConocidos?: string[];
   /** El texto del aviso cuando el guardado falló. Lo escrito sigue en pantalla. */
@@ -175,9 +177,10 @@ const VELO_DE_FICHA = '<div class="velo" data-accion="cerrar-ficha-foto"></div>'
 
 /**
  * Lo que una foto del depósito deja hacer, al pie y sin redibujar el
- * formulario. *Portada* no se dibuja si ya lo es: no tendría nada que hacer.
+ * formulario: *Ver* y *Sacar*. La portada se elige sólo desde el campo
+ * Portada, así que acá no hay ninguna acción para eso.
  */
-export function renderAccionesFoto(n: number, { portada }: { portada: boolean }): string {
+export function renderAccionesFoto(n: number): string {
   const boton = (accion: string, etiqueta: string, clase = 'sec'): string =>
     `<button class="btn ${clase}" data-accion="${accion}" data-n="${n}" type="button">${etiqueta}</button>`;
   return VELO_DE_FICHA +
@@ -185,7 +188,6 @@ export function renderAccionesFoto(n: number, { portada }: { portada: boolean })
     `<p class="lee" style="margin:0 0 var(--e-4)">Foto ${n}</p>` +
     '<div class="acciones acciones-foto">' +
       boton('ver-foto-receta', 'Ver') +
-      (portada ? '' : boton('elegir-portada', 'Portada')) +
       boton('sacar-foto-editor', 'Sacar', 'pel') +
     '</div></div>';
 }
@@ -328,18 +330,20 @@ function campoDuracion(tiempo: string | null): string {
 }
 
 export function renderEditor(
-  { receta, entrada, categorias = [], tagsConocidos = [], error, confirmandoBorrado }: ArgsEditor
+  { receta, entrada, carpeta, categorias = [], tagsConocidos = [], error, confirmandoBorrado }: ArgsEditor
 ): string {
-  // En el alta no hay categoría elegida, y la primera de la lista no es una
-  // respuesta: sin elegirla no se sabe en qué carpeta va el archivo
-  // (C04.3b.1). El placeholder queda seleccionado y no se puede volver a él.
-  const sinElegir = !entrada?.carpeta_id;
+  // «Sin categoría» es una opción más, elegible como cualquier otra —guardar
+  // así escribe en `_sin-categoria/` (C04.3b.1)—, así que no hace falta un
+  // placeholder. Lo que llegue sin ser el id de una categoría de la lista
+  // —la raíz o `_sin-categoria/`— tampoco tiene nada elegido.
+  const elegida = carpeta ?? entrada?.carpeta_id ?? '';
+  const carpetaElegida = categorias.some(c => c.id === elegida) ? elegida : '';
   const opcionesCarpeta =
-    (sinElegir ? '<option value="" disabled selected>Elegí una categoría</option>' : '') +
+    `<option value=""${carpetaElegida === '' ? ' selected' : ''}>Sin categoría</option>` +
     [...categorias]
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
       .map(c =>
-        `<option value="${escapar(c.id)}"${c.id === entrada?.carpeta_id ? ' selected' : ''}>${escapar(c.nombre)}</option>`
+        `<option value="${escapar(c.id)}"${c.id === carpetaElegida ? ' selected' : ''}>${escapar(c.nombre)}</option>`
       ).join('');
 
   const actual = dificultadValida(receta.dificultad);
@@ -348,8 +352,7 @@ export function renderEditor(
 
   const tags = receta.tags ?? [];
 
-  const carpetaActual = entrada?.carpeta_id ?? '';
-  const puede = sePuedeTerminar(receta, carpetaActual);
+  const puede = sePuedeTerminar(receta, carpetaElegida);
   const comunes = tags.filter(t => !tagEspecial(t));
   const especiales = TAGS_ESPECIALES.filter(t =>
     (t === 'borrador' && !puede) || tieneEspecial({ tags }, t));
@@ -376,7 +379,6 @@ export function renderEditor(
     campoDuracion(receta.tiempo) +
     `<label class="campo"><span>Dificultad</span><select name="dificultad">${opcionesDificultad}</select></label>` +
     campo('fuente', 'Fuente original', receta.fuente) +
-    campoPortada(receta.foto, receta.fotos) +
   '</div>';
 
   // Cómo se escribe un ingrediente para que el filtro por ingrediente lo
@@ -405,6 +407,7 @@ export function renderEditor(
     '</details>';
 
   const contenido = '<div class="ficha"><h2>Contenido</h2>' +
+    campoPortada(receta.foto, receta.fotos) +
     area('descripcion', 'Descripción', receta.descripcion, 3) +
     // El campo y su ayuda son un bloque: se pegan.
     area('ingredientes', 'Ingredientes', receta.ingredientes, 8, 'margin-bottom:var(--e-1)') +
@@ -414,22 +417,28 @@ export function renderEditor(
     area('notas', 'Notas', receta.notas, 3) +
   '</div>';
 
+  // Convertir con Agente sólo mientras la receta es un borrador: sin ese tag
+  // no hay nada que mandar a convertir.
+  const acciones = '<div class="acciones-editor">' +
+    (tieneEspecial({ tags }, 'borrador')
+      ? `<button class="btn sec" data-accion="convertir-con-agente" type="button">${ICO.compartir}Convertir con Agente</button>`
+      : '') +
+    '<button class="btn prim" data-accion="guardar" type="button">Guardar</button>' +
+  '</div>';
+
   const borrar = !entrada ? ''
     : confirmandoBorrado ? confirmacionBorrado(receta.titulo) : botonBorrar;
 
   return encabezado({
     titulo: entrada ? 'Editando' : 'Nueva receta',
     volver: true,
-    // Fijo arriba, como en la receta abierta (C03.1.2b): Guardar queda a mano
-    // aunque se esté escribiendo al fondo del formulario.
-    pegajoso: true,
-    derecha: '<button class="btn prim compacto" data-accion="guardar">Guardar</button>'
+    derecha: `<button class="btn prim compacto" data-accion="pegar-receta">${ICO.portapapeles}Pegar</button>`
   }) +
-    // Nada acá manda el formulario: guardar es un botón del encabezado, y sin
-    // esto Enter en cualquier campo de texto recargaría la página.
+    // Nada acá manda el formulario: Guardar es de tipo `button`, y sin esto
+    // Enter en cualquier campo de texto recargaría la página.
     '<form class="cuerpo" data-formulario onsubmit="return false">' +
       (error ? avisoAlGuardar(error) : '') +
-      datos + contenido + fichaFotos(receta) + borrar +
+      datos + fichaFotos(receta) + contenido + acciones + borrar +
     '</form>';
 }
 
