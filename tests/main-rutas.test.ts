@@ -1855,7 +1855,7 @@ describe('main.ts: las rutas', () => {
     it('un botón especial deshabilitado no cambia al tocarlo', async () => {
       const { abrir, tocar } = await montar();
       await abrir('#/r/f1/editar');
-      const attrs = await tocar('tag-especial', { valor: 'incompleta' }, { 'aria-pressed': 'true', disabled: '' });
+      const attrs = await tocar('tag-especial', { valor: 'borrador' }, { 'aria-pressed': 'true', disabled: '' });
       expect(attrs['aria-pressed']).toBe('true');
     });
   });
@@ -1889,18 +1889,18 @@ describe('main.ts: las rutas', () => {
     });
   });
 
-  it('una receta nueva abre con incompleta', async () => {
+  it('una receta nueva abre con borrador', async () => {
     const { abrir, app } = await montar();
     await abrir('#/nueva');
-    expect(app.innerHTML).toContain('data-valor="incompleta" aria-pressed="true"');
+    expect(app.innerHTML).toContain('data-valor="borrador" aria-pressed="true"');
   });
 
-  it('un borrador convertido también abre con incompleta', async () => {
+  it('un borrador convertido también abre con borrador', async () => {
     estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', capturado: '', nota: '' }];
     const { abrir, app } = await montar();
     await abrir('#/nueva?borrador=b1');
     expect(app.innerHTML).toContain('value="Focaccia"');
-    expect(app.innerHTML).toContain('data-valor="incompleta" aria-pressed="true"');
+    expect(app.innerHTML).toContain('data-valor="borrador" aria-pressed="true"');
   });
 
   it('crear la receta desde un borrador reparte la nota en sus secciones', async () => {
@@ -3164,7 +3164,7 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('value="Focaccia"');
       expect(app.innerHTML).not.toContain('borrador: b1');
       expect(app.innerHTML).not.toContain('name="borrador"');
-      expect(app.innerHTML).toContain('data-valor="incompleta" aria-pressed="true"');
+      expect(app.innerHTML).toContain('data-valor="borrador" aria-pressed="true"');
       // Con `replace`, no con una entrada nueva: `#/capturar` era la única
       // entrada que dejó el Share Target, y sumar una acá haría que volver
       // cayera de nuevo en la captura, que reabriría esta misma receta.

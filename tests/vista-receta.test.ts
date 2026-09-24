@@ -171,11 +171,11 @@ describe('Receta en lectura', () => {
     expect(html).toContain('Un tinto.');
   });
 
-  it('la marca de incompleta es tocable y abre el editor', () => {
+  it('la marca de borrador es tocable y abre el editor', () => {
     const conTag = parse('---\ntitulo: A\ntags: [incompleta]\n---\n');
     const html = renderReceta({ entrada: null, receta: conTag });
     expect(html).toContain('data-accion="editar"');
-    expect(html).toContain('class="inc');
+    expect(html).toContain('class="borr');
   });
 
   it('la marca es un chip de la fila de tags, y el primero', () => {
@@ -187,13 +187,13 @@ describe('Receta en lectura', () => {
     // Primero el estado, después los tags.
     expect(fila.indexOf('incompleta')).toBeLessThan(fila.indexOf('vegetariano'));
     // Y una sola vez: el tag no se repite como chip suelto, la marca ya lo dice.
-    expect(html.split('class="inc"').length - 1).toBe(1);
+    expect(html.split('class="borr"').length - 1).toBe(1);
   });
 
-  it('la fila de tags no repite la marca de incompleta: es el chip del tag', () => {
+  it('la fila de tags no repite la marca de borrador: es el chip del tag', () => {
     const r = parse('---\ntitulo: Pan\ntags: [incompleta, horno]\n---\n');
     const html = renderReceta({ entrada: entradaFalsa(), receta: r });
-    expect(html.match(/class="inc"/g)).toHaveLength(1);
+    expect(html.match(/class="borr"/g)).toHaveLength(1);
   });
 
   it('sin otros tags, la marca arma igual la fila de chips', () => {
@@ -202,13 +202,13 @@ describe('Receta en lectura', () => {
     expect(html).toContain('<div class="chips">');
   });
 
-  it('la marca es el tag incompleta, no un dato calculado', () => {
+  it('la marca es el tag borrador, no un dato calculado', () => {
     // Sin el tag no aparece, aunque a la receta le falte todo.
     const sinTag = parse('---\ntitulo: A\n---\n');
-    expect(renderReceta({ entrada: null, receta: sinTag })).not.toContain('class="inc"');
-    // Con el tag aparece, aunque la receta esté escrita entera.
+    expect(renderReceta({ entrada: null, receta: sinTag })).not.toContain('class="borr"');
+    // Con el tag aparece, aunque la receta esté escrita entera, y en su forma vieja.
     const conTag = parse('---\ntitulo: A\ntags: [incompleta]\n---\n## Ingredientes\n- Sal\n## Preparación\n1. Salar.');
-    expect(renderReceta({ entrada: null, receta: conTag })).toContain('class="inc"');
+    expect(renderReceta({ entrada: null, receta: conTag })).toContain('class="borr"');
   });
 
   it('las variaciones como bullets se muestran como lista', () => {

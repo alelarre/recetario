@@ -128,7 +128,7 @@ export interface OpcionesTarjeta {
 
 /** Cómo dice cada marca lo que es, para quien no la ve. */
 const NOMBRE_DE_MARCA: Record<TagEspecial, string> = {
-  favorito: 'Favorita', 'menú diario': 'Menú diario', probar: 'Para probar', incompleta: 'Incompleta'
+  favorito: 'Favorita', 'menú diario': 'Menú diario', probar: 'Para probar', borrador: 'Borrador'
 };
 
 /** Foto, título y una línea de contexto. Alto total 80 px. */
@@ -201,7 +201,7 @@ export function iconoDeTag(tag: string): string {
   if (esp === 'favorito') return ICO.estrella;
   if (esp === 'probar') return ICO.marcador;
   if (esp === 'menú diario') return ICO.calendario;
-  if (esp === 'incompleta') return '<span class="inc"></span>';
+  if (esp === 'borrador') return '<span class="borr"></span>';
   return '';
 }
 
@@ -231,12 +231,12 @@ export function chipTag(tag: string, { activo, cantidad, fijo, quieto }: Opcione
 
 /**
  * Los chips sueltos, sin el contenedor: los usa la receta, donde los tags se
- * leen y no se tocan (C02.6.3). La excepción es `incompleta`, que abre el
+ * leen y no se tocan (C02.6.3). La excepción es `borrador`, que abre el
  * editor: ahí se completa lo que falta (C03.1.3).
  */
 export function chipsSueltos(tags: string[]): string {
-  return ordenarTags(Array.isArray(tags) ? tags : []).map(tag => tagEspecial(tag) === 'incompleta'
-    ? `<button class="chip pend" data-accion="editar" aria-label="Incompleta: abrir el editor">` +
+  return ordenarTags(Array.isArray(tags) ? tags : []).map(tag => tagEspecial(tag) === 'borrador'
+    ? `<button class="chip pend" data-accion="editar" aria-label="Borrador: abrir el editor">` +
       `${iconoDeTag(tag)}${escapar(tag)}</button>`
     : chipTag(tag, { quieto: true })).join('');
 }

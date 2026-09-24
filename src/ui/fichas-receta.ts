@@ -46,7 +46,7 @@ const preparacion = (tramos: TramoPreparacion[]): string =>
 export interface OpcionesCabecera {
   receta: Receta;
   categoria: string;
-  /** Lo que va entre el contexto y la descripción. La receta pone ahí los tags y la marca de incompleta. */
+  /** Lo que va entre el contexto y la descripción. La receta pone ahí los tags y la marca de borrador. */
   marcas?: string;
   /**
    * El pin de color junto a la categoría. El color es de la carpeta del dueño:

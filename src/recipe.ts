@@ -324,7 +324,7 @@ export function variacionesDe(variaciones: string): { lista: string[]; secciones
 /**
  * Si la receta reúne lo mínimo para que el usuario pueda declararla terminada.
  *
- * La completitud es el tag especial `incompleta`: esto sólo habilita que
+ * La completitud es el tag especial `borrador`: esto sólo habilita que
  * se pueda sacar en el editor, y por eso vive en el editor y en ningún camino
  * de lectura.
  *

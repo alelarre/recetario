@@ -294,20 +294,20 @@ const area = (
 
 /**
  * Los cuatro tags especiales, un botón cada uno: apretado si la receta
- * lo tiene, suelto si no. `incompleta` no se suelta sin lo mínimo —título,
+ * lo tiene, suelto si no. `borrador` no se suelta sin lo mínimo —título,
  * categoría, ingredientes y pasos—: mientras falte, queda apretado y
  * deshabilitado, y la leyenda dice qué hace falta.
  */
 function botonesEspeciales(tags: string[], puedeTerminar: boolean): string {
   const botones = TAGS_ESPECIALES.map(t => {
-    const bloqueado = t === 'incompleta' && !puedeTerminar;
+    const bloqueado = t === 'borrador' && !puedeTerminar;
     const apretado = bloqueado || tieneEspecial({ tags }, t);
     return `<button type="button" class="tag-esp" data-accion="tag-especial" data-valor="${escapar(t)}" ` +
       `aria-pressed="${apretado}"${bloqueado ? ' disabled' : ''}>${iconoDeTag(t)}${escapar(t)}</button>`;
   }).join('');
   return `<div class="tags-esp" role="group" aria-label="Tags especiales">${botones}</div>` +
-    `<p class="aviso-mudo leyenda-incompleta"${puedeTerminar ? ' hidden' : ''}>` +
-    'Se va a poder sacar <i>incompleta</i> cuando se cargue: título, categoría, ingredientes y pasos.</p>';
+    `<p class="aviso-mudo leyenda-borrador"${puedeTerminar ? ' hidden' : ''}>` +
+    'Se va a poder sacar <i>borrador</i> cuando se cargue: título, categoría, ingredientes y pasos.</p>';
 }
 
 /**
@@ -352,7 +352,7 @@ export function renderEditor(
   const puede = sePuedeTerminar(receta, carpetaActual);
   const comunes = tags.filter(t => !tagEspecial(t));
   const especiales = TAGS_ESPECIALES.filter(t =>
-    (t === 'incompleta' && !puede) || tieneEspecial({ tags }, t));
+    (t === 'borrador' && !puede) || tieneEspecial({ tags }, t));
 
   // Las tres fichas llevan título: el formulario es largo, y al hacer scroll es lo
   // que dice en qué parte se está.

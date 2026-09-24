@@ -92,7 +92,7 @@ describe('renderEditor', () => {
   });
 
   it('lo que viaja en el formulario es el campo oculto, no lo a medio escribir', () => {
-    // Con carpeta elegida `incompleta` no se fuerza: el hidden es sólo los
+    // Con carpeta elegida `borrador` no se fuerza: el hidden es sólo los
     // tags comunes del `.md` («los tags especiales en el editor» cubre el
     // caso con especiales puestos).
     const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: cargada, categorias });
@@ -229,7 +229,7 @@ describe('renderEditor', () => {
 describe('los tags especiales en el editor', () => {
   it('hay un botón por especial, en su orden, dentro del campo Tags', () => {
     const html = dibujar();
-    const orden = ['favorito', 'menú diario', 'probar', 'incompleta']
+    const orden = ['favorito', 'menú diario', 'probar', 'borrador']
       .map(t => html.indexOf(`data-accion="tag-especial" data-valor="${t}"`));
     expect(orden.every(i => i > 0)).toBe(true);
     expect(orden).toEqual([...orden].sort((a, b) => a - b));
@@ -254,18 +254,18 @@ describe('los tags especiales en el editor', () => {
     expect(html).toContain('name="tags" value="probar, horno"');
   });
 
-  it('sin lo mínimo, incompleta queda apretado y deshabilitado, con la leyenda', () => {
+  it('sin lo mínimo, borrador queda apretado y deshabilitado, con la leyenda', () => {
     const vacia = { ...cargada, tags: [], preparacion: '' };
     const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: vacia, categorias });
-    expect(html).toContain('data-valor="incompleta" aria-pressed="true" disabled');
-    expect(html).toMatch(/class="aviso-mudo leyenda-incompleta"(?! hidden)/);
-    expect(html).toContain('name="tags" value="incompleta"');
+    expect(html).toContain('data-valor="borrador" aria-pressed="true" disabled');
+    expect(html).toMatch(/class="aviso-mudo leyenda-borrador"(?! hidden)/);
+    expect(html).toContain('name="tags" value="borrador"');
   });
 
-  it('con lo mínimo, incompleta se puede soltar y la leyenda no se ve', () => {
+  it('con lo mínimo, borrador se puede soltar y la leyenda no se ve, aunque el tag esté en su forma vieja', () => {
     const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['incompleta'] }, categorias });
-    expect(html).toContain('data-valor="incompleta" aria-pressed="true">');
-    expect(html).toContain('leyenda-incompleta" hidden');
+    expect(html).toContain('data-valor="borrador" aria-pressed="true">');
+    expect(html).toContain('leyenda-borrador" hidden');
   });
 
   it('el conmutador de Estado ya no existe', () => {

@@ -103,6 +103,14 @@ describe('buscar', () => {
     expect(store.buscar({ texto: null, categoria: null, dificultad: null })).toHaveLength(3);
     expect(store.buscar({ texto: undefined, categoria: undefined })).toHaveLength(3);
   });
+
+  it('filtra por el tag especial aunque la fila tenga la forma vieja', async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'Torta a medio hacer', 'Postres', 'c2', 'incompleta', 'harina')
+    ]);
+    await abrirDeNuevo();
+    expect(store.buscar({ tags: ['borrador'] }).map(e => e.id_archivo)).toEqual(['r4']);
+  });
 });
 
 describe('buscarPorTexto: los tres criterios', () => {

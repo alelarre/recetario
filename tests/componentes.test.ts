@@ -75,14 +75,14 @@ describe('tarjeta', () => {
     expect(placeholder('Rara')).toContain('data-drive="abc"');
   });
 
-  it('una receta incompleta lleva la marca, sin color de error', () => {
+  it('una receta borrador lleva la marca, sin color de error', () => {
     const html = tarjeta(entradaFalsa({ tags: ['incompleta'] }));
-    expect(html).toContain('class="inc"');
+    expect(html).toContain('class="borr"');
     expect(html).not.toContain('error');
   });
 
-  it('una receta sin el tag incompleta no lleva ninguna marca', () => {
-    expect(tarjeta(entradaFalsa({ tags: [] }))).not.toContain('class="inc"');
+  it('una receta sin el tag borrador no lleva ninguna marca', () => {
+    expect(tarjeta(entradaFalsa({ tags: [] }))).not.toContain('class="borr"');
   });
 
   it('en un resultado por ingrediente, la tarjeta dice por qué apareció', () => {
@@ -99,7 +99,7 @@ describe('las marcas de la tarjeta', () => {
   it('van juntas arriba a la derecha, en el orden de los especiales', () => {
     const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['incompleta', 'horno', 'favorito', 'probar'] }));
     const esq = html.slice(html.indexOf('class="marcas-esq"'));
-    const orden = ['Favorita', 'Para probar', 'Incompleta'].map(n => esq.indexOf(`aria-label="${n}"`));
+    const orden = ['Favorita', 'Para probar', 'Borrador'].map(n => esq.indexOf(`aria-label="${n}"`));
     expect(orden.every(i => i > 0)).toBe(true);
     expect(orden).toEqual([...orden].sort((a, b) => a - b));
     expect(html).toContain('style="--marcas:3"');
@@ -109,7 +109,7 @@ describe('las marcas de la tarjeta', () => {
     const html = tarjeta(entradaFalsa({ titulo: 'Pan', categoria: 'Panes', tags: ['incompleta'] }));
     const inicio = html.indexOf('class="ctx"');
     const ctx = html.slice(inicio, html.indexOf('</span></span>', inicio));
-    expect(ctx).not.toContain('class="inc"');
+    expect(ctx).not.toContain('class="borr"');
   });
 
   it('sin especiales no hay esquina', () => {
@@ -119,7 +119,7 @@ describe('las marcas de la tarjeta', () => {
   it('la marca de favorito lleva su propia clase, para el relleno de tokens.css', () => {
     const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['favorito', 'incompleta'] }));
     expect(html).toContain('<span class="marca favorita" role="img" aria-label="Favorita" title="Favorita">');
-    expect(html).toContain('<span class="marca" role="img" aria-label="Incompleta" title="Incompleta">');
+    expect(html).toContain('<span class="marca" role="img" aria-label="Borrador" title="Borrador">');
   });
 
   it('cada marca dice qué es al apoyar el mouse', () => {
@@ -174,8 +174,9 @@ describe('los chips de tags', () => {
     expect(iconoDeTag('horno')).toBe('');
   });
 
-  it('incompleta usa la marca de medio círculo como ícono', () => {
-    expect(iconoDeTag('incompleta')).toBe('<span class="inc"></span>');
+  it('borrador usa la marca de medio círculo como ícono, incluso en su forma vieja', () => {
+    expect(iconoDeTag('borrador')).toBe('<span class="borr"></span>');
+    expect(iconoDeTag('incompleta')).toBe('<span class="borr"></span>');
   });
 
   it('el chip lleva el ícono adelante del nombre', () => {

@@ -205,15 +205,15 @@ button.tarjeta { width: 100%; font: inherit; text-align: left; cursor: pointer; 
              background: var(--c, var(--cat-otros)); opacity: .25; mix-blend-mode: multiply; }
 .ph::before { content: ''; position: absolute; inset: 0; background: #000; opacity: .45; }
 
-/* ---- §6.5 Marca de incompleta ---- */
+/* ---- §6.5 Marca de borrador ---- */
 /* Un círculo a medio llenar: un aro vacío se lee como viñeta, no como
    «hecha a medias». Va en el acento —es lo único tocable de su fila y lleva al
    editor—, y nunca en `--error`: a la receta le falta algo, no está rota.
    `inline-block` con su tamaño propio: como `<span>` es `inline` por default,
    sin esto el ancho se ignora fuera de un ítem flex o grid y queda cortado. */
-.inc { display: inline-block; width: 12px; height: 12px; border: 1.5px solid currentColor; border-radius: 50%;
-       color: var(--acento);
-       background: linear-gradient(to right, currentColor 50%, transparent 50%); }
+.borr { display: inline-block; width: 12px; height: 12px; border: 1.5px solid currentColor; border-radius: 50%;
+        color: var(--acento);
+        background: linear-gradient(to right, currentColor 50%, transparent 50%); }
 
 /* ---- §6.10 Chip ---- */
 /* Un tono más claro que `--surface-alta`: en el editor lo separa del campo de

@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
-  TAGS_ESPECIALES, tagEspecial, esFavorita, ordenarTags, ordenarRecetas, conEspecial, tagReservado
+  TAGS_ESPECIALES, tagEspecial, esFavorita, ordenarTags, ordenarRecetas, conEspecial, tagReservado,
+  coincideTag
 } from '../src/catalogo.js';
 import { entradaFalsa } from './dobles.js';
 
 describe('los tags especiales', () => {
   it('son cuatro, en el orden fijo', () => {
-    expect(TAGS_ESPECIALES).toEqual(['favorito', 'menú diario', 'probar', 'incompleta']);
+    expect(TAGS_ESPECIALES).toEqual(['favorito', 'menú diario', 'probar', 'borrador']);
   });
 
   it('reconoce cada uno sin importar mayúsculas ni tildes', () => {
@@ -16,10 +17,11 @@ describe('los tags especiales', () => {
     expect(tagEspecial('probar')).toBe('probar');
   });
 
-  it('incompleta se reconoce en sus formas', () => {
-    expect(tagEspecial('incompleto')).toBe('incompleta');
-    expect(tagEspecial('Incompletas')).toBe('incompleta');
-    expect(tagEspecial('incompleta')).toBe('incompleta');
+  it('borrador se reconoce en sus formas, incluidas las viejas', () => {
+    expect(tagEspecial('borrador')).toBe('borrador');
+    expect(tagEspecial('Borradores')).toBe('borrador');
+    expect(tagEspecial('incompleta')).toBe('borrador');
+    expect(tagEspecial('INCOMPLETOS')).toBe('borrador');
   });
 
   it('un tag común no es especial', () => {
@@ -40,7 +42,7 @@ describe('los tags especiales', () => {
   });
 
   it('terminado y sus formas siguen reservados, y los cuatro especiales también', () => {
-    for (const t of ['terminado', 'terminadas', 'incompleta', 'incompletos', 'menu diario', 'favoritas', 'probar']) {
+    for (const t of ['terminado', 'terminadas', 'borrador', 'incompleta', 'menu diario', 'favoritas', 'probar']) {
       expect(tagReservado(t)).toBe(true);
     }
     expect(tagReservado('horno')).toBe(false);
@@ -56,6 +58,12 @@ describe('los tags especiales', () => {
       .toEqual(['favorito', 'menú diario', 'probar', 'incompleta', 'horno']);
   });
 
+  it('coincideTag compara por igualdad, o por el mismo especial', () => {
+    expect(coincideTag('incompleta', 'borrador')).toBe(true);
+    expect(coincideTag('pollo', 'pollo')).toBe(true);
+    expect(coincideTag('pollo', 'borrador')).toBe(false);
+  });
+
   it('ordena las recetas con las favoritas primero y alfabético adentro', () => {
     const e = (titulo: string, tags: string[] = []) => entradaFalsa({ titulo, tags });
     const orden = ordenarRecetas([
@@ -65,9 +73,12 @@ describe('los tags especiales', () => {
   });
 
   it('pone y saca un especial sin tocar los demás tags', () => {
-    expect(conEspecial(['horno'], 'incompleta', true)).toEqual(['incompleta', 'horno']);
-    expect(conEspecial(['Incompleto', 'horno'], 'incompleta', true)).toEqual(['incompleta', 'horno']);
-    expect(conEspecial(['incompleta', 'horno'], 'incompleta', false)).toEqual(['horno']);
+    expect(conEspecial(['horno'], 'borrador', true)).toEqual(['borrador', 'horno']);
     expect(conEspecial(['Favorita', 'horno'], 'favorito', false)).toEqual(['horno']);
+  });
+
+  it('la forma vieja se reemplaza por la canónica al poner el especial', () => {
+    expect(conEspecial(['incompleta', 'pollo'], 'borrador', true)).toEqual(['borrador', 'pollo']);
+    expect(conEspecial(['incompleta'], 'borrador', false)).toEqual([]);
   });
 });

@@ -233,13 +233,13 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
            font: 600 var(--txt-base)/1 var(--tipo); }
 .tag-esp svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5;
                stroke-linecap: round; stroke-linejoin: round; }
-.tag-esp .inc { color: inherit; }
+.tag-esp .borr { color: inherit; }
 @media (hover: hover) {
   .tag-esp:hover:not([disabled]):not([aria-pressed="true"]) { color: var(--fg); }
 }
 .tag-esp[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--bg); }
 .tag-esp[disabled] { cursor: default; opacity: .6; }
-.leyenda-incompleta { line-height: 1.5; margin: 0 0 var(--e-3); }
+.leyenda-borrador { line-height: 1.5; margin: 0 0 var(--e-3); }
 
 /* La duración: cinco botones con relojito, en tres columnas. Apretado se
    invierte, como los tags especiales; el reloj de `>1 día` corta con el fondo

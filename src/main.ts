@@ -1263,9 +1263,9 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         fotosDelBorrador = borrador.fotos;
         receta.fotos = borrador.fotos.map((id, i) => ({ n: i + 1, url: linkDeFoto(id) }));
       }
-      // Una receta nace incompleta: sacar el tag es la declaración explícita de
-      // que está terminada (C04.3b.1).
-      receta.tags = conEspecial(receta.tags, 'incompleta', true);
+      // Una receta nace como borrador: sacar el tag es la declaración explícita
+      // de que está terminada (C04.3b.1).
+      receta.tags = conEspecial(receta.tags, 'borrador', true);
       abrirEditor(renderEditor({
         entrada: null, receta, categorias: store.categorias(),
         tagsConocidos: store.tagsDe().map(t => t.tag)
@@ -1289,12 +1289,12 @@ function sincronizarTags(): void {
 }
 
 /**
- * Vuelve a mirar si la receta del formulario puede sacarse `incompleta`, y
+ * Vuelve a mirar si la receta del formulario puede sacarse `borrador`, y
  * habilita o bloquea su botón. Corre en cada tecla, así que toca el DOM en vez
  * de redibujar: redibujar perdería el foco y el cursor.
  */
 function revisarIncompleta(): void {
-  const boton = document.querySelector<HTMLButtonElement>('#app [data-accion="tag-especial"][data-valor="incompleta"]');
+  const boton = document.querySelector<HTMLButtonElement>('#app [data-accion="tag-especial"][data-valor="borrador"]');
   if (!boton) return;
   const valor = (n: string): string =>
     document.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
@@ -1304,9 +1304,9 @@ function revisarIncompleta(): void {
     valor('carpeta')
   );
   boton.disabled = !puede;
-  const leyenda = document.querySelector<HTMLElement>('#app .leyenda-incompleta');
+  const leyenda = document.querySelector<HTMLElement>('#app .leyenda-borrador');
   if (leyenda) leyenda.hidden = puede;
-  // Si dejó de cumplir, la receta vuelve a quedar incompleta.
+  // Si dejó de cumplir, la receta vuelve a quedar borrador.
   if (!puede && boton.getAttribute('aria-pressed') !== 'true') {
     boton.setAttribute('aria-pressed', 'true');
     sincronizarTags();
@@ -1864,7 +1864,7 @@ function agregarTag(valor: string): boolean {
   const tag = valor.trim().replace(/,+$/, '').trim();
   const contenedor = document.querySelector('[data-pills]');
   if (!tag || !contenedor) return false;
-  // Los especiales tienen su botón y terminado contradice a incompleta: no se escriben a mano.
+  // Los especiales tienen su botón y terminado contradice a borrador: no se escriben a mano.
   if (tagReservado(tag)) { avisarTag(true); return false; }
   avisarTag(false);
   const yaEsta = [...contenedor.querySelectorAll<HTMLElement>('[data-valor]')]
@@ -2775,7 +2775,7 @@ app.addEventListener('input', (e) => {
   }
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria();
   // En el editor, cada tecla puede habilitar o bloquear el botón de
-  // `incompleta`, y mueve el cursor de línea.
+  // `borrador`, y mueve el cursor de línea.
   if (enElEditor()) { revisarIncompleta(); acomodarBotonDeFoto(); return; }
   if (vistaActual?.vista !== 'capturar' && !editandoBorrador) return;
   const campo = e.target as HTMLInputElement | HTMLTextAreaElement | null;

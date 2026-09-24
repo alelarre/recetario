@@ -1,5 +1,5 @@
 import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_BORRADORES, NOMBRE_FOTOS, NOMBRE_PLAN, MARCA_RAIZ, SCHEMA_VERSION } from './config.js';
-import { COLUMNAS, entradaDesdeFila, filaDesde } from './catalogo.js';
+import { COLUMNAS, entradaDesdeFila, filaDesde, coincideTag } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, HOJA_BORRADORES, HOJA_CATEGORIAS, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 import { COLUMNAS_BORRADORES, MAXIMO_FOTOS, entradaBorradorDesdeFila, filaDeBorrador, nombreDeFoto, parseBorrador, serializeBorrador } from './borrador.js';
@@ -916,7 +916,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     return entradas.filter(e => {
       if (cat && e.categoria !== cat) return false;
       if (diff && e.dificultad !== diff) return false;
-      if (tagList.length && !tagList.every(tag => e.tags.includes(tag))) return false;
+      if (tagList.length && !tagList.every(tag => e.tags.some(x => coincideTag(x, tag)))) return false;
       if (!t) return true;
       return normalizar(e.titulo).includes(t) || e.ingredientes.some(i => normalizar(i).includes(t));
     });

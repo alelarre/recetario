@@ -120,28 +120,29 @@ export function entradaDesdeFila(fila?: unknown): Entrada {
  * lista `tags` del `.md` como cualquier otro. El orden es el mismo en todos
  * lados: primero lo que se busca para cocinar, al final lo que falta terminar.
  */
-export const TAGS_ESPECIALES = ['favorito', 'menú diario', 'probar', 'incompleta'] as const;
+export const TAGS_ESPECIALES = ['favorito', 'menú diario', 'probar', 'borrador'] as const;
 export type TagEspecial = (typeof TAGS_ESPECIALES)[number];
 
 /**
  * Formas que se leen como cada especial, además de lo que ya cubre
- * `normalizar` (mayúsculas y tildes). Sólo `favorito` e `incompleta` tienen
- * género y número.
+ * `normalizar` (mayúsculas y tildes). `favorito` tiene género y número;
+ * `borrador` además arrastra su nombre viejo, `incompleta`, y las formas de
+ * ése.
  */
 const FORMAS_ALTERNATIVAS: Record<TagEspecial, readonly string[]> = {
   favorito: ['favorita', 'favoritos', 'favoritas'],
   'menú diario': [],
   probar: [],
-  incompleta: ['incompleto', 'incompletos', 'incompletas']
+  borrador: ['borradores', 'incompleta', 'incompleto', 'incompletos', 'incompletas']
 };
 
-/** Contradicen a `incompleta`: un tag así diría lo contrario que el especial. */
+/** Contradicen a `borrador`: un tag así diría lo contrario que el especial. */
 const FORMAS_TERMINADO = ['terminado', 'terminada', 'terminados', 'terminadas'] as const;
 
 /**
  * Tags que no se escriben a mano. Los cuatro especiales tienen su botón en el
  * editor, y escribirlos crearía una segunda forma de poner lo mismo;
- * `terminado` contradice a `incompleta`. Derivada, para que no diverja de la
+ * `terminado` contradice a `borrador`. Derivada, para que no diverja de la
  * lista de especiales.
  */
 export const TAGS_RESERVADOS: readonly string[] = [
@@ -162,6 +163,17 @@ export function tagEspecial(valor: unknown): TagEspecial | null {
   if (!n) return null;
   return TAGS_ESPECIALES.find(t =>
     normalizar(t) === n || FORMAS_ALTERNATIVAS[t].some(f => normalizar(f) === n)) ?? null;
+}
+
+/**
+ * Si dos tags escritos son el mismo. Uno igual siempre coincide; si el
+ * buscado es un especial, también coincide cualquier forma —vieja o
+ * nueva— de ese mismo especial.
+ */
+export function coincideTag(escrito: string, buscado: string): boolean {
+  if (normalizar(escrito) === normalizar(buscado)) return true;
+  const esp = tagEspecial(buscado);
+  return esp !== null && tagEspecial(escrito) === esp;
 }
 
 /** Lleva ese especial, escrito como sea. */
