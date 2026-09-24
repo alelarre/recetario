@@ -10,6 +10,7 @@
  */
 import { escapar } from './markdown.js';
 import { encabezado, chipsSueltos, aviso } from './componentes.js';
+import type { OpcionesAviso } from './componentes.js';
 import { ICO } from './iconos.js';
 import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones } from './fichas-receta.js';
 import { renderFichaCompartir } from './compartir.js';
@@ -36,8 +37,8 @@ export interface OpcionesReceta {
   favorito?: 'escribiendo';
   /** Lo último que falló al marcar favorito. Se dibuja arriba de la ficha. */
   error?: string;
-  /** Un aviso que trae la receta la pantalla de la que se llegó. Va arriba de la ficha, sin control. */
-  aviso?: string;
+  /** Un aviso que trae la receta la pantalla de la que se llegó, con su acción si la tiene. Va arriba de la ficha. */
+  aviso?: OpcionesAviso;
   /** El visor de fotos abierto, en su foto actual. Sin esto no se dibuja. */
   visor?: EstadoVisor;
 }
@@ -95,7 +96,7 @@ export function renderReceta(
   const estrella = botonFavorito(receta, favorito === 'escribiendo');
   return encabezado({ titulo: '', volver: true, pegajoso: true, derecha: estrella + botonCompartir + alArchivo }) +
     '<div class="cuerpo">' +
-      (avisoDeLlegada ? aviso({ texto: avisoDeLlegada }) : '') +
+      (avisoDeLlegada ? aviso(avisoDeLlegada) : '') +
       (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'favorito' } }) : '') +
       fichaCabecera({ receta, categoria, marcas, carrusel }) + fichasDelCuerpo(receta) +
     '</div>' +

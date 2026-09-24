@@ -48,6 +48,7 @@ import { precargar, generar } from './pdf/generar.js';
 import {
   compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador, leerPortapapeles, enviarAlAgente
 } from './compartir.js';
+import type { FotosDelPedido } from './compartir.js';
 import { esRecetaEnMd, recetaRecibida, aplicarPegada, pedidoDeConversion } from './conversion.js';
 import { desdeCompartido, tituloPorDefecto } from './compartido.js';
 import { codificar, urlDeLink } from './link-receta.js';
@@ -216,6 +217,16 @@ let errorFavorito = '';
  */
 let avisoAlLlegar = '';
 let avisoDeLlegada = '';
+/** El pedido al agente, listo para mandar: el texto y las fotos. */
+type PedidoAlAgente = { pedido: string; fotos: FotosDelPedido | null };
+/**
+ * El pedido que no salió —el navegador ya no tenía la activación del toque—,
+ * para la pantalla a la que se va y el que la receta ofrece mandar con un
+ * toque nuevo. Como `pdfListo` con *Enviar PDF*: no se vuelve a armar.
+ */
+let pedidoAlLlegar: PedidoAlAgente | null = null;
+let pedidoPendiente: PedidoAlAgente | null = null;
+const PEDIDO_COPIADO = 'Pedido copiado: pegalo en el agente';
 
 /**
  * El plan de la semana, leído de su `.md` una vez. Mismo criterio que la
@@ -831,6 +842,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     errorFavorito = '';
     avisoDeLlegada = avisoAlLlegar;
     avisoAlLlegar = '';
+    pedidoPendiente = pedidoAlLlegar;
+    pedidoAlLlegar = null;
     // La pantalla nueva empieza arriba: el hash no cambia el scroll, así que
     // entrar al modo cocina desde el pie de la receta abría los ingredientes
     // ya scrolleados. La llamada es opcional por lo mismo que
@@ -896,7 +909,12 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
           ...(compartiendo ? { compartir: compartiendo } : {}),
           ...(marcandoFavorito ? { favorito: 'escribiendo' as const } : {}),
           ...(errorFavorito ? { error: errorFavorito } : {}),
-          ...(avisoDeLlegada ? { aviso: avisoDeLlegada } : {})
+          ...(pedidoPendiente
+            ? { aviso: {
+                texto: 'La receta quedó guardada. Tocá para mandarla al agente.',
+                accion: { etiqueta: 'Mandar al agente', accion: 'mandar-al-agente' }
+              } }
+            : avisoDeLlegada ? { aviso: { texto: avisoDeLlegada } } : {})
         }));
         return observarTitulo();
       } catch (err) {
@@ -1611,6 +1629,24 @@ function agregarTag(valor: string): boolean {
 const irCerrando = (hash: string): void => { location.replace(hash); };
 
 /**
+ * Manda el pedido al agente y dice cómo salió: mandado —o cancelado por el
+ * usuario, que es su decisión—, copiado para pegar, o no salió: sin la
+ * activación del toque, el navegador no deja abrir el menú Compartir ni la
+ * ventana de claude.ai, y el pedido espera otro toque.
+ */
+async function mandarAlAgente(envio: PedidoAlAgente): Promise<'mandado' | 'copiado' | 'no-salio'> {
+  try {
+    const r = await enviarAlAgente(plataformaDelNavegador(), envio.pedido, envio.fotos);
+    if (r === 'copiado') return 'copiado';
+    if (r === 'sin-activacion' || r === 'sin-portapapeles') return 'no-salio';
+    return 'mandado';
+  } catch (err) {
+    console.error(err);
+    return 'no-salio';
+  }
+}
+
+/**
  * Guarda lo que el editor tiene escrito: crea el `.md` o reescribe el abierto,
  * con su fila. Devuelve el id y la receta guardada, con el dibujo del tilde en
  * curso; `null` si no escribió nada —la validación o un error—, y en ese caso
@@ -2104,17 +2140,15 @@ app.addEventListener('click', async (e) => {
     const leidas = await fotosParaElAgente(receta.fotos);
     const numeradas = leidas.map(({ n, id }) => ({ n, id }));
     const datos = { id, titulo: receta.titulo ?? '', fuente: receta.fuente ?? '', notas: receta.notas };
-    try {
-      const fotos = leidas.length
+    const envio: PedidoAlAgente = {
+      pedido: pedidoDeConversion(datos, { fotos: numeradas }),
+      fotos: leidas.length
         ? { archivos: leidas.map(f => f.archivo), conLinks: pedidoDeConversion(datos, { fotos: numeradas, links: true }) }
-        : null;
-      const r = await enviarAlAgente(plataformaDelNavegador(), pedidoDeConversion(datos, { fotos: numeradas }), fotos);
-      if (r === 'copiado') avisoAlLlegar = 'Pedido copiado: pegalo en el agente';
-      if (r === 'sin-portapapeles') avisoAlLlegar = 'No se pudo abrir el agente ni copiar el pedido.';
-    } catch (err) {
-      console.error(err);
-      avisoAlLlegar = 'No se pudo abrir el agente ni copiar el pedido.';
-    }
+        : null
+    };
+    const r = await mandarAlAgente(envio);
+    if (r === 'copiado') avisoAlLlegar = PEDIDO_COPIADO;
+    if (r === 'no-salio') pedidoAlLlegar = envio;
     // La receta ya está guardada: el editor se cierra y la app queda en ella.
     // Editando, la receta es la pantalla de atrás; si no, la receta toma el
     // lugar del editor en el historial.
@@ -2123,6 +2157,16 @@ app.addEventListener('click', async (e) => {
     if (vistaActual?.vista === 'editar' && !llegoDeAfuera(vistaActual)) history.back();
     else irCerrando(`#/r/${encodeURIComponent(id)}`);
     return;
+  }
+
+  if (accion === 'mandar-al-agente') {
+    // El mismo pedido que no salió, con la activación de este toque.
+    const envio = pedidoPendiente;
+    if (!envio) return;
+    const r = await mandarAlAgente(envio);
+    if (r !== 'no-salio') pedidoPendiente = null;
+    avisoDeLlegada = r === 'copiado' ? PEDIDO_COPIADO : '';
+    return render();
   }
 
   if (accion === 'pegar-receta') {

@@ -447,10 +447,18 @@ describe('la estrella de favorito', () => {
   });
 
   it('un aviso que trae la receta de otra pantalla va arriba de la ficha, sin control', () => {
-    const html = renderReceta({ entrada: entradaFalsa(), receta, aviso: 'Pedido copiado: pegalo en el agente' });
+    const html = renderReceta({ entrada: entradaFalsa(), receta, aviso: { texto: 'Pedido copiado: pegalo en el agente' } });
     expect(html).toContain('Pedido copiado: pegalo en el agente');
     expect(html).not.toContain('Reintentar');
     expect(html.indexOf('class="aviso"')).toBeLessThan(html.indexOf('class="ficha"'));
+  });
+
+  it('el aviso puede llevar su acción', () => {
+    const html = renderReceta({
+      entrada: entradaFalsa(), receta,
+      aviso: { texto: 'La receta quedó guardada.', accion: { etiqueta: 'Mandar al agente', accion: 'mandar-al-agente' } }
+    });
+    expect(html).toContain('data-accion="mandar-al-agente">Mandar al agente');
   });
 
   it('los tags especiales van primeros y con su ícono', () => {

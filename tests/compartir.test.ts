@@ -1,5 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { compartirPdf, compartirLink, compartirTexto, enviarAlAgente, leerPortapapeles, LARGO_MAXIMO_DEL_LINK } from '../src/compartir.js';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import {
+  compartirPdf, compartirLink, compartirTexto, enviarAlAgente, leerPortapapeles, LARGO_MAXIMO_DEL_LINK,
+  plataformaDelNavegador
+} from '../src/compartir.js';
 import type { Plataforma } from '../src/compartir.js';
 
 const error = (name: string) => Object.assign(new Error(name), { name });
@@ -90,7 +93,7 @@ describe('enviar el pedido al agente', () => {
 
   it('sin menú Compartir y con un pedido corto, abre claude.ai con el pedido cargado', async () => {
     const abiertos: string[] = [];
-    const r = await enviarAlAgente({ ...base, abrir: u => abiertos.push(u) }, 'hola mundo');
+    const r = await enviarAlAgente({ ...base, abrir: u => abiertos.push(u) > 0 }, 'hola mundo');
     expect(r).toBe('abierto');
     expect(abiertos).toEqual(['https://claude.ai/new?q=hola%20mundo']);
   });
@@ -99,7 +102,7 @@ describe('enviar el pedido al agente', () => {
     const abiertos: string[] = [];
     const copiados: string[] = [];
     const largo = 'x'.repeat(LARGO_MAXIMO_DEL_LINK);
-    const r = await enviarAlAgente({ ...base, abrir: u => abiertos.push(u), copiar: async t => { copiados.push(t); } }, largo);
+    const r = await enviarAlAgente({ ...base, abrir: u => abiertos.push(u) > 0, copiar: async t => { copiados.push(t); } }, largo);
     expect(r).toBe('copiado');
     expect(copiados).toEqual([largo]);
     expect(abiertos).toEqual(['https://claude.ai/new']);
@@ -108,7 +111,7 @@ describe('enviar el pedido al agente', () => {
   it('si cancela el menú Compartir, no abre nada más', async () => {
     const abiertos: string[] = [];
     const abortar = async () => { throw Object.assign(new Error('x'), { name: 'AbortError' }); };
-    expect(await enviarAlAgente({ ...base, share: abortar, abrir: u => abiertos.push(u) }, 'p')).toBe('cancelado');
+    expect(await enviarAlAgente({ ...base, share: abortar, abrir: u => abiertos.push(u) > 0 }, 'p')).toBe('cancelado');
     expect(abiertos).toEqual([]);
   });
 });
@@ -131,7 +134,7 @@ describe('el pedido al agente con fotos', () => {
     const abiertos: string[] = [];
     const compartidos: ShareData[] = [];
     const r = await enviarAlAgente(
-      { ...base, share: async d => { compartidos.push(d); }, canShare: () => false, abrir: u => abiertos.push(u) },
+      { ...base, share: async d => { compartidos.push(d); }, canShare: () => false, abrir: u => abiertos.push(u) > 0 },
       'pedido', { archivos: [foto(1)], conLinks: 'pedido con links' });
     expect(r).toBe('abierto');
     expect(compartidos).toEqual([]);
@@ -140,13 +143,13 @@ describe('el pedido al agente con fotos', () => {
 
   it('sin menú Compartir, también', async () => {
     const abiertos: string[] = [];
-    await enviarAlAgente({ ...base, abrir: u => abiertos.push(u) }, 'pedido', { archivos: [foto(1)], conLinks: 'con links' });
+    await enviarAlAgente({ ...base, abrir: u => abiertos.push(u) > 0 }, 'pedido', { archivos: [foto(1)], conLinks: 'con links' });
     expect(abiertos).toEqual([`https://claude.ai/new?q=${encodeURIComponent('con links')}`]);
   });
 
   it('si no se pudieron leer las fotos, van los links', async () => {
     const abiertos: string[] = [];
-    await enviarAlAgente({ ...base, share: async () => {}, canShare: () => true, abrir: u => abiertos.push(u) },
+    await enviarAlAgente({ ...base, share: async () => {}, canShare: () => true, abrir: u => abiertos.push(u) > 0 },
       'pedido', { archivos: [], conLinks: 'con links' });
     expect(abiertos).toHaveLength(1);
   });
@@ -154,10 +157,49 @@ describe('el pedido al agente con fotos', () => {
   it('si Chrome perdió el toque, cae a los links', async () => {
     const abiertos: string[] = [];
     const sinToque = async () => { throw Object.assign(new Error('x'), { name: 'NotAllowedError' }); };
-    const r = await enviarAlAgente({ ...base, share: sinToque, canShare: () => true, abrir: u => abiertos.push(u) },
+    const r = await enviarAlAgente({ ...base, share: sinToque, canShare: () => true, abrir: u => abiertos.push(u) > 0 },
       'pedido', { archivos: [foto(1)], conLinks: 'con links' });
     expect(r).toBe('abierto');
     expect(abiertos[0]).toContain(encodeURIComponent('con links'));
+  });
+});
+
+describe('el pedido al agente que no se pudo mandar', () => {
+  const base: Plataforma = { descargar: () => {} };
+  const sinToque = async () => { throw Object.assign(new Error('x'), { name: 'NotAllowedError' }); };
+
+  it('si el navegador bloquea la ventana de claude.ai, no cuenta como abierto', async () => {
+    expect(await enviarAlAgente({ ...base, abrir: () => false }, 'pedido')).toBe('sin-activacion');
+  });
+
+  it('sin activación para el menú Compartir ni para la ventana, tampoco', async () => {
+    expect(await enviarAlAgente({ ...base, share: sinToque, abrir: () => false }, 'pedido')).toBe('sin-activacion');
+  });
+
+  it('sin forma de abrir nada, tampoco', async () => {
+    expect(await enviarAlAgente(base, 'pedido')).toBe('sin-activacion');
+  });
+});
+
+describe('abrir una ventana desde el navegador', () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it('dice si se abrió, y la ventana nueva no queda atada a la app', () => {
+    const ventana = { opener: {} as unknown };
+    const pedidas: unknown[][] = [];
+    vi.stubGlobal('navigator', {});
+    vi.stubGlobal('window', { open: (...args: unknown[]) => { pedidas.push(args); return ventana; } });
+    expect(plataformaDelNavegador().abrir?.('https://claude.ai/new')).toBe(true);
+    expect(ventana.opener).toBeNull();
+    // Con `noopener`, `window.open` devuelve null siempre, y no se podría saber
+    // si el navegador la bloqueó.
+    expect(pedidas[0]).toEqual(['https://claude.ai/new', '_blank']);
+  });
+
+  it('si el navegador la bloquea, dice que no', () => {
+    vi.stubGlobal('navigator', {});
+    vi.stubGlobal('window', { open: () => null });
+    expect(plataformaDelNavegador().abrir?.('https://claude.ai/new')).toBe(false);
   });
 });
 

@@ -7,7 +7,8 @@ export interface Plataforma {
   canShare?: (datos: ShareData) => boolean;
   copiar?: (texto: string) => Promise<void>;
   descargar: (archivo: File) => void;
-  abrir?: (url: string) => void;
+  /** Abre la dirección en otra ventana; `false` si el navegador no la abrió. */
+  abrir?: (url: string) => boolean;
   leer?: () => Promise<string>;
 }
 
@@ -83,8 +84,9 @@ export async function enviarAlAgente(p: Plataforma, pedido: string, fotos: Fotos
   const texto = fotos ? fotos.conLinks : pedido;
   const link = `https://claude.ai/new?q=${encodeURIComponent(texto)}`;
   if (link.length <= LARGO_MAXIMO_DEL_LINK) {
-    p.abrir?.(link);
-    return 'abierto';
+    // Sin la activación del toque, el navegador bloquea la ventana: el pedido
+    // no salió, y quien llamó tiene que pedir otro toque.
+    return p.abrir?.(link) ? 'abierto' : 'sin-activacion';
   }
   if (!p.copiar) return 'sin-portapapeles';
   try {
@@ -117,7 +119,14 @@ export function plataformaDelNavegador(): Plataforma {
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
     },
-    abrir: (url: string) => { window.open(url, '_blank', 'noopener'); },
+    // Sin `noopener`: con él, `window.open` devuelve `null` siempre y no se
+    // sabría si el navegador la bloqueó. El corte con la app se hace a mano.
+    abrir: (url: string) => {
+      const ventana = window.open(url, '_blank');
+      if (!ventana) return false;
+      ventana.opener = null;
+      return true;
+    },
     ...(nav.clipboard && typeof nav.clipboard.readText === 'function'
       ? { leer: () => nav.clipboard.readText() } : {}),
   };

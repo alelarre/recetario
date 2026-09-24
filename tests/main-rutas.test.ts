@@ -3784,6 +3784,52 @@ describe('main.ts: las rutas', () => {
       expect(pedido).toContain('la 1.ª es foto:2.');
     });
 
+    it('sin la activación del toque, la receta ofrece mandarlo con otro toque, y manda el mismo pedido', async () => {
+      const sinToque = async () => { throw Object.assign(new Error('x'), { name: 'NotAllowedError' }); };
+      vi.stubGlobal('navigator', { share: sinToque, canShare: () => true });
+      const { abrir, tocar, app } = await montar();
+      (global.window as unknown as { open: () => null }).open = () => null;
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Focaccia', notas: 'la de la abuela', carpeta: '', tags: 'borrador' };
+      await tocar('convertir-con-agente');
+      await abrir('#/r/nuevo-1');
+      expect(app.innerHTML).toContain('La receta quedó guardada. Tocá para mandarla al agente.');
+      expect(app.innerHTML).toContain('data-accion="mandar-al-agente">Mandar al agente');
+
+      // El toque nuevo trae activación: el menú Compartir ahora anda.
+      conShare();
+      await tocar('mandar-al-agente');
+      expect(mandados).toHaveLength(1);
+      expect(mandados[0]?.datos.text).toContain('`id: nuevo-1`');
+      expect(mandados[0]?.datos.text).toContain('Notas: la de la abuela');
+      expect(app.innerHTML).not.toContain('mandar-al-agente');
+    });
+
+    it('si el navegador bloquea la ventana de claude.ai, cuenta como no mandado', async () => {
+      vi.stubGlobal('navigator', {});
+      const { abrir, tocar, app } = await montar();
+      const abiertas: string[] = [];
+      (global.window as unknown as { open: (u: string) => null }).open = u => { abiertas.push(u); return null; };
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      await tocar('convertir-con-agente');
+      expect(abiertas).toHaveLength(1);
+      await abrir('#/r/nuevo-1');
+      expect(app.innerHTML).toContain('data-accion="mandar-al-agente"');
+    });
+
+    it('si vuelve a fallar, el aviso sigue ahí', async () => {
+      vi.stubGlobal('navigator', {});
+      const { abrir, tocar, app } = await montar();
+      (global.window as unknown as { open: () => null }).open = () => null;
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      await tocar('convertir-con-agente');
+      await abrir('#/r/nuevo-1');
+      await tocar('mandar-al-agente');
+      expect(app.innerHTML).toContain('data-accion="mandar-al-agente"');
+    });
+
     it('con el pedido copiado, el aviso se ve en la receta', async () => {
       const copiados: string[] = [];
       vi.stubGlobal('navigator', { clipboard: { writeText: async (t: string) => { copiados.push(t); } } });
