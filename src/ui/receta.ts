@@ -94,7 +94,7 @@ export function renderReceta(
   const botonCompartir =
     `<button class="ico" data-accion="compartir" aria-label="Compartir" title="Compartir">${ICO.compartir}</button>`;
   const estrella = botonFavorito(receta, favorito === 'escribiendo');
-  return encabezado({ titulo: '', volver: true, pegajoso: true, derecha: estrella + botonCompartir + alArchivo }) +
+  return encabezado({ titulo: '', volver: true, derecha: estrella + botonCompartir + alArchivo }) +
     '<div class="cuerpo">' +
       (avisoDeLlegada ? aviso(avisoDeLlegada) : '') +
       (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'favorito' } }) : '') +

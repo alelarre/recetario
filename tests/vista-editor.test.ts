@@ -214,8 +214,8 @@ describe('renderEditor', () => {
       .toContain('data-accion="borrar"');
   });
 
-  it('el encabezado ya no queda fijo: arriba no hay nada que tenga que quedar a mano', () => {
-    expect(dibujar()).not.toContain('<div class="enc peg">');
+  it('el encabezado es el de todas las pantallas, que queda fijo por CSS', () => {
+    expect(dibujar()).toContain('<div class="enc">');
   });
 
   it('el encabezado lleva Pegar, principal compacto con el ícono de portapapeles, y no Guardar', () => {

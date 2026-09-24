@@ -68,9 +68,12 @@ body {
 }
 
 /* ---- §6.12 Encabezado ---- */
+/* Fijo arriba en todas las pantallas: al bajar por una lista o un formulario
+   largo, el volver, la hamburguesa y las acciones siguen a mano. Por debajo
+   del menú lateral, los velos y las fichas al pie. */
 .enc { height: 56px; display: flex; align-items: center; gap: var(--e-2);
        padding: 0 var(--e-2); background: var(--bg); border-bottom: 1px solid var(--borde);
-       position: relative; }
+       position: sticky; top: 0; z-index: 3; }
 /* El título de la app se centra en la barra, no en el hueco que dejan los
    íconos: con dos a la derecha y ninguno a la izquierda, `text-align: center`
    lo deja corrido casi 50 px. */
@@ -79,11 +82,9 @@ body {
 /* El total va al otro extremo: con el título centrado en absoluto, nada lo
    empuja y queda pegado al borde izquierdo. */
 .enc .tot { margin-left: auto; }
-/* Fijo arriba, en la receta abierta y en el editor. El título que toma se
-   recorta: hay de 86 caracteres. */
-.enc.peg { position: sticky; top: 0; z-index: 3; }
-.enc.peg .tit { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.enc .tit { flex: 1; font-size: var(--txt-base); font-weight: 600; text-align: center; }
+/* El título se recorta en una línea: hay recetas de 86 caracteres. */
+.enc .tit { flex: 1; font-size: var(--txt-base); font-weight: 600; text-align: center;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .enc .tit.izq { text-align: left; padding-left: var(--e-2); }
 /* El ícono de un tag especial, antes del título de su lista: el trazo y el
    tamaño de los íconos del encabezado, alineado con la línea del texto. */
