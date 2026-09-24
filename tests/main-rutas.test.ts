@@ -14,7 +14,7 @@ import { DURACIONES } from '../src/catalogo.js';
 import { colorDeClave } from '../src/ui/categorias.js';
 import { linkDeFoto, parsearFotos, serializarFotos } from '../src/fotos-receta.js';
 import { ICO } from '../src/ui/iconos.js';
-import type { CambiosDeFotos, Coincidencias, Plan } from '../src/tipos.js';
+import type { CambiosDeFotos, Coincidencias, Plan, Receta } from '../src/tipos.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
 vi.mock('../src/ui/base.css', () => ({}));
@@ -58,6 +58,11 @@ const estadoInicial = () => ({
   falla: false as boolean | Error,
   /** Los títulos de las recetas que se crearon: cada una es un `.md` nuevo. */
   creadas: [] as string[],
+  /** Las recetas que llegaron a `crear`, enteras. */
+  recetasCreadas: [] as Receta[],
+  /** Las opciones con que se llamó a `crear` y a `guardar`, en orden. */
+  opcionesCrear: [] as Record<string, unknown>[],
+  opcionesGuardar: [] as Record<string, unknown>[],
   /** El `.md` que devuelve `store.receta`. */
   md: '---\ntitulo: Milanesas\n---\n',
   /** Lo que el editor tiene escrito cuando se toca Guardar. */
@@ -154,10 +159,12 @@ const storeFake = {
   buscarPorTexto: (): Coincidencias => ({ porNombre: [], porIngrediente: [], porTag: [] }),
   tagsDe: () => estado.tags,
   crear: async (
-    receta: { titulo: string | null; fotos?: { n: number; url: string }[] },
-    opciones?: { fotos?: CambiosDeFotos }
+    receta: Receta,
+    opciones?: { fotos?: CambiosDeFotos; carpetaId?: string }
   ) => {
     estado.creadas.push(receta.titulo ?? '');
+    estado.recetasCreadas.push(receta);
+    estado.opcionesCrear.push({ ...opciones });
     estado.cambiosDeFotos.push(opciones?.fotos ?? null);
     estado.depositos.push(receta.fotos ?? []);
     return { id: `nuevo-${estado.creadas.length}`, nombre_archivo: 'receta.md' };
@@ -165,8 +172,9 @@ const storeFake = {
   guardar: async (
     _id: string,
     receta: { tags: string[]; fotos?: { n: number; url: string }[] },
-    opciones?: { fotos?: CambiosDeFotos }
+    opciones?: { fotos?: CambiosDeFotos; carpetaDestino?: string }
   ) => {
+    estado.opcionesGuardar.push({ ...opciones });
     if (estado.fallaGuardar > 0) { estado.fallaGuardar--; throw new Error('red'); }
     estado.guardados.push({ tags: receta.tags });
     estado.cambiosDeFotos.push(opciones?.fotos ?? null);
@@ -3377,6 +3385,206 @@ describe('main.ts: las rutas', () => {
       await tocar('guardar-categoria');
 
       expect(estado.fotosDeCategoria.at(-1)).toBe(null);
+    });
+  });
+
+  describe('la receta nueva y lo compartido', () => {
+    /** El depósito como queda en el campo oculto del editor. */
+    const deposito = (fotos: { n: number; url: string }[]) =>
+      `name="fotos" value="${JSON.stringify(fotos).replace(/"/g, '&quot;')}"`;
+    const RECIBIDA = '---\ntitulo: Focaccia recibida\nid: f1\n---\n\n## Ingredientes\n- Harina — 500 g\n';
+
+    it('#/nueva abre el editor con «Sin categoría» y borrador puesto', async () => {
+      const { abrir, app } = await montar();
+      await abrir('#/nueva');
+      expect(app.innerHTML).toContain('<option value="" selected>Sin categoría</option>');
+      expect(app.innerHTML).toContain('data-valor="borrador" aria-pressed="true"');
+    });
+
+    it('lo compartido va a la fuente y a las notas', async () => {
+      const { abrir, app } = await montar();
+      await abrir(`#/nueva?text=${encodeURIComponent('https://ig.com/r mirá esto')}`);
+      expect(app.innerHTML).toContain('name="fuente" value="https://ig.com/r"');
+      expect(app.innerHTML).toContain('<textarea name="notas" rows="3">mirá esto</textarea>');
+      expect(app.innerHTML).toContain('<option value="" selected>Sin categoría</option>');
+      expect(app.innerHTML).toContain('data-valor="borrador" aria-pressed="true"');
+    });
+
+    it('las fotos compartidas entran al depósito como nuevas, sin tope, con su miniatura', async () => {
+      estado.compartidas = [new Blob(['a']), new Blob(['bb']), new Blob(['ccc']), new Blob(['dddd']),
+        new Blob(['eeeee']), new Blob(['ffffff'])];
+      const { abrir, app, imgs } = await montar();
+      imgs.push(imgFalsa({ n: '1' }), imgFalsa({ n: '6' }));
+      await abrir('#/nueva?fotos=6');
+      expect(app.innerHTML).toContain(deposito([1, 2, 3, 4, 5, 6].map(n => ({ n, url: '' }))));
+      expect(imgs[0]?.atributos['src']).toBe('blob:memoria-1');
+      expect(imgs[1]?.atributos['src']).toBe('blob:memoria-6');
+      // Leídas, el caché del service worker se vacía.
+      expect(estado.compartidasDescartadas).toBe(1);
+    });
+
+    it('guardar lo compartido sube las fotos nuevas', async () => {
+      estado.compartidas = [new Blob(['a']), new Blob(['bb'])];
+      const { abrir, tocar } = await montar();
+      await abrir('#/nueva?fotos=2');
+      estado.formulario = { titulo: 'Pan', carpeta: '', tags: 'borrador', fotos: JSON.stringify([{ n: 1, url: '' }, { n: 2, url: '' }]) };
+      await tocar('guardar');
+      expect([...(estado.cambiosDeFotos[0]?.nuevas.keys() ?? [])]).toEqual([1, 2]);
+    });
+
+    it('volver sin tocar nada pregunta: lo compartido cuenta como cambio', async () => {
+      const { abrir, empujados, preguntas } = await montar();
+      await abrir('#/nueva?text=hola');
+      await abrir('#/');
+      expect(empujados).toEqual(['#/nueva?text=hola']);
+      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
+    });
+
+    it('sin nada compartido, volver sin tocar nada no pregunta', async () => {
+      const { abrir, empujados } = await montar();
+      await abrir('#/nueva');
+      await abrir('#/');
+      expect(empujados).toEqual([]);
+    });
+
+    it('una receta .md con el id de una receta que existe abre su editor con lo recibido', async () => {
+      const original = storeFake.receta;
+      storeFake.receta = async (id: string) => {
+        estado.lecturas++;
+        return { entrada: entradaFalsa({ id_archivo: id, carpeta_id: 'c1', categoria: 'Carnes' }), receta: parse(estado.md) };
+      };
+      try {
+        const { abrir, app, reemplazos } = await montar();
+        await abrir(`#/nueva?text=${encodeURIComponent(RECIBIDA)}`);
+        expect(reemplazos.at(-1)).toBe('#/r/f1/editar?recibida=1');
+        // El navegador avisa el cambio de hash que dejó el reemplazo.
+        await abrir('#/r/f1/editar?recibida=1');
+        expect(app.innerHTML).toContain('name="titulo" value="Focaccia recibida"');
+        expect(app.innerHTML).toContain('<option value="c1" selected>Carnes</option>');
+        expect(app.innerHTML).toContain('Editando');
+      } finally {
+        storeFake.receta = original;
+      }
+    });
+
+    it('lo recibido para una receta existente cuenta como cambio', async () => {
+      const { abrir, empujados } = await montar();
+      await abrir(`#/nueva?text=${encodeURIComponent(RECIBIDA)}`);
+      await abrir('#/r/f1/editar?recibida=1');
+      await abrir('#/');
+      expect(empujados).toEqual(['#/r/f1/editar?recibida=1']);
+    });
+
+    it.each([
+      ['sin id', RECIBIDA.replace('id: f1\n', '')],
+      ['con un id que no existe', RECIBIDA.replace('id: f1', 'id: otro')]
+    ])('una receta .md %s abre la receta nueva llena', async (_caso, md) => {
+      const { abrir, app, reemplazos } = await montar();
+      await abrir(`#/nueva?text=${encodeURIComponent(md)}`);
+      expect(reemplazos.at(-1)).toBe('#/nueva?recibida=1');
+      await abrir('#/nueva?recibida=1');
+      expect(app.innerHTML).toContain('name="titulo" value="Focaccia recibida"');
+      expect(app.innerHTML).toContain('Nueva receta');
+      expect(app.innerHTML).toContain('<option value="" selected>Sin categoría</option>');
+      expect(app.innerHTML).toContain('data-valor="borrador" aria-pressed="true"');
+    });
+
+    it('las fotos que llegan con una receta .md se descartan sin entrar al depósito', async () => {
+      estado.compartidas = [new Blob(['a'])];
+      const { abrir, app } = await montar();
+      await abrir(`#/nueva?text=${encodeURIComponent(RECIBIDA.replace('id: f1\n', ''))}&fotos=1`);
+      await abrir('#/nueva?recibida=1');
+      expect(estado.compartidasDescartadas).toBe(1);
+      expect(app.innerHTML).toContain(deposito([]));
+    });
+
+    it('la clave id no llega al .md guardado', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir(`#/nueva?text=${encodeURIComponent(RECIBIDA.replace('id: f1', 'id: otro'))}`);
+      await abrir('#/nueva?recibida=1');
+      estado.formulario = { titulo: 'Focaccia recibida', carpeta: '', tags: 'borrador' };
+      await tocar('guardar');
+      expect(estado.recetasCreadas[0]?.extras).toEqual({});
+    });
+  });
+
+  describe('guardar desde el editor', () => {
+    it('con «Sin categoría» crea sin carpeta, y no pide elegir una', async () => {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Pan', carpeta: '', tags: 'borrador' };
+      await tocar('guardar');
+      expect(estado.creadas).toEqual(['Pan']);
+      expect(estado.opcionesCrear[0]).not.toHaveProperty('carpetaId');
+      expect(app.innerHTML).not.toContain('Elegí una categoría');
+    });
+
+    it('con una categoría crea en su carpeta', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Pan', carpeta: 'c1', tags: 'borrador' };
+      await tocar('guardar');
+      expect(estado.opcionesCrear[0]?.['carpetaId']).toBe('c1');
+    });
+
+    it('sin título, un borrador se guarda con el día y la hora', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador' };
+      await tocar('guardar');
+      expect(estado.creadas).toHaveLength(1);
+      expect(estado.creadas[0]).toMatch(/^Borrador \d{2}\/\d{2} \d{2}:\d{2}$/);
+    });
+
+    it('sin título y sin borrador, avisa y no guarda', async () => {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: '', carpeta: 'c1', tags: '' };
+      await tocar('guardar');
+      expect(estado.creadas).toEqual([]);
+      expect(app.innerHTML).toContain('Ponele un título antes de guardar.');
+    });
+
+    it('editando con «Sin categoría» elegida, guarda con carpetaDestino vacío', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = { titulo: 'Milanesas', carpeta: '', tags: 'borrador' };
+      await tocar('guardar');
+      expect(estado.opcionesGuardar[0]?.['carpetaDestino']).toBe('');
+    });
+
+    it('editando con una categoría, guarda con esa carpeta de destino', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1' };
+      await tocar('guardar');
+      expect(estado.opcionesGuardar[0]?.['carpetaDestino']).toBe('c1');
+    });
+
+    it('guardar lo recibido cierra en la receta nueva: no hay pantalla atrás', async () => {
+      const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
+      await abrir(`#/nueva?text=${encodeURIComponent('---\ntitulo: Focaccia\n---\n')}`);
+      await abrir('#/nueva?recibida=1');
+      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      await tocar('guardar');
+      expect(reemplazos.at(-1)).toBe('#/r/nuevo-1');
+      expect(vueltasAtras).toEqual([]);
+    });
+
+    it('guardar lo compartido también cierra en la receta nueva', async () => {
+      const { abrir, tocar, reemplazos } = await montar();
+      await abrir('#/nueva?text=hola');
+      estado.formulario = { titulo: 'Pan', carpeta: '', tags: 'borrador' };
+      await tocar('guardar');
+      expect(reemplazos.at(-1)).toBe('#/r/nuevo-1');
+    });
+
+    it('guardar una receta nueva desde el menú vuelve a donde estaba', async () => {
+      const { abrir, tocar, vueltasAtras } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Pan', carpeta: '', tags: 'borrador' };
+      await tocar('guardar');
+      expect(vueltasAtras).toHaveLength(1);
     });
   });
 

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { pedidoDeConversion, esRecetaEnMd, recetaRecibida } from '../src/conversion.js';
+import { pedidoDeConversion, esRecetaEnMd, recetaRecibida, aplicarPegada } from '../src/conversion.js';
+import { recetaFalsa } from './dobles.js';
 import { DURACIONES, DIFICULTADES } from '../src/catalogo.js';
 
 const receta = { id: 'r1', titulo: 'Focaccia', fuente: 'https://ejemplo.com/focaccia', notas: 'La de la abuela, sin romero' };
@@ -175,5 +176,41 @@ describe('lo que llega envuelto', () => {
   it('sin envoltorio, todo sigue igual', () => {
     expect(esRecetaEnMd(md)).toBe(true);
     expect(recetaRecibida(md).receta.titulo).toBe('Focaccia');
+  });
+});
+
+describe('lo pegado sobre el editor abierto', () => {
+  const actual = recetaFalsa({
+    titulo: 'Viejo', tags: ['horno'], notas: 'lo escrito',
+    fotos: [{ n: 1, url: 'https://drive.google.com/file/d/a/view' }], foto: 'foto:1'
+  });
+  const pegada = recetaFalsa({ titulo: 'Focaccia', tags: ['pan'], ingredientes: '- Harina — 500 g', notas: '' });
+
+  it('título, datos, tags y secciones son los de lo pegado', () => {
+    const r = aplicarPegada(actual, pegada, 'c1');
+    expect(r.titulo).toBe('Focaccia');
+    expect(r.tags).toEqual(['pan']);
+    expect(r.ingredientes).toBe('- Harina — 500 g');
+    expect(r.notas).toBe('');
+  });
+
+  it('el depósito de fotos es el del editor', () => {
+    const conFotos = recetaFalsa({ ...pegada, fotos: [{ n: 7, url: 'https://x/y.jpg' }] });
+    expect(aplicarPegada(actual, conFotos, 'c1').fotos).toEqual(actual.fotos);
+  });
+
+  it('la portada es la de lo pegado, y si no trae, la del editor', () => {
+    expect(aplicarPegada(actual, pegada, 'c1').foto).toBe('foto:1');
+    expect(aplicarPegada(actual, recetaFalsa({ ...pegada, foto: 'foto:2' }), 'c1').foto).toBe('foto:2');
+  });
+
+  it('sin categoría, queda borrador aunque lo pegado no lo traiga', () => {
+    expect(aplicarPegada(actual, pegada, '').tags).toEqual(['borrador', 'pan']);
+    expect(aplicarPegada(actual, pegada, 'c1').tags).not.toContain('borrador');
+  });
+
+  it('una forma alternativa de borrador no se duplica', () => {
+    const vieja = recetaFalsa({ ...pegada, tags: ['incompleta'] });
+    expect(aplicarPegada(actual, vieja, '').tags).toEqual(['borrador']);
   });
 });

@@ -4,7 +4,7 @@
  * formato salen de las mismas constantes que usa la app, así el pedido no se
  * desactualiza cuando cambia el esquema.
  */
-import { DURACIONES, DIFICULTADES, TAGS_RESERVADOS } from './catalogo.js';
+import { DURACIONES, DIFICULTADES, TAGS_RESERVADOS, conEspecial } from './catalogo.js';
 import { parse } from './recipe.js';
 import { linkDeFoto } from './fotos-receta.js';
 import type { Receta } from './tipos.js';
@@ -112,4 +112,16 @@ export function recetaRecibida(texto: string): { receta: Receta; id: string } {
   const extras = { ...receta.extras };
   delete extras['id'];
   return { receta: { ...receta, extras }, id };
+}
+
+/**
+ * Lo pegado o recibido sobre la receta que el editor tiene abierta: título,
+ * datos, tags y secciones son los de lo pegado, y el depósito de fotos es el
+ * del editor —las fotos ya están ahí, y lo pegado las nombra por número—. La
+ * portada que no venga queda la que estaba. Sin categoría la receta sólo puede
+ * ser un borrador, así que el tag queda puesto aunque lo pegado no lo traiga.
+ */
+export function aplicarPegada(actual: Receta, pegada: Receta, carpeta: string): Receta {
+  const receta = { ...pegada, fotos: actual.fotos, foto: pegada.foto ?? actual.foto };
+  return carpeta === '' ? { ...receta, tags: conEspecial(receta.tags, 'borrador', true) } : receta;
 }

@@ -46,6 +46,8 @@ import { crearControlCocina } from './cocina-control.js';
 import { registrarCategorias } from './ui/categorias.js';
 import { precargar, generar } from './pdf/generar.js';
 import { compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador } from './compartir.js';
+import { esRecetaEnMd, recetaRecibida, aplicarPegada } from './conversion.js';
+import { desdeCompartido, tituloPorDefecto } from './compartido.js';
 import { codificar, urlDeLink } from './link-receta.js';
 import { textoReceta } from './texto-receta.js';
 import type { EstadoCompartir } from './ui/compartir.js';
@@ -498,6 +500,19 @@ const fotosEditor = {
 /** La foto propia recién elegida para una categoría: se sube al guardarla. */
 let fotoPropia: { blob: Blob; url: string } | null = null;
 
+/**
+ * Cuántas fotos dejó el service worker del menú Compartir para la receta nueva
+ * que se está abriendo, todavía sin leer. Se leen una sola vez: un redibujado
+ * del editor no las vuelve a sumar.
+ */
+let compartidasPorLeer = 0;
+/**
+ * La receta `.md` que llegó compartida. Vive mientras la ruta la nombra
+ * (`recibida=1`): el editor la aplica al abrir, y en una receta nueva es
+ * también la base de lo que el editor no muestra.
+ */
+let recibida: Receta | null = null;
+
 /** La foto achicada; rechaza si el navegador no la decodifica. Sin opciones, al lado de Drive. */
 const achicarFoto = (archivo: Blob, opciones?: OpcionesAchicar): Promise<Blob> =>
   achicar(archivo, () => document.createElement('canvas'), opciones);
@@ -744,6 +759,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   // tag que ahí no existe, sin forma de darse cuenta.
   if (cambiaDePantalla) {
     editorAbierto = null;
+    if (!ruta.params['recibida']) recibida = null;
+    compartidasPorLeer = ruta.vista === 'nueva' ? Number(ruta.params['fotos'] ?? 0) || 0 : 0;
     if (!PANTALLAS_DE_RECETA.includes(ruta.vista)) recetaLeida = null;
     // El aviso de una escritura que falló sobrevive a la navegación entre las
     // pantallas del plan: agregar escribe y cierra, y el aviso va en el plan.
@@ -923,19 +940,47 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     case 'editar':
       try {
         const { entrada, receta } = await recetaDePantalla(ruta.params['id'] ?? '');
-        return abrirEditor(renderEditor({
-          entrada, receta, categorias: store.categorias(),
+        // Una receta `.md` compartida con el id de ésta se aplica como Pegar,
+        // sobre la copia leída: el archivo no cambia hasta Guardar.
+        const conRecibida = ruta.params['recibida'] && recibida
+          ? aplicarPegada(receta, recibida, entrada?.carpeta_id ?? '') : null;
+        abrirEditor(renderEditor({
+          entrada, receta: conRecibida ?? receta, categorias: store.categorias(),
           tagsConocidos: store.tagsDe().map(t => t.tag)
         }));
+        // Lo recibido cuenta como cambio desde que se abre: la foto contra la
+        // que se compara queda vacía, así que cualquier formulario difiere.
+        if (conRecibida && editorAbierto) editorAbierto.formulario = '';
+        return;
       } catch (err) {
         console.error(err);
         return enPantalla('No se pudo leer la receta.');
       }
 
     case 'nueva': {
+      const texto = ruta.params['text'] ?? '';
+      // Lo compartido puede ser una receta `.md` que volvió del agente: no va
+      // a las notas, se abre en el editor que le toca. Las fotos que llegaron
+      // con ella no son de ninguna receta y se descartan.
+      if (esRecetaEnMd(texto)) {
+        compartidasPorLeer = 0;
+        await imagenes.descartarCompartidas().catch(err => console.error(err));
+        recibirReceta(texto);
+        return;
+      }
+      const noSeLeyo = compartidasPorLeer ? await leerCompartidas() : false;
       // El mismo formulario que editar, sin entrada (todavía no hay archivo en
-      // Drive) y con una receta vacía en vez de una leída.
-      const receta = parse('');
+      // Drive) y con una receta vacía —o la recibida— en vez de una leída. Lo
+      // compartido reparte el link a la fuente y el resto del texto a Notas.
+      let receta: Receta;
+      if (recibida) receta = { ...recibida };
+      else {
+        const { fuente, nota } = desdeCompartido({ url: ruta.params['url'] ?? '', text: texto });
+        receta = { ...parse(''), fuente: fuente || null, notas: nota };
+      }
+      // Las fotos compartidas, ya en memoria: el depósito las nombra como
+      // nuevas y suben al guardar.
+      receta.fotos = [...receta.fotos, ...[...fotosEditor.nuevas.keys()].map(n => ({ n, url: '' }))];
       // Una receta nace como borrador: sacar el tag es la declaración explícita
       // de que está terminada (C04.3b.1).
       receta.tags = conEspecial(receta.tags, 'borrador', true);
@@ -943,9 +988,67 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         entrada: null, receta, categorias: store.categorias(),
         tagsConocidos: store.tagsDe().map(t => t.tag)
       }));
+      // Lo que llegó de otra app cuenta como cambio desde que se abre: salir
+      // sin guardar lo perdería.
+      if (llegoDeAfuera(ruta) && editorAbierto) editorAbierto.formulario = '';
+      if (noSeLeyo) avisarEnElFormulario(NO_SE_LEYO_UNA_FOTO);
       return;
     }
   }
+}
+
+/** El editor se abrió con algo que llegó de otra app: un link, un texto, fotos o una receta. */
+const llegoDeAfuera = (ruta: Ruta | null): boolean =>
+  ['url', 'text', 'fotos', 'recibida'].some(clave => !!ruta?.params[clave]);
+
+/**
+ * Las fotos que llegaron del menú Compartir: el service worker las dejó en su
+ * caché. Se achican, quedan en memoria como fotos nuevas del editor, sin tope,
+ * y el caché se vacía. Devuelve si alguna no se pudo leer.
+ */
+async function leerCompartidas(): Promise<boolean> {
+  const cantidad = compartidasPorLeer;
+  compartidasPorLeer = 0;
+  let noSeLeyo = false;
+  const destapar = tapar();
+  try {
+    const llegadas = await imagenes.fotosCompartidas(cantidad);
+    await imagenes.descartarCompartidas();
+    let deposito: FotoDeReceta[] = [];
+    for (const archivo of llegadas) {
+      let blob: Blob;
+      try {
+        blob = await achicarFoto(archivo);
+      } catch (err) {
+        console.error(err);
+        noSeLeyo = true;
+        continue;
+      }
+      const n = siguienteNumero(deposito);
+      deposito = [...deposito, { n, url: '' }];
+      fotosEditor.nuevas.set(n, blob);
+      fotosEditor.urls.set(n, imagenes.urlDeBlob(blob));
+    }
+  } catch (err) {
+    console.error(err);
+    noSeLeyo = true;
+  } finally {
+    destapar();
+  }
+  return noSeLeyo;
+}
+
+/**
+ * Una receta `.md` compartida va al editor de la receta de su `id` si existe;
+ * si no, al de una receta nueva. Siempre con `replace`: la entrada del
+ * historial es la que dejó el Share Target, y sin reemplazarla, volver caería
+ * de nuevo en ella y reabriría la misma receta.
+ */
+function recibirReceta(texto: string): void {
+  const { receta, id } = recetaRecibida(texto);
+  recibida = receta;
+  const existe = !!id && store.entradas().some(e => e.id_archivo === id);
+  irCerrando(existe ? `#/r/${encodeURIComponent(id)}/editar?recibida=1` : '#/nueva?recibida=1');
 }
 
 /** Los especiales apretados y las pills, en el `hidden` que viaja en el formulario. */
@@ -1015,7 +1118,7 @@ const portadaDelEditor = (): string => campoDelEditor('foto')?.value ?? '';
  * usa Guardar, salvo que ahí la de una receta existente se relee de Drive.
  */
 const baseDelEditor = (): Receta => {
-  if (vistaActual?.vista === 'nueva') return parse('');
+  if (vistaActual?.vista === 'nueva') return recibida ?? parse('');
   return recetaLeida?.receta ?? parse('');
 };
 
@@ -1464,6 +1567,83 @@ function agregarTag(valor: string): boolean {
  * chevron de la receta llevaría al modo cocina.
  */
 const irCerrando = (hash: string): void => { location.replace(hash); };
+
+/**
+ * Guarda lo que el editor tiene escrito: crea el `.md` o reescribe el abierto,
+ * con su fila. Devuelve el id y la receta guardada, con el dibujo del tilde en
+ * curso; `null` si no escribió nada —la validación o un error—, y en ese caso
+ * el editor ya está redibujado con lo escrito y el aviso (C04.5.2).
+ */
+async function guardarEditor(
+  boton: HTMLElement
+): Promise<{ id: string; receta: Receta; dibujado: Promise<void> } | null> {
+  if (!document.querySelector('[data-formulario]')) return null;
+  // El velo antes que nada: entre el toque y la escritura hay una relectura
+  // del `.md` de base, que es un pedido a Drive, y la validación puede
+  // devolver el editor sin escribir nada. Se suelta por cualquier
+  // camino, así que no queda pegado.
+  const destapar = tapar();
+  let guardada: { id: string; receta: Receta } | null = null;
+  let dibujado: Promise<void> = Promise.resolve();
+  try {
+    const datos = datosDelFormulario();
+    // `''` es «Sin categoría»: la receta va a `_sin-categoria/`.
+    const carpetaId = datos['carpeta'] ?? '';
+    const esNueva = vistaActual?.vista === 'nueva';
+    const id = idActual();
+
+    // Mientras trabaja, el botón lo dice y no se puede tocar dos veces (C04.5.1).
+    boton.setAttribute('disabled', '');
+    boton.textContent = 'Guardando…';
+
+    const base = esNueva ? recibida ?? parse('') : (await store.receta(id)).receta;
+    const escrita = conSubidas(recetaDesdeFormulario(datos, base));
+    // Un borrador puede no tener título todavía: se guarda con el día y la
+    // hora, y el nombre del archivo sale de ahí.
+    const nueva = !escrita.titulo && tieneEspecial(escrita, 'borrador')
+      ? { ...escrita, titulo: tituloPorDefecto(new Date()) } : escrita;
+
+    /** El editor otra vez, con lo que el usuario tenía escrito y el aviso (C04.5.2). */
+    const conError = (mensaje: string): null => {
+      pintar(renderEditor({
+        entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
+        // Con las fotos que este intento alcanzó a subir ya en sus líneas: el
+        // reintento las manda por su link en vez de volver a subirlas.
+        receta: conSubidas(escrita), carpeta: carpetaId, categorias: store.categorias(),
+        tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje
+      }));
+      return null;
+    };
+
+    if (!nueva.titulo) return conError('Ponele un título antes de guardar.');
+
+    // Lo que el depósito cambió respecto del `.md` que se abrió: el store sube,
+    // mueve y manda a la papelera.
+    const fotos = cambiosDeFotos(nueva, base);
+
+    try {
+      if (esNueva) {
+        const creada = await escribiendo(store.crear(nueva, carpetaId ? { carpetaId, fotos } : { fotos }));
+        guardada = { id: creada.id, receta: conSubidas(nueva) };
+      } else {
+        await escribiendo(store.guardar(id, nueva, { carpetaDestino: carpetaId, fotos }));
+        guardada = { id, receta: conSubidas(nueva) };
+        // Lo guardado es la copia: volver a la receta la muestra sin releer, y
+        // con el link de cada foto que se acaba de subir en su línea.
+        recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: guardada.receta };
+      }
+      editorAbierto = null;
+    } catch (err) {
+      console.error(err);
+      return conError(porQueNoGuardo(err));
+    }
+  } finally {
+    // El tilde sólo cuando se escribió: ni la validación ni el error llegan a
+    // `guardada`, y ahí el velo se va solo, sin tilde.
+    dibujado = destapar({ exito: guardada !== null });
+  }
+  return guardada ? { ...guardada, dibujado } : null;
+}
 
 const router = crearRouter(render);
 
@@ -2026,76 +2206,19 @@ app.addEventListener('click', async (e) => {
   }
 
   if (accion === 'guardar') {
-    if (!document.querySelector('[data-formulario]')) return;
-    // El velo antes que nada: entre el toque y la escritura hay una relectura
-    // del `.md` de base, que es un pedido a Drive, y la validación puede
-    // devolver el editor sin escribir nada. Se suelta por cualquier
-    // camino, así que no queda pegado.
-    const destapar = tapar();
-    /** Cómo se cierra el editor si el guardado sale bien; corre con el velo ya soltado. */
-    let cerrar: (() => void) | null = null;
-    /** El dibujo del tilde: se espera antes de navegar, para que no se pisen. */
-    let dibujado: Promise<void> = Promise.resolve();
-    try {
-      const datos = datosDelFormulario();
-      const carpetaId = datos['carpeta'] || '';
-      const esNueva = vistaActual?.vista === 'nueva';
-      const id = idActual();
-
-      // Mientras trabaja, el botón lo dice y no se puede tocar dos veces (C04.5.1).
-      boton.setAttribute('disabled', '');
-      boton.textContent = 'Guardando…';
-
-      const base = esNueva ? parse('') : (await store.receta(id)).receta;
-      const nueva = conSubidas(recetaDesdeFormulario(datos, base));
-
-      /** El editor otra vez, con lo que el usuario tenía escrito y el aviso (C04.5.2). */
-      const conError = (mensaje: string) => pintar(renderEditor({
-        entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
-        // Con las fotos que este intento alcanzó a subir ya en sus líneas: el
-        // reintento las manda por su link en vez de volver a subirlas.
-        receta: conSubidas(nueva), categorias: store.categorias(),
-        tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje
-      }));
-
-      if (!nueva.titulo) return conError('Ponele un título antes de guardar.');
-      // Sin categoría no se sabe en qué carpeta de Drive va el archivo (C04.3b.1).
-      if (esNueva && !carpetaId) return conError('Elegí una categoría antes de guardar.');
-
-      // Lo que el depósito cambió respecto del `.md` que se abrió: el store sube,
-      // mueve y manda a la papelera.
-      const fotos = cambiosDeFotos(nueva, base);
-
-      try {
-        if (esNueva) {
-          await escribiendo(store.crear(nueva, { carpetaId: carpetaId || undefined, fotos }));
-        } else {
-          await escribiendo(store.guardar(id, nueva, { carpetaDestino: carpetaId, fotos }));
-          // Lo guardado es la copia: volver a la receta la muestra sin releer, y
-          // con el link de cada foto que se acaba de subir en su línea.
-          recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: conSubidas(nueva) };
-        }
-        editorAbierto = null;
-        // Nada más confirma el éxito: vuelve a la receta, y lo escrito ya está
-        // en Drive, así que salir no tiene nada que preguntar.
-        cerrar = () => history.back();
-      } catch (err) {
-        console.error(err);
-        return conError(porQueNoGuardo(err));
-      }
-    } finally {
-      // El tilde sólo cuando se escribió: `cerrar` se asigna en el único camino
-      // que llegó a guardar, y ni la validación ni el error pasan por ahí.
-      dibujado = destapar({ exito: cerrar !== null });
-    }
+    const guardada = await guardarEditor(boton);
+    if (!guardada) return;
     // El orden que se ve: la olla revolviendo, el tilde, y recién después la
     // pantalla nueva. Por eso se espera a que el tilde esté dibujado antes de
     // navegar —la pantalla ya no está tapada, así que navegar se puede— y el
     // velo se saca cuando esa pantalla ya se pintó, con el repintado tapado.
-    // Sin `cerrar` no se guardó nada —validación o error—, y ya se pintó el
-    // aviso: ahí el velo se fue solo y no hay a dónde ir.
-    await dibujado;
-    if (cerrar) { esperarPintadoParaSacarElVelo(); cerrar(); }
+    await guardada.dibujado;
+    esperarPintadoParaSacarElVelo();
+    // Lo escrito ya está en Drive, así que salir no tiene nada que preguntar.
+    // El editor que abrió algo compartido no tiene pantalla atrás —la entrada
+    // del historial es la del Share Target—: cierra en la receta guardada.
+    if (llegoDeAfuera(vistaActual)) irCerrando(`#/r/${encodeURIComponent(guardada.id)}`);
+    else history.back();
     return;
   }
 
