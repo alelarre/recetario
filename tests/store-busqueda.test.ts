@@ -175,8 +175,8 @@ describe('categoriasConConteo', () => {
     expect(c.find(x => x.nombre === 'Postres')!.cantidad).toBe(1);
   });
 
-  it('no muestra Sin categorizar cuando la raíz está vacía', () => {
-    expect(store.categoriasConConteo().some(c => c.nombre === 'Sin categorizar')).toBe(false);
+  it('no muestra Sin categoría cuando la raíz está vacía', () => {
+    expect(store.categoriasConConteo().some(c => c.nombre === 'Sin categoría')).toBe(false);
   });
 });
 

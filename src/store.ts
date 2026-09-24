@@ -1,4 +1,4 @@
-import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_BORRADORES, NOMBRE_FOTOS, NOMBRE_PLAN, MARCA_RAIZ, SCHEMA_VERSION } from './config.js';
+import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_BORRADORES, NOMBRE_FOTOS, NOMBRE_SIN_CATEGORIA, NOMBRE_PLAN, MARCA_RAIZ, SCHEMA_VERSION } from './config.js';
 import { COLUMNAS, entradaDesdeFila, filaDesde, coincideTag } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, HOJA_BORRADORES, HOJA_CATEGORIAS, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
@@ -14,7 +14,7 @@ import type {
   Borrador, EntradaBorrador, Categoria, Plan, CambiosDeFotos
 } from './tipos.js';
 
-const CATEGORIA_RAIZ = 'Sin categorizar';
+const CATEGORIA_RAIZ = 'Sin categoría';
 const ULTIMA_COLUMNA = String.fromCharCode(64 + COLUMNAS.length);
 const ULTIMA_COLUMNA_BORRADORES = String.fromCharCode(64 + COLUMNAS_BORRADORES.length);
 const ULTIMA_COLUMNA_CATEGORIAS = String.fromCharCode(64 + COLUMNAS_CATEGORIAS.length);
@@ -128,6 +128,8 @@ interface Contexto {
   borradoresId: string;
   /** La carpeta `_fotos/`, o vacío si todavía no existe: se crea con la primera foto. */
   fotosId: string;
+  /** La carpeta `_sin-categoria/`, o vacío si todavía no existe: se crea con la primera receta suelta. */
+  sinCategoriaId: string;
   soloLectura: boolean;
   /** La hoja `meta` como se vio por última vez, de la planilla o de la copia. */
   meta: Record<string, string>;
@@ -202,7 +204,7 @@ const esNoEncontrado = (e: unknown): boolean =>
 export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencias) {
   const ctx: Contexto = {
     raizId: '', raizNombre: '', indiceId: '', categorias: [], carpetas: new Map(), borradoresId: '',
-    fotosId: '', soloLectura: false, meta: {}, modifiedTime: ''
+    fotosId: '', sinCategoriaId: '', soloLectura: false, meta: {}, modifiedTime: ''
   };
   let entradas: Entrada[] = [];
   let filas = new Map<string, number>();
@@ -270,6 +272,9 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   /** Carga la copia en memoria, en el orden de la planilla, como si se la hubiera leído. */
   function usarCopia(copia: CopiaIndice): void {
     ctx.meta = { ...copia.meta };
+    // Antes de armar el mapa de carpetas: `usarCategorias` necesita conocer
+    // `_sin-categoria/` para sumarla.
+    ctx.sinCategoriaId = ctx.meta['carpeta_sin_categoria'] ?? '';
     usarCategorias(copia.categorias);
     const ordenadas = [...copia.filas].sort((a, b) => a.fila - b.fila);
     entradas = ordenadas.map(f => conCategoria(f.entrada));
@@ -281,11 +286,16 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     ctx.fotosId = ctx.meta['carpeta_fotos'] ?? '';
   }
 
-  /** Las categorías en memoria y el mapa de carpeta → nombre que usan guardar y crear. */
+  /**
+   * Las categorías en memoria y el mapa de carpeta → nombre que usan guardar y
+   * crear. `_sin-categoria/` entra con el mismo nombre que la raíz: las dos son
+   * Sin categoría, así `delRecetario` y `conCategoria` la reconocen.
+   */
   function usarCategorias(lista: Categoria[]): void {
     ctx.categorias = lista;
     ctx.carpetas = new Map<string, string>([
       [ctx.raizId, CATEGORIA_RAIZ],
+      ...(ctx.sinCategoriaId ? [[ctx.sinCategoriaId, CATEGORIA_RAIZ] as [string, string]] : []),
       ...lista.map(c => [c.id, c.nombre] as [string, string])
     ]);
   }
@@ -293,7 +303,8 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   /**
    * La categoría de una receta sale de su carpeta, no de la columna: así
    * renombrar una categoría no obliga a reescribir las filas de sus recetas.
-   * Una carpeta que no es categoría —o la raíz— es Sin categorizar.
+   * Una carpeta que no es categoría —la raíz o `_sin-categoria/`— es Sin
+   * categoría.
    */
   function conCategoria(e: Entrada): Entrada {
     return { ...e, categoria: ctx.carpetas.get(e.carpeta_id) ?? CATEGORIA_RAIZ };
@@ -506,6 +517,8 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     filasBorradores = new Map(entradasBorradores.map((e, i) => [e.id_archivo, i + 2]));
     const crudoCategorias = await sheets.leer(
       ctx.indiceId, `${HOJA_CATEGORIAS}!A1:${ULTIMA_COLUMNA_CATEGORIAS}1000`);
+    // Antes de `usarCategorias`, que necesita conocer `_sin-categoria/` para sumarla.
+    ctx.sinCategoriaId = ctx.meta['carpeta_sin_categoria'] ?? '';
     usarCategorias(crudoCategorias.slice(1).map(categoriaDesdeFila).filter(c => c.id));
     entradas = entradas.map(conCategoria);
     ctx.borradoresId = ctx.meta['carpeta_borradores'] ?? '';
@@ -584,6 +597,22 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       await guardarMeta('carpeta_fotos', carpeta.id);
     }
     return ctx.fotosId;
+  }
+
+  /**
+   * `_sin-categoria/`, la bandeja de entrada de las recetas sin categoría,
+   * creada con la primera. Sin listar carpetas al abrir, `meta` es la única
+   * forma de volver a encontrarla; se suma al mapa de carpetas para que
+   * `delRecetario` y `conCategoria` la reconozcan en la misma sesión.
+   */
+  async function carpetaSinCategoria(): Promise<string> {
+    if (!ctx.sinCategoriaId) {
+      const carpeta = await drive.crear({ nombre: NOMBRE_SIN_CATEGORIA, padre: ctx.raizId, mime: MIME_CARPETA });
+      ctx.sinCategoriaId = carpeta.id;
+      await guardarMeta('carpeta_sin_categoria', carpeta.id);
+      ctx.carpetas.set(ctx.sinCategoriaId, CATEGORIA_RAIZ);
+    }
+    return ctx.sinCategoriaId;
   }
 
   /** Sube una foto a `_fotos/` y la deja en el caché con el blob que ya está en memoria. */
@@ -676,7 +705,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
 
     // Sin fila —por ejemplo, una receta abierta por link directo y marcada
     // favorita ahí mismo— no hay de dónde sacar su carpeta real ni su nombre
-    // de archivo: caer en la raíz la mandaría a «Sin categorizar» aunque esté
+    // de archivo: caer en la raíz la mandaría a «Sin categoría» aunque esté
     // en una categoría. Se le pregunta a Drive, y sólo en este caso, antes de
     // escribir: un id que llegó en un link puede ser cualquier archivo.
     let carpeta_id: string;
@@ -693,9 +722,17 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const conLinks = await subirYMover(nombre_archivo, receta, fotos);
     const actualizado = await drive.actualizar(id, serialize(conLinks));
 
-    if (carpetaDestino && carpetaDestino !== carpeta_id) {
-      await drive.mover(id, { de: carpeta_id, a: carpetaDestino });
-      carpeta_id = carpetaDestino;
+    // Vacío es «Sin categoría»: si ya está suelta —en la raíz o en
+    // `_sin-categoria/`— no se mueve; si no, va a `_sin-categoria/`, que se
+    // crea si todavía no existe.
+    let destino = carpetaDestino;
+    if (destino === '') {
+      destino = (carpeta_id === ctx.raizId || carpeta_id === ctx.sinCategoriaId)
+        ? undefined : await carpetaSinCategoria();
+    }
+    if (destino !== undefined && destino !== carpeta_id) {
+      await drive.mover(id, { de: carpeta_id, a: destino });
+      carpeta_id = destino;
     }
 
     const ubicacion: Ubicacion = {
@@ -715,7 +752,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     receta: Receta,
     { carpetaId, fotos }: { carpetaId?: string | undefined; fotos?: CambiosDeFotos | undefined } = {}
   ): Promise<{ id: string; nombre_archivo: string }> {
-    const padre = carpetaId ?? ctx.raizId;
+    const padre = carpetaId ?? await carpetaSinCategoria();
     const hermanos = (await drive.listarHijos(padre)).map(a => a.name ?? '');
     const nombre = slugArchivo(receta.titulo, hermanos);
     const conLinks = await subirYMover(nombre, receta, fotos);
@@ -784,6 +821,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     // no tienen propiedades las reciben de la tabla, una sola vez.
     let borradoresId = '';
     let fotosId = '';
+    let sinCategoriaId = '';
     const categorias: Categoria[] = [];
     // Cada carpeta mueve la barra: escribirle las propiedades a una
     // predefinida es un viaje a Drive, y son hasta dieciséis.
@@ -792,6 +830,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       const nombre = carpeta.name ?? '';
       if (nombre === NOMBRE_BORRADORES) borradoresId = carpeta.id;
       else if (nombre === NOMBRE_FOTOS) fotosId = carpeta.id;
+      else if (nombre === NOMBRE_SIN_CATEGORIA) sinCategoriaId = carpeta.id;
       else if (!nombre.startsWith('_')) {
         let color = carpeta.appProperties?.['color'] ?? '';
         let foto = carpeta.appProperties?.['foto'] ?? '';
@@ -805,9 +844,11 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       }
       alProgresar(TRAMOS.carpetas * ((i + 1) / carpetas.length));
     }
-    usarCategorias(categorias);
     ctx.borradoresId = borradoresId;
     ctx.fotosId = fotosId;
+    // Antes de `usarCategorias`, que necesita conocer `_sin-categoria/` para sumarla.
+    ctx.sinCategoriaId = sinCategoriaId;
+    usarCategorias(categorias);
 
     // Lo que empieza con `_` es de la app y no es una receta: `_plan.md` vive
     // en la carpeta base, al lado de `_indice`, y sin esto entraría al índice
@@ -817,6 +858,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
 
     const lugares = [
       { id: ctx.raizId, categoria: CATEGORIA_RAIZ },
+      ...(ctx.sinCategoriaId ? [{ id: ctx.sinCategoriaId, categoria: CATEGORIA_RAIZ }] : []),
       ...ctx.categorias.map(c => ({ id: c.id, categoria: c.nombre }))
     ];
 
@@ -890,6 +932,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     // anotada, el próximo arranque vuelve a reconstruir para siempre.
     await guardarMeta('carpeta_borradores', ctx.borradoresId);
     await guardarMeta('carpeta_fotos', ctx.fotosId);
+    await guardarMeta('carpeta_sin_categoria', ctx.sinCategoriaId);
     await guardarMeta('schemaVersion', String(SCHEMA_VERSION));
     await guardarMeta('ultima_reconstruccion', ahora);
     await guardarMeta('reconstruccion_en_curso', '');

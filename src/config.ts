@@ -16,6 +16,11 @@ export const NOMBRE_INDICE = '_indice';
 /** La carpeta de los borradores, un `.md` por borrador. El `_` la deja fuera de las categorías. */
 export const NOMBRE_BORRADORES = '_borradores';
 /**
+ * La bandeja de entrada: las recetas sin categoría, un `.md` por receta. Se
+ * crea con la primera. El `_` la deja fuera de las categorías y del reindexado.
+ */
+export const NOMBRE_SIN_CATEGORIA = '_sin-categoria';
+/**
  * Las fotos de las recetas y de las categorías, en la carpeta base. Se crea con
  * la primera foto. El `_` la deja fuera de las categorías y del reindexado.
  */
@@ -32,4 +37,4 @@ export const MARCA_RAIZ = { clave: 'recetario', valor: 'raiz' } as const;
 // Subir esta versión fuerza una reconstrucción del índice en el próximo
 // arranque. La sube cambiar la forma de la fila o de las hojas; lo que se
 // valida al leer —`tiempo`, `dificultad`— no.
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;

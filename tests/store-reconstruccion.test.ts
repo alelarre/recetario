@@ -54,9 +54,22 @@ describe('reconstruir', () => {
     expect(meta).toContainEqual(['carpeta_fotos', 'fc']);
   });
 
-  it('las recetas de la raíz quedan como Sin categorizar', async () => {
+  it('las recetas de la raíz quedan como Sin categoría', async () => {
     await store.reconstruir();
-    expect(store.entradas().find(e => e.titulo === 'Suelta')!.categoria).toBe('Sin categorizar');
+    expect(store.entradas().find(e => e.titulo === 'Suelta')!.categoria).toBe('Sin categoría');
+  });
+
+  it('_sin-categoria/ no es categoría: la reconoce, anota la meta y lee sus .md como Sin categoría', async () => {
+    drive._store.set('sc', { id: 'sc', name: '_sin-categoria', mimeType: CARPETA, parents: ['raiz'] });
+    drive._store.set('rs', { id: 'rs', name: 'suelta2.md', parents: ['sc'], contenido: md('Suelta 2') });
+    await store.reconstruir();
+    expect(store.categorias().map(c => c.nombre)).toEqual(['Carnes']);
+    const entrada = store.entradas().find(e => e.titulo === 'Suelta 2')!;
+    expect(entrada.categoria).toBe('Sin categoría');
+    expect(entrada.carpeta_id).toBe('sc');
+    expect(store._ctx.sinCategoriaId).toBe('sc');
+    const meta = await sheets.leer('i1', 'meta!A1:B20');
+    expect(meta).toContainEqual(['carpeta_sin_categoria', 'sc']);
   });
 
   it('nombra las ignoradas por no tener titulo, sin borrar el archivo', async () => {

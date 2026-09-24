@@ -34,7 +34,7 @@ async function abierta() {
     fila('r1', 'Ñoquis', 'Nombre viejo', 'c1'),
     fila('r2', 'Pollo', 'Aves', 'c2'),
     fila('r3', 'Lasaña', 'Pastas', 'c1'),
-    fila('r4', 'Suelta', 'Sin categorizar', 'raiz')
+    fila('r4', 'Suelta', 'Sin categoría', 'raiz')
   ]);
   sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)]]);
   sheets.cargar('i1', 'borradores', [[...COLUMNAS_BORRADORES]]);
@@ -63,7 +63,7 @@ describe('el nombre de la categoría de cada receta', () => {
   it('sale de la carpeta, no de la columna', async () => {
     const { store } = await abierta();
     expect(store.entradas().find(e => e.id_archivo === 'r1')?.categoria).toBe('Pastas');
-    expect(store.entradas().find(e => e.id_archivo === 'r4')?.categoria).toBe('Sin categorizar');
+    expect(store.entradas().find(e => e.id_archivo === 'r4')?.categoria).toBe('Sin categoría');
   });
 
   it('también al abrir desde la copia', async () => {
@@ -75,13 +75,13 @@ describe('el nombre de la categoría de cada receta', () => {
     expect(store.entradas().find(e => e.id_archivo === 'r1')?.categoria).toBe('Pastas');
   });
 
-  it('una receta con una carpeta que no es categoría queda Sin categorizar', async () => {
+  it('una receta con una carpeta que no es categoría queda Sin categoría', async () => {
     const { sheets } = await abierta();
     sheets.cargar('i1', 'recetas', [[...COLUMNAS], fila('r9', 'Rara', 'Vieja', 'borrada')]);
     const otra = crearStore({ drive: driveFalso([]), sheets, indiceLocal: indiceLocalFalso() });
     otra._ctx.indiceId = 'i1';
     await otra.cargarIndice();
-    expect(otra.entradas()[0]?.categoria).toBe('Sin categorizar');
+    expect(otra.entradas()[0]?.categoria).toBe('Sin categoría');
   });
 });
 

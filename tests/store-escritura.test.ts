@@ -73,7 +73,7 @@ describe('guardar: escritura sincrónica, sin cola', () => {
     await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
     await sheets.escribir('i1', 'meta!A1:B1', [['schemaVersion', '1']]);
     await sheets.append('i1', 'recetas', [
-      ['f1', 'f1.md', 'Vieja', 'Sin categorizar', 'raiz', '', '', '', '', '', '', String(Date.parse('2020-01-01T00:00:00.000Z'))]
+      ['f1', 'f1.md', 'Vieja', 'Sin categoría', 'raiz', '', '', '', '', '', '', String(Date.parse('2020-01-01T00:00:00.000Z'))]
     ]);
     const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();
@@ -142,10 +142,18 @@ describe('guardar', () => {
     expect(store.entradas()[0]?.categoria).toBe('Postres');
   });
 
+  it('carpetaDestino vacío mueve una receta de categoría a _sin-categoria/, creándola si falta', async () => {
+    await store.guardar('r1', parse(MD), { carpetaDestino: '' });
+    const carpeta = [...drive._store.values()].find(a => a.name === '_sin-categoria')!;
+    expect(carpeta).toMatchObject({ mimeType: CARPETA, parents: ['raiz'] });
+    expect(drive._store.get('r1')!.parents).toEqual([carpeta.id]);
+    expect(store.entradas()[0]?.categoria).toBe('Sin categoría');
+  });
+
   it('una receta sin fila en el índice se guarda con su carpeta y nombre reales', async () => {
     // 'suelta.md' vive en Carnes pero nunca tuvo fila: por ejemplo, se abrió
     // por un link directo. Sin `entrada` de dónde sacar la carpeta, caería en
-    // la raíz —«Sin categorizar»— y con `nombre_archivo` vacío.
+    // la raíz —«Sin categoría»— y con `nombre_archivo` vacío.
     drive._store.set('suelta', {
       id: 'suelta', name: 'suelta.md', mimeType: 'text/markdown', parents: ['c1'],
       modifiedTime: '2026-01-01T00:00:00.000Z', contenido: MD
@@ -197,10 +205,19 @@ describe('crear', () => {
     expect(contenido).toContain('rico');
   });
 
-  it('sin carpeta cae en la raíz, que es la bandeja de entrada', async () => {
+  it('sin carpeta cae en _sin-categoria/, que es la bandeja de entrada', async () => {
     const r = await store.crear(recetaFalsa({ titulo: 'Suelta' }));
-    expect(drive._store.get(r.id)!.parents).toEqual(['raiz']);
-    expect(store.entradas().find(e => e.id_archivo === r.id)!.categoria).toBe('Sin categorizar');
+    const carpeta = [...drive._store.values()].find(a => a.name === '_sin-categoria')!;
+    expect(drive._store.get(r.id)!.parents).toEqual([carpeta.id]);
+    expect(store.entradas().find(e => e.id_archivo === r.id)!.categoria).toBe('Sin categoría');
+  });
+
+  it('_sin-categoria/ se crea con la primera receta suelta, y no otra vez con la segunda', async () => {
+    await store.crear(recetaFalsa({ titulo: 'Suelta' }));
+    await store.crear(recetaFalsa({ titulo: 'Otra suelta' }));
+    expect([...drive._store.values()].filter(a => a.name === '_sin-categoria')).toHaveLength(1);
+    const meta = await sheets.leer('i1', 'meta!A1:B20');
+    expect(meta).toContainEqual(['carpeta_sin_categoria', expect.anything()]);
   });
 
   it('no pisa un nombre existente', async () => {
@@ -255,6 +272,90 @@ describe('borrar', () => {
     const deOtra = filas.filter(f => f[0] === otra.id);
     expect(deOtra).toHaveLength(1);
     expect(deOtra[0]?.[2]).toBe('Otra actualizada');
+  });
+});
+
+describe('carpetaDestino vacío y _sin-categoria/', () => {
+  it('no mueve una receta ya suelta en la raíz', async () => {
+    const drive = driveFalso([
+      { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
+      { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },
+      { id: 'r9', name: 'suelta.md', parents: ['raiz'], contenido: MD }
+    ]);
+    const sheets = sheetsFalso();
+    sheets.crearPlanilla('i1', ['recetas', 'meta', 'borradores', 'categorias']);
+    await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
+    await sheets.append('i1', 'recetas',
+      [['r9', 'suelta.md', 'Milanesas', 'Sin categoría', 'raiz', '', '', '', '', '', '', '1000']]);
+    sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)]]);
+    const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
+    await store.arrancar();
+    await store.cargarIndice();
+
+    await store.guardar('r9', parse(MD), { carpetaDestino: '' });
+
+    expect(drive.llamadas.filter(l => l[0] === 'mover')).toEqual([]);
+    expect(drive._store.get('r9')!.parents).toEqual(['raiz']);
+  });
+
+  it('con carpetaDestino explícito mueve una receta desde _sin-categoria/ a una categoría', async () => {
+    const drive = driveFalso([
+      { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
+      { id: 'c1', name: 'Carnes', mimeType: CARPETA, parents: ['raiz'] },
+      { id: 'sc', name: '_sin-categoria', mimeType: CARPETA, parents: ['raiz'] },
+      { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },
+      { id: 'r9', name: 'suelta.md', parents: ['sc'], contenido: MD }
+    ]);
+    const sheets = sheetsFalso();
+    sheets.crearPlanilla('i1', ['recetas', 'meta', 'borradores', 'categorias']);
+    await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
+    await sheets.append('i1', 'recetas',
+      [['r9', 'suelta.md', 'Milanesas', 'Sin categoría', 'sc', '', '', '', '', '', '', '1000']]);
+    sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)], ['carpeta_sin_categoria', 'sc']]);
+    sheets.cargar('i1', 'categorias', [[...COLUMNAS_CATEGORIAS], ['c1', 'Carnes', 'carnes', 'catalogo:carnes']]);
+    const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
+    await store.arrancar();
+    await store.cargarIndice();
+
+    await store.guardar('r9', parse(MD), { carpetaDestino: 'c1' });
+
+    expect(drive._store.get('r9')!.parents).toEqual(['c1']);
+    expect(store.entradas()[0]?.categoria).toBe('Carnes');
+  });
+
+  /**
+   * Un archivo sin fila en el índice, en `_sin-categoria/`: `delRecetario` sólo
+   * reconocía la raíz y las categorías, y lo hubiera rechazado igual que uno
+   * ajeno al Recetario.
+   */
+  async function sueltaSinFila() {
+    const drive = driveFalso([
+      { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
+      { id: 'sc', name: '_sin-categoria', mimeType: CARPETA, parents: ['raiz'] },
+      { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },
+      { id: 'suelta', name: 'suelta.md', parents: ['sc'], contenido: MD }
+    ]);
+    const sheets = sheetsFalso();
+    sheets.crearPlanilla('i1', ['recetas', 'meta', 'borradores', 'categorias']);
+    await sheets.escribir('i1', 'recetas!A1:L1', [[...COLUMNAS]]);
+    sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)], ['carpeta_sin_categoria', 'sc']]);
+    const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
+    await store.arrancar();
+    await store.cargarIndice();
+    return { drive, store };
+  }
+
+  it('guardar acepta un id sin fila que está en _sin-categoria/', async () => {
+    const { store, drive } = await sueltaSinFila();
+    await store.guardar('suelta', recetaFalsa({ titulo: 'Suelta' }));
+    expect(drive._store.get('suelta')?.contenido).toContain('Suelta');
+    expect(store.entradas().find(e => e.id_archivo === 'suelta')?.categoria).toBe('Sin categoría');
+  });
+
+  it('borrar acepta un id sin fila que está en _sin-categoria/', async () => {
+    const { store, drive } = await sueltaSinFila();
+    await store.borrar('suelta');
+    expect(drive._store.get('suelta')?.trashed).toBe(true);
   });
 });
 
