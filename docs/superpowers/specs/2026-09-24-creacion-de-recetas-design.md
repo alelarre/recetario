@@ -121,7 +121,7 @@ El Share Target (`public/sw.js`) no cambia. Lo que abre la app:
 
 | Llega | Abre |
 |---|---|
-| Un link, un texto que no es receta, fotos | El **editor nuevo** con la fuente, el título si vino, el texto en Notas y las fotos en el depósito. «Sin categoría» y `borrador`. No se guarda nada hasta Guardar o Convertir. |
+| Un link, un texto que no es receta, fotos | El **editor nuevo** con la fuente, el texto en Notas y las fotos en el depósito. «Sin categoría» y `borrador`. No se guarda nada hasta Guardar o Convertir. |
 | Una receta `.md` con `id:` de una receta que existe | El **editor de esa receta** con lo recibido aplicado como en *Pegar*. |
 | Una receta `.md` sin `id:`, o con uno que no existe | El **editor nuevo** lleno con la receta, «Sin categoría» y `borrador`. |
 
