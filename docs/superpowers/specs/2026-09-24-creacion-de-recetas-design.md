@@ -20,6 +20,11 @@ formulario, el editor**. Lo que falta terminar es una receta con el tag
 - **La categoría es opcional al crear.** Lo que no tiene categoría vive en la
   carpeta **`_sin-categoria/`**, al lado de las categorías. Se crea la primera
   vez que hace falta, como `_fotos/`.
+- **La app no escribe recetas sueltas en la carpeta base.** Un `.md` suelto
+  ahí, escrito por fuera, se sigue leyendo como hoy, sin categoría; guardarlo
+  lo deja donde está, y elegirle una categoría lo mueve.
+- El nombre que se muestra para lo que no tiene categoría pasa de «Sin
+  categorizar» a **«Sin categoría»**, en los dos casos.
 - `_sin-categoria/` **no es una categoría**: no aparece en el home, no tiene
   color ni foto y no se gestiona desde *Ajustes → Recetario*. Sus recetas sí
   están en el índice, con la categoría vacía.
@@ -31,8 +36,10 @@ formulario, el editor**. Lo que falta terminar es una receta con el tag
 
 ## Borradores en el menú
 
-- La entrada **Borradores** del menú lleva a `#/t/borrador`, la lista por tag
-  de siempre. El contador cuenta las recetas con `borrador`.
+- La entrada **Borradores** del menú sigue en `#/borradores`, que dibuja la
+  lista por tag de siempre filtrada por `borrador`, con la hamburguesa en vez
+  del volver: es un destino del menú. El contador cuenta las recetas con
+  `borrador`, escrito en cualquiera de sus formas.
 - En esa lista, una receta de `_sin-categoria/` se dibuja con la trama neutra
   en lugar del color de una categoría.
 - La lista no tiene «+» ni «Pegar receta».
