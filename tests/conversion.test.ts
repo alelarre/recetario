@@ -44,7 +44,9 @@ describe('el pedido al agente', () => {
 });
 
 describe('el pedido con fotos', () => {
-  const conFotos = { fotos: ['1AbC', '1DeF'] };
+  // Los números son los del depósito: el 2 no va (un link externo, o una
+  // foto que no se pudo leer), y el pedido lo tiene que decir.
+  const conFotos = { fotos: [{ n: 1, id: '1AbC' }, { n: 3, id: '1DeF' }] };
 
   it('dice cuántas van, en orden, qué pueden ser y cómo tratarlas, después de la receta', () => {
     const p = pedidoDeConversion(receta, conFotos);
@@ -56,7 +58,7 @@ describe('el pedido con fotos', () => {
   });
 
   it('una sola foto se dice en singular', () => {
-    expect(pedidoDeConversion(receta, { fotos: ['1AbC'] })).toContain('Fotos: va 1, en orden.');
+    expect(pedidoDeConversion(receta, { fotos: [{ n: 1, id: '1AbC' }] })).toContain('Fotos: va 1, en orden.');
   });
 
   it('sin fotos no dice nada de fotos', () => {
@@ -65,28 +67,38 @@ describe('el pedido con fotos', () => {
 
   it('con los links de Drive, una línea por foto y cómo leerlas', () => {
     const p = pedidoDeConversion(receta, { ...conFotos, links: true });
-    expect(p).toContain('Foto 1: https://drive.google.com/file/d/1AbC/view');
-    expect(p).toContain('Foto 2: https://drive.google.com/file/d/1DeF/view');
+    expect(p).toContain('foto:1: https://drive.google.com/file/d/1AbC/view');
+    expect(p).toContain('foto:3: https://drive.google.com/file/d/1DeF/view');
     expect(p).toContain('Las fotos están en mi Google Drive: leelas con el conector de Drive.');
     expect(pedidoDeConversion(receta, conFotos)).not.toContain('drive.google.com');
   });
 
   it('dice cómo referenciarlas en la receta, después del párrafo de las fotos', () => {
     const p = pedidoDeConversion(receta, conFotos);
-    expect(p).toContain('En la receta, esas fotos son foto:1, foto:2…, en el mismo orden.');
+    expect(p).toContain('En la receta, cada foto se nombra con su número: la 1.ª es foto:1 y la 2.ª es foto:3.');
     expect(p).toContain('Si una muestra el plato terminado, poné `foto: foto:N`.');
     expect(p).toContain('Si una muestra un paso, sumá `![](foto:N)` al final de ese paso.');
     expect(p).toContain('No escribas la sección Fotos: la arma la app.');
-    expect(p.indexOf('Fotos: van 2')).toBeLessThan(p.indexOf('En la receta, esas fotos son'));
-    expect(p.indexOf('En la receta, esas fotos son')).toBeLessThan(p.indexOf('Formato:'));
+    expect(p.indexOf('Fotos: van 2')).toBeLessThan(p.indexOf('En la receta, cada foto'));
+    expect(p.indexOf('En la receta, cada foto')).toBeLessThan(p.indexOf('Formato:'));
   });
 
   it('esa guía también va cuando el pedido lleva los links de Drive', () => {
-    expect(pedidoDeConversion(receta, { ...conFotos, links: true })).toContain('En la receta, esas fotos son foto:1, foto:2…');
+    expect(pedidoDeConversion(receta, { ...conFotos, links: true })).toContain('la 1.ª es foto:1 y la 2.ª es foto:3');
+  });
+
+  it('una sola foto dice su número', () => {
+    expect(pedidoDeConversion(receta, { fotos: [{ n: 4, id: 'x' }] }))
+      .toContain('En la receta, cada foto se nombra con su número: la 1.ª es foto:4.');
+  });
+
+  it('tres o más se enumeran con comas y la última con «y»', () => {
+    const p = pedidoDeConversion(receta, { fotos: [{ n: 1, id: 'a' }, { n: 2, id: 'b' }, { n: 5, id: 'c' }] });
+    expect(p).toContain('la 1.ª es foto:1, la 2.ª es foto:2 y la 3.ª es foto:5.');
   });
 
   it('sin fotos no dice nada de cómo referenciarlas', () => {
-    expect(pedidoDeConversion(receta, { fotos: [] })).not.toContain('En la receta, esas fotos son');
+    expect(pedidoDeConversion(receta, { fotos: [] })).not.toContain('En la receta, cada foto');
   });
 });
 

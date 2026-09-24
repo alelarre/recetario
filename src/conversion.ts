@@ -9,11 +9,28 @@ import { parse } from './recipe.js';
 import { linkDeFoto } from './fotos-receta.js';
 import type { Receta } from './tipos.js';
 
+/** Una foto del pedido: su número en el depósito de la receta y su id de Drive. */
+export interface FotoDelPedido {
+  n: number;
+  id: string;
+}
+
+/** «la 1.ª es foto:1, la 2.ª es foto:3 y la 3.ª es foto:4». */
+function numeracion(fotos: readonly FotoDelPedido[]): string {
+  const partes = fotos.map((f, i) => `la ${i + 1}.ª es foto:${f.n}`);
+  const ultima = partes.pop() ?? '';
+  return partes.length ? `${partes.join(', ')} y ${ultima}` : ultima;
+}
+
 /**
  * Qué son las fotos y cómo tratarlas. Con `links`, una línea por foto con su
  * link de Drive: es el pedido que no puede llevar las fotos como archivos.
+ *
+ * Cada foto se nombra con su número del depósito y no con su posición: la
+ * receta que vuelve se aplica sobre ese depósito, y un depósito puede tener
+ * huecos —una foto sacada— o fotos que no van —un link externo—.
  */
-function parrafoDeFotos(fotos: readonly string[], links: boolean): string[] {
+function parrafoDeFotos(fotos: readonly FotoDelPedido[], links: boolean): string[] {
   if (!fotos.length) return [];
   return [
     '',
@@ -21,14 +38,14 @@ function parrafoDeFotos(fotos: readonly string[], links: boolean): string[] {
       'mano, una captura de pantalla o el plato terminado. Transcribí lo que se lee, sin inventar cantidades ni pasos ' +
       'que no estén. Una foto del plato sirve para el título y la descripción, no para la receta.',
     ...(links
-      ? [...fotos.map((id, i) => `Foto ${i + 1}: ${linkDeFoto(id)}`),
+      ? [...fotos.map(f => `foto:${f.n}: ${linkDeFoto(f.id)}`),
         'Las fotos están en mi Google Drive: leelas con el conector de Drive.']
       : []),
     '',
     // Cómo se referencian en la receta que vuelve: el depósito del
     // editor las resuelve, así que la receta ya trae la portada y las
     // referencias apenas se pega o se comparte.
-    'En la receta, esas fotos son foto:1, foto:2…, en el mismo orden. Si una muestra el plato terminado, poné ' +
+    `En la receta, cada foto se nombra con su número: ${numeracion(fotos)}. Si una muestra el plato terminado, poné ` +
       '`foto: foto:N`. Si una muestra un paso, sumá `![](foto:N)` al final de ese paso. No escribas la sección ' +
       'Fotos: la arma la app.'
   ];
@@ -36,7 +53,7 @@ function parrafoDeFotos(fotos: readonly string[], links: boolean): string[] {
 
 export function pedidoDeConversion(
   { id, titulo, fuente, notas }: { id: string; titulo: string; fuente: string; notas: string },
-  { fotos = [], links = false }: { fotos?: readonly string[]; links?: boolean } = {}
+  { fotos = [], links = false }: { fotos?: readonly FotoDelPedido[]; links?: boolean } = {}
 ): string {
   const lista = (xs: readonly string[]): string => xs.map(x => `\`${x}\``).join(', ');
   return [

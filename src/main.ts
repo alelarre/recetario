@@ -528,11 +528,21 @@ const achicarFoto = (archivo: Blob, opciones?: OpcionesAchicar): Promise<Blob> =
 
 const NO_SE_LEYO_UNA_FOTO = 'No se pudo leer una de las fotos.';
 
-/** Las fotos de Drive como archivos, para mandarlas al agente. Si no se pueden leer, ninguna. */
-async function archivosDeFotos(ids: string[]): Promise<File[]> {
+/**
+ * Las fotos de Drive del depósito que se pudieron leer, en orden y con su
+ * número, como archivos para mandarlas al agente. El archivo lleva el número
+ * del depósito, el mismo con el que el pedido la nombra. Si no se pueden leer,
+ * ninguna.
+ */
+async function fotosParaElAgente(fotos: readonly FotoDeReceta[]): Promise<{ n: number; id: string; archivo: File }[]> {
+  const deDrive = [...fotos].sort((a, b) => a.n - b.n)
+    .flatMap(f => { const id = idDeDrive(f.url); return id ? [{ n: f.n, id }] : []; });
   try {
-    const blobs = await Promise.all(ids.map(id => imagenes.imagenDe(id)));
-    return blobs.flatMap((b, i) => b ? [new File([b], `foto-${i + 1}.jpg`, { type: b.type || 'image/jpeg' })] : []);
+    const blobs = await Promise.all(deDrive.map(f => imagenes.imagenDe(f.id)));
+    return deDrive.flatMap((f, i) => {
+      const b = blobs[i];
+      return b ? [{ ...f, archivo: new File([b], `foto-${f.n}.jpg`, { type: b.type || 'image/jpeg' }) }] : [];
+    });
   } catch (err) {
     console.error(err);
     return [];
@@ -2080,15 +2090,17 @@ app.addEventListener('click', async (e) => {
     const guardada = await guardarEditor(boton);
     if (!guardada) return;
     const { id, receta } = guardada;
-    // Las fotos que el agente puede leer son las de Drive, en el orden del
-    // depósito: el pedido las nombra `foto:1`, `foto:2`…
-    const ids = idsDeDrive([...receta.fotos].sort((a, b) => a.n - b.n).map(f => f.url));
+    // Las fotos que el agente puede leer son las de Drive que se pudieron
+    // leer, en el orden del depósito y con su número: la receta que vuelve las
+    // nombra con ese número.
+    const leidas = await fotosParaElAgente(receta.fotos);
+    const numeradas = leidas.map(({ n, id }) => ({ n, id }));
     const datos = { id, titulo: receta.titulo ?? '', fuente: receta.fuente ?? '', notas: receta.notas };
     try {
-      const fotos = ids.length
-        ? { archivos: await archivosDeFotos(ids), conLinks: pedidoDeConversion(datos, { fotos: ids, links: true }) }
+      const fotos = leidas.length
+        ? { archivos: leidas.map(f => f.archivo), conLinks: pedidoDeConversion(datos, { fotos: numeradas, links: true }) }
         : null;
-      const r = await enviarAlAgente(plataformaDelNavegador(), pedidoDeConversion(datos, { fotos: ids }), fotos);
+      const r = await enviarAlAgente(plataformaDelNavegador(), pedidoDeConversion(datos, { fotos: numeradas }), fotos);
       if (r === 'copiado') avisoAlLlegar = 'Pedido copiado: pegalo en el agente';
       if (r === 'sin-portapapeles') avisoAlLlegar = 'No se pudo abrir el agente ni copiar el pedido.';
     } catch (err) {

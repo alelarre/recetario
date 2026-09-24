@@ -3715,7 +3715,7 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('Ponele un título antes de guardar.');
     });
 
-    it('las fotos de Drive del depósito van en orden, como archivos', async () => {
+    it('las fotos de Drive van en orden, cada una con su número del depósito', async () => {
       conShare();
       const { abrir, tocar } = await montar();
       await abrir('#/r/f1/editar');
@@ -3725,10 +3725,29 @@ describe('main.ts: las rutas', () => {
       estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags: 'borrador', fotos: JSON.stringify(fotos) };
       await tocar('convertir-con-agente');
       const archivos = (mandados[0]?.datos.files ?? []) as File[];
-      expect(archivos.map(a => a.name)).toEqual(['foto-1.jpg', 'foto-2.jpg']);
+      // El archivo lleva el número con el que el depósito la nombra: la externa
+      // no va, y la 3 sigue siendo la 3.
+      expect(archivos.map(a => a.name)).toEqual(['foto-1.jpg', 'foto-3.jpg']);
       expect(await Promise.all(archivos.map(a => a.text()))).toEqual(['d1', 'd3']);
-      expect(mandados[0]?.datos.text).toContain('`id: f1`');
-      expect(mandados[0]?.datos.text).toContain('van 2');
+      const pedido = mandados[0]?.datos.text ?? '';
+      expect(pedido).toContain('`id: f1`');
+      expect(pedido).toContain('van 2');
+      expect(pedido).toContain('la 1.ª es foto:1 y la 2.ª es foto:3');
+    });
+
+    it('una foto que no se pudo leer no va ni se nombra', async () => {
+      conShare();
+      estado.fotosPerdidas = ['d1'];
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1/editar');
+      const fotos = [{ n: 1, url: linkDeFoto('d1') }, { n: 2, url: linkDeFoto('d2') }];
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags: 'borrador', fotos: JSON.stringify(fotos) };
+      await tocar('convertir-con-agente');
+      const archivos = (mandados[0]?.datos.files ?? []) as File[];
+      expect(archivos.map(a => a.name)).toEqual(['foto-2.jpg']);
+      const pedido = mandados[0]?.datos.text ?? '';
+      expect(pedido).toContain('va 1');
+      expect(pedido).toContain('la 1.ª es foto:2.');
     });
 
     it('con el pedido copiado, el aviso se ve en la receta', async () => {
