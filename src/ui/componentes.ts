@@ -310,8 +310,8 @@ export function vacio(texto: string): string {
 export type DestinoLateral = 'recetario' | 'borradores' | 'plan' | 'ajustes';
 
 export interface OpcionesLateral {
-  /** Cuál de los tres se está mirando: se marca con el acento. */
-  activo: DestinoLateral;
+  /** Cuál se está mirando: se marca con el acento. Sin él no se marca ninguno. */
+  activo?: DestinoLateral;
   /** Cuántos borradores esperan. En cero no se dibuja el número. */
   borradores: number;
   /** El menú está desplegado. En pantalla ancha el lateral es fijo y esto no aplica. */
@@ -339,9 +339,9 @@ export function lateral({ activo, borradores, abierto }: OpcionesLateral): strin
       item('borradores', '#/borradores', ICO.bandeja, 'Borradores', borradores) +
       // El plan es su única entrada: el Recetario no lo nombra.
       item('plan', '#/plan', ICO.calendario, 'Plan de la semana') +
-      // Nueva receta es una acción y no un lugar: nunca queda marcada, porque
-      // el editor al que lleva no dibuja el menú. Es la única entrada para
-      // crear una receta a mano.
+      // Nueva receta es una acción y no un lugar: nunca queda marcada, ni
+      // siquiera en el editor al que lleva. Es la única entrada para crear una
+      // receta a mano.
       `<a href="#/nueva">${ICO.mas}Nueva receta</a>` +
       item('ajustes', '#/ajustes', ICO.ajustes, 'Ajustes') +
       // Al pie y tenue: sirve para saber si el teléfono ya tomó el último deploy.

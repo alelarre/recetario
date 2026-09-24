@@ -677,6 +677,10 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
 /** El contador del menú: las recetas con el tag `borrador`. */
 const cuantosBorradores = (): number => store.buscar({ tags: ['borrador'] }).length;
 
+/** La receta nueva es un destino del menú; editar una existente, no. */
+const menuDelEditor = (): { menu?: { abierto: boolean; borradores: number } } =>
+  vistaActual?.vista === 'nueva' ? { menu: { abierto: menuAbierto, borradores: cuantosBorradores() } } : {};
+
 /** Ajustes, igual al entrar que mientras reindexa: sólo cambia `reindexando`. */
 function dibujarAjustes(): void {
   pintar(renderAjustes({
@@ -799,6 +803,9 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   // editor, y se pregunta.
   if (cambiaDePantalla && editorAbierto && formularioActual() !== editorAbierto.formulario) {
     history.pushState(null, '', editorAbierto.hash);
+    // Si se llegó desde un destino del menú, el menú se cierra: la pregunta
+    // queda en el formulario, debajo del velo.
+    ponerMenu(false);
     if (!document.querySelector('[data-salida]')) {
       document.querySelector('[data-formulario]')?.insertAdjacentHTML('afterbegin', confirmacionSalida);
     }
@@ -1052,7 +1059,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       receta.tags = conEspecial(receta.tags, 'borrador', true);
       abrirEditor(renderEditor({
         entrada: null, receta, categorias: store.categorias(),
-        tagsConocidos: store.tagsDe().map(t => t.tag)
+        tagsConocidos: store.tagsDe().map(t => t.tag), ...menuDelEditor()
       }));
       // Lo que llegó de otra app cuenta como cambio desde que se abre: salir
       // sin guardar lo perdería.
@@ -1708,7 +1715,7 @@ async function guardarEditor(
         // Con las fotos que este intento alcanzó a subir ya en sus líneas: el
         // reintento las manda por su link en vez de volver a subirlas.
         receta: conSubidas(escrita), carpeta: carpetaId, categorias: store.categorias(),
-        tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje
+        tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje, ...menuDelEditor()
       }));
       return null;
     };
@@ -1989,8 +1996,8 @@ app.addEventListener('click', async (e) => {
   }
   if (accion === 'ir-a-compras') { location.hash = '#/plan/compras'; return; }
 
-  if (accion === 'abrir-menu') { menuAbierto = true; return render(); }
-  if (accion === 'cerrar-menu') { menuAbierto = false; return render(); }
+  if (accion === 'abrir-menu') return ponerMenu(true);
+  if (accion === 'cerrar-menu') return ponerMenu(false);
   if (accion === 'limpiar') {
     // Vacía la caja y deja el cursor ahí. No navega: buscar vacío no hace nada,
     // y salir de los resultados es el chevron.
@@ -2208,7 +2215,7 @@ app.addEventListener('click', async (e) => {
     pintar(renderEditor({
       entrada: vistaActual?.vista === 'editar' ? recetaLeida?.entrada ?? null : null,
       receta: aplicarPegada(actual, pegada, carpeta), carpeta,
-      categorias: store.categorias(), tagsConocidos: store.tagsDe().map(t => t.tag)
+      categorias: store.categorias(), tagsConocidos: store.tagsDe().map(t => t.tag), ...menuDelEditor()
     }));
     return;
   }
@@ -2457,9 +2464,10 @@ app.addEventListener('input', (e) => {
  * Las pantallas que dibujan el menú lateral: sólo ahí se desliza para abrirlo,
  * y sólo ahí el encabezado lleva la hamburguesa en vez del volver. El botón lo
  * decide a mano cada `ui/*.ts`, así que la lista se exporta para que un test
- * recorra las cuatro y compruebe que ninguna se desalineó del gesto.
+ * la recorra y compruebe que ninguna se desalineó del gesto. La receta nueva
+ * está: es un destino del menú. Editar una existente no: lleva el volver.
  */
-export const PANTALLAS_CON_MENU: readonly Ruta['vista'][] = ['recetario', 'borradores', 'plan', 'ajustes'];
+export const PANTALLAS_CON_MENU: readonly Ruta['vista'][] = ['recetario', 'borradores', 'plan', 'ajustes', 'nueva'];
 
 /** El deslizamiento en curso: dónde empezó, si ya se sabe que es gesto, y cuánto va abierto. */
 let deslizando: { x: number; y: number; decidido: 'indeciso' | 'horizontal' | 'vertical'; p: number } | null = null;
@@ -2467,6 +2475,17 @@ let deslizando: { x: number; y: number; decidido: 'indeciso' | 'horizontal' | 'v
 /** Desde 900 px el menú es fijo (`base.css`): no hay nada que abrir. */
 const menuFijo = (): boolean =>
   typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 900px)').matches;
+
+/**
+ * Abre o cierra el menú sobre lo que ya está pintado: cambia las clases del
+ * panel y del velo, y no redibuja. En la receta nueva, redibujar borraría lo
+ * escrito. `menuAbierto` queda como la verdad para el próximo dibujo.
+ */
+function ponerMenu(abierto: boolean): void {
+  menuAbierto = abierto;
+  document.querySelector<HTMLElement>('#app .lat')?.classList.toggle('abierto', abierto);
+  document.querySelector<HTMLElement>('#app .velo-lat')?.classList.toggle('on', abierto);
+}
 
 /** El menú y el velo al ritmo del dedo, sin transición; con `null` vuelven a lo que diga el CSS. */
 function seguirDedo(p: number | null): void {
@@ -2533,8 +2552,7 @@ const soltarDeslizamiento = (): void => {
   const abrir = seAbre(p);
   // Si vuelve a donde estaba, el CSS lo reacomoda con su transición.
   if (abrir === menuAbierto) return;
-  menuAbierto = abrir;
-  void render();
+  ponerMenu(abrir);
 };
 document.addEventListener('touchend', soltarDeslizamiento);
 document.addEventListener('touchcancel', soltarDeslizamiento);

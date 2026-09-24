@@ -363,8 +363,27 @@ describe('main.ts: las rutas', () => {
      * El menú lateral y su velo mientras el dedo los arrastra: `main` les
      * escribe `transform` y `opacity` sin redibujar, para que sigan al dedo.
      */
-    const panelLateral = { style: { transition: '', transform: '' } };
-    const veloLateral = { style: { transition: '', opacity: '' } };
+    const clasesDe = (clases: Set<string>) => ({
+      toggle: (c: string, puesta?: boolean) => {
+        const poner = puesta ?? !clases.has(c);
+        if (poner) clases.add(c); else clases.delete(c);
+        return poner;
+      },
+      contains: (c: string) => clases.has(c)
+    });
+    /**
+     * Las clases del panel y del velo, como quedaron en el DOM: salen de lo
+     * pintado, y `main` las cambia sin repintar al abrir y cerrar el menú.
+     */
+    const clasesPanel = new Set<string>();
+    const clasesVeloLat = new Set<string>();
+    const panelLateral = { style: { transition: '', transform: '' }, classList: clasesDe(clasesPanel) };
+    const veloLateral = { style: { transition: '', opacity: '' }, classList: clasesDe(clasesVeloLat) };
+    /** El menú se ve desplegado: el panel corrido y el velo puesto, los dos. */
+    const menuDesplegado = (): boolean => {
+      expect(clasesPanel.has('abierto')).toBe(clasesVeloLat.has('on'));
+      return clasesPanel.has('abierto');
+    };
     /** Los oyentes del gesto del menú lateral: deslizar para abrirlo y cerrarlo. */
     const toquesEmpiezan: ((e: unknown) => unknown)[] = [];
     const toquesMueven: ((e: unknown) => unknown)[] = [];
@@ -402,7 +421,14 @@ describe('main.ts: las rutas', () => {
     let htmlApp = '';
     const app = {
       get innerHTML() { return htmlApp; },
-      set innerHTML(html: string) { htmlApp = html; pinturas.push({ html, velo: tapado() }); },
+      set innerHTML(html: string) {
+        htmlApp = html;
+        pinturas.push({ html, velo: tapado() });
+        clasesPanel.clear();
+        clasesVeloLat.clear();
+        if (html.includes('class="lat abierto"')) clasesPanel.add('abierto');
+        if (html.includes('class="velo-lat on"')) clasesVeloLat.add('on');
+      },
       insertAdjacentHTML: () => {},
       setAttribute: (n: string, v: string) => { atributosApp[n] = v; },
       removeAttribute: (n: string) => { delete atributosApp[n]; },
@@ -767,6 +793,7 @@ describe('main.ts: las rutas', () => {
         await esperar();
       },
       panelLateral,
+      menuDesplegado,
       /**
        * El dedo cruza la pantalla, como para abrir o cerrar el menú lateral:
        * apoya, arrastra en unos pasos y suelta. `cancelar` levanta el dedo con
@@ -909,20 +936,104 @@ describe('main.ts: las rutas', () => {
     }
   });
 
-  it('las cuatro pantallas del menú abren el menú desde su encabezado', async () => {
+  it('las pantallas del menú abren el menú desde su encabezado', async () => {
     // El gesto sale de `PANTALLAS_CON_MENU`; el botón lo decide a mano cada
-    // pantalla, y las dos se desalinearon una vez. Acá se recorre la lista:
-    // si mañana entra una quinta y su encabezado sigue con el volver, falla.
+    // pantalla. Acá se recorre la lista: si mañana entra otra y su encabezado
+    // sigue con el volver, falla.
     const { abrir, app, PANTALLAS_CON_MENU } = await montar();
     const hashes: Record<string, string> = {
-      recetario: '#/', borradores: '#/borradores', plan: '#/plan', ajustes: '#/ajustes'
+      recetario: '#/', borradores: '#/borradores', plan: '#/plan', ajustes: '#/ajustes', nueva: '#/nueva'
     };
     expect(Object.keys(hashes).sort()).toEqual([...PANTALLAS_CON_MENU].sort());
     for (const vista of PANTALLAS_CON_MENU) {
-      await abrir(hashes[vista]);
+      await abrir(hashes[vista]!);
       expect(app.innerHTML, vista).toContain('data-accion="abrir-menu"');
       expect(app.innerHTML, vista).not.toContain('data-accion="volver"');
     }
+  });
+
+  describe('abrir y cerrar el menú no redibuja la pantalla', () => {
+    it.each(['#/', '#/borradores', '#/plan', '#/ajustes', '#/nueva'])(
+      'en %s, la hamburguesa y el velo cambian las clases sin pintar', async hash => {
+        const { abrir, tocar, pinturas, menuDesplegado } = await montar();
+        await abrir(hash);
+        const antes = pinturas.length;
+
+        await tocar('abrir-menu');
+        expect(menuDesplegado()).toBe(true);
+        await tocar('cerrar-menu');
+        expect(menuDesplegado()).toBe(false);
+
+        expect(pinturas.length).toBe(antes);
+      });
+
+    it('el gesto tampoco pinta', async () => {
+      const { abrir, deslizar, pinturas, menuDesplegado } = await montar();
+      await abrir('#/nueva');
+      const antes = pinturas.length;
+      await deslizar({ desde: 30, hasta: 220 });
+      expect(menuDesplegado()).toBe(true);
+      await deslizar({ desde: 200, hasta: 10 });
+      expect(menuDesplegado()).toBe(false);
+      expect(pinturas.length).toBe(antes);
+    });
+
+    it('lo abierto sigue abierto en el próximo dibujo de la misma pantalla', async () => {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/');
+      await tocar('abrir-menu');
+      // Un filtro de la misma pantalla redibuja: el menú sale como estaba.
+      await abrir('#/?x=1');
+      expect(app.innerHTML).toContain('<nav class="lat abierto">');
+    });
+  });
+
+  describe('la receta nueva lleva el menú', () => {
+    it('#/nueva lleva la hamburguesa y no el volver; el menú no marca ningún destino', async () => {
+      const { abrir, app } = await montar();
+      await abrir('#/nueva');
+      expect(app.innerHTML).toContain('data-accion="abrir-menu"');
+      expect(app.innerHTML).not.toContain('data-accion="volver"');
+      expect(app.innerHTML).toContain('<nav class="lat">');
+      expect(app.innerHTML).not.toContain('<a class="act"');
+    });
+
+    it('editar una receta mantiene el volver, sin menú', async () => {
+      const { abrir, app } = await montar();
+      await abrir('#/r/f1/editar');
+      expect(app.innerHTML).toContain('data-accion="volver"');
+      expect(app.innerHTML).not.toContain('data-accion="abrir-menu"');
+      expect(app.innerHTML).not.toContain('class="lat');
+    });
+
+    it('abrir el menú no borra lo escrito', async () => {
+      const { abrir, tocar, app, pinturas } = await montar();
+      await abrir('#/nueva');
+      const formulario = app.innerHTML;
+      estado.formulario = { titulo: 'Pan de campo', notas: 'con masa madre' };
+      const antes = pinturas.length;
+
+      await tocar('abrir-menu');
+
+      expect(pinturas.length).toBe(antes);
+      expect(app.innerHTML).toBe(formulario);
+      expect(estado.formulario).toEqual({ titulo: 'Pan de campo', notas: 'con masa madre' });
+    });
+
+    it('con cambios, tocar un destino del menú pregunta, y el menú queda cerrado', async () => {
+      const { abrir, tocar, empujados, preguntas, menuDesplegado } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Pan de campo' };
+      await tocar('abrir-menu');
+      expect(menuDesplegado()).toBe(true);
+
+      // El link del menú cambia el hash: el `hashchange` es el que pregunta.
+      await abrir('#/plan');
+
+      expect(empujados).toEqual(['#/nueva']);
+      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
+      expect(menuDesplegado()).toBe(false);
+    });
   });
 
   describe('el gesto del menú lateral', () => {
@@ -930,22 +1041,24 @@ describe('main.ts: las rutas', () => {
     // `ui/gesto-menu.ts` son unitarios y el del botón mira el encabezado. Sin
     // esto, una pantalla puede dejar de responder al dedo sin que nada avise.
     const HASHES: Record<string, string> = {
-      recetario: '#/', borradores: '#/borradores', plan: '#/plan', ajustes: '#/ajustes'
+      recetario: '#/', borradores: '#/borradores', plan: '#/plan', ajustes: '#/ajustes', nueva: '#/nueva'
     };
 
-    it('en las cuatro pantallas del menú, deslizar desde el borde lo abre', async () => {
-      const { abrir, app, deslizar, PANTALLAS_CON_MENU } = await montar();
+    it('en las pantallas del menú, deslizar desde el borde lo abre', async () => {
+      const { abrir, deslizar, menuDesplegado, PANTALLAS_CON_MENU } = await montar();
       expect(Object.keys(HASHES).sort()).toEqual([...PANTALLAS_CON_MENU].sort());
 
       for (const vista of PANTALLAS_CON_MENU) {
-        await abrir(HASHES[vista]);
-        expect(app.innerHTML, vista).not.toContain('class="lat abierto"');
+        await abrir(HASHES[vista]!);
+        expect(menuDesplegado(), vista).toBe(false);
 
         // Arranca pasado el margen que Android se reserva para «atrás», y
         // cruza más de la mitad del menú, que mide 260.
         await deslizar({ desde: 30, hasta: 220 });
 
-        expect(app.innerHTML, vista).toContain('class="lat abierto"');
+        expect(menuDesplegado(), vista).toBe(true);
+        // Sale con el menú cerrado, para que la próxima empiece igual.
+        await deslizar({ desde: 200, hasta: 10 });
       }
     });
 
@@ -953,44 +1066,44 @@ describe('main.ts: las rutas', () => {
     // debajo de los botones queda un área que no es de `#app`. Ahí el dedo
     // tiene que abrir el menú igual, porque el gesto es de la pantalla.
     it('también abre desde el área vacía debajo del contenido', async () => {
-      const { abrir, app, deslizar } = await montar();
+      const { abrir, deslizar, menuDesplegado } = await montar();
       await abrir('#/borradores');
 
       // El toque no cae sobre nada de la pantalla: el destino no tiene
       // `closest`, como el `<body>` debajo del contenido.
       await deslizar({ desde: 30, hasta: 220, y: 700, sobre: { closest: undefined } });
 
-      expect(app.innerHTML).toContain('class="lat abierto"');
+      expect(menuDesplegado()).toBe(true);
     });
 
     it('abierto, deslizar para el otro lado lo cierra', async () => {
-      const { abrir, app, deslizar } = await montar();
+      const { abrir, deslizar, menuDesplegado } = await montar();
       await abrir('#/borradores');
       await deslizar({ desde: 30, hasta: 220 });
-      expect(app.innerHTML).toContain('class="lat abierto"');
+      expect(menuDesplegado()).toBe(true);
 
       await deslizar({ desde: 200, hasta: 10 });
 
-      expect(app.innerHTML).not.toContain('class="lat abierto"');
+      expect(menuDesplegado()).toBe(false);
     });
 
     it('un deslizamiento corto no alcanza: vuelve a donde estaba', async () => {
-      const { abrir, app, deslizar } = await montar();
+      const { abrir, deslizar, menuDesplegado } = await montar();
       await abrir('#/borradores');
 
       // Menos de la mitad del menú.
       await deslizar({ desde: 30, hasta: 100 });
 
-      expect(app.innerHTML).not.toContain('class="lat abierto"');
+      expect(menuDesplegado()).toBe(false);
     });
 
     it('desde el borde mismo no arranca: esa franja es el «atrás» de Android', async () => {
-      const { abrir, app, deslizar } = await montar();
+      const { abrir, deslizar, menuDesplegado } = await montar();
       await abrir('#/borradores');
 
       await deslizar({ desde: 5, hasta: 220 });
 
-      expect(app.innerHTML).not.toContain('class="lat abierto"');
+      expect(menuDesplegado()).toBe(false);
     });
 
     it('en una pantalla sin menú el dedo no lo abre', async () => {
@@ -999,19 +1112,19 @@ describe('main.ts: las rutas', () => {
 
       await deslizar({ desde: 30, hasta: 220 });
 
-      expect(app.innerHTML).not.toContain('class="lat abierto"');
+      expect(app.innerHTML).not.toContain('class="lat');
     });
 
     it('un toque que el sistema cancela termina el gesto igual, sin dejarlo a medias', async () => {
       // `touchcancel` es lo que manda Android cuando se queda con el gesto.
       // Se trata como soltar: el menú queda abierto o cerrado según dónde
       // llegó el dedo, y nunca a mitad de camino.
-      const { abrir, app, deslizar, panelLateral } = await montar();
+      const { abrir, deslizar, panelLateral, menuDesplegado } = await montar();
       await abrir('#/borradores');
 
       await deslizar({ desde: 30, hasta: 220, cancelar: true });
 
-      expect(app.innerHTML).toContain('class="lat abierto"');
+      expect(menuDesplegado()).toBe(true);
       // El panel vuelve a lo que diga el CSS: el `transform` que le escribió
       // el dedo no se queda pegado.
       expect(panelLateral.style.transform).toBe('');
@@ -3967,10 +4080,10 @@ describe('main.ts: las rutas', () => {
     });
 
     it('la hamburguesa abre el menú en la lista', async () => {
-      const { abrir, tocar, app } = await montar();
+      const { abrir, tocar, menuDesplegado } = await montar();
       await abrir('#/borradores');
       await tocar('abrir-menu');
-      expect(app.innerHTML).toContain('<nav class="lat abierto">');
+      expect(menuDesplegado()).toBe(true);
     });
 
     it('una ruta vieja de un borrador cae en la lista', async () => {

@@ -38,6 +38,29 @@ Un tinto.
 const cargada = parse(MD_REAL);
 const dibujar = (extra = {}) => renderEditor({ entrada: null, receta: cargada, categorias, ...extra });
 
+describe('el encabezado de la receta nueva', () => {
+  it('con el menú, lleva la hamburguesa y el lateral sin ningún destino marcado', () => {
+    const html = renderEditor({ entrada: null, receta: cargada, categorias, menu: { abierto: false, borradores: 2 } });
+    expect(html).toContain('data-accion="abrir-menu"');
+    expect(html).toContain('<span class="n">2</span>');
+    expect(html).not.toContain('data-accion="volver"');
+    expect(html).toContain('<nav class="lat">');
+    expect(html).not.toContain('<a class="act"');
+    expect(html).toContain('<div class="conten">');
+  });
+
+  it('con el menú abierto, el lateral sale desplegado', () => {
+    const html = renderEditor({ entrada: null, receta: cargada, categorias, menu: { abierto: true, borradores: 0 } });
+    expect(html).toContain('<nav class="lat abierto">');
+  });
+
+  it('sin el menú, el volver', () => {
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: cargada, categorias });
+    expect(html).toContain('data-accion="volver"');
+    expect(html).not.toContain('class="lat');
+  });
+});
+
 describe('carpetaDelEditor', () => {
   it('una categoría de la lista queda elegida', () => {
     expect(carpetaDelEditor('c1', categorias)).toBe('c1');
