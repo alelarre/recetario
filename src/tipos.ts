@@ -77,14 +77,11 @@ export interface UsoDeFoto {
 
 /**
  * Los cambios de fotos que hizo el editor, para que el store los aplique al
- * guardar (C04.1.1): subir las nuevas, mover las que vienen de un borrador y
- * mandar a la papelera las que se sacaron.
+ * guardar (C04.1.1): subir las nuevas y mandar a la papelera las que se sacaron.
  */
 export interface CambiosDeFotos {
   /** Se suben a `_fotos/`; su URL de Drive va en la línea `n` del depósito. */
   nuevas: Map<number, Blob>;
-  /** Ids en `_borradores/` que se mueven a `_fotos/`. */
-  deBorrador: string[];
   /** URLs que estaban en el `.md` y ya no. */
   sacadas: string[];
   /** Avisa cada foto que el store ya subió, para que un reintento no la resuba. */
@@ -155,32 +152,6 @@ export interface Entrada {
   mtime: number;
   /** URL externa, o cadena vacía. Se dibuja donde esté (IA §1.7). */
   foto: string;
-}
-
-/**
- * Un borrador: un `.md` en `Recetario/_borradores/`. Es su propia entidad —título,
- * fuente, nota y fotos—, no una receta incompleta.
- */
-export interface Borrador {
-  /** El id del archivo en Drive. */
-  id: string;
-  titulo: string;
-  /** Texto libre: una URL o "libro de pescados, pág. 84". */
-  fuente: string;
-  /** Lo que haya que recordar del borrador. Texto libre y opcional. */
-  nota: string;
-  /** ISO. El orden de la lista es por acá, lo más viejo primero. */
-  capturado: string;
-  /** Los ids de Drive de sus fotos, en orden. Van al lado del `.md`, en `_borradores/`. */
-  fotos: string[];
-}
-
-/** Una fila de la hoja `borradores` del índice: lo que alcanza para la lista y el contador. */
-export interface EntradaBorrador {
-  id_archivo: string;
-  nombre_archivo: string;
-  titulo: string;
-  capturado: string;
 }
 
 /** Las dos comidas de un día. */

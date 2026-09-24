@@ -13,8 +13,6 @@ export const API_KEY = 'AIzaSyC0T7P6AqTmoUeZk8Kcm5pbeqXg7jZx6BI';
 
 export const NOMBRE_RAIZ = 'Recetario';
 export const NOMBRE_INDICE = '_indice';
-/** La carpeta de los borradores, un `.md` por borrador. El `_` la deja fuera de las categorías. */
-export const NOMBRE_BORRADORES = '_borradores';
 /**
  * La bandeja de entrada: las recetas sin categoría, un `.md` por receta. Se
  * crea con la primera. El `_` la deja fuera de las categorías y del reindexado.

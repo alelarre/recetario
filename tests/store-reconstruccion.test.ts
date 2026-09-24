@@ -72,6 +72,21 @@ describe('reconstruir', () => {
     expect(meta).toContainEqual(['carpeta_sin_categoria', 'sc']);
   });
 
+  it('_borradores/ no es categoría ni se lee, y no se escribe la hoja borradores', async () => {
+    drive._store.set('bc', { id: 'bc', name: '_borradores', mimeType: CARPETA, parents: ['raiz'] });
+    drive._store.set('bv', { id: 'bv', name: 'nota.md', parents: ['bc'], contenido: md('Un borrador viejo') });
+    const escribir = vi.spyOn(sheets, 'escribir');
+    await store.reconstruir();
+    expect(store.categorias().map(c => c.nombre)).toEqual(['Carnes']);
+    expect(store.entradas().map(e => e.titulo)).not.toContain('Un borrador viejo');
+    expect(drive.llamadas).not.toContainEqual(['leerTexto', 'bv']);
+    expect(drive.llamadas.some(([que, ...args]) => que !== 'leerTexto' && args.includes('bc'))).toBe(false);
+    expect(sheets.appends.some(a => a.hoja === 'borradores')).toBe(false);
+    expect(escribir.mock.calls.some(([, rango]) => String(rango).startsWith('borradores'))).toBe(false);
+    const meta = await sheets.leer('i1', 'meta!A1:B20');
+    expect(meta.some(f => f[0] === 'carpeta_borradores')).toBe(false);
+  });
+
   it('nombra las ignoradas por no tener titulo, sin borrar el archivo', async () => {
     // Por nombre y no un conteo: así el aviso de Ajustes dice cuál buscar en
     // Drive (C05.5.2).

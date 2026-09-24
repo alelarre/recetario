@@ -1,68 +1,28 @@
 /**
- * Convertir un borrador en receta (C05.4.3). El único camino para escribir es
- * el store, que escribe el `.md` y su fila juntos; acá vive la operación que
- * además descarta el borrador, y que es una sola y no tres.
+ * Lo que llega por el menú Compartir de otra app: un link, un texto o las dos
+ * cosas, repartido entre la fuente y la nota de la receta que se va a crear.
  */
-import type { Store } from './store.js';
-import type { CambiosDeFotos, Receta } from './tipos.js';
 
-/** Lo que una receta recién creada devuelve: su identidad en Drive (R5). */
-export interface RecetaCreada {
-  id: string;
-  nombre_archivo: string;
-}
-
-export type StoreDeCompartido = Pick<Store, 'crear' | 'guardar' | 'descartarBorrador'>;
-
-export interface DependenciasCompartido {
-  store: StoreDeCompartido;
-  /**
-   * Lo que una conversión ya creó, por si hay que reintentarla: borrador → la
-   * receta. Sin esto el reintento crearía un segundo `.md`, y R2 pide que deje
-   * una sola fila. Vive con las dependencias y no en el módulo porque dura lo
-   * que la sesión: el reintento es a mano y en el momento (R1). Si la app se
-   * recargó en el medio, la conversión vuelve a empezar y el duplicado se ve.
-   */
-  convertidos?: Map<string, RecetaCreada>;
-}
+/** El primer link de un texto: lo que casi todas las apps mandan compartido. */
+const LINK = /https?:\/\/\S+/i;
 
 /**
- * Convertir es una operación, no tres (C01.7.1): escribe el `.md`, escribe la
- * fila del índice y borra la fila del borrador, en ese orden. No captura nada
- * en el medio —si algo falla, propaga y el reintento repite los tres (R2)—.
- *
- * La `fuente` del borrador llega en la receta: la pone quien la arma —el
- * editor, que abre con el título y la fuente del borrador—, no esta función.
- *
- * `fotos` pasa tal cual al store: esta función no arma ni deduce qué fotos
- * del borrador se conservan, eso lo decide quien llama (el editor). Lo único
- * que hace acá es descartar el borrador conservando `fotos.deBorrador`, que
- * ya se movieron a la receta.
+ * Lo que llega del menú Compartir, repartido entre la fuente y la nota: la
+ * fuente es el link —`url` si vino; si no, el primero que haya en el texto— y
+ * la nota es lo que sobra del texto. Un texto sin link —una receta copiada de
+ * un chat— va entero a la nota, que es lo que después se convierte.
  */
-export async function convertirBorrador(
-  deps: DependenciasCompartido,
-  { borradorId, receta, carpetaId, fotos }: {
-    borradorId: string; receta: Receta; carpetaId: string; fotos?: CambiosDeFotos | undefined
-  }
-): Promise<RecetaCreada> {
-  const convertidos = deps.convertidos ??= new Map<string, RecetaCreada>();
+export function desdeCompartido({ url, text }: { url: string; text: string }): { fuente: string; nota: string } {
+  const fuente = url.trim() || (text.match(LINK)?.[0] ?? '');
+  const nota = (fuente ? text.split(fuente).join(' ') : text)
+    .split('\n').map(l => l.replace(/[ \t]+/g, ' ').trim()).join('\n').trim();
+  return { fuente, nota };
+}
 
-  // El `.md` y su fila: las dos las hace el store en una sola llamada.
-  const anterior = convertidos.get(borradorId);
-  let creada: RecetaCreada;
-  if (anterior) {
-    await deps.store.guardar(anterior.id, receta, { carpetaDestino: carpetaId, fotos });
-    creada = anterior;
-  } else {
-    creada = await deps.store.crear(receta, { carpetaId, fotos });
-  }
-  convertidos.set(borradorId, creada);
+const dosCifras = (n: number): string => String(n).padStart(2, '0');
 
-  // El borrador: su `.md` a la papelera y su fila afuera, sin llevarse las
-  // fotos que el store ya movió a `_fotos/`. Que ya no esté no es un error
-  // (edge case de F01.7).
-  await deps.store.descartarBorrador(borradorId, { conservar: fotos?.deBorrador ?? [] });
-
-  convertidos.delete(borradorId);
-  return creada;
+/** El título de una receta que se guardó sin uno: el día y la hora. */
+export function tituloPorDefecto(fecha: Date): string {
+  return `Borrador ${dosCifras(fecha.getDate())}/${dosCifras(fecha.getMonth() + 1)} ` +
+    `${dosCifras(fecha.getHours())}:${dosCifras(fecha.getMinutes())}`;
 }

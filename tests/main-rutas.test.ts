@@ -56,25 +56,12 @@ vi.mock('../src/pdf/generar.js', () => ({
 /** Lo que los dobles le dan a main. `falla` enciende el error de lectura. */
 const estadoInicial = () => ({
   falla: false as boolean | Error,
-  borradores: [] as { id: string; titulo: string; fuente: string; nota: string; capturado: string; fotos?: string[] }[],
-  /** Los ids que se pidió descartar, en orden. */
-  descartados: [] as string[],
-  /** Cuántas veces más va a fallar `descartar` antes de andar. */
-  fallasAlDescartar: 0,
   /** Los títulos de las recetas que se crearon: cada una es un `.md` nuevo. */
   creadas: [] as string[],
   /** El `.md` que devuelve `store.receta`. */
   md: '---\ntitulo: Milanesas\n---\n',
-  /** Lo que el editor o la captura tienen escrito cuando se toca Guardar. */
+  /** Lo que el editor tiene escrito cuando se toca Guardar. */
   formulario: {} as Record<string, string>,
-  /** Lo que llegó a `agregarBorrador`. */
-  capturados: [] as { titulo: string; fuente: string; nota: string; fotos?: (Blob | string)[] }[],
-  /** Cada foto que se agregó a un borrador: el id del borrador y el texto del Blob. */
-  fotosAgregadas: [] as { id: string; foto: Blob }[],
-  /** Las fotos que se sacaron de un borrador, como `borrador:foto`. */
-  fotosSacadas: [] as string[],
-  /** Cuántas veces más falla subir una foto antes de andar. */
-  fallaFoto: 0,
   /** Las fotos que el service worker dejó del menú Compartir. */
   compartidas: [] as Blob[],
   /** Cuántas veces se descartó el caché de lo compartido. */
@@ -85,8 +72,6 @@ const estadoInicial = () => ({
   fotosPerdidas: [] as string[],
   /** Cuántas veces se leyó un `.md` de Drive: cada una es un pedido de red. */
   lecturas: 0,
-  /** Cuántas veces se leyó el .md de un borrador. */
-  lecturasBorradores: 0,
   /** Lo que el arranque dice de las planillas `_indice` repetidas. */
   indiceDuplicado: null as null | { cantidad: number; modifiedTime: string },
   /** Cuántas veces se borró la copia local del índice. */
@@ -107,8 +92,6 @@ const estadoInicial = () => ({
   cambiosDeFotos: [] as (CambiosDeFotos | null)[],
   /** Las recetas escritas, con su depósito: lo que quedaría en el `.md`. */
   depositos: [] as { n: number; url: string }[][],
-  /** Las fotos que cada descarte de borrador conservó. */
-  conservadas: [] as string[][],
   /** Los ids que se pidieron precargar, por tanda. */
   precargados: [] as string[][],
   /** Los ids de las categorías borradas. */
@@ -193,42 +176,6 @@ const storeFake = {
     estado.lecturas++;
     if (estado.falla) throw estado.falla === true ? new Error('red') : estado.falla;
     return { entrada: entradaFalsa({ id_archivo: id }), receta: parse(estado.md) };
-  },
-  borradores: () => estado.borradores.map(b => ({
-    id_archivo: b.id, nombre_archivo: `${b.id}.md`, titulo: b.titulo, capturado: b.capturado
-  })),
-  borrador: async (id: string) => {
-    estado.lecturasBorradores++;
-    const b = estado.borradores.find(x => x.id === id);
-    if (!b) throw new Error(`no hay borrador ${id}`);
-    return { fotos: [], ...b };
-  },
-  agregarBorrador: async (
-    b: { titulo: string; fuente: string; nota: string; fotos?: (Blob | string)[] },
-    alSubirFoto?: (i: number, id: string) => void
-  ) => {
-    estado.capturados.push(b);
-    (b.fotos ?? []).forEach((f, i) => { if (typeof f !== 'string') alSubirFoto?.(i, `subida-${i}`); });
-    return { id: 'b1', ...b, capturado: '' };
-  },
-  agregarFotoABorrador: async (id: string, foto: Blob) => {
-    if (estado.fallaFoto > 0) { estado.fallaFoto--; throw new Error('red'); }
-    estado.fotosAgregadas.push({ id, foto });
-    const b = estado.borradores.find(x => x.id === id)!;
-    b.fotos = [...(b.fotos ?? []), `nueva-${estado.fotosAgregadas.length}`];
-    return { ...b, fotos: b.fotos };
-  },
-  sacarFotoDeBorrador: async (id: string, fotoId: string) => {
-    estado.fotosSacadas.push(`${id}:${fotoId}`);
-    const b = estado.borradores.find(x => x.id === id)!;
-    b.fotos = (b.fotos ?? []).filter(f => f !== fotoId);
-    return { ...b, fotos: b.fotos };
-  },
-  editarBorrador: async () => {},
-  descartarBorrador: async (id: string, opciones?: { conservar?: readonly string[] }) => {
-    if (estado.fallasAlDescartar > 0) { estado.fallasAlDescartar--; throw new Error('red'); }
-    estado.descartados.push(id);
-    estado.conservadas.push([...(opciones?.conservar ?? [])]);
   },
   plan: async () => { estado.lecturasPlan++; return estado.plan; },
   guardarPlan: async (p: Plan) => {
@@ -942,9 +889,6 @@ describe('main.ts: las rutas', () => {
       ['#/r/f1', 'class="rec-tit"'],
       ['#/r/f1/cocinar', 'class="coc"'],
       ['#/buscar?q=nada', 'class="cajaenc"'],
-      ['#/borradores', 'No hay nada esperando.'],
-      // Sin fuente compartida es «agregar a mano»: lleva encabezado propio.
-      ['#/capturar', 'Nuevo borrador'],
       ['#/ajustes', 'Reindexar']
     ] as const) {
       await abrir(hash);
@@ -1456,12 +1400,6 @@ describe('main.ts: las rutas', () => {
     });
   });
 
-  it('lo compartido desde otra app abre la captura con la fuente cargada', async () => {
-    const { app } = await montar({ search: '?title=Reel&text=https%3A%2F%2Finstagram.com%2Freel%2Fabc' });
-    expect(global.location.hash).toBe('#/capturar?text=https%3A%2F%2Finstagram.com%2Freel%2Fabc');
-    expect(app.innerHTML).toContain('instagram.com/reel/abc');
-  });
-
   describe('la carpeta base', () => {
     it('sin carpeta marcada, el arranque lleva a la pantalla con las encontradas', async () => {
       estado.eligiendo = [{ id: 'r1', name: 'Recetario' }];
@@ -1740,60 +1678,6 @@ describe('main.ts: las rutas', () => {
     });
   });
 
-  describe('los borradores salen del índice; el .md se lee al abrir uno', () => {
-    const B1 = { id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' };
-
-    it('el contador y la lista no leen nada', async () => {
-      estado.borradores = [B1];
-      const { abrir, tocar, app } = await montar();
-      await abrir('#/');
-      await tocar('abrir-menu');
-      await abrir('#/borradores');
-      await abrir('#/ajustes');
-      expect(estado.lecturasBorradores).toBe(0);
-      await abrir('#/borradores');
-      expect(app.innerHTML).toContain('Focaccia');
-    });
-
-    it('entre un borrador, sus redibujados y crear la receta, el .md se lee una vez', async () => {
-      estado.borradores = [B1];
-      const { abrir, tocar } = await montar();
-      await abrir('#/borradores/b1');
-      await tocar('descartar');
-      await tocar('cancelar-descarte');
-      await tocar('editar-borrador');
-      await tocar('volver');
-      await abrir('#/nueva?borrador=b1');
-      expect(estado.lecturasBorradores).toBe(1);
-    });
-
-    it('salir a la lista y volver a abrirlo sí lo relee', async () => {
-      estado.borradores = [B1];
-      const { abrir } = await montar();
-      await abrir('#/borradores/b1');
-      await abrir('#/borradores');
-      await abrir('#/borradores/b1');
-      expect(estado.lecturasBorradores).toBe(2);
-    });
-
-    it('si descartar falla, avisa y el borrador sigue en pantalla', async () => {
-      estado.borradores = [B1];
-      estado.fallasAlDescartar = 1;
-      const { abrir, tocar, app } = await montar();
-      await abrir('#/borradores/b1');
-      await tocar('descartar-confirmado');
-      expect(app.innerHTML).toContain('No se pudo descartar.');
-      expect(app.innerHTML).toContain('Focaccia');
-    });
-
-    it('un borrador que no está en el índice muestra la lista', async () => {
-      const { abrir, app } = await montar();
-      await abrir('#/borradores/fantasma');
-      expect(app.innerHTML).toContain('No hay nada esperando.');
-      expect(estado.lecturasBorradores).toBe(0);
-    });
-  });
-
   it('al volver de segundo plano con el sol encendido, se vuelve a pedir la pantalla (C03.3.1)', async () => {
     let pedidos = 0;
     let soltar = () => {};
@@ -1895,58 +1779,6 @@ describe('main.ts: las rutas', () => {
     expect(app.innerHTML).toContain('data-valor="borrador" aria-pressed="true"');
   });
 
-  it('un borrador convertido también abre con borrador', async () => {
-    estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', capturado: '', nota: '' }];
-    const { abrir, app } = await montar();
-    await abrir('#/nueva?borrador=b1');
-    expect(app.innerHTML).toContain('value="Focaccia"');
-    expect(app.innerHTML).toContain('data-valor="borrador" aria-pressed="true"');
-  });
-
-  it('crear la receta desde un borrador reparte la nota en sus secciones', async () => {
-    estado.borradores = [{
-      id: 'b1', titulo: 'Focaccia', fuente: 'https://x/1', capturado: '',
-      nota: 'Una focaccia simple.\n\n## Ingredientes\n- Harina — 500 g\n\n## Preparación\n1. Amasar.\n\n## Notas\nDejar levar.'
-    }];
-    const { abrir, app } = await montar();
-    await abrir('#/nueva?borrador=b1');
-
-    // El editor abre con cada parte en su campo, no todo en Notas.
-    expect(app.innerHTML).toContain('value="Focaccia"');
-    expect(app.innerHTML).toContain('value="https://x/1"');
-    expect(app.innerHTML).toContain('- Harina — 500 g');
-    expect(app.innerHTML).toContain('1. Amasar.');
-    expect(app.innerHTML).toContain('Dejar levar.');
-    expect(app.innerHTML).toContain('Una focaccia simple.');
-  });
-
-  it('crear la receta desde un borrador y salir sin guardar deja el borrador', async () => {
-    estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-    const { abrir, tocar, vueltasAtras } = await montar();
-    await abrir('#/borradores/b1');
-    await tocar('crear-receta');
-    await abrir('#/nueva?borrador=b1');
-
-    await tocar('volver');
-    await abrir('#/borradores/b1');
-
-    expect(vueltasAtras).toHaveLength(1);
-    expect(estado.creadas).toEqual([]);
-    expect(estado.descartados).toEqual([]);
-  });
-
-  it('guardar la receta nueva borra el borrador del que salió', async () => {
-    estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-    const { abrir, tocar } = await montar();
-    await abrir('#/nueva?borrador=b1');
-
-    estado.formulario = { titulo: 'Focaccia', carpeta: 'c1' };
-    await tocar('guardar');
-
-    expect(estado.creadas).toEqual(['Focaccia']);
-    expect(estado.descartados).toEqual(['b1']);
-  });
-
   it('con la sesión vencida, guardar avisa que hay que conectarse y conectar no redibuja el editor (R3)', async () => {
     const original = storeFake.crear;
     storeFake.crear = async () => { throw new ErrorDeDrive('Invalid Credentials', 401); };
@@ -1982,34 +1814,6 @@ describe('main.ts: las rutas', () => {
     } finally {
       storeFake.crear = original;
     }
-  });
-
-  it('una receta nueva que no sale de un borrador no borra ninguno', async () => {
-    estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-    const { abrir, tocar } = await montar();
-    await abrir('#/nueva');
-
-    estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
-    await tocar('guardar');
-
-    expect(estado.creadas).toEqual(['Pan']);
-    expect(estado.descartados).toEqual([]);
-  });
-
-  it('si borrar el borrador falla, guardar de nuevo no crea un segundo .md (R2)', async () => {
-    estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-    estado.fallasAlDescartar = 1;
-    const { abrir, tocar, app } = await montar();
-    await abrir('#/nueva?borrador=b1');
-
-    estado.formulario = { titulo: 'Focaccia', carpeta: 'c1' };
-    await tocar('guardar');
-    expect(app.innerHTML).toContain('No se pudo guardar.');
-
-    await tocar('guardar');
-
-    expect(estado.creadas).toEqual(['Focaccia']);
-    expect(estado.descartados).toEqual(['b1']);
   });
 
   describe('salir del editor con cambios pendientes pregunta antes (C04.1.1)', () => {
@@ -2098,81 +1902,6 @@ describe('main.ts: las rutas', () => {
 
       expect(empujados).toEqual(['#/nueva']);
     });
-  });
-
-  it('volver mientras se edita un borrador muestra el borrador, no la lista', async () => {
-    // Editar no cambia la URL: con un `history.back()` el volver se iba a la
-    // lista, que es la entrada anterior.
-    estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-    const { abrir, tocar, app, vueltasAtras } = await montar();
-    await abrir('#/borradores/b1');
-    await tocar('editar-borrador');
-    expect(app.innerHTML).toContain('Editar borrador');
-
-    await tocar('volver');
-    expect(vueltasAtras).toHaveLength(0);
-    expect(app.innerHTML).toContain('data-accion="crear-receta"');
-  });
-
-  describe('editar un borrador con cambios pregunta antes de salir', () => {
-    const FOCACCIA = { id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' };
-    const abrirEdicion = async () => {
-      estado.borradores = [FOCACCIA];
-      estado.formulario = { titulo: 'Focaccia', fuente: '', nota: '' };
-      const m = await montar();
-      await m.abrir('#/borradores/b1');
-      await m.tocar('editar-borrador');
-      return m;
-    };
-
-    it('con cambios, el atrás no se va: vuelve a la edición y pregunta', async () => {
-      const { abrir, app, empujados, preguntas } = await abrirEdicion();
-      estado.formulario = { titulo: 'Focaccia de romero', fuente: '', nota: '' };
-      await abrir('#/borradores');
-      expect(empujados).toEqual(['#/borradores/b1']);
-      expect(app.innerHTML).toContain('Editar borrador');
-      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
-    });
-
-    it('con cambios, el volver del encabezado pregunta en vez de cerrar la edición', async () => {
-      const { tocar, app, preguntas } = await abrirEdicion();
-      estado.formulario = { titulo: 'Focaccia de romero', fuente: '', nota: '' };
-      await tocar('volver');
-      expect(app.innerHTML).toContain('Editar borrador');
-      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
-    });
-
-    it('salir sin guardar desde el volver del encabezado muestra el borrador, no la lista', async () => {
-      const { tocar, app, vueltasAtras } = await abrirEdicion();
-      estado.formulario = { titulo: 'Focaccia de romero', fuente: '', nota: '' };
-      await tocar('volver');
-      await tocar('salir-sin-guardar');
-      expect(vueltasAtras).toHaveLength(0);
-      expect(app.innerHTML).toContain('data-accion="crear-receta"');
-    });
-
-    it('sin cambios, el volver cierra la edición sin preguntar', async () => {
-      const { tocar, app, preguntas } = await abrirEdicion();
-      await tocar('volver');
-      expect(preguntas).toEqual([]);
-      expect(app.innerHTML).toContain('data-accion="crear-receta"');
-    });
-
-    it('cancelar no pregunta: es descartar lo escrito a propósito', async () => {
-      const { tocar, app, preguntas } = await abrirEdicion();
-      estado.formulario = { titulo: 'Focaccia de romero', fuente: '', nota: '' };
-      await tocar('cancelar-captura');
-      expect(preguntas).toEqual([]);
-      expect(app.innerHTML).toContain('data-accion="crear-receta"');
-    });
-  });
-
-  it('cancelar un borrador nuevo vuelve: `close()` no alcanza cuando la pestaña no la abrió un script', async () => {
-    const { abrir, tocar, vueltasAtras } = await montar();
-    await abrir('#/borradores');
-    await abrir('#/capturar');
-    await tocar('cancelar-captura');
-    expect(vueltasAtras).toHaveLength(1);
   });
 
   it('buscar con la caja vacía no hace nada, y no avisa', async () => {
@@ -2577,19 +2306,6 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('la captura se redibuja con la pantalla ya tapada', async () => {
-      const { abrir, tocar, pinturas } = await montar();
-      await abrir('#/capturar');
-      estado.formulario = { titulo: 'Focaccia', fuente: 'libro de la abuela' };
-      const desde = pinturas.length;
-
-      await tocar('guardar-captura');
-
-      // Lo primero que se pinta después del toque es el «Guardando…» que va
-      // antes de escribir: para entonces el velo ya está.
-      expect(pinturas[desde]?.velo).toBe(true);
-    });
-
     it('la estrella de favorito no lo muestra: no traba la lectura de la receta', async () => {
       const original = storeFake.guardar;
       const { promesa, resolver } = pendiente<void>();
@@ -2609,33 +2325,6 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('con la captura es igual: no responde mientras escribe, y al terminar cierra a Borradores', async () => {
-      const original = storeFake.agregarBorrador;
-      const { promesa, resolver } = pendiente<{ id: string; titulo: string; fuente: string; nota: string; capturado: string }>();
-      storeFake.agregarBorrador = () => promesa;
-      try {
-        const { abrir, tocar, app, velo, empujados, reemplazos, vueltasAtras } = await montar();
-        await abrir('#/capturar');
-        estado.formulario = { titulo: 'Focaccia', fuente: 'libro de la abuela' };
-        const guardando = tocar('guardar-captura');
-        await esperar();
-
-        expect(velo.hidden).toBe(false);
-        await tocar('volver');
-        expect(vueltasAtras).toEqual([]);
-        await abrir('#/');
-        expect(empujados).toEqual(['#/capturar']);
-        expect(app.innerHTML).toContain('Nuevo borrador');
-
-        resolver({ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' });
-        await guardando;
-
-        expect(velo.hidden).toBe(true);
-        expect(reemplazos.at(-1)).toBe('#/borradores');
-      } finally {
-        storeFake.agregarBorrador = original;
-      }
-    });
   });
 
   it('ningún guardado exitoso muestra un cartel de confirmación', async () => {
@@ -2644,114 +2333,8 @@ describe('main.ts: las rutas', () => {
     expect(app.innerHTML).not.toMatch(/guardad|listo|éxito/i);
   });
 
-  describe('la fuente de lo compartido desde otra app', () => {
-    // Casi todas las apps de Android mandan el link en `text` y no en `url`.
-    it('se guarda como fuente del borrador aunque llegue en text', async () => {
-      const { abrir, tocar } = await montar();
-      await abrir('#/capturar?text=' + encodeURIComponent('https://instagram.com/reel/abc'));
-      estado.formulario = { titulo: 'Reel de pasta' };
-      await tocar('guardar-captura');
-      expect(estado.capturados).toEqual([{ titulo: 'Reel de pasta', fuente: 'https://instagram.com/reel/abc', nota: '', fotos: [] }]);
-    });
-
-    it('si viene en url, manda url', async () => {
-      const { abrir, tocar } = await montar();
-      await abrir('#/capturar?url=' + encodeURIComponent('https://sitio.com/receta') + '&text=' + encodeURIComponent('Mirá esto'));
-      estado.formulario = { titulo: 'Tarta' };
-      await tocar('guardar-captura');
-      expect(estado.capturados[0]?.fuente).toBe('https://sitio.com/receta');
-    });
-
-    it('agregando a mano, la fuente es la del campo', async () => {
-      const { abrir, tocar } = await montar();
-      await abrir('#/capturar');
-      estado.formulario = { titulo: 'Guiso', fuente: 'libro de la abuela', nota: '' };
-      await tocar('guardar-captura');
-      expect(estado.capturados[0]?.fuente).toBe('libro de la abuela');
-    });
-
-    it('el texto que acompaña al link llega precargado en la nota', async () => {
-      const { app, abrir } = await montar();
-      await abrir('#/capturar?text=' + encodeURIComponent('Mirá este reel https://instagram.com/reel/abc'));
-      expect(app.innerHTML).toContain('>Mirá este reel</textarea>');
-      expect(app.innerHTML).toContain('instagram.com/reel/abc');
-    });
-
-    it('sin título, se guarda con uno armado con la fecha', async () => {
-      const { abrir, tocar } = await montar();
-      await abrir('#/capturar?text=' + encodeURIComponent('https://instagram.com/reel/abc'));
-      estado.formulario = {};
-      await tocar('guardar-captura');
-      expect(estado.capturados[0]?.titulo).toMatch(/^Borrador \d\d\/\d\d \d\d:\d\d$/);
-    });
-
-    it('sin fuente ni nota no se guarda, aunque haya título', async () => {
-      const { abrir, tocar } = await montar();
-      await abrir('#/capturar');
-      estado.formulario = { titulo: 'Guiso', fuente: '', nota: '' };
-      await tocar('guardar-captura');
-      expect(estado.capturados).toEqual([]);
-    });
-  });
-
-  describe('las fotos de los borradores', () => {
+  describe('las fotos en memoria y en el navegador', () => {
     const foto = (texto: string): Blob => new Blob([texto], { type: 'image/jpeg' });
-
-    it('lo compartido con fotos las saca del caché, las muestra en la captura y lo borra', async () => {
-      estado.compartidas = [foto('a'), foto('bb')];
-      const { abrir, app } = await montar();
-      await abrir('#/capturar?fotos=2');
-      expect(app.innerHTML).toContain('Guardar en Recetario');
-      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(2);
-      expect(estado.compartidasDescartadas).toBe(1);
-      // Con sólo fotos, Guardar está disponible.
-      expect(app.innerHTML).not.toMatch(/data-accion="guardar-captura" disabled/);
-    });
-
-    it('si llegan más de cinco, se guardan las primeras cinco y se avisa', async () => {
-      estado.compartidas = Array.from({ length: 8 }, (_, i) => foto(`f${i}`));
-      const { abrir, app, tocar } = await montar();
-      await abrir('#/capturar?fotos=8');
-      expect(app.innerHTML).toContain('Llegaron 8 fotos: se guardan las primeras 5.');
-      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(5);
-      expect(app.innerHTML).not.toContain('Cámara');
-      expect(app.innerHTML).not.toContain('Galería');
-      // En el tope, *Por URL* se va con los otros dos: la fila de botones entera.
-      expect(app.innerHTML).not.toContain('Por URL');
-
-      await tocar('guardar-captura');
-      expect(estado.capturados[0]?.fotos).toHaveLength(5);
-    });
-
-    it('una foto que no se decodifica no se agrega, y se avisa', async () => {
-      estado.compartidas = [foto('roto'), foto('bien')];
-      const { abrir, app } = await montar();
-      await abrir('#/capturar?fotos=2');
-      expect(app.innerHTML).toContain('No se pudo leer una de las fotos.');
-      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(1);
-    });
-
-    it('una foto que llega por el input de la cámara entra igual que una de la galería', async () => {
-      const { abrir, app, elegirFotos } = await montar();
-      await abrir('#/capturar');
-      // Los dos inputs —cámara y galería— llevan `data-fotos` y llegan al
-      // mismo manejador de `change`; acá no importa cuál los mandó.
-      expect(app.innerHTML).toContain('<input type="file" accept="image/*" capture="environment" data-fotos hidden>');
-      expect(app.innerHTML).toContain('<input type="file" accept="image/*" multiple data-fotos hidden>');
-      // La cámara devuelve de a una foto.
-      await elegirFotos([foto('de-la-camara')]);
-      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(1);
-    });
-
-    it('con varias fotos, el velo se pone una vez y no parpadea', async () => {
-      const { abrir, elegirFotos, idasYVueltasDelVelo } = await montar();
-      await abrir('#/capturar');
-
-      await elegirFotos([foto('a'), foto('bb'), foto('ccc')]);
-
-      // Una sola ida y una sola vuelta: puesto al empezar, sacado al terminar.
-      expect(idasYVueltasDelVelo).toEqual([false, true]);
-    });
 
     it('en el editor, tres fotos tampoco hacen parpadear el velo', async () => {
       const { abrir, elegirFotos, idasYVueltasDelVelo } = await montar();
@@ -2763,349 +2346,9 @@ describe('main.ts: las rutas', () => {
       expect(idasYVueltasDelVelo).toEqual([false, true]);
     });
 
-    it('en la captura, agregar y sacar fotos, y guardar con sólo fotos', async () => {
-      const { abrir, app, tocar, elegirFotos } = await montar();
-      await abrir('#/capturar');
-      await elegirFotos([foto('a'), foto('bb')]);
-      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(2);
-
-      await tocar('sacar-foto-captura', { valor: '0' });
-      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(1);
-
-      await tocar('guardar-captura');
-      expect(estado.capturados).toHaveLength(1);
-      expect(await (estado.capturados[0]?.fotos?.[0] as Blob).text()).toBe('bb');
-    });
-
-    it('elegir más de las que entran agrega las primeras y avisa', async () => {
-      const { abrir, app, elegirFotos } = await montar();
-      await abrir('#/capturar');
-      await elegirFotos(Array.from({ length: 7 }, (_, i) => foto(`f${i}`)));
-      expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(5);
-      expect(app.innerHTML).toContain('Un borrador lleva hasta 5 fotos: se agregaron las primeras 5.');
-    });
-
-    it('al reintentar, las fotos que ya subieron van por su id', async () => {
-      const original = storeFake.agregarBorrador;
-      let intentos = 0;
-      storeFake.agregarBorrador = async (b, alSubirFoto) => {
-        estado.capturados.push(b);
-        if (intentos++ === 0) { alSubirFoto?.(0, 'ya-subida'); throw new Error('red'); }
-        return { id: 'b1', ...b, capturado: '' };
-      };
-      try {
-        const { abrir, app, tocar, elegirFotos } = await montar();
-        await abrir('#/capturar');
-        await elegirFotos([foto('a'), foto('bb')]);
-        await tocar('guardar-captura');
-        expect(app.innerHTML).toContain('No se pudo guardar.');
-
-        await tocar('guardar-captura');
-        expect(estado.capturados[1]?.fotos?.[0]).toBe('ya-subida');
-        expect(typeof estado.capturados[1]?.fotos?.[1]).not.toBe('string');
-      } finally {
-        storeFake.agregarBorrador = original;
-      }
-    });
-
-    it('el borrador muestra sus fotos, y la que ya no está en Drive', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: ['f1', 'f2'] }];
-      estado.fotosPerdidas = ['f2'];
-      const { abrir, app } = await montar();
-      await abrir('#/borradores/b1');
-      expect(app.innerHTML).toContain('<img src="blob:f1"');
-      expect(app.innerHTML).toContain('La foto ya no está en Drive.');
-    });
-
-    it('tocar una miniatura abre el visor, y tocarlo lo cierra', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: ['f1'] }];
-      const { abrir, app, tocar } = await montar();
-      await abrir('#/borradores/b1');
-      await tocar('ver-foto', { valor: 'f1' });
-      expect(app.innerHTML).toContain('<div class="visor" data-accion="cerrar-visor"><img src="blob:f1"');
-      await tocar('cerrar-visor');
-      expect(app.innerHTML).not.toContain('class="visor"');
-    });
-
-    it('agregar una foto al borrador la sube con el velo y la muestra', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: [] }];
-      const original = storeFake.agregarFotoABorrador;
-      let soltar!: () => void;
-      const espera = new Promise<void>(r => { soltar = r; });
-      storeFake.agregarFotoABorrador = async (id, f) => { await espera; return original(id, f); };
-      try {
-        const { abrir, app, velo, elegirFotos } = await montar();
-        await abrir('#/borradores/b1');
-        const eligiendo = elegirFotos([foto('a')]);
-        await esperar(10);
-        expect(velo.hidden).toBe(false);
-        soltar();
-        await eligiendo;
-        expect(velo.hidden).toBe(true);
-        expect(estado.fotosAgregadas.map(f => f.id)).toEqual(['b1']);
-        expect(app.innerHTML).toContain('blob:nueva-1');
-      } finally {
-        storeFake.agregarFotoABorrador = original;
-      }
-    });
-
-    it('si subir la foto falla, avisa y el borrador sigue', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: [] }];
-      estado.fallaFoto = 1;
-      const { abrir, app, elegirFotos } = await montar();
-      await abrir('#/borradores/b1');
-      await elegirFotos([foto('a')]);
-      expect(app.innerHTML).toContain('No se pudo guardar. Revisá la conexión.');
-      expect(app.innerHTML).toContain('Tarta');
-    });
-
     // Agregar una foto por su dirección, igual que en la receta. Lo que
     // cambia es la salida de la que no se pudo bajar: en un borrador las fotos
     // son ids de Drive, y un link externo no tiene ninguno.
-    describe('por URL', () => {
-      /** Lo que contesta un sitio que sí deja bajar la foto. */
-      const respuestaDeFoto = (texto: string) => ({
-        ok: true,
-        headers: { get: (n: string) => (n.toLowerCase() === 'content-type' ? 'image/jpeg' : null) },
-        blob: async () => foto(texto)
-      });
-      /** Abre la ficha de *Por URL* con la dirección escrita y toca *Traer*. */
-      const traer = async (
-        montada: { tocar: (a: string, d?: Record<string, string>) => Promise<unknown> }, url: string
-      ) => {
-        await montada.tocar('abrir-foto-url');
-        estado.formulario['url-foto'] = url;
-        await montada.tocar('traer-foto-url');
-      };
-      const conUnBorrador = () => {
-        estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: [] }];
-      };
-
-      it('la foto bajada se sube al borrador en el momento, como una de la cámara', async () => {
-        conUnBorrador();
-        vi.stubGlobal('fetch', async () => respuestaDeFoto('bajada'));
-        const montada = await montar();
-        const { abrir, app, preguntas } = montada;
-        await abrir('#/borradores/b1');
-        expect(app.innerHTML).toContain('data-accion="abrir-foto-url"');
-
-        await traer(montada, 'https://ejemplo/tarta.jpg');
-
-        // El `.md` del borrador se reescribe ahí mismo: no hay cola ni estado
-        // intermedio, y la foto ya está en Drive.
-        expect(estado.fotosAgregadas.map(f => f.id)).toEqual(['b1']);
-        expect(await estado.fotosAgregadas[0].foto.text()).toBe('bajada');
-        expect(app.innerHTML).toContain('blob:nueva-1');
-        // Traerla cierra la ficha.
-        expect(preguntas.some(h => h.includes('data-foto-url'))).toBe(false);
-      });
-
-      it('el velo se pone una vez para bajarla, achicarla y subirla', async () => {
-        conUnBorrador();
-        vi.stubGlobal('fetch', async () => respuestaDeFoto('bajada'));
-        const montada = await montar();
-        const { abrir, idasYVueltasDelVelo } = montada;
-        await abrir('#/borradores/b1');
-        idasYVueltasDelVelo.length = 0;
-
-        await traer(montada, 'https://ejemplo/tarta.jpg');
-
-        // Una sola ida y una sola vuelta: los tres pasos van bajo el mismo velo.
-        expect(idasYVueltasDelVelo).toEqual([false, true]);
-      });
-
-      it('la que el sitio no deja bajar no entra: un borrador no guarda links', async () => {
-        conUnBorrador();
-        // Lo que hace CORS: `fetch` ni siquiera llega a contestar.
-        vi.stubGlobal('fetch', async () => { throw new TypeError('bloqueado'); });
-        const montada = await montar();
-        const { abrir, preguntas } = montada;
-        await abrir('#/borradores/b1');
-
-        await traer(montada, 'https://instagram/tarta.jpg');
-
-        expect(estado.fotosAgregadas).toEqual([]);
-        // La ficha queda abierta con lo escrito, y el aviso dice por qué no entró.
-        expect(preguntas.at(-1)).toContain('data-foto-url');
-        expect(preguntas.at(-1)).toContain('value="https://instagram/tarta.jpg"');
-        expect(preguntas.at(-1)).toContain('No se pudo traer la foto');
-        expect(preguntas.at(-1)).toContain('Un borrador sólo guarda fotos bajadas.');
-        // Dice qué pasó y se corta: que la ficha siga abierta con lo escrito ya
-        // invita a probar otra dirección.
-        expect(preguntas.at(-1)).not.toContain('probá');
-      });
-
-      it('una URL que no es una foto no entra, con aviso', async () => {
-        conUnBorrador();
-        // Una página que contesta 200 con HTML no es una foto.
-        vi.stubGlobal('fetch', async () => ({
-          ok: true, headers: { get: () => 'text/html; charset=utf-8' }, blob: async () => foto('<html>')
-        }));
-        const montada = await montar();
-        const { abrir, preguntas } = montada;
-        await abrir('#/borradores/b1');
-
-        await traer(montada, 'https://ejemplo/pagina');
-
-        expect(estado.fotosAgregadas).toEqual([]);
-        expect(preguntas.at(-1)).toContain('data-foto-url');
-        expect(preguntas.at(-1)).toContain('value="https://ejemplo/pagina"');
-        expect(preguntas.at(-1)).toContain('no es una foto');
-      });
-
-      it('si subirla al borrador falla, la ficha queda abierta con lo escrito', async () => {
-        conUnBorrador();
-        estado.fallaFoto = 1;
-        vi.stubGlobal('fetch', async () => respuestaDeFoto('bajada'));
-        const montada = await montar();
-        const { abrir, app, preguntas } = montada;
-        await abrir('#/borradores/b1');
-
-        await traer(montada, 'https://ejemplo/tarta.jpg');
-
-        // Reintentar es tocar *Traer* otra vez, sin volver a escribir la
-        // dirección: el aviso va adentro de la ficha, no arriba del borrador.
-        expect(preguntas.at(-1)).toContain('data-foto-url');
-        expect(preguntas.at(-1)).toContain('value="https://ejemplo/tarta.jpg"');
-        expect(preguntas.at(-1)).toContain('No se pudo guardar. Revisá la conexión.');
-        expect(app.innerHTML).not.toContain('No se pudo guardar.');
-        expect(app.innerHTML).toContain('Tarta');
-      });
-
-      it('la ficha se cuelga del cuerpo: el borrador no tiene formulario', async () => {
-        conUnBorrador();
-        const montada = await montar();
-        const { abrir, tocar, colgadasDelCuerpo } = montada;
-        await abrir('#/borradores/b1');
-
-        await tocar('abrir-foto-url');
-
-        // En el editor y en la captura la cuelga `[data-formulario]`; acá no
-        // hay ninguno, y sin el respaldo *Por URL* no abriría nada.
-        expect(colgadasDelCuerpo.at(-1)).toContain('data-foto-url');
-      });
-
-      it('abrirla se lleva el aviso que hubiera arriba: nunca dos a la vez', async () => {
-        conUnBorrador();
-        estado.fallaFoto = 1;
-        const montada = await montar();
-        const { abrir, app, tocar, elegirFotos } = montada;
-        await abrir('#/borradores/b1');
-        // Falla subir una foto de la galería: queda su aviso arriba.
-        await elegirFotos([foto('a')]);
-        expect(app.innerHTML).toContain('No se pudo guardar. Revisá la conexión.');
-
-        await tocar('abrir-foto-url');
-
-        expect(app.innerHTML).not.toContain('No se pudo guardar.');
-      });
-
-      it('en la captura queda en memoria hasta Guardar, como las demás', async () => {
-        vi.stubGlobal('fetch', async () => respuestaDeFoto('bajada'));
-        const montada = await montar();
-        const { abrir, app, tocar } = montada;
-        await abrir('#/capturar');
-        expect(app.innerHTML).toContain('data-accion="abrir-foto-url"');
-
-        await traer(montada, 'https://ejemplo/tarta.jpg');
-
-        expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(1);
-        // Nada se subió todavía: el borrador no existe hasta Guardar.
-        expect(estado.fotosAgregadas).toEqual([]);
-
-        await tocar('guardar-captura');
-        const guardada = estado.capturados[0].fotos?.[0];
-        expect(await (guardada as Blob).text()).toBe('bajada');
-      });
-
-      it('en la captura, abrirla también se lleva el aviso de arriba', async () => {
-        estado.compartidas = [foto('roto'), foto('bien')];
-        const montada = await montar();
-        const { abrir, app, tocar } = montada;
-        await abrir('#/capturar?fotos=2');
-        expect(app.innerHTML).toContain('No se pudo leer una de las fotos.');
-
-        await tocar('abrir-foto-url');
-
-        expect(app.innerHTML).not.toContain('No se pudo leer una de las fotos.');
-      });
-
-      it('en la captura el tope vale aunque se llegue por acá', async () => {
-        estado.compartidas = Array.from({ length: 5 }, (_, i) => foto(`f${i}`));
-        let pedidos = 0;
-        vi.stubGlobal('fetch', async () => { pedidos++; return respuestaDeFoto('bajada'); });
-        const montada = await montar();
-        const { abrir, app } = montada;
-        await abrir('#/capturar?fotos=5');
-
-        await traer(montada, 'https://ejemplo/sexta.jpg');
-
-        // Ni se la pide: con cinco no entra ninguna más.
-        expect(pedidos).toBe(0);
-        expect(app.innerHTML.match(/data-accion="sacar-foto-captura"/g)).toHaveLength(5);
-      });
-
-      it('en la captura, la que no se pudo bajar tampoco entra', async () => {
-        vi.stubGlobal('fetch', async () => { throw new TypeError('bloqueado'); });
-        const montada = await montar();
-        const { abrir, app, preguntas } = montada;
-        await abrir('#/capturar');
-
-        await traer(montada, 'https://instagram/tarta.jpg');
-
-        expect(app.innerHTML).not.toContain('data-accion="sacar-foto-captura"');
-        expect(preguntas.at(-1)).toContain('No se pudo traer la foto');
-      });
-    });
-
-    it('sacar una foto del borrador, con el velo y sin confirmación', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: ['f1', 'f2'] }];
-      const original = storeFake.sacarFotoDeBorrador;
-      let soltar!: () => void;
-      const espera = new Promise<void>(r => { soltar = r; });
-      storeFake.sacarFotoDeBorrador = async (id, f) => { await espera; return original(id, f); };
-      try {
-        const { abrir, app, velo, tocar } = await montar();
-        await abrir('#/borradores/b1');
-        const sacando = tocar('sacar-foto', { valor: 'f1' });
-        await esperar();
-        expect(velo.hidden).toBe(false);
-        soltar();
-        await sacando;
-        expect(velo.hidden).toBe(true);
-        expect(estado.fotosSacadas).toEqual(['b1:f1']);
-        expect(app.innerHTML).not.toContain('blob:f1');
-        expect(app.innerHTML).toContain('blob:f2');
-      } finally {
-        storeFake.sacarFotoDeBorrador = original;
-      }
-    });
-
-    it('Convertir con Claude sin menú Compartir lleva los links de Drive de las fotos', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: ['f1'] }];
-      vi.stubGlobal('navigator', {});
-      const { abrir, tocar } = await montar();
-      const aperturas: string[] = [];
-      (global.window as unknown as Record<string, unknown>)['open'] = (u: string) => { aperturas.push(u); };
-      await abrir('#/borradores/b1');
-      await tocar('convertir-con-claude');
-      expect(decodeURIComponent(aperturas[0] ?? '')).toContain('Foto 1: https://drive.google.com/file/d/f1/view');
-    });
-
-    it('Convertir con Claude con menú Compartir manda las fotos como archivos', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: ['f1', 'f2'] }];
-      const compartidos: ShareData[] = [];
-      vi.stubGlobal('navigator', {
-        share: async (d: ShareData) => { compartidos.push(d); },
-        canShare: (d: ShareData) => !!d.files
-      });
-      const { abrir, tocar } = await montar();
-      await abrir('#/borradores/b1');
-      await tocar('convertir-con-claude');
-      expect(compartidos[0]?.files?.map(f => f.name)).toEqual(['foto-1.jpg', 'foto-2.jpg']);
-      expect(compartidos[0]?.text).toContain('Fotos: van 2, en orden.');
-    });
-
     it('Borrar datos locales y Salir borran las fotos guardadas en el navegador', async () => {
       const { abrir, tocar } = await montar();
       await abrir('#/ajustes');
@@ -3115,206 +2358,6 @@ describe('main.ts: las rutas', () => {
       await tocar('salir');
       expect(estado.imagenesBorradas).toBe(2);
       expect(estado.compartidasDescartadas).toBe(2);
-    });
-  });
-
-  describe('convertir con Claude', () => {
-    const mdConId = (id: string): string =>
-      `---\ntitulo: Focaccia\nborrador: ${id}\n---\n\n## Preparación\n1. Hornear.\n`;
-    const MD_SIN_ID = '---\ntitulo: Focaccia\n---\n\n## Preparación\n1. Hornear.\n';
-
-    it('Convertir con Claude, sin menú Compartir, abre el link a Claude con el pedido', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: 'https://x', nota: '', capturado: '' }];
-      vi.stubGlobal('navigator', {});
-      const { abrir, tocar } = await montar();
-      // `montar()` no le da `open` al doble de `window`: se lo agrega acá,
-      // sólo para este test, y se lo saca en el `finally`.
-      const aperturas: string[] = [];
-      const ventana = global.window as unknown as Record<string, unknown>;
-      const original = ventana['open'];
-      ventana['open'] = (u: string) => { aperturas.push(u); };
-      try {
-        await abrir('#/borradores/b1');
-        await tocar('convertir-con-claude');
-        expect(aperturas).toHaveLength(1);
-        expect(aperturas[0]).toMatch(/^https:\/\/claude\.ai\/new\?q=/);
-        expect(aperturas[0]).toContain('borrador%3A%20b1');
-      } finally {
-        ventana['open'] = original;
-      }
-    });
-
-    it('sin menú Compartir ni portapapeles, y el pedido demasiado largo para el link, avisa en vez de no hacer nada', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: 'https://x', nota: 'a'.repeat(9000), capturado: '' }];
-      vi.stubGlobal('navigator', {});
-      const { abrir, tocar, app } = await montar();
-
-      await abrir('#/borradores/b1');
-      await tocar('convertir-con-claude');
-
-      expect(app.innerHTML).toContain('No se pudo abrir Claude ni copiar el pedido.');
-    });
-
-    it('compartir una receta con id válido abre el editor atado a ese borrador, con `replace`', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-      const { abrir, app, reemplazos } = await montar();
-      await abrir('#/capturar?text=' + encodeURIComponent(mdConId('b1')));
-
-      expect(global.location.hash).toBe('#/nueva?borrador=b1&recibida=1');
-      expect(app.innerHTML).toContain('value="Focaccia"');
-      expect(app.innerHTML).not.toContain('borrador: b1');
-      expect(app.innerHTML).not.toContain('name="borrador"');
-      expect(app.innerHTML).toContain('data-valor="borrador" aria-pressed="true"');
-      // Con `replace`, no con una entrada nueva: `#/capturar` era la única
-      // entrada que dejó el Share Target, y sumar una acá haría que volver
-      // cayera de nuevo en la captura, que reabriría esta misma receta.
-      expect(reemplazos).toContain('#/nueva?borrador=b1&recibida=1');
-    });
-
-    it('compartir una receta sin id abre la pregunta con `replace`, y elegir "Ninguno" crea la receta nueva', async () => {
-      const { abrir, tocar, app, reemplazos } = await montar();
-      await abrir('#/capturar?text=' + encodeURIComponent(MD_SIN_ID));
-
-      expect(global.location.hash).toBe('#/recibida');
-      expect(app.innerHTML).toContain('¿De qué borrador es esta receta?');
-      expect(reemplazos).toContain('#/recibida');
-
-      await tocar('elegir-borrador-recibido', { valor: '' });
-
-      expect(global.location.hash).toBe('#/nueva?recibida=1');
-      expect(app.innerHTML).toContain('value="Focaccia"');
-    });
-
-    it('en la pregunta, elegir un borrador ata el editor a él', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-      const { abrir, tocar } = await montar();
-      await abrir('#/capturar?text=' + encodeURIComponent(MD_SIN_ID));
-
-      await tocar('elegir-borrador-recibido', { valor: 'b1' });
-
-      expect(global.location.hash).toBe('#/nueva?borrador=b1&recibida=1');
-    });
-
-    it('compartir una receta con un id de borrador que no existe también abre la pregunta', async () => {
-      const { abrir } = await montar();
-      await abrir('#/capturar?text=' + encodeURIComponent(mdConId('fantasma')));
-      expect(global.location.hash).toBe('#/recibida');
-    });
-
-    it('compartir algo que no es una receta sigue abriendo la captura', async () => {
-      const { abrir, app } = await montar();
-      await abrir('#/capturar?text=hola');
-      // La pantalla de captura compartida en sí, no sólo el texto: el título
-      // y el botón de guardar del borrador.
-      expect(app.innerHTML).toContain('<h1>Guardar en Recetario</h1>');
-      // Un texto sin link no es una fuente: va a la nota.
-      expect(app.innerHTML).toContain('>hola</textarea>');
-      expect(app.innerHTML).toContain('data-accion="guardar-captura"');
-      expect(app.innerHTML).not.toContain('¿De qué borrador');
-    });
-
-    it('pegar receta en el borrador ata el editor a ese borrador, aunque el texto traiga otro id', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-      vi.stubGlobal('navigator', { clipboard: { readText: async () => mdConId('otro') } });
-      const { abrir, tocar } = await montar();
-      await abrir('#/borradores/b1');
-
-      await tocar('pegar-receta');
-
-      expect(global.location.hash).toBe('#/nueva?borrador=b1&recibida=1');
-    });
-
-    it('pegar receta en Borradores sigue la regla del id: sin id, lleva a la pregunta', async () => {
-      vi.stubGlobal('navigator', { clipboard: { readText: async () => MD_SIN_ID } });
-      const { abrir, tocar } = await montar();
-      await abrir('#/borradores');
-
-      await tocar('pegar-receta');
-
-      expect(global.location.hash).toBe('#/recibida');
-    });
-
-    it('pegar algo que no es una receta avisa y no abre nada', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-      vi.stubGlobal('navigator', { clipboard: { readText: async () => 'esto no es una receta' } });
-      const { abrir, tocar, app } = await montar();
-      await abrir('#/borradores/b1');
-
-      await tocar('pegar-receta');
-
-      expect(app.innerHTML).toContain('Lo copiado no es una receta en .md.');
-      expect(app.innerHTML).toContain('Focaccia');
-      expect(global.location.hash).toBe('#/borradores/b1');
-    });
-
-    it('con el portapapeles bloqueado, avisa que no se pudo leer', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-      vi.stubGlobal('navigator', { clipboard: { readText: async () => { throw new Error('denegado'); } } });
-      const { abrir, tocar, app } = await montar();
-      await abrir('#/borradores/b1');
-
-      await tocar('pegar-receta');
-
-      expect(app.innerHTML).toContain('No se pudo leer lo copiado.');
-    });
-
-    it('el editor con la receta recibida cuenta como cambios sin guardar desde que se abre', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-      const { abrir, app, empujados, preguntas } = await montar();
-      await abrir('#/capturar?text=' + encodeURIComponent(mdConId('b1')));
-      expect(global.location.hash).toBe('#/nueva?borrador=b1&recibida=1');
-
-      await abrir('#/');
-
-      expect(empujados).toEqual(['#/nueva?borrador=b1&recibida=1']);
-      expect(app.innerHTML).toContain('data-formulario');
-      expect(preguntas.join('')).toContain('data-salida');
-      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
-    });
-
-    it('guardar atado a un borrador, desde la receta recibida, convierte, descarta el borrador y cierra a la receta creada', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-      const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
-      await abrir('#/capturar?text=' + encodeURIComponent(mdConId('b1')));
-      expect(global.location.hash).toBe('#/nueva?borrador=b1&recibida=1');
-
-      estado.formulario = { titulo: 'Focaccia', carpeta: 'c1' };
-      await tocar('guardar');
-
-      expect(estado.creadas).toEqual(['Focaccia']);
-      expect(estado.descartados).toEqual(['b1']);
-      // No `history.back()`: desde acá volvería a `#/capturar` —o a
-      // `#/recibida`—, que reconocería la misma receta ya guardada y la
-      // reabriría. Cierra directo a la receta que
-      // `store.crear`/`convertirBorrador` acaba de crear.
-      expect(vueltasAtras).toEqual([]);
-      expect(reemplazos).toContain('#/r/nuevo-1');
-      expect(global.location.hash).toBe('#/r/nuevo-1');
-    });
-
-    it('sin entrada previa en el historial, «Salir sin guardar» cierra a Borradores en vez de intentar volver', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Focaccia', fuente: '', nota: '', capturado: '' }];
-      const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
-      await abrir('#/capturar?text=' + encodeURIComponent(mdConId('b1')));
-      // Como en el Share Target real: la captura era la única entrada.
-      (global.history as unknown as { length: number }).length = 1;
-
-      await tocar('salir-sin-guardar');
-
-      expect(vueltasAtras).toEqual([]);
-      expect(reemplazos).toContain('#/borradores');
-    });
-
-    it('sin entrada previa, volver desde «¿De qué borrador…» cierra a Borradores', async () => {
-      const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
-      await abrir('#/capturar?text=' + encodeURIComponent(MD_SIN_ID));
-      expect(global.location.hash).toBe('#/recibida');
-      (global.history as unknown as { length: number }).length = 1;
-
-      await tocar('volver');
-
-      expect(vueltasAtras).toEqual([]);
-      expect(reemplazos).toContain('#/borradores');
     });
   });
 
@@ -3704,7 +2747,6 @@ describe('main.ts: las rutas', () => {
       expect([...(cambios?.nuevas.keys() ?? [])]).toEqual([3]);
       expect(await (cambios?.nuevas.get(3) as Blob).text()).toBe('nueva');
       expect(cambios?.sacadas).toEqual([EXTERNA]);
-      expect(cambios?.deBorrador).toEqual([]);
       // Sacarla también borró su referencia del texto.
       expect(estado.formulario['preparacion']).toBe('1. Freír.');
     });
@@ -4182,51 +3224,6 @@ describe('main.ts: las rutas', () => {
       } finally {
         storeFake.guardar = original;
       }
-    });
-
-    it('el editor de un borrador abre con sus fotos, y convertir mueve las que quedaron', async () => {
-      estado.borradores = [{ id: 'b1', titulo: 'Tarta', fuente: '', nota: '', capturado: '', fotos: ['fa', 'fb'] }];
-      const { abrir, app, tocar } = await montar();
-      await abrir('#/nueva?borrador=b1');
-      expect(app.innerHTML).toContain(linkDeFoto('fa'));
-      estado.formulario = {
-        titulo: 'Tarta', carpeta: 'c1',
-        fotos: deposito([{ n: 1, url: linkDeFoto('fa') }, { n: 2, url: linkDeFoto('fb') }])
-      };
-
-      await tocar('sacar-foto-editor', { n: '2' });
-      await tocar('guardar');
-
-      expect(estado.cambiosDeFotos.at(-1)?.deBorrador).toEqual(['fa']);
-      expect(estado.conservadas.at(-1)).toEqual(['fa']);
-    });
-
-    it('en Nueva receta las marcas ven las secciones ajenas de la receta recibida', async () => {
-      // El editor no muestra las secciones ajenas: el uso de una foto puesta
-      // ahí sólo se conoce por la receta de base. En el alta esa base es la que
-      // volvió de Claude, no una vacía.
-      const md = [
-        '---', 'titulo: Focaccia', '---', '',
-        '## Preparación', '1. Hornear.', '',
-        '## Maridaje', `Un tinto ![](foto:1)`, '',
-        '## Fotos', `- 1: ${EXTERNA}`, '- 2: https://ejemplo/otra.jpg', ''
-      ].join('\n');
-      const { abrir, tocar, filasDeFotos } = await montar();
-      await abrir('#/capturar?text=' + encodeURIComponent(md));
-      await tocar('elegir-borrador-recibido', { valor: '' });
-      expect(global.location.hash).toBe('#/nueva?recibida=1');
-      estado.formulario = {
-        titulo: 'Focaccia', carpeta: 'c1', foto: '', preparacion: '1. Hornear.',
-        fotos: deposito([{ n: 1, url: EXTERNA }, { n: 2, url: 'https://ejemplo/otra.jpg' }])
-      };
-
-      await tocar('abrir-portada');
-      await tocar('elegir-portada', { n: '2' });
-
-      const minis = (filasDeFotos.at(-1) ?? '').split('<div class="miniatura">').slice(1);
-      // La 1 la nombra la sección ajena, que no está en ningún campo.
-      expect(minis[0]).toContain(ICO.enElTexto);
-      expect(minis[1]).toContain(ICO.portada);
     });
 
     /** Con dos fotos sin uso: las del carrusel, que es lo que el visor recorre. */

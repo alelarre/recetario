@@ -53,7 +53,6 @@ const copiaVigente = (cambios: Partial<CopiaIndice> = {}): CopiaIndice => ({
     { fila: 3, entrada: entradaDesdeFila(fila('r2', 'Bife')) },
     { fila: 2, entrada: entradaDesdeFila(fila('r1', 'Milanesas de la copia')) }
   ],
-  borradores: [],
   raizId: 'raiz',
   raizNombre: 'Recetario',
   categorias: [],

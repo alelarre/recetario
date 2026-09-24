@@ -7,7 +7,7 @@
  * bloqueado, JSON roto— se lee como «no hay copia». La copia nunca es
  * imprescindible: sin ella, la app baja la planilla.
  */
-import type { Categoria, Entrada, EntradaBorrador } from './tipos.js';
+import type { Categoria, Entrada } from './tipos.js';
 
 const CLAVE_STORAGE = 'recetario-indice';
 
@@ -30,8 +30,6 @@ export interface CopiaIndice {
    * final de la lista, y en la planilla queda en su lugar.
    */
   filas: { fila: number; entrada: Entrada }[];
-  /** La hoja `borradores`, con el mismo criterio que `filas`. */
-  borradores: { fila: number; entrada: EntradaBorrador }[];
   /** La hoja `categorias`, en el orden de la planilla. */
   categorias: Categoria[];
 }
@@ -76,7 +74,6 @@ function esCopia(c: unknown): c is CopiaIndice {
     && typeof x['modifiedTime'] === 'string'
     && !!x['meta'] && typeof x['meta'] === 'object'
     && Array.isArray(x['filas'])
-    && Array.isArray(x['borradores'])
     && typeof x['raizId'] === 'string'
     && typeof x['raizNombre'] === 'string'
     && Array.isArray(x['categorias']);

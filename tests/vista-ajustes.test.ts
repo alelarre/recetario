@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderAjustes } from '../src/ui/ajustes.js';
+import { renderAjustes, cuando } from '../src/ui/ajustes.js';
 import type { InformeArranque } from '../src/store.js';
 
 const base = { cuenta: 'a@b.c', ultimaReindexado: '', ignorados: [] as string[], reindexando: null };
@@ -99,7 +99,8 @@ describe('Ajustes: la ficha «Registro de actividad»', () => {
     expect(html).toContain('Abrió el 13/09 a las 14:31.');
     expect(html).toContain('_indice: modificada el 13/09 a las 14:30.');
     expect(html).toContain('Copia local: coincide con _indice; no se leyó Sheets.');
-    expect(html).toContain('61 recetas · 3 borradores · 16 categorías.');
+    // Los borradores son recetas con un tag: van contados en las recetas.
+    expect(html).toContain('61 recetas · 16 categorías.');
     expect(html).toContain('No hizo falta reindexar.');
   });
 
@@ -133,9 +134,9 @@ describe('Ajustes: la ficha «Registro de actividad»', () => {
       .toContain('_indice: se creó al abrir.');
   });
 
-  it('una receta y un borrador van en singular', () => {
+  it('una receta va en singular', () => {
     const html = renderAjustes({ ...base, informe, recetas: 1, borradores: 1, categorias: 16 });
-    expect(html).toContain('1 receta · 1 borrador · 16 categorías.');
+    expect(html).toContain('1 receta · 16 categorías.');
   });
 
   it('sin informe no hay ficha', () => {
@@ -166,5 +167,22 @@ describe('Ajustes: el orden de las fichas', () => {
     const html = renderAjustes({ ...base, informe, carpeta: 'Recetario' });
     const titulos = [...html.matchAll(/<h2>([^<]+)<\/h2>/g)].map(m => m[1]);
     expect(titulos).toEqual(['Cuenta', 'Recetario', 'Índice', 'Archivos locales', 'Avisos', 'Registro de actividad']);
+  });
+});
+
+describe('cuando', () => {
+  const ahora = new Date('2026-09-11T12:00:00Z');
+
+  it('lo reciente se cuenta en días', () => {
+    expect(cuando('2026-09-10T12:00:00Z', ahora)).toBe('ayer');
+    expect(cuando('2026-09-08T12:00:00Z', ahora)).toBe('hace 3 días');
+  });
+
+  it('pasada la semana, la fecha dice más que la cuenta', () => {
+    expect(cuando('2026-09-01T10:00:00Z', ahora)).toBe('1 de septiembre');
+  });
+
+  it('una fecha ilegible no rompe la lista', () => {
+    expect(cuando('cualquier cosa', ahora)).toBe('');
   });
 });

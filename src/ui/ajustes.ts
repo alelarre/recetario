@@ -4,8 +4,28 @@
  */
 import { escapar } from './markdown.js';
 import { encabezado, lateral, botonMenu, barra, porCiento } from './componentes.js';
-import { cuando } from './borradores.js';
 import type { Progreso, IndiceDuplicado, InformeArranque } from '../store.js';
+
+const DIA = 86400000;
+
+/**
+ * Cuándo pasó, dicho como se dice: lo reciente en días —«ayer», «hace 3
+ * días»— y lo viejo con su fecha, que a partir de una semana es más útil que
+ * contar días.
+ */
+export function cuando(iso: string, ahora = new Date()): string {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return '';
+  const dias = Math.floor((ahora.getTime() - t) / DIA);
+  if (dias <= 0) return 'hoy';
+  if (dias === 1) return 'ayer';
+  if (dias <= 7) return `hace ${dias} días`;
+  const fecha = new Date(t);
+  const opciones: Intl.DateTimeFormatOptions = fecha.getFullYear() === ahora.getFullYear()
+    ? { day: 'numeric', month: 'long' }
+    : { day: 'numeric', month: 'long', year: 'numeric' };
+  return fecha.toLocaleDateString('es-AR', opciones);
+}
 
 export interface OpcionesAjustes {
   cuenta: string;
@@ -17,7 +37,7 @@ export interface OpcionesAjustes {
   /** Lo mismo con `_plan.md`, que tampoco está en el índice y se busca por nombre. */
   planDuplicado?: IndiceDuplicado | null;
   reindexando: Progreso | null;
-  /** Cuántos borradores esperan, para el contador del menú. */
+  /** Cuántas recetas tienen el tag borrador, para el contador del menú. */
   borradores?: number;
   /** Lo que verificó el arranque de esta sesión. */
   informe?: InformeArranque | null;
@@ -99,7 +119,7 @@ export function renderAjustes(
       '<div class="cuerpo">' + seccionCuenta + seccionRecetario + seccionIndice +
         (enCurso ? '' : FICHA_DATOS_LOCALES) +
         `<div class="ficha"><h2>Avisos</h2>${lista}</div>` +
-        (informe ? fichaAlAbrir(informe, recetas, borradores, categorias) : '') +
+        (informe ? fichaAlAbrir(informe, recetas, categorias) : '') +
       '</div>' +
     '</div>';
 }
@@ -137,7 +157,7 @@ const contar = (n: number, uno: string, varios: string): string => `${n} ${n ===
  * (brand-identity §3.2). Si reindexó, la copia dice sólo cómo estaba: lo que
  * se hizo después no fue bajar la planilla sino rearmarla.
  */
-function fichaAlAbrir(informe: InformeArranque, recetas: number, borradores: number, categorias: number): string {
+function fichaAlAbrir(informe: InformeArranque, recetas: number, categorias: number): string {
   const { momento, indiceModificado, copia, copiaModificada, reindexado } = informe;
   const estadoCopia = copia === 'otra-fecha' && copiaModificada
     ? `del ${fechaYHora(copiaModificada)}, ${COPIA[copia]}`
@@ -148,8 +168,7 @@ function fichaAlAbrir(informe: InformeArranque, recetas: number, borradores: num
     `Abrió el ${fechaYHora(momento)}.`,
     indiceModificado ? `_indice: modificada el ${fechaYHora(indiceModificado)}.` : '_indice: se creó al abrir.',
     `Copia local: ${estadoCopia}${consecuencia}.`,
-    `${contar(recetas, 'receta', 'recetas')} · ${contar(borradores, 'borrador', 'borradores')} · ` +
-      `${contar(categorias, 'categoría', 'categorías')}.`,
+    `${contar(recetas, 'receta', 'recetas')} · ${contar(categorias, 'categoría', 'categorías')}.`,
     REINDEXADO[reindexado]
   ];
   return '<div class="ficha"><h2>Registro de actividad</h2>' +

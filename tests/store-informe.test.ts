@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { crearStore } from '../src/store.js';
 import { COLUMNAS } from '../src/catalogo.js';
-import { COLUMNAS_BORRADORES } from '../src/borrador.js';
 import { SCHEMA_VERSION } from '../src/config.js';
 import type { CopiaIndice } from '../src/indice-local.js';
 import type { EstadoCopia } from '../src/store.js';
@@ -12,7 +11,7 @@ const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
 const FECHA = '2026-09-13T10:00:00.000Z';
 
-/** Dos categorías, la carpeta de borradores —que no cuenta— y `_indice` con la meta que se pida. */
+/** Dos categorías, una carpeta de la app —que no cuenta— y `_indice` con la meta que se pida. */
 function armar({
   copia = null as CopiaIndice | null,
   meta = [['schemaVersion', String(SCHEMA_VERSION)]] as string[][],
@@ -27,17 +26,16 @@ function armar({
   ]);
   const sheets = sheetsFalso();
   if (conIndice) {
-    sheets.crearPlanilla('i1', ['recetas', 'meta', 'borradores']);
+    sheets.crearPlanilla('i1', ['recetas', 'meta']);
     sheets.cargar('i1', 'recetas', [[...COLUMNAS]]);
     sheets.cargar('i1', 'meta', meta);
-    sheets.cargar('i1', 'borradores', [[...COLUMNAS_BORRADORES]]);
   }
   return crearStore({ drive, sheets, indiceLocal: indiceLocalFalso(copia) });
 }
 
 const copiaVigente = (cambios: Partial<CopiaIndice> = {}): CopiaIndice => ({
   schemaVersion: SCHEMA_VERSION, indiceId: 'i1', modifiedTime: FECHA,
-  meta: { schemaVersion: String(SCHEMA_VERSION) }, filas: [], borradores: [], raizId: 'raiz', raizNombre: 'Recetario', categorias: [], ...cambios
+  meta: { schemaVersion: String(SCHEMA_VERSION) }, filas: [], raizId: 'raiz', raizNombre: 'Recetario', categorias: [], ...cambios
 });
 
 describe('el informe del arranque', () => {

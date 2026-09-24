@@ -1,8 +1,7 @@
-import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_BORRADORES, NOMBRE_FOTOS, NOMBRE_SIN_CATEGORIA, NOMBRE_PLAN, MARCA_RAIZ, SCHEMA_VERSION } from './config.js';
+import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_FOTOS, NOMBRE_SIN_CATEGORIA, NOMBRE_PLAN, MARCA_RAIZ, SCHEMA_VERSION } from './config.js';
 import { COLUMNAS, entradaDesdeFila, filaDesde, coincideTag } from './catalogo.js';
-import { HOJA_RECETAS, HOJA_META, HOJA_BORRADORES, HOJA_CATEGORIAS, rangoDeFila } from './sheets.js';
+import { HOJA_RECETAS, HOJA_META, HOJA_CATEGORIAS, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
-import { COLUMNAS_BORRADORES, MAXIMO_FOTOS, entradaBorradorDesdeFila, filaDeBorrador, nombreDeFoto, parseBorrador, serializeBorrador } from './borrador.js';
 import { COLUMNAS_CATEGORIAS, PREDEFINIDAS, categoriaDesdeFila, filaDeCategoria, predefinidaPorNombre, problemaDelNombre } from './categorias.js';
 import { parsePlan, serializePlan } from './plan.js';
 import { idDeDrive, linkDeFoto } from './fotos-receta.js';
@@ -11,12 +10,11 @@ import type { Sheets } from './sheets.js';
 import type { CopiaIndice, IndiceLocal } from './indice-local.js';
 import type {
   Receta, Ubicacion, Entrada, Filtros, Coincidencia, Coincidencias, ArchivoDrive,
-  Borrador, EntradaBorrador, Categoria, Plan, CambiosDeFotos
+  Categoria, Plan, CambiosDeFotos
 } from './tipos.js';
 
 const CATEGORIA_RAIZ = 'Sin categoría';
 const ULTIMA_COLUMNA = String.fromCharCode(64 + COLUMNAS.length);
-const ULTIMA_COLUMNA_BORRADORES = String.fromCharCode(64 + COLUMNAS_BORRADORES.length);
 const ULTIMA_COLUMNA_CATEGORIAS = String.fromCharCode(64 + COLUMNAS_CATEGORIAS.length);
 const MIME_CARPETA = 'application/vnd.google-apps.folder';
 /** Las fotos se achican a JPEG antes de subir (`fotos.ts`). */
@@ -124,8 +122,6 @@ interface Contexto {
   categorias: Categoria[];
   /** Id de carpeta → nombre de categoría. Incluye la raíz. */
   carpetas: Map<string, string>;
-  /** La carpeta `_borradores/`, o vacío si todavía no existe: se crea al agregar el primero. */
-  borradoresId: string;
   /** La carpeta `_fotos/`, o vacío si todavía no existe: se crea con la primera foto. */
   fotosId: string;
   /** La carpeta `_sin-categoria/`, o vacío si todavía no existe: se crea con la primera receta suelta. */
@@ -203,13 +199,11 @@ const esNoEncontrado = (e: unknown): boolean =>
 
 export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencias) {
   const ctx: Contexto = {
-    raizId: '', raizNombre: '', indiceId: '', categorias: [], carpetas: new Map(), borradoresId: '',
+    raizId: '', raizNombre: '', indiceId: '', categorias: [], carpetas: new Map(),
     fotosId: '', sinCategoriaId: '', soloLectura: false, meta: {}, modifiedTime: ''
   };
   let entradas: Entrada[] = [];
   let filas = new Map<string, number>();
-  let entradasBorradores: EntradaBorrador[] = [];
-  let filasBorradores = new Map<string, number>();
   /**
    * El plan de la semana: el id de `_plan.md` y lo último que se leyó o
    * escribió. `buscado` distingue «todavía no lo busqué» de «no existe»: la
@@ -264,7 +258,6 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       modifiedTime: ctx.modifiedTime,
       meta: { ...ctx.meta },
       filas: conFila(entradas, filas),
-      borradores: conFila(entradasBorradores, filasBorradores),
       categorias: ctx.categorias
     };
   }
@@ -279,10 +272,6 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const ordenadas = [...copia.filas].sort((a, b) => a.fila - b.fila);
     entradas = ordenadas.map(f => conCategoria(f.entrada));
     filas = new Map(ordenadas.map(f => [f.entrada.id_archivo, f.fila]));
-    const borradores = [...copia.borradores].sort((a, b) => a.fila - b.fila);
-    entradasBorradores = borradores.map(f => f.entrada);
-    filasBorradores = new Map(borradores.map(f => [f.entrada.id_archivo, f.fila]));
-    ctx.borradoresId = ctx.meta['carpeta_borradores'] ?? '';
     ctx.fotosId = ctx.meta['carpeta_fotos'] ?? '';
   }
 
@@ -352,8 +341,6 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
         ['schemaVersion', String(SCHEMA_VERSION)],
         ['ultima_reconstruccion', '']
       ]);
-      await sheets.agregarHoja(archivo.id, HOJA_BORRADORES);
-      await sheets.escribir(archivo.id, `${HOJA_BORRADORES}!A1:${ULTIMA_COLUMNA_BORRADORES}1`, [[...COLUMNAS_BORRADORES]]);
       await sheets.agregarHoja(archivo.id, HOJA_CATEGORIAS);
       await sheets.escribir(archivo.id, `${HOJA_CATEGORIAS}!A1:${ULTIMA_COLUMNA_CATEGORIAS}1`, [[...COLUMNAS_CATEGORIAS]]);
       return archivo.id;
@@ -511,17 +498,12 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const cuerpo = crudo.slice(1);  // la fila 1 son los encabezados
     entradas = cuerpo.map(entradaDesdeFila).filter(e => e.id_archivo);
     filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
-    const crudoBorradores = await sheets.leer(
-      ctx.indiceId, `${HOJA_BORRADORES}!A1:${ULTIMA_COLUMNA_BORRADORES}100000`);
-    entradasBorradores = crudoBorradores.slice(1).map(entradaBorradorDesdeFila).filter(e => e.id_archivo);
-    filasBorradores = new Map(entradasBorradores.map((e, i) => [e.id_archivo, i + 2]));
     const crudoCategorias = await sheets.leer(
       ctx.indiceId, `${HOJA_CATEGORIAS}!A1:${ULTIMA_COLUMNA_CATEGORIAS}1000`);
     // Antes de `usarCategorias`, que necesita conocer `_sin-categoria/` para sumarla.
     ctx.sinCategoriaId = ctx.meta['carpeta_sin_categoria'] ?? '';
     usarCategorias(crudoCategorias.slice(1).map(categoriaDesdeFila).filter(c => c.id));
     entradas = entradas.map(conCategoria);
-    ctx.borradoresId = ctx.meta['carpeta_borradores'] ?? '';
     ctx.fotosId = ctx.meta['carpeta_fotos'] ?? '';
     // La fecha es la de la búsqueda de recién: nada escribió entre medio. Sin
     // fecha —la planilla recién creada— no se guarda: lo hace el reindexado al
@@ -624,10 +606,10 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   }
 
   /**
-   * Antes de escribir el `.md`: sube las fotos nuevas y pasa las
-   * del borrador a `_fotos/`, con el nombre del `.md` y su número. Devuelve la
-   * receta con el link de cada nueva en su línea. Cada subida se avisa apenas
-   * termina, para que un reintento no la resuba.
+   * Antes de escribir el `.md`: sube las fotos nuevas a `_fotos/`, con el
+   * nombre del `.md` y su número. Devuelve la receta con el link de cada nueva
+   * en su línea. Cada subida se avisa apenas termina, para que un reintento no
+   * la resuba.
    */
   async function subirYMover(nombreMd: string, receta: Receta, fotos: CambiosDeFotos | undefined): Promise<Receta> {
     const base = nombreMd.replace(/\.md$/i, '');
@@ -636,24 +618,6 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       const id = await subirAFotos(`${base}-${n}.jpg`, blob);
       fotos?.alSubir?.(n, id);
       links.set(n, linkDeFoto(id));
-    }
-    for (const id of fotos?.deBorrador ?? []) {
-      let padres: string[];
-      try {
-        padres = (await drive.metadatos(id, 'parents')).parents ?? [];
-      } catch (e) {
-        // Borrada a mano en Drive: la receta la nombra igual y la galería
-        // dibuja el recuadro de «ya no está». `_fotos/` se pide recién al
-        // mover, para no crearla si no queda ninguna.
-        if (noEsta(e)) continue;
-        throw e;
-      }
-      // En un reintento ya puede estar movida; renombrar dos veces no cambia nada.
-      if (ctx.borradoresId && padres.includes(ctx.borradoresId)) {
-        await drive.mover(id, { de: ctx.borradoresId, a: await carpetaDeFotos() });
-      }
-      const n = receta.fotos.find(f => idDeDrive(f.url) === id)?.n;
-      if (n !== undefined) await drive.renombrar(id, `${base}-${n}.jpg`);
     }
     // Una línea sin URL —una foto nueva que no llegó a subirse— dejaría la
     // sección `## Fotos` sin la forma que `parsearFotos` exige, y la receta
@@ -819,7 +783,6 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
 
     // Las carpetas: la verdad de cada categoría. Las predefinidas que todavía
     // no tienen propiedades las reciben de la tabla, una sola vez.
-    let borradoresId = '';
     let fotosId = '';
     let sinCategoriaId = '';
     const categorias: Categoria[] = [];
@@ -828,8 +791,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const carpetas = await drive.listarCarpetas(ctx.raizId);
     for (const [i, carpeta] of carpetas.entries()) {
       const nombre = carpeta.name ?? '';
-      if (nombre === NOMBRE_BORRADORES) borradoresId = carpeta.id;
-      else if (nombre === NOMBRE_FOTOS) fotosId = carpeta.id;
+      if (nombre === NOMBRE_FOTOS) fotosId = carpeta.id;
       else if (nombre === NOMBRE_SIN_CATEGORIA) sinCategoriaId = carpeta.id;
       else if (!nombre.startsWith('_')) {
         let color = carpeta.appProperties?.['color'] ?? '';
@@ -844,7 +806,6 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       }
       alProgresar(TRAMOS.carpetas * ((i + 1) / carpetas.length));
     }
-    ctx.borradoresId = borradoresId;
     ctx.fotosId = fotosId;
     // Antes de `usarCategorias`, que necesita conocer `_sin-categoria/` para sumarla.
     ctx.sinCategoriaId = sinCategoriaId;
@@ -869,10 +830,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       for (const archivo of (await drive.listarHijos(lugar.id)).filter(esMd)) pendientes.push({ archivo, lugar });
       alProgresar(entre(TRAMOS.carpetas, TRAMOS.listados, (i + 1) / lugares.length));
     }
-    const pendientesBorradores = ctx.borradoresId
-      ? (await drive.listarHijos(ctx.borradoresId)).filter(esMd)
-      : [];
-    const total = pendientes.length + pendientesBorradores.length;
+    const total = pendientes.length;
 
     const nuevas: string[][] = [];
     // Por nombre y no un conteo: un archivo que se salteó hay que poder
@@ -899,22 +857,11 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       }));
     }
 
-    const nuevosBorradores: EntradaBorrador[] = [];
-    const textosBorradores = await conConcurrencia(pendientesBorradores, TOPE_LECTURAS, leer);
-    for (const [i, archivo] of pendientesBorradores.entries()) {
-      const { titulo, capturado } = parseBorrador(textosBorradores[i] ?? '');
-      if (!titulo) { ignorados.push(archivo.name ?? archivo.id); continue; }
-      nuevosBorradores.push({ id_archivo: archivo.id, nombre_archivo: archivo.name ?? '', titulo, capturado });
-    }
-
     // Leído todo, aunque no hubiera nada que leer: lo que queda es escribir.
     alProgresar(TRAMOS.lecturas);
 
     const hojas = await sheets.hojas(ctx.indiceId);
-    await asegurarHoja(hojas, HOJA_BORRADORES, ULTIMA_COLUMNA_BORRADORES, COLUMNAS_BORRADORES);
     await reemplazarFilas(HOJA_RECETAS, idDeHoja(hojas, HOJA_RECETAS), ULTIMA_COLUMNA, nuevas);
-    await reemplazarFilas(HOJA_BORRADORES, idDeHoja(hojas, HOJA_BORRADORES), ULTIMA_COLUMNA_BORRADORES,
-      nuevosBorradores.map(filaDeBorrador));
     await asegurarHoja(hojas, HOJA_CATEGORIAS, ULTIMA_COLUMNA_CATEGORIAS, COLUMNAS_CATEGORIAS);
     await reemplazarFilas(HOJA_CATEGORIAS, idDeHoja(hojas, HOJA_CATEGORIAS), ULTIMA_COLUMNA_CATEGORIAS,
       ctx.categorias.map(filaDeCategoria));
@@ -923,14 +870,11 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
 
     entradas = nuevas.map(entradaDesdeFila).map(conCategoria);
     filas = new Map(entradas.map((e, i) => [e.id_archivo, i + 2]));
-    entradasBorradores = nuevosBorradores;
-    filasBorradores = new Map(nuevosBorradores.map((e, i) => [e.id_archivo, i + 2]));
 
     const ahora = new Date().toISOString();
     // La versión del esquema se escribe acá y no solo al crear la planilla:
     // subirla es lo que fuerza la reconstrucción, y si al terminar no queda
     // anotada, el próximo arranque vuelve a reconstruir para siempre.
-    await guardarMeta('carpeta_borradores', ctx.borradoresId);
     await guardarMeta('carpeta_fotos', ctx.fotosId);
     await guardarMeta('carpeta_sin_categoria', ctx.sinCategoriaId);
     await guardarMeta('schemaVersion', String(SCHEMA_VERSION));
@@ -1021,26 +965,6 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     return { entrada, receta: parse(texto), texto };
   }
 
-  /** Escribe la fila del borrador y actualiza su entrada en memoria. */
-  async function escribirBorrador(entrada: EntradaBorrador): Promise<void> {
-    entradasBorradores = [...entradasBorradores.filter(e => e.id_archivo !== entrada.id_archivo), entrada];
-    await escribirEnHoja(HOJA_BORRADORES, filasBorradores, entrada.id_archivo,
-      filaDeBorrador(entrada), COLUMNAS_BORRADORES.length);
-    await persistir();
-  }
-
-  /** Los nombres de lo que hay en `_borradores/`, para no repetir ninguno. */
-  const hermanosEnBorradores = async (): Promise<string[]> =>
-    (await drive.listarHijos(ctx.borradoresId)).map(a => a.name ?? '');
-
-  /** Sube una foto al lado del `.md`, con el primer número libre. Suma su nombre a `hermanos`. */
-  async function subirFoto(nombreMd: string, foto: Blob, hermanos: string[]): Promise<string> {
-    const nombre = nombreDeFoto(nombreMd, hermanos);
-    hermanos.push(nombre);
-    const archivo = await drive.crear({ nombre, contenido: foto, padre: ctx.borradoresId, mime: MIME_FOTO });
-    return archivo.id;
-  }
-
   /** A la papelera. Lo que ya no está en Drive no es un error: ya se fue. */
   async function aLaPapelera(id: string): Promise<void> {
     try {
@@ -1048,115 +972,6 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     } catch (e) {
       if (!noEsta(e)) throw e;
     }
-  }
-
-  /**
-   * Captura: las fotos, después un `.md` nuevo en `_borradores/` con sus ids, y
-   * su fila (C01.4.2). Una foto que ya se subió en un intento anterior llega
-   * como su id y no se vuelve a subir; `alSubirFoto` avisa cada id nuevo, para
-   * que quien llama lo recuerde si algo falla después.
-   */
-  async function agregarBorrador(
-    { titulo, fuente, nota, fotos = [] }: { titulo: string; fuente: string; nota: string; fotos?: (Blob | string)[] },
-    alSubirFoto?: (indice: number, id: string) => void
-  ): Promise<Borrador> {
-    if (!ctx.borradoresId) {
-      const carpeta = await drive.crear({ nombre: NOMBRE_BORRADORES, padre: ctx.raizId, mime: MIME_CARPETA });
-      ctx.borradoresId = carpeta.id;
-      // Sin listar carpetas al abrir, la única forma de volver a encontrarla.
-      await guardarMeta('carpeta_borradores', carpeta.id);
-    }
-    const hermanos = await hermanosEnBorradores();
-    const nombre = slugArchivo(titulo, hermanos);
-    const ids: string[] = [];
-    for (const [i, foto] of fotos.entries()) {
-      if (typeof foto === 'string') { ids.push(foto); continue; }
-      const id = await subirFoto(nombre, foto, hermanos);
-      alSubirFoto?.(i, id);
-      ids.push(id);
-    }
-    const contenido = { titulo, fuente, nota, capturado: new Date().toISOString(), fotos: ids };
-    const archivo = await drive.crear({ nombre, contenido: serializeBorrador(contenido), padre: ctx.borradoresId });
-    await escribirBorrador({ id_archivo: archivo.id, nombre_archivo: nombre, titulo, capturado: contenido.capturado });
-    return { id: archivo.id, ...contenido };
-  }
-
-  /**
-   * Reescribe el `.md` y su fila. `capturado` sale de la fila: editar no cambia
-   * cuándo entró. Las fotos no se editan acá: salen del `.md`, que se lee.
-   */
-  async function editarBorrador(
-    id: string, { titulo, fuente, nota }: { titulo: string; fuente: string; nota: string }
-  ): Promise<void> {
-    const entrada = entradasBorradores.find(e => e.id_archivo === id);
-    if (!entrada) return;
-    const { fotos } = parseBorrador(await drive.leerTexto(id));
-    await drive.actualizar(id, serializeBorrador({ titulo, fuente, nota, capturado: entrada.capturado, fotos }));
-    await escribirBorrador({ ...entrada, titulo });
-  }
-
-  /** El borrador de la fila, leído de su `.md`. */
-  async function borradorConEntrada(id: string): Promise<{ entrada: EntradaBorrador; borrador: Borrador }> {
-    const entrada = entradasBorradores.find(e => e.id_archivo === id);
-    if (!entrada) throw new Error(`El borrador ${id} no está en el índice`);
-    return { entrada, borrador: { id, ...parseBorrador(await drive.leerTexto(id)) } };
-  }
-
-  /** Sube la foto y la suma al final del `.md`. Con cinco, no agrega nada. Devuelve el borrador nuevo. */
-  async function agregarFotoABorrador(id: string, foto: Blob): Promise<Borrador> {
-    const { entrada, borrador: actual } = await borradorConEntrada(id);
-    if (actual.fotos.length >= MAXIMO_FOTOS) return actual;
-    const fotoId = await subirFoto(entrada.nombre_archivo, foto, await hermanosEnBorradores());
-    const nuevo = { ...actual, fotos: [...actual.fotos, fotoId] };
-    const { id: _, ...contenido } = nuevo;
-    await drive.actualizar(id, serializeBorrador(contenido));
-    return nuevo;
-  }
-
-  /**
-   * Manda la foto a la papelera y la saca del `.md`. Sólo una foto que el
-   * borrador nombra: un id cualquiera no se toca.
-   */
-  async function sacarFotoDeBorrador(id: string, fotoId: string): Promise<Borrador> {
-    const { borrador: actual } = await borradorConEntrada(id);
-    if (!actual.fotos.includes(fotoId)) return actual;
-    await aLaPapelera(fotoId);
-    const nuevo = { ...actual, fotos: actual.fotos.filter(f => f !== fotoId) };
-    const { id: _, ...contenido } = nuevo;
-    await drive.actualizar(id, serializeBorrador(contenido));
-    return nuevo;
-  }
-
-  /**
-   * Las fotos y el `.md` a la papelera, y la fila afuera. Sin fila no hace
-   * nada: descartar dos veces termina bien. Si la fila falla, reintentar
-   * vuelve a mandar a la papelera lo que ya está ahí, que no falla.
-   *
-   * `conservar` son las fotos que convertir ya pasó a la receta: esas no se
-   * tocan. Y como convertir puede haberlas movido sin llegar a
-   * descartar el borrador, tampoco se toca ninguna que ya no esté en
-   * `_borradores/`: el `.md` del borrador las sigue nombrando, pero son de la
-   * receta.
-   */
-  async function descartarBorrador(id: string, { conservar = [] }: { conservar?: readonly string[] } = {}): Promise<void> {
-    if (!filasBorradores.has(id)) return;
-    const { fotos } = parseBorrador(await drive.leerTexto(id));
-    for (const foto of fotos) {
-      if (conservar.includes(foto)) continue;
-      let padres: string[];
-      try {
-        padres = (await drive.metadatos(foto, 'parents')).parents ?? [];
-      } catch (e) {
-        if (!noEsta(e)) throw e;
-        continue;   // borrada a mano en Drive: no hay nada que mandar a la papelera
-      }
-      if (!padres.includes(ctx.borradoresId)) continue;
-      await aLaPapelera(foto);
-    }
-    await drive.borrar(id);
-    entradasBorradores = entradasBorradores.filter(e => e.id_archivo !== id);
-    await borrarDeHoja(HOJA_BORRADORES, filasBorradores, id);
-    await persistir();
   }
 
   /** La carpeta base nueva: «Crear la carpeta Recetario en Mi unidad». */
@@ -1355,16 +1170,6 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     return ctx.categorias;
   }
 
-  /** La lista y el contador: desde memoria, lo más viejo primero (C01.4.1). */
-  function borradores(): EntradaBorrador[] {
-    return [...entradasBorradores].sort((a, b) => a.capturado.localeCompare(b.capturado));
-  }
-
-  /** El borrador entero: la fuente y la nota están en su `.md`, no en el índice. */
-  async function borrador(id: string): Promise<Borrador> {
-    return { id, ...parseBorrador(await drive.leerTexto(id)) };
-  }
-
   /**
    * El plan de la semana. `_plan.md` no está en el índice: se lo busca por
    * nombre en la carpeta base la primera vez y el id queda en memoria. Con más
@@ -1411,7 +1216,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   /** Hay más de un `_plan.md` en la carpeta base, para Ajustes. */
   const planDuplicado = (): IndiceDuplicado | null => plan.duplicado;
 
-  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, escribirFila, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, recetasDe, crearCategoria, editarCategoria, borrarCategoria, carpeta, crearCarpeta, prepararCarpeta, marcarReemplazada, categorias, borradores, borrador, agregarBorrador, editarBorrador, agregarFotoABorrador, sacarFotoDeBorrador, descartarBorrador, plan: planSemanal, guardarPlan, planDuplicado, _ctx: ctx };
+  return { arrancar, cargarIndice, entradas: () => entradas, guardarMeta, ultimaReconstruccion, escribirFila, guardar, crear, borrar, reconstruir, buscar, buscarPorTexto, categoriasConConteo, tagsDe, receta, recetasDe, crearCategoria, editarCategoria, borrarCategoria, carpeta, crearCarpeta, prepararCarpeta, marcarReemplazada, categorias, plan: planSemanal, guardarPlan, planDuplicado, _ctx: ctx };
 }
 
 /** El objeto que devuelve `crearStore`. Lo consumen `compartido`, `main` y los tests. */

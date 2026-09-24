@@ -7,7 +7,7 @@
 import { DURACIONES, DIFICULTADES, TAGS_RESERVADOS } from './catalogo.js';
 import { parse } from './recipe.js';
 import { linkDeFoto } from './fotos-receta.js';
-import type { Receta, Borrador } from './tipos.js';
+import type { Receta } from './tipos.js';
 
 /**
  * Qué son las fotos y cómo tratarlas. Con `links`, una línea por foto con su
@@ -35,7 +35,7 @@ function parrafoDeFotos(fotos: readonly string[], links: boolean): string[] {
 }
 
 export function pedidoDeConversion(
-  { id, titulo, fuente, nota, fotos = [] }: Pick<Borrador, 'id' | 'titulo' | 'fuente' | 'nota'> & { fotos?: readonly string[] },
+  { id, titulo, fuente, nota, fotos = [] }: { id: string; titulo: string; fuente: string; nota: string; fotos?: readonly string[] },
   { links = false }: { links?: boolean } = {}
 ): string {
   const lista = (xs: readonly string[]): string => xs.map(x => `\`${x}\``).join(', ');

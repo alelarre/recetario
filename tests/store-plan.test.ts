@@ -21,7 +21,7 @@ async function armar({ planes = [] as { id: string; contenido: string; modifiedT
     ...planes.map(p => ({ id: p.id, name: '_plan.md', parents: ['raiz'], contenido: p.contenido, modifiedTime: p.modifiedTime ?? FECHA }))
   ]);
   const sheets = sheetsFalso();
-  sheets.crearPlanilla('i1', ['recetas', 'meta', 'borradores', 'categorias']);
+  sheets.crearPlanilla('i1', ['recetas', 'meta', 'categorias']);
   sheets.cargar('i1', 'recetas', [[...COLUMNAS]]);
   sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)]]);
   const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });

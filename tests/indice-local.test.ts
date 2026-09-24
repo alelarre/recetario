@@ -10,7 +10,6 @@ const copia: CopiaIndice = {
   modifiedTime: '2026-09-13T10:00:00.000Z',
   meta: { schemaVersion: '3', ultima_reconstruccion: '2026-09-12T10:00:00.000Z' },
   filas: [{ fila: 2, entrada: entradaFalsa({ id_archivo: 'r1', titulo: 'Milanesas', tags: ['horno'], mtime: 1000 }) }],
-  borradores: [{ fila: 2, entrada: { id_archivo: 'b1', nombre_archivo: 'a.md', titulo: 'A', capturado: '2026-09-13' } }],
   raizId: 'raiz',
   raizNombre: 'Recetario',
   categorias: [{ id: 'c1', nombre: 'Pastas', color: 'pastas', foto: 'catalogo:pastas' }]

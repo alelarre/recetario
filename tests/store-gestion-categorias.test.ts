@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { crearStore } from '../src/store.js';
 import { COLUMNAS } from '../src/catalogo.js';
-import { COLUMNAS_BORRADORES } from '../src/borrador.js';
 import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 import { SCHEMA_VERSION } from '../src/config.js';
 import type { CopiaIndice } from '../src/indice-local.js';
@@ -28,7 +27,7 @@ async function abierta() {
     { id: 'r3', name: 'r3.md', parents: ['c1'] }, { id: 'r4', name: 'r4.md', parents: ['raiz'] }
   ]);
   const sheets = sheetsFalso();
-  sheets.crearPlanilla('i1', ['recetas', 'meta', 'borradores', 'categorias']);
+  sheets.crearPlanilla('i1', ['recetas', 'meta', 'categorias']);
   sheets.cargar('i1', 'recetas', [
     [...COLUMNAS],
     fila('r1', 'Ñoquis', 'Nombre viejo', 'c1'),
@@ -37,7 +36,6 @@ async function abierta() {
     fila('r4', 'Suelta', 'Sin categoría', 'raiz')
   ]);
   sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)]]);
-  sheets.cargar('i1', 'borradores', [[...COLUMNAS_BORRADORES]]);
   sheets.cargar('i1', 'categorias', [
     [...COLUMNAS_CATEGORIAS], ['c1', 'Pastas', 'pastas', 'catalogo:pastas'], ['c2', 'Aves', 'aves', 'catalogo:aves']
   ]);

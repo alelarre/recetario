@@ -19,14 +19,12 @@ import {
   renderAccionesFoto, renderElegirFoto, renderSelectorPortada, renderFotoPorUrl,
   filaDeFotosEditor, muestraDePortada, fotosDesde, botonPonerFoto
 } from './ui/editor.js';
-import { renderBorradores, renderBorrador, renderPreguntaBorrador } from './ui/borradores.js';
 import { renderPlan } from './ui/plan.js';
 import { renderPlanAgregar, bloqueDeAgregar } from './ui/plan-agregar.js';
 import { renderCompras } from './ui/compras.js';
 import { diaDeHoy } from './plan.js';
 import { listaDeCompras, textoCompras } from './compras.js';
 import type { ListaDeCompras } from './compras.js';
-import { renderCaptura } from './ui/captura.js';
 import { renderAjustes } from './ui/ajustes.js';
 import { renderConexion } from './ui/conexion.js';
 import { renderListaCategorias, renderEdicionCategoria, confirmacionBorrarCategoria, botonBorrarCategoria } from './ui/gestion-categorias.js';
@@ -46,23 +44,19 @@ import {
 } from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
 import { registrarCategorias } from './ui/categorias.js';
-import { convertirBorrador } from './compartido.js';
-import { pedidoDeConversion, esRecetaEnMd, recetaRecibida } from './conversion.js';
 import { precargar, generar } from './pdf/generar.js';
-import { compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador, enviarAClaude, leerPortapapeles } from './compartir.js';
+import { compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador } from './compartir.js';
 import { codificar, urlDeLink } from './link-receta.js';
 import { textoReceta } from './texto-receta.js';
 import type { EstadoCompartir } from './ui/compartir.js';
-import type { RecetaCreada } from './compartido.js';
 import type { Ruta } from './ui/router.js';
-import { desdeCompartido, tituloPorDefecto, sePuedeGuardar, MAXIMO_FOTOS } from './borrador.js';
 import { achicar } from './fotos.js';
 import type { OpcionesAchicar } from './fotos.js';
 import { crearImagenes, conTope } from './imagenes.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { EstadoVisor } from './ui/visor.js';
 import type { ResultadoArranque, Progreso } from './store.js';
-import type { Borrador, CambiosDeFotos, Entrada, FotoDeReceta, Momento, Plan, Receta } from './tipos.js';
+import type { CambiosDeFotos, Entrada, FotoDeReceta, Momento, Plan, Receta } from './tipos.js';
 
 type Store = ReturnType<typeof crearStore>;
 
@@ -138,15 +132,9 @@ function sacarFoto(img: Element, recuadro: string): void {
 }
 
 let store: Store;
-/**
- * Lo que una conversión de borrador ya creó, por si hay que reintentarla
- * (C01.7.1). Vive acá y no en cada Guardar: si el borrado del borrador falla,
- * el segundo intento tiene que reescribir el `.md` que ya existe, no crear otro.
- */
-const convertidos = new Map<string, RecetaCreada>();
 let estadoArranque: ResultadoArranque | undefined;
 let vistaActual: Ruta | null = null;
-/** El id de la ruta que se está mirando: la receta, el borrador o la categoría. */
+/** El id de la ruta que se está mirando: la receta o la categoría. */
 const idActual = (): string => vistaActual?.params['id'] ?? '';
 let tagsActivos: string[] = [];   // filtro de la vista de categoría; se limpia al cambiar de vista
 let duracionesActivas: string[] = [];   // filtro de duración de la categoría o la lista por tag
@@ -198,22 +186,6 @@ async function usarCarpeta(elegida: CarpetaSimple): Promise<void> {
 /** El menú lateral desplegado. Sólo aplica en pantalla angosta: desde 900 px es fijo. */
 let menuAbierto = false;
 
-/** Lo que se está por descartar o borrar pide confirmación antes (C01.6.2, C04.6.1). */
-let confirmandoDescarte = false;
-/** El borrador se edita con el mismo formulario con el que se creó, precargado. */
-let editandoBorrador = false;
-/**
- * La pregunta de salir sin guardar vino del volver del encabezado, que cierra
- * la edición y deja el borrador, y no del gesto de atrás, que se va de él.
- */
-let cerrandoEdicion = false;
-
-/** Deja de editar el borrador: sin foto del formulario, ya no hay cambios que cuidar. */
-const cerrarEdicion = (): void => {
-  editandoBorrador = false;
-  cerrandoEdicion = false;
-  editorAbierto = null;
-};
 /**
  * El editor abierto: su hash y cómo estaba el formulario al dibujarlo. Salir
  * con el formulario distinto pregunta antes (C04.1.1). La comparación es contra
@@ -235,17 +207,8 @@ let marcandoFavorito = false;
 let errorFavorito = '';
 
 /**
- * El borrador abierto, leído de su `.md` una vez. Mismo criterio que la
- * receta: lo reutilizan los redibujados —confirmar el descarte, Editar, un
- * error— y crear la receta desde él. Salir a otra pantalla lo descarta. La
- * lista y el contador no leen nada: salen del índice en memoria.
- */
-let borradorLeido: Borrador | null = null;
-const PANTALLAS_DE_BORRADOR: readonly Ruta['vista'][] = ['borrador', 'nueva'];
-
-/**
- * El plan de la semana, leído de su `.md` una vez. Mismo criterio que la receta
- * y el borrador: se conserva mientras se navega entre las tres pantallas del
+ * El plan de la semana, leído de su `.md` una vez. Mismo criterio que la
+ * receta: se conserva mientras se navega entre las tres pantallas del
  * plan y se descarta al salir a cualquier otra.
  */
 let planLeido: Plan | null = null;
@@ -265,12 +228,6 @@ let categoriaPlan: string | null = null;
 let comprasLeidas: { clave: string; lista: ListaDeCompras } | null = null;
 
 /**
- * La receta que llegó de Claude —compartida o pegada— mientras se decide a qué
- * borrador va y se revisa en el editor. Vive en memoria: el `.md` puede ser
- * largo para el hash.
- */
-let recibida: Receta | null = null;
-/**
  * Falta la sesión de Google: la renovación silenciosa no salió, o Google
  * rechazó el token. No es un problema de red, y el aviso lo dice (R3).
  */
@@ -281,9 +238,6 @@ const sinSesion = (err: unknown): boolean =>
 /** Por qué no se guardó, en castellano (R1). */
 const porQueNoGuardo = (err: unknown): string =>
   sinSesion(err) ? SIN_SESION : 'No se pudo guardar. Revisá la conexión.';
-
-/** El aviso de «Pegar receta» cuando lo copiado no sirve, para Borradores y el borrador. */
-let avisoBorradores = '';
 
 /**
  * Cuántos pedidos de tapar la pantalla hay abiertos, y la pantalla desde la
@@ -414,12 +368,6 @@ async function escribiendo<T>(p: Promise<T>): Promise<T> {
   finally { destapar(); }
 }
 
-/** El borrador de la pantalla: de Drive la primera vez, de memoria mientras no se salga. */
-async function borradorDePantalla(id: string): Promise<Borrador> {
-  if (borradorLeido?.id !== id) borradorLeido = await store.borrador(id);
-  return borradorLeido;
-}
-
 /** Las pantallas de una misma receta, entre las que la copia leída se conserva. */
 const PANTALLAS_DE_RECETA: readonly Ruta['vista'][] = ['receta', 'cocinar', 'editar'];
 
@@ -526,30 +474,6 @@ let cuenta = '';
 /** El progreso del reindexado en curso, o `null`. Mientras corre no se guarda ni se borra. */
 let reindexando: Progreso | null = null;
 
-/** La captura: lo escrito sobrevive al error y a la reautenticación (R3). */
-/** Lo que llegó del menú Compartir en la ruta de la captura. */
-const compartidoDe = (ruta: Ruta): { url: string; text: string } =>
-  ({ url: ruta.params['url'] ?? '', text: ruta.params['text'] ?? '' });
-
-let tituloCaptura = '';
-/** La fuente escrita a mano: agregar una foto redibuja la captura. */
-let fuenteCaptura = '';
-let notaCaptura = '';
-let guardandoCaptura = false;
-let errorCaptura = '';
-/** Un aviso de las fotos de la captura, sin control. */
-let avisoCaptura = '';
-/**
- * Las fotos de la captura, ya achicadas, en memoria hasta Guardar. `id` es el
- * de Drive cuando ya se subió en un intento que falló después: reintentar no
- * la vuelve a subir.
- */
-let fotosCaptura: { blob: Blob; url: string; id?: string }[] = [];
-/** Cuántas fotos dejó el service worker para esta captura, todavía sin leer. */
-let compartidasPorLeer = 0;
-/** La foto del borrador abierta en el visor, por id. */
-let fotoAbierta: string | null = null;
-
 /** El visor de fotos de una receta abierto: las URLs que recorre y en cuál está. */
 let visor: EstadoVisor | null = null;
 /**
@@ -564,15 +488,13 @@ let visorDesde: number | null = null;
  * Las fotos que el editor tiene en memoria hasta Guardar: el blob de
  * cada número nuevo, su object URL para la miniatura, y el id de Drive de la
  * que ya se subió en un intento que falló después —reintentar no la vuelve a
- * subir, igual que la captura—.
+ * subir—.
  */
 const fotosEditor = {
   nuevas: new Map<number, Blob>(),
   urls: new Map<number, string>(),
   subidas: new Map<number, string>()
 };
-/** Los ids de las fotos del borrador que abrió el editor: las que queden se mueven a `_fotos/`. */
-let fotosDelBorrador: string[] = [];
 /** La foto propia recién elegida para una categoría: se sube al guardarla. */
 let fotoPropia: { blob: Blob; url: string } | null = null;
 
@@ -581,105 +503,6 @@ const achicarFoto = (archivo: Blob, opciones?: OpcionesAchicar): Promise<Blob> =
   achicar(archivo, () => document.createElement('canvas'), opciones);
 
 const NO_SE_LEYO_UNA_FOTO = 'No se pudo leer una de las fotos.';
-
-/**
- * Suma fotos a la captura, achicadas, hasta el máximo. Devuelve el aviso que
- * corresponda, o vacío.
- */
-async function sumarFotosACaptura(archivos: Blob[]): Promise<string> {
-  const lugar = MAXIMO_FOTOS - fotosCaptura.length;
-  let noSeLeyo = false;
-  // Tapa una vez para todas y no una por foto: con varias, el velo se prendía
-  // y se apagaba entre una y otra. Lo de adentro suma sobre el mismo
-  // contador, así que el velo no parpadea.
-  const destapar = tapar();
-  try {
-    for (const archivo of archivos.slice(0, Math.max(lugar, 0))) {
-      try {
-        const blob = await escribiendo(achicarFoto(archivo));
-        fotosCaptura.push({ blob, url: imagenes.urlDeBlob(blob) });
-      } catch (err) {
-        console.error(err);
-        noSeLeyo = true;
-      }
-    }
-  } finally {
-    destapar();
-  }
-  return [
-    archivos.length > lugar ? fotosDeMas(lugar) : '',
-    noSeLeyo ? NO_SE_LEYO_UNA_FOTO : ''
-  ].filter(Boolean).join(' ');
-}
-
-/** Se eligieron más de las que entran. */
-const fotosDeMas = (lugar: number): string => lugar > 0
-  ? `Un borrador lleva hasta ${MAXIMO_FOTOS} fotos: se agregaron las primeras ${lugar}.`
-  : `Un borrador lleva hasta ${MAXIMO_FOTOS} fotos.`;
-
-/**
- * Las fotos que llegaron del menú Compartir: el service worker las dejó en su
- * caché. Se toman las primeras cinco, se achican y el caché se borra.
- */
-async function leerCompartidas(cantidad: number): Promise<void> {
-  const llegadas = await imagenes.fotosCompartidas(Math.min(cantidad, MAXIMO_FOTOS));
-  await imagenes.descartarCompartidas();
-  const noSeLeyo = (await sumarFotosACaptura(llegadas)).includes(NO_SE_LEYO_UNA_FOTO);
-  avisoCaptura = [
-    llegadas.length && cantidad > MAXIMO_FOTOS ? `Llegaron ${cantidad} fotos: se guardan las primeras ${MAXIMO_FOTOS}.` : '',
-    noSeLeyo ? NO_SE_LEYO_UNA_FOTO : ''
-  ].filter(Boolean).join(' ');
-}
-
-/** Las fotos del borrador para dibujarlo: el object URL de cada una, o `null` si ya no está en Drive. */
-const fotosDeBorrador = (b: Borrador): Promise<{ id: string; url: string | null }[]> =>
-  Promise.all(b.fotos.map(async id => ({ id, url: await imagenes.urlDeImagen(id) })));
-
-/**
- * Sube fotos al borrador abierto: cada una reescribe el `.md` en el momento.
- * El velo se pone una vez para todas y no una por foto; lo que no se
- * pudo queda en el aviso.
- */
-async function agregarFotosABorrador(id: string, archivos: Blob[]): Promise<void> {
-  const lugar = MAXIMO_FOTOS - (borradorLeido?.fotos.length ?? 0);
-  const avisos: string[] = archivos.length > lugar ? [fotosDeMas(lugar)] : [];
-  let noSeLeyo = false;
-  const destapar = tapar();
-  try {
-    for (const archivo of archivos.slice(0, Math.max(lugar, 0))) {
-      let blob: Blob;
-      try {
-        blob = await escribiendo(achicarFoto(archivo));
-      } catch (err) {
-        console.error(err);
-        noSeLeyo = true;
-        continue;
-      }
-      try {
-        borradorLeido = await escribiendo(store.agregarFotoABorrador(id, blob));
-      } catch (err) {
-        console.error(err);
-        avisos.push(porQueNoGuardo(err));
-        break;
-      }
-    }
-  } finally {
-    destapar();
-  }
-  if (noSeLeyo) avisos.push(NO_SE_LEYO_UNA_FOTO);
-  avisoBorradores = avisos.join(' ');
-}
-
-/** Las fotos del borrador como archivos, para mandarlas a Claude. Si no se pueden leer, ninguna. */
-async function archivosDeFotos(ids: string[]): Promise<File[]> {
-  try {
-    const blobs = await Promise.all(ids.map(id => imagenes.imagenDe(id)));
-    return blobs.flatMap((b, i) => b ? [new File([b], `foto-${i + 1}.jpg`, { type: b.type || 'image/jpeg' })] : []);
-  } catch (err) {
-    console.error(err);
-    return [];
-  }
-}
 
 /** El modo cocina: paso actual, marcados, conmutador y pantalla encendida. */
 const cocina = crearControlCocina();
@@ -785,12 +608,15 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
   router.iniciar();
 }
 
+/** El contador del menú: las recetas con el tag `borrador`. */
+const cuantosBorradores = (): number => store.buscar({ tags: ['borrador'] }).length;
+
 /** Ajustes, igual al entrar que mientras reindexa: sólo cambia `reindexando`. */
 function dibujarAjustes(): void {
   pintar(renderAjustes({
     cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
     indiceDuplicado: indiceDuplicado(), planDuplicado: store.planDuplicado(), reindexando,
-    borradores: store.borradores().length, menuAbierto,
+    borradores: cuantosBorradores(), menuAbierto,
     informe: informeArranque(), recetas: store.entradas().length, categorias: store.categorias().length,
     carpeta: store.carpeta().nombre
   }));
@@ -862,31 +688,6 @@ function observarTramo(): void {
 }
 
 /**
- * Lo recibido de Claude va al editor del borrador del id si existe; si no, a
- * la pregunta «¿De qué borrador es esta receta?».
- *
- * `reemplazar` navega con `replace` en vez de sumar una entrada al
- * historial. Hace falta cuando esto se llama desde `capturar`: el Share
- * Target deja esa pantalla como única entrada (`hashDeCompartido` ya
- * reemplazó), y si acá se sumara una entrada, volver —o «Salir sin
- * guardar», o cerrar después de guardar— caería de nuevo en `#/capturar`,
- * que reconocería la misma receta y la reabriría. Desde «Pegar receta» no hace
- * falta: ahí sí conviene que volver deje al borrador o a Borradores, de donde
- * se pegó.
- */
-function recibirReceta(texto: string, borradorElegido?: string, reemplazar = false): void {
-  const { receta, borradorId } = recetaRecibida(texto);
-  recibida = receta;
-  const id = borradorElegido ?? borradorId;
-  const existe = !!id && store.borradores().some(b => b.id_archivo === id);
-  const hash = existe ? `#/nueva?borrador=${encodeURIComponent(id)}&recibida=1` : '#/recibida';
-  if (reemplazar) irCerrando(hash); else location.hash = hash;
-  // Un `hashchange` real haría lo mismo, pero en el próximo tick: no hay que
-  // esperarlo para mostrar el editor o la pregunta.
-  void render();
-}
-
-/**
  * La lista que dibujan la categoría y la lista por tag: filtrada por duración y
  * ordenada. Sin fila de duraciones no hay conmutador para volver a A–Z, así que
  * ahí el orden por duración se ignora en vez de quedar pegado sin control.
@@ -943,12 +744,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   // tag que ahí no existe, sin forma de darse cuenta.
   if (cambiaDePantalla) {
     editorAbierto = null;
-    avisoBorradores = '';
-    // Lo recibido de Claude sobrevive a la pregunta y al editor que abre
-    // desde ella; cualquier otra pantalla lo descarta.
-    if (!(ruta.vista === 'recibida' || (ruta.vista === 'nueva' && ruta.params['recibida']))) recibida = null;
     if (!PANTALLAS_DE_RECETA.includes(ruta.vista)) recetaLeida = null;
-    if (!PANTALLAS_DE_BORRADOR.includes(ruta.vista)) borradorLeido = null;
     // El aviso de una escritura que falló sobrevive a la navegación entre las
     // pantallas del plan: agregar escribe y cierra, y el aviso va en el plan.
     if (!PANTALLAS_DE_PLAN.includes(ruta.vista)) { planLeido = null; comprasLeidas = null; errorPlan = ''; }
@@ -961,36 +757,18 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     visibles = TRAMO;
     // Navegar cierra el menú: se abrió para elegir a dónde ir.
     menuAbierto = false;
-    confirmandoDescarte = false;
-    editandoBorrador = false;
-    cerrandoEdicion = false;
     // Salir de la pantalla de la carpeta la cierra: lo que se estaba por usar no sigue.
     selector.confirmando = null;
     selector.error = '';
-    if (ruta.vista !== 'capturar' && ruta.vista !== 'borrador') {
-      tituloCaptura = ''; fuenteCaptura = ''; notaCaptura = ''; guardandoCaptura = false; errorCaptura = '';
-    }
-    // Las imágenes de la pantalla anterior se sueltan: las fotos de la
-    // captura en memoria son de esa captura, y el visor, de ese borrador.
+    // Las imágenes de la pantalla anterior se sueltan: el visor es de esa pantalla.
     imagenes.soltarImagenes();
-    fotosCaptura = [];
-    avisoCaptura = '';
-    compartidasPorLeer = 0;
-    fotoAbierta = null;
     visor = null;
     // Las fotos del editor viven lo que la pantalla: salir sin guardar no deja
     // nada en Drive, y volver a entrar abre con lo que dice el `.md`.
     fotosEditor.nuevas.clear();
     fotosEditor.urls.clear();
     fotosEditor.subidas.clear();
-    fotosDelBorrador = [];
     fotoPropia = null;
-    // Lo compartido llega con la nota ya escrita: el texto que acompañaba al link.
-    if (ruta.vista === 'capturar') {
-      tituloCaptura = ''; fuenteCaptura = ''; guardandoCaptura = false; errorCaptura = '';
-      notaCaptura = desdeCompartido(compartidoDe(ruta)).nota;
-      compartidasPorLeer = Number(ruta.params['fotos'] ?? 0) || 0;
-    }
     cocina.reiniciar();
     compartiendo = null;
     pdfListo = null;
@@ -1009,9 +787,14 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   }) + '</div>');
 
   switch (ruta.vista) {
+    // Las pantallas de borradores ya no existen: sus rutas muestran el Recetario.
+    case 'borradores':
+    case 'borrador':
+    case 'capturar':
+    case 'recibida':
     case 'recetario':
       pintar(renderRecetario({
-        categorias: store.categoriasConConteo(), borradores: store.borradores().length,
+        categorias: store.categoriasConConteo(), borradores: cuantosBorradores(),
         menuAbierto, tags: store.tagsDe()
       }));
       return precargarElHome();
@@ -1107,43 +890,12 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       return abrirEditor(renderEdicionCategoria({ categoria, valores, otros }));
     }
 
-    case 'capturar': {
-      // La captura no dibuja la app: es una pantalla efímera sobre lo que el
-      // usuario estaba haciendo en otra app (C01.2.2).
-      const textoCompartido = ruta.params['text'] || '';
-      // Lo compartido puede ser la receta que volvió de Claude: ahí no se
-      // captura como borrador, se abre el editor directo. Con `replace`: esta
-      // pantalla es la única entrada del historial que dejó el Share Target, y
-      // sin reemplazarla, volver caería de nuevo acá y reabriría la misma receta.
-      if (esRecetaEnMd(textoCompartido)) { recibirReceta(textoCompartido, undefined, true); return; }
-      const llegado = compartidoDe(ruta);
-      if (compartidasPorLeer) {
-        const cantidad = compartidasPorLeer;
-        compartidasPorLeer = 0;
-        await leerCompartidas(cantidad);
-      }
-      return pintar(renderCaptura({
-        fuente: desdeCompartido(llegado).fuente || fuenteCaptura,
-        compartido: !!(llegado.url || llegado.text || ruta.params['fotos']),
-        titulo: tituloCaptura, nota: notaCaptura, guardando: guardandoCaptura,
-        fotos: fotosCaptura.map(f => f.url),
-        ...(errorCaptura ? { error: errorCaptura } : {}),
-        ...(avisoCaptura ? { aviso: avisoCaptura } : {})
-      }));
-    }
-
-    case 'recibida':
-      // Sin nada recibido —una recarga de esta misma pantalla, por
-      // ejemplo— no hay qué preguntar: se vuelve a Borradores.
-      if (!recibida) { irCerrando('#/borradores'); return; }
-      return pintar(renderPreguntaBorrador({ borradores: store.borradores() }));
-
     case 'plan':
       try {
         const plan = await planDePantalla();
         return pintar(renderPlan({
           plan, entradas: store.entradas(), hoy: diaDeHoy(),
-          borradores: store.borradores().length, menuAbierto,
+          borradores: cuantosBorradores(), menuAbierto,
           ...(confirmandoReinicio ? { confirmandoReinicio: true } : {}),
           ...(errorPlan ? { error: errorPlan } : {})
         }));
@@ -1172,45 +924,6 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         return enPantalla('No se pudo armar la lista de compras.');
       }
 
-    case 'borradores':
-      return pintar(renderBorradores({
-        borradores: store.borradores(), menuAbierto,
-        ...(avisoBorradores ? { aviso: avisoBorradores } : {})
-      }));
-
-    case 'borrador': {
-      const id = ruta.params['id'] ?? '';
-      // Un borrador que ya no está en el índice —convertido, descartado— no
-      // es un error: la lista es lo que corresponde mostrar.
-      if (!store.borradores().some(b => b.id_archivo === id)) {
-        return pintar(renderBorradores({ borradores: store.borradores(), menuAbierto }));
-      }
-      try {
-        const borrador = await borradorDePantalla(id);
-        // Editar es el mismo formulario con el que se creó, precargado.
-        if (editandoBorrador) {
-          const html = renderCaptura({
-            fuente: borrador.fuente, titulo: borrador.titulo, nota: borrador.nota,
-            edicion: true, guardando: guardandoCaptura,
-            ...(errorCaptura ? { error: errorCaptura } : {})
-          });
-          // La foto contra la que se comparan los cambios se saca al entrar a
-          // editar; un redibujado —un error al guardar— no la reemplaza.
-          return editorAbierto ? pintar(html) : abrirEditor(html);
-        }
-        const fotos = await fotosDeBorrador(borrador);
-        const abierta = fotos.find(f => f.id === fotoAbierta)?.url;
-        return pintar(renderBorrador({
-          borrador, confirmando: confirmandoDescarte, fotos,
-          ...(abierta ? { visor: abierta } : {}),
-          ...(avisoBorradores ? { aviso: avisoBorradores } : {})
-        }));
-      } catch (err) {
-        console.error(err);
-        return enPantalla('No se pudo leer el borrador.');
-      }
-    }
-
     case 'editar':
       try {
         const { entrada, receta } = await recetaDePantalla(ruta.params['id'] ?? '');
@@ -1225,44 +938,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
 
     case 'nueva': {
       // El mismo formulario que editar, sin entrada (todavía no hay archivo en
-      // Drive) y con una receta vacía en vez de una leída. Desde un borrador
-      // abre con el título y la fuente cargados (C04.3b.1); guardar es lo que
-      // de verdad la crea, y ahí se borra el borrador (C01.7.1). Si la receta
-      // viene de Claude —recibida—, se usa tal cual, sin mezclar la nota de
-      // ningún borrador.
-      const borradorId = ruta.params['borrador'] ?? '';
-      // `recibida` se lee una sola vez: de ahí sale tanto si esta pantalla
-      // usa la receta de Claude como, más abajo, si cuenta como cambios sin
-      // guardar desde que se abre.
-      const deClaude = ruta.params['recibida'] ? recibida : null;
-      const borrador = borradorId ? await borradorDePantalla(borradorId).catch(() => null) : null;
-      let receta: Receta;
-      if (deClaude) {
-        // Copia: `recibida` sigue viva hasta que se guarda o se navega a otra
-        // pantalla (para que `guardar` conserve sus claves desconocidas), y
-        // no tiene que verse afectada por lo que el editor le hace a la suya.
-        receta = { ...deClaude };
-      } else {
-        receta = parse('');
-        if (borrador) {
-          // La nota se lee como si fuera el `.md` de la receta: lo que esté
-          // bajo `## Ingredientes`, `## Preparación`, `## Variaciones` o
-          // `## Notas` cae en su campo, y el texto suelto de arriba queda como
-          // descripción. Escribirla así es opcional.
-          const deLaNota = parse(borrador.nota);
-          Object.assign(receta, deLaNota, {
-            titulo: borrador.titulo || deLaNota.titulo,
-            fuente: borrador.fuente || deLaNota.fuente
-          });
-        }
-      }
-      if (borrador) {
-        // El editor atado a un borrador abre con el depósito ya cargado: sus
-        // fotos, en su orden, como 1, 2, 3…, con sus links de Drive.
-        // La receta que vuelve de Claude ya las nombra como `foto:N`.
-        fotosDelBorrador = borrador.fotos;
-        receta.fotos = borrador.fotos.map((id, i) => ({ n: i + 1, url: linkDeFoto(id) }));
-      }
+      // Drive) y con una receta vacía en vez de una leída.
+      const receta = parse('');
       // Una receta nace como borrador: sacar el tag es la declaración explícita
       // de que está terminada (C04.3b.1).
       receta.tags = conEspecial(receta.tags, 'borrador', true);
@@ -1270,9 +947,6 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         entrada: null, receta, categorias: store.categorias(),
         tagsConocidos: store.tagsDe().map(t => t.tag)
       }));
-      // Cuenta como cambios sin guardar desde que se abre: la foto contra la
-      // que se compara queda vacía, así que cualquier formulario difiere.
-      if (deClaude && editorAbierto) editorAbierto.formulario = '';
       return;
     }
   }
@@ -1340,14 +1014,12 @@ const portadaDelEditor = (): string => campoDelEditor('foto')?.value ?? '';
 
 /**
  * La receta sobre la que escribe el formulario: lo que el editor no muestra
- * —`extras` y las secciones ajenas— sale de acá. En el alta es la receta que
- * volvió de Claude, si hay una; editando, la que se leyó. Es la misma base que
+ * —`extras` y las secciones ajenas— sale de acá. En el alta es una vacía;
+ * editando, la que se leyó. Es la misma base que
  * usa Guardar, salvo que ahí la de una receta existente se relee de Drive.
  */
 const baseDelEditor = (): Receta => {
-  if (vistaActual?.vista === 'nueva') {
-    return (vistaActual.params['recibida'] && recibida ? recibida : null) ?? parse('');
-  }
+  if (vistaActual?.vista === 'nueva') return parse('');
   return recetaLeida?.receta ?? parse('');
 };
 
@@ -1585,9 +1257,8 @@ type PedidoDeFoto =
 
 /**
  * Pide la foto de una dirección escrita a mano y la deja lista para agregar.
- * Es lo común a las tres pantallas que la agregan —la receta, el borrador y la
- * captura—: las salidas son las mismas y lo único que cambia es qué hace
- * cada una con cada una.
+ * Las salidas son tres: la foto bajada, un link que no se pudo bajar, o un
+ * error.
  */
 async function pedirFotoPorUrl(escrita: string): Promise<PedidoDeFoto> {
   const url = conEsquemaEnMinuscula(escrita);
@@ -1608,31 +1279,18 @@ async function pedirFotoPorUrl(escrita: string): Promise<PedidoDeFoto> {
   }
 }
 
-/** El borrador abierto, que no es lo mismo que estar editándolo: ahí la pantalla es la captura. */
-const enElBorrador = (): boolean => vistaActual?.vista === 'borrador' && !editandoBorrador;
-
 /**
- * *Traer* en la ficha de una foto por URL: cada pantalla la agrega a lo suyo.
- * Las tres están nombradas —como en el manejador de *Cámara* y *Galería*—: la
- * ficha no se dibuja en ninguna otra, y caer al editor desde una pantalla sin
- * depósito sería escribir en un formulario que no existe.
+ * *Traer* en la ficha de una foto por URL. Sólo el editor la dibuja: caer al
+ * editor desde una pantalla sin depósito sería escribir en un formulario que
+ * no existe.
  */
 async function agregarFotoPorUrl(escrita: string): Promise<void> {
-  if (vistaActual?.vista === 'capturar') return agregarFotoPorUrlACaptura(escrita);
-  if (enElBorrador()) return agregarFotoPorUrlABorrador(escrita);
   if (enElEditor()) return agregarFotoPorUrlAlEditor(escrita);
   return;
 }
 
-/**
- * Abre la ficha de *Por URL*. En el borrador y en la captura el aviso que haya
- * arriba se va primero, y por eso la pantalla se redibuja antes de colgarla:
- * con la ficha abierta, dos avisos a la vez no dicen cuál es el de ahora. En
- * el editor eso lo hace `avisarEnElFormulario` sin redibujar nada.
- */
-async function abrirFotoPorUrl(): Promise<void> {
-  if (vistaActual?.vista === 'capturar' && avisoCaptura) { avisoCaptura = ''; await render(); }
-  else if (enElBorrador() && avisoBorradores) { avisoBorradores = ''; await render(); }
+/** Abre la ficha de *Por URL*. El aviso de un intento anterior se va al traer la próxima. */
+function abrirFotoPorUrl(): void {
   abrirFichaFoto(renderFotoPorUrl());
 }
 
@@ -1661,78 +1319,6 @@ async function agregarFotoPorUrlAlEditor(escrita: string): Promise<void> {
 }
 
 /**
- * Lo que no se pudo bajar **no entra al borrador**: sus fotos son ids de
- * Drive (`borrador.ts`) —así se las muestra, se las manda a Claude y se las
- * pasa a `_fotos/` al convertirlo— y un link externo no tiene ninguno. Antes
- * que cambiarle el formato o inventarle un id, se avisa que no se pudo traer.
- * La receta sí la guarda como link, que es lo que su `.md` sabe escribir.
- */
-const NO_SE_PUDO_TRAER =
-  'No se pudo traer la foto —el sitio no lo permite o no hay conexión—. ' +
-  'Un borrador sólo guarda fotos bajadas.';
-
-/**
- * La foto de una dirección para un borrador, o `null` si no hay ninguna que
- * agregar: ahí la ficha queda abierta con lo escrito y el aviso adentro, como
- * con cualquier otra dirección que no sirve.
- */
-async function fotoDeUrlParaBorrador(escrita: string): Promise<Blob | null> {
-  const pedido = await pedirFotoPorUrl(escrita);
-  if (pedido.que === 'foto') return pedido.blob;
-  abrirFichaFoto(renderFotoPorUrl(escrita, pedido.que === 'link' ? NO_SE_PUDO_TRAER : pedido.mensaje));
-  return null;
-}
-
-/**
- * En el borrador abierto, la foto bajada sube a Drive en el momento, igual que
- * una de la cámara: el `.md` del borrador se reescribe con cada foto.
- */
-async function agregarFotoPorUrlABorrador(escrita: string): Promise<void> {
-  // Una sola vez el velo, aunque sean tres pasos —bajarla, achicarla y
-  // subirla—: si no, se prende y se apaga entre uno y otro. El
-  // redibujado va después de soltarlo, que tapado no se navega.
-  const destapar = tapar();
-  let subida = false;
-  try {
-    const blob = await fotoDeUrlParaBorrador(escrita);
-    if (!blob) return;
-    borradorLeido = await store.agregarFotoABorrador(idActual(), blob);
-    // La ficha se cierra recién con la foto en Drive: si la subida falla, lo
-    // escrito sigue ahí y reintentar es tocar *Traer* otra vez.
-    cerrarFichaFoto();
-    subida = true;
-  } catch (err) {
-    console.error(err);
-    // Como cualquier otra cosa que sale mal en esta ficha, el aviso va adentro
-    // y no arriba de la pantalla: así no quedan dos (R1).
-    abrirFichaFoto(renderFotoPorUrl(escrita, porQueNoGuardo(err)));
-  } finally {
-    await destapar();
-  }
-  if (subida) await render();
-}
-
-/** En la captura, la foto bajada queda en memoria hasta Guardar, como las demás. */
-async function agregarFotoPorUrlACaptura(escrita: string): Promise<void> {
-  // El tope vale aunque el control no se dibuje con cinco: es lo mismo que
-  // hacen `sumarFotosACaptura` y `store.agregarFotoABorrador`.
-  if (fotosCaptura.length >= MAXIMO_FOTOS) return;
-  // Como en el borrador: el velo una sola vez para bajarla y achicarla.
-  const destapar = tapar();
-  let traida = false;
-  try {
-    const blob = await fotoDeUrlParaBorrador(escrita);
-    if (!blob) return;
-    cerrarFichaFoto();
-    fotosCaptura.push({ blob, url: imagenes.urlDeBlob(blob) });
-    traida = true;
-  } finally {
-    await destapar();
-  }
-  if (traida) await render();
-}
-
-/**
  * La receta con el link de cada foto que un intento anterior ya subió.
  * Su línea deja de estar vacía, así que el reintento la escribe en el `.md` y
  * no la vuelve a mandar como nueva.
@@ -1747,8 +1333,7 @@ const conSubidas = (receta: Receta): Receta => ({
 
 /**
  * Lo que el depósito cambió respecto del `.md` que el editor abrió: las que
- * hay que subir, las del borrador que siguen estando y las URLs que ya no
- * están. Cada subida se anota apenas el store avisa, para el reintento.
+ * hay que subir y las URLs que ya no están. Cada subida se anota apenas el store avisa, para el reintento.
  */
 function cambiosDeFotos(nueva: Receta, base: Receta): CambiosDeFotos {
   const nuevas = new Map<number, Blob>();
@@ -1759,7 +1344,6 @@ function cambiosDeFotos(nueva: Receta, base: Receta): CambiosDeFotos {
   const urls = new Set(nueva.fotos.map(f => f.url));
   return {
     nuevas,
-    deBorrador: fotosDelBorrador.filter(id => urls.has(linkDeFoto(id))),
     sacadas: base.fotos.map(f => f.url).filter(url => !urls.has(url)),
     alSubir: (n, id) => { fotosEditor.subidas.set(n, id); }
   };
@@ -2201,133 +1785,9 @@ app.addEventListener('click', async (e) => {
     location.reload();
     return;
   }
-  if (accion === 'crear-receta') {
-    location.hash = `#/nueva?borrador=${encodeURIComponent(idActual())}`;
-    return;
-  }
-  if (accion === 'descartar') { confirmandoDescarte = true; return render(); }
-  if (accion === 'cancelar-descarte') { confirmandoDescarte = false; return render(); }
-  if (accion === 'descartar-confirmado') {
-    const id = idActual();
-    try {
-      await escribiendo(store.descartarBorrador(id));
-      // El borrador que se acaba de descartar no tiene que quedar en el
-      // historial: volver ahí mostraría algo que ya no existe.
-      irCerrando('#/borradores');
-      return;
-    } catch (err) {
-      console.error(err);
-      if (!borradorLeido) return;
-      const fotos = await fotosDeBorrador(borradorLeido).catch(() => []);
-      return pintar(renderBorrador({ borrador: borradorLeido, confirmando: true, fotos, error: 'No se pudo descartar.' }));
-    }
-  }
-  if (accion === 'agregar-borrador') { location.hash = '#/capturar'; return; }
-  if (accion === 'cancelar-captura') {
-    tituloCaptura = '';
-    fuenteCaptura = '';
-    notaCaptura = '';
-    fotosCaptura = [];
-    // Editando, cancelar vuelve al borrador sin tocarlo, y sin preguntar:
-    // es descartar lo escrito a propósito.
-    if (editandoBorrador) { cerrarEdicion(); return render(); }
-    // Compartida desde otra app, cerrar la pestaña es volver a donde estabas
-    // (C01.2.2). Pero `close()` sólo funciona si la abrió un script: si no
-    // —y si la captura se abrió a mano desde Borradores—, hay que volver por
-    // la app, o Cancelar no hacía nada.
-    const compartida = !!(vistaActual?.params['url'] || vistaActual?.params['text'] || vistaActual?.params['fotos']);
-    if (compartida) window.close();
-    if (history.length <= 1) { irCerrando('#/borradores'); return; }
-    return history.back();
-  }
-  if (accion === 'guardar-captura') {
-    const campoTitulo = document.querySelector<HTMLInputElement>('input[name="titulo"]');
-    const campoFuente = document.querySelector<HTMLInputElement>('input[name="fuente"]');
-    const campoNota = document.querySelector<HTMLTextAreaElement>('textarea[name="nota"]');
-    tituloCaptura = campoTitulo?.value.trim() ?? '';
-    notaCaptura = campoNota?.value.trim() ?? '';
-    // Compartida, la captura no dibuja el campo: la fuente es el link que
-    // vino en la URL.
-    const fuente = campoFuente
-      ? campoFuente.value.trim()
-      : vistaActual ? desdeCompartido(compartidoDe(vistaActual)).fuente : '';
-    if (!sePuedeGuardar({ fuente, nota: notaCaptura, fotos: editandoBorrador ? 0 : fotosCaptura.length })) return;
-    // El título es opcional: sin él, el borrador se llama por cuándo se capturó.
-    const titulo = tituloCaptura
-      || tituloPorDefecto(editandoBorrador && borradorLeido?.capturado ? new Date(borradorLeido.capturado) : new Date());
-
-    // El velo antes de redibujar con «Guardando…»: ese redibujado va antes de
-    // la escritura, y ya tiene que salir con la pantalla tapada. Lo de
-    // arriba es leer el formulario: si no hay nada que guardar, no se tapa nada.
-    const destapar = tapar();
-    try {
-      guardandoCaptura = true;
-      errorCaptura = '';
-      await render();
-      if (editandoBorrador) {
-        const id = idActual();
-        await escribiendo(store.editarBorrador(id, { titulo, fuente, nota: notaCaptura }));
-        // Lo guardado es lo que se muestra: volver al borrador no relee el `.md`.
-        if (borradorLeido?.id === id) borradorLeido = { ...borradorLeido, titulo, fuente, nota: notaCaptura };
-        cerrarEdicion();
-        guardandoCaptura = false;
-        tituloCaptura = '';
-        notaCaptura = '';
-        return render();
-      }
-      // Cada foto que sube queda anotada con su id: si algo falla después,
-      // reintentar no la vuelve a subir.
-      await escribiendo(store.agregarBorrador(
-        { titulo, fuente, nota: notaCaptura, fotos: fotosCaptura.map(f => f.id ?? f.blob) },
-        (i, id) => { const foto = fotosCaptura[i]; if (foto) foto.id = id; }
-      ));
-    } catch (err) {
-      console.error(err);
-      // Nada queda esperando: el texto sigue en pantalla y se reintenta a mano.
-      guardandoCaptura = false;
-      errorCaptura = porQueNoGuardo(err);
-      return render();
-    } finally {
-      destapar();
-    }
-    guardandoCaptura = false;
-    tituloCaptura = '';
-    fuenteCaptura = '';
-    notaCaptura = '';
-    fotosCaptura = [];
-    // Volver a donde estabas, con Recetario sin quedar abierto (C01.2.2). Si
-    // la pestaña no la abrió un script, `close()` no hace nada: ahí queda la
-    // lista, que es el lugar donde el borrador nuevo está.
-    window.close();
-    irCerrando('#/borradores');
-    return;
-  }
-  if (accion === 'editar-borrador') { editandoBorrador = true; editorAbierto = null; return render(); }
-
-  // Las fotos. En la captura viven en memoria hasta Guardar; en el borrador,
-  // sacar una la manda a la papelera y reescribe el `.md` en el momento, sin
-  // confirmación: se recupera desde la papelera de Drive.
-  if (accion === 'sacar-foto-captura') {
-    fotosCaptura.splice(Number(boton.dataset['valor'] ?? -1), 1);
-    avisoCaptura = '';
-    return render();
-  }
-  if (accion === 'sacar-foto') {
-    const id = idActual();
-    try {
-      borradorLeido = await escribiendo(store.sacarFotoDeBorrador(id, boton.dataset['valor'] ?? ''));
-      avisoBorradores = '';
-    } catch (err) {
-      console.error(err);
-      avisoBorradores = porQueNoGuardo(err);
-    }
-    return render();
-  }
-  if (accion === 'ver-foto') { fotoAbierta = boton.dataset['valor'] ?? null; return render(); }
   if (accion === 'cerrar-visor') {
     // Un deslizamiento termina en un click: ese no cierra, ya cambió de foto.
     if (deslizoElVisor) { deslizoElVisor = false; return; }
-    fotoAbierta = null;
     visor = null;
     if (enElEditor()) { document.querySelector('#app .visor')?.remove(); return; }
     return render();
@@ -2415,34 +1875,6 @@ app.addEventListener('click', async (e) => {
     return;
   }
 
-  if (accion === 'convertir-con-claude') {
-    const b = borradorLeido;
-    if (!b) return;
-    const fotos = b.fotos.length
-      ? { archivos: await archivosDeFotos(b.fotos), conLinks: pedidoDeConversion(b, { links: true }) }
-      : null;
-    const r = await enviarAClaude(plataformaDelNavegador(), pedidoDeConversion(b), fotos);
-    if (r === 'copiado') { avisoBorradores = 'Pedido copiado: pegalo en Claude'; return render(); }
-    if (r === 'sin-portapapeles') { avisoBorradores = 'No se pudo abrir Claude ni copiar el pedido.'; return render(); }
-    return;
-  }
-  if (accion === 'pegar-receta') {
-    const texto = await leerPortapapeles(plataformaDelNavegador());
-    if (texto === null) { avisoBorradores = 'No se pudo leer lo copiado.'; return render(); }
-    if (!esRecetaEnMd(texto)) { avisoBorradores = 'Lo copiado no es una receta en .md.'; return render(); }
-    avisoBorradores = '';
-    // En la pantalla de un borrador, pegar ata a ese borrador aunque el texto
-    // traiga otro id; en Borradores sigue la regla del id que trae.
-    const enBorrador = vistaActual?.vista === 'borrador' ? vistaActual.params['id'] : undefined;
-    return recibirReceta(texto, enBorrador);
-  }
-  if (accion === 'elegir-borrador-recibido') {
-    if (!recibida) return;
-    const id = boton.dataset['valor'] ?? '';
-    location.hash = id ? `#/nueva?borrador=${encodeURIComponent(id)}&recibida=1` : '#/nueva?recibida=1';
-    return render();
-  }
-
   if (accion === 'tag-especial') {
     if (boton.hasAttribute('disabled')) return;
     boton.setAttribute('aria-pressed', String(boton.getAttribute('aria-pressed') !== 'true'));
@@ -2488,29 +1920,8 @@ app.addEventListener('click', async (e) => {
   }
 
   if (accion === 'volver') {
-    // Editar un borrador no cambia la URL: es estado de la pantalla. Volver
-    // cierra la edición y muestra el borrador, en vez de irse a la lista, que
-    // es la entrada anterior del historial.
-    if (editandoBorrador) {
-      // Con cambios, pregunta antes, igual que el gesto de atrás (C04.1.1).
-      if (editorAbierto && formularioActual() !== editorAbierto.formulario) {
-        cerrandoEdicion = true;
-        if (!document.querySelector('[data-salida]')) {
-          document.querySelector('[data-formulario]')?.insertAdjacentHTML('afterbegin', confirmacionSalida);
-        }
-        window.scrollTo?.(0, 0);
-        return;
-      }
-      cerrarEdicion();
-      return render();
-    }
     if (vistaActual?.vista === 'cocinar') await cocina.soltarPantalla();
     if (history.length <= 1) {
-      // Sin entrada previa —por ejemplo, la pregunta «¿De qué borrador…»
-      // abierta con `replace` porque la receta llegó por Share— no hay
-      // nada detrás en este mismo hilo: se cierra a Borradores, no al
-      // Recetario, que es adonde no vino.
-      if (vistaActual?.vista === 'recibida') { irCerrando('#/borradores'); return; }
       // Entrar por un link directo deja el historial vacío: ahí volver es ir
       // al Recetario, no salirse de la app.
       location.hash = '#/';
@@ -2520,14 +1931,10 @@ app.addEventListener('click', async (e) => {
   }
   if (accion === 'editar') { location.hash = `#/r/${idActual()}/editar`; return; }
   if (accion === 'seguir-editando') {
-    cerrandoEdicion = false;
     document.querySelector('[data-salida]')?.remove();
     return;
   }
   if (accion === 'salir-sin-guardar') {
-    // Desde el volver del encabezado, salir es dejar de editar: el borrador
-    // sigue en pantalla, como cuando no había cambios.
-    if (editandoBorrador && cerrandoEdicion) { cerrarEdicion(); return render(); }
     editorAbierto = null;
     // Mismo caso que arriba: sin entrada previa —el editor de una receta
     // recibida por Share, abierto con `replace`— volver no puede intentar
@@ -2541,7 +1948,6 @@ app.addEventListener('click', async (e) => {
     // Conectado, el aviso se va y se guarda a mano; si no, queda donde está.
     try {
       await auth.conectar();
-      errorCaptura = '';
       document.querySelector('[data-sin-sesion]')?.remove();
     } catch (err) {
       console.error(err);
@@ -2639,16 +2045,12 @@ app.addEventListener('click', async (e) => {
       const carpetaId = datos['carpeta'] || '';
       const esNueva = vistaActual?.vista === 'nueva';
       const id = idActual();
-      const borradorId = vistaActual?.params['borrador'] ?? '';
 
       // Mientras trabaja, el botón lo dice y no se puede tocar dos veces (C04.5.1).
       boton.setAttribute('disabled', '');
       boton.textContent = 'Guardando…';
 
-      // Atada a la receta que volvió de Claude, la base es esa receta y no una
-      // vacía: así se conservan sus claves desconocidas.
-      const recibidaBase = vistaActual?.params['recibida'] && recibida ? recibida : null;
-      const base = esNueva ? (recibidaBase ?? parse('')) : (await store.receta(id)).receta;
+      const base = esNueva ? parse('') : (await store.receta(id)).receta;
       const nueva = conSubidas(recetaDesdeFormulario(datos, base));
 
       /** El editor otra vez, con lo que el usuario tenía escrito y el aviso (C04.5.2). */
@@ -2669,12 +2071,8 @@ app.addEventListener('click', async (e) => {
       const fotos = cambiosDeFotos(nueva, base);
 
       try {
-        let creada: { id: string } | null = null;
-        if (esNueva && borradorId) {
-          // Convertir es una sola operación: el .md, la fila y el borrador (C01.7.1).
-          creada = await escribiendo(convertirBorrador({ store, convertidos }, { borradorId, receta: nueva, carpetaId, fotos }));
-        } else if (esNueva) {
-          creada = await escribiendo(store.crear(nueva, { carpetaId: carpetaId || undefined, fotos }));
+        if (esNueva) {
+          await escribiendo(store.crear(nueva, { carpetaId: carpetaId || undefined, fotos }));
         } else {
           await escribiendo(store.guardar(id, nueva, { carpetaDestino: carpetaId, fotos }));
           // Lo guardado es la copia: volver a la receta la muestra sin releer, y
@@ -2682,14 +2080,9 @@ app.addEventListener('click', async (e) => {
           recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: conSubidas(nueva) };
         }
         editorAbierto = null;
-        recibida = null;
-        // Atada a la receta recibida, `history.back()` caería en `#/capturar`
-        // —o en `#/recibida`— y reabriría lo mismo que se acaba de guardar: se
-        // cierra directo a la receta creada. Si no, nada más confirma el éxito:
-        // vuelve a la receta, y lo escrito ya está en Drive, así que salir no
-        // tiene nada que preguntar.
-        const aLaCreada = recibidaBase && creada ? `#/r/${encodeURIComponent(creada.id)}` : '';
-        cerrar = aLaCreada ? () => irCerrando(aLaCreada) : () => history.back();
+        // Nada más confirma el éxito: vuelve a la receta, y lo escrito ya está
+        // en Drive, así que salir no tiene nada que preguntar.
+        cerrar = () => history.back();
       } catch (err) {
         console.error(err);
         return conError(porQueNoGuardo(err));
@@ -2741,7 +2134,7 @@ app.addEventListener('click', async (e) => {
 
   // Reintentar es volver a pedir: lo leído no se reutiliza.
   if (accion === 'reintentar') {
-    recetaLeida = null; borradorLeido = null; selector.error = '';
+    recetaLeida = null; selector.error = '';
     return render();
   }
 });
@@ -2776,20 +2169,7 @@ app.addEventListener('input', (e) => {
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria();
   // En el editor, cada tecla puede habilitar o bloquear el botón de
   // `borrador`, y mueve el cursor de línea.
-  if (enElEditor()) { revisarIncompleta(); acomodarBotonDeFoto(); return; }
-  if (vistaActual?.vista !== 'capturar' && !editandoBorrador) return;
-  const campo = e.target as HTMLInputElement | HTMLTextAreaElement | null;
-  if (!campo?.name) return;
-  if (campo.name === 'titulo') { tituloCaptura = campo.value; return; }
-  if (campo.name === 'nota') notaCaptura = campo.value;
-  else if (campo.name === 'fuente') fuenteCaptura = campo.value;
-  else return;
-  // Guardar vale con fuente, con nota o con fotos: el título es opcional.
-  const fuente = document.querySelector<HTMLInputElement>('#app input[name="fuente"]')?.value
-    ?? (vistaActual ? desdeCompartido(compartidoDe(vistaActual)).fuente : '');
-  const boton = document.querySelector<HTMLButtonElement>('#app [data-accion="guardar-captura"]');
-  const fotos = editandoBorrador ? 0 : fotosCaptura.length;
-  if (boton) boton.toggleAttribute('disabled', !sePuedeGuardar({ fuente, nota: notaCaptura, fotos }));
+  if (enElEditor()) { revisarIncompleta(); acomodarBotonDeFoto(); }
 });
 
 /**
@@ -2975,20 +2355,9 @@ app.addEventListener('change', (e) => {
   const campoFotos = e.target as HTMLInputElement | null;
   if (campoFotos?.dataset && 'fotos' in campoFotos.dataset) {
     const archivos: Blob[] = Array.from(campoFotos.files ?? []);
-    void (async () => {
-      if (vistaActual?.vista === 'capturar') {
-        avisoCaptura = await sumarFotosACaptura(archivos);
-      } else if (vistaActual?.vista === 'borrador' && !editandoBorrador) {
-        await agregarFotosABorrador(idActual(), archivos);
-      } else if (enElEditor()) {
-        // El editor no se redibuja: perdería lo escrito. La fila de
-        // miniaturas se rehace sola.
-        return agregarFotosAlEditor(archivos);
-      } else {
-        return;
-      }
-      await render();
-    })();
+    // El editor no se redibuja: perdería lo escrito. La fila de miniaturas
+    // se rehace sola.
+    if (enElEditor()) void agregarFotosAlEditor(archivos);
     return;
   }
   // *Subir foto* en una categoría: una sola, y se sube recién al guardar.

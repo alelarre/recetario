@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { crearStore } from '../src/store.js';
 import { COLUMNAS } from '../src/catalogo.js';
-import { COLUMNAS_BORRADORES } from '../src/borrador.js';
 import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 import { SCHEMA_VERSION } from '../src/config.js';
 import { driveFalso, sheetsFalso, indiceLocalFalso } from './dobles.js';
@@ -12,10 +11,10 @@ const PLANILLA = 'application/vnd.google-apps.spreadsheet';
 /**
  * Tres carpetas: Pastas sin propiedades (predefinida a migrar), «Mis tartas» con
  * propiedades de Tartas (una predefinida renombrada a mano) y «Fiambres» sin
- * propiedades (desconocida). Más `_borradores`, que no es categoría. `hojas`
- * elige qué hojas tiene la planilla.
+ * propiedades (desconocida). Más `_borradores`, una carpeta de la app que no
+ * es categoría. `hojas` elige qué hojas tiene la planilla.
  */
-function armar(hojas = ['recetas', 'meta', 'borradores', 'categorias']) {
+function armar(hojas = ['recetas', 'meta', 'categorias']) {
   const drive = driveFalso([
     { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
     { id: 'c1', name: 'Pastas', mimeType: CARPETA, parents: ['raiz'] },
@@ -28,7 +27,6 @@ function armar(hojas = ['recetas', 'meta', 'borradores', 'categorias']) {
   sheets.crearPlanilla('i1', hojas);
   sheets.cargar('i1', 'recetas', [[...COLUMNAS]]);
   sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)]]);
-  sheets.cargar('i1', 'borradores', [[...COLUMNAS_BORRADORES]]);
   if (hojas.includes('categorias')) sheets.cargar('i1', 'categorias', [[...COLUMNAS_CATEGORIAS]]);
   const indiceLocal = indiceLocalFalso();
   const store = crearStore({ drive, sheets, indiceLocal });
@@ -60,19 +58,17 @@ describe('reindexar las categorías', () => {
     expect(store.categorias().map(c => c.nombre)).not.toContain('_borradores');
   });
 
-  it('escribe la hoja categorias y anota carpeta_borradores en meta', async () => {
+  it('escribe la hoja categorias', async () => {
     const { store, sheets } = armar();
     await store.arrancar();
     await store.reconstruir();
     const hoja = await sheets.leer('i1', 'categorias!A1:D100');
     expect(hoja[0]).toEqual([...COLUMNAS_CATEGORIAS]);
     expect(hoja.slice(1).map(f => f[0]).sort()).toEqual(['c1', 'c2', 'c3']);
-    const meta = Object.fromEntries((await sheets.leer('i1', 'meta!A1:B20')).map(f => [f[0], f[1]]));
-    expect(meta['carpeta_borradores']).toBe('bc');
   });
 
   it('crea la hoja categorias si la planilla no la tiene', async () => {
-    const { store, sheets } = armar(['recetas', 'meta', 'borradores']);
+    const { store, sheets } = armar(['recetas', 'meta']);
     await store.arrancar();
     await store.reconstruir();
     expect((await sheets.hojas('i1')).map(h => h.title)).toContain('categorias');
@@ -89,10 +85,9 @@ describe('reindexar las categorías', () => {
 });
 
 describe('cargar las categorías', () => {
-  it('salen de la hoja, con el id de _borradores de meta, sin listar carpetas', async () => {
+  it('salen de la hoja, sin listar carpetas', async () => {
     const { store, sheets, drive } = armar();
     sheets.cargar('i1', 'categorias', [[...COLUMNAS_CATEGORIAS], ['c1', 'Pastas', 'pastas', 'catalogo:pastas']]);
-    sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)], ['carpeta_borradores', 'bc']]);
     let listadas = 0;
     const listar = drive.listarCarpetas.bind(drive);
     drive.listarCarpetas = async (id: string) => { listadas++; return listar(id); };
@@ -102,8 +97,6 @@ describe('cargar las categorías', () => {
 
     expect(store.categorias()).toEqual([{ id: 'c1', nombre: 'Pastas', color: 'pastas', foto: 'catalogo:pastas' }]);
     expect(listadas).toBe(0);
-    const b = await store.agregarBorrador({ titulo: 'Pan', fuente: '', nota: '' });
-    expect(drive._store.get(b.id)?.parents).toEqual(['bc']);
   });
 
   it('con la planilla recién creada están vacías hasta reindexar', async () => {
@@ -118,22 +111,13 @@ describe('cargar las categorías', () => {
     expect(store.categorias().map(c => c.nombre)).toEqual(['Carnes']);
   });
 
-  it('agregar el primer borrador anota la carpeta nueva en meta', async () => {
-    const { store, sheets } = armar();
-    await store.arrancar();
-    await store.cargarIndice();
-    await store.agregarBorrador({ titulo: 'Pan', fuente: '', nota: '' });
-    const meta = Object.fromEntries((await sheets.leer('i1', 'meta!A1:B20')).map(f => [f[0], f[1]]));
-    expect(meta['carpeta_borradores']).toMatch(/^nuevo/);
-  });
-
-  it('crear la planilla crea las cuatro hojas', async () => {
+  it('crear la planilla crea las tres hojas', async () => {
     const drive = driveFalso([{ id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } }]);
     const sheets = sheetsFalso();
     const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
     await store.arrancar();
     expect((await sheets.hojas(store._ctx.indiceId)).map(h => h.title))
-      .toEqual(['recetas', 'meta', 'borradores', 'categorias']);
+      .toEqual(['recetas', 'meta', 'categorias']);
   });
 });
 

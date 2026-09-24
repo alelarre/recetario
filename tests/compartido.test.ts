@@ -1,215 +1,39 @@
-import { describe, it, expect, vi } from 'vitest';
-import { convertirBorrador } from '../src/compartido.js';
-import { crearStore } from '../src/store.js';
-import { driveFalso, sheetsFalso, recetaFalsa, indiceLocalFalso } from './dobles.js';
-import { COLUMNAS } from '../src/catalogo.js';
-import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
-import { COLUMNAS_BORRADORES, serializeBorrador } from '../src/borrador.js';
-import { SCHEMA_VERSION } from '../src/config.js';
-import { linkDeFoto } from '../src/fotos-receta.js';
-import type { CambiosDeFotos } from '../src/tipos.js';
+import { describe, it, expect } from 'vitest';
+import { desdeCompartido, tituloPorDefecto } from '../src/compartido.js';
 
-const CARPETA = 'application/vnd.google-apps.folder';
-const PLANILLA = 'application/vnd.google-apps.spreadsheet';
-const CAPTURADO = '2026-09-01T10:00:00Z';
-
-/**
- * El store de verdad sobre los dobles de Drive y de Sheets: lo que esta capa
- * tiene que probar es que las escrituras pasan, y en qué orden, no que un
- * doble del store devuelva lo que el test quiere.
- */
-const armar = async ({ borradores: lista = [] as { id: string; titulo: string; fotos?: string[] }[] } = {}) => {
-  const drive = driveFalso([
-    { id: 'raiz', name: 'Recetario', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } },
-    { id: 'c1', name: 'Pescados y mariscos', mimeType: CARPETA, parents: ['raiz'] },
-    { id: 'i1', name: '_indice', mimeType: PLANILLA, parents: ['raiz'] },
-    { id: 'bc', name: '_borradores', mimeType: CARPETA, parents: ['raiz'] },
-    ...lista.map(b => ({
-      id: b.id, name: `${b.id}.md`, parents: ['bc'],
-      contenido: serializeBorrador({ titulo: b.titulo, fuente: '', nota: '', capturado: CAPTURADO, fotos: b.fotos ?? [] })
-    })),
-    // Las fotos del borrador, al lado del `.md`, como en `_borradores/` de verdad.
-    ...lista.flatMap(b => (b.fotos ?? []).map(f => (
-      { id: f, name: `${f}.jpg`, mimeType: 'image/jpeg', parents: ['bc'] }
-    )))
-  ]);
-  const sheets = sheetsFalso();
-  sheets.crearPlanilla('i1', ['recetas', 'meta', 'borradores', 'categorias']);
-  sheets.cargar('i1', 'recetas', [[...COLUMNAS]]);
-  sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)], ['carpeta_borradores', 'bc']]);
-  sheets.cargar('i1', 'borradores', [
-    [...COLUMNAS_BORRADORES], ...lista.map(b => [b.id, `${b.id}.md`, b.titulo, CAPTURADO])
-  ]);
-  sheets.cargar('i1', 'categorias', [[...COLUMNAS_CATEGORIAS], ['c1', 'Pescados y mariscos', 'pescados', 'catalogo:pescados-y-mariscos']]);
-
-  const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
-  await store.arrancar();
-  await store.cargarIndice();
-
-  // El orden de las escrituras es parte del contrato (C01.7.1), y no se ve en
-  // ningún registro del doble: se anota acá, al pasar.
-  const orden: string[] = [];
-  const anotar = <T extends object, K extends keyof T>(objeto: T, metodo: K, etiqueta: string) => {
-    const original = objeto[metodo] as (...args: unknown[]) => unknown;
-    vi.spyOn(objeto, metodo as never).mockImplementation(((...args: unknown[]) => {
-      orden.push(etiqueta);
-      return original.apply(objeto, args);
-    }) as never);
-  };
-  anotar(drive, 'crear', 'crear-md');
-  anotar(sheets, 'append', 'escribir-fila');
-  anotar(drive, 'borrar', 'borrador-a-la-papelera');
-  anotar(sheets, 'borrarFila', 'borrar-fila-del-borrador');
-
-  return { drive, sheets, store, orden, deps: { store } };
-};
-
-describe('convertirBorrador', () => {
-  it('escribe el .md, escribe la fila y descarta el borrador, en ese orden', async () => {
-    const { deps, orden } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
-
-    await convertirBorrador(deps, {
-      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1'
-    });
-
-    expect(orden).toEqual(['crear-md', 'escribir-fila', 'borrador-a-la-papelera', 'borrar-fila-del-borrador']);
+describe('lo que llega compartido desde otra app', () => {
+  it('con url, la fuente es la url y el texto va a la nota', () => {
+    expect(desdeCompartido({ url: 'https://sitio.com/r', text: 'La de la abuela, buenísima' }))
+      .toEqual({ fuente: 'https://sitio.com/r', nota: 'La de la abuela, buenísima' });
   });
 
-  it('la fuente del borrador pasa al frontmatter', async () => {
-    const { deps, drive } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
-
-    const { id } = await convertirBorrador(deps, {
-      borradorId: 'b1',
-      receta: recetaFalsa({ titulo: 'Rabas', fuente: 'https://x/1' }),
-      carpetaId: 'c1'
-    });
-
-    expect(await drive.leerTexto(id)).toContain('fuente: https://x/1');
+  it('con url y el mismo link en el texto, la nota no lo repite', () => {
+    expect(desdeCompartido({ url: 'https://sitio.com/r', text: 'Mirá https://sitio.com/r' }))
+      .toEqual({ fuente: 'https://sitio.com/r', nota: 'Mirá' });
   });
 
-  it('la receta queda en la categoría que le tocó, con su fila en el índice', async () => {
-    const { deps, store } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
-
-    const { id } = await convertirBorrador(deps, {
-      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1'
-    });
-
-    expect(store.entradas()).toHaveLength(1);
-    expect(store.entradas()[0]).toMatchObject({
-      id_archivo: id, titulo: 'Rabas', categoria: 'Pescados y mariscos', carpeta_id: 'c1'
-    });
+  it('sin url, la fuente es el primer link del texto y lo demás va a la nota', () => {
+    expect(desdeCompartido({ url: '', text: 'Mirá este reel https://instagram.com/reel/abc ¡buenísimo!' }))
+      .toEqual({ fuente: 'https://instagram.com/reel/abc', nota: 'Mirá este reel ¡buenísimo!' });
   });
 
-  it('el borrador convertido deja de estar en la lista, y su .md está en la papelera', async () => {
-    const { deps, store, drive } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
-
-    await convertirBorrador(deps, {
-      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1'
-    });
-
-    expect(store.borradores()).toEqual([]);
-    expect(drive._store.get('b1')?.trashed).toBe(true);
+  it('un texto que es sólo el link deja la nota vacía', () => {
+    expect(desdeCompartido({ url: '', text: 'https://youtu.be/xyz' }))
+      .toEqual({ fuente: 'https://youtu.be/xyz', nota: '' });
   });
 
-  it('si el borrador ya no existe, la operación termina bien', async () => {
-    const { deps } = await armar();
-
-    await expect(convertirBorrador(deps, {
-      borradorId: 'fantasma', receta: recetaFalsa({ titulo: 'A' }), carpetaId: 'c1'
-    })).resolves.toMatchObject({ id: expect.any(String) });
+  it('un texto sin link —una receta copiada— va entero a la nota, sin fuente', () => {
+    expect(desdeCompartido({ url: '', text: 'Harina 500 g\nAgua 300 ml' }))
+      .toEqual({ fuente: '', nota: 'Harina 500 g\nAgua 300 ml' });
   });
 
-  it('reintentar después de un fallo al descartar deja una sola receta (R2)', async () => {
-    const { deps, store, drive } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
-    const falla = vi.spyOn(store, 'descartarBorrador').mockRejectedValueOnce(new Error('red'));
-
-    await expect(convertirBorrador(deps, {
-      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1'
-    })).rejects.toThrow('red');
-
-    falla.mockRestore();
-    await convertirBorrador(deps, {
-      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1'
-    });
-
-    expect(store.entradas()).toHaveLength(1);
-    // Y tampoco quedó un segundo .md: el reintento reescribe el que ya estaba.
-    expect(await drive.listarHijos('c1')).toHaveLength(1);
-    expect(store.borradores()).toEqual([]);
+  it('nada compartido es nada', () => {
+    expect(desdeCompartido({ url: '', text: '' })).toEqual({ fuente: '', nota: '' });
   });
 });
 
-describe('convertirBorrador con fotos', () => {
-  const sinFotos: CambiosDeFotos = { nuevas: new Map(), deBorrador: [], sacadas: [] };
-
-  it('pasa las fotos tal cual al crear la receta', async () => {
-    const { deps, store } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
-    const fotos: CambiosDeFotos = { ...sinFotos, deBorrador: ['fb'] };
-    const espia = vi.spyOn(store, 'crear');
-
-    await convertirBorrador(deps, {
-      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1', fotos
-    });
-
-    expect(espia).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ carpetaId: 'c1', fotos }));
-  });
-
-  it('descarta el borrador conservando las fotos que ya se movieron a la receta', async () => {
-    const { deps, store } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
-    const fotos: CambiosDeFotos = { ...sinFotos, deBorrador: ['fb', 'fb2'] };
-    const espia = vi.spyOn(store, 'descartarBorrador');
-
-    await convertirBorrador(deps, {
-      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1', fotos
-    });
-
-    expect(espia).toHaveBeenCalledWith('b1', { conservar: ['fb', 'fb2'] });
-  });
-
-  it('sin fotos, no conserva ninguna al descartar', async () => {
-    const { deps, store } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
-    const espia = vi.spyOn(store, 'descartarBorrador');
-
-    await convertirBorrador(deps, {
-      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1'
-    });
-
-    expect(espia).toHaveBeenCalledWith('b1', { conservar: [] });
-  });
-
-  it('el reintento pasa las fotos a guardar, no a crear', async () => {
-    const { deps, store } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas' }] });
-    vi.spyOn(store, 'descartarBorrador').mockRejectedValueOnce(new Error('red'));
-    const fotos: CambiosDeFotos = { ...sinFotos, deBorrador: ['fb'] };
-
-    await expect(convertirBorrador(deps, {
-      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1', fotos
-    })).rejects.toThrow('red');
-
-    const espia = vi.spyOn(store, 'guardar');
-    await convertirBorrador(deps, {
-      borradorId: 'b1', receta: recetaFalsa({ titulo: 'Rabas' }), carpetaId: 'c1', fotos
-    });
-
-    expect(espia).toHaveBeenCalledWith(expect.any(String), expect.anything(), expect.objectContaining({ fotos }));
-  });
-
-  it('la foto del borrador termina en _fotos/, sin ir a la papelera con el borrador', async () => {
-    const { deps, store, drive } = await armar({ borradores: [{ id: 'b1', titulo: 'Rabas', fotos: ['fb'] }] });
-    const fotos: CambiosDeFotos = { ...sinFotos, deBorrador: ['fb'] };
-
-    await convertirBorrador(deps, {
-      borradorId: 'b1',
-      receta: recetaFalsa({ titulo: 'Rabas', fotos: [{ n: 1, url: linkDeFoto('fb') }] }),
-      carpetaId: 'c1',
-      fotos
-    });
-
-    const carpetaFotos = [...drive._store.values()].find(a => a.name === '_fotos');
-    expect(carpetaFotos).toBeDefined();
-    expect(drive._store.get('fb')).toMatchObject({ parents: [carpetaFotos?.id] });
-    expect(drive._store.get('fb')?.trashed).not.toBe(true);
-    expect(store.borradores()).toEqual([]);
-    expect(drive._store.get('b1')?.trashed).toBe(true);
+describe('el título por defecto', () => {
+  it('se arma con el día y la hora', () => {
+    expect(tituloPorDefecto(new Date(2026, 8, 19, 9, 5))).toBe('Borrador 19/09 09:05');
   });
 });

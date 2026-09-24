@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { crearStore } from '../src/store.js';
 import { COLUMNAS } from '../src/catalogo.js';
-import { COLUMNAS_BORRADORES } from '../src/borrador.js';
 import { COLUMNAS_CATEGORIAS, PREDEFINIDAS } from '../src/categorias.js';
 import { SCHEMA_VERSION } from '../src/config.js';
 import { driveFalso, sheetsFalso, indiceLocalFalso } from './dobles.js';
@@ -14,10 +13,9 @@ const MARCA = { recetario: 'raiz' };
 
 /** Una planilla `_indice` completa, con la meta que se pida. */
 function planilla(sheets: SheetsFalso, id: string, meta: string[][] = [['schemaVersion', String(SCHEMA_VERSION)]]) {
-  sheets.crearPlanilla(id, ['recetas', 'meta', 'borradores', 'categorias']);
+  sheets.crearPlanilla(id, ['recetas', 'meta', 'categorias']);
   sheets.cargar(id, 'recetas', [[...COLUMNAS]]);
   sheets.cargar(id, 'meta', meta);
-  sheets.cargar(id, 'borradores', [[...COLUMNAS_BORRADORES]]);
   sheets.cargar(id, 'categorias', [[...COLUMNAS_CATEGORIAS]]);
 }
 
@@ -88,7 +86,7 @@ describe('arrancar por la marca', () => {
     planilla(sheets, 'in');
     const copia = {
       schemaVersion: SCHEMA_VERSION, indiceId: 'iv', raizId: 'vieja', raizNombre: 'Recetario',
-      modifiedTime: '2026-09-13T00:00:00.000Z', meta: {}, filas: [], borradores: [], categorias: []
+      modifiedTime: '2026-09-13T00:00:00.000Z', meta: {}, filas: [], categorias: []
     };
     const store = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso(copia) });
     const r = arranqueListo(await store.arrancar());
