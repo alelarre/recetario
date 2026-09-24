@@ -1586,9 +1586,9 @@ function agregarTag(valor: string): boolean {
  *
  * Es lo que corresponde cuando la navegación es un **cierre**: volver de la
  * cocina a la receta, salir a la categoría, o dejar la receta recién guardada
- * en lugar del editor. Con `location.hash =` el historial acumula la pantalla que se
- * está dejando, y el volver de la siguiente trae de vuelta justo eso: el
- * chevron de la receta llevaría al modo cocina.
+ * en lugar del editor. Con `location.hash =` el historial acumula la pantalla
+ * que se está dejando, y el volver de la siguiente trae de vuelta justo eso:
+ * el chevron de la receta llevaría al modo cocina.
  */
 const irCerrando = (hash: string): void => { location.replace(hash); };
 
@@ -2096,9 +2096,12 @@ app.addEventListener('click', async (e) => {
       avisoAlLlegar = 'No se pudo abrir el agente ni copiar el pedido.';
     }
     // La receta ya está guardada: el editor se cierra y la app queda en ella.
+    // Editando, la receta es la pantalla de atrás; si no, la receta toma el
+    // lugar del editor en el historial.
     await guardada.dibujado;
     esperarPintadoParaSacarElVelo();
-    irCerrando(`#/r/${encodeURIComponent(id)}`);
+    if (vistaActual?.vista === 'editar' && !llegoDeAfuera(vistaActual)) history.back();
+    else irCerrando(`#/r/${encodeURIComponent(id)}`);
     return;
   }
 

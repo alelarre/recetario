@@ -3676,6 +3676,17 @@ describe('main.ts: las rutas', () => {
       expect(reemplazos.at(-1)).toBe('#/r/nuevo-1');
     });
 
+    it('editando una receta, termina volviendo a ella: no la repite en el historial', async () => {
+      conShare();
+      const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags: 'borrador' };
+      await tocar('convertir-con-agente');
+      expect(mandados).toHaveLength(1);
+      expect(vueltasAtras).toHaveLength(1);
+      expect(reemplazos).toEqual([]);
+    });
+
     it('si guardar falla, no manda nada y el editor queda con el aviso', async () => {
       conShare();
       const original = storeFake.crear;
