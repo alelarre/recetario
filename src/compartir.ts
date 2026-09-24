@@ -61,20 +61,20 @@ export const compartirTexto = (p: Plataforma, texto: string): Promise<Resultado>
 
 export const LARGO_MAXIMO_DEL_LINK = 8000;
 
-/** Las fotos del borrador para el pedido: como archivos, y el pedido que las nombra por su link de Drive. */
+/** Las fotos de la receta para el pedido: como archivos, y el pedido que las nombra por su link de Drive. */
 export interface FotosDelPedido {
   archivos: File[];
   conLinks: string;
 }
 
 /**
- * El pedido hacia Claude. Con el menú Compartir del sistema (Android)
- * se elige Claude ahí, y las fotos viajan como archivos junto al texto. Sin
- * él —o sin poder compartir archivos—, un link a claude.ai con el pedido
+ * El pedido hacia el agente. Con el menú Compartir del sistema (Android)
+ * se elige el agente ahí, y las fotos viajan como archivos junto al texto.
+ * Sin él —o sin poder compartir archivos—, un link a claude.ai con el pedido
  * cargado, y las fotos por su link de Drive; si el pedido no entra en el
- * link, se copia y se abre Claude vacío para pegarlo.
+ * link, se copia y se abre claude.ai vacío para pegarlo.
  */
-export async function enviarAClaude(p: Plataforma, pedido: string, fotos: FotosDelPedido | null = null): Promise<Resultado> {
+export async function enviarAlAgente(p: Plataforma, pedido: string, fotos: FotosDelPedido | null = null): Promise<Resultado> {
   const conArchivos = !!fotos?.archivos.length && !!p.canShare?.({ files: fotos.archivos });
   if (p.share && (!fotos || conArchivos)) {
     const r = await mandar(p.share, conArchivos && fotos ? { text: pedido, files: fotos.archivos } : { text: pedido });

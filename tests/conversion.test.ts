@@ -2,19 +2,24 @@ import { describe, it, expect } from 'vitest';
 import { pedidoDeConversion, esRecetaEnMd, recetaRecibida } from '../src/conversion.js';
 import { DURACIONES, DIFICULTADES } from '../src/catalogo.js';
 
-const borrador = { id: 'b123', titulo: 'Focaccia', fuente: 'https://ejemplo.com/focaccia', nota: 'La de la abuela, sin romero' };
+const receta = { id: 'r1', titulo: 'Focaccia', fuente: 'https://ejemplo.com/focaccia', notas: 'La de la abuela, sin romero' };
 
-describe('el pedido para Claude', () => {
-  const pedido = pedidoDeConversion(borrador);
+describe('el pedido al agente', () => {
+  const pedido = pedidoDeConversion(receta);
 
-  it('lleva el borrador tal cual', () => {
-    expect(pedido).toContain('Focaccia');
-    expect(pedido).toContain('https://ejemplo.com/focaccia');
-    expect(pedido).toContain('La de la abuela, sin romero');
+  it('empieza pidiendo convertir el borrador', () => {
+    expect(pedido).toMatch(/^Convertí este borrador en una receta para mi Recetario/);
   });
 
-  it('pide la línea del id del borrador', () => {
-    expect(pedido).toContain('borrador: b123');
+  it('lleva la receta tal cual', () => {
+    expect(pedido).toContain('Focaccia');
+    expect(pedido).toContain('https://ejemplo.com/focaccia');
+    expect(pedido).toContain('Notas: La de la abuela, sin romero');
+  });
+
+  it('pide el id como última línea del frontmatter, y no borrador:', () => {
+    expect(pedido).toMatch(/`id: r1`/);
+    expect(pedido).not.toContain('borrador:');
   });
 
   it('lleva los valores cerrados desde las constantes de la app', () => {
@@ -30,43 +35,43 @@ describe('el pedido para Claude', () => {
     expect(pedido).toMatch(/sólo con el texto plano, sin texto antes ni después/i);
   });
 
-  it('un borrador sin fuente ni nota no deja líneas vacías con rótulo', () => {
-    const p = pedidoDeConversion({ id: 'b1', titulo: 'Pan', fuente: '', nota: '' });
+  it('una receta sin fuente ni notas no deja líneas vacías con rótulo', () => {
+    const p = pedidoDeConversion({ id: 'r1', titulo: 'Pan', fuente: '', notas: '' });
     expect(p).not.toMatch(/Fuente:\s*\n/);
-    expect(p).not.toMatch(/Nota:\s*\n/);
+    expect(p).not.toMatch(/Notas:\s*\n/);
   });
 });
 
 describe('el pedido con fotos', () => {
-  const conFotos = { ...borrador, fotos: ['1AbC', '1DeF'] };
+  const conFotos = { fotos: ['1AbC', '1DeF'] };
 
-  it('dice cuántas van, en orden, qué pueden ser y cómo tratarlas, después del borrador', () => {
-    const p = pedidoDeConversion(conFotos);
+  it('dice cuántas van, en orden, qué pueden ser y cómo tratarlas, después de la receta', () => {
+    const p = pedidoDeConversion(receta, conFotos);
     expect(p).toContain('Fotos: van 2, en orden.');
     expect(p).toContain('sin inventar cantidades ni pasos que no estén');
     expect(p).toContain('Una foto del plato sirve para el título y la descripción, no para la receta.');
-    expect(p.indexOf('Nota: La de la abuela')).toBeLessThan(p.indexOf('Fotos: van 2'));
+    expect(p.indexOf('Notas: La de la abuela')).toBeLessThan(p.indexOf('Fotos: van 2'));
     expect(p.indexOf('Fotos: van 2')).toBeLessThan(p.indexOf('Formato:'));
   });
 
   it('una sola foto se dice en singular', () => {
-    expect(pedidoDeConversion({ ...borrador, fotos: ['1AbC'] })).toContain('Fotos: va 1, en orden.');
+    expect(pedidoDeConversion(receta, { fotos: ['1AbC'] })).toContain('Fotos: va 1, en orden.');
   });
 
   it('sin fotos no dice nada de fotos', () => {
-    expect(pedidoDeConversion({ ...borrador, fotos: [] })).not.toContain('Fotos:');
+    expect(pedidoDeConversion(receta, { fotos: [] })).not.toContain('Fotos:');
   });
 
   it('con los links de Drive, una línea por foto y cómo leerlas', () => {
-    const p = pedidoDeConversion(conFotos, { links: true });
+    const p = pedidoDeConversion(receta, { ...conFotos, links: true });
     expect(p).toContain('Foto 1: https://drive.google.com/file/d/1AbC/view');
     expect(p).toContain('Foto 2: https://drive.google.com/file/d/1DeF/view');
     expect(p).toContain('Las fotos están en mi Google Drive: leelas con el conector de Drive.');
-    expect(pedidoDeConversion(conFotos)).not.toContain('drive.google.com');
+    expect(pedidoDeConversion(receta, conFotos)).not.toContain('drive.google.com');
   });
 
   it('dice cómo referenciarlas en la receta, después del párrafo de las fotos', () => {
-    const p = pedidoDeConversion(conFotos);
+    const p = pedidoDeConversion(receta, conFotos);
     expect(p).toContain('En la receta, esas fotos son foto:1, foto:2…, en el mismo orden.');
     expect(p).toContain('Si una muestra el plato terminado, poné `foto: foto:N`.');
     expect(p).toContain('Si una muestra un paso, sumá `![](foto:N)` al final de ese paso.');
@@ -76,11 +81,11 @@ describe('el pedido con fotos', () => {
   });
 
   it('esa guía también va cuando el pedido lleva los links de Drive', () => {
-    expect(pedidoDeConversion(conFotos, { links: true })).toContain('En la receta, esas fotos son foto:1, foto:2…');
+    expect(pedidoDeConversion(receta, { ...conFotos, links: true })).toContain('En la receta, esas fotos son foto:1, foto:2…');
   });
 
   it('sin fotos no dice nada de cómo referenciarlas', () => {
-    expect(pedidoDeConversion({ ...borrador, fotos: [] })).not.toContain('En la receta, esas fotos son');
+    expect(pedidoDeConversion(receta, { fotos: [] })).not.toContain('En la receta, esas fotos son');
   });
 });
 
@@ -100,60 +105,66 @@ describe('reconocer una receta en .md', () => {
 });
 
 describe('la receta recibida', () => {
-  it('saca la clave borrador y devuelve el id', () => {
-    const { receta, borradorId } = recetaRecibida('---\ntitulo: Pan\nborrador: b9\n---\n\n## Preparación\n1. Amasar.\n');
-    expect(borradorId).toBe('b9');
+  it('saca la clave id y la devuelve aparte', () => {
+    const { receta, id } = recetaRecibida('---\ntitulo: Pan\nid: r1\n---\n\n## Preparación\n1. Amasar.\n');
+    expect(id).toBe('r1');
     expect(receta.titulo).toBe('Pan');
-    expect(receta.extras).not.toHaveProperty('borrador');
+    expect(receta.extras).not.toHaveProperty('id');
   });
 
-  it('sin la clave, el id es vacío y las demás claves desconocidas se conservan', () => {
-    const { receta, borradorId } = recetaRecibida('---\ntitulo: Pan\nmaridaje: tinto\n---\n');
-    expect(borradorId).toBe('');
+  it('sin la clave, el id es vacío', () => {
+    const { receta, id } = recetaRecibida('---\ntitulo: Pan\nmaridaje: tinto\n---\n');
+    expect(id).toBe('');
     expect(receta.extras['maridaje']).toBe('tinto');
+  });
+
+  it('una receta vieja con borrador: no da id, y borrador queda en los extras como cualquier clave desconocida', () => {
+    const { receta, id } = recetaRecibida('---\ntitulo: Pan\nborrador: b1\n---\n');
+    expect(id).toBe('');
+    expect(receta.extras['borrador']).toBe('b1');
   });
 });
 
 describe('CRLF (una receta compartida o pegada con saltos de línea de Windows)', () => {
-  const CRLF = '---\r\ntitulo: Pan\r\nborrador: b9\r\n---\r\n\r\n## Preparación\r\n1. Amasar.\r\n';
+  const CRLF = '---\r\ntitulo: Pan\r\nid: r1\r\n---\r\n\r\n## Preparación\r\n1. Amasar.\r\n';
 
   it('se reconoce igual que con LF', () => {
     expect(esRecetaEnMd(CRLF)).toBe(true);
   });
 
-  it('recetaRecibida saca el título y el id del borrador, sin avisos de frontmatter faltante', () => {
-    const { receta, borradorId } = recetaRecibida(CRLF);
+  it('recetaRecibida saca el título y el id, sin avisos de frontmatter faltante', () => {
+    const { receta, id } = recetaRecibida(CRLF);
     expect(receta.titulo).toBe('Pan');
-    expect(borradorId).toBe('b9');
+    expect(id).toBe('r1');
     expect(receta.avisos).not.toContain('sin-frontmatter');
     expect(receta.avisos).not.toContain('sin-titulo');
   });
 });
 
 describe('lo que llega envuelto', () => {
-  const receta = '---\ntitulo: Focaccia\nborrador: b1\n---\n\n## Preparación\n1. Amasar.\n';
+  const md = '---\ntitulo: Focaccia\nid: r1\n---\n\n## Preparación\n1. Amasar.\n';
 
   it('dentro de un bloque de código, con o sin lenguaje', () => {
-    expect(esRecetaEnMd('```\n' + receta + '```')).toBe(true);
-    expect(esRecetaEnMd('```markdown\n' + receta + '```\n')).toBe(true);
-    expect(recetaRecibida('```markdown\n' + receta + '```').receta.titulo).toBe('Focaccia');
-    expect(recetaRecibida('~~~\n' + receta + '~~~').borradorId).toBe('b1');
+    expect(esRecetaEnMd('```\n' + md + '```')).toBe(true);
+    expect(esRecetaEnMd('```markdown\n' + md + '```\n')).toBe(true);
+    expect(recetaRecibida('```markdown\n' + md + '```').receta.titulo).toBe('Focaccia');
+    expect(recetaRecibida('~~~\n' + md + '~~~').id).toBe('r1');
   });
 
   it('con texto del agente antes y después del bloque', () => {
-    const conCharla = 'Listo, acá va:\n\n```md\n' + receta + '```\n\n¿Querés que agregue algo?';
+    const conCharla = 'Listo, acá va:\n\n```md\n' + md + '```\n\n¿Querés que agregue algo?';
     expect(esRecetaEnMd(conCharla)).toBe(true);
-    const { receta: r, borradorId } = recetaRecibida(conCharla);
+    const { receta: r, id } = recetaRecibida(conCharla);
     expect(r.titulo).toBe('Focaccia');
-    expect(borradorId).toBe('b1');
+    expect(id).toBe('r1');
     expect(r.preparacion).toContain('Amasar');
   });
 
   it('citada con >, y citada adentro de un bloque', () => {
-    const citada = receta.split('\n').map(l => (l ? '> ' + l : '>')).join('\n');
+    const citada = md.split('\n').map(l => (l ? '> ' + l : '>')).join('\n');
     expect(esRecetaEnMd(citada)).toBe(true);
     expect(recetaRecibida(citada).receta.titulo).toBe('Focaccia');
-    expect(recetaRecibida('```\n' + citada + '\n```').borradorId).toBe('b1');
+    expect(recetaRecibida('```\n' + citada + '\n```').id).toBe('r1');
   });
 
   it('un texto cualquiera dentro de un bloque no es una receta', () => {
@@ -162,7 +173,7 @@ describe('lo que llega envuelto', () => {
   });
 
   it('sin envoltorio, todo sigue igual', () => {
-    expect(esRecetaEnMd(receta)).toBe(true);
-    expect(recetaRecibida(receta).receta.titulo).toBe('Focaccia');
+    expect(esRecetaEnMd(md)).toBe(true);
+    expect(recetaRecibida(md).receta.titulo).toBe('Focaccia');
   });
 });

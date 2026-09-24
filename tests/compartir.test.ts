@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { compartirPdf, compartirLink, compartirTexto, enviarAClaude, leerPortapapeles, LARGO_MAXIMO_DEL_LINK } from '../src/compartir.js';
+import { compartirPdf, compartirLink, compartirTexto, enviarAlAgente, leerPortapapeles, LARGO_MAXIMO_DEL_LINK } from '../src/compartir.js';
 import type { Plataforma } from '../src/compartir.js';
 
 const error = (name: string) => Object.assign(new Error(name), { name });
@@ -78,19 +78,19 @@ describe('compartir link y texto', () => {
   });
 });
 
-describe('enviar el pedido a Claude', () => {
+describe('enviar el pedido al agente', () => {
   const base = { descargar: () => {} };
 
   it('con el menú Compartir, lo comparte como texto', async () => {
     const compartidos: ShareData[] = [];
-    const r = await enviarAClaude({ ...base, share: async d => { compartidos.push(d); } }, 'pedido');
+    const r = await enviarAlAgente({ ...base, share: async d => { compartidos.push(d); } }, 'pedido');
     expect(r).toBe('compartido');
     expect(compartidos).toEqual([{ text: 'pedido' }]);
   });
 
   it('sin menú Compartir y con un pedido corto, abre claude.ai con el pedido cargado', async () => {
     const abiertos: string[] = [];
-    const r = await enviarAClaude({ ...base, abrir: u => abiertos.push(u) }, 'hola mundo');
+    const r = await enviarAlAgente({ ...base, abrir: u => abiertos.push(u) }, 'hola mundo');
     expect(r).toBe('abierto');
     expect(abiertos).toEqual(['https://claude.ai/new?q=hola%20mundo']);
   });
@@ -99,7 +99,7 @@ describe('enviar el pedido a Claude', () => {
     const abiertos: string[] = [];
     const copiados: string[] = [];
     const largo = 'x'.repeat(LARGO_MAXIMO_DEL_LINK);
-    const r = await enviarAClaude({ ...base, abrir: u => abiertos.push(u), copiar: async t => { copiados.push(t); } }, largo);
+    const r = await enviarAlAgente({ ...base, abrir: u => abiertos.push(u), copiar: async t => { copiados.push(t); } }, largo);
     expect(r).toBe('copiado');
     expect(copiados).toEqual([largo]);
     expect(abiertos).toEqual(['https://claude.ai/new']);
@@ -108,18 +108,18 @@ describe('enviar el pedido a Claude', () => {
   it('si cancela el menú Compartir, no abre nada más', async () => {
     const abiertos: string[] = [];
     const abortar = async () => { throw Object.assign(new Error('x'), { name: 'AbortError' }); };
-    expect(await enviarAClaude({ ...base, share: abortar, abrir: u => abiertos.push(u) }, 'p')).toBe('cancelado');
+    expect(await enviarAlAgente({ ...base, share: abortar, abrir: u => abiertos.push(u) }, 'p')).toBe('cancelado');
     expect(abiertos).toEqual([]);
   });
 });
 
-describe('el pedido a Claude con fotos', () => {
+describe('el pedido al agente con fotos', () => {
   const foto = (n: number) => new File(['jpeg'], `foto-${n}.jpg`, { type: 'image/jpeg' });
   const base: Plataforma = { descargar: () => {} };
 
   it('con canShare de archivos, viajan el texto y las fotos', async () => {
     const compartidos: ShareData[] = [];
-    const r = await enviarAClaude(
+    const r = await enviarAlAgente(
       { ...base, share: async d => { compartidos.push(d); }, canShare: d => !!d.files?.length },
       'pedido', { archivos: [foto(1), foto(2)], conLinks: 'pedido con links' });
     expect(r).toBe('compartido');
@@ -127,10 +127,10 @@ describe('el pedido a Claude con fotos', () => {
     expect(compartidos[0]?.files?.map(f => f.name)).toEqual(['foto-1.jpg', 'foto-2.jpg']);
   });
 
-  it('sin canShare de archivos, el link a Claude lleva el pedido con los links de Drive', async () => {
+  it('sin canShare de archivos, el link al agente lleva el pedido con los links de Drive', async () => {
     const abiertos: string[] = [];
     const compartidos: ShareData[] = [];
-    const r = await enviarAClaude(
+    const r = await enviarAlAgente(
       { ...base, share: async d => { compartidos.push(d); }, canShare: () => false, abrir: u => abiertos.push(u) },
       'pedido', { archivos: [foto(1)], conLinks: 'pedido con links' });
     expect(r).toBe('abierto');
@@ -140,13 +140,13 @@ describe('el pedido a Claude con fotos', () => {
 
   it('sin menú Compartir, también', async () => {
     const abiertos: string[] = [];
-    await enviarAClaude({ ...base, abrir: u => abiertos.push(u) }, 'pedido', { archivos: [foto(1)], conLinks: 'con links' });
+    await enviarAlAgente({ ...base, abrir: u => abiertos.push(u) }, 'pedido', { archivos: [foto(1)], conLinks: 'con links' });
     expect(abiertos).toEqual([`https://claude.ai/new?q=${encodeURIComponent('con links')}`]);
   });
 
   it('si no se pudieron leer las fotos, van los links', async () => {
     const abiertos: string[] = [];
-    await enviarAClaude({ ...base, share: async () => {}, canShare: () => true, abrir: u => abiertos.push(u) },
+    await enviarAlAgente({ ...base, share: async () => {}, canShare: () => true, abrir: u => abiertos.push(u) },
       'pedido', { archivos: [], conLinks: 'con links' });
     expect(abiertos).toHaveLength(1);
   });
@@ -154,7 +154,7 @@ describe('el pedido a Claude con fotos', () => {
   it('si Chrome perdió el toque, cae a los links', async () => {
     const abiertos: string[] = [];
     const sinToque = async () => { throw Object.assign(new Error('x'), { name: 'NotAllowedError' }); };
-    const r = await enviarAClaude({ ...base, share: sinToque, canShare: () => true, abrir: u => abiertos.push(u) },
+    const r = await enviarAlAgente({ ...base, share: sinToque, canShare: () => true, abrir: u => abiertos.push(u) },
       'pedido', { archivos: [foto(1)], conLinks: 'con links' });
     expect(r).toBe('abierto');
     expect(abiertos[0]).toContain(encodeURIComponent('con links'));

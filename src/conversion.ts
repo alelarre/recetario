@@ -1,6 +1,6 @@
 /**
- * Convertir un borrador con Claude. La app no llama a ningún modelo:
- * arma el pedido, y reconoce la receta en `.md` que vuelve. Las reglas del
+ * Convertir una receta con el agente. La app no llama a ningún modelo: arma
+ * el pedido, y reconoce la receta en `.md` que vuelve. Las reglas del
  * formato salen de las mismas constantes que usa la app, así el pedido no se
  * desactualiza cuando cambia el esquema.
  */
@@ -35,8 +35,8 @@ function parrafoDeFotos(fotos: readonly string[], links: boolean): string[] {
 }
 
 export function pedidoDeConversion(
-  { id, titulo, fuente, nota, fotos = [] }: { id: string; titulo: string; fuente: string; nota: string; fotos?: readonly string[] },
-  { links = false }: { links?: boolean } = {}
+  { id, titulo, fuente, notas }: { id: string; titulo: string; fuente: string; notas: string },
+  { fotos = [], links = false }: { fotos?: readonly string[]; links?: boolean } = {}
 ): string {
   const lista = (xs: readonly string[]): string => xs.map(x => `\`${x}\``).join(', ');
   return [
@@ -45,7 +45,7 @@ export function pedidoDeConversion(
     'Borrador:',
     `Título: ${titulo}`,
     ...(fuente ? [`Fuente: ${fuente}`] : []),
-    ...(nota ? [`Nota: ${nota}`] : []),
+    ...(notas ? [`Notas: ${notas}`] : []),
     ...parrafoDeFotos(fotos, links),
     '',
     'Formato:',
@@ -53,7 +53,7 @@ export function pedidoDeConversion(
     `- \`tiempo\` es uno de estos valores, tal cual: ${lista(DURACIONES)}. Cuenta el tiempo hasta comer, con reposo y horno. Si la fuente no lo dice, no lo pongas.`,
     `- \`dificultad\` es uno de estos valores: ${lista(DIFICULTADES)}. Si no se puede saber, no la pongas.`,
     `- En \`tags\` no uses estos: ${lista(TAGS_RESERVADOS)}.`,
-    `- La última línea del frontmatter es \`borrador: ${id}\`.`,
+    `- La última línea del frontmatter es \`id: ${id}\`.`,
     '- Después del frontmatter, una descripción corta opcional y las secciones `## Ingredientes`, `## Preparación`, `## Variaciones` y `## Notas`, sólo las que haya.',
     '- Un ingrediente por línea: `- nombre — cantidad`. Los `###` agrupan ingredientes o tramos de la preparación.',
     '- La preparación en pasos numerados.',
@@ -66,9 +66,9 @@ export function pedidoDeConversion(
 
 /**
  * `\r\n` → `\n`, una vez, para que el resto del módulo no tenga que pensar en
- * CRLF (precedente: `borrador.ts`). `parse()` de `recipe.ts` sólo reconoce
- * `\n`: sin esto, una receta compartida o pegada con saltos de Windows se
- * detecta como receta pero se parsea vacía.
+ * CRLF. `parse()` de `recipe.ts` sólo reconoce `\n`: sin esto, una receta
+ * compartida o pegada con saltos de Windows se detecta como receta pero se
+ * parsea vacía.
  */
 const normalizarSaltos = (texto: string): string => texto.replace(/\r\n/g, '\n');
 
@@ -101,11 +101,15 @@ export function esRecetaEnMd(texto: unknown): boolean {
   return !!m && /^titulo\s*:/m.test(m[1] ?? '');
 }
 
-/** La receta parseada, sin la clave `borrador`, que se devuelve aparte. */
-export function recetaRecibida(texto: string): { receta: Receta; borradorId: string } {
+/**
+ * La receta parseada, sin la clave `id`, que se devuelve aparte. Una receta
+ * vieja que todavía trae `borrador:` no tiene `id`: esa clave queda en los
+ * extras como cualquier otra desconocida.
+ */
+export function recetaRecibida(texto: string): { receta: Receta; id: string } {
   const receta = parse(limpiarRecibido(texto) + '\n');
-  const borradorId = String(receta.extras['borrador'] ?? '').trim();
+  const id = String(receta.extras['id'] ?? '').trim();
   const extras = { ...receta.extras };
-  delete extras['borrador'];
-  return { receta: { ...receta, extras }, borradorId };
+  delete extras['id'];
+  return { receta: { ...receta, extras }, id };
 }
