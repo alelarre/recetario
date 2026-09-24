@@ -446,6 +446,13 @@ describe('la estrella de favorito', () => {
     expect(html.indexOf('class="aviso"')).toBeLessThan(html.indexOf('class="ficha"'));
   });
 
+  it('un aviso que trae la receta de otra pantalla va arriba de la ficha, sin control', () => {
+    const html = renderReceta({ entrada: entradaFalsa(), receta, aviso: 'Pedido copiado: pegalo en el agente' });
+    expect(html).toContain('Pedido copiado: pegalo en el agente');
+    expect(html).not.toContain('Reintentar');
+    expect(html.indexOf('class="aviso"')).toBeLessThan(html.indexOf('class="ficha"'));
+  });
+
   it('los tags especiales van primeros y con su ícono', () => {
     const conTags = parse('---\ntitulo: Asado\ntags: [horno, probar]\n---\n');
     const html = renderReceta({ entrada: entradaFalsa(), receta: conTags });

@@ -36,6 +36,8 @@ export interface OpcionesReceta {
   favorito?: 'escribiendo';
   /** Lo último que falló al marcar favorito. Se dibuja arriba de la ficha. */
   error?: string;
+  /** Un aviso que trae la receta la pantalla de la que se llegó. Va arriba de la ficha, sin control. */
+  aviso?: string;
   /** El visor de fotos abierto, en su foto actual. Sin esto no se dibuja. */
   visor?: EstadoVisor;
 }
@@ -57,7 +59,9 @@ function botonFavorito(receta: Receta, escribiendo: boolean): string {
     `<span class="${clase}">${ICO.estrella}${ICO.estrella}</span></button>`;
 }
 
-export function renderReceta({ entrada, receta: sinResolver, compartir, favorito, error, visor }: OpcionesReceta): string {
+export function renderReceta(
+  { entrada, receta: sinResolver, compartir, favorito, error, aviso: avisoDeLlegada, visor }: OpcionesReceta
+): string {
   // La cabecera y el cuerpo sólo ven la receta resuelta: ni `fichaCabecera`
   // ni `fichasDelCuerpo` saben de `foto:N`, eso es cosa de acá.
   const receta = resolverReceta(sinResolver);
@@ -91,6 +95,7 @@ export function renderReceta({ entrada, receta: sinResolver, compartir, favorito
   const estrella = botonFavorito(receta, favorito === 'escribiendo');
   return encabezado({ titulo: '', volver: true, pegajoso: true, derecha: estrella + botonCompartir + alArchivo }) +
     '<div class="cuerpo">' +
+      (avisoDeLlegada ? aviso({ texto: avisoDeLlegada }) : '') +
       (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'favorito' } }) : '') +
       fichaCabecera({ receta, categoria, marcas, carrusel }) + fichasDelCuerpo(receta) +
     '</div>' +

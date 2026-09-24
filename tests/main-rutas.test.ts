@@ -3656,6 +3656,103 @@ describe('main.ts: las rutas', () => {
     });
   });
 
+  describe('convertir con el agente', () => {
+    /** Lo que se mandó por el menú Compartir, con cuántas recetas había creadas en ese momento. */
+    const mandados: { datos: ShareData; creadasAntes: number }[] = [];
+    afterEach(() => { mandados.length = 0; });
+    const conShare = () => vi.stubGlobal('navigator', {
+      share: async (datos: ShareData) => { mandados.push({ datos, creadasAntes: estado.creadas.length }); },
+      canShare: () => true
+    });
+
+    it('guarda primero y después manda el pedido con el id de la receta', async () => {
+      conShare();
+      const { abrir, tocar } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Focaccia', fuente: 'https://ig.com/r', notas: 'la de la abuela', carpeta: '', tags: 'borrador' };
+      await tocar('convertir-con-agente');
+      expect(estado.creadas).toEqual(['Focaccia']);
+      expect(mandados).toHaveLength(1);
+      expect(mandados[0]?.creadasAntes).toBe(1);
+      const pedido = mandados[0]?.datos.text ?? '';
+      expect(pedido).toContain('`id: nuevo-1`');
+      expect(pedido).toContain('Título: Focaccia');
+      expect(pedido).toContain('Fuente: https://ig.com/r');
+      expect(pedido).toContain('Notas: la de la abuela');
+    });
+
+    it('al terminar, la app queda en la receta', async () => {
+      conShare();
+      const { abrir, tocar, reemplazos } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      await tocar('convertir-con-agente');
+      expect(reemplazos.at(-1)).toBe('#/r/nuevo-1');
+    });
+
+    it('si guardar falla, no manda nada y el editor queda con el aviso', async () => {
+      conShare();
+      const original = storeFake.crear;
+      storeFake.crear = async () => { throw new Error('red'); };
+      try {
+        const { abrir, tocar, app, reemplazos } = await montar();
+        await abrir('#/nueva');
+        estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+        await tocar('convertir-con-agente');
+        expect(mandados).toEqual([]);
+        expect(reemplazos).toEqual([]);
+        expect(app.innerHTML).toContain('No se pudo guardar. Revisá la conexión.');
+      } finally {
+        storeFake.crear = original;
+      }
+    });
+
+    it('si la validación falla, no manda nada', async () => {
+      conShare();
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/nueva');
+      // Sin título y con borrador ya sacado: no hay con qué nombrar el archivo.
+      estado.formulario = { titulo: '', carpeta: 'c1', tags: '' };
+      await tocar('convertir-con-agente');
+      expect(mandados).toEqual([]);
+      expect(app.innerHTML).toContain('Ponele un título antes de guardar.');
+    });
+
+    it('las fotos de Drive del depósito van en orden, como archivos', async () => {
+      conShare();
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1/editar');
+      const fotos = [
+        { n: 3, url: linkDeFoto('d3') }, { n: 1, url: linkDeFoto('d1') }, { n: 2, url: 'https://x/y.jpg' }
+      ];
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags: 'borrador', fotos: JSON.stringify(fotos) };
+      await tocar('convertir-con-agente');
+      const archivos = (mandados[0]?.datos.files ?? []) as File[];
+      expect(archivos.map(a => a.name)).toEqual(['foto-1.jpg', 'foto-2.jpg']);
+      expect(await Promise.all(archivos.map(a => a.text()))).toEqual(['d1', 'd3']);
+      expect(mandados[0]?.datos.text).toContain('`id: f1`');
+      expect(mandados[0]?.datos.text).toContain('van 2');
+    });
+
+    it('con el pedido copiado, el aviso se ve en la receta', async () => {
+      const copiados: string[] = [];
+      vi.stubGlobal('navigator', { clipboard: { writeText: async (t: string) => { copiados.push(t); } } });
+      const { abrir, tocar, app } = await montar();
+      (global.window as unknown as { open: () => void }).open = () => {};
+      await abrir('#/nueva');
+      // Unas notas largas no entran en el link a claude.ai: el pedido se copia.
+      estado.formulario = { titulo: 'Focaccia', notas: 'x'.repeat(9000), carpeta: '', tags: 'borrador' };
+      await tocar('convertir-con-agente');
+      expect(copiados).toHaveLength(1);
+      await abrir('#/r/nuevo-1');
+      expect(app.innerHTML).toContain('Pedido copiado: pegalo en el agente');
+      // Es de esa llegada: la próxima pantalla ya no lo trae.
+      await abrir('#/');
+      await abrir('#/r/nuevo-1');
+      expect(app.innerHTML).not.toContain('Pedido copiado');
+    });
+  });
+
   describe('el registro del service worker', () => {
     // `main.ts` no es el script de entrada: `inicio.ts` lo carga con
     // `import()`, así que puede evaluarse después de `load`. Sin este chequeo,

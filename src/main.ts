@@ -45,8 +45,10 @@ import {
 import { crearControlCocina } from './cocina-control.js';
 import { registrarCategorias } from './ui/categorias.js';
 import { precargar, generar } from './pdf/generar.js';
-import { compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador, leerPortapapeles } from './compartir.js';
-import { esRecetaEnMd, recetaRecibida, aplicarPegada } from './conversion.js';
+import {
+  compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador, leerPortapapeles, enviarAlAgente
+} from './compartir.js';
+import { esRecetaEnMd, recetaRecibida, aplicarPegada, pedidoDeConversion } from './conversion.js';
 import { desdeCompartido, tituloPorDefecto } from './compartido.js';
 import { codificar, urlDeLink } from './link-receta.js';
 import { textoReceta } from './texto-receta.js';
@@ -207,6 +209,13 @@ let recetaLeida: { id: string; entrada: Entrada | null; receta: Receta } | null 
 let marcandoFavorito = false;
 /** Lo último que falló al marcar favorito. Lo dibuja la receta, arriba de la ficha. */
 let errorFavorito = '';
+/**
+ * Un aviso para la pantalla a la que se va, y el que la pantalla actual trajo
+ * al llegar: cómo terminó el pedido al agente se lee en la receta, porque el
+ * editor desde el que se mandó ya se cerró. Dura esa llegada.
+ */
+let avisoAlLlegar = '';
+let avisoDeLlegada = '';
 
 /**
  * El plan de la semana, leído de su `.md` una vez. Mismo criterio que la
@@ -519,6 +528,17 @@ const achicarFoto = (archivo: Blob, opciones?: OpcionesAchicar): Promise<Blob> =
 
 const NO_SE_LEYO_UNA_FOTO = 'No se pudo leer una de las fotos.';
 
+/** Las fotos de Drive como archivos, para mandarlas al agente. Si no se pueden leer, ninguna. */
+async function archivosDeFotos(ids: string[]): Promise<File[]> {
+  try {
+    const blobs = await Promise.all(ids.map(id => imagenes.imagenDe(id)));
+    return blobs.flatMap((b, i) => b ? [new File([b], `foto-${i + 1}.jpg`, { type: b.type || 'image/jpeg' })] : []);
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+}
+
 /** El modo cocina: paso actual, marcados, conmutador y pantalla encendida. */
 const cocina = crearControlCocina();
 
@@ -791,6 +811,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     pdfListo = null;
     marcandoFavorito = false;
     errorFavorito = '';
+    avisoDeLlegada = avisoAlLlegar;
+    avisoAlLlegar = '';
     // La pantalla nueva empieza arriba: el hash no cambia el scroll, así que
     // entrar al modo cocina desde el pie de la receta abría los ingredientes
     // ya scrolleados. La llamada es opcional por lo mismo que
@@ -852,7 +874,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
           ...(visor ? { visor } : {}),
           ...(compartiendo ? { compartir: compartiendo } : {}),
           ...(marcandoFavorito ? { favorito: 'escribiendo' as const } : {}),
-          ...(errorFavorito ? { error: errorFavorito } : {})
+          ...(errorFavorito ? { error: errorFavorito } : {}),
+          ...(avisoDeLlegada ? { aviso: avisoDeLlegada } : {})
         }));
         return observarTitulo();
       } catch (err) {
@@ -2048,6 +2071,34 @@ app.addEventListener('click', async (e) => {
     fotosEditor.nuevas.delete(n);
     fotosEditor.urls.delete(n);
     cerrarFichaFoto();
+    return;
+  }
+
+  if (accion === 'convertir-con-agente') {
+    // Guarda y después manda: el pedido lleva el id del `.md`, que en una
+    // receta nueva recién existe al crearla. Si no se guardó, no se manda nada.
+    const guardada = await guardarEditor(boton);
+    if (!guardada) return;
+    const { id, receta } = guardada;
+    // Las fotos que el agente puede leer son las de Drive, en el orden del
+    // depósito: el pedido las nombra `foto:1`, `foto:2`…
+    const ids = idsDeDrive([...receta.fotos].sort((a, b) => a.n - b.n).map(f => f.url));
+    const datos = { id, titulo: receta.titulo ?? '', fuente: receta.fuente ?? '', notas: receta.notas };
+    try {
+      const fotos = ids.length
+        ? { archivos: await archivosDeFotos(ids), conLinks: pedidoDeConversion(datos, { fotos: ids, links: true }) }
+        : null;
+      const r = await enviarAlAgente(plataformaDelNavegador(), pedidoDeConversion(datos, { fotos: ids }), fotos);
+      if (r === 'copiado') avisoAlLlegar = 'Pedido copiado: pegalo en el agente';
+      if (r === 'sin-portapapeles') avisoAlLlegar = 'No se pudo abrir el agente ni copiar el pedido.';
+    } catch (err) {
+      console.error(err);
+      avisoAlLlegar = 'No se pudo abrir el agente ni copiar el pedido.';
+    }
+    // La receta ya está guardada: el editor se cierra y la app queda en ella.
+    await guardada.dibujado;
+    esperarPintadoParaSacarElVelo();
+    irCerrando(`#/r/${encodeURIComponent(id)}`);
     return;
   }
 
