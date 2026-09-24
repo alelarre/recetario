@@ -323,7 +323,7 @@ describe('main.ts: las rutas', () => {
     search = '', readyState = 'complete' as DocumentReadyState, reducedMotion = false
   } = {}) => {
     // Sólo los temporizadores: `Date` queda real, que es de donde salen las
-    // fechas de los borradores y del plan.
+    // fechas del plan y el título de un borrador sin título.
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const clicks: ((e: unknown) => unknown)[] = [];
     const cambios: ((e: unknown) => unknown)[] = [];
@@ -486,18 +486,6 @@ describe('main.ts: las rutas', () => {
         return null;
       }
     };
-    /**
-     * Lo que se colgó del cuerpo de la pantalla y no del formulario: la ficha
-     * de *Por URL* en el borrador, que no tiene ninguno. Va también a
-     * `preguntas`, que es donde los tests buscan las fichas.
-     */
-    const colgadasDelCuerpo: string[] = [];
-    const cuerpo = {
-      insertAdjacentHTML: (_donde: string, html: string) => {
-        colgadasDelCuerpo.push(html);
-        preguntas.push(html);
-      }
-    };
     /** Saca del formulario lo que se había insertado: la ficha, el velo o el visor. */
     const quitarInsertado = (marca: string) =>
       preguntas.flatMap(html => html.includes(marca)
@@ -561,19 +549,10 @@ describe('main.ts: las rutas', () => {
       querySelector: (sel: string) => {
         if (sel === '#app') return app;
         if (sel === '#velo-escritura') return velo;
-        // El formulario existe sólo donde la pantalla lo dibuja —el editor, la
-        // captura, la edición de una categoría—: el borrador abierto no tiene
-        // ninguno, y ahí las fichas se cuelgan del cuerpo. Sale de lo pintado,
-        // para que el doble no pueda decir que hay uno donde no lo hay.
+        // El formulario existe sólo donde la pantalla lo dibuja —el editor y la
+        // edición de una categoría—. Sale de lo pintado, para que el doble no
+        // pueda decir que hay uno donde no lo hay.
         if (sel === '[data-formulario]') return app.innerHTML.includes('data-formulario') ? formulario : null;
-        if (sel === '#app .cuerpo') return app.innerHTML.includes('class="cuerpo"') ? cuerpo : null;
-        // Los campos de la captura: lo que el test dejó escrito en `formulario`.
-        if (sel === 'input[name="titulo"]') return { value: estado.formulario['titulo'] ?? '' };
-        // La captura compartida no dibuja el campo fuente: la trae la URL.
-        if (sel === 'input[name="fuente"]') {
-          return estado.formulario['fuente'] === undefined ? null : { value: estado.formulario['fuente'] };
-        }
-        if (sel === 'textarea[name="nota"]') return { value: estado.formulario['nota'] ?? '' };
         if (sel === '[data-salida]') return preguntas.length ? { remove: () => { preguntas.length = 0; } } : null;
         if (sel === '[data-confirmar-borrado]') {
           return enLugar.at(-1)?.includes('data-confirmar-borrado')
@@ -693,7 +672,6 @@ describe('main.ts: las rutas', () => {
       reemplazos,
       empujados,
       preguntas,
-      colgadasDelCuerpo,
       enLugar,
       desplazamientos,
       comportamientos,
@@ -2354,9 +2332,6 @@ describe('main.ts: las rutas', () => {
       expect(idasYVueltasDelVelo).toEqual([false, true]);
     });
 
-    // Agregar una foto por su dirección, igual que en la receta. Lo que
-    // cambia es la salida de la que no se pudo bajar: en un borrador las fotos
-    // son ids de Drive, y un link externo no tiene ninguno.
     it('Borrar datos locales y Salir borran las fotos guardadas en el navegador', async () => {
       const { abrir, tocar } = await montar();
       await abrir('#/ajustes');
@@ -3438,6 +3413,17 @@ describe('main.ts: las rutas', () => {
       await abrir('#/');
       expect(empujados).toEqual(['#/nueva?text=hola']);
       expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
+    });
+
+    it('salir sin guardar lo compartido, sin pantalla atrás, cierra al Recetario', async () => {
+      const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
+      // El Share Target abre la app con una sola entrada en el historial.
+      Object.defineProperty(global.history, 'length', { value: 1, configurable: true });
+      await abrir('#/nueva?text=hola');
+      await abrir('#/');
+      await tocar('salir-sin-guardar');
+      expect(reemplazos.at(-1)).toBe('#/');
+      expect(vueltasAtras).toEqual([]);
     });
 
     it('sin nada compartido, volver sin tocar nada no pregunta', async () => {

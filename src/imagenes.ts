@@ -5,7 +5,7 @@
  * imágenes propias de las categorías.
  *
  * También vive acá lo que el service worker deja del menú Compartir: las
- * fotos que llegaron, en su propio caché, hasta que la captura las lee.
+ * fotos que llegaron, en su propio caché, hasta que la receta nueva las lee.
  *
  * Todo se inyecta: los tests corren en Node, donde no hay Cache Storage ni
  * object URLs.

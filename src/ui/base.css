@@ -71,8 +71,7 @@
 .rec-fuente { margin-top: var(--e-4); padding-top: var(--e-3); border-top: 1px solid var(--borde);
               font-size: var(--txt-micro); color: var(--fg-3); }
 .rec-fuente a { color: var(--fg-2); }
-/* El emoji se come el espacio que le sigue: el aire va por margen. Vale para
-   la receta y para el borrador, que rotulan su fuente igual. */
+/* El emoji se come el espacio que le sigue: el aire va por margen. */
 .emo { margin-right: var(--e-2); font-style: normal; }
 /* La descripción cierra el bloque de la receta; el margen del último párrafo
    sumaría al del divisor de la fuente. */
@@ -265,43 +264,29 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
 .acciones-editor { display: flex; flex-direction: column; gap: var(--e-2); margin-top: var(--e-4); }
 .acciones-editor .btn { width: 100%; }
 
-/* ---- Captura ---- */
-/* El ayuda memoria de la nota: es referencia mientras se escribe, no prosa.
-   En micro, que es el piso de la escala, y en el color de los rótulos de los
-   campos. */
+/* La ayuda del formato de ingredientes: es referencia mientras se escribe, no
+   prosa. En micro, que es el piso de la escala, y en el color de los rótulos
+   de los campos. */
 .esbozo { margin-bottom: var(--e-5); }
 .esbozo summary { font-size: var(--txt-chico); color: var(--fg-2);
                   cursor: pointer; padding: 0 0 var(--e-2); }
 .esbozo pre { margin: 0; padding: 0 0 var(--e-2);
-              /* Sin caja: con borde parecía un campo editable, y con fondo
-                 propio se veía distinto según dónde estuviera —invisible sobre
-                 la ficha del editor, un recuadro gris sobre la hoja de la
-                 captura—. Es sólo texto de referencia. */
+              /* Sin caja: con borde parece un campo editable, y con fondo
+                 propio se despega de la ficha. Es sólo texto de referencia. */
               background: none; border: 0;
               font-size: var(--txt-micro); line-height: 1.6; color: var(--fg-2);
               white-space: pre-wrap; word-break: break-word; }
-/* El mismo ancho máximo que el cuerpo de la receta y del editor (C05.10.1). */
-.hoja { min-height: 100%; display: flex; flex-direction: column; padding: var(--e-5) var(--e-4);
-        max-width: 680px; margin: 0 auto; }
-.hoja h1 { font-size: var(--txt-titulo); font-weight: 600; line-height: 1.25; margin: 0 0 var(--e-5); }
-.fnt { font-size: var(--txt-chico); color: var(--fg-2); background: var(--surface);
-       border: 1px solid var(--borde); border-radius: var(--r-medio); padding: var(--e-3);
-       word-break: break-all; margin-bottom: var(--e-5); }
-.pie2 { margin-top: auto; display: flex; gap: var(--e-2); justify-content: flex-end; padding-top: var(--e-5); }
 
-/* ---- Borradores ---- */
+/* ---- Filas de lista: la de las categorías en Ajustes ---- */
 .bor { display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
        background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha);
        /* Es un <a>: sin esto lleva el subrayado y el violeta de link visitado. */
        text-decoration: none; color: inherit; }
 .bor .txt { flex: 1; min-width: 0; }
-/* El título es lo que trajo Compartir —el texto de un reel, una URL—, así que
-   se recorta en dos renglones como el de una receta (`.tarjeta .n`). Sin esto,
-   uno largo estira la página a lo ancho. */
+/* El nombre se recorta en dos renglones como el de una receta (`.tarjeta .n`).
+   Sin esto, uno largo y sin espacios estira la página a lo ancho. */
 .bor .n { font-weight: 600; overflow-wrap: anywhere;
           display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.bor .f { font-size: var(--txt-chico); color: var(--fg-2); white-space: nowrap;
-          overflow: hidden; text-overflow: ellipsis; margin-top: var(--e-1); }
 .bor .d { font-size: var(--txt-micro); color: var(--fg-3); white-space: nowrap; }
 
 /* ---- Carpeta base ---- */

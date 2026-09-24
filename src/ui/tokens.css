@@ -115,7 +115,7 @@ body {
               padding-bottom: var(--e-3); border-bottom: 1px solid var(--borde-fuerte); }
 
 /* ---- §6.7 Botón ----
-   Algunos botones son `<a>` —«Categorías ›», «+ Nueva», «Ir a la fuente»—: sin
+   Algunos botones son `<a>` —«Categorías ›», «+ Nueva»—: sin
    apagarlo, el navegador los subraya y dejan de parecer botones. */
 .btn { min-height: 48px; padding: 0 var(--e-4); border-radius: var(--r-medio);
        font: 600 var(--txt-base)/1 var(--tipo); display: inline-flex; align-items: center;
@@ -223,7 +223,7 @@ button.tarjeta { width: 100%; font: inherit; text-align: left; cursor: pointer; 
         border: 1px solid var(--borde-fuerte); border-radius: var(--r-chico);
         font-size: var(--txt-chico); color: var(--fg); }
 .chip.act { background: var(--acento-suave); border-color: var(--acento); color: var(--acento); }
-/* La incompleta, dicha con palabras: un chip más de la fila de tags, que abre
+/* El borrador, dicho con palabras: un chip más de la fila de tags, que abre
    el editor. Los valores del chip activo; la clase es otra porque significan
    cosas distintas. */
 .chip.pend { background: var(--acento-suave); border-color: var(--acento); color: var(--acento); }
@@ -405,7 +405,7 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
 /* ---- Estado vacío ---- */
 .vacio { color: var(--fg-2); text-align: center; padding: var(--e-7) var(--e-4); line-height: 1.6; }
 
-/* ---- Fotos del borrador: la fila de miniaturas y el visor ---- */
+/* ---- Fotos de la receta: la fila de miniaturas y el visor ---- */
 .miniaturas { display: flex; flex-wrap: wrap; gap: var(--e-2); align-items: center; }
 /* Las fotos arriba y los dos botones de agregar abajo, en su propia fila. */
 .fotos-campo { display: flex; flex-direction: column; gap: var(--e-2); align-items: flex-start; }

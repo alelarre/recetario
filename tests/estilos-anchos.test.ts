@@ -81,11 +81,10 @@ describe('las fichas al pie se miden contra la ventana chica', () => {
   });
 });
 
-describe('el título de un borrador no estira la pantalla', () => {
-  // El título de un borrador es lo que trajo Compartir: el texto de un reel,
-  // una URL, cualquier cosa sin espacios. Sin recortarlo, uno largo desborda y
-  // la página queda con scroll horizontal, y ahí Android se lleva el
-  // deslizamiento del menú lateral antes que la página.
+describe('el nombre de una fila de lista no estira la pantalla', () => {
+  // Un nombre largo y sin espacios, sin recortarlo, desborda y la página queda
+  // con scroll horizontal, y ahí Android se lleva el deslizamiento del menú
+  // lateral antes que la página.
   it('se recorta como el de una receta en la lista', () => {
     const n = regla(BASE, '.bor .n');
     expect(n).toContain('overflow: hidden');

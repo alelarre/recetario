@@ -47,8 +47,7 @@ const storeFake = {
     receta: { titulo: id, ingredientes: 'a', preparacion: 'b', notas: 'c', fotos: [] }
   }),
   buscar: () => [],
-  tagsDe: () => [],
-  borradores: () => []
+  tagsDe: () => []
 };
 vi.mock('../src/store.js', () => ({ crearStore: () => storeFake }));
 

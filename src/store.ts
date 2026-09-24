@@ -611,7 +611,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
    * en su línea. Cada subida se avisa apenas termina, para que un reintento no
    * la resuba.
    */
-  async function subirYMover(nombreMd: string, receta: Receta, fotos: CambiosDeFotos | undefined): Promise<Receta> {
+  async function subirFotosNuevas(nombreMd: string, receta: Receta, fotos: CambiosDeFotos | undefined): Promise<Receta> {
     const base = nombreMd.replace(/\.md$/i, '');
     const links = new Map<number, string>();
     for (const [n, blob] of fotos?.nuevas ?? []) {
@@ -683,7 +683,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       nombre_archivo = meta.nombre;
     }
 
-    const conLinks = await subirYMover(nombre_archivo, receta, fotos);
+    const conLinks = await subirFotosNuevas(nombre_archivo, receta, fotos);
     const actualizado = await drive.actualizar(id, serialize(conLinks));
 
     // Vacío es «Sin categoría»: si ya está suelta —en la raíz o en
@@ -719,7 +719,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const padre = carpetaId ?? await carpetaSinCategoria();
     const hermanos = (await drive.listarHijos(padre)).map(a => a.name ?? '');
     const nombre = slugArchivo(receta.titulo, hermanos);
-    const conLinks = await subirYMover(nombre, receta, fotos);
+    const conLinks = await subirFotosNuevas(nombre, receta, fotos);
     const archivo = await drive.crear({ nombre, contenido: serialize(conLinks), padre });
 
     const ubicacion: Ubicacion = {

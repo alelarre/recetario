@@ -96,10 +96,4 @@ describe('cómo responden los controles al toque', () => {
     const regla = BASE.match(/#velo-escritura\.exito\s*\{([^}]*)\}/)?.[1] ?? '';
     expect(regla).not.toContain('pointer-events');
   });
-
-  it('el formulario del borrador tiene el ancho de la receta y del editor en pantalla ancha (C05.10.1)', () => {
-    const regla = BASE.slice(BASE.indexOf('.hoja {'), BASE.indexOf('}', BASE.indexOf('.hoja {')));
-    expect(regla).toContain('max-width: 680px');
-    expect(regla).toContain('margin: 0 auto');
-  });
 });

@@ -185,7 +185,7 @@ export function aviso({ texto, accion }: OpcionesAviso): string {
 export const SIN_SESION = 'Hay que conectarse de nuevo con Google.';
 
 /**
- * El aviso de un guardado que falló, en la captura y en el editor. Se reintenta
+ * El aviso de un guardado que falló, en el editor. Se reintenta
  * con Guardar, que sigue a la vista; sin sesión, antes hay que conectarse, y
  * por eso ese aviso sí lleva su control.
  */
@@ -342,8 +342,8 @@ export function lateral({ activo, borradores, abierto }: OpcionesLateral): strin
       // El plan es su única entrada: el Recetario no lo nombra.
       item('plan', '#/plan', ICO.calendario, 'Plan de la semana') +
       // Nueva receta es una acción y no un lugar: nunca queda marcada, porque
-      // el editor al que lleva no dibuja el menú. Está acá porque es el único
-      // sitio desde donde se alcanza sin pasar por un borrador.
+      // el editor al que lleva no dibuja el menú. Es la única entrada para
+      // crear una receta a mano.
       `<a href="#/nueva">${ICO.mas}Nueva receta</a>` +
       item('ajustes', '#/ajustes', ICO.ajustes, 'Ajustes') +
       // Al pie y tenue: sirve para saber si el teléfono ya tomó el último deploy.
@@ -443,10 +443,8 @@ const datosDeAccion = (a: AccionDeMiniatura, n: number | undefined): string =>
  * sigue aceptando varias.
  *
  * `porUrl` suma un tercer botón, **Por URL**, que no es un input de archivo:
- * la app baja la foto de la dirección que se le escriba. Va en las tres —la
- * receta, el borrador y la captura—: una foto que está en la web se agrega
- * igual en todas. Lo que cambia es qué pasa con la que no se pudo bajar,
- * y eso lo decide `main.ts`.
+ * la app baja la foto de la dirección que se le escriba. Qué pasa con la que
+ * no se pudo bajar lo decide `main.ts`.
  */
 export function filaDeFotos(
   { fotos, agregar, porUrl = false }: { fotos: Miniatura[]; agregar: boolean; porUrl?: boolean }

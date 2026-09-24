@@ -1092,7 +1092,7 @@ function sincronizarTags(): void {
  * habilita o bloquea su botón. Corre en cada tecla, así que toca el DOM en vez
  * de redibujar: redibujar perdería el foco y el cursor.
  */
-function revisarIncompleta(): void {
+function revisarBorrador(): void {
   const boton = document.querySelector<HTMLButtonElement>('#app [data-accion="tag-especial"][data-valor="borrador"]');
   if (!boton) return;
   const valor = (n: string): string =>
@@ -1121,7 +1121,7 @@ const ALTO_RENGLON = 24;
 /** Se está en el editor de una receta, la que sea: ahí nada se redibuja sin perder lo escrito. */
 const enElEditor = (): boolean => vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva';
 
-/** Un campo del formulario por su `name`, como lo hace `revisarIncompleta`. */
+/** Un campo del formulario por su `name`, como lo hace `revisarBorrador`. */
 const campoDelEditor = (nombre: string) =>
   document.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#app [name="${nombre}"]`);
 
@@ -1239,14 +1239,12 @@ function cerrarFichaFoto(): void {
 
 /**
  * Abre una ficha al pie: siempre una sola, como la hoja de Compartir. Se
- * cuelga del formulario y, donde no hay ninguno —el borrador abierto—, del
- * cuerpo de la pantalla: la ficha es fija (`tokens.css`), así que de dónde
- * cuelgue no le cambia nada.
+ * cuelga del formulario del editor, que no se redibuja; la ficha es fija
+ * (`tokens.css`), así que de dónde cuelgue no le cambia nada.
  */
 function abrirFichaFoto(html: string): void {
   cerrarFichaFoto();
-  const donde = document.querySelector('[data-formulario]') ?? document.querySelector('#app .cuerpo');
-  donde?.insertAdjacentHTML('beforeend', html);
+  document.querySelector('[data-formulario]')?.insertAdjacentHTML('beforeend', html);
   void completarFotos();
 }
 
@@ -1587,8 +1585,8 @@ function agregarTag(valor: string): boolean {
  * Navega reemplazando la entrada del historial en vez de agregar una.
  *
  * Es lo que corresponde cuando la navegación es un **cierre**: volver de la
- * cocina a la receta, salir a la categoría, o irse de un borrador que se acaba
- * de descartar. Con `location.hash =` el historial acumula la pantalla que se
+ * cocina a la receta, salir a la categoría, o dejar la receta recién guardada
+ * en lugar del editor. Con `location.hash =` el historial acumula la pantalla que se
  * está dejando, y el volver de la siguiente trae de vuelta justo eso: el
  * chevron de la receta llevaría al modo cocina.
  */
@@ -1977,10 +1975,9 @@ app.addEventListener('click', async (e) => {
   if (accion === 'salir') {
     auth.olvidar();
     // La copia tiene títulos e ingredientes: después de Salir no queda nada
-    // del usuario en el navegador. Y se recarga, porque el índice, la receta
-    // abierta y los borradores también viven en memoria: sin recargar, la
-    // próxima pantalla los volvería a dibujar. Las fotos guardadas en el
-    // navegador tampoco quedan.
+    // del usuario en el navegador. Y se recarga, porque el índice y la receta
+    // abierta también viven en memoria: sin recargar, la próxima pantalla los
+    // volvería a dibujar. Las fotos guardadas en el navegador tampoco quedan.
     indiceLocal.borrar();
     await Promise.all([imagenes.borrarImagenes(), imagenes.descartarCompartidas()]);
     irCerrando('#/');
@@ -2190,11 +2187,10 @@ app.addEventListener('click', async (e) => {
   }
   if (accion === 'salir-sin-guardar') {
     editorAbierto = null;
-    // Mismo caso que arriba: sin entrada previa —el editor de una receta
-    // recibida por Share, abierto con `replace`— volver no puede intentar
-    // salir de la app (C01.2.2); cierra a Borradores. Mismo patrón que ya usa
-    // «Cancelar» en la captura.
-    if (history.length <= 1) { irCerrando('#/borradores'); return; }
+    // Mismo caso que arriba: sin entrada previa —el editor que abrió lo
+    // compartido desde otra app— volver no puede intentar salir de la app
+    // (C01.2.2); cierra al Recetario.
+    if (history.length <= 1) { irCerrando('#/'); return; }
     return history.back();
   }
   if (accion === 'conectar-de-nuevo') {
@@ -2337,10 +2333,9 @@ app.addEventListener('click', async (e) => {
 });
 
 /**
- * La captura se escribe en el DOM y no en el estado: redibujar en cada tecla
- * perdería el foco y el cursor. Lo que se sigue tecla a tecla es lo mínimo —el
- * título habilita Guardar, y lo escrito sobrevive a un error—, y el botón se
- * habilita tocándolo directo, sin volver a pintar la pantalla.
+ * Lo que se escribe vive en el DOM y no en el estado: redibujar en cada tecla
+ * perdería el foco y el cursor. Lo que se sigue tecla a tecla toca el DOM
+ * directo, sin volver a pintar la pantalla.
  */
 app.addEventListener('input', (e) => {
   if (tapadas) return;
@@ -2366,7 +2361,7 @@ app.addEventListener('input', (e) => {
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria();
   // En el editor, cada tecla puede habilitar o bloquear el botón de
   // `borrador`, y mueve el cursor de línea.
-  if (enElEditor()) { revisarIncompleta(); acomodarBotonDeFoto(); }
+  if (enElEditor()) { revisarBorrador(); acomodarBotonDeFoto(); }
 });
 
 /**
@@ -2577,7 +2572,7 @@ app.addEventListener('change', (e) => {
     return;
   }
   // La categoría es un select: cambia por `change`, no por `input`.
-  if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') revisarIncompleta();
+  if (vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva') revisarBorrador();
   // Mismo motivo que en `conClosest`: nada de instanceof contra globales del
   // navegador, que en los tests no existen.
   const campo = e.target as HTMLInputElement | null;
@@ -2589,7 +2584,7 @@ app.addEventListener('change', (e) => {
 });
 
 // Lo que llega desde el menú Compartir de Android viene en la query: se pasa
-// a la captura y se limpia la URL, para que recargar no vuelva a capturarlo.
+// a la receta nueva y se limpia la URL, para que recargar no lo vuelva a abrir.
 const compartido = hashDeCompartido(location.search);
 if (compartido) history.replaceState(null, '', location.pathname + compartido);
 
