@@ -69,6 +69,8 @@ const estadoInicial = () => ({
   formulario: {} as Record<string, string>,
   /** Las fotos que el service worker dejó del menú Compartir. */
   compartidas: [] as Blob[],
+  /** Leer las fotos compartidas del caché falla. */
+  fallanCompartidas: false,
   /** Cuántas veces se descartó el caché de lo compartido. */
   compartidasDescartadas: 0,
   /** Cuántas veces se borró el caché de las imágenes. */
@@ -223,7 +225,10 @@ vi.mock('../src/imagenes.js', async original => ({
     guardarImagen: async () => {},
     olvidarImagen: async () => {},
     precargar: async (ids: string[]) => { estado.precargados.push(ids); },
-    fotosCompartidas: async (n: number) => estado.compartidas.slice(0, n),
+    fotosCompartidas: async (n: number) => {
+      if (estado.fallanCompartidas) throw new Error('caché');
+      return estado.compartidas.slice(0, n);
+    },
     descartarCompartidas: async () => { estado.compartidasDescartadas++; },
     borrarImagenes: async () => { estado.imagenesBorradas++; }
   })
@@ -3396,6 +3401,15 @@ describe('main.ts: las rutas', () => {
       expect(imgs[1]?.atributos['src']).toBe('blob:memoria-6');
       // Leídas, el caché del service worker se vacía.
       expect(estado.compartidasDescartadas).toBe(1);
+    });
+
+    it('si leer las fotos compartidas falla, el caché se vacía igual y el editor avisa', async () => {
+      estado.fallanCompartidas = true;
+      const { abrir, app, preguntas } = await montar();
+      await abrir('#/nueva?fotos=2');
+      expect(estado.compartidasDescartadas).toBe(1);
+      expect(app.innerHTML).toContain('name="titulo"');
+      expect(preguntas.join('')).toContain('No se pudo leer una de las fotos.');
     });
 
     it('guardar lo compartido sube las fotos nuevas', async () => {

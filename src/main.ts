@@ -1074,8 +1074,14 @@ async function leerCompartidas(): Promise<boolean> {
   let noSeLeyo = false;
   const destapar = tapar();
   try {
-    const llegadas = await imagenes.fotosCompartidas(cantidad);
-    await imagenes.descartarCompartidas();
+    let llegadas: Blob[];
+    // El caché se vacía aunque la lectura falle: si no, las fotos quedarían
+    // ahí hasta la próxima vez que se comparta algo.
+    try {
+      llegadas = await imagenes.fotosCompartidas(cantidad);
+    } finally {
+      await imagenes.descartarCompartidas().catch(err => console.error(err));
+    }
     let deposito: FotoDeReceta[] = [];
     for (const archivo of llegadas) {
       let blob: Blob;
