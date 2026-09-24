@@ -51,6 +51,11 @@ formulario, el editor**. Lo que falta terminar es una receta con el tag
   en las sugerencias del editor. El botón del editor para ponerlo y sacarlo
   sigue.
 - *Nueva receta* sigue en el menú y es la única entrada para crear a mano.
+- **La receta nueva lleva la hamburguesa**, como todo destino del menú, y el
+  gesto la abre. Editar una receta existente mantiene el volver.
+- **Abrir y cerrar el menú no redibuja la pantalla**: en el editor, redibujar
+  borraría lo escrito. Tocar un destino del menú con cambios sin guardar hace
+  la misma pregunta que el volver.
 
 ## El editor
 
