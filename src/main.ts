@@ -1701,8 +1701,8 @@ async function guardarEditor(
 
     if (!nueva.titulo) return conError('Ponele un título antes de guardar.');
 
-    // Lo que el depósito cambió respecto del `.md` que se abrió: el store sube,
-    // mueve y manda a la papelera.
+    // Lo que el depósito cambió respecto del `.md` que se abrió: el store sube
+    // las nuevas y manda a la papelera las que se sacaron.
     const fotos = cambiosDeFotos(nueva, base);
 
     try {

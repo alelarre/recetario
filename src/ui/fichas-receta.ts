@@ -63,7 +63,7 @@ export interface OpcionesCabecera {
 
 /**
  * La foto de la cabecera, tocable: abre el visor. Si es una del depósito
- * lleva `data-n`, para que Tarea 8 sepa en qué foto abrirlo y deslizar entre
+ * lleva `data-n`, para que el visor sepa en qué foto abrirse y deslizar entre
  * las demás; una cabecera externa que no está en el depósito se abre sola,
  * sin ese número.
  */

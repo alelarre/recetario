@@ -16,7 +16,7 @@ export const ICO = {
   ajustes: svg('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2"/>' +
     '<circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/>'),
   lapiz: svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>'),
-  /** Lo llevan las dos acciones destructivas: Borrar receta y Descartar un borrador. */
+  /** Lo lleva la acción destructiva: Borrar receta. */
   tacho: svg('<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/>'),
   cerrar: svg('<path d="M18 6L6 18M6 6l12 12"/>'),
   /** Las dos posiciones del conmutador de cocina: qué va y en qué orden. De Lucide. */
@@ -49,7 +49,7 @@ export const ICO = {
   chevron: svg('<path d="M9 18l6-6-6-6"/>'),
   /** Una carpeta de Drive: la ficha de cada carpeta encontrada. */
   carpeta: svg('<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>'),
-  /** La cámara: agregar una foto al borrador. */
+  /** La cámara: sacar una foto y agregarla al depósito de la receta. */
   camara: svg('<path d="M4 8a2 2 0 012-2h2l1.5-2h5L16 6h2a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/>' +
     '<circle cx="12" cy="13" r="3.5"/>'),
   /**

@@ -656,7 +656,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   }
 
   /**
-   * Con `fotos`, en este orden: subir y mover, el `.md` y su fila, y recién
+   * Con `fotos`, en este orden: subir las nuevas a `_fotos/`, el `.md` y su fila, y recién
    * después la papelera. Si algo falla en el medio, lo peor que queda es una
    * foto huérfana en `_fotos/`, nunca una receta que nombra una foto borrada.
    */

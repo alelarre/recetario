@@ -3,8 +3,7 @@
  * con algo cargado, de lunes a domingo, y una línea por receta con la comida
  * como prefijo y un link `[título](drive:<fileId>)`.
  *
- * Es un formato propio, como el del borrador: no comparte parser con
- * `recipe.ts`. Sin frontmatter, y sin fechas —el plan no tiene semana ni
+ * Es un formato propio: no comparte parser con `recipe.ts`. Sin frontmatter, y sin fechas —el plan no tiene semana ni
  * historial—.
  *
  * Al leer se ignora lo que no se reconoce —un día que no existe, una línea sin

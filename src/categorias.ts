@@ -67,7 +67,7 @@ export const categoriaDesdeFila = (f: string[]): Categoria => ({
 export function problemaDelNombre(nombre: string, otros: readonly string[]): string {
   const limpio = nombre.trim();
   if (!limpio) return 'Ponele un nombre.';
-  // Las carpetas que empiezan con _ no son categorías: `_borradores`, `_indice`.
+  // Las carpetas que empiezan con _ no son categorías: `_fotos`, `_sin-categoria`.
   if (limpio.startsWith('_')) return 'No puede empezar con _.';
   const buscado = normalizar(limpio);
   if (otros.some(o => normalizar(o) === buscado)) return 'Ya hay una categoría con ese nombre.';

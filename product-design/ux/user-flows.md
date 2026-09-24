@@ -447,33 +447,25 @@ El aviso es «No se pudo conectar.», con el botón *Conectar con Google* otra v
 **Jobs:** J3, J8. Es el flujo que hace que el ecosistema funcione.
 
 ```
-El agente escribe un .md en una carpeta de categoría
-  ▸ y escribe su fila en el índice, con la capa compartida
+El agente deja un .md en una carpeta de categoría de Drive
   → abro la app
-  ▸ la fecha de _indice cambió: la app baja la planilla
+  ▸ la receta todavía no está: la app no descubre lo que se escribe afuera
+  → Menú → Ajustes → Reindexar
   ▸ la receta está
 ```
 
-**No hay detección de cambios, ni Changes API, ni "3 recetas nuevas".** La app no
-descubre sola lo que se escribe afuera: la receta está disponible porque el
-agente actualizó el índice.
+**No hay detección de cambios, ni Changes API, ni "3 recetas nuevas".** Un `.md`
+escrito por fuera de la app aparece recién al reindexar: el índice es derivado y
+los `.md` son la verdad (principio 1).
 
 **Tampoco hace falta avisar:** la conversión la disparó el usuario y es
 just-in-time, antes de cocinar. Sabe que llegó porque la pidió.
 
-**Camino de error — el agente escribió el `.md` pero no el índice:**
-
-```
-  ✗ la receta existe en Drive y no aparece en la app
-  ⚑ la salida es reindexar: Menú → Ajustes → Reindexar
-```
-
-Es reparable por diseño: el índice es derivado y los `.md` son la verdad
-(principio 1). **Es el caso del conector de Google Drive de claude.ai**, que crea
-archivos pero no escribe planillas: después de cargar recetas con él hay que
-reindexar. El camino que no lo necesita es F2, «Convertir con Agente»: el agente
-devuelve el `.md` y guarda la app. Rehacer el skill del agente está pendiente
-(`../../BACKLOG.md`, P14).
+**El camino sin reindexar es F2, «Convertir con Agente»:** el agente devuelve el
+`.md` y lo guarda la app, que escribe el archivo y su fila juntos. Es también lo
+que pasa con el conector de Google Drive de claude.ai, que crea archivos pero no
+escribe planillas: lo que carga por su cuenta necesita reindexar. Rehacer el
+skill del agente está pendiente (`../../BACKLOG.md`, P14).
 
 ---
 

@@ -1,7 +1,7 @@
 /**
  * El visor de fotos de la receta: la foto actual a pantalla
  * completa sobre el velo, entre las fotos del depósito, en su orden. Módulo
- * puro: no toca el DOM ni escucha gestos, eso lo cablea `main.ts` (Tarea 8).
+ * puro: no toca el DOM ni escucha gestos, eso lo cablea `main.ts`.
  */
 import { imgDe } from './markdown.js';
 
@@ -26,10 +26,9 @@ export function pasoDelVisor(i: number, dx: number, total: number): number {
 
 /**
  * La foto actual, al ancho de la pantalla sobre el velo. `data-i` y
- * `data-total` quedan en el contenedor para que Tarea 8 sepa dónde está
- * parada y hasta dónde llega, sin recalcularlo. Se cierra tocando, en
- * cualquier parte (`data-accion="cerrar-visor"`, como el visor de fotos de
- * un borrador).
+ * `data-total` quedan en el contenedor para que el deslizamiento sepa dónde
+ * está parado y hasta dónde llega, sin recalcularlo. Se cierra tocando, en
+ * cualquier parte (`data-accion="cerrar-visor"`).
  */
 export function renderVisor({ urls, i }: EstadoVisor): string {
   const url = urls[i];

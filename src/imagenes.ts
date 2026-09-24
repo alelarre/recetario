@@ -1,7 +1,7 @@
 /**
  * Mostrar imágenes de Drive: se piden con el token y quedan en Cache Storage
  * por id de archivo. Un id de Drive no cambia de contenido, así que lo
- * guardado no vence. Sirve para las fotos de los borradores y para las
+ * guardado no vence. Sirve para las fotos de las recetas y para las
  * imágenes propias de las categorías.
  *
  * También vive acá lo que el service worker deja del menú Compartir: las

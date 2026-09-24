@@ -70,8 +70,8 @@ export function renderReceta(
   // que buscar, ni en la cabecera ni en el texto.
   const carrusel = fotosSinUso(sinResolver);
   const categoria = entrada?.categoria ?? '';
-  // Los tags, con los especiales primero y con su ícono. Incompleta es
-  // uno más: su chip abre el editor. Favorito no va: ya lo dice la estrella del
+  // Los tags, con los especiales primero y con su ícono. Borrador es uno
+  // más: su chip abre el editor. Favorito no va: ya lo dice la estrella del
   // encabezado, y un chip igual parecía otro control para marcarla.
   const tags = receta.tags.filter(t => tagEspecial(t) !== 'favorito');
   const marcas = tags.length ? `<div class="chips">${chipsSueltos(tags)}</div>` : '';

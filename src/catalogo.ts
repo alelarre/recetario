@@ -126,8 +126,8 @@ export type TagEspecial = (typeof TAGS_ESPECIALES)[number];
 /**
  * Formas que se leen como cada especial, además de lo que ya cubre
  * `normalizar` (mayúsculas y tildes). `favorito` tiene género y número;
- * `borrador` además arrastra su nombre viejo, `incompleta`, y las formas de
- * ése.
+ * `borrador` además acepta `incompleta` y sus formas, para que los `.md`
+ * escritos afuera con esa palabra se lean como borrador.
  */
 const FORMAS_ALTERNATIVAS: Record<TagEspecial, readonly string[]> = {
   favorito: ['favorita', 'favoritos', 'favoritas'],

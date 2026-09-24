@@ -375,7 +375,7 @@ export interface OpcionesTile {
 export function tile(nombre: string, { cantidad, accion }: OpcionesTile = {}): string {
   const imagen = fotoCategoria(nombre);
   // Con `imgDe`, una foto propia de Drive también se dibuja: como recuadro
-  // hasta que la Tarea 8 le ponga el `src`.
+  // hasta que `main.ts` la pida a Drive y le ponga el `src`.
   const fondo = imagen
     ? `<span class="im">${imgDe(imagen)}</span>`
     : '<span class="im trama"></span>';   // las que no tienen foto
@@ -411,7 +411,7 @@ export interface Miniatura {
   n?: number;
   /**
    * En qué se usa la foto (`usosDeFotos`): una marca por uso, arriba a la
-   * derecha. Es de la receta; las de un borrador no tienen uso.
+   * derecha. Sin `uso`, la foto no lleva marca.
    */
   uso?: UsoDeFoto;
 }
@@ -434,7 +434,7 @@ const datosDeAccion = (a: AccionDeMiniatura, n: number | undefined): string =>
   (n === undefined ? '' : ` data-n="${n}"`);
 
 /**
- * La fila de fotos de un borrador o del editor: miniaturas cuadradas y, al
+ * La fila de fotos del editor: miniaturas cuadradas y, al
  * final, dos botones —*Cámara* y *Galería*— para agregar. El `capture`
  * de un input es lo único que lleva directo a la cámara, y saca la galería:
  * por eso hacen falta dos inputs, cada uno en su propio `label` —tocarlo lo
