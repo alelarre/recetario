@@ -25,6 +25,8 @@ formulario, el editor**. Lo que falta terminar es una receta con el tag
   lo deja donde está, y elegirle una categoría lo mueve.
 - El nombre que se muestra para lo que no tiene categoría pasa de «Sin
   categorizar» a **«Sin categoría»**, en los dos casos.
+- **Todos los encabezados de todas las pantallas quedan fijos** arriba al
+  bajar.
 - `_sin-categoria/` **no es una categoría**: no aparece en el home, no tiene
   color ni foto y no se gestiona desde *Ajustes → Recetario*. Sus recetas sí
   están en el índice, con la categoría vacía.
@@ -43,6 +45,11 @@ formulario, el editor**. Lo que falta terminar es una receta con el tag
 - En esa lista, una receta de `_sin-categoria/` se dibuja con la trama neutra
   en lugar del color de una categoría.
 - La lista no tiene «+» ni «Pegar receta».
+- **A los borradores se llega sólo por esta entrada.** El home no muestra
+  «Sin categoría», y el tag `borrador` no aparece en ninguna lista de tags: ni
+  en el carrusel del home, ni en los filtros de una categoría o de un tag, ni
+  en las sugerencias del editor. El botón del editor para ponerlo y sacarlo
+  sigue.
 - *Nueva receta* sigue en el menú y es la única entrada para crear a mano.
 
 ## El editor
@@ -61,7 +68,8 @@ Es el único formulario, para crear y para editar. Orden de arriba abajo:
    sólo mientras la receta tiene `borrador`) y debajo **Guardar** (principal).
    Al editar una receta existente, *Borrar receta* va debajo, separado.
 
-Guardar deja de estar fijo en el encabezado: está sólo al final.
+Guardar está sólo al final. El encabezado queda fijo, como en todas las
+pantallas.
 
 ### Categoría
 
@@ -132,8 +140,10 @@ El Share Target (`public/sw.js`) no cambia. Lo que abre la app:
 ## El índice
 
 - Deja de existir la hoja `borradores`.
-- Reindexar lee también `_sin-categoria/`, y sus filas llevan la categoría
-  vacía.
+- Reindexar lee también `_sin-categoria/`, y sus filas llevan «Sin
+  categoría».
+- Si una receta de `_sin-categoria/` no tiene el tag `borrador`, reindexar lo
+  avisa al terminar, nombrando el archivo, y no hace nada más.
 - Se sube `SCHEMA_VERSION`: el primer arranque con la versión nueva reindexa.
 
 ## Lo que se borra
