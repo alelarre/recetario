@@ -522,6 +522,14 @@ let compartidasPorLeer = 0;
  */
 let recibida: Receta | null = null;
 
+/**
+ * La base de una receta nueva: la recibida o pegada, o una vacía, siempre sin
+ * depósito. Una receta nueva no tiene nada en Drive, y las fotos que traiga un
+ * `.md` ajeno son de otra receta: contadas como suyas, guardar las daría por
+ * sacadas y las mandaría a la papelera.
+ */
+const baseDeNueva = (): Receta => ({ ...(recibida ?? parse('')), fotos: [] });
+
 /** La foto achicada; rechaza si el navegador no la decodifica. Sin opciones, al lado de Drive. */
 const achicarFoto = (archivo: Blob, opciones?: OpcionesAchicar): Promise<Blob> =>
   achicar(archivo, () => document.createElement('canvas'), opciones);
@@ -1009,7 +1017,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // Drive) y con una receta vacía —o la recibida— en vez de una leída. Lo
       // compartido reparte el link a la fuente y el resto del texto a Notas.
       let receta: Receta;
-      if (recibida) receta = { ...recibida };
+      if (recibida) receta = baseDeNueva();
       else {
         const { fuente, nota } = desdeCompartido({ url: ruta.params['url'] ?? '', text: texto });
         receta = { ...parse(''), fuente: fuente || null, notas: nota };
@@ -1154,7 +1162,7 @@ const portadaDelEditor = (): string => campoDelEditor('foto')?.value ?? '';
  * usa Guardar, salvo que ahí la de una receta existente se relee de Drive.
  */
 const baseDelEditor = (): Receta => {
-  if (vistaActual?.vista === 'nueva') return recibida ?? parse('');
+  if (vistaActual?.vista === 'nueva') return baseDeNueva();
   return recetaLeida?.receta ?? parse('');
 };
 
@@ -1630,7 +1638,7 @@ async function guardarEditor(
     boton.setAttribute('disabled', '');
     boton.textContent = 'Guardando…';
 
-    const base = esNueva ? recibida ?? parse('') : (await store.receta(id)).receta;
+    const base = esNueva ? baseDeNueva() : (await store.receta(id)).receta;
     const escrita = conSubidas(recetaDesdeFormulario(datos, base));
     // Un borrador puede no tener título todavía: se guarda con el día y la
     // hora, y el nombre del archivo sale de ahí.

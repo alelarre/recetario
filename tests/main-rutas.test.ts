@@ -3582,7 +3582,7 @@ describe('main.ts: las rutas', () => {
     });
 
     it('llena el formulario con lo pegado y conserva el depósito y la categoría elegida', async () => {
-      estado.md = `---\ntitulo: Milanesas\n---\n\n${serializarFotos([FOTO])}`;
+      estado.md = `---\ntitulo: Milanesas\n---\n\n## Fotos\n${serializarFotos([FOTO])}`;
       portapapeles(PEGADA);
       const { abrir, tocar, app } = await montar();
       await abrir('#/r/f1/editar');
@@ -3626,6 +3626,40 @@ describe('main.ts: las rutas', () => {
       await tocar('pegar-receta');
       expect(app.innerHTML).toBe(antes);
       expect(preguntas.join('')).toContain('No se pudo leer lo copiado.');
+    });
+
+    it('en una receta nueva, las fotos del .md pegado no son suyas: guardar no las manda a la papelera', async () => {
+      portapapeles(`---\ntitulo: Focaccia pegada\n---\n\n## Fotos\n${serializarFotos([FOTO])}`);
+      const { abrir, tocar } = await montar();
+      await abrir('#/nueva');
+      await tocar('pegar-receta');
+      estado.formulario = { titulo: 'Focaccia pegada', carpeta: '', tags: 'borrador', fotos: '[]' };
+      await tocar('guardar');
+      expect(estado.creadas).toEqual(['Focaccia pegada']);
+      expect(estado.cambiosDeFotos[0]?.sacadas).toEqual([]);
+    });
+
+    it('lo mismo con una receta .md recibida sin id', async () => {
+      const md = `---\ntitulo: Focaccia recibida\n---\n\n## Fotos\n${serializarFotos([FOTO])}`;
+      const { abrir, tocar } = await montar();
+      await abrir(`#/nueva?text=${encodeURIComponent(md)}`);
+      await abrir('#/nueva?recibida=1');
+      estado.formulario = { titulo: 'Focaccia recibida', carpeta: '', tags: 'borrador', fotos: '[]' };
+      await tocar('guardar');
+      expect(estado.cambiosDeFotos[0]?.sacadas).toEqual([]);
+    });
+
+    it('redibujar la receta nueva después de Pegar no mezcla las fotos pegadas con las del editor', async () => {
+      estado.compartidas = [new Blob(['a'])];
+      portapapeles(`---\ntitulo: Focaccia pegada\n---\n\n## Fotos\n${serializarFotos([FOTO])}`);
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/nueva?fotos=1');
+      estado.formulario = { titulo: '', carpeta: '', fotos: JSON.stringify([{ n: 1, url: '' }]) };
+      await tocar('pegar-receta');
+      // Reintentar vuelve a dibujar la pantalla con lo que hay en memoria.
+      await tocar('reintentar');
+      const campo = app.innerHTML.match(/name="fotos" value="([^"]*)"/)?.[1] ?? '';
+      expect(JSON.parse(campo.replace(/&quot;/g, '"'))).toEqual([{ n: 1, url: '' }]);
     });
 
     it('un id: en lo pegado se ignora: pega en el editor abierto', async () => {
