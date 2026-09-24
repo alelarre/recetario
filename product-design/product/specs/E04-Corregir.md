@@ -33,8 +33,9 @@ error.
 
 - [ ] **Editar** está al pie de la receta abierta, a un toque.
 - [ ] El editor abre con todos los campos cargados con lo que dice el `.md`.
-- [ ] El encabezado lleva el volver a la izquierda, el título —*Nueva receta* o *Editando*— y, a la derecha, **Pegar**: botón principal compacto, con el ícono del portapapeles y el texto «Pegar» (`E01-CapturaYBorradores.md` C01.9.3). Está en todo editor. El encabezado se va con el scroll: no lleva ninguna acción que haga falta al fondo del formulario.
-- [ ] Salir sin guardar con cambios pendientes **pregunta antes**: *"¿Salir sin guardar los cambios?"*, con *Seguir editando* y *Salir*. Vale para el volver del encabezado y para el gesto de atrás de Android. La pregunta se inserta arriba del formulario sin redibujarlo, para no perder lo escrito.
+- [ ] El encabezado lleva a la izquierda el volver al editar una receta existente, y el botón del menú en la receta nueva (C04.3b.1); el título —*Nueva receta* o *Editando*— y, a la derecha, **Pegar**: botón principal compacto, con el ícono del portapapeles y el texto «Pegar» (`E01-CapturaYBorradores.md` C01.9.3). Está en todo editor.
+- [ ] **El encabezado queda fijo arriba** al bajar por el formulario, como el de todas las pantallas (`../../ux/design-system.md` §6.12).
+- [ ] Salir sin guardar con cambios pendientes **pregunta antes**: *"¿Salir sin guardar los cambios?"*, con *Seguir editando* y *Salir*. Vale para el volver del encabezado, para un destino del menú lateral y para el gesto de atrás de Android. La pregunta se inserta arriba del formulario sin redibujarlo, para no perder lo escrito.
 - [ ] El formulario va en tres fichas con título, en este orden: **Datos** —Título, Categoría, Tags, Rinde, Duración, Dificultad y Fuente original—, **Fotos** (F04.3d) y **Contenido** —Portada, Descripción, Ingredientes, Preparación, Variaciones y Notas—.
 - [ ] **Las acciones van al final, a lo ancho:** **Convertir con Agente** (secundario, sólo mientras la receta tiene `borrador`; `E01-CapturaYBorradores.md` C01.9.1) y debajo **Guardar** (principal). *Guardar* está sólo ahí, no en el encabezado. Al editar una receta existente, *Borrar receta* va debajo, separado (C04.6.1).
 - [ ] Agregar, sacar o poner una foto cuenta como cambio sin guardar, igual que escribir en un campo.
@@ -129,6 +130,7 @@ el menú lateral, y desde lo que llega por Compartir
 #### C04.3b.1 — Nueva receta *(J7)*
 
 - [ ] Los mismos campos, vacíos. La categoría arranca en **«Sin categoría»**.
+- [ ] **Es un destino del menú lateral:** el encabezado lleva el botón del menú con el contador de borradores en lugar del volver, y el gesto abre el menú, como en las demás pantallas del menú (`E02-Encontrar.md` C02.1.3). En el menú no queda marcado ningún destino: *Nueva receta* es una acción. **Abrir y cerrar el menú no redibuja el formulario:** lo escrito sigue.
 - [ ] **La categoría es opcional:** con «Sin categoría», guardar crea el `.md` en `_sin-categoria/`, que se crea la primera vez que hace falta (C05.4.4). Con una categoría, en su carpeta. En los dos casos escribe su fila del índice, por el store (C05.4.1).
 - [ ] **El título es obligatorio, salvo en un borrador:** vacío, se guarda como *Borrador dd/mm hh:mm*, con el momento del guardado. Sin título y sin `borrador`, el aviso dice *«Ponele un título antes de guardar.»*
 - [ ] El nombre del archivo se deriva del título **una sola vez, al crearlo**, y no vuelve a cambiar (C04.2.2): el título en minúsculas, sin acentos y con guiones — `milanesas-napolitanas.md`.
@@ -241,7 +243,9 @@ cuándo se lo puede sacar.
   especiales, y es del usuario, no del agente. Los otros tres se ponen y
   sacan libremente.
 - [ ] Mientras la receta tiene `borrador`, el editor ofrece **Convertir con
-  Agente** al final (`E01-CapturaYBorradores.md` C01.9.1).
+  Agente** al final (`E01-CapturaYBorradores.md` C01.9.1). Aparece y
+  desaparece **en el momento** de apretar o soltar el botón, sin redibujar el
+  formulario.
 - [ ] También se llega acá desde el chip `borrador` de la receta abierta,
   que abre el editor (C03.1.3).
 

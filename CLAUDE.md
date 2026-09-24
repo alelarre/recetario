@@ -37,14 +37,19 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   coincide, no se lee Sheets. Parte de que nunca hay escritura concurrente. No
   sirve para funcionar sin conexión.
 - **Un borrador es una receta con el tag `borrador`**: el mismo `.md`, el
-  mismo editor y la misma fila. Borradores es la lista por tag de `borrador`.
-  La categoría es opcional al crear: lo que no tiene categoría vive en
-  `_sin-categoria/` (`carpeta_sin_categoria` en `meta`), que no es una
-  categoría, y se muestra como «Sin categoría». Sacar `borrador` exige
-  categoría, así que ahí todo es borrador. **La app no escribe recetas sueltas
-  en la carpeta base**; un `.md` suelto escrito afuera se lee sin categoría.
+  mismo editor y la misma fila. Borradores es la lista por tag de `borrador`,
+  en el menú, y **es el único camino a ellos**: el home no tiene tile «Sin
+  categoría» y `borrador` no aparece en ninguna lista de tags (`store.tagsDe`
+  lo filtra). La categoría es opcional al crear: lo que no tiene categoría vive
+  en `_sin-categoria/` (`carpeta_sin_categoria` en `meta`), que no es una
+  categoría, y se muestra como «Sin categoría»; ninguna categoría puede
+  llamarse así. Sacar `borrador` exige categoría, así que ahí todo es
+  borrador; reindexar nombra en Ajustes la que no lo tenga, sin tocarla.
+  **La app no escribe recetas sueltas en la carpeta base**; un `.md` suelto
+  escrito afuera se lee sin categoría.
 - **El editor es el único formulario.** *Nueva receta*, en el menú, lo abre
-  vacío; el menú Compartir lo abre con la fuente, el texto en Notas y las fotos
+  vacío, con la hamburguesa en vez del volver (`nueva` está en
+  `PANTALLAS_CON_MENU`); editar una existente lleva el volver; el menú Compartir lo abre con la fuente, el texto en Notas y las fotos
   en el depósito: el Share Target es un `POST` que atiende `public/sw.js` y
   redirige a `#/nueva`. Nada se escribe hasta Guardar.
 - **El plan de la semana es otro `.md`**, `_plan.md`, en la carpeta base y al
@@ -91,7 +96,7 @@ Nada del código depende de `product-design/`. **Todo el producto vive en `src/`
 | Google | `auth.ts`, `drive.ts`, `sheets.ts`; los tipos de Google Identity Services están escritos a mano en `gis.d.ts` (el SDK se carga por `<script>`). `config.ts` tiene el client ID, el scope, los nombres fijos y `SCHEMA_VERSION`. |
 | Dominio | `recipe.ts` (parsear y escribir el `.md`), `plan.ts` (el `.md` del plan de la semana), `compras.ts` (la lista que sale del plan, y su texto), `catalogo.ts` (la fila del índice, tags reservados, búsqueda), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts` (lo que llega por el menú Compartir: la fuente, las notas y el título por defecto), `conversion.ts` (el pedido al agente, la receta que vuelve y cómo se pega), `fotos.ts` (achicar una foto antes de subirla), `fotos-receta.ts` (el depósito: parsear y escribir `## Fotos`, resolver `foto:N`, poner y sacar referencias), `tipos.ts`. |
 | Compartir | `compartir.ts` (menú Compartir del sistema y portapapeles, con sus respaldos), `link-receta.ts` (la receta comprimida en el fragmento del link), `texto-receta.ts`, `pdf/` (pdfmake con Inter embebida), `cocina-control.ts` (modo cocina y pantalla encendida, compartido entre receta e invitado). |
-| UI | `src/ui/`: una pantalla por archivo, sobre `componentes.ts`, `iconos.ts`, `pintar.ts`, `fichas-receta.ts` y `visor.ts` (la foto a pantalla completa, compartida entre receta, editor e invitado); `router.ts` tiene las rutas. **`tokens.css` es el sistema del producto** —tokens y componentes— y se edita directamente; `base.css` es lo propio de cada pantalla. |
+| UI | `src/ui/`: una pantalla por archivo, sobre `componentes.ts`, `iconos.ts`, `pintar.ts`, `fichas-receta.ts` y `visor.ts` (la foto a pantalla completa, compartida entre receta, editor e invitado); `router.ts` tiene las rutas. **`tokens.css` es el sistema del producto** —tokens y componentes— y se edita directamente; `base.css` es lo propio de cada pantalla. Todo encabezado queda fijo arriba por CSS (`.enc`, `.encoc`, `.cajaenc`). Abrir y cerrar el menú lateral cambia las clases del panel y del velo sin redibujar (`ponerMenu` en `main.ts`): en la receta nueva, redibujar borraría lo escrito. |
 | Imágenes | `src/categorias/*.webp`, el catálogo de fotos de categoría, importado con `import.meta.glob`: el nombre del archivo es la clave. `imagenes.ts` muestra las imágenes de Drive —las fotos de las recetas y las propias de las categorías— desde Cache Storage, las precarga en segundo plano, y lee las fotos que el service worker dejó del menú Compartir. |
 
 ## Comandos

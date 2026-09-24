@@ -82,7 +82,7 @@ no esconde nada que haga falta.
 #### C03.2.1 — Se entra a propósito *(J6)*
 
 - [ ] Se entra desde **Cocinar** en la receta abierta. No es la vista por defecto: cocinar es el uso menor.
-- [ ] **El encabezado mide 64 px**, como sus controles: el chevron, el título de la receta centrado y recortado con elipsis, el sol (C03.3.1) y *Salir*. El sol y *Salir* responden en toda su área de 64 px, aunque su caja dibujada sea más chica.
+- [ ] **El encabezado mide 64 px**, como sus controles: el chevron, el título de la receta centrado y recortado con elipsis, el sol (C03.3.1) y *Salir*. El sol y *Salir* responden en toda su área de 64 px, aunque su caja dibujada sea más chica. Queda fijo arriba al scrollear, como el de todas las pantallas.
 - [ ] **Dos salidas, con destinos distintos**: el chevron vuelve **a la receta** —seguir leyéndola sin la escala de cocina— y **Salir** vuelve **a la categoría**, que es donde se elige otra cosa. Si la receta no está en el índice no se sabe su categoría, y *Salir* vuelve al Recetario.
 - [ ] Las dos sueltan el bloqueo de pantalla: se dejó de cocinar.
 - [ ] Volver con el gesto del sistema sale del modo, no de la receta. Salir del modo **no deja la cocina en el historial**: volver desde la receta lleva a donde se estaba antes.
@@ -90,7 +90,7 @@ no esconde nada que haga falta.
 
 #### C03.2.2 — El conmutador Ingredientes / Pasos *(J6)*
 
-- [ ] Dos posiciones, **cada una con su ícono y su nombre**: la zanahoria para *Ingredientes* y la lista numerada para *Pasos*. Queda fijo arriba al scrollear. Al entrar, abre en **Ingredientes**: el *mise en place* va primero.
+- [ ] Dos posiciones, **cada una con su ícono y su nombre**: la zanahoria para *Ingredientes* y la lista numerada para *Pasos*. Queda fijo al scrollear, debajo del encabezado. Al entrar, abre en **Ingredientes**: el *mise en place* va primero.
 - [ ] **Preserva la posición de scroll de cada lado.** Ir a Ingredientes y volver a Pasos devuelve al paso donde se estaba, no al principio.
 - [ ] Cambiar de posición es un toque, en un control de tamaño grande.
 - [ ] Notas, variaciones y descripción **no se muestran** en este modo.

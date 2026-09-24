@@ -393,15 +393,15 @@ se reconoce abre el Recetario.
 
 | Pantalla | Ruta | Propósito | Contexto | Jobs |
 |---|---|---|---|---|
-| **Recetario** | `#/` | Punto de entrada. Búsqueda arriba, el carrusel de tags, y las categorías abajo, en orden alfabético, con *Sin categoría* si hay recetas sin categoría. | Recuperar | J1, J5 |
+| **Recetario** | `#/` | Punto de entrada. Búsqueda arriba, el carrusel de tags, y las categorías abajo, en orden alfabético. Lo que no tiene categoría no tiene tile: es borrador, y se llega por *Borradores*. | Recuperar | J1, J5 |
 | **Resultados** | `#/buscar?q=` | Lo que devuelve la búsqueda, agrupado por título, ingrediente y tag. Se ordena A–Z o por duración dentro de cada grupo. | Recuperar | J1, J4 |
 | **Categoría** | `#/c/<nombre>` | Las recetas de una carpeta, con el carrusel de tags, la fila de duraciones y el conmutador de orden. | Recuperar | J5 |
 | **Lista por tag** | `#/t/<tag>` | Las recetas del recetario entero con ese tag. Se llega tocando un chip del carrusel del Recetario. Mismos filtros que la categoría. | Recuperar | J5 |
 | **Receta** | `#/r/<id>` | La receta entera, en una columna de fichas, con el carrusel de sus fotos en la primera y cada una donde el texto la nombra —tocar una abre el visor—. En el encabezado, la estrella de favorito y Compartir; al pie, *Cocinar* y *Editar*. | Recuperar | J6 |
 | **Modo cocina** | `#/r/<id>/cocinar` | Letra grande, conmutador Ingredientes / Pasos, el paso actual realzado, y la pantalla encendida. | Cocinar | J6 |
 | **Editor** | `#/r/<id>/editar` | El único formulario de la app. Corregir un error, anotar una variación, poner y sacar los tags especiales, agregar fotos y ponerlas en el texto, cambiar la categoría, *Pegar*, *Convertir con Agente* mientras es borrador, borrar la receta. Con `?recibida=1` abre con la receta `.md` compartida aplicada como *Pegar*. | Cocinar | J3, J7 |
-| **Nueva receta** | `#/nueva` | El mismo editor, vacío, en «Sin categoría» y con `borrador`. Con `?url=&text=&fotos=` abre con lo que llegó por el Share Target —`fotos` es cuántas dejó el service worker en su caché—; con `?recibida=1`, con la receta `.md` que llegó compartida sin un `id:` que exista. | Archivar | J2, J3, J7 |
-| **Borradores** | `#/borradores` | La lista por tag de `borrador`, como destino del menú: hamburguesa en vez de volver, y el título «Borradores». | Archivar | J2, J3 |
+| **Nueva receta** | `#/nueva` | El mismo editor, vacío, en «Sin categoría» y con `borrador`. Es destino del menú: hamburguesa en vez de volver. Con `?url=&text=&fotos=` abre con lo que llegó por el Share Target —`fotos` es cuántas dejó el service worker en su caché—; con `?recibida=1`, con la receta `.md` que llegó compartida sin un `id:` que exista. | Archivar | J2, J3, J7 |
+| **Borradores** | `#/borradores` | La lista por tag de `borrador`, como destino del menú: hamburguesa en vez de volver, y el título «Borradores». Es el único camino a los borradores. | Archivar | J2, J3 |
 | **Ajustes** | `#/ajustes` | Seis fichas, en este orden: Cuenta, Recetario, Índice, Archivos locales, Avisos y Registro de actividad. Ver §4.7. | Transversal | — |
 | **Categorías** | `#/categorias` | La lista de categorías con cuántas recetas tiene cada una, y *+ Nueva*. | Transversal | — |
 | **Editar categoría** | `#/categorias/<id>` · `#/categorias/nueva` | Nombre, color y foto de una categoría —del catálogo o una propia, con *Subir foto*—, y *Borrar categoría*. | Transversal | — |
@@ -501,11 +501,15 @@ El botón de volver es un control de tamaño normal, no un chevron chico. El ges
 del sistema —swipe en Android, back del navegador— funciona igual y es el camino
 que la mayoría va a usar; el botón es el respaldo visible.
 
-**El volver es para las pantallas a las que se entra desde otra.** A las cuatro
-que se alcanzan desde el menú —Recetario, Borradores, el plan de la semana y
-Ajustes— se sale por el menú, así que su encabezado lo abre: hamburguesa, no
-volver. *Nueva receta* está en el menú como acción, y se sale volviendo: lleva
-volver.
+**El volver es para las pantallas a las que se entra desde otra.** A las que se
+alcanzan desde el menú —Recetario, Borradores, el plan de la semana, la receta
+nueva y Ajustes— se sale por el menú, así que su encabezado lo abre:
+hamburguesa, no volver. Editar una receta existente se abre desde la receta y
+lleva volver.
+
+**Todos los encabezados quedan fijos arriba al bajar**, también el del modo
+cocina y la caja de los resultados: el volver, la hamburguesa y las acciones de
+la pantalla están siempre a mano.
 
 Sale de la regla de tamaños del principio 7: el tamaño de los controles es una
 regla del sistema, no una decisión por pantalla.
@@ -520,16 +524,18 @@ con su nombre y su ícono:
 | **Inicio** | El punto de entrada: la pantalla del Recetario. Se llama *Inicio* porque «Recetario» ya es la marca de arriba del menú |
 | **Borradores** | La cola: las recetas con `borrador`, con su contador |
 | **Plan de la semana** | La única entrada al plan, con el ícono del calendario |
-| **Nueva receta** | Una acción, no un lugar: nunca queda marcada |
+| **Nueva receta** | Una acción, no un lugar: nunca queda marcada, ni en el editor al que lleva |
 | **Ajustes** | Secundario, pero alcanzable desde cualquier parte |
 
 **Al pie del menú va la versión de la app.**
 
 **En el teléfono se despliega desde una hamburguesa**, arriba a la izquierda —del
 lado por el que el panel entra—, y se cierra tocando el velo o cualquier destino.
-La hamburguesa está en las cuatro pantallas que se alcanzan desde el menú (§4.5),
-que son las mismas donde el gesto lo abre: el botón y el deslizamiento no se
-separan.
+La hamburguesa está en las pantallas que se alcanzan desde el menú (§4.5), que
+son las mismas donde el gesto lo abre: el botón y el deslizamiento no se
+separan. **Abrir y cerrar el menú no redibuja la pantalla:** en la receta nueva
+borraría lo escrito. Con cambios sin guardar, tocar un destino hace la pregunta
+de salir sin guardar, y el menú se cierra.
 **También se abre y se cierra deslizando.** Cerrado, el gesto empieza a 24 px del
 borde izquierdo: desde el borde mismo Android lo toma como «atrás». No arranca
 sobre el carrusel de tags ni sobre la fila de duraciones, que se deslizan en el
@@ -608,7 +614,8 @@ demás, pero tienen forma propia:
 - **Cada uno tiene su ícono**, y las marcas de los que lleva una receta van juntas
   en la esquina de su tarjeta.
 - **En el carrusel de tags van primero**; después, los demás por cantidad de
-  recetas.
+  recetas. **`borrador` no va en ninguna lista de tags**: ni en el carrusel ni
+  en las sugerencias del editor. A los borradores se llega por el menú.
 - **Las favoritas van primero en toda lista de recetas**, y alfabético dentro de
   cada bloque.
 

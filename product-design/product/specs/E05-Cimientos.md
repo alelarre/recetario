@@ -343,6 +343,7 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 - [ ] Si a la planilla le falta la hoja `categorias`, la crea.
 - [ ] Al terminar, el índice no conserva ninguna fila anterior: lo que no está en Drive, no está.
 - [ ] Los archivos ignorados por no tener título se cuentan y quedan visibles en Ajustes.
+- [ ] **Una receta de `_sin-categoria/` sin el tag `borrador`**, en ninguna de sus formas (C05.1.4), se nombra en Ajustes al terminar, como los ignorados. No se hace nada más: no se mueve, no se le pone el tag y entra al índice como cualquier otra.
 - [ ] La fecha del último reindexado queda registrada en `meta` y se muestra en Ajustes.
 
 #### C05.5.2 — El reindexado muestra progreso y no se cancela *(J8)*
@@ -485,6 +486,7 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 
 - [ ] Lista los avisos sin acción acumulados (C05.9.2).
 - [ ] Si hay más de una planilla `_indice` en Drive, dice cuántas y cuál se usa: la modificada más recientemente.
+- [ ] Después del reindexado, los `.md` ignorados por no tener título y, aparte, las recetas de `_sin-categoria/` sin la marca de borrador (C05.5.1), con el nombre de cada archivo: *«En Sin categoría hay 2 recetas sin la marca de borrador.»*
 - [ ] Sin avisos, la sección dice «No hay nada para avisar.», sin ilustración.
 
 #### C05.9b.4 — Recetario: la carpeta y las categorías *(transversal)*
@@ -494,7 +496,7 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 - [ ] **La foto propia** se elige con *Subir foto*, primera entre las muestras: se ve en la muestra en el momento y se sube a `_fotos/` recién al guardar la categoría, como `drive:<id>`. Reemplazar la foto manda la propia anterior a la papelera, y borrar la categoría también se lleva la suya.
 - [ ] Cada cambio escribe en el momento la carpeta en Drive —su nombre y sus propiedades— y su fila en la hoja `categorias`.
 - [ ] Una categoría nueva nace con el primer color de la paleta que nadie usa.
-- [ ] Un nombre vacío, que empiece con `_` o repetido sin mirar tildes ni mayúsculas no se acepta, y se dice por qué.
+- [ ] Un nombre vacío, que empiece con `_`, repetido o igual a **«Sin categoría»** —sin mirar tildes ni mayúsculas en los dos casos— no se acepta, y se dice por qué. «Sin categoría» es el nombre de lo que no tiene categoría (C05.4.4).
 - [ ] Borrar una categoría con recetas lo advierte con la cantidad y los nombres: la carpeta y sus recetas van a la papelera de Drive, y sus filas salen del índice.
 
 #### C05.9b.5 — Archivos locales *(J8)*

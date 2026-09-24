@@ -812,11 +812,11 @@ Alto 56 px, fondo `--bg`, borde inferior 1 px `--borde`.
 Volver a la izquierda como control de 48 px —no un chevron chico—, título al
 medio en `--txt-base` peso 600, acciones a la derecha.
 
-**El encabezado abre el menú en las cuatro pantallas a las que se llega desde el
-menú** —Recetario, Borradores, el plan de la semana y Ajustes—: ahí la
-hamburguesa (§6.17) ocupa el lugar del volver, que queda para las pantallas a las
-que se entra desde otra. *Nueva receta* es una de esas: está en el menú como
-acción, pero se sale de ella volviendo. En el Recetario y en Ajustes el
+**El encabezado abre el menú en las pantallas a las que se llega desde el
+menú** —Recetario, Borradores, el plan de la semana, la receta nueva y
+Ajustes—: ahí la hamburguesa (§6.17) ocupa el lugar del volver, que queda para
+las pantallas a las que se entra desde otra. Editar una receta existente es una
+de esas: se entra desde la receta y se sale volviendo. En el Recetario y en Ajustes el
 título va además en `--txt-titulo`, centrado en la barra y no en el hueco que
 dejan los controles. Borradores es la lista por tag de `borrador` dibujada como
 destino del menú: el encabezado de la lista por tag —título chico, el ícono del
@@ -826,18 +826,19 @@ El total de una lista —las recetas de una categoría, los borradores— va a l
 derecha, en `--txt-chico` `--fg-2` y cifras tabulares. En la lista por tag de un
 especial, su ícono va antes del título, a `--ico`.
 
-**Queda pegado arriba en la receta abierta**, donde las acciones —la estrella,
-*Compartir*— tienen que estar a mano en cualquier punto del scroll. En el editor
-se va con el scroll: *Guardar* está al pie del formulario. El título de la receta se recorta a una línea con elipsis. En las demás
-pantallas se va con el scroll.
+**Queda pegado arriba en todas las pantallas**, con `z-index` 3: el volver, la
+hamburguesa y las acciones —la estrella y *Compartir* en la receta, *Pegar* en
+el editor— están a mano en cualquier punto del scroll. El menú lateral, su velo,
+las fichas al pie y el visor van por encima. El título se recorta a una línea con
+elipsis. La caja de los resultados, que es el encabezado de esa pantalla, queda
+pegada igual.
 
 **En modo cocina el encabezado mide 64 px y cada control suyo toca en
 64 × 64** —volver, el sol, *Salir*—, como pide §1. El sol y *Salir* se dibujan
 como una caja de 40 px de alto con borde `--borde-fuerte` adentro de sus 64: sin
 reborde, un ícono suelto no se lee como algo que se toca. **El sol encendido se
-invierte** (§6.0). El encabezado de cocina se va con el scroll, y **queda pegado
-solo el conmutador** (§6.14): 64 px fijos arriba en vez de 128. Volver y salir se
-recuperan scrolleando hacia arriba, o con el gesto del sistema.
+invierte** (§6.0). El encabezado de cocina también queda pegado arriba, y el
+conmutador (§6.14) se pega debajo de él.
 
 **Las barras pegadas se separan con un borde, no con un degradado.** Un degradado
 sobre fichas deja el contenido cortado a mitad detrás de él, que lee como un
@@ -863,7 +864,8 @@ volver.
 
 ### 6.14 Conmutador de cocina
 
-Dos posiciones del mismo ancho, pegado arriba, alto 64 px.
+Dos posiciones del mismo ancho, alto 64 px, pegado debajo del encabezado de
+cocina (§6.12).
 
 Inactiva: `--surface`, texto `--fg-2`. Activa: `--surface-alta`, texto `--fg`,
 con una barra de 3 px de `--acento` abajo.
@@ -874,7 +876,9 @@ numerada— a `--ico-cocina`, al lado de la palabra. El cambio es instantáneo.
 ### 6.17 Menú lateral
 
 La navegación primaria de la app: Inicio —la pantalla del Recetario, que no
-repite el nombre de la marca—, Borradores, Nueva receta y Ajustes.
+repite el nombre de la marca—, Borradores, Plan de la semana, Nueva receta y
+Ajustes. Nueva receta es una acción: en el editor al que lleva, que dibuja el
+menú, no queda marcado ningún ítem.
 
 Panel de **260 px** de ancho, pegado a la izquierda y de alto completo.
 `--surface`, borde derecho 1 px `--borde`, padding `--e-4`.
@@ -912,6 +916,9 @@ que abrir el menú ahí igual.
 Desde 900 px queda fijo, el velo y la hamburguesa desaparecen, y el contenido se
 corre 260 px. **Es sólo CSS:** la misma marca dibujada, una consulta de medios
 decide. Con `prefers-reduced-motion` el cajón aparece sin transición.
+
+**Abrir y cerrar no redibuja la pantalla:** se cambian las clases del panel y del
+velo que ya están dibujados. En la receta nueva, redibujar borraría lo escrito.
 
 **Con el cajón abierto, la página de atrás no se desplaza:** el velo tapa el
 toque, pero sin eso un deslizamiento vertical scrollea justo lo que el velo

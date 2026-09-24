@@ -114,7 +114,8 @@ categoría si ya la tiene, o en `_sin-categoria/` si no (C05.4.4).
 
 #### C01.4.1 — La lista *(J3)*
 
-- [ ] Está en `#/borradores` y es **la lista por tag** (C02.6.5) de `borrador`: las mismas tarjetas, las favoritas primero, la carga por tramos, el carrusel, el filtro y el orden por duración.
+- [ ] Está en `#/borradores` y es **la lista por tag** (C02.6.5) de `borrador`: las mismas tarjetas, las favoritas primero, la carga por tramos, el carrusel, el filtro y el orden por duración. El carrusel no lleva el chip de `borrador`, que no va en ninguna lista de tags (C02.6.4).
+- [ ] **Es el único camino a los borradores:** el Recetario no tiene tile para lo que no tiene categoría (`E02-Encontrar.md` C02.4.1).
 - [ ] Es un destino del menú: el encabezado dice **«Borradores»**, con el ícono del tag y el total, y a la izquierda lleva el botón del menú con su contador, no el volver (C02.1.3).
 - [ ] Entra una receta que lleve `borrador` escrito en cualquiera de sus formas (C05.1.4).
 - [ ] Una receta de `_sin-categoria/` se dibuja con la trama neutra en lugar del color de una categoría.
