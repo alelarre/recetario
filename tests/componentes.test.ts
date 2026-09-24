@@ -75,6 +75,12 @@ describe('tarjeta', () => {
     expect(placeholder('Rara')).toContain('data-drive="abc"');
   });
 
+  it('la fila de una receta sin categoría cae en la trama neutra, sin color propio', () => {
+    const html = placeholder('Sin categoría');
+    expect(html).toContain('--c:var(--cat-otros)');
+    expect(html).not.toMatch(/<img/);
+  });
+
   it('una receta borrador lleva la marca, sin color de error', () => {
     const html = tarjeta(entradaFalsa({ tags: ['incompleta'] }));
     expect(html).toContain('class="borr"');

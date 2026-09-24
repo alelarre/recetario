@@ -13,7 +13,10 @@ describe('Recetario', () => {
 
   it('sin ninguna receta, dice por dónde entran; con alguna, no', () => {
     const vacio = dibujar({ categorias: [{ id: 'c1', nombre: 'Carnes', cantidad: 0 }] });
-    expect(vacio).toContain('Todavía no hay recetas.');
+    expect(vacio).toContain(
+      'Todavía no hay recetas. Entran con Nueva receta, compartiendo desde otra app, ' +
+      'o como archivos .md en las carpetas de Drive.'
+    );
     expect(vacio).toContain('class="grilla"');
     expect(dibujar()).not.toContain('Todavía no hay recetas.');
   });

@@ -11,7 +11,8 @@
 import { encabezado, tile, lateral, botonMenu, carruselTags, vacio } from './componentes.js';
 import { ICO } from './iconos.js';
 
-const SIN_RECETAS = 'Todavía no hay recetas. Entran desde Borradores, o como archivos .md en las carpetas de Drive.';
+const SIN_RECETAS = 'Todavía no hay recetas. Entran con Nueva receta, compartiendo desde otra app, ' +
+  'o como archivos .md en las carpetas de Drive.';
 
 export interface OpcionesRecetario {
   categorias: { id: string; nombre: string; cantidad: number }[];

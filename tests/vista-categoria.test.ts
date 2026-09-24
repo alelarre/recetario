@@ -40,6 +40,17 @@ describe('Categoría', () => {
     expect(html).toContain('class="chip act"');
   });
 
+  it('sin recetas y sin filtros, dice por dónde entran', () => {
+    const html = renderCategoria({
+      nombre: 'Carnes', entradas: [], total: 0, visibles: 0, tagsActivos: [], tags: [],
+      duraciones: [], duracionesActivas: [], orden: 'alfa'
+    });
+    expect(html).toContain(
+      'Todavía no hay nada acá. Entran con Nueva receta, compartiendo desde otra app, ' +
+      'o como archivos .md en la carpeta Carnes de Drive.'
+    );
+  });
+
   it('filtrar hasta cero muestra la frase, con el carrusel encendido arriba', () => {
     const html = renderCategoria({
       nombre: 'A', entradas: [], total: 0, visibles: 0, tagsActivos: ['horno'],

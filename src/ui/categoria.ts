@@ -50,7 +50,8 @@ export function renderCategoria(
   const cuerpo = lista
     ? `<div class="lista">${lista}</div>` + (visibles < total ? SPINNER : '')
     : vacio(!hayFiltros
-        ? `Todavía no hay nada acá. Las recetas entran como archivos .md en la carpeta ${nombre} de Drive.`
+        ? `Todavía no hay nada acá. Entran con Nueva receta, compartiendo desde otra app, ` +
+          `o como archivos .md en la carpeta ${nombre} de Drive.`
         : duracionesActivas.length
           ? 'Ninguna receta con esos filtros. Probá sacando alguno de los filtros de arriba.'
           : 'Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba.');

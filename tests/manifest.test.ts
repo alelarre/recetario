@@ -24,10 +24,22 @@ describe('el Share Target del manifest', () => {
     expect(params.files).toEqual([{ name: 'fotos', accept: ['image/*'] }]);
   });
 
-  it('el service worker atiende esa misma ruta y usa el caché que lee la captura', () => {
+  it('el service worker atiende esa misma ruta y usa el caché que lee el editor', () => {
     const sw = readFileSync('public/sw.js', 'utf8');
     expect(sw).toContain("'recetario-compartido'");
     expect(sw).toMatch(/pathname\.endsWith\('\/compartir'\)/);
+  });
+
+  it('el redirect de lo compartido apunta a la receta nueva, con fotos aunque no haya url ni texto', () => {
+    const sw = readFileSync('public/sw.js', 'utf8');
+    expect(sw).toMatch(/#\/nueva/);
+    expect(sw).not.toMatch(/#\/capturar/);
+    // `destino.set('fotos', …)` va después del `for` que pone `url` y `text`,
+    // sin depender de que alguno de los dos haya llegado.
+    const ordenFotos = sw.indexOf("destino.set('fotos'");
+    const construyeQuery = sw.indexOf('const query = destino.toString()');
+    expect(ordenFotos).toBeGreaterThan(-1);
+    expect(ordenFotos).toBeLessThan(construyeQuery);
   });
 
   it('el título se ignora: el link y el texto llegan a la receta nueva', () => {

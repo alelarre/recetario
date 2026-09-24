@@ -6,7 +6,8 @@
 // los shells con otro nombre.
 const CACHE = 'recetario-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest'];
-// Las fotos compartidas, hasta que la captura las lee (`src/imagenes.ts`).
+// Las fotos compartidas, hasta que el editor de una receta nueva las lee
+// (`src/imagenes.ts`).
 const COMPARTIDO = 'recetario-compartido';
 
 self.addEventListener('install', (e) => {
@@ -25,8 +26,8 @@ self.addEventListener('activate', (e) => {
 /**
  * El Share Target: un `POST` multipart que ningún servidor recibe. Las fotos
  * quedan en `recetario-compartido` —`compartido/0`, `compartido/1`…, sin lo
- * de un envío anterior— y la captura se abre con un 303, con `url` y `text`
- * como antes y cuántas fotos llegaron.
+ * de un envío anterior— y el editor de una receta nueva se abre con un 303,
+ * con `url` y `text` como antes y cuántas fotos llegaron.
  */
 async function recibirCompartido(request) {
   const datos = await request.formData();
@@ -44,7 +45,7 @@ async function recibirCompartido(request) {
   }
   if (fotos.length) destino.set('fotos', String(fotos.length));
   const query = destino.toString();
-  return Response.redirect(new URL(`./#/capturar${query ? `?${query}` : ''}`, self.registration.scope).href, 303);
+  return Response.redirect(new URL(`./#/nueva${query ? `?${query}` : ''}`, self.registration.scope).href, 303);
 }
 
 /** Solo se guarda la respuesta exitosa: una de error cacheada sobrevive a la recarga y rompe la app. */
