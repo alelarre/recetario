@@ -826,7 +826,6 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   }) + '</div>');
 
   switch (ruta.vista) {
-    case 'borradores':
     case 'recetario':
       pintar(renderRecetario({
         categorias: store.categoriasConConteo(), borradores: cuantosBorradores(),
@@ -846,17 +845,21 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       return observarTramo();
     }
 
-    case 'tag': {
+    case 'tag':
+    case 'borradores': {
       // Se llega tocando un chip del carrusel del Recetario: el tag tocado
       // entra como filtro igual que en la categoría, para poder sumarle otros.
-      const nombre = ruta.params['nombre'] ?? '';
+      // Borradores es la misma lista con `borrador`, como destino del menú.
+      const enElMenu = ruta.vista === 'borradores';
+      const nombre = enElMenu ? 'borrador' : ruta.params['nombre'] ?? '';
       const activos = tagsActivos.includes(nombre) ? tagsActivos : [nombre, ...tagsActivos];
       const porTags = store.buscar({ tags: activos });
       const { entradas, ordenEfectivo } = listaOrdenada(porTags);
       pintar(renderTag({
         tag: nombre, entradas: entradas.slice(0, visibles), total: entradas.length,
         visibles: Math.min(visibles, entradas.length), tagsActivos: activos, tags: store.tagsDe(),
-        duraciones: contarDuraciones(porTags), duracionesActivas, orden: ordenEfectivo
+        duraciones: contarDuraciones(porTags), duracionesActivas, orden: ordenEfectivo,
+        ...(enElMenu ? { menu: { abierto: menuAbierto, borradores: cuantosBorradores() } } : {})
       }));
       return observarTramo();
     }

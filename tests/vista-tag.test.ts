@@ -90,4 +90,39 @@ describe('la lista por tag', () => {
     expect(html).toContain('data-accion="filtrar-duracion"');
     expect(html).toContain('data-accion="ordenar"');
   });
+
+  describe('con el menú: la lista de Borradores', () => {
+    const borradores = { ...base, tag: 'borrador', tagsActivos: ['borrador'] };
+
+    it('lleva la hamburguesa con el contador, y no el volver', () => {
+      const html = renderTag({ ...borradores, entradas: [], menu: { abierto: false, borradores: 3 } });
+      expect(html).toContain('data-accion="abrir-menu"');
+      expect(html).toContain('<span class="n">3</span>');
+      expect(html).not.toContain('data-accion="volver"');
+    });
+
+    it('dibuja el menú lateral con Borradores marcado', () => {
+      const html = renderTag({ ...borradores, entradas: [], menu: { abierto: true, borradores: 3 } });
+      expect(html).toContain('<nav class="lat abierto">');
+      expect(html).toContain('<a class="act" href="#/borradores">');
+    });
+
+    it('vacía, dice que no hay borradores', () => {
+      const html = renderTag({ ...borradores, entradas: [], total: 0, visibles: 0, menu: { abierto: false, borradores: 0 } });
+      expect(html).toContain('No hay borradores.');
+    });
+
+    it('no ofrece crear ni pegar: para eso está Nueva receta', () => {
+      const html = renderTag({ ...borradores, entradas: [], menu: { abierto: false, borradores: 0 } });
+      expect(html).not.toContain('pegar-receta');
+      expect(html).not.toContain('Nuevo');
+    });
+
+    it('sin el menú sigue siendo la lista por tag con el volver', () => {
+      const html = renderTag({ ...borradores, entradas: [] });
+      expect(html).toContain('data-accion="volver"');
+      expect(html).not.toContain('class="lat');
+      expect(html).toContain('Ninguna receta tiene estos tags.');
+    });
+  });
 });

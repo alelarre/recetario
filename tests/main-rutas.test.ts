@@ -3753,6 +3753,43 @@ describe('main.ts: las rutas', () => {
     });
   });
 
+  describe('la lista de Borradores', () => {
+    it('#/borradores dibuja la lista de las recetas con borrador, con el menú y su contador', async () => {
+      const original = storeFake.buscar;
+      const pedidas: unknown[] = [];
+      storeFake.buscar = (filtro?: unknown) => {
+        pedidas.push(filtro);
+        return [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags: ['borrador'] })];
+      };
+      try {
+        const { abrir, app } = await montar();
+        await abrir('#/borradores');
+        expect(pedidas).toContainEqual({ tags: ['borrador'] });
+        expect(app.innerHTML).toContain('Milanesas');
+        expect(app.innerHTML).toContain('data-accion="abrir-menu"');
+        expect(app.innerHTML).not.toContain('data-accion="volver"');
+        expect(app.innerHTML).toContain('<span class="n">1</span>');
+        expect(app.innerHTML).toContain('<a class="act" href="#/borradores">');
+        expect(app.innerHTML).not.toContain('pegar-receta');
+      } finally {
+        storeFake.buscar = original;
+      }
+    });
+
+    it('la hamburguesa abre el menú en la lista', async () => {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/borradores');
+      await tocar('abrir-menu');
+      expect(app.innerHTML).toContain('<nav class="lat abierto">');
+    });
+
+    it('una ruta vieja de un borrador cae en la lista', async () => {
+      const { abrir, app } = await montar();
+      await abrir('#/borradores/b1');
+      expect(app.innerHTML).toContain('<a class="act" href="#/borradores">');
+    });
+  });
+
   describe('el registro del service worker', () => {
     // `main.ts` no es el script de entrada: `inicio.ts` lo carga con
     // `import()`, así que puede evaluarse después de `load`. Sin este chequeo,
