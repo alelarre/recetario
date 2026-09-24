@@ -3867,6 +3867,7 @@ describe('main.ts: las rutas', () => {
         expect(app.innerHTML).toContain('<span class="n">1</span>');
         expect(app.innerHTML).toContain('<a class="act" href="#/borradores">');
         expect(app.innerHTML).not.toContain('pegar-receta');
+        expect(app.innerHTML).toMatch(/<span class="tit">.*Borradores<\/span>/);
       } finally {
         storeFake.buscar = original;
       }

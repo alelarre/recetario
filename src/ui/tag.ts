@@ -30,10 +30,12 @@ export interface OpcionesTag {
    * no, y cuántos borradores esperan, para el contador de la hamburguesa.
    */
   menu?: { abierto: boolean; borradores: number };
+  /** El título del encabezado, si no es el tag: Borradores se llama como en el menú. */
+  titulo?: string;
 }
 
 export function renderTag(
-  { tag, entradas, total, visibles, tagsActivos, tags, duraciones, duracionesActivas, orden, menu }: OpcionesTag
+  { tag, entradas, total, visibles, tagsActivos, tags, duraciones, duracionesActivas, orden, menu, titulo }: OpcionesTag
 ): string {
   const lista = ordenarRecetas(entradas, orden).map(e => tarjeta(e)).join('');
   // El tag de la ruta no se puede sacar —cambiar de tag es volver—, así que el
@@ -51,7 +53,7 @@ export function renderTag(
   // El carrusel corta en los mismos veinte que el Recetario.
   const icono = iconoDeTag(tag);
   const pantalla = encabezado({
-    titulo: tag, total, ...(icono ? { icono } : {}),
+    titulo: titulo ?? tag, total, ...(icono ? { icono } : {}),
     ...(menu ? { izquierda: botonMenu(menu.borradores) } : { volver: true })
   }) +
     `<div class="cuerpo denso">${carruselTags(tags, { activos: tagsActivos, tope: 20, fijo: tag })}` +

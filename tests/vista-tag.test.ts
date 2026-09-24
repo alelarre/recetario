@@ -101,6 +101,13 @@ describe('la lista por tag', () => {
       expect(html).not.toContain('data-accion="volver"');
     });
 
+    it('se titula como el menú, no con el nombre del tag', () => {
+      const html = renderTag({ ...borradores, titulo: 'Borradores', entradas: [], menu: { abierto: false, borradores: 0 } });
+      // El título lleva adelante el ícono del tag, que es otro `<span>`.
+      expect(html).toContain('<span class="borr"></span>Borradores</span>');
+      expect(html).not.toContain('<span class="borr"></span>borrador</span>');
+    });
+
     it('dibuja el menú lateral con Borradores marcado', () => {
       const html = renderTag({ ...borradores, entradas: [], menu: { abierto: true, borradores: 3 } });
       expect(html).toContain('<nav class="lat abierto">');

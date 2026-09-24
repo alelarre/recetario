@@ -890,7 +890,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         tag: nombre, entradas: entradas.slice(0, visibles), total: entradas.length,
         visibles: Math.min(visibles, entradas.length), tagsActivos: activos, tags: store.tagsDe(),
         duraciones: contarDuraciones(porTags), duracionesActivas, orden: ordenEfectivo,
-        ...(enElMenu ? { menu: { abierto: menuAbierto, borradores: cuantosBorradores() } } : {})
+        ...(enElMenu ? { titulo: 'Borradores', menu: { abierto: menuAbierto, borradores: cuantosBorradores() } } : {})
       }));
       return observarTramo();
     }
