@@ -787,11 +787,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   }) + '</div>');
 
   switch (ruta.vista) {
-    // Las pantallas de borradores ya no existen: sus rutas muestran el Recetario.
     case 'borradores':
-    case 'borrador':
-    case 'capturar':
-    case 'recibida':
     case 'recetario':
       pintar(renderRecetario({
         categorias: store.categoriasConConteo(), borradores: cuantosBorradores(),

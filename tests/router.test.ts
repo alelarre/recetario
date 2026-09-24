@@ -20,20 +20,32 @@ describe('parsearHash', () => {
     expect(parsearHash('#/r/abc123/editar')).toEqual({ vista: 'editar', params: { id: 'abc123' } });
   });
 
+  it('la edición con una receta recibida aplicada', () => {
+    expect(parsearHash('#/r/x/editar?recibida=1')).toEqual({ vista: 'editar', params: { id: 'x', recibida: '1' } });
+  });
+
   it('alta de receta', () => {
     expect(parsearHash('#/nueva')).toEqual({ vista: 'nueva', params: {} });
   });
 
-  it('alta desde un borrador, con su id', () => {
-    expect(parsearHash('#/nueva?borrador=b1')).toEqual({ vista: 'nueva', params: { borrador: 'b1' } });
+  it('alta con lo compartido: link, texto y cuántas fotos dejó el service worker', () => {
+    expect(parsearHash('#/nueva?url=u&text=t&fotos=2'))
+      .toEqual({ vista: 'nueva', params: { url: 'u', text: 't', fotos: '2' } });
+    expect(parsearHash('#/nueva?text=hola')).toEqual({ vista: 'nueva', params: { text: 'hola' } });
   });
 
-  it('la pregunta del borrador y la receta recibida', () => {
-    expect(parsearHash('#/recibida')).toEqual({ vista: 'recibida', params: {} });
+  it('alta con una receta recibida', () => {
     expect(parsearHash('#/nueva?recibida=1')).toEqual({ vista: 'nueva', params: { recibida: '1' } });
-    expect(parsearHash('#/nueva?borrador=b1&recibida=1'))
-      .toEqual({ vista: 'nueva', params: { borrador: 'b1', recibida: '1' } });
-    expect(parsearHash('#/nueva?borrador=b1')).toEqual({ vista: 'nueva', params: { borrador: 'b1' } });
+  });
+
+  it('el parámetro borrador de la alta ya no existe', () => {
+    expect(parsearHash('#/nueva?borrador=b1')).toEqual({ vista: 'nueva', params: {} });
+  });
+
+  it('las rutas de la captura y de la pregunta del borrador caen en el Recetario', () => {
+    expect(parsearHash('#/capturar')).toEqual({ vista: 'recetario', params: {} });
+    expect(parsearHash('#/capturar?url=u&text=t&fotos=1')).toEqual({ vista: 'recetario', params: {} });
+    expect(parsearHash('#/recibida')).toEqual({ vista: 'recetario', params: {} });
   });
 
   it('una ruta desconocida cae en el Recetario en vez de romper', () => {
@@ -71,22 +83,10 @@ describe('parsearHash', () => {
 
   it('reconoce las rutas nuevas', () => {
     expect(parsearHash('#/borradores')).toEqual({ vista: 'borradores', params: {} });
-    expect(parsearHash('#/borradores/b1')).toEqual({ vista: 'borrador', params: { id: 'b1' } });
+    // Un borrador ya no es una pantalla: su vieja ruta cae en la lista.
+    expect(parsearHash('#/borradores/b1')).toEqual({ vista: 'borradores', params: {} });
     expect(parsearHash('#/ajustes')).toEqual({ vista: 'ajustes', params: {} });
     expect(parsearHash('#/r/f1/cocinar')).toEqual({ vista: 'cocinar', params: { id: 'f1' } });
-  });
-
-  it('capturar lee el título y la fuente del Share Target', () => {
-    expect(parsearHash('#/capturar?url=https%3A%2F%2Fx%2F1&text=Focaccia'))
-      .toEqual({ vista: 'capturar', params: { url: 'https://x/1', text: 'Focaccia' } });
-  });
-
-  it('capturar lee cuántas fotos dejó el service worker', () => {
-    expect(parsearHash('#/capturar?fotos=3')).toEqual({ vista: 'capturar', params: { url: '', text: '', fotos: '3' } });
-  });
-
-  it('capturar sin nada es capturar igual: el Share Target puede no mandar campos', () => {
-    expect(parsearHash('#/capturar')).toEqual({ vista: 'capturar', params: { url: '', text: '' } });
   });
 
   describe('defensa de parámetros', () => {
@@ -119,15 +119,16 @@ describe('parsearHash', () => {
 });
 
 describe('lo compartido desde otra app (Share Target)', () => {
-  it('Android manda los datos en la query, antes del #: pasan a la captura', () => {
+  it('Android manda los datos en la query, antes del #: pasan a la receta nueva', () => {
     expect(hashDeCompartido('?title=Pollo&text=Mir%C3%A1+esto&url=https%3A%2F%2Fx.com%2F1'))
-      .toBe('#/capturar?url=https%3A%2F%2Fx.com%2F1&text=Mir%C3%A1+esto');
+      .toBe('#/nueva?url=https%3A%2F%2Fx.com%2F1&text=Mir%C3%A1+esto');
+    expect(hashDeCompartido('?text=hola')).toBe('#/nueva?text=hola');
   });
 
   it('muchas apps mandan el link sólo en text', () => {
     const hash = hashDeCompartido('?text=https%3A%2F%2Finstagram.com%2Freel%2Fabc');
-    expect(hash).toBe('#/capturar?text=https%3A%2F%2Finstagram.com%2Freel%2Fabc');
-    expect(parsearHash(hash)).toEqual({ vista: 'capturar', params: { url: '', text: 'https://instagram.com/reel/abc' } });
+    expect(hash).toBe('#/nueva?text=https%3A%2F%2Finstagram.com%2Freel%2Fabc');
+    expect(parsearHash(hash)).toEqual({ vista: 'nueva', params: { text: 'https://instagram.com/reel/abc' } });
   });
 
   it('sin url ni text no hay nada compartido', () => {

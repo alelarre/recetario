@@ -1,14 +1,18 @@
 /** Las vistas que la app sabe dibujar. El hash es el único estado de navegación. */
 export type Vista =
   | 'recetario' | 'categoria' | 'resultados' | 'receta' | 'cocinar'
-  | 'editar' | 'nueva' | 'borradores' | 'borrador' | 'capturar' | 'ajustes' | 'carpeta'
-  | 'categorias' | 'editar-categoria' | 'tag' | 'recibida'
+  | 'editar' | 'nueva' | 'borradores' | 'ajustes' | 'carpeta'
+  | 'categorias' | 'editar-categoria' | 'tag'
   | 'plan' | 'plan-agregar' | 'plan-compras';
 
 export interface Ruta {
   vista: Vista;
   params: Record<string, string>;
 }
+
+/** Los parámetros de la query que están y no vienen vacíos, de esta lista. */
+const presentes = (params: Record<string, string>, claves: readonly string[]): Record<string, string> =>
+  Object.fromEntries(claves.flatMap(c => (params[c] ? [[c, params[c]]] : [])));
 
 export function parsearHash(hash: unknown): Ruta {
   const limpio = String(hash ?? '').replace(/^#/, '');
@@ -29,41 +33,23 @@ export function parsearHash(hash: unknown): Ruta {
   }
 
   if (partes[0] === 'buscar') return { vista: 'resultados', params: { q: params['q'] ?? '' } };
-  // `#/nueva?borrador=b1` es crear la receta desde un borrador: el parámetro es
-  // lo que ata las dos cosas, y sin él el borrador no se borra al guardar.
-  if (partes[0] === 'nueva') {
-    const p: Record<string, string> = {};
-    if (params['borrador']) p['borrador'] = params['borrador'];
-    // `recibida`: el editor abre con la receta que llegó de Claude.
-    if (params['recibida']) p['recibida'] = params['recibida'];
-    return { vista: 'nueva', params: p };
-  }
-  // La pregunta «¿De qué borrador es esta receta?», cuando la receta que
-  // llegó de Claude no trae un id de borrador que exista.
-  if (partes[0] === 'recibida') return { vista: 'recibida', params: {} };
+  // `#/nueva` abre el editor vacío. Lo compartido desde otra app llega con
+  // `url`, `text` y `fotos` —cuántas dejó el service worker en su caché—, y
+  // una receta `.md` compartida que no es de ninguna receta existente, con
+  // `recibida`. Sólo viajan los que vinieron.
+  if (partes[0] === 'nueva') return { vista: 'nueva', params: presentes(params, ['url', 'text', 'fotos', 'recibida']) };
 
   if (partes[0] === 'r' && partes[1]) {
-    if (partes[2] === 'editar') return { vista: 'editar', params: { id: partes[1] } };
+    // `recibida`: el editor abre con la receta `.md` compartida aplicada encima.
+    if (partes[2] === 'editar') return { vista: 'editar', params: { id: partes[1], ...presentes(params, ['recibida']) } };
     if (partes[2] === 'cocinar') return { vista: 'cocinar', params: { id: partes[1] } };
     if (!partes[2]) return { vista: 'receta', params: { id: partes[1] } };
   }
 
-  if (partes[0] === 'borradores') {
-    return partes[1]
-      ? { vista: 'borrador', params: { id: partes[1] } }
-      : { vista: 'borradores', params: {} };
-  }
+  // Un borrador es una receta con ese tag y se abre como cualquier otra: una
+  // ruta vieja con id cae en la lista.
+  if (partes[0] === 'borradores') return { vista: 'borradores', params: {} };
   if (partes[0] === 'ajustes') return { vista: 'ajustes', params: {} };
-  // El Share Target manda lo que la app de origen le dio: los dos campos
-  // pueden venir vacíos y la captura igual se abre (F01.2). `fotos` es
-  // cuántas dejó el service worker en su caché.
-  if (partes[0] === 'capturar') {
-    return {
-      vista: 'capturar',
-      params: { url: params['url'] ?? '', text: params['text'] ?? '', ...(params['fotos'] ? { fotos: params['fotos'] } : {}) }
-    };
-  }
-
   if (partes[0] === 'categorias') {
     return partes[1]
       ? { vista: 'editar-categoria', params: { id: partes[1] } }
@@ -108,7 +94,7 @@ export function parsearHash(hash: unknown): Ruta {
 }
 
 /**
- * Lo compartido desde otra app, como hash de la captura, o `null`.
+ * Lo compartido desde otra app, como hash de la receta nueva, o `null`.
  *
  * El Share Target de Android manda `title`, `text` y `url` en la query de la
  * URL —antes del `#`—, y el router sólo lee lo que viene después. Muchas apps
@@ -122,7 +108,7 @@ export function hashDeCompartido(search: string): string | null {
     const valor = params.get(clave);
     if (valor) destino.set(clave, valor);
   }
-  return [...destino.keys()].length ? `#/capturar?${destino.toString()}` : null;
+  return [...destino.keys()].length ? `#/nueva?${destino.toString()}` : null;
 }
 
 /** La vista de invitado: la receta que viaja en el link, sin login. */

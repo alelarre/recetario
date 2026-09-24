@@ -30,8 +30,8 @@ describe('el Share Target del manifest', () => {
     expect(sw).toMatch(/pathname\.endsWith\('\/compartir'\)/);
   });
 
-  it('el título se ignora: el link y el texto llegan a la captura', () => {
+  it('el título se ignora: el link y el texto llegan a la receta nueva', () => {
     expect(hashDeCompartido('?title=Instagram&text=' + encodeURIComponent('Mirá https://instagram.com/reel/abc')))
-      .toBe('#/capturar?text=' + encodeURIComponent('Mirá https://instagram.com/reel/abc').replace(/%20/g, '+'));
+      .toBe('#/nueva?text=' + encodeURIComponent('Mirá https://instagram.com/reel/abc').replace(/%20/g, '+'));
   });
 });
