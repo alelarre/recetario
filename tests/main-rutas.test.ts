@@ -3588,6 +3588,74 @@ describe('main.ts: las rutas', () => {
     });
   });
 
+  describe('pegar una receta en el editor', () => {
+    const PEGADA = '---\ntitulo: Focaccia pegada\n---\n\n## Ingredientes\n- Harina — 500 g\n';
+    const FOTO = { n: 1, url: linkDeFoto('d1') };
+    const portapapeles = (texto: string | null) => vi.stubGlobal('navigator', {
+      clipboard: { readText: async () => { if (texto === null) throw new Error('sin permiso'); return texto; } }
+    });
+
+    it('llena el formulario con lo pegado y conserva el depósito y la categoría elegida', async () => {
+      estado.md = `---\ntitulo: Milanesas\n---\n\n${serializarFotos([FOTO])}`;
+      portapapeles(PEGADA);
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', fotos: JSON.stringify([FOTO]) };
+      await tocar('pegar-receta');
+      expect(app.innerHTML).toContain('name="titulo" value="Focaccia pegada"');
+      expect(app.innerHTML).toContain('Harina — 500 g');
+      expect(app.innerHTML).toContain(`name="fotos" value="${JSON.stringify([FOTO]).replace(/"/g, '&quot;')}"`);
+      expect(app.innerHTML).toContain('<option value="c1" selected>Carnes</option>');
+      // No guarda: pegar sólo llena el formulario.
+      expect(estado.creadas).toEqual([]);
+      expect(estado.guardados).toEqual([]);
+    });
+
+    it('con «Sin categoría», borrador queda puesto aunque lo pegado no lo traiga', async () => {
+      portapapeles('---\ntitulo: Focaccia pegada\ntags: [pan]\n---\n');
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: '', carpeta: '' };
+      await tocar('pegar-receta');
+      expect(app.innerHTML).toContain('name="titulo" value="Focaccia pegada"');
+      expect(app.innerHTML).toContain('data-valor="borrador" aria-pressed="true"');
+      expect(app.innerHTML).toContain('<option value="" selected>Sin categoría</option>');
+    });
+
+    it('lo que no es una receta avisa sin redibujar el formulario', async () => {
+      portapapeles('una lista de compras');
+      const { abrir, tocar, app, preguntas } = await montar();
+      await abrir('#/nueva');
+      const antes = app.innerHTML;
+      await tocar('pegar-receta');
+      expect(app.innerHTML).toBe(antes);
+      expect(preguntas.join('')).toContain('Lo copiado no es una receta en .md.');
+    });
+
+    it('si el portapapeles no se deja leer, lo dice', async () => {
+      portapapeles(null);
+      const { abrir, tocar, app, preguntas } = await montar();
+      await abrir('#/nueva');
+      const antes = app.innerHTML;
+      await tocar('pegar-receta');
+      expect(app.innerHTML).toBe(antes);
+      expect(preguntas.join('')).toContain('No se pudo leer lo copiado.');
+    });
+
+    it('un id: en lo pegado se ignora: pega en el editor abierto', async () => {
+      portapapeles('---\ntitulo: Focaccia pegada\nid: f1\n---\n');
+      const { abrir, tocar, app, reemplazos } = await montar();
+      await abrir('#/nueva');
+      await tocar('pegar-receta');
+      expect(global.location.hash).toBe('#/nueva');
+      expect(reemplazos).toEqual([]);
+      expect(app.innerHTML).toContain('name="titulo" value="Focaccia pegada"');
+      estado.formulario = { titulo: 'Focaccia pegada', carpeta: '', tags: 'borrador' };
+      await tocar('guardar');
+      expect(estado.recetasCreadas[0]?.extras).toEqual({});
+    });
+  });
+
   describe('el registro del service worker', () => {
     // `main.ts` no es el script de entrada: `inicio.ts` lo carga con
     // `import()`, así que puede evaluarse después de `load`. Sin este chequeo,

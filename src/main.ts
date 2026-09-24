@@ -45,7 +45,7 @@ import {
 import { crearControlCocina } from './cocina-control.js';
 import { registrarCategorias } from './ui/categorias.js';
 import { precargar, generar } from './pdf/generar.js';
-import { compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador } from './compartir.js';
+import { compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador, leerPortapapeles } from './compartir.js';
 import { esRecetaEnMd, recetaRecibida, aplicarPegada } from './conversion.js';
 import { desdeCompartido, tituloPorDefecto } from './compartido.js';
 import { codificar, urlDeLink } from './link-receta.js';
@@ -1225,9 +1225,9 @@ function abrirFichaFoto(html: string): void {
 }
 
 /**
- * Un aviso de las fotos arriba del formulario, que aparece y se va sin
- * redibujarlo: en el editor redibujar perdería lo escrito, y en la categoría
- * apagaría Guardar hasta la próxima tecla.
+ * Un aviso arriba del formulario —el de las fotos, o el de Pegar—, que
+ * aparece y se va sin redibujarlo: en el editor redibujar perdería lo escrito,
+ * y en la categoría apagaría Guardar hasta la próxima tecla.
  */
 function avisarEnElFormulario(texto: string): void {
   document.querySelector('#app [data-aviso-fotos]')?.remove();
@@ -2048,6 +2048,30 @@ app.addEventListener('click', async (e) => {
     fotosEditor.nuevas.delete(n);
     fotosEditor.urls.delete(n);
     cerrarFichaFoto();
+    return;
+  }
+
+  if (accion === 'pegar-receta') {
+    if (!enElEditor()) return;
+    const texto = await leerPortapapeles(plataformaDelNavegador());
+    // El aviso va arriba del formulario sin redibujarlo: lo escrito sigue ahí.
+    if (texto === null) return avisarEnElFormulario('No se pudo leer lo copiado.');
+    if (!esRecetaEnMd(texto)) return avisarEnElFormulario('Lo copiado no es una receta en .md.');
+    // El `id` que traiga se ignora: se pega en el editor abierto.
+    const { receta: pegada } = recetaRecibida(texto);
+    const datos = datosDelFormulario();
+    const carpeta = datos['carpeta'] ?? '';
+    const actual = recetaDesdeFormulario(datos, baseDelEditor());
+    // En una receta nueva, lo pegado es también la base de lo que el editor
+    // no muestra, como lo recibido por Compartir.
+    if (vistaActual?.vista === 'nueva') recibida = pegada;
+    // Sin `abrirEditor`: la foto contra la que se comparan los cambios sigue
+    // siendo la de antes, y salir sin guardar pregunta.
+    pintar(renderEditor({
+      entrada: vistaActual?.vista === 'editar' ? recetaLeida?.entrada ?? null : null,
+      receta: aplicarPegada(actual, pegada, carpeta), carpeta,
+      categorias: store.categorias(), tagsConocidos: store.tagsDe().map(t => t.tag)
+    }));
     return;
   }
 
