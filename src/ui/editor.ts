@@ -328,15 +328,24 @@ function campoDuracion(tiempo: string | null): string {
   '</div>';
 }
 
+/**
+ * La carpeta que el editor da por elegida: el id si es una categoría de la
+ * lista, `''` —«Sin categoría»— si no. La raíz y `_sin-categoria/` no son
+ * categorías, y una receta ahí se trata como sin categoría: queda borrador.
+ */
+export function carpetaDelEditor(
+  carpetaId: string, categorias: readonly Pick<Categoria, 'id'>[]
+): string {
+  return categorias.some(c => c.id === carpetaId) ? carpetaId : '';
+}
+
 export function renderEditor(
   { receta, entrada, carpeta, categorias = [], tagsConocidos = [], error, confirmandoBorrado }: ArgsEditor
 ): string {
   // «Sin categoría» es una opción más, elegible como cualquier otra —guardar
   // así escribe en `_sin-categoria/` (C04.3b.1)—, así que no hace falta un
-  // placeholder. Lo que llegue sin ser el id de una categoría de la lista
-  // —la raíz o `_sin-categoria/`— tampoco tiene nada elegido.
-  const elegida = carpeta ?? entrada?.carpeta_id ?? '';
-  const carpetaElegida = categorias.some(c => c.id === elegida) ? elegida : '';
+  // placeholder.
+  const carpetaElegida = carpetaDelEditor(carpeta ?? entrada?.carpeta_id ?? '', categorias);
   const opcionesCarpeta =
     `<option value=""${carpetaElegida === '' ? ' selected' : ''}>Sin categoría</option>` +
     [...categorias]
@@ -416,12 +425,13 @@ export function renderEditor(
     area('notas', 'Notas', receta.notas, 3) +
   '</div>';
 
-  // Convertir con Agente sólo mientras la receta es un borrador: sin ese tag
-  // no hay nada que mandar a convertir.
+  // Convertir con Agente sólo mientras la receta es un borrador —con el tag
+  // puesto, o bloqueado porque falta lo mínimo—: sin él no hay nada que mandar
+  // a convertir. Va siempre, oculto sin el tag, para que el botón de
+  // `borrador` lo muestre y lo oculte sin redibujar.
   const acciones = '<div class="acciones-editor">' +
-    (tieneEspecial({ tags }, 'borrador')
-      ? `<button class="btn sec" data-accion="convertir-con-agente" type="button">${ICO.compartir}Convertir con Agente</button>`
-      : '') +
+    '<button class="btn sec" data-accion="convertir-con-agente" type="button"' +
+      `${especiales.includes('borrador') ? '' : ' hidden'}>${ICO.compartir}Convertir con Agente</button>` +
     '<button class="btn prim" data-accion="guardar" type="button">Guardar</button>' +
   '</div>';
 

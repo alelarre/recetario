@@ -17,7 +17,7 @@ import { renderCocina } from './ui/cocina.js';
 import {
   renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado,
   renderAccionesFoto, renderElegirFoto, renderSelectorPortada, renderFotoPorUrl,
-  filaDeFotosEditor, muestraDePortada, fotosDesde, botonPonerFoto
+  filaDeFotosEditor, muestraDePortada, fotosDesde, botonPonerFoto, carpetaDelEditor
 } from './ui/editor.js';
 import { renderPlan } from './ui/plan.js';
 import { renderPlanAgregar, bloqueDeAgregar } from './ui/plan-agregar.js';
@@ -1005,7 +1005,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         // Una receta `.md` compartida con el id de ésta se aplica como Pegar,
         // sobre la copia leída: el archivo no cambia hasta Guardar.
         const conRecibida = ruta.params['recibida'] && recibida
-          ? aplicarPegada(receta, recibida, entrada?.carpeta_id ?? '') : null;
+          ? aplicarPegada(receta, recibida, carpetaDelEditor(entrada?.carpeta_id ?? '', store.categorias()))
+          : null;
         abrirEditor(renderEditor({
           entrada, receta: conRecibida ?? receta, categorias: store.categorias(),
           tagsConocidos: store.tagsDe().map(t => t.tag)
@@ -1150,8 +1151,18 @@ function revisarBorrador(): void {
   // Si dejó de cumplir, la receta vuelve a quedar borrador.
   if (!puede && boton.getAttribute('aria-pressed') !== 'true') {
     boton.setAttribute('aria-pressed', 'true');
+    mostrarConvertir(true);
     sincronizarTags();
   }
+}
+
+/**
+ * Convertir con Agente se ve sólo mientras la receta tiene `borrador`. Se
+ * oculta con el atributo y no redibujando: redibujar perdería lo escrito.
+ */
+function mostrarConvertir(conBorrador: boolean): void {
+  const convertir = document.querySelector<HTMLElement>('#app [data-accion="convertir-con-agente"]');
+  if (convertir) convertir.hidden = !conBorrador;
 }
 
 /** Las cinco secciones de texto del editor, las que pueden nombrar una foto. */
@@ -2201,7 +2212,9 @@ app.addEventListener('click', async (e) => {
 
   if (accion === 'tag-especial') {
     if (boton.hasAttribute('disabled')) return;
-    boton.setAttribute('aria-pressed', String(boton.getAttribute('aria-pressed') !== 'true'));
+    const apretado = boton.getAttribute('aria-pressed') !== 'true';
+    boton.setAttribute('aria-pressed', String(apretado));
+    if (boton.dataset['valor'] === 'borrador') mostrarConvertir(apretado);
     sincronizarTags();
     return;
   }

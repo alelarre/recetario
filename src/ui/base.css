@@ -263,6 +263,7 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
    columna, no la fila a mitades de `.acciones`. */
 .acciones-editor { display: flex; flex-direction: column; gap: var(--e-2); margin-top: var(--e-4); }
 .acciones-editor .btn { width: 100%; }
+.acciones-editor .btn[hidden] { display: none; }
 
 /* La ayuda del formato de ingredientes: es referencia mientras se escribe, no
    prosa. En micro, que es el piso de la escala, y en el color de los rótulos

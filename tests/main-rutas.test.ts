@@ -53,6 +53,22 @@ vi.mock('../src/pdf/generar.js', () => ({
   }
 }));
 
+/**
+ * `aplicarPegada` es la real, pero deja anotada la carpeta con que se la
+ * llamó: es lo que decide si lo pegado queda como borrador.
+ */
+const pegadas = vi.hoisted(() => ({ carpetas: [] as string[] }));
+vi.mock('../src/conversion.js', async original => {
+  const real = await original<typeof import('../src/conversion.js')>();
+  return {
+    ...real,
+    aplicarPegada: (...args: Parameters<typeof real.aplicarPegada>) => {
+      pegadas.carpetas.push(args[2]);
+      return real.aplicarPegada(...args);
+    }
+  };
+});
+
 /** Lo que los dobles le dan a main. `falla` enciende el error de lectura. */
 const estadoInicial = () => ({
   falla: false as boolean | Error,
@@ -544,6 +560,8 @@ describe('main.ts: las rutas', () => {
         presionados.set(valor, v === 'true');
       }
     }]));
+    /** Convertir con Agente al pie del editor: se muestra y se oculta sin redibujar. */
+    const botonConvertir = { hidden: false };
     let valorOculto = '';
     const campoTiempoDuracion = {
       get value() { return valorOculto; },
@@ -566,6 +584,9 @@ describe('main.ts: las rutas', () => {
         // El sol encendido, tal como lo dibuja la cocina.
         if (sel === '[data-accion="wake"].on') return app.innerHTML.includes('class="ico on" data-accion="wake"') ? {} : null;
         if (sel === '#app input[name="tiempo"]') return campoTiempoDuracion;
+        if (sel === '#app [data-accion="convertir-con-agente"]') {
+          return app.innerHTML.includes('data-accion="convertir-con-agente"') ? botonConvertir : null;
+        }
         // El menú lateral y su velo, que el gesto mueve al ritmo del dedo.
         // Salen de lo pintado: una pantalla sin menú no los tiene.
         if (sel === '#app .lat') return app.innerHTML.includes('class="lat') ? panelLateral : null;
@@ -664,6 +685,7 @@ describe('main.ts: las rutas', () => {
     return {
       /** La lista con la que `main` decide el gesto del menú lateral. */
       PANTALLAS_CON_MENU,
+      botonConvertir,
       app,
       velo,
       pinturas,
@@ -1725,6 +1747,27 @@ describe('main.ts: las rutas', () => {
       expect(attrs['aria-pressed']).toBe('true');
       const otra = await tocar('tag-especial', { valor: 'probar' }, { 'aria-pressed': 'true' });
       expect(otra['aria-pressed']).toBe('false');
+    });
+
+    it('soltar y apretar borrador oculta y muestra Convertir con Agente, sin redibujar', async () => {
+      estado.md = '---\ntitulo: Milanesas\ntags: [borrador]\n---\n';
+      const { abrir, tocar, botonConvertir, pinturas } = await montar();
+      await abrir('#/r/f1/editar');
+      const antes = pinturas.length;
+
+      await tocar('tag-especial', { valor: 'borrador' }, { 'aria-pressed': 'true' });
+      expect(botonConvertir.hidden).toBe(true);
+      await tocar('tag-especial', { valor: 'borrador' }, { 'aria-pressed': 'false' });
+      expect(botonConvertir.hidden).toBe(false);
+      expect(pinturas.length).toBe(antes);
+    });
+
+    it('otro tag especial no toca Convertir con Agente', async () => {
+      const { abrir, tocar, botonConvertir } = await montar();
+      await abrir('#/r/f1/editar');
+      botonConvertir.hidden = true;
+      await tocar('tag-especial', { valor: 'probar' }, { 'aria-pressed': 'false' });
+      expect(botonConvertir.hidden).toBe(true);
     });
 
     it('un botón especial deshabilitado no cambia al tocarlo', async () => {
@@ -3462,6 +3505,26 @@ describe('main.ts: las rutas', () => {
         expect(app.innerHTML).toContain('name="titulo" value="Focaccia recibida"');
         expect(app.innerHTML).toContain('<option value="c1" selected>Carnes</option>');
         expect(app.innerHTML).toContain('Editando');
+      } finally {
+        storeFake.receta = original;
+      }
+    });
+
+    it.each([
+      ['en una categoría, la pega con esa carpeta', 'c1', 'c1'],
+      ['en la raíz, la pega como «Sin categoría»', 'raiz', ''],
+      ['en _sin-categoria/, la pega como «Sin categoría»', 'sin-cat', '']
+    ])('una receta .md recibida para una receta existente %s', async (_caso, carpetaId, esperada) => {
+      const original = storeFake.receta;
+      storeFake.receta = async (id: string) => ({
+        entrada: entradaFalsa({ id_archivo: id, carpeta_id: carpetaId }), receta: parse(estado.md)
+      });
+      pegadas.carpetas = [];
+      try {
+        const { abrir } = await montar();
+        await abrir(`#/nueva?text=${encodeURIComponent(RECIBIDA)}`);
+        await abrir('#/r/f1/editar?recibida=1');
+        expect(pegadas.carpetas).toEqual([esperada]);
       } finally {
         storeFake.receta = original;
       }

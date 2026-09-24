@@ -93,6 +93,14 @@ describe('crear una categoría', () => {
     await copiaCoincide(sheets, indiceLocal.actual());
   });
 
+  it('«Sin categoría» no se puede crear, y no toca Drive', async () => {
+    const { store, drive } = await abierta();
+    const antes = drive._store.size;
+    await expect(store.crearCategoria({ nombre: 'sin categoria', color: 'aves', foto: '' }))
+      .rejects.toThrow('Ese nombre es el de las recetas sin categoría.');
+    expect(drive._store.size).toBe(antes);
+  });
+
   it('un nombre repetido no toca Drive', async () => {
     const { store, drive } = await abierta();
     const antes = drive._store.size;
@@ -123,6 +131,13 @@ describe('editar una categoría', () => {
     drive.llamadas.length = 0;
     await store.editarCategoria('c1', { nombre: 'Pastas', color: 'aves', foto: 'catalogo:pastas' });
     expect(drive.llamadas.filter(l => l[0] === 'propiedades')).toEqual([['propiedades', 'c1', { color: 'aves', foto: 'catalogo:pastas' }]]);
+  });
+
+  it('no se puede renombrar a «Sin categoría»', async () => {
+    const { store, drive } = await abierta();
+    await expect(store.editarCategoria('c1', { nombre: 'Sin Categoría', color: 'pastas', foto: '' }))
+      .rejects.toThrow('Ese nombre es el de las recetas sin categoría.');
+    expect(drive._store.get('c1')?.name).toBe('Pastas');
   });
 
   it('su propio nombre no cuenta como repetido; el de otra sí', async () => {

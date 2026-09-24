@@ -61,6 +61,12 @@ export const categoriaDesdeFila = (f: string[]): Categoria => ({
 });
 
 /**
+ * El nombre que se muestra para lo que no tiene categoría: la raíz y
+ * `_sin-categoria/`. Una categoría con este nombre se confundiría con ellas.
+ */
+export const SIN_CATEGORIA = 'Sin categoría';
+
+/**
  * Por qué un nombre no sirve para una categoría, o vacío si sirve. `otros` son
  * los nombres de las demás categorías: al editar, sin la que se edita.
  */
@@ -70,6 +76,7 @@ export function problemaDelNombre(nombre: string, otros: readonly string[]): str
   // Las carpetas que empiezan con _ no son categorías: `_fotos`, `_sin-categoria`.
   if (limpio.startsWith('_')) return 'No puede empezar con _.';
   const buscado = normalizar(limpio);
+  if (buscado === normalizar(SIN_CATEGORIA)) return 'Ese nombre es el de las recetas sin categoría.';
   if (otros.some(o => normalizar(o) === buscado)) return 'Ya hay una categoría con ese nombre.';
   return '';
 }

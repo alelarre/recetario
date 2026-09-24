@@ -12,6 +12,11 @@ describe('el nombre de una categoría', () => {
     expect(problemaDelNombre('PASTAS', ['Pastas'])).toBe('Ya hay una categoría con ese nombre.');
     expect(problemaDelNombre('Pescados y mariscos', ['Péscados y Mariscos'])).toBe('Ya hay una categoría con ese nombre.');
   });
+
+  it('«Sin categoría», sin mirar tildes ni mayúsculas, no: es el nombre de lo que no tiene categoría', () => {
+    expect(problemaDelNombre('Sin categoría', [])).toBe('Ese nombre es el de las recetas sin categoría.');
+    expect(problemaDelNombre('  SIN CATEGORIA ', ['Pastas'])).toBe('Ese nombre es el de las recetas sin categoría.');
+  });
 });
 
 describe('el color de una categoría nueva', () => {

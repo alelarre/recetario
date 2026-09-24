@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   renderEditor, recetaDesdeFormulario, formularioDesde, pillTag,
-  renderAccionesFoto, renderElegirFoto, renderSelectorPortada, renderFotoPorUrl, botonPonerFoto
+  renderAccionesFoto, renderElegirFoto, renderSelectorPortada, renderFotoPorUrl, botonPonerFoto,
+  carpetaDelEditor
 } from '../src/ui/editor.js';
 import { ICO, ICONO_DE_DURACION } from '../src/ui/iconos.js';
 import { escapar } from '../src/ui/markdown.js';
@@ -36,6 +37,19 @@ Un tinto.
 
 const cargada = parse(MD_REAL);
 const dibujar = (extra = {}) => renderEditor({ entrada: null, receta: cargada, categorias, ...extra });
+
+describe('carpetaDelEditor', () => {
+  it('una categoría de la lista queda elegida', () => {
+    expect(carpetaDelEditor('c1', categorias)).toBe('c1');
+  });
+
+  it('lo que no es una categoría de la lista es «Sin categoría»', () => {
+    // La raíz o `_sin-categoria/`: ninguna está entre las categorías.
+    expect(carpetaDelEditor('raiz', categorias)).toBe('');
+    expect(carpetaDelEditor('sin-cat', categorias)).toBe('');
+    expect(carpetaDelEditor('', categorias)).toBe('');
+  });
+});
 
 describe('renderEditor', () => {
   it('hay un control por clave del frontmatter y el YAML no se ve', () => {
@@ -305,17 +319,18 @@ describe('los tags especiales en el editor', () => {
 });
 
 describe('las acciones al pie del editor', () => {
-  it('Convertir con Agente aparece con el tag borrador puesto, y no sin él', () => {
+  it('Convertir con Agente se ve con el tag borrador puesto, y queda oculto sin él', () => {
     const conBorrador = renderEditor({
       entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['borrador'] }, categorias
     });
-    expect(conBorrador).toContain('data-accion="convertir-con-agente"');
+    expect(conBorrador).toContain('data-accion="convertir-con-agente" type="button">');
     expect(conBorrador).toContain(`${ICO.compartir}Convertir con Agente`);
 
+    // Oculto y no ausente: apretar el tag lo muestra sin redibujar el formulario.
     const sinBorrador = renderEditor({
       entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: [] }, categorias
     });
-    expect(sinBorrador).not.toContain('data-accion="convertir-con-agente"');
+    expect(sinBorrador).toContain('data-accion="convertir-con-agente" type="button" hidden>');
   });
 
   it('Convertir con Agente es secundario', () => {

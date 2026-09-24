@@ -2,7 +2,7 @@ import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_FOTOS, NOMBRE_SIN_CATEGORIA, NOMBRE_
 import { COLUMNAS, entradaDesdeFila, filaDesde, coincideTag } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, HOJA_CATEGORIAS, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
-import { COLUMNAS_CATEGORIAS, PREDEFINIDAS, categoriaDesdeFila, filaDeCategoria, predefinidaPorNombre, problemaDelNombre } from './categorias.js';
+import { COLUMNAS_CATEGORIAS, PREDEFINIDAS, categoriaDesdeFila, filaDeCategoria, predefinidaPorNombre, problemaDelNombre, SIN_CATEGORIA } from './categorias.js';
 import { parsePlan, serializePlan } from './plan.js';
 import { idDeDrive, linkDeFoto } from './fotos-receta.js';
 import type { Drive } from './drive.js';
@@ -13,7 +13,7 @@ import type {
   Categoria, Plan, CambiosDeFotos
 } from './tipos.js';
 
-const CATEGORIA_RAIZ = 'Sin categoría';
+const CATEGORIA_RAIZ = SIN_CATEGORIA;
 const ULTIMA_COLUMNA = String.fromCharCode(64 + COLUMNAS.length);
 const ULTIMA_COLUMNA_CATEGORIAS = String.fromCharCode(64 + COLUMNAS_CATEGORIAS.length);
 const MIME_CARPETA = 'application/vnd.google-apps.folder';

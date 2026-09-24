@@ -61,8 +61,8 @@ formulario, el editor**. Lo que falta terminar es una receta con el tag
 
 Es el único formulario, para crear y para editar. Orden de arriba abajo:
 
-1. **Encabezado:** volver a la izquierda, el título («Nueva receta» o
-   «Editando») y, a la derecha, **Pegar**: botón principal compacto, con el
+1. **Encabezado:** a la izquierda, la hamburguesa en la receta nueva y el
+   volver al editar una existente; el título («Nueva receta» o «Editando») y, a la derecha, **Pegar**: botón principal compacto, con el
    ícono de portapapeles y el texto «Pegar». Está en todo editor.
 2. **Datos:** Título, Categoría, Tags, Rinde, Duración, Dificultad, Fuente
    original.
@@ -153,10 +153,11 @@ El Share Target (`public/sw.js`) no cambia. Lo que abre la app:
 
 ## Lo que se borra
 
-- Las pantallas **Borradores**, **Borrador**, **Captura** y **¿De qué borrador
-  es esta receta?**, con sus rutas `#/borradores`, `#/borradores/<id>`,
-  `#/capturar` y `#/recibida`, y los parámetros `borrador` y `recibida` de
-  `#/nueva`.
+- Las pantallas **Borrador**, **Captura** y **¿De qué borrador es esta
+  receta?**, con sus rutas `#/borradores/<id>`, `#/capturar` y `#/recibida`, y
+  el parámetro `borrador` de `#/nueva`. La pantalla **Borradores** propia
+  también se borra: `#/borradores` queda como la lista por tag (ver
+  «Borradores en el menú»).
 - `src/borrador.ts`, `src/ui/captura.ts`, `src/ui/borradores.ts`,
   `convertirBorrador` y las operaciones de borradores del store
   (`agregarBorrador`, `editarBorrador`, `descartarBorrador`,
