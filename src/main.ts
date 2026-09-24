@@ -491,6 +491,8 @@ async function guardarPlan(nuevo: Plan): Promise<void> {
 
 /** Lo que el reindexado dejó afuera, para la sección de avisos de Ajustes. */
 let ignorados: string[] = [];
+/** Las recetas de `_sin-categoria/` sin el tag borrador que avisó el último reindexado. */
+let sinBorrador: string[] = [];
 /** El mail de la cuenta conectada. Se pide una vez, al entrar a Ajustes. */
 let cuenta = '';
 /** El progreso del reindexado en curso, o `null`. Mientras corre no se guarda ni se borra. */
@@ -678,7 +680,7 @@ const cuantosBorradores = (): number => store.buscar({ tags: ['borrador'] }).len
 /** Ajustes, igual al entrar que mientras reindexa: sólo cambia `reindexando`. */
 function dibujarAjustes(): void {
   pintar(renderAjustes({
-    cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados,
+    cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados, sinBorrador,
     indiceDuplicado: indiceDuplicado(), planDuplicado: store.planDuplicado(), reindexando,
     borradores: cuantosBorradores(), menuAbierto,
     informe: informeArranque(), recetas: store.entradas().length, categorias: store.categorias().length,
@@ -702,6 +704,7 @@ async function reconstruir({ enAjustes = false } = {}) {
   try {
     const r = await store.reconstruir(progreso => { reindexando = progreso; dibujar(); });
     ignorados = r.ignorados;
+    sinBorrador = r.sinBorrador;
     registrarCategorias(store.categorias());
   } finally {
     reindexando = null;

@@ -1306,16 +1306,32 @@ describe('main.ts: las rutas', () => {
     expect(recargas).toHaveLength(1);
   });
 
+  it('al terminar de reindexar, Ajustes avisa las recetas de Sin categoría sin la marca de borrador', async () => {
+    const { app, abrir, tocar } = await montar();
+    const conReconstruir = storeFake as typeof storeFake & {
+      reconstruir?: () => Promise<{ ignorados: string[]; sinBorrador: string[] }>;
+    };
+    conReconstruir.reconstruir = async () => ({ ignorados: [], sinBorrador: ['sin-tag.md'] });
+    try {
+      await abrir('#/ajustes');
+      await tocar('reindexar');
+      expect(app.innerHTML).toContain('En Sin categoría hay una receta sin la marca de borrador.');
+      expect(app.innerHTML).toContain('sin-tag.md');
+    } finally {
+      delete conReconstruir.reconstruir;
+    }
+  });
+
   it('mientras reindexa, Ajustes se dibuja con los mismos datos que al entrar', async () => {
     const { app, abrir, tocar } = await montar();
     let aMitad = '';
     const conReconstruir = storeFake as typeof storeFake & {
-      reconstruir?: (alProgresar: (p: number) => void) => Promise<{ ignorados: string[] }>;
+      reconstruir?: (alProgresar: (p: number) => void) => Promise<{ ignorados: string[]; sinBorrador: string[] }>;
     };
     conReconstruir.reconstruir = async alProgresar => {
       alProgresar(0.5);
       aMitad = app.innerHTML;
-      return { ignorados: [] };
+      return { ignorados: [], sinBorrador: [] };
     };
     try {
       await abrir('#/ajustes');

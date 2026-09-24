@@ -35,6 +35,20 @@ describe('Ajustes', () => {
     expect(html).toContain('2');
   });
 
+  it('avisa las recetas de Sin categoría sin la marca de borrador, por nombre', () => {
+    const html = renderAjustes({ ...base, sinBorrador: ['sin-tag.md', 'otra.md'] });
+    expect(html).toContain('En Sin categoría hay 2 recetas sin la marca de borrador.');
+    expect(html).toContain('sin-tag.md, otra.md');
+    expect(html).not.toContain('No hay nada para avisar.');
+  });
+
+  it('una sola receta de Sin categoría sin la marca, en singular, junto a los ignorados', () => {
+    const html = renderAjustes({ ...base, ignorados: ['suelta.md'], sinBorrador: ['sin-tag.md'] });
+    expect(html).toContain('En Sin categoría hay una receta sin la marca de borrador.');
+    expect(html).toContain('sin-tag.md');
+    expect(html).toContain('suelta.md');
+  });
+
   it('sin avisos, la sección lo dice y no dibuja ilustración', () => {
     const html = renderAjustes(base);
     expect(html).toContain('No hay nada para avisar.');

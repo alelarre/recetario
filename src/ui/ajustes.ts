@@ -32,6 +32,8 @@ export interface OpcionesAjustes {
   ultimaReindexado: string;
   /** Los `.md` que el reindexado salteó, por nombre: sin eso no se encuentran en Drive. */
   ignorados: string[];
+  /** Las recetas de `_sin-categoria/` sin el tag borrador, por nombre: el reindexado las avisa y no las toca. */
+  sinBorrador?: string[];
   /** Hay más de una planilla `_indice` en Drive: cuántas y cuál se usa. */
   indiceDuplicado?: IndiceDuplicado | null;
   /** Lo mismo con `_plan.md`, que tampoco está en el índice y se busca por nombre. */
@@ -52,7 +54,7 @@ export interface OpcionesAjustes {
 }
 
 export function renderAjustes(
-  { cuenta, ultimaReindexado, ignorados, indiceDuplicado, planDuplicado, reindexando, borradores = 0, menuAbierto, informe, recetas = 0, categorias = 0, carpeta = '' }: OpcionesAjustes
+  { cuenta, ultimaReindexado, ignorados, sinBorrador = [], indiceDuplicado, planDuplicado, reindexando, borradores = 0, menuAbierto, informe, recetas = 0, categorias = 0, carpeta = '' }: OpcionesAjustes
 ): string {
   // El progreso es un número de 0 a 1: recién arrancado vale 0, que no es «no
   // está reindexando».
@@ -109,7 +111,13 @@ export function renderAjustes(
       `<p class="aviso-mudo" style="margin:var(--e-2) 0 0">${ignorados.map(n => escapar(n)).join(', ')}</p>`
     : '';
 
-  const lista = duplicado + planRepetido + deIgnorados ||
+  const deSinBorrador = sinBorrador.length
+    ? '<div class="fila-a"><span class="t aviso-mudo">En Sin categoría hay ' +
+      `${sinBorrador.length === 1 ? 'una receta' : `${sinBorrador.length} recetas`} sin la marca de borrador.</span></div>` +
+      `<p class="aviso-mudo" style="margin:var(--e-2) 0 0">${sinBorrador.map(n => escapar(n)).join(', ')}</p>`
+    : '';
+
+  const lista = duplicado + planRepetido + deIgnorados + deSinBorrador ||
     '<p class="aviso-mudo" style="margin:0">No hay nada para avisar.</p>';
 
   return lateral({ activo: 'ajustes', borradores, ...(menuAbierto ? { abierto: true } : {}) }) +

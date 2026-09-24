@@ -178,12 +178,33 @@ describe('categoriasConConteo', () => {
   it('no muestra Sin categoría cuando la raíz está vacía', () => {
     expect(store.categoriasConConteo().some(c => c.nombre === 'Sin categoría')).toBe(false);
   });
+
+  it('no muestra Sin categoría aunque haya recetas sueltas: a los borradores se llega por el menú', async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'Suelta', 'Sin categoría', 'raiz', 'borrador', 'harina'),
+      fila('r5', 'Otra suelta', 'Sin categoría', 'sin-cat', 'borrador', 'harina')
+    ]);
+    await abrirDeNuevo();
+    const c = store.categoriasConConteo();
+    expect(c.map(x => x.nombre)).toEqual(['Carnes', 'Postres']);
+  });
 });
 
 describe('tagsDe', () => {
   it('ordena por frecuencia descendente, y a igual frecuencia, alfabéticamente', () => {
     // En Carnes los tres tienen frecuencia 1, así que el orden es alfabético.
     expect(store.tagsDe('Carnes').map(t => t.tag)).toEqual(['horno', 'parrilla', 'rápido']);
+  });
+
+  it('no lista borrador en ninguna de sus formas: a los borradores se llega por el menú', async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'Torta', 'Postres', 'c2', 'borrador|dulce', 'harina'),
+      fila('r5', 'Budín', 'Postres', 'c2', 'incompleta', 'harina'),
+      fila('r6', 'Tarta', 'Postres', 'c2', 'Borradores|probar', 'harina')
+    ]);
+    await abrirDeNuevo();
+    expect(store.tagsDe().map(t => t.tag)).toEqual(['dulce', 'horno', 'parrilla', 'probar', 'rápido']);
+    expect(store.tagsDe('Postres').map(t => t.tag)).toEqual(['dulce', 'probar']);
   });
 
   it('prioriza frecuencia sobre orden alfabético', async () => {

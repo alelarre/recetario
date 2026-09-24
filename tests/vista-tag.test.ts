@@ -119,6 +119,16 @@ describe('la lista por tag', () => {
       expect(html).toContain('No hay borradores.');
     });
 
+    it('el carrusel no ofrece borrador como chip: `tagsDe` no lo lista, y la ruta no lo agrega', () => {
+      const html = renderTag({
+        ...borradores, entradas: [], menu: { abierto: false, borradores: 2 },
+        tags: [{ tag: 'dulce', cantidad: 2 }, { tag: 'probar', cantidad: 1 }]
+      });
+      expect(html).toContain('data-tag="dulce"');
+      expect(html).not.toContain('<span class="chip act">');
+      expect(html.slice(html.indexOf('class="cuerpo'))).not.toContain('>borrador<');
+    });
+
     it('no ofrece crear ni pegar: para eso está Nueva receta', () => {
       const html = renderTag({ ...borradores, entradas: [], menu: { abierto: false, borradores: 0 } });
       expect(html).not.toContain('pegar-receta');

@@ -95,6 +95,30 @@ describe('reconstruir', () => {
     expect(drive._store.has('x1')).toBe(true);
   });
 
+  it('avisa las recetas de _sin-categoria/ sin borrador, y no hace nada más con ellas', async () => {
+    drive._store.set('sc', { id: 'sc', name: '_sin-categoria', mimeType: CARPETA, parents: ['raiz'] });
+    const conTags = (titulo: string, tags: string) => `---\ntitulo: ${titulo}\ntags: [${tags}]\n---\n`;
+    drive._store.set('s1', { id: 's1', name: 'con-tag.md', parents: ['sc'], contenido: conTags('Con tag', 'borrador') });
+    drive._store.set('s2', { id: 's2', name: 'forma-vieja.md', parents: ['sc'], contenido: conTags('Vieja', 'Incompleta') });
+    drive._store.set('s3', { id: 's3', name: 'sin-tag.md', parents: ['sc'], contenido: conTags('Sin tag', 'dulce') });
+    const antes = drive._store.get('s3')?.contenido;
+
+    const r = await store.reconstruir();
+
+    // La suelta de la raíz tampoco tiene el tag, pero no está en `_sin-categoria/`.
+    expect(r.sinBorrador).toEqual(['sin-tag.md']);
+    const entrada = store.entradas().find(e => e.id_archivo === 's3')!;
+    expect(entrada.carpeta_id).toBe('sc');
+    expect(entrada.tags).toEqual(['dulce']);
+    expect(drive._store.get('s3')?.contenido).toBe(antes);
+    expect(r.ignorados).toEqual(['sin-titulo.md']);
+  });
+
+  it('sin _sin-categoria/, no hay nada que avisar', async () => {
+    const r = await store.reconstruir();
+    expect(r.sinBorrador).toEqual([]);
+  });
+
   it('deja el flag limpio y la fecha escrita al terminar', async () => {
     await store.reconstruir();
     const meta = Object.fromEntries((await sheets.leer('i1', 'meta!A1:B20')).map(f => [f[0], f[1]]));

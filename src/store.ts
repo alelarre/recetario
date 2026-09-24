@@ -1,5 +1,5 @@
 import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_FOTOS, NOMBRE_SIN_CATEGORIA, NOMBRE_PLAN, MARCA_RAIZ, SCHEMA_VERSION } from './config.js';
-import { COLUMNAS, entradaDesdeFila, filaDesde, coincideTag } from './catalogo.js';
+import { COLUMNAS, entradaDesdeFila, filaDesde, coincideTag, tagEspecial, tieneEspecial } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, HOJA_CATEGORIAS, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 import { COLUMNAS_CATEGORIAS, PREDEFINIDAS, categoriaDesdeFila, filaDeCategoria, predefinidaPorNombre, problemaDelNombre, SIN_CATEGORIA } from './categorias.js';
@@ -776,7 +776,9 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     }
   }
 
-  async function reconstruir(alProgresar: (p: Progreso) => void = () => {}): Promise<{ indexadas: number; ignorados: string[] }> {
+  async function reconstruir(
+    alProgresar: (p: Progreso) => void = () => {}
+  ): Promise<{ indexadas: number; ignorados: string[]; sinBorrador: string[] }> {
     if (typeof alProgresar !== 'function') alProgresar = () => {};
 
     await guardarMeta('reconstruccion_en_curso', 'si');
@@ -836,6 +838,10 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     // Por nombre y no un conteo: un archivo que se salteó hay que poder
     // encontrarlo en Drive.
     const ignorados: string[] = [];
+    // Una receta de `_sin-categoria/` es siempre borrador; sin el tag, la
+    // escribieron afuera. Se avisa por nombre y se deja como está: ponerle el
+    // tag o elegirle categoría lo decide el usuario, desde el editor.
+    const sinBorrador: string[] = [];
     let leidas = 0;
     // Leer y parsear van separados: las lecturas se solapan, pero las filas se
     // arman después, en el orden de los archivos y no en el que Drive contestó.
@@ -850,6 +856,9 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     for (const [i, { archivo, lugar }] of pendientes.entries()) {
       const receta = parse(textos[i] ?? '');
       if (!receta.titulo) { ignorados.push(archivo.name ?? archivo.id); continue; }
+      if (lugar.id === ctx.sinCategoriaId && !tieneEspecial(receta, 'borrador')) {
+        sinBorrador.push(archivo.name ?? archivo.id);
+      }
       nuevas.push(filaDesde(receta, {
         id: archivo.id, nombre_archivo: archivo.name ?? '',
         categoria: lugar.categoria, carpeta_id: lugar.id,
@@ -886,7 +895,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     await persistir();
     alProgresar(1);
 
-    return { indexadas: entradas.length, ignorados };
+    return { indexadas: entradas.length, ignorados, sinBorrador };
   }
 
   function buscar(filtros?: Filtros | unknown): Entrada[] {
@@ -941,10 +950,9 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   function categoriasConConteo(): { id: string; nombre: string; cantidad: number }[] {
     const cuenta = new Map<string, number>();
     for (const e of entradas) cuenta.set(e.categoria, (cuenta.get(e.categoria) ?? 0) + 1);
-    const lista = ctx.categorias.map(c => ({ id: c.id, nombre: c.nombre, cantidad: cuenta.get(c.nombre) ?? 0 }));
-    const sueltas = cuenta.get(CATEGORIA_RAIZ) ?? 0;
-    if (sueltas > 0) lista.unshift({ id: ctx.raizId, nombre: CATEGORIA_RAIZ, cantidad: sueltas });
-    return lista;
+    // Sólo las categorías: lo que no tiene categoría es borrador, y a los
+    // borradores se llega por el menú, no por el home.
+    return ctx.categorias.map(c => ({ id: c.id, nombre: c.nombre, cantidad: cuenta.get(c.nombre) ?? 0 }));
   }
 
   function tagsDe(categoria?: unknown): { tag: string; cantidad: number }[] {
@@ -953,7 +961,12 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const cuenta = new Map<string, number>();
     for (const e of entradas) {
       if (cat && e.categoria !== cat) continue;
-      for (const tag of e.tags) cuenta.set(tag, (cuenta.get(tag) ?? 0) + 1);
+      for (const tag of e.tags) {
+        // `borrador` no se ofrece como filtro ni como sugerencia: a los
+        // borradores se llega por el menú, y el editor tiene su botón.
+        if (tagEspecial(tag) === 'borrador') continue;
+        cuenta.set(tag, (cuenta.get(tag) ?? 0) + 1);
+      }
     }
     return [...cuenta].map(([tag, cantidad]) => ({ tag, cantidad }))
       .sort((a, b) => b.cantidad - a.cantidad || a.tag.localeCompare(b.tag));
