@@ -29,9 +29,9 @@ en Drive, y ninguna de las dos es el producto sola.
 Por eso el input principal no es un editor. El editor de la PWA sirve para
 corregir un error encontrado al cocinar y para escribir una receta que ya se
 tiene en la cabeza; convertir una fuente en receta es trabajo del agente. La
-app no llama a ningún modelo: desde un borrador, **«Convertir con Claude»** arma
-el pedido y lo manda a Claude, y la receta que vuelve —compartida o pegada— abre
-el editor.
+app no llama a ningún modelo: desde el editor de un borrador, **«Convertir con
+Agente»** guarda la receta, arma el pedido y lo manda al agente, y la receta que
+vuelve —compartida, o pegada con **Pegar**— se revisa en el editor.
 
 El producto se diseña para **~1.000 recetas**, no para las decenas de hoy: en su
 mayoría recetas que el usuario todavía no cocinó y cuyo nombre no recuerda.
@@ -94,7 +94,7 @@ Las ocho primeras vienen del encuadre del proyecto y están fijas
 | Plataforma | PWA de archivos estáticos en GitHub Pages. Sin backend, sin infraestructura que mantener. |
 | Persistencia | Drive para el contenido; una Google Sheet como índice derivado y reconstruible desde los `.md`, con una copia en el navegador que evita releerla cuando no cambió. |
 | Permisos | Scope OAuth `drive`, con su pantalla de "app no verificada" una vez. `drive.file` no sirve: es por archivo y no ve los `.md` que escriben los agentes. |
-| Input de contenido | Los `.md` los escribe un agente: por fuera de la app, o como respuesta a «Convertir con Claude», que vuelve a la app y se guarda desde el editor. El editor de la app es para corregir. |
+| Input de contenido | Los `.md` los escribe un agente: por fuera de la app, o como respuesta a «Convertir con Agente», que vuelve a la app y se guarda desde el editor. El editor de la app es para corregir. |
 | Modelo de negocio | Ninguno. Es una app personal, no un producto a monetizar. |
 | Alcance de este proyecto | Redefinición de producto y UX desde cero, hasta wireframes. La visión y el stack están fijos; todo lo demás se rediseña. |
 | **Escala de diseño** | **~1.000 recetas.** Toda decisión de navegación, índice y arranque se evalúa a esa escala, no a las decenas actuales. |
@@ -198,10 +198,10 @@ permanente, y crece con el tamaño del archivo.
 
 | Entidad | Descripción | Persistencia |
 |---|---|---|
-| **Receta** | Un `.md` con frontmatter y cuerpo. La unidad del sistema. Que le falta terminarse lo dice el tag `incompleta`, que el usuario pone y saca desde el editor; una receta nueva nace con él. | Archivo en Drive |
-| **Borrador** | Input crudo sin procesar. Nace con un título —escrito por el usuario— y, si la hay, una fuente. Vive en una sección separada del recetario y **se borra al convertirse** —va a la papelera de Drive—; la fuente sobrevive en la receta. Es un `.md` por borrador en `Recetario/_borradores/`, con un formato propio: título, fuente, cuándo se capturó y la nota. Se listan desde la hoja `borradores` de `_indice`, aparte de las recetas. | Archivo en Drive |
+| **Receta** | Un `.md` con frontmatter y cuerpo. La unidad del sistema. Que le falta terminarse lo dice el tag `borrador`, que el usuario pone y saca desde el editor; una receta nueva nace con él. | Archivo en Drive |
+| **Borrador** | Una receta con el tag `borrador`: lo que se capturó y todavía no está terminado. No es una entidad aparte: tiene el formato, el editor y la fila del índice de cualquier receta. Sin categoría vive en `Recetario/_sin-categoria/`; con categoría, en ella. Se listan en Borradores, la lista por tag de `borrador`, y **dejan de serlo** cuando el usuario suelta el tag, con título, categoría, ingredientes y pasos. | Archivo en Drive |
 | **Categoría** | La carpeta que contiene la receta. Es **exclusiva**: una receta vive en una sola. Las define el usuario: hay 16 predefinidas, y se crean, renombran y borran desde *Ajustes → Recetario*. El color y la foto son propiedades de la carpeta. | Carpeta en Drive |
-| **Tag** | Clasificación **múltiple** y libre. Es lo que permite que una receta se cruce por más de un criterio sin mover el archivo. Cuatro son reservados y tienen forma propia: `favorito`, `menú diario`, `probar` e `incompleta`. | Frontmatter del `.md` |
+| **Tag** | Clasificación **múltiple** y libre. Es lo que permite que una receta se cruce por más de un criterio sin mover el archivo. Cuatro son reservados y tienen forma propia: `favorito`, `menú diario`, `probar` y `borrador`. | Frontmatter del `.md` |
 | **Ingrediente** | Tiene que ser **filtrable**: J4 —buscar qué cocinar con lo que hay— exige poder consultar los ingredientes de mil recetas sin que "berenjena" traiga ruido. En el `.md` es un ítem de lista con nombre, separador y cantidad; el nombre entra al índice, y sobre él se busca. | Cuerpo del `.md`, y una columna del índice |
 | **Fuente** | De dónde salió la receta. **Campo opcional de texto libre:** a veces una URL, a veces una referencia como *"libro de pescados, pág. 84"*, a veces nada. Nace en el borrador y sobrevive en la receta convertida. | Frontmatter del `.md` |
 | **Índice** | Cache derivado de todas las recetas, para listar y buscar sin leer cada `.md`. Reconstruible y **reemplazable**: existe para que la PWA escale, no por decisión de producto. | Google Sheet |
@@ -216,10 +216,8 @@ permanente, y crece con el tamaño del archivo.
 | Receta | Tag | Tiene cero o más |
 | Receta | Ingrediente | Contiene varios; es lo que la hace filtrable |
 | Receta | Índice | Aporta una fila |
-| Receta | Borrador | Puede nacer de uno, que se borra; hereda su fuente |
+| Receta | Borrador | Es un borrador mientras lleva el tag `borrador`; nace así |
 | Receta | Fuente | Tiene cero o una |
-| Borrador | Fuente | Tiene cero o una |
-| Borrador | Índice | Tiene su fila en la hoja `borradores`, aparte de las recetas. No se clasifica ni entra en la búsqueda: solo espera. |
 | Plan de la semana | Receta | Cada comida referencia cuantas quiera, por `fileId` y por título |
 | Lista de compras | Plan de la semana | Deriva de él, sumando los ingredientes de sus recetas |
 

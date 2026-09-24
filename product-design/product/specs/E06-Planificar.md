@@ -101,7 +101,7 @@ Un solo archivo en Drive, legible sin la app (principio 1, J8).
 #### C06.3.1 — `_plan.md` *(J9, J8)*
 
 - [ ] Un solo plan y un solo archivo: **`_plan.md`**, en la carpeta base, al
-  lado de `_indice`. Como `_borradores/`, el `_` lo deja fuera de las categorías
+  lado de `_indice`. Como `_fotos/`, el `_` lo deja fuera de las categorías
   y del reindexado.
 - [ ] Sin frontmatter. Un `## <Día>` por día con algo cargado, de lunes a
   domingo; una línea por receta, con la comida como prefijo y un link
@@ -109,8 +109,7 @@ Un solo archivo en Drive, legible sin la app (principio 1, J8).
 - [ ] **El título está para leerlo; el id es lo que usa la app** (R5): el archivo
   sigue siendo legible aunque el índice no esté.
 - [ ] Un día sin nada no se escribe. El plan reiniciado es un archivo vacío.
-- [ ] El formato es propio, como el del borrador: no comparte parser con el `.md`
-  de una receta.
+- [ ] El formato es propio: no comparte parser con el `.md` de una receta.
 
 **Edge case:** `_plan.md` editado a mano → se lee tal cual, y **lo que no se
 entiende se ignora** —un día que no existe, una línea sin link, una comida que

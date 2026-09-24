@@ -149,8 +149,8 @@ Consecuencias:
 |---|---|
 | Arranque | **Desde la app donde vio la receta**, compartiendo hacia Recetario. Si compartir no es posible, registrar al menos la fuente. |
 | Qué queda | Un **borrador**. |
-| Dónde espera | Una **sección separada** —Borradores—, no mezclada con el recetario. |
-| Quién completa | **El usuario**, en una sesión con el agente. No corre solo: desde el borrador, «Convertir con Claude» arma el pedido y lo manda, y la receta vuelve a la app compartida o pegada. |
+| Dónde espera | **Borradores**, la lista de las recetas con el tag `borrador`, con su contador en el menú. |
+| Quién completa | **El usuario**, en una sesión con el agente. No corre solo: desde el editor del borrador, «Convertir con Agente» guarda la receta, arma el pedido y lo manda, y la receta vuelve a la app compartida o pegada. |
 
 
 ### 2.3 Cocinar — *"lo tengo abierto mientras hago"* 🥉 Menor

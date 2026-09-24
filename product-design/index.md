@@ -46,10 +46,12 @@ editor: el de la PWA sirve para corregir y para escribir una receta que ya tené
 en la cabeza, no para convertir una fuente.
 
 Para que nada se pierda antes de eso, lo que se encuentra se captura en el
-momento como **borrador** —un título y la fuente, nada más— y espera en una
-sección separada hasta que haya tiempo de convertirlo. Desde el borrador,
-**«Convertir con Claude»** arma el pedido y lo manda a Claude; la respuesta vuelve
-a la app compartida o pegada y abre el editor. La app no llama a ningún modelo.
+momento: compartirlo abre el editor con la fuente cargada, y guardar alcanza.
+Queda como **borrador** —una receta con el tag `borrador`— y espera en
+Borradores hasta que haya tiempo de convertirlo. Desde el editor, **«Convertir
+con Agente»** guarda la receta, arma el pedido y lo manda al agente; la
+respuesta vuelve a la app compartida, o se pega en el editor con **Pegar**. La
+app no llama a ningún modelo.
 
 Una receta se puede **compartir** como PDF, como link a una vista de invitado
 que se lee y se cocina sin login, o como texto. Es una copia del momento: nada
@@ -112,7 +114,7 @@ Lo pendiente está en [`BACKLOG.md`](../BACKLOG.md), en la raíz del repo.
 | [Jobs to be Done](product/strategy/jtbd.md) | Los jobs que el producto resuelve, por persona y transversales. | 2 |
 | [Principios de producto](product/strategy/product-principles.md) | Los árbitros de las decisiones de diseño ambiguas. | 3 |
 | [Índice de épicas](product/specs/specs-overview.md) | Las seis épicas del producto, cómo se relacionan, y dónde viven las reglas transversales. | 5 → 7 → 11 |
-| [E01 — Captura y borradores](product/specs/E01-CapturaYBorradores.md) | Guardar algo antes de perderlo, la cola que espera conversión, y convertir con Claude. | 5 → 7 → 11 |
+| [E01 — Captura y borradores](product/specs/E01-CapturaYBorradores.md) | Guardar algo antes de perderlo, los borradores que esperan conversión, y Convertir con Agente. | 5 → 7 → 11 |
 | [E02 — Encontrar](product/specs/E02-Encontrar.md) | Búsqueda por título, ingrediente y tag; categorías; paseo. | 5 → 7 → 11 |
 | [E03 — Leer y cocinar](product/specs/E03-LeerYCocinar.md) | La receta a la vista, con las manos ocupadas. | 5 → 7 → 11 |
 | [E04 — Corregir](product/specs/E04-Corregir.md) | El editor: arreglar un error, crear una receta mínima. | 5 → 7 → 11 |

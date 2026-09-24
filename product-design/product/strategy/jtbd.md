@@ -116,8 +116,8 @@ mayormente migradas, es casi todo el recetario.
 **Antes del producto:** el usuario guardaba el link, guardaba el reel, o anotaba
 en una app de notas. Quedaba en un limbo fuera del recetario. **Confirmado: ahí
 se perdían recetas.**
-**Hoy:** se comparte hacia Recetario, o se abre la captura a mano; queda un
-borrador con su título y su fuente.
+**Hoy:** se comparte hacia Recetario, que abre el editor con la fuente
+cargada, o se crea con *Nueva receta*; queda una receta con el tag `borrador`.
 **Si no se resuelve:** sigue siendo el agujero real del sistema. No es una
 molestia de comodidad: es contenido que nunca llega.
 
@@ -127,11 +127,11 @@ molestia de comodidad: es contenido que nunca llega.
 
 **Forma de la solución:**
 compartir desde la app donde se vio la receta —o, como mínimo, registrar la
-fuente—; queda un **borrador**; el borrador espera en una **sección separada**,
-no mezclado con el recetario; y lo completa el usuario. Ver `personas.md` §2.2.
+fuente—; queda un **borrador**; el borrador espera en **Borradores**, la lista
+de las recetas con ese tag; y lo completa el usuario. Ver `personas.md` §2.2.
 
 **Camino técnico sin backend:** la **Share Target API** permite que la PWA sea
-destino del "Compartir" del sistema y escriba el borrador en Drive, sin agente y
+destino del "Compartir" del sistema y escriba la receta en Drive, sin agente y
 sin servidor. Funciona en Android, con la PWA instalada.
 
 #### J3 — Convertir lo que guardé en una receta completa ✅
@@ -143,9 +143,9 @@ sin servidor. Funciona en Android, con la PWA instalada.
 **Frecuencia:** alta, y **acoplada al momento de cocinar**: la conversión ocurre
 *"generalmente antes de ponerme a cocinarlo"*, no cuando se encuentra la receta.
 **Hoy:** lo hace un agente, por fuera de la app, que no llama a ningún modelo.
-Desde el borrador, «Convertir con Claude» arma el pedido y lo manda; la receta
-vuelve compartida o pegada, abre el editor, y al guardarla el borrador se borra
-— ver `personas.md` §3.3.
+Desde el editor del borrador, «Convertir con Agente» guarda la receta, arma el
+pedido y lo manda; la receta vuelve compartida o pegada en el editor, y se
+termina soltando el tag `borrador` — ver `personas.md` §3.3.
 **Si no se resuelve:** vuelve el problema declarado como más desgastante — *"no
 tener la receta completa guardada para revisar"*.
 

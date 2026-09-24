@@ -25,7 +25,7 @@ real del producto que desempata.
 | # | Principio | Tensión que resuelve | Decisión que desempata |
 |---|---|---|---|
 | 1 | El archivo es el producto; la app es una vista | Independencia del dato vs. comodidad de la app | Dónde vive un borrador a medio capturar |
-| 2 | Capturar cuesta un solo dato | Velocidad de captura vs. estructura del dato | Qué le pide la bandeja al usuario cuando comparte |
+| 2 | Capturar cuesta un solo dato | Velocidad de captura vs. estructura del dato | Qué le pide el editor al usuario cuando comparte |
 | 3 | Se lee lo que llega, y se dice qué le falta | Rigor del esquema vs. tolerancia al dato ajeno | Qué hace la app con una receta sin ingredientes estructurados |
 | 4 | Avisa, ofrece la salida, y no insiste | Automatismo silencioso vs. control del usuario | Qué pasa cuando se corta la red al guardar |
 | 5 | Se navega para llegar y para pasear | Clasificar vs. acceder | Qué ocupa la pantalla principal |
@@ -69,12 +69,13 @@ antes que uno con dos y un momento de reconciliación.
 ## 2. Capturar cuesta un solo dato
 
 El momento de guardar y el momento de ordenar están separados. Al capturar, la
-app pide **una sola cosa: el título**, que el usuario escribe. Nada más. Todo lo
-demás —qué es, cómo se clasifica, qué lleva— se resuelve al convertir.
+app ofrece **una sola cosa: el título**, que el usuario escribe si quiere. Nada
+más es necesario. Todo lo demás —qué es, cómo se clasifica, qué lleva— se
+resuelve al convertir.
 
-El título no es burocracia: es lo único que vuelve al borrador recuperable. Sin
-él la bandeja es una pila de URLs indistinguibles y el problema de J2 se
-reproduce adentro del producto.
+El título es lo que vuelve al borrador reconocible en Borradores. Si no se
+escribe, el borrador se titula con el momento en que se guardó, y se le pone
+uno al convertirlo.
 
 **Tensión que resuelve:** velocidad de captura vs. estructura del dato. Es la
 tensión declarada como la que más veces va a haber que desempatar. J2 pide
@@ -83,16 +84,16 @@ rápido entra sin estructura, y está bien.
 
 **En la práctica, esto significa:**
 
-- El único campo del camino de entrada es el título, y es obligatorio para grabar.
-- La bandeja **no** pregunta categoría, ni tags, ni ingredientes, ni nada más. Cualquier campo nuevo tiene que ganarle al riesgo de perder la receta, y ninguno lo hace.
-- Un borrador con título y una URL es una captura completa. Puede no tener ingredientes, ni pasos, ni sentido.
+- Compartir y tocar Guardar alcanza. El título es opcional mientras la receta es un borrador.
+- El editor que abre lo compartido **no exige** categoría, ni tags, ni ingredientes, ni nada más: la categoría arranca en «Sin categoría». Cualquier campo obligatorio nuevo tiene que ganarle al riesgo de perder la receta, y ninguno lo hace.
+- Un borrador con una URL es una captura completa. Puede no tener ingredientes, ni pasos, ni sentido.
 - La estructura la impone la **conversión** (J3), que es un momento con atención completa y sentada, no la captura (J2).
-- Corolario: borrador y receta son **dos entidades distintas**, no dos estados de la misma. El borrador es input crudo y **va a la papelera de Drive cuando se convierte**; la URL de origen sobrevive como atributo `fuente` de la receta.
+- Corolario: borrador y receta son **la misma entidad en dos estados**, y el tag `borrador` dice cuál. Convertir es completar el mismo archivo y sacarle el tag; la URL de origen queda como atributo `fuente`.
 
 **Ejemplo de arbitraje:** en el Share Target es tentador pedir también una
 categoría —"total es un toque más"— porque resuelve de una vez
-dónde archivarlo después. Este principio lo descarta: el presupuesto de la
-captura es un campo y ya está gastado en el título.
+dónde archivarlo después. Este principio lo descarta: la categoría arranca en
+«Sin categoría» y elegirla es parte de la conversión.
 
 ---
 
@@ -110,9 +111,9 @@ se escribe casi todo.
 **En la práctica, esto significa:**
 
 - El mínimo para renderizar es el título; todo lo demás es opcional. Un valor que la app no reconoce —una `dificultad` o una duración fuera de la lista— se lee como ausente, no como error.
-- **"Incompleta" es un tag del `.md`**, uno de los cuatro reservados. Lo pone y lo saca el usuario con su botón en el editor; la app no lo calcula.
+- **"Borrador" es un tag del `.md`**, uno de los cuatro reservados. Lo pone y lo saca el usuario con su botón en el editor; la app no lo calcula.
 - Una receta nueva nace con el tag puesto, y no se puede sacar hasta que tenga título, categoría, ingredientes y pasos. Pasado ese mínimo, decidir que está terminada es del usuario.
-- Una receta incompleta **se lista y se abre igual**. Se ve que le falta algo —la marca en la esquina de la tarjeta—; no se esconde ni se bloquea.
+- Un borrador **se lista y se abre igual** que cualquier receta. Se ve que le falta algo —la marca en la esquina de la tarjeta—; no se esconde ni se bloquea.
 - Un archivo que no cumple ni el mínimo —no tiene título— se ignora, y el hecho se informa en un lugar no central: la ficha *Avisos* de Ajustes, con el nombre del archivo.
 
 **Ejemplo de arbitraje:** al elegir el formato del `.md` aparece la opción de
@@ -241,10 +242,10 @@ Los principios tienen que desempatar decisiones reales del producto.
 |---|---|---|
 | ¿Qué ocupa la pantalla principal? | **5** | Búsqueda arriba, categorías abajo. La grilla de tiles no tiene el primer lugar. |
 | ¿Cuánto del producto ocupa el plan de la semana? | **6** | Una sola entrada en el menú lateral. Es el único job que cambiaría la conducta: se construye con costo de retiro bajo, sin tocar el índice ni el esquema del `.md`. |
-| ¿Cuánto muestra la receta? | **3** + **7** | La lectura muestra la receta entera tal como está en el archivo, incluido el tag `incompleta`: la app no decide qué esconder de un dato que no controla. El modo cocina muestra sólo ingredientes y pasos, con un conmutador; los tamaños salen de la regla de controles del principio 7. |
-| ¿Qué pide el Share Target al capturar? | **2** | El título, escrito por el usuario. Nada más. |
+| ¿Cuánto muestra la receta? | **3** + **7** | La lectura muestra la receta entera tal como está en el archivo, incluido el tag `borrador`: la app no decide qué esconder de un dato que no controla. El modo cocina muestra sólo ingredientes y pasos, con un conmutador; los tamaños salen de la regla de controles del principio 7. |
+| ¿Qué pide el Share Target al capturar? | **2** | Nada obligatorio: la fuente llega cargada, el título es opcional y la categoría arranca en «Sin categoría». |
 | ¿Qué pasa si se comparte sin red? | **1** + **4** | Falla y avisa. No hay cola local. Está aceptado explícitamente, aun sabiendo que es el riesgo que J2 existe para eliminar. |
-| ¿Qué pasa con el borrador al convertirse? | **2** | Va a la papelera de Drive. La URL de origen sobrevive como atributo `fuente` de la receta. |
+| ¿Qué pasa con el borrador al convertirse? | **2** | Es la misma receta: se completa y se le saca el tag `borrador`. La URL de origen queda como atributo `fuente`. |
 
 ---
 

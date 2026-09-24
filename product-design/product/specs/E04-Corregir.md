@@ -1,6 +1,6 @@
 # E04 — Corregir
 
-**Versión:** 3.3 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
+**Versión:** 3.4 · **Fecha:** 2026-09-24 · **Estado:** Final — Hito 11
 **Job:** J7 · **Prioridad:** baja · **Flujo:** F7
 
 **Reglas transversales:** ver `E05-Cimientos.md` §Reglas.
@@ -13,7 +13,9 @@ Arreglar un error descubierto al cocinar, o anotar una variación que salió mej
 
 **El editor corrige, y crea una receta que ya tenés en la cabeza.** Lo que no
 hace es componer desde una fuente: transcribir un PDF, un video o la foto de un
-libro sigue siendo trabajo del agente. Es el mismo formulario para las dos cosas.
+libro sigue siendo trabajo del agente. Es el mismo formulario para las dos cosas,
+y el único de la app: lo que llega por Compartir también abre acá
+(`E01-CapturaYBorradores.md` F01.2).
 
 La distinción es estratégica, no una limitación de alcance: un editor que
 compitiera con la ruta de entrada real no la mejoraría.
@@ -31,9 +33,10 @@ error.
 
 - [ ] **Editar** está al pie de la receta abierta, a un toque.
 - [ ] El editor abre con todos los campos cargados con lo que dice el `.md`.
-- [ ] El encabezado —volver, título y *Guardar*— queda fijo arriba al hacer scroll, como en la receta abierta (C03.1.2b): *Guardar* queda a mano aunque se esté escribiendo al fondo del formulario.
+- [ ] El encabezado lleva el volver a la izquierda, el título —*Nueva receta* o *Editando*— y, a la derecha, **Pegar**: botón principal compacto, con el ícono del portapapeles y el texto «Pegar» (`E01-CapturaYBorradores.md` C01.9.3). Está en todo editor. El encabezado se va con el scroll: no lleva ninguna acción que haga falta al fondo del formulario.
 - [ ] Salir sin guardar con cambios pendientes **pregunta antes**: *"¿Salir sin guardar los cambios?"*, con *Seguir editando* y *Salir*. Vale para el volver del encabezado y para el gesto de atrás de Android. La pregunta se inserta arriba del formulario sin redibujarlo, para no perder lo escrito.
-- [ ] El formulario va en tres fichas con título: **Datos**, **Contenido** y **Fotos** (F04.3d).
+- [ ] El formulario va en tres fichas con título, en este orden: **Datos** —Título, Categoría, Tags, Rinde, Duración, Dificultad y Fuente original—, **Fotos** (F04.3d) y **Contenido** —Portada, Descripción, Ingredientes, Preparación, Variaciones y Notas—.
+- [ ] **Las acciones van al final, a lo ancho:** **Convertir con Agente** (secundario, sólo mientras la receta tiene `borrador`; `E01-CapturaYBorradores.md` C01.9.1) y debajo **Guardar** (principal). *Guardar* está sólo ahí, no en el encabezado. Al editar una receta existente, *Borrar receta* va debajo, separado (C04.6.1).
 - [ ] Agregar, sacar o poner una foto cuenta como cambio sin guardar, igual que escribir en un campo.
 - [ ] Salir sin cambios no pregunta nada.
 
@@ -47,15 +50,15 @@ y el archivo se arma solo al guardar.
 
 - [ ] Un control por clave: título (texto), tags (lista editable), rinde y fuente (texto), dificultad (elección de tres), `tiempo` con los cinco botones de duración (C04.2.1c) y `foto` con el selector de **Portada** (C04.2.1d).
 - [ ] **El YAML no se muestra en ningún momento.**
-- [ ] Solo el título es obligatorio.
+- [ ] Solo el título es obligatorio, salvo en un borrador (C04.3b.1).
 - [ ] Un campo que se deja vacío **no se escribe** en el frontmatter: no quedan claves vacías.
 - [ ] `rinde` es texto libre, no un número: *"4 porciones"*.
 
 #### C04.2.1b — Los tags, y las palabras que la app se reserva *(J7)*
 
 - [ ] Los tags comunes puestos se dibujan como pills, cada una con su cruz, que la saca; debajo va el campo para agregar otro, que se suma con Enter y sugiere los tags que ya existen —nunca los reservados—. Lo que quedó a medio escribir en ese campo no se guarda. Los especiales no: tienen su botón (C04.4.1) y no se dibujan dos veces.
-- [ ] Hay **palabras reservadas** que el editor no deja escribir a mano: `favorito`, `menú diario`, `probar` e `incompleta`, cada uno en sus formas alternativas, más `terminado` en sus cuatro formas —masculino, femenino, singular y plural—.
-- [ ] `terminado` está reservada porque contradice a `incompleta` (C05.3.1): un tag que contradiga a otro tag especial es ambigüedad pura.
+- [ ] Hay **palabras reservadas** que el editor no deja escribir a mano: `favorito`, `menú diario`, `probar` y `borrador`, cada uno en sus formas alternativas, más `terminado` en sus cuatro formas —masculino, femenino, singular y plural—.
+- [ ] `terminado` está reservada porque contradice a `borrador` (C05.3.1): un tag que contradiga a otro tag especial es ambigüedad pura.
 - [ ] Los cuatro especiales están reservados porque tienen su propio control: escribirlos a mano duplicaría el botón.
 - [ ] Al intentar agregar una reservada, el tag **no entra** y aparece una línea de aviso sin acción, *"Tag no permitido"* (C05.9.1): no es un error del usuario, es un nombre tomado.
 - [ ] La comparación ignora mayúsculas y acentos, igual que la búsqueda.
@@ -71,9 +74,10 @@ y el archivo se arma solo al guardar.
 
 #### C04.2.1d — El campo «Portada» *(J7)*
 
-- [ ] **Se llama «Portada»**, y no «Foto»: abajo está la ficha *Fotos*, que es el depósito, y son dos cosas distintas.
-- [ ] **No es un campo de texto: es la miniatura de la cabecera actual**, y tocarla abre una ficha al pie con el depósito para elegir y **Sin foto**.
-- [ ] **La portada sale de lo que ya está**: una foto del depósito o ninguna. **Desde acá no se agrega nada**: una foto nueva —de la cámara, de la galería o de una URL— entra por la ficha *Fotos* (C04.3d.1, C04.3d.1b), y recién después se la puede poner de portada.
+- [ ] **Se llama «Portada»**, y no «Foto»: arriba está la ficha *Fotos*, que es el depósito, y son dos cosas distintas.
+- [ ] Es el primer campo de la ficha *Contenido*.
+- [ ] **No es un campo de texto: es la miniatura de la cabecera actual**, y tocarla abre una ficha al pie con el depósito para elegir y **Sin foto**. **Es el único lugar donde se elige la portada**: la ficha de una foto no la ofrece (C04.3d.2).
+- [ ] **La portada sale de lo que ya está**: una foto del depósito o ninguna. **Desde acá no se agrega nada**: una foto nueva —de la cámara, de la galería o de una URL— entra por la ficha *Fotos* (C04.3d.1, C04.3d.1b), y recién después se la puede poner de portada. Con el depósito vacío, la ficha lo dice: *«Subí una foto en la ficha Fotos para poder elegirla de portada.»*
 - [ ] Elegir una del depósito escribe `foto: foto:N` y la deja marcada en la grilla; *Sin foto* deja la cabecera vacía.
 - [ ] **Una cabecera que es una URL suelta** —escrita afuera— se dibuja adelante de la grilla, marcada como la actual y sin poder tocarse: no está en el depósito. Se conserva mientras no se elija otra cosa; elegir una del depósito o *Sin foto* la reemplaza.
 - [ ] Sin cabecera, el botón dice *Sin foto*. Una `foto:N` que no está en el depósito se lee como ausente (C05.1.1).
@@ -86,8 +90,10 @@ y el archivo se arma solo al guardar.
 
 #### C04.2.3 — La categoría es un control que actúa *(J7)*
 
-- [ ] Las opciones son las subcarpetas de `Recetario/`, las mismas del Recetario (C02.4.1).
-- [ ] Cambiarla **mueve el archivo entre carpetas de Drive** al guardar. No escribe nada en el frontmatter: la carpeta es la única verdad de la categoría.
+- [ ] La primera opción es **«Sin categoría»**, elegible como cualquier otra; después, las subcarpetas de `Recetario/`, las mismas del Recetario (C02.4.1), en orden alfabético.
+- [ ] En una receta existente arranca en la suya. Una receta sin categoría —en `_sin-categoria/` o suelta en la carpeta base— arranca en «Sin categoría».
+- [ ] Cambiarla **mueve el archivo entre carpetas de Drive** al guardar, en los dos sentidos: elegir «Sin categoría» lo lleva a `_sin-categoria/` (C05.4.4). Un `.md` suelto en la carpeta base, escrito afuera, se queda donde está mientras siga sin categoría. No escribe nada en el frontmatter: la carpeta es la única verdad de la categoría.
+- [ ] Con «Sin categoría», el botón de `borrador` queda apretado y bloqueado (C04.4.1): sin categoría, la receta sólo puede ser un borrador.
 - [ ] Al guardar se actualiza la categoría de la fila del índice.
 - [ ] Si el movimiento falla, avisa y el reintento repite todo el guardado (R2).
 
@@ -107,7 +113,7 @@ campo de texto y se guarda tal cual en su lugar del `.md`.
 - [ ] **No hay un control por ingrediente**: es un único campo, como la preparación.
 - [ ] La estructura es por convención: cada bullet es un ingrediente, los `###` son grupos, y la cantidad va después del separador (C05.1.3).
 - [ ] El editor **no corrige, no autocompleta y no valida** la convención.
-- [ ] Una receta mal tipeada queda fuera del filtro por ingrediente y figura como incompleta. Es el costo aceptado y es consistente con el principio 3.
+- [ ] Una receta mal tipeada queda fuera del filtro por ingrediente. Es el costo aceptado y es consistente con el principio 3.
 
 #### C04.3.3 — El editor no impone formato *(J7, J8)*
 
@@ -116,17 +122,18 @@ campo de texto y se guarda tal cual en su lugar del `.md`.
 
 ### F04.3b — Crear una receta nueva
 
-El mismo formulario, con los campos vacíos.
+El mismo formulario, con los campos vacíos. Se llega desde *Nueva receta*, en
+el menú lateral, y desde lo que llega por Compartir
+(`E01-CapturaYBorradores.md` F01.2).
 
 #### C04.3b.1 — Nueva receta *(J7)*
 
-- [ ] Los mismos campos, vacíos. Solo el título es obligatorio.
-- [ ] La categoría hay que elegirla: sin ella no se sabe en qué carpeta va el archivo.
-- [ ] Guardar crea el `.md` en la carpeta elegida y escribe su fila del índice, por el store (C05.4.1).
+- [ ] Los mismos campos, vacíos. La categoría arranca en **«Sin categoría»**.
+- [ ] **La categoría es opcional:** con «Sin categoría», guardar crea el `.md` en `_sin-categoria/`, que se crea la primera vez que hace falta (C05.4.4). Con una categoría, en su carpeta. En los dos casos escribe su fila del índice, por el store (C05.4.1).
+- [ ] **El título es obligatorio, salvo en un borrador:** vacío, se guarda como *Borrador dd/mm hh:mm*, con el momento del guardado. Sin título y sin `borrador`, el aviso dice *«Ponele un título antes de guardar.»*
 - [ ] El nombre del archivo se deriva del título **una sola vez, al crearlo**, y no vuelve a cambiar (C04.2.2): el título en minúsculas, sin acentos y con guiones — `milanesas-napolitanas.md`.
 - [ ] Si ya existe un archivo con ese nombre en la carpeta, se usa un nombre distinto sin preguntar: la identidad es el `fileId`, no el nombre.
-- [ ] **Desde un borrador** (C01.6.3), el editor abre con el título, la `fuente` y **el depósito ya cargado con las fotos del borrador**, y guardar descarta el borrador —su `.md` a la papelera y su fila afuera— en la misma operación (C01.7.1). Lo mismo con una receta que llegó de Claude atada a un borrador (C01.9.2).
-- [ ] **Nace con el tag `incompleta` puesto** (C04.4.1, C05.3.1): terminar es una declaración explícita, no el estado inicial. Una receta creada desde un borrador también.
+- [ ] **Nace con el tag `borrador` puesto** (C04.4.1, C05.3.1): terminar es una declaración explícita, no el estado inicial. También la que llega por Compartir o pegada (`E01-CapturaYBorradores.md` C01.2.1, C01.9.2).
 
 ### F04.3c — Lo desconocido se conserva
 
@@ -148,7 +155,7 @@ conserva, lo borra.
 
 ### F04.3d — Las fotos de la receta
 
-La ficha **Fotos**, después de Contenido: el depósito de la receta (C05.1.5),
+La ficha **Fotos**, entre Datos y Contenido: el depósito de la receta (C05.1.5),
 donde se agregan y se sacan. **Una foto se pone en el texto desde el lugar**:
 se pone el cursor en la línea y se elige la foto, que es el orden en que se
 piensa mientras se escribe el paso.
@@ -162,7 +169,7 @@ ya achicadas y con su número asignado.
 - [ ] **Cada miniatura dice en qué se usa** (`E05-Cimientos.md` C05.1.5), con un ícono por uso arriba a la derecha, sobre el mismo fondo oscuro que el número: la ficha con un señalador si es la portada, los tres renglones si está en un paso o un ingrediente, **los dos si es las dos cosas**. Una foto sin uso no lleva ninguna marca.
 - [ ] **Debajo de la fila, el epígrafe dice qué significa cada marca**, con los íconos dibujados en línea con el texto: *«[portada] es la portada / [en el texto] está en un paso o un ingrediente / Las que no tienen marca solo se ven en el carrusel de la receta: para poner una en un paso, tocá el [imagen] que aparece al costado del renglón que estás escribiendo.»*
 - [ ] Las marcas se rehacen en el momento: poner una foto de portada o en una línea la marca sin salir del editor.
-- [ ] **Cámara**, **Galería** y **Por URL** al final, sin tope: la primera saca una foto nueva de a una, la segunda abre el selector del sistema y acepta varias a la vez, y la tercera la trae de una dirección (C04.3d.1b). Son los mismos tres de las fotos de un borrador (C01.2.4, C01.2.4b); lo único que cambia acá es que no hay tope.
+- [ ] **Cámara**, **Galería** y **Por URL** al final, sin tope: la primera saca una foto nueva de a una, la segunda abre el selector del sistema y acepta varias a la vez, y la tercera la trae de una dirección (C04.3d.1b). Las fotos que llegan por Compartir entran al mismo depósito (`E01-CapturaYBorradores.md` C01.2.3).
 - [ ] Cada foto nueva toma el número más alto más uno; ninguno se reusa, ni siquiera el de una que se sacó.
 - [ ] Mientras se achica, el velo cubre la pantalla (R8): tarda, aunque no escriba nada en Drive.
 - [ ] Una foto que el navegador no puede decodificar —HEIC, un archivo roto— no se agrega, y el aviso lo dice: *«No se pudo leer una de las fotos.»*
@@ -175,13 +182,10 @@ Una receta que se está copiando de un sitio trae su foto de ahí. **La app la
 baja y la guarda como cualquier otra**: el link de un sitio ajeno se rompe
 cuando el sitio la borra.
 
-Es la misma ficha y el mismo camino en la captura y en el borrador
-(C01.2.4b); lo único que no comparten es la salida de la que no se pudo bajar.
-
 - [ ] **Por URL** abre una ficha al pie con un campo para la dirección y **Traer**.
 - [ ] Lo que trae **es una foto más del depósito**: se achica y se sube al guardar, igual que una de la cámara (C04.3d.1). Nada toca Drive hasta Guardar.
 - [ ] **Mientras la baja y la achica, el velo cubre la pantalla** (R8), y el pedido se corta solo si el sitio no contesta.
-- [ ] **Si el sitio no la deja bajar** —CORS, que es lo habitual—, la URL **entra igual al depósito como link externo** (C05.1.5), y el aviso lo dice: *«No se pudo traer la foto —el sitio no lo permite o no hay conexión—: queda como link, y si el sitio la borra se pierde.»* No es un error: la foto entró, y el aviso va sin control, arriba del formulario y a la vista (R1). Sin red pasa lo mismo: desde el navegador no se distinguen. **Esto es propio de la receta**: su `.md` escribe una URL ajena como cualquier otra foto, y el borrador, que guarda ids de Drive, no la agrega (C01.2.4b).
+- [ ] **Si el sitio no la deja bajar** —CORS, que es lo habitual—, la URL **entra igual al depósito como link externo** (C05.1.5), y el aviso lo dice: *«No se pudo traer la foto —el sitio no lo permite o no hay conexión—: queda como link, y si el sitio la borra se pierde.»* No es un error: la foto entró, y el aviso va sin control, arriba del formulario y a la vista (R1). Sin red pasa lo mismo: desde el navegador no se distinguen.
 - [ ] **Una dirección que no es una foto** —una página, un archivo que no existe, algo que no empieza con `http(s)://` o que lleva un espacio adentro— **no entra**: el aviso va en la ficha, que queda abierta con lo escrito (R1). **Una `http://` tampoco**, y su aviso lo dice: *«La dirección tiene que empezar con https://.»* Desde Pages es contenido mixto, así que no se puede bajar y la imagen tampoco cargaría después.
 - [ ] **Sólo entra al depósito una URL que se pueda volver a leer**: la línea es `- <n>: <url>` con el esquema en minúsculas y sin espacios, y una que no tenga esa forma dejaría toda la sección `## Fotos` como sección ajena al reabrir la receta (C05.1.5).
 - [ ] **El esquema en mayúsculas no se rechaza, se arregla:** `Https://` —lo que manda el teclado del teléfono con la primera letra— se escribe en minúsculas, y el chequeo de `http://` lo ve igual. El resto de la dirección se deja tal cual: distingue mayúsculas.
@@ -190,8 +194,8 @@ Es la misma ficha y el mismo camino en la captura y en el borrador
 
 #### C04.3d.2 — Qué se hace con una foto *(J7)*
 
-- [ ] Tocar una miniatura abre una ficha al pie con tres acciones: **Ver**, **Portada** y **Sacar**. El velo o tocar afuera la cierran.
-- [ ] **Ver** abre el visor (C03.5.3). **Portada** la pone de cabecera; si ya lo es, la acción no se dibuja.
+- [ ] Tocar una miniatura abre una ficha al pie, titulada con su número, con dos acciones: **Ver** y **Sacar**. El velo o tocar afuera la cierran.
+- [ ] **Ver** abre el visor (C03.5.3). La portada no se elige acá: se elige en el campo *Portada* (C04.2.1d).
 - [ ] **Sacar** la saca del depósito y **borra sus referencias del texto**. Si era la portada, la cabecera queda vacía.
 
 #### C04.3d.3 — Poner una foto en una línea *(J7)*
@@ -208,34 +212,37 @@ Es la misma ficha y el mismo camino en la captura y en el borrador
 
 ### F04.4 — Declarar una receta terminada
 
-El estado de la receta lo fija el usuario acá, sacando el tag `incompleta`, y
+El estado de la receta lo fija el usuario acá, sacando el tag `borrador`, y
 en ningún otro lado. La app no lo deduce del contenido (C05.3.1): sólo dice
 cuándo se lo puede sacar.
 
 #### C04.4.1 — El control *(J7)*
 
 - [ ] Dentro del campo **«Tags»**, una fila con **un botón por tag especial**
-  —`favorito`, `menú diario`, `probar` e `incompleta`, en ese orden—, arriba de
+  —`favorito`, `menú diario`, `probar` y `borrador`, en ese orden—, arriba de
   los tags comunes y del campo para agregar. Apretado: la receta tiene el tag.
   Suelto: no lo tiene. Tocarlo lo pone o lo saca, con su `aria-pressed`. Cada
   botón lleva el ícono de su tag. No hay fila «Estado» ni otro control de
   completitud: es este botón.
-- [ ] **Una receta nueva nace con `incompleta` puesto** (C04.3b.1): no está
+- [ ] **Una receta nueva nace con `borrador` puesto** (C04.3b.1): no está
   terminada hasta que alguien lo diga.
-- [ ] `incompleta` **no se puede soltar** hasta que la receta cumpla C05.3.3
+- [ ] `borrador` **no se puede soltar** hasta que la receta cumpla C05.3.3
   —título, categoría, ingredientes y pasos—. Mientras no se pueda, queda
   **apretado y deshabilitado**, con la leyenda: *"Se va a poder sacar
-  incompleta cuando se cargue: título, categoría, ingredientes y pasos."*
+  borrador cuando se cargue: título, categoría, ingredientes y pasos."* Con
+  «Sin categoría» nunca se puede.
 - [ ] La condición se revisa **mientras se escribe**, sin redibujar el
   formulario ni perder el foco.
 - [ ] Si la receta deja de cumplirla —se borran los pasos, se vacía el
-  título— mientras `incompleta` está suelto, el botón **vuelve a apretarse
+  título, se elige «Sin categoría»— mientras `borrador` está suelto, el botón **vuelve a apretarse
   solo**.
-- [ ] Sacar `incompleta` es una declaración del usuario, no una edición de
+- [ ] Sacar `borrador` es una declaración del usuario, no una edición de
   contenido: es la única excepción del principio 3 entre los cuatro
   especiales, y es del usuario, no del agente. Los otros tres se ponen y
   sacan libremente.
-- [ ] También se llega acá desde el chip `incompleta` de la receta abierta,
+- [ ] Mientras la receta tiene `borrador`, el editor ofrece **Convertir con
+  Agente** al final (`E01-CapturaYBorradores.md` C01.9.1).
+- [ ] También se llega acá desde el chip `borrador` de la receta abierta,
   que abre el editor (C03.1.3).
 
 **Por qué apretado y no una casilla:** una casilla tiene un estado implícito
@@ -254,7 +261,7 @@ Reescribe el `.md` en Drive y actualiza su fila en el índice.
 - [ ] El guardado se declara exitoso recién cuando las dos terminaron.
 - [ ] Mientras guarda, el botón indica que está trabajando y no se puede tocar dos veces.
 - [ ] El velo tapa la pantalla desde el toque (R8), antes de releer el `.md` de base para saber qué fotos se sacaron.
-- [ ] Al terminar, vuelve a la receta, ya con lo guardado.
+- [ ] Al terminar, el editor se cierra: editando, vuelve a la receta, ya con lo guardado; una receta nueva vuelve a la pantalla desde la que se abrió *Nueva receta*, y la que llegó por Compartir queda en la receta guardada (`E01-CapturaYBorradores.md` C01.2.2).
 
 #### C04.5.2 — Cuando falla *(J7)*
 
@@ -270,7 +277,7 @@ sobre contenido del usuario.
 
 #### C04.6.1 — Borrar *(J7)*
 
-- [ ] *Borrar receta*, con su tacho, va suelto al pie del formulario, a lo ancho y fuera de las fichas: es una acción destructiva, no un campo. En una receta nueva no aparece.
+- [ ] *Borrar receta*, con su tacho, va suelto al pie del formulario, debajo de *Guardar*, a lo ancho y fuera de las fichas: es una acción destructiva, no un campo. En una receta nueva no aparece.
 - [ ] Pide confirmación, y la confirmación nombra la receta. Toma el lugar del botón sin redibujar el formulario.
 - [ ] Borra el `.md` de Drive y la fila del índice, y después manda a la papelera **sus fotos de `_fotos/`** (C05.1.5). Las externas y las que viven en otra carpeta no se tocan.
 - [ ] Al terminar, vuelve a la lista de donde se venía.

@@ -59,27 +59,25 @@ Estoy viendo un reel / una página / un video / fotos de una receta
   → Compartir del sistema
   → elijo Recetario en la hoja de compartir
   ▸ el service worker recibe el POST: guarda las fotos en su caché y
-    redirige a #/capturar con el link, el texto y cuántas fotos llegaron
+    redirige a #/nueva con el link, el texto y cuántas fotos llegaron
   ⚑ ¿lo compartido es una receta en .md?
       sí  → no es una captura: sigue en F2, «La vuelta»
-  ▸ se abre la pantalla Captura —«Guardar en Recetario»—: el link como fuente,
-    lo que sobró del texto en la nota, y las fotos, achicadas, como miniaturas
-  ⚑ ¿llegaron más de 5 fotos?
-      sí  ▸ aviso: «Llegaron 8 fotos: se guardan las primeras 5.»
+  ▸ se abre el editor de una receta nueva: el link en Fuente original, lo que
+    sobró del texto en Notas, y las fotos, achicadas, en el depósito, todas
+  ▸ la categoría en «Sin categoría» y el tag borrador puesto
   → escribo el título, si quiero   ⚑ opcional: sin título, «Borrador dd/mm hh:mm»
-  → saco una foto con su ×, o agrego otra con la cámara, la galería o su
-    dirección, si quiero   ⚑ la que el sitio no deja bajar no entra: un
-                             borrador guarda ids de Drive, no links
-  → Guardar                        ⚑ hace falta fuente, nota o una foto
-  ▸ se suben las fotos al lado del .md, en orden
-  ▸ se escribe el .md del borrador en _borradores/, con sus ids, y su fila en la hoja borradores
-  ▸ la app se cierra y vuelvo a donde estaba
+  → completo lo que quiera, o nada
+  → Guardar
+  ▸ se suben las fotos a _fotos/
+  ▸ se escribe el .md en _sin-categoria/, y su fila en el índice
+  ▸ el editor se cierra y la app queda en la receta guardada
 ```
 
 **Decisiones que este flujo fija:**
 
-- **Compartir y guardar alcanza.** No pide categoría, ni tags (principio 2), y el título es opcional. Lo único que se exige es fuente o nota, y lo compartido ya trae una. La fuente es el link —`url`, o el primero que haya en el texto, porque muchas apps lo mandan ahí— y no se escribe a mano; el resto del texto va a la nota. El título de la página no viaja: el de la receta lo escribe el usuario, si quiere.
-- **La app no queda abierta.** La captura termina donde empezó: en la app donde estaba. Si el navegador no deja cerrar la pestaña, queda en Borradores, que es donde está el borrador nuevo.
+- **Compartir y guardar alcanza.** No pide categoría ni tags (principio 2), y el título es opcional mientras la receta es un borrador. La fuente es el link —`url`, o el primero que haya en el texto, porque muchas apps lo mandan ahí—; el resto del texto va a Notas. El título de la página no viaja: el de la receta lo escribe el usuario, o queda el de la fecha.
+- **Un solo formulario.** Lo compartido abre el mismo editor que *Nueva receta* y *Editar*: lo que se captura ya es una receta, con el tag `borrador`.
+- **Nada se escribe hasta Guardar.** Lo compartido cuenta como cambio: salir sin guardar pregunta *«¿Salir sin guardar los cambios?»*.
 - **Se escribe en Drive, no local.** Principio 1.
 
 **Camino de error:**
@@ -88,17 +86,17 @@ Estoy viendo un reel / una página / un video / fotos de una receta
   → Guardar
   ✗ no hay red
   ▸ aviso: «No se pudo guardar. Revisá la conexión.»
-  ⚑ el texto y las fotos quedan en pantalla para reintentar con Guardar
+  ⚑ lo escrito y las fotos quedan en pantalla para reintentar con Guardar
   ⚑ las fotos que ya se subieron no se vuelven a subir
-  ✗ si cierro, se pierde
+  ✗ si salgo, se pierde
 ```
 
 Está aceptado explícitamente (principio 1 + 4): no hay cola local. Es el único
 punto donde el producto acepta a sabiendas un riesgo sobre el job huérfano.
 
-**La captura a mano** es la misma pantalla, desde *Borradores → Nuevo*: título,
-fuente, nota y fotos —la página de un libro, sacada con la cámara—, y al
-guardar queda en Borradores.
+**A mano** es el mismo editor, desde *Menú → Nueva receta*: fuente escrita a
+mano, notas y fotos —la página de un libro, sacada con la cámara—, y al guardar
+queda como borrador.
 
 **iOS no se soporta:** no tiene Share Target y el Atajo equivalente queda fuera
 del alcance. Android es la plataforma (`E05-Cimientos.md` R7).
@@ -110,89 +108,90 @@ del alcance. Android es la plataforma (`E05-Cimientos.md` R7).
 **Job:** J3. Ocurre sentado, con atención completa, **antes de ponerse a
 cocinar** — no cuando se encontró la receta.
 
-Hay tres caminos, y los tres terminan en la misma operación de la capa
-compartida (`information-architecture.md` §2.2): escribe el `.md`, escribe la
-fila del índice y descarta el borrador —su `.md` a la papelera, su fila afuera, y
-las fotos que la receta no se quedó—.
-Nadie borra el borrador por separado.
+Un borrador ya es una receta: convertirlo es completarla y sacarle el tag
+`borrador`, en el editor. Hay tres caminos.
 
-**1. Convertir con Claude.** La app no llama a ningún modelo: arma el pedido, y
-recibe de vuelta la receta para revisarla y guardarla.
+**1. Convertir con Agente.** La app no llama a ningún modelo: guarda la receta,
+arma el pedido, y recibe de vuelta la receta para revisarla y guardarla.
 
 ```
 Menú → Borradores           ⚑ el contador dice cuántos esperan
-  → toco una entrada
-  ▸ Borrador: título, fuente, nota y fotos
-  → Convertir con Claude
-  ▸ la app arma el pedido: el borrador, su id, las reglas del formato y, si
-    tiene fotos, cuántas van, cómo leerlas y cómo nombrarlas —foto:1, foto:2…—
+  → toco una receta → Editar       ⚑ o su chip borrador
+  ▸ el editor, con Convertir con Agente al final, arriba de Guardar
+  → Convertir con Agente
+  ▸ guarda la receta, como Guardar     ⚑ si no se pudo guardar, no manda nada
+  ▸ la app arma el pedido: título, fuente, Notas, el id del .md, las reglas
+    del formato y, si hay fotos en el depósito, cuántas van, cómo leerlas y
+    cómo nombrarlas —cada una con su número, foto:N—
   ⚑ ¿hay menú Compartir del sistema que comparta archivos?
       sí (Android)  → se abre con el pedido como texto y las fotos como
-                      archivos; elijo Claude
+                      archivos; elijo el agente
       no (la Mac)   ▸ el pedido suma el link de Drive de cada foto, para que
-                      Claude las lea con su conector de Drive
+                      el agente las lea con su conector de Drive
                     ⚑ ¿el pedido entra en un link de 8.000 caracteres?
                         sí  → se abre claude.ai/new con el pedido cargado
                         no  → se copia, se abre claude.ai/new
-                              ▸ aviso: «Pedido copiado: pegalo en Claude»
-  ▸ Claude lee la fuente y las fotos, y responde sólo con el .md de la receta
+                              ▸ aviso: «Pedido copiado: pegalo en el agente»
+  ▸ el editor queda cerrado y la app en la receta
+  ✗ el navegador ya no deja abrir el menú ni la ventana —guardar tardó y se
+    perdió el toque—
+  ▸ la receta avisa «La receta quedó guardada. Tocá para mandarla al agente.»
+  → Mandar al agente                   ▸ el mismo pedido, con el toque nuevo
+  ▸ el agente lee la fuente y las fotos, y responde sólo con el .md de la receta
 ```
 
 **La vuelta** no depende de la ida: cualquier receta en `.md` que llegue a la
 app abre el editor, empiece donde empiece la conversación.
 
 ```
-La respuesta de Claude
+La respuesta del agente
   ⚑ ¿cómo vuelve?
-      compartida  → Compartir → Recetario      (llega a #/capturar, como F1)
-      pegada      → la copio → Pegar receta, en el Borrador o en Borradores
+      compartida  → Compartir → Recetario      (llega a #/nueva, como F1)
+      pegada      → la copio → abro el editor de la receta → Pegar
   ▸ la app limpia lo que llega: bloque de código, cita con >, texto alrededor
   ⚑ ¿es una receta? (frontmatter entre --- con una línea titulo:)
-      no, compartida  → se captura como borrador (F1)
+      no, compartida  → abre el editor nuevo con lo compartido (F1)
       no, pegada      ✗ aviso: «Lo copiado no es una receta en .md.»
-  ⚑ ¿de qué borrador es?
-      pegada dentro de un Borrador              → de ese, traiga el id que traiga
-      trae borrador: <id> y ese borrador existe → de ese
-      si no  ▸ «¿De qué borrador es esta receta?»: la lista, y Ninguno
-             → elijo uno, o Ninguno            ⚑ volver descarta lo recibido
-  ▸ el editor abre con la receta cargada, sin categoría y con el tag incompleta
-  ▸ atado a un borrador, el depósito ya trae sus fotos: 1, 2, 3… en su orden,
-    y la receta que volvió ya las nombra como foto:N
+  ⚑ compartida: ¿trae id: de una receta que existe?
+      sí  ▸ el editor de esa receta, con lo recibido aplicado como Pegar
+      no  ▸ el editor nuevo, lleno con la receta, «Sin categoría» y borrador
+  ⚑ pegada: se aplica al editor abierto, traiga el id que traiga
+  ▸ título, datos, tags y secciones son los de la receta que volvió; el
+    depósito de fotos y la categoría elegida quedan, y la receta ya nombra
+    las fotos como foto:N
   → reviso, elijo la categoría           ⚑ la clasificación es siempre mía
   → saco las fotos que no sirven                  ⚑ de a una, con sus acciones
+  → suelto borrador, si ya está terminada  ⚑ hace falta título, categoría,
+                                              ingredientes y pasos
   → Guardar
-  ▸ atada a un borrador: la operación de conversión, y las fotos que quedaron
-    se mudan de _borradores/ a _fotos/ con el nombre del .md
-  ▸ con Ninguno: se crea como cualquier receta nueva
+  ▸ se reescribe el .md y su fila; elegir una categoría lo mueve de
+    _sin-categoria/ a su carpeta
 ```
 
 El pedido se arma con las mismas constantes que usa la app —las claves del
 frontmatter, las cinco duraciones, las tres dificultades, los tags reservados—,
 así que no se desactualiza cuando cambia el esquema. Pide no inventar lo que la
-fuente no dice y no agregar datos nutricionales. La clave `borrador` que trae la
-respuesta no se muestra ni se guarda. El editor cuenta la receta recibida como
-cambios sin guardar: salir pregunta.
+fuente no dice y no agregar datos nutricionales. La clave `id` que trae la
+respuesta no se muestra ni se guarda. Pegar no guarda y pisa lo escrito sin
+preguntar; la receta recibida por Compartir cuenta como cambios sin guardar:
+salir pregunta.
 
 ```
   ✗ el navegador no deja leer el portapapeles
   ▸ aviso: «No se pudo leer lo copiado.»
 ```
 
-**2. Crear la receta, a mano.** Para una receta que ya tenés en la cabeza.
+**2. Completarla a mano.** Para una receta que ya tenés en la cabeza.
 
 ```
-Borradores → toco una entrada → Crear la receta
-  ▸ el editor abre con título y fuente cargados, y el depósito con sus fotos
+Borradores → toco una receta → Editar
   → elijo la categoría y escribo la receta
-  → Guardar
-  ▸ la misma operación: escribe el .md, escribe la fila, descarta el borrador
+  → suelto borrador → Guardar
+  ▸ se reescribe el .md y su fila, y el archivo se mueve a su categoría
 ```
 
-**3. Un agente por fuera de la app**, con acceso al Drive: lee el borrador,
-extrae la receta, propone carpeta y tags, el usuario confirma, y escribe. Ver F9.
-
-**Desde el borrador también se puede** *Editar* —título, fuente y nota— y
-*Descartar*, que pide confirmación y manda el `.md` a la papelera de Drive.
+**3. Un agente por fuera de la app**, con acceso al Drive: lee la fuente,
+extrae la receta y deja el `.md` en Drive, que aparece al reindexar. Ver F9.
 
 ---
 
@@ -304,10 +303,10 @@ toque marca el paso.
 ```
 Receta
   → Editar
-  ▸ Editor: tres fichas, Datos, Contenido y Fotos
+  ▸ Editor: tres fichas, Datos, Fotos y Contenido, y al final Guardar
   → corrijo el error, o agrego una variación
   ⚑ también acá: la categoría, la duración —cinco botones—, los cuatro tags
-    especiales —un botón cada uno— y Borrar receta
+    especiales —un botón cada uno—, Pegar en el encabezado y Borrar receta
   → Guardar
   ▸ se reescribe el .md
   ▸ se actualiza su fila en el índice
@@ -327,7 +326,6 @@ Editor → ficha Fotos
   → toco una miniatura
   ⚑ ¿qué hago con ella?
       Ver        → el visor, que desliza entre todas
-      Portada    → pasa a ser la foto de la receta
       Sacar      ▸ sale del depósito y sus referencias se borran del texto
   → Guardar
   ▸ suben las fotos nuevas a _fotos/
@@ -348,14 +346,15 @@ Editor → escribo un paso
   ▸ ![](foto:N) se escribe al final de esa línea
 ```
 
-**El campo «Portada» de Datos es la foto de la cabecera**: la miniatura de lo
-que hay, y al tocarla, el depósito para elegir, una URL externa o *Sin foto*.
+**El campo «Portada», primero de Contenido, es la foto de la cabecera** y el
+único lugar donde se elige: la miniatura de lo que hay, y al tocarla, el
+depósito para elegir, una URL externa o *Sin foto*.
 **Salir sin guardar no deja nada en Drive:** las fotos nuevas nunca llegaron.
 
 **El editor corrige, no compone.** Componer es trabajo del agente
 (`product-vision.md` §1).
 
-**El tag `incompleta` no se puede sacar** sin título, categoría, al menos un
+**El tag `borrador` no se puede sacar** sin título, categoría, al menos un
 ingrediente y al menos un paso. **Borrar receta** pide confirmación y manda el
 `.md` a la papelera de Drive.
 
@@ -472,7 +471,7 @@ just-in-time, antes de cocinar. Sabe que llegó porque la pidió.
 Es reparable por diseño: el índice es derivado y los `.md` son la verdad
 (principio 1). **Es el caso del conector de Google Drive de claude.ai**, que crea
 archivos pero no escribe planillas: después de cargar recetas con él hay que
-reindexar. El camino que no lo necesita es F2, «Convertir con Claude»: el agente
+reindexar. El camino que no lo necesita es F2, «Convertir con Agente»: el agente
 devuelve el `.md` y guarda la app. Rehacer el skill del agente está pendiente
 (`../../BACKLOG.md`, P14).
 
@@ -488,7 +487,6 @@ archivo sea la única fuente de verdad.
     no, al abrir      → aviso: «No se pudo conectar con Drive. Sin esa lectura no hay con qué dibujar.», con Reintentar.
                         La copia local del índice no se usa: la consulta a Drive va antes.
     no, al guardar    → aviso: no se pudo guardar. El texto queda en pantalla.
-    no, al capturar   → ver F1.
     no, al marcar favorita → aviso: no se pudo marcar. La estrella queda como estaba.
 ```
 
@@ -542,7 +540,7 @@ El reindexado lee cada .md
   ⚑ ¿el archivo tiene título?
       no  → se ignora, y se cuenta
       sí  → entra al índice y se muestra
-            ⚑ ¿lleva el tag incompleta?
+            ⚑ ¿lleva el tag borrador, o incompleta?
                 sí  → con su marca en la esquina de la tarjeta
             ⚑ ¿tiempo o dificultad fuera de sus valores?
                 sí  → se leen como sin dato; el archivo no se toca
@@ -551,11 +549,11 @@ El reindexado lee cada .md
 
 **Se lee lo que llega** (principio 3). Una clave o una sección que el esquema no
 conoce se muestra o se ignora, y se conserva al guardar. La app nunca deduce la
-completitud del contenido: una receta es incompleta si lleva el tag, y lo lleva
+completitud del contenido: una receta es un borrador si lleva el tag, y lo lleva
 porque nació con él o porque el usuario se lo puso.
 
 **La salida manual:** cuando la receta está terminada, el usuario suelta el botón
-*incompleta* en el editor y la marca desaparece.
+*borrador* en el editor y la marca desaparece.
 
 ---
 
@@ -679,7 +677,7 @@ ni columna nueva.
   ▸ la estrella queda como estaba
 ```
 
-Los otros tres especiales —`menú diario`, `probar`, `incompleta`— se ponen y se
+Los otros tres especiales —`menú diario`, `probar`, `borrador`— se ponen y se
 sacan desde el editor (F7).
 
 ---
@@ -775,8 +773,8 @@ app se abre hasta que el job está cumplido.
 | Job | Flujo | Camino de pantallas |
 |---|---|---|
 | J1 — Recuperar por nombre | F3 | Recetario → Resultados → Receta |
-| J2 — No perder lo que encontré | F1 | *(app externa)* → Captura → *(vuelvo)* |
-| J3 — Convertir en receta completa | F2, F9 | Recetario → Borradores → Borrador → *(Claude)* → Editor → Receta |
+| J2 — No perder lo que encontré | F1 | *(app externa)* → Editor → Receta |
+| J3 — Convertir en receta completa | F2, F9 | Recetario → Borradores → Receta → Editor → *(agente)* → Editor → Receta |
 | J4 — Buscar con lo que tengo | F4 | Recetario → Resultados → Receta |
 | J5 — Mirar sin buscar | F5, F16, F17 | Recetario → Categoría o Lista por tag → Receta |
 | J6 — Seguir la receta cocinando | F6 | Receta → Modo cocina |

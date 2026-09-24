@@ -63,7 +63,7 @@ Todos cálidos. Ninguno tiene matiz frío (`brand-identity.md` §2.2).
 | `--borde-fuerte` | `#544C40` | El borde de un control, y el separador dentro de una ficha. | 2.2:1 |
 | `--fg` | `#F2EBE1` | El texto. Blanco cálido, nunca `#FFF`. | **14.2:1** sobre `--surface` |
 | `--fg-2` | `#B3A99B` | La línea de contexto, las etiquetas de metadato. | **7.2:1** |
-| `--fg-3` | `#948A7A` | El texto tenue: fechas, contadores, la marca de incompleta. | **4.9:1** |
+| `--fg-3` | `#948A7A` | El texto tenue: fechas, contadores, la marca de borrador. | **4.9:1** |
 | `--velo` | `#0C0A07` | Más oscuro que `--bg`. Solo bajo el nombre de un tile de categoría, como degradado. | — |
 
 **`--fg-3` cumple 4.5:1 sin excepción:** es el piso de todo texto, también del
@@ -90,7 +90,7 @@ pantalla— y no se usa en ningún texto ni en ningún control: el éxito no se
 escribe (`brand-identity.md` §3.2), se dibuja una sola vez y se va.
 
 **No hay token de advertencia:** lo que en otro producto sería una advertencia
-—una receta incompleta— acá no es un problema y usa `--fg-3`.
+—un borrador— acá no es un problema y usa `--fg-3`.
 
 **El acento y el error se tienen que distinguir de reojo:** una distancia
 percibida (CIEDE2000) de al menos 12 entre los dos. La arcilla está a 14.6 del
@@ -100,8 +100,8 @@ error: más cerca, un botón primario se lee como error.
 sin ingredientes, un archivo ignorado o una categoría vacía **nunca** usan
 `--error`.
 
-La excepción son los controles que borran algo —*Descartar* un borrador, *Borrar*
-una receta, borrar una categoría—, con la variante de peligro del botón (§6.7), y
+La excepción son los controles que borran algo —*Borrar* una receta, borrar una
+categoría, *Sacar* una foto—, con la variante de peligro del botón (§6.7), y
 el borde de la ficha que pide la confirmación. La operación **es** destructiva, y
 es el único aviso que el usuario tiene antes de tocarla.
 
@@ -211,13 +211,13 @@ Base 16 px, razón 1.2, redondeada a valores enteros.
 
 | Token | Tamaño | Interlínea | Peso | Uso |
 |---|---|---|---|---|
-| `--txt-micro` | 12 px | 1.4 | 400 · 600 | En 400, la fecha del borrador y la fuente; en 600, los contadores. La versión, al pie del menú lateral. **Solo datos y referencia —la ayuda de formato—, nunca prosa.** |
+| `--txt-micro` | 12 px | 1.4 | 400 · 600 | En 400, la fuente; en 600, los contadores. La versión, al pie del menú lateral. **Solo datos y referencia —la ayuda de formato—, nunca prosa.** |
 | `--txt-chico` | 14 px | 1.45 | 400 · 600 | En 400, la línea de contexto de una tarjeta, las etiquetas de los campos, el chip y los rótulos de grupo en mayúsculas. En 600, el nombre del tile, el valor de un botón de duración y el conmutador de orden. |
 | `--txt-base` | 16 px | 1.5 | 400 | La interfaz, y las notas de una oración (§6.8): son prosa, y la prosa no baja de 16. El piso de la restricción §1. |
-| *base fuerte* | 16 px | 1.3 | 600 | El nombre de un ítem de lista —tarjeta, borrador—, los botones y el título del encabezado chico. No es un token aparte: es `--txt-base` en 600, y se nombra porque es el estilo más repetido de la app. |
+| *base fuerte* | 16 px | 1.3 | 600 | El nombre de un ítem de lista —tarjeta, fila de categoría—, los botones y el título del encabezado chico. No es un token aparte: es `--txt-base` en 600, y se nombra porque es el estilo más repetido de la app. |
 | `--txt-lectura` | 18 px | 1.6 | 400 | **El cuerpo de la receta abierta.** Descripción, pasos, notas, ingredientes. |
 | *título de sección* | 18 px | 1.3 | 600 | El encabezado de una ficha —«Ingredientes», «Cuenta»— y el nombre de una variación. Es `--txt-lectura` en 600: se separa del cuerpo por peso, divisor y aire, no por tamaño, para no competir con el título de la receta. |
-| `--txt-titulo` | 24 px | 1.25 | 600 | El título de las pantallas de primer nivel —Recetario, Borradores, Ajustes—, en el encabezado; y el nombre del objeto de una pantalla de detalle —la receta, el borrador—, en el cuerpo. También el nombre de la app arriba del menú lateral y el de la pantalla de conexión. |
+| `--txt-titulo` | 24 px | 1.25 | 600 | El título de las pantallas de primer nivel —Recetario, Ajustes—, en el encabezado; y el nombre del objeto de una pantalla de detalle —la receta—, en el cuerpo. También el nombre de la app arriba del menú lateral y el de la pantalla de conexión. |
 | `--txt-cocina` | 22 px | 1.65 | 400 | El cuerpo en modo cocina. |
 | `--txt-cocina-titulo` | 28 px | 1.3 | 600 | El encabezado de sección en modo cocina (§3.3). **Sin aplicar:** los grupos y los tramos en cocina van en 16, mayúsculas y `--fg-2`. El token se aplica sólo si cocinando a 50 cm reales esos rótulos no alcanzan. |
 
@@ -228,7 +228,8 @@ volver a encontrar el renglón después de mirar para otro lado.
 nivel —las del menú lateral— lo llevan grande en el encabezado. Las de detalle llevan
 el encabezado chico, en *base fuerte*, y si tienen un objeto propio, su nombre grande en
 el cuerpo. **Categoría es de detalle y no tiene objeto propio**: su nombre queda en el
-encabezado chico, como el de Borrador y el del Editor.
+encabezado chico, como el del Editor. Borradores, que es una lista por tag,
+lleva el mismo encabezado chico que las demás listas (§6.12).
 
 ### 3.3 La escala de cocina
 
@@ -281,15 +282,15 @@ carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chi
 | `chevron` | La flecha derecha del carrusel. |
 | `buscar` | La caja de búsqueda. |
 | `menu` | La hamburguesa que abre el menú lateral, con el contador de borradores encima. |
-| `casa`, `bandeja`, `mas`, `ajustes` | Los destinos del menú lateral: Inicio, Borradores, Nueva receta y Ajustes. `mas` va también en *Nuevo*, en Borradores. |
+| `casa`, `bandeja`, `mas`, `ajustes` | Los destinos del menú lateral: Inicio, Borradores, Nueva receta y Ajustes. |
 | `lapiz` | *Editar*, en el pie de la receta. |
 | `compartir` | *Compartir*, en el encabezado de la receta. |
 | `estrella` | Favorito: en el encabezado de la receta (§6.22), en la marca de la tarjeta, en el chip y en el botón del editor. |
 | `marcador` | El tag *probar*. |
 | `calendario` | El tag *menú diario*. |
-| `tacho` | Las acciones destructivas: *Borrar receta* y *Descartar* un borrador. |
-| `cerrar` | La cruz: la del chip removible del editor, la que limpia la búsqueda y la que saca una foto del borrador. |
-| `camara` | *Cámara*, en la fila de fotos de la captura, el borrador y el editor de recetas (§6.25), y *Subir foto* al elegir la de una categoría (§6.4). |
+| `tacho` | La acción destructiva del editor: *Borrar receta*. |
+| `cerrar` | La cruz: la del chip removible del editor, la que limpia la búsqueda y la que saca una receta de una comida del plan. |
+| `camara` | *Cámara*, en la ficha *Fotos* del editor (§6.25), y *Subir foto* al elegir la de una categoría (§6.4). |
 | `imagen` | El botón que pone en una línea una foto que ya está en el depósito (§6.9b). Es una foto sacada y no la cámara: no agrega ninguna. |
 | `portada` | La marca de la foto que es la portada, en la fila de fotos del editor (§6.25). Una ficha con un señalador adentro; el señalador va relleno con `currentColor`. **No es una estrella:** en esta app la estrella es favorito. |
 | `enElTexto` | La marca de la foto que está puesta en un paso o un ingrediente (§6.25). Tres renglones de largo distinto. |
@@ -299,7 +300,7 @@ carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chi
 | Los cinco relojitos | Uno por valor de la duración, el mismo mapa en el editor (§6.18), la tarjeta, la receta, la búsqueda, el filtro (§6.19) y el orden (§6.20). |
 
 **Dos dibujos no están en `iconos.ts` porque son CSS:** el medio círculo de
-*incompleta* (§6.5) —que hace de ícono del cuarto tag especial— y el chevron del
+*borrador* (§6.5) —que hace de ícono del cuarto tag especial— y el chevron del
 desplegable (§6.9).
 
 **Los relojitos:** una esfera con la aguja y el recorrido recién hecho, tenue
@@ -355,7 +356,7 @@ la única escala distinta del sistema.
 **Ningún control con texto es de radio completo.** Un chip con `border-radius:
 999px` es la píldora de Material, que está descartada. Lo redondo es lo que no
 lleva palabras: los contadores (§6.4, §6.17), la flecha del carrusel (§6.21), la
-marca de incompleta (§6.5) y las muestras de color de una categoría.
+marca de borrador (§6.5) y las muestras de color de una categoría.
 
 ### 4.3 Borde
 
@@ -416,7 +417,7 @@ acorta.
 ## 6. Componentes core
 
 Con tokens aplicados. Los que son sistema —encabezado, ficha, botón, tarjeta,
-placeholder, marca de incompleta, chip, carrusel, campo, aviso, ítem de
+placeholder, marca de borrador, chip, carrusel, campo, aviso, ítem de
 ingrediente, spinner, miniatura, galería y foto en línea— están en
 `src/ui/tokens.css`; los que son de una pantalla, en `src/ui/base.css`.
 
@@ -433,7 +434,7 @@ Tres convenciones valen para todos los componentes:
   a centímetros. Todos llevan `aria-pressed`.
 - **El presionado es lo que vale en el teléfono:** mientras el dedo está apoyado
   (`:active`), el control pasa a `--surface-alta` —el ícono, el botón secundario
-  y el de peligro, la tarjeta, la entrada de borrador, el ítem del menú— y el
+  y el de peligro, la tarjeta, la fila de una lista, el ítem del menú— y el
   primario se aclara mezclando el acento con `--fg`.
 - **El hover existe sólo bajo `@media (hover: hover)`**, con el mismo dibujo que
   el presionado. En una pantalla táctil el hover queda pegado después de tocar,
@@ -456,7 +457,7 @@ Tres convenciones valen para todos los componentes:
 | Línea de contexto | `--txt-chico`, `--fg-2`, sólo datos: categoría · duración · rinde |
 | El relojito de la duración | 15 × 15 px, pegado al valor (`.dur`); mismo mapa de íconos que el editor (§6.18) |
 | El cuadrito `▪` de categoría | 8 × 8 px, `--r-chico`, el color de la categoría |
-| Marcas de los especiales, juntas en la esquina de arriba a la derecha | 16 × 16 px cada una, separadas 4 px, en el orden de los especiales —favorito, menú diario, probar, incompleta—, en `--acento`; ver §6.5. La estrella de favorito lleva además un relleno del acento al 35 %. El título reserva 20 px de ancho por marca, para no pasar por debajo; una tarjeta sin marcas no reserva nada. Sin texto, así que cada una se nombra para el lector de pantalla —*Favorita*, *Menú diario*, *Para probar*, *Incompleta*— y con el mismo nombre en el `title`, que en la computadora aparece como globito al apoyar el mouse |
+| Marcas de los especiales, juntas en la esquina de arriba a la derecha | 16 × 16 px cada una, separadas 4 px, en el orden de los especiales —favorito, menú diario, probar, borrador—, en `--acento`; ver §6.5. La estrella de favorito lleva además un relleno del acento al 35 %. El título reserva 20 px de ancho por marca, para no pasar por debajo; una tarjeta sin marcas no reserva nada. Sin texto, así que cada una se nombra para el lector de pantalla —*Favorita*, *Menú diario*, *Para probar*, *Borrador*— y con el mismo nombre en el `title`, que en la computadora aparece como globito al apoyar el mouse |
 | Motivo, en resultados por ingrediente | `--txt-chico`, `--acento` |
 | El «+» de agregar, sólo cuando la tarjeta suma en vez de abrir | Círculo de 28 px relleno en `--fg`, con el signo en `--bg` a 2,5 px de trazo. Es el contraste más alto que da la paleta, para que se lea como botón antes que como dato; el acento queda para las marcas de la esquina, que son otra cosa. Va al final de la fila, fuera del bloque de texto. Se usa en *Agregar al plan* (`E06-Planificar.md` F06.3) |
 
@@ -569,7 +570,7 @@ pero se pide a Drive con el token: hasta que llega, el tile queda con su color.
 Al elegirla, *Subir foto* es la primera muestra de la fila: un botón de
 `--surface-alta` con el ícono `camara`, del mismo tamaño que las demás.
 
-### 6.5 Marca de incompleta
+### 6.5 Marca de borrador
 
 **Un círculo de 12 px a medio llenar**: 1,5 px de
 borde en `currentColor` y la mitad izquierda rellena del mismo color
@@ -582,9 +583,10 @@ otro dibujo para decir lo mismo:
 | Dónde | Cómo |
 |---|---|
 | **Tarjeta de la lista** | Junto con las demás marcas de especiales, arriba a la derecha de la tarjeta y en su orden (§6.1). Sin texto, así que cada una se nombra para el lector de pantalla. |
-| **Receta abierta** | Un chip (§6.10) con el tag tal como está escrito —*incompleta*—, el primero de la fila de tags. Tocable, abre el editor (`E03-LeerYCocinar.md` C03.1.3). |
-| **Editor** | El ícono del botón `incompleta` (§6.10b), en el color del botón y no en el acento. |
-| **Carrusel de tags** | El ícono del chip `incompleta` (§6.21). |
+| **Receta abierta** | Un chip (§6.10) con el tag tal como está escrito —*borrador*—, el primero de la fila de tags. Tocable, abre el editor (`E03-LeerYCocinar.md` C03.1.3). |
+| **Editor** | El ícono del botón `borrador` (§6.10b), en el color del botón y no en el acento. |
+| **Carrusel de tags** | El ícono del chip `borrador` (§6.21). |
+| **Borradores** | El ícono antes del título, en el encabezado de la lista (§6.12). |
 
 - **Nunca `--error` y nunca amarillo.** No es un problema: la receta funciona, le
   falta algo.
@@ -620,8 +622,8 @@ Alto 48 px (64 en cocina), padding lateral `--e-4`, `--r-medio`,
 
 **Variante compacta: 40 px de alto.** Existe para **un botón dentro de otra
 barra**: el encabezado de pantalla, que mide 56 px y no puede contener uno de 48
-con aire alrededor —*Guardar* en el editor, *Editar* en el borrador, *Salir* en
-cocina, *+ Nueva* en Categorías—, el botón de un aviso con acción (§6.8), el de
+con aire alrededor —*Pegar* en el editor, *Salir* en cocina, *+ Nueva* en
+Categorías—, el botón de un aviso con acción (§6.8), el de
 una fila de Ajustes —*Salir*, *Cambiar carpeta*, *Categorías ›*— y el *Usar* de
 una carpeta encontrada, en la pantalla de la carpeta base. **Su área
 táctil sigue siendo de 48 px**, porque el alto de la barra la completa; en
@@ -635,8 +637,8 @@ fondo, borde `--borde`).
 **Con ícono,** va a la izquierda de la palabra, a `--ico`, con `--e-2` de
 separación.
 
-**Un botón que navega es un `<a>`, y nunca se subraya.** *Categorías ›*, *+
-Nueva* e *Ir a la fuente* llevan a otra pantalla, así que son enlaces y no
+**Un botón que navega es un `<a>`, y nunca se subraya.** *Categorías ›* y *+
+Nueva* llevan a otra pantalla, así que son enlaces y no
 `<button>`; se dibujan igual que cualquier otro botón.
 
 **No hay botón flotante.**
@@ -739,9 +741,9 @@ No hay una cruz con su propia área táctil adentro: a 32 px de alto no entra un
 segundo blanco de 48. Debajo de la fila de chips van `--e-3` de aire antes del
 campo de agregar.
 
-**Pendiente** —el estado de una receta incompleta, en la receta abierta— usa los
+**Pendiente** —el estado de un borrador, en la receta abierta— usa los
 mismos valores que **Encendido**, con la marca de §6.5 adelante y el tag tal como
-está escrito, *incompleta*. Son clases distintas porque significan cosas
+está escrito, *borrador*. Son clases distintas porque significan cosas
 distintas: uno es un filtro puesto, el otro un estado del contenido.
 
 **Un tag reservado no llega a ser chip:** el editor lo rechaza al agregarlo y lo
@@ -751,7 +753,7 @@ dice en una línea de `--txt-chico` en `--error`, sin caja ni botón
 ### 6.10b Botón de tag especial
 
 Cuatro botones —uno por tag especial: `favorito`, `menú diario`, `probar`,
-`incompleta`—, dentro del campo **«Tags»**
+`borrador`—, dentro del campo **«Tags»**
 del editor, en una **grilla de 2 × 2** arriba de los tags comunes y del campo
 para agregar (`E04-Corregir.md` C04.2.1b, C04.4.1), con `--e-2` entre sí. Cada
 uno mide 48 px de alto mínimo, `--r-medio`, `--txt-base` peso 600, y lleva su
@@ -765,14 +767,14 @@ uno mide 48 px de alto mínimo, `--r-medio`, `--txt-base` peso 600, y lleva su
 **Apretado se dibuja invertido, no con el acento** (§6.0). Con puntero, un botón
 suelto sube su texto a `--fg` al pasar por encima.
 
-**`incompleta` apretado y deshabilitado** —sin título, categoría, ingredientes
+**`borrador` apretado y deshabilitado** —sin título, categoría, ingredientes
 o pasos— no se puede tocar, y debajo lleva la leyenda de qué falta, como un
-aviso sin acción (§6.8): *"Se va a poder sacar incompleta cuando se cargue:
+aviso sin acción (§6.8): *"Se va a poder sacar borrador cuando se cargue:
 título, categoría, ingredientes y pasos."* **Deshabilitado baja a `opacity:
 .6`**, manteniendo apretado: sigue leyéndose qué estado tiene, sólo que no se
 puede tocar.
 
-**Nunca `--error`.** Misma regla que la marca de incompleta (§6.5): a la
+**Nunca `--error`.** Misma regla que la marca de borrador (§6.5): a la
 receta le falta algo, no está rota.
 
 ### 6.11 Ítem de ingrediente
@@ -814,17 +816,19 @@ medio en `--txt-base` peso 600, acciones a la derecha.
 menú** —Recetario, Borradores, el plan de la semana y Ajustes—: ahí la
 hamburguesa (§6.17) ocupa el lugar del volver, que queda para las pantallas a las
 que se entra desde otra. *Nueva receta* es una de esas: está en el menú como
-acción, pero se sale de ella volviendo. En el Recetario, Borradores y Ajustes el
+acción, pero se sale de ella volviendo. En el Recetario y en Ajustes el
 título va además en `--txt-titulo`, centrado en la barra y no en el hueco que
-dejan los controles.
+dejan los controles. Borradores es la lista por tag de `borrador` dibujada como
+destino del menú: el encabezado de la lista por tag —título chico, el ícono del
+tag y el total—, con la hamburguesa y el título «Borradores».
 
 El total de una lista —las recetas de una categoría, los borradores— va a la
 derecha, en `--txt-chico` `--fg-2` y cifras tabulares. En la lista por tag de un
 especial, su ícono va antes del título, a `--ico`.
 
-**Queda pegado arriba en la receta abierta y en el editor**, donde las acciones
-—la estrella, *Compartir*, *Guardar*— tienen que estar a mano en cualquier punto
-del scroll. El título ahí se recorta a una línea con elipsis. En las demás
+**Queda pegado arriba en la receta abierta**, donde las acciones —la estrella,
+*Compartir*— tienen que estar a mano en cualquier punto del scroll. En el editor
+se va con el scroll: *Guardar* está al pie del formulario. El título de la receta se recorta a una línea con elipsis. En las demás
 pantallas se va con el scroll.
 
 **En modo cocina el encabezado mide 64 px y cada control suyo toca en
@@ -866,16 +870,6 @@ con una barra de 3 px de `--acento` abajo.
 
 `--txt-base` peso 600. Cada posición lleva su ícono —la zanahoria, la lista
 numerada— a `--ico-cocina`, al lado de la palabra. El cambio es instantáneo.
-
-### 6.15 Entrada de borrador
-
-Ficha de `--e-3` de padding: título en `--txt-base` peso 600 y la fecha en
-`--txt-micro` `--fg-3` a la derecha. La fuente y la nota no van en la fila: están
-adentro del borrador, y acá competían con el título.
-
-**El título se recorta a dos renglones**, como el de una receta en una lista
-(§6.5): lo que trae Compartir puede ser el texto entero de un reel o una URL
-sin espacios, y sin recortarlo estira la pantalla a lo ancho.
 
 ### 6.17 Menú lateral
 
@@ -1044,7 +1038,7 @@ las categorías en el Recetario, y arriba de la lista en la categoría y en la
 lista por tag.
 
 **El orden:** los tags especiales primero, en su orden —favorito, menú diario,
-probar, incompleta— y sólo los que tienen alguna receta; después los comunes,
+probar, borrador— y sólo los que tienen alguna receta; después los comunes,
 por cantidad de recetas y alfabético en el empate. Cada chip lleva su número, y
 los especiales su ícono. En el Recetario y en la lista por tag entran hasta
 veinte comunes.
@@ -1155,27 +1149,20 @@ borrar una receta.
 
 ### 6.25 Fila de miniaturas y visor
 
-**La fila** va debajo de la nota, en la captura y en el borrador, y es la ficha
-*Fotos* del editor de recetas (§6.26). Lleva el rótulo
+**La fila** es la ficha *Fotos* del editor de recetas (§6.26). Lleva el rótulo
 *Fotos* de un campo (§6.9): miniaturas **cuadradas de 64 px** con `--e-2` entre
 sí, que bajan de renglón si no entran. Cada una es la foto recortada al cuadrado
-(`object-fit: cover`) sobre `--surface-alta`, con `--r-foto`. **La ×** va en la
-esquina de arriba a la derecha: un círculo de 24 px de `--velo` al 75 % con el
-ícono `cerrar` de 14 px en `--fg`, que se lee sobre cualquier foto. En el
-borrador la × saca la foto; en el editor de recetas no va, porque *Sacar* es una
-de las acciones de la ficha (§6.26). Al final de la fila, botones
+(`object-fit: cover`) sobre `--surface-alta`, con `--r-foto`. No lleva ×:
+*Sacar* es una de las acciones de la ficha (§6.26). Al final de la fila, botones
 secundarios de 64 px de alto: **Cámara**, con el ícono `camara`, que saca una
 foto por vez; **Galería**, con el ícono `galeria` —dos fotos, una detrás de
 la otra—, que abre el selector del sistema y acepta varias a la vez; y **Por
-URL**, con el ícono `link`, que abre la ficha de §6.26. Los tres van en las
-tres pantallas —la captura, el borrador y la ficha *Fotos* de una receta—:
-una foto que está en la web se agrega igual en todas. **Con mouse o trackpad,
+URL**, con el ícono `link`, que abre la ficha de §6.26. **Con mouse o trackpad,
 *Cámara* no se dibuja**: ahí el `capture` no hace nada y abriría el mismo
 selector que *Galería*. Es la consulta de puntero con la que aparecen las
 flechas del carrusel (§6.21), al revés. **Van en su propia fila, debajo de las
 miniaturas**, y bajan de renglón entre ellos si no entran —en un teléfono, los
-tres entran de a dos—, y ninguno se dibuja en el borrador con cinco fotos ni
-tienen tope en el editor. **Una foto que ya no está en Drive** es el mismo cuadrado con
+tres entran de a dos—, y no tienen tope. **Una foto que ya no está en Drive** es el mismo cuadrado con
 borde punteado `--borde-fuerte` y *"La foto ya no está en Drive."* en *micro*
 `--fg-3`, centrado.
 
@@ -1188,8 +1175,7 @@ que se nombra a la foto en el texto, así que se lee sobre cualquiera.
 sólo en la ficha *Fotos* de una receta: el mismo badge de `--velo` al 75 % y
 `--r-chico`, de 18 px de alto, con los íconos `portada` y `enElTexto` (§3.4) a
 13 px en `--fg` —los dos si la foto es las dos cosas, ninguno si no se usa—.
-Van arriba a la derecha porque es la esquina que queda libre: la × de sacar,
-que ocupa ese lugar en el borrador, no existe en la ficha *Fotos*.
+Van arriba a la derecha porque es la esquina que queda libre.
 
 **El epígrafe de la ficha *Fotos*** va debajo de la fila, en *micro* `--fg-3`,
 con `--e-3` arriba y un interlineado de 1,8. Es **un párrafo**, no una fila de
@@ -1202,7 +1188,7 @@ sobre `--velo` al 94 %, con la foto entera al ancho —o al alto— de la pantal
 sin recortar. Se cierra tocando cualquier lado. **Desliza entre lo que se
 tocó**: desde el carrusel de una receta, entre las del carrusel; desde la fila
 de fotos del editor, entre las del depósito; una foto que no es de una tira —la
-portada, la de un paso, **y cualquiera de un borrador**— se abre sola. El dedo
+portada, la de un paso— se abre sola. El dedo
 pasa a la siguiente o a la anterior, sin dar la vuelta en los extremos, y ese
 gesto no la cierra. Es estado de la pantalla, no una ruta.
 
@@ -1244,12 +1230,12 @@ desplaza. Son cuatro:
 
 | Ficha | Qué muestra |
 |---|---|
-| **Acciones** | *Foto N* y botones secundarios en dos columnas —no entran todos en una fila de teléfono—: **Ver**, **Portada** y **Sacar**, este último con la variante de peligro (§6.7). *Portada* no se dibuja si ya lo es, y el último botón, si queda solo en su fila, la ocupa entera. |
+| **Acciones** | *Foto N* y dos botones, uno al lado del otro: **Ver**, secundario, y **Sacar**, con la variante de peligro (§6.7). **No ofrece Portada**: la portada se elige sólo en su campo. |
 | **Poner una foto** | La galería del depósito, y nada más: es la que abre el botón de §6.9b. **No ofrece agregar**, que es la ficha *Fotos*. |
-| **Foto de portada** | La galería del depósito con la actual marcada, y **Sin foto**. **No ofrece agregar**: la portada sale de lo que ya está. |
-| **Foto por URL** | El campo *Dirección de la foto*, con `https://…` de placeholder, y **Traer**. Si algo falla, el aviso (§6.12) va arriba del campo y la ficha queda abierta con lo escrito. Es la única de las cuatro que también se abre en la captura y en el borrador, desde la misma fila de §6.25. |
+| **Foto de portada** | La galería del depósito con la actual marcada, y **Sin foto**. **No ofrece agregar**: la portada sale de lo que ya está. Es el único lugar donde se elige. |
+| **Foto por URL** | El campo *Dirección de la foto*, con `https://…` de placeholder, y **Traer**. Si algo falla, el aviso (§6.12) va arriba del campo y la ficha queda abierta con lo escrito. |
 
-**El botón de portada**, en el campo *Portada* de Datos, es un cuadrado de
+**El botón de portada**, en el campo *Portada* de Contenido, es un cuadrado de
 96 px con `--r-foto`: la miniatura de la cabecera actual, o un recuadro
 punteado de `--borde-fuerte` que dice *Sin foto* en *micro* `--fg-3`.
 

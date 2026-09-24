@@ -126,11 +126,11 @@ habla de sí misma en primera persona.
 |---|---|---|
 | **Error de operación** | Qué no se pudo, y qué quedó como estaba o qué mirar. Con *Reintentar* al lado. | *"No se pudo guardar. Revisá la conexión."* · *"No se pudo borrar. La receta sigue estando."* |
 | **Sin conexión con Google** | El hecho, y el control al lado. | *"No se pudo reconectar con Google."* → `[Reintentar]` · *"Hay que conectarse de nuevo con Google."* → `[Conectar]` |
-| **Estado vacío** | Qué hay, en una frase. Sin ilustración. Si está vacío por un filtro, cómo salir. | *"No hay nada esperando."* · *"Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba."* |
-| **Confirmación destructiva** | Qué se va a borrar, nombrándolo. | *"¿Borrar Milanesas napolitanas?"* · *"¿Descartar Pasta con berenjenas?"* |
+| **Estado vacío** | Qué hay, en una frase. Sin ilustración. Si está vacío por un filtro, cómo salir. | *"No hay borradores."* · *"Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba."* |
+| **Confirmación destructiva** | Qué se va a borrar, nombrándolo. | *"¿Borrar Milanesas napolitanas?"* |
 | **Operación larga** | Cuánto va, con número. Cuando no se puede saber, el verbo y un spinner. | *"Reindexando: 34%."* · *"Armando el PDF…"* |
 | **Aviso sin acción** | El hecho y el número. | *"2 archivos ignorados por no tener título."* · *"No hay nada para avisar."* |
-| **Falta información** | Lo que falta, no lo que está mal. | *"Se va a poder sacar incompleta cuando se cargue: título, categoría, ingredientes y pasos."* |
+| **Falta información** | Lo que falta, no lo que está mal. | *"Se va a poder sacar borrador cuando se cargue: título, categoría, ingredientes y pasos."* |
 | **Explicación de un control** | Una oración, debajo, sólo donde el control no se explica solo. | *"Salir no borra nada de Drive."* · *"Hasta comer, con reposo y horno incluidos."* |
 | **Resultado de copiar o armar algo para compartir** | El hecho, porque no deja nada a la vista que lo diga. | *"Link copiado."* · *"El PDF está listo."* |
 | **Éxito** | **No se escribe.** Ningún cartel confirma que guardar, borrar o reindexar salió bien: lo dice la pantalla. Lo único que lo dice sin palabras es el tilde con el que cierra el velo al guardar una receta (`design-system.md` §6.17b). | — |
@@ -141,8 +141,8 @@ habla de sí misma en primera persona.
 |---|---|---|
 | *"No se pudo guardar. Revisá la conexión."* | *"Uy, algo salió mal 😕"* | El "uy" es simpatía en el peor momento, y "algo" no es información. |
 | *"No se pudo conectar."* | *"Parece que hubo un problema al conectar."* | "Parece que" convierte un hecho en una sospecha. |
-| *"No hay nada esperando."* | *"¡Todo al día! No tenés nada pendiente 🎉"* | Es una celebración por no haber hecho nada. |
-| El botón `incompleta` apretado, y debajo qué falta cargar. | *"Esta receta está incompleta. Completala para poder buscarla."* | Reta, y da una instrucción que nadie pidió. |
+| *"No hay borradores."* | *"¡Todo al día! No tenés nada pendiente 🎉"* | Es una celebración por no haber hecho nada. |
+| El botón `borrador` apretado, y debajo qué falta cargar. | *"Esta receta es un borrador. Completala para poder buscarla."* | Reta, y da una instrucción que nadie pidió. |
 | *"No se pudo reconectar con Google."* | *"Tu sesión de Google expiró. Por favor volvé a conectarte para continuar."* | Tres líneas para lo que se resuelve con una y un botón. |
 | *"Reindexando: 34%."* | *"Esto puede tardar un ratito…"* | Un número es una espera medible; "un ratito" no. |
 | *"No se pudo guardar."* | *"Unable to parse range: meta!A1:B20"* | El error crudo del servidor no se muestra nunca. |
@@ -177,23 +177,20 @@ la interfaz**, y no tienen sinónimos.
 | Un `.md` con una comida | **receta** | "plato", "ficha", "entrada" |
 | La carpeta de Drive donde vive | **categoría** | "sección", "colección" |
 | La carpeta de Drive que contiene todo el Recetario | **carpeta** — *"Carpeta: Recetario"*, **Cambiar carpeta**, *Crear la carpeta «Recetario» en Mi unidad*, *Ya tengo una carpeta* | "raíz", "directorio", "ubicación" |
-| Lo capturado que espera conversión | **borrador** | "pendiente", "captura", "item" |
+| Una receta que todavía no está terminada —el tag que la marca— | **borrador** | "pendiente", "captura", "incompleta", "item" |
 | El lugar donde esperan | **Borradores** | **"bandeja"**, "inbox", "por procesar" |
-| Guardar algo desde otra app | **capturar** —la pantalla se titula **Nuevo borrador**, y el botón de Borradores, **Nuevo**— | "importar", "agregar", "compartir a" |
-| Escribir a mano la receta de un borrador | **Crear la receta** | "procesar", "pasar a receta" |
-| Pedirle a Claude que escriba la receta de un borrador | **Convertir con Claude** | "generar", "importar con IA" |
-| Traer a la app la receta que devolvió Claude | **Pegar receta** | "importar", "cargar" |
-| A qué borrador corresponde una receta que llegó | **¿De qué borrador es esta receta?**, con **Ninguno** como salida | — |
-| Tirar un borrador | **Descartar** | "borrar", "eliminar" |
-| Tirar una receta o una categoría | **Borrar** — *Borrar receta*, *Borrar categoría* | "eliminar", "quitar" |
-| Empezar una receta sin borrador | **Nueva receta** | "crear", "agregar receta" |
+| Lo que no tiene categoría | **Sin categoría** | "sin categorizar", "otros", "general" |
+| Guardar algo desde otra app | **capturar** —abre el editor, titulado **Nueva receta**— | "importar", "agregar", "compartir a" |
+| Pedirle al agente que escriba la receta de un borrador | **Convertir con Agente** —y **Mandar al agente** si el pedido no llegó a salir— | "generar", "importar con IA", "Convertir con Claude" |
+| Traer al editor la receta que devolvió el agente | **Pegar** | "importar", "cargar", "Pegar receta" |
+| Tirar una receta o una categoría | **Borrar** — *Borrar receta*, *Borrar categoría* | "eliminar", "quitar", "descartar" |
+| Empezar una receta a mano | **Nueva receta** | "crear", "agregar receta" |
 | Mandar una receta afuera de la app | **Compartir**, con sus tres formas: **PDF**, **Link**, **Texto** | "exportar", "enviar", "publicar" |
 | Una versión alternativa de un plato | **variación** | "versión", "alternativa" |
 | Los criterios libres de la receta | **tags** | "etiquetas", "labels" |
-| Los cuatro tags que la app se reserva | **tags especiales**: `favorito`, `menú diario`, `probar`, `incompleta`. Se escriben así, en minúscula, en el `.md`, en el chip y en su botón del editor | "estado", "marcadores", "listas" |
-| El nombre de cada marca de la tarjeta, para el lector de pantalla | **Favorita**, **Menú diario**, **Para probar**, **Incompleta** —en femenino, por *la receta*; el botón de la estrella se llama **Favorito**— | — |
-| Lo que la receta no tiene | **incompleta** | "inválida", "con errores", "borrador" |
-| Sacar la marca de incompleta | **sacar *incompleta*** —soltar su botón en el editor— | "marcar como completada", "declarar completa", "validar" |
+| Los cuatro tags que la app se reserva | **tags especiales**: `favorito`, `menú diario`, `probar`, `borrador`. Se escriben así, en minúscula, en el `.md`, en el chip y en su botón del editor | "estado", "marcadores", "listas" |
+| El nombre de cada marca de la tarjeta, para el lector de pantalla | **Favorita**, **Menú diario**, **Para probar**, **Borrador** —*Favorita* en femenino, por *la receta*; el botón de la estrella se llama **Favorito**— | — |
+| Sacar la marca de borrador | **sacar *borrador*** —soltar su botón en el editor— | "marcar como completada", "declarar completa", "validar" |
 | Cuánto lleva la receta, hasta comer | **Duración** —uno de `~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`— | "tiempo", "tiempo de cocción", "preparación" |
 | Para cuántos alcanza | **Rinde** | "porciones", "comensales" |
 | El modo de lectura con la pantalla encendida | **Cocinar**, y **Salir** para dejarlo | "modo cocina" como etiqueta, "empezar" |
@@ -203,7 +200,7 @@ la interfaz**, y no tienen sinónimos.
 | Lo que pasó al abrir la app | **Registro de actividad** | "log", "diagnóstico", "depuración" |
 | Lo que la app tiene para decir sin pedir nada | **Avisos** | "notificaciones", "alertas" |
 | Dejar la cuenta de Google | **Salir**; entrar es **Conectar con Google** | "cerrar sesión", "logout", "iniciar sesión" |
-| De dónde salió la receta | **fuente** —*Ir a la fuente*, en el borrador— | "origen", "link", "referencia" |
+| De dónde salió la receta | **fuente** —*Fuente original*, en el editor— | "origen", "link", "referencia" |
 
 **Las fichas de Ajustes, en orden:** Cuenta, Recetario, Índice, Archivos locales,
 Avisos, Registro de actividad.
@@ -230,11 +227,11 @@ Lo que entra a la app desde otra se **captura**; lo que sale de la app se
 **comparte**. El menú Compartir de Android aparece en los dos caminos, y por eso
 la app nunca dice "compartir a Recetario".
 
-### 4.4 "Convertir" es sólo con Claude
+### 4.4 "Convertir" es sólo con el agente
 
-El verbo de pasar un borrador a receta es **crear la receta**. "Convertir" queda
-para un solo botón, **Convertir con Claude**, donde quien escribe la receta no es
-el usuario.
+"Convertir" queda para un solo botón, **Convertir con Agente**, donde quien
+escribe la receta no es el usuario. Terminar un borrador a mano es completarlo
+en el editor y **sacar *borrador***.
 
 ---
 

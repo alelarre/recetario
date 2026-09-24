@@ -1,6 +1,6 @@
 # E02 — Encontrar
 
-**Versión:** 3.3 · **Fecha:** 2026-09-16 · **Estado:** Final — Hito 11
+**Versión:** 3.4 · **Fecha:** 2026-09-24 · **Estado:** Final — Hito 11
 **Jobs:** J1, J4, J5 · **Prioridad:** alta · **Flujos:** F3, F4, F5
 
 **Reglas transversales:** ver `E05-Cimientos.md` §Reglas.
@@ -39,15 +39,16 @@ de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 #### C02.1.2 — Estados del Recetario *(J1, J5)*
 
 - [ ] Cargando: la búsqueda ya usable; las categorías con su espacio reservado, sin salto al llegar.
-- [ ] Sin recetas: las categorías se ven igual, vacías, y una línea explica que las recetas entran por Borradores o desde Drive.
+- [ ] Sin recetas: las categorías se ven igual, vacías, y una línea dice cómo entra una receta: *«Todavía no hay recetas. Entran con Nueva receta, compartiendo desde otra app, o como archivos .md en las carpetas de Drive.»*
 - [ ] Sin red: el aviso arriba, y **ni la búsqueda ni las categorías se dibujan con datos viejos** (C05.8.1).
 - [ ] Si la app no puede abrir el índice, no llega al Recetario: la salida es la de C05.6.2.
 
 #### C02.1.3 — El menú lateral *(J1, J5)*
 
 - [ ] Lo dibujan las cuatro pantallas a las que se llega desde él: el Recetario, Borradores, el plan de la semana y Ajustes. Lleva Inicio, Borradores con su contador, Plan de la semana, Nueva receta y Ajustes, y al pie la versión de la app.
+- [ ] **Borradores** es la lista por tag de `borrador` (C02.6.5) dibujada como destino del menú (`E01-CapturaYBorradores.md` C01.4.1). **Nueva receta** abre el editor vacío (`E04-Corregir.md` C04.3b.1) y es la única entrada de la app para crear una receta a mano.
 - [ ] En el teléfono está cerrado: se abre con el botón del encabezado y se cierra tocando el velo o eligiendo un destino. Desde 900 px de ancho queda fijo y el botón no se dibuja.
-- [ ] **El botón está en esas cuatro y en ninguna otra**, en el lugar del volver: son las mismas donde el gesto abre el menú. *Nueva receta* no es una de ellas —se llega también desde el Recetario— y lleva volver.
+- [ ] **El botón está en esas cuatro y en ninguna otra**, en el lugar del volver: son las mismas donde el gesto abre el menú. *Nueva receta* no es una de ellas y lleva volver.
 - [ ] **Abierto, la pantalla de atrás no se desplaza**: el velo la tapa. Desde 900 px el menú es fijo, no hay velo y nada se frena.
 - [ ] **Se abre y se cierra deslizando**, y acompaña al dedo mientras se desliza. Al soltar queda abierto si pasó la mitad.
 - [ ] Cerrado, el gesto tiene que empezar **a 24 px o más del borde izquierdo**: desde el borde Android lo toma como «atrás». Abierto, empieza desde cualquier lado.
@@ -99,7 +100,7 @@ ingrediente.
 - [ ] La búsqueda es una lectura del índice, no una lectura de mil `.md`.
 - [ ] Los ingredientes se comparan tal como están escritos: no hay normalización, singularización ni sinónimos (C05.4b.1).
 - [ ] Lo que se compara es **el nombre**, o sea lo que está antes del separador (C05.1.3). Un ítem sin separador se compara entero.
-- [ ] Una receta con los ingredientes mal tipeados no aparece, y eso es esperado: figura como incompleta y ese es el aviso (principio 3).
+- [ ] Una receta con los ingredientes mal tipeados no aparece, y eso es esperado (principio 3).
 
 #### C02.3.4 — Estados de los resultados *(J1, J4)*
 
@@ -126,6 +127,7 @@ carpeta, y después se crean, renombran y borran desde *Ajustes → Recetario*.
 - [ ] Una carpeta creada a mano en Drive aparece como categoría al reindexar.
 - [ ] Cada tile lleva la foto y el color de su carpeta, con el nombre completo. La foto puede ser del catálogo o una propia, subida a `_fotos/` (C05.4.4), que se pide con el token y se completa cuando llega. Una categoría sin foto se dibuja con la trama sobre su color.
 - [ ] Una categoría sin recetas se muestra igual.
+- [ ] **Las recetas sin categoría** —en `_sin-categoria/` o sueltas en la carpeta base (C05.4.4)— suman a la grilla un tile **«Sin categoría»**, en su lugar alfabético, sólo si hay alguna. No es una categoría: se dibuja con la trama sobre el neutro y no se gestiona desde Ajustes.
 - [ ] **Cada tile dice cuántas recetas tiene**, en un badge sobre la foto y sólo si tiene alguna: una categoría vacía no lleva un cero encima. Sobre foto clara el badge necesita fondo casi opaco.
 - [ ] La grilla pasa de dos a cuatro columnas en pantalla ancha (C05.10.1).
 
@@ -152,7 +154,7 @@ la lista tiene que servir para recorrer, no solo para llegar.
 #### C02.5.3 — Estados de la lista *(J5)*
 
 - [ ] Cargando: indicador donde va el contenido, no pantalla de carga.
-- [ ] Categoría vacía: una frase. Sin ilustración.
+- [ ] Categoría vacía: una frase que dice cómo entra una receta, con el nombre de su carpeta —*«Todavía no hay nada acá. Entran con Nueva receta, compartiendo desde otra app, o como archivos .md en la carpeta Pescados de Drive.»*—. Sin ilustración.
 - [ ] Sin red: el aviso, y nada dibujado con datos viejos.
 
 ### F02.5b — Las listas muestran foto
@@ -198,13 +200,13 @@ tag.
 #### C02.6.3 — En la receta los tags se leen *(J4, J5)*
 
 - [ ] Los tags se muestran en la receta abierta como chips, y no son tocables: al filtro se entra por el carrusel (C02.6.4).
-- [ ] La excepción es `incompleta`, que abre el editor (C03.1.3).
+- [ ] La excepción es `borrador`, que abre el editor (C03.1.3).
 
 #### C02.6.4 — El carrusel de tags *(J5)*
 
 - [ ] Vive en el Recetario —debajo de la búsqueda, arriba de *Categorías*—, en cada categoría y en la lista por tag, debajo del encabezado.
 - [ ] Cada chip lleva el tag tal como está escrito, su ícono si es especial, y **cuántas recetas lo llevan**: en el Recetario y en la lista por tag cuenta todo el recetario; en una categoría, sólo esa categoría.
-- [ ] **El orden:** los cuatro especiales primero y en orden fijo —`favorito`, `menú diario`, `probar`, `incompleta`—; después los demás **por cantidad de recetas**, de mayor a menor, con los empates en alfabético.
+- [ ] **El orden:** los cuatro especiales primero y en orden fijo —`favorito`, `menú diario`, `probar`, `borrador`—; después los demás **por cantidad de recetas**, de mayor a menor, con los empates en alfabético.
 - [ ] En una categoría van todos los tags. En el Recetario y en la lista por tag, los especiales y los **veinte** comunes más usados: para la cola larga está la búsqueda.
 - [ ] Un tag especial sin ninguna receta no se dibuja. Sin ningún tag, el carrusel no se dibuja.
 - [ ] Se desliza de costado, sin barra de scroll. Un degradé a la derecha dice que sigue; a la izquierda aparece cuando ya se corrió. Con mouse o trackpad hay una flecha a cada lado, que corre el 80% del ancho visible.
@@ -223,17 +225,17 @@ tag.
 
 ### F02.7 — Las marcas de los tags especiales en las listas
 
-Los cuatro tags especiales —`favorito`, `menú diario`, `probar`, `incompleta`—
-se ven en la tarjeta sin abrir la receta. Una receta incompleta se lista igual
+Los cuatro tags especiales —`favorito`, `menú diario`, `probar`, `borrador`—
+se ven en la tarjeta sin abrir la receta. Un borrador se lista igual
 que cualquier otra, y se ve que le falta algo. No se esconde ni se ordena al
 final.
 
 #### C02.7.1 — Las marcas *(J1, J5)*
 
-- [ ] Van **juntas en la esquina superior derecha de la tarjeta**, en el orden fijo de los especiales, cada una con su ícono: la estrella, el calendario, el marcador y la marca de incompleta (design-system §6.5). El título no pasa por debajo.
-- [ ] Salen de la lista `tags` de la fila del índice (C05.3.1). Cada marca tiene su nombre accesible: *Favorita*, *Menú diario*, *Para probar*, *Incompleta*.
-- [ ] La marca de incompleta es consistente con la de la receta abierta (C03.1.3).
-- [ ] Una receta incompleta **no se filtra, no se esconde y no se ordena distinto**.
+- [ ] Van **juntas en la esquina superior derecha de la tarjeta**, en el orden fijo de los especiales, cada una con su ícono: la estrella, el calendario, el marcador y la marca de borrador (design-system §6.5). El título no pasa por debajo.
+- [ ] Salen de la lista `tags` de la fila del índice (C05.3.1). Cada marca tiene su nombre accesible: *Favorita*, *Menú diario*, *Para probar*, *Borrador*.
+- [ ] La marca de borrador es consistente con la de la receta abierta (C03.1.3).
+- [ ] Un borrador **no se filtra, no se esconde y no se ordena distinto**. Su lista propia es Borradores (`E01-CapturaYBorradores.md` C01.4.1).
 - [ ] La marca no se dibuja como error ni como advertencia: la receta funciona, le falta algo.
 - [ ] **De los cuatro, sólo `favorito` cambia el orden:** las favoritas van primero en las listas (C02.5.1).
 

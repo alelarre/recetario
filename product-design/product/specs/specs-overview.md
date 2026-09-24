@@ -27,10 +27,10 @@ varias pantallas.
 
 | # | Épica | Qué cubre | Jobs | Prioridad |
 |---|---|---|---|---|
-| **E01** | [Captura y Borradores](E01-CapturaYBorradores.md) | Guardar algo antes de perderlo, los borradores que esperan conversión, y convertir uno con Claude | J2, J3 | **La más alta** |
+| **E01** | [Captura y Borradores](E01-CapturaYBorradores.md) | Guardar algo antes de perderlo: lo compartido abre el editor, los borradores son recetas con el tag `borrador`, y Convertir con Agente | J2, J3 | **La más alta** |
 | **E02** | [Encontrar](E02-Encontrar.md) | Búsqueda por nombre, ingrediente y tag; categorías; tags especiales y lista por tag; filtro y orden por duración | J1, J4, J5 | Alta |
 | **E03** | [Leer y cocinar](E03-LeerYCocinar.md) | La receta a la vista, el modo cocina con las manos ocupadas, la estrella de favorito, y compartir la receta (PDF, link a la vista de invitado, texto) | J6 | Media |
-| **E04** | [Corregir](E04-Corregir.md) | El editor: arreglar un error, anotar una variación, crear una receta, poner los tags especiales y la duración | J7 | Baja |
+| **E04** | [Corregir](E04-Corregir.md) | El editor, único formulario de la app: arreglar un error, anotar una variación, crear una receta, poner los tags especiales y la duración | J7 | Baja |
 | **E05** | [Cimientos](E05-Cimientos.md) | El esquema del `.md`, la carpeta base y las categorías en Drive, el índice y su copia local, los estados degradados, Ajustes | J8, transversal | Alta |
 | **E06** | [Planificar](E06-Planificar.md) | El plan de siete días sin fechas y la lista de compras que sale de él | J9 | Baja |
 

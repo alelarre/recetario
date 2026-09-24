@@ -20,27 +20,33 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   una línea `- <número>: <url>` por foto, con el número estable y nunca reusado.
   El texto las nombra con `![epígrafe](foto:N)` en cualquier sección y `foto`
   acepta `foto:N`; antes de dibujarse, la receta se resuelve a URLs. Las que
-  sube la app van a `_fotos/` (`carpeta_fotos` en `meta`), achicadas a JPEG, y
-  se piden con el token como las de los borradores. La foto propia de una
-  categoría vive ahí también.
+  sube la app van a `_fotos/` (`carpeta_fotos` en `meta`), achicadas a JPEG;
+  se piden a Drive con el token y quedan en Cache Storage por id de archivo
+  (`src/imagenes.ts`). La foto propia de una categoría vive ahí también.
 - **Cuatro tags especiales**, reservados y con forma propia: `favorito`,
-  `menú diario`, `probar` e `incompleta` (la completitud de la receta). Van en
-  la lista `tags` como cualquier otro.
-- **El índice es una Google Sheet** (`_indice`, con las hojas de recetas, `meta`,
-  `borradores` y `categorias`). Es un cache derivado: los `.md` y las carpetas
+  `menú diario`, `probar` y `borrador` (la completitud de la receta). Van en
+  la lista `tags` como cualquier otro. Cada uno tiene formas alternativas que
+  se leen como él sin reescribir el `.md`: `incompleta` y sus formas son
+  `borrador`.
+- **El índice es una Google Sheet** (`_indice`, con las hojas de recetas, `meta`
+  y `categorias`). Es un cache derivado: los `.md` y las carpetas
   son siempre la verdad, y *Ajustes → Reindexar* lo rehace entero. La fila se
   escribe en el momento, sin cola.
 - **Copia local del índice, y sólo del índice** (`src/indice-local.ts`): vive en
   `localStorage`; al abrir se compara el `modifiedTime` de `_indice` y, si
   coincide, no se lee Sheets. Parte de que nunca hay escritura concurrente. No
   sirve para funcionar sin conexión.
-- **Los borradores son `.md` aparte**, uno por archivo en `_borradores/`, con
-  formato propio: título, fuente, capturado, la nota y los ids de hasta cinco
-  fotos. Las fotos van al lado del `.md`, achicadas a JPEG; se muestran
-  pidiéndolas a Drive con el token y quedan en Cache Storage por id de archivo
-  (`src/imagenes.ts`). Llegan de la cámara, la galería o el menú Compartir: el
-  Share Target es un `POST` que atiende `public/sw.js`. Descartar o convertir
-  manda el borrador y sus fotos a la papelera.
+- **Un borrador es una receta con el tag `borrador`**: el mismo `.md`, el
+  mismo editor y la misma fila. Borradores es la lista por tag de `borrador`.
+  La categoría es opcional al crear: lo que no tiene categoría vive en
+  `_sin-categoria/` (`carpeta_sin_categoria` en `meta`), que no es una
+  categoría, y se muestra como «Sin categoría». Sacar `borrador` exige
+  categoría, así que ahí todo es borrador. **La app no escribe recetas sueltas
+  en la carpeta base**; un `.md` suelto escrito afuera se lee sin categoría.
+- **El editor es el único formulario.** *Nueva receta*, en el menú, lo abre
+  vacío; el menú Compartir lo abre con la fuente, el texto en Notas y las fotos
+  en el depósito: el Share Target es un `POST` que atiende `public/sw.js` y
+  redirige a `#/nueva`. Nada se escribe hasta Guardar.
 - **El plan de la semana es otro `.md`**, `_plan.md`, en la carpeta base y al
   lado de `_indice`: siete días sin fechas que arrancan en hoy, con dos comidas
   cada uno y una lista de recetas en cada comida. No está en el índice —se lo
@@ -48,13 +54,15 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   deriva del plan y no se guarda en ningún lado.
 - **El input principal no es el editor**, son sesiones con agentes que reciben
   una fuente (PDF, foto, video, sitio web) y escriben el `.md`. El editor existe
-  para corregir. Desde un borrador, «Convertir con Claude» arma el pedido y lo
-  manda a Claude; la respuesta vuelve compartida o con «Pegar receta». **La app
-  no llama a ningún modelo.**
+  para corregir. En un borrador, «Convertir con Agente» guarda la receta y
+  manda el pedido, que pide `id: <id>` en el frontmatter. La respuesta vuelve
+  compartida —abre el editor de la receta de ese `id`, o uno nuevo— o se pega
+  con «Pegar», en el encabezado del editor, que llena el formulario sin
+  guardar. **La app no llama a ningún modelo.**
 - **Hay un solo camino de escritura: el store.** `store.crear` y
-  `store.guardar` escriben el `.md` y su fila juntos; `convertirBorrador`
-  (`src/compartido.ts`) suma descartar el borrador. El agente no corre este
-  código: devuelve el `.md` y lo guarda la app.
+  `store.guardar` escriben el `.md` y su fila juntos; sin categoría, en
+  `_sin-categoria/`. El agente no corre este código: devuelve el `.md` y lo
+  guarda la app.
 - **La app no descubre lo que se escribe afuera:** un `.md` subido a Drive por
   fuera aparece al reindexar.
 
@@ -81,10 +89,10 @@ Nada del código depende de `product-design/`. **Todo el producto vive en `src/`
 |---|---|
 | Entrada | `inicio.ts` decide entre `main.ts` (la app, con login) e `invitado.ts` (la vista de una receta compartida, sin login). `main.ts` cablea rutas, acciones y pantallas. |
 | Google | `auth.ts`, `drive.ts`, `sheets.ts`; los tipos de Google Identity Services están escritos a mano en `gis.d.ts` (el SDK se carga por `<script>`). `config.ts` tiene el client ID, el scope, los nombres fijos y `SCHEMA_VERSION`. |
-| Dominio | `recipe.ts` (parsear y escribir el `.md`), `borrador.ts`, `plan.ts` (el `.md` del plan de la semana), `compras.ts` (la lista que sale del plan, y su texto), `catalogo.ts` (la fila del índice, tags reservados, búsqueda), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts`, `conversion.ts` (el pedido a Claude y lo que vuelve), `fotos.ts` (achicar una foto antes de subirla), `fotos-receta.ts` (el depósito: parsear y escribir `## Fotos`, resolver `foto:N`, poner y sacar referencias), `tipos.ts`. |
+| Dominio | `recipe.ts` (parsear y escribir el `.md`), `plan.ts` (el `.md` del plan de la semana), `compras.ts` (la lista que sale del plan, y su texto), `catalogo.ts` (la fila del índice, tags reservados, búsqueda), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts` (lo que llega por el menú Compartir: la fuente, las notas y el título por defecto), `conversion.ts` (el pedido al agente, la receta que vuelve y cómo se pega), `fotos.ts` (achicar una foto antes de subirla), `fotos-receta.ts` (el depósito: parsear y escribir `## Fotos`, resolver `foto:N`, poner y sacar referencias), `tipos.ts`. |
 | Compartir | `compartir.ts` (menú Compartir del sistema y portapapeles, con sus respaldos), `link-receta.ts` (la receta comprimida en el fragmento del link), `texto-receta.ts`, `pdf/` (pdfmake con Inter embebida), `cocina-control.ts` (modo cocina y pantalla encendida, compartido entre receta e invitado). |
 | UI | `src/ui/`: una pantalla por archivo, sobre `componentes.ts`, `iconos.ts`, `pintar.ts`, `fichas-receta.ts` y `visor.ts` (la foto a pantalla completa, compartida entre receta, editor e invitado); `router.ts` tiene las rutas. **`tokens.css` es el sistema del producto** —tokens y componentes— y se edita directamente; `base.css` es lo propio de cada pantalla. |
-| Imágenes | `src/categorias/*.webp`, el catálogo de fotos de categoría, importado con `import.meta.glob`: el nombre del archivo es la clave. `imagenes.ts` muestra las imágenes de Drive —las fotos de los borradores, las de las recetas y las propias de las categorías— desde Cache Storage, las precarga en segundo plano, y lee las fotos que el service worker dejó del menú Compartir. |
+| Imágenes | `src/categorias/*.webp`, el catálogo de fotos de categoría, importado con `import.meta.glob`: el nombre del archivo es la clave. `imagenes.ts` muestra las imágenes de Drive —las fotos de las recetas y las propias de las categorías— desde Cache Storage, las precarga en segundo plano, y lee las fotos que el service worker dejó del menú Compartir. |
 
 ## Comandos
 
@@ -194,7 +202,6 @@ Cada una se midió o se discutió a fondo.
   descartan.
 - **Miniaturas, o una portada guardada aparte:** se dibuja la foto entera, y un
   `thumbnailLink` de Drive caduca. Las fotos sí van en Drive, en `_fotos/`.
-- **Los borradores como receta incompleta o en una planilla propia.**
 
 **Producto y UI**
 - **Un tema claro o `prefers-color-scheme`:** se cocina de noche; un solo tema
@@ -230,7 +237,7 @@ Cada una se midió o se discutió a fondo.
   terceros; la salida de fondo es un dominio propio.
 - **Un id que llega en un link a `#/r/<id>` puede ser cualquier archivo del
   Drive:** por eso `store.guardar` y `store.borrar` rechazan un archivo sin
-  fila que no esté en la carpeta base o en una categoría.
+  fila que no esté en la carpeta base, en `_sin-categoria/` o en una categoría.
 - **El conector de Google Drive de claude.ai es limitado:** crea, lee, mueve y
   renombra archivos, pero no escribe planillas ni reescribe el contenido de un
   archivo existente.
@@ -242,6 +249,8 @@ Cada una se midió o se discutió a fondo.
 - **Android toma el deslizamiento desde el borde como «atrás»:** por eso el
   gesto del menú lateral empieza a 24 px del borde.
 - **Lo que ningún test cubre y se verifica en el teléfono:** el Share Target
-  real (necesita la PWA instalada en Android), el foco del teclado en la
-  captura, la posición de scroll al conmutar en el modo cocina, el gesto de
-  atrás de Android en el editor con cambios sin guardar, y los gestos táctiles.
+  real (necesita la PWA instalada en Android), el foco del teclado en el
+  editor que abre lo compartido, abrir claude.ai desde la PWA instalada al
+  Convertir con Agente, la posición de scroll al conmutar en el modo cocina, el
+  gesto de atrás de Android en el editor con cambios sin guardar, y los gestos
+  táctiles.

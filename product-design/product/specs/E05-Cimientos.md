@@ -1,6 +1,6 @@
 # E05 — Cimientos
 
-**Versión:** 4.0 · **Fecha:** 2026-09-17 · **Estado:** Vigente
+**Versión:** 4.1 · **Fecha:** 2026-09-24 · **Estado:** Vigente
 **Job:** J8 y transversal · **Prioridad:** alta · **Flujos:** F8, F9, F10, F11, F12
 
 ---
@@ -48,7 +48,7 @@ Si el token expiró, el aviso dice que hay que conectarse de nuevo y ofrece el
 control. Al reconectar, el usuario reintenta la operación **a mano**: la app no
 reanuda nada por su cuenta.
 
-- [ ] Lo escrito en el editor o en la captura sobrevive a la reautenticación.
+- [ ] Lo escrito en el editor sobrevive a la reautenticación.
 
 ### R4 — El `.md` gana, y la app no lo verifica
 
@@ -77,7 +77,7 @@ segundo plano. El cambio se ve la próxima vez que la app abre y lee el índice:
 al abrir, la fecha de `_indice` en Drive dice si la copia local sigue valiendo
 (C05.4.2). Un `.md` escrito afuera sin su fila aparece recién al reindexar.
 
-- [ ] Un borrador convertido por el agente sigue listado en Borradores hasta que la app se vuelva a abrir.
+- [ ] Un `.md` que el agente deja directo en Drive no aparece en ninguna lista hasta reindexar.
 
 ### R7 — Android es la plataforma
 
@@ -92,16 +92,16 @@ toque que la lanza hasta que termina. Es un solo mecanismo para todas las
 operaciones, y no uno por pantalla. Mientras dura, el resultado y el error tienen a dónde llegar:
 la pantalla que lanzó la escritura sigue siendo la que está.
 
-- [ ] **Aparece con el toque, no con la escritura:** entre uno y otra puede haber una lectura de Drive —el `.md` de base al guardar una receta, el plan al sumarle una— o un redibujado; todo eso pasa con la pantalla ya tapada. Si después nada llega a escribirse —falta el título, falta la categoría—, el velo se saca y queda el aviso.
+- [ ] **Aparece con el toque, no con la escritura:** entre uno y otra puede haber una lectura de Drive —el `.md` de base al guardar una receta, el plan al sumarle una— o un redibujado; todo eso pasa con la pantalla ya tapada. Si después nada llega a escribirse —falta el título—, el velo se saca y queda el aviso.
 - [ ] **No se toca:** ningún control responde, ni el gesto del menú lateral.
 - [ ] **No se desplaza:** la página de atrás no scrollea mientras el velo está.
 - [ ] **No se navega:** un cambio de hash —un link, el volver del encabezado, el gesto de atrás de Android— no dibuja la pantalla nueva, y la URL vuelve a la de la pantalla que está escribiendo.
 - [ ] **No se repite la acción:** volver a tocar el control no hace nada.
 - [ ] El velo se suelta siempre, termine bien o mal; después la operación sigue su camino —navega, redibuja o muestra su aviso con lo escrito todavía en pantalla (R1)—.
-- [ ] **Guardar una receta cierra con el tilde:** cuando el `.md` y su fila quedaron escritos —una receta nueva, una editada o una convertida desde un borrador—, el velo tarda 1850 ms más en irse, tapando la olla y dibujando el tilde, que queda quieto un momento para que se llegue a ver (§6.17b). Es la escritura que el usuario confirma con un botón y de la que la pantalla se va; las demás sueltan el velo de una. Si no se llegó a escribir —falta el título, falta la categoría, falló Drive— no hay tilde.
+- [ ] **Guardar una receta cierra con el tilde:** cuando el `.md` y su fila quedaron escritos —una receta nueva, una editada, o la que se guarda al Convertir con Agente—, el velo tarda 1850 ms más en irse, tapando la olla y dibujando el tilde, que queda quieto un momento para que se llegue a ver (§6.17b). Es la escritura que el usuario confirma con un botón y de la que la pantalla se va; las demás sueltan el velo de una. Si no se llegó a escribir —falta el título, falló Drive— no hay tilde.
 - [ ] **El orden es olla, tilde y recién después la pantalla nueva:** el editor se cierra cuando el tilde ya está dibujado, y el velo se va cuando la pantalla a la que se vuelve está pintada, así el repintado no se ve pasar. Mientras dibuja el tilde el velo sigue tapando, pero la pantalla ya no está ocupada: navegar no lo frena nadie. Si el guardado no lleva a ninguna pantalla nueva, el velo se va solo. Una escritura nueva durante ese rato corta el dibujo y vuelve a tapar.
-- [ ] Entran: guardar y crear una receta —también desde un borrador o desde Claude—, borrarla, guardar una captura, descartar un borrador, agregarle y sacarle una foto, crear, editar y borrar una categoría, escribir el plan de la semana —sumarle una receta, sacarle una, reiniciarlo— y crear la carpeta base.
-- [ ] Entran también **tres operaciones que no escriben nada**, porque tardan y mientras duran vale lo mismo —no se toca y no se navega—: **armar la lista de compras**, que lee de Drive una receta por cada una distinta del plan (`E06` F06.4); **achicar una foto** recién elegida, en el editor de recetas, en la captura, en el borrador y en la foto propia de una categoría; y **bajar la foto de una URL** en el editor de recetas (`E04-Corregir.md` C04.3d.1b). Las fotos del editor no llegan a Drive hasta Guardar (F04.3d). **Con varias fotos de una, el velo se pone una sola vez para todas**: prenderlo y apagarlo entre una y otra se ve como un parpadeo.
+- [ ] Entran: guardar y crear una receta —también la que llegó por Compartir o pegada, y la que se guarda al Convertir con Agente—, borrarla, crear, editar y borrar una categoría, escribir el plan de la semana —sumarle una receta, sacarle una, reiniciarlo— y crear la carpeta base.
+- [ ] Entran también **tres operaciones que no escriben nada**, porque tardan y mientras duran vale lo mismo —no se toca y no se navega—: **armar la lista de compras**, que lee de Drive una receta por cada una distinta del plan (`E06` F06.4); **achicar una foto** recién elegida o recién llegada por Compartir, en el editor de recetas, y la foto propia de una categoría; y **bajar la foto de una URL** en el editor de recetas (`E04-Corregir.md` C04.3d.1b). Las fotos del editor no llegan a Drive hasta Guardar (F04.3d). **Con varias fotos de una, el velo se pone una sola vez para todas**: prenderlo y apagarlo entre una y otra se ve como un parpadeo.
 - [ ] **Lo que se espera a un sitio ajeno tiene un corte.** Bajar una foto de una URL es lo único del velo que depende de un servidor que no es Google: si no contesta en unos 20 segundos, el pedido se corta y sigue como si no se hubiera podido bajar. Sin eso, un servidor que acepta y calla dejaría la pantalla tapada sin salida, y salir del editor sería recargar, que se lleva lo escrito.
 - [ ] Quedan afuera cuatro, cada una con su propia señal: marcar favorito, que ya tiene su estrella animada y no debe trabar la lectura de la receta; reindexar, que oculta sus controles y muestra el avance; preparar la carpeta base, que dibuja su propia pantalla de progreso; y conectar de nuevo con Google, donde el usuario está en el popup y el velo taparía la pantalla desde otra ventana.
 - [ ] Los botones que dicen «Guardando…» se quedan como están: el velo se suma, no los reemplaza.
@@ -163,9 +163,10 @@ pescados usa `Anchoítas — 18-20 medianas` y el recetario original usa
 
 #### C05.1.4 — Los tags reservados *(J8)*
 
-- [ ] Cuatro tags son **especiales**: `favorito`, `menú diario`, `probar` e `incompleta`, en ese orden en cualquier fila de tags y antes que los demás.
-- [ ] Se reconocen sin mirar mayúsculas ni tildes. `favorito` se reconoce además como `favorita`, `favoritos` y `favoritas`; `incompleta`, como `incompleto`, `incompletos` e `incompletas`. Al escribir, la app usa siempre la forma canónica.
-- [ ] Ninguno se escribe a mano en el campo de tags: cada uno tiene su botón en el editor (`E04-Corregir.md`). Tampoco se acepta `terminado` ni sus formas de género y número, que contradicen a `incompleta`.
+- [ ] Cuatro tags son **especiales**: `favorito`, `menú diario`, `probar` y `borrador`, en ese orden en cualquier fila de tags y antes que los demás.
+- [ ] Se reconocen sin mirar mayúsculas ni tildes. `favorito` se reconoce además como `favorita`, `favoritos` y `favoritas`; `borrador`, como `borradores`, `incompleta`, `incompleto`, `incompletos` e `incompletas`. Un `.md` que trae una forma alternativa se lee como el especial sin reescribirse; al guardarlo desde el editor queda con la forma canónica.
+- [ ] Buscar o filtrar por un especial encuentra también sus formas alternativas: la lista por tag de `borrador` y el contador de Borradores cuentan las recetas con `incompleta` (`E01-CapturaYBorradores.md` C01.4.1).
+- [ ] Ninguno se escribe a mano en el campo de tags: cada uno tiene su botón en el editor (`E04-Corregir.md`). Tampoco se acepta `terminado` ni sus formas de género y número, que contradicen a `borrador`.
 - [ ] No suman claves al frontmatter ni columnas al índice: son valores de `tags`.
 
 #### C05.1.5 — El depósito de fotos *(J8)*
@@ -181,7 +182,7 @@ pescados usa `Anchoítas — 18-20 medianas` y el recetario original usa
 - [ ] El uso se calcula **sobre la receta cruda**, antes de resolverla: después ya no hay ninguna `foto:N` que buscar. Una `foto:` o una referencia a un número que no está en el depósito no marcan nada.
 - [ ] Por eso **lo que viaja en el link compartido va sin resolver** (`E03-LeerYCocinar.md` C03.7.3): se le sacan las fotos de Drive y las referencias que las nombraban, pero las externas siguen siendo `foto:N`. Resolver es lo último, y lo hace el que dibuja.
 - [ ] **Las sin uso son las únicas que se muestran aparte** —el carrusel de la receta (`E03-LeerYCocinar.md` C03.5.2), la galería del PDF (C03.7.2)—, para que ninguna foto se dibuje dos veces. El editor marca el uso de cada una en su miniatura (`E04-Corregir.md` C04.3d.1).
-- [ ] **Las fotos que sube la app van a `_fotos/`**, en la carpeta base, achicadas a JPEG como las de los borradores. La carpeta se crea con la primera foto y su id queda en `meta` como `carpeta_fotos`. El `_` la deja fuera de las categorías y del reindexado.
+- [ ] **Las fotos que sube la app van a `_fotos/`**, en la carpeta base, achicadas a JPEG: el lado mayor a 1600 px. La carpeta se crea con la primera foto y su id queda en `meta` como `carpeta_fotos`. El `_` la deja fuera de las categorías y del reindexado.
 - [ ] El nombre del archivo es el del `.md` con el número —`pan-de-campo-3.jpg`—, para que en Drive se lean juntas. No se verifica que sea único: lo que manda es el id.
 - [ ] Cambiar la receta de categoría no mueve sus fotos: el link es por id.
 - [ ] **La app sólo manda a la papelera fotos que están en `_fotos/`.** Un link de Drive pegado a mano que apunta a otra carpeta se saca del depósito y el archivo no se toca.
@@ -223,44 +224,43 @@ el usuario a mano, y eso es el caso normal.
 ### F05.3 — La completitud la declara el usuario
 
 Una receta está terminada cuando el usuario lo dice, y no cuando el texto alcanza
-una forma. **Es un dato del archivo** —el tag `incompleta` en la lista `tags`—,
+una forma. **Es un dato del archivo** —el tag `borrador` en la lista `tags`—,
 no un cálculo: la app lo lee y lo muestra, nunca lo deduce.
 
 Terminar una receta es un juicio. Hay recetas escritas enteras que todavía no
 están buenas, y recetas de tres líneas que sí. Derivarlo del contenido decidiría
 por el usuario y además podría cambiar solo, sin que nadie tocara nada.
 
-#### C05.3.1 — La completitud es el tag `incompleta` *(J8)*
+#### C05.3.1 — La completitud es el tag `borrador` *(J8)*
 
-- [ ] Una receta está incompleta si su lista `tags` tiene `incompleta`; si no lo tiene, está terminada.
-- [ ] Se escribe siempre en la forma canónica, en minúscula. Se reconocen además `incompleto`, `incompletos` e `incompletas` como el mismo tag (C05.1.4).
+- [ ] Una receta es un borrador si su lista `tags` tiene `borrador`; si no lo tiene, está terminada.
+- [ ] Se escribe siempre en la forma canónica, en minúscula. Se reconocen además sus formas alternativas como el mismo tag (C05.1.4).
 - [ ] Es el único de los cuatro tags especiales que **no** se pone y saca libremente: sólo se puede sacar cuando la receta cumple C05.3.3, y una receta nueva nace con el tag puesto (`E04-Corregir.md` C04.3b.1).
+- [ ] **Una receta sin categoría es siempre un borrador:** la categoría es parte de C05.3.3. Un `.md` escrito afuera en `_sin-categoria/` sin el tag se muestra como está (R4), y el editor no lo deja guardar sin `borrador` mientras no tenga categoría.
 - [ ] `completa` es una clave desconocida como cualquier otra (C05.1.1): la app no la lee ni la borra, y la conserva tal cual si venía en el `.md`.
 
 #### C05.3.2 — El índice no tiene columna propia *(J1, J8)*
 
-- [ ] La fila no tiene columna de completitud. Si una receta está incompleta se sabe por su columna `tags`, igual que si es favorita (F05.4b).
+- [ ] La fila no tiene columna de completitud. Si una receta es un borrador se sabe por su columna `tags`, igual que si es favorita (F05.4b).
 - [ ] Sigue siendo cache: un `.md` editado afuera deja la fila atrasada hasta el próximo guardado o reindexado (R4).
 
 #### C05.3.3 — Cuándo se puede sacar el tag *(J7)*
 
 - [ ] La condición (`sePuedeTerminar`): título, categoría, al menos un ingrediente y al menos un paso.
-- [ ] La condición existe para habilitar que se pueda soltar el botón `incompleta` del editor (`E04-Corregir.md` C04.4.1) y **en ningún otro lado**: no filtra, no corrige y no escribe.
-- [ ] Título y categoría ya son obligatorios para guardar; se evalúan igual para que el aviso pueda decir todo lo que falta de una vez.
+- [ ] La condición existe para habilitar que se pueda soltar el botón `borrador` del editor (`E04-Corregir.md` C04.4.1) y **en ningún otro lado**: no filtra, no corrige y no escribe.
+- [ ] Título y categoría no son obligatorios para guardar un borrador (`E04-Corregir.md` C04.3b.1); son obligatorios para dejar de serlo, y se evalúan junto con lo demás para que la leyenda diga todo lo que falta de una vez.
 - [ ] Si una receta sin el tag deja de cumplir la condición mientras se la edita, el tag vuelve a ponerse solo.
 
 ### F05.4 — El índice, y la capa compartida
 
 El índice es una Google Sheet, `_indice`, dentro de la carpeta base: derivada y
-reconstruible. Tiene cuatro hojas: **`recetas`** —una fila por receta
-(F05.4b)—, **`meta`** —la versión del esquema, la fecha del último reindexado y
-la marca de un reindexado en curso—, **`borradores`** —una fila por cada `.md`
-de `_borradores/`: archivo, título y cuándo se capturó— y **`categorias`** —una
-fila por subcarpeta: id, nombre, color y foto (C05.4.4)—.
+reconstruible. Tiene tres hojas: **`recetas`** —una fila por receta
+(F05.4b), borradores incluidos—, **`meta`** —la versión del esquema, la fecha
+del último reindexado y la marca de un reindexado en curso— y **`categorias`**
+—una fila por subcarpeta: id, nombre, color y foto (C05.4.4)—.
 
 **Lo escribe un solo camino: el store** (`src/store.ts`). Crear y guardar una
-receta escriben el `.md` y su fila juntos, y convertir un borrador
-(`src/compartido.ts`) suma descartarlo. El formato tiene una sola
+receta escriben el `.md` y su fila juntos. El formato tiene una sola
 implementación —`src/recipe.ts` para el `.md`, `src/catalogo.ts` para la fila—,
 así que no hay dos versiones que puedan divergir. El agente no corre este
 código: devuelve el `.md` y lo guarda la app (C01.9.2); lo que deja directo en
@@ -271,7 +271,7 @@ Drive aparece al reindexar.
 - [ ] Recibe la receta parseada y escribe o reemplaza **su** fila, identificada por `fileId` (R5).
 - [ ] **La escritura es sincrónica:** ocurre en el momento del guardado y no se junta con otras. **No hay debounce y no hay cola.**
 - [ ] Nada queda esperando en almacenamiento local a que alguien lo mande después: una fila encolada es una segunda fuente de verdad, que es lo que R1 prohíbe.
-- [ ] Lo mismo vale para las hojas `borradores` y `categorias`: cada captura, descarte o cambio de categoría escribe su fila en el momento.
+- [ ] Lo mismo vale para la hoja `categorias`: cada cambio de categoría escribe su fila en el momento.
 - [ ] La operación termina cuando Sheets confirmó; recién ahí el guardado se declara exitoso.
 - [ ] Es idempotente: repetirla con la misma receta deja una sola fila (R2).
 
@@ -283,7 +283,7 @@ escritura parcial y un JSON obligaría a reescribir el archivo entero.
 
 - [ ] Una sola lectura devuelve todas las filas: buscar entre mil recetas no lee mil archivos.
 - [ ] Lo que se lee se usa para listar y buscar; abrir una receta lee su `.md`.
-- [ ] **Hay copia local del índice, y sólo del índice.** Vive en `localStorage` y guarda las cuatro hojas, más qué planilla y qué carpeta base son. Al abrir se pide el `modifiedTime` de `_indice` en Drive: si es el mismo que tenía la copia al guardarse, no se lee Sheets; si no, se lee la planilla y la copia se reemplaza. Con la copia vigente, abrir es un solo pedido.
+- [ ] **Hay copia local del índice, y sólo del índice.** Vive en `localStorage` y guarda las tres hojas, más qué planilla y qué carpeta base son. Al abrir se pide el `modifiedTime` de `_indice` en Drive: si es el mismo que tenía la copia al guardarse, no se lee Sheets; si no, se lee la planilla y la copia se reemplaza. Con la copia vigente, abrir es un solo pedido.
 - [ ] Cada escritura en `_indice` deja la copia al día.
 - [ ] Una copia de otra versión del esquema, de otra planilla, o que no se puede leer cuenta como que no hay copia. La copia nunca es imprescindible.
 - [ ] La premisa es que nunca hay escritura concurrente. No sirve para dibujar sin red: ver C05.8.1.
@@ -291,7 +291,6 @@ escritura parcial y un JSON obligaría a reescribir el archivo entero.
 #### C05.4.3 — Un solo camino de escritura *(J8)*
 
 - [ ] Toda escritura de una receta pasa por el store, que escribe el `.md` y su fila: no hay una ruta paralela dentro de la app.
-- [ ] **Convertir un borrador en receta** es una sola operación —el `.md`, la fila y descartar el borrador— y la usa la app cuando se guarda una receta creada desde un borrador (C01.6.3), venga escrita a mano o recibida de Claude.
 - [ ] El agente no escribe el índice: entrega el `.md` y lo guarda la app, o lo deja en Drive y aparece al reindexar.
 
 **Nota técnica:** no hay bloqueo ni lógica de concurrencia. Con un solo usuario
@@ -301,6 +300,9 @@ y sesiones que no se solapan el riesgo es bajo, y la reparación es reindexar
 #### C05.4.4 — Las categorías salen del índice *(J1, J8)*
 
 - [ ] Una categoría es una subcarpeta de la carpeta base. Las carpetas que empiezan con `_` no son categorías.
+- [ ] **Lo que no tiene categoría vive en `_sin-categoria/`**, al lado de las categorías. Se crea la primera vez que hace falta, como `_fotos/`, y su id queda en `meta` como `carpeta_sin_categoria`; reindexar la encuentra por su nombre. No es una categoría: no tiene color ni foto, no se gestiona desde *Ajustes → Recetario* y no está en la hoja `categorias`. Sus recetas sí están en el índice, sin categoría.
+- [ ] **La app no escribe recetas sueltas en la carpeta base.** Un `.md` suelto ahí, escrito afuera, se lee sin categoría; guardarlo lo deja donde está, y elegirle una categoría lo mueve.
+- [ ] Lo que no tiene categoría, en `_sin-categoria/` o suelto en la carpeta base, se muestra como **«Sin categoría»** (`E02-Encontrar.md` C02.4.1).
 - [ ] **El color y la foto son propiedades de la carpeta** (`appProperties` `color` y `foto`). La foto es una del catálogo, `catalogo:<clave>`, o una propia subida a `_fotos/`, `drive:<id>` (C05.9b.4). La hoja `categorias` las copia; la carpeta es la verdad.
 - [ ] La app no tiene escrito ningún id de carpeta. Las 16 predefinidas —nombre, color y foto— están en `src/categorias.ts` y sólo sirven para el setup (C05.7.4) y para darle color y foto, al reindexar, a una carpeta con nombre de predefinida que todavía no tiene propiedades.
 - [ ] Una carpeta creada a mano en Drive aparece como categoría al reindexar. Sin color ni foto se dibuja con el neutro y la trama, y no rompe nada.
@@ -337,8 +339,8 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 
 #### C05.5.1 — Reindexar *(J8)*
 
-- [ ] Lista las subcarpetas de la carpeta base, lee cada `.md` —los de cada categoría, los sueltos en la carpeta base, que quedan sin categorizar, y los de `_borradores/`— y escribe las hojas `recetas`, `borradores` y `categorias` enteras.
-- [ ] Si a la planilla le falta la hoja `borradores` o `categorias`, la crea.
+- [ ] Lista las subcarpetas de la carpeta base, lee cada `.md` —los de cada categoría, los de `_sin-categoria/` y los sueltos en la carpeta base, estos dos sin categoría— y escribe las hojas `recetas` y `categorias` enteras.
+- [ ] Si a la planilla le falta la hoja `categorias`, la crea.
 - [ ] Al terminar, el índice no conserva ninguna fila anterior: lo que no está en Drive, no está.
 - [ ] Los archivos ignorados por no tener título se cuentan y quedan visibles en Ajustes.
 - [ ] La fecha del último reindexado queda registrada en `meta` y se muestra en Ajustes.
@@ -353,7 +355,7 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 
 #### C05.5.3 — Cuándo se reindexa solo *(J8)*
 
-- [ ] Al abrir, si la planilla se acaba de crear (C05.7.3), si la versión del esquema anotada en `meta` no es la del código (`SCHEMA_VERSION`, hoy 6), o si `meta` dice que un reindexado quedó a medias.
+- [ ] Al abrir, si la planilla se acaba de crear (C05.7.3), si la versión del esquema anotada en `meta` no es la del código (`SCHEMA_VERSION`, hoy 7), o si `meta` dice que un reindexado quedó a medias.
 - [ ] Al terminar, el reindexado anota la versión del esquema en `meta`: sin eso, reindexaría en cada arranque.
 - [ ] Cambiar la forma de la fila o de las hojas obliga a subir `SCHEMA_VERSION`. Lo que se valida al leer —`tiempo`, `dificultad`— no la sube.
 - [ ] Al elegir o cambiar la carpeta base (C05.7.4).
@@ -503,7 +505,7 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 
 #### C05.9b.6 — Registro de actividad *(J8)*
 
-- [ ] Dice lo que verificó el arranque de esta sesión, con el tono de los avisos —el hecho y el número—: cuándo abrió, la fecha de `_indice`, si la copia local coincidía —y entonces no se leyó Sheets— o por qué no, cuántas recetas, borradores y categorías hay, y si reindexó y por qué.
+- [ ] Dice lo que verificó el arranque de esta sesión, con el tono de los avisos —el hecho y el número—: cuándo abrió, la fecha de `_indice`, si la copia local coincidía —y entonces no se leyó Sheets— o por qué no, cuántas recetas y categorías hay, y si reindexó y por qué.
 - [ ] Es sólo lectura: no ofrece ninguna acción.
 
 ### F05.10 — La app en pantalla ancha
