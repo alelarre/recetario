@@ -7,6 +7,7 @@
 import { DURACIONES, DIFICULTADES, TAGS_RESERVADOS, conEspecial } from './catalogo.js';
 import { parse } from './recipe.js';
 import { linkDeFoto } from './fotos-receta.js';
+import { esTituloPorDefecto } from './compartido.js';
 import type { Receta } from './tipos.js';
 
 /** Una foto del pedido: su número en el depósito de la receta y su id de Drive. */
@@ -35,49 +36,110 @@ function parrafoDeFotos(fotos: readonly FotoDelPedido[], links: boolean): string
   return [
     '',
     `Fotos: ${fotos.length === 1 ? 'va 1' : `van ${fotos.length}`}, en orden. Pueden ser páginas de un libro, una receta escrita a ` +
-      'mano, una captura de pantalla o el plato terminado. Transcribí lo que se lee, sin inventar cantidades ni pasos ' +
+      'mano, una captura de pantalla o el plato terminado. Transcribir lo que se lee, sin inventar cantidades ni pasos ' +
       'que no estén. Una foto del plato sirve para el título y la descripción, no para la receta.',
     ...(links
       ? [...fotos.map(f => `foto:${f.n}: ${linkDeFoto(f.id)}`),
-        'Las fotos están en mi Google Drive: leelas con el conector de Drive.']
+        'Las fotos están en mi Google Drive: leerlas con el conector de Drive.']
       : []),
     '',
     // Cómo se referencian en la receta que vuelve: el depósito del
     // editor las resuelve, así que la receta ya trae la portada y las
     // referencias apenas se pega o se comparte.
-    `En la receta, cada foto se nombra con su número: ${numeracion(fotos)}. Si una muestra el plato terminado, poné ` +
-      '`foto: foto:N`. Si una muestra un paso, sumá `![](foto:N)` al final de ese paso. No escribas la sección ' +
+    `En la receta, cada foto se nombra con su número: ${numeracion(fotos)}. Si una muestra el plato terminado, poner ` +
+      '`foto: foto:N`. Si una muestra un paso, sumar `![](foto:N)` al final de ese paso. No escribir la sección ' +
       'Fotos: la arma la app.'
   ];
 }
 
+/** Lo que el pedido lleva de la receta: lo que el agente usa para escribirla. */
+export interface DatosDelPedido {
+  id: string;
+  titulo: string;
+  fuente: string;
+  descripcion: string;
+  rinde: string;
+  ingredientes: string;
+  preparacion: string;
+  notas: string;
+}
+
+/** «a», «a y b», «a, b y c». */
+function enumerar(xs: readonly string[]): string {
+  const resto = [...xs];
+  const ultima = resto.pop() ?? '';
+  return resto.length ? `${resto.join(', ')} y ${ultima}` : ultima;
+}
+
+/**
+ * Lo que ya está escrito en el editor viaja con su rótulo: el agente parte de
+ * ahí y lo completa. Sin eso, lo que vuelve reemplaza esos campos y se pierde
+ * lo que el usuario había escrito. Ingredientes y preparación van en su propia
+ * línea, porque son listas.
+ */
+function camposCargados(d: DatosDelPedido): { lineas: string[]; nombres: string[] } {
+  const lineas: string[] = [];
+  const nombres: string[] = [];
+  const campo = (valor: string, rotulo: string, nombre: string, enBloque = false): void => {
+    const v = valor.trim();
+    if (!v) return;
+    lineas.push(enBloque ? `${rotulo}:\n${v}` : `${rotulo}: ${v}`);
+    nombres.push(nombre);
+  };
+  campo(d.descripcion, 'Descripción', 'descripción');
+  campo(d.rinde, 'Rinde', 'rinde');
+  campo(d.ingredientes, 'Ingredientes', 'ingredientes', true);
+  campo(d.preparacion, 'Preparación', 'preparación', true);
+  return { lineas, nombres };
+}
+
 export function pedidoDeConversion(
-  { id, titulo, fuente, notas }: { id: string; titulo: string; fuente: string; notas: string },
+  datos: DatosDelPedido,
   { fotos = [], links = false }: { fotos?: readonly FotoDelPedido[]; links?: boolean } = {}
 ): string {
   const lista = (xs: readonly string[]): string => xs.map(x => `\`${x}\``).join(', ');
+  const titulo = datos.titulo.trim();
+  const fuente = datos.fuente.trim();
+  const notas = datos.notas.trim();
+  // El título por defecto es la fecha: no describe el plato.
+  const conTitulo = !!titulo && !esTituloPorDefecto(titulo);
+  const cargados = camposCargados(datos);
   return [
-    'Convertí este borrador en una receta para mi Recetario. Leé la fuente y escribí la receta en el formato de abajo.',
+    'Convertir este borrador en una receta para mi Recetario, en el formato de abajo.',
     '',
     'Borrador:',
-    `Título: ${titulo}`,
+    conTitulo ? `Título: ${titulo}` : 'Título: no tiene. Proponer un título corto que represente el plato.',
     ...(fuente ? [`Fuente: ${fuente}`] : []),
+    ...cargados.lineas,
     ...(notas ? [`Notas: ${notas}`] : []),
+    '',
+    ...(cargados.nombres.length
+      ? [`Lo que ya está cargado (${enumerar(cargados.nombres)}) es el punto de partida: conservarlo y refinarlo con ` +
+          'lo que aporten la fuente, las fotos, las notas y la búsqueda, sin descartar nada que no esté contradicho.', '']
+      : []),
+    // Con fuente, la receta es la de la fuente y la búsqueda la verifica; sin
+    // fuente, la receta se arma y la búsqueda es de donde sale.
+    ...(fuente
+      ? ['Leer la fuente y transcribir la receta. Después, corroborarla con una búsqueda web contra una o más fuentes ' +
+          'externas. Si difieren en cantidades, tiempos o temperaturas, quedarse con la fuente original y anotar la ' +
+          'diferencia en `## Notas`.']
+      : ['No hay fuente: proponer la receta a partir del borrador y contrastarla con una búsqueda web de una o más ' +
+          'fuentes. En `fuente`, poner la URL de la fuente principal consultada.']),
     ...parrafoDeFotos(fotos, links),
     '',
     'Formato:',
     '- Frontmatter entre `---`, con estas claves y ninguna otra: `titulo` (obligatoria), `tags` como lista `[a, b]`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`.',
-    `- \`tiempo\` es uno de estos valores, tal cual: ${lista(DURACIONES)}. Cuenta el tiempo hasta comer, con reposo y horno. Si la fuente no lo dice, no lo pongas.`,
-    `- \`dificultad\` es uno de estos valores: ${lista(DIFICULTADES)}. Si no se puede saber, no la pongas.`,
-    `- En \`tags\` no uses estos: ${lista(TAGS_RESERVADOS)}.`,
-    `- La última línea del frontmatter es \`id: ${id}\`.`,
+    `- \`tiempo\` es uno de estos valores, tal cual: ${lista(DURACIONES)}. Cuenta el tiempo hasta comer, con reposo y horno. Si no se sabe, no ponerlo.`,
+    `- \`dificultad\` es uno de estos valores: ${lista(DIFICULTADES)}. Si no se puede saber, no ponerla.`,
+    `- En \`tags\` no usar estos: ${lista(TAGS_RESERVADOS)}.`,
+    `- La última línea del frontmatter es \`id: ${datos.id}\`.`,
     '- Después del frontmatter, una descripción corta opcional y las secciones `## Ingredientes`, `## Preparación`, `## Variaciones` y `## Notas`, sólo las que haya.',
     '- Un ingrediente por línea: `- nombre — cantidad`. Los `###` agrupan ingredientes o tramos de la preparación.',
     '- La preparación en pasos numerados.',
     '',
-    'No inventes temperaturas, tiempos ni cantidades que la fuente no dice. No agregues datos nutricionales.',
+    'No inventar temperaturas, tiempos ni cantidades que ninguna fuente respalde. No agregar datos nutricionales.',
     '',
-    'Respondé en formato markdown, sólo con el texto plano, sin texto antes ni después. Usar un bloque de código o quote si es necesario para evitar aplicar formato en la salida.'
+    'Responder en formato markdown, sólo con el texto plano, sin texto antes ni después. Usar un bloque de código o una cita si hace falta para que no se le aplique formato a la salida.'
   ].join('\n');
 }
 

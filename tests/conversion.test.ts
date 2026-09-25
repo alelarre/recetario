@@ -3,18 +3,19 @@ import { pedidoDeConversion, esRecetaEnMd, recetaRecibida, aplicarPegada } from 
 import { recetaFalsa } from './dobles.js';
 import { DURACIONES, DIFICULTADES } from '../src/catalogo.js';
 
-const receta = { id: 'r1', titulo: 'Focaccia', fuente: 'https://ejemplo.com/focaccia', notas: 'La de la abuela, sin romero' };
+const vacio = { descripcion: '', rinde: '', ingredientes: '', preparacion: '' };
+const receta = { id: 'r1', titulo: 'Focaccia', fuente: 'https://ejemplo.com/focaccia', notas: 'La de la abuela, sin romero', ...vacio };
 
 describe('el pedido al agente', () => {
   const pedido = pedidoDeConversion(receta);
 
   it('empieza pidiendo convertir el borrador', () => {
-    expect(pedido).toMatch(/^Convertí este borrador en una receta para mi Recetario/);
+    expect(pedido).toMatch(/^Convertir este borrador en una receta para mi Recetario/);
   });
 
   it('lleva la receta tal cual', () => {
-    expect(pedido).toContain('Focaccia');
-    expect(pedido).toContain('https://ejemplo.com/focaccia');
+    expect(pedido).toContain('Título: Focaccia');
+    expect(pedido).toContain('Fuente: https://ejemplo.com/focaccia');
     expect(pedido).toContain('Notas: La de la abuela, sin romero');
   });
 
@@ -37,9 +38,68 @@ describe('el pedido al agente', () => {
   });
 
   it('una receta sin fuente ni notas no deja líneas vacías con rótulo', () => {
-    const p = pedidoDeConversion({ id: 'r1', titulo: 'Pan', fuente: '', notas: '' });
+    const p = pedidoDeConversion({ ...receta, fuente: '', notas: '' });
     expect(p).not.toMatch(/Fuente:\s*\n/);
     expect(p).not.toMatch(/Notas:\s*\n/);
+  });
+});
+
+describe('el título', () => {
+  it('el que se pone solo a un borrador no viaja: se pide uno que represente el plato', () => {
+    const p = pedidoDeConversion({ ...receta, titulo: 'Borrador 24/09 21:15' });
+    expect(p).not.toContain('Borrador 24/09 21:15');
+    expect(p).toContain('Título: no tiene. Proponer un título corto que represente el plato.');
+  });
+
+  it('sin título, lo mismo', () => {
+    expect(pedidoDeConversion({ ...receta, titulo: '' }))
+      .toContain('Título: no tiene. Proponer un título corto que represente el plato.');
+  });
+
+  it('un título escrito que empieza con «Borrador» pero no es el de la fecha viaja', () => {
+    expect(pedidoDeConversion({ ...receta, titulo: 'Borrador de pan' })).toContain('Título: Borrador de pan');
+  });
+});
+
+describe('lo que ya está cargado en el editor', () => {
+  const cargada = {
+    ...receta, descripcion: 'Esponjosa y bien aceitada', rinde: '1 placa',
+    ingredientes: '- Harina — 500 g\n- Agua — 350 cc', preparacion: '1. Mezclar.\n2. Leudar.'
+  };
+  const p = pedidoDeConversion(cargada);
+
+  it('viaja tal cual, cada campo con su rótulo', () => {
+    expect(p).toContain('Descripción: Esponjosa y bien aceitada');
+    expect(p).toContain('Rinde: 1 placa');
+    expect(p).toContain('Ingredientes:\n- Harina — 500 g\n- Agua — 350 cc');
+    expect(p).toContain('Preparación:\n1. Mezclar.\n2. Leudar.');
+  });
+
+  it('se pide conservarlo y refinarlo, nombrando sólo lo que hay', () => {
+    expect(p).toContain('Lo que ya está cargado (descripción, rinde, ingredientes y preparación) es el punto de partida');
+    const soloIngredientes = pedidoDeConversion({ ...receta, ingredientes: '- Harina — 500 g' });
+    expect(soloIngredientes).toContain('Lo que ya está cargado (ingredientes) es el punto de partida');
+    expect(soloIngredientes).not.toContain('Rinde:');
+  });
+
+  it('sin nada cargado no se habla de eso', () => {
+    expect(pedidoDeConversion(receta)).not.toContain('Lo que ya está cargado');
+  });
+});
+
+describe('la fuente y la búsqueda', () => {
+  it('con fuente: transcribir y después corroborar contra fuentes externas', () => {
+    const p = pedidoDeConversion(receta);
+    expect(p).toContain('Leer la fuente y transcribir la receta.');
+    expect(p).toContain('Después, corroborarla con una búsqueda web contra una o más fuentes externas.');
+    expect(p).toContain('quedarse con la fuente original y anotar la diferencia en `## Notas`');
+  });
+
+  it('sin fuente: proponer la receta y contrastarla con una búsqueda web, y anotar la fuente usada', () => {
+    const p = pedidoDeConversion({ ...receta, fuente: '' });
+    expect(p).not.toContain('Leer la fuente');
+    expect(p).toContain('No hay fuente: proponer la receta a partir del borrador y contrastarla con una búsqueda web de una o más fuentes.');
+    expect(p).toContain('En `fuente`, poner la URL de la fuente principal consultada.');
   });
 });
 
@@ -69,16 +129,16 @@ describe('el pedido con fotos', () => {
     const p = pedidoDeConversion(receta, { ...conFotos, links: true });
     expect(p).toContain('foto:1: https://drive.google.com/file/d/1AbC/view');
     expect(p).toContain('foto:3: https://drive.google.com/file/d/1DeF/view');
-    expect(p).toContain('Las fotos están en mi Google Drive: leelas con el conector de Drive.');
+    expect(p).toContain('Las fotos están en mi Google Drive: leerlas con el conector de Drive.');
     expect(pedidoDeConversion(receta, conFotos)).not.toContain('drive.google.com');
   });
 
   it('dice cómo referenciarlas en la receta, después del párrafo de las fotos', () => {
     const p = pedidoDeConversion(receta, conFotos);
     expect(p).toContain('En la receta, cada foto se nombra con su número: la 1.ª es foto:1 y la 2.ª es foto:3.');
-    expect(p).toContain('Si una muestra el plato terminado, poné `foto: foto:N`.');
-    expect(p).toContain('Si una muestra un paso, sumá `![](foto:N)` al final de ese paso.');
-    expect(p).toContain('No escribas la sección Fotos: la arma la app.');
+    expect(p).toContain('Si una muestra el plato terminado, poner `foto: foto:N`.');
+    expect(p).toContain('Si una muestra un paso, sumar `![](foto:N)` al final de ese paso.');
+    expect(p).toContain('No escribir la sección Fotos: la arma la app.');
     expect(p.indexOf('Fotos: van 2')).toBeLessThan(p.indexOf('En la receta, cada foto'));
     expect(p.indexOf('En la receta, cada foto')).toBeLessThan(p.indexOf('Formato:'));
   });

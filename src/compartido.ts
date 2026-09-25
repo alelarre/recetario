@@ -26,3 +26,10 @@ export function tituloPorDefecto(fecha: Date): string {
   return `Borrador ${dosCifras(fecha.getDate())}/${dosCifras(fecha.getMonth() + 1)} ` +
     `${dosCifras(fecha.getHours())}:${dosCifras(fecha.getMinutes())}`;
 }
+
+/**
+ * El título que se puso solo, con el día y la hora: no dice nada del plato,
+ * así que al pedirle la receta al agente no viaja.
+ */
+export const esTituloPorDefecto = (titulo: string): boolean =>
+  /^Borrador \d{2}\/\d{2} \d{2}:\d{2}$/.test(titulo.trim());

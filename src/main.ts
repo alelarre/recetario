@@ -2169,7 +2169,10 @@ app.addEventListener('click', async (e) => {
     // nombra con ese número.
     const leidas = await fotosParaElAgente(receta.fotos);
     const numeradas = leidas.map(({ n, id }) => ({ n, id }));
-    const datos = { id, titulo: receta.titulo ?? '', fuente: receta.fuente ?? '', notas: receta.notas };
+    const datos = {
+      id, titulo: receta.titulo ?? '', fuente: receta.fuente ?? '', descripcion: receta.descripcion,
+      rinde: receta.rinde ?? '', ingredientes: receta.ingredientes, preparacion: receta.preparacion, notas: receta.notas
+    };
     const envio: PedidoAlAgente = {
       pedido: pedidoDeConversion(datos, { fotos: numeradas }),
       fotos: leidas.length
