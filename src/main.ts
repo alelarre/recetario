@@ -2591,17 +2591,19 @@ function ponerMenu(abierto: boolean): void {
 
 /**
  * Un destino del lateral. El que ya se está mirando cierra el menú y no
- * navega —con `''` y `#/` es el mismo Inicio—. Con el menú desplegado, el
- * destino toma el lugar de su capa en el historial, así el atrás no pasa por
- * un menú abierto. En pantalla ancha, sin capa, el link navega solo.
- * Devuelve si se ocupó del toque.
+ * navega —con `''` y `#/` es el mismo Inicio—. Con una capa abierta —el menú
+ * desplegado, o cualquier otra con el lateral fijo de pantalla ancha—, el
+ * destino toma el lugar de su capa en el historial, así el atrás no vuelve a
+ * ella. Sin capa, el link navega solo. Devuelve si se ocupó del toque.
  */
 function tocarDestino(href: string): boolean {
   if (vistaActual && mismaPantalla(parsearHash(href), vistaActual)) { ponerMenu(false); return true; }
-  if (nav.capaActual() !== 'menu') return false;
-  // Cerrarlo va después de navegar: con la capa consumida, cerrar no vuelve atrás.
+  const abierta = nav.capaActual();
+  if (abierta === null) return false;
+  // Cerrar el menú va después de navegar: con la capa consumida, cerrar no
+  // vuelve atrás. Lo demás de la capa lo limpia el cambio de pantalla.
   nav.ir(href);
-  mostrarMenu(false);
+  if (abierta === 'menu') mostrarMenu(false);
   return true;
 }
 

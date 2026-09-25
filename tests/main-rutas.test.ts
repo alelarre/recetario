@@ -4695,6 +4695,19 @@ describe('main.ts: las rutas', () => {
       expect(pinturas.length).toBe(antes);
     });
 
+    it('desde 900 px, un destino del lateral fijo con la categoría del plan abierta no deja su capa', async () => {
+      const { abrir, tocar, tocarDestino, pila, app } = await montar({ ancha: true });
+      await abrir('#/plan');
+      await abrir('#/plan/agregar?dia=1&momento=noche');
+      await tocar('elegir-categoria-plan', { nombre: 'Carnes' });
+      expect(await tocarDestino('#/ajustes')).toBe(true);
+      expect(global.location.hash).toBe('#/ajustes');
+      expect(pila().map(e => [e.hash, capa(e.state)])).toEqual([
+        ['', undefined], ['#/plan', undefined], ['#/plan/agregar?dia=1&momento=noche', undefined], ['#/ajustes', undefined]
+      ]);
+      expect(app.innerHTML).toContain('Reindexar');
+    });
+
     it('el visor de la receta: el atrás lo cierra; la cruz consume su entrada', async () => {
       estado.md = DEPOSITO;
       const { abrir, tocar, atras, app, pila } = await montar();
