@@ -579,6 +579,20 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
 }
 
 /**
+ * El arranque, al abrir y desde *Conectar con Google*. Si falla, la pantalla
+ * no queda en «Conectando…»: avisa con Reintentar.
+ */
+function arrancarOAvisar(opciones: { pidiendoPermiso?: boolean } = {}): Promise<void> {
+  return arrancar(opciones).catch(err => {
+    console.error(err);
+    pintar('<div class="cuerpo">' + aviso({
+      texto: 'No se pudo abrir el Recetario.',
+      accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
+    }) + '</div>');
+  });
+}
+
+/**
  * El índice y la primera pantalla. Reindexar rearma el índice entero:
  * cargarlo antes es leer de más, y una planilla de un esquema viejo puede no
  * tener todas sus hojas. Si el reindexado falla, el aviso lo dice y
@@ -1931,15 +1945,18 @@ async function compartirPdfDeLaReceta(accion: 'compartir-pdf' | 'enviar-pdf'): P
       return render();
     }
   }
+  let siguiente: EstadoCompartir | null = { paso: 'error-pdf' };
   try {
     const r = await compartirPdf(plataformaDelNavegador(), estadoDePantalla.pdfListo);
-    estadoDePantalla.compartiendo = r === 'sin-activacion' ? { paso: 'pdf-listo' } : null;
+    siguiente = r === 'sin-activacion' ? { paso: 'pdf-listo' } : null;
   } catch (err) {
     console.error(err);
-    estadoDePantalla.compartiendo = { paso: 'error-pdf' };
   }
-  if (!estadoDePantalla.compartiendo) { estadoDePantalla.pdfListo = null; nav.cerrarCapa('compartir'); }
-  return render();
+  // Mandarlo espera al menú Compartir del sistema: si en el medio se cerró
+  // la ficha, o se abrió otra, el resultado no es de ésa.
+  if (apertura !== aperturaDeCompartir || !estadoDePantalla.compartiendo) return;
+  if (!siguiente) estadoDePantalla.pdfListo = null;
+  return seguirCompartiendo(apertura, siguiente);
 }
 
 /** La receta abierta como link o como texto. */
@@ -2043,7 +2060,7 @@ const accionesDeAjustes: SeccionDeAcciones = {
     return render();
   },
   'reindexar-al-arrancar': () => terminarArranque(true),
-  conectar: () => arrancar({ pidiendoPermiso: true }),
+  conectar: () => arrancarOAvisar({ pidiendoPermiso: true }),
   'cambiar-carpeta': () => { nav.ir('#/carpeta?cambiando=1'); },
   'carpeta-sugerida': (boton) => {
     estadoDePantalla.selector.confirmando = { id: boton.dataset['id'] ?? '', nombre: boton.dataset['nombre'] ?? '' };
@@ -2437,13 +2454,7 @@ app.addEventListener('change', (e) => {
 const compartido = hashDeCompartido(location.search);
 nav.arrancar(compartido ? location.pathname + compartido : undefined);
 
-arrancar().catch(err => {
-  console.error(err);
-  pintar('<div class="cuerpo">' + aviso({
-    texto: 'No se pudo abrir el Recetario.',
-    accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
-  }) + '</div>');
-});
+void arrancarOAvisar();
 
 // El caché de fotos deja de ser desalojable con la PWA instalada: en Android,
 // Chrome lo concede solo. Se pide una vez y no se mira el resultado —que no se

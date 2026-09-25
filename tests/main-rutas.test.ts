@@ -22,9 +22,16 @@ vi.mock('../src/ui/tokens.css', () => ({}));
 vi.mock('../src/ui/base.css', () => ({}));
 // Los tres módulos de Google se simulan, pero conservan sus clases de error:
 // `main.ts` las usa para reconocer una sesión vencida.
+// Con `sesion.hay` en `false`, no hay sesión previa: la app abre en la
+// pantalla de conexión y el permiso se pide con el botón.
+const sesion = vi.hoisted(() => ({ hay: true }));
 vi.mock('../src/auth.js', async original => ({
   ...await original<typeof import('../src/auth.js')>(),
-  crearAuth: () => ({ conectar: async () => {}, token: async () => 'tok', olvidar: () => {} })
+  crearAuth: () => ({
+    conectar: async () => {},
+    token: async () => { if (!sesion.hay) throw new Error('sin sesión'); return 'tok'; },
+    olvidar: () => {}
+  })
 }));
 vi.mock('../src/drive.js', async original => ({ ...await original<typeof import('../src/drive.js')>(), crearDrive: () => ({ cuenta: async () => 'alguien@gmail.com' }) }));
 vi.mock('../src/sheets.js', async original => ({ ...await original<typeof import('../src/sheets.js')>(), crearSheets: () => ({}) }));
@@ -349,6 +356,7 @@ describe('main.ts: las rutas', () => {
     limpiarGlobales();
     Object.assign(estado, estadoInicial());
     Object.assign(picker, { elegida: null, falla: false });
+    sesion.hay = true;
     achicado.espera = null;
     vi.unstubAllGlobals();
     delete (global as unknown as Record<string, unknown>)['FormData'];
@@ -2523,6 +2531,29 @@ describe('main.ts: las rutas', () => {
       await esperar();
       expect(compartidos).toHaveLength(0);
       expect(app.innerHTML).not.toContain('hoja-compartir');
+    });
+
+    it('si mientras se mandaba el PDF la ficha se cerró y se abrió otra, el resultado no la pisa', async () => {
+      estado.md = PASOS;
+      const envios: (() => void)[] = [];
+      vi.stubGlobal('navigator', { share: () => new Promise<void>(r => { envios.push(r); }), canShare: () => true });
+      const { abrir, tocar, tocarSinCerrar, atras, app, pila } = await montar();
+      await abrir('#/r/f1');
+      await tocar('compartir');
+      const mandando = tocarSinCerrar('compartir-pdf');
+      await esperar();
+      expect(envios).toHaveLength(1);
+      await atras();
+      await tocar('compartir');
+      expect(app.innerHTML).toContain('hoja-compartir');
+
+      envios[0]?.();
+      await mandando;
+      await esperar();
+      // La ficha nueva sigue en sus opciones, con su capa.
+      expect(app.innerHTML).toContain('hoja-compartir');
+      expect(app.innerHTML).not.toContain('Armando el PDF…');
+      expect(pila().map(e => (e.state as { capa?: unknown } | null)?.capa)).toEqual([undefined, undefined, 'compartir']);
     });
 
     it('texto: lo comparte con el título adentro', async () => {
@@ -5565,6 +5596,24 @@ describe('main.ts: las rutas', () => {
       const { pinturas } = await montar({ hash: '#/ajustes' });
       expect(global.location.hash).toBe('#/carpeta');
       expect(pinturas.filter(p => p.html.includes('Tus recetas en Drive'))).toHaveLength(1);
+    });
+  });
+
+  describe('conectar desde la pantalla de conexión', () => {
+    it('si el arranque falla después del permiso, avisa con Reintentar y no queda en «Conectando…»', async () => {
+      sesion.hay = false;
+      const original = storeFake.arrancar;
+      try {
+        const { app, tocar } = await montar({ hash: '#/' });
+        expect(app.innerHTML).toContain('data-accion="conectar"');
+        storeFake.arrancar = async () => { throw new Error('sin red'); };
+        await tocar('conectar');
+        expect(app.innerHTML).not.toContain('Conectando…');
+        expect(app.innerHTML).toContain('No se pudo abrir el Recetario.');
+        expect(app.innerHTML).toContain('data-accion="reconectar"');
+      } finally {
+        storeFake.arrancar = original;
+      }
     });
   });
 
