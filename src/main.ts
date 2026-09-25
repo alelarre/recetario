@@ -48,18 +48,17 @@ import { precargar, generar } from './pdf/generar.js';
 import {
   compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador, leerPortapapeles, enviarAlAgente
 } from './compartir.js';
-import type { FotosDelPedido } from './compartir.js';
 import { esRecetaEnMd, recetaRecibida, aplicarPegada, pedidoDeConversion } from './conversion.js';
 import { desdeCompartido, tituloPorDefecto } from './compartido.js';
 import { codificar, urlDeLink } from './link-receta.js';
 import { textoReceta } from './texto-receta.js';
-import type { EstadoCompartir } from './ui/compartir.js';
 import type { Ruta } from './ui/router.js';
+import { estadoNuevo, TRAMO } from './estado-pantalla.js';
+import type { EstadoDePantalla, PedidoAlAgente } from './estado-pantalla.js';
 import { achicar } from './fotos.js';
 import type { OpcionesAchicar } from './fotos.js';
 import { crearImagenes, conTope } from './imagenes.js';
 import type { DatosFormulario } from './ui/editor.js';
-import type { EstadoVisor } from './ui/visor.js';
 import type { ResultadoArranque, Progreso } from './store.js';
 import type { CambiosDeFotos, Entrada, FotoDeReceta, Momento, Plan, Receta } from './tipos.js';
 
@@ -141,28 +140,18 @@ let estadoArranque: ResultadoArranque | undefined;
 let vistaActual: Ruta | null = null;
 /** El id de la ruta que se está mirando: la receta o la categoría. */
 const idActual = (): string => vistaActual?.params['id'] ?? '';
-let tagsActivos: string[] = [];   // filtro de la vista de categoría; se limpia al cambiar de vista
-let duracionesActivas: string[] = [];   // filtro de duración de la categoría o la lista por tag
-let orden: Orden = 'alfa';               // el conmutador de las listas; vuelve a A–Z al cambiar de pantalla
+/** Lo que es de la pantalla que se mira. Cambiar de pantalla lo reemplaza entero. */
+let estadoDePantalla: EstadoDePantalla = estadoNuevo();
 
-/**
- * Cuántas tarjetas dibuja la categoría. El tramo no es una lectura de red —el
- * índice ya está entero en memoria—: es cuántas se dibujan de una vez.
- */
-const TRAMO = 30;
-let visibles = TRAMO;
 let observadorTramo: IntersectionObserver | null = null;
 
 /**
- * La pantalla de la carpeta base. Las sugerencias vienen del arranque; que se
- * esté cambiando la carpeta, de la ruta. La app no lista nada del Drive: la
- * carpeta se crea, o se elige con el Picker de Google.
+ * Las carpetas que la pantalla de la carpeta base ofrece. Vienen del arranque y
+ * no de la pantalla: sobreviven a salir y volver. Que se esté cambiando la
+ * carpeta sale de la ruta. La app no lista nada del Drive: la carpeta se crea,
+ * o se elige con el Picker de Google.
  */
-const selector = {
-  sugerencias: [] as CarpetaSimple[],
-  confirmando: null as CarpetaSimple | null,
-  error: ''
-};
+let sugerenciasDeCarpeta: CarpetaSimple[] = [];
 
 /** Se entró desde Ajustes a cambiar la carpeta, y no por no tener ninguna. */
 const cambiandoCarpeta = (): boolean => vistaActual?.params['cambiando'] === '1';
@@ -183,22 +172,21 @@ async function usarCarpeta(elegida: CarpetaSimple): Promise<void> {
     location.reload();
   } catch (err) {
     console.error(err);
-    selector.error = 'No se pudo preparar la carpeta. Revisá la conexión.';
+    estadoDePantalla.selector.error = 'No se pudo preparar la carpeta. Revisá la conexión.';
     await render();
   }
 }
 
-/** El menú lateral desplegado. Sólo aplica en pantalla angosta: desde 900 px es fijo. */
+/**
+ * El menú lateral desplegado. Sólo aplica en pantalla angosta: desde 900 px es
+ * fijo. Va aparte del estado de la pantalla porque lo cambian el gesto y la
+ * pregunta de cambios sin guardar, sin dibujar nada; navegar lo cierra igual.
+ */
 let menuAbierto = false;
 
 /**
- * El editor abierto: su hash y cómo estaba el formulario al dibujarlo. Salir
- * con el formulario distinto pregunta antes (C04.1.1). La comparación es contra
- * esta foto, no contra el `.md` de Drive: no se lee nada para decidir.
- */
-let editorAbierto: { hash: string; formulario: string } | null = null;
-/**
- * La receta abierta, leída una vez. La reutilizan los redibujados —marcar un
+ * La receta abierta, leída una vez. Es un caché: sobrevive entre las pantallas
+ * de la misma receta. La reutilizan los redibujados —marcar un
  * paso, conmutar, tocar el sol: cada lectura era un pedido a Drive que se
  * sentía en cada toque— y el ir y venir entre la receta, su modo cocina y su
  * editor, que es la misma receta. Salir a cualquier otra pantalla la descarta:
@@ -206,43 +194,29 @@ let editorAbierto: { hash: string; formulario: string } | null = null;
  */
 let recetaLeida: { id: string; entrada: Entrada | null; receta: Receta } | null = null;
 
-/** La estrella de favorito está escribiendo: dura lo que tarda Drive. */
-let marcandoFavorito = false;
-/** Lo último que falló al marcar favorito. Lo dibuja la receta, arriba de la ficha. */
-let errorFavorito = '';
 /**
- * Un aviso para la pantalla a la que se va, y el que la pantalla actual trajo
- * al llegar: cómo terminó el pedido al agente se lee en la receta, porque el
- * editor desde el que se mandó ya se cerró. Dura esa llegada.
+ * Un aviso y un pedido al agente que no salió, para la pantalla a la que se
+ * va. Sobreviven al cambio de pantalla a propósito: al llegar pasan a ser el
+ * `avisoDeLlegada` y el `pedidoPendiente` de la pantalla nueva, y acá se
+ * vacían.
  */
 let avisoAlLlegar = '';
-let avisoDeLlegada = '';
-/** El pedido al agente, listo para mandar: el texto y las fotos. */
-type PedidoAlAgente = { pedido: string; fotos: FotosDelPedido | null };
-/**
- * El pedido que no salió —el navegador ya no tenía la activación del toque—,
- * para la pantalla a la que se va y el que la receta ofrece mandar con un
- * toque nuevo. Como `pdfListo` con *Enviar PDF*: no se vuelve a armar.
- */
 let pedidoAlLlegar: PedidoAlAgente | null = null;
-let pedidoPendiente: PedidoAlAgente | null = null;
 const PEDIDO_COPIADO = 'Pedido copiado: pegalo en el agente';
 
 /**
  * El plan de la semana, leído de su `.md` una vez. Mismo criterio que la
- * receta: se conserva mientras se navega entre las tres pantallas del
- * plan y se descarta al salir a cualquier otra.
+ * receta: es un caché que se conserva mientras se navega entre las tres
+ * pantallas del plan y se descarta al salir a cualquier otra.
  */
 let planLeido: Plan | null = null;
 const PANTALLAS_DE_PLAN: readonly Ruta['vista'][] = ['plan', 'plan-agregar', 'plan-compras'];
-/** Reiniciar el plan pregunta antes: vacía los siete días. */
-let confirmandoReinicio = false;
-/** Lo último que falló al escribir el plan. La grilla sigue mostrando lo que dice Drive. */
+/**
+ * Lo último que falló al escribir el plan. La grilla sigue mostrando lo que
+ * dice Drive. Sobrevive entre las pantallas del plan, como el plan leído:
+ * agregar escribe y cierra, y el aviso va en el plan.
+ */
 let errorPlan = '';
-/** Lo escrito en la caja de la pantalla de agregar. Vive acá y no en el DOM: el bloque se redibuja solo. */
-let consultaPlan = '';
-/** La categoría elegida en la grilla de la pantalla de agregar, si hay una. */
-let categoriaPlan: string | null = null;
 /**
  * La lista de compras ya armada, con la clave del plan del que salió:
  * redibujar —abrir la ficha de compartir— no vuelve a leer las recetas.
@@ -507,8 +481,6 @@ let cuenta = '';
 /** El progreso del reindexado en curso, o `null`. Mientras corre no se guarda ni se borra. */
 let reindexando: Progreso | null = null;
 
-/** El visor de fotos de una receta abierto: las URLs que recorre y en cuál está. */
-let visor: EstadoVisor | null = null;
 /**
  * El deslizamiento cambió de foto: el click que viene después del `touchend`
  * no cierra el visor, que si no se cerraría en cada gesto.
@@ -521,26 +493,19 @@ let visorDesde: number | null = null;
  * Las fotos que el editor tiene en memoria hasta Guardar: el blob de
  * cada número nuevo, su object URL para la miniatura, y el id de Drive de la
  * que ya se subió en un intento que falló después —reintentar no la vuelve a
- * subir—.
+ * subir—. Va aparte del estado de la pantalla porque completar las fotos de
+ * cualquier dibujo lo lee; vive lo que dura el editor y se vacía al salir.
  */
 const fotosEditor = {
   nuevas: new Map<number, Blob>(),
   urls: new Map<number, string>(),
   subidas: new Map<number, string>()
 };
-/** La foto propia recién elegida para una categoría: se sube al guardarla. */
-let fotoPropia: { blob: Blob; url: string } | null = null;
-
-/**
- * Cuántas fotos dejó el service worker del menú Compartir para la receta nueva
- * que se está abriendo, todavía sin leer. Se leen una sola vez: un redibujado
- * del editor no las vuelve a sumar.
- */
-let compartidasPorLeer = 0;
 /**
  * La receta `.md` que llegó compartida. Vive mientras la ruta la nombra
- * (`recibida=1`): el editor la aplica al abrir, y en una receta nueva es
- * también la base de lo que el editor no muestra.
+ * (`recibida=1`), y por eso sobrevive al cambio de pantalla que la abre: el
+ * editor la aplica al abrir, y en una receta nueva es también la base de lo
+ * que el editor no muestra.
  */
 let recibida: Receta | null = null;
 
@@ -582,14 +547,8 @@ async function fotosParaElAgente(fotos: readonly FotoDeReceta[]): Promise<{ n: n
 /** El modo cocina: paso actual, marcados, conmutador y pantalla encendida. */
 const cocina = crearControlCocina();
 
-/** La ficha de compartir de la receta abierta, o `null`. */
-let compartiendo: EstadoCompartir | null = null;
-/** El PDF ya armado, para *Enviar PDF* cuando Chrome perdió el toque: no se vuelve a generar. */
-let pdfListo: File | null = null;
 /** Lo que la ficha de compartir escucha. Con el PDF armándose, ninguna responde. */
 const ACCIONES_DE_LA_FICHA = ['compartir', 'cerrar-compartir', 'compartir-pdf', 'enviar-pdf', 'compartir-link', 'compartir-texto'];
-
-/** El mensaje de un error desconocido, sin asumir que es un Error. */
 
 /** Lo que verificó el arranque, para la ficha «Al abrir» de Ajustes. */
 const informeArranque = () =>
@@ -619,7 +578,7 @@ function datosDelFormulario(): DatosFormulario {
 /** Recién dibujado, el editor no tiene cambios: su formulario es la foto contra la que se compara. */
 const abrirEditor = (html: string): void => {
   pintar(html);
-  editorAbierto = { hash: location.hash, formulario: formularioActual() };
+  estadoDePantalla.editorAbierto = { hash: location.hash, formulario: formularioActual() };
 };
 
 document.addEventListener('visibilitychange', () => {
@@ -662,7 +621,7 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
   // Los tres estados que no llegan a 'listo' avisan en castellano, con su
   // control: ninguno muestra el mensaje crudo de Google (R1).
   if (estadoArranque.estado === 'elegir-carpeta') {
-    selector.sugerencias = estadoArranque.sugerencias.map(c => ({ id: c.id, nombre: c.name ?? '' }));
+    sugerenciasDeCarpeta = estadoArranque.sugerencias.map(c => ({ id: c.id, nombre: c.name ?? '' }));
     location.replace('#/carpeta');
     router.iniciar();
     return;
@@ -761,7 +720,7 @@ function observarTramo(): void {
   if (!spin) return;
   observadorTramo = new IntersectionObserver(entradas => {
     if (!entradas.some(e => e.isIntersecting)) return;
-    visibles += TRAMO;
+    estadoDePantalla.visibles += TRAMO;
     void render();
   });
   observadorTramo.observe(spin);
@@ -773,8 +732,8 @@ function observarTramo(): void {
  * ahí el orden por duración se ignora en vez de quedar pegado sin control.
  */
 function listaOrdenada(porTags: Entrada[]): { entradas: Entrada[]; ordenEfectivo: Orden } {
-  const ordenEfectivo: Orden = contarDuraciones(porTags).length || duracionesActivas.length ? orden : 'alfa';
-  return { entradas: ordenarRecetas(filtrarPorDuracion(porTags, duracionesActivas), ordenEfectivo), ordenEfectivo };
+  const ordenEfectivo: Orden = contarDuraciones(porTags).length || estadoDePantalla.duracionesActivas.length ? estadoDePantalla.orden : 'alfa';
+  return { entradas: ordenarRecetas(filtrarPorDuracion(porTags, estadoDePantalla.duracionesActivas), ordenEfectivo), ordenEfectivo };
 }
 
 /**
@@ -810,8 +769,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   // atrás ya cambiaron la URL. Así que no se dibuja la pantalla nueva —el
   // formulario sigue en el DOM con lo escrito—, la URL vuelve a ser la del
   // editor, y se pregunta.
-  if (cambiaDePantalla && editorAbierto && formularioActual() !== editorAbierto.formulario) {
-    history.pushState(null, '', editorAbierto.hash);
+  if (cambiaDePantalla && estadoDePantalla.editorAbierto && formularioActual() !== estadoDePantalla.editorAbierto.formulario) {
+    history.pushState(null, '', estadoDePantalla.editorAbierto.hash);
     // Si se llegó desde un destino del menú, el menú se cierra: la pregunta
     // queda en el formulario, debajo del velo.
     ponerMenu(false);
@@ -826,43 +785,28 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   // se entra a otra categoría y no se ve nada porque quedó filtrando por un
   // tag que ahí no existe, sin forma de darse cuenta.
   if (cambiaDePantalla) {
-    editorAbierto = null;
+    estadoDePantalla = {
+      ...estadoNuevo(),
+      compartidasPorLeer: ruta.vista === 'nueva' ? Number(ruta.params['fotos'] ?? 0) || 0 : 0,
+      avisoDeLlegada: avisoAlLlegar,
+      pedidoPendiente: pedidoAlLlegar
+    };
+    avisoAlLlegar = '';
+    pedidoAlLlegar = null;
+    // Lo que sobrevive a la pantalla, cada cosa hasta donde le toca.
     if (!ruta.params['recibida']) recibida = null;
-    compartidasPorLeer = ruta.vista === 'nueva' ? Number(ruta.params['fotos'] ?? 0) || 0 : 0;
     if (!PANTALLAS_DE_RECETA.includes(ruta.vista)) recetaLeida = null;
-    // El aviso de una escritura que falló sobrevive a la navegación entre las
-    // pantallas del plan: agregar escribe y cierra, y el aviso va en el plan.
     if (!PANTALLAS_DE_PLAN.includes(ruta.vista)) { planLeido = null; comprasLeidas = null; errorPlan = ''; }
-    confirmandoReinicio = false;
-    consultaPlan = '';
-    categoriaPlan = null;
-    tagsActivos = [];
-    duracionesActivas = [];
-    orden = 'alfa';
-    visibles = TRAMO;
     // Navegar cierra el menú: se abrió para elegir a dónde ir.
     menuAbierto = false;
-    // Salir de la pantalla de la carpeta la cierra: lo que se estaba por usar no sigue.
-    selector.confirmando = null;
-    selector.error = '';
     // Las imágenes de la pantalla anterior se sueltan: el visor es de esa pantalla.
     imagenes.soltarImagenes();
-    visor = null;
     // Las fotos del editor viven lo que la pantalla: salir sin guardar no deja
     // nada en Drive, y volver a entrar abre con lo que dice el `.md`.
     fotosEditor.nuevas.clear();
     fotosEditor.urls.clear();
     fotosEditor.subidas.clear();
-    fotoPropia = null;
     cocina.reiniciar();
-    compartiendo = null;
-    pdfListo = null;
-    marcandoFavorito = false;
-    errorFavorito = '';
-    avisoDeLlegada = avisoAlLlegar;
-    avisoAlLlegar = '';
-    pedidoPendiente = pedidoAlLlegar;
-    pedidoAlLlegar = null;
     // La pantalla nueva empieza arriba: el hash no cambia el scroll, así que
     // entrar al modo cocina desde el pie de la receta abría los ingredientes
     // ya scrolleados. La llamada es opcional por lo mismo que
@@ -885,12 +829,12 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
 
     case 'categoria': {
       const nombre = ruta.params['nombre'] ?? '';
-      const porTags = store.buscar({ categoria: nombre, tags: tagsActivos });
+      const porTags = store.buscar({ categoria: nombre, tags: estadoDePantalla.tagsActivos });
       const { entradas, ordenEfectivo } = listaOrdenada(porTags);
       pintar(renderCategoria({
-        nombre, entradas: entradas.slice(0, visibles), total: entradas.length,
-        visibles: Math.min(visibles, entradas.length), tagsActivos, tags: store.tagsDe(nombre),
-        duraciones: contarDuraciones(porTags), duracionesActivas, orden: ordenEfectivo
+        nombre, entradas: entradas.slice(0, estadoDePantalla.visibles), total: entradas.length,
+        visibles: Math.min(estadoDePantalla.visibles, entradas.length), tagsActivos: estadoDePantalla.tagsActivos, tags: store.tagsDe(nombre),
+        duraciones: contarDuraciones(porTags), duracionesActivas: estadoDePantalla.duracionesActivas, orden: ordenEfectivo
       }));
       return observarTramo();
     }
@@ -902,13 +846,13 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // Borradores es la misma lista con `borrador`, como destino del menú.
       const enElMenu = ruta.vista === 'borradores';
       const nombre = enElMenu ? 'borrador' : ruta.params['nombre'] ?? '';
-      const activos = tagsActivos.includes(nombre) ? tagsActivos : [nombre, ...tagsActivos];
+      const activos = estadoDePantalla.tagsActivos.includes(nombre) ? estadoDePantalla.tagsActivos : [nombre, ...estadoDePantalla.tagsActivos];
       const porTags = store.buscar({ tags: activos });
       const { entradas, ordenEfectivo } = listaOrdenada(porTags);
       pintar(renderTag({
-        tag: nombre, entradas: entradas.slice(0, visibles), total: entradas.length,
-        visibles: Math.min(visibles, entradas.length), tagsActivos: activos, tags: store.tagsDe(),
-        duraciones: contarDuraciones(porTags), duracionesActivas, orden: ordenEfectivo,
+        tag: nombre, entradas: entradas.slice(0, estadoDePantalla.visibles), total: entradas.length,
+        visibles: Math.min(estadoDePantalla.visibles, entradas.length), tagsActivos: activos, tags: store.tagsDe(),
+        duraciones: contarDuraciones(porTags), duracionesActivas: estadoDePantalla.duracionesActivas, orden: ordenEfectivo,
         ...(enElMenu ? { titulo: 'Borradores', menu: { abierto: menuAbierto, borradores: cuantosBorradores() } } : {})
       }));
       return observarTramo();
@@ -916,7 +860,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
 
     case 'resultados': {
       const q = ruta.params['q'] ?? '';
-      return pintar(renderResultados({ consulta: q, grupos: store.buscarPorTexto(q), orden }));
+      return pintar(renderResultados({ consulta: q, grupos: store.buscarPorTexto(q), orden: estadoDePantalla.orden }));
     }
 
     case 'receta':
@@ -924,16 +868,16 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         const { entrada, receta } = await recetaDePantalla(ruta.params['id'] ?? '');
         pintar(renderReceta({
           entrada, receta,
-          ...(visor ? { visor } : {}),
-          ...(compartiendo ? { compartir: compartiendo } : {}),
-          ...(marcandoFavorito ? { favorito: 'escribiendo' as const } : {}),
-          ...(errorFavorito ? { error: errorFavorito } : {}),
-          ...(pedidoPendiente
+          ...(estadoDePantalla.visor ? { visor: estadoDePantalla.visor } : {}),
+          ...(estadoDePantalla.compartiendo ? { compartir: estadoDePantalla.compartiendo } : {}),
+          ...(estadoDePantalla.marcandoFavorito ? { favorito: 'escribiendo' as const } : {}),
+          ...(estadoDePantalla.errorFavorito ? { error: estadoDePantalla.errorFavorito } : {}),
+          ...(estadoDePantalla.pedidoPendiente
             ? { aviso: {
                 texto: 'La receta quedó guardada. Tocá para mandarla al agente.',
                 accion: { etiqueta: 'Mandar al agente', accion: 'mandar-al-agente' }
               } }
-            : avisoDeLlegada ? { aviso: { texto: avisoDeLlegada } } : {})
+            : estadoDePantalla.avisoDeLlegada ? { aviso: { texto: estadoDePantalla.avisoDeLlegada } } : {})
         }));
         return observarTitulo();
       } catch (err) {
@@ -957,9 +901,9 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       return dibujarAjustes();
 
     case 'carpeta': {
-      const { error, ...resto } = selector;
+      const { error, confirmando } = estadoDePantalla.selector;
       return pintar(renderSelector({
-        ...resto,
+        sugerencias: sugerenciasDeCarpeta, confirmando,
         cambiando: ruta.params['cambiando'] === '1',
         // Sin API key el Picker no abre: queda sólo crear.
         conPicker: Boolean(API_KEY),
@@ -990,7 +934,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         return pintar(renderPlan({
           plan, entradas: store.entradas(), hoy: diaDeHoy(),
           borradores: cuantosBorradores(), menuAbierto,
-          ...(confirmandoReinicio ? { confirmandoReinicio: true } : {}),
+          ...(estadoDePantalla.confirmandoReinicio ? { confirmandoReinicio: true } : {}),
           ...(errorPlan ? { error: errorPlan } : {})
         }));
       } catch (err) {
@@ -1005,14 +949,14 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         dia: Number(ruta.params['dia'] ?? 0),
         momento: (ruta.params['momento'] ?? 'noche') as Momento,
         menuDiario: delMenuDiario(), categorias: store.categorias(),
-        categoriaElegida: categoriaPlan, deLaCategoria: categoriaPlan ? delaCategoria(categoriaPlan) : [],
-        consulta: consultaPlan, grupos: store.buscarPorTexto(consultaPlan)
+        categoriaElegida: estadoDePantalla.categoriaPlan, deLaCategoria: estadoDePantalla.categoriaPlan ? delaCategoria(estadoDePantalla.categoriaPlan) : [],
+        consulta: estadoDePantalla.consultaPlan, grupos: store.buscarPorTexto(estadoDePantalla.consultaPlan)
       }));
 
     case 'plan-compras':
       try {
         const lista = await comprasDelPlan(await planDePantalla());
-        return pintar(renderCompras({ lista, ...(compartiendo ? { compartir: compartiendo } : {}) }));
+        return pintar(renderCompras({ lista, ...(estadoDePantalla.compartiendo ? { compartir: estadoDePantalla.compartiendo } : {}) }));
       } catch (err) {
         console.error(err);
         return enPantalla('No se pudo armar la lista de compras.');
@@ -1032,7 +976,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
         }));
         // Lo recibido cuenta como cambio desde que se abre: la foto contra la
         // que se compara queda vacía, así que cualquier formulario difiere.
-        if (conRecibida && editorAbierto) editorAbierto.formulario = '';
+        if (conRecibida && estadoDePantalla.editorAbierto) estadoDePantalla.editorAbierto.formulario = '';
         return;
       } catch (err) {
         console.error(err);
@@ -1045,12 +989,12 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       // a las notas, se abre en el editor que le toca. Las fotos que llegaron
       // con ella no son de ninguna receta y se descartan.
       if (esRecetaEnMd(texto)) {
-        compartidasPorLeer = 0;
+        estadoDePantalla.compartidasPorLeer = 0;
         await imagenes.descartarCompartidas().catch(err => console.error(err));
         recibirReceta(texto);
         return;
       }
-      const noSeLeyo = compartidasPorLeer ? await leerCompartidas() : false;
+      const noSeLeyo = estadoDePantalla.compartidasPorLeer ? await leerCompartidas() : false;
       // El mismo formulario que editar, sin entrada (todavía no hay archivo en
       // Drive) y con una receta vacía —o la recibida— en vez de una leída. Lo
       // compartido reparte el link a la fuente y el resto del texto a Notas.
@@ -1072,7 +1016,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       }));
       // Lo que llegó de otra app cuenta como cambio desde que se abre: salir
       // sin guardar lo perdería.
-      if (llegoDeAfuera(ruta) && editorAbierto) editorAbierto.formulario = '';
+      if (llegoDeAfuera(ruta) && estadoDePantalla.editorAbierto) estadoDePantalla.editorAbierto.formulario = '';
       if (noSeLeyo) avisarEnElFormulario(NO_SE_LEYO_UNA_FOTO);
       return;
     }
@@ -1089,8 +1033,8 @@ const llegoDeAfuera = (ruta: Ruta | null): boolean =>
  * y el caché se vacía. Devuelve si alguna no se pudo leer.
  */
 async function leerCompartidas(): Promise<boolean> {
-  const cantidad = compartidasPorLeer;
-  compartidasPorLeer = 0;
+  const cantidad = estadoDePantalla.compartidasPorLeer;
+  estadoDePantalla.compartidasPorLeer = 0;
   let noSeLeyo = false;
   const destapar = tapar();
   try {
@@ -1560,8 +1504,8 @@ const fotosMostrables = (fotos: FotoDeReceta[]): { n: number; url: string }[] =>
 function abrirVisor(fotos: FotoDeReceta[], n: number | undefined, suelta?: string | undefined): void {
   const lista = fotosMostrables(fotos);
   const i = n === undefined ? -1 : lista.findIndex(f => f.n === n);
-  if (i >= 0) visor = { urls: lista.map(f => f.url), i };
-  else if (suelta) visor = { urls: [suelta], i: 0 };
+  if (i >= 0) estadoDePantalla.visor = { urls: lista.map(f => f.url), i };
+  else if (suelta) estadoDePantalla.visor = { urls: [suelta], i: 0 };
 }
 
 /**
@@ -1571,7 +1515,7 @@ function abrirVisor(fotos: FotoDeReceta[], n: number | undefined, suelta?: strin
 function dibujarVisor(): void {
   if (!enElEditor()) { void render(); return; }
   document.querySelector('#app .visor')?.remove();
-  if (visor) document.querySelector('[data-formulario]')?.insertAdjacentHTML('beforeend', renderVisor(visor));
+  if (estadoDePantalla.visor) document.querySelector('[data-formulario]')?.insertAdjacentHTML('beforeend', renderVisor(estadoDePantalla.visor));
   void completarFotos();
 }
 
@@ -1603,7 +1547,7 @@ function revisarCategoria(): void {
   const linea = form.querySelector<HTMLElement>('.error-nombre');
   if (linea) { linea.hidden = !problema; linea.textContent = problema; }
   const guardar = document.querySelector<HTMLButtonElement>('#app [data-accion="guardar-categoria"]');
-  if (guardar) guardar.disabled = !!problema || formularioActual() === editorAbierto?.formulario;
+  if (guardar) guardar.disabled = !!problema || formularioActual() === estadoDePantalla.editorAbierto?.formulario;
 }
 
 /** Lo que el formulario de la categoría tiene escrito. */
@@ -1749,7 +1693,7 @@ async function guardarEditor(
         // con el link de cada foto que se acaba de subir en su línea.
         recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: guardada.receta };
       }
-      editorAbierto = null;
+      estadoDePantalla.editorAbierto = null;
     } catch (err) {
       console.error(err);
       return conError(porQueNoGuardo(err));
@@ -1783,7 +1727,7 @@ app.addEventListener('click', async (e) => {
     const id = img.dataset['drive'] ?? '';
     const suelta = id ? linkDeFoto(id) : img.getAttribute('src') ?? '';
     if (!suelta) return;
-    visor = { urls: [suelta], i: 0 };
+    estadoDePantalla.visor = { urls: [suelta], i: 0 };
     return render();
   }
   if (!boton) return;
@@ -1793,8 +1737,8 @@ app.addEventListener('click', async (e) => {
     // Desde el Recetario el carrusel no filtra nada ahí mismo: navega a la
     // lista por tag, que es donde ese chip tiene algo que mostrar.
     if (vistaActual?.vista === 'recetario') { location.hash = `#/t/${encodeURIComponent(tag)}`; return; }
-    tagsActivos = tagsActivos.includes(tag) ? tagsActivos.filter(t => t !== tag) : [...tagsActivos, tag];
-    visibles = TRAMO;
+    estadoDePantalla.tagsActivos = estadoDePantalla.tagsActivos.includes(tag) ? estadoDePantalla.tagsActivos.filter(t => t !== tag) : [...estadoDePantalla.tagsActivos, tag];
+    estadoDePantalla.visibles = TRAMO;
     return render();
   }
 
@@ -1802,41 +1746,41 @@ app.addEventListener('click', async (e) => {
 
   if (accion === 'filtrar-duracion') {
     const valor = boton.dataset['valor'] ?? '';
-    duracionesActivas = duracionesActivas.includes(valor)
-      ? duracionesActivas.filter(d => d !== valor) : [...duracionesActivas, valor];
-    visibles = TRAMO;
+    estadoDePantalla.duracionesActivas = estadoDePantalla.duracionesActivas.includes(valor)
+      ? estadoDePantalla.duracionesActivas.filter(d => d !== valor) : [...estadoDePantalla.duracionesActivas, valor];
+    estadoDePantalla.visibles = TRAMO;
     return render();
   }
   if (accion === 'ordenar') {
-    orden = boton.dataset['valor'] === 'duracion' ? 'duracion' : 'alfa';
-    visibles = TRAMO;
+    estadoDePantalla.orden = boton.dataset['valor'] === 'duracion' ? 'duracion' : 'alfa';
+    estadoDePantalla.visibles = TRAMO;
     return render();
   }
 
   // Mientras se arma el PDF la ficha no acepta otro toque: cerrar con el velo
   // no frena `generar`, y al terminar el PDF se mandaría igual.
-  if (compartiendo?.paso === 'generando' && ACCIONES_DE_LA_FICHA.includes(accion ?? '')) return;
+  if (estadoDePantalla.compartiendo?.paso === 'generando' && ACCIONES_DE_LA_FICHA.includes(accion ?? '')) return;
 
   if (accion === 'compartir') {
-    compartiendo = { paso: 'opciones' };
+    estadoDePantalla.compartiendo = { paso: 'opciones' };
     // Lo pesado del PDF empieza a bajar ya: el toque que lo genera es otro.
     void precargar().catch(() => {});
     return render();
   }
   if (accion === 'cerrar-compartir') {
-    compartiendo = null;
-    pdfListo = null;
+    estadoDePantalla.compartiendo = null;
+    estadoDePantalla.pdfListo = null;
     return render();
   }
   if (accion === 'compartir-pdf' || accion === 'enviar-pdf') {
     if (!recetaLeida) return;
     const { entrada, receta } = recetaLeida;
-    if (accion === 'compartir-pdf' || !pdfListo) {
-      compartiendo = { paso: 'generando' };
+    if (accion === 'compartir-pdf' || !estadoDePantalla.pdfListo) {
+      estadoDePantalla.compartiendo = { paso: 'generando' };
       await render();
       // Si mientras se armaba se navegó, `render` ya cerró la ficha: el PDF es
       // de una pantalla que no está, y aplicarlo mostraría «listo» en otra receta.
-      const sigueGenerando = (): boolean => compartiendo?.paso === 'generando';
+      const sigueGenerando = (): boolean => estadoDePantalla.compartiendo?.paso === 'generando';
       try {
         // El PDF lleva las fotos adentro: las de Drive salen del caché de
         // `imagenes`, y el canvas para achicarlas es el mismo de siempre.
@@ -1845,39 +1789,39 @@ app.addEventListener('click', async (e) => {
           achicar: (foto, maximo) => achicarFoto(foto, { maximo })
         });
         if (!sigueGenerando()) return;
-        pdfListo = new File([blob], slugArchivo(receta.titulo).replace(/\.md$/, '.pdf'), { type: 'application/pdf' });
+        estadoDePantalla.pdfListo = new File([blob], slugArchivo(receta.titulo).replace(/\.md$/, '.pdf'), { type: 'application/pdf' });
       } catch (err) {
         console.error(err);
         if (!sigueGenerando()) return;
-        compartiendo = { paso: 'error-pdf' };
+        estadoDePantalla.compartiendo = { paso: 'error-pdf' };
         return render();
       }
     }
     try {
-      const r = await compartirPdf(plataformaDelNavegador(), pdfListo);
-      compartiendo = r === 'sin-activacion' ? { paso: 'pdf-listo' } : null;
+      const r = await compartirPdf(plataformaDelNavegador(), estadoDePantalla.pdfListo);
+      estadoDePantalla.compartiendo = r === 'sin-activacion' ? { paso: 'pdf-listo' } : null;
     } catch (err) {
       console.error(err);
-      compartiendo = { paso: 'error-pdf' };
+      estadoDePantalla.compartiendo = { paso: 'error-pdf' };
     }
-    if (!compartiendo) pdfListo = null;
+    if (!estadoDePantalla.compartiendo) estadoDePantalla.pdfListo = null;
     return render();
   }
   if (accion === 'compartir-compras') {
     // La lista se comparte sólo como texto: no es una receta y no tiene link.
-    compartiendo = { paso: 'opciones', solo: 'texto' };
+    estadoDePantalla.compartiendo = { paso: 'opciones', solo: 'texto' };
     return render();
   }
   if (accion === 'compartir-texto' && vistaActual?.vista === 'plan-compras') {
     const contenido = textoCompras(comprasLeidas?.lista ?? { conCantidad: [], sinCantidad: [] });
     try {
       const r = await compartirTexto(plataformaDelNavegador(), contenido);
-      compartiendo = r === 'copiado' ? { paso: 'copiado', que: 'texto' }
+      estadoDePantalla.compartiendo = r === 'copiado' ? { paso: 'copiado', que: 'texto' }
         : r === 'sin-portapapeles' ? { paso: 'mostrar', que: 'texto', contenido }
         : null;
     } catch (err) {
       console.error(err);
-      compartiendo = { paso: 'mostrar', que: 'texto', contenido };
+      estadoDePantalla.compartiendo = { paso: 'mostrar', que: 'texto', contenido };
     }
     return render();
   }
@@ -1893,24 +1837,24 @@ app.addEventListener('click', async (e) => {
       const r = que === 'link'
         ? await compartirLink(plataforma, receta.titulo ?? '', contenido)
         : await compartirTexto(plataforma, contenido);
-      compartiendo = r === 'copiado' ? { paso: 'copiado', que }
+      estadoDePantalla.compartiendo = r === 'copiado' ? { paso: 'copiado', que }
         : r === 'sin-portapapeles' ? { paso: 'mostrar', que, contenido }
         : null;
     } catch (err) {
       console.error(err);
-      compartiendo = contenido ? { paso: 'mostrar', que, contenido } : null;
+      estadoDePantalla.compartiendo = contenido ? { paso: 'mostrar', que, contenido } : null;
     }
     return render();
   }
   if (accion === 'favorito') {
     const id = idActual();
     const actual = recetaLeida?.receta;
-    if (!id || !actual || marcandoFavorito) return;
+    if (!id || !actual || estadoDePantalla.marcandoFavorito) return;
 
     // El resultado se dibuja recién cuando Drive contesta: mientras tanto, la
     // estrella muestra que está escribiendo y no acepta otro toque.
-    marcandoFavorito = true;
-    errorFavorito = '';
+    estadoDePantalla.marcandoFavorito = true;
+    estadoDePantalla.errorFavorito = '';
     await render();
 
     const nueva = { ...actual, tags: conEspecial(actual.tags, 'favorito', !esFavorita(actual)) };
@@ -1919,9 +1863,9 @@ app.addEventListener('click', async (e) => {
       recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: nueva };
     } catch (err) {
       console.error(err);
-      errorFavorito = 'No se pudo marcar como favorita. Revisá la conexión.';
+      estadoDePantalla.errorFavorito = 'No se pudo marcar como favorita. Revisá la conexión.';
     }
-    marcandoFavorito = false;
+    estadoDePantalla.marcandoFavorito = false;
     return render();
   }
   if (accion === 'cocinar') {
@@ -1961,11 +1905,11 @@ app.addEventListener('click', async (e) => {
     return;
   }
   if (accion === 'elegir-categoria-plan') {
-    categoriaPlan = boton.dataset['nombre'] ?? '';
+    estadoDePantalla.categoriaPlan = boton.dataset['nombre'] ?? '';
     return render();
   }
   if (accion === 'volver-categorias-plan') {
-    categoriaPlan = null;
+    estadoDePantalla.categoriaPlan = null;
     return render();
   }
   if (accion === 'elegir-para-el-plan') {
@@ -1999,11 +1943,11 @@ app.addEventListener('click', async (e) => {
     await guardarPlan({ comidas: plan.comidas.filter((_, n) => n !== i) });
     return render();
   }
-  if (accion === 'reiniciar-plan') { confirmandoReinicio = true; return render(); }
-  if (accion === 'cancelar-reinicio') { confirmandoReinicio = false; return render(); }
+  if (accion === 'reiniciar-plan') { estadoDePantalla.confirmandoReinicio = true; return render(); }
+  if (accion === 'cancelar-reinicio') { estadoDePantalla.confirmandoReinicio = false; return render(); }
   if (accion === 'reiniciar-plan-confirmado') {
     await guardarPlan({ comidas: [] });
-    confirmandoReinicio = false;
+    estadoDePantalla.confirmandoReinicio = false;
     return render();
   }
   if (accion === 'ir-a-compras') { location.hash = '#/plan/compras'; return; }
@@ -2024,7 +1968,7 @@ app.addEventListener('click', async (e) => {
     return;
   }
   if (accion === 'carpeta-sugerida') {
-    selector.confirmando = { id: boton.dataset['id'] ?? '', nombre: boton.dataset['nombre'] ?? '' };
+    estadoDePantalla.selector.confirmando = { id: boton.dataset['id'] ?? '', nombre: boton.dataset['nombre'] ?? '' };
     return render();
   }
   if (accion === 'carpeta-elegir') {
@@ -2032,30 +1976,30 @@ app.addEventListener('click', async (e) => {
       const elegida = await elegirCarpeta(await auth.token());
       // Cerró la ventana sin elegir: nada cambia, ni siquiera la pantalla.
       if (!elegida) return;
-      selector.confirmando = elegida;
+      estadoDePantalla.selector.confirmando = elegida;
     } catch (err) {
       console.error(err);
-      selector.error = 'No se pudo abrir el selector de Google.';
+      estadoDePantalla.selector.error = 'No se pudo abrir el selector de Google.';
     }
     return render();
   }
-  if (accion === 'carpeta-cancelar') { selector.confirmando = null; return render(); }
+  if (accion === 'carpeta-cancelar') { estadoDePantalla.selector.confirmando = null; return render(); }
   // Crear no confirma: el botón ya dice qué carpeta y dónde. Queda como
   // `confirmando` igual, para que un fallo del setup se pueda reintentar sobre
   // la carpeta que ya se creó y no cree otra.
   if (accion === 'carpeta-crear') {
     try {
-      selector.confirmando = await escribiendo(store.crearCarpeta(NOMBRE_RAIZ, 'root'));
+      estadoDePantalla.selector.confirmando = await escribiendo(store.crearCarpeta(NOMBRE_RAIZ, 'root'));
     } catch (err) {
       console.error(err);
-      selector.error = 'No se pudo crear la carpeta.';
+      estadoDePantalla.selector.error = 'No se pudo crear la carpeta.';
       return render();
     }
-    return usarCarpeta(selector.confirmando);
+    return usarCarpeta(estadoDePantalla.selector.confirmando);
   }
   if (accion === 'carpeta-confirmar') {
-    if (!selector.confirmando) return;
-    return usarCarpeta(selector.confirmando);
+    if (!estadoDePantalla.selector.confirmando) return;
+    return usarCarpeta(estadoDePantalla.selector.confirmando);
   }
   if (accion === 'borrar-datos-locales') {
     // Recargar y no seguir: lo que hay en memoria salió de esa copia, y la
@@ -2080,7 +2024,7 @@ app.addEventListener('click', async (e) => {
   if (accion === 'cerrar-visor') {
     // Un deslizamiento termina en un click: ese no cierra, ya cambió de foto.
     if (deslizoElVisor) { deslizoElVisor = false; return; }
-    visor = null;
+    estadoDePantalla.visor = null;
     if (enElEditor()) { document.querySelector('#app .visor')?.remove(); return; }
     return render();
   }
@@ -2203,11 +2147,11 @@ app.addEventListener('click', async (e) => {
 
   if (accion === 'mandar-al-agente') {
     // El mismo pedido que no salió, con la activación de este toque.
-    const envio = pedidoPendiente;
+    const envio = estadoDePantalla.pedidoPendiente;
     if (!envio) return;
     const r = await mandarAlAgente(envio);
-    if (r !== 'no-salio') pedidoPendiente = null;
-    avisoDeLlegada = r === 'copiado' ? PEDIDO_COPIADO : '';
+    if (r !== 'no-salio') estadoDePantalla.pedidoPendiente = null;
+    estadoDePantalla.avisoDeLlegada = r === 'copiado' ? PEDIDO_COPIADO : '';
     return render();
   }
 
@@ -2297,7 +2241,7 @@ app.addEventListener('click', async (e) => {
     return;
   }
   if (accion === 'salir-sin-guardar') {
-    editorAbierto = null;
+    estadoDePantalla.editorAbierto = null;
     // Mismo caso que arriba: sin entrada previa —el editor que abrió lo
     // compartido desde otra app— volver no puede intentar salir de la app
     // (C01.2.2); cierra al Recetario.
@@ -2341,7 +2285,7 @@ app.addEventListener('click', async (e) => {
     const id = vistaActual?.params['id'] ?? 'nueva';
     // La foto propia se manda sólo si se eligió un archivo en esta pantalla:
     // cambiar el color o el nombre no vuelve a subir nada.
-    const propia = valores.foto.startsWith('propia:') ? fotoPropia?.blob : undefined;
+    const propia = valores.foto.startsWith('propia:') ? estadoDePantalla.fotoPropia?.blob : undefined;
     const datos = {
       ...valores,
       foto: valores.foto.startsWith('propia:') ? '' : valores.foto,
@@ -2351,7 +2295,7 @@ app.addEventListener('click', async (e) => {
       if (id === 'nueva') await escribiendo(store.crearCategoria(datos));
       else await escribiendo(store.editarCategoria(id, datos));
       registrarCategorias(store.categorias());
-      editorAbierto = null;
+      estadoDePantalla.editorAbierto = null;
       return history.back();
     } catch (err) {
       console.error(err);
@@ -2379,7 +2323,7 @@ app.addEventListener('click', async (e) => {
     try {
       await escribiendo(store.borrarCategoria(id));
       registrarCategorias(store.categorias());
-      editorAbierto = null;
+      estadoDePantalla.editorAbierto = null;
       irCerrando('#/categorias');
       return;
     } catch (err) {
@@ -2420,7 +2364,7 @@ app.addEventListener('click', async (e) => {
     const id = idActual();
     try {
       await escribiendo(store.borrar(id));
-      editorAbierto = null;
+      estadoDePantalla.editorAbierto = null;
       // Vuelve a la lista de donde se venía; el archivo queda en la papelera
       // de Drive, que es la red de seguridad y es del usuario. Y la receta
       // borrada no queda en el historial.
@@ -2438,7 +2382,7 @@ app.addEventListener('click', async (e) => {
 
   // Reintentar es volver a pedir: lo leído no se reutiliza.
   if (accion === 'reintentar') {
-    recetaLeida = null; selector.error = '';
+    recetaLeida = null; estadoDePantalla.selector.error = '';
     return render();
   }
 });
@@ -2455,16 +2399,16 @@ app.addEventListener('input', (e) => {
   if (vistaActual?.vista === 'plan-agregar') {
     const caja = e.target as HTMLInputElement | null;
     if (caja?.dataset?.['accion'] !== 'buscar-en-plan') return;
-    consultaPlan = caja.value;
+    estadoDePantalla.consultaPlan = caja.value;
     // Escribir es dejar la categoría elegida: son dos formas de filtrar y no
     // conviven en el mismo bloque.
-    categoriaPlan = null;
+    estadoDePantalla.categoriaPlan = null;
     const bloque = document.querySelector('[data-resultados-plan]');
     if (bloque) {
       bloque.innerHTML = bloqueDeAgregar({
         menuDiario: delMenuDiario(), categorias: store.categorias(),
         categoriaElegida: null, deLaCategoria: [],
-        consulta: consultaPlan, grupos: store.buscarPorTexto(consultaPlan)
+        consulta: estadoDePantalla.consultaPlan, grupos: store.buscarPorTexto(estadoDePantalla.consultaPlan)
       });
     }
     return;
@@ -2539,7 +2483,7 @@ document.addEventListener('touchstart', (e) => {
   if (!toque || toques.length !== 1) return;
   // Con el visor abierto, el dedo pasa de una foto a la siguiente y no abre
   // el menú: es lo único que se puede hacer ahí.
-  if (visor) { visorDesde = toque.clientX; return; }
+  if (estadoDePantalla.visor) { visorDesde = toque.clientX; return; }
   if (!vistaActual || !PANTALLAS_CON_MENU.includes(vistaActual.vista) || menuFijo()) return;
   if (!puedeEmpezar(toque.clientX, menuAbierto, sobreFilaDeslizable(e.target))) return;
   deslizando = { x: toque.clientX, y: toque.clientY, decidido: 'indeciso', p: menuAbierto ? 1 : 0 };
@@ -2576,14 +2520,14 @@ document.addEventListener('touchcancel', soltarDeslizamiento);
 // gesto del menú: ahí el deslizamiento arrastra el panel al ritmo del dedo, y
 // acá la foto cambia de una vez, al soltar.
 document.addEventListener('touchend', (e) => {
-  if (tapadas || visorDesde === null || !visor) return;
+  if (tapadas || visorDesde === null || !estadoDePantalla.visor) return;
   const toque = (e as TouchEvent).changedTouches[0];
   const desde = visorDesde;
   visorDesde = null;
   if (!toque) return;
-  const i = pasoDelVisor(visor.i, toque.clientX - desde, visor.urls.length);
-  if (i === visor.i) return;
-  visor = { ...visor, i };
+  const i = pasoDelVisor(estadoDePantalla.visor.i, toque.clientX - desde, estadoDePantalla.visor.urls.length);
+  if (i === estadoDePantalla.visor.i) return;
+  estadoDePantalla.visor = { ...estadoDePantalla.visor, i };
   deslizoElVisor = true;
   dibujarVisor();
 });
@@ -2681,10 +2625,10 @@ app.addEventListener('change', (e) => {
     void (async () => {
       try {
         const blob = await escribiendo(achicarFoto(archivo));
-        fotoPropia = { blob, url: imagenes.urlDeBlob(blob) };
+        estadoDePantalla.fotoPropia = { blob, url: imagenes.urlDeBlob(blob) };
         // Queda elegida como cualquier otra: el campo oculto la nombra, y de
         // ahí salen la muestra de arriba y «cambios sin guardar».
-        elegirEnCategoria('foto', `propia:${fotoPropia.url}`);
+        elegirEnCategoria('foto', `propia:${estadoDePantalla.fotoPropia.url}`);
         avisarEnElFormulario('');
       } catch (err) {
         console.error(err);
