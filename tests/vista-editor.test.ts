@@ -425,9 +425,13 @@ describe('recetaDesdeFormulario', () => {
     expect(serialize(recetaDesdeFormulario(formularioDesde(original), original))).toBe(serialize(original));
   });
 
-  it('el título vacío no borra el que había: es el único obligatorio', () => {
+  it('el título vacío queda vacío: guardar lo rechaza en vez de volver al anterior', () => {
     const r = recetaDesdeFormulario({ titulo: '' }, parse('---\ntitulo: A\n---\n'));
-    expect(r.titulo).toBe('A');
+    expect(r.titulo).toBeNull();
+  });
+
+  it('sin el campo del título, conserva el que había', () => {
+    expect(recetaDesdeFormulario({}, parse('---\ntitulo: A\n---\n')).titulo).toBe('A');
   });
 
   it('los tags se separan por coma y se limpian', () => {

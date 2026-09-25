@@ -141,7 +141,7 @@ const estadoInicial = () => ({
   /** Los ids de las recetas que se mandaron a la papelera. */
   recetasBorradas: [] as string[],
   /** Los tags con los que se guardó cada vez que se tocó la estrella, en orden. */
-  guardados: [] as { tags: string[] }[],
+  guardados: [] as { tags: string[]; titulo?: string | null | undefined }[],
   /** Cuántas veces más falla `guardar` antes de andar, para probar el aviso de la estrella. */
   fallaGuardar: 0,
   /** Lo que devuelve `store.tagsDe()`, ya ordenado por cantidad. */
@@ -213,12 +213,12 @@ const storeFake = {
   },
   guardar: async (
     _id: string,
-    receta: { tags: string[]; fotos?: { n: number; url: string }[] },
+    receta: { titulo?: string | null; tags: string[]; fotos?: { n: number; url: string }[] },
     opciones?: { fotos?: CambiosDeFotos; carpetaDestino?: string }
   ) => {
     estado.opcionesGuardar.push({ ...opciones });
     if (estado.fallaGuardar > 0) { estado.fallaGuardar--; throw new Error('red'); }
-    estado.guardados.push({ tags: receta.tags });
+    estado.guardados.push({ tags: receta.tags, titulo: receta.titulo });
     estado.cambiosDeFotos.push(opciones?.fotos ?? null);
     estado.depositos.push(receta.fotos ?? []);
   },
@@ -4686,6 +4686,25 @@ describe('main.ts: las rutas', () => {
       estado.formulario = { titulo: 'Milanesas', carpeta: '', tags: 'borrador' };
       await tocar('guardar');
       expect(estado.opcionesGuardar[0]?.['carpetaDestino']).toBe('');
+    });
+
+    it('editando, vaciar el título avisa y no guarda el que tenía', async () => {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = { titulo: '', carpeta: 'c1', tags: '' };
+      await tocar('guardar');
+      expect(estado.opcionesGuardar).toEqual([]);
+      expect(app.innerHTML).toContain('Ponele un título antes de guardar.');
+    });
+
+    it('editando un borrador, vaciar el título guarda con el título por defecto', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador' };
+      await tocar('guardar');
+      expect(estado.opcionesGuardar).toHaveLength(1);
+      expect(estado.guardados.at(-1)?.titulo).not.toBe('Milanesas');
+      expect(estado.guardados.at(-1)?.titulo).toBeTruthy();
     });
 
     it('editando con una categoría, guarda con esa carpeta de destino', async () => {

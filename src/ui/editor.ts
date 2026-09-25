@@ -510,7 +510,9 @@ export function recetaDesdeFormulario(datos: DatosFormulario, base: Receta): Rec
 
   return {
     ...base,
-    titulo: texto('titulo') ?? base.titulo,
+    // Vaciado no vuelve al anterior: queda vacío, y guardar avisa (C04.5.2)
+    // o, en un borrador, le pone el título por defecto.
+    titulo: datos['titulo'] === undefined ? base.titulo : texto('titulo'),
     tags: String(datos['tags'] ?? '').split(',').map(t => t.trim()).filter(Boolean),
     rinde: texto('rinde'),
     tiempo: duracionValida(datos['tiempo']) || null,

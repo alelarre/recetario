@@ -64,7 +64,7 @@ y el archivo se arma solo al guardar.
 
 - [ ] Un control por clave: título (texto), tags (lista editable), rinde y fuente (texto), dificultad (elección de tres), `tiempo` con los cinco botones de duración (C04.2.1c) y `foto` con el selector de **Portada** (C04.2.1d).
 - [ ] **El YAML no se muestra en ningún momento.**
-- [ ] Solo el título es obligatorio, salvo en un borrador; una receta nueva, además, tiene que tener algo cargado (C04.3b.1).
+- [ ] Solo el título es obligatorio, salvo en un borrador; una receta nueva, además, tiene que tener algo cargado (C04.3b.1). **Vaciar el título de una receta que ya existe no vuelve al que tenía:** sin `borrador`, el aviso dice *«Ponele un título antes de guardar.»*; en un borrador, se guarda con el título por defecto, como al crearlo (C04.3b.1).
 - [ ] Un campo que se deja vacío **no se escribe** en el frontmatter: no quedan claves vacías.
 - [ ] `rinde` es texto libre, no un número: *"4 porciones"*.
 - [ ] La dificultad es un desplegable con *—* —sin dificultad—, *fácil*, *media* y *difícil*. Un valor fuera de esos tres abre el editor en *—*, igual que un `tiempo` inválido (C04.2.1c).
