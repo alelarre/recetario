@@ -320,7 +320,7 @@ const dejarTerminar = async (corriendo: Promise<unknown>): Promise<void> => {
 function imgFalsa(
   dataset: { drive?: string; n?: string },
   /** El recuadro del que cuelga, si la foto va a dejar su motivo en lugar del `<img>`. */
-  recuadro: false | '.carrusel-foto' | '.galeria-item' = false,
+  recuadro: false | '.cuadro-foto' = false,
   tagName = 'IMG'
 ) {
   const img = {
@@ -3448,7 +3448,7 @@ describe('main.ts: las rutas', () => {
       // Y la fila se redibuja con la marca de portada en la que se eligió, sin
       // salir del editor.
       const fila = filasDeFotos.at(-1) ?? '';
-      const minis = fila.split('<div class="miniatura">').slice(1);
+      const minis = fila.split('<div class="miniatura cuadro-foto">').slice(1);
       expect(minis[1]).toContain(ICO.portada);
       expect(minis[0]).not.toContain(ICO.portada);
     });
@@ -3793,7 +3793,7 @@ describe('main.ts: las rutas', () => {
       expect(preguntas.some(h => h.includes('data-elegir-foto'))).toBe(false);
       expect(app.innerHTML).toBe(antes);
       // Ahora está en un paso, y la fila se redibuja diciéndolo.
-      const minis = (filasDeFotos.at(-1) ?? '').split('<div class="miniatura">').slice(1);
+      const minis = (filasDeFotos.at(-1) ?? '').split('<div class="miniatura cuadro-foto">').slice(1);
       expect(minis[1]).toContain(ICO.enElTexto);
       expect(minis[0]).not.toContain(ICO.enElTexto);
     });
@@ -3953,7 +3953,7 @@ describe('main.ts: las rutas', () => {
       estado.md = MD_CON_FOTOS;
       estado.fotosPerdidas = ['f8', 'f7'];
       const { abrir, imgs } = await montar();
-      imgs.push(imgFalsa({ drive: 'f9' }), imgFalsa({ drive: 'f8' }, '.carrusel-foto'), imgFalsa({ drive: 'f7' }));
+      imgs.push(imgFalsa({ drive: 'f9' }), imgFalsa({ drive: 'f8' }, '.cuadro-foto'), imgFalsa({ drive: 'f7' }));
 
       await abrir('#/r/f1');
 
@@ -3962,18 +3962,32 @@ describe('main.ts: las rutas', () => {
       expect(imgs[2]?.sacada).toBe(true);
     });
 
-    it('una foto externa que no carga se saca; en el carrusel deja su recuadro', async () => {
+    it('una foto externa que no carga se saca de un paso; en su cuadro —la cabecera, el carrusel— deja el recuadro', async () => {
       estado.md = MD_CON_FOTOS;
       const { abrir, fallarFoto } = await montar();
       await abrir('#/r/f1');
 
-      const enLaCabecera = imgFalsa({});
-      const enElCarrusel = imgFalsa({}, '.carrusel-foto');
-      await fallarFoto(enLaCabecera);
-      await fallarFoto(enElCarrusel);
+      const enUnPaso = imgFalsa({});
+      const enSuCuadro = imgFalsa({}, '.cuadro-foto');
+      await fallarFoto(enUnPaso);
+      await fallarFoto(enSuCuadro);
 
-      expect(enLaCabecera.sacada).toBe(true);
-      expect(enElCarrusel.reemplazo).toContain('No se pudo cargar la foto.');
+      expect(enUnPaso.sacada).toBe(true);
+      expect(enSuCuadro.reemplazo).toContain('No se pudo cargar la foto.');
+    });
+
+    it('una portada del editor cuya foto de Drive ya no está muestra el aviso', async () => {
+      estado.md = MD_CON_FOTOS;
+      estado.fotosPerdidas = ['f9'];
+      const { abrir, imgs } = await montar();
+      // La portada es `foto:1`, la de Drive: su `<img>` cuelga del botón de la portada.
+      const portada = imgFalsa({ drive: 'f9' }, '.cuadro-foto');
+      imgs.push(portada);
+
+      await abrir('#/r/f1/editar');
+
+      expect(portada.reemplazo).toContain('La foto ya no está en Drive.');
+      expect(portada.sacada).toBe(false);
     });
 
     it('el error de algo que no es una imagen no toca nada', async () => {

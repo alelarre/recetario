@@ -133,8 +133,8 @@ function mirarElAviso(): void {
 /**
  * Las fotos que la pantalla dejó pedidas. Las del editor salen del blob que
  * está en memoria; las de Drive, del caché o de la red. Una de Drive que ya no
- * está pasa al recuadro de aviso si tiene su propio cuadrado —el carrusel de la
- * receta, una grilla, una miniatura—, y no se dibuja en ningún otro lado.
+ * está pasa al recuadro de aviso si está en un cuadro de foto, y no se dibuja
+ * en ningún otro lado.
  * Las de Drive van de a dos, como la precarga: de
  * a una, una lista entera se completa de arriba a abajo y se ve llegar.
  */
@@ -154,15 +154,15 @@ async function completarFotos(): Promise<void> {
 }
 
 /**
- * La foto que no se va a ver: donde tiene su propio cuadrado —el carrusel de la
- * receta, la grilla de portada del editor, la fila de miniaturas— deja el
- * recuadro con el motivo, y en cualquier otro lado —la cabecera, un paso, una
- * lista— el bloque no se dibuja. En una lista, abajo queda el placeholder de la
- * categoría.
+ * La foto que no se va a ver: en un cuadro de foto (`.cuadro-foto`: la
+ * cabecera y el carrusel de la receta, la fila y las grillas del editor, su
+ * portada, la muestra de la categoría) deja el recuadro con el motivo, y en
+ * cualquier otro lado —un paso, una lista— el bloque no se dibuja. En una
+ * lista, abajo queda el placeholder de la categoría.
  */
 function sacarFoto(img: Element, recuadro: string): void {
   // Sin `pintarParte`: el recuadro no deja ninguna foto pedida.
-  if (img.closest('.carrusel-foto, .galeria-item, .miniatura')) img.outerHTML = recuadro;
+  if (img.closest('.cuadro-foto')) img.outerHTML = recuadro;
   else img.remove();
 }
 

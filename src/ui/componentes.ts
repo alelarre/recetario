@@ -11,7 +11,7 @@ import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
 import { ICO, ICONO_DE_DURACION } from './iconos.js';
 import { textoVersion } from '../version.js';
 import { tagEspecial, ordenarTags, tieneEspecial, TAGS_ESPECIALES, duracionValida, DURACIONES } from '../catalogo.js';
-import type { Entrada, UsoDeFoto } from '../tipos.js';
+import type { Entrada, FotoDeReceta, UsoDeFoto } from '../tipos.js';
 import type { TagEspecial, Duracion, Orden } from '../catalogo.js';
 import type { DestinoLateral } from './router.js';
 
@@ -420,6 +420,16 @@ export function tile(nombre: string, { cantidad, accion }: OpcionesTile = {}): s
 }
 
 /**
+ * La imagen de una foto del depósito, para ir adentro de un cuadro de foto
+ * (`.cuadro-foto`, en `tokens.css`): una de Drive sale como `<img data-drive>`
+ * sin `src`, y una nueva —que todavía no se subió— como `<img data-n>` con su
+ * número. Las dos las completa `main` después del dibujo: la de Drive con el
+ * token, la nueva con el blob que tiene en memoria.
+ */
+export const cuadroDeFoto = (foto: FotoDeReceta): string =>
+  foto.url ? imgDe(foto.url) : `<img data-n="${foto.n}" alt="">`;
+
+/**
  * Una miniatura de la fila de fotos del editor. `url` en `''` es una foto
  * nueva que todavía no se subió y de la que sólo se sabe su número: la
  * miniatura se la pone quien la tenga en memoria, buscándola por `data-n`.
@@ -436,8 +446,8 @@ export interface Miniatura {
 
 /**
  * El recuadro de una foto de Drive que ya no está. `main` lo pone en lugar de
- * una imagen que tenga su propio cuadrado —el carrusel de la receta, una
- * grilla, una miniatura— cuando Drive contesta que el archivo no existe.
+ * la imagen de un cuadro de foto cuando Drive contesta que el archivo no
+ * existe.
  */
 export const FOTO_AUSENTE = '<span class="miniatura-vacia">La foto ya no está en Drive.</span>';
 
@@ -462,10 +472,10 @@ export function filaDeFotos({ fotos }: { fotos: Miniatura[] }): string {
     // el número: una foto sin uso no lleva ninguna, y la esquina queda limpia.
     const marcas = (f.uso.portada ? ICO.portada : '') + (f.uso.enElTexto ? ICO.enElTexto : '');
     // El número va adentro del botón: encima de la foto, tocarlo es tocarla.
-    const contenido = (f.url ? imgDe(f.url) : `<img data-n="${f.n}" alt="">`) +
+    const contenido = cuadroDeFoto(f) +
       `<span class="miniatura-n">#${f.n}</span>` +
       (marcas ? `<span class="miniatura-usos">${marcas}</span>` : '');
-    return '<div class="miniatura">' +
+    return '<div class="miniatura cuadro-foto">' +
       `<button type="button" class="miniatura-ver" data-accion="${escapar(f.ver.accion)}" data-n="${f.n}" ` +
       `aria-label="${escapar(f.ver.etiqueta)}">${contenido}</button></div>`;
   }).join('');

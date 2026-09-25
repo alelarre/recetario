@@ -337,6 +337,12 @@ titulo: Pan
     expect(html.indexOf('carrusel-fotos')).toBeLessThan(html.indexOf('<h2>Ingredientes</h2>'));
   });
 
+  it('la cabecera y cada foto del carrusel son cuadros de foto: una que no está deja ahí su aviso', () => {
+    const html = renderReceta({ entrada: null, receta: CON_SOBRANTES });
+    expect(html).toContain('class="rec-foto-boton cuadro-foto"');
+    expect(html.match(/class="carrusel-foto cuadro-foto"/g)).toHaveLength(2);
+  });
+
   it('cada foto del carrusel es un botón que abre el visor, con su número del depósito', () => {
     const html = renderReceta({ entrada: null, receta: CON_SOBRANTES });
     expect(html.match(/data-accion="ver-foto-receta"/g)).toHaveLength(3); // cabecera + 2 del carrusel

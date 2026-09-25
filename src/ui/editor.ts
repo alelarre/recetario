@@ -11,7 +11,9 @@
  * (C04.3c.1).
  */
 import { escapar, imgDe } from './markdown.js';
-import { encabezado, aviso, avisoAlGuardar, iconoDeTag, filaDeFotos, conLateral, izquierdaDelEncabezado } from './componentes.js';
+import {
+  encabezado, aviso, avisoAlGuardar, iconoDeTag, filaDeFotos, cuadroDeFoto, conLateral, izquierdaDelEncabezado
+} from './componentes.js';
 import type { MenuDePantalla } from './componentes.js';
 import { ICO, ICONO_DE_DURACION } from './iconos.js';
 import {
@@ -87,14 +89,6 @@ export const pillTag = (tag: string): string =>
   `${iconoDeTag(tag)}${escapar(tag)}${ICO.cerrar}</button>`;
 
 /**
- * Una foto del depósito, dibujada. Una foto nueva todavía no tiene URL —se
- * sube al guardar—: el `<img>` queda vacío y marcado con su número, y quien
- * la tenga en memoria le pone su object URL buscándolo por `data-n`.
- */
-const imagenDeFoto = (f: FotoDeReceta): string =>
-  f.url ? imgDe(f.url) : `<img data-n="${f.n}" alt="">`;
-
-/**
  * Lo que se ve adentro del botón de la cabecera: la foto del depósito, la URL
  * pegada a mano, o «Sin foto». Una `foto:N` que no está en el depósito se lee
  * como ausente, igual que cualquier otro valor inválido. Se exporta porque
@@ -103,7 +97,7 @@ const imagenDeFoto = (f: FotoDeReceta): string =>
 export function muestraDePortada(foto: string | null, fotos: FotoDeReceta[]): string {
   const delDeposito = fotos.find(f => `foto:${f.n}` === foto);
   const url = resolver(foto, fotos);
-  return delDeposito ? imagenDeFoto(delDeposito)
+  return delDeposito ? cuadroDeFoto(delDeposito)
     : url === null ? '<span class="portada-vacia">Sin foto</span>'
     : imgDe(url);
 }
@@ -117,7 +111,7 @@ function campoPortada(foto: string | null, fotos: FotoDeReceta[]): string {
   // *Portada* y no *Foto*: abajo está la ficha Fotos, que es el depósito, y
   // dos cosas distintas no se llaman igual.
   return '<div class="campo" data-portada><span>Portada</span>' +
-    `<button type="button" class="portada-boton" data-accion="abrir-portada" ` +
+    `<button type="button" class="portada-boton cuadro-foto" data-accion="abrir-portada" ` +
       `aria-label="Elegir la foto de portada">${muestraDePortada(foto, fotos)}</button>` +
     `<input type="hidden" name="foto" value="${escapar(foto ?? '')}">` +
   '</div>';
@@ -215,9 +209,9 @@ export const botonPonerFoto = (seccion: string, linea: number, altura: number): 
  */
 export function renderElegirFoto(fotos: FotoDeReceta[], seccion: string, linea: number): string {
   const grilla = fotos.map(f =>
-    '<button type="button" class="galeria-item" data-accion="poner-en" ' +
+    '<button type="button" class="galeria-item cuadro-foto" data-accion="poner-en" ' +
     `data-seccion="${escapar(seccion)}" data-linea="${linea}" data-n="${f.n}" ` +
-    `aria-label="Poner la foto ${f.n}">${imagenDeFoto(f)}</button>`
+    `aria-label="Poner la foto ${f.n}">${cuadroDeFoto(f)}</button>`
   ).join('');
   return VELO_DE_FICHA +
     '<div class="ficha hoja-foto" data-elegir-foto>' +
@@ -240,11 +234,11 @@ export function renderSelectorPortada(fotos: FotoDeReceta[], actual: string | nu
   // depósito o `null`: que vuelva igual es justamente que hoy hay una URL.
   const urlSuelta = actual !== null && resolver(actual, fotos) === actual ? actual : '';
   const items =
-    (urlSuelta ? `<span class="galeria-item actual">${imgDe(urlSuelta)}</span>` : '') +
+    (urlSuelta ? `<span class="galeria-item cuadro-foto actual">${imgDe(urlSuelta)}</span>` : '') +
     fotos.map(f =>
-      '<button type="button" class="galeria-item" data-accion="elegir-portada" ' +
+      '<button type="button" class="galeria-item cuadro-foto" data-accion="elegir-portada" ' +
       `data-n="${f.n}" aria-pressed="${actual === `foto:${f.n}`}" ` +
-      `aria-label="La foto ${f.n} de portada">${imagenDeFoto(f)}</button>`
+      `aria-label="La foto ${f.n} de portada">${cuadroDeFoto(f)}</button>`
     ).join('');
   return VELO_DE_FICHA +
     '<div class="ficha hoja-foto" data-selector-portada>' +

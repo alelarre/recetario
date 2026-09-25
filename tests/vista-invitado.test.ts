@@ -112,7 +112,7 @@ describe('La vista de invitado', () => {
     expect(html).not.toContain('<h2>Fotos</h2>');
     expect(html).toContain('carrusel-fotos');
     // Ni la portada —que ya está arriba— ni la de Drive, que no viajó.
-    expect(html.match(/class="carrusel-foto"/g)).toHaveLength(1);
+    expect(html.match(/class="carrusel-foto cuadro-foto"/g)).toHaveLength(1);
     expect(html).toContain('src="https://x/suelta.jpg"');
     expect(html).not.toContain('data-drive');
     expect(html.indexOf('carrusel-fotos')).toBeLessThan(html.indexOf('<h2>Preparación</h2>'));

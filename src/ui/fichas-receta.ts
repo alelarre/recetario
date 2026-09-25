@@ -5,7 +5,7 @@
  */
 import { escapar, aHtml, tramosAHtml, tramosDeFuente, tramosEnLinea, imgDe } from './markdown.js';
 import { colorCategoria } from './categorias.js';
-import { carrusel, duracionConReloj } from './componentes.js';
+import { carrusel, cuadroDeFoto, duracionConReloj } from './componentes.js';
 import { gruposDe, tramosDe, variacionesDe } from '../recipe.js';
 import type { Receta, GrupoIngredientes, TramoPreparacion, FotoDeReceta } from '../tipos.js';
 import type { TramoEnLinea } from './markdown.js';
@@ -68,9 +68,9 @@ export interface OpcionesCabecera {
  * sin ese número.
  */
 function botonFoto(url: string, n: number | undefined): string {
-  return `<button type="button" class="rec-foto-boton" data-accion="ver-foto-receta"` +
+  return `<button type="button" class="rec-foto-boton cuadro-foto" data-accion="ver-foto-receta"` +
     (n !== undefined ? ` data-n="${n}"` : '') +
-    ` aria-label="Ver la foto">${imgDe(url, 'rec-foto')}</button>`;
+    ` aria-label="Ver la foto">${imgDe(url)}</button>`;
 }
 
 /**
@@ -84,8 +84,8 @@ function botonFoto(url: string, n: number | undefined): string {
  */
 function carruselDeFotos(fotos: FotoDeReceta[]): string {
   const items = fotos.map(f =>
-    `<button type="button" class="carrusel-foto" data-accion="ver-foto-receta" data-n="${f.n}" ` +
-    `aria-label="Ver la foto ${f.n}">${imgDe(f.url)}</button>`).join('');
+    `<button type="button" class="carrusel-foto cuadro-foto" data-accion="ver-foto-receta" data-n="${f.n}" ` +
+    `aria-label="Ver la foto ${f.n}">${cuadroDeFoto(f)}</button>`).join('');
   return carrusel(items, { etiquetaIzq: 'Fotos anteriores', etiquetaDer: 'Más fotos', clase: 'carrusel-fotos' });
 }
 

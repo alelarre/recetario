@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   tarjeta, placeholder, aviso, encabezado, chipsSueltos, chipTag, iconoDeTag, vacio, tile, carrusel, carruselTags,
-  filaDuraciones, conmutadorOrden, lateral, lateralFijo, conLateral, filaDeFotos
+  filaDuraciones, conmutadorOrden, lateral, lateralFijo, conLateral, filaDeFotos, cuadroDeFoto
 } from '../src/ui/componentes.js';
+import { linkDeFoto } from '../src/fotos-receta.js';
 import { entradaFalsa } from './dobles.js';
 import { registrarCategorias } from '../src/ui/categorias.js';
 import { ICO, ICONO_DE_DURACION as ICO_DUR } from '../src/ui/iconos.js';
@@ -413,6 +414,20 @@ describe('la tarjeta con acción', () => {
 const mini = (n: number, url: string, uso = { portada: false, enElTexto: false }) =>
   ({ n, url, uso, ver: { accion: 'acciones-foto', etiqueta: `Qué hacer con la foto ${n}` } });
 
+describe('cuadroDeFoto', () => {
+  it('una foto de Drive sale sin `src`, pedida por su id', () => {
+    expect(cuadroDeFoto({ n: 1, url: linkDeFoto('f9') })).toBe('<img data-drive="f9" alt="">');
+  });
+
+  it('una nueva sale con su número, para que la complete quien la tiene en memoria', () => {
+    expect(cuadroDeFoto({ n: 4, url: '' })).toBe('<img data-n="4" alt="">');
+  });
+
+  it('una externa sale con su URL', () => {
+    expect(cuadroDeFoto({ n: 2, url: 'https://ejemplo/a.jpg' })).toContain('<img src="https://ejemplo/a.jpg"');
+  });
+});
+
 describe('filaDeFotos: Cámara, Galería y Por URL', () => {
   it('hay dos inputs de archivo: uno directo a la cámara y otro a la galería', () => {
     const html = filaDeFotos({ fotos: [] });
@@ -472,9 +487,10 @@ describe('filaDeFotos: Cámara, Galería y Por URL', () => {
     expect(html).not.toContain('miniatura-sacar');
   });
 
-  it('una foto nueva queda con su número y sin `src`: la completa quien la tiene en memoria', () => {
+  it('cada miniatura es un cuadro de foto, dibujado por cuadroDeFoto', () => {
     const html = filaDeFotos({ fotos: [mini(4, '')] });
-    expect(html).toContain('<img data-n="4" alt="">');
+    expect(html).toContain('<div class="miniatura cuadro-foto">');
+    expect(html).toContain(cuadroDeFoto({ n: 4, url: '' }));
   });
 
   it('las marcas de uso son de la receta: sin uso, la miniatura no lleva ninguna', () => {

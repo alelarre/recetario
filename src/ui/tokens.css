@@ -445,6 +445,15 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
 /* ---- Estado vacío ---- */
 .vacio { color: var(--fg-2); text-align: center; padding: var(--e-7) var(--e-4); line-height: 1.6; }
 
+/* ---- El cuadro de una foto ----
+   Donde una foto tiene su propio cuadro —la cabecera y el carrusel de la
+   receta, la fila, las grillas y la portada del editor, las fotos de la
+   categoría—, la imagen lo llena recortada, y mientras llega se ve el fondo.
+   Si la foto no está, `main` deja en su lugar el recuadro con el motivo
+   (`.miniatura-vacia`): por eso el tamaño va en el cuadro y no en la imagen. */
+.cuadro-foto { overflow: hidden; border-radius: var(--r-foto); background: var(--surface-alta); }
+.cuadro-foto img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
 /* ---- Fotos de la receta: la fila de miniaturas y el visor ---- */
 .miniaturas { display: flex; flex-wrap: wrap; gap: var(--e-2); align-items: center; }
 /* Las fotos arriba y los botones de agregar abajo, en su propia fila. */
@@ -454,9 +463,7 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
    selector que *Galería*, así que no se dibuja. Es la misma consulta con la
    que aparecen las flechas del carrusel, al revés. */
 @media (hover: hover) and (pointer: fine) { .solo-tactil { display: none; } }
-.miniatura { position: relative; width: 64px; height: 64px; flex: 0 0 64px;
-             border-radius: var(--r-foto); overflow: hidden; background: var(--surface-alta); }
-.miniatura img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.miniatura { position: relative; width: 64px; height: 64px; flex: 0 0 64px; }
 .miniatura-ver { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
 /* Una foto que ya no está en Drive: el recuadro vacío, con lo que pasó. */
 .miniatura-vacia { display: grid; place-items: center; width: 100%; height: 100%; padding: var(--e-1);
@@ -496,9 +503,7 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
    foto mide 66 px: entran cinco en el ancho de un teléfono, y el visor es el
    que las muestra grandes. */
 .carrusel-fotos { --carrusel-fondo: var(--surface); margin-top: var(--e-3); }
-.carrusel-foto { display: block; width: 66px; padding: 0; border: 0; background: var(--surface-alta);
-                 border-radius: var(--r-foto); overflow: hidden; aspect-ratio: 1; cursor: pointer; }
-.carrusel-foto img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.carrusel-foto { display: block; width: 66px; padding: 0; border: 0; aspect-ratio: 1; cursor: pointer; }
 
 /* ---- Galería de fotos: una grilla de cuadradas de a tres por fila.
    La usa el selector de portada del editor. ---- */
@@ -506,9 +511,7 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
 /* Separa la grilla —o su leyenda sin fotos— del botón de abajo, en el selector
    de portada: `.acciones` se reusa en más fichas y no lleva margen propio. */
 [data-selector-portada] > :is(.galeria, .aviso-mudo) + .acciones { margin-top: var(--e-3); }
-.galeria-item { display: block; padding: 0; border: 0; background: var(--surface-alta);
-                border-radius: var(--r-foto); overflow: hidden; aspect-ratio: 1; cursor: pointer; }
-.galeria-item img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.galeria-item { display: block; padding: 0; border: 0; aspect-ratio: 1; cursor: pointer; }
 /* La cabecera que es una URL suelta se muestra marcada pero no se toca: no
    está en el depósito, así que no hay ninguna foto que elegir en ella. */
 .galeria-item.actual { cursor: default; }
@@ -531,10 +534,7 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
 .acciones-foto { display: grid; grid-template-columns: 1fr 1fr; }
 .acciones-foto > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 /* La portada: la miniatura de lo que hay, o el recuadro que dice que no hay. */
-.portada-boton { display: block; width: 96px; height: 96px; padding: 0; border: 0;
-                 border-radius: var(--r-foto); overflow: hidden;
-                 background: var(--surface-alta); cursor: pointer; }
-.portada-boton img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.portada-boton { display: block; width: 96px; height: 96px; padding: 0; border: 0; cursor: pointer; }
 .portada-vacia { display: grid; place-items: center; width: 100%; height: 100%;
                  border: 1px dashed var(--borde-fuerte); border-radius: var(--r-foto);
                  font-size: var(--txt-micro); color: var(--fg-3); }

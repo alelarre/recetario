@@ -432,7 +432,7 @@ Masa madre, 24 horas.
 
 /** El contenido de cada `.miniatura` de la fila, en su orden. */
 const miniaturas = (html: string): string[] =>
-  html.split('<div class="miniatura">').slice(1).map(s => s.slice(0, s.indexOf('</div>')));
+  html.split('<div class="miniatura cuadro-foto">').slice(1).map(s => s.slice(0, s.indexOf('</div>')));
 
 describe('las fotos en el editor', () => {
   const conFotos = parse(MD_CON_FOTOS);
@@ -562,6 +562,14 @@ foto: foto:1
     // La cabecera `foto:3` se dibuja resuelta: la URL de su línea del depósito.
     expect(html).toContain('<img src="https://ejemplo.com/pan.jpg"');
     expect(html).not.toContain('<input name="foto"');
+  });
+
+  it('la portada, la galería de las fichas y las miniaturas son cuadros de foto', () => {
+    // `main` reconoce el cuadro por su clase para dejar ahí el aviso de la foto que no está.
+    expect(dibujarFotos()).toContain('class="portada-boton cuadro-foto"');
+    expect(renderSelectorPortada(conFotos.fotos, null)).toContain('class="galeria-item cuadro-foto"');
+    expect(renderSelectorPortada(conFotos.fotos, 'https://ejemplo.com/otra.jpg')).toContain('class="galeria-item cuadro-foto actual"');
+    expect(renderElegirFoto(conFotos.fotos, 'preparacion', 0)).toContain('class="galeria-item cuadro-foto"');
   });
 
   it('sin cabecera, el botón lo dice', () => {
@@ -707,7 +715,7 @@ describe('renderSelectorPortada', () => {
     // otra cosa (C04.2.1d).
     const conUrl = renderSelectorPortada(fotos, 'https://ejemplo.com/otra.jpg');
     expect(conUrl).toContain('<img src="https://ejemplo.com/otra.jpg"');
-    expect(conUrl).toContain('class="galeria-item actual"');
+    expect(conUrl).toContain('class="galeria-item cuadro-foto actual"');
     // Y no marca ninguna del depósito.
     expect(conUrl).not.toContain('aria-pressed="true"');
     // La que sí está en el depósito se marca ahí y no se repite arriba.
