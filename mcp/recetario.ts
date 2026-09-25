@@ -407,12 +407,17 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
      * A la papelera, con su fila y sus fotos de `_fotos/`, como Borrar en la
      * app. `confirmacion` es el título exacto de la receta en el índice: el
      * agente no borra con un id solo, que puede ser el de otra receta, ni sin
-     * que el usuario haya visto cuál es.
+     * que el usuario haya visto cuál es. Una receta sin título se confirma con
+     * su nombre de archivo: una confirmación vacía no confirma nada.
      */
     async borrar({ id, confirmacion }: { id: string; confirmacion?: string }): Promise<void> {
       await listo();
-      const { titulo } = entradaDe(id);
-      if (confirmacion !== titulo) {
+      const { titulo, nombre_archivo } = entradaDe(id);
+      if (!titulo) {
+        if (!confirmacion || confirmacion !== nombre_archivo) {
+          throw new Error(`La receta no tiene título: para borrarla hay que pasar su nombre de archivo exacto: "${nombre_archivo}"`);
+        }
+      } else if (confirmacion !== titulo) {
         throw new Error(`Para borrar hay que pasar el título exacto de la receta: "${titulo}"`);
       }
       await store.borrar(id);

@@ -361,6 +361,26 @@ describe('borrar', () => {
     expect(drive.cuantas('borrar')).toBe(0);
   });
 
+  describe('una receta sin título', () => {
+    beforeEach(() => {
+      drive._store.set('r4', { id: 'r4', name: 'r4.md', parents: ['c2'], contenido: '---\norigen: suelta\n---\n' });
+      sheets.cargar('i1', 'recetas', [
+        [...COLUMNAS], fila('r3', 'Flan casero', 'Postres', 'c2'), fila('r4', '', 'Postres', 'c2')
+      ]);
+    });
+
+    it('se borra con su nombre de archivo como confirmación', async () => {
+      await nuevoRecetario().borrar({ id: 'r4', confirmacion: 'r4.md' });
+      expect(drive.cuantas('borrar', 'r4')).toBe(1);
+    });
+
+    it.each([undefined, ''])('con la confirmación %j no borra nada y pide el nombre de archivo', async confirmacion => {
+      const error = await nuevoRecetario().borrar({ id: 'r4', confirmacion }).catch((e: unknown) => e);
+      expect((error as Error).message).toBe('La receta no tiene título: para borrarla hay que pasar su nombre de archivo exacto: "r4.md"');
+      expect(drive.cuantas('borrar')).toBe(0);
+    });
+  });
+
   it('un id que no está en el índice no se borra', async () => {
     const error = await nuevoRecetario().borrar({ id: 'f1', confirmacion: 'flan-1.jpg' }).catch((e: unknown) => e);
     expect((error as Error).message).toContain('reindexar');
