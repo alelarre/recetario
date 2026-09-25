@@ -41,6 +41,7 @@ import type { MenuDePantalla } from './ui/componentes.js';
 import { pintar as pintarEnPantalla, pintarParte, despuesDePintar, conClosest, desplazarCarrusel, movimientoReducido } from './ui/pintar.js';
 import { renderVisor, pasoDelVisor } from './ui/visor.js';
 import type { EstadoVisor } from './ui/visor.js';
+import type { EstadoCompartir } from './ui/compartir.js';
 import {
   linkDeFoto, idDeDrive, resolverReceta, fotosSinUso, siguienteNumero, lineaDelCursor, ponerEn, sacarReferencias
 } from './fotos-receta.js';
@@ -2338,15 +2339,13 @@ async function compartirLaReceta(que: 'link' | 'texto'): Promise<void> {
     const r = que === 'link'
       ? await compartirLink(plataforma, receta.titulo ?? '', contenido)
       : await compartirTexto(plataforma, contenido);
-    estadoDePantalla.compartiendo = r === 'copiado' ? { paso: 'copiado', que }
+    return seguirCompartiendo(r === 'copiado' ? { paso: 'copiado', que }
       : r === 'sin-portapapeles' ? { paso: 'mostrar', que, contenido }
-      : null;
+      : null);
   } catch (err) {
     console.error(err);
-    estadoDePantalla.compartiendo = contenido ? { paso: 'mostrar', que, contenido } : null;
+    return seguirCompartiendo(contenido ? { paso: 'mostrar', que, contenido } : null);
   }
-  if (!estadoDePantalla.compartiendo) nav.cerrarCapa('compartir');
-  return render();
 }
 
 /** La lista de compras, que se comparte sólo como texto. */
@@ -2354,14 +2353,24 @@ async function compartirLasCompras(): Promise<void> {
   const contenido = textoCompras(comprasLeidas?.lista ?? { conCantidad: [], sinCantidad: [] });
   try {
     const r = await compartirTexto(plataformaDelNavegador(), contenido);
-    estadoDePantalla.compartiendo = r === 'copiado' ? { paso: 'copiado', que: 'texto' }
+    return seguirCompartiendo(r === 'copiado' ? { paso: 'copiado', que: 'texto' }
       : r === 'sin-portapapeles' ? { paso: 'mostrar', que: 'texto', contenido }
-      : null;
+      : null);
   } catch (err) {
     console.error(err);
-    estadoDePantalla.compartiendo = { paso: 'mostrar', que: 'texto', contenido };
+    return seguirCompartiendo({ paso: 'mostrar', que: 'texto', contenido });
   }
-  if (!estadoDePantalla.compartiendo) nav.cerrarCapa('compartir');
+}
+
+/**
+ * El paso que sigue de la ficha de compartir, o cerrarla con `null`. Si
+ * mientras se compartía el atrás ya la cerró —o se cambió de pantalla—, no se
+ * la vuelve a abrir: su capa ya no está.
+ */
+function seguirCompartiendo(siguiente: EstadoCompartir | null): Promise<void> | undefined {
+  if (!estadoDePantalla.compartiendo) return;
+  estadoDePantalla.compartiendo = siguiente;
+  if (!siguiente) nav.cerrarCapa('compartir');
   return render();
 }
 

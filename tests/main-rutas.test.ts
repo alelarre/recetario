@@ -4739,6 +4739,26 @@ describe('main.ts: las rutas', () => {
       expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined]);
     });
 
+    it.each([
+      ['la receta', '#/r/f1', 'compartir'],
+      ['la lista de compras', '#/plan/compras', 'compartir-compras']
+    ])('en %s, si el atrás cerró la ficha mientras se copiaba, no vuelve a abrirse', async (_, hash, accion) => {
+      let copiar!: () => void;
+      vi.stubGlobal('navigator', { clipboard: { writeText: () => new Promise<void>(r => { copiar = r; }) } });
+      const { abrir, tocar, tocarSinCerrar, atras, app, pila } = await montar();
+      await abrir(hash);
+      await tocar(accion);
+      const copiando = tocarSinCerrar('compartir-texto');
+      await esperar();
+      await atras();
+      expect(app.innerHTML).not.toContain('hoja-compartir');
+      copiar();
+      await copiando;
+      await esperar();
+      expect(app.innerHTML).not.toContain('hoja-compartir');
+      expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined]);
+    });
+
     it('las fichas de fotos del editor: el atrás las cierra sin tocar el formulario; el velo consume su entrada', async () => {
       estado.md = DEPOSITO;
       const { abrir, tocar, atras, app, preguntas, pila } = await montar();
