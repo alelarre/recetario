@@ -543,7 +543,7 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 - [ ] Una categoría nueva nace con el primer color de la paleta que nadie usa.
 - [ ] Un nombre vacío, que empiece con `_`, repetido o igual a **«Sin categoría»** —sin mirar tildes ni mayúsculas en los dos casos— no se acepta, y se dice por qué. «Sin categoría» es el nombre de lo que no tiene categoría (C05.4.4).
 - [ ] **Borrar una categoría no borra sus recetas:** pasan a `_sin-categoria/` con el tag `borrador` puesto, para que quede a la vista que hay que elegirles otra categoría, y sus filas del índice se actualizan. Sus fotos quedan en `_fotos/` como estaban: el `.md` las nombra por su id. La carpeta vacía, su fila de `categorias` y su foto propia van a la papelera de Drive.
-- [ ] Con recetas, la confirmación lo advierte con la cantidad: *«Sus N recetas pasan a Borradores, sin categoría.»*, y el botón dice **Borrar <nombre de la categoría>**.
+- [ ] Con recetas, la confirmación lo advierte con la cantidad: *«Sus N recetas pasan a Borradores, sin categoría.»*, y el botón dice **Borrar <nombre de la categoría>**. La confirmación toma el lugar del botón, se trae entera a la vista y el foco va a *Cancelar*.
 
 #### C05.9b.5 — Archivos locales *(J8)*
 

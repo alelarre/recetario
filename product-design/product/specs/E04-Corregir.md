@@ -300,7 +300,7 @@ sobre contenido del usuario.
 #### C04.6.1 — Borrar *(J7)*
 
 - [ ] *Borrar receta*, con su tacho, va al pie del formulario, debajo de *Guardar* y con el mismo aire que lo separa de *Convertir con Agente*, a lo ancho y fuera de las fichas: es una acción destructiva, no un campo. En una receta nueva no aparece.
-- [ ] Pide confirmación, y la confirmación nombra la receta. Toma el lugar del botón sin redibujar el formulario.
+- [ ] Pide confirmación, y la confirmación nombra la receta. Toma el lugar del botón sin redibujar el formulario, se trae entera a la vista —lo justo, sin quedar debajo del encabezado— y el foco va a *Cancelar*.
 - [ ] Borra el `.md` de Drive y la fila del índice, y después manda a la papelera **sus fotos de `_fotos/`** (C05.1.5). Las externas y las que viven en otra carpeta no se tocan.
 - [ ] Escribe con el velo y su tilde (`E05-Cimientos.md` R8), y al terminar vuelve hasta salir de la receta: a la lista de donde se venía (C04.1.2).
 - [ ] Si falla, avisa y la receta sigue estando (R1).

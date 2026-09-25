@@ -127,8 +127,24 @@ const pintar = (html: string): void => {
  * `nearest` sólo se mueve lo justo, y no se mueve nada si ya estaba a la vista.
  */
 function mirarElAviso(): void {
-  const aviso = document.querySelector<HTMLElement>('#app .aviso');
-  aviso?.scrollIntoView?.({ block: 'nearest', behavior: movimientoReducido() ? 'auto' : 'smooth' });
+  traerALaVista(document.querySelector<HTMLElement>('#app .aviso'));
+}
+
+/** Lo justo para que se vea entero; el encabezado fijo lo descuenta `scroll-padding-top`. */
+function traerALaVista(elemento: HTMLElement | null): void {
+  elemento?.scrollIntoView?.({ block: 'nearest', behavior: movimientoReducido() ? 'auto' : 'smooth' });
+}
+
+/**
+ * Una confirmación de borrar toma el lugar de un botón al pie de la pantalla y
+ * es más alta que él: sin esto queda a medias debajo del borde. Se la trae
+ * entera y el foco va a su primer botón, *Cancelar*, sin que el foco mueva el
+ * scroll por su cuenta.
+ */
+function mirarLaConfirmacion(selector: string): void {
+  const confirmacion = document.querySelector<HTMLElement>(selector);
+  traerALaVista(confirmacion);
+  confirmacion?.querySelector<HTMLElement>('button')?.focus({ preventScroll: true });
 }
 
 /**
@@ -1751,7 +1767,9 @@ const accionesDeCategorias: SeccionDeAcciones = {
   'borrar-categoria': (boton) => {
     const id = idActual();
     const categoria = store.categorias().find(c => c.id === id);
-    if (categoria) pintarParte(boton, confirmacionBorrarCategoria(categoria.nombre, store.recetasDe(id).map(e => e.titulo)), 'reemplazar');
+    if (!categoria) return;
+    pintarParte(boton, confirmacionBorrarCategoria(categoria.nombre, store.recetasDe(id).map(e => e.titulo)), 'reemplazar');
+    mirarLaConfirmacion('[data-confirmar-borrado-categoria]');
   },
   'cancelar-borrar-categoria': () => {
     const confirmacion = document.querySelector('[data-confirmar-borrado-categoria]');
@@ -1880,7 +1898,10 @@ const accionesDelEditor: SeccionDeAcciones = {
   // La confirmación toma el lugar del botón, y el botón el de la confirmación:
   // redibujar el editor perdería lo escrito y la foto contra la que se
   // comparan los cambios sin guardar.
-  borrar: (boton) => { pintarParte(boton, confirmacionBorrado(recetaLeida?.receta.titulo ?? null), 'reemplazar'); },
+  borrar: (boton) => {
+    pintarParte(boton, confirmacionBorrado(recetaLeida?.receta.titulo ?? null), 'reemplazar');
+    mirarLaConfirmacion('[data-confirmar-borrado]');
+  },
   'cancelar-borrado': () => {
     const confirmacion = document.querySelector('[data-confirmar-borrado]');
     if (confirmacion) pintarParte(confirmacion, botonBorrar, 'reemplazar');

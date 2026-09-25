@@ -577,6 +577,20 @@ describe('main.ts: las rutas', () => {
         : []);
     /** Cada vez que un aviso se trajo a la vista, con cómo se lo alineó. */
     const avisosALaVista: string[] = [];
+    /** Cada vez que una confirmación de borrar se trajo a la vista, con cómo se la alineó. */
+    const confirmacionesALaVista: string[] = [];
+    /** Los botones que tomaron el foco, por su acción, y si pidieron no mover el scroll. */
+    const enfocados: { accion: string; sinScroll: boolean }[] = [];
+    /** La confirmación que tomó el lugar de un botón: su primer botón es el primer `data-accion` del HTML. */
+    const confirmacionFalsa = (html: string) => ({
+      set outerHTML(nuevo: string) { enLugar.push(nuevo); },
+      scrollIntoView: (o: { block?: string }) => { confirmacionesALaVista.push(o?.block ?? ''); },
+      querySelector: (sel: string) => sel === 'button'
+        ? { focus: (o?: { preventScroll?: boolean }) => {
+            enfocados.push({ accion: html.match(/data-accion="([\w-]+)"/)?.[1] ?? '', sinScroll: !!o?.preventScroll });
+          } }
+        : null
+    });
     /** Los `<img>` que la pantalla dejó pedidos; los pone el test. */
     const imgs: ReturnType<typeof imgFalsa>[] = [];
     /** Cada vez que `main` redibujó la fila de miniaturas del editor. */
@@ -639,13 +653,10 @@ describe('main.ts: las rutas', () => {
         // pueda decir que hay uno donde no lo hay.
         if (sel === '[data-formulario]') return app.innerHTML.includes('data-formulario') ? formulario : null;
         if (sel === '[data-salida]') return preguntas.length ? { remove: () => { preguntas.length = 0; } } : null;
-        if (sel === '[data-confirmar-borrado]') {
-          return enLugar.at(-1)?.includes('data-confirmar-borrado')
-            ? { set outerHTML(html: string) { enLugar.push(html); } } : null;
-        }
-        if (sel === '[data-confirmar-borrado-categoria]') {
-          return enLugar.at(-1)?.includes('data-confirmar-borrado-categoria')
-            ? { set outerHTML(html: string) { enLugar.push(html); } } : null;
+        if (sel === '[data-confirmar-borrado]' || sel === '[data-confirmar-borrado-categoria]') {
+          const marca = sel.slice(1, -1);
+          const html = enLugar.at(-1) ?? '';
+          return html.includes(marca) ? confirmacionFalsa(html) : null;
         }
         // El sol encendido, tal como lo dibuja la cocina.
         if (sel === '[data-accion="wake"].on') return app.innerHTML.includes('class="ico on" data-accion="wake"') ? {} : null;
@@ -767,6 +778,8 @@ describe('main.ts: las rutas', () => {
       pinturas,
       atributosApp,
       avisosALaVista,
+      confirmacionesALaVista,
+      enfocados,
       idasYVueltasDelVelo,
       recargas,
       alRecargar,
@@ -1902,6 +1915,15 @@ describe('main.ts: las rutas', () => {
       expect(global.location.hash).toBe('#/categorias');
     });
 
+    it('la confirmación de borrar una categoría se trae entera a la vista y el foco va a su primer botón', async () => {
+      const { abrir, tocar, confirmacionesALaVista, enfocados } = await montar();
+      await abrir('#/categorias');
+      await abrir('#/categorias/c1');
+      await tocar('borrar-categoria');
+      expect(confirmacionesALaVista).toEqual(['nearest']);
+      expect(enfocados).toEqual([{ accion: 'cancelar-borrar-categoria', sinScroll: true }]);
+    });
+
     it('si el borrado falla sin haber movido nada, avisa que la categoría sigue estando', async () => {
       const original = storeFake.borrarCategoria;
       storeFake.borrarCategoria = async () => { throw new Error('red'); };
@@ -2272,6 +2294,17 @@ describe('main.ts: las rutas', () => {
       expect(estado.lecturas).toBe(1);
       expect(enLugar.at(-1)).toContain('¿Borrar <b>Milanesas</b>?');
       expect(enLugar.at(-1)).toContain('data-accion="borrar-confirmado"');
+    });
+
+    it('la confirmación se trae entera a la vista y el foco va a su primer botón', async () => {
+      const { abrir, tocar, confirmacionesALaVista, enfocados } = await montar();
+      await abrir('#/r/f1/editar');
+
+      await tocar('borrar');
+
+      expect(confirmacionesALaVista).toEqual(['nearest']);
+      // Sin mover el scroll: el que lo mueve es `scrollIntoView`, suave.
+      expect(enfocados).toEqual([{ accion: 'cancelar-borrado', sinScroll: true }]);
     });
 
     it('cancelar vuelve a poner el botón, también sin redibujar', async () => {
