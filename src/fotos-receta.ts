@@ -134,6 +134,22 @@ export function usosDeFotos(receta: Receta): Map<number, UsoDeFoto> {
 }
 
 /**
+ * Los números que nombra una referencia `![](foto:N)` del cuerpo y que no
+ * están en el depósito, sin repetir y en el orden en que aparecen. Al
+ * dibujarse esas referencias se borran (`resolverReceta`): quien escribe la
+ * receta tiene que enterarse antes. Va sobre la receta cruda, como
+ * `usosDeFotos`.
+ */
+export function referenciasSinFoto(receta: Receta): number[] {
+  const hay = new Set(receta.fotos.map(f => f.n));
+  const faltan = new Set<number>();
+  for (const texto of textosDe(receta))
+    for (const m of texto.matchAll(PATRON_REFERENCIA))
+      if (!hay.has(Number(m[2]))) faltan.add(Number(m[2]));
+  return [...faltan];
+}
+
+/**
  * Las fotos que no usa ni la cabecera ni el texto, en el orden del depósito:
  * las únicas que se muestran aparte —el carrusel de la receta, la galería del
  * PDF—, porque las demás ya se ven donde van.

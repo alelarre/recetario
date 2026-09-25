@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { pedidoDeConversion, esRecetaEnMd, recetaRecibida, aplicarPegada } from '../src/conversion.js';
+import {
+  pedidoDeConversion, esRecetaEnMd, recetaRecibida, aplicarPegada, reglasDelFormato, limpiarRecibido
+} from '../src/conversion.js';
 import { recetaFalsa } from './dobles.js';
-import { DURACIONES, DIFICULTADES } from '../src/catalogo.js';
+import { DURACIONES, DIFICULTADES, TAGS_RESERVADOS } from '../src/catalogo.js';
 
 const vacio = { descripcion: '', rinde: '', ingredientes: '', preparacion: '' };
 const receta = { id: 'r1', titulo: 'Focaccia', fuente: 'https://ejemplo.com/focaccia', notas: 'La de la abuela, sin romero', ...vacio };
@@ -41,6 +43,36 @@ describe('el pedido al agente', () => {
     const p = pedidoDeConversion({ ...receta, fuente: '', notas: '' });
     expect(p).not.toMatch(/Fuente:\s*\n/);
     expect(p).not.toMatch(/Notas:\s*\n/);
+  });
+});
+
+describe('las reglas del formato', () => {
+  const reglas = reglasDelFormato();
+
+  it('son líneas de lista, con los valores cerrados de las constantes de la app', () => {
+    expect(reglas.length).toBeGreaterThan(0);
+    for (const r of reglas) expect(r).toMatch(/^- /);
+    const texto = reglas.join('\n');
+    for (const d of DURACIONES) expect(texto).toContain(`\`${d}\``);
+    for (const d of DIFICULTADES) expect(texto).toContain(`\`${d}\``);
+    for (const t of TAGS_RESERVADOS) expect(texto).toContain(`\`${t}\``);
+    expect(texto).toContain('## Ingredientes');
+    expect(texto).toContain('`- nombre — cantidad`');
+  });
+
+  it('no dependen de ninguna receta: no piden un id', () => {
+    expect(reglas.join('\n')).not.toContain('id:');
+  });
+
+  it('el pedido las lleva tal cual, en orden, debajo de «Formato:»', () => {
+    const pedido = pedidoDeConversion(receta);
+    let desde = pedido.indexOf('\nFormato:\n');
+    expect(desde).toBeGreaterThan(-1);
+    for (const r of reglas) {
+      const i = pedido.indexOf(`\n${r}\n`, desde);
+      expect(i).toBeGreaterThan(desde);
+      desde = i;
+    }
   });
 });
 
@@ -248,6 +280,17 @@ describe('lo que llega envuelto', () => {
   it('sin envoltorio, todo sigue igual', () => {
     expect(esRecetaEnMd(md)).toBe(true);
     expect(recetaRecibida(md).receta.titulo).toBe('Focaccia');
+  });
+});
+
+describe('limpiarRecibido', () => {
+  const md = '---\ntitulo: Pan\n---\n\n## Preparación\n1. Amasar.';
+
+  it('saca los CRLF, el bloque de código, la cita y los bordes en blanco', () => {
+    expect(limpiarRecibido(md.replace(/\n/g, '\r\n'))).toBe(md);
+    expect(limpiarRecibido('Acá va:\n```md\n' + md + '\n```\nListo.')).toBe(md);
+    expect(limpiarRecibido(md.split('\n').map(l => (l ? '> ' + l : '>')).join('\n'))).toBe(md);
+    expect(limpiarRecibido('\n\n' + md + '\n\n')).toBe(md);
   });
 });
 

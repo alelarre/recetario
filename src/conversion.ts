@@ -93,11 +93,37 @@ function camposCargados(d: DatosDelPedido): { lineas: string[]; nombres: string[
   return { lineas, nombres };
 }
 
+const lista = (xs: readonly string[]): string => xs.map(x => `\`${x}\``).join(', ');
+
+/** Las reglas del frontmatter: claves, valores cerrados y tags reservados. */
+const REGLAS_DEL_FRONTMATTER: readonly string[] = [
+  '- Frontmatter entre `---`, con estas claves y ninguna otra: `titulo` (obligatoria), `tags` como lista `[a, b]`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`.',
+  `- \`tiempo\` es uno de estos valores, tal cual: ${lista(DURACIONES)}. Cuenta el tiempo hasta comer, con reposo y horno. Si no se sabe, no ponerlo.`,
+  `- \`dificultad\` es uno de estos valores: ${lista(DIFICULTADES)}. Si no se puede saber, no ponerla.`,
+  `- En \`tags\` no usar estos: ${lista(TAGS_RESERVADOS)}.`
+];
+
+/** Las reglas del cuerpo: secciones, ingredientes y pasos. */
+const REGLAS_DEL_CUERPO: readonly string[] = [
+  '- Después del frontmatter, una descripción corta opcional y las secciones `## Ingredientes`, `## Preparación`, `## Variaciones` y `## Notas`, sólo las que haya.',
+  '- Un ingrediente por línea: `- nombre — cantidad`. Los `###` agrupan ingredientes o tramos de la preparación.',
+  '- La preparación en pasos numerados.'
+];
+
+/**
+ * Las reglas del `.md`, una por línea: las mismas del pedido de *Convertir
+ * con Agente* y las que recibe cualquier otro agente que escriba recetas.
+ * Salen de las constantes de la app, así que no se desactualizan cuando
+ * cambia el esquema. No llevan el `id` del pedido, que es de una receta.
+ */
+export function reglasDelFormato(): string[] {
+  return [...REGLAS_DEL_FRONTMATTER, ...REGLAS_DEL_CUERPO];
+}
+
 export function pedidoDeConversion(
   datos: DatosDelPedido,
   { fotos = [], links = false }: { fotos?: readonly FotoDelPedido[]; links?: boolean } = {}
 ): string {
-  const lista = (xs: readonly string[]): string => xs.map(x => `\`${x}\``).join(', ');
   const titulo = datos.titulo.trim();
   const fuente = datos.fuente.trim();
   const notas = datos.notas.trim();
@@ -128,14 +154,9 @@ export function pedidoDeConversion(
     ...parrafoDeFotos(fotos, links),
     '',
     'Formato:',
-    '- Frontmatter entre `---`, con estas claves y ninguna otra: `titulo` (obligatoria), `tags` como lista `[a, b]`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`.',
-    `- \`tiempo\` es uno de estos valores, tal cual: ${lista(DURACIONES)}. Cuenta el tiempo hasta comer, con reposo y horno. Si no se sabe, no ponerlo.`,
-    `- \`dificultad\` es uno de estos valores: ${lista(DIFICULTADES)}. Si no se puede saber, no ponerla.`,
-    `- En \`tags\` no usar estos: ${lista(TAGS_RESERVADOS)}.`,
+    ...REGLAS_DEL_FRONTMATTER,
     `- La última línea del frontmatter es \`id: ${datos.id}\`.`,
-    '- Después del frontmatter, una descripción corta opcional y las secciones `## Ingredientes`, `## Preparación`, `## Variaciones` y `## Notas`, sólo las que haya.',
-    '- Un ingrediente por línea: `- nombre — cantidad`. Los `###` agrupan ingredientes o tramos de la preparación.',
-    '- La preparación en pasos numerados.',
+    ...REGLAS_DEL_CUERPO,
     '',
     'No inventar temperaturas, tiempos ni cantidades que ninguna fuente respalde. No agregar datos nutricionales.',
     '',
@@ -169,8 +190,11 @@ function sinCita(texto: string): string {
   return lineas.map(l => l.replace(/^\s*>\s?/, '')).join('\n');
 }
 
-/** Lo que llega compartido o pegado, sin el envoltorio que le puso el agente. */
-const limpiarRecibido = (texto: string): string =>
+/**
+ * Lo que llega compartido, pegado o de un agente, sin el envoltorio que le
+ * puso: sin CRLF, sin el bloque de código y sin la cita.
+ */
+export const limpiarRecibido = (texto: string): string =>
   sinCita(sinBloqueDeCodigo(normalizarSaltos(texto))).trim();
 
 /** Empieza con un frontmatter cerrado que tiene `titulo:`. */
