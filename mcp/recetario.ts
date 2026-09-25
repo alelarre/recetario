@@ -174,12 +174,19 @@ export interface NumeroDeFoto extends FotoPedida {
 
 /**
  * El aviso de un `.md` que trae su propio depósito: se ignora siempre, y el
- * agente tiene que saber que lo que escribió ahí no llega a Drive.
+ * agente tiene que saber que lo que escribió ahí no llega a Drive. Al
+ * corregir, `enDrive` es el depósito actual: el que vino de `leer` sin tocar
+ * no avisa, porque un aviso de todas las veces se aprende a ignorar. Se
+ * compara por número y URL, sin importar el orden.
  */
-function fotosIgnoradas(recibida: Receta): Problema[] {
-  return recibida.fotos.length
-    ? [{ campo: 'fotos', nivel: 'aviso', mensaje: 'Se ignoró la sección `## Fotos` del .md; el depósito lo arma el MCP.' }]
-    : [];
+function fotosIgnoradas(recibida: Receta, enDrive: readonly FotoDeReceta[] = []): Problema[] {
+  if (!recibida.fotos.length) return [];
+  const clave = (f: FotoDeReceta): string => `${f.n} ${f.url}`;
+  const deDrive = new Set(enDrive.map(clave));
+  const igual = recibida.fotos.length === enDrive.length && recibida.fotos.every(f => deDrive.has(clave(f)));
+  return igual
+    ? []
+    : [{ campo: 'fotos', nivel: 'aviso', mensaje: 'Se ignoró la sección `## Fotos` del .md; el depósito lo arma el MCP.' }];
 }
 
 /** Una receta nueva no tiene depósito: sacar fotos es sólo al corregir, con el `id`. */
@@ -430,7 +437,7 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
     const { quedan, sacadas, problemas: alSacar } = sacarDelDeposito(enDrive, sacar);
     const recibida = leerRecibido(md);
     const { receta, seSuben } = conFotosPedidas(recibida, quedan, fotos, enDrive);
-    const problemas = [...problemasDe(receta, { fotosPendientes: seSuben.map(s => s.n) }), ...alSacar, ...fotosIgnoradas(recibida)];
+    const problemas = [...problemasDe(receta, { fotosPendientes: seSuben.map(s => s.n) }), ...alSacar, ...fotosIgnoradas(recibida, enDrive)];
     return { receta, problemas, seSuben, sacadas, numeros: numerados(fotos, enDrive, seSuben) };
   }
 

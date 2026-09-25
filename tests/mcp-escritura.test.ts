@@ -239,6 +239,23 @@ describe('guardar', () => {
     ]);
   });
 
+  it('el .md de leer sin tocar, con su ## Fotos, no avisa, ni en guardar ni en validar con id', async () => {
+    const recetario = nuevoRecetario();
+    const { md: deLeer } = await recetario.leer('r3');
+    const reordenado = deLeer.replace(`- 1: ${linkDeFoto('f1')}\n- 2: ${linkDeFoto('f2')}`, `- 2: ${linkDeFoto('f2')}\n- 1: ${linkDeFoto('f1')}`);
+    expect(reordenado).not.toBe(deLeer);
+    expect((await recetario.validarAlCorregir({ id: 'r3', md: reordenado })).problemas.map(p => p.mensaje)).not.toContain(FOTOS_IGNORADAS);
+    const r = await recetario.guardar({ id: 'r3', md: deLeer.replace('- huevos — 6', '- huevos — 8') });
+    expect(r.escrita).toBe(true);
+    expect(r.problemas.map(p => p.mensaje)).not.toContain(FOTOS_IGNORADAS);
+  });
+
+  it('un ## Fotos con una línea cambiada avisa, también en validar con id', async () => {
+    const cambiado = corregido.replace(`- 2: ${linkDeFoto('f2')}`, '- 2: https://ejemplo.com/otra.jpg');
+    const v = await nuevoRecetario().validarAlCorregir({ id: 'r3', md: cambiado });
+    expect(v.problemas).toContainEqual({ campo: 'fotos', nivel: 'aviso', mensaje: FOTOS_IGNORADAS });
+  });
+
   it('un ## Fotos alterado se ignora: se escribe el depósito de Drive', async () => {
     const alterado = corregido
       .replace(`- 1: ${linkDeFoto('f1')}`, '- 1: https://ejemplo.com/otra.jpg')
