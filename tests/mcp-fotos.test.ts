@@ -1,6 +1,7 @@
 // Las fotos del MCP: achicarlas en Node con el mismo `achicar()` de la app, y
 // subirlas con la receta en el depósito, con el número que el `.md` ya usa.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { existsSync } from 'node:fs';
 import { mkdtemp, rm, writeFile, copyFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -79,7 +80,6 @@ describe('achicarEnNode', () => {
     expect(comando).toBe('sips');
     expect(args.slice(0, 4)).toEqual(['-s', 'format', 'jpeg', origen]);
     expect(args[4]).toBe('--out');
-    const { existsSync } = await import('node:fs');
     expect(existsSync(args[5] ?? '')).toBe(false);
   });
 
