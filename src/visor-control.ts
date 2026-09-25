@@ -21,9 +21,9 @@ export interface VisorControl {
   /**
    * Abre con **lo que se tocó**: la foto `n`, deslizando entre las de la
    * tira. Una foto que no está en la tira —la portada, la de un paso— se
-   * abre sola, con la URL `suelta`. Devuelve si abrió.
+   * abre sola, con la URL `suelta`. Sin ninguna de las dos, no abre.
    */
-  abrir(tira: FotoDelVisor[], n?: number, suelta?: string): boolean;
+  abrir(tira: FotoDelVisor[], n?: number, suelta?: string): void;
   /** El toque sobre el visor. Lo cierra y devuelve `true`, salvo que sea el click con el que termina un deslizamiento. */
   tocar(): boolean;
   /** Lo cierra sin tocar el historial: el atrás ya consumió la capa, o se cambió de pantalla. */
@@ -71,10 +71,9 @@ export function crearVisorControl(capas: CapasDelVisor): VisorControl {
       const i = n === undefined ? -1 : tira.findIndex(f => f.n === n);
       if (i >= 0) estado = { urls: tira.map(f => f.url), i };
       else if (suelta) estado = { urls: [suelta], i: 0 };
-      else return false;
+      else return;
       deslizo = false;
       capas.abrirCapa('visor');
-      return true;
     },
 
     tocar() {

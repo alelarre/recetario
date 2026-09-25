@@ -78,6 +78,15 @@ describe('lista-recetas — la lista agrupada', () => {
     expect(html).toContain('tiene Merluza');
   });
 
+  it('los grupos van juntos en su envoltorio, que los separa; el orden y el spinner, afuera', () => {
+    const html = listaAgrupada({ lista: { ...tres, orden: 'alfa' }, consulta: 'merluza' });
+    const grupos = html.indexOf('<div class="grupos"><div class="grupo-res">');
+    expect(grupos).toBeGreaterThan(html.indexOf('data-accion="ordenar"'));
+    // El envoltorio cierra antes del spinner: entre uno y otro, las etiquetas cierran parejas.
+    const envoltorio = html.slice(grupos, html.indexOf('<div class="spin'));
+    expect(envoltorio.split('<div').length).toBe(envoltorio.split('</div>').length);
+  });
+
   it('mientras falta un tramo, el spinner propio del tramo va después del último grupo', () => {
     const html = listaAgrupada({ lista: tres, consulta: 'merluza' });
     expect(html.indexOf('data-tramo')).toBeGreaterThan(html.lastIndexOf('class="fila tarjeta"'));

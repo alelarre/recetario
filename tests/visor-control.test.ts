@@ -54,7 +54,7 @@ describe('visor-control — abrir', () => {
 
   it('abre en la foto tocada, recorriendo la tira, y es una capa', () => {
     const { visor, capas } = montar();
-    expect(visor.abrir(TIRA, 3)).toBe(true);
+    visor.abrir(TIRA, 3);
     expect(visor.estado).toEqual({ urls: TIRA.map(f => f.url), i: 1 });
     expect(capas).toEqual(['abrir visor']);
   });
@@ -73,8 +73,8 @@ describe('visor-control — abrir', () => {
 
   it('sin nada que mostrar no abre, ni suma una capa', () => {
     const { visor, capas } = montar();
-    expect(visor.abrir(TIRA, 1)).toBe(false);
-    expect(visor.abrir(TIRA, 1, '')).toBe(false);
+    visor.abrir(TIRA, 1);
+    visor.abrir(TIRA, 1, '');
     expect(visor.estado).toBeNull();
     expect(capas).toEqual([]);
   });

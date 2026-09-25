@@ -48,6 +48,11 @@ describe('agregar una receta a una comida', () => {
     expect(html.indexOf('Milanesas napolitanas')).toBeLessThan(html.indexOf('Tortilla de papas'));
   });
 
+  it('Menú diario y Categorías van juntos en el envoltorio de grupos, que los separa', () => {
+    expect(bloqueDeAgregar(inicio())).toMatch(/^<div class="grupos"><div class="grupo-res"><div class="rot">Menú diario</);
+    expect(bloqueDeAgregar(inicio([]))).toMatch(/^<div class="grupos"><div class="grupo-res"><div class="rot">Categorías</);
+  });
+
   it('sin recetas con ese tag, no hay bloque Menú diario, pero la grilla de categorías sigue', () => {
     const html = bloqueDeAgregar(inicio([]));
     expect(html).not.toContain('Menú diario');

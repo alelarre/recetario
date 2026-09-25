@@ -225,9 +225,10 @@ button.tarjeta { width: 100%; font: inherit; text-align: left; cursor: pointer; 
    grupo. Con margen, se sumaría a ese `gap`. */
 .lista { display: flex; flex-direction: column; gap: var(--e-2); }
 .grupo-res { display: flex; flex-direction: column; gap: var(--e-3); }
+/* Los grupos, más separados entre sí que las filas de cada uno. */
+.grupos { display: flex; flex-direction: column; gap: var(--e-5); }
 .rot { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
        letter-spacing: .06em; display: flex; justify-content: space-between; }
-.grupo-res + .grupo-res { margin-top: var(--e-5); }
 
 /* ---- §6.4 Tile de categoría ---- */
 .tile { position: relative; aspect-ratio: 4/3; border-radius: var(--r-ficha); overflow: hidden;

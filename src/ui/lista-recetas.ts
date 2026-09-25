@@ -71,5 +71,7 @@ export function listaAgrupada({ lista, consulta, accion }: OpcionesListaAgrupada
         })).join('') +
       '</div>' +
     '</div>').join('');
-  return (lista.orden ? conmutadorOrden(lista.orden) : '') + grupos + (lista.hayMas ? SPINNER_TRAMO : '');
+  // Los grupos van en su envoltorio, que los separa más que a las filas.
+  return (lista.orden ? conmutadorOrden(lista.orden) : '') + `<div class="grupos">${grupos}</div>` +
+    (lista.hayMas ? SPINNER_TRAMO : '');
 }

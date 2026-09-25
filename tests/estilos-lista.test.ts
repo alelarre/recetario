@@ -30,7 +30,7 @@ describe('la fila: la base de la tarjeta, la categoría en Ajustes y la carpeta'
 });
 
 describe('la lista de recetas, en tokens.css', () => {
-  for (const selector of ['.lista', '.rot', '.grupo-res + .grupo-res', '.tile', '.fila-dur .chip', '.orden', '.orden-seg']) {
+  for (const selector of ['.lista', '.rot', '.grupos', '.tile', '.fila-dur .chip', '.orden', '.orden-seg']) {
     it(`${selector} está en tokens.css y no en base.css`, () => {
       expect(regla(TOKENS, selector)).toBeDefined();
       expect(regla(BASE, selector)).toBeUndefined();
@@ -64,6 +64,14 @@ describe('sin margen doble entre filas: el gap del contenedor es el único separ
     expect(grupo).toContain('display: flex');
     expect(grupo).toContain('flex-direction: column');
     expect(grupo).toContain('gap: var(--e-3)');
+  });
+
+  it('los grupos no llevan margen entre sí: los separa el gap de su envoltorio, más ancho que el de las filas', () => {
+    expect(regla(TOKENS, '.grupo-res + .grupo-res')).toBeUndefined();
+    const grupos = regla(TOKENS, '.grupos') ?? '';
+    expect(grupos).toContain('display: flex');
+    expect(grupos).toContain('flex-direction: column');
+    expect(grupos).toContain('gap: var(--e-5)');
   });
 
   it('el bloque de Agregar al plan, que no es un .cuerpo, apila igual', () => {

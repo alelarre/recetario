@@ -64,7 +64,7 @@ export function bloqueDeAgregar(bloque: OpcionesBloque): string {
     .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
     .map(c => tile(c.nombre, { accion: ELEGIR_CATEGORIA }))
     .join('');
-  return menu + `<div class="grupo-res"><div class="rot">Categorías</div><div class="grilla">${grilla}</div></div>`;
+  return `<div class="grupos">${menu}<div class="grupo-res"><div class="rot">Categorías</div><div class="grilla">${grilla}</div></div></div>`;
 }
 
 export function renderPlanAgregar(opciones: OpcionesPlanAgregar): string {
