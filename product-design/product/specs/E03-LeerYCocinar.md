@@ -62,8 +62,8 @@ receta entera.
 - [ ] Borrador: **se muestra como cualquier receta.** El tag `borrador` no aparece en la fila de tags, en ninguna de sus formas (C05.1.4), y no hay marca, estado ni aviso de lo que falta: a un borrador se llega desde Borradores, que abre el editor (`E01-CapturaYBorradores.md` C01.4.1). Si la fila de tags queda vacía, no se dibuja.
 - [ ] Sin foto: el bloque de foto no se dibuja y la receta empieza por el título.
 - [ ] Cargando: mientras se lee el `.md`, el velo tapa la pantalla de la que se llegó (`E05-Cimientos.md` R8), en su forma de espera. La receta se dibuja entera cuando llega.
-- [ ] Sin red: no se puede abrir; el aviso (C05.8.1).
-- [ ] El `.md` ya no está en Drive: el aviso dice que la receta ya no existe y ofrece volver. La app **no corrige el índice** (R4).
+- [ ] Sin red: no se puede abrir; el aviso *«No se pudo leer la receta.»* con **Reintentar** (C05.8.1).
+- [ ] El `.md` ya no está en Drive —no existe, o está en la papelera—: el aviso dice *«Esta receta ya no está en Drive.»* y ofrece **Volver**, que sale de la receta como después de borrarla, a la pantalla desde donde se la eligió o al Recetario. No ofrece Reintentar. Si tenía fila en el índice, **se saca**, y deja de aparecer en las listas (la excepción de R4). Vale igual para el modo cocina.
 
 ### F03.2 — El modo cocina
 

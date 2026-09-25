@@ -7,6 +7,7 @@
 // de red avise sin dejar datos de una lectura anterior.
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { ErrorDeDrive } from '../src/drive.js';
+import { RecetaQueNoEsta } from '../src/store.js';
 import { comoGlobal, limpiarGlobales, historialFalso } from './dom-falso.js';
 import { entradaFalsa } from './dobles.js';
 import { parse } from '../src/recipe.js';
@@ -2110,6 +2111,23 @@ describe('main.ts: las rutas', () => {
     await abrir('#/r/f1');
     expect(app.innerHTML).not.toContain('Unable to parse range');
     expect(app.innerHTML).toContain('data-accion="reintentar"');
+  });
+
+  it.each([
+    ['la receta', ['#/r/f1']],
+    ['el modo cocina', ['#/r/f1', '#/r/f1/cocinar']],
+    ['el editor', ['#/r/f1', '#/r/f1/editar']]
+  ])('%s: si la receta ya no está en Drive, lo dice y ofrece volver, no reintentar', async (_, hashes) => {
+    const { app, abrir, tocar } = await montar();
+    await abrir('#/c/Carnes');
+    estado.falla = new RecetaQueNoEsta('f1');
+    for (const hash of hashes) await abrir(hash);
+    expect(app.innerHTML).toContain('Esta receta ya no está en Drive.');
+    expect(app.innerHTML).not.toContain('No se pudo leer');
+    expect(app.innerHTML).not.toContain('data-accion="reintentar"');
+    // Volver sale de la receta entera: atrás, la receta diría lo mismo.
+    await tocar('salir-de-receta');
+    expect(global.location.hash).toBe('#/c/Carnes');
   });
 
   it('cada pantalla nueva empieza arriba', async () => {

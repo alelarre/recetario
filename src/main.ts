@@ -1,7 +1,7 @@
 import { crearAuth, ErrorDeAuth } from './auth.js';
 import { crearDrive, ErrorDeDrive } from './drive.js';
 import { crearSheets, ErrorDeSheets } from './sheets.js';
-import { crearStore, conConcurrencia, TOPE_LECTURAS, recetasMovidasEn } from './store.js';
+import { crearStore, conConcurrencia, TOPE_LECTURAS, recetasMovidasEn, RecetaQueNoEsta } from './store.js';
 import * as indiceLocal from './indice-local.js';
 import { parse, slugArchivo, sePuedeTerminar } from './recipe.js';
 import { tagReservado, conEspecial, esFavorita, tieneEspecial, tieneAlgoCargado } from './catalogo.js';
@@ -858,6 +858,12 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
   const enPantalla = (texto: string) => pintar('<div class="cuerpo">' + aviso({
     texto, accion: { etiqueta: 'Reintentar', accion: 'reintentar' }
   }) + '</div>');
+  // Reintentar no trae una receta que ya no está en Drive: se ofrece volver.
+  const recetaSinLeer = (err: unknown) => err instanceof RecetaQueNoEsta
+    ? pintar('<div class="cuerpo">' + aviso({
+      texto: 'Esta receta ya no está en Drive.', accion: { etiqueta: 'Volver', accion: 'salir-de-receta' }
+    }) + '</div>')
+    : enPantalla('No se pudo leer la receta.');
 
   switch (ruta.vista) {
     case 'recetario':
@@ -919,7 +925,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
         return observarTitulo();
       } catch (err) {
         console.error(err);
-        return enPantalla('No se pudo leer la receta.');
+        return recetaSinLeer(err);
       }
 
     case 'cocinar':
@@ -928,7 +934,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
         return pintar(renderCocina({ receta, ...cocina.estado(), salidas: 'volver-y-salir' }));
       } catch (err) {
         console.error(err);
-        return enPantalla('No se pudo leer la receta.');
+        return recetaSinLeer(err);
       }
 
     case 'ajustes':
@@ -1020,7 +1026,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
         return;
       } catch (err) {
         console.error(err);
-        return enPantalla('No se pudo leer la receta.');
+        return recetaSinLeer(err);
       }
 
     case 'nueva': {
@@ -1563,6 +1569,9 @@ const accionesDeNavegacion: SeccionDeAcciones = {
   // Entrar por un link directo no deja ninguna pantalla atrás: ahí volver es
   // ir al Recetario, no salirse de la app.
   volver: () => { nav.volver('#/'); },
+  // Sale de la receta entera, como después de borrarla: si la que ya no está
+  // se abrió en el editor o en la cocina, la pantalla de atrás es ella misma.
+  'salir-de-receta': () => { nav.salirDe(`#/r/${encodeURIComponent(idActual())}`, '#/'); },
   editar: () => { nav.ir(`#/r/${idActual()}/editar`); },
   // Vacía la caja y deja el cursor ahí. No navega: buscar vacío no hace nada,
   // y salir de los resultados es el chevron.

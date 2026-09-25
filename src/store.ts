@@ -25,6 +25,17 @@ const noEsta = (e: unknown): boolean =>
   !!e && typeof e === 'object' && (e as { status?: unknown }).status === 404;
 
 /**
+ * La receta pedida ya no está en Drive: borrada o en la papelera. No es un
+ * error de red, y reintentar no la trae (R1).
+ */
+export class RecetaQueNoEsta extends Error {
+  constructor(id: string) {
+    super(`La receta ${id} ya no está en Drive.`);
+    this.name = 'RecetaQueNoEsta';
+  }
+}
+
+/**
  * Cuántos `.md` se leen a la vez al reconstruir. La cuota de lectura de Drive
  * es generosa, pero sin tope una carpeta de mil recetas abre mil pedidos juntos:
  * seis alcanzan para que la reconstrucción deje de ser una espera en fila.
@@ -1027,9 +1038,26 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       .sort((a, b) => b.cantidad - a.cantidad || a.tag.localeCompare(b.tag));
   }
 
+  /**
+   * Un `.md` en la papelera se sigue pudiendo leer: sólo los metadatos dicen
+   * que ya no está. Se piden a la vez que el texto, así no suman espera. Si ya
+   * no está, su fila sale del índice para que no vuelva a aparecer en las
+   * listas; que eso falle no cambia lo que hay que avisar.
+   */
   async function receta(id: string): Promise<{ entrada: Entrada | null; receta: Receta; texto: string }> {
     const entrada = entradas.find(e => e.id_archivo === id) ?? null;
-    const texto = await drive.leerTexto(id);
+    let leido: [string, ArchivoDrive] | null;
+    try {
+      leido = await Promise.all([drive.leerTexto(id), drive.metadatos(id, 'trashed')]);
+    } catch (e) {
+      if (!noEsta(e)) throw e;
+      leido = null;
+    }
+    if (!leido || leido[1].trashed) {
+      if (entrada) await borrarDelIndice(id).catch((e: unknown) => { console.error(e); });
+      throw new RecetaQueNoEsta(id);
+    }
+    const texto = leido[0];
     return { entrada, receta: parse(texto), texto };
   }
 

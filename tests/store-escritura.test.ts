@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { crearStore } from '../src/store.js';
+import { crearStore, RecetaQueNoEsta } from '../src/store.js';
 import { driveFalso, sheetsFalso, recetaFalsa, indiceLocalFalso, imagenesFalsas } from './dobles.js';
 import type { DriveFalso, SheetsFalso } from './dobles.js';
 import { parse } from '../src/recipe.js';
@@ -272,6 +272,35 @@ describe('borrar', () => {
     const deOtra = filas.filter(f => f[0] === otra.id);
     expect(deOtra).toHaveLength(1);
     expect(deOtra[0]?.[2]).toBe('Otra actualizada');
+  });
+});
+
+describe('leer una receta que ya no está en Drive', () => {
+  it('borrada del todo: avisa que no está y saca la fila del índice', async () => {
+    drive._store.delete('r1');
+    await expect(store.receta('r1')).rejects.toBeInstanceOf(RecetaQueNoEsta);
+    expect(store.entradas()).toHaveLength(0);
+    expect(await sheets.leer('i1', 'recetas!A1:L10')).toHaveLength(1);  // solo el encabezado
+  });
+
+  it('en la papelera: lo mismo, aunque Drive todavía devuelva el texto', async () => {
+    drive._store.get('r1')!.trashed = true;
+    await expect(store.receta('r1')).rejects.toBeInstanceOf(RecetaQueNoEsta);
+    expect(store.entradas()).toHaveLength(0);
+  });
+
+  it('sin fila en el índice avisa igual, sin tocar la planilla', async () => {
+    const antes = sheets.escrituras.length;
+    await expect(store.receta('nunca')).rejects.toBeInstanceOf(RecetaQueNoEsta);
+    expect(sheets.escrituras).toHaveLength(antes);
+    expect(store.entradas()).toHaveLength(1);
+  });
+
+  it('un error de red no es «ya no está»: la fila queda', async () => {
+    const red = Object.assign(new Error('sin red'), { status: 503 });
+    drive.fallar('leerTexto', red);
+    await expect(store.receta('r1')).rejects.toBe(red);
+    expect(store.entradas()).toHaveLength(1);
   });
 });
 

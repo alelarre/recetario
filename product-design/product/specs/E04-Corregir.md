@@ -32,6 +32,7 @@ error.
 
 - [ ] **Editar** está al pie de la receta abierta, a un toque.
 - [ ] El editor abre con todos los campos cargados con lo que dice el `.md`.
+- [ ] Si el `.md` ya no está en Drive, el editor no abre: en su lugar va el mismo aviso que en la receta, *«Esta receta ya no está en Drive.»* con **Volver** (`E03-LeerYCocinar.md` C03.1.3).
 - [ ] El encabezado lleva a la izquierda el volver al editar una receta existente, y el botón del menú en la receta nueva (C04.3b.1); el título —*Nueva receta* o *Editando*— y, a la derecha, **Pegar**: botón principal compacto, con el ícono del portapapeles y el texto «Pegar» (`E01-CapturaYBorradores.md` C01.9.3). Está en todo editor.
 - [ ] **El encabezado queda fijo arriba** al bajar por el formulario, como el de todas las pantallas (`../../ux/design-system.md` §6.12).
 - [ ] Salir sin guardar con cambios pendientes **pregunta antes**: *"¿Salir sin guardar los cambios?"*, con *Seguir editando* y *Salir*. Vale para el volver del encabezado, para un destino del menú lateral —también *Nueva receta* con otra receta nueva abierta— y para el gesto de atrás de Android. La pregunta se inserta arriba del formulario sin redibujarlo, para no perder lo escrito.

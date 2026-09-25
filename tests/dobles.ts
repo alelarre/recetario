@@ -74,9 +74,14 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       if (!a) throw Object.assign(new Error(`El doble de Drive no tiene el archivo ${id}`), { status: 404 });
       return a;
     },
+    // Como el real: un id que no está es un 404. Uno en la papelera se sigue
+    // leyendo; sólo `metadatos` dice que está ahí.
     async leerTexto(id: string) {
       api.llamadas.push(['leerTexto', id]);
-      return store.get(id)?.contenido ?? '';
+      if (fallas.has('leerTexto')) throw fallas.get('leerTexto');
+      const a = store.get(id);
+      if (!a) throw Object.assign(new Error(`El doble de Drive no tiene el archivo ${id}`), { status: 404 });
+      return a.contenido ?? '';
     },
     async crear({ nombre, contenido = '', padre, mime = 'text/markdown' }: {
       nombre: string; contenido?: string | Blob; padre?: string; mime?: string;
