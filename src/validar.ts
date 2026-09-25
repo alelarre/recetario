@@ -60,18 +60,19 @@ const POR_AVISO: Record<Aviso, Problema> = {
   }
 };
 
+/**
+ * Otra forma de un especial es aviso: la app la lee como el especial, y las
+ * recetas viejas que la traen tienen que poder reescribirse. Lo reservado que
+ * no es ningún especial —`terminado`— contradice a `borrador` y es error.
+ */
 function problemasDeTags(tags: string[]): Problema[] {
   return tags
     .filter(t => tagReservado(t) && !(TAGS_ESPECIALES as readonly string[]).includes(t))
-    .map(t => {
+    .map((t): Problema => {
       const especial = tagEspecial(t);
-      return {
-        campo: 'tags',
-        nivel: 'error' as const,
-        mensaje: especial
-          ? `El tag \`${t}\` es otra forma de un tag especial: escribirlo \`${especial}\`.`
-          : `El tag \`${t}\` está reservado y no se usa.`
-      };
+      return especial
+        ? { campo: 'tags', nivel: 'aviso', mensaje: `El tag \`${t}\` es otra forma de un tag especial: escribirlo \`${especial}\`.` }
+        : { campo: 'tags', nivel: 'error', mensaje: `El tag \`${t}\` está reservado y no se usa.` };
     });
 }
 

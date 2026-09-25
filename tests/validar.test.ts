@@ -202,9 +202,14 @@ describe('el nivel de cada problema', () => {
     expect(niveles(conFrontmatter('dificultad: media', 'dificultad: intermedia'))).toEqual({ dificultad: ['error'] });
   });
 
-  it('error: un tag reservado', () => {
-    expect(niveles(conFrontmatter('tags: [carne, favorito, borrador]', 'tags: [favoritas, terminado]')))
+  it('error: un tag reservado que no es ningún especial', () => {
+    expect(niveles(conFrontmatter('tags: [carne, favorito, borrador]', 'tags: [terminado, Terminadas]')))
       .toEqual({ tags: ['error', 'error'] });
+  });
+
+  it('aviso: otra forma de un especial, que la app lee como el especial', () => {
+    const md = conFrontmatter('tags: [carne, favorito, borrador]', 'tags: [incompleta, Borradores, favorita, Menu Diario]');
+    expect(niveles(md)).toEqual({ tags: ['aviso', 'aviso', 'aviso', 'aviso'] });
   });
 
   it('error: una foto:N que no está en el depósito, en la portada o en el texto', () => {
