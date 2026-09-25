@@ -9,96 +9,25 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { SCOPE } from '../src/config.js';
 import { abrirLoopback } from './loopback.js';
+import { ErrorDeLogin, errorDe } from './errores.js';
 
-export type CodigoAuth =
-  | 'sin-cliente' | 'sin-permiso' | 'permiso-revocado' | 'usuario-no-habilitado'
-  | 'cliente-interno' | 'api-deshabilitada' | 'scope-insuficiente' | 'sin-carpeta' | 'sin-red';
+export {
+  ErrorDeLogin, MENSAJES, codigoDe, comoErrorDeLogin, errorDe,
+  type CodigoAuth, type RespuestaDeGoogle
+} from './errores.js';
 
 export const RUTA_CLIENTE = join(homedir(), '.config', 'recetario', 'cliente.json');
 
-export const MENSAJES: Record<CodigoAuth, string> = {
-  'sin-cliente':
-    'Falta el cliente de Google del MCP: ~/.config/recetario/cliente.json no está o está mal formado. ' +
-    'Hay que crear un cliente «Aplicación de escritorio» en Google Cloud y guardar ahí el JSON que se descarga.',
-  'sin-permiso':
-    'El MCP todavía no tiene permiso para usar el Drive. ' +
-    'Hay que correr `npm run mcp:conectar` y dar permiso con la cuenta del Drive del recetario.',
-  'permiso-revocado':
-    'Google rechazó el permiso guardado: se revocó el acceso, se cambió la contraseña o venció ' +
-    '(con el proyecto en modo Prueba dura 7 días). Hay que correr `npm run mcp:conectar` otra vez.',
-  'usuario-no-habilitado':
-    'Google no dio el permiso: la cuenta no está entre los usuarios de prueba del proyecto, o se canceló. ' +
-    'Hay que agregarla en Pantalla de consentimiento → Usuarios de prueba.',
-  'cliente-interno':
-    'El proyecto de Google Cloud tiene el tipo de usuario «Interno». Hay que pasarlo a «Externo» en la pantalla de consentimiento.',
-  'api-deshabilitada':
-    'La API de Drive o la de Sheets no está habilitada en el proyecto de Google Cloud. ' +
-    'Hay que habilitarla en APIs y servicios → Biblioteca.',
-  'scope-insuficiente':
-    'El permiso dado no incluye el acceso completo a Drive. Hay que correr `npm run mcp:conectar` y aceptar el permiso completo.',
-  'sin-carpeta':
-    'La cuenta conectada no ve ninguna carpeta del recetario. Hay que conectarse con la cuenta del Drive del recetario, ' +
-    'o abrir la app una vez para crear o elegir la carpeta.',
-  'sin-red':
-    'No hay conexión con Google. Hay que revisar la conexión y reintentar; no hace falta reconectar.'
-};
-
-export class ErrorDeLogin extends Error {
-  readonly codigo: CodigoAuth;
-  constructor(codigo: CodigoAuth) {
-    super(MENSAJES[codigo]);
-    this.name = 'ErrorDeLogin';
-    this.codigo = codigo;
-  }
-}
-
-/** Lo que contestó Google, o que ni siquiera se llegó. */
-export type RespuestaDeGoogle = { red: true } | { status?: number; cuerpo: string };
-
 /**
- * El código que corresponde a una respuesta de Google, o `null` si no es un
- * problema de login o de permisos. Se busca en el texto: los errores de OAuth
- * (`{"error":"invalid_grant"}`), los de las APIs (`reason` en `errors` o en
- * `details`) y el `error` del redirect llegan con formas distintas.
+ * El canje del código recién dado que Google rechaza (`invalid_grant`) no es
+ * un permiso revocado sino uno que no llegó a completarse: el código venció o
+ * ya se usó. El paso es el mismo, pero el texto no habla de revocar.
  */
-export function codigoDe(respuesta: RespuestaDeGoogle): CodigoAuth | null {
-  if ('red' in respuesta) return 'sin-red';
-  const { status, cuerpo } = respuesta;
-  if (cuerpo.includes('invalid_grant')) return 'permiso-revocado';
-  if (cuerpo.includes('access_denied')) return 'usuario-no-habilitado';
-  if (cuerpo.includes('org_internal')) return 'cliente-interno';
-  if (status === 403) {
-    if (/accessNotConfigured|SERVICE_DISABLED/.test(cuerpo)) return 'api-deshabilitada';
-    if (/insufficientPermissions|ACCESS_TOKEN_SCOPE_INSUFFICIENT/.test(cuerpo)) return 'scope-insuficiente';
-  }
-  return null;
-}
+const MENSAJE_CANJE_FALLIDO =
+  'El permiso no se pudo completar: Google no aceptó el código que volvió del navegador. ' +
+  'Hay que correr `npm run mcp:conectar` de nuevo.';
 
-/**
- * Un `fetch` de Node que no llegó al servidor rechaza con `TypeError('fetch
- * failed')`; una lectura cortada por `AbortSignal.timeout`, con un
- * `TimeoutError`. Cualquier otro `TypeError` es un error de programación y no
- * se disfraza de falta de conexión.
- */
-function esFallaDeRed(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  return (error instanceof TypeError && error.message === 'fetch failed') || error.name === 'TimeoutError';
-}
-
-/**
- * Un error de un pedido a Google (un `ErrorDeDrive` o de Sheets, que llevan el
- * cuerpo en el mensaje y el `status`, o un `fetch` que no llegó) como
- * `ErrorDeLogin`; `null` si es otra cosa y hay que dejarlo pasar.
- */
-export function comoErrorDeLogin(error: unknown): ErrorDeLogin | null {
-  if (error instanceof ErrorDeLogin) return error;
-  if (esFallaDeRed(error)) return new ErrorDeLogin('sin-red');
-  if (error instanceof Error && 'status' in error && typeof error.status === 'number') {
-    const codigo = codigoDe({ status: error.status, cuerpo: error.message });
-    return codigo ? new ErrorDeLogin(codigo) : null;
-  }
-  return null;
-}
+const MENSAJE_ILEGIBLE = 'Google respondió algo que no se pudo leer. Hay que reintentar en un rato.';
 
 /** Donde vive el refresh token: el Llavero de macOS (`llavero.ts`). */
 export interface Llavero {
@@ -149,6 +78,20 @@ export interface OpcionesAuth {
 export interface AuthEscritorio {
   token(): Promise<string>;
   conectar(): Promise<void>;
+  /**
+   * Descarta el access token en memoria. Se llama ante un 401 de Drive o de
+   * Sheets: el token puede seguir vigente por reloj y aun así estar revocado.
+   */
+  olvidar(): void;
+}
+
+/** Un JSON de Google; si no lo es, un error fijo que no muestra el cuerpo. */
+function leerJson<T>(texto: string): T {
+  try {
+    return JSON.parse(texto) as T;
+  } catch {
+    throw new Error(MENSAJE_ILEGIBLE);
+  }
 }
 
 export function crearAuthEscritorio(opciones: OpcionesAuth): AuthEscritorio {
@@ -159,8 +102,12 @@ export function crearAuthEscritorio(opciones: OpcionesAuth): AuthEscritorio {
   let vigente: { token: string; vence: number } | null = null;
   let renovando: Promise<string> | null = null;
 
-  /** Un pedido al endpoint de tokens; cualquier falla sale como `ErrorDeLogin` o con el status. */
-  async function pedirToken(parametros: Record<string, string>): Promise<RespuestaDeToken> {
+  /**
+   * Un pedido al endpoint de tokens; cualquier falla sale como `ErrorDeLogin`
+   * o con el status. `enCanje` es el canje del código que acaba de volver del
+   * navegador, donde un `invalid_grant` tiene su propio texto.
+   */
+  async function pedirToken(parametros: Record<string, string>, enCanje = false): Promise<RespuestaDeToken> {
     let r: Response;
     try {
       r = await fetch(URL_TOKEN, {
@@ -173,12 +120,15 @@ export function crearAuthEscritorio(opciones: OpcionesAuth): AuthEscritorio {
     }
     const texto = await r.text();
     if (!r.ok) {
-      const codigo = codigoDe({ status: r.status, cuerpo: texto });
+      const error = errorDe({ status: r.status, cuerpo: texto });
+      if (enCanje && error?.codigo === 'permiso-revocado') {
+        throw new ErrorDeLogin('permiso-revocado', { mensaje: MENSAJE_CANJE_FALLIDO });
+      }
       // El cuerpo de un error del endpoint de tokens no trae tokens, pero igual
       // no se muestra: el status alcanza para saber que no es de login.
-      throw codigo ? new ErrorDeLogin(codigo) : new Error(`Google respondió ${r.status} al pedir el token.`);
+      throw error ?? new Error(`Google respondió ${r.status} al pedir el token.`);
     }
-    const datos = JSON.parse(texto) as Partial<RespuestaDeToken>;
+    const datos = leerJson<Partial<RespuestaDeToken>>(texto);
     if (typeof datos.access_token !== 'string' || typeof datos.expires_in !== 'number') {
       throw new Error('Google respondió sin access token.');
     }
@@ -235,20 +185,16 @@ export function crearAuthEscritorio(opciones: OpcionesAuth): AuthEscritorio {
           code_challenge_method: 'S256'
         }).toString();
         await abrirNavegador(url.toString());
-        const vuelta = await loopback.vuelta;
-        if ('error' in vuelta) {
-          const traducido = codigoDe({ cuerpo: vuelta.error });
-          throw traducido ? new ErrorDeLogin(traducido) : new Error(`Google no dio el permiso (${vuelta.error}).`);
-        }
+        const codigo = await loopback.vuelta;
 
         const respuesta = await pedirToken({
           grant_type: 'authorization_code',
-          code: vuelta.codigo,
+          code: codigo,
           code_verifier: verificador,
           redirect_uri: loopback.redirect,
           client_id: cliente.clientId,
           client_secret: cliente.clientSecret
-        });
+        }, true);
         // Con `prompt=consent` Google siempre manda un refresh token nuevo.
         if (!respuesta.refresh_token) throw new ErrorDeLogin('sin-permiso');
         await llavero.guardar(respuesta.refresh_token);
@@ -256,6 +202,10 @@ export function crearAuthEscritorio(opciones: OpcionesAuth): AuthEscritorio {
       } finally {
         loopback.cerrar();
       }
+    },
+
+    olvidar() {
+      vigente = null;
     }
   };
 }
@@ -272,9 +222,8 @@ export async function cuentaConectada(fetchGoogle: typeof fetch, token: string):
   }
   const texto = await r.text();
   if (!r.ok) {
-    const codigo = codigoDe({ status: r.status, cuerpo: texto });
-    throw codigo ? new ErrorDeLogin(codigo) : new Error(`Drive respondió ${r.status} al preguntar la cuenta.`);
+    throw errorDe({ status: r.status, cuerpo: texto }) ?? new Error(`Drive respondió ${r.status} al preguntar la cuenta.`);
   }
-  const datos = JSON.parse(texto) as { user?: { emailAddress?: string } };
+  const datos = leerJson<{ user?: { emailAddress?: string } }>(texto);
   return datos.user?.emailAddress ?? '(sin correo)';
 }

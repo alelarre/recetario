@@ -11,6 +11,9 @@ import {
   MENSAJES, type Llavero
 } from '../mcp/auth.js';
 import { crearLlaveroMac, type EjecutarComando } from '../mcp/llavero.js';
+import { abrirLoopback } from '../mcp/loopback.js';
+import { abrirNavegadorMac } from '../mcp/navegador.js';
+import { EventEmitter } from 'node:events';
 
 const SCOPE_DRIVE = 'https://www.googleapis.com/auth/drive';
 
@@ -118,11 +121,14 @@ describe('mcp/auth: conectar', () => {
         vuelta.searchParams.set('code', 'codigo-del-navegador');
         vuelta.searchParams.set('state', p.get('state') ?? '');
         // El navegador vuelve al loopback: un pedido real a 127.0.0.1.
-        void globalThis.fetch(vuelta);
+        paginaDeVuelta = globalThis.fetch(vuelta).then(r => r.text());
       }
     });
+    let paginaDeVuelta: Promise<string> = Promise.resolve('');
 
     await auth.conectar();
+    // La página no dice «listo»: el canje todavía puede fallar, y eso se ve en la terminal.
+    expect(await paginaDeVuelta).toContain('Volvé a la terminal');
 
     const url = new URL(urlAbierta);
     expect(url.origin + url.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth');
@@ -325,7 +331,7 @@ describe('mcp/llavero: el Llavero de macOS con `security`', () => {
     expect(llamadas[0].args).toEqual(['-i']);
     expect(llamadas[0].entrada).toBe(`add-generic-password -U -s recetario-mcp -a ale -w "${token}"\n`);
     for (const l of llamadas) expect(l.args.join(' ')).not.toContain(token);
-    expect(llamadas[1].args).toEqual(['find-generic-password', '-s', 'recetario-mcp', '-w']);
+    expect(llamadas[1].args).toEqual(['find-generic-password', '-s', 'recetario-mcp', '-a', 'ale', '-w']);
   });
 
   it('si al releer no está lo que se guardó, falla', async () => {
@@ -342,7 +348,137 @@ describe('mcp/llavero: el Llavero de macOS con `security`', () => {
   it('lee el token, o null si no hay', async () => {
     const hay = ejecutarFalso([{ codigo: 0, salida: 'refresco\n' }]);
     expect(await crearLlaveroMac({ ejecutar: hay.ejecutar, cuenta: 'ale' }).leer()).toBe('refresco');
+    expect(hay.llamadas[0].args).toEqual(['find-generic-password', '-s', 'recetario-mcp', '-a', 'ale', '-w']);
     const noHay = ejecutarFalso([{ codigo: 44 }]);
     expect(await crearLlaveroMac({ ejecutar: noHay.ejecutar, cuenta: 'ale' }).leer()).toBeNull();
+  });
+});
+
+/** Un `conectar` cuyo navegador vuelve al loopback con los parámetros que se le den. */
+function conectarConVuelta(google: ReturnType<typeof googleFalso>, llavero: Llavero, parametros: Record<string, string>) {
+  return crearAuthEscritorio({
+    llavero, fetch: google.fetch, rutaCliente,
+    abrirNavegador: async (url) => {
+      const p = new URL(url).searchParams;
+      const vuelta = new URL(p.get('redirect_uri') ?? '');
+      vuelta.searchParams.set('state', p.get('state') ?? '');
+      for (const [k, v] of Object.entries(parametros)) vuelta.searchParams.set(k, v);
+      void globalThis.fetch(vuelta);
+    }
+  }).conectar();
+}
+
+describe('mcp/auth: los errores de login dicen qué hacer', () => {
+  it('un 401 de Drive o de Sheets es permiso-revocado', () => {
+    expect(codigoDe({ status: 401, cuerpo: '{"error":{"code":401,"status":"UNAUTHENTICATED"}}' })).toBe('permiso-revocado');
+    const deSheets = Object.assign(new Error('{"error":{"code":401}}'), { status: 401 });
+    expect(comoErrorDeLogin(deSheets)).toMatchObject({ codigo: 'permiso-revocado' });
+  });
+
+  it('un cliente que Google no reconoce al pedir el token es sin-cliente', () => {
+    expect(codigoDe({ status: 401, cuerpo: '{"error":"invalid_client","error_description":"Unauthorized"}' })).toBe('sin-cliente');
+  });
+
+  it('olvidar() descarta el access token en memoria y el próximo token() renueva', async () => {
+    let n = 0;
+    const google = googleFalso(() => json({ access_token: `acceso-${++n}`, expires_in: 3600 }));
+    const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: google.fetch, rutaCliente });
+    expect(await auth.token()).toBe('acceso-1');
+    auth.olvidar();
+    expect(await auth.token()).toBe('acceso-2');
+  });
+
+  it('access_denied nombra las dos causas, cada una con su paso', () => {
+    const texto = MENSAJES['usuario-no-habilitado'];
+    expect(texto).toMatch(/Cancelar.*npm run mcp:conectar/);
+    expect(texto).toContain('Usuarios de prueba');
+  });
+
+  it('api-deshabilitada dice cuál API habilitar, leída de details[].metadata.service', () => {
+    const cuerpo = JSON.stringify({ error: { code: 403, status: 'PERMISSION_DENIED', message: 'Service disabled', details: [
+      { reason: 'SERVICE_DISABLED', metadata: { service: 'sheets.googleapis.com' } }
+    ] } });
+    const error = comoErrorDeLogin(Object.assign(new Error(cuerpo), { status: 403 }));
+    expect(error).toMatchObject({ codigo: 'api-deshabilitada', detalle: 'Sheets' });
+    expect(error?.message).toContain('Google Sheets API');
+    expect(error?.message).not.toContain('Drive');
+  });
+
+  it('api-deshabilitada lee la API del message si no hay metadata', () => {
+    const cuerpo = JSON.stringify({ error: { code: 403, errors: [{ reason: 'accessNotConfigured' }],
+      message: 'Google Drive API has not been used in project 670194416271 before or it is disabled.' } });
+    const error = comoErrorDeLogin(Object.assign(new Error(cuerpo), { status: 403 }));
+    expect(error).toMatchObject({ codigo: 'api-deshabilitada', detalle: 'Drive' });
+    expect(error?.message).toContain('Google Drive API');
+    expect(error?.message).not.toContain('Sheets');
+  });
+
+  it('api-deshabilitada sin la API a la vista nombra las dos', () => {
+    const error = comoErrorDeLogin(Object.assign(new Error('{"error":{"errors":[{"reason":"accessNotConfigured"}]}}'), { status: 403 }));
+    expect(error?.detalle).toBeUndefined();
+    expect(error?.message).toContain('Google Drive API');
+    expect(error?.message).toContain('Google Sheets API');
+  });
+
+  it('invalid_grant al canjear el código tiene un mensaje de ese momento', async () => {
+    const google = googleFalso(() => json({ error: 'invalid_grant' }, 400));
+    const llavero = llaveroFalso(null);
+    const error = await conectarConVuelta(google, llavero, { code: 'c' }).catch((e: unknown) => e);
+    expect(error).toMatchObject({ codigo: 'permiso-revocado' });
+    expect((error as Error).message).toMatch(/no se pudo completar.*npm run mcp:conectar/);
+    expect((error as Error).message).not.toBe(MENSAJES['permiso-revocado']);
+    expect(llavero.valor).toBeNull();
+  });
+
+  it('un 200 que no es JSON falla con un mensaje fijo, sin el cuerpo', async () => {
+    const google = googleFalso(() => new Response('<html>algo-raro-del-proxy</html>', { status: 200 }));
+    const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: google.fetch, rutaCliente });
+    const error = await auth.token().catch((e: unknown) => e);
+    expect((error as Error).message).toMatch(/no se pudo leer/);
+    expect((error as Error).message).not.toContain('algo-raro');
+    const deCuenta = await cuentaConectada(google.fetch, 'tok').catch((e: unknown) => e);
+    expect((deCuenta as Error).message).toMatch(/no se pudo leer/);
+    expect((deCuenta as Error).message).not.toContain('algo-raro');
+  });
+
+  it('un error del redirect que no está en la tabla es sin-permiso, con el código de Google en el detalle', async () => {
+    const google = googleFalso(() => json({}));
+    const error = await conectarConVuelta(google, llaveroFalso(null), { error: 'invalid_scope' }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ErrorDeLogin);
+    expect(error).toMatchObject({ codigo: 'sin-permiso', detalle: 'invalid_scope' });
+    expect(google.pedidos).toEqual([]);
+  });
+});
+
+describe('mcp/loopback', () => {
+  it('si el permiso no vuelve a tiempo, falla con sin-permiso y cierra el puerto', async () => {
+    const loopback = await abrirLoopback('estado', 20);
+    const error = await loopback.vuelta.catch((e: unknown) => e);
+    expect(error).toMatchObject({ codigo: 'sin-permiso' });
+    expect((error as Error).message).toContain('npm run mcp:conectar');
+    await expect(globalThis.fetch(loopback.redirect)).rejects.toThrow();
+  });
+
+  it('una vuelta con el state correcto pero sin code es sin-permiso, y el puerto se cierra', async () => {
+    const loopback = await abrirLoopback('estado');
+    const pagina = await (await globalThis.fetch(`${loopback.redirect}/?state=estado`)).text();
+    expect(pagina).toContain('Volvé a la terminal');
+    await expect(loopback.vuelta).rejects.toMatchObject({ codigo: 'sin-permiso' });
+    await expect(globalThis.fetch(loopback.redirect)).rejects.toThrow();
+  });
+});
+
+describe('mcp/navegador', () => {
+  it('si `open` no se puede lanzar, avisa con un mensaje claro y no revienta', () => {
+    const avisos: string[] = [];
+    const proceso = Object.assign(new EventEmitter(), { unref() {} });
+    abrirNavegadorMac('https://accounts.google.com/x', {
+      lanzar: () => proceso,
+      avisar: (m) => { avisos.push(m); }
+    });
+    expect(avisos.join('\n')).toContain('https://accounts.google.com/x');
+    proceso.emit('error', new Error('spawn open ENOENT'));
+    expect(avisos.at(-1)).toMatch(/No se pudo abrir el navegador/);
+    expect(avisos.at(-1)).not.toContain('ENOENT');
   });
 });

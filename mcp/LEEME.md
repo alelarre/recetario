@@ -47,12 +47,12 @@ Los errores de login salen con un código entre corchetes:
 
 | Código | Qué hacer |
 |---|---|
-| `sin-cliente` | Falta `~/.config/recetario/cliente.json` o no es el JSON de un cliente de escritorio: repetir los pasos 1 a 3. |
-| `sin-permiso` | Correr `npm run mcp:conectar`. |
-| `permiso-revocado` | Correr `npm run mcp:conectar` otra vez. Si pasa cada semana es porque el proyecto está en modo *Prueba*, donde el permiso dura 7 días. |
-| `usuario-no-habilitado` | Agregar la cuenta en *Pantalla de consentimiento de OAuth → Usuarios de prueba*. |
+| `sin-cliente` | Falta `~/.config/recetario/cliente.json`, no es el JSON de un cliente de escritorio o Google no reconoce el cliente (se borró): repetir los pasos 1 a 3. |
+| `sin-permiso` | Correr `npm run mcp:conectar`. También sale si el permiso no volvió del navegador (se cerró la pestaña, pasaron cinco minutos o Google devolvió otro error). |
+| `permiso-revocado` | Correr `npm run mcp:conectar` otra vez. Si pasa cada semana es porque el proyecto está en modo *Prueba*, donde el permiso dura 7 días. Durante `mcp:conectar` quiere decir que el permiso no se pudo completar: correrlo de nuevo. |
+| `usuario-no-habilitado` | Si se tocó *Cancelar*, correr `npm run mcp:conectar` de nuevo y aceptar. Si no, agregar la cuenta en *Pantalla de consentimiento de OAuth → Usuarios de prueba*. |
 | `cliente-interno` | Pasar el tipo de usuario del proyecto a *Externo*, en la pantalla de consentimiento. |
-| `api-deshabilitada` | Habilitar Google Drive API y Google Sheets API en *APIs y servicios → Biblioteca*. |
+| `api-deshabilitada` | Habilitar la API que nombra el mensaje (Google Drive API o Google Sheets API) en *APIs y servicios → Biblioteca*. |
 | `scope-insuficiente` | Correr `npm run mcp:conectar` y aceptar el acceso completo a Drive. |
 | `sin-carpeta` | Conectarse con la cuenta del Drive del recetario, o abrir la app una vez para crear o elegir la carpeta. |
 | `sin-red` | Revisar la conexión y reintentar. No hace falta reconectar. |

@@ -4,6 +4,7 @@
 // queda un puerto abierto después del login.
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { ErrorDeLogin, codigoDe } from './errores.js';
 
 /** Si el permiso no vuelve en este tiempo, el login se da por abandonado. */
 const ESPERA_MAXIMA = 5 * 60_000;
@@ -12,10 +13,11 @@ export interface Loopback {
   /** `http://127.0.0.1:<puerto>`: el `redirect_uri` del pedido de permiso. */
   redirect: string;
   /**
-   * Lo que trajo el navegador con el `state` esperado: el código de
-   * autorización, o el `error` con que Google no dio el permiso.
+   * El código de autorización que trajo el navegador con el `state` esperado.
+   * Si Google no dio el permiso, si volvió sin código o si no volvió a
+   * tiempo, un `ErrorDeLogin`.
    */
-  vuelta: Promise<{ codigo: string } | { error: string }>;
+  vuelta: Promise<string>;
   cerrar(): void;
 }
 
@@ -24,9 +26,9 @@ function pagina(texto: string): string {
 }
 
 export async function abrirLoopback(state: string, esperaMaxima = ESPERA_MAXIMA): Promise<Loopback> {
-  let resolver!: (vuelta: { codigo: string } | { error: string }) => void;
+  let resolver!: (codigo: string) => void;
   let rechazar!: (error: Error) => void;
-  const vuelta = new Promise<{ codigo: string } | { error: string }>((res, rej) => { resolver = res; rechazar = rej; });
+  const vuelta = new Promise<string>((res, rej) => { resolver = res; rechazar = rej; });
   // Si el login falla antes de esperar la vuelta, la promesa no queda sin atender.
   vuelta.catch(() => {});
 
@@ -35,23 +37,25 @@ export async function abrirLoopback(state: string, esperaMaxima = ESPERA_MAXIMA)
   const servidor = createServer((pedido, respuesta) => {
     const parametros = new URL(pedido.url ?? '/', 'http://127.0.0.1').searchParams;
     const error = parametros.get('error');
-    let texto: string;
+    const recibido = parametros.get('code');
     if (parametros.get('state') !== state) {
-      texto = 'Este pedido no corresponde al permiso que pidió el recetario. Se canceló el login.';
+      // Un pedido que no trae el `state` de este login no viene de Google.
       rechazar(new Error('La vuelta del navegador no corresponde al pedido de permiso; se canceló el login.'));
     } else if (error) {
-      texto = 'Google no dio el permiso. Volvé a la terminal para ver qué pasó.';
-      resolver({ error });
+      const codigo = codigoDe({ cuerpo: error });
+      rechazar(codigo ? new ErrorDeLogin(codigo) : new ErrorDeLogin('sin-permiso', {
+        detalle: error,
+        mensaje: `Google no dio el permiso (${error}). Hay que correr \`npm run mcp:conectar\` de nuevo.`
+      }));
+    } else if (recibido) {
+      resolver(recibido);
     } else {
-      const recibido = parametros.get('code');
-      if (recibido) {
-        texto = 'Listo: el recetario ya tiene permiso. Podés cerrar esta pestaña.';
-        resolver({ codigo: recibido });
-      } else {
-        texto = 'Google volvió sin código. Se canceló el login.';
-        rechazar(new Error('Google volvió sin código de autorización.'));
-      }
+      rechazar(new ErrorDeLogin('sin-permiso', {
+        mensaje: 'Google volvió del permiso sin código. Hay que correr `npm run mcp:conectar` de nuevo.'
+      }));
     }
+    // El canje del código todavía puede fallar: cómo terminó se ve en la terminal.
+    const texto = 'Volvé a la terminal para ver cómo terminó el permiso. Ya podés cerrar esta pestaña.';
     respuesta.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', Connection: 'close' });
     respuesta.end(pagina(texto), () => cerrar());
   });
@@ -69,7 +73,9 @@ export async function abrirLoopback(state: string, esperaMaxima = ESPERA_MAXIMA)
   const { port } = servidor.address() as AddressInfo;
 
   temporizador = setTimeout(() => {
-    rechazar(new Error('Pasaron cinco minutos sin que volviera el permiso de Google; se canceló el login.'));
+    rechazar(new ErrorDeLogin('sin-permiso', {
+      mensaje: 'El permiso de Google no volvió a tiempo y se canceló el login. Hay que correr `npm run mcp:conectar` de nuevo.'
+    }));
     cerrar();
   }, esperaMaxima);
 

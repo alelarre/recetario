@@ -43,7 +43,7 @@ export function crearLlaveroMac(opciones: OpcionesLlavero = {}): Llavero {
   const cuenta = opciones.cuenta ?? userInfo().username;
 
   async function leer(): Promise<string | null> {
-    const { codigo, salida } = await ejecutar('security', ['find-generic-password', '-s', SERVICIO, '-w']);
+    const { codigo, salida } = await ejecutar('security', ['find-generic-password', '-s', SERVICIO, '-a', cuenta, '-w']);
     if (codigo === NO_ENCONTRADO) return null;
     if (codigo !== 0) throw new Error(`No se pudo leer el Llavero (security salió con ${codigo}).`);
     return salida.trim() || null;
