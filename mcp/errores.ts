@@ -142,7 +142,12 @@ export function esErrorDeGoogle(error: unknown): error is ErrorDeGoogle {
   return error instanceof Error && 'status' in error && typeof error.status === 'number';
 }
 
-/** El texto de un error de Google que no es de login, sin el cuerpo de la respuesta. */
+/**
+ * El texto de un error de Google que no es de login, sin el cuerpo de la
+ * respuesta. El status 0 no viene de Google: es el cliente de Sheets cuando la
+ * respuesta no trajo la hoja pedida, con un mensaje propio que se conserva.
+ */
 export function mensajeDeGoogle(error: ErrorDeGoogle): string {
+  if (error.status === 0) return `${error.message}. Probá reindexar.`;
   return `Google respondió ${error.status} y no se pudo completar el pedido.`;
 }

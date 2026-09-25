@@ -3,9 +3,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { crearServidor } from '../mcp/servidor.js';
+import { crearServidor, respuestaDeError } from '../mcp/servidor.js';
 import { crearRecetario } from '../mcp/recetario.js';
 import { ErrorDeDrive } from '../src/drive.js';
+import { ErrorDeSheets } from '../src/sheets.js';
 import { COLUMNAS } from '../src/catalogo.js';
 import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 import { SCHEMA_VERSION } from '../src/config.js';
@@ -187,6 +188,12 @@ describe('los errores', () => {
     expect(r.isError).toBe(true);
     expect(texto(r)).toContain('500');
     expect(texto(r)).not.toContain('Backend');
+  });
+
+  it('uno de Sheets sin status (la hoja que no volvió) dice qué pasó y qué hacer, sin «Google respondió 0»', () => {
+    const r = respuestaDeError(new ErrorDeSheets('Sheets no devolvió la hoja recetas', 0)) as Respuesta;
+    expect(r.isError).toBe(true);
+    expect(texto(r)).toBe('Sheets no devolvió la hoja recetas. Probá reindexar.');
   });
 
   it('uno propio del recetario sale con su mensaje', async () => {
