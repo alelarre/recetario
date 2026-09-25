@@ -22,10 +22,14 @@ export const rangoDeFila = (fila: unknown, hoja = HOJA_RECETAS, columnas: number
   return `${hoja}!A${fila}:${letra(columnas - 1)}${fila}`;
 };
 
-/** Una hoja de la planilla: su id numérico y su nombre. */
+/**
+ * Una hoja de la planilla: su id numérico, su nombre y, cuando se pidió, el
+ * tamaño de la grilla —filas vacías incluidas—.
+ */
 export interface PropiedadesHoja {
   sheetId: number;
   title: string;
+  gridProperties?: { rowCount?: number };
 }
 
 /** Un error de la API de Sheets, con el status para distinguir el 429 de cuota. */
@@ -71,8 +75,14 @@ export function crearSheets(obtenerToken: () => Promise<string>) {
       `/${id}/values/${encodeURIComponent(hoja + '!A1')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
       { method: 'POST', body: JSON.stringify({ values: filas }) }),
 
-    agregarHoja: (id: string, titulo: string) => pedir<unknown>(`/${id}:batchUpdate`,
-      { method: 'POST', body: JSON.stringify({ requests: [{ addSheet: { properties: { title: titulo } } }] }) }),
+    /** La respuesta trae las propiedades de la hoja nueva: con eso no hace falta pedir `hojas` para saber su id. */
+    agregarHoja: async (id: string, titulo: string): Promise<PropiedadesHoja> => {
+      const r = await pedir<{ replies?: { addSheet?: { properties?: PropiedadesHoja } }[] }>(`/${id}:batchUpdate`,
+        { method: 'POST', body: JSON.stringify({ requests: [{ addSheet: { properties: { title: titulo } } }] }) });
+      const hoja = r.replies?.[0]?.addSheet?.properties;
+      if (!hoja) throw new ErrorDeSheets(`Sheets no devolvió la hoja ${titulo}`, 0);
+      return hoja;
+    },
 
     /** Borra la fila de verdad: el corrimiento posterior es determinístico. */
     borrarFila: (id: string, hojaId: number, fila: number) => pedir<unknown>(`/${id}:batchUpdate`, {
@@ -83,18 +93,14 @@ export function crearSheets(obtenerToken: () => Promise<string>) {
     }),
 
     /**
-     * Borra varias filas en una sola llamada, una escritura de cuota en vez
-     * de una por fila. `filas` tiene que venir de mayor a menor: un
-     * `deleteDimension` corre las filas de abajo hacia arriba, así que borrar
-     * primero una fila de más arriba invalidaría el índice de las que
-     * todavía faltan (el mismo corrimiento que `borrarFila`).
+     * Deja la hoja con el encabezado solo: borra de la fila 2 a la `filas`, en
+     * un único `deleteDimension`. `filas` es el tamaño de la grilla, así que
+     * se van también las filas vacías y las que se agregaron a mano.
      */
-    borrarFilas: (id: string, hojaId: number, filas: number[]) => pedir<unknown>(`/${id}:batchUpdate`, {
+    vaciarHoja: (id: string, hojaId: number, filas: number) => pedir<unknown>(`/${id}:batchUpdate`, {
       method: 'POST',
       body: JSON.stringify({
-        requests: filas.map(fila => (
-          { deleteDimension: { range: { sheetId: hojaId, dimension: 'ROWS', startIndex: fila - 1, endIndex: fila } } }
-        ))
+        requests: [{ deleteDimension: { range: { sheetId: hojaId, dimension: 'ROWS', startIndex: 1, endIndex: filas } } }]
       })
     }),
 
@@ -105,7 +111,7 @@ export function crearSheets(obtenerToken: () => Promise<string>) {
      */
     hojas: async (id: string): Promise<PropiedadesHoja[]> => {
       const r = await pedir<{ sheets?: { properties?: PropiedadesHoja }[] }>(
-        `/${id}?fields=sheets(properties(sheetId,title))`);
+        `/${id}?fields=sheets(properties(sheetId,title,gridProperties(rowCount)))`);
       return (r.sheets ?? [])
         .map(s => s.properties)
         .filter((p): p is PropiedadesHoja => p !== undefined);

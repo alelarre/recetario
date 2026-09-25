@@ -6,7 +6,7 @@ import { COLUMNAS_CATEGORIAS, PREDEFINIDAS, categoriaDesdeFila, filaDeCategoria,
 import { parsePlan, serializePlan } from './plan.js';
 import { idDeDrive, linkDeFoto } from './fotos-receta.js';
 import type { Drive } from './drive.js';
-import type { Sheets } from './sheets.js';
+import type { Sheets, PropiedadesHoja } from './sheets.js';
 import type { CopiaIndice, IndiceLocal } from './indice-local.js';
 import type {
   Receta, Ubicacion, Entrada, Filtros, Coincidencia, Coincidencias, ArchivoDrive,
@@ -206,7 +206,7 @@ export type DriveDelStore = Pick<Drive,
   'crear' | 'actualizar' | 'renombrar' | 'mover' | 'borrar'>;
 
 export type SheetsDelStore = Pick<Sheets,
-  'leer' | 'escribir' | 'append' | 'agregarHoja' | 'borrarFila' | 'borrarFilas' |
+  'leer' | 'escribir' | 'append' | 'agregarHoja' | 'borrarFila' | 'vaciarHoja' |
   'hojas' | 'renombrarHoja'>;
 
 /** Lo que el store usa del caché de imágenes (`imagenes.ts`). */
@@ -239,6 +239,13 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   let entradas: Entrada[] = [];
   let filas = new Map<string, number>();
   /**
+   * Los `sheetId` de las hojas de `_indice`, pedidos una vez por sesión: sólo
+   * cambian si alguien borra una hoja a mano, y ahí la salida es reindexar,
+   * que los vuelve a pedir. Van con el id de la planilla para no usar los de
+   * otra después de cambiar de carpeta.
+   */
+  let hojasConocidas: { indiceId: string; hojas: PropiedadesHoja[] } | null = null;
+  /**
    * El plan de la semana: el id de `_plan.md` y lo último que se leyó o
    * escribió. `buscado` distingue «todavía no lo busqué» de «no existe»: la
    * búsqueda en Drive es una sola por sesión.
@@ -251,6 +258,14 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   async function leerMeta(): Promise<Record<string, string>> {
     const filas = await sheets.leer(ctx.indiceId, `${HOJA_META}!A1:B20`);
     return Object.fromEntries(filas.map(f => [f[0] ?? '', f[1] ?? '']));
+  }
+
+  /** Las hojas de `_indice`, de memoria si ya se pidieron para esta planilla. */
+  async function hojasDelIndice(): Promise<PropiedadesHoja[]> {
+    if (hojasConocidas?.indiceId !== ctx.indiceId) {
+      hojasConocidas = { indiceId: ctx.indiceId, hojas: await sheets.hojas(ctx.indiceId) };
+    }
+    return hojasConocidas.hojas;
   }
 
   /**
@@ -370,13 +385,17 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       }
 
       await sheets.escribir(archivo.id, `${HOJA_RECETAS}!A1:${ULTIMA_COLUMNA}1`, [[...COLUMNAS]]);
-      await sheets.agregarHoja(archivo.id, HOJA_META);
+      const meta = await sheets.agregarHoja(archivo.id, HOJA_META);
       await sheets.escribir(archivo.id, `${HOJA_META}!A1:B2`, [
         ['schemaVersion', String(SCHEMA_VERSION)],
         ['ultima_reconstruccion', '']
       ]);
-      await sheets.agregarHoja(archivo.id, HOJA_CATEGORIAS);
+      const categorias = await sheets.agregarHoja(archivo.id, HOJA_CATEGORIAS);
       await sheets.escribir(archivo.id, `${HOJA_CATEGORIAS}!A1:${ULTIMA_COLUMNA_CATEGORIAS}1`, [[...COLUMNAS_CATEGORIAS]]);
+      hojasConocidas = {
+        indiceId: archivo.id,
+        hojas: [{ sheetId: hojaPorDefecto.sheetId, title: HOJA_RECETAS }, meta, categorias]
+      };
       return archivo.id;
     } catch (e) {
       // Si algo después de crear el archivo falla, no dejar una planilla a
@@ -514,12 +533,22 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     return ctx.meta['ultima_reconstruccion'] ?? '';
   }
 
+  /**
+   * Escribe la hoja `meta` entera desde la de memoria, con los cambios: una
+   * escritura y ninguna lectura. `ctx.meta` siempre tiene todas las claves
+   * —sale de leer la hoja, de la copia o de crear la planilla— y en el orden
+   * de sus filas, así que cada clave cae en la fila donde ya estaba y una
+   * nueva va al final.
+   */
+  async function anotarMeta(cambios: Record<string, string>): Promise<void> {
+    const meta = { ...ctx.meta, ...cambios };
+    const filasMeta = Object.entries(meta);
+    await sheets.escribir(ctx.indiceId, `${HOJA_META}!A1:B${filasMeta.length}`, filasMeta);
+    ctx.meta = meta;
+  }
+
   async function guardarMeta(clave: string, valor: string): Promise<void> {
-    const meta = await sheets.leer(ctx.indiceId, `${HOJA_META}!A1:B20`);
-    const i = meta.findIndex(f => f[0] === clave);
-    const fila = i >= 0 ? i + 1 : meta.length + 1;
-    await sheets.escribir(ctx.indiceId, `${HOJA_META}!A${fila}:B${fila}`, [[clave, valor]]);
-    ctx.meta[clave] = valor;
+    await anotarMeta({ [clave]: valor });
   }
 
   async function cargarIndice(): Promise<Entrada[]> {
@@ -562,22 +591,22 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   async function borrarDeHoja(hoja: string, nros: Map<string, number>, id: string): Promise<boolean> {
     const nro = nros.get(id);
     if (!nro) return false;
-    const hojas = await sheets.hojas(ctx.indiceId);
-    await sheets.borrarFila(ctx.indiceId, idDeHoja(hojas, hoja), nro);
+    await sheets.borrarFila(ctx.indiceId, idDeHoja(await hojasDelIndice(), hoja), nro);
     nros.delete(id);
     // El corrimiento es determinístico: no hace falta releer nada.
     for (const [otroId, otraFila] of nros) if (otraFila > nro) nros.set(otroId, otraFila - 1);
     return true;
   }
 
-  async function escribirFila(receta: Receta, ubicacion: Ubicacion): Promise<void> {
+  /** `persistir: false` deja la copia para quien llama, que escribe varias filas seguidas y persiste una vez. */
+  async function escribirFila(receta: Receta, ubicacion: Ubicacion, { persistir: conCopia = true } = {}): Promise<void> {
     const fila = filaDesde(receta, ubicacion);
     // La entrada en memoria se actualiza acá y no en quien llama: la capa
     // compartida escribe la fila sin pasar por guardar ni crear, y la copia
     // se arma desde las entradas.
     entradas = [...entradas.filter(e => e.id_archivo !== ubicacion.id), entradaDesdeFila(fila)];
     await escribirEnHoja(HOJA_RECETAS, filas, ubicacion.id, fila, COLUMNAS.length);
-    await persistir();
+    if (conCopia) await persistir();
   }
 
   async function borrarDelIndice(id: string): Promise<void> {
@@ -673,20 +702,23 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
    * toca. Una que ya no está no es un error.
    */
   async function tirarFotos(ids: readonly string[]): Promise<void> {
-    if (!ctx.fotosId) return;
-    for (const id of ids) {
+    const fotosId = ctx.fotosId;
+    if (!fotosId) return;
+    // Cada foto es independiente de las otras: van juntas, con el mismo tope
+    // que las lecturas, y no una detrás de otra.
+    await conConcurrencia(ids, TOPE_LECTURAS, async id => {
       let padres: string[];
       try {
         padres = (await drive.metadatos(id, 'parents')).parents ?? [];
       } catch (e) {
         if (!noEsta(e)) throw e;
         await enElCache(c => c.olvidarImagen(id));
-        continue;
+        return;
       }
-      if (!padres.includes(ctx.fotosId)) continue;
+      if (!padres.includes(fotosId)) return;
       await aLaPapelera(id);
       await enElCache(c => c.olvidarImagen(id));
-    }
+    });
   }
 
   /**
@@ -697,7 +729,11 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   async function guardar(
     id: string,
     receta: Receta,
-    { carpetaDestino, fotos }: { carpetaDestino?: string | undefined; fotos?: CambiosDeFotos | undefined } = {}
+    { carpetaDestino, fotos, persistir: conCopia = true }: {
+      carpetaDestino?: string | undefined; fotos?: CambiosDeFotos | undefined;
+      /** `false`: la copia local la guarda quien llama, al terminar una tanda. */
+      persistir?: boolean;
+    } = {}
   ): Promise<void> {
     const entrada = entradas.find(e => e.id_archivo === id);
 
@@ -741,7 +777,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       mtime: Date.parse(actualizado.modifiedTime ?? '') || Date.now()
     };
 
-    await escribirFila(conLinks, ubicacion);
+    await escribirFila(conLinks, ubicacion, { persistir: conCopia });
     if (fotos) await tirarFotos(idsDeDrive(fotos.sacadas));
   }
 
@@ -767,15 +803,16 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   }
 
   /**
-   * El `.md` se lee antes de mandarlo a la papelera, para saber sus fotos; las
-   * de `_fotos/` van después del `.md` y de su fila. Las externas no se tocan.
+   * Las fotos salen de la receta: la que pasa quien llama, que ya la tiene
+   * leída, o si no la del `.md`, leído antes de mandarlo a la papelera. Las de
+   * `_fotos/` van después del `.md` y de su fila. Las externas no se tocan.
    */
-  async function borrar(id: string): Promise<void> {
+  async function borrar(id: string, { receta: leida }: { receta?: Receta | undefined } = {}): Promise<void> {
     if (!entradas.some(e => e.id_archivo === id)) await delRecetario(id);
     // Si el `.md` no se puede leer, se borra igual y sus fotos quedan
     // huérfanas en `_fotos/`: no poder borrar una receta es peor que dejar una
     // foto de más, y es el mismo lado seguro que el resto de la feature.
-    const fotos = await drive.leerTexto(id).then(texto => parse(texto).fotos).catch(() => []);
+    const fotos = leida?.fotos ?? await drive.leerTexto(id).then(texto => parse(texto).fotos).catch(() => []);
     await drive.borrar(id);
     await borrarDelIndice(id);
     await tirarFotos(idsDeDrive(fotos.map(f => f.url)));
@@ -786,32 +823,38 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     return hojas.find(h => h.title === nombre)?.sheetId ?? 0;
   }
 
-  /** Agrega la hoja con su encabezado si la planilla es de un esquema anterior y no la tiene. */
+  /**
+   * La hoja, agregada con su encabezado si la planilla es de un esquema
+   * anterior y no la tiene. Una recién agregada está vacía: su grilla es el
+   * encabezado solo.
+   */
   async function asegurarHoja(
-    hojas: { title: string }[], hoja: string, ultimaColumna: string, columnas: readonly string[]
-  ): Promise<void> {
-    if (hojas.some(h => h.title === hoja)) return;
-    await sheets.agregarHoja(ctx.indiceId, hoja);
+    hojas: PropiedadesHoja[], hoja: string, ultimaColumna: string, columnas: readonly string[]
+  ): Promise<PropiedadesHoja> {
+    const existente = hojas.find(h => h.title === hoja);
+    if (existente) return existente;
+    const nueva = await sheets.agregarHoja(ctx.indiceId, hoja);
     await sheets.escribir(ctx.indiceId, `${hoja}!A1:${ultimaColumna}1`, [[...columnas]]);
+    return { ...nueva, gridProperties: { rowCount: 1 } };
   }
 
-  /** Vacía una hoja, salvo el encabezado, y la llena con `nuevas`. */
-  async function reemplazarFilas(hoja: string, hojaId: number, ultimaColumna: string, nuevas: string[][]): Promise<void> {
-    const previas = await sheets.leer(ctx.indiceId, `${hoja}!A1:${ultimaColumna}100000`);
-    if (previas.length >= 2) {
-      // Todas juntas en una sola llamada: de a una, la cuota de escritura de
-      // Sheets (60/min) se agota apenas la cantidad de recetas pasa un puñado.
-      const filasABorrar: number[] = [];
-      for (let fila = previas.length; fila >= 2; fila--) filasABorrar.push(fila);
-      await sheets.borrarFilas(ctx.indiceId, hojaId, filasABorrar);
-    }
+  /**
+   * Vacía una hoja, salvo el encabezado, y la llena con `nuevas`. Lo que se
+   * borra sale del tamaño de la grilla, no de las filas en memoria ni de leer
+   * la hoja: la grilla incluye lo agregado a mano y las filas duplicadas, y
+   * borrarla entera es un solo pedido.
+   */
+  async function reemplazarFilas(hoja: PropiedadesHoja, nuevas: string[][]): Promise<void> {
+    const grilla = hoja.gridProperties?.rowCount ?? 0;
+    if (grilla >= 2) await sheets.vaciarHoja(ctx.indiceId, hoja.sheetId, grilla);
     for (let i = 0; i < nuevas.length; i += 500) {
-      await sheets.append(ctx.indiceId, hoja, nuevas.slice(i, i + 500));
+      await sheets.append(ctx.indiceId, hoja.title, nuevas.slice(i, i + 500));
     }
   }
 
+  /** `listadas` son las carpetas de la raíz, si quien llama ya las listó. */
   async function reconstruir(
-    alProgresar: (p: Progreso) => void = () => {}
+    alProgresar: (p: Progreso) => void = () => {}, listadas?: ArchivoDrive[]
   ): Promise<{ indexadas: number; ignorados: string[]; sinBorrador: string[] }> {
     if (typeof alProgresar !== 'function') alProgresar = () => {};
 
@@ -824,7 +867,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const categorias: Categoria[] = [];
     // Cada carpeta mueve la barra: escribirle las propiedades a una
     // predefinida es un viaje a Drive, y son hasta dieciséis.
-    const carpetas = await drive.listarCarpetas(ctx.raizId);
+    const carpetas = listadas ?? await drive.listarCarpetas(ctx.raizId);
     for (const [i, carpeta] of carpetas.entries()) {
       const nombre = carpeta.name ?? '';
       if (nombre === NOMBRE_FOTOS) fotosId = carpeta.id;
@@ -898,11 +941,17 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     // Leído todo, aunque no hubiera nada que leer: lo que queda es escribir.
     alProgresar(TRAMOS.lecturas);
 
+    // Siempre de Sheets y no de memoria: hace falta el tamaño de cada grilla,
+    // que cambia con cada fila agregada. De paso, renueva los ids en memoria.
     const hojas = await sheets.hojas(ctx.indiceId);
-    await reemplazarFilas(HOJA_RECETAS, idDeHoja(hojas, HOJA_RECETAS), ULTIMA_COLUMNA, nuevas);
-    await asegurarHoja(hojas, HOJA_CATEGORIAS, ULTIMA_COLUMNA_CATEGORIAS, COLUMNAS_CATEGORIAS);
-    await reemplazarFilas(HOJA_CATEGORIAS, idDeHoja(hojas, HOJA_CATEGORIAS), ULTIMA_COLUMNA_CATEGORIAS,
-      ctx.categorias.map(filaDeCategoria));
+    const recetas = hojas.find(h => h.title === HOJA_RECETAS) ?? { sheetId: 0, title: HOJA_RECETAS };
+    await reemplazarFilas(recetas, nuevas);
+    const categoriasHoja = await asegurarHoja(hojas, HOJA_CATEGORIAS, ULTIMA_COLUMNA_CATEGORIAS, COLUMNAS_CATEGORIAS);
+    await reemplazarFilas(categoriasHoja, ctx.categorias.map(filaDeCategoria));
+    hojasConocidas = {
+      indiceId: ctx.indiceId,
+      hojas: [...hojas.filter(h => h.title !== HOJA_CATEGORIAS), categoriasHoja]
+    };
 
     alProgresar(TRAMOS.hojas);
 
@@ -913,11 +962,13 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     // La versión del esquema se escribe acá y no solo al crear la planilla:
     // subirla es lo que fuerza la reconstrucción, y si al terminar no queda
     // anotada, el próximo arranque vuelve a reconstruir para siempre.
-    await guardarMeta('carpeta_fotos', ctx.fotosId);
-    await guardarMeta('carpeta_sin_categoria', ctx.sinCategoriaId);
-    await guardarMeta('schemaVersion', String(SCHEMA_VERSION));
-    await guardarMeta('ultima_reconstruccion', ahora);
-    await guardarMeta('reconstruccion_en_curso', '');
+    await anotarMeta({
+      carpeta_fotos: ctx.fotosId,
+      carpeta_sin_categoria: ctx.sinCategoriaId,
+      schemaVersion: String(SCHEMA_VERSION),
+      ultima_reconstruccion: ahora,
+      reconstruccion_en_curso: ''
+    });
     // Una sola vez, al final: si se corta a mitad, la primera anotación ya
     // cambió la fecha de _indice, y la próxima apertura baja la planilla y ve
     // la reconstrucción en curso.
@@ -1089,11 +1140,16 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     // 1. Las predefinidas que falten, con su color y su foto ya escritos. Son
     // dos viajes a Drive cada una y hasta dieciséis: sobre una carpeta recién
     // creada, este paso es el rato largo del setup.
-    const existentes = new Set((await drive.listarCarpetas(carpeta.id)).map(c => normalizar(c.name ?? '')));
+    // Lo listado, con las creadas sumadas, es lo que reindexar vuelve a
+    // necesitar: se le pasa en vez de listar dos veces.
+    const carpetas = await drive.listarCarpetas(carpeta.id);
+    const existentes = new Set(carpetas.map(c => normalizar(c.name ?? '')));
     const faltan = PREDEFINIDAS.filter(p => !existentes.has(normalizar(p.nombre)));
     for (const [i, p] of faltan.entries()) {
       const nueva = await drive.crear({ nombre: p.nombre, padre: carpeta.id, mime: MIME_CARPETA });
-      await drive.propiedades(nueva.id, { color: p.color, foto: `catalogo:${p.foto}` });
+      const appProperties = { color: p.color, foto: `catalogo:${p.foto}` };
+      await drive.propiedades(nueva.id, appProperties);
+      carpetas.push({ id: nueva.id, name: p.nombre, mimeType: MIME_CARPETA, appProperties });
       alProgresar(TRAMOS_SETUP.categorias * ((i + 1) / faltan.length));
     }
 
@@ -1113,7 +1169,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
 
     // 3. Reindexar: escribe las propiedades que falten y guarda la copia. Su
     // barra, que va de 0 a 1, entra comprimida en lo que queda de la de acá.
-    const { ignorados } = await reconstruir(p => alProgresar(entre(TRAMOS_SETUP.indice, 1, p)));
+    const { ignorados } = await reconstruir(p => alProgresar(entre(TRAMOS_SETUP.indice, 1, p)), carpetas);
 
     // 4. La marca, y fuera de las otras.
     try {
@@ -1240,20 +1296,22 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const suyas = (await drive.listarHijos(id)).filter(esMd);
     const textos = await conConcurrencia(suyas, TOPE_LECTURAS, a => drive.leerTexto(a.id));
     // De a una: las escrituras en la planilla van en fila, y la primera crea
-    // `_sin-categoria/` si todavía no existe.
+    // `_sin-categoria/` si todavía no existe. La copia local se guarda una
+    // vez, al final o al cortarse: si no, lo ya movido quedaría fuera de ella.
     for (const [i, archivo] of suyas.entries()) {
       const receta = parse(textos[i] ?? '');
       try {
-        await guardar(archivo.id, { ...receta, tags: conEspecial(receta.tags, 'borrador', true) }, { carpetaDestino: '' });
+        await guardar(archivo.id, { ...receta, tags: conEspecial(receta.tags, 'borrador', true) },
+          { carpetaDestino: '', persistir: false });
       } catch (e) {
+        await persistir();
         if (i === 0) throw e;
         throw Object.assign(new Error('Se cortó el paso de las recetas a _sin-categoria/.', { cause: e }), { recetasMovidas: i });
       }
     }
 
     await drive.borrar(id);
-    const hojas = await sheets.hojas(ctx.indiceId);
-    await sheets.borrarFila(ctx.indiceId, idDeHoja(hojas, HOJA_CATEGORIAS), nroCategoria);
+    await sheets.borrarFila(ctx.indiceId, idDeHoja(await hojasDelIndice(), HOJA_CATEGORIAS), nroCategoria);
     usarCategorias(ctx.categorias.filter(c => c.id !== id));
     await persistir();
     if (propia) await tirarFotos([propia]);

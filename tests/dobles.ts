@@ -40,6 +40,9 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
 
   const api = {
     llamadas: [] as unknown[][],
+    /** Cuántos pedidos de `operacion` se hicieron; con `id`, sólo sobre ese archivo. */
+    cuantas: (operacion: string, id?: string): number =>
+      api.llamadas.filter(l => l[0] === operacion && (id === undefined || l[1] === id)).length,
     /** Sin error, la operación vuelve a andar. */
     fallar(operacion: string, error: unknown) {
       if (error === undefined) fallas.delete(operacion); else fallas.set(operacion, error);
@@ -52,9 +55,11 @@ export function driveFalso(archivos: ArchivoFalso[] = []) {
       return vivos().filter(a => a.name === nombre && (!padre || (a.parents ?? []).includes(padre)));
     },
     async listarCarpetas(id: string) {
+      api.llamadas.push(['listarCarpetas', id]);
       return vivos().filter(a => (a.parents ?? []).includes(id) && a.mimeType === MIME_CARPETA);
     },
     async listarHijos(id: string) {
+      api.llamadas.push(['listarHijos', id]);
       return vivos().filter(a => (a.parents ?? []).includes(id));
     },
     async carpetasMarcadas() {
@@ -199,6 +204,10 @@ export function sheetsFalso() {
   const api = {
     escrituras,
     appends,
+    /** Cada pedido que se le hizo, en orden: la operación y el rango u hoja. */
+    llamadas: [] as string[][],
+    /** Cuántos pedidos de `operacion` se hicieron. */
+    cuantas: (operacion: string): number => api.llamadas.filter(l => l[0] === operacion).length,
     /**
      * Gancho opcional para simular la confirmación de Sheets: si está,
      * `escribir` y `append` lo esperan antes de tocar la planilla. Sirve para
@@ -219,54 +228,67 @@ export function sheetsFalso() {
     },
 
     async leer(id: string, rango: string) {
+      api.llamadas.push(['leer', rango]);
       const hoja = rango.split('!')[0] ?? '';
       return (planillas.get(id)?.[hoja] ?? []).map(f => [...f]);
     },
 
     async escribir(id: string, rango: string, valores: string[][]) {
       if (api.alEscribir) await api.alEscribir();
+      api.llamadas.push(['escribir', rango]);
       const [hoja = '', celdas = ''] = rango.split('!');
       escrituras.push({ id, hoja, valores });
       const fila = Number(celdas.match(/\d+/)?.[0] ?? 0);
       const p = asegurar(id);
       const destino = p[hoja] ?? (p[hoja] = []);
-      while (destino.length < fila) destino.push([]);
-      destino[fila - 1] = valores[0] ?? [];
+      // Como la API: un rango de varias filas las escribe todas, desde la primera.
+      for (const [i, valor] of valores.entries()) {
+        while (destino.length < fila + i) destino.push([]);
+        destino[fila - 1 + i] = valor;
+      }
     },
 
     async append(id: string, hoja: string, filas: string[][]) {
       if (api.alEscribir) await api.alEscribir();
+      api.llamadas.push(['append', hoja]);
       escrituras.push({ id, hoja, valores: filas });
       appends.push({ id, hoja, valores: filas });
       const p = asegurar(id);
       (p[hoja] ?? (p[hoja] = [])).push(...filas);
     },
 
-    async agregarHoja(id: string, titulo: string) {
+    async agregarHoja(id: string, titulo: string): Promise<PropiedadesHoja> {
+      api.llamadas.push(['agregarHoja', titulo]);
       const p = asegurar(id);
       p[titulo] = [];
       const hojas = hojasMetadatos.get(id) ?? [];
-      hojas.push({ sheetId: hojas.length, title: titulo });
+      const nueva = { sheetId: hojas.length, title: titulo };
+      hojas.push(nueva);
       hojasMetadatos.set(id, hojas);
+      return { ...nueva };
     },
 
     async borrarFila(id: string, hojaId: number, fila: number) {
+      api.llamadas.push(['borrarFila', String(hojaId)]);
       exigirHoja(id, hojaId).splice(fila - 1, 1);
     },
 
-    async borrarFilas(id: string, hojaId: number, filas: number[]) {
-      const hoja = exigirHoja(id, hojaId);
-      // Mismo contrato que la API real: de mayor a menor, para que cada
-      // índice siga siendo válido según se van sacando filas.
-      for (const fila of filas) hoja.splice(fila - 1, 1);
+    async vaciarHoja(id: string, hojaId: number, filas: number) {
+      api.llamadas.push(['vaciarHoja', String(hojaId)]);
+      exigirHoja(id, hojaId).splice(1, filas - 1);
     },
 
-    async hojas(id: string) {
-      asegurar(id);  // Una planilla que nadie creó todavía igual tiene su hoja por defecto.
-      return hojasMetadatos.get(id) ?? [];
+    /** La cantidad de filas de la grilla es la de la hoja falsa: no hay filas vacías de sobra. */
+    async hojas(id: string): Promise<PropiedadesHoja[]> {
+      api.llamadas.push(['hojas']);
+      const p = asegurar(id);  // Una planilla que nadie creó todavía igual tiene su hoja por defecto.
+      return (hojasMetadatos.get(id) ?? []).map(h => ({
+        ...h, gridProperties: { rowCount: Math.max(1, p[h.title]?.length ?? 0) }
+      }));
     },
 
     async renombrarHoja(id: string, sheetId: number, nuevoTitulo: string) {
+      api.llamadas.push(['renombrarHoja', nuevoTitulo]);
       const p = asegurar(id);
       const hojas = hojasMetadatos.get(id) ?? [];
       const hoja = hojas.find(h => h.sheetId === sheetId);

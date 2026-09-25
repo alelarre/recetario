@@ -235,14 +235,12 @@ describe('borrar una categoría', () => {
     expect(recetasMovidasEn(error)).toBe(0);
   });
 
-  it('una categoría vacía no borra filas de recetas', async () => {
+  it('una categoría vacía no borra filas de recetas: sólo la suya', async () => {
     const { store, sheets } = await abierta();
     const c = await store.crearCategoria({ nombre: 'Vacía', color: 'bebidas', foto: '' });
-    let llamadas = 0;
-    const borrarFilas = sheets.borrarFilas.bind(sheets);
-    sheets.borrarFilas = async (id: string, hojaId: number, nros: number[]) => { llamadas++; return borrarFilas(id, hojaId, nros); };
+    sheets.llamadas.length = 0;
     await store.borrarCategoria(c.id);
-    expect(llamadas).toBe(0);
+    expect(sheets.llamadas.filter(l => l[0] === 'borrarFila')).toEqual([['borrarFila', '2']]);
     expect(store.categorias().map(x => x.id)).toEqual(['c1', 'c2']);
   });
 

@@ -327,7 +327,9 @@ escritura parcial y un JSON obligaría a reescribir el archivo entero.
 - [ ] Una sola lectura devuelve todas las filas: buscar entre mil recetas no lee mil archivos.
 - [ ] Lo que se lee se usa para listar y buscar; abrir una receta lee su `.md`.
 - [ ] **Hay copia local del índice, y sólo del índice.** Vive en `localStorage` y guarda las tres hojas, más qué planilla y qué carpeta base son. Al abrir se pide el `modifiedTime` de `_indice` en Drive: si es el mismo que tenía la copia al guardarse, no se lee Sheets; si no, se lee la planilla y la copia se reemplaza. Con la copia vigente, abrir es un solo pedido.
-- [ ] Cada escritura en `_indice` deja la copia al día.
+- [ ] Cada escritura en `_indice` deja la copia al día. Borrar una categoría, que reescribe una fila por receta, la deja al día una sola vez: al terminar, o donde se cortó.
+- [ ] **`meta` se lee sólo al abrir sin copia vigente** —o al preparar una carpeta base—. Después se escribe entera desde la de memoria, sin releerla, y reindexar no lee ninguna hoja.
+- [ ] Los ids de las hojas de `_indice`, que borrar una fila necesita, se piden una vez por sesión; si la planilla se creó en la sesión, ya se conocen.
 - [ ] Una copia de otra versión del esquema, de otra planilla, o que no se puede leer cuenta como que no hay copia. La copia nunca es imprescindible.
 - [ ] La premisa es que nunca hay escritura concurrente. No sirve para dibujar sin red: ver C05.8.1.
 
@@ -409,11 +411,15 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 **Nota técnica:** es la operación más cara del producto — con ~1.000 recetas son
 ~1.000 lecturas de Drive, más la escritura de la planilla. Se leen de a seis a la
 vez, con un tope para no abrir cientos de pedidos juntos, y las filas se escriben
-igual en el orden en que Drive lista los archivos. Aun así puede tardar minutos:
+igual en el orden en que Drive lista los archivos. Cada hoja se vacía con un
+solo pedido y sin leerla: se borra la grilla entera salvo el encabezado, con
+el tamaño que Sheets informa, así que se van también las filas duplicadas o
+agregadas a mano. Aun así puede tardar minutos:
 por eso vive a tres toques y por eso tiene barra de progreso y no un indicador
 indeterminado. El setup de una carpeta base (C05.7.4) suma sus dos etapas
 propias —crear las predefinidas que falten y `_indice`— adelante de la barra del
-reindexado, que entra comprimida en lo que queda.
+reindexado, que entra comprimida en lo que queda. Las carpetas se listan una
+sola vez: el reindexado usa las del setup, con las recién creadas.
 
 ### F05.6 — Un índice roto se recrea, no se repara
 
