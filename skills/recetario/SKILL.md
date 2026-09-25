@@ -80,7 +80,13 @@ Lo que hace el MCP:
   los números coinciden. Sin el `id`, valida como una receta nueva.
 - **Una foto `fuente` se sube sólo si la receta queda como `borrador`.** Si su
   contenido ya pasó entero a la receta, no se sube, y su número queda sin usar.
-- **Una URL que no se puede bajar queda como link externo** en el depósito.
+- **Una URL `https` que no se puede bajar** por falta de red, porque el sitio
+  no contesta a tiempo o por un error del servidor (5xx) **queda como link
+  externo** en el depósito.
+- **Una URL que contesta 4xx es un error**, con la URL: ahí no hay foto. No se
+  escribe nada; buscá otra foto o seguí sin ella.
+- **Una URL `http` que no se baja es un error:** la app no puede mostrarla
+  como link. Pasá la `https` o bajala y pasá la ruta local.
 - **Sólo se aceptan URLs `http` y `https`.**
 - Una foto se saca pidiendo su número en `sacar` de `guardar`, después de sacar
   su `foto:N` del texto.

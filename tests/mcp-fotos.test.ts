@@ -106,11 +106,34 @@ describe('achicarEnNode', () => {
     expect(await medidasDe(blob)).toMatchObject({ ancho: 1600, alto: 800 });
   });
 
-  it('una URL que no se puede bajar es NoSeBajo', async () => {
+  it('sin red, sin respuesta a tiempo o con un error del servidor es NoSeBajo', async () => {
     const sinRed: DependenciasAchicar['fetch'] = async () => { throw new TypeError('fetch failed'); };
-    const e404: DependenciasAchicar['fetch'] = async () => new Response('no', { status: 404 });
-    await expect(achicarEnNode('https://ejemplo.com/a.jpg', { fetch: sinRed })).rejects.toBeInstanceOf(NoSeBajo);
-    await expect(achicarEnNode('https://ejemplo.com/a.jpg', { fetch: e404 })).rejects.toBeInstanceOf(NoSeBajo);
+    const sinRespuesta: DependenciasAchicar['fetch'] = async () => { throw new DOMException('The operation timed out.', 'TimeoutError'); };
+    const e503: DependenciasAchicar['fetch'] = async () => new Response('no', { status: 503 });
+    for (const fetch of [sinRed, sinRespuesta, e503]) {
+      await expect(achicarEnNode('https://ejemplo.com/a.jpg', { fetch })).rejects.toBeInstanceOf(NoSeBajo);
+    }
+  });
+
+  it.each([403, 404, 410])('un %i es un error con la URL, no un link externo', async status => {
+    const fetch: DependenciasAchicar['fetch'] = async () => new Response('no', { status });
+    const error = await achicarEnNode('https://ejemplo.com/a.jpg', { fetch }).catch((e: unknown) => e);
+    expect(error).not.toBeInstanceOf(NoSeBajo);
+    expect((error as Error).message).toContain('https://ejemplo.com/a.jpg');
+    expect((error as Error).message).toContain(String(status));
+  });
+
+  it('una http que no se baja es un error: la app no la puede mostrar desde Pages', async () => {
+    const sinRed: DependenciasAchicar['fetch'] = async () => { throw new TypeError('fetch failed'); };
+    const error = await achicarEnNode('http://ejemplo.com/a.jpg', { fetch: sinRed }).catch((e: unknown) => e);
+    expect(error).not.toBeInstanceOf(NoSeBajo);
+    expect((error as Error).message).toContain('http://ejemplo.com/a.jpg');
+  });
+
+  it('una http que se baja se sube como cualquier otra', async () => {
+    const fetch: DependenciasAchicar['fetch'] = async () =>
+      new Response(new Uint8Array(await jpeg(200, 100)), { headers: { 'Content-Type': 'image/jpeg' } });
+    expect(await medidasDe(await achicarEnNode('http://ejemplo.com/a.jpg', { fetch }))).toMatchObject({ ancho: 200 });
   });
 
   it.each(['file:///etc/passwd', 'data:image/png;base64,AAAA', 'ftp://ejemplo.com/a.jpg'])(

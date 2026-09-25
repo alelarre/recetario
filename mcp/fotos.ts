@@ -9,9 +9,9 @@ import { achicar, type Imagen, type Lienzo } from '../src/fotos.js';
 import { CORTE_DE_LECTURA } from '../src/config.js';
 
 /**
- * Una URL que no se pudo bajar: sin red, un error del servidor o un pedido
- * que no contesta. Quien la pidió la deja como link externo, igual que *Por
- * URL* en el editor.
+ * Una URL `https` que no se pudo bajar por algo que puede ser pasajero: sin
+ * red, un error del servidor (5xx) o un pedido que no contesta. Quien la pidió
+ * la deja como link externo, igual que *Por URL* en el editor.
  */
 export class NoSeBajo extends Error {
   constructor(readonly url: string, motivo: string) {
@@ -87,6 +87,11 @@ async function bajar(url: string, pedir: NonNullable<DependenciasAchicar['fetch'
   } catch (e) {
     throw new NoSeBajo(url, motivo(e));
   }
+  // Un 4xx dice que ahí no hay nada que traer: como link externo, la foto
+  // quedaría rota. La app tampoco la agrega.
+  if (respuesta.status >= 400 && respuesta.status < 500) {
+    throw new Error(`La foto ${url} no se puede traer: el servidor contestó ${respuesta.status}.`);
+  }
   if (!respuesta.ok) throw new NoSeBajo(url, `el servidor contestó ${respuesta.status}`);
   const pasado = `pesa más de ${TOPE_DE_BAJADA / 1024 / 1024} MB`;
   if (Number(respuesta.headers.get('Content-Length')) > TOPE_DE_BAJADA) throw new NoSeBajo(url, pasado);
@@ -132,10 +137,11 @@ async function leerLocal(ruta: string, ejecutar: NonNullable<DependenciasAchicar
 
 /**
  * La foto de `origen` —una ruta local o una URL— achicada a JPEG, como la
- * sube el editor. Una URL http o https que no se baja, o que pasa el tope,
- * rechaza con `NoSeBajo`. Cualquier otra falla —otro esquema, un archivo que
- * no está, que no es una foto o que no se decodifica— rechaza con un error
- * que nombra el origen, para que el agente sepa cuál de las fotos pedidas es.
+ * sube el editor. Una URL `https` que no se baja por red, por un 5xx o por
+ * tiempo, o que pasa el tope, rechaza con `NoSeBajo`. Cualquier otra falla
+ * —un 4xx, una `http` que no se baja, otro esquema, un archivo que no está,
+ * que no es una foto o que no se decodifica— rechaza con un error que nombra
+ * el origen, para que el agente sepa cuál de las fotos pedidas es.
  */
 export async function achicarEnNode(
   origen: string,
@@ -147,7 +153,14 @@ export async function achicarEnNode(
   if (esquema !== null && esquema !== 'http' && esquema !== 'https') {
     throw new Error(`La foto ${origen} no se puede traer: una URL tiene que ser http o https, y un archivo local va como ruta, sin esquema.`);
   }
-  const blob = esquema ? await bajar(urlNormalizada(origen), pedir) : await leerLocal(origen, ejecutar).catch((e: unknown) => {
+  const blob = esquema ? await bajar(urlNormalizada(origen), pedir).catch((e: unknown) => {
+    // Desde Pages, una `http:` es contenido mixto: como link externo, la app
+    // no la podría mostrar nunca.
+    if (esquema === 'http' && e instanceof NoSeBajo) {
+      throw new Error(`${e.message}. Una foto http no puede quedar como link: la app no la muestra. Pasá una https o una ruta local.`);
+    }
+    throw e;
+  }) : await leerLocal(origen, ejecutar).catch((e: unknown) => {
     throw new Error(`No se pudo leer la foto ${origen}: ${e instanceof Error ? e.message : String(e)}`);
   });
   try {
