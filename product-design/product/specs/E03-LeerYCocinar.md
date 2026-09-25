@@ -63,7 +63,7 @@ receta entera.
 - [ ] Sin foto: el bloque de foto no se dibuja y la receta empieza por el título.
 - [ ] Cargando: mientras se lee el `.md`, el velo tapa la pantalla de la que se llegó (`E05-Cimientos.md` R8), en su forma de espera. La receta se dibuja entera cuando llega.
 - [ ] Sin red: no se puede abrir; el aviso *«No se pudo leer la receta.»* con **Reintentar** (C05.8.1).
-- [ ] El `.md` ya no está en Drive —no existe, o está en la papelera—: el aviso dice *«Esta receta ya no está en Drive.»* y ofrece **Volver**, que sale de la receta como después de borrarla, a la pantalla desde donde se la eligió o al Recetario. No ofrece Reintentar. Si tenía fila en el índice, **se saca**, y deja de aparecer en las listas (la excepción de R4). Vale igual para el modo cocina.
+- [ ] El `.md` ya no está en Drive —Drive contesta que no existe; la papelera no se mira, lo que está ahí se sigue leyendo—: el aviso dice *«Esta receta ya no está en Drive.»* y ofrece **Volver**, que sale de la receta como después de borrarla, a la pantalla desde donde se la eligió o al Recetario. No ofrece Reintentar. Si tenía fila en el índice, **se saca**, y deja de aparecer en las listas (la excepción de R4). Vale igual para el modo cocina.
 
 ### F03.2 — El modo cocina
 

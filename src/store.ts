@@ -1039,25 +1039,22 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   }
 
   /**
-   * Un `.md` en la papelera se sigue pudiendo leer: sólo los metadatos dicen
-   * que ya no está. Se piden a la vez que el texto, así no suman espera. Si ya
-   * no está, su fila sale del índice para que no vuelva a aparecer en las
-   * listas; que eso falle no cambia lo que hay que avisar.
+   * Un `.md` que Drive ya no tiene contesta 404 a la lectura: ahí se avisa que
+   * la receta ya no está, y su fila sale del índice para que no vuelva a
+   * aparecer en las listas; que eso falle no cambia lo que hay que avisar. La
+   * papelera no se mira: lo que está ahí todavía se puede leer, y averiguarlo
+   * costaría un pedido más en cada apertura.
    */
   async function receta(id: string): Promise<{ entrada: Entrada | null; receta: Receta; texto: string }> {
     const entrada = entradas.find(e => e.id_archivo === id) ?? null;
-    let leido: [string, ArchivoDrive] | null;
+    let texto: string;
     try {
-      leido = await Promise.all([drive.leerTexto(id), drive.metadatos(id, 'trashed')]);
+      texto = await drive.leerTexto(id);
     } catch (e) {
       if (!noEsta(e)) throw e;
-      leido = null;
-    }
-    if (!leido || leido[1].trashed) {
-      if (entrada) await borrarDelIndice(id).catch((e: unknown) => { console.error(e); });
+      if (entrada) await borrarDelIndice(id).catch((err: unknown) => { console.error(err); });
       throw new RecetaQueNoEsta(id);
     }
-    const texto = leido[0];
     return { entrada, receta: parse(texto), texto };
   }
 

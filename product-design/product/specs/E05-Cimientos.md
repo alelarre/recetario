@@ -58,7 +58,7 @@ receta ni al listar. La divergencia se corrige reconstruyendo el índice a mano
 desde Ajustes.
 
 - [ ] Abrir una receta cuyo `.md` difiere de su fila no escribe nada.
-- [ ] **La única excepción:** abrir una receta cuyo `.md` ya no está en Drive —no existe, o está en la papelera— saca su fila (`E03-LeerYCocinar.md` C03.1.3): no hay nada que comparar, y la fila sólo haría volver a una receta que no se puede abrir.
+- [ ] **La única excepción:** abrir una receta cuyo `.md` Drive ya no tiene —contesta que no existe; la papelera no se mira— saca su fila (`E03-LeerYCocinar.md` C03.1.3): no hay nada que comparar, y la fila sólo haría volver a una receta que no se puede abrir.
 
 ### R5 — Una receta se identifica por su `fileId` de Drive
 

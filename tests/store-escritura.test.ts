@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { crearStore, RecetaQueNoEsta } from '../src/store.js';
 import { driveFalso, sheetsFalso, recetaFalsa, indiceLocalFalso, imagenesFalsas } from './dobles.js';
 import type { DriveFalso, SheetsFalso } from './dobles.js';
@@ -283,10 +283,12 @@ describe('leer una receta que ya no está en Drive', () => {
     expect(await sheets.leer('i1', 'recetas!A1:L10')).toHaveLength(1);  // solo el encabezado
   });
 
-  it('en la papelera: lo mismo, aunque Drive todavía devuelva el texto', async () => {
+  it('la papelera no se mira: una receta que está ahí se lee como siempre, en un solo pedido', async () => {
     drive._store.get('r1')!.trashed = true;
-    await expect(store.receta('r1')).rejects.toBeInstanceOf(RecetaQueNoEsta);
-    expect(store.entradas()).toHaveLength(0);
+    const metadatos = vi.spyOn(drive, 'metadatos');
+    await expect(store.receta('r1')).resolves.toMatchObject({ receta: { titulo: expect.any(String) } });
+    expect(metadatos).not.toHaveBeenCalled();
+    expect(store.entradas()).toHaveLength(1);
   });
 
   it('sin fila en el índice avisa igual, sin tocar la planilla', async () => {
