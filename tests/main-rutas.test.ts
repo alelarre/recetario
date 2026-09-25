@@ -505,30 +505,18 @@ describe('main.ts: las rutas', () => {
     } | null = null;
     /**
      * La muestra de la categoría que se edita: el cuadro de arriba que sigue
-     * en vivo lo que se escribe y se elige. `main` la toca por partes y sin
-     * redibujar, así que el doble guarda cada parte por separado.
+     * en vivo lo que se escribe y se elige. `main` la redibuja entera en su
+     * lugar, sin tocar el formulario; el doble guarda lo último que recibió y
+     * lee de ahí cada parte.
      */
     const muestraDeCategoria = {
-      color: '',
+      html: '',
+      set outerHTML(html: string) { muestraDeCategoria.html = html; },
+      get color() { return muestraDeCategoria.html.match(/--c:([^";]*)/)?.[1] ?? ''; },
       /** Sin foto elegida, el cuadro va con la trama sobre el color. */
-      conTrama: true,
-      imagen: '',
-      nombre: '',
-      style: {
-        setProperty: (n: string, v: string) => { if (n === '--c') muestraDeCategoria.color = v; }
-      },
-      querySelector: (sel: string) => {
-        if (sel === '.im') {
-          return {
-            classList: {
-              toggle: (c: string, puesta: boolean) => { if (c === 'trama') muestraDeCategoria.conTrama = puesta; }
-            },
-            set innerHTML(html: string) { muestraDeCategoria.imagen = html; }
-          };
-        }
-        if (sel === '.nm') return { set textContent(t: string) { muestraDeCategoria.nombre = t; } };
-        return null;
-      }
+      get conTrama() { return muestraDeCategoria.html.includes('class="im trama"'); },
+      get imagen() { return muestraDeCategoria.html.match(/<img [^>]*>/)?.[0] ?? ''; },
+      get nombre() { return muestraDeCategoria.html.match(/<span class="nm">([^<]*)<\/span>/)?.[1] ?? ''; }
     };
     /** La línea del nombre inválido, que aparece y se va sin redibujar. */
     const errorDeNombre = { hidden: true, textContent: '' };
@@ -4041,12 +4029,14 @@ describe('main.ts: las rutas', () => {
     });
 
     it('en una categoría, la foto subida se ve en la muestra y se manda al guardar', async () => {
-      const { abrir, tocar, elegirFotoDeCategoria } = await montar();
+      const { abrir, tocar, elegirFotoDeCategoria, muestraDeCategoria } = await montar();
       await abrir('#/categorias/c1');
       estado.formulario = { nombre: 'Carnes', color: 'carnes', foto: 'catalogo:carnes' };
 
       await elegirFotoDeCategoria(foto('propia'));
-      expect(estado.formulario['foto']).toMatch(/^propia:blob:/);
+      // El oculto sólo dice que es la subida: la URL en memoria no viaja en el formulario.
+      expect(estado.formulario['foto']).toBe('propia');
+      expect(muestraDeCategoria.imagen).toContain('src="blob:memoria-6"');
 
       await tocar('guardar-categoria');
       expect(await (estado.fotosDeCategoria.at(-1) as Blob).text()).toBe('propia');

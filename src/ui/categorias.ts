@@ -67,15 +67,10 @@ export function colorDeClave(color: string): string {
  * La URL de una foto de categoría: del catálogo (`catalogo:<clave>`) o propia,
  * subida a `_fotos/` (`drive:<id>`) y resuelta a su link de Drive,
  * igual que la de una receta. Cualquier otro valor da null.
- *
- * `propia:<url>` es la foto que se acaba de elegir en la pantalla de la
- * categoría y todavía está en memoria: se sube al guardar y recién ahí pasa a
- * ser `drive:<id>`. Nunca llega a Drive con esa forma.
  */
 export function urlDeFoto(foto: string): string | null {
   if (foto.startsWith('catalogo:')) return CATALOGO.get(foto.slice('catalogo:'.length)) ?? null;
   if (foto.startsWith('drive:')) return linkDeFoto(foto.slice('drive:'.length));
-  if (foto.startsWith('propia:')) return foto.slice('propia:'.length) || null;
   return null;
 }
 

@@ -28,10 +28,11 @@ import { listaDeCompras, textoCompras } from './compras.js';
 import type { ListaDeCompras } from './compras.js';
 import { renderAjustes } from './ui/ajustes.js';
 import { renderConexion } from './ui/conexion.js';
-import { renderListaCategorias, renderEdicionCategoria, confirmacionBorrarCategoria, botonBorrarCategoria } from './ui/gestion-categorias.js';
+import {
+  renderListaCategorias, renderEdicionCategoria, confirmacionBorrarCategoria, botonBorrarCategoria,
+  muestraCategoria, FOTO_PROPIA
+} from './ui/gestion-categorias.js';
 import { colorLibre, problemaDelNombre } from './categorias.js';
-import { colorDeClave, urlDeFoto } from './ui/categorias.js';
-import { imgDe } from './ui/markdown.js';
 import { renderSelector } from './ui/carpeta.js';
 import { elegirCarpeta } from './picker.js';
 import { API_KEY, NOMBRE_RAIZ } from './config.js';
@@ -1387,16 +1388,12 @@ function revisarCategoria(): void {
   const otros = JSON.parse(form.dataset['otros'] ?? '[]') as string[];
   const problema = problemaDelNombre(valor('nombre'), otros);
 
-  const muestra = form.querySelector<HTMLElement>('[data-muestra]');
+  // La muestra entera, por el mismo camino que la dibujó la pantalla.
+  const muestra = form.querySelector('[data-muestra]');
   if (muestra) {
-    muestra.style.setProperty('--c', colorDeClave(valor('color')));
-    // Como `muestraCategoria` (`gestion-categorias.ts`): con `imgDe`, para
-    // que una foto propia de Drive también se pueda mostrar.
-    const im = muestra.querySelector<HTMLElement>('.im');
-    const url = urlDeFoto(valor('foto'));
-    if (im) { im.classList.toggle('trama', !url); pintarParte(im, url ? imgDe(url) : ''); }
-    const nm = muestra.querySelector<HTMLElement>('.nm');
-    if (nm) nm.textContent = valor('nombre');
+    pintarParte(muestra, muestraCategoria(
+      { nombre: valor('nombre'), color: valor('color'), foto: valor('foto') }, estadoDePantalla.fotoPropia?.url
+    ), 'reemplazar');
   }
   const linea = form.querySelector<HTMLElement>('.error-nombre');
   if (linea) { linea.hidden = !problema; linea.textContent = problema; }
@@ -1416,7 +1413,8 @@ function dibujarCategoria(valores: { nombre: string; color: string; foto: string
   pintar(renderEdicionCategoria({
     categoria: id === 'nueva' ? null : store.categorias().find(c => c.id === id) ?? null,
     valores, otros: store.categorias().filter(c => c.id !== id).map(c => c.nombre),
-    ...(error ? { error } : {})
+    ...(error ? { error } : {}),
+    ...(estadoDePantalla.fotoPropia ? { propia: estadoDePantalla.fotoPropia.url } : {})
   }));
 }
 
@@ -1847,10 +1845,10 @@ const accionesDeCategorias: SeccionDeAcciones = {
     const id = vistaActual?.params['id'] ?? 'nueva';
     // La foto propia se manda sólo si se eligió un archivo en esta pantalla:
     // cambiar el color o el nombre no vuelve a subir nada.
-    const propia = valores.foto.startsWith('propia:') ? estadoDePantalla.fotoPropia?.blob : undefined;
+    const propia = valores.foto === FOTO_PROPIA ? estadoDePantalla.fotoPropia?.blob : undefined;
     const datos = {
       ...valores,
-      foto: valores.foto.startsWith('propia:') ? '' : valores.foto,
+      foto: valores.foto === FOTO_PROPIA ? '' : valores.foto,
       ...(propia ? { fotoPropia: propia } : {})
     };
     try {
@@ -2534,8 +2532,9 @@ app.addEventListener('change', (e) => {
         const blob = await velo.esperar(() => achicarFoto(archivo));
         estadoDePantalla.fotoPropia = { blob, url: imagenes.urlDeBlob(blob) };
         // Queda elegida como cualquier otra: el campo oculto la nombra, y de
-        // ahí salen la muestra de arriba y «cambios sin guardar».
-        elegirEnCategoria('foto', `propia:${estadoDePantalla.fotoPropia.url}`);
+        // ahí salen la muestra de arriba y «cambios sin guardar». Su URL
+        // queda en el estado de la pantalla, no en el formulario.
+        elegirEnCategoria('foto', FOTO_PROPIA);
         avisarEnElFormulario('');
       } catch (err) {
         console.error(err);

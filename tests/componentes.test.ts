@@ -343,6 +343,22 @@ describe('tile', () => {
     expect(tile('Rara')).toContain('data-drive="abc"');
   });
 
+  it('como muestra, dibuja el color y la foto que se le dan, y no es un link', () => {
+    registrarCategorias([{ id: 'c1', nombre: 'Rara', color: 'fucsia', foto: 'drive:abc' }]);
+    const html = tile('Rara', { muestra: { color: 'var(--cat-pastas)', foto: 'https://ejemplo/a.jpg' } });
+    expect(html).toContain('--c:var(--cat-pastas)');
+    expect(html).toContain('<img src="https://ejemplo/a.jpg"');
+    expect(html).not.toContain('data-drive="abc"');
+    expect(html).toMatch(/^<span class="tile muestra"[^>]* data-muestra>/);
+    expect(html).not.toContain('href=');
+    // Es un cuadro de foto: una propia de Drive que ya no está deja ahí su aviso.
+    expect(html).toContain('class="im cuadro-foto"');
+  });
+
+  it('como muestra sin foto, la trama sobre el color', () => {
+    expect(tile('', { muestra: { color: 'var(--cat-pastas)', foto: null } })).toContain('class="im trama"');
+  });
+
   it('el contador aparece cuando la categoría tiene recetas', () => {
     expect(tile('Carnes', { cantidad: 20 })).toContain('<span class="cu">20</span>');
   });

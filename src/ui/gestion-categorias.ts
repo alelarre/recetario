@@ -6,7 +6,7 @@
  * guardar» funcione como en el editor de recetas.
  */
 import { escapar, imgDe } from './markdown.js';
-import { encabezado, aviso } from './componentes.js';
+import { encabezado, aviso, tile } from './componentes.js';
 import { ICO } from './iconos.js';
 import { colorDeClave, urlDeFoto, fotosDelCatalogo } from './categorias.js';
 import { CLAVES_COLOR } from '../categorias.js';
@@ -19,16 +19,24 @@ interface Valores {
 }
 
 /**
- * El tile de una categoría con estos valores: la miniatura de la lista y la
- * muestra de la edición. Con `imgDe`, como `componentes.ts`: una foto propia
- * de Drive (`drive:<id>`) se dibuja como recuadro, `background-image` no
- * podría mostrarla nunca.
+ * El valor de la foto recién subida en el campo oculto. La foto está en
+ * memoria hasta guardar la categoría, y su URL no viaja en el formulario: la
+ * tiene quien la subió, y se la pasa a la pantalla aparte.
  */
-function muestraCategoria({ nombre, color, foto }: Valores, extra = ''): string {
-  const imagen = urlDeFoto(foto);
-  const fondo = imagen ? `<span class="im">${imgDe(imagen)}</span>` : '<span class="im trama"></span>';
-  return `<span class="tile muestra" style="--c:${colorDeClave(color)}"${extra}>` +
-    `${fondo}<span class="nm">${escapar(nombre)}</span></span>`;
+export const FOTO_PROPIA = 'propia';
+
+/** La URL de la foto elegida: la del catálogo, la propia de Drive, o la recién subida. */
+const urlElegida = (foto: string, propia: string | undefined): string | null =>
+  foto === FOTO_PROPIA ? propia ?? null : urlDeFoto(foto);
+
+/**
+ * El tile de una categoría con estos valores: la miniatura de la lista y la
+ * muestra de la edición. Es el mismo `tile()` de la grilla, con el color y
+ * la foto que se están eligiendo; `main` la redibuja entera con cada
+ * elección y cada tecla del nombre.
+ */
+export function muestraCategoria({ nombre, color, foto }: Valores, propia?: string): string {
+  return tile(nombre, { muestra: { color: colorDeClave(color), foto: urlElegida(foto, propia) } });
 }
 
 const recetas = (n: number): string => `${n} ${n === 1 ? 'receta' : 'recetas'}`;
@@ -90,28 +98,37 @@ export function confirmacionBorrarCategoria(nombre: string, titulos: string[]): 
     '</div></div>';
 }
 
+/**
+ * Una foto para elegir: sin URL es «sin foto», con la trama; con URL, el
+ * mismo `<img>` para la del catálogo y la propia.
+ */
+const opcionDeFoto = (valor: string, url: string | null, elegida: boolean, etiqueta: string): string =>
+  `<button type="button" class="muestra-foto ${url ? 'cuadro-foto' : 'trama'}" data-accion="elegir-foto" ` +
+  `data-valor="${escapar(valor)}" aria-pressed="${elegida}" aria-label="${escapar(etiqueta)}">` +
+  `${url ? imgDe(url) : ''}</button>`;
+
 export function renderEdicionCategoria(
-  { categoria, valores, otros, error }: { categoria: Categoria | null; valores: Valores; otros: string[]; error?: string }
+  { categoria, valores, otros, error, propia }: {
+    categoria: Categoria | null; valores: Valores; otros: string[]; error?: string;
+    /** La URL en memoria de la foto recién subida, si `valores.foto` es `FOTO_PROPIA`. */
+    propia?: string;
+  }
 ): string {
   const colores = CLAVES_COLOR.map(clave =>
     `<button type="button" class="muestra-color" data-accion="elegir-color" data-valor="${clave}" ` +
     `aria-pressed="${clave === valores.color}" style="background:${colorDeClave(clave)}" aria-label="${clave}"></button>`
   ).join('');
 
-  const delCatalogo = ['', ...fotosDelCatalogo().map(f => `catalogo:${f}`)].map(foto => {
-    const imagen = urlDeFoto(foto);
-    return `<button type="button" class="muestra-foto${imagen ? '' : ' trama'}" data-accion="elegir-foto" data-valor="${escapar(foto)}" ` +
-      `aria-pressed="${foto === valores.foto}"${imagen ? ` style="background-image:url(${imagen})"` : ''} ` +
-      `aria-label="${foto ? escapar(foto.slice('catalogo:'.length)) : 'sin foto'}"></button>`;
-  }).join('');
+  const delCatalogo = ['', ...fotosDelCatalogo().map(f => `catalogo:${f}`)].map(foto =>
+    opcionDeFoto(foto, urlDeFoto(foto), foto === valores.foto, foto ? foto.slice('catalogo:'.length) : 'sin foto')
+  ).join('');
   // La foto propia de la categoría se elige de nuevo como cualquiera del
-  // catálogo. Va con `imgDe` y no con `background-image`: la de
-  // Drive se pide con el token, y una URL suelta no la mostraría nunca.
-  const propia = valores.foto.startsWith('drive:') || valores.foto.startsWith('propia:')
-    ? `<button type="button" class="muestra-foto" data-accion="elegir-foto" data-valor="${escapar(valores.foto)}" ` +
-      `aria-pressed="true" aria-label="la foto subida">${imgDe(urlDeFoto(valores.foto) ?? '')}</button>`
+  // catálogo. La de Drive se pide con el token: por eso todas van con `imgDe`
+  // y no con `background-image`, que no la mostraría nunca.
+  const laPropia = valores.foto.startsWith('drive:') || valores.foto === FOTO_PROPIA
+    ? opcionDeFoto(valores.foto, urlElegida(valores.foto, propia), true, 'la foto subida')
     : '';
-  const fotos = subirFoto + propia + delCatalogo;
+  const fotos = subirFoto + laPropia + delCatalogo;
 
   return encabezado({
     titulo: categoria ? categoria.nombre : 'Nueva categoría', volver: true,
@@ -119,7 +136,7 @@ export function renderEdicionCategoria(
   }) +
     `<form class="cuerpo" data-formulario data-otros="${escapar(JSON.stringify(otros))}" onsubmit="return false">` +
       (error ? aviso({ texto: error }) : '') +
-      muestraCategoria(valores, ' data-muestra') +
+      muestraCategoria(valores, propia) +
       '<label class="campo"><span>Nombre</span>' +
         `<input name="nombre" value="${escapar(valores.nombre)}" autocomplete="off"></label>` +
       '<p class="aviso-mudo error-nombre" hidden></p>' +

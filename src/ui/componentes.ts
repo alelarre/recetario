@@ -401,16 +401,27 @@ export interface OpcionesTile {
    * grilla de categorías al agregar al plan.
    */
   accion?: string;
+  /**
+   * La muestra de la gestión de categorías: el tile con el color y la foto
+   * que se están eligiendo —un token de color y una URL—, no los de la
+   * categoría registrada. No se toca, y es un cuadro de foto: una propia de
+   * Drive que ya no está deja ahí su aviso.
+   */
+  muestra?: { color: string; foto: string | null };
 }
 
-/** El tile de una categoría en la grilla del Recetario (mockup 03). */
-export function tile(nombre: string, { cantidad, accion }: OpcionesTile = {}): string {
-  const imagen = fotoCategoria(nombre);
+/** El tile de una categoría en la grilla del Recetario (mockup 03), o su muestra. */
+export function tile(nombre: string, { cantidad, accion, muestra }: OpcionesTile = {}): string {
+  const imagen = muestra ? muestra.foto : fotoCategoria(nombre);
   // Con `imgDe`, una foto propia de Drive también se dibuja: como recuadro
   // hasta que `main.ts` la pida a Drive y le ponga el `src`.
   const fondo = imagen
-    ? `<span class="im">${imgDe(imagen)}</span>`
+    ? `<span class="im${muestra ? ' cuadro-foto' : ''}">${imgDe(imagen)}</span>`
     : '<span class="im trama"></span>';   // las que no tienen foto
+  if (muestra) {
+    return `<span class="tile muestra" style="--c:${muestra.color}" data-muestra>` +
+      `${fondo}<span class="nm">${escapar(nombre)}</span></span>`;
+  }
   const cuenta = cantidad ? `<span class="cu">${cantidad}</span>` : '';
   const atributos = `class="tile" style="--c:${colorCategoria(nombre)}" data-slug="${escapar(slugCategoria(nombre))}"`;
   return (accion

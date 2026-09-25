@@ -55,5 +55,7 @@ describe('categorias', () => {
     expect(urlDeFoto('catalogo:pastas')).toMatch(/pastas/);
     expect(urlDeFoto('')).toBeNull();
     expect(urlDeFoto('drive:abc')).toBe('https://drive.google.com/file/d/abc/view');
+    // La recién subida no viaja en el valor: su URL la tiene quien la subió.
+    expect(urlDeFoto('propia:blob:x')).toBeNull();
   });
 });

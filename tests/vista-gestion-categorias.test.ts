@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  renderListaCategorias, renderEdicionCategoria, confirmacionBorrarCategoria, botonBorrarCategoria
+  renderListaCategorias, renderEdicionCategoria, confirmacionBorrarCategoria, botonBorrarCategoria,
+  muestraCategoria, FOTO_PROPIA
 } from '../src/ui/gestion-categorias.js';
 
 const pastas = { id: 'c1', nombre: 'Pastas', color: 'pastas', foto: 'catalogo:pastas' };
@@ -53,7 +54,33 @@ describe('la edición de una categoría', () => {
   });
 
   it('la muestra de arriba es el tile que va a quedar', () => {
-    expect(renderEdicionCategoria({ categoria: pastas, valores, otros: [] })).toContain('data-muestra');
+    const html = renderEdicionCategoria({ categoria: pastas, valores, otros: [] });
+    expect(html).toContain(muestraCategoria(valores));
+    expect(html).toContain('data-muestra');
+  });
+
+  it('las fotos del catálogo y la propia son el mismo <img> en el mismo cuadro', () => {
+    const conPropia = renderEdicionCategoria({
+      categoria: pastas, valores: { ...valores, foto: 'drive:abc' }, otros: []
+    });
+    expect(conPropia).not.toContain('background-image');
+    expect(conPropia).toMatch(
+      /<button type="button" class="muestra-foto cuadro-foto" data-accion="elegir-foto" data-valor="catalogo:pastas"[^>]*><img src="[^"]*pastas/
+    );
+    expect(conPropia).toContain(
+      '<button type="button" class="muestra-foto cuadro-foto" data-accion="elegir-foto" data-valor="drive:abc" ' +
+      'aria-pressed="true" aria-label="la foto subida"><img data-drive="abc" alt=""></button>'
+    );
+  });
+
+  it('la recién subida no viaja en el campo oculto: el oculto dice «propia» y la URL llega aparte', () => {
+    const html = renderEdicionCategoria({
+      categoria: pastas, valores: { ...valores, foto: FOTO_PROPIA }, otros: [], propia: 'blob:memoria-1'
+    });
+    expect(html).toContain(`name="foto" value="${FOTO_PROPIA}"`);
+    expect(html).not.toContain('value="propia:');
+    // La muestra y la opción de la foto subida la dibujan con esa URL.
+    expect(html.match(/<img src="blob:memoria-1"/g)).toHaveLength(2);
   });
 
   it('Borrar categoría sólo al editar', () => {
