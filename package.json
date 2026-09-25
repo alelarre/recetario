@@ -13,7 +13,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.tests.json && tsc --noEmit -p mcp/tsconfig.json",
     "mcp": "tsx mcp/servidor.ts",
-    "mcp:conectar": "tsx mcp/servidor.ts --conectar"
+    "mcp:conectar": "tsx mcp/conectar.ts"
   },
   "keywords": [],
   "author": "",
