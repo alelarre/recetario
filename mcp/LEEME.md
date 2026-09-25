@@ -86,7 +86,7 @@ Los errores de login salen con un código entre corchetes:
 | `cliente-interno` | Pasar el tipo de usuario del proyecto a *Externo*, en la pantalla de consentimiento. |
 | `api-deshabilitada` | Habilitar la API que nombra el mensaje (Google Drive API o Google Sheets API) en *APIs y servicios → Biblioteca*. |
 | `scope-insuficiente` | Correr `npm run mcp:conectar` y aceptar el acceso completo a Drive. |
-| `sin-carpeta` | Conectarse con la cuenta del Drive del recetario, o abrir la app una vez para crear o elegir la carpeta. |
+| `sin-carpeta` | Si no ve ninguna carpeta: conectarse con la cuenta del Drive del recetario, o abrir la app una vez para crear o elegir la carpeta. Si ve más de una marcada: elegir cuál usar en la app, en *Ajustes → Cambiar carpeta*. |
 | `sin-red` | Revisar la conexión y reintentar. No hace falta reconectar. |
 
 Para sacarle el permiso al MCP: borrar el ítem `recetario-mcp` en *Acceso a
