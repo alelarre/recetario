@@ -43,6 +43,8 @@ import {
   linkDeFoto, idDeDrive, resolverReceta, fotosSinUso, siguienteNumero, lineaDelCursor, ponerEn, sacarReferencias
 } from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
+import { registrarAcciones, accionDe } from './acciones.js';
+import type { SeccionDeAcciones } from './acciones.js';
 import { registrarCategorias } from './ui/categorias.js';
 import { precargar, generar } from './pdf/generar.js';
 import {
@@ -547,8 +549,6 @@ async function fotosParaElAgente(fotos: readonly FotoDeReceta[]): Promise<{ n: n
 /** El modo cocina: paso actual, marcados, conmutador y pantalla encendida. */
 const cocina = crearControlCocina();
 
-/** Lo que la ficha de compartir escucha. Con el PDF armándose, ninguna responde. */
-const ACCIONES_DE_LA_FICHA = ['compartir', 'cerrar-compartir', 'compartir-pdf', 'enviar-pdf', 'compartir-link', 'compartir-texto'];
 
 /** Lo que verificó el arranque, para la ficha «Al abrir» de Ajustes. */
 const informeArranque = () =>
@@ -1708,211 +1708,204 @@ async function guardarEditor(
 
 const router = crearRouter(render);
 
-app.addEventListener('click', async (e) => {
-  // Con la pantalla tapada no responde nada: el velo ya tapa los controles, y
-  // esto cubre lo que llegue igual.
-  if (tapadas) return;
-  // Todo el manejo de clicks es delegación desde #app, así que el destino
-  // llega como EventTarget y hay que estrecharlo una sola vez, acá.
-  const destino = conClosest(e.target);
-  const boton = destino?.closest<HTMLElement>('[data-accion], [data-tag]') ?? null;
-  // Una foto en línea del texto no lleva `data-accion` —la dibuja el markdown,
-  // que no sabe de acciones— y abre el visor igual. Se abre **sola**: lo
-  // que se tocó es esa foto, no una tira. En el modo cocina no: ahí la
-  // foto está adentro del paso, que sí lleva acción, y un toque marca dónde voy.
-  if (!boton && destino && recetaLeida) {
-    const enLinea = destino.closest<HTMLElement>('.foto-linea');
-    const img = enLinea?.querySelector<HTMLElement>('img');
-    if (!img) return;
-    const id = img.dataset['drive'] ?? '';
-    const suelta = id ? linkDeFoto(id) : img.getAttribute('src') ?? '';
-    if (!suelta) return;
-    estadoDePantalla.visor = { urls: [suelta], i: 0 };
+// Las acciones de la pantalla, por tema. Cada sección es un mapa
+// `data-accion → función`; el listener de click sólo busca en `acciones`.
+
+/** Navegar entre pantallas: el volver del encabezado, entrar al editor y reintentar una lectura. */
+const accionesDeNavegacion: SeccionDeAcciones = {
+  volver: async () => {
+    if (vistaActual?.vista === 'cocinar') await cocina.soltarPantalla();
+    if (history.length <= 1) {
+      // Entrar por un link directo deja el historial vacío: ahí volver es ir
+      // al Recetario, no salirse de la app.
+      location.hash = '#/';
+      return;
+    }
+    return history.back();
+  },
+  editar: () => { location.hash = `#/r/${idActual()}/editar`; },
+  // Vacía la caja y deja el cursor ahí. No navega: buscar vacío no hace nada,
+  // y salir de los resultados es el chevron.
+  limpiar: () => {
+    const campo = document.querySelector<HTMLInputElement>('#app [data-accion="buscar"]');
+    if (campo) { campo.value = ''; campo.focus?.(); }
+  },
+  // Reintentar es volver a pedir: lo leído no se reutiliza.
+  reintentar: () => {
+    recetaLeida = null; estadoDePantalla.selector.error = '';
     return render();
   }
-  if (!boton) return;
+};
 
-  if (boton.dataset['tag']) {
-    const tag = boton.dataset['tag'];
-    // Desde el Recetario el carrusel no filtra nada ahí mismo: navega a la
-    // lista por tag, que es donde ese chip tiene algo que mostrar.
-    if (vistaActual?.vista === 'recetario') { location.hash = `#/t/${encodeURIComponent(tag)}`; return; }
-    estadoDePantalla.tagsActivos = estadoDePantalla.tagsActivos.includes(tag) ? estadoDePantalla.tagsActivos.filter(t => t !== tag) : [...estadoDePantalla.tagsActivos, tag];
-    estadoDePantalla.visibles = TRAMO;
-    return render();
-  }
+/** El menú lateral. */
+const accionesDelMenu: SeccionDeAcciones = {
+  'abrir-menu': () => ponerMenu(true),
+  'cerrar-menu': () => ponerMenu(false)
+};
 
-  const accion = boton.dataset['accion'];
-
-  if (accion === 'filtrar-duracion') {
+/**
+ * Los filtros y el orden de una lista de recetas. El chip de un tag no lleva
+ * `data-accion` sino `data-tag`: lo atiende `tocarTag`.
+ */
+const accionesDeLista: SeccionDeAcciones = {
+  'filtrar-duracion': (boton) => {
     const valor = boton.dataset['valor'] ?? '';
     estadoDePantalla.duracionesActivas = estadoDePantalla.duracionesActivas.includes(valor)
       ? estadoDePantalla.duracionesActivas.filter(d => d !== valor) : [...estadoDePantalla.duracionesActivas, valor];
     estadoDePantalla.visibles = TRAMO;
     return render();
-  }
-  if (accion === 'ordenar') {
+  },
+  ordenar: (boton) => {
     estadoDePantalla.orden = boton.dataset['valor'] === 'duracion' ? 'duracion' : 'alfa';
     estadoDePantalla.visibles = TRAMO;
     return render();
   }
+};
 
-  // Mientras se arma el PDF la ficha no acepta otro toque: cerrar con el velo
-  // no frena `generar`, y al terminar el PDF se mandaría igual.
-  if (estadoDePantalla.compartiendo?.paso === 'generando' && ACCIONES_DE_LA_FICHA.includes(accion ?? '')) return;
+/** Tocar el chip de un tag: filtra la lista, o desde el Recetario lleva a la lista por tag. */
+function tocarTag(tag: string): Promise<void> | undefined {
+  // Desde el Recetario el carrusel no filtra nada ahí mismo: navega a la
+  // lista por tag, que es donde ese chip tiene algo que mostrar.
+  if (vistaActual?.vista === 'recetario') { location.hash = `#/t/${encodeURIComponent(tag)}`; return; }
+  estadoDePantalla.tagsActivos = estadoDePantalla.tagsActivos.includes(tag) ? estadoDePantalla.tagsActivos.filter(t => t !== tag) : [...estadoDePantalla.tagsActivos, tag];
+  estadoDePantalla.visibles = TRAMO;
+  return render();
+}
 
-  if (accion === 'compartir') {
-    estadoDePantalla.compartiendo = { paso: 'opciones' };
-    // Lo pesado del PDF empieza a bajar ya: el toque que lo genera es otro.
-    void precargar().catch(() => {});
-    return render();
+/**
+ * Las fotos del depósito en el editor: las fichas al pie, la portada, traer
+ * una por URL, ponerla en una línea y sacarla.
+ */
+const accionesDeFotos: SeccionDeAcciones = {
+  'cerrar-ficha-foto': () => {
+    cerrarFichaFoto();
+    // Tocar el velo puede haberle sacado el foco al campo: el botón de la
+    // foto no puede quedar colgado de un campo que ya no lo tiene.
+    acomodarBotonDeFoto();
+  },
+  'acciones-foto': (boton) => {
+    const n = boton.dataset['n'] ?? '';
+    abrirFichaFoto(renderAccionesFoto(Number(n)));
+  },
+  'abrir-portada': () => {
+    abrirFichaFoto(renderSelectorPortada(depositoDelEditor(), portadaDelEditor() || null));
+  },
+  'elegir-portada': (boton) => {
+    escribirPortada(`foto:${boton.dataset['n'] ?? ''}`);
+    cerrarFichaFoto();
+  },
+  'sin-portada': () => { escribirPortada(''); cerrarFichaFoto(); },
+  'abrir-foto-url': () => abrirFotoPorUrl(),
+  'traer-foto-url': async () => {
+    const url = document.querySelector<HTMLInputElement>('#app [data-url-foto]')?.value.trim() ?? '';
+    if (url) await agregarFotoPorUrl(url);
+  },
+  'abrir-elegir-foto': (boton) => {
+    // La sección y la línea son las que tenía el botón: las escribió
+    // `acomodarBotonDeFoto` con el cursor donde estaba.
+    abrirFichaFoto(renderElegirFoto(
+      depositoDelEditor(), boton.dataset['seccion'] ?? '', Number(boton.dataset['linea'] ?? 0)
+    ));
+  },
+  'poner-en': (boton) => {
+    const campo = campoDelEditor(boton.dataset['seccion'] ?? '');
+    if (campo) {
+      campo.value = ponerEn(campo.value, Number(boton.dataset['linea'] ?? 0), Number(boton.dataset['n'] ?? 0));
+    }
+    // Ahora está en el texto, y su miniatura lo dice.
+    redibujarFilaDeFotos();
+    cerrarFichaFoto();
+  },
+  'sacar-foto-editor': (boton) => {
+    const n = Number(boton.dataset['n'] ?? 0);
+    // La foto se va del depósito y de todo el texto que la nombraba. El texto
+    // primero: la fila se redibuja con el uso de las que quedaron.
+    for (const seccion of SECCIONES) {
+      const campo = campoDelEditor(seccion);
+      if (campo) campo.value = sacarReferencias(campo.value, n);
+    }
+    if (portadaDelEditor() === `foto:${n}`) escribirPortada('');
+    escribirDeposito(depositoDelEditor().filter(f => f.n !== n));
+    fotosEditor.nuevas.delete(n);
+    fotosEditor.urls.delete(n);
+    cerrarFichaFoto();
   }
-  if (accion === 'cerrar-compartir') {
-    estadoDePantalla.compartiendo = null;
-    estadoDePantalla.pdfListo = null;
-    return render();
-  }
-  if (accion === 'compartir-pdf' || accion === 'enviar-pdf') {
+};
+
+/**
+ * El visor de fotos. El depósito sale del campo oculto en el editor y de la
+ * receta leída en la lectura: son la misma acción y el mismo `data-n` en la
+ * cabecera, la galería y la ficha de acciones.
+ */
+const accionesDelVisor: SeccionDeAcciones = {
+  'ver-foto-receta': (boton) => {
+    const marca = boton.dataset['n'];
+    const n = marca === undefined ? undefined : Number(marca);
+    if (enElEditor()) {
+      cerrarFichaFoto();
+      abrirVisor(depositoDelEditor(), n);
+      dibujarVisor();
+      return;
+    }
     if (!recetaLeida) return;
-    const { entrada, receta } = recetaLeida;
-    if (accion === 'compartir-pdf' || !estadoDePantalla.pdfListo) {
-      estadoDePantalla.compartiendo = { paso: 'generando' };
-      await render();
-      // Si mientras se armaba se navegó, `render` ya cerró la ficha: el PDF es
-      // de una pantalla que no está, y aplicarlo mostraría «listo» en otra receta.
-      const sigueGenerando = (): boolean => estadoDePantalla.compartiendo?.paso === 'generando';
-      try {
-        // El PDF lleva las fotos adentro: las de Drive salen del caché de
-        // `imagenes`, y el canvas para achicarlas es el mismo de siempre.
-        const blob = await generar(receta, entrada?.categoria ?? '', {
-          imagenDe: id => imagenes.imagenDe(id),
-          achicar: (foto, maximo) => achicarFoto(foto, { maximo })
-        });
-        if (!sigueGenerando()) return;
-        estadoDePantalla.pdfListo = new File([blob], slugArchivo(receta.titulo).replace(/\.md$/, '.pdf'), { type: 'application/pdf' });
-      } catch (err) {
-        console.error(err);
-        if (!sigueGenerando()) return;
-        estadoDePantalla.compartiendo = { paso: 'error-pdf' };
-        return render();
-      }
-    }
-    try {
-      const r = await compartirPdf(plataformaDelNavegador(), estadoDePantalla.pdfListo);
-      estadoDePantalla.compartiendo = r === 'sin-activacion' ? { paso: 'pdf-listo' } : null;
-    } catch (err) {
-      console.error(err);
-      estadoDePantalla.compartiendo = { paso: 'error-pdf' };
-    }
-    if (!estadoDePantalla.compartiendo) estadoDePantalla.pdfListo = null;
+    const receta = resolverReceta(recetaLeida.receta);
+    // El carrusel son las sin uso, calculadas sobre la cruda: desde ahí el
+    // visor las recorre. La portada no está ahí y se abre sola.
+    const sola = (n === undefined ? undefined : receta.fotos.find(f => f.n === n)?.url) ?? receta.foto ?? undefined;
+    abrirVisor(fotosSinUso(recetaLeida.receta), n, sola);
+    return render();
+  },
+  'cerrar-visor': () => {
+    // Un deslizamiento termina en un click: ese no cierra, ya cambió de foto.
+    if (deslizoElVisor) { deslizoElVisor = false; return; }
+    estadoDePantalla.visor = null;
+    if (enElEditor()) { document.querySelector('#app .visor')?.remove(); return; }
     return render();
   }
-  if (accion === 'compartir-compras') {
-    // La lista se comparte sólo como texto: no es una receta y no tiene link.
-    estadoDePantalla.compartiendo = { paso: 'opciones', solo: 'texto' };
-    return render();
-  }
-  if (accion === 'compartir-texto' && vistaActual?.vista === 'plan-compras') {
-    const contenido = textoCompras(comprasLeidas?.lista ?? { conCantidad: [], sinCantidad: [] });
-    try {
-      const r = await compartirTexto(plataformaDelNavegador(), contenido);
-      estadoDePantalla.compartiendo = r === 'copiado' ? { paso: 'copiado', que: 'texto' }
-        : r === 'sin-portapapeles' ? { paso: 'mostrar', que: 'texto', contenido }
-        : null;
-    } catch (err) {
-      console.error(err);
-      estadoDePantalla.compartiendo = { paso: 'mostrar', que: 'texto', contenido };
-    }
-    return render();
-  }
-  if (accion === 'compartir-link' || accion === 'compartir-texto') {
-    if (!recetaLeida) return;
-    const { entrada, receta } = recetaLeida;
-    const categoria = entrada?.categoria ?? '';
-    const que = accion === 'compartir-link' ? 'link' : 'texto';
-    let contenido = '';
-    try {
-      const plataforma = plataformaDelNavegador();
-      contenido = que === 'link' ? urlDeLink(await codificar(receta, categoria)) : textoReceta(receta, categoria);
-      const r = que === 'link'
-        ? await compartirLink(plataforma, receta.titulo ?? '', contenido)
-        : await compartirTexto(plataforma, contenido);
-      estadoDePantalla.compartiendo = r === 'copiado' ? { paso: 'copiado', que }
-        : r === 'sin-portapapeles' ? { paso: 'mostrar', que, contenido }
-        : null;
-    } catch (err) {
-      console.error(err);
-      estadoDePantalla.compartiendo = contenido ? { paso: 'mostrar', que, contenido } : null;
-    }
-    return render();
-  }
-  if (accion === 'favorito') {
-    const id = idActual();
-    const actual = recetaLeida?.receta;
-    if (!id || !actual || estadoDePantalla.marcandoFavorito) return;
+};
 
-    // El resultado se dibuja recién cuando Drive contesta: mientras tanto, la
-    // estrella muestra que está escribiendo y no acepta otro toque.
-    estadoDePantalla.marcandoFavorito = true;
-    estadoDePantalla.errorFavorito = '';
-    await render();
+/**
+ * Una foto en línea del texto no lleva `data-accion` —la dibuja el markdown,
+ * que no sabe de acciones— y abre el visor igual. Se abre **sola**: lo que se
+ * tocó es esa foto, no una tira. En el modo cocina no: ahí la foto está
+ * adentro del paso, que sí lleva acción, y un toque marca dónde voy.
+ */
+function tocarFotoEnLinea(destino: Element): Promise<void> | undefined {
+  const enLinea = destino.closest<HTMLElement>('.foto-linea');
+  const img = enLinea?.querySelector<HTMLElement>('img');
+  if (!img) return;
+  const id = img.dataset['drive'] ?? '';
+  const suelta = id ? linkDeFoto(id) : img.getAttribute('src') ?? '';
+  if (!suelta) return;
+  estadoDePantalla.visor = { urls: [suelta], i: 0 };
+  return render();
+}
 
-    const nueva = { ...actual, tags: conEspecial(actual.tags, 'favorito', !esFavorita(actual)) };
-    try {
-      await store.guardar(id, nueva);
-      recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: nueva };
-    } catch (err) {
-      console.error(err);
-      estadoDePantalla.errorFavorito = 'No se pudo marcar como favorita. Revisá la conexión.';
-    }
-    estadoDePantalla.marcandoFavorito = false;
-    return render();
-  }
-  if (accion === 'cocinar') {
-    cocina.entrarDesdeLectura();
-    location.hash = `#/r/${idActual()}/cocinar`;
-    return;
-  }
-  if (accion === 'conmutar') {
-    const volverA = cocina.conmutar(boton.dataset['posicion'], window.scrollY);
-    if (volverA === null) return;
-    await render();
-    window.scrollTo(0, volverA);
-    return;
-  }
-  if (accion === 'paso') {
-    // Tocar un paso marca dónde voy; tocar el que ya estaba realzado lo da por
-    // hecho y el hilo sigue al siguiente.
-    if (cocina.marcarPaso(boton.dataset['paso'])) return render();
-    return;
-  }
-  if (accion === 'wake') {
-    await cocina.alternarPantalla();
-    return render();
-  }
+/** Las flechas de un carrusel, que sólo existen con mouse. */
+const accionesDelCarrusel: SeccionDeAcciones = {
+  'carrusel-izq': (boton) => { desplazarCarrusel(boton, 'carrusel-izq'); },
+  'carrusel-der': (boton) => { desplazarCarrusel(boton, 'carrusel-der'); }
+};
 
-  if (accion === 'carrusel-izq' || accion === 'carrusel-der') {
-    desplazarCarrusel(boton, accion);
-    return;
-  }
-
-  // El plan: el `+` de una celda, la tarjeta que suma, la cruz que saca una
-  // línea, y reiniciar. Cada cambio escribe en el momento.
-  if (accion === 'agregar-al-plan') {
+/**
+ * El plan: el `+` de una celda, la tarjeta que suma, la cruz que saca una
+ * línea, y reiniciar. Cada cambio escribe en el momento.
+ */
+const accionesDelPlan: SeccionDeAcciones = {
+  'agregar-al-plan': (boton) => {
     const dia = boton.dataset['dia'] ?? '';
     const momento = boton.dataset['momento'] ?? '';
     location.hash = `#/plan/agregar?dia=${encodeURIComponent(dia)}&momento=${encodeURIComponent(momento)}`;
-    return;
-  }
-  if (accion === 'elegir-categoria-plan') {
+  },
+  'elegir-categoria-plan': (boton) => {
     estadoDePantalla.categoriaPlan = boton.dataset['nombre'] ?? '';
     return render();
-  }
-  if (accion === 'volver-categorias-plan') {
+  },
+  'volver-categorias-plan': () => {
     estadoDePantalla.categoriaPlan = null;
     return render();
-  }
-  if (accion === 'elegir-para-el-plan') {
+  },
+  'elegir-para-el-plan': async (boton) => {
     const id = boton.dataset['id'] ?? '';
     const entrada = store.entradas().find(e => e.id_archivo === id);
     if (!entrada) return;
@@ -1935,183 +1928,157 @@ app.addEventListener('click', async (e) => {
     // Esta pantalla se cierra al elegir: volver tiene que dejar el plan.
     irCerrando('#/plan');
     return render();
-  }
-  if (accion === 'sacar-del-plan') {
+  },
+  'sacar-del-plan': async (boton) => {
     const i = Number(boton.dataset['i'] ?? -1);
     const plan = planLeido;
     if (!plan || !Number.isInteger(i) || i < 0 || i >= plan.comidas.length) return;
     await guardarPlan({ comidas: plan.comidas.filter((_, n) => n !== i) });
     return render();
-  }
-  if (accion === 'reiniciar-plan') { estadoDePantalla.confirmandoReinicio = true; return render(); }
-  if (accion === 'cancelar-reinicio') { estadoDePantalla.confirmandoReinicio = false; return render(); }
-  if (accion === 'reiniciar-plan-confirmado') {
+  },
+  'reiniciar-plan': () => { estadoDePantalla.confirmandoReinicio = true; return render(); },
+  'cancelar-reinicio': () => { estadoDePantalla.confirmandoReinicio = false; return render(); },
+  'reiniciar-plan-confirmado': async () => {
     await guardarPlan({ comidas: [] });
     estadoDePantalla.confirmandoReinicio = false;
     return render();
-  }
-  if (accion === 'ir-a-compras') { location.hash = '#/plan/compras'; return; }
+  },
+  'ir-a-compras': () => { location.hash = '#/plan/compras'; }
+};
 
-  if (accion === 'abrir-menu') return ponerMenu(true);
-  if (accion === 'cerrar-menu') return ponerMenu(false);
-  if (accion === 'limpiar') {
-    // Vacía la caja y deja el cursor ahí. No navega: buscar vacío no hace nada,
-    // y salir de los resultados es el chevron.
-    const campo = document.querySelector<HTMLInputElement>('#app [data-accion="buscar"]');
-    if (campo) { campo.value = ''; campo.focus?.(); }
-    return;
-  }
-  if (accion === 'reindexar') return reconstruir({ enAjustes: true });
-  if (accion === 'conectar') return arrancar({ pidiendoPermiso: true });
-  if (accion === 'cambiar-carpeta') {
-    location.hash = '#/carpeta?cambiando=1';
-    return;
-  }
-  if (accion === 'carpeta-sugerida') {
-    estadoDePantalla.selector.confirmando = { id: boton.dataset['id'] ?? '', nombre: boton.dataset['nombre'] ?? '' };
-    return render();
-  }
-  if (accion === 'carpeta-elegir') {
+/** La receta abierta y su modo cocina: la estrella, entrar, conmutar, marcar pasos, la pantalla encendida y las salidas. */
+const accionesDeLaReceta: SeccionDeAcciones = {
+  favorito: async () => {
+    const id = idActual();
+    const actual = recetaLeida?.receta;
+    if (!id || !actual || estadoDePantalla.marcandoFavorito) return;
+
+    // El resultado se dibuja recién cuando Drive contesta: mientras tanto, la
+    // estrella muestra que está escribiendo y no acepta otro toque.
+    estadoDePantalla.marcandoFavorito = true;
+    estadoDePantalla.errorFavorito = '';
+    await render();
+
+    const nueva = { ...actual, tags: conEspecial(actual.tags, 'favorito', !esFavorita(actual)) };
     try {
-      const elegida = await elegirCarpeta(await auth.token());
-      // Cerró la ventana sin elegir: nada cambia, ni siquiera la pantalla.
-      if (!elegida) return;
-      estadoDePantalla.selector.confirmando = elegida;
+      await store.guardar(id, nueva);
+      recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: nueva };
     } catch (err) {
       console.error(err);
-      estadoDePantalla.selector.error = 'No se pudo abrir el selector de Google.';
+      estadoDePantalla.errorFavorito = 'No se pudo marcar como favorita. Revisá la conexión.';
     }
+    estadoDePantalla.marcandoFavorito = false;
+    return render();
+  },
+  cocinar: () => {
+    cocina.entrarDesdeLectura();
+    location.hash = `#/r/${idActual()}/cocinar`;
+  },
+  conmutar: async (boton) => {
+    const volverA = cocina.conmutar(boton.dataset['posicion'], window.scrollY);
+    if (volverA === null) return;
+    await render();
+    window.scrollTo(0, volverA);
+  },
+  // Tocar un paso marca dónde voy; tocar el que ya estaba realzado lo da por
+  // hecho y el hilo sigue al siguiente.
+  paso: (boton) => {
+    if (cocina.marcarPaso(boton.dataset['paso'])) return render();
+    return;
+  },
+  wake: async () => {
+    await cocina.alternarPantalla();
+    return render();
+  },
+  // Las dos salidas del modo cocina tienen destinos distintos, y las dos
+  // sueltan el bloqueo de pantalla: se dejó de cocinar.
+  'volver-receta': async () => {
+    await cocina.soltarPantalla();
+    if (cocina.salirALectura() === 'atras') return history.back();
+    // Se entró al modo cocina por un link directo: no hay receta atrás.
+    irCerrando(`#/r/${encodeURIComponent(idActual())}`);
+  },
+  'salir-cocina': async () => {
+    await cocina.soltarPantalla();
+    cocina.olvidarLectura();
+    const entrada = store.entradas().find(e => e.id_archivo === idActual());
+    // Sin fila del índice no se sabe de qué categoría es: se vuelve al Recetario.
+    irCerrando(entrada?.categoria ? `#/c/${encodeURIComponent(entrada.categoria)}` : '#/');
+  },
+  'mandar-al-agente': async () => {
+    // El mismo pedido que no salió, con la activación de este toque.
+    const envio = estadoDePantalla.pedidoPendiente;
+    if (!envio) return;
+    const r = await mandarAlAgente(envio);
+    if (r !== 'no-salio') estadoDePantalla.pedidoPendiente = null;
+    estadoDePantalla.avisoDeLlegada = r === 'copiado' ? PEDIDO_COPIADO : '';
     return render();
   }
-  if (accion === 'carpeta-cancelar') { estadoDePantalla.selector.confirmando = null; return render(); }
-  // Crear no confirma: el botón ya dice qué carpeta y dónde. Queda como
-  // `confirmando` igual, para que un fallo del setup se pueda reintentar sobre
-  // la carpeta que ya se creó y no cree otra.
-  if (accion === 'carpeta-crear') {
+};
+
+/** La gestión de categorías: elegir color y foto, guardar y borrar. */
+const accionesDeCategorias: SeccionDeAcciones = {
+  'elegir-color': (boton) => { elegirEnCategoria('color', boton.dataset['valor'] ?? ''); },
+  'elegir-foto': (boton) => { elegirEnCategoria('foto', boton.dataset['valor'] ?? ''); },
+  'guardar-categoria': async () => {
+    if (!document.querySelector('[data-formulario]')) return;
+    const valores = valoresDeCategoria();
+    const id = vistaActual?.params['id'] ?? 'nueva';
+    // La foto propia se manda sólo si se eligió un archivo en esta pantalla:
+    // cambiar el color o el nombre no vuelve a subir nada.
+    const propia = valores.foto.startsWith('propia:') ? estadoDePantalla.fotoPropia?.blob : undefined;
+    const datos = {
+      ...valores,
+      foto: valores.foto.startsWith('propia:') ? '' : valores.foto,
+      ...(propia ? { fotoPropia: propia } : {})
+    };
     try {
-      estadoDePantalla.selector.confirmando = await escribiendo(store.crearCarpeta(NOMBRE_RAIZ, 'root'));
+      if (id === 'nueva') await escribiendo(store.crearCategoria(datos));
+      else await escribiendo(store.editarCategoria(id, datos));
+      registrarCategorias(store.categorias());
+      estadoDePantalla.editorAbierto = null;
+      return history.back();
     } catch (err) {
       console.error(err);
-      estadoDePantalla.selector.error = 'No se pudo crear la carpeta.';
-      return render();
-    }
-    return usarCarpeta(estadoDePantalla.selector.confirmando);
-  }
-  if (accion === 'carpeta-confirmar') {
-    if (!estadoDePantalla.selector.confirmando) return;
-    return usarCarpeta(estadoDePantalla.selector.confirmando);
-  }
-  if (accion === 'borrar-datos-locales') {
-    // Recargar y no seguir: lo que hay en memoria salió de esa copia, y la
-    // próxima escritura la volvería a guardar igual.
-    indiceLocal.borrar();
-    await Promise.all([imagenes.borrarImagenes(), imagenes.descartarCompartidas()]);
-    location.reload();
-    return;
-  }
-  if (accion === 'salir') {
-    auth.olvidar();
-    // La copia tiene títulos e ingredientes: después de Salir no queda nada
-    // del usuario en el navegador. Y se recarga, porque el índice y la receta
-    // abierta también viven en memoria: sin recargar, la próxima pantalla los
-    // volvería a dibujar. Las fotos guardadas en el navegador tampoco quedan.
-    indiceLocal.borrar();
-    await Promise.all([imagenes.borrarImagenes(), imagenes.descartarCompartidas()]);
-    irCerrando('#/');
-    location.reload();
-    return;
-  }
-  if (accion === 'cerrar-visor') {
-    // Un deslizamiento termina en un click: ese no cierra, ya cambió de foto.
-    if (deslizoElVisor) { deslizoElVisor = false; return; }
-    estadoDePantalla.visor = null;
-    if (enElEditor()) { document.querySelector('#app .visor')?.remove(); return; }
-    return render();
-  }
-
-  // Las fotos de una receta. El depósito sale del campo oculto en el
-  // editor y de la receta leída en la lectura: son la misma acción y el mismo
-  // `data-n` en la cabecera, la galería y la ficha de acciones.
-  if (accion === 'ver-foto-receta') {
-    const marca = boton.dataset['n'];
-    const n = marca === undefined ? undefined : Number(marca);
-    if (enElEditor()) {
-      cerrarFichaFoto();
-      abrirVisor(depositoDelEditor(), n);
-      dibujarVisor();
+      const otros = store.categorias().filter(c => c.id !== id).map(c => c.nombre);
+      // El motivo del nombre se dice tal cual; lo demás, sin el mensaje de Google (R1).
+      const mensaje = err instanceof Error && problemaDelNombre(valores.nombre, otros) ? err.message : 'No se pudo guardar. Revisá la conexión.';
+      dibujarCategoria(valores, mensaje);
       return;
     }
-    if (!recetaLeida) return;
-    const receta = resolverReceta(recetaLeida.receta);
-    // El carrusel son las sin uso, calculadas sobre la cruda: desde ahí el
-    // visor las recorre. La portada no está ahí y se abre sola.
-    const sola = (n === undefined ? undefined : receta.fotos.find(f => f.n === n)?.url) ?? receta.foto ?? undefined;
-    abrirVisor(fotosSinUso(recetaLeida.receta), n, sola);
-    return render();
-  }
-  if (accion === 'cerrar-ficha-foto') {
-    cerrarFichaFoto();
-    // Tocar el velo puede haberle sacado el foco al campo: el botón de la
-    // foto no puede quedar colgado de un campo que ya no lo tiene.
-    acomodarBotonDeFoto();
-    return;
-  }
-  if (accion === 'acciones-foto') {
-    const n = boton.dataset['n'] ?? '';
-    abrirFichaFoto(renderAccionesFoto(Number(n)));
-    return;
-  }
-  if (accion === 'abrir-portada') {
-    abrirFichaFoto(renderSelectorPortada(depositoDelEditor(), portadaDelEditor() || null));
-    return;
-  }
-  if (accion === 'elegir-portada') {
-    escribirPortada(`foto:${boton.dataset['n'] ?? ''}`);
-    cerrarFichaFoto();
-    return;
-  }
-  if (accion === 'sin-portada') { escribirPortada(''); cerrarFichaFoto(); return; }
-  if (accion === 'abrir-foto-url') return abrirFotoPorUrl();
-  if (accion === 'traer-foto-url') {
-    const url = document.querySelector<HTMLInputElement>('#app [data-url-foto]')?.value.trim() ?? '';
-    if (url) await agregarFotoPorUrl(url);
-    return;
-  }
-  if (accion === 'abrir-elegir-foto') {
-    // La sección y la línea son las que tenía el botón: las escribió
-    // `acomodarBotonDeFoto` con el cursor donde estaba.
-    abrirFichaFoto(renderElegirFoto(
-      depositoDelEditor(), boton.dataset['seccion'] ?? '', Number(boton.dataset['linea'] ?? 0)
-    ));
-    return;
-  }
-  if (accion === 'poner-en') {
-    const campo = campoDelEditor(boton.dataset['seccion'] ?? '');
-    if (campo) {
-      campo.value = ponerEn(campo.value, Number(boton.dataset['linea'] ?? 0), Number(boton.dataset['n'] ?? 0));
+  },
+  'borrar-categoria': (boton) => {
+    const id = idActual();
+    const categoria = store.categorias().find(c => c.id === id);
+    if (categoria) boton.outerHTML = confirmacionBorrarCategoria(categoria.nombre, store.recetasDe(id).map(e => e.titulo));
+  },
+  'cancelar-borrar-categoria': () => {
+    const confirmacion = document.querySelector('[data-confirmar-borrado-categoria]');
+    if (confirmacion) confirmacion.outerHTML = botonBorrarCategoria;
+  },
+  'borrar-categoria-confirmado': async () => {
+    const id = idActual();
+    try {
+      await escribiendo(store.borrarCategoria(id));
+      registrarCategorias(store.categorias());
+      estadoDePantalla.editorAbierto = null;
+      irCerrando('#/categorias');
+      return;
+    } catch (err) {
+      console.error(err);
+      const confirmacion = document.querySelector('[data-confirmar-borrado-categoria]');
+      if (confirmacion) confirmacion.outerHTML = aviso({ texto: 'No se pudo borrar. La categoría sigue estando.' }) + botonBorrarCategoria;
+      return;
     }
-    // Ahora está en el texto, y su miniatura lo dice.
-    redibujarFilaDeFotos();
-    cerrarFichaFoto();
-    return;
   }
-  if (accion === 'sacar-foto-editor') {
-    const n = Number(boton.dataset['n'] ?? 0);
-    // La foto se va del depósito y de todo el texto que la nombraba. El texto
-    // primero: la fila se redibuja con el uso de las que quedaron.
-    for (const seccion of SECCIONES) {
-      const campo = campoDelEditor(seccion);
-      if (campo) campo.value = sacarReferencias(campo.value, n);
-    }
-    if (portadaDelEditor() === `foto:${n}`) escribirPortada('');
-    escribirDeposito(depositoDelEditor().filter(f => f.n !== n));
-    fotosEditor.nuevas.delete(n);
-    fotosEditor.urls.delete(n);
-    cerrarFichaFoto();
-    return;
-  }
+};
 
-  if (accion === 'convertir-con-agente') {
+/**
+ * El editor de una receta: guardar, convertir con el agente, pegar, los tags,
+ * la duración, salir y borrar.
+ */
+const accionesDelEditor: SeccionDeAcciones = {
+  'convertir-con-agente': async (boton) => {
     // Guarda y después manda: el pedido lleva el id del `.md`, que en una
     // receta nueva recién existe al crearla. Si no se guardó, no se manda nada.
     const guardada = await guardarEditor(boton);
@@ -2142,20 +2109,8 @@ app.addEventListener('click', async (e) => {
     esperarPintadoParaSacarElVelo();
     if (vistaActual?.vista === 'editar' && !llegoDeAfuera(vistaActual)) history.back();
     else irCerrando(`#/r/${encodeURIComponent(id)}`);
-    return;
-  }
-
-  if (accion === 'mandar-al-agente') {
-    // El mismo pedido que no salió, con la activación de este toque.
-    const envio = estadoDePantalla.pedidoPendiente;
-    if (!envio) return;
-    const r = await mandarAlAgente(envio);
-    if (r !== 'no-salio') estadoDePantalla.pedidoPendiente = null;
-    estadoDePantalla.avisoDeLlegada = r === 'copiado' ? PEDIDO_COPIADO : '';
-    return render();
-  }
-
-  if (accion === 'pegar-receta') {
+  },
+  'pegar-receta': async () => {
     if (!enElEditor()) return;
     const texto = await leerPortapapeles(plataformaDelNavegador());
     // El aviso va arriba del formulario sin redibujarlo: lo escrito sigue ahí.
@@ -2176,19 +2131,15 @@ app.addEventListener('click', async (e) => {
       receta: aplicarPegada(actual, pegada, carpeta), carpeta,
       categorias: store.categorias(), tagsConocidos: store.tagsDe().map(t => t.tag), ...menuDelEditor()
     }));
-    return;
-  }
-
-  if (accion === 'tag-especial') {
+  },
+  'tag-especial': (boton) => {
     if (boton.hasAttribute('disabled')) return;
     const apretado = boton.getAttribute('aria-pressed') !== 'true';
     boton.setAttribute('aria-pressed', String(apretado));
     if (boton.dataset['valor'] === 'borrador') mostrarConvertir(apretado);
     sincronizarTags();
-    return;
-  }
-
-  if (accion === 'elegir-duracion') {
+  },
+  'elegir-duracion': (boton) => {
     const valor = boton.dataset['valor'] ?? '';
     const puesto = boton.getAttribute('aria-pressed') !== 'true';
     for (const b of document.querySelectorAll<HTMLElement>('#app [data-accion="elegir-duracion"]')) {
@@ -2196,145 +2147,25 @@ app.addEventListener('click', async (e) => {
     }
     const oculto = document.querySelector<HTMLInputElement>('#app input[name="tiempo"]');
     if (oculto) { oculto.value = puesto ? valor : ''; oculto.setAttribute('value', oculto.value); }
-    return;
-  }
-
-  if (accion === 'tag-quitar') {
+  },
+  'tag-quitar': (boton) => {
     const tag = boton.dataset['valor'] ?? '';
     boton.remove();
     sincronizarTags();
     if (tag) document.querySelector<HTMLInputElement>('[data-tag-nuevo]')?.focus();
-    return;
-  }
-
-  // Las dos salidas del modo cocina tienen destinos distintos, y las dos
-  // sueltan el bloqueo de pantalla: se dejó de cocinar.
-  if (accion === 'volver-receta') {
-    await cocina.soltarPantalla();
-    if (cocina.salirALectura() === 'atras') return history.back();
-    // Se entró al modo cocina por un link directo: no hay receta atrás.
-    irCerrando(`#/r/${encodeURIComponent(idActual())}`);
-    return;
-  }
-  if (accion === 'salir-cocina') {
-    await cocina.soltarPantalla();
-    cocina.olvidarLectura();
-    const entrada = store.entradas().find(e => e.id_archivo === idActual());
-    // Sin fila del índice no se sabe de qué categoría es: se vuelve al Recetario.
-    irCerrando(entrada?.categoria ? `#/c/${encodeURIComponent(entrada.categoria)}` : '#/');
-    return;
-  }
-
-  if (accion === 'volver') {
-    if (vistaActual?.vista === 'cocinar') await cocina.soltarPantalla();
-    if (history.length <= 1) {
-      // Entrar por un link directo deja el historial vacío: ahí volver es ir
-      // al Recetario, no salirse de la app.
-      location.hash = '#/';
-      return;
-    }
-    return history.back();
-  }
-  if (accion === 'editar') { location.hash = `#/r/${idActual()}/editar`; return; }
-  if (accion === 'seguir-editando') {
+  },
+  'seguir-editando': () => {
     document.querySelector('[data-salida]')?.remove();
-    return;
-  }
-  if (accion === 'salir-sin-guardar') {
+  },
+  'salir-sin-guardar': () => {
     estadoDePantalla.editorAbierto = null;
-    // Mismo caso que arriba: sin entrada previa —el editor que abrió lo
+    // Mismo caso que el volver: sin entrada previa —el editor que abrió lo
     // compartido desde otra app— volver no puede intentar salir de la app
     // (C01.2.2); cierra al Recetario.
     if (history.length <= 1) { irCerrando('#/'); return; }
     return history.back();
-  }
-  if (accion === 'conectar-de-nuevo') {
-    // No se redibuja: en el editor lo escrito vive sólo en el formulario (R3).
-    // Conectado, el aviso se va y se guarda a mano; si no, queda donde está.
-    try {
-      await auth.conectar();
-      document.querySelector('[data-sin-sesion]')?.remove();
-    } catch (err) {
-      console.error(err);
-    }
-    return;
-  }
-  if (accion === 'reconectar') {
-    try {
-      // Si el arranque nunca llegó a "listo" (solo-lectura), reintentar todo
-      // el arranque en vez de solo renovar el token: el store todavía no
-      // tiene categorías ni índice cargados.
-      if (estadoArranque?.estado !== 'listo') { await arrancar({ pidiendoPermiso: true }); return; }
-      await auth.conectar();
-      return render();
-    } catch (err) {
-      console.error(err);
-      return pintar('<div class="cuerpo">' + aviso({
-        texto: 'No se pudo reconectar con Google.',
-        accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
-      }) + '</div>');
-    }
-  }
-
-  if (accion === 'elegir-color') { elegirEnCategoria('color', boton.dataset['valor'] ?? ''); return; }
-  if (accion === 'elegir-foto') { elegirEnCategoria('foto', boton.dataset['valor'] ?? ''); return; }
-
-  if (accion === 'guardar-categoria') {
-    if (!document.querySelector('[data-formulario]')) return;
-    const valores = valoresDeCategoria();
-    const id = vistaActual?.params['id'] ?? 'nueva';
-    // La foto propia se manda sólo si se eligió un archivo en esta pantalla:
-    // cambiar el color o el nombre no vuelve a subir nada.
-    const propia = valores.foto.startsWith('propia:') ? estadoDePantalla.fotoPropia?.blob : undefined;
-    const datos = {
-      ...valores,
-      foto: valores.foto.startsWith('propia:') ? '' : valores.foto,
-      ...(propia ? { fotoPropia: propia } : {})
-    };
-    try {
-      if (id === 'nueva') await escribiendo(store.crearCategoria(datos));
-      else await escribiendo(store.editarCategoria(id, datos));
-      registrarCategorias(store.categorias());
-      estadoDePantalla.editorAbierto = null;
-      return history.back();
-    } catch (err) {
-      console.error(err);
-      const otros = store.categorias().filter(c => c.id !== id).map(c => c.nombre);
-      // El motivo del nombre se dice tal cual; lo demás, sin el mensaje de Google (R1).
-      const mensaje = err instanceof Error && problemaDelNombre(valores.nombre, otros) ? err.message : 'No se pudo guardar. Revisá la conexión.';
-      dibujarCategoria(valores, mensaje);
-      return;
-    }
-  }
-
-  if (accion === 'borrar-categoria') {
-    const id = idActual();
-    const categoria = store.categorias().find(c => c.id === id);
-    if (categoria) boton.outerHTML = confirmacionBorrarCategoria(categoria.nombre, store.recetasDe(id).map(e => e.titulo));
-    return;
-  }
-  if (accion === 'cancelar-borrar-categoria') {
-    const confirmacion = document.querySelector('[data-confirmar-borrado-categoria]');
-    if (confirmacion) confirmacion.outerHTML = botonBorrarCategoria;
-    return;
-  }
-  if (accion === 'borrar-categoria-confirmado') {
-    const id = idActual();
-    try {
-      await escribiendo(store.borrarCategoria(id));
-      registrarCategorias(store.categorias());
-      estadoDePantalla.editorAbierto = null;
-      irCerrando('#/categorias');
-      return;
-    } catch (err) {
-      console.error(err);
-      const confirmacion = document.querySelector('[data-confirmar-borrado-categoria]');
-      if (confirmacion) confirmacion.outerHTML = aviso({ texto: 'No se pudo borrar. La categoría sigue estando.' }) + botonBorrarCategoria;
-      return;
-    }
-  }
-
-  if (accion === 'guardar') {
+  },
+  guardar: async (boton) => {
     const guardada = await guardarEditor(boton);
     if (!guardada) return;
     // El orden que se ve: la olla revolviendo, el tilde, y recién después la
@@ -2348,19 +2179,16 @@ app.addEventListener('click', async (e) => {
     // del historial es la del Share Target—: cierra en la receta guardada.
     if (llegoDeAfuera(vistaActual)) irCerrando(`#/r/${encodeURIComponent(guardada.id)}`);
     else history.back();
-    return;
-  }
-
+  },
   // La confirmación toma el lugar del botón, y el botón el de la confirmación:
   // redibujar el editor perdería lo escrito y la foto contra la que se
   // comparan los cambios sin guardar.
-  if (accion === 'borrar') { boton.outerHTML = confirmacionBorrado(recetaLeida?.receta.titulo ?? null); return; }
-  if (accion === 'cancelar-borrado') {
+  borrar: (boton) => { boton.outerHTML = confirmacionBorrado(recetaLeida?.receta.titulo ?? null); },
+  'cancelar-borrado': () => {
     const confirmacion = document.querySelector('[data-confirmar-borrado]');
     if (confirmacion) confirmacion.outerHTML = botonBorrar;
-    return;
-  }
-  if (accion === 'borrar-confirmado') {
+  },
+  'borrar-confirmado': async () => {
     const id = idActual();
     try {
       await escribiendo(store.borrar(id));
@@ -2379,12 +2207,232 @@ app.addEventListener('click', async (e) => {
       return;
     }
   }
+};
 
-  // Reintentar es volver a pedir: lo leído no se reutiliza.
-  if (accion === 'reintentar') {
-    recetaLeida = null; estadoDePantalla.selector.error = '';
-    return render();
+/** Lo que la ficha de compartir escucha. Con el PDF armándose, ninguna responde. */
+const ACCIONES_DE_LA_FICHA = ['compartir', 'cerrar-compartir', 'compartir-pdf', 'enviar-pdf', 'compartir-link', 'compartir-texto'];
+
+/**
+ * El PDF de la receta abierta. *Compartir PDF* lo arma siempre; *Enviar PDF*
+ * reusa el que ya estaba armado, si lo hay.
+ */
+async function compartirPdfDeLaReceta(accion: 'compartir-pdf' | 'enviar-pdf'): Promise<void> {
+  if (!recetaLeida) return;
+  const { entrada, receta } = recetaLeida;
+  if (accion === 'compartir-pdf' || !estadoDePantalla.pdfListo) {
+    estadoDePantalla.compartiendo = { paso: 'generando' };
+    await render();
+    // Si mientras se armaba se navegó, `render` ya cerró la ficha: el PDF es
+    // de una pantalla que no está, y aplicarlo mostraría «listo» en otra receta.
+    const sigueGenerando = (): boolean => estadoDePantalla.compartiendo?.paso === 'generando';
+    try {
+      // El PDF lleva las fotos adentro: las de Drive salen del caché de
+      // `imagenes`, y el canvas para achicarlas es el mismo de siempre.
+      const blob = await generar(receta, entrada?.categoria ?? '', {
+        imagenDe: id => imagenes.imagenDe(id),
+        achicar: (foto, maximo) => achicarFoto(foto, { maximo })
+      });
+      if (!sigueGenerando()) return;
+      estadoDePantalla.pdfListo = new File([blob], slugArchivo(receta.titulo).replace(/\.md$/, '.pdf'), { type: 'application/pdf' });
+    } catch (err) {
+      console.error(err);
+      if (!sigueGenerando()) return;
+      estadoDePantalla.compartiendo = { paso: 'error-pdf' };
+      return render();
+    }
   }
+  try {
+    const r = await compartirPdf(plataformaDelNavegador(), estadoDePantalla.pdfListo);
+    estadoDePantalla.compartiendo = r === 'sin-activacion' ? { paso: 'pdf-listo' } : null;
+  } catch (err) {
+    console.error(err);
+    estadoDePantalla.compartiendo = { paso: 'error-pdf' };
+  }
+  if (!estadoDePantalla.compartiendo) estadoDePantalla.pdfListo = null;
+  return render();
+}
+
+/** La receta abierta como link o como texto. */
+async function compartirLaReceta(que: 'link' | 'texto'): Promise<void> {
+  if (!recetaLeida) return;
+  const { entrada, receta } = recetaLeida;
+  const categoria = entrada?.categoria ?? '';
+  let contenido = '';
+  try {
+    const plataforma = plataformaDelNavegador();
+    contenido = que === 'link' ? urlDeLink(await codificar(receta, categoria)) : textoReceta(receta, categoria);
+    const r = que === 'link'
+      ? await compartirLink(plataforma, receta.titulo ?? '', contenido)
+      : await compartirTexto(plataforma, contenido);
+    estadoDePantalla.compartiendo = r === 'copiado' ? { paso: 'copiado', que }
+      : r === 'sin-portapapeles' ? { paso: 'mostrar', que, contenido }
+      : null;
+  } catch (err) {
+    console.error(err);
+    estadoDePantalla.compartiendo = contenido ? { paso: 'mostrar', que, contenido } : null;
+  }
+  return render();
+}
+
+/** La lista de compras, que se comparte sólo como texto. */
+async function compartirLasCompras(): Promise<void> {
+  const contenido = textoCompras(comprasLeidas?.lista ?? { conCantidad: [], sinCantidad: [] });
+  try {
+    const r = await compartirTexto(plataformaDelNavegador(), contenido);
+    estadoDePantalla.compartiendo = r === 'copiado' ? { paso: 'copiado', que: 'texto' }
+      : r === 'sin-portapapeles' ? { paso: 'mostrar', que: 'texto', contenido }
+      : null;
+  } catch (err) {
+    console.error(err);
+    estadoDePantalla.compartiendo = { paso: 'mostrar', que: 'texto', contenido };
+  }
+  return render();
+}
+
+/** La ficha de compartir de la receta y de la lista de compras. */
+const accionesDeCompartir: SeccionDeAcciones = {
+  compartir: () => {
+    estadoDePantalla.compartiendo = { paso: 'opciones' };
+    // Lo pesado del PDF empieza a bajar ya: el toque que lo genera es otro.
+    void precargar().catch(() => {});
+    return render();
+  },
+  'cerrar-compartir': () => {
+    estadoDePantalla.compartiendo = null;
+    estadoDePantalla.pdfListo = null;
+    return render();
+  },
+  'compartir-pdf': () => compartirPdfDeLaReceta('compartir-pdf'),
+  'enviar-pdf': () => compartirPdfDeLaReceta('enviar-pdf'),
+  'compartir-compras': () => {
+    // La lista se comparte sólo como texto: no es una receta y no tiene link.
+    estadoDePantalla.compartiendo = { paso: 'opciones', solo: 'texto' };
+    return render();
+  },
+  'compartir-texto': () =>
+    vistaActual?.vista === 'plan-compras' ? compartirLasCompras() : compartirLaReceta('texto'),
+  'compartir-link': () => compartirLaReceta('link')
+};
+
+/** Ajustes, la conexión con Google y la carpeta base. */
+const accionesDeAjustes: SeccionDeAcciones = {
+  reindexar: () => reconstruir({ enAjustes: true }),
+  conectar: () => arrancar({ pidiendoPermiso: true }),
+  'cambiar-carpeta': () => { location.hash = '#/carpeta?cambiando=1'; },
+  'carpeta-sugerida': (boton) => {
+    estadoDePantalla.selector.confirmando = { id: boton.dataset['id'] ?? '', nombre: boton.dataset['nombre'] ?? '' };
+    return render();
+  },
+  'carpeta-elegir': async () => {
+    try {
+      const elegida = await elegirCarpeta(await auth.token());
+      // Cerró la ventana sin elegir: nada cambia, ni siquiera la pantalla.
+      if (!elegida) return;
+      estadoDePantalla.selector.confirmando = elegida;
+    } catch (err) {
+      console.error(err);
+      estadoDePantalla.selector.error = 'No se pudo abrir el selector de Google.';
+    }
+    return render();
+  },
+  'carpeta-cancelar': () => { estadoDePantalla.selector.confirmando = null; return render(); },
+  // Crear no confirma: el botón ya dice qué carpeta y dónde. Queda como
+  // `confirmando` igual, para que un fallo del setup se pueda reintentar sobre
+  // la carpeta que ya se creó y no cree otra.
+  'carpeta-crear': async () => {
+    try {
+      estadoDePantalla.selector.confirmando = await escribiendo(store.crearCarpeta(NOMBRE_RAIZ, 'root'));
+    } catch (err) {
+      console.error(err);
+      estadoDePantalla.selector.error = 'No se pudo crear la carpeta.';
+      return render();
+    }
+    return usarCarpeta(estadoDePantalla.selector.confirmando);
+  },
+  'carpeta-confirmar': () => {
+    if (!estadoDePantalla.selector.confirmando) return;
+    return usarCarpeta(estadoDePantalla.selector.confirmando);
+  },
+  'borrar-datos-locales': async () => {
+    // Recargar y no seguir: lo que hay en memoria salió de esa copia, y la
+    // próxima escritura la volvería a guardar igual.
+    indiceLocal.borrar();
+    await Promise.all([imagenes.borrarImagenes(), imagenes.descartarCompartidas()]);
+    location.reload();
+  },
+  salir: async () => {
+    auth.olvidar();
+    // La copia tiene títulos e ingredientes: después de Salir no queda nada
+    // del usuario en el navegador. Y se recarga, porque el índice y la receta
+    // abierta también viven en memoria: sin recargar, la próxima pantalla los
+    // volvería a dibujar. Las fotos guardadas en el navegador tampoco quedan.
+    indiceLocal.borrar();
+    await Promise.all([imagenes.borrarImagenes(), imagenes.descartarCompartidas()]);
+    irCerrando('#/');
+    location.reload();
+  },
+  'conectar-de-nuevo': async () => {
+    // No se redibuja: en el editor lo escrito vive sólo en el formulario (R3).
+    // Conectado, el aviso se va y se guarda a mano; si no, queda donde está.
+    try {
+      await auth.conectar();
+      document.querySelector('[data-sin-sesion]')?.remove();
+    } catch (err) {
+      console.error(err);
+    }
+  },
+  reconectar: async () => {
+    try {
+      // Si el arranque nunca llegó a "listo" (solo-lectura), reintentar todo
+      // el arranque en vez de solo renovar el token: el store todavía no
+      // tiene categorías ni índice cargados.
+      if (estadoArranque?.estado !== 'listo') { await arrancar({ pidiendoPermiso: true }); return; }
+      await auth.conectar();
+      return render();
+    } catch (err) {
+      console.error(err);
+      return pintar('<div class="cuerpo">' + aviso({
+        texto: 'No se pudo reconectar con Google.',
+        accion: { etiqueta: 'Reintentar', accion: 'reconectar' }
+      }) + '</div>');
+    }
+  }
+};
+
+const acciones = registrarAcciones({
+  navegacion: accionesDeNavegacion,
+  menu: accionesDelMenu,
+  lista: accionesDeLista,
+  fotos: accionesDeFotos,
+  visor: accionesDelVisor,
+  carrusel: accionesDelCarrusel,
+  plan: accionesDelPlan,
+  receta: accionesDeLaReceta,
+  categorias: accionesDeCategorias,
+  editor: accionesDelEditor,
+  compartir: accionesDeCompartir,
+  ajustes: accionesDeAjustes
+});
+
+app.addEventListener('click', async (e) => {
+  // Con la pantalla tapada no responde nada: el velo ya tapa los controles, y
+  // esto cubre lo que llegue igual.
+  if (tapadas) return;
+  // Todo el manejo de clicks es delegación desde #app, así que el destino
+  // llega como EventTarget y hay que estrecharlo una sola vez, acá.
+  const destino = conClosest(e.target);
+  const boton = destino?.closest<HTMLElement>('[data-accion], [data-tag]') ?? null;
+  if (!boton && destino && recetaLeida) return tocarFotoEnLinea(destino);
+  if (!boton) return;
+  const tag = boton.dataset['tag'];
+  if (tag) return tocarTag(tag);
+
+  const accion = boton.dataset['accion'];
+  // Mientras se arma el PDF la ficha no acepta otro toque: cerrar con el velo
+  // no frena `generar`, y al terminar el PDF se mandaría igual.
+  if (estadoDePantalla.compartiendo?.paso === 'generando' && ACCIONES_DE_LA_FICHA.includes(accion ?? '')) return;
+  // Una acción que no está registrada no hace nada.
+  return accionDe(acciones, accion)?.(boton, e);
 });
 
 /**

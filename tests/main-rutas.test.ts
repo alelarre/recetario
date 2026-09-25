@@ -936,6 +936,18 @@ describe('main.ts: las rutas', () => {
     }
   });
 
+  it('una acción que no está registrada no hace nada', async () => {
+    const { abrir, tocar, pinturas, empujados, reemplazos, vueltasAtras } = await montar();
+    await abrir('#/r/f1');
+    const antes = { pinturas: pinturas.length, hash: location.hash };
+    for (const accion of ['no-existe', 'toString', 'constructor']) await tocar(accion);
+    expect(pinturas.length).toBe(antes.pinturas);
+    expect(location.hash).toBe(antes.hash);
+    expect(empujados).toEqual([]);
+    expect(reemplazos).toEqual([]);
+    expect(vueltasAtras).toEqual([]);
+  });
+
   it('las pantallas del menú abren el menú desde su encabezado', async () => {
     // El gesto sale de `PANTALLAS_CON_MENU`; el botón lo decide a mano cada
     // pantalla. Acá se recorre la lista: si mañana entra otra y su encabezado
