@@ -79,7 +79,7 @@ export function crearServidor(recetario: Recetario): McpServer {
     description: 'Busca recetas como la app, por texto (título, ingredientes y tags) o por filtros, y dice por qué coincide cada una. Los borradores aparecen sólo si se piden con el tag `borrador`.',
     inputSchema: {
       texto: z.string().optional(),
-      categoria: z.string().optional().describe('El nombre de la categoría.'),
+      categoria: z.string().optional().describe('El nombre de la categoría, sin importar mayúsculas ni tildes. «Sin categoría» trae los borradores sin categoría, pedidos con el tag `borrador`.'),
       tags: z.array(z.string()).optional(),
       dificultad: z.string().optional()
     }

@@ -118,18 +118,22 @@ export type Escritura =
 const hayErrores = (problemas: readonly Problema[]): boolean => problemas.some(p => p.nivel === 'error');
 
 /**
- * La carpeta de la categoría nombrada, sin distinguir mayúsculas ni tildes:
- * el agente la escribe como la leyó o como la dice el usuario. Vacío es Sin
- * categoría, igual que su nombre. Una que no existe no se crea: el agente
- * escribió mal una que sí existe, o hay que crearla desde la app con su color
- * y su foto.
+ * La categoría nombrada, sin distinguir mayúsculas ni tildes: el agente la
+ * escribe como la leyó o como la dice el usuario. Vacío o el nombre de Sin
+ * categoría es `null`. Una que no existe no se crea: el agente escribió mal
+ * una que sí existe, o hay que crearla desde la app con su color y su foto.
  */
-export function carpetaDeCategoria(nombre: string, categorias: readonly { id: string; nombre: string }[]): string {
+function categoriaNombrada<C extends { id: string; nombre: string }>(nombre: string, categorias: readonly C[]): C | null {
   const buscado = normalizar(nombre);
-  if (!buscado || buscado === normalizar(SIN_CATEGORIA)) return '';
+  if (!buscado || buscado === normalizar(SIN_CATEGORIA)) return null;
   const categoria = categorias.find(c => normalizar(c.nombre) === buscado);
-  if (categoria) return categoria.id;
+  if (categoria) return categoria;
   throw new Error(`No hay ninguna categoría «${nombre}». Las que existen son: ${categorias.map(c => c.nombre).join(', ')}.`);
+}
+
+/** La carpeta de la categoría nombrada; vacía es Sin categoría. */
+export function carpetaDeCategoria(nombre: string, categorias: readonly { id: string; nombre: string }[]): string {
+  return categoriaNombrada(nombre, categorias)?.id ?? '';
 }
 
 /**
@@ -372,7 +376,11 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
    * resultados. Sin texto, o pidiendo borradores, el filtro de la app, que
    * trae borradores sólo si se piden con el tag.
    */
-  function buscarEnIndice(consulta: Consulta): Resultado[] {
+  function buscarEnIndice(pedida: Consulta): Resultado[] {
+    // La categoría con el nombre que tiene en el índice, que es con el que filtra la app.
+    const consulta: Consulta = pedida.categoria
+      ? { ...pedida, categoria: categoriaNombrada(pedida.categoria, store.categorias())?.nombre ?? SIN_CATEGORIA }
+      : pedida;
     const texto = (consulta.texto ?? '').trim();
     const filtros: Filtros = {
       ...(consulta.categoria ? { categoria: consulta.categoria } : {}),

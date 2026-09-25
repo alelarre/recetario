@@ -347,6 +347,27 @@ describe('las herramientas', () => {
     expect(resultados[0]?.motivos).toEqual(['categoría Carnes', 'tag rápido']);
   });
 
+  it('buscar por categoría no distingue mayúsculas ni tildes, y el motivo lleva su nombre', async () => {
+    const recetario = nuevoRecetario();
+    const postres = await recetario.buscar({ categoria: 'postres' });
+    expect(postres.map(r => r.id)).toEqual(['r3']);
+    expect(postres[0]?.motivos).toEqual(['categoría Postres']);
+    expect((await recetario.buscar({ texto: 'horno', categoria: 'CÁRNES' })).map(r => r.id)).toEqual(['r1']);
+  });
+
+  it('buscar por Sin categoría trae los borradores sin categoría', async () => {
+    drive._store.set('r5', { id: 'r5', name: 'r5.md', parents: ['raiz'], contenido: '---\ntitulo: Suelta\ntags: [borrador]\n---\n' });
+    sheets.cargar('i1', 'recetas', [
+      ...(await sheets.leer('i1', 'recetas!A1:M100')), fila('r5', 'Suelta', '', 'raiz', 'borrador', '')
+    ]);
+    const sueltas = await nuevoRecetario().buscar({ categoria: 'sin categoria', tags: ['borrador'] });
+    expect(sueltas.map(r => r.id)).toEqual(['r5']);
+  });
+
+  it('buscar por una categoría que no existe falla y lista las que hay', async () => {
+    await expect(nuevoRecetario().buscar({ categoria: 'Pescados' })).rejects.toThrow('Carnes, Postres');
+  });
+
   it('buscar combina texto y filtros', async () => {
     const recetario = nuevoRecetario();
     expect((await recetario.buscar({ texto: 'horno', categoria: 'Carnes' })).map(r => r.id)).toEqual(['r1']);
