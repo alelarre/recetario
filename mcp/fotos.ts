@@ -41,6 +41,19 @@ export const TOPE_DE_BAJADA = 25 * 1024 * 1024;
 /** Un origen con esquema —`https:`, `file:`, `data:`— es una URL; si no, una ruta local. */
 const esquemaDe = (origen: string): string | null => /^([a-z][a-z0-9+.-]+):/i.exec(origen)?.[1]?.toLowerCase() ?? null;
 
+/**
+ * La URL como la escribe `new URL`: esquema en minúsculas, espacios
+ * codificados y sin saltos de línea. Una que no se baja se escribe así en el
+ * depósito, donde una línea con otra forma haría perder la sección entera.
+ */
+function urlNormalizada(origen: string): string {
+  try {
+    return new URL(origen.trim()).href;
+  } catch {
+    throw new Error(`La foto ${origen} no se puede traer: no es una URL válida.`);
+  }
+}
+
 /** Un lienzo de `@napi-rs/canvas` con la forma del `<canvas>` que `achicar()` usa. */
 function lienzoDeNode(): Lienzo {
   const canvas = createCanvas(1, 1);
@@ -128,13 +141,13 @@ export async function achicarEnNode(
   origen: string,
   { fetch: pedir = fetch, ejecutar = ejecutarSinShell }: DependenciasAchicar = {}
 ): Promise<Blob> {
-  const esquema = esquemaDe(origen);
+  const esquema = esquemaDe(origen.trim());
   // Sólo la web: `file:` o `data:` no son una foto que el agente vio en un
   // sitio, y una ruta local se pasa sin esquema.
   if (esquema !== null && esquema !== 'http' && esquema !== 'https') {
     throw new Error(`La foto ${origen} no se puede traer: una URL tiene que ser http o https, y un archivo local va como ruta, sin esquema.`);
   }
-  const blob = esquema ? await bajar(origen, pedir) : await leerLocal(origen, ejecutar).catch((e: unknown) => {
+  const blob = esquema ? await bajar(urlNormalizada(origen), pedir) : await leerLocal(origen, ejecutar).catch((e: unknown) => {
     throw new Error(`No se pudo leer la foto ${origen}: ${e instanceof Error ? e.message : String(e)}`);
   });
   try {

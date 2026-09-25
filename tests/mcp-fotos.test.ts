@@ -326,6 +326,26 @@ describe('las fotos al crear', () => {
     expect(porNombre('pan-casero-2.jpg')).toBeUndefined();
   });
 
+  it.each([
+    ['con un espacio', 'https://ejemplo.com/foto caida.jpg', 'https://ejemplo.com/foto%20caida.jpg'],
+    ['con el esquema en mayúsculas', 'HTTPS://ejemplo.com/caida.jpg', 'https://ejemplo.com/caida.jpg']
+  ])('una URL caída %s entra normalizada y el depósito se lee entero', async (_, origen, normalizada) => {
+    const receta = escrita(await nuevoRecetario().crear({
+      md: md('Pan casero'), categoria: 'Postres',
+      fotos: [{ origen: CHICA, uso: 'paso' }, { origen, uso: 'plato' }]
+    }));
+    expect(receta.fotos).toEqual([
+      { n: 1, url: linkDeFoto(porNombre('pan-casero-1.jpg')?.id ?? '') },
+      { n: 2, url: normalizada }
+    ]);
+  });
+
+  it('una URL que no se puede interpretar falla con el origen', async () => {
+    const error = await achicarEnNode('https://[roto/a.jpg', { fetch: fetchFalso }).catch((e: unknown) => e);
+    expect(error).not.toBeInstanceOf(NoSeBajo);
+    expect((error as Error).message).toContain('https://[roto/a.jpg');
+  });
+
   it('un origen que no es http ni https falla antes de escribir nada', async () => {
     const error = await nuevoRecetario().crear({
       md: md('Pan casero'), categoria: 'Postres', fotos: [{ origen: 'file:///etc/passwd', uso: 'plato' }]

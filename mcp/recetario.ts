@@ -188,7 +188,8 @@ async function prepararFotos(
       lineas.push({ n, url: '' });
     } catch (e) {
       if (!(e instanceof NoSeBajo)) throw e;
-      lineas.push({ n, url: pedida.origen });
+      // La URL normalizada: la que llegó puede no tener la forma de una línea del depósito.
+      lineas.push({ n, url: e.url });
     }
   }
   return { receta: { ...receta, fotos: [...receta.fotos, ...lineas] }, cambios: { nuevas, sacadas } };
