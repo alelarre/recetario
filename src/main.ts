@@ -2573,8 +2573,15 @@ app.addEventListener('input', (e) => {
 let deslizando: { x: number; y: number; decidido: 'indeciso' | 'horizontal' | 'vertical'; p: number } | null = null;
 
 /** Desde `ANCHO_MENU_FIJO` el menú es fijo (`base.css`): no hay nada que abrir. */
-const menuFijo = (): boolean =>
-  typeof window.matchMedia === 'function' && window.matchMedia(`(min-width: ${ANCHO_MENU_FIJO}px)`).matches;
+const corteDelMenu = typeof window.matchMedia === 'function'
+  ? window.matchMedia(`(min-width: ${ANCHO_MENU_FIJO}px)`) : null;
+const menuFijo = (): boolean => corteDelMenu?.matches ?? false;
+
+// La ventana que se agranda hasta el corte deja el menú fijo: desplegado no
+// hay nada que mostrar, y su capa quedaría en el historial sin nada abierto.
+corteDelMenu?.addEventListener?.('change', (e) => {
+  if (e.matches) ponerMenu(false);
+});
 
 /**
  * Muestra u oculta el menú sobre lo que ya está pintado: cambia las clases del

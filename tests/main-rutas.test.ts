@@ -681,12 +681,19 @@ describe('main.ts: las rutas', () => {
       visibilityState: 'visible',
       readyState
     });
+    /** Los oyentes del cruce del corte de 900 px. */
+    const alCruzarElCorte: ((e: { matches: boolean }) => void)[] = [];
     global.window = comoGlobal<Window & typeof globalThis>({
       google: {}, addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; },
       scrollTo: (_x: number, y: number) => { scrolls.push(y); }, scrollY: 0, close: () => {},
-      // Sólo la consulta de reduced motion importa acá: las demás no se usan.
+      // La consulta de reduced motion y la del corte de 900 px, que avisa al cruzarlo.
       matchMedia: (q: string) => ({
-        matches: (reducedMotion && q.includes('prefers-reduced-motion')) || (ancha && q.includes('min-width: 900px'))
+        get matches() {
+          return (reducedMotion && q.includes('prefers-reduced-motion')) || (ancha && q.includes('min-width: 900px'));
+        },
+        addEventListener: (ev: string, fn: (e: { matches: boolean }) => void) => {
+          if (ev === 'change' && q.includes('min-width: 900px')) alCruzarElCorte.push(fn);
+        }
       })
     });
     // El historial, con sus entradas y su `state`: `replace` no agrega una
@@ -802,6 +809,12 @@ describe('main.ts: las rutas', () => {
         if (!frenado) global.location.hash = href;
         await esperar();
         return frenado;
+      },
+      /** La ventana se agranda hasta 900 px o más, o se achica por debajo. */
+      cambiarAncho: async (ahora: boolean) => {
+        ancha = ahora;
+        for (const fn of alCruzarElCorte) fn({ matches: ahora });
+        await esperar();
       },
       /** El atrás del navegador o de Android, que no pasa por la app. */
       atras: async () => {
@@ -4706,6 +4719,20 @@ describe('main.ts: las rutas', () => {
         ['', undefined], ['#/plan', undefined], ['#/plan/agregar?dia=1&momento=noche', undefined], ['#/ajustes', undefined]
       ]);
       expect(app.innerHTML).toContain('Reindexar');
+    });
+
+    it('el menú abierto al pasar la ventana a 900 px se cierra y consume su entrada', async () => {
+      const { abrir, tocar, cambiarAncho, menuDesplegado, pila, vueltasAtras } = await montar();
+      await abrir('#/plan');
+      await tocar('abrir-menu');
+      await cambiarAncho(true);
+      expect(menuDesplegado()).toBe(false);
+      expect(vueltasAtras).toHaveLength(1);
+      expect(pila().map(e => [e.hash, capa(e.state)])).toEqual([['', undefined], ['#/plan', undefined]]);
+      // Achicarla de nuevo no lo abre ni toca el historial.
+      await cambiarAncho(false);
+      expect(menuDesplegado()).toBe(false);
+      expect(vueltasAtras).toHaveLength(1);
     });
 
     it('el visor de la receta: el atrás lo cierra; la cruz consume su entrada', async () => {
