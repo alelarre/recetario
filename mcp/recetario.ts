@@ -169,22 +169,39 @@ export interface NumeroDeFoto extends FotoPedida {
 }
 
 /**
- * La herramienta `validar`: cómo lee la app el `.md` y qué tiene fuera del
- * formato. No necesita el Drive, así que las referencias se validan contra la
- * sección `## Fotos` que trae el `.md` —la que mostró `leer`— más las fotos
- * que se van a pedir. `crear` y `guardar` validan contra el depósito que
- * arman ellos.
+ * El aviso de un `.md` que trae su propio depósito: se ignora siempre, y el
+ * agente tiene que saber que lo que escribió ahí no llega a Drive.
  */
-function validarConFotos(md: string, fotos: readonly FotoPedida[] = []): {
+function fotosIgnoradas(recibida: Receta): Problema[] {
+  return recibida.fotos.length
+    ? [{ campo: 'fotos', nivel: 'aviso', mensaje: 'Se ignoró la sección `## Fotos` del .md; el depósito lo arma el MCP.' }]
+    : [];
+}
+
+/** Una receta nueva no tiene depósito: sacar fotos es sólo al corregir, con el `id`. */
+const SACAR_SIN_ID: Problema = {
+  campo: 'fotos', nivel: 'error',
+  mensaje: '`sacar` es para corregir una receta: pasá también su `id`. Sin `id`, se valida como una receta nueva, que no tiene fotos que sacar.'
+};
+
+/**
+ * Una receta nueva armada sin escribir, como la escribe `crear`: el depósito
+ * vacío más las fotos que se van a pedir, y los problemas contra ese
+ * depósito. No necesita el Drive.
+ */
+function armarNueva(md: string, fotos: readonly FotoPedida[]) {
+  const recibida = leerRecibido(md);
+  const { receta, seSuben } = conFotosPedidas(recibida, [], fotos, []);
+  const problemas = [...problemasDe(receta, { fotosPendientes: seSuben.map(s => s.n) }), ...fotosIgnoradas(recibida)];
+  return { receta, problemas, seSuben, numeros: numerados(fotos, [], seSuben) };
+}
+
+/** La herramienta `validar` sin `id`: la receta nueva como la armaría `crear`. */
+function validarNueva(md: string, fotos: readonly FotoPedida[] = [], sacar: readonly number[] = []): {
   receta: Receta; problemas: Problema[]; fotos: NumeroDeFoto[];
 } {
-  const receta = leerRecibido(md);
-  const seSuben = fotosQueSeSuben(fotos, receta.fotos, { conBorrador: tieneEspecial(receta, 'borrador') });
-  return {
-    receta,
-    problemas: problemasDe(receta, { fotosPendientes: seSuben.map(s => s.n) }),
-    fotos: numerados(fotos, receta.fotos, seSuben)
-  };
+  const { receta, problemas, numeros } = armarNueva(md, fotos);
+  return { receta, problemas: sacar.length ? [...problemas, SACAR_SIN_ID] : problemas, fotos: numeros };
 }
 
 /**
@@ -394,8 +411,9 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
   async function armarCorreccion({ id, md, fotos = [], sacar = [] }: Correccion) {
     const enDrive = (await store.receta(id)).receta.fotos;
     const { quedan, sacadas, problemas: alSacar } = sacarDelDeposito(enDrive, sacar);
-    const { receta, seSuben } = conFotosPedidas(leerRecibido(md), quedan, fotos, enDrive);
-    const problemas = [...problemasDe(receta, { fotosPendientes: seSuben.map(s => s.n) }), ...alSacar];
+    const recibida = leerRecibido(md);
+    const { receta, seSuben } = conFotosPedidas(recibida, quedan, fotos, enDrive);
+    const problemas = [...problemasDe(receta, { fotosPendientes: seSuben.map(s => s.n) }), ...alSacar, ...fotosIgnoradas(recibida)];
     return { receta, problemas, seSuben, sacadas, numeros: numerados(fotos, enDrive, seSuben) };
   }
 
@@ -403,7 +421,7 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
     /** Las reglas del `.md`. No necesita el Drive. */
     formato: (): string[] => reglasDelFormatoDelMcp(),
 
-    validar: validarConFotos,
+    validar: validarNueva,
 
     async categorias(): Promise<{ id: string; nombre: string; cantidad: number }[]> {
       await listo();
@@ -439,11 +457,9 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
     }): Promise<Escritura> {
       await listo();
       const carpetaId = carpetaDeCategoria(categoria, store.categorias());
-      // El depósito de una receta nueva son sólo las fotos que se suben con ella.
-      const { receta: recibida, seSuben } = conFotosPedidas(leerRecibido(md), [], fotos, []);
-      const problemas = problemasDe(recibida, { fotosPendientes: seSuben.map(s => s.n) });
+      const { receta: armada, problemas, seSuben } = armarNueva(md, fotos);
       if (hayErrores(problemas)) return { escrita: false, problemas };
-      const { receta, cambios } = await prepararFotos(recibida, seSuben, [], achicar);
+      const { receta, cambios } = await prepararFotos(armada, seSuben, [], achicar);
       const { id, nombre_archivo } = await store.crear(receta, carpetaId ? { carpetaId, fotos: cambios } : { fotos: cambios });
       return { escrita: true, id, nombre_archivo, problemas };
     },

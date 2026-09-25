@@ -45,6 +45,8 @@ const MD_FLAN = [
   ''
 ].join('\n');
 
+const FOTOS_IGNORADAS = 'Se ignoró la sección `## Fotos` del .md; el depósito lo arma el MCP.';
+
 const md = (titulo: string, extra = ''): string =>
   `---\ntitulo: ${titulo}\n${extra}---\n\n## Ingredientes\n\n- harina — 500 g\n`;
 
@@ -188,6 +190,7 @@ describe('crear', () => {
     const conFotos = md('Pan casero') + `\n## Fotos\n\n- 1: ${linkDeFoto('f1')}\n`;
     const r = await nuevoRecetario().crear({ md: conFotos, categoria: 'Postres' });
     if (!r.escrita) throw new Error('no se escribió');
+    expect(r.problemas).toEqual([{ campo: 'fotos', nivel: 'aviso', mensaje: FOTOS_IGNORADAS }]);
     expect(parse(archivo(r.id)?.contenido).fotos).toEqual([]);
     expect(archivo(r.id)?.contenido).not.toContain('## Fotos');
   });
@@ -196,7 +199,10 @@ describe('crear', () => {
     const conFotos = md('Pan casero', 'foto: foto:1\n') + `\n## Fotos\n\n- 1: ${linkDeFoto('f1')}\n`;
     const r = await nuevoRecetario().crear({ md: conFotos, categoria: 'Postres' });
     expect(r.escrita).toBe(false);
-    expect(r.problemas).toEqual([expect.objectContaining({ campo: 'foto', nivel: 'error' })]);
+    expect(r.problemas).toEqual([
+      expect.objectContaining({ campo: 'foto', nivel: 'error' }),
+      { campo: 'fotos', nivel: 'aviso', mensaje: FOTOS_IGNORADAS }
+    ]);
     expect(r.problemas[0]?.mensaje).toContain('El depósito está vacío.');
     expect(drive.cuantas('crear')).toBe(0);
   });
@@ -227,6 +233,7 @@ describe('guardar', () => {
     const sinDeposito = corregido.replace(/\n## Fotos[\s\S]*$/, '\n');
     const r = await nuevoRecetario().guardar({ id: 'r3', md: sinDeposito });
     expect(r.escrita).toBe(true);
+    expect(r.problemas.map(p => p.mensaje)).not.toContain(FOTOS_IGNORADAS);
     expect(parse(archivo('r3')?.contenido).fotos).toEqual([
       { n: 1, url: linkDeFoto('f1') }, { n: 2, url: linkDeFoto('f2') }
     ]);
@@ -238,6 +245,7 @@ describe('guardar', () => {
       .replace(`- 2: ${linkDeFoto('f2')}`, `- 2: ${linkDeFoto('de-otra-receta')}\n- 3: ${linkDeFoto('tambien-ajena')}`);
     const r = await nuevoRecetario().guardar({ id: 'r3', md: alterado });
     expect(r.escrita).toBe(true);
+    expect(r.problemas).toContainEqual({ campo: 'fotos', nivel: 'aviso', mensaje: FOTOS_IGNORADAS });
     expect(parse(archivo('r3')?.contenido).fotos).toEqual([
       { n: 1, url: linkDeFoto('f1') }, { n: 2, url: linkDeFoto('f2') }
     ]);

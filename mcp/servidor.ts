@@ -95,12 +95,12 @@ export function crearServidor(recetario: Recetario): McpServer {
     inputSchema: {
       md: z.string(),
       fotos: fotos.optional(),
-      id: z.string().optional().describe('La receta que se corrige. Sin id, se valida como una receta nueva.'),
+      id: z.string().optional().describe('La receta que se corrige. Sin id, se valida como una receta nueva, igual que `crear`.'),
       sacar: sacar.optional()
     }
   }, ({ md, fotos: pedidas, id, sacar: sacadas }) => responder(async () => json(
     id === undefined
-      ? recetario.validar(md, pedidas)
+      ? recetario.validar(md, pedidas, sacadas)
       : await recetario.validarAlCorregir({ id, md, fotos: pedidas, sacar: sacadas })
   )));
 

@@ -126,6 +126,12 @@ describe('llamar a una herramienta', () => {
     ]);
   });
 
+  it('validar con sacar y sin id devuelve el error de sacar', async () => {
+    const r = await llamar(await conectar(), 'validar', { md: md('Pan'), sacar: [1] });
+    const v = JSON.parse(texto(r));
+    expect(v.problemas).toEqual([expect.objectContaining({ campo: 'fotos', nivel: 'error' })]);
+  });
+
   it('validar con el id numera las fotos desde el depósito de Drive de la receta', async () => {
     drive._store.get('r3')!.contenido = md('Flan casero') + '\n## Fotos\n\n- 1: https://ejemplo.com/1.jpg\n- 2: https://ejemplo.com/2.jpg\n';
     const r = await llamar(await conectar(), 'validar', {

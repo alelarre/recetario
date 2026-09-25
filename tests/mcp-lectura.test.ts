@@ -19,6 +19,8 @@ const fila = (id: string, titulo: string, categoria: string, carpeta: string,
               tags: string, ingredientes: string, dificultad = ''): string[] =>
   [id, `${id}.md`, titulo, categoria, carpeta, '', '', dificultad, '', tags, ingredientes, '1000', ''];
 
+const FOTOS_IGNORADAS = 'Se ignoró la sección `## Fotos` del .md; el depósito lo arma el MCP.';
+
 const MD_MILANESAS = '---\ntitulo: Milanesas napolitanas\ntags: [horno]\n---\n\n## Ingredientes\n\n- nalga — 1 kg\n';
 
 let drive: DriveFalso;
@@ -373,12 +375,26 @@ describe('las herramientas', () => {
     expect(recetario.validar(md).problemas.map(p => p.campo)).toEqual(['foto', 'fotos']);
   });
 
-  it('validar al guardar: las fotos nuevas siguen al número más alto del depósito', () => {
-    const md = '---\ntitulo: Tarta\nfoto: foto:4\n---\n\n## Preparación\n\n1. Hornear. ![](foto:5)\n\n' +
+  it('validar sin id valida como crear: el ## Fotos del .md se ignora, con un aviso, y las fotos se numeran desde 1', () => {
+    const md = '---\ntitulo: Tarta\nfoto: foto:1\n---\n\n## Preparación\n\n1. Hornear. ![](foto:2)\n\n' +
       '## Fotos\n\n- 1: https://ejemplo.com/1.jpg\n- 3: https://ejemplo.com/3.jpg\n';
     const fotos = [{ origen: 'a.jpg', uso: 'plato' }, { origen: 'b.jpg', uso: 'paso' }] as const;
-    expect(nuevoRecetario().validar(md, fotos).problemas).toEqual([]);
-    expect(nuevoRecetario().validar(md.replace('foto:5', 'foto:6'), fotos).problemas.map(p => p.campo)).toEqual(['fotos']);
+    const r = nuevoRecetario().validar(md, fotos);
+    expect(r.problemas).toEqual([{ campo: 'fotos', nivel: 'aviso', mensaje: FOTOS_IGNORADAS }]);
+    expect(r.fotos.map(f => f.n)).toEqual([1, 2]);
+    expect(r.receta.fotos).toEqual([]);
+    const sinFotos = nuevoRecetario().validar(md.replace('foto: foto:1\n', 'foto: foto:3\n')).problemas;
+    expect(sinFotos.filter(p => p.nivel === 'error').map(p => p.campo)).toEqual(['foto', 'fotos']);
+  });
+
+  it('validar con sacar y sin id es un error: una receta nueva no tiene fotos que sacar', () => {
+    const r = nuevoRecetario().validar(MD_MILANESAS, [], [1]);
+    expect(r.problemas).toEqual([expect.objectContaining({ campo: 'fotos', nivel: 'error' })]);
+    expect(r.problemas[0]?.mensaje).toContain('`id`');
+  });
+
+  it('un ## Fotos vacío no avisa', () => {
+    expect(nuevoRecetario().validar(`${MD_MILANESAS}\n## Fotos\n`).problemas).toEqual([]);
   });
 
   it('validar: lo mismo que validarMd', () => {
@@ -386,12 +402,12 @@ describe('las herramientas', () => {
     expect(nuevoRecetario().validar(md)).toEqual({ ...validarMd(md), fotos: [] });
   });
 
-  it('validar dice el número de cada foto pedida y si se sube, siguiendo al depósito que trae el .md', () => {
-    const md = '---\ntitulo: Tarta\n---\n\n## Fotos\n\n- 3: https://ejemplo.com/3.jpg\n';
+  it('validar dice el número de cada foto pedida y si se sube', () => {
+    const md = '---\ntitulo: Tarta\n---\n';
     const fotos = [{ origen: 'libro.jpg', uso: 'fuente' }, { origen: 'plato.jpg', uso: 'plato' }] as const;
     expect(nuevoRecetario().validar(md, fotos).fotos).toEqual([
-      { origen: 'libro.jpg', uso: 'fuente', n: 4, seSube: false },
-      { origen: 'plato.jpg', uso: 'plato', n: 5, seSube: true }
+      { origen: 'libro.jpg', uso: 'fuente', n: 1, seSube: false },
+      { origen: 'plato.jpg', uso: 'plato', n: 2, seSube: true }
     ]);
     const conBorrador = md.replace('titulo: Tarta\n', 'titulo: Tarta\ntags: [borrador]\n');
     expect(nuevoRecetario().validar(conBorrador, fotos).fotos.map(f => f.seSube)).toEqual([true, true]);
