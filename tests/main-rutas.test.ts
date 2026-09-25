@@ -1316,7 +1316,7 @@ describe('main.ts: las rutas', () => {
     const { abrir, app } = await montar();
     await abrir('#/t/horno');
     expect(app.innerHTML).toContain('>horno<');
-    expect(app.innerHTML).toContain('class="tarjeta"');
+    expect(app.innerHTML).toContain('class="fila tarjeta"');
   });
 
   it('en la lista por tag, tocar otro chip acumula: los dos quedan activos y la lista se achica', async () => {

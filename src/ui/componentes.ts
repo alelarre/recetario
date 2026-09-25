@@ -156,8 +156,8 @@ export function tarjeta(e: Entrada, { motivo, accion, destino = 'receta' }: Opci
     : '';
   const estilo = puestas.length ? ` style="--marcas:${puestas.length}"` : '';
   const apertura = accion
-    ? `<button class="tarjeta" type="button" data-accion="${escapar(accion)}" data-id="${escapar(e.id_archivo)}"${estilo}>`
-    : `<a class="tarjeta" href="#/r/${encodeURIComponent(e.id_archivo)}${destino === 'editor' ? '/editar' : ''}"${estilo}>`;
+    ? `<button class="fila tarjeta" type="button" data-accion="${escapar(accion)}" data-id="${escapar(e.id_archivo)}"${estilo}>`
+    : `<a class="fila tarjeta" href="#/r/${encodeURIComponent(e.id_archivo)}${destino === 'editor' ? '/editar' : ''}"${estilo}>`;
   // Con acción la tarjeta agrega en vez de abrir la receta: el «+» lo dice
   // para quien ve, y queda afuera de `.txt` para no competir con las marcas.
   const masElegir = accion ? `<span class="mas-elegir" aria-hidden="true">${ICO.mas}</span>` : '';

@@ -2497,7 +2497,7 @@ function seguirDedo(p: number | null): void {
   }
 }
 
-/** Las dos filas que se desplazan de costado: el carrusel (`tokens.css`) y la fila de duraciones (`base.css`). Una que entra entera no cuenta: no hay nada que mover. */
+/** Las dos filas que se desplazan de costado: el carrusel y la fila de duraciones, en `tokens.css`. Una que entra entera no cuenta: no hay nada que mover. */
 function sobreFilaDeslizable(destino: EventTarget | null): boolean {
   const fila = conClosest(destino)?.closest<HTMLElement>('.carrusel, .fila-dur');
   return !!fila && fila.scrollWidth > fila.clientWidth;

@@ -393,7 +393,7 @@ describe('el menú lateral', () => {
 describe('la tarjeta con acción', () => {
   it('es un botón que lleva el id, y no un link a la receta', () => {
     const html = tarjeta(entradaFalsa({ id_archivo: 'f1', titulo: 'Rabas' }), { accion: 'elegir-para-el-plan' });
-    expect(html).toContain('<button class="tarjeta" type="button" data-accion="elegir-para-el-plan" data-id="f1"');
+    expect(html).toContain('<button class="fila tarjeta" type="button" data-accion="elegir-para-el-plan" data-id="f1"');
     expect(html).not.toContain('href=');
     expect(html.trimEnd().endsWith('</button>')).toBe(true);
   });

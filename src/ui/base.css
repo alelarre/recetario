@@ -11,36 +11,6 @@
                 font: 400 var(--txt-base) var(--tipo); }
 .buscar input:focus { outline: none; }
 .grilla { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--e-3); }
-.tile { position: relative; aspect-ratio: 4/3; border-radius: var(--r-ficha); overflow: hidden;
-        border: 1px solid var(--c); background: var(--surface); display: block;
-        text-decoration: none; color: var(--fg); }
-.tile .im { position: absolute; inset: 0; background: var(--c); opacity: 1; overflow: hidden; }
-/* La foto de la categoría: propia (Drive) o del catálogo, siempre con `imgDe`. */
-.tile .im img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.tile .im::after { content: ''; position: absolute; inset: 0; background: var(--c);
-                   opacity: .28; mix-blend-mode: overlay; }
-.tile .cu { position: absolute; top: var(--e-2); right: var(--e-2); z-index: 1;
-            min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
-            /* Casi opaco y con el texto claro: el badge cae sobre fotos de
-               cualquier luminosidad, y una foto clara se comía al número. */
-            background: color-mix(in srgb, var(--velo) 92%, transparent);
-            border: 1px solid var(--borde-fuerte);
-            font-size: var(--txt-micro); font-weight: 600; color: var(--fg);
-            display: grid; place-items: center; font-variant-numeric: tabular-nums; }
-.tile .im.trama { background:
-    repeating-linear-gradient(135deg, var(--c) 0 6px, transparent 6px 14px); opacity: .22; }
-.tile .nm { position: absolute; inset: auto 0 0 0; padding: var(--e-6) var(--e-2) var(--e-2);
-            font-size: var(--txt-chico); font-weight: 600; color: var(--fg);
-            background: linear-gradient(to top,
-                        color-mix(in srgb, var(--velo) 96%, transparent) 0%,
-                        color-mix(in srgb, var(--velo) 88%, transparent) 40%,
-                        transparent 100%); }
-
-/* ---- Rótulo de sección y listas ---- */
-.rot { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
-       letter-spacing: .06em; display: flex; justify-content: space-between; margin-bottom: var(--e-3); }
-.lista { display: flex; flex-direction: column; gap: var(--e-2); }
-
 /* ---- Categoría ---- */
 .tot { font-size: var(--txt-chico); color: var(--fg-2); font-variant-numeric: tabular-nums;
        padding-right: var(--e-3); }
@@ -52,7 +22,6 @@
            position: sticky; top: 0; z-index: 3;
            padding-inline: max(var(--e-2), calc((100% - var(--columna)) / 2)); }
 .cajaenc .buscar { flex: 1; }
-.grupo-res + .grupo-res { margin-top: var(--e-5); }
 
 /* ---- Receta en lectura ---- */
 /* El link al `.md` en Drive: un dato al margen, no un botón. Sin caja, y más
@@ -292,11 +261,7 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
               font-size: var(--txt-micro); line-height: 1.6; color: var(--fg-2);
               white-space: pre-wrap; word-break: break-word; }
 
-/* ---- Filas de lista: la de las categorías en Ajustes ---- */
-.bor { display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
-       background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha);
-       /* Es un <a>: sin esto lleva el subrayado y el violeta de link visitado. */
-       text-decoration: none; color: inherit; }
+/* ---- La fila de una categoría en Ajustes: la base es `.fila` ---- */
 .bor .txt { flex: 1; min-width: 0; }
 /* El nombre se recorta en dos renglones como el de una receta (`.tarjeta .n`).
    Sin esto, uno largo y sin espacios estira la página a lo ancho. */
@@ -305,10 +270,8 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
 .bor .d { font-size: var(--txt-micro); color: var(--fg-3); white-space: nowrap; }
 
 /* ---- Carpeta base ---- */
-/* Una carpeta encontrada. La ficha no es un control: el que se toca es el Usar
-   de la derecha, así que no lleva ni fondo de toque ni cursor. */
-.carp { display: flex; gap: var(--e-3); align-items: center; padding: var(--e-3);
-        background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha); }
+/* Una carpeta encontrada, sobre la base `.fila`. No es un control: el que se
+   toca es el Usar de la derecha, así que no lleva ni fondo de toque ni cursor. */
 .carp .n { flex: 1; min-width: 0; font-weight: 600;
            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .carp > svg { flex: 0 0 var(--ico); width: var(--ico); height: var(--ico); color: var(--fg-2);
@@ -537,20 +500,3 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
                           stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .muestra-color[aria-pressed="true"], .muestra-foto[aria-pressed="true"] { border-color: var(--fg); }
 
-/* La fila de duraciones: chips con relojito que se deslizan como el
-   carrusel, sin degradé ni flechas; y el conmutador de orden, a la derecha. */
-.fila-dur { display: flex; gap: var(--e-2); overflow-x: auto; scrollbar-width: none;
-            margin-inline: calc(-1 * var(--e-4)); padding-inline: var(--e-4); margin-bottom: var(--e-3); }
-.fila-dur::-webkit-scrollbar { display: none; }
-.fila-dur .chip { flex: 0 0 auto; --fondo-reloj: color-mix(in srgb, var(--surface-alta) 86%, var(--fg)); }
-.fila-dur .chip.act { --fondo-reloj: var(--acento-suave); }
-.orden { display: flex; justify-content: flex-end; margin-bottom: var(--e-3); }
-.orden-seg { display: inline-grid; grid-template-columns: auto auto; border: 1px solid var(--borde);
-             border-radius: var(--r-medio); overflow: hidden; }
-.orden-seg button { min-height: 40px; padding: 0 var(--e-3); border: 0; background: none; color: var(--fg-2);
-                    font: 600 var(--txt-chico)/1 var(--tipo); cursor: pointer; display: inline-flex;
-                    align-items: center; gap: 6px; }
-.orden-seg button + button { border-left: 1px solid var(--borde); }
-.orden-seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
-.orden-seg svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5;
-                 stroke-linecap: round; stroke-linejoin: round; }

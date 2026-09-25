@@ -37,7 +37,7 @@ export function renderListaCategorias({ categorias }: { categorias: { categoria:
   const filas = [...categorias]
     .sort((a, b) => a.categoria.nombre.localeCompare(b.categoria.nombre, 'es'))
     .map(({ categoria, recetas: n }) =>
-      `<a class="bor cat-fila" href="#/categorias/${encodeURIComponent(categoria.id)}">` +
+      `<a class="fila bor cat-fila" href="#/categorias/${encodeURIComponent(categoria.id)}">` +
         muestraCategoria({ nombre: '', color: categoria.color, foto: categoria.foto }) +
         `<span class="txt"><span class="n">${escapar(categoria.nombre)}</span></span>` +
         `<span class="d">${recetas(n)}</span>` +

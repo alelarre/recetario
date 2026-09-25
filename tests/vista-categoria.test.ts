@@ -14,14 +14,14 @@ describe('Categoría', () => {
       tagsActivos: [], tags: []
     });
     expect(html).toContain('>20<');
-    expect(html.match(/class="tarjeta"/g)).toHaveLength(13);
+    expect(html.match(/class="fila tarjeta"/g)).toHaveLength(13);
   });
 
   it('mientras falta un tramo, el spinner va al final de la lista', () => {
     const html = renderCategoria({
       nombre: 'A', lista: listaPlanaFalsa({ entradas: veinte.slice(0, 13), total: 20, hayMas: true }), tagsActivos: [], tags: []
     });
-    expect(html.indexOf('class="spin"')).toBeGreaterThan(html.lastIndexOf('class="tarjeta"'));
+    expect(html.indexOf('class="spin"')).toBeGreaterThan(html.lastIndexOf('class="fila tarjeta"'));
   });
 
   it('con todo cargado no queda spinner', () => {

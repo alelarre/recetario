@@ -10,7 +10,7 @@ const e = (titulo: string, extra: Parameters<typeof entradaFalsa>[0] = {}) =>
 describe('lista-recetas — la lista plana', () => {
   it('dibuja las tarjetas en el orden en que llegan', () => {
     const html = listaPlana({ lista: plana({ entradas: [e('Zapallo'), e('Ajo')], total: 2 }), vacio: '' });
-    expect(html.match(/class="tarjeta"/g)).toHaveLength(2);
+    expect(html.match(/class="fila tarjeta"/g)).toHaveLength(2);
     expect(html.indexOf('Zapallo')).toBeLessThan(html.indexOf('Ajo'));
     expect(html).toContain('<div class="lista">');
   });
@@ -18,7 +18,7 @@ describe('lista-recetas — la lista plana', () => {
   it('mientras falta un tramo, el spinner propio del tramo va al final', () => {
     const html = listaPlana({ lista: plana({ entradas: [e('A')], total: 2, hayMas: true }), vacio: '' });
     expect(html).toContain('<div class="spin" data-tramo></div>');
-    expect(html.indexOf('data-tramo')).toBeGreaterThan(html.lastIndexOf('class="tarjeta"'));
+    expect(html.indexOf('data-tramo')).toBeGreaterThan(html.lastIndexOf('class="fila tarjeta"'));
   });
 
   it('con todo dibujado no hay spinner', () => {
@@ -80,7 +80,7 @@ describe('lista-recetas — la lista agrupada', () => {
 
   it('mientras falta un tramo, el spinner propio del tramo va después del último grupo', () => {
     const html = listaAgrupada({ lista: tres, consulta: 'merluza' });
-    expect(html.indexOf('data-tramo')).toBeGreaterThan(html.lastIndexOf('class="tarjeta"'));
+    expect(html.indexOf('data-tramo')).toBeGreaterThan(html.lastIndexOf('class="fila tarjeta"'));
     expect(listaAgrupada({ lista: { ...tres, hayMas: false }, consulta: 'x' })).not.toContain('class="spin"');
   });
 

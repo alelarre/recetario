@@ -39,7 +39,7 @@ export function renderSelector(
   const encontradas = sugerencias.length
     ? '<div><div class="rot">Encontradas</div><div class="lista">' +
       sugerencias.map(c =>
-        '<div class="carp">' +
+        '<div class="fila carp">' +
           ICO.carpeta +
           `<span class="n">${escapar(c.nombre)}</span>` +
           '<button class="btn sec compacto" data-accion="carpeta-sugerida" ' +
