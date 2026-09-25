@@ -331,4 +331,11 @@ describe('las fotos al guardar', () => {
     expect(drive.cuantas('crear')).toBe(0);
   });
 
+  it('sacar una foto no tira una URL que otra línea del depósito sigue usando', async () => {
+    archivo('r3')!.contenido = MD_FLAN.replace(`- 2: ${linkDeFoto('f2')}`, `- 2: ${linkDeFoto('f2')}\n- 3: ${linkDeFoto('f2')}`);
+    const sinPaso = MD_FLAN.replace(' ![](foto:2)', '');
+    const r = await nuevoRecetario().guardar({ id: 'r3', md: sinPaso, sacar: [2] });
+    expect(escrita(r).fotos.map(f => f.n)).toEqual([1, 3]);
+    expect(drive.cuantas('borrar', 'f2')).toBe(0);
+  });
 });

@@ -135,9 +135,13 @@ export function sacarDelDeposito(
       campo: 'fotos', nivel: 'error' as const,
       mensaje: `\`foto:${n}\` no está en el depósito de la receta: no hay qué sacar.`
     }));
+  const quedan = deposito.filter(f => !pedidos.has(f.n));
+  // Una URL que otra línea sigue usando no va a la papelera: esa línea
+  // quedaría nombrando una foto borrada.
+  const siguen = new Set(quedan.map(f => f.url));
   return {
-    quedan: deposito.filter(f => !pedidos.has(f.n)),
-    sacadas: deposito.filter(f => pedidos.has(f.n)).map(f => f.url),
+    quedan,
+    sacadas: [...new Set(deposito.filter(f => pedidos.has(f.n) && !siguen.has(f.url)).map(f => f.url))],
     problemas
   };
 }
