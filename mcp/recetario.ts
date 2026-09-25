@@ -8,6 +8,7 @@ import { reglasDelFormato, reglaDeReservados } from '../src/conversion.js';
 import { leerRecibido, problemasDe, type Problema } from '../src/validar.js';
 import { TAGS_RESERVADOS, tagEspecial, tieneEspecial } from '../src/catalogo.js';
 import { normalizar } from '../src/recipe.js';
+import { idDeDrive } from '../src/fotos-receta.js';
 import { SIN_CATEGORIA } from '../src/categorias.js';
 import type { IndiceLocal } from '../src/indice-local.js';
 import type { CambiosDeFotos, Entrada, Filtros, FotoDeReceta, Receta } from '../src/tipos.js';
@@ -136,14 +137,16 @@ export function sacarDelDeposito(
       mensaje: `\`foto:${n}\` no está en el depósito de la receta: no hay qué sacar.`
     }));
   const quedan = deposito.filter(f => !pedidos.has(f.n));
-  // Una URL que otra línea sigue usando no va a la papelera: esa línea
-  // quedaría nombrando una foto borrada.
-  const siguen = new Set(quedan.map(f => f.url));
-  return {
-    quedan,
-    sacadas: [...new Set(deposito.filter(f => pedidos.has(f.n) && !siguen.has(f.url)).map(f => f.url))],
-    problemas
-  };
+  // Una foto que otra línea sigue nombrando no va a la papelera: esa línea
+  // quedaría apuntando a un archivo borrado. Un archivo de Drive se reconoce
+  // por su id, porque dos links distintos pueden llevar al mismo.
+  const clave = (url: string): string => idDeDrive(url) ?? url;
+  const siguen = new Set(quedan.map(f => clave(f.url)));
+  const sacadas = new Map<string, string>();
+  for (const f of deposito) {
+    if (pedidos.has(f.n) && !siguen.has(clave(f.url))) sacadas.set(clave(f.url), f.url);
+  }
+  return { quedan, sacadas: [...sacadas.values()], problemas };
 }
 
 /**
