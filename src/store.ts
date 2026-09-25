@@ -738,21 +738,13 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
    */
   async function borrar(id: string): Promise<void> {
     if (!entradas.some(e => e.id_archivo === id)) await delRecetario(id);
-    const fotos = await fotosDeDriveDe(id);
+    // Si el `.md` no se puede leer, se borra igual y sus fotos quedan
+    // huérfanas en `_fotos/`: no poder borrar una receta es peor que dejar una
+    // foto de más, y es el mismo lado seguro que el resto de la feature.
+    const fotos = await drive.leerTexto(id).then(texto => parse(texto).fotos).catch(() => []);
     await drive.borrar(id);
     await borrarDelIndice(id);
-    await tirarFotos(fotos);
-  }
-
-  /**
-   * Los ids de las fotos de Drive del depósito de una receta, leyendo su
-   * `.md`. Si no se puede leer, ninguna: la receta se borra igual y sus fotos
-   * quedan huérfanas en `_fotos/`. No poder borrar una receta es peor que
-   * dejar una foto de más.
-   */
-  async function fotosDeDriveDe(id: string): Promise<string[]> {
-    const fotos = await drive.leerTexto(id).then(texto => parse(texto).fotos).catch(() => []);
-    return idsDeDrive(fotos.map(f => f.url));
+    await tirarFotos(idsDeDrive(fotos.map(f => f.url)));
   }
 
   /** El `sheetId` de una hoja por su nombre. Una hoja recién agregada no está en la lista, y no hace falta: está vacía. */
@@ -1171,16 +1163,13 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   /**
    * La carpeta a la papelera con sus recetas adentro, y sus filas afuera: las de
    * las recetas en una sola llamada —de a una, la cuota de Sheets se agota— y la
-   * de la categoría. Las fotos de sus recetas y su foto propia van al final:
-   * viven en `_fotos/`, no adentro de la carpeta, y si algo falla antes, lo
-   * peor que queda es una foto huérfana. Los `.md` se leen antes de la
-   * papelera, para saber sus fotos.
+   * de la categoría. Su foto propia va al final: vive en `_fotos/`, no adentro
+   * de la carpeta.
    */
   async function borrarCategoria(id: string): Promise<void> {
     const nroCategoria = filaDeLaCategoria(id);
     if (nroCategoria < 2) return;
     const propia = idDeFotoPropia(ctx.categorias.find(c => c.id === id)?.foto ?? '');
-    const deLasRecetas = await conConcurrencia(recetasDe(id), TOPE_LECTURAS, e => fotosDeDriveDe(e.id_archivo));
     await drive.borrar(id);
 
     const hojas = await sheets.hojas(ctx.indiceId);
@@ -1203,7 +1192,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     await sheets.borrarFila(ctx.indiceId, idDeHoja(hojas, HOJA_CATEGORIAS), nroCategoria);
     usarCategorias(ctx.categorias.filter(c => c.id !== id));
     await persistir();
-    await tirarFotos([...deLasRecetas.flat(), ...(propia ? [propia] : [])]);
+    if (propia) await tirarFotos([propia]);
   }
 
   /** La carpeta base en uso, para la ficha Cuenta de Ajustes. */
