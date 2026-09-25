@@ -173,19 +173,11 @@ describe('las fotos', () => {
     expect(campos(validarMd(md, { fotosPendientes: [2] }).problemas)).toEqual(['foto']);
   });
 
-  it('con un depósito dado, las referencias se validan contra él y no contra la sección del .md', () => {
-    // La sección del .md tiene 1 y 2; el depósito dado, sólo la 1.
-    const { receta, problemas } = validarMd(CORRECTA, { deposito: [{ n: 1, url: 'https://ejemplo.com/1.jpg' }] });
-    expect(campos(problemas)).toEqual(['fotos']);
-    expect(receta.fotos.map(f => f.n)).toEqual([1, 2]);  // la receta sigue siendo la del .md
-    expect(campos(validarMd(CORRECTA, { deposito: [] }).problemas)).toEqual(['foto', 'fotos']);
-    expect(validarMd(CORRECTA, { deposito: [], fotosPendientes: [1, 2] }).problemas).toEqual([]);
-  });
-
   it('el mensaje de una foto:N que no está dice qué números hay', () => {
-    const conUna = validarMd(CORRECTA, { deposito: [{ n: 1, url: 'u' }], fotosPendientes: [4] }).problemas;
+    const conUna = validarMd(CORRECTA.replace('- 2: https://drive.google.com/file/d/bbb/view\n', ''), { fotosPendientes: [4] }).problemas;
     expect(conUna[0]?.mensaje).toContain('Hay: 1, 4.');
-    const vacio = validarMd(CORRECTA, { deposito: [] }).problemas;
+    const vacio = validarMd(CORRECTA.replace(/\n## Fotos[\s\S]*$/, '\n')).problemas;
+    expect(vacio.length).toBeGreaterThan(0);
     expect(vacio.every(p => p.mensaje.includes('El depósito está vacío.'))).toBe(true);
   });
 
