@@ -97,3 +97,20 @@ describe('el nombre de una fila de lista no estira la pantalla', () => {
     expect(regla(BASE, '.bor .txt')).toContain('min-width: 0');
   });
 });
+
+describe('en pantalla ancha, todo es la misma columna (C05.10.1)', () => {
+  it('el ancho de la columna es un token, y lo usan el cuerpo y el modo cocina', () => {
+    expect(TOKENS).toMatch(/--columna:\s*680px/);
+    expect(regla(TOKENS, '.cuerpo')).toContain('max-width: var(--columna)');
+    expect(regla(BASE, '.coc')).toContain('max-width: var(--columna)');
+    expect(regla(BASE, '.coc')).toContain('margin: 0 auto');
+  });
+
+  it('los encabezados alinean sus controles con la columna; la barra sigue de lado a lado', () => {
+    const alineado = 'padding-inline: max(var(--e-2), calc((100% - var(--columna)) / 2))';
+    expect(regla(TOKENS, '.enc')).toContain(alineado);
+    expect(regla(BASE, '.encoc')).toContain(alineado);
+    expect(regla(BASE, '.conm')).toContain(alineado);
+    expect(regla(BASE, '.cajaenc')).toContain(alineado);
+  });
+});

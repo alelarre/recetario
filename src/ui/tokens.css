@@ -6,6 +6,9 @@
 :root {
   color-scheme: dark;
 
+  /* C05.10.1 — el ancho máximo de la columna en pantalla ancha. */
+  --columna: 680px;
+
   /* §2.1 Neutros — todos cálidos */
   --bg: #17140F;
   --surface: #211D17;
@@ -73,7 +76,9 @@ body {
    del menú lateral, los velos y las fichas al pie. */
 .enc { height: 56px; display: flex; align-items: center; gap: var(--e-2);
        padding: 0 var(--e-2); background: var(--bg); border-bottom: 1px solid var(--borde);
-       position: sticky; top: 0; z-index: 3; }
+       position: sticky; top: 0; z-index: 3;
+       /* La barra va de lado a lado; sus controles, sobre la columna. */
+       padding-inline: max(var(--e-2), calc((100% - var(--columna)) / 2)); }
 /* El título de la app se centra en la barra, no en el hueco que dejan los
    íconos: con dos a la derecha y ninguno a la izquierda, `text-align: center`
    lo deja corrido casi 50 px. */
@@ -104,7 +109,7 @@ body {
 /* ---- El cuerpo de una pantalla ---- */
 .cuerpo { padding: var(--e-4); display: flex; flex-direction: column; gap: var(--e-5);
           /* C05.10.1 — una columna con máximo. */
-          max-width: 680px; margin: 0 auto; }
+          max-width: var(--columna); margin: 0 auto; }
 .cuerpo.denso { gap: var(--e-3); }
 
 /* ---- §6.6 Ficha ---- */
@@ -480,7 +485,7 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
    cierra. Por eso van fijas y por arriba del velo, esté donde esté el scroll
    del formulario. */
 .hoja-foto { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31;
-             max-width: 680px; margin: 0 auto; overflow: auto;
+             max-width: var(--columna); margin: 0 auto; overflow: auto;
              /* Como la de compartir: el tope es la ventana chica, la que se ve
                 con la barra de direcciones puesta. Acá el scroll es de
                 la ficha: adentro no hay nada que se desplace solo. */

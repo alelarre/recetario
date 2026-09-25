@@ -519,7 +519,8 @@ azar del CSS.
 
 #### C05.10.1 — Una columna con máximo *(transversal)*
 
-- [ ] El contenido es una columna; pasado cierto ancho, la columna tiene un máximo y se centra.
+- [ ] El contenido es una columna; pasado cierto ancho, la columna tiene un máximo y se centra. El modo cocina también.
+- [ ] Los encabezados —y el conmutador del modo cocina— pintan su barra de lado a lado, pero sus controles se alinean con la columna.
 - [ ] Las grillas —categorías, listas de tarjetas— pasan de dos a cuatro columnas al ensancharse.
 - [ ] No hay layout de escritorio propio: es la misma app, más ancha.
 - [ ] Ninguna pantalla queda inutilizable en ancho de teléfono chico.

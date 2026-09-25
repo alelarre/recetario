@@ -49,7 +49,8 @@
 /* Es el encabezado de los resultados: fijo arriba, como el de toda pantalla. */
 .cajaenc { display: flex; align-items: center; gap: var(--e-2); padding: var(--e-2);
            border-bottom: 1px solid var(--borde); background: var(--bg);
-           position: sticky; top: 0; z-index: 3; }
+           position: sticky; top: 0; z-index: 3;
+           padding-inline: max(var(--e-2), calc((100% - var(--columna)) / 2)); }
 .cajaenc .buscar { flex: 1; }
 .grupo-res + .grupo-res { margin-top: var(--e-5); }
 
@@ -96,7 +97,7 @@
 .pie { position: sticky; bottom: 0; background: var(--bg);
        border-top: 1px solid var(--borde); padding: var(--e-4); }
 /* El pie sigue el ancho del cuerpo: en pantalla ancha no se va a los bordes. */
-.pie .acciones { max-width: 680px; margin: 0 auto; }
+.pie .acciones { max-width: var(--columna); margin: 0 auto; }
 
 /* §6.22 — La estrella de favorito del encabezado: el contorno y la llena,
    superpuestas. Mientras se escribe en Drive, la llena se descubre de izquierda
@@ -128,7 +129,7 @@
    ventana tan baja que ni el título, el botón y el aire entran —apaisado y con
    algo más tapando—, y ahí lo que se sale por arriba es el título y no el
    botón, que es lo que hay que poder tocar. */
-.hoja-compartir { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-width: 680px; margin: 0 auto;
+.hoja-compartir { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-width: var(--columna); margin: 0 auto;
                   display: flex; flex-direction: column; justify-content: flex-end; gap: var(--e-2);
                   max-height: 100svh;
                   background: var(--surface); border-top: 1px solid var(--borde);
@@ -169,7 +170,8 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
    margen interno del sol, que dibuja su caja a 40 dentro de sus 64. */
 .encoc { height: 64px; display: flex; align-items: center; padding: 0 var(--e-2);
          border-bottom: 1px solid var(--borde); background: var(--bg);
-         position: sticky; top: 0; z-index: 3; }
+         position: sticky; top: 0; z-index: 3;
+         padding-inline: max(var(--e-2), calc((100% - var(--columna)) / 2)); }
 .encoc .ico { width: 64px; height: 64px; flex-basis: 64px; }
 /* Centrado como el encabezado del resto de la app, y recortado: el chevron y
    Salir no miden lo mismo, así que sin `min-width: 0` un título largo empuja
@@ -178,7 +180,8 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Debajo del encabezado de cocina, que también queda fijo y mide 64. */
 .conm { position: sticky; top: 64px; z-index: 2; display: flex; background: var(--surface);
-        border-bottom: 1px solid var(--borde); }
+        border-bottom: 1px solid var(--borde);
+        padding-inline: max(var(--e-2), calc((100% - var(--columna)) / 2)); }
 /* El ícono va al lado de la palabra, no en su lugar (§3.4), al tamaño de cocina. */
 .conm button { flex: 1; height: 64px; background: none; border: 0; cursor: pointer;
                color: var(--fg-2); font: 600 var(--txt-base)/1 var(--tipo);
@@ -187,7 +190,7 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
 .conm button.on { background: var(--surface-alta); color: var(--fg); border-bottom-color: var(--acento); }
 .conm svg { width: var(--ico-cocina); height: var(--ico-cocina); stroke: currentColor; fill: none;
             stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
-.coc { padding: var(--e-4); }
+.coc { padding: var(--e-4); max-width: var(--columna); margin: 0 auto; }
 .coc .grupo { font-size: var(--txt-base); margin-top: var(--e-6); margin-bottom: var(--e-2); }
 .coc .grupo:first-child { margin-top: 0; }
 .coc .ing { font-size: var(--txt-cocina); line-height: 1.65; padding: var(--e-cocina) 0; }
