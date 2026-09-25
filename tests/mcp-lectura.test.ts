@@ -1,12 +1,12 @@
 // Las herramientas de lectura del MCP contra los dobles de Drive y Sheets: lo
 // que devuelven tiene que ser lo mismo que ve la app.
 import { describe, it, expect, beforeEach } from 'vitest';
-import { crearRecetario, indiceEnMemoria, reglasDelMcp } from '../mcp/recetario.js';
-import { ErrorDeLogin } from '../mcp/errores.js';
+import { crearRecetario, indiceEnMemoria } from '../mcp/recetario.js';
+import { ErrorDeLogin, MENSAJES } from '../mcp/errores.js';
 import { crearStore } from '../src/store.js';
 import { reglasDelFormato } from '../src/conversion.js';
 import { validarMd } from '../src/validar.js';
-import { COLUMNAS } from '../src/catalogo.js';
+import { COLUMNAS, TAGS_RESERVADOS, tagEspecial } from '../src/catalogo.js';
 import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 import { SCHEMA_VERSION } from '../src/config.js';
 import { driveFalso, sheetsFalso, indiceLocalFalso } from './dobles.js';
@@ -120,6 +120,14 @@ describe('sin carpeta', () => {
     drive._store.set('otra', { id: 'otra', name: 'Recetario 2', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } });
     const error = await nuevoRecetario().categorias().catch((e: unknown) => e);
     expect((error as ErrorDeLogin).codigo).toBe('sin-carpeta');
+    expect((error as ErrorDeLogin).message).toBe(
+      'Hay más de una carpeta marcada como Recetario. Abrí la app y elegí cuál usar desde Ajustes → Cambiar carpeta.');
+    expect((error as ErrorDeLogin).detalle).toBe('2');
+  });
+
+  it('sin ninguna marcada, el mensaje es el de siempre', async () => {
+    const error = await nuevoRecetario().categorias().catch((e: unknown) => e);
+    expect((error as ErrorDeLogin).message).toBe(MENSAJES['sin-carpeta']);
   });
 
   it('después de marcar la carpeta, el próximo uso arranca', async () => {
@@ -173,20 +181,30 @@ describe('errores de Google en el arranque', () => {
 });
 
 describe('las herramientas', () => {
-  it('formato: las reglas de la app sin la que prohíbe borrador, más las del MCP', () => {
+  it('formato: las reglas de la app, con los reservados menos borrador y la regla de borrador al lado', () => {
     const reglas = nuevoRecetario().formato();
     const deLaApp = reglasDelFormato();
-    const prohibicion = deLaApp.filter(l => l.includes('`borrador`'));
-    expect(prohibicion).toHaveLength(1);
-    for (const linea of deLaApp) {
-      if (prohibicion.includes(linea)) expect(reglas).not.toContain(linea);
-      else expect(reglas).toContain(linea);
+    const i = deLaApp.findIndex(l => l.includes('`borrador`'));
+    expect(i).toBeGreaterThanOrEqual(0);
+    expect(deLaApp.filter(l => l.includes('`borrador`'))).toHaveLength(1);
+
+    const reservados = reglas[i]!;
+    expect(reservados.startsWith('- En `tags` no usar estos:')).toBe(true);
+    for (const t of TAGS_RESERVADOS) {
+      if (tagEspecial(t) === 'borrador') expect(reservados).not.toContain(`\`${t}\``);
+      else expect(reservados).toContain(`\`${t}\``);
     }
-    expect(reglas).toEqual([...deLaApp.filter(l => !prohibicion.includes(l)), ...reglasDelMcp]);
+    expect(reservados).toContain('`terminado`');
+    expect(reservados).toContain('`favorita`');
+    expect(reglas[i + 1]).toContain('El tag `borrador` va cuando');
+
+    // Lo demás de la app, tal cual y en su orden; al final, la regla de las fotos.
+    expect(reglas).toEqual([...deLaApp.slice(0, i), reglas[i], reglas[i + 1], ...deLaApp.slice(i + 1), reglas.at(-1)]);
+    expect(reglas.at(-1)).toContain('`foto: foto:N`');
   });
 
   it('formato dice cuándo va borrador y cómo se nombran las fotos', () => {
-    const texto = reglasDelMcp.join('\n');
+    const texto = nuevoRecetario().formato().join('\n');
     expect(texto).toContain('`borrador`');
     expect(texto).toContain('`foto: foto:N`');
     expect(texto).toContain('`![](foto:N)`');

@@ -6,7 +6,7 @@ import { crearDrive } from '../src/drive.js';
 import { crearSheets } from '../src/sheets.js';
 import { reglasDelFormato } from '../src/conversion.js';
 import { validarMd } from '../src/validar.js';
-import { tagEspecial } from '../src/catalogo.js';
+import { TAGS_RESERVADOS, tagEspecial } from '../src/catalogo.js';
 import type { IndiceLocal } from '../src/indice-local.js';
 import type { Entrada, Filtros } from '../src/tipos.js';
 import { conLogin } from './google.js';
@@ -24,19 +24,33 @@ export const indiceEnMemoria: IndiceLocal = {
   borrar: () => {}
 };
 
-/**
- * Las reglas del `.md` que el MCP suma a las de la app. El pedido de
- * *Convertir con Agente* no lleva `borrador` porque la app lo pone sola; acá
- * lo decide el agente. Y las fotos las sube el MCP, que arma el depósito.
- */
-export const reglasDelMcp: readonly string[] = [
-  '- El tag `borrador` va cuando algo de la fuente quedó sin volcar a la receta (un renglón ilegible, la receta sigue en otra página, una cantidad dudosa), o cuando faltan los ingredientes o los pasos. Si no, no va.',
-  '- La sección `## Fotos` no se escribe: el depósito lo arma el MCP con las fotos que recibe, y devuelve el número de cada una. Con ese número, la foto del plato va en `foto: foto:N` y la de un paso con `![](foto:N)` al final de ese paso.'
-];
+const lista = (xs: readonly string[]): string => xs.map(x => `\`${x}\``).join(', ');
 
-/** Las reglas de la app, sin la que prohíbe el tag `borrador`, y las del MCP. */
+/**
+ * Los tags reservados menos `borrador` y sus otras formas. El pedido de
+ * *Convertir con Agente* prohíbe `borrador` porque la app lo pone sola; acá lo
+ * decide el agente, y el resto de la prohibición sigue: `terminado`
+ * contradice a `borrador`, y `favorita` es una segunda forma de `favorito`.
+ */
+const REGLA_RESERVADOS =
+  `- En \`tags\` no usar estos: ${lista(TAGS_RESERVADOS.filter(t => tagEspecial(t) !== 'borrador'))}.`;
+
+const REGLA_BORRADOR =
+  '- El tag `borrador` va cuando algo de la fuente quedó sin volcar a la receta (un renglón ilegible, la receta sigue en otra página, una cantidad dudosa), o cuando faltan los ingredientes o los pasos. Si no, no va.';
+
+/** Las fotos las sube el MCP, que arma el depósito y devuelve el número de cada una. */
+const REGLA_FOTOS =
+  '- La sección `## Fotos` no se escribe: el depósito lo arma el MCP con las fotos que recibe, y devuelve el número de cada una. Con ese número, la foto del plato va en `foto: foto:N` y la de un paso con `![](foto:N)` al final de ese paso.';
+
+/**
+ * Las reglas de la app, con la línea de los reservados cambiada por la del
+ * MCP y la regla de `borrador` al lado, y al final la de las fotos.
+ */
 function reglasDelFormatoDelMcp(): string[] {
-  return [...reglasDelFormato().filter(l => !l.includes('`borrador`')), ...reglasDelMcp];
+  return [
+    ...reglasDelFormato().flatMap(l => l.includes('`borrador`') ? [REGLA_RESERVADOS, REGLA_BORRADOR] : [l]),
+    REGLA_FOTOS
+  ];
 }
 
 /** Lo que recibe `buscar`: texto, filtros o las dos cosas. */
@@ -57,6 +71,9 @@ export interface Resultado {
   motivos: string[];
 }
 
+const MENSAJE_VARIAS_MARCADAS =
+  'Hay más de una carpeta marcada como Recetario. Abrí la app y elegí cuál usar desde Ajustes → Cambiar carpeta.';
+
 export interface DependenciasRecetario {
   drive: DriveDelStore;
   sheets: SheetsDelStore;
@@ -74,9 +91,22 @@ export function crearRecetario({ drive, sheets, auth }: DependenciasRecetario) {
     alRechazar: () => auth.olvidar(),
     alFallar: (e: ErrorDeLogin) => { ultimoDeLogin = e; }
   };
+  /**
+   * Cuántas carpetas marcadas vio el arranque. `elegir-carpeta` es igual con
+   * ninguna que con varias, y cada caso pide un paso distinto al usuario.
+   */
+  let marcadas = 0;
+  const conLoginDrive = conLogin(drive, ganchos);
   // Sin caché de imágenes: el MCP no muestra fotos.
   const store = crearStore({
-    drive: conLogin(drive, ganchos),
+    drive: {
+      ...conLoginDrive,
+      carpetasMarcadas: async () => {
+        const carpetas = await conLoginDrive.carpetasMarcadas();
+        marcadas = carpetas.length;
+        return carpetas;
+      }
+    },
     sheets: conLogin(sheets, ganchos),
     indiceLocal: indiceEnMemoria
   });
@@ -86,10 +116,16 @@ export function crearRecetario({ drive, sheets, auth }: DependenciasRecetario) {
 
   async function arrancar(): Promise<void> {
     ultimoDeLogin = null;
+    marcadas = 0;
     const resultado = await store.arrancar();
     // Ninguna carpeta marcada, o más de una: la app la hace elegir, y el MCP
     // no elige por el usuario.
-    if (resultado.estado === 'elegir-carpeta') throw new ErrorDeLogin('sin-carpeta');
+    if (resultado.estado === 'elegir-carpeta') {
+      if (marcadas > 1) {
+        throw new ErrorDeLogin('sin-carpeta', { detalle: String(marcadas), mensaje: MENSAJE_VARIAS_MARCADAS });
+      }
+      throw new ErrorDeLogin('sin-carpeta');
+    }
     if (resultado.estado === 'solo-lectura') {
       throw ultimoDeLogin ?? new Error(`No se pudo leer el Drive: ${resultado.motivo}`);
     }
