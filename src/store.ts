@@ -165,6 +165,12 @@ interface Contexto {
 export type Progreso = number;
 
 /**
+ * Qué recetas cuenta `tagsDe`: las de las listas, las de Borradores, o las
+ * dos juntas para las sugerencias del editor.
+ */
+export type AlcanceTags = 'recetas' | 'borradores' | 'todas';
+
+/**
  * Hasta dónde llega la barra al terminar cada etapa del reindexado. Los pesos
  * son a ojo —lo que tarda cada una depende del Drive de cada uno—: lo único
  * que importa es que la barra no se quede quieta ni vuelva atrás.
@@ -996,12 +1002,20 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     return ctx.categorias.map(c => ({ id: c.id, nombre: c.nombre, cantidad: cuenta.get(c.nombre) ?? 0 }));
   }
 
-  function tagsDe(categoria?: unknown): { tag: string; cantidad: number }[] {
+  /**
+   * Los tags con cuántas recetas los llevan. Cada chip cuenta lo mismo que la
+   * lista que abre: las recetas sin los borradores, o en Borradores sólo los
+   * borradores. `todas` junta las dos, para sugerir tags en el editor.
+   */
+  function tagsDe(alcance: AlcanceTags = 'recetas', categoria?: unknown): { tag: string; cantidad: number }[] {
     const cat = typeof categoria === 'string' ? categoria : '';
 
     const cuenta = new Map<string, number>();
     for (const e of listables()) {
       if (cat && e.categoria !== cat) continue;
+      const esBorrador = tieneEspecial(e, 'borrador');
+      if (alcance === 'recetas' && esBorrador) continue;
+      if (alcance === 'borradores' && !esBorrador) continue;
       for (const tag of e.tags) {
         // `borrador` no se ofrece como filtro ni como sugerencia: a los
         // borradores se llega por el menú, y el editor tiene su botón.

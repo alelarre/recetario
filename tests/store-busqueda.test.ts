@@ -298,7 +298,7 @@ describe('categoriasConConteo', () => {
 describe('tagsDe', () => {
   it('ordena por frecuencia descendente, y a igual frecuencia, alfabéticamente', () => {
     // En Carnes los tres tienen frecuencia 1, así que el orden es alfabético.
-    expect(store.tagsDe('Carnes').map(t => t.tag)).toEqual(['horno', 'parrilla', 'rápido']);
+    expect(store.tagsDe('recetas', 'Carnes').map(t => t.tag)).toEqual(['horno', 'parrilla', 'rápido']);
   });
 
   it('no lista borrador en ninguna de sus formas: a los borradores se llega por el menú', async () => {
@@ -308,8 +308,39 @@ describe('tagsDe', () => {
       fila('r6', 'Tarta', 'Postres', 'c2', 'Borradores|probar', 'harina')
     ]);
     await abrirDeNuevo();
-    expect(store.tagsDe().map(t => t.tag)).toEqual(['dulce', 'horno', 'parrilla', 'probar', 'rápido']);
-    expect(store.tagsDe('Postres').map(t => t.tag)).toEqual(['dulce', 'probar']);
+    expect(store.tagsDe('todas').map(t => t.tag)).toEqual(['dulce', 'horno', 'parrilla', 'probar', 'rápido']);
+    expect(store.tagsDe('borradores').map(t => t.tag)).toEqual(['dulce', 'probar']);
+  });
+
+  it('cuenta lo mismo que la lista que abre el chip: sin los borradores', async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'Torta', 'Postres', 'c2', 'borrador|dulce', 'harina'),
+      fila('r5', 'Tarta', 'Postres', 'c2', 'incompleta|probar', 'harina')
+    ]);
+    await abrirDeNuevo();
+    expect(store.tagsDe()).toEqual(store.tagsDe('recetas'));
+    expect(store.tagsDe().find(t => t.tag === 'dulce')?.cantidad).toBe(store.buscar({ tags: ['dulce'] }).length);
+    expect(store.tagsDe().map(t => t.tag)).not.toContain('probar');
+    expect(store.tagsDe('recetas', 'Postres')).toEqual([{ tag: 'dulce', cantidad: 1 }]);
+  });
+
+  it('en Borradores cuenta sólo los borradores, con o sin categoría', async () => {
+    drive._store.set('sc', { id: 'sc', name: '_sin-categoria', mimeType: CARPETA, parents: ['raiz'] });
+    await sheets.append('i1', 'meta', [['carpeta_sin_categoria', 'sc']]);
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'Torta', 'Postres', 'c2', 'borrador|dulce', 'harina'),
+      fila('r5', 'Pan', 'Sin categoría', 'sc', 'borrador|dulce|horno', 'harina')
+    ]);
+    await abrirDeNuevo();
+    expect(store.tagsDe('borradores')).toEqual([{ tag: 'dulce', cantidad: 2 }, { tag: 'horno', cantidad: 1 }]);
+  });
+
+  it('las sugerencias del editor juntan los tags de recetas y borradores', async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'Tarta', 'Postres', 'c2', 'borrador|probar', 'harina')
+    ]);
+    await abrirDeNuevo();
+    expect(store.tagsDe('todas').map(t => t.tag)).toContain('probar');
   });
 
   it('prioriza frecuencia sobre orden alfabético', async () => {
@@ -320,7 +351,7 @@ describe('tagsDe', () => {
       fila('r7', 'Asado', 'Carnes', 'c1', 'asado', 'carne', 'media')
     ]);
     await abrirDeNuevo();
-    const tags = store.tagsDe('Carnes');
+    const tags = store.tagsDe('recetas', 'Carnes');
     // zapallo aparece 3 veces: va primero aunque 'h' < 'z'.
     expect(tags[0].tag).toBe('zapallo');
     expect(tags[0].cantidad).toBe(3);

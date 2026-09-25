@@ -5001,6 +5001,22 @@ describe('main.ts: las rutas', () => {
       }
     });
 
+    it('cada carrusel pide los tags que cuenta su lista: Borradores los de los borradores, el resto sin ellos', async () => {
+      const original = storeFake.tagsDe;
+      const pedidos: unknown[][] = [];
+      storeFake.tagsDe = (...args: unknown[]) => { pedidos.push(args); return estado.tags; };
+      try {
+        const { abrir } = await montar();
+        for (const ruta of ['#/', '#/c/Carnes', '#/t/horno', '#/borradores']) {
+          pedidos.length = 0;
+          await abrir(ruta);
+          expect(pedidos, ruta).toEqual([ruta === '#/c/Carnes' ? ['recetas', 'Carnes'] : [ruta === '#/borradores' ? 'borradores' : 'recetas']]);
+        }
+      } finally {
+        storeFake.tagsDe = original;
+      }
+    });
+
     it('la hamburguesa abre el menú en la lista', async () => {
       const { abrir, tocar, menuDesplegado } = await montar();
       await abrir('#/borradores');

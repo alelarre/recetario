@@ -838,7 +838,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
     case 'recetario':
       pintar(renderRecetario({
         categorias: store.categoriasConConteo(), borradores: cuantosBorradores(),
-        tags: store.tagsDe(), ...menuDe('recetario')
+        tags: store.tagsDe('recetas'), ...menuDe('recetario')
       }));
       return precargarElHome();
 
@@ -847,7 +847,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       const { lista } = estadoDePantalla;
       pintar(renderCategoria({
         nombre, lista: lista.plana(store.buscar({ categoria: nombre, tags: [...lista.tagsActivos] })),
-        tagsActivos: lista.tagsActivos, tags: store.tagsDe(nombre)
+        tagsActivos: lista.tagsActivos, tags: store.tagsDe('recetas', nombre)
       }));
       return observarLista();
     }
@@ -862,7 +862,8 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       const { lista } = estadoDePantalla;
       const activos = lista.tagsActivos.includes(nombre) ? [...lista.tagsActivos] : [nombre, ...lista.tagsActivos];
       pintar(renderTag({
-        tag: nombre, lista: lista.plana(store.buscar({ tags: activos })), tagsActivos: activos, tags: store.tagsDe(),
+        tag: nombre, lista: lista.plana(store.buscar({ tags: activos })), tagsActivos: activos,
+        tags: store.tagsDe(esBorradores ? 'borradores' : 'recetas'),
         ...(esBorradores ? { titulo: 'Borradores', borradores: true } : {}), ...menuDe(ruta.vista)
       }));
       return observarLista();
@@ -986,7 +987,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
           : null;
         abrirEditor(() => pintarEditor({
           entrada, receta: conRecibida ?? receta, categorias: store.categorias(),
-          tagsConocidos: store.tagsDe().map(t => t.tag)
+          tagsConocidos: store.tagsDe('todas').map(t => t.tag)
         }));
         // Lo recibido cuenta como cambio desde que se abre: la foto contra la
         // que se compara queda vacía, así que cualquier formulario difiere.
@@ -1026,7 +1027,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       receta.tags = conEspecial(receta.tags, 'borrador', true);
       abrirEditor(() => pintarEditor({
         entrada: null, receta, categorias: store.categorias(),
-        tagsConocidos: store.tagsDe().map(t => t.tag), ...menuDe(vistaActual?.vista)
+        tagsConocidos: store.tagsDe('todas').map(t => t.tag), ...menuDe(vistaActual?.vista)
       }));
       // Lo que llegó de otra app cuenta como cambio desde que se abre: salir
       // sin guardar lo perdería.
@@ -1492,7 +1493,7 @@ async function guardarEditor<T>(
     pintarEditor({
       entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
       receta: fotosEditor.conSubidas(recetaDesdeFormulario(datos, baseDelEditor())), carpeta: datos['carpeta'] ?? '',
-      categorias: store.categorias(), tagsConocidos: store.tagsDe().map(t => t.tag),
+      categorias: store.categorias(), tagsConocidos: store.tagsDe('todas').map(t => t.tag),
       error: err instanceof NoSeGuarda ? err.message : porQueNoGuardo(err), ...menuDe(vistaActual?.vista)
     });
     return null;
@@ -1831,7 +1832,7 @@ const accionesDelEditor: SeccionDeAcciones = {
     pintarEditor({
       entrada: vistaActual?.vista === 'editar' ? recetaLeida?.entrada ?? null : null,
       receta: aplicarPegada(actual, pegada, carpeta), carpeta,
-      categorias: store.categorias(), tagsConocidos: store.tagsDe().map(t => t.tag), ...menuDe(vistaActual?.vista)
+      categorias: store.categorias(), tagsConocidos: store.tagsDe('todas').map(t => t.tag), ...menuDe(vistaActual?.vista)
     });
   },
   'tag-especial': (boton) => {

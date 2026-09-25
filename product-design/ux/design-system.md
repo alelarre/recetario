@@ -1091,8 +1091,9 @@ lista por tag.
 
 **El orden:** los tags especiales primero, en su orden —favorito, menú diario,
 probar; `borrador` no va en ninguna lista de tags— y sólo los que tienen alguna receta; después los comunes,
-por cantidad de recetas y alfabético en el empate. Cada chip lleva su número, y
-los especiales su ícono. En el Recetario y en la lista por tag entran hasta
+por cantidad de recetas y alfabético en el empate. Cada chip lleva su número,
+que cuenta lo mismo que la lista que abre —sin los borradores, salvo en
+Borradores, donde cuenta sólo ellos—, y los especiales su ícono. En el Recetario y en la lista por tag entran hasta
 veinte comunes.
 
 **Qué hace un toque:** en la categoría y en la lista por tag, enciende el chip y

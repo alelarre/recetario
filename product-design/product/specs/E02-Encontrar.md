@@ -212,7 +212,7 @@ tag.
 #### C02.6.4 — El carrusel de tags *(J5)*
 
 - [ ] Vive en el Recetario —debajo de la búsqueda, arriba de *Categorías*—, en cada categoría y en la lista por tag, debajo del encabezado.
-- [ ] Cada chip lleva el tag tal como está escrito, su ícono si es especial, y **cuántas recetas lo llevan**: en el Recetario y en la lista por tag cuenta todo el recetario; en una categoría, sólo esa categoría.
+- [ ] Cada chip lleva el tag tal como está escrito, su ícono si es especial, y **cuántas recetas lo llevan**, contando lo mismo que la lista que abre: en el Recetario y en la lista por tag cuenta todo el recetario; en una categoría, sólo esa categoría. Los borradores no cuentan, salvo en Borradores, donde se cuentan sólo ellos.
 - [ ] **`borrador` no aparece**, en ninguna de sus formas (C05.1.4): ni en el Recetario, ni en una categoría, ni en la lista por tag, tampoco en la de Borradores. A los borradores se llega por el menú (C02.1.3).
 - [ ] **El orden:** los especiales primero y en orden fijo —`favorito`, `menú diario`, `probar`—; después los demás **por cantidad de recetas**, de mayor a menor, con los empates en alfabético.
 - [ ] En una categoría van todos los tags. En el Recetario y en la lista por tag, los especiales y los **veinte** comunes más usados: para la cola larga está la búsqueda.
