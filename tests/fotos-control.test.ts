@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { crearFotosControl } from '../src/fotos-control.js';
+import { crearFotosControl, accionesDeFotos, NO_SE_LEYO_UNA_FOTO } from '../src/fotos-control.js';
+import type { FotoTraida } from '../src/fotos-control.js';
 import { linkDeFoto } from '../src/fotos-receta.js';
 import { parse } from '../src/recipe.js';
 import type { FotoDeReceta, Receta } from '../src/tipos.js';
@@ -234,5 +235,66 @@ describe('fotos-control — guardar', () => {
     expect(reintento.fotos).toEqual([{ n: 1, url: linkDeFoto('subida-1') }]);
     // Con su link, ya no es nueva: no se vuelve a subir.
     expect(fotos.cambiosDeFotos(reintento, receta({ fotos: [] })).nuevas.size).toBe(0);
+  });
+});
+
+describe('fotos-control — las acciones del editor', () => {
+  const boton = (datos: Record<string, string> = {}): HTMLElement =>
+    ({ dataset: datos }) as unknown as HTMLElement;
+  const evento = {} as Event;
+
+  /** Las acciones sobre una pantalla de mentira que anota lo que se le pide. */
+  function conPantalla(url: string, traida: FotoTraida = { que: 'no-se-pudo' }) {
+    const armado = montar();
+    const hechos: string[] = [];
+    const acciones = accionesDeFotos(armado.fotos, {
+      abrirFicha: html => { hechos.push(`abrir ${html.match(/data-[\w-]+/)?.[0] ?? ''}`); if (html.includes('aviso')) hechos.push(html); },
+      cerrarFicha: () => { hechos.push('cerrar'); },
+      acomodarBoton: () => { hechos.push('acomodar'); },
+      urlEscrita: () => url,
+      traer: async u => { hechos.push(`traer ${u}`); return traida; },
+      esperar: async tarea => { hechos.push('esperar'); return tarea(); },
+      avisar: texto => { hechos.push(`avisar ${texto}`); }
+    });
+    return { ...armado, hechos, acciones };
+  }
+
+  it('Por URL con una dirección http:// no la pide: reabre la ficha con el aviso', async () => {
+    const { acciones, hechos } = conPantalla('http://ejemplo/a.jpg');
+    await acciones['traer-foto-url']?.(boton(), evento);
+    expect(hechos.some(h => h.startsWith('traer'))).toBe(false);
+    expect(hechos.join('\n')).toContain('https://');
+  });
+
+  it('Por URL con el esquema en mayúsculas lo normaliza y la trae en una sola espera', async () => {
+    const { acciones, hechos, fotos } = conPantalla('Https://ejemplo/a.jpg', { que: 'foto', blob: foto('a') });
+    fotos.cargar(receta({ fotos: [] }));
+    await acciones['traer-foto-url']?.(boton(), evento);
+    expect(hechos).toEqual(['avisar ', 'esperar', 'traer https://ejemplo/a.jpg', 'cerrar']);
+    expect(fotos.fotos()).toEqual([{ n: 1, url: '' }]);
+  });
+
+  it('Por URL que no se pudo bajar entra como link, cierra la ficha y avisa', async () => {
+    const { acciones, hechos, fotos } = conPantalla('https://ejemplo/a.jpg');
+    fotos.cargar(receta({ fotos: [] }));
+    await acciones['traer-foto-url']?.(boton(), evento);
+    expect(fotos.fotos()).toEqual([{ n: 1, url: 'https://ejemplo/a.jpg' }]);
+    expect(hechos.slice(-2)).toEqual(['cerrar', expect.stringMatching(/^avisar .*queda como link/)]);
+  });
+
+  it('Por URL con una foto que no se decodifica reabre la ficha con el aviso', async () => {
+    const { acciones, hechos, fotos } = conPantalla('https://ejemplo/a.jpg', { que: 'foto', blob: foto('roto') });
+    fotos.cargar(receta({ fotos: [] }));
+    await acciones['traer-foto-url']?.(boton(), evento);
+    expect(fotos.fotos()).toEqual([]);
+    expect(hechos.join('\n')).toContain(NO_SE_LEYO_UNA_FOTO);
+  });
+
+  it('elegir la portada la pone y cierra la ficha', () => {
+    const { acciones, hechos, fotos } = conPantalla('');
+    fotos.cargar(receta());
+    void acciones['elegir-portada']?.(boton({ n: '2' }), evento);
+    expect(fotos.portada()).toBe('foto:2');
+    expect(hechos).toEqual(['cerrar']);
   });
 });

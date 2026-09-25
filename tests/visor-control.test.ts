@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { crearVisorControl, pasoDelVisor } from '../src/visor-control.js';
+import { crearVisorControl, pasoDelVisor, accionesDelVisor } from '../src/visor-control.js';
 
 /** El controlador con unas capas de mentira que anotan lo que se les pide. */
 function montar() {
@@ -155,5 +155,55 @@ describe('visor-control — cerrar', () => {
     // Lo que quedó del deslizamiento no se come el primer toque del próximo visor.
     visor.abrir(TIRA, 2);
     expect(visor.tocar()).toBe(true);
+  });
+});
+
+describe('accionesDelVisor', () => {
+  /** Un botón con su `data-n`, como lo entrega la delegación. */
+  const boton = (n?: string): HTMLElement => ({ dataset: n === undefined ? {} : { n } }) as unknown as HTMLElement;
+  const evento = {} as Event;
+
+  function conPantalla(fotos: { tira: { n: number; url: string }[]; suelta?: string } | null) {
+    const { visor, capas } = montar();
+    const pedidas: (number | undefined)[] = [];
+    let dibujos = 0;
+    const acciones = accionesDelVisor(visor, {
+      fotos: n => { pedidas.push(n); return fotos; },
+      dibujar: () => { dibujos++; }
+    });
+    return { visor, capas, acciones, pedidas, dibujos: () => dibujos };
+  }
+
+  it('abre en la foto tocada, con la tira que da la pantalla, y la dibuja', () => {
+    const { visor, acciones, pedidas, dibujos } = conPantalla({ tira: TIRA });
+    void acciones['ver-foto-receta']?.(boton('3'), evento);
+    expect(pedidas).toEqual([3]);
+    expect(visor.estado).toEqual({ urls: TIRA.map(f => f.url), i: 1 });
+    expect(dibujos()).toBe(1);
+  });
+
+  it('una foto que no está en la tira se abre sola, con su URL suelta', () => {
+    const { visor, acciones } = conPantalla({ tira: TIRA, suelta: 'https://x/portada.jpg' });
+    void acciones['ver-foto-receta']?.(boton(), evento);
+    expect(visor.estado).toEqual({ urls: ['https://x/portada.jpg'], i: 0 });
+  });
+
+  it('sin nada que mostrar no abre ni dibuja', () => {
+    const { visor, acciones, dibujos } = conPantalla(null);
+    void acciones['ver-foto-receta']?.(boton('3'), evento);
+    expect(visor.estado).toBeNull();
+    expect(dibujos()).toBe(0);
+  });
+
+  it('cerrar dibuja el visor cerrado, salvo el click que termina un deslizamiento', () => {
+    const { visor, acciones, dibujos } = conPantalla({ tira: TIRA });
+    void acciones['ver-foto-receta']?.(boton('2'), evento);
+    deslizar(visor, 200, 100);
+    void acciones['cerrar-visor']?.(boton(), evento);
+    expect(visor.estado).not.toBeNull();
+    expect(dibujos()).toBe(1);
+    void acciones['cerrar-visor']?.(boton(), evento);
+    expect(visor.estado).toBeNull();
+    expect(dibujos()).toBe(2);
   });
 });

@@ -7,7 +7,7 @@ import { pintar, conClosest } from './ui/pintar.js';
 import { renderInvitado, renderLinkRoto, carruselDeInvitado } from './ui/invitado.js';
 import { renderCocina } from './ui/cocina.js';
 import { rutaDeInvitado } from './ui/router.js';
-import { crearVisorControl } from './visor-control.js';
+import { crearVisorControl, accionesDelVisor } from './visor-control.js';
 import { accionesDelCarrusel } from './carrusel-control.js';
 import { accionDe } from './acciones.js';
 import { decodificar } from './link-receta.js';
@@ -41,16 +41,18 @@ export function iniciarInvitado(): void {
   const visor = crearVisorControl(nav);
 
   /**
-   * Abre el visor con lo que se tocó: una foto del carrusel desliza entre
-   * las del carrusel; la portada —que nunca está ahí— se abre sola.
+   * Las fotos que viajaron en el link: la cabecera y las del carrusel abren
+   * el visor, y se cierra tocando en cualquier parte. Una foto del carrusel
+   * desliza entre las del carrusel; la portada —que nunca está ahí— se abre sola.
    */
-  function abrirVisor(marca: string | undefined): void {
-    if (!leida) return;
-    const carrusel = carruselDeInvitado(leida.cruda);
-    const n = marca === undefined ? undefined : Number(marca);
-    const sola = (n === undefined ? undefined : leida.receta.fotos.find(f => f.n === n)?.url) ?? leida.receta.foto;
-    visor.abrir(carrusel, n, sola ?? undefined);
-  }
+  const delVisor = accionesDelVisor(visor, {
+    fotos: n => {
+      if (!leida) return null;
+      const sola = (n === undefined ? undefined : leida.receta.fotos.find(f => f.n === n)?.url) ?? leida.receta.foto;
+      return { tira: carruselDeInvitado(leida.cruda), suelta: sola ?? undefined };
+    },
+    dibujar: () => render()
+  });
 
   async function render(): Promise<void> {
     const ruta = rutaDeInvitado(location.hash);
@@ -116,18 +118,8 @@ export function iniciarInvitado(): void {
       await render();
       return;
     }
-    // Las fotos que viajaron en el link: la cabecera y las del carrusel
-    // abren el visor, y se cierra tocando en cualquier parte.
-    if (accion === 'ver-foto-receta') {
-      abrirVisor(boton.dataset['n']);
-      return render();
-    }
-    const delCarrusel = accionDe(accionesDelCarrusel, accion);
-    if (delCarrusel) { delCarrusel(boton, e); return; }
-    if (accion === 'cerrar-visor') {
-      if (visor.tocar()) return render();
-      return;
-    }
+    const deLasFotos = accionDe(delVisor, accion) ?? accionDe(accionesDelCarrusel, accion);
+    if (deLasFotos) await deLasFotos(boton, e);
   });
 
   // El único gesto del invitado: con el visor abierto, el dedo pasa de una

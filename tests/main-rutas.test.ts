@@ -3236,20 +3236,21 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('el bloque Menú diario sale de las recetas con ese tag', async () => {
-      const original = storeFake.entradas;
-      storeFake.entradas = () => [
-        entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags: ['menú diario'] }),
-        entradaFalsa({ id_archivo: 'f2', titulo: 'Rabas', categoria: 'Carnes' })
-      ];
+    it('el bloque Menú diario se lo pide al store por su tag, que deja afuera los borradores', async () => {
+      const original = storeFake.buscar;
+      const pedidos: unknown[] = [];
+      storeFake.buscar = ((filtros: unknown) => {
+        pedidos.push(filtros);
+        return [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags: ['menú diario'] })];
+      }) as typeof storeFake.buscar;
       try {
         const { abrir, app } = await montar();
         await abrir('#/plan/agregar?dia=1&momento=noche');
+        expect(pedidos).toContainEqual({ tags: ['menú diario'] });
         expect(app.innerHTML).toContain('Menú diario');
         expect(app.innerHTML).toContain('Milanesas');
-        expect(app.innerHTML).not.toContain('Rabas');
       } finally {
-        storeFake.entradas = original;
+        storeFake.buscar = original;
       }
     });
 
@@ -3265,36 +3266,18 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('data-accion="elegir-categoria-plan" data-nombre="Carnes"');
     });
 
-    it('el Menú diario no muestra un borrador aunque tenga el tag', async () => {
-      const original = storeFake.entradas;
-      storeFake.entradas = () => [
-        entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags: ['menú diario'] }),
-        entradaFalsa({ id_archivo: 'f2', titulo: 'A medio hacer', categoria: 'Carnes', tags: ['menú diario', 'borrador'] })
-      ];
-      try {
-        const { abrir, app } = await montar();
-        await abrir('#/plan/agregar?dia=1&momento=noche');
-        expect(app.innerHTML).toContain('Milanesas');
-        expect(app.innerHTML).not.toContain('A medio hacer');
-      } finally {
-        storeFake.entradas = original;
-      }
-    });
-
-    it('elegir una categoría de la grilla no muestra los borradores de esa categoría', async () => {
-      const original = storeFake.entradas;
-      storeFake.entradas = () => [
-        entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' }),
-        entradaFalsa({ id_archivo: 'f2', titulo: 'A medio hacer', categoria: 'Carnes', tags: ['borrador'] })
-      ];
+    it('la categoría elegida se la pide al store, que deja afuera los borradores', async () => {
+      const original = storeFake.buscar;
+      const pedidos: unknown[] = [];
+      storeFake.buscar = ((filtros: unknown) => { pedidos.push(filtros); return original(); }) as typeof storeFake.buscar;
       try {
         const { abrir, tocar, app } = await montar();
         await abrir('#/plan/agregar?dia=1&momento=noche');
         await tocar('elegir-categoria-plan', { nombre: 'Carnes' });
+        expect(pedidos).toContainEqual({ categoria: 'Carnes' });
         expect(app.innerHTML).toContain('Milanesas');
-        expect(app.innerHTML).not.toContain('A medio hacer');
       } finally {
-        storeFake.entradas = original;
+        storeFake.buscar = original;
       }
     });
   });

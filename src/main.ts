@@ -3,9 +3,8 @@ import { crearDrive, ErrorDeDrive } from './drive.js';
 import { crearSheets, ErrorDeSheets } from './sheets.js';
 import { crearStore, conConcurrencia, TOPE_LECTURAS } from './store.js';
 import * as indiceLocal from './indice-local.js';
-import { parse, slugArchivo } from './recipe.js';
+import { parse, slugArchivo, sePuedeTerminar } from './recipe.js';
 import { tagReservado, conEspecial, esFavorita, tieneEspecial, tieneAlgoCargado } from './catalogo.js';
-import { sePuedeTerminar } from './recipe.js';
 import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado, MENU, esDelMenu } from './ui/router.js';
 import { renderRecetario } from './ui/recetario.js';
 import { renderCategoria } from './ui/categoria.js';
@@ -15,7 +14,6 @@ import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
 import {
   renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado,
-  renderAccionesFoto, renderElegirFoto, renderSelectorPortada, renderFotoPorUrl,
   filaDeFotosEditor, muestraDePortada, botonPonerFoto, carpetaDelEditor
 } from './ui/editor.js';
 import type { ArgsEditor } from './ui/editor.js';
@@ -42,12 +40,14 @@ import { aviso, lateralFijo, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/co
 import type { MenuDePantalla } from './ui/componentes.js';
 import { pintar as pintarEnPantalla, pintarParte, despuesDePintar, conClosest, movimientoReducido } from './ui/pintar.js';
 import { renderVisor } from './ui/visor.js';
-import { crearVisorControl } from './visor-control.js';
+import { crearVisorControl, accionesDelVisor } from './visor-control.js';
+import type { FotoDelVisor } from './visor-control.js';
 import type { EstadoCompartir } from './ui/compartir.js';
 import {
   linkDeFoto, idDeDrive, resolverReceta, fotosSinUso, lineaDelCursor
 } from './fotos-receta.js';
-import { crearFotosControl, SECCIONES } from './fotos-control.js';
+import { crearFotosControl, accionesDeFotos, SECCIONES, NO_SE_LEYO_UNA_FOTO } from './fotos-control.js';
+import type { FotoTraida } from './fotos-control.js';
 import { crearControlCocina } from './cocina-control.js';
 import { crearNavegacion } from './navegacion.js';
 import { crearVelo } from './velo.js';
@@ -336,21 +336,6 @@ function precargarElHome(): void {
   if (ids.length) void imagenes.precargar(ids);
 }
 
-/**
- * Las recetas con el tag `menú diario`: lo que la pantalla de agregar ofrece
- * sin buscar nada. Un borrador no entra aunque lleve el tag: a los borradores
- * se llega por el menú, no por acá.
- */
-const delMenuDiario = (): Entrada[] =>
-  store.entradas().filter(e => tieneEspecial(e, 'menú diario') && !tieneEspecial(e, 'borrador'));
-
-/**
- * Las recetas de una categoría, para cuando se la elige en la grilla de
- * agregar al plan. Un borrador de esa categoría no se ofrece.
- */
-const delaCategoria = (nombre: string): Entrada[] =>
-  store.entradas().filter(e => e.categoria === nombre && !tieneEspecial(e, 'borrador'));
-
 /** Deja la categoría elegida en *Agregar al plan*: lo que se lista cambia, y vuelve al primer tramo. */
 function dejarCategoriaDelPlan(): void {
   estadoDePantalla.categoriaPlan = null;
@@ -461,8 +446,6 @@ const baseDeNueva = (): Receta => ({ ...(recibida ?? parse('')), fotos: [] });
 /** La foto achicada; rechaza si el navegador no la decodifica. Sin opciones, al lado de Drive. */
 const achicarFoto = (archivo: Blob, opciones?: OpcionesAchicar): Promise<Blob> =>
   achicar(archivo, () => document.createElement('canvas'), opciones);
-
-const NO_SE_LEYO_UNA_FOTO = 'No se pudo leer una de las fotos.';
 
 /**
  * Las fotos de Drive del depósito que se pudieron leer, en orden y con su
@@ -690,8 +673,9 @@ function bloqueDelPlan(): OpcionesBloque {
   if (consultaPlan.trim()) {
     return { busqueda: { consulta: consultaPlan, lista: lista.agrupada(store.buscarPorTexto(consultaPlan)) } };
   }
-  if (categoriaPlan) return { categoria: { nombre: categoriaPlan, lista: lista.plana(delaCategoria(categoriaPlan), { filtros: false }) } };
-  return { menuDiario: lista.plana(delMenuDiario(), { filtros: false }), categorias: store.categorias() };
+  // El store deja afuera los borradores: a ellos se llega por el menú, no por acá.
+  if (categoriaPlan) return { categoria: { nombre: categoriaPlan, lista: lista.plana(store.buscar({ categoria: categoriaPlan }), { filtros: false }) } };
+  return { menuDiario: lista.plana(store.buscar({ tags: ['menú diario'] }), { filtros: false }), categorias: store.categorias() };
 }
 
 /**
@@ -1231,32 +1215,6 @@ async function agregarFotosAlEditor(archivos: Blob[]): Promise<void> {
   avisarEnElFormulario(noSeLeyo ? NO_SE_LEYO_UNA_FOTO : '');
 }
 
-const NO_ES_UNA_FOTO = 'Esa URL no es una foto.';
-const SOLO_HTTPS = 'La dirección tiene que empezar con https://.';
-const QUEDA_COMO_LINK =
-  'No se pudo traer la foto —el sitio no lo permite o no hay conexión—: ' +
-  'queda como link, y si el sitio la borra se pierde.';
-
-/**
- * La forma que tiene que tener una dirección para poder ser una línea del
- * depósito, **tal cual la parsea `fotos-receta.ts`**: esquema en minúsculas y
- * ni un espacio. Una que no la cumpla se escribiría igual y al releer el `.md`
- * dejaría toda la sección `## Fotos` como sección ajena: la receta perdería
- * sus fotos (C05.1.5).
- */
-const URL_DE_FOTO = /^https?:\/\/\S+$/;
-
-/**
- * La dirección con el esquema en minúsculas, que es lo único que se normaliza:
- * el resto distingue mayúsculas y cambiarlo daría otra foto. El teclado del
- * teléfono manda `Https://` solo, y quien lo escribió quiso lo evidente.
- */
-const conEsquemaEnMinuscula = (url: string): string =>
-  url.replace(/^[A-Za-z]+:\/\//, e => e.toLowerCase());
-
-/** Lo que devolvió una dirección: la foto, algo que no es una foto, o nada. */
-type FotoTraida = { que: 'foto'; blob: Blob } | { que: 'no-es-foto' } | { que: 'no-se-pudo' };
-
 /**
  * Baja la foto de una dirección. Una página que contesta 200 con HTML no es
  * una foto, y por eso se mira el `Content-Type` antes que nada.
@@ -1285,47 +1243,6 @@ async function traerFoto(url: string): Promise<FotoTraida> {
   }
 }
 
-/** Abre la ficha de *Por URL*. El aviso de un intento anterior se va al traer la próxima. */
-function abrirFotoPorUrl(): void {
-  abrirFichaFoto(renderFotoPorUrl());
-}
-
-/**
- * *Traer* en la ficha de *Por URL*. La foto bajada entra al depósito por el
- * mismo camino que una de la cámara. Lo que no se pudo bajar entra como link
- * externo —el `.md` de la receta acepta una URL ajena como cualquier otra—, y
- * lo que no es una foto no entra y deja la ficha abierta con lo escrito: el
- * aviso vuelve con lo que se escribió y no con lo normalizado (R1).
- */
-async function agregarFotoPorUrl(escrita: string): Promise<void> {
-  // Cada intento empieza sin el aviso del anterior: dos avisos a la vez no
-  // dicen cuál es el de ahora.
-  avisarEnElFormulario('');
-  const url = conEsquemaEnMinuscula(escrita);
-  const reabrir = (mensaje: string): void => { abrirFichaFoto(renderFotoPorUrl(escrita, mensaje)); };
-  // Lo que ni siquiera tiene forma de dirección no se pide: es lo único que se
-  // puede escribir como línea del depósito (C05.1.5).
-  if (!URL_DE_FOTO.test(url)) return reabrir(NO_ES_UNA_FOTO);
-  // Desde Pages, una `http://` es contenido mixto: el pedido falla siempre y
-  // la imagen tampoco cargaría después. Entra como link y no sirve de nada.
-  if (url.startsWith('http://')) return reabrir(SOLO_HTTPS);
-  // Bajarla y achicarla son una sola espera.
-  const resultado = await velo.esperar(async () => {
-    const traida = await traerFoto(url);
-    if (traida.que !== 'foto') return traida.que;
-    return await fotosEditor.sumarFotos([traida.blob]) ? 'no-se-leyo' : 'sumada';
-  });
-  if (resultado === 'no-es-foto') return reabrir(NO_ES_UNA_FOTO);
-  if (resultado === 'no-se-leyo') return reabrir(NO_SE_LEYO_UNA_FOTO);
-  if (resultado === 'no-se-pudo') {
-    fotosEditor.sumarLink(url);
-    cerrarFichaFoto();
-    // No es un error del usuario: la foto entró, y el aviso dice con qué.
-    return avisarEnElFormulario(QUEDA_COMO_LINK);
-  }
-  cerrarFichaFoto();
-}
-
 /** Las fotos del depósito que se pueden mostrar: la subida, o la que está en memoria. */
 const fotosMostrables = (fotos: FotoDeReceta[]): { n: number; url: string }[] =>
   fotos.flatMap(f => {
@@ -1334,23 +1251,18 @@ const fotosMostrables = (fotos: FotoDeReceta[]): { n: number; url: string }[] =>
   });
 
 /**
- * Saca de la pantalla el visor que su controlador ya cerró. En el editor, del
- * DOM; en la lectura, redibujando.
+ * El visor en pantalla, abierto o cerrado según su controlador. En la lectura
+ * se redibuja; en el editor se agrega y se saca del DOM, como las fichas:
+ * redibujar el formulario perdería lo escrito. Abierto desde una ficha, toma
+ * su lugar: la ficha se va, y su capa pasa a ser la del visor.
  */
-function sacarVisor(): Promise<void> | undefined {
-  if (enElEditor()) { document.querySelector('#app .visor')?.remove(); return; }
-  return render();
-}
-
-/**
- * El visor en pantalla. En el editor se agrega y se saca del DOM, como las
- * fichas: redibujar el formulario perdería lo escrito.
- */
-function dibujarVisor(): void {
-  if (!enElEditor()) { void render(); return; }
+function dibujarVisor(): Promise<void> | undefined {
+  if (!enElEditor()) return render();
+  quitarFichaFoto();
   document.querySelector('#app .visor')?.remove();
   const formulario = document.querySelector('[data-formulario]');
   if (visor.estado && formulario) pintarParte(formulario, renderVisor(visor.estado), 'al-final');
+  return;
 }
 
 /**
@@ -1550,7 +1462,7 @@ const router = crearRouter(ruta => {
  */
 const CIERRE_DE_CAPA: Record<string, () => unknown> = {
   menu: () => { mostrarMenu(false); },
-  visor: () => { visor.olvidar(); return sacarVisor(); },
+  visor: () => { visor.olvidar(); return dibujarVisor(); },
   compartir: () => sacarCompartir(),
   'ficha-foto': () => { quitarFichaFoto(); acomodarBotonDeFoto(); },
   'categoria-plan': () => { dejarCategoriaDelPlan(); return render(); }
@@ -1596,81 +1508,19 @@ function tocarTag(tag: string): Promise<void> | undefined {
 }
 
 /**
- * Las fotos del depósito en el editor: las fichas al pie, la portada, traer
- * una por URL, ponerla en una línea y sacarla.
+ * Lo que el visor recorre desde la foto tocada. El depósito sale de
+ * `fotosEditor` en el editor y de la receta leída en la lectura: es la misma
+ * acción y el mismo `data-n` en la cabecera, la galería y la ficha de acciones.
  */
-const accionesDeFotos: SeccionDeAcciones = {
-  'cerrar-ficha-foto': () => {
-    cerrarFichaFoto();
-    // Tocar el velo puede haberle sacado el foco al campo: el botón de la
-    // foto no puede quedar colgado de un campo que ya no lo tiene.
-    acomodarBotonDeFoto();
-  },
-  'acciones-foto': (boton) => {
-    const n = boton.dataset['n'] ?? '';
-    abrirFichaFoto(renderAccionesFoto(Number(n)));
-  },
-  'abrir-portada': () => {
-    abrirFichaFoto(renderSelectorPortada(fotosEditor.fotos(), fotosEditor.portada() || null));
-  },
-  'elegir-portada': (boton) => {
-    fotosEditor.ponerPortada(Number(boton.dataset['n'] ?? 0));
-    cerrarFichaFoto();
-  },
-  'sin-portada': () => { fotosEditor.sacarPortada(); cerrarFichaFoto(); },
-  'abrir-foto-url': () => abrirFotoPorUrl(),
-  'traer-foto-url': async () => {
-    const url = document.querySelector<HTMLInputElement>('#app [data-url-foto]')?.value.trim() ?? '';
-    if (url) await agregarFotoPorUrl(url);
-  },
-  'abrir-elegir-foto': (boton) => {
-    // La sección y la línea son las que tenía el botón: las escribió
-    // `acomodarBotonDeFoto` con el cursor donde estaba.
-    abrirFichaFoto(renderElegirFoto(
-      fotosEditor.fotos(), boton.dataset['seccion'] ?? '', Number(boton.dataset['linea'] ?? 0)
-    ));
-  },
-  'poner-en': (boton) => {
-    // Ahora está en el texto, y su miniatura lo dice.
-    fotosEditor.ponerEn(
-      boton.dataset['seccion'] ?? '', Number(boton.dataset['linea'] ?? 0), Number(boton.dataset['n'] ?? 0)
-    );
-    cerrarFichaFoto();
-  },
-  'sacar-foto-editor': (boton) => {
-    // La foto se va del depósito, de la portada y de todo el texto que la nombraba.
-    fotosEditor.sacar(Number(boton.dataset['n'] ?? 0));
-    cerrarFichaFoto();
-  }
-};
-
-/**
- * El visor de fotos. El depósito sale de `fotosEditor` en el editor y de la
- * receta leída en la lectura: son la misma acción y el mismo `data-n` en la
- * cabecera, la galería y la ficha de acciones.
- */
-const accionesDelVisor: SeccionDeAcciones = {
-  'ver-foto-receta': (boton) => {
-    const marca = boton.dataset['n'];
-    const n = marca === undefined ? undefined : Number(marca);
-    if (enElEditor()) {
-      // Sin consumir la capa de la ficha: el visor toma su lugar.
-      quitarFichaFoto();
-      visor.abrir(fotosMostrables(fotosEditor.fotos()), n);
-      dibujarVisor();
-      return;
-    }
-    if (!recetaLeida) return;
-    const receta = resolverReceta(recetaLeida.receta);
-    // El carrusel son las sin uso, calculadas sobre la cruda: desde ahí el
-    // visor las recorre. La portada no está ahí y se abre sola.
-    const sola = (n === undefined ? undefined : receta.fotos.find(f => f.n === n)?.url) ?? receta.foto ?? undefined;
-    visor.abrir(fotosMostrables(fotosSinUso(recetaLeida.receta)), n, sola);
-    return render();
-  },
-  // El click con el que termina un deslizamiento no cierra: ya cambió de foto.
-  'cerrar-visor': () => (visor.tocar() ? sacarVisor() : undefined)
-};
+function fotosDelVisor(n: number | undefined): { tira: FotoDelVisor[]; suelta?: string | undefined } | null {
+  if (enElEditor()) return { tira: fotosMostrables(fotosEditor.fotos()) };
+  if (!recetaLeida) return null;
+  const receta = resolverReceta(recetaLeida.receta);
+  // El carrusel son las sin uso, calculadas sobre la cruda: desde ahí el
+  // visor las recorre. La portada no está ahí y se abre sola.
+  const suelta = (n === undefined ? undefined : receta.fotos.find(f => f.n === n)?.url) ?? receta.foto ?? undefined;
+  return { tira: fotosMostrables(fotosSinUso(recetaLeida.receta)), suelta };
+}
 
 /**
  * Una foto en línea del texto no lleva `data-accion` —la dibuja el markdown,
@@ -2207,8 +2057,16 @@ const acciones = registrarAcciones({
   navegacion: accionesDeNavegacion,
   menu: accionesDelMenu,
   lista: accionesDeLista(() => estadoDePantalla.lista, () => render()),
-  fotos: accionesDeFotos,
-  visor: accionesDelVisor,
+  fotos: accionesDeFotos(fotosEditor, {
+    abrirFicha: abrirFichaFoto,
+    cerrarFicha: cerrarFichaFoto,
+    acomodarBoton: acomodarBotonDeFoto,
+    urlEscrita: () => document.querySelector<HTMLInputElement>('#app [data-url-foto]')?.value ?? '',
+    traer: traerFoto,
+    esperar: tarea => velo.esperar(tarea),
+    avisar: avisarEnElFormulario
+  }),
+  visor: accionesDelVisor(visor, { fotos: fotosDelVisor, dibujar: dibujarVisor }),
   carrusel: accionesDelCarrusel,
   plan: accionesDelPlan,
   receta: accionesDeLaReceta,
@@ -2386,7 +2244,7 @@ document.addEventListener('touchcancel', soltarDeslizamiento);
 // acá la foto cambia de una vez, al soltar.
 document.addEventListener('touchend', (e) => {
   if (velo.ocupado()) return;
-  if (visor.terminarToque((e as TouchEvent).changedTouches[0]?.clientX ?? null)) dibujarVisor();
+  if (visor.terminarToque((e as TouchEvent).changedTouches[0]?.clientX ?? null)) void dibujarVisor();
 });
 
 app.addEventListener('keydown', (e) => {

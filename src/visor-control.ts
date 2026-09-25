@@ -8,6 +8,7 @@
  */
 import type { EstadoVisor } from './ui/visor.js';
 import type { Navegacion } from './navegacion.js';
+import type { SeccionDeAcciones } from './acciones.js';
 
 /** Lo que el visor necesita del historial: abrir su capa y consumirla al cerrar tocando. */
 export type CapasDelVisor = Pick<Navegacion, 'abrirCapa' | 'cerrarCapa'>;
@@ -103,3 +104,31 @@ export function crearVisorControl(capas: CapasDelVisor): VisorControl {
     }
   };
 }
+
+/** Lo que las acciones del visor necesitan de la pantalla que lo muestra. */
+export interface PantallaDelVisor {
+  /**
+   * Lo que el visor recorre al tocar la foto `n`: la tira y, para una foto
+   * que no está en ella, su URL `suelta`. `null` si no hay nada que mostrar.
+   */
+  fotos(n: number | undefined): { tira: FotoDelVisor[]; suelta?: string | undefined } | null;
+  /** Dibuja el visor como quedó: abierto en su foto, o cerrado. */
+  dibujar(): unknown;
+}
+
+/**
+ * Abrir el visor desde una foto —la cabecera, el carrusel, una miniatura, la
+ * ficha de acciones: todas con el mismo `data-n`— y cerrarlo con un toque.
+ */
+export const accionesDelVisor = (visor: VisorControl, pantalla: PantallaDelVisor): SeccionDeAcciones => ({
+  'ver-foto-receta': (boton) => {
+    const marca = boton.dataset['n'];
+    const n = marca === undefined ? undefined : Number(marca);
+    const fotos = pantalla.fotos(n);
+    if (!fotos) return;
+    visor.abrir(fotos.tira, n, fotos.suelta);
+    return pantalla.dibujar();
+  },
+  // El click con el que termina un deslizamiento no cierra: ya cambió de foto.
+  'cerrar-visor': () => (visor.tocar() ? pantalla.dibujar() : undefined)
+});
