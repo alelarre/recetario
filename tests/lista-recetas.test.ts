@@ -6,7 +6,6 @@ import { entradaFalsa, listaPlanaFalsa as plana, listaAgrupadaFalsa as agrupada 
 const e = (titulo: string, extra: Parameters<typeof entradaFalsa>[0] = {}) =>
   entradaFalsa({ id_archivo: titulo, titulo, ...extra });
 
-
 describe('lista-recetas — la lista plana', () => {
   it('dibuja las tarjetas en el orden en que llegan', () => {
     const html = listaPlana({ lista: plana({ entradas: [e('Zapallo'), e('Ajo')], total: 2 }), vacio: '' });

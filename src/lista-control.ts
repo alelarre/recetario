@@ -71,15 +71,17 @@ export interface ListaControl {
   /**
    * La lista de la categoría o de un tag: `entradas` ya filtradas por tags.
    * Con `filtros: false` no hay filtro de duración ni conmutador, y va en A–Z.
+   * Con `paginar: false` van todas, sin tramo.
    */
-  plana(entradas: Entrada[], opciones?: { filtros?: boolean }): ListaPlana;
+  plana(entradas: Entrada[], opciones?: { filtros?: boolean; paginar?: boolean }): ListaPlana;
   agrupada(grupos: Coincidencias): ListaAgrupada;
   /**
-   * Observa el spinner del tramo que está dentro de `dentroDe`: cuando entra en
-   * pantalla, suma un tramo y llama a `redibujar`. Se llama después de cada
-   * dibujo de la lista, porque el spinner es otro.
+   * Observa el spinner del tramo de esta lista, el que encuentra `spinner`:
+   * cuando entra en pantalla, suma un tramo y llama a `redibujar`. Se llama
+   * después de cada dibujo de la lista, porque el spinner es otro. Lo busca
+   * quien dibuja: la pantalla puede tener otra lista con su propio spinner.
    */
-  observar(dentroDe: string, redibujar: () => unknown): void;
+  observar(spinner: () => Element | null, redibujar: () => unknown): void;
   /** Deja de observar: la pantalla se va. */
   soltar(): void;
 }
@@ -119,7 +121,7 @@ export function crearListaControl(): ListaControl {
     mas() { visibles += TRAMO; },
     primerTramo() { visibles = TRAMO; },
 
-    plana(entradas, { filtros = true } = {}) {
+    plana(entradas, { filtros = true, paginar = true } = {}) {
       const duraciones = filtros ? contarDuraciones(entradas) : [];
       const activas = filtros ? duracionesActivas : [];
       // Sin fila de duraciones no hay conmutador para volver a A–Z: ahí el
@@ -127,10 +129,11 @@ export function crearListaControl(): ListaControl {
       const conConmutador = duraciones.length > 0 || activas.length > 0;
       const efectivo: Orden = conConmutador ? orden : 'alfa';
       const todas = ordenarRecetas(filtrarPorDuracion(entradas, activas), efectivo);
+      const tope = paginar ? visibles : todas.length;
       return {
-        entradas: todas.slice(0, visibles),
+        entradas: todas.slice(0, tope),
         total: todas.length,
-        hayMas: visibles < todas.length,
+        hayMas: tope < todas.length,
         duraciones,
         duracionesActivas: [...activas],
         orden: conConmutador ? efectivo : null
@@ -161,12 +164,12 @@ export function crearListaControl(): ListaControl {
       return { grupos, total, hayMas: visibles < total, orden: conConmutador ? efectivo : null };
     },
 
-    observar(dentroDe, redibujar) {
+    observar(spinner, redibujar) {
       soltar();
       // `IntersectionObserver` no existe en Node, donde corren los tests: se
       // pregunta antes, igual que el resto del código hace con `navigator`.
       if (typeof IntersectionObserver === 'undefined') return;
-      const spin = document.querySelector(`${dentroDe} [data-tramo]`);
+      const spin = spinner();
       if (!spin) return;
       observador = new IntersectionObserver(entradas => {
         if (!entradas.some(e => e.isIntersecting)) return;

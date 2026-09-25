@@ -56,7 +56,6 @@ describe('la lista por tag', () => {
     expect(html).not.toContain('/editar');
   });
 
-
   it('sin recetas muestra el vacío, sin invitar a sacar un filtro que no se puede sacar', () => {
     const html = renderTag({ ...base });
     expect(html).toContain('class="vacio"');

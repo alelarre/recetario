@@ -481,7 +481,6 @@ async function fotosParaElAgente(fotos: readonly FotoDeReceta[]): Promise<{ n: n
 /** El modo cocina: paso actual, marcados, conmutador y pantalla encendida. */
 const cocina = crearControlCocina();
 
-
 /** Lo que verificó el arranque, para la ficha «Al abrir» de Ajustes. */
 const informeArranque = () =>
   estadoArranque?.estado === 'listo' ? estadoArranque.informe : null;
@@ -672,7 +671,12 @@ function observarTitulo(): void {
 }
 
 /** El tramo siguiente de la lista de la pantalla entera se dibuja redibujándola. */
-const observarLista = (): void => { estadoDePantalla.lista.observar('#app', () => render()); };
+const observarLista = (): void => {
+  estadoDePantalla.lista.observar(() => document.querySelector('#app [data-tramo]'), () => render());
+};
+
+/** El spinner del bloque de *Agregar al plan*, y no otro de la pantalla. */
+const spinnerDelPlan = (): Element | null => document.querySelector('[data-resultados-plan] [data-tramo]');
 
 /**
  * Lo que va debajo de la caja de *Agregar al plan*: los resultados de lo
@@ -685,7 +689,10 @@ function bloqueDelPlan(): OpcionesBloque {
   }
   // El store deja afuera los borradores: a ellos se llega por el menú, no por acá.
   if (categoriaPlan) return { categoria: { nombre: categoriaPlan, lista: lista.plana(store.buscar({ categoria: categoriaPlan }), { filtros: false }) } };
-  return { menuDiario: lista.plana(store.buscar({ tags: ['menú diario'] }), { filtros: false }), categorias: store.categorias() };
+  // El Menú diario no pagina: es la lista corta de lo que se come seguido, y
+  // verla entera es para lo que está.
+  const menuDiario = lista.plana(store.buscar({ tags: ['menú diario'] }), { filtros: false, paginar: false });
+  return { menuDiario, categorias: store.categorias() };
 }
 
 /**
@@ -696,7 +703,7 @@ function pintarBloqueDelPlan(): void {
   const bloque = document.querySelector('[data-resultados-plan]');
   if (!bloque) return;
   pintarParte(bloque, bloqueDeAgregar(bloqueDelPlan()));
-  estadoDePantalla.lista.observar('[data-resultados-plan]', pintarBloqueDelPlan);
+  estadoDePantalla.lista.observar(spinnerDelPlan, pintarBloqueDelPlan);
 }
 
 /** La misma pantalla: la misma vista con los mismos parámetros, todos. */
@@ -939,7 +946,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
         momento: (ruta.params['momento'] ?? 'noche') as Momento,
         consulta: estadoDePantalla.consultaPlan, ...bloqueDelPlan()
       }));
-      return estadoDePantalla.lista.observar('[data-resultados-plan]', pintarBloqueDelPlan);
+      return estadoDePantalla.lista.observar(spinnerDelPlan, pintarBloqueDelPlan);
 
     case 'plan-compras':
       try {
@@ -2107,7 +2114,12 @@ const accionesDeAjustes: SeccionDeAcciones = {
 const acciones = registrarAcciones({
   navegacion: accionesDeNavegacion,
   menu: accionesDelMenu,
-  lista: accionesDeLista(() => estadoDePantalla.lista, () => render()),
+  // En *Agregar al plan* la lista es el bloque de abajo de la caja: se
+  // redibuja sólo ese, para no sacarle el foco.
+  lista: accionesDeLista(
+    () => estadoDePantalla.lista,
+    () => (vistaActual?.vista === 'plan-agregar' ? pintarBloqueDelPlan() : render())
+  ),
   fotos: accionesDeFotos(fotosEditor, {
     abrirFicha: abrirFichaFoto,
     cerrarFicha: cerrarFichaFoto,

@@ -77,6 +77,12 @@ describe('lista-control — la lista plana', () => {
     expect(toda.hayMas).toBe(false);
   });
 
+  it('sin paginar van todas, aunque pasen del tramo', () => {
+    const plana = crearListaControl().plana(muchas(TRAMO + 5), { filtros: false, paginar: false });
+    expect(plana.entradas).toHaveLength(TRAMO + 5);
+    expect(plana.hayMas).toBe(false);
+  });
+
   it('A–Z: las favoritas primero y alfabético dentro de cada bloque, venga como venga', () => {
     const plana = crearListaControl().plana([
       e('Vitel toné'), e('Osobuco', { tags: ['favorito'] }), e('Bife'), e('Asado', { tags: ['favorito'] })
@@ -206,7 +212,7 @@ describe('lista-control — la lista agrupada', () => {
 
 describe('lista-control — el observador del tramo', () => {
   const g = global as unknown as Record<string, unknown>;
-  afterEach(() => { delete g['IntersectionObserver']; delete g['document']; });
+  afterEach(() => { delete g['IntersectionObserver']; });
 
   /** Un observador falso que se dispara a mano, y lo que observa y desconecta. */
   function observadorFalso() {
@@ -221,22 +227,19 @@ describe('lista-control — el observador del tramo', () => {
     return { observados, desconectados: () => desconectados, llegar: (si = true) => llegar(si) };
   }
 
-  it('mira el spinner del tramo de su propia lista, no el primero de la pantalla', () => {
+  it('observa el spinner que le da quien dibuja la lista, sin buscarlo en el documento', () => {
     const obs = observadorFalso();
-    const pedidos: string[] = [];
     const spin = { es: 'el de la lista' };
-    g['document'] = comoGlobal<Document>({ querySelector: (sel: string) => { pedidos.push(sel); return spin; } });
-    crearListaControl().observar('[data-resultados-plan]', () => {});
-    expect(pedidos).toEqual(['[data-resultados-plan] [data-tramo]']);
+    // Sin `document`: si el controlador lo leyera, fallaría acá.
+    crearListaControl().observar(() => comoGlobal<Element>(spin), () => {});
     expect(obs.observados).toEqual([spin]);
   });
 
   it('cuando el spinner entra en pantalla, agranda el tramo y redibuja', () => {
     const obs = observadorFalso();
-    g['document'] = comoGlobal<Document>({ querySelector: () => ({}) });
     const lista = crearListaControl();
     let redibujos = 0;
-    lista.observar('#app', () => { redibujos++; });
+    lista.observar(() => comoGlobal<Element>({}), () => { redibujos++; });
     obs.llegar(false);
     expect(redibujos).toBe(0);
     obs.llegar();
@@ -247,21 +250,20 @@ describe('lista-control — el observador del tramo', () => {
   it('observar de nuevo, o soltar, desconecta el anterior; sin spinner no observa nada', () => {
     const obs = observadorFalso();
     let hay = true;
-    g['document'] = comoGlobal<Document>({ querySelector: () => (hay ? {} : null) });
+    const spinner = (): Element | null => (hay ? comoGlobal<Element>({}) : null);
     const lista = crearListaControl();
-    lista.observar('#app', () => {});
-    lista.observar('#app', () => {});
+    lista.observar(spinner, () => {});
+    lista.observar(spinner, () => {});
     expect(obs.desconectados()).toBe(1);
     lista.soltar();
     expect(obs.desconectados()).toBe(2);
     hay = false;
-    lista.observar('#app', () => {});
+    lista.observar(spinner, () => {});
     expect(obs.observados).toHaveLength(2);
   });
 
   it('sin IntersectionObserver, como en Node, no hace nada', () => {
-    g['document'] = comoGlobal<Document>({ querySelector: () => ({}) });
-    expect(() => crearListaControl().observar('#app', () => {})).not.toThrow();
+    expect(() => crearListaControl().observar(() => comoGlobal<Element>({}), () => {})).not.toThrow();
   });
 });
 

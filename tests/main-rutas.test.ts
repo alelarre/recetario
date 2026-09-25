@@ -1541,6 +1541,31 @@ describe('main.ts: las rutas', () => {
     }
   });
 
+  it('cambiar de pantalla suelta el observador del tramo de la lista anterior', async () => {
+    const original = storeFake.buscar;
+    storeFake.buscar = () => Array.from({ length: 31 }, (_, i) =>
+      entradaFalsa({ id_archivo: `f${i}`, titulo: `A${String(i + 1).padStart(2, '0')}`, categoria: 'Carnes' }));
+    const observadores: { desconectado: boolean }[] = [];
+    const g = global as unknown as Record<string, unknown>;
+    g['IntersectionObserver'] = class {
+      estado = { desconectado: false };
+      constructor() { observadores.push(this.estado); }
+      observe(): void {}
+      disconnect(): void { this.estado.desconectado = true; }
+    };
+    try {
+      const { abrir } = await montar();
+      await abrir('#/c/Carnes');
+      expect(observadores).toHaveLength(1);
+      expect(observadores[0]?.desconectado).toBe(false);
+      await abrir('#/ajustes');
+      expect(observadores[0]?.desconectado).toBe(true);
+    } finally {
+      storeFake.buscar = original;
+      delete g['IntersectionObserver'];
+    }
+  });
+
   it('los resultados paginan como la categoría: el tramo siguiente entra al llegar al pie', async () => {
     const original = storeFake.buscarPorTexto;
     storeFake.buscarPorTexto = () => ({
@@ -3060,7 +3085,6 @@ describe('main.ts: las rutas', () => {
     });
   });
 
-
   describe('el plan de la semana', () => {
     /** Un plan con dos recetas en la misma comida. */
     const conDos = (): Plan => ({
@@ -3284,6 +3308,47 @@ describe('main.ts: las rutas', () => {
       } finally {
         storeFake.buscarPorTexto = original;
         delete g['IntersectionObserver'];
+      }
+    });
+
+    it('el conmutador de orden de la búsqueda redibuja sólo el bloque: la caja no pierde el foco', async () => {
+      const original = storeFake.buscarPorTexto;
+      storeFake.buscarPorTexto = (): Coincidencias => ({
+        porNombre: [
+          entradaFalsa({ id_archivo: 'f1', titulo: 'Arroz', categoria: 'Carnes', tiempo: '~60 min' }),
+          entradaFalsa({ id_archivo: 'f2', titulo: 'Zapallo', categoria: 'Carnes', tiempo: '~15 min' })
+        ],
+        porIngrediente: [], porTag: []
+      });
+      try {
+        const { abrir, tipear, tocar, resultadosPlan, pinturas } = await montar();
+        await abrir('#/plan/agregar?dia=1&momento=noche');
+        await tipear('buscar-en-plan', 'a');
+        expect(resultadosPlan.at(-1)).toContain('data-accion="ordenar"');
+        const antes = pinturas.length;
+        await tocar('ordenar', { valor: 'duracion' });
+        expect(pinturas.length).toBe(antes);
+        const bloque = resultadosPlan.at(-1) ?? '';
+        expect(bloque.indexOf('Zapallo')).toBeLessThan(bloque.indexOf('Arroz'));
+      } finally {
+        storeFake.buscarPorTexto = original;
+      }
+    });
+
+    it('el Menú diario no pagina: dibuja todas sus recetas de una vez', async () => {
+      const original = storeFake.buscar;
+      storeFake.buscar = ((filtros: { tags?: string[] } = {}) => filtros.tags?.includes('menú diario')
+        ? Array.from({ length: 35 }, (_, i) => entradaFalsa({
+            id_archivo: `m${i}`, titulo: `M${String(i + 1).padStart(2, '0')}`, categoria: 'Carnes', tags: ['menú diario']
+          }))
+        : []) as typeof storeFake.buscar;
+      try {
+        const { abrir, app } = await montar();
+        await abrir('#/plan/agregar?dia=1&momento=noche');
+        expect(app.innerHTML).toContain('M35');
+        expect(app.innerHTML).not.toContain('data-tramo');
+      } finally {
+        storeFake.buscar = original;
       }
     });
 
