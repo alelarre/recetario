@@ -1208,6 +1208,16 @@ describe('main.ts: las rutas', () => {
       expect(menuDesplegado()).toBe(true);
     });
 
+    it('sobre una fila deslizable que desborda, el dedo es de la fila: el menú no se abre', async () => {
+      const { abrir, deslizar, menuDesplegado } = await montar();
+      await abrir('#/borradores');
+      const fila = { clientWidth: 300, scrollWidth: 600 };
+
+      await deslizar({ desde: 30, hasta: 220, sobre: { closest: (sel: string) => (sel === '[data-deslizable]' ? fila : null) } });
+
+      expect(menuDesplegado()).toBe(false);
+    });
+
     it('abierto, deslizar para el otro lado lo cierra', async () => {
       const { abrir, deslizar, menuDesplegado } = await montar();
       await abrir('#/borradores');

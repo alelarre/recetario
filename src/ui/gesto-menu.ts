@@ -33,6 +33,16 @@ export function puedeEmpezar(xInicio: number, abierto: boolean, sobreFilaDesliza
 }
 
 /**
+ * Si el dedo apoyó sobre una fila que se desplaza de costado: cualquier
+ * `[data-deslizable]` —lo pone `carrusel()`— que no entre entera. Una que
+ * entra entera no cuenta: no hay nada que mover.
+ */
+export function sobreFilaDeslizable(destino: Element | null): boolean {
+  const fila = destino?.closest<HTMLElement>('[data-deslizable]');
+  return !!fila && fila.scrollWidth > fila.clientWidth;
+}
+
+/**
  * Si el movimiento es gesto o desplazamiento. Sólo cuenta como gesto uno
  * claramente horizontal: en diagonal gana el desplazamiento de la página.
  */

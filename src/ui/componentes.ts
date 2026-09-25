@@ -34,7 +34,9 @@ export function filaDuraciones(conteo: { valor: Duracion; cantidad: number }[], 
   const chips = lista.map(({ valor, cantidad }) =>
     `<button class="chip${activas.includes(valor) ? ' act' : ''}" data-accion="filtrar-duracion" data-valor="${escapar(valor)}">` +
     `${ICONO_DE_DURACION[valor]}${escapar(valor)}<span class="cuenta">${cantidad}</span></button>`).join('');
-  return `<div class="fila-dur" role="group" aria-label="Filtrar por duración">${chips}</div>`;
+  return carrusel(chips, {
+    etiquetaIzq: 'Duraciones anteriores', etiquetaDer: 'Más duraciones', clase: 'fila-dur', grupo: 'Filtrar por duración'
+  });
 }
 
 /** «A–Z | Duración», a la derecha. */
@@ -247,21 +249,27 @@ export interface OpcionesMarcoCarrusel {
   etiquetaDer: string;
   /** Una clase más en el marco, para lo propio de cada carrusel. */
   clase?: string;
+  /** Si la pista es un grupo de controles, qué dice de él a quien no ve. */
+  grupo?: string;
 }
 
 /**
  * El marco que se desliza de costado: la pista con lo que le den adentro, el
  * degradé que dice que sigue, y las dos flechas, que aparecen sólo con mouse o
- * trackpad. Lo usan los tags y las fotos de la receta.
+ * trackpad. Lo usan los tags, las duraciones y las fotos de la receta.
+ *
+ * La pista lleva `data-deslizable`: sobre ella el dedo es de la fila, y el
+ * gesto del menú lateral no empieza (`ui/gesto-menu.ts`).
  *
  * Cada marco es independiente: la flecha mueve la pista de su propio marco
  * (`carrusel-control.ts`), así que dos carruseles pueden
  * convivir en la misma pantalla. Sin contenido no hay carrusel.
  */
-export function carrusel(contenido: string, { etiquetaIzq, etiquetaDer, clase }: OpcionesMarcoCarrusel): string {
+export function carrusel(contenido: string, { etiquetaIzq, etiquetaDer, clase, grupo }: OpcionesMarcoCarrusel): string {
   if (!contenido) return '';
+  const rol = grupo ? ` role="group" aria-label="${escapar(grupo)}"` : '';
   return `<div class="carrusel-marco${clase ? ` ${clase}` : ''}">` +
-    `<div class="carrusel" data-carrusel>${contenido}</div>` +
+    `<div class="carrusel" data-carrusel data-deslizable${rol}>${contenido}</div>` +
     `<button class="carrusel-flecha izq" data-accion="carrusel-izq" aria-label="${escapar(etiquetaIzq)}">${ICO.volver}</button>` +
     `<button class="carrusel-flecha der" data-accion="carrusel-der" aria-label="${escapar(etiquetaDer)}">${ICO.chevron}</button>` +
     '</div>';

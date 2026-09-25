@@ -36,7 +36,7 @@ import { colorLibre, problemaDelNombre } from './categorias.js';
 import { renderSelector } from './ui/carpeta.js';
 import { elegirCarpeta } from './picker.js';
 import { API_KEY, NOMBRE_RAIZ } from './config.js';
-import { puedeEmpezar, direccion, progreso, seAbre, ANCHO_MENU_FIJO } from './ui/gesto-menu.js';
+import { puedeEmpezar, direccion, progreso, seAbre, sobreFilaDeslizable, ANCHO_MENU_FIJO } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
 import { aviso, lateralFijo, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js';
 import type { MenuDePantalla } from './ui/componentes.js';
@@ -2337,12 +2337,6 @@ function seguirDedo(p: number | null): void {
   }
 }
 
-/** Las dos filas que se desplazan de costado: el carrusel y la fila de duraciones, en `tokens.css`. Una que entra entera no cuenta: no hay nada que mover. */
-function sobreFilaDeslizable(destino: EventTarget | null): boolean {
-  const fila = conClosest(destino)?.closest<HTMLElement>('.carrusel, .fila-dur');
-  return !!fila && fila.scrollWidth > fila.clientWidth;
-}
-
 // Deslizar para abrir o cerrar el menú, como en una app nativa. Los listeners
 // son pasivos: un deslizamiento vertical tiene que seguir desplazando la página.
 //
@@ -2359,7 +2353,7 @@ document.addEventListener('touchstart', (e) => {
   // el menú: es lo único que se puede hacer ahí.
   if (visor.empezarToque(toque?.clientX ?? null) || !toque) return;
   if (!vistaActual || !esDelMenu(vistaActual.vista) || menuFijo()) return;
-  if (!puedeEmpezar(toque.clientX, menuAbierto, sobreFilaDeslizable(e.target))) return;
+  if (!puedeEmpezar(toque.clientX, menuAbierto, sobreFilaDeslizable(conClosest(e.target)))) return;
   deslizando = { x: toque.clientX, y: toque.clientY, decidido: 'indeciso', p: menuAbierto ? 1 : 0 };
 }, { passive: true });
 

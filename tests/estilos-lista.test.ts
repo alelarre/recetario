@@ -30,12 +30,17 @@ describe('la fila: la base de la tarjeta, la categoría en Ajustes y la carpeta'
 });
 
 describe('la lista de recetas, en tokens.css', () => {
-  for (const selector of ['.lista', '.rot', '.grupo-res + .grupo-res', '.tile', '.fila-dur', '.orden', '.orden-seg']) {
+  for (const selector of ['.lista', '.rot', '.grupo-res + .grupo-res', '.tile', '.fila-dur .chip', '.orden', '.orden-seg']) {
     it(`${selector} está en tokens.css y no en base.css`, () => {
       expect(regla(TOKENS, selector)).toBeDefined();
       expect(regla(BASE, selector)).toBeUndefined();
     });
   }
+
+  it('la fila de duraciones se alinea como el carrusel de tags: no tiene márgenes ni desplazamiento propios', () => {
+    expect(regla(TOKENS, '.fila-dur')).toBeUndefined();
+    expect(TOKENS).not.toContain('.fila-dur::-webkit-scrollbar');
+  });
 
   it('no hay una regla .foto suelta: la foto de la tarjeta va adentro del placeholder', () => {
     expect(regla(TOKENS, '.foto')).toBeUndefined();

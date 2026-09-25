@@ -273,9 +273,9 @@ button.chip { cursor: pointer; }
 
 /* ---- §6.21 Carrusel ----
    El marco que se desliza de costado: la pista con lo que le pongan adentro, el
-   degradé y las dos flechas. Lo comparten el carrusel de tags y el de fotos de
-   la receta, y puede haber más de uno en la misma pantalla: cada marco lleva su
-   propia timeline y su propio fondo de degradé. */
+   degradé y las dos flechas. Lo comparten el carrusel de tags, la fila de
+   duraciones y el de fotos de la receta, y puede haber más de uno en la misma
+   pantalla: cada marco lleva su propia timeline y su propio fondo de degradé. */
 .carrusel-marco { position: relative; margin-bottom: var(--e-3); }
 .carrusel { display: flex; gap: var(--e-2); overflow-x: auto; padding-bottom: var(--e-1);
             scrollbar-width: none; scroll-behavior: smooth; }
@@ -540,12 +540,10 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
                  font-size: var(--txt-micro); color: var(--fg-3); }
 
 /* ---- §6.19 Fila de chips de duración y §6.20 Conmutador de orden ---- */
-/* La fila de duraciones: chips con relojito que se deslizan como el
-   carrusel, sin degradé ni flechas; y el conmutador de orden, a la derecha. */
-.fila-dur { display: flex; gap: var(--e-2); overflow-x: auto; scrollbar-width: none;
-            margin-inline: calc(-1 * var(--e-4)); padding-inline: var(--e-4); margin-bottom: var(--e-3); }
-.fila-dur::-webkit-scrollbar { display: none; }
-.fila-dur .chip { flex: 0 0 auto; --fondo-reloj: color-mix(in srgb, var(--surface-alta) 86%, var(--fg)); }
+/* La fila de duraciones es un carrusel (§6.21): se desliza, se alinea y lleva
+   el degradé y las flechas como la de tags. Acá sólo el fondo del relojito de
+   sus chips; y el conmutador de orden, a la derecha. */
+.fila-dur .chip { --fondo-reloj: color-mix(in srgb, var(--surface-alta) 86%, var(--fg)); }
 .fila-dur .chip.act { --fondo-reloj: var(--acento-suave); }
 .orden { display: flex; justify-content: flex-end; margin-bottom: var(--e-3); }
 .orden-seg { display: inline-grid; grid-template-columns: auto auto; border: 1px solid var(--borde);

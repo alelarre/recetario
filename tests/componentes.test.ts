@@ -233,7 +233,16 @@ describe('el carrusel: el marco que comparten los tags y las fotos', () => {
   it('envuelve lo que recibe en la pista, adentro del marco', () => {
     const html = carrusel('<span class="x">uno</span>', opciones);
     expect(html).toContain('<div class="carrusel-marco">');
-    expect(html).toContain('<div class="carrusel" data-carrusel><span class="x">uno</span></div>');
+    expect(html).toContain('<div class="carrusel" data-carrusel data-deslizable><span class="x">uno</span></div>');
+  });
+
+  it('la pista se marca deslizable: ahí el dedo es de la fila y no del menú', () => {
+    expect(carrusel('<span></span>', opciones)).toContain('data-deslizable');
+  });
+
+  it('con un nombre de grupo, la pista lo dice a quien no ve', () => {
+    expect(carrusel('<span></span>', { ...opciones, grupo: 'Filtrar' }))
+      .toContain('<div class="carrusel" data-carrusel data-deslizable role="group" aria-label="Filtrar">');
   });
 
   it('lleva las dos flechas, con las etiquetas que le pasan', () => {
@@ -306,6 +315,14 @@ describe('la fila de duraciones y el conmutador de orden', () => {
     expect(html).toContain(ICO_DUR['~15 min']);
     expect(html).toContain('<span class="cuenta">2</span>');
     expect(html).toMatch(/class="chip act" data-accion="filtrar-duracion" data-valor="&gt;1 día"/);
+  });
+
+  it('la fila de duraciones es un carrusel: marco con degradé, flechas y la pista deslizable', () => {
+    const html = filaDuraciones([{ valor: '~15 min', cantidad: 2 }], []);
+    expect(html).toContain('<div class="carrusel-marco fila-dur">');
+    expect(html).toContain('<div class="carrusel" data-carrusel data-deslizable role="group" aria-label="Filtrar por duración">');
+    expect(html).toContain('data-accion="carrusel-izq"');
+    expect(html).toContain('data-accion="carrusel-der"');
   });
 
   it('un valor encendido sin recetas se dibuja igual, para poder apagarlo', () => {

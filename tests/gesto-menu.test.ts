@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { puedeEmpezar, direccion, progreso, seAbre, ANCHO_MENU, ANCHO_MENU_FIJO, MARGEN_BORDE } from '../src/ui/gesto-menu.js';
+import {
+  puedeEmpezar, direccion, progreso, seAbre, sobreFilaDeslizable, ANCHO_MENU, ANCHO_MENU_FIJO, MARGEN_BORDE
+} from '../src/ui/gesto-menu.js';
 
 describe('el gesto del menú lateral', () => {
   it('cerrado, no empieza pegado al borde: ese deslizamiento es el «atrás» de Android', () => {
@@ -16,6 +18,32 @@ describe('el gesto del menú lateral', () => {
   it('cerrado, no empieza sobre una fila que se desplaza de costado: el dedo es de la fila', () => {
     expect(puedeEmpezar(200, false, true)).toBe(false);
     expect(puedeEmpezar(200, true, true)).toBe(true);
+  });
+
+  describe('sobre una fila deslizable', () => {
+    /** Lo tocado: adentro de una fila que mide `ancho` y tiene `contenido` para correr, si hay fila. */
+    const tocado = (fila: { ancho: number; contenido: number } | null, selectores: string[] = []): Element =>
+      ({
+        closest: (sel: string) => {
+          selectores.push(sel);
+          return fila && sel === '[data-deslizable]' ? { clientWidth: fila.ancho, scrollWidth: fila.contenido } : null;
+        }
+      }) as unknown as Element;
+
+    it('cualquier [data-deslizable] que desborda cuenta, sin una lista de clases', () => {
+      const selectores: string[] = [];
+      expect(sobreFilaDeslizable(tocado({ ancho: 300, contenido: 600 }, selectores))).toBe(true);
+      expect(selectores).toEqual(['[data-deslizable]']);
+    });
+
+    it('una fila que entra entera no cuenta: no hay nada que correr', () => {
+      expect(sobreFilaDeslizable(tocado({ ancho: 300, contenido: 300 }))).toBe(false);
+    });
+
+    it('fuera de una fila, o sin destino, no cuenta', () => {
+      expect(sobreFilaDeslizable(tocado(null))).toBe(false);
+      expect(sobreFilaDeslizable(null)).toBe(false);
+    });
   });
 
   it('no decide hasta que el dedo se mueve lo suficiente', () => {
