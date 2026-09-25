@@ -12,13 +12,25 @@ describe('Recetario', () => {
   });
 
   it('sin ninguna receta, dice por dónde entran; con alguna, no', () => {
-    const vacio = dibujar({ categorias: [{ id: 'c1', nombre: 'Carnes', cantidad: 0 }] });
+    const vacio = dibujar({ categorias: [{ id: 'c1', nombre: 'Carnes', cantidad: 0 }], borradores: 0 });
     expect(vacio).toContain(
       'Todavía no hay recetas. Entran con Nueva receta, compartiendo desde otra app, ' +
       'o como archivos .md en las carpetas de Drive.'
     );
     expect(vacio).toContain('class="grilla"');
     expect(dibujar()).not.toContain('Todavía no hay recetas.');
+  });
+
+  it('sin recetas terminadas pero con borradores, lo dice; sin nada, el texto de hoy', () => {
+    const conBorradores = dibujar({ categorias: [{ id: 'c1', nombre: 'Carnes', cantidad: 0 }], borradores: 2 });
+    expect(conBorradores).toContain('Todavía no hay recetas terminadas. Hay 2 en Borradores.');
+    expect(conBorradores).not.toContain('Todavía no hay recetas. Entran con Nueva receta');
+
+    const sinNada = dibujar({ categorias: [{ id: 'c1', nombre: 'Carnes', cantidad: 0 }], borradores: 0 });
+    expect(sinNada).toContain(
+      'Todavía no hay recetas. Entran con Nueva receta, compartiendo desde otra app, ' +
+      'o como archivos .md en las carpetas de Drive.'
+    );
   });
 
   it('la búsqueda está arriba y visible, no detrás de un ícono', () => {

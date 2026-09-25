@@ -908,8 +908,12 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const cat = String(categoria ?? '');
     const diff = String(dificultad ?? '');
     const tagList = Array.isArray(tags) ? tags : [];
+    // Un borrador sólo aparece si se lo pide explícitamente: el resto de la
+    // app llega a los borradores por el menú, no por una búsqueda o un filtro.
+    const pideBorradores = tagList.some(tag => tagEspecial(tag) === 'borrador');
 
     return entradas.filter(e => {
+      if (!pideBorradores && tieneEspecial(e, 'borrador')) return false;
       if (cat && e.categoria !== cat) return false;
       if (diff && e.dificultad !== diff) return false;
       if (tagList.length && !tagList.every(tag => e.tags.some(x => coincideTag(x, tag)))) return false;
@@ -935,6 +939,10 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const porTag: Coincidencia[] = [];
 
     for (const e of entradas) {
+      // Los borradores no aparecen en ninguna búsqueda: se llega a ellos por
+      // el menú, y el tag `borrador` no cuenta ni como motivo.
+      if (tieneEspecial(e, 'borrador')) continue;
+
       if (normalizar(e.titulo).includes(t)) porNombre.push(e);
 
       const ingrediente = e.ingredientes.find(i => normalizar(i).includes(t));
@@ -949,9 +957,13 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
 
   function categoriasConConteo(): { id: string; nombre: string; cantidad: number }[] {
     const cuenta = new Map<string, number>();
-    for (const e of entradas) cuenta.set(e.categoria, (cuenta.get(e.categoria) ?? 0) + 1);
-    // Sólo las categorías: lo que no tiene categoría es borrador, y a los
-    // borradores se llega por el menú, no por el home.
+    for (const e of entradas) {
+      // Una receta con el tag no cuenta, esté o no en una carpeta de
+      // categoría: a los borradores se llega por el menú, no por el home.
+      if (tieneEspecial(e, 'borrador')) continue;
+      cuenta.set(e.categoria, (cuenta.get(e.categoria) ?? 0) + 1);
+    }
+    // Sólo las categorías: lo que no tiene categoría es borrador.
     return ctx.categorias.map(c => ({ id: c.id, nombre: c.nombre, cantidad: cuenta.get(c.nombre) ?? 0 }));
   }
 

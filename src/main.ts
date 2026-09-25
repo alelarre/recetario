@@ -434,11 +434,20 @@ function precargarElHome(): void {
   if (ids.length) void imagenes.precargar(ids);
 }
 
-/** Las recetas con el tag `menú diario`: lo que la pantalla de agregar ofrece sin buscar nada. */
-const delMenuDiario = (): Entrada[] => store.entradas().filter(e => tieneEspecial(e, 'menú diario'));
+/**
+ * Las recetas con el tag `menú diario`: lo que la pantalla de agregar ofrece
+ * sin buscar nada. Un borrador no entra aunque lleve el tag: a los borradores
+ * se llega por el menú, no por acá.
+ */
+const delMenuDiario = (): Entrada[] =>
+  store.entradas().filter(e => tieneEspecial(e, 'menú diario') && !tieneEspecial(e, 'borrador'));
 
-/** Las recetas de una categoría, para cuando se la elige en la grilla de agregar al plan. */
-const delaCategoria = (nombre: string): Entrada[] => store.entradas().filter(e => e.categoria === nombre);
+/**
+ * Las recetas de una categoría, para cuando se la elige en la grilla de
+ * agregar al plan. Un borrador de esa categoría no se ofrece.
+ */
+const delaCategoria = (nombre: string): Entrada[] =>
+  store.entradas().filter(e => e.categoria === nombre && !tieneEspecial(e, 'borrador'));
 
 /**
  * La lista de compras del plan. Las recetas se leen de Drive al entrar, una por

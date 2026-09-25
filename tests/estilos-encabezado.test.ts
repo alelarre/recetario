@@ -47,4 +47,8 @@ describe('los encabezados fijos', () => {
   it('el título largo se recorta en una línea en cualquier encabezado', () => {
     expect(regla(TOKENS, '.enc .tit')).toContain('text-overflow: ellipsis');
   });
+
+  it('el scroll deja el aviso a la vista debajo del encabezado fijo', () => {
+    expect(regla(TOKENS, 'html')).toContain('scroll-padding-top: 64px');
+  });
 });

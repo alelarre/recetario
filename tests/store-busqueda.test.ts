@@ -111,6 +111,24 @@ describe('buscar', () => {
     await abrirDeNuevo();
     expect(store.buscar({ tags: ['borrador'] }).map(e => e.id_archivo)).toEqual(['r4']);
   });
+
+  it('sin pedirlo, un borrador no aparece en ningún resultado: a los borradores se llega por el menú', async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'Torta a medio hacer', 'Postres', 'c2', 'borrador', 'harina')
+    ]);
+    await abrirDeNuevo();
+    expect(store.buscar({}).map(e => e.id_archivo)).not.toContain('r4');
+    expect(store.buscar({ texto: 'torta' }).map(e => e.id_archivo)).not.toContain('r4');
+    expect(store.buscar({ categoria: 'Postres' }).map(e => e.id_archivo)).not.toContain('r4');
+  });
+
+  it('pidiendo el tag borrador, sí lo devuelve, en cualquiera de sus formas', async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'Torta a medio hacer', 'Postres', 'c2', 'Borradores', 'harina')
+    ]);
+    await abrirDeNuevo();
+    expect(store.buscar({ tags: ['incompleta'] }).map(e => e.id_archivo)).toEqual(['r4']);
+  });
 });
 
 describe('buscarPorTexto: los tres criterios', () => {
@@ -166,6 +184,17 @@ describe('buscarPorTexto: los tres criterios', () => {
     expect(store.buscarPorTexto(null)).toEqual({ porNombre: [], porIngrediente: [], porTag: [] });
     expect(() => store.buscarPorTexto(42)).not.toThrow();
   });
+
+  it('no devuelve un borrador en ningún grupo, ni el tag borrador como motivo', async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('f-borrador', 'Merluza a medio hacer', 'Carnes', 'c1', 'borrador', 'Merluza')
+    ]);
+    await abrirDeNuevo();
+    const g = store.buscarPorTexto('merluza');
+    expect(g.porNombre.map(e => e.id_archivo)).not.toContain('f-borrador');
+    expect(g.porIngrediente.map(r => r.entrada.id_archivo)).not.toContain('f-borrador');
+    expect(store.buscarPorTexto('borrador').porTag).toEqual([]);
+  });
 });
 
 describe('categoriasConConteo', () => {
@@ -187,6 +216,14 @@ describe('categoriasConConteo', () => {
     await abrirDeNuevo();
     const c = store.categoriasConConteo();
     expect(c.map(x => x.nombre)).toEqual(['Carnes', 'Postres']);
+  });
+
+  it('no cuenta una receta de la categoría marcada como borrador', async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'A medio hacer', 'Carnes', 'c1', 'borrador', 'harina')
+    ]);
+    await abrirDeNuevo();
+    expect(store.categoriasConConteo().find(x => x.nombre === 'Carnes')!.cantidad).toBe(2);
   });
 });
 

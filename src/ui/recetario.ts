@@ -14,6 +14,10 @@ import { ICO } from './iconos.js';
 const SIN_RECETAS = 'Todavía no hay recetas. Entran con Nueva receta, compartiendo desde otra app, ' +
   'o como archivos .md en las carpetas de Drive.';
 
+/** Con borradores esperando, el vacío no dice «no hay recetas»: hay, sin terminar. */
+const sinTerminadasConBorradores = (n: number): string =>
+  `Todavía no hay recetas terminadas. Hay ${n} en Borradores.`;
+
 export interface OpcionesRecetario {
   categorias: { id: string; nombre: string; cantidad: number }[];
   /** Cuántos borradores esperan. En cero no se dibuja el número. */
@@ -49,8 +53,11 @@ export function renderRecetario(
         carruselTags(tags, { tope: 20 }) +
         '<div><div class="rot">Categorías</div>' +
         `<div class="grilla">${grilla}</div></div>` +
-        // Sin ninguna receta las categorías se ven igual: falta decir por dónde entran.
-        (categorias.some(c => c.cantidad > 0) ? '' : vacio(SIN_RECETAS)) +
+        // Sin ninguna receta las categorías se ven igual: falta decir por dónde entran,
+        // o —si hay borradores— que ya hay algo, sin terminar.
+        (categorias.some(c => c.cantidad > 0)
+          ? ''
+          : vacio(borradores > 0 ? sinTerminadasConBorradores(borradores) : SIN_RECETAS)) +
       '</div>' +
     '</div>';
 }

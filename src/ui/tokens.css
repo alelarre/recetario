@@ -59,6 +59,10 @@
   --r-chico: 4px; --r-medio: 8px; --r-ficha: 12px; --r-foto: 8px;
 }
 
+/* El encabezado fijo tapa 64px arriba: sin esto, `scrollIntoView` deja un
+   aviso justo debajo, tapado. */
+html { scroll-padding-top: 64px; }
+
 * { box-sizing: border-box; }
 
 body {
