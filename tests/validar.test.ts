@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { validarMd, type Problema } from '../src/validar.js';
 
 const CORRECTA = `---
@@ -181,5 +182,56 @@ describe('lo que llega como lo devuelve un agente', () => {
   it('citado con >', () => {
     const citada = CORRECTA.split('\n').map(l => (l ? '> ' + l : '>')).join('\n');
     expect(validarMd(citada).problemas).toEqual([]);
+  });
+});
+
+describe('el nivel de cada problema', () => {
+  const niveles = (md: string): Record<string, string[]> => {
+    const por: Record<string, string[]> = {};
+    for (const p of validarMd(md).problemas) (por[p.campo] ??= []).push(p.nivel);
+    return por;
+  };
+
+  it('error, y no se escribe: sin frontmatter, sin titulo', () => {
+    expect(niveles('# Pan\n')).toEqual({ frontmatter: ['error'], titulo: ['error'] });
+    expect(niveles(conFrontmatter('titulo: Milanesas napolitanas\n', ''))).toEqual({ titulo: ['error'] });
+  });
+
+  it('error: tiempo o dificultad inválidos', () => {
+    expect(niveles(conFrontmatter('tiempo: ~60 min', 'tiempo: 45 minutos'))).toEqual({ tiempo: ['error'] });
+    expect(niveles(conFrontmatter('dificultad: media', 'dificultad: intermedia'))).toEqual({ dificultad: ['error'] });
+  });
+
+  it('error: un tag reservado', () => {
+    expect(niveles(conFrontmatter('tags: [carne, favorito, borrador]', 'tags: [favoritas, terminado]')))
+      .toEqual({ tags: ['error', 'error'] });
+  });
+
+  it('error: una foto:N que no está en el depósito, en la portada o en el texto', () => {
+    const md = CORRECTA.replace(/\n## Fotos[\s\S]*$/, '\n');
+    expect(niveles(md)).toEqual({ foto: ['error'], fotos: ['error'] });
+  });
+
+  it('aviso, y se escribe igual: una clave desconocida', () => {
+    expect(niveles(conFrontmatter('rinde: 4 porciones', 'rinde: 4 porciones\nmaridaje: tinto')))
+      .toEqual({ maridaje: ['aviso'] });
+  });
+
+  it('aviso: un ingrediente con la cantidad adelante', () => {
+    expect(niveles(CORRECTA.replace('- Huevos — 3', '- 4 milanesas'))).toEqual({ ingredientes: ['aviso'] });
+  });
+
+  it('aviso: lo que avisa el parser y no está entre los errores', () => {
+    const ilegible = conFrontmatter('rinde: 4 porciones', 'rinde: 4 porciones\nesto no es clave valor');
+    expect(niveles(ilegible)).toEqual({ frontmatter: ['aviso'] });
+    const duplicada = CORRECTA.replace('## Fotos', '## Preparación\n4. Servir.\n\n## Fotos');
+    expect(niveles(duplicada)).toEqual({ cuerpo: ['aviso'] });
+  });
+
+  it('una receta vieja, escrita antes de las reglas de los ingredientes, sólo tiene avisos', () => {
+    const baba = readFileSync(new URL('./fixtures/baba-ganush.md', import.meta.url), 'utf8');
+    const { problemas } = validarMd(baba);
+    expect(problemas.length).toBeGreaterThan(0);
+    expect(problemas.every(p => p.nivel === 'aviso')).toBe(true);
   });
 });

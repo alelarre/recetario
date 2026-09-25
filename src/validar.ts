@@ -18,10 +18,19 @@ import { resolver, referenciasSinFoto } from './fotos-receta.js';
 import { limpiarRecibido } from './conversion.js';
 import type { Aviso, Receta } from './tipos.js';
 
+/**
+ * `error`: la receta no se escribe, porque se guardaría perdiendo algo o
+ * rompiendo una regla del formato. `aviso`: se escribe igual; es lo que tienen
+ * las recetas escritas antes de las reglas, que tienen que poder corregirse
+ * conservando lo que no se toca.
+ */
+export type Nivel = 'error' | 'aviso';
+
 /** Algo del `.md` que no es del formato: dónde está y qué hacer, en una línea. */
 export interface Problema {
   /** La clave del frontmatter, `frontmatter`, `ingredientes`, `fotos` o `cuerpo`. */
   campo: string;
+  nivel: Nivel;
   mensaje: string;
 }
 
@@ -31,18 +40,22 @@ const lista = (xs: readonly string[]): string => xs.map(x => `\`${x}\``).join(',
 const POR_AVISO: Record<Aviso, Problema> = {
   'sin-frontmatter': {
     campo: 'frontmatter',
+    nivel: 'error',
     mensaje: 'Falta el frontmatter: el .md empieza con `---`, las claves y otro `---`.'
   },
   'frontmatter-ilegible': {
     campo: 'frontmatter',
+    nivel: 'aviso',
     mensaje: 'El frontmatter tiene líneas que no son `clave: valor` ni ítems de `tags`.'
   },
   'sin-titulo': {
     campo: 'titulo',
+    nivel: 'error',
     mensaje: 'Falta `titulo` en el frontmatter, y es obligatoria.'
   },
   'seccion-duplicada': {
     campo: 'cuerpo',
+    nivel: 'aviso',
     mensaje: 'Una sección está repetida: al leerla, la app junta las dos.'
   }
 };
@@ -54,6 +67,7 @@ function problemasDeTags(tags: string[]): Problema[] {
       const especial = tagEspecial(t);
       return {
         campo: 'tags',
+        nivel: 'error' as const,
         mensaje: especial
           ? `El tag \`${t}\` es otra forma de un tag especial: escribirlo \`${especial}\`.`
           : `El tag \`${t}\` está reservado y no se usa.`
@@ -68,6 +82,7 @@ function problemasDeIngredientes(ingredientes: string): Problema[] {
     .filter(i => i.cantidad === null && /^\p{N}/u.test(i.nombre))
     .map(i => ({
       campo: 'ingredientes',
+      nivel: 'aviso' as const,
       mensaje: `El ingrediente «${i.nombre}» no tiene la forma \`- nombre — cantidad\`: la cantidad va después del nombre.`
     }));
 }
@@ -78,12 +93,14 @@ function problemasDeFotos(receta: Receta): Problema[] {
   if (receta.foto !== null && resolver(receta.foto, receta.fotos) === null) {
     problemas.push({
       campo: 'foto',
+      nivel: 'error',
       mensaje: `\`foto: ${receta.foto}\` no está en el depósito de fotos.`
     });
   }
   for (const n of referenciasSinFoto(receta)) {
     problemas.push({
       campo: 'fotos',
+      nivel: 'error',
       mensaje: `La referencia a \`foto:${n}\` no está en el depósito de fotos: al dibujarse, se borra.`
     });
   }
@@ -102,17 +119,19 @@ export function validarMd(md: string): { receta: Receta; problemas: Problema[] }
   if (receta.tiempo !== null && !duracionValida(receta.tiempo)) {
     problemas.push({
       campo: 'tiempo',
+      nivel: 'error',
       mensaje: `\`tiempo: ${receta.tiempo}\` no es uno de sus valores: ${lista(DURACIONES)}.`
     });
   }
   if (receta.dificultad !== null && !dificultadValida(receta.dificultad)) {
     problemas.push({
       campo: 'dificultad',
+      nivel: 'error',
       mensaje: `\`dificultad: ${receta.dificultad}\` no es uno de sus valores: ${lista(DIFICULTADES)}.`
     });
   }
   for (const clave of Object.keys(receta.extras)) {
-    problemas.push({ campo: clave, mensaje: `\`${clave}\` es una clave desconocida del frontmatter.` });
+    problemas.push({ campo: clave, nivel: 'aviso', mensaje: `\`${clave}\` es una clave desconocida del frontmatter.` });
   }
 
   problemas.push(
