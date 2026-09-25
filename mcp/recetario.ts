@@ -13,7 +13,7 @@ import { SIN_CATEGORIA } from '../src/categorias.js';
 import type { IndiceLocal } from '../src/indice-local.js';
 import type { CambiosDeFotos, Entrada, Filtros, FotoDeReceta, Receta } from '../src/tipos.js';
 import { conLogin } from './google.js';
-import { fotosQueSeSuben, portadaCon, type FotoASubir, type FotoPedida } from './fotos-pedidas.js';
+import { fotosQueSeSuben, numerosDeFotos, portadaCon, type FotoASubir, type FotoPedida } from './fotos-pedidas.js';
 import { achicarEnNode, NoSeBajo } from './fotos.js';
 import { ErrorDeLogin } from './errores.js';
 import type { AuthEscritorio } from './auth.js';
@@ -64,10 +64,10 @@ function reglasDelFormatoDelMcp(): string[] {
 
 /** Lo que recibe `buscar`: texto, filtros o las dos cosas. */
 export interface Consulta {
-  texto?: string;
-  categoria?: string;
-  tags?: string[];
-  dificultad?: string;
+  texto?: string | undefined;
+  categoria?: string | undefined;
+  tags?: string[] | undefined;
+  dificultad?: string | undefined;
 }
 
 /** Una receta encontrada y por qué apareció. */
@@ -149,6 +149,12 @@ export function sacarDelDeposito(
   return { quedan, sacadas: [...sacadas.values()], problemas };
 }
 
+/** El número que va a tener una foto pedida en el depósito, y si se sube. */
+export interface NumeroDeFoto extends FotoPedida {
+  n: number;
+  seSube: boolean;
+}
+
 /**
  * La herramienta `validar`: cómo lee la app el `.md` y qué tiene fuera del
  * formato. No necesita el Drive, así que las referencias se validan contra la
@@ -156,10 +162,23 @@ export function sacarDelDeposito(
  * que se van a pedir. `crear` y `guardar` validan contra el depósito que
  * arman ellos.
  */
-function validarConFotos(md: string, fotos: readonly FotoPedida[] = []): { receta: Receta; problemas: Problema[] } {
+function validarConFotos(md: string, fotos: readonly FotoPedida[] = []): {
+  receta: Receta; problemas: Problema[]; fotos: NumeroDeFoto[];
+} {
   const receta = leerRecibido(md);
   const seSuben = fotosQueSeSuben(fotos, receta.fotos, { conBorrador: tieneEspecial(receta, 'borrador') });
-  return { receta, problemas: problemasDe(receta, { fotosPendientes: seSuben.map(s => s.n) }) };
+  const numeros = numerosDeFotos(fotos, receta.fotos);
+  const subidas = new Set(seSuben.map(s => s.n));
+  return {
+    receta,
+    problemas: problemasDe(receta, { fotosPendientes: [...subidas] }),
+    // El agente escribe `foto:N` con estos números; `seSube` en falso es una
+    // `fuente` que no se sube porque la receta no lleva `borrador`.
+    fotos: fotos.map((f, i) => {
+      const n = numeros[i] ?? 0;
+      return { origen: f.origen, uso: f.uso, n, seSube: subidas.has(n) };
+    })
+  };
 }
 
 /**
@@ -366,7 +385,7 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
      * se escribe: en un lote cortado, las anteriores quedan escritas.
      */
     async crear({ md, categoria = '', fotos = [] }: {
-      md: string; categoria?: string; fotos?: readonly FotoPedida[];
+      md: string; categoria?: string | undefined; fotos?: readonly FotoPedida[] | undefined;
     }): Promise<Escritura> {
       await listo();
       const carpetaId = carpetaDeCategoria(categoria, store.categorias());
@@ -387,7 +406,8 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
      * `categoria` ausente no mueve la receta; vacía la pasa a Sin categoría.
      */
     async guardar({ id, md, categoria, fotos = [], sacar = [] }: {
-      id: string; md: string; categoria?: string; fotos?: readonly FotoPedida[]; sacar?: readonly number[];
+      id: string; md: string; categoria?: string | undefined;
+      fotos?: readonly FotoPedida[] | undefined; sacar?: readonly number[] | undefined;
     }): Promise<Escritura> {
       await listo();
       const entrada = entradaDe(id);
@@ -410,7 +430,7 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
      * que el usuario haya visto cuál es. Una receta sin título se confirma con
      * su nombre de archivo: una confirmación vacía no confirma nada.
      */
-    async borrar({ id, confirmacion }: { id: string; confirmacion?: string }): Promise<void> {
+    async borrar({ id, confirmacion }: { id: string; confirmacion?: string | undefined }): Promise<void> {
       await listo();
       const { titulo, nombre_archivo } = entradaDe(id);
       if (!titulo) {

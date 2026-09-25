@@ -326,7 +326,18 @@ describe('las herramientas', () => {
 
   it('validar: lo mismo que validarMd', () => {
     const md = '---\ntitulo: Algo\ntiempo: un rato\n---\n';
-    expect(nuevoRecetario().validar(md)).toEqual(validarMd(md));
+    expect(nuevoRecetario().validar(md)).toEqual({ ...validarMd(md), fotos: [] });
+  });
+
+  it('validar dice el número de cada foto pedida y si se sube, siguiendo al depósito que trae el .md', () => {
+    const md = '---\ntitulo: Tarta\n---\n\n## Fotos\n\n- 3: https://ejemplo.com/3.jpg\n';
+    const fotos = [{ origen: 'libro.jpg', uso: 'fuente' }, { origen: 'plato.jpg', uso: 'plato' }] as const;
+    expect(nuevoRecetario().validar(md, fotos).fotos).toEqual([
+      { origen: 'libro.jpg', uso: 'fuente', n: 4, seSube: false },
+      { origen: 'plato.jpg', uso: 'plato', n: 5, seSube: true }
+    ]);
+    const conBorrador = md.replace('titulo: Tarta\n', 'titulo: Tarta\ntags: [borrador]\n');
+    expect(nuevoRecetario().validar(conBorrador, fotos).fotos.map(f => f.seSube)).toEqual([true, true]);
   });
 });
 

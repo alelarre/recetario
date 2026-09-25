@@ -41,7 +41,39 @@ El refresh token queda en el Llavero de macOS, en el ítem `recetario-mcp`, y
 nunca en un archivo. Para reconectar —otra cuenta, o un permiso vencido— se
 corre `npm run mcp:conectar` de nuevo: reemplaza el token del Llavero.
 
-### Si algo falla
+## Registrarlo
+
+`<repo>` es la ruta absoluta del repo, por ejemplo `/Users/yo/Documents/recetario`.
+El `--silent` es necesario: sin él, `npm` escribe su encabezado por la salida
+estándar, que es el canal del protocolo MCP.
+
+**Claude Code:**
+
+```sh
+claude mcp add recetario -- npm --silent --prefix <repo> run mcp
+```
+
+**Claude Desktop:** sumar el servidor en
+`~/Library/Application Support/Claude/claude_desktop_config.json` y reiniciar
+la app:
+
+```json
+{
+  "mcpServers": {
+    "recetario": {
+      "command": "npm",
+      "args": ["--silent", "--prefix", "<repo>", "run", "mcp"]
+    }
+  }
+}
+```
+
+Si Claude Desktop no encuentra `npm`, poner en `command` la ruta completa que
+da `which npm`.
+
+El skill que usa estas herramientas está en `skills/recetario/SKILL.md`.
+
+## Si algo falla
 
 Los errores de login salen con un código entre corchetes:
 
