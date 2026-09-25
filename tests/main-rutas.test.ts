@@ -663,8 +663,10 @@ describe('main.ts: las rutas', () => {
           return app.innerHTML.includes('data-resultados-plan')
             ? { set innerHTML(html: string) { resultadosPlan.push(html); } } : null;
         }
-        // El spinner del pie de una lista: lo que mira el observador del tramo.
-        if (sel === '#app .spin') return app.innerHTML.includes('class="spin"') ? {} : null;
+        // El spinner del tramo de una lista: lo que mira el observador. El de
+        // *Agregar al plan* está en su bloque, que se redibuja aparte.
+        if (sel === '#app [data-tramo]') return app.innerHTML.includes('data-tramo') ? {} : null;
+        if (sel === '[data-resultados-plan] [data-tramo]') return (resultadosPlan.at(-1) ?? app.innerHTML).includes('data-tramo') ? { plan: true } : null;
         return null;
       },
       querySelectorAll: (sel: string) => {
@@ -1520,6 +1522,34 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).not.toContain('A31');
     } finally {
       storeFake.buscar = original;
+      delete g['IntersectionObserver'];
+    }
+  });
+
+  it('los resultados paginan como la categoría: el tramo siguiente entra al llegar al pie', async () => {
+    const original = storeFake.buscarPorTexto;
+    storeFake.buscarPorTexto = () => ({
+      porNombre: Array.from({ length: 31 }, (_, i) =>
+        entradaFalsa({ id_archivo: `f${i}`, titulo: `A${String(i + 1).padStart(2, '0')}`, categoria: 'Carnes' })),
+      porIngrediente: [], porTag: []
+    });
+    let llegarAlPie = (): void => {};
+    const g = global as unknown as Record<string, unknown>;
+    g['IntersectionObserver'] = class {
+      constructor(fn: (e: { isIntersecting: boolean }[]) => void) { llegarAlPie = () => fn([{ isIntersecting: true }]); }
+      observe(): void {}
+      disconnect(): void {}
+    };
+    try {
+      const { abrir, app } = await montar();
+      await abrir('#/buscar?q=a');
+      expect(app.innerHTML).not.toContain('A31');
+      // El rótulo dice cuántas trajo el grupo, no cuántas se ven.
+      expect(app.innerHTML).toContain('<span>Por nombre</span><span>31</span>');
+      llegarAlPie();
+      await vi.waitFor(() => expect(app.innerHTML).toContain('A31'));
+    } finally {
+      storeFake.buscarPorTexto = original;
       delete g['IntersectionObserver'];
     }
   });
@@ -3060,6 +3090,57 @@ describe('main.ts: las rutas', () => {
         expect(foto.atributos['src']).toBe('blob:d1');
       } finally {
         storeFake.buscarPorTexto = original;
+      }
+    });
+
+    it('la búsqueda es la lista agrupada de los resultados: las favoritas primero en cada grupo', async () => {
+      const original = storeFake.buscarPorTexto;
+      storeFake.buscarPorTexto = (): Coincidencias => ({
+        porNombre: [
+          entradaFalsa({ id_archivo: 'f1', titulo: 'Zapallo', categoria: 'Carnes' }),
+          entradaFalsa({ id_archivo: 'f2', titulo: 'Arroz', categoria: 'Carnes', tags: ['favorito'] })
+        ],
+        porIngrediente: [], porTag: []
+      });
+      try {
+        const { abrir, tipear, resultadosPlan } = await montar();
+        await abrir('#/plan/agregar?dia=1&momento=noche');
+        await tipear('buscar-en-plan', 'a');
+        const bloque = resultadosPlan.at(-1) ?? '';
+        expect(bloque.indexOf('Arroz')).toBeLessThan(bloque.indexOf('Zapallo'));
+      } finally {
+        storeFake.buscarPorTexto = original;
+      }
+    });
+
+    it('la búsqueda pagina, y el tramo siguiente redibuja sólo el bloque mirando el spinner del bloque', async () => {
+      const original = storeFake.buscarPorTexto;
+      storeFake.buscarPorTexto = (): Coincidencias => ({
+        porNombre: Array.from({ length: 31 }, (_, i) =>
+          entradaFalsa({ id_archivo: `f${i}`, titulo: `A${String(i + 1).padStart(2, '0')}`, categoria: 'Carnes' })),
+        porIngrediente: [], porTag: []
+      });
+      let llegarAlPie = (): void => {};
+      const observados: unknown[] = [];
+      const g = global as unknown as Record<string, unknown>;
+      g['IntersectionObserver'] = class {
+        constructor(fn: (e: { isIntersecting: boolean }[]) => void) { llegarAlPie = () => fn([{ isIntersecting: true }]); }
+        observe(el: unknown): void { observados.push(el); }
+        disconnect(): void {}
+      };
+      try {
+        const { abrir, tipear, resultadosPlan, app } = await montar();
+        await abrir('#/plan/agregar?dia=1&momento=noche');
+        await tipear('buscar-en-plan', 'a');
+        expect(resultadosPlan.at(-1)).not.toContain('A31');
+        expect(observados.at(-1)).toEqual({ plan: true });
+        const pantalla = app.innerHTML;
+        llegarAlPie();
+        await vi.waitFor(() => expect(resultadosPlan.at(-1)).toContain('A31'));
+        expect(app.innerHTML).toBe(pantalla);
+      } finally {
+        storeFake.buscarPorTexto = original;
+        delete g['IntersectionObserver'];
       }
     });
 

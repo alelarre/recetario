@@ -7,17 +7,12 @@
  * Lo que sobrevive a un cambio de pantalla no va acá: vive aparte en
  * `main.ts`, cada cosa con el motivo por el que sobrevive.
  */
-import type { Orden } from './catalogo.js';
+import { crearListaControl } from './lista-control.js';
+import type { ListaControl } from './lista-control.js';
 import type { FotosDelPedido } from './compartir.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
 import type { EstadoCompartir } from './ui/compartir.js';
 import type { EstadoVisor } from './ui/visor.js';
-
-/**
- * Cuántas tarjetas dibuja una lista de una vez. El tramo no es una lectura de
- * red —el índice ya está entero en memoria—: es cuántas se dibujan.
- */
-export const TRAMO = 30;
 
 /** El pedido al agente, listo para mandar: el texto y las fotos. */
 export type PedidoAlAgente = { pedido: string; fotos: FotosDelPedido | null };
@@ -41,14 +36,8 @@ export interface EstadoDePantalla {
    * redibujado del editor no las vuelve a sumar.
    */
   compartidasPorLeer: number;
-  /** El filtro por tags de la categoría o la lista por tag. */
-  tagsActivos: string[];
-  /** El filtro por duración de la categoría o la lista por tag. */
-  duracionesActivas: string[];
-  /** El conmutador de las listas. */
-  orden: Orden;
-  /** Cuántas tarjetas de la lista están dibujadas: crece de a un tramo. */
-  visibles: number;
+  /** La lista de recetas de la pantalla: sus filtros, su orden y su tramo. */
+  lista: ListaControl;
   /** Reiniciar el plan pregunta antes: vacía los siete días. */
   confirmandoReinicio: boolean;
   /** Lo escrito en la caja de la pantalla de agregar. Vive acá y no en el DOM: el bloque se redibuja solo. */
@@ -92,10 +81,7 @@ export const estadoNuevo = (): EstadoDePantalla => ({
   editorAbierto: null,
   salidaPendiente: null,
   compartidasPorLeer: 0,
-  tagsActivos: [],
-  duracionesActivas: [],
-  orden: 'alfa',
-  visibles: TRAMO,
+  lista: crearListaControl(),
   confirmandoReinicio: false,
   consultaPlan: '',
   categoriaPlan: null,

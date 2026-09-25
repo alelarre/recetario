@@ -8,10 +8,12 @@
  * tarjetas no llevan a la receta —ni los tiles a la categoría—.
  */
 import { escapar } from './markdown.js';
-import { encabezado, tarjeta, tile } from './componentes.js';
+import { encabezado, tile } from './componentes.js';
 import { ICO } from './iconos.js';
+import { listaAgrupada, listaPlana } from './lista-recetas.js';
 import { tituloDeComida } from '../plan.js';
-import type { Categoria, Coincidencia, Coincidencias, Entrada, Momento } from '../tipos.js';
+import type { ListaAgrupada, ListaPlana } from '../lista-control.js';
+import type { Categoria, Momento } from '../tipos.js';
 
 /** La acción que suma la receta tocada a la comida de la ruta. */
 const ELEGIR = 'elegir-para-el-plan';
@@ -20,86 +22,60 @@ const ELEGIR_CATEGORIA = 'elegir-categoria-plan';
 /** La acción que deja esa categoría y vuelve a Menú diario y la grilla. */
 const VOLVER_CATEGORIAS = 'volver-categorias-plan';
 
-export interface OpcionesBloque {
-  /** Las recetas con el tag `menú diario`, que se muestran sin buscar nada. */
-  menuDiario: Entrada[];
-  consulta: string;
-  grupos: Coincidencias;
-  /** Las 16 categorías, para la grilla que se ofrece sin buscar nada. */
-  categorias: Categoria[];
-  /** La categoría elegida en esa grilla, o ninguna. */
-  categoriaElegida: string | null;
-  /** Las recetas de `categoriaElegida`; vacío si no hay ninguna elegida. */
-  deLaCategoria: Entrada[];
-}
+/**
+ * Lo que va debajo de la caja, que es una de tres cosas: los resultados de lo
+ * escrito, las recetas de una categoría elegida en la grilla, o —sin nada de
+ * eso— el bloque *Menú diario* junto con la grilla de las categorías.
+ */
+export type OpcionesBloque =
+  | { busqueda: { consulta: string; lista: ListaAgrupada } }
+  | { categoria: { nombre: string; lista: ListaPlana } }
+  | { menuDiario: ListaPlana; categorias: Categoria[] };
 
-export interface OpcionesPlanAgregar extends OpcionesBloque {
+export type OpcionesPlanAgregar = OpcionesBloque & {
   dia: number;
   momento: Momento;
-}
-
-const grupo = (rotulo: string, tarjetas: string[]): string =>
-  tarjetas.length
-    ? '<div class="grupo-res">' +
-      `<div class="rot"><span>${rotulo}</span><span>${tarjetas.length}</span></div>` +
-      `<div class="lista">${tarjetas.join('')}</div>` +
-      '</div>'
-    : '';
-
-const conMotivo = (c: Coincidencia): string => tarjeta(c.entrada, { motivo: c.motivo, accion: ELEGIR });
-
-const listaDeRecetas = (entradas: Entrada[]): string =>
-  [...entradas]
-    .sort((a, b) => a.titulo.localeCompare(b.titulo, 'es'))
-    .map(e => tarjeta(e, { accion: ELEGIR }))
-    .join('');
+  /** Lo escrito en la caja. */
+  consulta: string;
+};
 
 /**
- * Lo que va debajo de la caja: los resultados agrupados como en `#/buscar`
- * (C02.3.2), las recetas de una categoría elegida en la grilla, o —sin nada de
- * eso— el bloque *Menú diario* junto con la grilla de las 16 categorías. Se
- * dibuja aparte porque escribir lo reemplaza sin repintar la pantalla, que
+ * Los resultados se agrupan como en `#/buscar` (C02.3.2), con la misma lista.
+ * Se dibuja aparte porque escribir lo reemplaza sin repintar la pantalla, que
  * perdería el foco del teclado.
  */
-export function bloqueDeAgregar(
-  { menuDiario, consulta, grupos, categorias, categoriaElegida, deLaCategoria }: OpcionesBloque
-): string {
-  if (consulta.trim()) {
-    const cuerpo =
-      grupo('Por nombre', grupos.porNombre.map(e => tarjeta(e, { accion: ELEGIR }))) +
-      grupo('Por ingrediente', grupos.porIngrediente.map(conMotivo)) +
-      grupo('Por tag', grupos.porTag.map(conMotivo));
-    return cuerpo ||
-      `<div class="vacio">Ninguna receta se llama, lleva ni tiene <b>${escapar(consulta)}</b>.</div>`;
-  }
-  if (categoriaElegida) {
-    const lista = listaDeRecetas(deLaCategoria);
+export function bloqueDeAgregar(bloque: OpcionesBloque): string {
+  if ('busqueda' in bloque) return listaAgrupada({ ...bloque.busqueda, accion: ELEGIR });
+  if ('categoria' in bloque) {
+    const { nombre, lista } = bloque.categoria;
     return '<div class="rot-cat">' +
       `<button type="button" class="ico" data-accion="${VOLVER_CATEGORIAS}" aria-label="Volver a las categorías">${ICO.volver}</button>` +
-      `<span>${escapar(categoriaElegida)}</span>` +
+      `<span>${escapar(nombre)}</span>` +
     '</div>' +
-    (lista
-      ? `<div class="lista">${lista}</div>`
-      : `<div class="vacio">Todavía no hay recetas en <b>${escapar(categoriaElegida)}</b>.</div>`);
+    listaPlana({
+      lista, tarjeta: { accion: ELEGIR },
+      vacio: `<div class="vacio">Todavía no hay recetas en <b>${escapar(nombre)}</b>.</div>`
+    });
   }
-  const menu = menuDiario.length
-    ? `<div class="grupo-res"><div class="rot">Menú diario</div><div class="lista">${listaDeRecetas(menuDiario)}</div></div>`
+  const menu = bloque.menuDiario.entradas.length
+    ? `<div class="grupo-res"><div class="rot">Menú diario</div>${listaPlana({ lista: bloque.menuDiario, tarjeta: { accion: ELEGIR }, vacio: '' })}</div>`
     : '';
-  const grilla = [...categorias]
+  const grilla = [...bloque.categorias]
     .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
     .map(c => tile(c.nombre, { accion: ELEGIR_CATEGORIA }))
     .join('');
   return menu + `<div class="grupo-res"><div class="rot">Categorías</div><div class="grilla">${grilla}</div></div>`;
 }
 
-export function renderPlanAgregar({ dia, momento, ...bloque }: OpcionesPlanAgregar): string {
+export function renderPlanAgregar(opciones: OpcionesPlanAgregar): string {
+  const { dia, momento, consulta } = opciones;
   return encabezado({ titulo: tituloDeComida(dia, momento), volver: true }) +
     '<div class="cuerpo denso">' +
       // La misma caja del Recetario, con su propia acción: acá escribir filtra
       // en esta pantalla y no navega a los resultados.
       `<div class="buscar">${ICO.buscar}` +
-        `<input data-accion="buscar-en-plan" value="${escapar(bloque.consulta)}" placeholder="Buscar receta o ingrediente">` +
+        `<input data-accion="buscar-en-plan" value="${escapar(consulta)}" placeholder="Buscar receta o ingrediente">` +
       '</div>' +
-      `<div data-resultados-plan>${bloqueDeAgregar(bloque)}</div>` +
+      `<div data-resultados-plan>${bloqueDeAgregar(opciones)}</div>` +
     '</div>';
 }

@@ -1,18 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { listaPlana, listaAgrupada } from '../src/ui/lista-recetas.js';
-import type { ListaAgrupada, ListaPlana } from '../src/lista-control.js';
 import { vacio } from '../src/ui/componentes.js';
-import { entradaFalsa } from './dobles.js';
+import { entradaFalsa, listaPlanaFalsa as plana, listaAgrupadaFalsa as agrupada } from './dobles.js';
 
 const e = (titulo: string, extra: Parameters<typeof entradaFalsa>[0] = {}) =>
   entradaFalsa({ id_archivo: titulo, titulo, ...extra });
 
-const plana = (parcial: Partial<ListaPlana> = {}): ListaPlana => ({
-  entradas: [], total: 0, hayMas: false, duraciones: [], duracionesActivas: [], orden: null, ...parcial
-});
-const agrupada = (parcial: Partial<ListaAgrupada> = {}): ListaAgrupada => ({
-  grupos: [], total: 0, hayMas: false, orden: null, ...parcial
-});
 
 describe('lista-recetas — la lista plana', () => {
   it('dibuja las tarjetas en el orden en que llegan', () => {

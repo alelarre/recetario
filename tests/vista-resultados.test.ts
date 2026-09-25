@@ -1,19 +1,23 @@
 import { describe, it, expect } from 'vitest';
 import { renderResultados } from '../src/ui/resultados.js';
+import { crearListaControl } from '../src/lista-control.js';
 import { entradaFalsa } from './dobles.js';
+import type { Coincidencias } from '../src/tipos.js';
 
 const sinNada = { porNombre: [], porIngrediente: [], porTag: [] };
+/** La lista como la arma la pantalla: por el controlador, que ordena y corta. */
+const lista = (grupos: Coincidencias) => crearListaControl().agrupada(grupos);
 
 describe('Resultados', () => {
   it('un grupo sin resultados no se dibuja', () => {
-    const html = renderResultados({ consulta: 'merluza', grupos: { ...sinNada, porNombre: [entradaFalsa()] } });
+    const html = renderResultados({ consulta: 'merluza', lista: lista({ ...sinNada, porNombre: [entradaFalsa()] }) });
     expect(html).toContain('Por nombre');
     expect(html).not.toContain('Por ingrediente');
   });
 
   it('cada grupo dice cuántos resultados trajo', () => {
     const html = renderResultados({
-      consulta: 'x', grupos: { ...sinNada, porNombre: [entradaFalsa(), entradaFalsa()] }
+      consulta: 'x', lista: lista({ ...sinNada, porNombre: [entradaFalsa({ id_archivo: 'a' }), entradaFalsa({ id_archivo: 'b' })] })
     });
     expect(html).toContain('>2<');
   });
@@ -21,11 +25,11 @@ describe('Resultados', () => {
   it('los tres criterios se dibujan por separado, con su motivo', () => {
     const html = renderResultados({
       consulta: 'merluza',
-      grupos: {
+      lista: lista({
         porNombre: [entradaFalsa({ titulo: 'Filet de merluza' })],
         porIngrediente: [{ entrada: entradaFalsa({ titulo: 'Gratin' }), motivo: 'tiene Merluza o pescadilla' }],
         porTag: [{ entrada: entradaFalsa({ titulo: 'Caballa' }), motivo: 'tiene tag merluza' }]
-      }
+      })
     });
     expect(html).toContain('Por nombre');
     expect(html).toContain('tiene Merluza o pescadilla');
@@ -33,66 +37,39 @@ describe('Resultados', () => {
   });
 
   it('la caja lleva la lupa, y dice Buscar cuando está vacía', () => {
-    const html = renderResultados({ consulta: '', grupos: sinNada });
+    const html = renderResultados({ consulta: '', lista: lista(sinNada) });
     expect(html).toContain('class="buscar"');
     expect(html).toContain('placeholder="Buscar"');
     expect(html).toContain('<circle cx="11" cy="11" r="7"/>');
   });
 
   it('la caja del encabezado trae lo buscado, para corregirlo sin volver', () => {
-    expect(renderResultados({ consulta: 'berenjena', grupos: { ...sinNada, porNombre: [entradaFalsa()] } }))
+    expect(renderResultados({ consulta: 'berenjena', lista: lista({ ...sinNada, porNombre: [entradaFalsa()] }) }))
       .toContain('value="berenjena"');
   });
 
   it('sin resultados, una frase y nada más', () => {
-    const html = renderResultados({ consulta: 'berenjena', grupos: sinNada });
-    expect(html).toContain('berenjena');
+    const html = renderResultados({ consulta: 'berenjena', lista: lista(sinNada) });
+    expect(html).toContain('Ninguna receta se llama, lleva ni tiene <b>berenjena</b>.');
     expect(html).not.toContain('quisiste decir');
     expect(html).not.toContain('<img');
+    expect(html).not.toContain('class="cuerpo');
   });
 
   it('escapa lo buscado', () => {
-    expect(renderResultados({ consulta: '"><script>', grupos: sinNada })).not.toContain('<script>');
-  });
-
-  it('cada subsección ordena sus favoritas primero, sin mezclarse entre subsecciones', () => {
-    const e = (titulo: string, tags: string[] = []) => entradaFalsa({ titulo, tags });
-    const html = renderResultados({
-      consulta: 'x',
-      grupos: {
-        porNombre: [e('Zapallo'), e('Arroz', ['favorito'])],
-        porIngrediente: [{ entrada: e('Budín'), motivo: 'Lleva huevo' }],
-        porTag: []
-      }
-    });
-    expect(html.indexOf('Arroz')).toBeLessThan(html.indexOf('Zapallo'));
-    // La favorita del primer grupo no se sube al grupo de arriba de todo.
-    expect(html.indexOf('Por nombre')).toBeLessThan(html.indexOf('Arroz'));
+    expect(renderResultados({ consulta: '"><script>', lista: lista(sinNada) })).not.toContain('<script>');
   });
 
   const e = (id: string, titulo: string, tiempo: string) => entradaFalsa({ id_archivo: id, titulo, tiempo });
 
   it('con alguna duración, el conmutador va arriba de los grupos', () => {
-    const html = renderResultados({ consulta: 'horno', grupos: { porNombre: [e('1', 'Besugo al horno', '~60 min')], porIngrediente: [], porTag: [] } });
+    const html = renderResultados({ consulta: 'horno', lista: lista({ ...sinNada, porNombre: [e('1', 'Besugo al horno', '~60 min')] }) });
     expect(html).toContain('data-accion="ordenar"');
     expect(html.indexOf('data-accion="ordenar"')).toBeLessThan(html.indexOf('grupo-res'));
   });
 
   it('sin ninguna duración, no hay conmutador', () => {
-    const html = renderResultados({ consulta: 'horno', grupos: { porNombre: [e('1', 'Besugo', '')], porIngrediente: [], porTag: [] } });
+    const html = renderResultados({ consulta: 'horno', lista: lista({ ...sinNada, porNombre: [e('1', 'Besugo', '')] }) });
     expect(html).not.toContain('data-accion="ordenar"');
-  });
-
-  it('ordena por duración dentro de cada grupo, sin mezclarlos', () => {
-    const html = renderResultados({
-      consulta: 'horno', orden: 'duracion',
-      grupos: {
-        porNombre: [e('1', 'Besugo al horno', '>60 min'), e('2', 'Pollo al horno', '~30 min')],
-        porIngrediente: [],
-        porTag: [{ entrada: e('3', 'Arroz', '~15 min'), motivo: 'tiene tag horno' }]
-      }
-    });
-    expect(html.indexOf('Pollo al horno')).toBeLessThan(html.indexOf('Besugo al horno'));
-    expect(html.indexOf('Besugo al horno')).toBeLessThan(html.indexOf('Arroz'));
   });
 });

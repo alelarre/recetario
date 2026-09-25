@@ -8,6 +8,7 @@ import type { Entrada, Receta } from '../src/tipos.js';
 import { parse } from '../src/recipe.js';
 import type { DriveDelStore, ImagenesDelStore, SheetsDelStore } from '../src/store.js';
 import type { CopiaIndice, IndiceLocal } from '../src/indice-local.js';
+import type { ListaAgrupada, ListaPlana } from '../src/lista-control.js';
 
 const MIME_CARPETA = 'application/vnd.google-apps.folder';
 
@@ -345,3 +346,14 @@ export function entradaFalsa(parcial: Partial<Entrada> = {}): Entrada {
 export function recetaFalsa(parcial: Partial<Receta> = {}): Receta {
   return { ...parse(''), ...parcial };
 }
+
+/** Una lista plana ya armada, como la entrega `lista-control`: sin filtros ni conmutador salvo que se pidan. */
+export const listaPlanaFalsa = (parcial: Partial<ListaPlana> = {}): ListaPlana => ({
+  entradas: [], total: parcial.entradas?.length ?? 0, hayMas: false, duraciones: [], duracionesActivas: [], orden: null,
+  ...parcial
+});
+
+/** Una lista agrupada ya armada, como la entrega `lista-control`. */
+export const listaAgrupadaFalsa = (parcial: Partial<ListaAgrupada> = {}): ListaAgrupada => ({
+  grupos: [], total: 0, hayMas: false, orden: null, ...parcial
+});

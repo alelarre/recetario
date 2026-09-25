@@ -1,61 +1,32 @@
 /**
  * La lista de una categoría (mockup 04).
  *
- * `total` y `visibles` son distintos a propósito: el encabezado dice el total
- * real desde el primer momento aunque la lista todavía esté dibujando su
- * primer tramo, así que el número no cambia debajo de la mano mientras se
- * scrollea (C02.5.2). El spinner del final no es una espera de red —el índice
- * ya está en memoria— sino la señal de que hay más tramo.
+ * El encabezado dice el total real desde el primer momento, aunque la lista
+ * todavía esté dibujando su primer tramo: el número no cambia debajo de la
+ * mano mientras se scrollea (C02.5.2).
  */
-import { encabezado, tarjeta, vacio, SPINNER, carruselTags, filaDuraciones, conmutadorOrden } from './componentes.js';
-import { ordenarRecetas } from '../catalogo.js';
-import type { Entrada } from '../tipos.js';
-import type { Duracion, Orden } from '../catalogo.js';
+import { encabezado, vacio } from './componentes.js';
+import { listaPlana } from './lista-recetas.js';
+import type { ListaPlana } from '../lista-control.js';
 
 export interface OpcionesCategoria {
   nombre: string;
-  /** Las que se dibujan, ya cortadas al tramo. */
-  entradas: Entrada[];
-  /** Cuántas tiene la categoría con el filtro puesto. */
-  total: number;
-  visibles: number;
-  tagsActivos: string[];
+  /** Lo que arma `lista-control`: filtrada, ordenada y cortada al tramo. */
+  lista: ListaPlana;
+  tagsActivos: readonly string[];
   /** Los tags de la categoría, ya ordenados por cantidad. */
   tags: { tag: string; cantidad: number }[];
-  /** Cuántas recetas hay con cada duración, sobre el filtro de tags. */
-  duraciones: { valor: Duracion; cantidad: number }[];
-  duracionesActivas: string[];
-  orden: Orden;
 }
 
-export function renderCategoria(
-  { nombre, entradas, total, visibles, tagsActivos, tags, duraciones, duracionesActivas, orden }: OpcionesCategoria
-): string {
-  const activos = Array.isArray(tagsActivos) ? tagsActivos : [];
+export function renderCategoria({ nombre, lista, tagsActivos, tags }: OpcionesCategoria): string {
+  const hayFiltros = tagsActivos.length > 0 || lista.duracionesActivas.length > 0;
+  const siVacia = vacio(!hayFiltros
+    ? `Todavía no hay nada acá. Entran con Nueva receta, compartiendo desde otra app, ` +
+      `o como archivos .md en la carpeta ${nombre} de Drive.`
+    : lista.duracionesActivas.length
+      ? 'Ninguna receta con esos filtros. Probá sacando alguno de los filtros de arriba.'
+      : 'Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba.');
 
-  // Los tags puestos se ven encendidos en el carrusel mismo, y se sacan
-  // tocándolos de nuevo: no hay una fila aparte de filtros activos.
-  const filtros = carruselTags(tags, { activos });
-
-  // La fila de duraciones y el conmutador de orden sólo existen si hay algo
-  // que filtrar u ordenar: una duración con recetas, o encendida.
-  const hayDuraciones = duraciones.length > 0 || duracionesActivas.length > 0;
-  const filtroDuracion = filaDuraciones(duraciones, duracionesActivas);
-  const conmutador = hayDuraciones ? conmutadorOrden(orden) : '';
-
-  // Las favoritas primero, o por duración si se eligió ese orden.
-  const lista = ordenarRecetas(entradas, orden).map(e => tarjeta(e)).join('');
-
-  const hayFiltros = activos.length > 0 || duracionesActivas.length > 0;
-  const cuerpo = lista
-    ? `<div class="lista">${lista}</div>` + (visibles < total ? SPINNER : '')
-    : vacio(!hayFiltros
-        ? `Todavía no hay nada acá. Entran con Nueva receta, compartiendo desde otra app, ` +
-          `o como archivos .md en la carpeta ${nombre} de Drive.`
-        : duracionesActivas.length
-          ? 'Ninguna receta con esos filtros. Probá sacando alguno de los filtros de arriba.'
-          : 'Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba.');
-
-  return encabezado({ titulo: nombre, volver: true, total }) +
-    `<div class="cuerpo denso">${filtros}${filtroDuracion}${conmutador}${cuerpo}</div>`;
+  return encabezado({ titulo: nombre, volver: true, total: lista.total }) +
+    `<div class="cuerpo denso">${listaPlana({ lista, carrusel: { tags, activos: tagsActivos }, vacio: siVacia })}</div>`;
 }

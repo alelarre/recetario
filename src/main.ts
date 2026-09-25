@@ -4,8 +4,7 @@ import { crearSheets, ErrorDeSheets } from './sheets.js';
 import { crearStore, conConcurrencia, TOPE_LECTURAS } from './store.js';
 import * as indiceLocal from './indice-local.js';
 import { parse, slugArchivo } from './recipe.js';
-import { tagReservado, conEspecial, esFavorita, tieneEspecial, contarDuraciones, filtrarPorDuracion, ordenarRecetas, tieneAlgoCargado } from './catalogo.js';
-import type { Orden } from './catalogo.js';
+import { tagReservado, conEspecial, esFavorita, tieneEspecial, tieneAlgoCargado } from './catalogo.js';
 import { sePuedeTerminar } from './recipe.js';
 import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado, MENU, esDelMenu } from './ui/router.js';
 import { renderRecetario } from './ui/recetario.js';
@@ -21,6 +20,7 @@ import {
 } from './ui/editor.js';
 import { renderPlan } from './ui/plan.js';
 import { renderPlanAgregar, bloqueDeAgregar } from './ui/plan-agregar.js';
+import type { OpcionesBloque } from './ui/plan-agregar.js';
 import { renderCompras } from './ui/compras.js';
 import { diaDeHoy } from './plan.js';
 import { listaDeCompras, textoCompras } from './compras.js';
@@ -61,7 +61,8 @@ import { desdeCompartido, tituloPorDefecto } from './compartido.js';
 import { codificar, urlDeLink } from './link-receta.js';
 import { textoReceta } from './texto-receta.js';
 import type { Ruta, Vista } from './ui/router.js';
-import { estadoNuevo, TRAMO } from './estado-pantalla.js';
+import { estadoNuevo } from './estado-pantalla.js';
+import { accionesDeLista } from './lista-control.js';
 import type { EstadoDePantalla, PedidoAlAgente } from './estado-pantalla.js';
 import { achicar } from './fotos.js';
 import type { OpcionesAchicar } from './fotos.js';
@@ -159,8 +160,6 @@ let vistaActual: Ruta | null = null;
 const idActual = (): string => vistaActual?.params['id'] ?? '';
 /** Lo que es de la pantalla que se mira. Cambiar de pantalla lo reemplaza entero. */
 let estadoDePantalla: EstadoDePantalla = estadoNuevo();
-
-let observadorTramo: IntersectionObserver | null = null;
 
 /**
  * Las carpetas que la pantalla de la carpeta base ofrece. Vienen del arranque y
@@ -336,6 +335,12 @@ const delMenuDiario = (): Entrada[] =>
  */
 const delaCategoria = (nombre: string): Entrada[] =>
   store.entradas().filter(e => e.categoria === nombre && !tieneEspecial(e, 'borrador'));
+
+/** Deja la categoría elegida en *Agregar al plan*: lo que se lista cambia, y vuelve al primer tramo. */
+function dejarCategoriaDelPlan(): void {
+  estadoDePantalla.categoriaPlan = null;
+  estadoDePantalla.lista.primerTramo();
+}
 
 /**
  * La lista de compras del plan. Las recetas se leen de Drive al entrar, una por
@@ -643,33 +648,31 @@ function observarTitulo(): void {
   observadorTitulo.observe(grande);
 }
 
+/** El tramo siguiente de la lista de la pantalla entera se dibuja redibujándola. */
+const observarLista = (): void => { estadoDePantalla.lista.observar('#app', () => render()); };
+
 /**
- * El tramo siguiente se dibuja cuando el spinner del final entra en pantalla.
- * `IntersectionObserver` no existe en Node, donde corren los tests: se
- * pregunta antes, igual que el resto del código hace con `navigator`.
+ * Lo que va debajo de la caja de *Agregar al plan*: los resultados de lo
+ * escrito, las recetas de la categoría elegida, o el Menú diario con la grilla.
  */
-function observarTramo(): void {
-  observadorTramo?.disconnect();
-  observadorTramo = null;
-  if (typeof IntersectionObserver === 'undefined') return;
-  const spin = document.querySelector('#app .spin');
-  if (!spin) return;
-  observadorTramo = new IntersectionObserver(entradas => {
-    if (!entradas.some(e => e.isIntersecting)) return;
-    estadoDePantalla.visibles += TRAMO;
-    void render();
-  });
-  observadorTramo.observe(spin);
+function bloqueDelPlan(): OpcionesBloque {
+  const { lista, consultaPlan, categoriaPlan } = estadoDePantalla;
+  if (consultaPlan.trim()) {
+    return { busqueda: { consulta: consultaPlan, lista: lista.agrupada(store.buscarPorTexto(consultaPlan)) } };
+  }
+  if (categoriaPlan) return { categoria: { nombre: categoriaPlan, lista: lista.plana(delaCategoria(categoriaPlan), { filtros: false }) } };
+  return { menuDiario: lista.plana(delMenuDiario(), { filtros: false }), categorias: store.categorias() };
 }
 
 /**
- * La lista que dibujan la categoría y la lista por tag: filtrada por duración y
- * ordenada. Sin fila de duraciones no hay conmutador para volver a A–Z, así que
- * ahí el orden por duración se ignora en vez de quedar pegado sin control.
+ * Redibuja sólo el bloque de *Agregar al plan*: repintar la pantalla entera
+ * perdería el foco del teclado. El tramo siguiente se dibuja por acá también.
  */
-function listaOrdenada(porTags: Entrada[]): { entradas: Entrada[]; ordenEfectivo: Orden } {
-  const ordenEfectivo: Orden = contarDuraciones(porTags).length || estadoDePantalla.duracionesActivas.length ? estadoDePantalla.orden : 'alfa';
-  return { entradas: ordenarRecetas(filtrarPorDuracion(porTags, estadoDePantalla.duracionesActivas), ordenEfectivo), ordenEfectivo };
+function pintarBloqueDelPlan(): void {
+  const bloque = document.querySelector('[data-resultados-plan]');
+  if (!bloque) return;
+  pintarParte(bloque, bloqueDeAgregar(bloqueDelPlan()));
+  estadoDePantalla.lista.observar('[data-resultados-plan]', pintarBloqueDelPlan);
 }
 
 /** La misma pantalla: la misma vista con los mismos parámetros, todos. */
@@ -738,6 +741,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
   // se entra a otra categoría y no se ve nada porque quedó filtrando por un
   // tag que ahí no existe, sin forma de darse cuenta.
   if (cambiaDePantalla) {
+    estadoDePantalla.lista.soltar();
     estadoDePantalla = {
       ...estadoNuevo(),
       compartidasPorLeer: ruta.vista === 'nueva' ? Number(ruta.params['fotos'] ?? 0) || 0 : 0,
@@ -782,14 +786,12 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
 
     case 'categoria': {
       const nombre = ruta.params['nombre'] ?? '';
-      const porTags = store.buscar({ categoria: nombre, tags: estadoDePantalla.tagsActivos });
-      const { entradas, ordenEfectivo } = listaOrdenada(porTags);
+      const { lista } = estadoDePantalla;
       pintar(renderCategoria({
-        nombre, entradas: entradas.slice(0, estadoDePantalla.visibles), total: entradas.length,
-        visibles: Math.min(estadoDePantalla.visibles, entradas.length), tagsActivos: estadoDePantalla.tagsActivos, tags: store.tagsDe(nombre),
-        duraciones: contarDuraciones(porTags), duracionesActivas: estadoDePantalla.duracionesActivas, orden: ordenEfectivo
+        nombre, lista: lista.plana(store.buscar({ categoria: nombre, tags: [...lista.tagsActivos] })),
+        tagsActivos: lista.tagsActivos, tags: store.tagsDe(nombre)
       }));
-      return observarTramo();
+      return observarLista();
     }
 
     case 'tag':
@@ -799,21 +801,19 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       // Borradores es la misma lista con `borrador`, como destino del menú.
       const esBorradores = ruta.vista === 'borradores';
       const nombre = esBorradores ? 'borrador' : ruta.params['nombre'] ?? '';
-      const activos = estadoDePantalla.tagsActivos.includes(nombre) ? estadoDePantalla.tagsActivos : [nombre, ...estadoDePantalla.tagsActivos];
-      const porTags = store.buscar({ tags: activos });
-      const { entradas, ordenEfectivo } = listaOrdenada(porTags);
+      const { lista } = estadoDePantalla;
+      const activos = lista.tagsActivos.includes(nombre) ? [...lista.tagsActivos] : [nombre, ...lista.tagsActivos];
       pintar(renderTag({
-        tag: nombre, entradas: entradas.slice(0, estadoDePantalla.visibles), total: entradas.length,
-        visibles: Math.min(estadoDePantalla.visibles, entradas.length), tagsActivos: activos, tags: store.tagsDe(),
-        duraciones: contarDuraciones(porTags), duracionesActivas: estadoDePantalla.duracionesActivas, orden: ordenEfectivo,
+        tag: nombre, lista: lista.plana(store.buscar({ tags: activos })), tagsActivos: activos, tags: store.tagsDe(),
         ...(esBorradores ? { titulo: 'Borradores', borradores: true } : {}), ...menuDe(ruta.vista)
       }));
-      return observarTramo();
+      return observarLista();
     }
 
     case 'resultados': {
       const q = ruta.params['q'] ?? '';
-      return pintar(renderResultados({ consulta: q, grupos: store.buscarPorTexto(q), orden: estadoDePantalla.orden }));
+      pintar(renderResultados({ consulta: q, lista: estadoDePantalla.lista.agrupada(store.buscarPorTexto(q)) }));
+      return observarLista();
     }
 
     case 'receta':
@@ -897,13 +897,12 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
     case 'plan-agregar':
       // El día y el momento ya vienen validados por el router: sin una comida
       // a la que sumar, la ruta cae en el plan.
-      return pintar(renderPlanAgregar({
+      pintar(renderPlanAgregar({
         dia: Number(ruta.params['dia'] ?? 0),
         momento: (ruta.params['momento'] ?? 'noche') as Momento,
-        menuDiario: delMenuDiario(), categorias: store.categorias(),
-        categoriaElegida: estadoDePantalla.categoriaPlan, deLaCategoria: estadoDePantalla.categoriaPlan ? delaCategoria(estadoDePantalla.categoriaPlan) : [],
-        consulta: estadoDePantalla.consultaPlan, grupos: store.buscarPorTexto(estadoDePantalla.consultaPlan)
+        consulta: estadoDePantalla.consultaPlan, ...bloqueDelPlan()
       }));
+      return estadoDePantalla.lista.observar('[data-resultados-plan]', pintarBloqueDelPlan);
 
     case 'plan-compras':
       try {
@@ -1696,7 +1695,7 @@ const CIERRE_DE_CAPA: Record<string, () => unknown> = {
   visor: () => sacarVisor(),
   compartir: () => sacarCompartir(),
   'ficha-foto': () => { quitarFichaFoto(); acomodarBotonDeFoto(); },
-  'categoria-plan': () => { estadoDePantalla.categoriaPlan = null; return render(); }
+  'categoria-plan': () => { dejarCategoriaDelPlan(); return render(); }
 };
 nav.alCerrarCapa(capa => { void CIERRE_DE_CAPA[capa]?.(); });
 window.addEventListener('popstate', () => { nav.alPopstate(); });
@@ -1729,32 +1728,12 @@ const accionesDelMenu: SeccionDeAcciones = {
   'cerrar-menu': () => ponerMenu(false)
 };
 
-/**
- * Los filtros y el orden de una lista de recetas. El chip de un tag no lleva
- * `data-accion` sino `data-tag`: lo atiende `tocarTag`.
- */
-const accionesDeLista: SeccionDeAcciones = {
-  'filtrar-duracion': (boton) => {
-    const valor = boton.dataset['valor'] ?? '';
-    estadoDePantalla.duracionesActivas = estadoDePantalla.duracionesActivas.includes(valor)
-      ? estadoDePantalla.duracionesActivas.filter(d => d !== valor) : [...estadoDePantalla.duracionesActivas, valor];
-    estadoDePantalla.visibles = TRAMO;
-    return render();
-  },
-  ordenar: (boton) => {
-    estadoDePantalla.orden = boton.dataset['valor'] === 'duracion' ? 'duracion' : 'alfa';
-    estadoDePantalla.visibles = TRAMO;
-    return render();
-  }
-};
-
 /** Tocar el chip de un tag: filtra la lista, o desde el Recetario lleva a la lista por tag. */
 function tocarTag(tag: string): Promise<void> | undefined {
   // Desde el Recetario el carrusel no filtra nada ahí mismo: navega a la
   // lista por tag, que es donde ese chip tiene algo que mostrar.
   if (vistaActual?.vista === 'recetario') { nav.ir(`#/t/${encodeURIComponent(tag)}`); return; }
-  estadoDePantalla.tagsActivos = estadoDePantalla.tagsActivos.includes(tag) ? estadoDePantalla.tagsActivos.filter(t => t !== tag) : [...estadoDePantalla.tagsActivos, tag];
-  estadoDePantalla.visibles = TRAMO;
+  estadoDePantalla.lista.alternarTag(tag);
   return render();
 }
 
@@ -1887,12 +1866,13 @@ const accionesDelPlan: SeccionDeAcciones = {
   // de la pantalla, y el chevron hace lo mismo.
   'elegir-categoria-plan': (boton) => {
     estadoDePantalla.categoriaPlan = boton.dataset['nombre'] ?? '';
+    estadoDePantalla.lista.primerTramo();
     nav.abrirCapa('categoria-plan');
     return render();
   },
   'volver-categorias-plan': () => {
     nav.cerrarCapa('categoria-plan');
-    estadoDePantalla.categoriaPlan = null;
+    dejarCategoriaDelPlan();
     return render();
   },
   'elegir-para-el-plan': async (boton) => {
@@ -2389,7 +2369,7 @@ const accionesDeAjustes: SeccionDeAcciones = {
 const acciones = registrarAcciones({
   navegacion: accionesDeNavegacion,
   menu: accionesDelMenu,
-  lista: accionesDeLista,
+  lista: accionesDeLista(() => estadoDePantalla.lista, () => render()),
   fotos: accionesDeFotos,
   visor: accionesDelVisor,
   carrusel: accionesDelCarrusel,
@@ -2439,17 +2419,9 @@ app.addEventListener('input', (e) => {
     estadoDePantalla.consultaPlan = caja.value;
     // Escribir es dejar la categoría elegida: son dos formas de filtrar y no
     // conviven en el mismo bloque.
-    estadoDePantalla.categoriaPlan = null;
+    dejarCategoriaDelPlan();
     nav.cerrarCapa('categoria-plan');
-    const bloque = document.querySelector('[data-resultados-plan]');
-    if (bloque) {
-      pintarParte(bloque, bloqueDeAgregar({
-        menuDiario: delMenuDiario(), categorias: store.categorias(),
-        categoriaElegida: null, deLaCategoria: [],
-        consulta: estadoDePantalla.consultaPlan, grupos: store.buscarPorTexto(estadoDePantalla.consultaPlan)
-      }));
-    }
-    return;
+    return pintarBloqueDelPlan();
   }
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria();
   // En el editor, cada tecla puede habilitar o bloquear el botón de

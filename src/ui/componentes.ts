@@ -268,7 +268,7 @@ export function carrusel(contenido: string, { etiquetaIzq, etiquetaDer, clase }:
 }
 
 export interface OpcionesCarrusel {
-  activos?: string[];
+  activos?: readonly string[];
   /** Cuántos tags comunes entran. Los especiales no cuentan y van siempre. */
   tope?: number;
   /** El tag de la ruta en la lista por tag: va encendido pero no es tocable. */
