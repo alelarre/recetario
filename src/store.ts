@@ -849,9 +849,10 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     // Por nombre y no un conteo: un archivo que se salteó hay que poder
     // encontrarlo en Drive.
     const ignorados: string[] = [];
-    // Una receta de `_sin-categoria/` es siempre borrador; sin el tag, la
-    // escribieron afuera. Se avisa por nombre y se deja como está: ponerle el
-    // tag o elegirle categoría lo decide el usuario, desde el editor.
+    // Una receta suelta —en la carpeta base o en `_sin-categoria/`— es
+    // siempre borrador; sin el tag, la escribieron afuera. Se avisa por nombre
+    // y se deja como está: ponerle el tag o elegirle categoría lo decide el
+    // usuario, desde el editor.
     const sinBorrador: string[] = [];
     let leidas = 0;
     // Leer y parsear van separados: las lecturas se solapan, pero las filas se
@@ -867,7 +868,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     for (const [i, { archivo, lugar }] of pendientes.entries()) {
       const receta = parse(textos[i] ?? '');
       if (!receta.titulo) { ignorados.push(archivo.name ?? archivo.id); continue; }
-      if (lugar.id === ctx.sinCategoriaId && !tieneEspecial(receta, 'borrador')) {
+      if (sueltaSinBorrador(lugar.id, receta)) {
         sinBorrador.push(archivo.name ?? archivo.id);
       }
       nuevas.push(filaDesde(receta, {
@@ -910,13 +911,20 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   }
 
   /**
-   * Lo que se lista: todo menos una receta de `_sin-categoria/` sin el tag
-   * `borrador`. Esa la escribieron afuera y no es receta ni borrador; hasta que
-   * el usuario la acomode, sólo la nombra el aviso del reindexado en Ajustes.
+   * Una receta suelta —en la carpeta base o en `_sin-categoria/`— sin el tag
+   * `borrador`: la escribieron afuera y no es receta ni borrador.
+   */
+  function sueltaSinBorrador(carpeta: string, receta: { tags: string[] }): boolean {
+    const suelta = carpeta === ctx.raizId || (!!ctx.sinCategoriaId && carpeta === ctx.sinCategoriaId);
+    return suelta && !tieneEspecial(receta, 'borrador');
+  }
+
+  /**
+   * Lo que se lista: todo menos una suelta sin `borrador`. Hasta que el
+   * usuario la acomode, sólo la nombra el aviso del reindexado en Ajustes.
    */
   function listables(): Entrada[] {
-    if (!ctx.sinCategoriaId) return entradas;
-    return entradas.filter(e => e.carpeta_id !== ctx.sinCategoriaId || tieneEspecial(e, 'borrador'));
+    return entradas.filter(e => !sueltaSinBorrador(e.carpeta_id, e));
   }
 
   function buscar(filtros?: Filtros | unknown): Entrada[] {

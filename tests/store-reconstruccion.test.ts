@@ -95,7 +95,7 @@ describe('reconstruir', () => {
     expect(drive._store.has('x1')).toBe(true);
   });
 
-  it('avisa las recetas de _sin-categoria/ sin borrador, y no hace nada más con ellas', async () => {
+  it('avisa las recetas de _sin-categoria/ y de la raíz sin borrador, y no hace nada más con ellas', async () => {
     drive._store.set('sc', { id: 'sc', name: '_sin-categoria', mimeType: CARPETA, parents: ['raiz'] });
     const conTags = (titulo: string, tags: string) => `---\ntitulo: ${titulo}\ntags: [${tags}]\n---\n`;
     drive._store.set('s1', { id: 's1', name: 'con-tag.md', parents: ['sc'], contenido: conTags('Con tag', 'borrador') });
@@ -105,8 +105,8 @@ describe('reconstruir', () => {
 
     const r = await store.reconstruir();
 
-    // La suelta de la raíz tampoco tiene el tag, pero no está en `_sin-categoria/`.
-    expect(r.sinBorrador).toEqual(['sin-tag.md']);
+    // La suelta de la raíz tampoco tiene el tag: va al mismo aviso.
+    expect(r.sinBorrador).toEqual(['suelta.md', 'sin-tag.md']);
     const entrada = store.entradas().find(e => e.id_archivo === 's3')!;
     expect(entrada.carpeta_id).toBe('sc');
     expect(entrada.tags).toEqual(['dulce']);
@@ -114,7 +114,13 @@ describe('reconstruir', () => {
     expect(r.ignorados).toEqual(['sin-titulo.md']);
   });
 
-  it('sin _sin-categoria/, no hay nada que avisar', async () => {
+  it('sin _sin-categoria/, avisa igual la suelta de la raíz sin borrador', async () => {
+    const r = await store.reconstruir();
+    expect(r.sinBorrador).toEqual(['suelta.md']);
+  });
+
+  it('una suelta de la raíz con borrador no se avisa', async () => {
+    drive._store.get('r3')!.contenido = '---\ntitulo: Suelta\ntags: [borrador]\n---\n';
     const r = await store.reconstruir();
     expect(r.sinBorrador).toEqual([]);
   });

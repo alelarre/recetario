@@ -168,6 +168,37 @@ describe('una receta en _sin-categoria/ sin el tag borrador', () => {
   });
 });
 
+describe('una receta suelta en la carpeta base sin el tag borrador', () => {
+  beforeEach(async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('r7', 'Guiso suelto', 'Sin categoría', 'raiz', 'otoño|favorito', 'porotos'),
+      fila('r8', 'Pan suelto', 'Sin categoría', 'raiz', 'borrador', 'harina')
+    ]);
+    await abrirDeNuevo();
+  });
+
+  it('no aparece en buscar, ni pidiendo sus tags', () => {
+    expect(store.buscar().map(e => e.id_archivo)).not.toContain('r7');
+    expect(store.buscar({ tags: ['otoño'] })).toHaveLength(0);
+    expect(store.buscar({ tags: ['favorito'] }).map(e => e.id_archivo)).not.toContain('r7');
+  });
+
+  it('no aparece en buscarPorTexto por título, ingrediente ni tag', () => {
+    for (const q of ['guiso', 'porotos', 'otoño']) {
+      const { porNombre, porIngrediente, porTag } = store.buscarPorTexto(q);
+      expect([...porNombre, ...porIngrediente.map(c => c.entrada), ...porTag.map(c => c.entrada)].map(e => e.id_archivo)).not.toContain('r7');
+    }
+  });
+
+  it('sus tags no cuentan en tagsDe', () => {
+    expect(store.tagsDe().map(t => t.tag)).not.toContain('otoño');
+  });
+
+  it('un borrador suelto en la carpeta base sí aparece pidiendo el tag borrador', () => {
+    expect(store.buscar({ tags: ['borrador'] }).map(e => e.id_archivo)).toEqual(['r8']);
+  });
+});
+
 describe('buscarPorTexto: los tres criterios', () => {
   beforeEach(async () => {
     // Un fixture propio: lo que importa acá es que el mismo texto coincida por
