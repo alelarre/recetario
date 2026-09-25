@@ -55,8 +55,8 @@ export function renderSelector(
 
   const confirmacion = confirmando
     ? '<div class="ficha">' +
-        `<p class="lee" style="margin:0 0 var(--e-4)">Voy a usar <b>${escapar(confirmando.nombre)}</b>. ` +
-        'Si faltan categorías, las creo, y después indexo lo que haya adentro.</p>' +
+        `<p class="lee" style="margin:0 0 var(--e-4)">Se va a usar <b>${escapar(confirmando.nombre)}</b>. ` +
+        'Las categorías que falten se crean, y después se indexa lo que haya adentro.</p>' +
         '<div class="acciones">' +
           '<button class="btn sec" data-accion="carpeta-cancelar">Cancelar</button>' +
           '<button class="btn prim" data-accion="carpeta-confirmar">Usar</button>' +

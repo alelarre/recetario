@@ -402,8 +402,8 @@ Carpeta base
       Usar, en una de «Encontradas»          → confirmación
       Crear la carpeta «Recetario» en Mi unidad  ⚑ no confirma: crea y prepara
       Ya tengo una carpeta → Picker de Google → confirmación
-  ▸ confirmación: «Voy a usar <carpeta>. Si faltan categorías, las creo, y
-    después indexo lo que haya adentro.»
+  ▸ confirmación: «Se va a usar <carpeta>. Las categorías que falten se
+    crean, y después se indexa lo que haya adentro.»
   → Usar
   ▸ setup, con la barra sobre el velo: «Preparando la carpeta…»
       ▸ crea las predefinidas que falten, de las 16, con su color y su foto

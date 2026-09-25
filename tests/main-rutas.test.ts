@@ -1985,7 +1985,7 @@ describe('main.ts: las rutas', () => {
       estado.eligiendo = [{ id: 'r1', name: 'Recetario' }];
       const { app, tocar, recargas } = await montar();
       await tocar('carpeta-sugerida', { id: 'r1', nombre: 'Recetario' });
-      expect(app.innerHTML).toContain('Voy a usar <b>Recetario</b>.');
+      expect(app.innerHTML).toContain('Se va a usar <b>Recetario</b>.');
       await tocar('carpeta-confirmar');
       expect(estado.preparadas).toEqual(['r1']);
       expect(estado.reemplazadas).toBe(0);
@@ -2025,7 +2025,7 @@ describe('main.ts: las rutas', () => {
       picker.elegida = { id: 'p1', nombre: 'Mis recetas' };
       const { app, tocar } = await montar();
       await tocar('carpeta-elegir');
-      expect(app.innerHTML).toContain('Voy a usar <b>Mis recetas</b>.');
+      expect(app.innerHTML).toContain('Se va a usar <b>Mis recetas</b>.');
       await tocar('carpeta-confirmar');
       expect(estado.preparadas).toEqual(['p1']);
     });
@@ -2034,7 +2034,7 @@ describe('main.ts: las rutas', () => {
       estado.eligiendo = [];
       const { app, tocar } = await montar();
       await tocar('carpeta-elegir');
-      expect(app.innerHTML).not.toContain('Voy a usar');
+      expect(app.innerHTML).not.toContain('Se va a usar');
       expect(estado.preparadas).toEqual([]);
     });
 

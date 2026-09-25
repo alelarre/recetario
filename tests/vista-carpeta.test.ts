@@ -54,7 +54,7 @@ describe('la pantalla de la carpeta base', () => {
 
   it('la confirmación nombra la carpeta y reemplaza los botones', () => {
     const html = renderSelector({ ...base, confirmando: { id: 'a1', nombre: 'Cocina' } });
-    expect(html).toContain('Voy a usar <b>Cocina</b>.');
+    expect(html).toContain('Se va a usar <b>Cocina</b>. Las categorías que falten se crean, y después se indexa lo que haya adentro.');
     expect(html).toContain('data-accion="carpeta-confirmar"');
     expect(html).toContain('data-accion="carpeta-cancelar"');
     expect(html).not.toContain('data-accion="carpeta-crear"');
