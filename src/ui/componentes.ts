@@ -46,7 +46,7 @@ export function conmutadorOrden(orden: Orden): string {
   '</div></div>';
 }
 
-/** El spinner de lo que no bloquea, como el final de la lista: lo que bloquea es el velo. */
+/** El spinner de lo que no bloquea: lo que bloquea es el velo. El del final de una lista es `SPINNER_TRAMO`. */
 export const SPINNER = '<div class="spin"></div>';
 
 export interface OpcionesEncabezado {
