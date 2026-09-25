@@ -62,8 +62,8 @@ Si algún módulo de `src/` usa algo del navegador en la importación (`window`,
   - Recibe: el id, el `.md`, la categoría si cambia, y las fotos nuevas y las que se sacan.
   - Hace: `store.guardar`, que relee antes de escribir, como la app.
 - **`borrar`**
-  - Recibe: el id.
-  - Hace: `store.borrar`, que manda a la papelera.
+  - Recibe: el id y `confirmacion`, que es el título exacto de la receta.
+  - Hace: si `confirmacion` falta o no coincide con el título de la receta en el índice, no borra y devuelve un error que lo explica. Si coincide, `store.borrar`, que manda a la papelera.
 - **`reindexar`**
   - Recibe: nada.
   - Hace: `store.reconstruir`, con el avance como progreso del MCP.
