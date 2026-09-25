@@ -14,6 +14,7 @@ import { DURACIONES } from '../src/catalogo.js';
 import { colorDeClave } from '../src/ui/categorias.js';
 import { linkDeFoto, parsearFotos, serializarFotos } from '../src/fotos-receta.js';
 import { ICO } from '../src/ui/iconos.js';
+import { CORTE_DE_LECTURA } from '../src/config.js';
 import type { CambiosDeFotos, Coincidencias, Plan, Receta } from '../src/tipos.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
@@ -89,6 +90,8 @@ const estadoInicial = () => ({
   compartidas: [] as Blob[],
   /** Leer las fotos compartidas del caché falla. */
   fallanCompartidas: false,
+  /** Si está, leer las fotos compartidas espera a que se cumpla. */
+  frenoCompartidas: null as Promise<void> | null,
   /** Cuántas veces se descartó el caché de lo compartido. */
   compartidasDescartadas: 0,
   /** Cuántas veces se borró el caché de las imágenes. */
@@ -226,9 +229,12 @@ vi.mock('../src/store.js', async original => ({
   crearStore: () => storeFake
 }));
 // Achicar necesita un canvas: acá devuelve la foto tal cual, y una foto
-// que dice «roto» no se decodifica.
+// que dice «roto» no se decodifica. Con `espera`, achicar tarda lo que el
+// test quiera: la galería lenta.
+const achicado = vi.hoisted(() => ({ espera: null as Promise<void> | null }));
 vi.mock('../src/fotos.js', () => ({
   achicar: async (b: Blob) => {
+    if (achicado.espera) await achicado.espera;
     if (await b.text() === 'roto') throw new Error('no se decodifica');
     return b;
   }
@@ -251,6 +257,7 @@ vi.mock('../src/imagenes.js', async original => ({
     olvidarImagen: async () => {},
     precargar: async (ids: string[]) => { estado.precargados.push(ids); },
     fotosCompartidas: async (n: number) => {
+      if (estado.frenoCompartidas) await estado.frenoCompartidas;
       if (estado.fallanCompartidas) throw new Error('caché');
       return estado.compartidas.slice(0, n);
     },
@@ -343,6 +350,7 @@ describe('main.ts: las rutas', () => {
     limpiarGlobales();
     Object.assign(estado, estadoInicial());
     Object.assign(picker, { elegida: null, falla: false });
+    achicado.espera = null;
     vi.unstubAllGlobals();
     delete (global as unknown as Record<string, unknown>)['FormData'];
     vi.resetModules();
@@ -2887,6 +2895,48 @@ describe('main.ts: las rutas', () => {
 
   });
 
+  describe('una lectura que no contesta se corta y deja navegar', () => {
+    /**
+     * Drive acepta el pedido y no contesta: `drive.ts` lo corta a los
+     * `CORTE_DE_LECTURA`, y el store rechaza con ese corte.
+     */
+    const colgada = (): Promise<never> => new Promise((_, rechazar) => {
+      setTimeout(() => { rechazar(new DOMException('corte', 'TimeoutError')); }, CORTE_DE_LECTURA);
+    });
+
+    it.each([
+      ['la receta', '#/r/f1', 'No se pudo leer la receta.'],
+      ['el editor', '#/r/f1/editar', 'No se pudo leer la receta.'],
+      ['el plan', '#/plan', 'No se pudo leer el plan.'],
+      ['las compras', '#/plan/compras', 'No se pudo armar la lista de compras.']
+    ])('%s: la pantalla avisa y el velo se va', async (_, hash, aviso) => {
+      const receta = storeFake.receta;
+      const plan = storeFake.plan;
+      storeFake.receta = colgada;
+      storeFake.plan = colgada;
+      try {
+        const { abrir, app, velo } = await montar();
+        await abrir(hash);
+        await vi.advanceTimersByTimeAsync(300);
+        // Leyendo, la pantalla está tapada y no se navega.
+        expect(velo.hidden).toBe(false);
+        await abrir('#/ajustes');
+        expect(global.location.hash).toBe(hash);
+
+        await vi.advanceTimersByTimeAsync(CORTE_DE_LECTURA);
+        await esperar();
+        expect(app.innerHTML).toContain(aviso);
+        expect(velo.hidden).toBe(true);
+        // Y ya se puede ir a otro lado.
+        await abrir('#/ajustes');
+        expect(app.innerHTML).toContain('Reindexar');
+      } finally {
+        storeFake.receta = receta;
+        storeFake.plan = plan;
+      }
+    });
+  });
+
   it('ningún guardado exitoso muestra un cartel de confirmación', async () => {
     const { app, abrir } = await montar();
     await abrir('#/r/f1');
@@ -2905,6 +2955,46 @@ describe('main.ts: las rutas', () => {
 
       // Achicarlas acá es inmediato: una espera de menos de 250 ms no llega a verse.
       expect(idasYVueltasDelVelo).toEqual([]);
+    });
+
+    /**
+     * Sumar fotos es una espera: la pantalla queda ocupada, así que un cambio
+     * de pantalla que llegue en el medio se deshace, y el depósito no se vacía
+     * debajo de las fotos que se están sumando.
+     */
+    it('un cambio de pantalla mientras se leen las compartidas se deshace y no vacía el depósito', async () => {
+      estado.compartidas = [foto('a'), foto('bb')];
+      let soltar!: () => void;
+      estado.frenoCompartidas = new Promise<void>(r => { soltar = r; });
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/nueva?fotos=2');
+      await abrir('#/ajustes');
+      expect(global.location.hash).toBe('#/nueva?fotos=2');
+      expect(app.innerHTML).not.toContain('Reindexar');
+
+      soltar();
+      await esperar(20);
+      estado.formulario = { ...estado.formulario, titulo: 'Pan', carpeta: '' };
+      await tocar('guardar');
+      expect([...(estado.cambiosDeFotos.at(-1)?.nuevas.keys() ?? [])]).toEqual([1, 2]);
+    });
+
+    it('un cambio de pantalla con la galería lenta se deshace y no vacía el depósito', async () => {
+      let soltar!: () => void;
+      achicado.espera = new Promise<void>(r => { soltar = r; });
+      const { abrir, elegirFotos, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      await elegirFotos([foto('a')]);
+      await abrir('#/plan');
+      expect(global.location.hash).toBe('#/r/f1/editar');
+      expect(app.innerHTML).toContain('data-formulario');
+
+      soltar();
+      await esperar(20);
+      estado.formulario = { ...estado.formulario, titulo: 'Milanesas', carpeta: 'c1' };
+      await tocar('guardar');
+      expect([...(estado.cambiosDeFotos.at(-1)?.nuevas.keys() ?? [])]).toEqual([1]);
     });
 
     it('Borrar datos locales y Salir borran las fotos guardadas en el navegador', async () => {

@@ -32,6 +32,14 @@ export const NOMBRE_PLAN = '_plan.md';
  */
 export const MARCA_RAIZ = { clave: 'recetario', valor: 'raiz' } as const;
 
+/**
+ * Lo que se espera a una lectura de red antes de darla por perdida: una de
+ * Drive o de Sheets, o la foto de un sitio ajeno. Mientras se lee al dibujar
+ * una pantalla, la pantalla está tapada (R8), y un servidor que acepta el
+ * pedido y nunca contesta la dejaría tapada sin salida.
+ */
+export const CORTE_DE_LECTURA = 20_000;
+
 // Subir esta versión fuerza una reconstrucción del índice en el próximo
 // arranque. La sube cambiar la forma de la fila o de las hojas; lo que se
 // valida al leer —`tiempo`, `dificultad`— no.

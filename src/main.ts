@@ -35,7 +35,7 @@ import {
 import { colorLibre, problemaDelNombre } from './categorias.js';
 import { renderSelector } from './ui/carpeta.js';
 import { elegirCarpeta } from './picker.js';
-import { API_KEY, NOMBRE_RAIZ } from './config.js';
+import { API_KEY, CORTE_DE_LECTURA, NOMBRE_RAIZ } from './config.js';
 import { puedeEmpezar, direccion, progreso, seAbre, sobreFilaDeslizable, ANCHO_MENU_FIJO } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
 import { aviso, lateralFijo, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js';
@@ -1257,9 +1257,6 @@ const conEsquemaEnMinuscula = (url: string): string =>
 /** Lo que devolvió una dirección: la foto, algo que no es una foto, o nada. */
 type FotoTraida = { que: 'foto'; blob: Blob } | { que: 'no-es-foto' } | { que: 'no-se-pudo' };
 
-/** Lo que se espera a un sitio ajeno antes de darlo por perdido. */
-const CORTE_DE_TRAIDA = 20_000;
-
 /**
  * Baja la foto de una dirección. Una página que contesta 200 con HTML no es
  * una foto, y por eso se mira el `Content-Type` antes que nada.
@@ -1269,13 +1266,13 @@ const CORTE_DE_TRAIDA = 20_000;
  * desde el navegador, y en los dos casos la salida es la misma, quedarse con
  * la URL como link.
  *
- * **El pedido se corta solo.** Es el único pedido a un sitio ajeno que ocupa la
- * pantalla (R8), y un servidor que acepta y nunca contesta dejaría el editor
- * tapado sin salida: salir sería recargar, y con eso se va lo escrito.
+ * **El pedido se corta solo**, como las lecturas de Drive: ocupa la pantalla
+ * (R8), y un servidor que acepta y nunca contesta dejaría el editor tapado sin
+ * salida: salir sería recargar, y con eso se va lo escrito.
  */
 async function traerFoto(url: string): Promise<FotoTraida> {
   const corte = new AbortController();
-  const reloj = setTimeout(() => { corte.abort(); }, CORTE_DE_TRAIDA);
+  const reloj = setTimeout(() => { corte.abort(); }, CORTE_DE_LECTURA);
   try {
     const r = await fetch(url, { signal: corte.signal });
     if (!r.ok) return { que: 'no-es-foto' };

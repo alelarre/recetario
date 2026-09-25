@@ -1,4 +1,5 @@
 import { COLUMNAS } from './catalogo.js';
+import { CORTE_DE_LECTURA } from './config.js';
 
 const API = 'https://sheets.googleapis.com/v4/spreadsheets';
 export const HOJA_RECETAS = 'recetas';
@@ -37,10 +38,13 @@ export class ErrorDeSheets extends Error {
 }
 
 export function crearSheets(obtenerToken: () => Promise<string>) {
+  /** Como en `drive.ts`: una lectura se corta a los `CORTE_DE_LECTURA`, una escritura no. */
   async function pedir<T>(ruta: string, opciones: RequestInit = {}): Promise<T> {
     const token = await obtenerToken();
+    const esLectura = (opciones.method ?? 'GET') === 'GET';
     const r = await fetch(API + ruta, {
       ...opciones,
+      ...(esLectura ? { signal: AbortSignal.timeout(CORTE_DE_LECTURA) } : {}),
       headers: {
         Authorization: `Bearer ${token}`,
         ...(opciones.body ? { 'Content-Type': 'application/json' } : {}),

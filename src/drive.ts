@@ -1,4 +1,4 @@
-import { MARCA_RAIZ } from './config.js';
+import { CORTE_DE_LECTURA, MARCA_RAIZ } from './config.js';
 import type { ArchivoDrive } from './tipos.js';
 
 const API = 'https://www.googleapis.com/drive/v3';
@@ -64,12 +64,18 @@ export function crearDrive(obtenerToken: () => Promise<string>) {
     return (tipo.includes('json') ? r.json() : r.text()) as Promise<T>;
   }
 
-  /** El pedido con el token; un status de error es un `ErrorDeDrive`. */
+  /**
+   * El pedido con el token; un status de error es un `ErrorDeDrive`. Una
+   * lectura se corta a los `CORTE_DE_LECTURA`; una escritura no, porque
+   * cortarla a mitad no dice si llegó.
+   */
   async function responder(ruta: string, opciones: RequestInit = {}, base = API): Promise<Response> {
     const token = await obtenerToken();
     const esJson = typeof opciones.body === 'string';
+    const esLectura = (opciones.method ?? 'GET') === 'GET';
     const r = await fetch(base + ruta, {
       ...opciones,
+      ...(esLectura ? { signal: AbortSignal.timeout(CORTE_DE_LECTURA) } : {}),
       headers: {
         Authorization: `Bearer ${token}`,
         ...(esJson ? { 'Content-Type': 'application/json' } : {}),
