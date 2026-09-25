@@ -4311,6 +4311,18 @@ describe('main.ts: las rutas', () => {
       expect(enElVisor(app.innerHTML)).toContain(`src="${EXTERNA}"`);
     });
 
+    it('en el modo cocina, tocar una foto en línea no abre el visor ni deja una capa', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, app, tocarFotoEnLinea, pila } = await montar();
+      await abrir('#/r/f1/cocinar');
+      const antes = pila().length;
+
+      await tocarFotoEnLinea({ src: EXTERNA });
+
+      expect(app.innerHTML).not.toContain('class="visor"');
+      expect(pila()).toHaveLength(antes);
+    });
+
     it('una foto en línea que no está en el depósito se abre sola', async () => {
       estado.md = '---\ntitulo: Milanesas\n---\n\n## Notas\n\n![](https://ejemplo/suelta.jpg)\n';
       const { abrir, app, tocarFotoEnLinea } = await montar();

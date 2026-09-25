@@ -1610,10 +1610,13 @@ function fotosDelVisor(n: number | undefined): { tira: FotoDelVisor[]; suelta?: 
 /**
  * Una foto en línea del texto no lleva `data-accion` —la dibuja el markdown,
  * que no sabe de acciones— y abre el visor igual. Se abre **sola**: lo que se
- * tocó es esa foto, no una tira. En el modo cocina no: ahí la foto está
- * adentro del paso, que sí lleva acción, y un toque marca dónde voy.
+ * tocó es esa foto, no una tira. En el modo cocina no (C03.5.2): ahí un
+ * toque marca el paso.
  */
 function tocarFotoEnLinea(destino: Element): Promise<void> | undefined {
+  // El modo cocina no dibuja el visor: abrirlo acá dejaría una capa en el
+  // historial sin nada a la vista, y el próximo atrás no haría nada.
+  if (vistaActual?.vista === 'cocinar') return;
   const enLinea = destino.closest<HTMLElement>('.foto-linea');
   const img = enLinea?.querySelector<HTMLElement>('img');
   if (!img) return;
