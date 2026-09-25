@@ -36,7 +36,7 @@ import { elegirCarpeta } from './picker.js';
 import { API_KEY, NOMBRE_RAIZ } from './config.js';
 import { puedeEmpezar, direccion, progreso, seAbre, ANCHO_MENU_FIJO } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
-import { aviso, conLateral, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js';
+import { aviso, lateralFijo, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js';
 import type { MenuDePantalla } from './ui/componentes.js';
 import { pintar as pintarEnPantalla, pintarParte, despuesDePintar, conClosest, desplazarCarrusel, movimientoReducido } from './ui/pintar.js';
 import { renderVisor, pasoDelVisor } from './ui/visor.js';
@@ -672,7 +672,7 @@ const menuDe = (vista: Vista | undefined): { menu?: MenuDePantalla } =>
 function conLateralFijo(html: string): string {
   const vista = vistaActual?.vista;
   if (!vista || esDelMenu(vista) || vista === 'carpeta' || estadoArranque?.estado !== 'listo') return html;
-  return conLateral({ activo: null, abierto: false, borradores: cuantosBorradores() }, html, true);
+  return lateralFijo(cuantosBorradores(), html);
 }
 
 /** Ajustes, igual al entrar que mientras reindexa: sólo cambia `reindexando`. */

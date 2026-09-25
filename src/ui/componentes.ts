@@ -328,7 +328,11 @@ export interface MenuDePantalla {
   borradores: number;
 }
 
-export interface OpcionesLateral extends MenuDePantalla {
+export interface OpcionesLateral {
+  /** Cuál se está mirando: se marca con el acento. */
+  activo: DestinoLateral | null;
+  borradores: number;
+  abierto?: boolean;
   /**
    * Sólo en pantalla ancha, donde queda fijo: la pantalla no es destino del
    * menú, y en el teléfono no lo abre nada. Va sin velo.
@@ -384,12 +388,18 @@ export const izquierdaDelEncabezado = (menu: MenuDePantalla | undefined): Pick<O
   menu ? { izquierda: botonMenu(menu.borradores) } : { volver: true };
 
 /**
- * La pantalla con el lateral al costado y el contenido corrido. Sin menú es
- * la pantalla sola: el lateral de las pantallas que no son destino lo pone
- * `main`, sólo para pantalla ancha.
+ * Una pantalla del menú con el lateral al costado y el contenido corrido. Sin
+ * menú es la pantalla sola.
  */
-export const conLateral = (menu: MenuDePantalla | undefined, pantalla: string, soloAncho = false): string =>
-  menu ? lateral({ ...menu, ...(soloAncho ? { soloAncho } : {}) }) + `<div class="conten">${pantalla}</div>` : pantalla;
+export const conLateral = (menu: MenuDePantalla | undefined, pantalla: string): string =>
+  menu ? lateral(menu) + `<div class="conten">${pantalla}</div>` : pantalla;
+
+/**
+ * Una pantalla que no es destino del menú, con el lateral fijo de pantalla
+ * ancha: sin entrada marcada, y en el teléfono no se ve (C05.10.1).
+ */
+export const lateralFijo = (borradores: number, pantalla: string): string =>
+  lateral({ activo: null, borradores, soloAncho: true }) + `<div class="conten">${pantalla}</div>`;
 
 export interface OpcionesTile {
   cantidad?: number;

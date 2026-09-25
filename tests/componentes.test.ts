@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   tarjeta, placeholder, aviso, encabezado, chipsSueltos, chipTag, iconoDeTag, vacio, tile, carrusel, carruselTags,
-  filaDuraciones, conmutadorOrden, lateral, filaDeFotos
+  filaDuraciones, conmutadorOrden, lateral, lateralFijo, conLateral, filaDeFotos
 } from '../src/ui/componentes.js';
 import { entradaFalsa } from './dobles.js';
 import { registrarCategorias } from '../src/ui/categorias.js';
@@ -370,11 +370,19 @@ describe('el menú lateral', () => {
     expect(html).toContain('href="#/plan"');
   });
 
-  it('sólo para pantalla ancha va sin velo y con su clase, que lo esconde en el teléfono', () => {
-    const html = lateral({ activo: null, abierto: false, borradores: 0, soloAncho: true });
+  it('el fijo de las pantallas que no son del menú va sin velo, sin marca y con su clase, que lo esconde en el teléfono', () => {
+    const html = lateralFijo(2, '<p>pantalla</p>');
     expect(html).not.toContain('velo-lat');
-    expect(html).toContain('<nav class="lat solo-ancho">');
+    expect(html).toMatch(/^<nav class="lat solo-ancho">/);
     expect(html).not.toContain('<a class="act"');
+    expect(html).toContain('<span class="cu">2</span>');
+    expect(html).toContain('<div class="conten"><p>pantalla</p></div>');
+  });
+
+  it('con el menú de la pantalla, el lateral y el contenido corrido; sin menú, la pantalla sola', () => {
+    expect(conLateral({ activo: 'plan', abierto: true, borradores: 0 }, '<p>x</p>'))
+      .toMatch(/^<div class="velo-lat on"[^]*<nav class="lat abierto">[^]*<div class="conten"><p>x<\/p><\/div>$/);
+    expect(conLateral(undefined, '<p>x</p>')).toBe('<p>x</p>');
   });
 
   it('en el plan, su entrada queda marcada', () => {
