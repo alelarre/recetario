@@ -5,7 +5,7 @@ import { mkdtemp, rm, writeFile, copyFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
-import { achicarEnNode, NoSeBajo, type DependenciasAchicar } from '../mcp/fotos.js';
+import { achicarEnNode, NoSeBajo, TOPE_DE_BAJADA, type DependenciasAchicar } from '../mcp/fotos.js';
 import { crearRecetario } from '../mcp/recetario.js';
 import { parse } from '../src/recipe.js';
 import { linkDeFoto } from '../src/fotos-receta.js';
@@ -111,6 +111,48 @@ describe('achicarEnNode', () => {
     const e404: DependenciasAchicar['fetch'] = async () => new Response('no', { status: 404 });
     await expect(achicarEnNode('https://ejemplo.com/a.jpg', { fetch: sinRed })).rejects.toBeInstanceOf(NoSeBajo);
     await expect(achicarEnNode('https://ejemplo.com/a.jpg', { fetch: e404 })).rejects.toBeInstanceOf(NoSeBajo);
+  });
+
+  it.each(['file:///etc/passwd', 'data:image/png;base64,AAAA', 'ftp://ejemplo.com/a.jpg'])(
+    '%s no se pide: falla con un error claro, que no es NoSeBajo',
+    async origen => {
+      let pedida = false;
+      const fetch: DependenciasAchicar['fetch'] = async () => { pedida = true; return new Response(''); };
+      const error = await achicarEnNode(origen, { fetch }).catch((e: unknown) => e);
+      expect(error).not.toBeInstanceOf(NoSeBajo);
+      expect((error as Error).message).toContain('http');
+      expect(pedida).toBe(false);
+    }
+  );
+
+  /** Un cuerpo de `megas` MB que cuenta cuánto se leyó; no se lee nada hasta que se pide. */
+  function cuerpo(megas: number) {
+    const leido = { megas: 0 };
+    const stream = new ReadableStream<Uint8Array>({
+      pull(c) {
+        if (leido.megas >= megas) return c.close();
+        leido.megas++;
+        c.enqueue(new Uint8Array(1024 * 1024));
+      }
+    }, { highWaterMark: 0 });
+    return { stream, leido };
+  }
+
+  it('una URL que dice pesar más del tope es NoSeBajo, sin leer el cuerpo', async () => {
+    const { stream, leido } = cuerpo(30);
+    const fetch: DependenciasAchicar['fetch'] = async () => new Response(stream, {
+      headers: { 'Content-Type': 'image/jpeg', 'Content-Length': String(TOPE_DE_BAJADA + 1) }
+    });
+    await expect(achicarEnNode('https://ejemplo.com/enorme.jpg', { fetch })).rejects.toBeInstanceOf(NoSeBajo);
+    expect(leido.megas).toBe(0);
+  });
+
+  it('sin Content-Length, la lectura se corta al pasar el tope', async () => {
+    const { stream, leido } = cuerpo(100);
+    const fetch: DependenciasAchicar['fetch'] = async () => new Response(stream, { headers: { 'Content-Type': 'image/jpeg' } });
+    await expect(achicarEnNode('https://ejemplo.com/enorme.jpg', { fetch })).rejects.toBeInstanceOf(NoSeBajo);
+    expect(TOPE_DE_BAJADA).toBe(25 * 1024 * 1024);
+    expect(leido.megas).toBeLessThanOrEqual(27);
   });
 
   it('una URL que baja algo que no es una foto falla con la URL', async () => {
@@ -282,6 +324,14 @@ describe('las fotos al crear', () => {
     expect(receta.fotos[1]).toEqual({ n: 2, url: 'https://ejemplo.com/caida.jpg' });
     expect(receta.foto).toBe('foto:2');
     expect(porNombre('pan-casero-2.jpg')).toBeUndefined();
+  });
+
+  it('un origen que no es http ni https falla antes de escribir nada', async () => {
+    const error = await nuevoRecetario().crear({
+      md: md('Pan casero'), categoria: 'Postres', fotos: [{ origen: 'file:///etc/passwd', uso: 'plato' }]
+    }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect(drive.cuantas('crear')).toBe(0);
   });
 
   it('un archivo que no se puede leer falla con su nombre y no escribe nada', async () => {

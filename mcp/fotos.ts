@@ -31,7 +31,15 @@ const ejecutarSinShell = (comando: string, args: string[]): Promise<void> =>
     execFile(comando, args, error => (error ? rechazar(error) : resolver()));
   });
 
-const esUrl = (origen: string): boolean => /^https?:\/\//i.test(origen);
+/**
+ * Lo más que se baja de una URL. Una foto de teléfono pesa unos pocos MB; una
+ * dirección que devuelve algo mucho más grande no es una foto, y leerla
+ * entera llenaría la memoria.
+ */
+export const TOPE_DE_BAJADA = 25 * 1024 * 1024;
+
+/** Un origen con esquema —`https:`, `file:`, `data:`— es una URL; si no, una ruta local. */
+const esquemaDe = (origen: string): string | null => /^([a-z][a-z0-9+.-]+):/i.exec(origen)?.[1]?.toLowerCase() ?? null;
 
 /** Un lienzo de `@napi-rs/canvas` con la forma del `<canvas>` que `achicar()` usa. */
 function lienzoDeNode(): Lienzo {
@@ -59,14 +67,36 @@ const decodificar = async (blob: Blob): Promise<Imagen> =>
  * contesta dejaría la herramienta colgada.
  */
 async function bajar(url: string, pedir: NonNullable<DependenciasAchicar['fetch']>): Promise<Blob> {
+  const motivo = (e: unknown): string => (e instanceof Error ? e.message : String(e));
   let respuesta: Response;
   try {
     respuesta = await pedir(url, { signal: AbortSignal.timeout(CORTE_DE_LECTURA) });
   } catch (e) {
-    throw new NoSeBajo(url, e instanceof Error ? e.message : String(e));
+    throw new NoSeBajo(url, motivo(e));
   }
   if (!respuesta.ok) throw new NoSeBajo(url, `el servidor contestó ${respuesta.status}`);
-  return respuesta.blob();
+  const pasado = `pesa más de ${TOPE_DE_BAJADA / 1024 / 1024} MB`;
+  if (Number(respuesta.headers.get('Content-Length')) > TOPE_DE_BAJADA) throw new NoSeBajo(url, pasado);
+  if (!respuesta.body) return respuesta.blob();
+  // Sin `Content-Length`, o con uno que miente: se cuenta lo leído.
+  const lector = respuesta.body.getReader();
+  const partes: Uint8Array[] = [];
+  let leido = 0;
+  try {
+    for (;;) {
+      const { done, value } = await lector.read();
+      if (done) break;
+      leido += value.byteLength;
+      if (leido > TOPE_DE_BAJADA) {
+        await lector.cancel().catch(() => {});
+        throw new NoSeBajo(url, pasado);
+      }
+      partes.push(value);
+    }
+  } catch (e) {
+    throw e instanceof NoSeBajo ? e : new NoSeBajo(url, motivo(e));
+  }
+  return new Blob(partes as BlobPart[], { type: respuesta.headers.get('Content-Type') ?? '' });
 }
 
 /**
@@ -89,16 +119,22 @@ async function leerLocal(ruta: string, ejecutar: NonNullable<DependenciasAchicar
 
 /**
  * La foto de `origen` —una ruta local o una URL— achicada a JPEG, como la
- * sube el editor. Una URL que no se baja rechaza con `NoSeBajo`; cualquier
- * otra falla —un archivo que no está, que no es una foto o que no se
- * decodifica— rechaza con un error que nombra el origen, para que el agente
- * sepa cuál de las fotos pedidas es.
+ * sube el editor. Una URL http o https que no se baja, o que pasa el tope,
+ * rechaza con `NoSeBajo`. Cualquier otra falla —otro esquema, un archivo que
+ * no está, que no es una foto o que no se decodifica— rechaza con un error
+ * que nombra el origen, para que el agente sepa cuál de las fotos pedidas es.
  */
 export async function achicarEnNode(
   origen: string,
   { fetch: pedir = fetch, ejecutar = ejecutarSinShell }: DependenciasAchicar = {}
 ): Promise<Blob> {
-  const blob = esUrl(origen) ? await bajar(origen, pedir) : await leerLocal(origen, ejecutar).catch((e: unknown) => {
+  const esquema = esquemaDe(origen);
+  // Sólo la web: `file:` o `data:` no son una foto que el agente vio en un
+  // sitio, y una ruta local se pasa sin esquema.
+  if (esquema !== null && esquema !== 'http' && esquema !== 'https') {
+    throw new Error(`La foto ${origen} no se puede traer: una URL tiene que ser http o https, y un archivo local va como ruta, sin esquema.`);
+  }
+  const blob = esquema ? await bajar(origen, pedir) : await leerLocal(origen, ejecutar).catch((e: unknown) => {
     throw new Error(`No se pudo leer la foto ${origen}: ${e instanceof Error ? e.message : String(e)}`);
   });
   try {
