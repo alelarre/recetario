@@ -147,13 +147,12 @@ versiones es una receta, no tres.
 - [ ] Cada `###` bajo `## Variaciones` es una variación con su nombre.
 - [ ] Sin ningún `###`, cada renglón de la lista es una variación suelta, sin nombre (`E05-Cimientos.md` C05.1.2).
 - [ ] Si la variación empieza con una línea en itálica de fuente, se muestra como fuente propia y no como texto del cuerpo.
-- [ ] Sus ingredientes y pasos, si los trae, se muestran dentro de la variación.
+- [ ] Lo que trae se muestra como texto, tal como está escrito: una variación no tiene la estructura de la receta, así que no hay ingredientes con su cantidad aparte ni pasos numerados.
 - [ ] **No hay pantalla propia ni navegación entre variaciones:** están en la misma columna.
 - [ ] En modo cocina no aparecen (C03.2.2).
 
-**Nota técnica:** los ingredientes de una variación cuentan para el filtro por
-ingrediente de la receta entera, sin distinguir de cuál son. Es una imprecisión
-aceptada (IA §1.8).
+**La búsqueda por ingrediente mira sólo `## Ingredientes`** (IA §1.8): lo que
+nombra una variación no se busca.
 
 ### F03.5 — Las fotos, si las hay
 

@@ -229,9 +229,10 @@ dibuja completa igual: su lugar en las listas lo ocupa la foto de su categoría.
 Un plato con varias recetas de fuentes distintas **no se repite N veces**: hay
 una receta y las demás cuelgan de ella como variaciones.
 
-`## Variaciones` sube de categoría: cada `###` adentro es una versión con
-nombre, **puede llevar su propia `fuente`** en una línea en itálica al empezar, y
-puede traer sus propios ingredientes y pasos si difiere mucho.
+`## Variaciones` es texto libre: cada `###` adentro es una versión con nombre, y
+**puede llevar su propia `fuente`** en una línea en itálica al empezar. Lo que
+sigue se muestra como está escrito; no tiene la estructura de ingredientes y
+pasos de la receta.
 
 **Una variación también puede ser un simple bullet**, y
 en el contenido real casi siempre lo es: *"- Pasar por harina directamente, sin
@@ -244,10 +245,10 @@ alguien mueve o renombra algo en Drive — que es precisamente lo que el product
 promete que se puede hacer. Dentro del archivo, la receta sigue siendo
 autocontenida y legible sola (J8).
 
-**Consecuencia para J4:** el filtro por ingrediente mira los ingredientes de la
-receta principal. Los de una variación cuentan para la receta entera, sin
-distinguir cuál. Es una imprecisión aceptada: la alternativa es un modelo de
-versiones que el formato no aguanta sin dejar de ser legible.
+**Consecuencia para J4:** la búsqueda por ingrediente mira sólo `## Ingredientes`.
+Lo que nombra una variación no se busca: no tiene estructura, y darle una
+obligaría a un modelo de versiones que el formato no aguanta sin dejar de ser
+legible.
 
 ---
 
