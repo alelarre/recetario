@@ -116,11 +116,12 @@ categoría si ya la tiene, o en `_sin-categoria/` si no (C05.4.4).
 
 - [ ] Está en `#/borradores` y es **la lista por tag** (C02.6.5) de `borrador`: las mismas tarjetas, las favoritas primero, la carga por tramos, el carrusel, el filtro y el orden por duración. El carrusel no lleva el chip de `borrador`, que no va en ninguna lista de tags (C02.6.4).
 - [ ] **Es el único camino a los borradores:** el Recetario no tiene tile para lo que no tiene categoría (`E02-Encontrar.md` C02.4.1).
-- [ ] Es un destino del menú: el encabezado dice **«Borradores»**, con el ícono del tag y el total, y a la izquierda lleva el botón del menú con su contador, no el volver (C02.1.3).
+- [ ] Es un destino del menú: el encabezado dice **«Borradores»**, con el total, y a la izquierda lleva el botón del menú con su contador, no el volver (C02.1.3).
 - [ ] Entra una receta que lleve `borrador` escrito en cualquiera de sus formas (C05.1.4).
 - [ ] Una receta de `_sin-categoria/` se dibuja con la trama neutra en lugar del color de una categoría.
 - [ ] La lista no tiene «+» ni «Pegar»: crear es *Nueva receta* (C01.3.1), y pegar está en el editor (C01.9.3).
-- [ ] Tocar una tarjeta abre la receta, como en cualquier lista (`E03-LeerYCocinar.md`). Su chip `borrador` abre el editor (C03.1.3).
+- [ ] **Tocar una tarjeta abre el editor de ese borrador** (`#/r/<id>/editar`), no la receta: a un borrador se entra a completarlo. Es la única lista que lo hace; las demás abren la receta. Volver desde ese editor vuelve a Borradores, por el historial.
+- [ ] Las tarjetas **no llevan marca de borrador**: en esta lista lo son todas, y en ninguna otra aparece una (`E02-Encontrar.md` C02.7.1).
 - [ ] La lista sale del índice en memoria: mostrarla no hace ningún pedido.
 
 #### C01.4.2 — Un borrador es una receta *(J2)*
@@ -181,7 +182,7 @@ compartida o pegada. La vuelta no depende de la ida: **cualquier receta en
 #### C01.9.1 — El botón guarda y manda el pedido *(J3)*
 
 - [ ] **«Convertir con Agente»** va al final del editor, arriba de *Guardar*, sólo mientras la receta tiene `borrador` (C04.1.1).
-- [ ] **Primero guarda**, como *Guardar* (C04.5.1): el pedido lleva el id del `.md`, que en una receta nueva recién existe al crearla. Si la validación o la escritura fallan, no manda nada.
+- [ ] **Primero guarda**, como *Guardar* (C04.5.1): el pedido lleva el id del `.md`, que en una receta nueva recién existe al crearla. Si la validación o la escritura fallan —también una receta nueva sin nada cargado (`E04-Corregir.md` C04.3b.1)—, no manda nada.
 - [ ] El pedido lleva el título, la fuente y las Notas de la receta tal cual, y las reglas del formato armadas desde las mismas constantes que usa la app —duraciones, dificultades, tags reservados—, así no se desactualiza cuando cambia el esquema.
 - [ ] La última línea del frontmatter que pide es `id: <id>`, con el id del `.md` de la receta. La categoría no viaja: se elige en el editor.
 - [ ] **Con fotos**, manda las de Drive del depósito, en su orden, y el pedido suma cuántas van, qué pueden ser —páginas de un libro, una receta escrita a mano, una captura, el plato terminado—, que se transcriba lo que se lee sin inventar cantidades ni pasos, y que una foto del plato sirve para el título y la descripción, no para la receta.

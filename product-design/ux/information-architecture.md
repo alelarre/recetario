@@ -401,7 +401,7 @@ se reconoce abre el Recetario.
 | **Modo cocina** | `#/r/<id>/cocinar` | Letra grande, conmutador Ingredientes / Pasos, el paso actual realzado, y la pantalla encendida. | Cocinar | J6 |
 | **Editor** | `#/r/<id>/editar` | El único formulario de la app. Corregir un error, anotar una variación, poner y sacar los tags especiales, agregar fotos y ponerlas en el texto, cambiar la categoría, *Pegar*, *Convertir con Agente* mientras es borrador, borrar la receta. Con `?recibida=1` abre con la receta `.md` compartida aplicada como *Pegar*. | Cocinar | J3, J7 |
 | **Nueva receta** | `#/nueva` | El mismo editor, vacío, en «Sin categoría» y con `borrador`. Es destino del menú: hamburguesa en vez de volver. Con `?url=&text=&fotos=` abre con lo que llegó por el Share Target —`fotos` es cuántas dejó el service worker en su caché—; con `?recibida=1`, con la receta `.md` que llegó compartida sin un `id:` que exista. | Archivar | J2, J3, J7 |
-| **Borradores** | `#/borradores` | La lista por tag de `borrador`, como destino del menú: hamburguesa en vez de volver, y el título «Borradores». Es el único camino a los borradores. | Archivar | J2, J3 |
+| **Borradores** | `#/borradores` | La lista por tag de `borrador`, como destino del menú: hamburguesa en vez de volver, y el título «Borradores». Es el único camino a los borradores, y tocar uno abre su editor. | Archivar | J2, J3 |
 | **Ajustes** | `#/ajustes` | Seis fichas, en este orden: Cuenta, Recetario, Índice, Archivos locales, Avisos y Registro de actividad. Ver §4.7. | Transversal | — |
 | **Categorías** | `#/categorias` | La lista de categorías con cuántas recetas tiene cada una, y *+ Nueva*. | Transversal | — |
 | **Editar categoría** | `#/categorias/<id>` · `#/categorias/nueva` | Nombre, color y foto de una categoría —del catálogo o una propia, con *Subir foto*—, y *Borrar categoría*. | Transversal | — |
@@ -475,7 +475,7 @@ acción asociada, así que no interrumpe (principio 4).
 | Las recetas de un tag | 1 | Recetario → chip del carrusel |
 | Marcar una favorita | 1 | Receta → estrella |
 | Compartir una receta | 2 | Receta → Compartir → PDF, Link o Texto |
-| Un borrador | 2 | Menú → Borradores → receta |
+| Un borrador | 2 | Menú → Borradores → su editor |
 | Corregir la receta que estoy leyendo | 1 | Receta → editar |
 | El plan de la semana | 2 | Menú → Plan de la semana |
 | Cargar una receta en una comida | 4 | Plan → `+` → elegir la receta |
@@ -612,7 +612,8 @@ demás, pero tienen forma propia:
   pone y lo saca sin pasar por el editor.
 - **`borrador` es la completitud** (§1.6): una receta nueva nace con él.
 - **Cada uno tiene su ícono**, y las marcas de los que lleva una receta van juntas
-  en la esquina de su tarjeta.
+  en la esquina de su tarjeta. `borrador` no: no tiene ícono ni marca, y en la
+  receta abierta no aparece; un borrador se ve sólo en Borradores.
 - **En el carrusel de tags van primero**; después, los demás por cantidad de
   recetas. **`borrador` no va en ninguna lista de tags**: ni en el carrusel ni
   en las sugerencias del editor. A los borradores se llega por el menú.

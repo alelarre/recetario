@@ -81,14 +81,15 @@ describe('tarjeta', () => {
     expect(html).not.toMatch(/<img/);
   });
 
-  it('una receta borrador lleva la marca, sin color de error', () => {
+  it('el tag borrador no lleva marca: el borrador sólo se ve en su lista', () => {
     const html = tarjeta(entradaFalsa({ tags: ['incompleta'] }));
-    expect(html).toContain('class="borr"');
-    expect(html).not.toContain('error');
+    expect(html).not.toContain('marcas-esq');
+    expect(html).not.toContain('--marcas');
   });
 
-  it('una receta sin el tag borrador no lleva ninguna marca', () => {
-    expect(tarjeta(entradaFalsa({ tags: [] }))).not.toContain('class="borr"');
+  it('por defecto abre la receta; con destino editor, abre su editor', () => {
+    expect(tarjeta(entradaFalsa({ id_archivo: 'r1' }))).toContain('href="#/r/r1"');
+    expect(tarjeta(entradaFalsa({ id_archivo: 'r1' }), { destino: 'editor' })).toContain('href="#/r/r1/editar"');
   });
 
   it('en un resultado por ingrediente, la tarjeta dice por qué apareció', () => {
@@ -103,19 +104,20 @@ describe('tarjeta', () => {
 
 describe('las marcas de la tarjeta', () => {
   it('van juntas arriba a la derecha, en el orden de los especiales', () => {
-    const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['incompleta', 'horno', 'favorito', 'probar'] }));
+    const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['probar', 'horno', 'favorito', 'menú diario', 'borrador'] }));
     const esq = html.slice(html.indexOf('class="marcas-esq"'));
-    const orden = ['Favorita', 'Para probar', 'Borrador'].map(n => esq.indexOf(`aria-label="${n}"`));
+    expect(esq).not.toContain('Borrador');
+    const orden = ['Favorita', 'Menú diario', 'Para probar'].map(n => esq.indexOf(`aria-label="${n}"`));
     expect(orden.every(i => i > 0)).toBe(true);
     expect(orden).toEqual([...orden].sort((a, b) => a - b));
     expect(html).toContain('style="--marcas:3"');
   });
 
   it('la línea de contexto no lleva ninguna marca', () => {
-    const html = tarjeta(entradaFalsa({ titulo: 'Pan', categoria: 'Panes', tags: ['incompleta'] }));
+    const html = tarjeta(entradaFalsa({ titulo: 'Pan', categoria: 'Panes', tags: ['probar'] }));
     const inicio = html.indexOf('class="ctx"');
     const ctx = html.slice(inicio, html.indexOf('</span></span>', inicio));
-    expect(ctx).not.toContain('class="borr"');
+    expect(ctx).not.toContain('class="marca');
   });
 
   it('sin especiales no hay esquina', () => {
@@ -123,9 +125,9 @@ describe('las marcas de la tarjeta', () => {
   });
 
   it('la marca de favorito lleva su propia clase, para el relleno de tokens.css', () => {
-    const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['favorito', 'incompleta'] }));
+    const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['favorito', 'probar'] }));
     expect(html).toContain('<span class="marca favorita" role="img" aria-label="Favorita" title="Favorita">');
-    expect(html).toContain('<span class="marca" role="img" aria-label="Borrador" title="Borrador">');
+    expect(html).toContain('<span class="marca" role="img" aria-label="Para probar" title="Para probar">');
   });
 
   it('cada marca dice qué es al apoyar el mouse', () => {
@@ -164,11 +166,12 @@ describe('encabezado', () => {
 });
 
 describe('chipsSueltos', () => {
-  it('en la fila de tags de la receta, incompleta abre el editor en vez de filtrar', () => {
-    const html = chipsSueltos(['horno', 'incompleta']);
-    expect(html).toContain('data-accion="editar"');
-    expect(html).not.toContain('data-tag="incompleta"');
-    expect(html.indexOf('incompleta')).toBeLessThan(html.indexOf('horno'));
+  it('en la fila de tags de la receta, borrador no aparece, ni en su forma vieja', () => {
+    const html = chipsSueltos(['horno', 'incompleta', 'borrador']);
+    expect(html).toContain('horno');
+    expect(html).not.toContain('incompleta');
+    expect(html).not.toContain('borrador');
+    expect(html).not.toContain('data-accion');
   });
 });
 
@@ -180,9 +183,9 @@ describe('los chips de tags', () => {
     expect(iconoDeTag('horno')).toBe('');
   });
 
-  it('borrador usa la marca de medio círculo como ícono, incluso en su forma vieja', () => {
-    expect(iconoDeTag('borrador')).toBe('<span class="borr"></span>');
-    expect(iconoDeTag('incompleta')).toBe('<span class="borr"></span>');
+  it('borrador no tiene ícono, ni en su forma vieja', () => {
+    expect(iconoDeTag('borrador')).toBe('');
+    expect(iconoDeTag('incompleta')).toBe('');
   });
 
   it('el chip lleva el ícono adelante del nombre', () => {

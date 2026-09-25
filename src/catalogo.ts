@@ -184,6 +184,22 @@ export function tieneEspecial(x: { tags: string[] }, especial: TagEspecial): boo
 
 export const esFavorita = (x: { tags: string[] }): boolean => tieneEspecial(x, 'favorito');
 
+/**
+ * Si una receta nueva tiene algo que guardar (C04.3b.1): algún campo escrito
+ * —por el usuario o precargado por Compartir—, una foto en el depósito, o un
+ * tag que no sea `borrador`, que se pone solo. Sin esto, el título por defecto
+ * de un borrador dejaría guardar un formulario vacío.
+ */
+export function tieneAlgoCargado(receta: Receta): boolean {
+  const campos = [
+    receta.titulo, receta.fuente, receta.rinde, receta.tiempo, receta.dificultad, receta.foto,
+    receta.descripcion, receta.ingredientes, receta.preparacion, receta.variaciones, receta.notas
+  ];
+  return campos.some(c => (c ?? '').trim() !== '') ||
+    receta.fotos.length > 0 ||
+    receta.tags.some(t => tagEspecial(t) !== 'borrador');
+}
+
 /** Los especiales primero, en el orden de `TAGS_ESPECIALES`; el resto como venía. */
 export function ordenarTags(tags: string[]): string[] {
   const lista = Array.isArray(tags) ? tags : [];

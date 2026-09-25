@@ -116,7 +116,7 @@ arma el pedido, y recibe de vuelta la receta para revisarla y guardarla.
 
 ```
 Menú → Borradores           ⚑ el contador dice cuántos esperan
-  → toco una receta → Editar       ⚑ o su chip borrador
+  → toco una receta               ▸ abre su editor, no la receta
   ▸ el editor, con Convertir con Agente al final, arriba de Guardar
   → Convertir con Agente
   ▸ guarda la receta, como Guardar     ⚑ si no se pudo guardar, no manda nada
@@ -533,7 +533,7 @@ El reindexado lee cada .md
       no  → se ignora, y se cuenta
       sí  → entra al índice y se muestra
             ⚑ ¿lleva el tag borrador, o incompleta?
-                sí  → con su marca en la esquina de la tarjeta
+                sí  → aparece en Borradores
             ⚑ ¿tiempo o dificultad fuera de sus valores?
                 sí  → se leen como sin dato; el archivo no se toca
   ▸ los ignorados se informan en Ajustes → Avisos, con su nombre, no en la cara
@@ -545,7 +545,7 @@ completitud del contenido: una receta es un borrador si lleva el tag, y lo lleva
 porque nació con él o porque el usuario se lo puso.
 
 **La salida manual:** cuando la receta está terminada, el usuario suelta el botón
-*borrador* en el editor y la marca desaparece.
+*borrador* en el editor y la receta sale de Borradores.
 
 ---
 

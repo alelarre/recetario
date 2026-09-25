@@ -2433,7 +2433,7 @@ describe('main.ts: las rutas', () => {
     it('si la validación falla, el velo no queda puesto', async () => {
       const { abrir, tocar, app, velo } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: '', carpeta: 'c1' };
+      estado.formulario = { titulo: '', carpeta: 'c1', notas: 'Algo.' };
 
       await tocar('guardar');
 
@@ -3719,19 +3719,56 @@ describe('main.ts: las rutas', () => {
       expect(estado.opcionesCrear[0]?.['carpetaId']).toBe('c1');
     });
 
-    it('sin título, un borrador se guarda con el día y la hora', async () => {
+    it('sin título, un borrador con algo cargado se guarda con el día y la hora', async () => {
       const { abrir, tocar } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador', notas: 'La de la abuela.' };
       await tocar('guardar');
       expect(estado.creadas).toHaveLength(1);
       expect(estado.creadas[0]).toMatch(/^Borrador \d{2}\/\d{2} \d{2}:\d{2}$/);
     });
 
+    it('una receta nueva sin nada cargado avisa y no la crea', async () => {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador', fotos: '[]' };
+      await tocar('guardar');
+      expect(estado.creadas).toEqual([]);
+      expect(app.innerHTML).toContain('Completá algún campo antes de guardar.');
+    });
+
+    it('una receta nueva con sólo la fuente se guarda', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador', fuente: 'https://ejemplo.com/pan' };
+      await tocar('guardar');
+      expect(estado.creadas).toHaveLength(1);
+    });
+
+    it('una receta nueva con sólo una foto se guarda', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador', fotos: JSON.stringify([{ n: 1, url: linkDeFoto('d1') }]) };
+      await tocar('guardar');
+      expect(estado.creadas).toHaveLength(1);
+    });
+
+    it('editando una receta que ya existe, la regla del mínimo no se aplica', async () => {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = {
+        titulo: '', carpeta: '', tags: 'borrador', fotos: '[]',
+        descripcion: '', ingredientes: '', preparacion: '', variaciones: '', notas: ''
+      };
+      await tocar('guardar');
+      expect(estado.opcionesGuardar).toHaveLength(1);
+      expect(app.innerHTML).not.toContain('Completá algún campo');
+    });
+
     it('sin título y sin borrador, avisa y no guarda', async () => {
       const { abrir, tocar, app } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: '', carpeta: 'c1', tags: '' };
+      estado.formulario = { titulo: '', carpeta: 'c1', tags: '', notas: 'Algo.' };
       await tocar('guardar');
       expect(estado.creadas).toEqual([]);
       expect(app.innerHTML).toContain('Ponele un título antes de guardar.');
@@ -3944,12 +3981,23 @@ describe('main.ts: las rutas', () => {
       }
     });
 
+    it('una receta nueva sin nada cargado no se guarda ni se manda', async () => {
+      conShare();
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador', fotos: '[]' };
+      await tocar('convertir-con-agente');
+      expect(estado.creadas).toEqual([]);
+      expect(mandados).toEqual([]);
+      expect(app.innerHTML).toContain('Completá algún campo antes de guardar.');
+    });
+
     it('si la validación falla, no manda nada', async () => {
       conShare();
       const { abrir, tocar, app } = await montar();
       await abrir('#/nueva');
       // Sin título y con borrador ya sacado: no hay con qué nombrar el archivo.
-      estado.formulario = { titulo: '', carpeta: 'c1', tags: '' };
+      estado.formulario = { titulo: '', carpeta: 'c1', tags: '', notas: 'Algo.' };
       await tocar('convertir-con-agente');
       expect(mandados).toEqual([]);
       expect(app.innerHTML).toContain('Ponele un título antes de guardar.');
@@ -4074,6 +4122,36 @@ describe('main.ts: las rutas', () => {
         expect(app.innerHTML).toContain('<a class="act" href="#/borradores">');
         expect(app.innerHTML).not.toContain('pegar-receta');
         expect(app.innerHTML).toMatch(/<span class="tit">.*Borradores<\/span>/);
+      } finally {
+        storeFake.buscar = original;
+      }
+    });
+
+    it('tocar un borrador abre su editor, y volver vuelve a la lista por el historial', async () => {
+      const original = storeFake.buscar;
+      storeFake.buscar = () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', tags: ['borrador'] })];
+      try {
+        const { abrir, tocar, app, vueltasAtras } = await montar();
+        await abrir('#/borradores');
+        expect(app.innerHTML).toContain('href="#/r/f1/editar"');
+        expect(app.innerHTML).not.toContain('href="#/r/f1"');
+        await abrir('#/r/f1/editar');
+        expect(app.innerHTML).toContain('data-formulario');
+        await tocar('volver');
+        expect(vueltasAtras).toHaveLength(1);
+      } finally {
+        storeFake.buscar = original;
+      }
+    });
+
+    it('las demás listas siguen abriendo la receta', async () => {
+      const original = storeFake.buscar;
+      storeFake.buscar = () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', tags: ['horno'] })];
+      try {
+        const { abrir, app } = await montar();
+        await abrir('#/t/horno');
+        expect(app.innerHTML).toContain('href="#/r/f1"');
+        expect(app.innerHTML).not.toContain('/editar"');
       } finally {
         storeFake.buscar = original;
       }

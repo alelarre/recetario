@@ -51,7 +51,7 @@ y el archivo se arma solo al guardar.
 
 - [ ] Un control por clave: título (texto), tags (lista editable), rinde y fuente (texto), dificultad (elección de tres), `tiempo` con los cinco botones de duración (C04.2.1c) y `foto` con el selector de **Portada** (C04.2.1d).
 - [ ] **El YAML no se muestra en ningún momento.**
-- [ ] Solo el título es obligatorio, salvo en un borrador (C04.3b.1).
+- [ ] Solo el título es obligatorio, salvo en un borrador; una receta nueva, además, tiene que tener algo cargado (C04.3b.1).
 - [ ] Un campo que se deja vacío **no se escribe** en el frontmatter: no quedan claves vacías.
 - [ ] `rinde` es texto libre, no un número: *"4 porciones"*.
 
@@ -132,6 +132,7 @@ el menú lateral, y desde lo que llega por Compartir
 - [ ] Los mismos campos, vacíos. La categoría arranca en **«Sin categoría»**.
 - [ ] **Es un destino del menú lateral:** el encabezado lleva el botón del menú con el contador de borradores en lugar del volver, y el gesto abre el menú, como en las demás pantallas del menú (`E02-Encontrar.md` C02.1.3). En el menú no queda marcado ningún destino: *Nueva receta* es una acción. **Abrir y cerrar el menú no redibuja el formulario:** lo escrito sigue.
 - [ ] **La categoría es opcional:** con «Sin categoría», guardar crea el `.md` en `_sin-categoria/`, que se crea la primera vez que hace falta (C05.4.4). Con una categoría, en su carpeta. En los dos casos escribe su fila del índice, por el store (C05.4.1).
+- [ ] **Se guarda sólo si tiene algo cargado**, escrito por el usuario o precargado por Compartir: título, fuente, rinde, duración, dificultad, portada, descripción, ingredientes, preparación, variaciones o notas —lo que es sólo espacio no cuenta—, al menos una foto en el depósito, o algún tag que no sea `borrador`. Sin nada, no escribe y el aviso de guardar dice *«Completá algún campo antes de guardar.»* Vale para *Guardar* y para *Convertir con Agente*, que entonces no manda nada. Al editar una receta que ya existe no se aplica.
 - [ ] **El título es obligatorio, salvo en un borrador:** vacío, se guarda como *Borrador dd/mm hh:mm*, con el momento del guardado. Sin título y sin `borrador`, el aviso dice *«Ponele un título antes de guardar.»*
 - [ ] El nombre del archivo se deriva del título **una sola vez, al crearlo**, y no vuelve a cambiar (C04.2.2): el título en minúsculas, sin acentos y con guiones — `milanesas-napolitanas.md`.
 - [ ] Si ya existe un archivo con ese nombre en la carpeta, se usa un nombre distinto sin preguntar: la identidad es el `fileId`, no el nombre.
@@ -224,8 +225,8 @@ cuándo se lo puede sacar.
   —`favorito`, `menú diario`, `probar` y `borrador`, en ese orden—, arriba de
   los tags comunes y del campo para agregar. Apretado: la receta tiene el tag.
   Suelto: no lo tiene. Tocarlo lo pone o lo saca, con su `aria-pressed`. Cada
-  botón lleva el ícono de su tag. No hay fila «Estado» ni otro control de
-  completitud: es este botón.
+  botón lleva el ícono de su tag, salvo `borrador`, que no tiene. No hay fila
+  «Estado» ni otro control de completitud: es este botón.
 - [ ] **Una receta nueva nace con `borrador` puesto** (C04.3b.1): no está
   terminada hasta que alguien lo diga.
 - [ ] `borrador` **no se puede soltar** hasta que la receta cumpla C05.3.3
@@ -246,8 +247,8 @@ cuándo se lo puede sacar.
   Agente** al final (`E01-CapturaYBorradores.md` C01.9.1). Aparece y
   desaparece **en el momento** de apretar o soltar el botón, sin redibujar el
   formulario.
-- [ ] También se llega acá desde el chip `borrador` de la receta abierta,
-  que abre el editor (C03.1.3).
+- [ ] A un borrador se llega desde Borradores, donde tocarlo abre el editor
+  (`E01-CapturaYBorradores.md` C01.4.1).
 
 **Por qué apretado y no una casilla:** una casilla tiene un estado implícito
 —lo que significa *no tildada*—. Apretado e invertido dice las dos cosas, y es

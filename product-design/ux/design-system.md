@@ -63,7 +63,7 @@ Todos cálidos. Ninguno tiene matiz frío (`brand-identity.md` §2.2).
 | `--borde-fuerte` | `#544C40` | El borde de un control, y el separador dentro de una ficha. | 2.2:1 |
 | `--fg` | `#F2EBE1` | El texto. Blanco cálido, nunca `#FFF`. | **14.2:1** sobre `--surface` |
 | `--fg-2` | `#B3A99B` | La línea de contexto, las etiquetas de metadato. | **7.2:1** |
-| `--fg-3` | `#948A7A` | El texto tenue: fechas, contadores, la marca de borrador. | **4.9:1** |
+| `--fg-3` | `#948A7A` | El texto tenue: fechas, contadores. | **4.9:1** |
 | `--velo` | `#0C0A07` | Más oscuro que `--bg`. Solo bajo el nombre de un tile de categoría, como degradado. | — |
 
 **`--fg-3` cumple 4.5:1 sin excepción:** es el piso de todo texto, también del
@@ -90,7 +90,7 @@ pantalla— y no se usa en ningún texto ni en ningún control: el éxito no se
 escribe (`brand-identity.md` §3.2), se dibuja una sola vez y se va.
 
 **No hay token de advertencia:** lo que en otro producto sería una advertencia
-—un borrador— acá no es un problema y usa `--fg-3`.
+—un borrador— acá no es un problema y no se marca (§6.5).
 
 **El acento y el error se tienen que distinguir de reojo:** una distancia
 percibida (CIEDE2000) de al menos 12 entre los dos. La arcilla está a 14.6 del
@@ -299,9 +299,8 @@ carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chi
 | `zanahoria`, `listaNumerada` | Las dos posiciones del conmutador de cocina —*Ingredientes* y *Pasos*—, al lado de la palabra. |
 | Los cinco relojitos | Uno por valor de la duración, el mismo mapa en el editor (§6.18), la tarjeta, la receta, la búsqueda, el filtro (§6.19) y el orden (§6.20). |
 
-**Dos dibujos no están en `iconos.ts` porque son CSS:** el medio círculo de
-*borrador* (§6.5) —que hace de ícono del cuarto tag especial— y el chevron del
-desplegable (§6.9).
+**Un dibujo no está en `iconos.ts` porque es CSS:** el chevron del desplegable
+(§6.9).
 
 **Los relojitos:** una esfera con la aguja y el recorrido recién hecho, tenue
 al 30 % de opacidad, en las posiciones de `~15 min`, `~30 min` y `~60 min`;
@@ -355,8 +354,8 @@ la única escala distinta del sistema.
 
 **Ningún control con texto es de radio completo.** Un chip con `border-radius:
 999px` es la píldora de Material, que está descartada. Lo redondo es lo que no
-lleva palabras: los contadores (§6.4, §6.17), la flecha del carrusel (§6.21), la
-marca de borrador (§6.5) y las muestras de color de una categoría.
+lleva palabras: los contadores (§6.4, §6.17), la flecha del carrusel (§6.21) y las
+muestras de color de una categoría.
 
 ### 4.3 Borde
 
@@ -417,7 +416,7 @@ acorta.
 ## 6. Componentes core
 
 Con tokens aplicados. Los que son sistema —encabezado, ficha, botón, tarjeta,
-placeholder, marca de borrador, chip, carrusel, campo, aviso, ítem de
+placeholder, chip, carrusel, campo, aviso, ítem de
 ingrediente, spinner, miniatura, galería y foto en línea— están en
 `src/ui/tokens.css`; los que son de una pantalla, en `src/ui/base.css`.
 
@@ -457,7 +456,7 @@ Tres convenciones valen para todos los componentes:
 | Línea de contexto | `--txt-chico`, `--fg-2`, sólo datos: categoría · duración · rinde |
 | El relojito de la duración | 15 × 15 px, pegado al valor (`.dur`); mismo mapa de íconos que el editor (§6.18) |
 | El cuadrito `▪` de categoría | 8 × 8 px, `--r-chico`, el color de la categoría |
-| Marcas de los especiales, juntas en la esquina de arriba a la derecha | 16 × 16 px cada una, separadas 4 px, en el orden de los especiales —favorito, menú diario, probar, borrador—, en `--acento`; ver §6.5. La estrella de favorito lleva además un relleno del acento al 35 %. El título reserva 20 px de ancho por marca, para no pasar por debajo; una tarjeta sin marcas no reserva nada. Sin texto, así que cada una se nombra para el lector de pantalla —*Favorita*, *Menú diario*, *Para probar*, *Borrador*— y con el mismo nombre en el `title`, que en la computadora aparece como globito al apoyar el mouse |
+| Marcas de los especiales, juntas en la esquina de arriba a la derecha | 16 × 16 px cada una, separadas 4 px, en el orden de los especiales —favorito, menú diario, probar—, en `--acento`; `borrador` no lleva (§6.5). La estrella de favorito lleva además un relleno del acento al 35 %. El título reserva 20 px de ancho por marca, para no pasar por debajo; una tarjeta sin marcas no reserva nada. Sin texto, así que cada una se nombra para el lector de pantalla —*Favorita*, *Menú diario*, *Para probar*— y con el mismo nombre en el `title`, que en la computadora aparece como globito al apoyar el mouse |
 | Motivo, en resultados por ingrediente | `--txt-chico`, `--acento` |
 | El «+» de agregar, sólo cuando la tarjeta suma en vez de abrir | Círculo de 28 px relleno en `--fg`, con el signo en `--bg` a 2,5 px de trazo. Es el contraste más alto que da la paleta, para que se lea como botón antes que como dato; el acento queda para las marcas de la esquina, que son otra cosa. Va al final de la fila, fuera del bloque de texto. Se usa en *Agregar al plan* (`E06-Planificar.md` F06.3) |
 
@@ -570,33 +569,13 @@ pero se pide a Drive con el token: hasta que llega, el tile queda con su color.
 Al elegirla, *Subir foto* es la primera muestra de la fila: un botón de
 `--surface-alta` con el ícono `camara`, del mismo tamaño que las demás.
 
-### 6.5 Marca de borrador
+### 6.5 Borrador
 
-**Un círculo de 12 px a medio llenar**: 1,5 px de
-borde en `currentColor` y la mitad izquierda rellena del mismo color
-—`linear-gradient(to right, currentColor 50%, transparent 50%)`—. **En
-`--acento`**, salvo donde el contexto ya tiene un color propio.
-
-Es la misma marca en todos los lugares donde el dato se muestra, y no hay ningún
-otro dibujo para decir lo mismo:
-
-| Dónde | Cómo |
-|---|---|
-| **Tarjeta de la lista** | Junto con las demás marcas de especiales, arriba a la derecha de la tarjeta y en su orden (§6.1). Sin texto, así que cada una se nombra para el lector de pantalla. |
-| **Receta abierta** | Un chip (§6.10) con el tag tal como está escrito —*borrador*—, el primero de la fila de tags. Tocable, abre el editor (`E03-LeerYCocinar.md` C03.1.3). |
-| **Editor** | El ícono del botón `borrador` (§6.10b), en el color del botón y no en el acento. |
-| **Carrusel de tags** | El ícono del chip `borrador` (§6.21). |
-| **Borradores** | El ícono antes del título, en el encabezado de la lista (§6.12). |
-
-- **Nunca `--error` y nunca amarillo.** No es un problema: la receta funciona, le
-  falta algo.
-- **El acento acá no rompe la regla de que el acento es de las acciones:** donde
-  la marca es más visible —la receta abierta— es efectivamente una acción, la
-  única de su fila. En la tarjeta hereda ese color para que la marca sea una
-  sola, aprendida una vez.
-
-**Por qué a medio llenar:** dice "hecha a medias", que es exactamente el estado.
-Un aro vacío al lado de un título se lee como viñeta.
+**El tag `borrador` no tiene presentación propia.** Un borrador se ve sólo en su
+lista, Borradores, donde lo son todas: no lleva marca en la tarjeta (§6.1), no
+aparece en la fila de tags de la receta abierta, y su botón del editor (§6.10b)
+es el único de los cuatro sin ícono. El encabezado de Borradores lleva el título
+y el total, sin ícono.
 
 ### 6.6 Ficha
 
@@ -744,11 +723,6 @@ No hay una cruz con su propia área táctil adentro: a 32 px de alto no entra un
 segundo blanco de 48. Debajo de la fila de chips van `--e-3` de aire antes del
 campo de agregar.
 
-**Pendiente** —el estado de un borrador, en la receta abierta— usa los
-mismos valores que **Encendido**, con la marca de §6.5 adelante y el tag tal como
-está escrito, *borrador*. Son clases distintas porque significan cosas
-distintas: uno es un filtro puesto, el otro un estado del contenido.
-
 **Un tag reservado no llega a ser chip:** el editor lo rechaza al agregarlo y lo
 dice en una línea de `--txt-chico` en `--error`, sin caja ni botón
 (`E04-Corregir.md` C04.2.1b).
@@ -760,7 +734,8 @@ Cuatro botones —uno por tag especial: `favorito`, `menú diario`, `probar`,
 del editor, en una **grilla de 2 × 2** arriba de los tags comunes y del campo
 para agregar (`E04-Corregir.md` C04.2.1b, C04.4.1), con `--e-2` entre sí. Cada
 uno mide 48 px de alto mínimo, `--r-medio`, `--txt-base` peso 600, y lleva su
-ícono (§3.4) a 16 px y el tag tal como se escribe, con `aria-pressed`.
+ícono (§3.4) a 16 px —`borrador` no tiene (§6.5)— y el tag tal como se escribe,
+con `aria-pressed`.
 
 | Estado | Fondo | Texto | Borde |
 |---|---|---|---|
@@ -777,8 +752,7 @@ título, categoría, ingredientes y pasos."* **Deshabilitado baja a `opacity:
 .6`**, manteniendo apretado: sigue leyéndose qué estado tiene, sólo que no se
 puede tocar.
 
-**Nunca `--error`.** Misma regla que la marca de borrador (§6.5): a la
-receta le falta algo, no está rota.
+**Nunca `--error`:** a la receta le falta algo, no está rota.
 
 ### 6.11 Ítem de ingrediente
 
@@ -822,8 +796,9 @@ las pantallas a las que se entra desde otra. Editar una receta existente es una
 de esas: se entra desde la receta y se sale volviendo. En el Recetario y en Ajustes el
 título va además en `--txt-titulo`, centrado en la barra y no en el hueco que
 dejan los controles. Borradores es la lista por tag de `borrador` dibujada como
-destino del menú: el encabezado de la lista por tag —título chico, el ícono del
-tag y el total—, con la hamburguesa y el título «Borradores».
+destino del menú: el encabezado de la lista por tag —título chico y el total,
+sin ícono (§6.5)—, con la hamburguesa y el título «Borradores». Tocar una
+tarjeta ahí abre el editor del borrador, no la receta.
 
 El total de una lista —las recetas de una categoría, los borradores— va a la
 derecha, en `--txt-chico` `--fg-2` y cifras tabulares. En la lista por tag de un
@@ -1048,7 +1023,7 @@ las categorías en el Recetario, y arriba de la lista en la categoría y en la
 lista por tag.
 
 **El orden:** los tags especiales primero, en su orden —favorito, menú diario,
-probar, borrador— y sólo los que tienen alguna receta; después los comunes,
+probar; `borrador` no va en ninguna lista de tags— y sólo los que tienen alguna receta; después los comunes,
 por cantidad de recetas y alfabético en el empate. Cada chip lleva su número, y
 los especiales su ícono. En el Recetario y en la lista por tag entran hasta
 veinte comunes.

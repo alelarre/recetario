@@ -122,15 +122,26 @@ export interface OpcionesTarjeta {
    * plan, donde tocar una receta la suma a una comida.
    */
   accion?: string;
+  /**
+   * Adónde lleva el link: la receta, o su editor. En Borradores se abre el
+   * editor, porque a un borrador se entra a completarlo.
+   */
+  destino?: 'receta' | 'editor';
 }
 
-/** Cómo dice cada marca lo que es, para quien no la ve. */
-const NOMBRE_DE_MARCA: Record<TagEspecial, string> = {
-  favorito: 'Favorita', 'menú diario': 'Menú diario', probar: 'Para probar', borrador: 'Borrador'
+/**
+ * Los especiales que llevan marca en la tarjeta, y cómo dice cada una lo que
+ * es para quien no la ve. `borrador` no tiene: el borrador se ve sólo en su
+ * lista, y ahí una marca en cada tarjeta no diría nada.
+ */
+type ConMarca = Exclude<TagEspecial, 'borrador'>;
+const NOMBRE_DE_MARCA: Record<ConMarca, string> = {
+  favorito: 'Favorita', 'menú diario': 'Menú diario', probar: 'Para probar'
 };
+const CON_MARCA = TAGS_ESPECIALES.filter((t): t is ConMarca => t !== 'borrador');
 
 /** Foto, título y una línea de contexto. Alto total 80 px. */
-export function tarjeta(e: Entrada, { motivo, accion }: OpcionesTarjeta = {}): string {
+export function tarjeta(e: Entrada, { motivo, accion, destino = 'receta' }: OpcionesTarjeta = {}): string {
   const dur = duracionConReloj(e.tiempo);
   const contexto = motivo
     ? `<span class="ctx-txt"><span class="motivo">${escapar(motivo)}</span>${dur ? ` · ${dur}` : ''}</span>`
@@ -142,7 +153,7 @@ export function tarjeta(e: Entrada, { motivo, accion }: OpcionesTarjeta = {}): s
   // El `title` es el globito del escritorio: en el teléfono no hay dónde
   // apoyar el dedo, y ahí lo que dice qué es cada marca sigue siendo el
   // `aria-label`.
-  const puestas = TAGS_ESPECIALES.filter(t => tieneEspecial(e, t));
+  const puestas = CON_MARCA.filter(t => tieneEspecial(e, t));
   const marcas = puestas.length
     ? '<span class="marcas-esq">' + puestas.map(t =>
         `<span class="marca${t === 'favorito' ? ' favorita' : ''}" role="img" ` +
@@ -153,7 +164,7 @@ export function tarjeta(e: Entrada, { motivo, accion }: OpcionesTarjeta = {}): s
   const estilo = puestas.length ? ` style="--marcas:${puestas.length}"` : '';
   const apertura = accion
     ? `<button class="tarjeta" type="button" data-accion="${escapar(accion)}" data-id="${escapar(e.id_archivo)}"${estilo}>`
-    : `<a class="tarjeta" href="#/r/${encodeURIComponent(e.id_archivo)}"${estilo}>`;
+    : `<a class="tarjeta" href="#/r/${encodeURIComponent(e.id_archivo)}${destino === 'editor' ? '/editar' : ''}"${estilo}>`;
   // Con acción la tarjeta agrega en vez de abrir la receta: el «+» lo dice
   // para quien ve, y queda afuera de `.txt` para no competir con las marcas.
   const masElegir = accion ? `<span class="mas-elegir" aria-hidden="true">${ICO.mas}</span>` : '';
@@ -193,13 +204,12 @@ export function avisoAlGuardar(error: string): string {
     : aviso({ texto: error });
 }
 
-/** El ícono del tag especial, o nada si es un tag común. */
+/** El ícono del tag especial, o nada si es un tag común o `borrador`, que no tiene presentación propia. */
 export function iconoDeTag(tag: string): string {
   const esp = tagEspecial(tag);
   if (esp === 'favorito') return ICO.estrella;
   if (esp === 'probar') return ICO.marcador;
   if (esp === 'menú diario') return ICO.calendario;
-  if (esp === 'borrador') return '<span class="borr"></span>';
   return '';
 }
 
@@ -229,14 +239,13 @@ export function chipTag(tag: string, { activo, cantidad, fijo, quieto }: Opcione
 
 /**
  * Los chips sueltos, sin el contenedor: los usa la receta, donde los tags se
- * leen y no se tocan (C02.6.3). La excepción es `borrador`, que abre el
- * editor: ahí se completa lo que falta (C03.1.3).
+ * leen y no se tocan (C02.6.3). `borrador` no va: como en toda lista de tags,
+ * el borrador se ve sólo en su propia lista.
  */
 export function chipsSueltos(tags: string[]): string {
-  return ordenarTags(Array.isArray(tags) ? tags : []).map(tag => tagEspecial(tag) === 'borrador'
-    ? `<button class="chip pend" data-accion="editar" aria-label="Borrador: abrir el editor">` +
-      `${iconoDeTag(tag)}${escapar(tag)}</button>`
-    : chipTag(tag, { quieto: true })).join('');
+  return ordenarTags(Array.isArray(tags) ? tags : [])
+    .filter(tag => tagEspecial(tag) !== 'borrador')
+    .map(tag => chipTag(tag, { quieto: true })).join('');
 }
 
 export interface OpcionesMarcoCarrusel {

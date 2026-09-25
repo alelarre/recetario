@@ -189,8 +189,8 @@ la interfaz**, y no tienen sinónimos.
 | Una versión alternativa de un plato | **variación** | "versión", "alternativa" |
 | Los criterios libres de la receta | **tags** | "etiquetas", "labels" |
 | Los cuatro tags que la app se reserva | **tags especiales**: `favorito`, `menú diario`, `probar`, `borrador`. Se escriben así, en minúscula, en el `.md`, en el chip y en su botón del editor | "estado", "marcadores", "listas" |
-| El nombre de cada marca de la tarjeta, para el lector de pantalla | **Favorita**, **Menú diario**, **Para probar**, **Borrador** —*Favorita* en femenino, por *la receta*; el botón de la estrella se llama **Favorito**— | — |
-| Sacar la marca de borrador | **sacar *borrador*** —soltar su botón en el editor— | "marcar como completada", "declarar completa", "validar" |
+| El nombre de cada marca de la tarjeta, para el lector de pantalla | **Favorita**, **Menú diario**, **Para probar** —*Favorita* en femenino, por *la receta*; el botón de la estrella se llama **Favorito**— | — |
+| Sacar el tag de borrador | **sacar *borrador*** —soltar su botón en el editor— | "marcar como completada", "declarar completa", "validar" |
 | Cuánto lleva la receta, hasta comer | **Duración** —uno de `~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`— | "tiempo", "tiempo de cocción", "preparación" |
 | Para cuántos alcanza | **Rinde** | "porciones", "comensales" |
 | El modo de lectura con la pantalla encendida | **Cocinar**, y **Salir** para dejarlo | "modo cocina" como etiqueta, "empezar" |

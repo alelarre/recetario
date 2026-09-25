@@ -4,7 +4,7 @@ import { crearSheets, ErrorDeSheets } from './sheets.js';
 import { crearStore, conConcurrencia, TOPE_LECTURAS } from './store.js';
 import * as indiceLocal from './indice-local.js';
 import { parse, slugArchivo } from './recipe.js';
-import { tagReservado, conEspecial, esFavorita, tieneEspecial, contarDuraciones, filtrarPorDuracion, ordenarRecetas } from './catalogo.js';
+import { tagReservado, conEspecial, esFavorita, tieneEspecial, contarDuraciones, filtrarPorDuracion, ordenarRecetas, tieneAlgoCargado } from './catalogo.js';
 import type { Orden } from './catalogo.js';
 import { sePuedeTerminar } from './recipe.js';
 import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado } from './ui/router.js';
@@ -1720,6 +1720,9 @@ async function guardarEditor(
       return null;
     };
 
+    // Una receta nueva sin nada escrito no se crea: el título por defecto del
+    // borrador no es contenido (C04.3b.1). Editando, el `.md` ya existe.
+    if (esNueva && !tieneAlgoCargado(escrita)) return conError('Completá algún campo antes de guardar.');
     if (!nueva.titulo) return conError('Ponele un título antes de guardar.');
 
     // Lo que el depósito cambió respecto del `.md` que se abrió: el store sube

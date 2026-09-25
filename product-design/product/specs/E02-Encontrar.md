@@ -201,7 +201,7 @@ tag.
 #### C02.6.3 — En la receta los tags se leen *(J4, J5)*
 
 - [ ] Los tags se muestran en la receta abierta como chips, y no son tocables: al filtro se entra por el carrusel (C02.6.4).
-- [ ] La excepción es `borrador`, que abre el editor (C03.1.3).
+- [ ] `borrador` no aparece, en ninguna de sus formas (C03.1.3).
 
 #### C02.6.4 — El carrusel de tags *(J5)*
 
@@ -227,19 +227,16 @@ tag.
 
 ### F02.7 — Las marcas de los tags especiales en las listas
 
-Los cuatro tags especiales —`favorito`, `menú diario`, `probar`, `borrador`—
-se ven en la tarjeta sin abrir la receta. Un borrador se lista igual
-que cualquier otra, y se ve que le falta algo. No se esconde ni se ordena al
-final.
+Tres de los tags especiales —`favorito`, `menú diario`, `probar`— se ven en la
+tarjeta sin abrir la receta. `borrador` no tiene marca: un borrador se ve sólo
+en su lista, Borradores, y ahí lo son todas.
 
 #### C02.7.1 — Las marcas *(J1, J5)*
 
-- [ ] Van **juntas en la esquina superior derecha de la tarjeta**, en el orden fijo de los especiales, cada una con su ícono: la estrella, el calendario, el marcador y la marca de borrador (design-system §6.5). El título no pasa por debajo.
-- [ ] Salen de la lista `tags` de la fila del índice (C05.3.1). Cada marca tiene su nombre accesible: *Favorita*, *Menú diario*, *Para probar*, *Borrador*.
-- [ ] La marca de borrador es consistente con la de la receta abierta (C03.1.3).
-- [ ] Un borrador **no se filtra, no se esconde y no se ordena distinto**. Su lista propia es Borradores (`E01-CapturaYBorradores.md` C01.4.1).
-- [ ] La marca no se dibuja como error ni como advertencia: la receta funciona, le falta algo.
-- [ ] **De los cuatro, sólo `favorito` cambia el orden:** las favoritas van primero en las listas (C02.5.1).
+- [ ] Van **juntas en la esquina superior derecha de la tarjeta**, en el orden fijo de los especiales, cada una con su ícono: la estrella, el calendario y el marcador. El título no pasa por debajo.
+- [ ] Salen de la lista `tags` de la fila del índice (C05.3.1). Cada marca tiene su nombre accesible: *Favorita*, *Menú diario*, *Para probar*.
+- [ ] **`borrador` no lleva marca**, en ninguna lista. Su lista propia es Borradores (`E01-CapturaYBorradores.md` C01.4.1).
+- [ ] **De los especiales, sólo `favorito` cambia el orden:** las favoritas van primero en las listas (C02.5.1).
 
 ### F02.8 — Sin historial ni sugerencias por uso
 

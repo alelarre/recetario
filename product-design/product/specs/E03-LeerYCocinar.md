@@ -36,7 +36,7 @@ receta entera.
 - [ ] En la primera ficha: foto si la hay, título, línea de contexto, tags, descripción, el **carrusel de fotos** si la receta tiene depósito (C03.5.2) y, al pie tras un divisor, la fuente. Después ingredientes, preparación, variaciones y notas, cada una en su ficha.
 - [ ] La línea de contexto lleva el color y el nombre de la categoría, lo que rinde, **la duración con su relojito** y la dificultad. La duración sólo se dibuja si `tiempo` es uno de los cinco valores (`E05-Cimientos.md` C05.1.1).
 - [ ] **El punto del color va siempre pegado al texto:** en una pantalla angosta el texto corta en varios renglones y el punto queda al lado del primero, nunca solo en un renglón propio.
-- [ ] Los tags van como chips, los especiales primero y con su ícono. **Se leen y no se tocan** (C02.6.3); el único tocable es *borrador* (C03.1.3). **`favorito` no lleva chip:** ya lo dice la estrella del encabezado (C03.1.2b).
+- [ ] Los tags van como chips, los especiales primero y con su ícono. **Se leen y no se tocan** (C02.6.3); *borrador* no va (C03.1.3). **`favorito` no lleva chip:** ya lo dice la estrella del encabezado (C03.1.2b).
 - [ ] Una sección ausente no se dibuja: no queda encabezado vacío.
 - [ ] Una sección desconocida del `.md` se muestra tal cual, después de Notas, sin interpretarse (C05.1.2).
 - [ ] Toda la receta se lee scrolleando, sin ningún toque.
@@ -60,9 +60,7 @@ receta entera.
 
 #### C03.1.3 — Estados de la receta *(J6)*
 
-- [ ] Borrador: **un chip más de la fila de tags, entre los especiales, con el tag tal como está escrito** —*borrador*, o *incompleta* si el `.md` lo trae así (C05.1.4)— **y lleva la marca** (design-system §6.5). Es **tocable** y **abre el editor**, donde se saca el tag con su botón una vez cargado lo mínimo (C04.4.1). El resto de la receta se muestra igual.
-- [ ] Va **en la fila de tags y no suelto debajo**: es un estado del mismo orden que un tag y se lee en el mismo barrido.
-- [ ] La marca sale del tag `borrador` de la lista `tags`, no de mirar el contenido (C05.3.1).
+- [ ] Borrador: **se muestra como cualquier receta.** El tag `borrador` no aparece en la fila de tags, en ninguna de sus formas (C05.1.4), y no hay marca, estado ni aviso de lo que falta: a un borrador se llega desde Borradores, que abre el editor (`E01-CapturaYBorradores.md` C01.4.1). Si la fila de tags queda vacía, no se dibuja.
 - [ ] Sin foto: el bloque de foto no se dibuja y la receta empieza por el título.
 - [ ] Cargando: el esqueleto de la pantalla está mientras se lee el `.md`.
 - [ ] Sin red: no se puede abrir; el aviso (C05.8.1).
@@ -212,7 +210,7 @@ revocar.
 - [ ] El ícono de compartir del encabezado (C03.1.2b) abre una ficha al pie con **PDF**, **Link**, **Texto** y **Cancelar**.
 - [ ] La ficha es estado de la pantalla, no una ruta: volver, *Cancelar* o tocar el velo la cierran. Mientras está abierta, la página de atrás no scrollea.
 - [ ] Las tres opciones usan el menú Compartir del sistema. Si el usuario cancela ese menú, la ficha se cierra sin aviso.
-- [ ] Ninguna de las tres lleva los tags, la marca de borrador ni las claves extra del frontmatter.
+- [ ] Ninguna de las tres lleva los tags ni las claves extra del frontmatter.
 
 #### C03.7.2 — PDF *(J6)*
 

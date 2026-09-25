@@ -40,7 +40,9 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   mismo editor y la misma fila. Borradores es la lista por tag de `borrador`,
   en el menú, y **es el único camino a ellos**: el home no tiene tile «Sin
   categoría» y `borrador` no aparece en ninguna lista de tags (`store.tagsDe`
-  lo filtra). La categoría es opcional al crear: lo que no tiene categoría vive
+  lo filtra). **`borrador` no tiene presentación propia:** ni marca en la
+  tarjeta, ni chip en la receta, ni ícono; tocar un borrador en Borradores
+  abre su editor. La categoría es opcional al crear: lo que no tiene categoría vive
   en `_sin-categoria/` (`carpeta_sin_categoria` en `meta`), que no es una
   categoría, y se muestra como «Sin categoría»; ninguna categoría puede
   llamarse así. Sacar `borrador` exige categoría, así que ahí todo es
@@ -51,7 +53,8 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   vacío, con la hamburguesa en vez del volver (`nueva` está en
   `PANTALLAS_CON_MENU`); editar una existente lleva el volver; el menú Compartir lo abre con la fuente, el texto en Notas y las fotos
   en el depósito: el Share Target es un `POST` que atiende `public/sw.js` y
-  redirige a `#/nueva`. Nada se escribe hasta Guardar.
+  redirige a `#/nueva`. Nada se escribe hasta Guardar, y una receta nueva sin
+  ningún campo cargado no se guarda (`tieneAlgoCargado` en `catalogo.ts`).
 - **El plan de la semana es otro `.md`**, `_plan.md`, en la carpeta base y al
   lado de `_indice`: siete días sin fechas que arrancan en hoy, con dos comidas
   cada uno y una lista de recetas en cada comida. No está en el índice —se lo

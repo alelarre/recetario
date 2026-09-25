@@ -171,44 +171,20 @@ describe('Receta en lectura', () => {
     expect(html).toContain('Un tinto.');
   });
 
-  it('la marca de borrador es tocable y abre el editor', () => {
-    const conTag = parse('---\ntitulo: A\ntags: [incompleta]\n---\n');
-    const html = renderReceta({ entrada: null, receta: conTag });
-    expect(html).toContain('data-accion="editar"');
-    expect(html).toContain('class="borr');
-  });
-
-  it('la marca es un chip de la fila de tags, y el primero', () => {
-    const conTags = parse('---\ntitulo: A\ntags: [incompleta, vegetariano, legumbres]\n---\n');
-    const html = renderReceta({ entrada: null, receta: conTags });
-    const fila = html.slice(html.indexOf('<div class="chips">'), html.indexOf('</div>', html.indexOf('<div class="chips">')));
-    expect(fila).toContain('chip pend');
-    expect(fila).toContain('incompleta');
-    // Primero el estado, después los tags.
-    expect(fila.indexOf('incompleta')).toBeLessThan(fila.indexOf('vegetariano'));
-    // Y una sola vez: el tag no se repite como chip suelto, la marca ya lo dice.
-    expect(html.split('class="borr"').length - 1).toBe(1);
-  });
-
-  it('la fila de tags no repite la marca de borrador: es el chip del tag', () => {
+  it('el tag borrador no se muestra en la receta, ni en su forma vieja', () => {
     const r = parse('---\ntitulo: Pan\ntags: [incompleta, horno]\n---\n');
     const html = renderReceta({ entrada: entradaFalsa(), receta: r });
-    expect(html.match(/class="borr"/g)).toHaveLength(1);
+    expect(html).toContain('horno');
+    expect(html).not.toContain('incompleta');
+    expect(html).not.toContain('chip pend');
+    expect(html).not.toContain('class="borr"');
+    // El único camino al editor es el botón Editar.
+    expect(html.match(/data-accion="editar"/g)).toHaveLength(1);
   });
 
-  it('sin otros tags, la marca arma igual la fila de chips', () => {
-    const soloIncompleta = parse('---\ntitulo: A\ntags: [incompleta]\n---\n');
-    const html = renderReceta({ entrada: null, receta: soloIncompleta });
-    expect(html).toContain('<div class="chips">');
-  });
-
-  it('la marca es el tag borrador, no un dato calculado', () => {
-    // Sin el tag no aparece, aunque a la receta le falte todo.
-    const sinTag = parse('---\ntitulo: A\n---\n');
-    expect(renderReceta({ entrada: null, receta: sinTag })).not.toContain('class="borr"');
-    // Con el tag aparece, aunque la receta esté escrita entera, y en su forma vieja.
-    const conTag = parse('---\ntitulo: A\ntags: [incompleta]\n---\n## Ingredientes\n- Sal\n## Preparación\n1. Salar.');
-    expect(renderReceta({ entrada: null, receta: conTag })).toContain('class="borr"');
+  it('con sólo borrador no hay fila de tags', () => {
+    const r = parse('---\ntitulo: A\ntags: [borrador]\n---\n');
+    expect(renderReceta({ entrada: null, receta: r })).not.toContain('<div class="chips">');
   });
 
   it('las variaciones como bullets se muestran como lista', () => {

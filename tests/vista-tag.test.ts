@@ -54,6 +54,12 @@ describe('la lista por tag', () => {
     expect(html).not.toContain('>t20<');
   });
 
+  it('sin el menú, tocar una receta la abre', () => {
+    const html = renderTag({ ...base, entradas: [entradaFalsa({ id_archivo: 'r1' })] });
+    expect(html).toContain('href="#/r/r1"');
+    expect(html).not.toContain('/editar');
+  });
+
   it('las favoritas van primero', () => {
     const html = renderTag({ ...base, entradas: [
       entradaFalsa({ titulo: 'Zapallo', tags: ['horno'] }),
@@ -103,9 +109,19 @@ describe('la lista por tag', () => {
 
     it('se titula como el menú, no con el nombre del tag', () => {
       const html = renderTag({ ...borradores, titulo: 'Borradores', entradas: [], menu: { abierto: false, borradores: 0 } });
-      // El título lleva adelante el ícono del tag, que es otro `<span>`.
-      expect(html).toContain('<span class="borr"></span>Borradores</span>');
-      expect(html).not.toContain('<span class="borr"></span>borrador</span>');
+      expect(html).toContain('Borradores</');
+      expect(html).not.toContain('borrador</');
+      // Sin ícono: el borrador no tiene presentación propia.
+      expect(html).not.toContain('class="borr"');
+    });
+
+    it('tocar un borrador abre su editor, no la receta', () => {
+      const html = renderTag({
+        ...borradores, entradas: [entradaFalsa({ id_archivo: 'b1', tags: ['borrador'] })],
+        menu: { abierto: false, borradores: 1 }
+      });
+      expect(html).toContain('href="#/r/b1/editar"');
+      expect(html).not.toContain('href="#/r/b1"');
     });
 
     it('dibuja el menú lateral con Borradores marcado', () => {

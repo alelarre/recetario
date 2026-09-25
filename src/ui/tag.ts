@@ -5,7 +5,8 @@
  * favoritas primero.
  *
  * Borradores es esta misma lista con el tag `borrador`, dibujada como destino
- * del menú: con el lateral y la hamburguesa en vez del volver.
+ * del menú: con el lateral y la hamburguesa en vez del volver, y con cada
+ * tarjeta abriendo el editor, que es donde se completa un borrador.
  */
 import {
   encabezado, tarjeta, vacio, carruselTags, iconoDeTag, SPINNER, filaDuraciones, conmutadorOrden, lateral, botonMenu
@@ -37,7 +38,8 @@ export interface OpcionesTag {
 export function renderTag(
   { tag, entradas, total, visibles, tagsActivos, tags, duraciones, duracionesActivas, orden, menu, titulo }: OpcionesTag
 ): string {
-  const lista = ordenarRecetas(entradas, orden).map(e => tarjeta(e)).join('');
+  const destino = menu ? 'editor' : 'receta';
+  const lista = ordenarRecetas(entradas, orden).map(e => tarjeta(e, { destino })).join('');
   // El tag de la ruta no se puede sacar —cambiar de tag es volver—, así que el
   // vacío dice el hecho y no invita a «sacar un filtro» que no se puede sacar.
   const cuerpo = lista
