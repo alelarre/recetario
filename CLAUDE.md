@@ -65,8 +65,10 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   `skills/recetario/SKILL.md` y sus herramientas: recibe una fuente (PDF, foto,
   video, sitio web, una lista de links) y escribe las recetas, corrige las que
   están u ordena el recetario. El editor existe para corregir. En un borrador,
-  «Convertir con Agente» guarda la receta y manda el pedido a claude.ai, que
-  pide `id: <id>` en el frontmatter. La respuesta vuelve compartida —abre el
+  «Convertir con Agente» guarda la receta y manda el pedido por el menú
+  Compartir del sistema, donde se elige el agente; sin menú Compartir (Chrome
+  en la Mac), abre claude.ai con el pedido. El pedido pide `id: <id>` en el
+  frontmatter. La respuesta vuelve compartida —abre el
   editor de la receta de ese `id`, o uno nuevo— o se pega con «Pegar», en el
   encabezado del editor, que llena el formulario sin guardar. **La app no llama
   a ningún modelo.**
@@ -75,9 +77,10 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   `_sin-categoria/`. El agente corre este mismo código a través del MCP, que
   importa `store.ts`: lo que escribe queda con su fila, sin reindexar. Con
   *Convertir con Agente*, el agente devuelve el `.md` y lo guarda la app.
-- **La app no descubre lo que se escribe afuera:** lo que escribe el MCP
-  aparece la próxima vez que la app abre, porque cambió la fecha de `_indice`;
-  un `.md` subido a Drive por fuera del store aparece al reindexar.
+- **Lo que escribe el MCP aparece al abrir la app; un `.md` subido por fuera
+  del store, al reindexar.** El MCP escribe la fila con el `.md` y cambia la
+  fecha de `_indice`, que la app compara al abrir; un `.md` subido a Drive a
+  mano no tiene fila.
 
 ## Dónde está cada cosa
 
