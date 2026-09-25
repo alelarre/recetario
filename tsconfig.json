@@ -29,4 +29,6 @@
     "allowJs": false
   },
   "include": ["src", "vite.config.ts"]
+  // `mcp/` no entra acá: tiene su propio `mcp/tsconfig.json`, porque corre en
+  // Node y no en el navegador. La dependencia va siempre de `mcp/` a `src/`.
 }

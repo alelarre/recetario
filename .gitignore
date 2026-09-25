@@ -4,3 +4,10 @@ dist/
 *.local
 .superpowers/
 .playwright-mcp/
+
+# Credenciales del MCP: el client id/secret y el refresh token nunca se
+# commitean. El refresh token en sí no se escribe a archivo (va al Llavero);
+# esto cubre cualquier volcado accidental.
+credentials*.json
+token*.json
+client_secret*.json
