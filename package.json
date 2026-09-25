@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "vite build && vitest run",
+    "test": "vitest run",
     "dev": "vite",
     "build": "vite build",
     "test:watch": "vitest",

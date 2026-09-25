@@ -2,14 +2,8 @@
   /*
    * El MCP importa `src/` (nunca al revés), así que este tsconfig incluye
    * las dos carpetas: un archivo de `mcp/` con un tipo mal usado de `src/`
-   * tiene que fallar el typecheck. `lib` y los tipos de `vite/client` quedan
-   * como en la raíz porque `include` trae todo `src/`, con sus imports de
-   * `.css`, `.png` e `import.meta.glob`; `node` se suma para lo propio del
-   * MCP (`process`, `Buffer`, streams).
+   * tiene que fallar el typecheck.
    */
   "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "types": ["vite/client", "node"]
-  },
   "include": ["../mcp", "../src"]
 }

@@ -1,14 +1,19 @@
 // El MCP importa de `src/`, nunca al revés, y no entra al bundle de la PWA:
 // Pages sólo publica `dist/`. Este test cubre las dos reglas.
-import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { describe, it, expect, beforeAll } from 'vitest';
+import { build } from 'vite';
+import { readFileSync, readdirSync, statSync, rmSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const raiz = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const carpetaSrc = join(raiz, 'src');
 const carpetaMcp = join(raiz, 'mcp');
-const carpetaDist = join(raiz, 'dist');
+
+// Un build propio del test, en una carpeta que no es `dist/` (la que
+// publica Pages): así el test siempre construye lo que va a revisar, sin
+// importarle si algo corrió `npm run build` antes ni pisar ese `dist/`.
+const carpetaDistDeTest = join(raiz, '.vitest-dist');
 
 function archivosDe(carpeta: string): string[] {
   const resultado: string[] = [];
@@ -36,6 +41,15 @@ function especificadoresRelativos(contenido: string): string[] {
   return especificadores;
 }
 
+beforeAll(async () => {
+  rmSync(carpetaDistDeTest, { recursive: true, force: true });
+  await build({
+    root: raiz,
+    logLevel: 'silent',
+    build: { outDir: carpetaDistDeTest, emptyOutDir: true }
+  });
+}, 30000);
+
 describe('publicación: mcp/ no se mezcla con la app', () => {
   it('ningún archivo de src/ importa de mcp/', () => {
     const infractores: string[] = [];
@@ -52,13 +66,9 @@ describe('publicación: mcp/ no se mezcla con la app', () => {
     expect(infractores).toEqual([]);
   });
 
-  it('después del build, dist/ no tiene código de mcp/', () => {
-    // `npm test` corre `vite build` antes de vitest, así que dist/ está
-    // recién armado. Si no existe, el build no corrió: falla en vez de
-    // dar un falso verde.
-    expect(existsSync(carpetaDist)).toBe(true);
+  it('el build no tiene código de mcp/', () => {
     const conLaMarca: string[] = [];
-    for (const archivo of archivosDe(carpetaDist)) {
+    for (const archivo of archivosDe(carpetaDistDeTest)) {
       const contenido = readFileSync(archivo, 'utf-8');
       if (contenido.includes('MCP-RECETARIO')) conLaMarca.push(archivo);
     }
