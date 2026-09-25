@@ -6,6 +6,8 @@ import { SCHEMA_VERSION } from '../src/config.js';
 import type { CopiaIndice } from '../src/indice-local.js';
 import { driveFalso, sheetsFalso, indiceLocalFalso, recetaFalsa, imagenesFalsas } from './dobles.js';
 import type { SheetsFalso } from './dobles.js';
+import { parse } from '../src/recipe.js';
+import { linkDeFoto } from '../src/fotos-receta.js';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
@@ -148,19 +150,50 @@ describe('editar una categoría', () => {
 });
 
 describe('borrar una categoría', () => {
-  it('la carpeta a la papelera, las filas de sus recetas en una llamada, y la copia coincide', async () => {
+  const NOQUIS = `---\ntitulo: Ñoquis\ntags: [favorito]\n---\n\n## Preparación\n1. Amasar\n\n## Fotos\n- 1: ${linkDeFoto('fv')}\n`;
+
+  it('sus recetas pasan a _sin-categoria/ con el tag borrador, y después la carpeta va a la papelera', async () => {
     const { store, drive, sheets, indiceLocal } = await abierta();
-    let llamadas = 0;
-    const borrarFilas = sheets.borrarFilas.bind(sheets);
-    sheets.borrarFilas = async (id: string, hojaId: number, nros: number[]) => { llamadas++; return borrarFilas(id, hojaId, nros); };
+    drive._store.set('fv', { id: 'fv', name: 'noquis-1.jpg', mimeType: 'image/jpeg', parents: ['raiz'] });
+    drive._store.get('r1')!.contenido = NOQUIS;
+    drive._store.get('r3')!.contenido = '---\ntitulo: Lasaña\n---\n\n## Preparación\n1. Armar\n';
+    const orden: string[] = [];
+    const mover = drive.mover.bind(drive);
+    drive.mover = async (id: string, donde: { de: string; a: string }) => { orden.push(`mover ${id}`); return mover(id, donde); };
+    const borrar = drive.borrar.bind(drive);
+    drive.borrar = async (id: string) => { orden.push(`borrar ${id}`); return borrar(id); };
 
     await store.borrarCategoria('c1');
 
+    const sc = [...drive._store.values()].find(a => a.name === '_sin-categoria')!;
+    expect(orden).toEqual(['mover r1', 'mover r3', 'borrar c1']);
+    for (const id of ['r1', 'r3']) {
+      expect(drive._store.get(id)?.parents).toEqual([sc.id]);
+      expect(drive._store.get(id)?.trashed).toBeFalsy();
+      expect(parse(drive._store.get(id)!.contenido!).tags).toContain('borrador');
+    }
+    // Las fotos se quedan: el `.md` las sigue nombrando por su id.
+    expect(parse(drive._store.get('r1')!.contenido!).fotos).toEqual([{ n: 1, url: linkDeFoto('fv') }]);
+    expect(parse(drive._store.get('r1')!.contenido!).tags).toContain('favorito');
+    expect(drive._store.get('fv')?.trashed).toBeFalsy();
     expect(drive._store.get('c1')?.trashed).toBe(true);
-    expect(llamadas).toBe(1);
-    expect(store.entradas().map(e => e.id_archivo).sort()).toEqual(['r2', 'r4']);
+    expect(store.buscar({ tags: ['borrador'] }).map(e => e.id_archivo).sort()).toEqual(['r1', 'r3']);
+    expect(store.entradas().map(e => e.id_archivo).sort()).toEqual(['r1', 'r2', 'r3', 'r4']);
     expect(store.categorias().map(c => c.id)).toEqual(['c2']);
     await copiaCoincide(sheets, indiceLocal.actual());
+  });
+
+  it('un .md que no se puede leer frena el borrado: la carpeta sigue estando', async () => {
+    const { store, drive } = await abierta();
+    drive._store.get('r1')!.contenido = NOQUIS;
+    const leerTexto = drive.leerTexto.bind(drive);
+    drive.leerTexto = async (id: string) => { if (id === 'r3') throw new Error('red'); return leerTexto(id); };
+
+    await expect(store.borrarCategoria('c1')).rejects.toThrow('red');
+
+    expect(drive._store.get('c1')?.trashed).toBeFalsy();
+    expect(drive._store.get('r3')?.parents).toEqual(['c1']);
+    expect(store.categorias().map(c => c.id)).toEqual(['c1', 'c2']);
   });
 
   it('una categoría vacía no borra filas de recetas', async () => {

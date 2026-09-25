@@ -1891,7 +1891,7 @@ describe('main.ts: las rutas', () => {
       await abrir('#/categorias');
       await abrir('#/categorias/c1');
       await tocar('borrar-categoria');
-      expect(enLugar.at(-1)).toContain('Carnes y su receta va a la papelera de Drive.');
+      expect(enLugar.at(-1)).toContain('Su receta pasa a Borradores, sin categoría.');
       await tocar('borrar-categoria-confirmado');
       expect(estado.categoriasBorradas).toEqual(['c1']);
       expect(global.location.hash).toBe('#/categorias');

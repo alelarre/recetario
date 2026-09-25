@@ -101,21 +101,24 @@ describe('la edición de una categoría', () => {
 });
 
 describe('la confirmación de borrado', () => {
-  it('con recetas: cuántas, hasta tres nombres en orden, y el botón dice lo que hace', () => {
+  it('con recetas: la categoría a la papelera, sus recetas a Borradores, y hasta tres nombres en orden', () => {
     const html = confirmacionBorrarCategoria('Pastas', ['Ravioles', 'Lasaña', 'Ñoquis', 'Canelones', 'Sorrentinos']);
-    expect(html).toContain('<b>Pastas y sus 5 recetas van a la papelera de Drive.</b>');
+    expect(html).toContain('<b>Pastas va a la papelera de Drive.</b>');
+    expect(html).toContain('Sus 5 recetas pasan a Borradores, sin categoría.');
+    expect(html).not.toContain('recetas van a la papelera');
     expect(html).toContain('Canelones, Lasaña, Ñoquis y 2 más.');
-    expect(html).toContain('Borrar Pastas y 5 recetas');
+    expect(html).toContain('>Borrar Pastas<');
     expect(html).toContain('data-accion="borrar-categoria-confirmado"');
   });
 
   it('con una receta, en singular', () => {
-    expect(confirmacionBorrarCategoria('Pastas', ['Ñoquis'])).toContain('Pastas y su receta va a la papelera de Drive.');
+    expect(confirmacionBorrarCategoria('Pastas', ['Ñoquis'])).toContain('Su receta pasa a Borradores, sin categoría.');
   });
 
   it('vacía, la corta', () => {
     const html = confirmacionBorrarCategoria('Pastas', []);
     expect(html).toContain('<b>Pastas va a la papelera de Drive.</b>');
+    expect(html).not.toContain('Borradores');
     expect(html).toContain('>Borrar Pastas<');
   });
 

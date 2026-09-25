@@ -1,5 +1,5 @@
 import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_FOTOS, NOMBRE_SIN_CATEGORIA, NOMBRE_PLAN, MARCA_RAIZ, SCHEMA_VERSION } from './config.js';
-import { COLUMNAS, entradaDesdeFila, filaDesde, coincideTag, tagEspecial, tieneEspecial } from './catalogo.js';
+import { COLUMNAS, entradaDesdeFila, filaDesde, coincideTag, tagEspecial, tieneEspecial, conEspecial } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, HOJA_CATEGORIAS, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 import { COLUMNAS_CATEGORIAS, PREDEFINIDAS, categoriaDesdeFila, filaDeCategoria, predefinidaPorNombre, problemaDelNombre, SIN_CATEGORIA } from './categorias.js';
@@ -1161,34 +1161,33 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   }
 
   /**
-   * La carpeta a la papelera con sus recetas adentro, y sus filas afuera: las de
-   * las recetas en una sola llamada —de a una, la cuota de Sheets se agota— y la
-   * de la categoría. Su foto propia va al final: vive en `_fotos/`, no adentro
-   * de la carpeta.
+   * Sus recetas no se pierden: pasan a `_sin-categoria/` con el tag
+   * `borrador`, para que quede a la vista que les falta categoría. Sus fotos
+   * se quedan en `_fotos/`, porque el `.md` las sigue nombrando. Recién con la
+   * carpeta vacía van a la papelera ella, su fila y su foto propia, que vive
+   * en `_fotos/` y no adentro de la carpeta.
+   *
+   * Los `.md` se leen todos antes de mover el primero: uno que no se puede
+   * leer frena todo y la categoría queda como estaba. Si algo falla después,
+   * lo movido queda movido y la carpeta, que todavía tiene recetas, no se
+   * borra.
    */
   async function borrarCategoria(id: string): Promise<void> {
     const nroCategoria = filaDeLaCategoria(id);
     if (nroCategoria < 2) return;
     const propia = idDeFotoPropia(ctx.categorias.find(c => c.id === id)?.foto ?? '');
-    await drive.borrar(id);
 
-    const hojas = await sheets.hojas(ctx.indiceId);
-    const nros = recetasDe(id)
-      .map(e => filas.get(e.id_archivo))
-      .filter((n): n is number => typeof n === 'number')
-      .sort((a, b) => b - a);
-    if (nros.length) {
-      await sheets.borrarFilas(ctx.indiceId, idDeHoja(hojas, HOJA_RECETAS), nros);
-      entradas = entradas.filter(e => e.carpeta_id !== id);
-      const quedan = new Map<string, number>();
-      for (const [otro, nro] of filas) {
-        if (nros.includes(nro)) continue;
-        // Cada fila borrada por encima corre a esta un lugar hacia arriba.
-        quedan.set(otro, nro - nros.filter(n => n < nro).length);
-      }
-      filas = quedan;
+    const suyas = recetasDe(id);
+    const textos = await conConcurrencia(suyas, TOPE_LECTURAS, e => drive.leerTexto(e.id_archivo));
+    // De a una: las escrituras en la planilla van en fila, y la primera crea
+    // `_sin-categoria/` si todavía no existe.
+    for (const [i, e] of suyas.entries()) {
+      const receta = parse(textos[i] ?? '');
+      await guardar(e.id_archivo, { ...receta, tags: conEspecial(receta.tags, 'borrador', true) }, { carpetaDestino: '' });
     }
 
+    await drive.borrar(id);
+    const hojas = await sheets.hojas(ctx.indiceId);
     await sheets.borrarFila(ctx.indiceId, idDeHoja(hojas, HOJA_CATEGORIAS), nroCategoria);
     usarCategorias(ctx.categorias.filter(c => c.id !== id));
     await persistir();

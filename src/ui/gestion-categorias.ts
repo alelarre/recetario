@@ -72,7 +72,7 @@ const subirFoto =
 export const botonBorrarCategoria =
   '<button class="btn pel" type="button" data-accion="borrar-categoria">Borrar categoría</button>';
 
-/** Dice todo antes de borrar: cuántas recetas se van, cuáles, y a dónde. */
+/** Dice todo antes de borrar: qué va a la papelera, y a dónde pasan sus recetas y cuáles son. */
 export function confirmacionBorrarCategoria(nombre: string, titulos: string[]): string {
   const n = titulos.length;
   const ordenados = [...titulos].sort((a, b) => a.localeCompare(b, 'es'));
@@ -80,15 +80,10 @@ export function confirmacionBorrarCategoria(nombre: string, titulos: string[]): 
     ? `<p class="lee" style="margin:0 0 var(--e-4)">${escapar(ordenados.slice(0, 3).join(', '))}` +
       `${n > 3 ? ` y ${n - 3} más` : ''}.</p>`
     : '';
-  const titulo = n === 0
-    ? `${nombre} va a la papelera de Drive.`
-    : n === 1
-      ? `${nombre} y su receta va a la papelera de Drive.`
-      : `${nombre} y sus ${n} recetas van a la papelera de Drive.`;
-  const explicacion = n
-    ? '<p class="lee" style="margin:0 0 var(--e-2)">Dejan de verse en la app. Se pueden recuperar desde la papelera de Drive, y después hay que reindexar.</p>'
-    : '';
-  const boton = n ? `Borrar ${nombre} y ${recetas(n)}` : `Borrar ${nombre}`;
+  const titulo = `${nombre} va a la papelera de Drive.`;
+  const aDonde = n === 1 ? 'Su receta pasa a Borradores, sin categoría.' : `Sus ${n} recetas pasan a Borradores, sin categoría.`;
+  const explicacion = n ? `<p class="lee" style="margin:0 0 var(--e-2)">${escapar(aDonde)}</p>` : '';
+  const boton = `Borrar ${nombre}`;
   return '<div class="ficha" data-confirmar-borrado-categoria style="border-color:var(--error)">' +
     `<p class="lee" style="margin:0 0 var(--e-2)"><b>${escapar(titulo)}</b></p>` +
     explicacion + cuales +
