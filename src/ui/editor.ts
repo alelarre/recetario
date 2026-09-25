@@ -44,9 +44,12 @@ export interface ArgsEditor {
   menu?: MenuDePantalla;
 }
 
-/** Suelto al pie y no en una ficha: es una acción destructiva, no un campo más. */
+/**
+ * Al pie con Guardar y no en una ficha: es una acción destructiva, no un
+ * campo más. El ancho y el aire se los da `.acciones-editor`.
+ */
 export const botonBorrar =
-  `<button class="btn pel" data-accion="borrar" type="button" style="width:100%">${ICO.tacho}Borrar receta</button>`;
+  `<button class="btn pel" data-accion="borrar" type="button">${ICO.tacho}Borrar receta</button>`;
 
 /**
  * Toma el lugar del botón sin redibujar el formulario, por lo mismo que la
@@ -423,18 +426,20 @@ export function renderEditor(
     area('notas', 'Notas', receta.notas, 3) +
   '</div>';
 
+  const borrar = !entrada ? ''
+    : confirmandoBorrado ? confirmacionBorrado(receta.titulo) : botonBorrar;
+
   // Convertir con Agente sólo mientras la receta es un borrador —con el tag
   // puesto, o bloqueado porque falta lo mínimo—: sin él no hay nada que mandar
   // a convertir. Va siempre, oculto sin el tag, para que el botón de
-  // `borrador` lo muestre y lo oculte sin redibujar.
+  // `borrador` lo muestre y lo oculte sin redibujar. Borrar va en el mismo
+  // bloque para que entre los tres haya un solo aire, el `gap` del bloque.
   const acciones = '<div class="acciones-editor">' +
     '<button class="btn sec" data-accion="convertir-con-agente" type="button"' +
       `${especiales.includes('borrador') ? '' : ' hidden'}>${ICO.compartir}Convertir con Agente</button>` +
     '<button class="btn prim" data-accion="guardar" type="button">Guardar</button>' +
+    borrar +
   '</div>';
-
-  const borrar = !entrada ? ''
-    : confirmandoBorrado ? confirmacionBorrado(receta.titulo) : botonBorrar;
 
   const pantalla = encabezado({
     titulo: entrada ? 'Editando' : 'Nueva receta',
@@ -445,7 +450,7 @@ export function renderEditor(
     // Enter en cualquier campo de texto recargaría la página.
     '<form class="cuerpo" data-formulario onsubmit="return false">' +
       (error ? avisoAlGuardar(error) : '') +
-      datos + fichaFotos(receta) + contenido + acciones + borrar +
+      datos + fichaFotos(receta) + contenido + acciones +
     '</form>';
   return conLateral(menu, pantalla);
 }

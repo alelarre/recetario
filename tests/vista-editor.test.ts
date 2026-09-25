@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   renderEditor, recetaDesdeFormulario, formularioDesde, pillTag,
   renderAccionesFoto, renderElegirFoto, renderSelectorPortada, renderFotoPorUrl, botonPonerFoto,
-  carpetaDelEditor
+  carpetaDelEditor, botonBorrar
 } from '../src/ui/editor.js';
 import { ICO, ICONO_DE_DURACION } from '../src/ui/iconos.js';
 import { escapar } from '../src/ui/markdown.js';
@@ -371,6 +372,35 @@ describe('las acciones al pie del editor', () => {
   it('al editar, Borrar receta va después de Guardar', () => {
     const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: cargada, categorias });
     expect(html.indexOf('data-accion="guardar"')).toBeLessThan(html.indexOf('data-accion="borrar"'));
+  });
+});
+
+describe('el pie del editor', () => {
+  /** El bloque `.acciones-editor` entero, hasta el cierre del formulario. */
+  const pie = (html: string) => html.slice(html.indexOf('<div class="acciones-editor">'), html.indexOf('</form>'));
+
+  it('Convertir con Agente, Guardar y Borrar receta van en el mismo bloque: un solo separador entre los tres', () => {
+    const html = renderEditor({
+      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['borrador'] }, categorias
+    });
+    const bloque = pie(html);
+    expect(bloque).toMatch(/^<div class="acciones-editor">.*data-accion="convertir-con-agente".*data-accion="guardar".*data-accion="borrar".*<\/div>$/s);
+  });
+
+  it('la confirmación de borrar toma el lugar del botón adentro del mismo bloque', () => {
+    const html = renderEditor({
+      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: cargada, categorias, confirmandoBorrado: true
+    });
+    expect(pie(html)).toContain('data-confirmar-borrado');
+  });
+
+  it('el ancho entero es sólo de los botones del bloque, no de los de la confirmación', () => {
+    const BASE = readFileSync(new URL('../src/ui/base.css', import.meta.url), 'utf8');
+    expect(BASE).toMatch(/^\.acciones-editor > \.btn \{ width: 100%; \}/m);
+  });
+
+  it('Borrar receta no trae un ancho propio: lo pone el bloque, como a los otros dos', () => {
+    expect(botonBorrar).not.toContain('style=');
   });
 });
 

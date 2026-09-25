@@ -37,7 +37,7 @@ error.
 - [ ] Salir sin guardar con cambios pendientes **pregunta antes**: *"¿Salir sin guardar los cambios?"*, con *Seguir editando* y *Salir*. Vale para el volver del encabezado, para un destino del menú lateral —también *Nueva receta* con otra receta nueva abierta— y para el gesto de atrás de Android. La pregunta se inserta arriba del formulario sin redibujarlo, para no perder lo escrito.
 - [ ] **Con un destino nuevo** —un link del menú—, esa navegación se deshace mientras se pregunta: *Seguir editando* no deja nada en el historial, y *Salir* va al destino.
 - [ ] El formulario va en tres fichas con título, en este orden: **Datos** —Título, Categoría, Tags, Rinde, Duración, Dificultad y Fuente original—, **Fotos** (F04.3d) y **Contenido** —Portada, Descripción, Ingredientes, Preparación, Variaciones y Notas—.
-- [ ] **Las acciones van al final, a lo ancho:** **Convertir con Agente** (secundario, sólo mientras la receta tiene `borrador`; `E01-CapturaYBorradores.md` C01.9.1) y debajo **Guardar** (principal). *Guardar* está sólo ahí, no en el encabezado. Al editar una receta existente, *Borrar receta* va debajo, separado (C04.6.1).
+- [ ] **Las acciones van al final, a lo ancho:** **Convertir con Agente** (secundario, sólo mientras la receta tiene `borrador`; `E01-CapturaYBorradores.md` C01.9.1) y debajo **Guardar** (principal). *Guardar* está sólo ahí, no en el encabezado. Al editar una receta existente, *Borrar receta* va debajo (C04.6.1). Entre los tres botones hay un solo aire, `--e-2`.
 - [ ] Agregar, sacar o poner una foto cuenta como cambio sin guardar, igual que escribir en un campo.
 - [ ] Salir sin cambios no pregunta nada.
 
@@ -299,7 +299,7 @@ sobre contenido del usuario.
 
 #### C04.6.1 — Borrar *(J7)*
 
-- [ ] *Borrar receta*, con su tacho, va suelto al pie del formulario, debajo de *Guardar*, a lo ancho y fuera de las fichas: es una acción destructiva, no un campo. En una receta nueva no aparece.
+- [ ] *Borrar receta*, con su tacho, va al pie del formulario, debajo de *Guardar* y con el mismo aire que lo separa de *Convertir con Agente*, a lo ancho y fuera de las fichas: es una acción destructiva, no un campo. En una receta nueva no aparece.
 - [ ] Pide confirmación, y la confirmación nombra la receta. Toma el lugar del botón sin redibujar el formulario.
 - [ ] Borra el `.md` de Drive y la fila del índice, y después manda a la papelera **sus fotos de `_fotos/`** (C05.1.5). Las externas y las que viven en otra carpeta no se tocan.
 - [ ] Escribe con el velo y su tilde (`E05-Cimientos.md` R8), y al terminar vuelve hasta salir de la receta: a la lista de donde se venía (C04.1.2).

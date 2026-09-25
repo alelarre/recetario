@@ -15,6 +15,15 @@ describe('el botón', () => {
     expect(BASE).toMatch(/^\.acciones-editor \.btn\[hidden\] \{ display: none; \}/m);
   });
 
+  // Los tres botones del pie del editor se separan con el `gap` del bloque y
+  // nada más: un margen propio sumaría otro aire distinto entre ellos, y
+  // del formulario lo separa el `gap` de `.cuerpo`, como a una ficha.
+  it('al pie del editor, los separa sólo el gap del bloque, de la escala', () => {
+    const regla = BASE.match(/^\.acciones-editor \{([^}]*)\}/m)?.[1] ?? '';
+    expect(regla).toContain('gap: var(--e-2)');
+    expect(regla).not.toContain('margin');
+  });
+
   it('no se subraya, aunque sea un <a>', () => {
     const regla = TOKENS.match(/^\.btn \{([^}]*)\}/m)?.[1] ?? '';
     expect(regla).toContain('text-decoration: none');
