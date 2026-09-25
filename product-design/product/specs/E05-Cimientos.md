@@ -76,9 +76,12 @@ Un `.md` o una fila que escribe un agente mientras la app está abierta **no
 disparan nada**. No hay polling, ni Changes API, ni refresco al volver del
 segundo plano. El cambio se ve la próxima vez que la app abre y lee el índice:
 al abrir, la fecha de `_indice` en Drive dice si la copia local sigue valiendo
-(C05.4.2). Un `.md` escrito afuera sin su fila aparece recién al reindexar.
+(C05.4.2). Lo que escribe el MCP lleva su fila (C05.4.3), así que aparece al
+abrir sin reindexar. Un `.md` escrito afuera sin su fila aparece recién al
+reindexar.
 
-- [ ] Un `.md` que el agente deja directo en Drive no aparece en ninguna lista hasta reindexar.
+- [ ] Una receta que escribe el MCP aparece la próxima vez que la app abre, sin reindexar.
+- [ ] Un `.md` que se sube directo a Drive, sin pasar por el store, no aparece en ninguna lista hasta reindexar.
 
 ### R7 — Android es la plataforma
 
@@ -305,9 +308,9 @@ y `_sin-categoria/`, y la marca de una carpeta reemplazada (C05.7.4)— y **`cat
 **Lo escribe un solo camino: el store** (`src/store.ts`). Crear y guardar una
 receta escriben el `.md` y su fila juntos. El formato tiene una sola
 implementación —`src/recipe.ts` para el `.md`, `src/catalogo.ts` para la fila—,
-así que no hay dos versiones que puedan divergir. El agente no corre este
-código: devuelve el `.md` y lo guarda la app (C01.9.2); lo que deja directo en
-Drive aparece al reindexar.
+así que no hay dos versiones que puedan divergir. El agente escribe con este
+mismo código a través del MCP (C05.4.3), o devuelve el `.md` y lo guarda la app
+(C01.9.2). Lo que se sube directo a Drive aparece al reindexar.
 
 #### C05.4.1 — Escribir una receta al índice *(transversal)*
 
@@ -339,11 +342,20 @@ escritura parcial y un JSON obligaría a reescribir el archivo entero.
 #### C05.4.3 — Un solo camino de escritura *(J8)*
 
 - [ ] Toda escritura de una receta pasa por el store, que escribe el `.md` y su fila: no hay una ruta paralela dentro de la app.
-- [ ] El agente no escribe el índice: entrega el `.md` y lo guarda la app, o lo deja en Drive y aparece al reindexar.
+- [ ] **El agente escribe por el MCP local** (`mcp/`), un proceso de Node en la Mac que importa el store de la app: crear, guardar y borrar una receta son `store.crear`, `store.guardar` y `store.borrar`, y el `.md` y su fila se escriben juntos.
+- [ ] El MCP valida el `.md` antes de escribir, con la misma lectura que la app: si hay errores, no escribe nada y los devuelve.
+- [ ] Borrar por el MCP pide como confirmación el título exacto de la receta, o su nombre de archivo si no tiene título; si no coincide, no borra.
+- [ ] Si una escritura del MCP falla por red o por login, el `.md` pudo quedar sin su fila: antes de reintentar, el agente reindexa y busca la receta, y si ya está no la crea de nuevo.
+- [ ] Sin el MCP, el agente entrega el `.md` y lo guarda la app (*Convertir con Agente*, C01.9.2).
 
-**Nota técnica:** no hay bloqueo ni lógica de concurrencia. Con un solo usuario
-y sesiones que no se solapan el riesgo es bajo, y la reparación es reindexar
-(F05.5) con una sola pestaña abierta.
+**Nota técnica:** no hay bloqueo ni lógica de concurrencia. **La app y el MCP no
+se usan a la vez:** los dos numeran las filas del índice por posición y cada uno
+trabaja con el índice que leyó al arrancar, así que si uno agrega o borra filas
+mientras el otro escribe, cualquiera puede escribir en la fila equivocada. El
+MCP lee la planilla una vez por sesión y no ve lo que la app escribe después.
+Con un solo usuario y sesiones que no se solapan el riesgo es bajo, y la
+reparación es reindexar (F05.5) con una sola pestaña abierta y sin el MCP
+escribiendo.
 
 #### C05.4.4 — Las categorías salen del índice *(J1, J8)*
 

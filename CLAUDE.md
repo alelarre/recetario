@@ -60,19 +60,24 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   cada uno y una lista de recetas en cada comida. No está en el índice —se lo
   busca por nombre— y cada cambio lo reescribe entero. La lista de compras
   deriva del plan y no se guarda en ningún lado.
-- **El input principal no es el editor**, son sesiones con agentes que reciben
-  una fuente (PDF, foto, video, sitio web) y escriben el `.md`. El editor existe
-  para corregir. En un borrador, «Convertir con Agente» guarda la receta y
-  manda el pedido, que pide `id: <id>` en el frontmatter. La respuesta vuelve
-  compartida —abre el editor de la receta de ese `id`, o uno nuevo— o se pega
-  con «Pegar», en el encabezado del editor, que llena el formulario sin
-  guardar. **La app no llama a ningún modelo.**
+- **El input principal no es el editor**, son sesiones con un agente en la Mac
+  (Claude Code o Claude Desktop) que usa el MCP local (`mcp/`), el skill
+  `skills/recetario/SKILL.md` y sus herramientas: recibe una fuente (PDF, foto,
+  video, sitio web, una lista de links) y escribe las recetas, corrige las que
+  están u ordena el recetario. El editor existe para corregir. En un borrador,
+  «Convertir con Agente» guarda la receta y manda el pedido a claude.ai, que
+  pide `id: <id>` en el frontmatter. La respuesta vuelve compartida —abre el
+  editor de la receta de ese `id`, o uno nuevo— o se pega con «Pegar», en el
+  encabezado del editor, que llena el formulario sin guardar. **La app no llama
+  a ningún modelo.**
 - **Hay un solo camino de escritura: el store.** `store.crear` y
   `store.guardar` escriben el `.md` y su fila juntos; sin categoría, en
-  `_sin-categoria/`. El agente no corre este código: devuelve el `.md` y lo
-  guarda la app.
-- **La app no descubre lo que se escribe afuera:** un `.md` subido a Drive por
-  fuera aparece al reindexar.
+  `_sin-categoria/`. El agente corre este mismo código a través del MCP, que
+  importa `store.ts`: lo que escribe queda con su fila, sin reindexar. Con
+  *Convertir con Agente*, el agente devuelve el `.md` y lo guarda la app.
+- **La app no descubre lo que se escribe afuera:** lo que escribe el MCP
+  aparece la próxima vez que la app abre, porque cambió la fecha de `_indice`;
+  un `.md` subido a Drive por fuera del store aparece al reindexar.
 
 ## Dónde está cada cosa
 
@@ -83,7 +88,8 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
 | Cómo se ve | `product-design/ux/design-system.md`; lo que manda es `src/ui/tokens.css` |
 | Cómo habla la app | `product-design/ux/brand-identity.md` §3 y §4 |
 | Qué está pendiente | `BACKLOG.md` |
-| El skill con el que un agente carga recetas | `skills/recetario/SKILL.md` — quedó en un esquema viejo, ver `BACKLOG.md` P14 |
+| El skill con el que un agente carga recetas | `skills/recetario/SKILL.md` |
+| Cómo conectar y registrar el MCP, y qué hacer con cada error de login | `mcp/LEEME.md` |
 
 `product-design/` es la especificación del producto y se mantiene al día: un
 cambio de comportamiento o de diseño actualiza el documento que corresponde, en
@@ -91,7 +97,10 @@ el mismo trabajo. Los documentos dicen cómo es el producto hoy —sin historial
 sin fechas, sin alternativas descartadas—. Los mockups de `ux/mockups/` y los
 wireframes son de cuando se diseñó y no se actualizan.
 
-Nada del código depende de `product-design/`. **Todo el producto vive en `src/`:**
+Nada del código depende de `product-design/`. **Todo el producto vive en `src/`.**
+El MCP vive en `mcp/`, importa de `src/` y nunca al revés:
+`tests/publicacion.test.ts` verifica que ningún archivo de `src/` importe de
+`mcp/` y que `mcp/` no entre al bundle de Pages.
 
 | | |
 |---|---|
@@ -99,9 +108,10 @@ Nada del código depende de `product-design/`. **Todo el producto vive en `src/`
 | Navegación y velo | `navegacion.ts` es el único que toca `location` y `history`: la profundidad viaja en `history.state` y dice si hay una pantalla atrás; `ir`, `reemplazar`, `volver`, `salirDe` (retrocede hasta salir de una pantalla, como al borrar una receta o salir de la cocina) y las **capas**, lo que se abre sin cambiar de ruta y se cierra con el atrás (IA §4.6). `velo.ts` es el dueño del velo de R8, con sus tres formas: `escribir`, `esperar` y `conProgreso`; `ocupado()` es lo que miran las guardas de navegación y de toque. |
 | Controladores | Cada uno tiene su estado y registra sus acciones en el mapa. `lista-control.ts`: filtros, orden y tramo de una lista de recetas, y el observador del tramo (`filtrar-duracion`, `ordenar`; el chip de un tag lo atiende `main.ts`). `fotos-control.ts`: el depósito del editor de recetas —las fotos, la portada, las nuevas en memoria, las ya subidas— y los campos ocultos, que se escriben sólo desde ahí (las fichas de foto, *Por URL*, portada, poner y sacar). `visor-control.ts`: la foto a pantalla completa y su gesto (`ver-foto-receta`, `cerrar-visor`). `carrusel-control.ts`: las flechas (`carrusel-izq`, `carrusel-der`). Visor, carrusel y `cocina-control.ts` los usan la app y el invitado. La foto propia de una categoría que se edita no es de `fotos-control`: vive en el estado de pantalla. |
 | Google | `auth.ts`, `drive.ts`, `sheets.ts`; los tipos de Google Identity Services están escritos a mano en `gis.d.ts` (el SDK se carga por `<script>`). `config.ts` tiene el client ID, el scope, los nombres fijos y `SCHEMA_VERSION`. |
-| Dominio | `recipe.ts` (parsear y escribir el `.md`), `plan.ts` (el `.md` del plan de la semana), `compras.ts` (la lista que sale del plan, y su texto), `catalogo.ts` (la fila del índice, tags reservados, búsqueda), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts` (lo que llega por el menú Compartir: la fuente, las notas y el título por defecto), `conversion.ts` (el pedido al agente, la receta que vuelve y cómo se pega), `fotos.ts` (achicar una foto antes de subirla), `fotos-receta.ts` (el depósito: parsear y escribir `## Fotos`, resolver `foto:N`, poner y sacar referencias), `tipos.ts`. |
+| Dominio | `recipe.ts` (parsear y escribir el `.md`), `plan.ts` (el `.md` del plan de la semana), `compras.ts` (la lista que sale del plan, y su texto), `catalogo.ts` (la fila del índice, tags reservados, búsqueda), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts` (lo que llega por el menú Compartir: la fuente, las notas y el título por defecto), `conversion.ts` (el pedido al agente y sus reglas del formato, la receta que vuelve y cómo se pega), `validar.ts` (cómo lee la app un `.md` recibido y qué tiene fuera del formato; lo usa el MCP), `fotos.ts` (achicar una foto antes de subirla), `fotos-receta.ts` (el depósito: parsear y escribir `## Fotos`, resolver `foto:N`, poner y sacar referencias), `tipos.ts`. |
 | Compartir | `compartir.ts` (menú Compartir del sistema y portapapeles, con sus respaldos), `link-receta.ts` (la receta comprimida en el fragmento del link), `texto-receta.ts`, `pdf/` (pdfmake con Inter embebida), `cocina-control.ts` (modo cocina y pantalla encendida, compartido entre receta e invitado). |
 | UI | `src/ui/`: una pantalla por archivo, sobre `componentes.ts` (con `cuadroDeFoto` y `carrusel`), `iconos.ts`, `pintar.ts`, `fichas-receta.ts`, `lista-recetas.ts` (la lista de recetas que dibujan la categoría, la lista por tag, Borradores, los resultados y *Agregar al plan*) y `visor.ts` (la foto a pantalla completa, compartida entre receta, editor e invitado); `router.ts` tiene las rutas y `MENU`, la única fuente de qué pantallas son destino del menú. `pintar` dibuja la pantalla entera y `pintarParte` una parte —un bloque, una ficha, la fila de fotos— sin repintar: los dos completan las fotos que el HTML deja pedidas, así que todo HTML con fotos pasa por uno de los dos. **`tokens.css` es el sistema del producto** —tokens y componentes— y se edita directamente; `base.css` es lo propio de cada pantalla. Todo encabezado queda fijo arriba por CSS (`.enc`, `.encoc`, `.cajaenc`). Abrir y cerrar el menú lateral cambia las clases del panel y del velo sin redibujar (`ponerMenu` en `main.ts`): en la receta nueva, redibujar borraría lo escrito. Desde 900 px (`ANCHO_MENU_FIJO` en `gesto-menu.ts`, igual que el CSS) el lateral queda fijo en todas las pantallas. |
+| MCP (`mcp/`) | Un proceso de Node que Claude Code o Claude Desktop lanzan por stdio con `tsx`. `servidor.ts` registra las diez herramientas —`formato`, `categorias`, `tags`, `buscar`, `leer`, `validar`, `crear`, `guardar`, `borrar` y `reindexar`— con sus esquemas; la lógica está en `recetario.ts`, sobre `crearStore` de la app con un índice sólo en memoria (lee la planilla una vez por proceso). `crear` y `guardar` validan primero con `src/validar.ts` y no escriben si hay errores. `validar` recibe también el `id` y `sacar` al corregir, para numerar las fotos desde el depósito que está en Drive, igual que `guardar`. `borrar` pide `confirmacion`: el título exacto, o el nombre de archivo si no hay título. **El depósito `## Fotos` lo arma el MCP** y el que trae el `.md` se ignora: cada foto se pide con su origen y su uso —`plato` (portada si el `.md` no trae `foto:`), `paso` o `fuente` (se sube sólo si la receta queda `borrador`)—, y el número de cada una se sabe antes de subirla (`fotos-pedidas.ts`). `fotos.ts` achica con el `achicar()` de la app sobre `@napi-rs/canvas`, pasa los HEIC por `sips` y acepta rutas locales o URLs `http` y `https` de hasta 25 MB; una URL que no se baja queda como link externo. Login: `auth.ts` (OAuth de escritorio con `loopback.ts`), `llavero.ts` (el refresh token en el Llavero con `security`), `google.ts` (Drive y Sheets con ese token) y `errores.ts`: los errores de login salen como `[código] texto`, con nueve códigos fijos que el skill traduce a un paso para el usuario. `conectar.ts` es `npm run mcp:conectar`. Tiene su propio `tsconfig.json` y sus tests son `tests/mcp-*.test.ts`. |
 | Imágenes | `src/categorias/*.webp`, el catálogo de fotos de categoría, importado con `import.meta.glob`: el nombre del archivo es la clave. `imagenes.ts` muestra las imágenes de Drive —las fotos de las recetas y las propias de las categorías—: cada una se pide recién cuando aparece en pantalla, nunca antes, y queda en Cache Storage por id de archivo; también lee las fotos que el service worker dejó del menú Compartir. |
 
 ## Comandos
@@ -114,6 +124,10 @@ Nada del código depende de `product-design/`. **Todo el producto vive en `src/`
   en verde. **Vite borra los tipos, no los verifica:** sin `typecheck` un error
   de tipos se publica igual. El CI corre tests y typecheck antes de publicar.
 - Publicar es pushear a `main`: `.github/workflows/pages.yml` despliega a Pages.
+- `npm run mcp` levanta el MCP por stdio; lo lanza Claude Code o Claude Desktop,
+  registrado con `npm --silent --prefix <repo> run mcp` (`mcp/LEEME.md`).
+- `npm run mcp:conectar` abre el navegador para darle permiso al MCP y guarda
+  el refresh token en el Llavero; reemplaza el que hubiera.
 
 ## Cómo se trabaja
 
@@ -138,12 +152,14 @@ Nada del código depende de `product-design/`. **Todo el producto vive en `src/`
 
 ## TypeScript
 
-Todo `src/` y `tests/` es TypeScript con `strict`, más
+Todo `src/`, `mcp/` y `tests/` es TypeScript con `strict`, más
 `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` y
 `verbatimModuleSyntax`. No hay ningún `.js` y `allowJs` está apagado.
 
-- **Dos configs.** `tsconfig.json` para `src`; `tsconfig.tests.json` extiende y
-  apaga sólo `noUncheckedIndexedAccess`, que en una aserción de test es ruido.
+- **Tres configs.** `tsconfig.json` para `src`; `tsconfig.tests.json` extiende y
+  apaga sólo `noUncheckedIndexedAccess`, que en una aserción de test es ruido;
+  `mcp/tsconfig.json` extiende el de `src` e incluye `mcp/` y `src/`.
+  `npm run typecheck` corre los tres.
 - **Los tipos del dominio viven en `src/tipos.ts`** y separan dos fronteras: la
   del `.md`, donde una receta parseada siempre tiene todas sus claves y lo
   ausente llega como `null`; y la de Google, donde todo campo se declara
@@ -189,6 +205,14 @@ Todo `src/` y `tests/` es TypeScript con `strict`, más
 - **La API key del Picker** (`API_KEY` en `src/config.ts`) tampoco es un secreto:
   va restringida por referente a esos dos orígenes y a la Picker API. Vacía, la
   app sólo ofrece crear la carpeta.
+- **El MCP tiene su propio cliente OAuth**, tipo *App de escritorio*, en el mismo
+  proyecto y con el mismo scope `drive`. Su client ID y su client secret van en
+  `~/.config/recetario/cliente.json`, fuera del repo: Google no considera
+  secreto el de una app de escritorio, pero igual no se commitea. El permiso se
+  da con loopback (un puerto local en `127.0.0.1`). **El refresh token vive sólo
+  en el Llavero de macOS**, en el ítem `recetario-mcp`; nunca en un archivo. En
+  modo *Prueba*, Google lo revoca a los 7 días y hay que correr
+  `npm run mcp:conectar` de nuevo.
 
 ## No proponer
 
@@ -248,9 +272,22 @@ Cada una se midió o se discutió a fondo.
 - **Un id que llega en un link a `#/r/<id>` puede ser cualquier archivo del
   Drive:** por eso `store.guardar` y `store.borrar` rechazan un archivo sin
   fila que no esté en la carpeta base, en `_sin-categoria/` o en una categoría.
-- **El conector de Google Drive de claude.ai es limitado:** crea, lee, mueve y
-  renombra archivos, pero no escribe planillas ni reescribe el contenido de un
-  archivo existente.
+- **La app y el MCP no se usan a la vez.** Los dos numeran las filas del índice
+  por posición en la planilla, y cada uno trabaja con el índice que leyó al
+  arrancar: si la app agrega o borra filas mientras el MCP escribe, o al revés,
+  cualquiera de los dos puede escribir en la fila equivocada. No hay bloqueo;
+  el skill pide cerrar la app antes de escribir y el `LEEME` lo repite. Si
+  pasó, la salida es *Reindexar*.
+- **Cada uno ve lo del otro recién al volver a arrancar.** La app ve lo que
+  escribió el MCP al abrirse de nuevo: la fecha de `_indice` cambió y la copia
+  local no coincide, así que lee la planilla, sin reindexar. Una app que quedó
+  abierta mientras tanto no lo ve hasta recargar. El MCP lee la planilla una
+  vez por proceso: lo que la app escribe después no lo ve hasta que se lanza
+  otro proceso (otra sesión del agente) o se corre `reindexar`.
+- **El conector de Google Drive de claude.ai no sirve para cargar recetas:** no
+  escribe planillas ni reescribe el contenido de un archivo. Las recetas se
+  cargan con el MCP. *Convertir con Agente* usa el conector sólo para que
+  claude.ai lea las fotos del pedido.
 - **Subir `SCHEMA_VERSION` cuesta un reindexado entero** al próximo arranque.
   Reindexar lee los `.md` de a seis a la vez (`TOPE_LECTURAS` en `store.ts`),
   pero con miles de recetas sigue siendo la operación más cara.

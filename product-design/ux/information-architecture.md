@@ -333,19 +333,20 @@ store de la app.
 
 Así no hay dos implementaciones del mismo formato que se separen con el tiempo.
 
-**El agente no corre este código: entrega la receta por la app.** El
-conector de Google Drive de claude.ai crea archivos pero no escribe planillas:
-un `.md` que deja en Drive aparece recién al reindexar. El camino sin ese paso es
-que el agente devuelva el `.md` y el usuario lo comparta o lo pegue en el
-editor (*Convertir con Agente*, `user-flows.md` F2): ahí guarda la app, por el mismo
-camino que cualquier receta. Rehacer el skill del agente sobre esa base está pendiente
-(`../../BACKLOG.md`, P14).
+**El agente corre este mismo código a través del MCP local** (`mcp/`), que
+importa el store: lo que escribe lleva su fila y aparece en la app sin
+reindexar (`user-flows.md` F9). Sin el MCP, el agente devuelve el `.md` y el
+usuario lo comparte o lo pega en el editor (*Convertir con Agente*,
+`user-flows.md` F2): ahí guarda la app, por el mismo camino que cualquier
+receta. Un `.md` subido a Drive por fuera del store aparece recién al reindexar.
 
 ### 2.3 Dos escritores sobre el mismo índice
 
-La app escribe la planilla, y un agente puede dejar `.md` en Drive en otro
-momento. Con un solo usuario y sesiones que no se solapan, el riesgo
-de colisión es bajo, y el principio 1 lo cubre: si una fila queda mal, el índice
+La app y el MCP escriben la misma planilla, cada uno con el índice que leyó al
+arrancar y numerando las filas por posición. **No se usan a la vez:** si uno
+agrega o borra filas mientras el otro escribe, una fila puede caer en el lugar
+de otra. Con un solo usuario y sesiones que no se solapan, el riesgo de
+colisión es bajo, y el principio 1 lo cubre: si una fila queda mal, el índice
 se reconstruye desde los `.md`, que son la verdad.
 
 No se agrega ningún mecanismo de bloqueo, tampoco entre dos pestañas de la app:

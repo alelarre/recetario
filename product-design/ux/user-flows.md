@@ -191,8 +191,9 @@ Menú → Borradores → toco una receta   ▸ abre su editor
   ▸ se reescribe el .md y su fila, y el archivo se mueve a su categoría
 ```
 
-**3. Un agente por fuera de la app**, con acceso al Drive: lee la fuente,
-extrae la receta y deja el `.md` en Drive, que aparece al reindexar. Ver F9.
+**3. Un agente por fuera de la app**, en la Mac, con el MCP del recetario: lee
+la receta con `leer`, la completa desde la fuente y la escribe con `guardar`,
+con su fila. Aparece completa la próxima vez que abro la app. Ver F9.
 
 ---
 
@@ -452,25 +453,38 @@ El aviso es «No se pudo conectar.», con el botón *Conectar con Google* otra v
 **Jobs:** J3, J8. Es el flujo que hace que el ecosistema funcione.
 
 ```
-El agente deja un .md en una carpeta de categoría de Drive
+⚑ la app cerrada, en el teléfono y en la computadora
+En la Mac, el agente usa el MCP del recetario: le paso un PDF, fotos o links
+  ▸ me muestra cada receta, o el resumen del lote, antes de escribir
+  → apruebo
+  ▸ escribe cada receta con su .md y su fila del índice, y dice dónde quedó
   → abro la app
-  ▸ la receta todavía no está: la app no descubre lo que se escribe afuera
+  ▸ la fecha de _indice cambió: la app lee la planilla y las recetas están,
+    sin reindexar
+```
+
+```
+Un .md subido a Drive a mano, o con otra herramienta que no es el MCP
+  → abro la app
+  ▸ la receta todavía no está: no tiene fila en el índice
   → Menú → Ajustes → Reindexar
   ▸ la receta está
 ```
 
-**No hay detección de cambios, ni Changes API, ni "3 recetas nuevas".** Un `.md`
-escrito por fuera de la app aparece recién al reindexar: el índice es derivado y
-los `.md` son la verdad (principio 1).
+**No hay detección de cambios, ni Changes API, ni "3 recetas nuevas".** Lo que
+escribe el MCP se ve porque lleva su fila, y la app la lee al abrirse. Una app
+que quedó abierta no lo ve hasta recargar. Un `.md` sin fila aparece recién al
+reindexar: el índice es derivado y los `.md` son la verdad (principio 1).
 
-**Tampoco hace falta avisar:** la conversión la disparó el usuario y es
-just-in-time, antes de cocinar. Sabe que llegó porque la pidió.
+**La app y el MCP no se usan a la vez.** Los dos escriben filas del índice por
+posición: con la app abierta mientras el MCP escribe, una fila puede caer en el
+lugar de otra. Si pasó, la salida es reindexar (F11).
 
-**El camino sin reindexar es F2, «Convertir con Agente»:** el agente devuelve el
-`.md` y lo guarda la app, que escribe el archivo y su fila juntos. Es también lo
-que pasa con el conector de Google Drive de claude.ai, que crea archivos pero no
-escribe planillas: lo que carga por su cuenta necesita reindexar. Rehacer el
-skill del agente está pendiente (`../../BACKLOG.md`, P14).
+**Tampoco hace falta avisar:** la carga la disparó el usuario, y el agente dice
+qué recetas escribió y dónde quedaron.
+
+**Sin el MCP, el camino es F2, «Convertir con Agente»:** el agente devuelve el
+`.md` y lo guarda la app, que escribe el archivo y su fila juntos.
 
 ---
 
