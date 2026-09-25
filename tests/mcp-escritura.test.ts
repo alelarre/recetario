@@ -184,6 +184,23 @@ describe('crear', () => {
     expect(filas.sort()).toEqual(['Receta 1', 'Receta 2']);
   });
 
+  it('ignora la sección ## Fotos del .md: el depósito lo arma el MCP', async () => {
+    const conFotos = md('Pan casero') + `\n## Fotos\n\n- 1: ${linkDeFoto('f1')}\n`;
+    const r = await nuevoRecetario().crear({ md: conFotos, categoria: 'Postres' });
+    if (!r.escrita) throw new Error('no se escribió');
+    expect(parse(archivo(r.id)?.contenido).fotos).toEqual([]);
+    expect(archivo(r.id)?.contenido).not.toContain('## Fotos');
+  });
+
+  it('una referencia a una foto que no está en el depósito es error, con los números que hay', async () => {
+    const conFotos = md('Pan casero', 'foto: foto:1\n') + `\n## Fotos\n\n- 1: ${linkDeFoto('f1')}\n`;
+    const r = await nuevoRecetario().crear({ md: conFotos, categoria: 'Postres' });
+    expect(r.escrita).toBe(false);
+    expect(r.problemas).toEqual([expect.objectContaining({ campo: 'foto', nivel: 'error' })]);
+    expect(r.problemas[0]?.mensaje).toContain('El depósito está vacío.');
+    expect(drive.cuantas('crear')).toBe(0);
+  });
+
   it('con fotos pedidas no escribe: todavía no se suben', async () => {
     const error = await nuevoRecetario().crear({
       md: md('Pan casero', 'foto: foto:1\n'), categoria: 'Postres', fotos: [{ origen: '/tmp/pan.jpg', uso: 'plato' }]
@@ -214,6 +231,36 @@ describe('guardar', () => {
     expect(escrito).toContain('Un oporto.');
   });
 
+  it('un .md sin ## Fotos conserva el depósito de Drive', async () => {
+    const sinDeposito = corregido.replace(/\n## Fotos[\s\S]*$/, '\n');
+    const r = await nuevoRecetario().guardar({ id: 'r3', md: sinDeposito });
+    expect(r.escrita).toBe(true);
+    expect(parse(archivo('r3')?.contenido).fotos).toEqual([
+      { n: 1, url: linkDeFoto('f1') }, { n: 2, url: linkDeFoto('f2') }
+    ]);
+  });
+
+  it('un ## Fotos alterado se ignora: se escribe el depósito de Drive', async () => {
+    const alterado = corregido
+      .replace(`- 1: ${linkDeFoto('f1')}`, '- 1: https://ejemplo.com/otra.jpg')
+      .replace(`- 2: ${linkDeFoto('f2')}`, `- 2: ${linkDeFoto('de-otra-receta')}\n- 3: ${linkDeFoto('tambien-ajena')}`);
+    const r = await nuevoRecetario().guardar({ id: 'r3', md: alterado });
+    expect(r.escrita).toBe(true);
+    expect(parse(archivo('r3')?.contenido).fotos).toEqual([
+      { n: 1, url: linkDeFoto('f1') }, { n: 2, url: linkDeFoto('f2') }
+    ]);
+  });
+
+  it('una referencia a un número que no está en el depósito de Drive es error, con los que hay', async () => {
+    const r = await nuevoRecetario().guardar({ id: 'r3', md: corregido.replace('![](foto:2)', '![](foto:5)') });
+    expect(r.escrita).toBe(false);
+    const errores = r.problemas.filter(p => p.nivel === 'error');
+    expect(errores).toEqual([expect.objectContaining({ campo: 'fotos' })]);
+    expect(errores[0]?.mensaje).toContain('foto:5');
+    expect(errores[0]?.mensaje).toContain('Hay: 1, 2.');
+    expect(drive.cuantas('actualizar')).toBe(0);
+  });
+
   it('mueve el archivo si cambia la categoría', async () => {
     await nuevoRecetario().guardar({ id: 'r3', md: corregido, categoria: 'carnes' });
     expect(archivo('r3')?.parents).toEqual(['c1']);
@@ -224,6 +271,18 @@ describe('guardar', () => {
     await nuevoRecetario().guardar({ id: 'r3', md: corregido });
     expect(drive.cuantas('mover')).toBe(0);
     expect(archivo('r3')?.parents).toEqual(['c2']);
+  });
+
+  it('categoría vacía la pasa a _sin-categoria/, y de ahí vuelve a una categoría', async () => {
+    const recetario = nuevoRecetario();
+    await recetario.guardar({ id: 'r3', md: corregido, categoria: '' });
+    const suelta = archivo('r3')?.parents?.[0] ?? '';
+    expect(archivo(suelta)?.name).toBe('_sin-categoria');
+    expect((await indiceDeLaApp()).find(e => e.id_archivo === 'r3')?.carpeta_id).toBe(suelta);
+
+    await recetario.guardar({ id: 'r3', md: corregido, categoria: 'Carnes' });
+    expect(archivo('r3')?.parents).toEqual(['c1']);
+    expect((await indiceDeLaApp()).find(e => e.id_archivo === 'r3')).toMatchObject({ categoria: 'Carnes', carpeta_id: 'c1' });
   });
 
   it('una categoría que no existe falla sin escribir', async () => {
@@ -241,10 +300,29 @@ describe('guardar', () => {
     expect(drive.cuantas('borrar', 'f1')).toBe(0);
   });
 
+  it('un número repetido en sacar tira la foto una sola vez', async () => {
+    const sinPaso = corregido.replace(' ![](foto:2)', '');
+    const r = await nuevoRecetario().guardar({ id: 'r3', md: sinPaso, sacar: [2, 2] });
+    expect(r.escrita).toBe(true);
+    expect(drive.cuantas('borrar', 'f2')).toBe(1);
+    expect(parse(archivo('r3')?.contenido).fotos.map(f => f.n)).toEqual([1]);
+  });
+
+  it('sacar una foto con URL externa la saca del depósito sin tocar Drive', async () => {
+    archivo('r3')!.contenido = MD_FLAN.replace(`- 2: ${linkDeFoto('f2')}`, `- 2: ${linkDeFoto('f2')}\n- 3: https://ejemplo.com/flan.jpg`);
+    const r = await nuevoRecetario().guardar({ id: 'r3', md: corregido, sacar: [3] });
+    expect(r.escrita).toBe(true);
+    expect(parse(archivo('r3')?.contenido).fotos.map(f => f.n)).toEqual([1, 2]);
+    expect(drive.cuantas('borrar')).toBe(0);
+  });
+
   it('no saca una foto que el .md todavía nombra', async () => {
     const r = await nuevoRecetario().guardar({ id: 'r3', md: corregido, sacar: [2] });
     expect(r.escrita).toBe(false);
-    expect(r.problemas.filter(p => p.nivel === 'error')).toEqual([expect.objectContaining({ campo: 'fotos' })]);
+    const errores = r.problemas.filter(p => p.nivel === 'error');
+    expect(errores).toEqual([expect.objectContaining({ campo: 'fotos' })]);
+    expect(errores[0]?.mensaje).toContain('foto:2');
+    expect(errores[0]?.mensaje).toContain('Hay: 1.');
     expect(drive.cuantas('actualizar')).toBe(0);
     expect(drive.cuantas('borrar')).toBe(0);
   });
@@ -271,15 +349,28 @@ describe('guardar', () => {
 });
 
 describe('borrar', () => {
-  it('manda la receta a la papelera, con su fila y sus fotos de _fotos/', async () => {
-    await nuevoRecetario().borrar('r3');
+  it('con el título exacto como confirmación manda la receta a la papelera, con su fila y sus fotos de _fotos/', async () => {
+    await nuevoRecetario().borrar({ id: 'r3', confirmacion: 'Flan casero' });
     expect(drive.cuantas('borrar', 'r3')).toBe(1);
     expect(drive.cuantas('borrar', 'f1')).toBe(1);
     expect((await indiceDeLaApp()).find(e => e.id_archivo === 'r3')).toBeUndefined();
   });
 
+  it('sin confirmación no borra nada y dice qué título pasar', async () => {
+    const error = await nuevoRecetario().borrar({ id: 'r3' }).catch((e: unknown) => e);
+    expect((error as Error).message).toBe('Para borrar hay que pasar el título exacto de la receta: "Flan casero"');
+    expect(drive.cuantas('borrar')).toBe(0);
+    expect((await indiceDeLaApp()).find(e => e.id_archivo === 'r3')).toBeDefined();
+  });
+
+  it.each(['flan casero', 'Flan', 'Flan casero '])('con una confirmación que no coincide («%s») no borra nada', async confirmacion => {
+    const error = await nuevoRecetario().borrar({ id: 'r3', confirmacion }).catch((e: unknown) => e);
+    expect((error as Error).message).toBe('Para borrar hay que pasar el título exacto de la receta: "Flan casero"');
+    expect(drive.cuantas('borrar')).toBe(0);
+  });
+
   it('un id que no está en el índice no se borra', async () => {
-    const error = await nuevoRecetario().borrar('f1').catch((e: unknown) => e);
+    const error = await nuevoRecetario().borrar({ id: 'f1', confirmacion: 'flan-1.jpg' }).catch((e: unknown) => e);
     expect((error as Error).message).toContain('reindexar');
     expect(drive.cuantas('borrar')).toBe(0);
   });

@@ -5,10 +5,9 @@ import { crearStore, type DriveDelStore, type SheetsDelStore, type Progreso } fr
 import { crearDrive } from '../src/drive.js';
 import { crearSheets } from '../src/sheets.js';
 import { reglasDelFormato, reglaDeReservados } from '../src/conversion.js';
-import { validarMd, type Problema } from '../src/validar.js';
+import { leerRecibido, problemasDe, type Problema } from '../src/validar.js';
 import { TAGS_RESERVADOS, tagEspecial } from '../src/catalogo.js';
 import { normalizar } from '../src/recipe.js';
-import { usosDeFotos } from '../src/fotos-receta.js';
 import { SIN_CATEGORIA } from '../src/categorias.js';
 import type { IndiceLocal } from '../src/indice-local.js';
 import type { CambiosDeFotos, Entrada, Filtros, FotoDeReceta, Receta } from '../src/tipos.js';
@@ -46,7 +45,7 @@ const REGLA_BORRADOR =
 const REGLAS_FOTOS: readonly string[] = [
   '- La sección `## Fotos` la arma el MCP con las fotos que se le piden. Cada foto pedida tiene un número fijo, que se sabe de antemano: al crear, la foto i de la lista de fotos (contando desde 1, en el orden en que se piden) es `foto:i`; al guardar, las nuevas siguen al número más alto del depósito que devolvió `leer`, en el orden en que se piden. Una foto `fuente` que no se sube deja su número sin usar: los números nunca se reusan y los huecos valen.',
   '- La foto del plato va en `foto: foto:N`, y la de un paso con `![](foto:N)` al final de ese paso. `foto` también acepta una URL externa.',
-  '- Al crear, el `.md` no lleva la sección `## Fotos`. Al corregir, la sección `## Fotos` se deja tal como vino de `leer`: para sacar una foto se pide su número en `sacar`, después de sacar del texto su `foto:N`.'
+  '- No escribas la sección `## Fotos`: la arma el MCP, y la que traiga el `.md` se ignora. `leer` la muestra para que sepas qué números hay. Una foto se saca sólo pidiendo su número en `sacar`, después de sacar del texto su `foto:N`.'
 ];
 
 /**
@@ -119,40 +118,39 @@ export function carpetaDeCategoria(nombre: string, categorias: readonly { id: st
 }
 
 /**
- * La receta sin las fotos que se sacan, y las URLs que van a la papelera. Los
- * números se buscan en el depósito que está en Drive: sólo se tira una foto
- * que la receta tiene de verdad. Una foto que el `.md` todavía nombra no se
- * saca, porque la receta quedaría con una referencia rota.
+ * El depósito que se escribe al guardar: el que está en Drive, menos las
+ * fotos que se sacan. La sección `## Fotos` del `.md` recibido no cuenta: un
+ * depósito alterado perdería fotos o nombraría las de otra receta, que el
+ * store después mandaría a la papelera como propias. Un número repetido se
+ * saca una vez; uno que no está es error.
  */
-export function sacarFotos(
-  receta: Receta, sacar: readonly number[], deposito: readonly FotoDeReceta[]
-): { receta: Receta; sacadas: string[]; problemas: Problema[] } {
-  const usos = usosDeFotos(receta);
-  const problemas: Problema[] = [];
-  const sacadas: string[] = [];
-  for (const n of sacar) {
-    const foto = deposito.find(f => f.n === n);
-    const uso = usos.get(n);
-    if (!foto) {
-      problemas.push({ campo: 'fotos', nivel: 'error', mensaje: `\`foto:${n}\` no está en el depósito de la receta: no hay qué sacar.` });
-    } else if (uso && (uso.portada || uso.enElTexto)) {
-      problemas.push({ campo: 'fotos', nivel: 'error', mensaje: `\`foto:${n}\` se saca, pero el .md todavía la nombra: primero hay que sacar la referencia.` });
-    } else {
-      sacadas.push(foto.url);
-    }
-  }
-  const quedan = receta.fotos.filter(f => !sacar.includes(f.n));
-  return { receta: { ...receta, fotos: quedan }, sacadas, problemas };
+export function sacarDelDeposito(
+  deposito: readonly FotoDeReceta[], sacar: readonly number[]
+): { quedan: FotoDeReceta[]; sacadas: string[]; problemas: Problema[] } {
+  const pedidos = new Set(sacar);
+  const problemas: Problema[] = [...pedidos]
+    .filter(n => !deposito.some(f => f.n === n))
+    .map(n => ({
+      campo: 'fotos', nivel: 'error' as const,
+      mensaje: `\`foto:${n}\` no está en el depósito de la receta: no hay qué sacar.`
+    }));
+  return {
+    quedan: deposito.filter(f => !pedidos.has(f.n)),
+    sacadas: deposito.filter(f => pedidos.has(f.n)).map(f => f.url),
+    problemas
+  };
 }
 
 /**
- * Cómo lee la app el `.md` y qué tiene fuera del formato. Con las fotos que
- * se van a pedir, sus números cuentan como si ya estuvieran en el depósito
- * del `.md`. No necesita el Drive.
+ * La herramienta `validar`: cómo lee la app el `.md` y qué tiene fuera del
+ * formato. No necesita el Drive, así que las referencias se validan contra la
+ * sección `## Fotos` que trae el `.md` —la que mostró `leer`— más las fotos
+ * que se van a pedir. `crear` y `guardar` validan contra el depósito que
+ * arman ellos.
  */
-function validarConFotos(md: string, fotos: readonly FotoPedida[] = []) {
-  const numeros = numerosDeFotos(fotos, validarMd(md).receta.fotos);
-  return { ...validarMd(md, { fotosPendientes: numeros }), numeros };
+function validarConFotos(md: string, fotos: readonly FotoPedida[] = []): { receta: Receta; problemas: Problema[] } {
+  const receta = leerRecibido(md);
+  return { receta, problemas: problemasDe(receta, { fotosPendientes: numerosDeFotos(fotos, receta.fotos) }) };
 }
 
 /**
@@ -299,16 +297,7 @@ export function crearRecetario({ drive, sheets, auth }: DependenciasRecetario) {
     /** Las reglas del `.md`. No necesita el Drive. */
     formato: (): string[] => reglasDelFormatoDelMcp(),
 
-    /**
-     * Cómo lee la app el `.md` y qué tiene fuera del formato. Con las fotos que
-     * se van a pedir, sus números cuentan como si ya estuvieran en el depósito.
-     * No necesita el Drive.
-     */
-    /** Cómo lee la app el `.md` y qué tiene fuera del formato. No necesita el Drive. */
-    validar(md: string, fotos: readonly FotoPedida[] = []): { receta: Receta; problemas: Problema[] } {
-      const { receta, problemas } = validarConFotos(md, fotos);
-      return { receta, problemas };
-    },
+    validar: validarConFotos,
 
     async categorias(): Promise<{ id: string; nombre: string; cantidad: number }[]> {
       await listo();
@@ -344,7 +333,10 @@ export function crearRecetario({ drive, sheets, auth }: DependenciasRecetario) {
     }): Promise<Escritura> {
       await listo();
       const carpetaId = carpetaDeCategoria(categoria, store.categorias());
-      const { receta, problemas, numeros } = validarConFotos(md, fotos);
+      // El depósito de una receta nueva son sólo las fotos que se suben con ella.
+      const receta: Receta = { ...leerRecibido(md), fotos: [] };
+      const numeros = numerosDeFotos(fotos, []);
+      const problemas = problemasDe(receta, { fotosPendientes: numeros });
       if (hayErrores(problemas)) return { escrita: false, problemas };
       const cambios = await cambiosDeFotos(fotos, numeros, []);
       const { id, nombre_archivo } = await store.crear(receta, carpetaId ? { carpetaId, fotos: cambios } : { fotos: cambios });
@@ -364,21 +356,30 @@ export function crearRecetario({ drive, sheets, auth }: DependenciasRecetario) {
       await listo();
       const entrada = entradaDe(id);
       const carpetaDestino = categoria === undefined ? undefined : carpetaDeCategoria(categoria, store.categorias());
-      const deposito = (await store.receta(id)).receta.fotos;
-      const numeros = numerosDeFotos(fotos, deposito);
-      const validada = validarMd(md, { fotosPendientes: numeros });
-      const sinSacadas = sacarFotos(validada.receta, sacar, deposito);
-      const problemas = [...validada.problemas, ...sinSacadas.problemas];
+      const enDrive = (await store.receta(id)).receta.fotos;
+      const { quedan, sacadas, problemas: alSacar } = sacarDelDeposito(enDrive, sacar);
+      // Las nuevas siguen al número más alto que había, sacadas incluidas: los números no se reusan.
+      const numeros = numerosDeFotos(fotos, enDrive);
+      const receta: Receta = { ...leerRecibido(md), fotos: quedan };
+      const problemas = [...problemasDe(receta, { fotosPendientes: numeros }), ...alSacar];
       if (hayErrores(problemas)) return { escrita: false, problemas };
-      const cambios = await cambiosDeFotos(fotos, numeros, sinSacadas.sacadas);
-      await store.guardar(id, sinSacadas.receta, { carpetaDestino, fotos: cambios });
+      const cambios = await cambiosDeFotos(fotos, numeros, sacadas);
+      await store.guardar(id, receta, { carpetaDestino, fotos: cambios });
       return { escrita: true, id, nombre_archivo: entrada.nombre_archivo, problemas };
     },
 
-    /** A la papelera, con su fila y sus fotos de `_fotos/`, como Borrar en la app. */
-    async borrar(id: string): Promise<void> {
+    /**
+     * A la papelera, con su fila y sus fotos de `_fotos/`, como Borrar en la
+     * app. `confirmacion` es el título exacto de la receta en el índice: el
+     * agente no borra con un id solo, que puede ser el de otra receta, ni sin
+     * que el usuario haya visto cuál es.
+     */
+    async borrar({ id, confirmacion }: { id: string; confirmacion?: string }): Promise<void> {
       await listo();
-      entradaDe(id);
+      const { titulo } = entradaDe(id);
+      if (confirmacion !== titulo) {
+        throw new Error(`Para borrar hay que pasar el título exacto de la receta: "${titulo}"`);
+      }
       await store.borrar(id);
     },
 

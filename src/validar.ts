@@ -16,7 +16,7 @@ import {
 } from './catalogo.js';
 import { resolver, referenciasSinFoto } from './fotos-receta.js';
 import { limpiarRecibido } from './conversion.js';
-import type { Aviso, Receta } from './tipos.js';
+import type { Aviso, FotoDeReceta, Receta } from './tipos.js';
 
 /**
  * `error`: la receta no se escribe, porque se guardaría perdiendo algo o
@@ -88,45 +88,66 @@ function problemasDeIngredientes(ingredientes: string): Problema[] {
     }));
 }
 
+/** Los números que hay en el depósito, dichos para quien tiene que elegir uno. */
+function disponibles(fotos: readonly FotoDeReceta[]): string {
+  const numeros = fotos.map(f => f.n).sort((a, b) => a - b);
+  return numeros.length ? `Hay: ${numeros.join(', ')}.` : 'El depósito está vacío.';
+}
+
 /**
- * `pendientes`: números de fotos que todavía no están en el depósito pero van
- * a estar al escribir. Quien escribe con fotos nuevas las nombra antes de
- * subirlas, y esas referencias no se borran al dibujar.
+ * Las referencias `foto:N` contra un depósito: el del `.md`, o el que quien
+ * escribe va a poner en su lugar. `pendientes`: números de fotos que todavía
+ * no están en el depósito pero van a estar al escribir. Quien escribe con
+ * fotos nuevas las nombra antes de subirlas, y esas referencias no se borran
+ * al dibujar.
  */
-function problemasDeFotos(leida: Receta, pendientes: readonly number[]): Problema[] {
-  const receta: Receta = { ...leida, fotos: [...leida.fotos, ...pendientes.map(n => ({ n, url: `pendiente:${n}` }))] };
+function problemasDeFotos(leida: Receta, deposito: readonly FotoDeReceta[], pendientes: readonly number[]): Problema[] {
+  const receta: Receta = { ...leida, fotos: [...deposito, ...pendientes.map(n => ({ n, url: `pendiente:${n}` }))] };
+  const hay = disponibles(receta.fotos);
   const problemas: Problema[] = [];
   // `resolver` devuelve tal cual lo que no es `foto:N`: `null` es un número sin foto.
   if (receta.foto !== null && resolver(receta.foto, receta.fotos) === null) {
     problemas.push({
       campo: 'foto',
       nivel: 'error',
-      mensaje: `\`foto: ${receta.foto}\` no está en el depósito de fotos.`
+      mensaje: `\`foto: ${receta.foto}\` no está en el depósito de fotos. ${hay}`
     });
   }
   for (const n of referenciasSinFoto(receta)) {
     problemas.push({
       campo: 'fotos',
       nivel: 'error',
-      mensaje: `La referencia a \`foto:${n}\` no está en el depósito de fotos: al dibujarse, se borra.`
+      mensaje: `La referencia a \`foto:${n}\` no está en el depósito de fotos: al dibujarse, se borra. ${hay}`
     });
   }
   return problemas;
 }
 
-/**
- * La receta como la lee la app y lo que tiene fuera del formato. El texto se
- * limpia antes como al pegar: un agente lo puede devolver con CRLF, en un
- * bloque de código o citado. `fotosPendientes` son los números de las fotos
- * que se suben junto con el `.md`: cuentan como si ya estuvieran en el
- * depósito, y la receta devuelta sigue siendo la del `.md`.
- */
-export function validarMd(
-  md: string, { fotosPendientes = [] }: { fotosPendientes?: readonly number[] } = {}
-): { receta: Receta; problemas: Problema[] } {
-  const receta = parse(limpiarRecibido(md) + '\n');
-  const problemas: Problema[] = receta.avisos.map(a => ({ ...POR_AVISO[a] }));
+/** Las opciones de la validación. */
+export interface OpcionesValidar {
+  /** Los números de las fotos que se suben junto con el `.md`: cuentan como si ya estuvieran en el depósito. */
+  fotosPendientes?: readonly number[];
+  /**
+   * El depósito que se va a escribir, si no es la sección `## Fotos` del
+   * `.md`: quien arma el depósito por su cuenta valida las referencias contra
+   * ese.
+   */
+  deposito?: readonly FotoDeReceta[];
+}
 
+/**
+ * El `.md` como lo lee la app, limpiado antes como al pegar: un agente lo
+ * puede devolver con CRLF, en un bloque de código o citado.
+ */
+export function leerRecibido(md: string): Receta {
+  return parse(limpiarRecibido(md) + '\n');
+}
+
+/** Lo que una receta ya leída con `leerRecibido` tiene fuera del formato. */
+export function problemasDe(
+  receta: Receta, { fotosPendientes = [], deposito = receta.fotos }: OpcionesValidar = {}
+): Problema[] {
+  const problemas: Problema[] = receta.avisos.map(a => ({ ...POR_AVISO[a] }));
   if (receta.tiempo !== null && !duracionValida(receta.tiempo)) {
     problemas.push({
       campo: 'tiempo',
@@ -148,7 +169,17 @@ export function validarMd(
   problemas.push(
     ...problemasDeTags(receta.tags),
     ...problemasDeIngredientes(receta.ingredientes),
-    ...problemasDeFotos(receta, fotosPendientes)
+    ...problemasDeFotos(receta, deposito, fotosPendientes)
   );
-  return { receta, problemas };
+  return problemas;
+}
+
+/**
+ * La receta como la lee la app y lo que tiene fuera del formato. La receta
+ * devuelta es siempre la del `.md`, aunque las opciones cambien contra qué
+ * depósito se validan las fotos.
+ */
+export function validarMd(md: string, opciones: OpcionesValidar = {}): { receta: Receta; problemas: Problema[] } {
+  const receta = leerRecibido(md);
+  return { receta, problemas: problemasDe(receta, opciones) };
 }

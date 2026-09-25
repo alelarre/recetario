@@ -225,7 +225,10 @@ describe('las herramientas', () => {
     expect(texto).toContain('`fuente`');
     expect(texto).toContain('nunca se reusan');
     expect(texto).toContain('URL externa');
-    expect(texto).toContain('tal como vino de `leer`');
+    expect(texto).toContain('No escribas la sección `## Fotos`');
+    expect(texto).toContain('se ignora');
+    expect(texto).toContain('`sacar`');
+    expect(texto).not.toContain('tal como vino de `leer`');
   });
 
   it('categorias: id, nombre y cantidad, sin contar los borradores', async () => {
