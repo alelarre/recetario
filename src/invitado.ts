@@ -3,11 +3,13 @@
  * ni token, ni el manejador de acciones de `main.ts`. Escucha sólo las acciones
  * de su lista; una acción nueva de la app no llega acá aunque use el mismo nombre.
  */
-import { pintar, conClosest, desplazarCarrusel } from './ui/pintar.js';
+import { pintar, conClosest } from './ui/pintar.js';
 import { renderInvitado, renderLinkRoto, carruselDeInvitado } from './ui/invitado.js';
 import { renderCocina } from './ui/cocina.js';
 import { rutaDeInvitado } from './ui/router.js';
 import { crearVisorControl } from './visor-control.js';
+import { accionesDelCarrusel } from './carrusel-control.js';
+import { accionDe } from './acciones.js';
 import { decodificar } from './link-receta.js';
 import { resueltaSinFotosDeDrive } from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
@@ -120,10 +122,8 @@ export function iniciarInvitado(): void {
       abrirVisor(boton.dataset['n']);
       return render();
     }
-    if (accion === 'carrusel-izq' || accion === 'carrusel-der') {
-      desplazarCarrusel(boton, accion);
-      return;
-    }
+    const delCarrusel = accionDe(accionesDelCarrusel, accion);
+    if (delCarrusel) { delCarrusel(boton, e); return; }
     if (accion === 'cerrar-visor') {
       if (visor.tocar()) return render();
       return;

@@ -255,7 +255,7 @@ export interface OpcionesMarcoCarrusel {
  * trackpad. Lo usan los tags y las fotos de la receta.
  *
  * Cada marco es independiente: la flecha mueve la pista de su propio marco
- * (`desplazarCarrusel` en `ui/pintar.ts`), así que dos carruseles pueden
+ * (`carrusel-control.ts`), así que dos carruseles pueden
  * convivir en la misma pantalla. Sin contenido no hay carrusel.
  */
 export function carrusel(contenido: string, { etiquetaIzq, etiquetaDer, clase }: OpcionesMarcoCarrusel): string {

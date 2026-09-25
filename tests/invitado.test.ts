@@ -41,8 +41,8 @@ async function montar(hash: string) {
     pila: historial.pila,
     /** Un link o la barra del navegador: una entrada nueva, que avisa con `hashchange`. */
     abrir: async (h: string) => { global.location.hash = h; await esperar(); },
-    tocar: async (accion: string, datos: Record<string, string> = {}) => {
-      const boton = { dataset: { accion, ...datos } };
+    tocar: async (accion: string, datos: Record<string, string> = {}, extra: Record<string, unknown> = {}) => {
+      const boton = { dataset: { accion, ...datos }, ...extra };
       for (const fn of oyentes['click'] ?? []) await fn({ target: { closest: () => boton } });
       await esperar();
     },
@@ -145,6 +145,17 @@ describe('el controlador del invitado', () => {
     // Sola: deslizar no pasa a las del carrusel.
     await deslizar(200, 100);
     expect(enElVisor()).toContain('src="https://x/1.jpg"');
+  });
+
+  it('la flecha del carrusel corre la pista de su marco', async () => {
+    const carga = await codificar(parse(MD_CON_SUELTAS), 'Pescados');
+    const { tocar } = await montar(`#/ver?r=${carga}`);
+    const corridas: number[] = [];
+    const pista = { clientWidth: 100, scrollBy: ({ left }: { left: number }) => { corridas.push(left); } };
+    const closest = (sel: string) => (sel === '.carrusel-marco' ? { querySelector: () => pista } : null);
+    await tocar('carrusel-der', {}, { closest });
+    await tocar('carrusel-izq', {}, { closest });
+    expect(corridas).toEqual([80, -80]);
   });
 
   it('el visor no queda abierto al ir a la cocina', async () => {

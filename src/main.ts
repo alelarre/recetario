@@ -40,7 +40,7 @@ import { puedeEmpezar, direccion, progreso, seAbre, ANCHO_MENU_FIJO } from './ui
 import type { CarpetaSimple } from './ui/carpeta.js';
 import { aviso, lateralFijo, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js';
 import type { MenuDePantalla } from './ui/componentes.js';
-import { pintar as pintarEnPantalla, pintarParte, despuesDePintar, conClosest, desplazarCarrusel, movimientoReducido } from './ui/pintar.js';
+import { pintar as pintarEnPantalla, pintarParte, despuesDePintar, conClosest, movimientoReducido } from './ui/pintar.js';
 import { renderVisor } from './ui/visor.js';
 import { crearVisorControl } from './visor-control.js';
 import type { EstadoCompartir } from './ui/compartir.js';
@@ -66,6 +66,7 @@ import { textoReceta } from './texto-receta.js';
 import type { Ruta, Vista } from './ui/router.js';
 import { estadoNuevo } from './estado-pantalla.js';
 import { accionesDeLista } from './lista-control.js';
+import { accionesDelCarrusel } from './carrusel-control.js';
 import type { EstadoDePantalla, PedidoAlAgente } from './estado-pantalla.js';
 import { achicar } from './fotos.js';
 import type { OpcionesAchicar } from './fotos.js';
@@ -1690,12 +1691,6 @@ function tocarFotoEnLinea(destino: Element): Promise<void> | undefined {
   visor.abrir([], undefined, suelta);
   return render();
 }
-
-/** Las flechas de un carrusel, que sólo existen con mouse. */
-const accionesDelCarrusel: SeccionDeAcciones = {
-  'carrusel-izq': (boton) => { desplazarCarrusel(boton, 'carrusel-izq'); },
-  'carrusel-der': (boton) => { desplazarCarrusel(boton, 'carrusel-der'); }
-};
 
 /**
  * El plan: el `+` de una celda, la tarjeta que suma, la cruz que saca una

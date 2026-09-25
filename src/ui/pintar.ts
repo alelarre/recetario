@@ -58,21 +58,3 @@ export const conClosest = (t: EventTarget | null): Element | null =>
 export const movimientoReducido = (): boolean =>
   typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/**
- * La flecha desplaza la pista de su propio marco, y no la primera de la
- * pantalla: la receta tiene el carrusel de fotos y otra pantalla puede tener el
- * de tags. Se mueve el 80% de lo que se ve, para que quede algo de referencia
- * entre una vista y la siguiente.
- *
- * Las flechas sólo existen con mouse o trackpad —el CSS las esconde—: el
- * teléfono desliza con el dedo.
- */
-export function desplazarCarrusel(flecha: Element, hacia: 'carrusel-izq' | 'carrusel-der'): void {
-  const pista = flecha.closest('.carrusel-marco')?.querySelector<HTMLElement>('[data-carrusel]');
-  if (!pista) return;
-  const paso = Math.round(pista.clientWidth * 0.8);
-  pista.scrollBy?.({
-    left: hacia === 'carrusel-der' ? paso : -paso,
-    behavior: movimientoReducido() ? 'auto' : 'smooth'
-  });
-}
