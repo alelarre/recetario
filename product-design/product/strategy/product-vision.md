@@ -1,9 +1,5 @@
 # Recetario — Product Vision
 
-**Versión:** 2.1
-**Fecha:** 2026-09-06
-**Estado:** v2.1 — Validada post-research
-
 > Todo lo que sigue está respaldado por `research/competitive-analysis.md`,
 > `product/strategy/personas.md` y `product/strategy/jtbd.md`, y no puede
 > contradecir los siete principios de `product/strategy/product-principles.md`.
@@ -51,7 +47,9 @@ producto, y esa capacidad es parte de por qué el producto existe.
 
 Los dos usos principales son **recuperar** una receta que ya tiene en mente y
 **archivar** una que acaba de encontrar. Cocinar con la app abierta es el uso
-**menor**, reservado a recetas complejas o poco frecuentes. Detalle completo en
+**menor**, reservado a recetas complejas o poco frecuentes. Además **planifica
+la semana** con la app: qué recetas van cada día y la lista de compras que sale
+de ahí. Detalle completo en
 `personas.md`.
 
 ### El insight central
@@ -96,7 +94,6 @@ Las ocho primeras vienen del encuadre del proyecto y están fijas
 | Permisos | Scope OAuth `drive`, con su pantalla de "app no verificada" una vez. `drive.file` no sirve: es por archivo y no ve los `.md` que escriben los agentes. |
 | Input de contenido | Los `.md` los escribe un agente: por fuera de la app, o como respuesta a «Convertir con Agente», que vuelve a la app y se guarda desde el editor. El editor de la app es para corregir. |
 | Modelo de negocio | Ninguno. Es una app personal, no un producto a monetizar. |
-| Alcance de este proyecto | Redefinición de producto y UX desde cero, hasta wireframes. La visión y el stack están fijos; todo lo demás se rediseña. |
 | **Escala de diseño** | **~1.000 recetas.** Toda decisión de navegación, índice y arranque se evalúa a esa escala, no a las decenas actuales. |
 | **Alcance del editor** | **Corregir, y crear una receta que ya tenés en la cabeza.** Lo que no hace es componer desde una fuente: transcribir un PDF, un video o la foto de un libro es trabajo del agente. |
 | **Dónde vive el agente** | **Es parte del producto, afuera de la PWA.** Recetario es un ecosistema de dos partes que escriben sobre los mismos archivos; la conversión ocurre en una sesión con el agente, no adentro de la app. **La app no llama a ningún modelo:** recibe borradores y espera, y cuando se quiere convertir uno arma el pedido —el borrador y las reglas del formato—, lo manda al agente y recibe la receta compartida o pegada. |

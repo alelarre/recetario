@@ -1,9 +1,5 @@
 # Recetario — Product Principles
 
-**Versión:** 1.0
-**Fecha:** 2026-09-05
-**Estado:** Final — Hito 3 cerrado
-
 ---
 
 ## Sobre este documento
@@ -113,7 +109,7 @@ se escribe casi todo.
 - El mínimo para renderizar es el título; todo lo demás es opcional. Un valor que la app no reconoce —una `dificultad` o una duración fuera de la lista— se lee como ausente, no como error.
 - **"Borrador" es un tag del `.md`**, uno de los cuatro reservados. Lo pone y lo saca el usuario con su botón en el editor; la app no lo calcula.
 - Una receta nueva nace con el tag puesto, y no se puede sacar hasta que tenga título, categoría, ingredientes y pasos. Pasado ese mínimo, decidir que está terminada es del usuario.
-- Un borrador **se lista y se abre igual** que cualquier receta. Se ve que le falta algo —la marca en la esquina de la tarjeta—; no se esconde ni se bloquea.
+- Un borrador **vive en Borradores**, el destino del menú: no aparece en la búsqueda, en las listas ni en las categorías. Desde ahí se abre en su editor, para completarlo. No se bloquea: se edita y se guarda como cualquier receta.
 - Un archivo que no cumple ni el mínimo —no tiene título— se ignora, y el hecho se informa en un lugar no central: la ficha *Avisos* de Ajustes, con el nombre del archivo.
 
 **Ejemplo de arbitraje:** al elegir el formato del `.md` aparece la opción de
@@ -185,16 +181,17 @@ producto**. Se construye como exploración, con costo de retiro bajo, y se
 promueve solo si el uso lo confirma.
 
 **Tensión que resuelve:** ambición del producto vs. evidencia de conducta. J9
-—planificar la semana y armar la compra— es el único job hipotético y el único
-que **cambiaría** la conducta del usuario en vez de acompañarla: apunta a más
-variedad entre semana, cuando entre semana hoy se cocina de memoria y sin
-receta.
+—planificar la semana y armar la compra— es el único job que **cambia** la
+conducta del usuario en vez de acompañarla: apunta a más variedad entre semana,
+cuando entre semana se cocina de memoria y sin receta. Está validado por el uso
+(`jtbd.md`), y el plan sigue siendo lo mínimo que lo resuelve, con costo de
+retiro bajo.
 
 **En la práctica, esto significa:**
 
 - J9 no define entidades nuevas en el núcleo ni condiciona el diseño de los jobs validados: `_indice` no cambia —ni hoja ni columna— y el esquema del `.md` de receta tampoco.
 - Cumple igual el principio 1: el plan de la semana es un archivo, `_plan.md`.
-- Sacarlo cuesta borrar una entrada del menú, tres pantallas, dos módulos y un archivo de Drive. Nada más del producto cambia.
+- Sacarlo es borrar una entrada del menú, tres pantallas, dos módulos y un archivo de Drive, y desconectarlos del store, de `main.ts`, del router, de la configuración y de Ajustes (`E06-Planificar.md` C06.5.1). El índice y el esquema del `.md` no cambian.
 - Lo mismo vale para cualquier job futuro que aparezca sin conducta observada.
 
 **Ejemplo de arbitraje:** desde dónde se llega al plan. Es **una sola entrada,
@@ -242,8 +239,8 @@ Los principios tienen que desempatar decisiones reales del producto.
 | Decisión | Principio | Cómo desempata |
 |---|---|---|
 | ¿Qué ocupa la pantalla principal? | **5** | Búsqueda arriba, categorías abajo. La grilla de tiles no tiene el primer lugar. |
-| ¿Cuánto del producto ocupa el plan de la semana? | **6** | Una sola entrada en el menú lateral. Es el único job que cambiaría la conducta: se construye con costo de retiro bajo, sin tocar el índice ni el esquema del `.md`. |
-| ¿Cuánto muestra la receta? | **3** + **7** | La lectura muestra la receta entera tal como está en el archivo, incluido el tag `borrador`: la app no decide qué esconder de un dato que no controla. El modo cocina muestra sólo ingredientes y pasos, con un conmutador; los tamaños salen de la regla de controles del principio 7. |
+| ¿Cuánto del producto ocupa el plan de la semana? | **6** | Una sola entrada en el menú lateral. Es el único job que cambia la conducta: se construye con costo de retiro bajo, sin tocar el índice ni el esquema del `.md`. |
+| ¿Cuánto muestra la receta? | **3** + **7** | La lectura muestra la receta entera tal como está en el archivo, salvo el tag `borrador`, que se ve sólo en su lista: la app no decide qué esconder de un dato que no controla. El modo cocina muestra sólo ingredientes y pasos, con un conmutador; los tamaños salen de la regla de controles del principio 7. |
 | ¿Qué pide el Share Target al capturar? | **2** | Nada obligatorio: la fuente llega cargada, el título es opcional y la categoría arranca en «Sin categoría». |
 | ¿Qué pasa si se comparte sin red? | **1** + **4** | Falla y avisa. No hay cola local. Está aceptado explícitamente, aun sabiendo que es el riesgo que J2 existe para eliminar. |
 | ¿Qué pasa con el borrador al convertirse? | **2** | Es la misma receta: se completa y se le saca el tag `borrador`. La URL de origen queda como atributo `fuente`. |

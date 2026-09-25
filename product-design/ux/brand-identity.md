@@ -124,7 +124,7 @@ habla de sí misma en primera persona.
 
 | Contexto | Cómo suena | Ejemplo |
 |---|---|---|
-| **Error de operación** | Qué no se pudo, y qué quedó como estaba o qué mirar. Con *Reintentar* al lado. | *"No se pudo guardar. Revisá la conexión."* · *"No se pudo borrar. La receta sigue estando."* |
+| **Error de operación** | Qué no se pudo, y qué quedó como estaba o qué mirar. Con *Reintentar* al lado, salvo que el control que falló siga a la vista: entonces ese control es el reintento y el aviso no lleva *Reintentar*. | *"No se pudo guardar. Revisá la conexión."* · *"No se pudo borrar. La receta sigue estando."* |
 | **Sin conexión con Google** | El hecho, y el control al lado. | *"No se pudo reconectar con Google."* → `[Reintentar]` · *"Hay que conectarse de nuevo con Google."* → `[Conectar]` |
 | **Estado vacío** | Qué hay, en una frase. Sin ilustración. Si está vacío por un filtro, cómo salir. | *"No hay borradores."* · *"Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba."* |
 | **Confirmación destructiva** | Qué se va a borrar, nombrándolo. | *"¿Borrar Milanesas napolitanas?"* |
@@ -201,6 +201,15 @@ la interfaz**, y no tienen sinónimos.
 | Lo que la app tiene para decir sin pedir nada | **Avisos** | "notificaciones", "alertas" |
 | Dejar la cuenta de Google | **Salir**; entrar es **Conectar con Google** | "cerrar sesión", "logout", "iniciar sesión" |
 | De dónde salió la receta | **fuente** —*Fuente original*, en el editor— | "origen", "link", "referencia" |
+| Los siete días con sus comidas, y su entrada en el menú | **Plan de la semana** | — |
+| Lo que hay que comprar para el plan | **Lista de compras** | — |
+| Vaciar los siete días | **Reiniciar el plan** —*¿Reiniciar el plan? Se vacían los siete días.*— | — |
+| Las dos comidas del día | **Mediodía** y **Noche** —*Martes al mediodía*, *Martes a la noche*, en el título de *Agregar al plan*— | — |
+| El bloque de *Agregar al plan* con las recetas del tag `menú diario` | **Menú diario** | — |
+| La foto que encabeza la receta | **Portada** | — |
+| Las fotos de la receta, y su ficha en el editor | **Fotos** —*Foto 3* nombra una— | — |
+| Las tres formas de poner una foto | **Cámara**, **Galería** y **Por URL**; bajar la de una dirección es **Traer** | — |
+| Lo que se hace con una foto del editor | **Ver** y **Sacar** | — |
 
 **Las fichas de Ajustes, en orden:** Cuenta, Recetario, Índice, Archivos locales,
 Avisos, Registro de actividad.

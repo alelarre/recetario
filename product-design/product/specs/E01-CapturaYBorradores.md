@@ -135,7 +135,6 @@ categoría si ya la tiene, o en `_sin-categoria/` si no (C05.4.4).
 #### C01.4.3 — Estados de Borradores *(J3)*
 
 - [ ] Vacía: *«No hay borradores.»*. Sin ilustración.
-- [ ] Sin red: el aviso de R1. **Borradores no se dibuja con datos de antes.**
 - [ ] Un `.md` que un agente deja directo en Drive aparece recién al reindexar (R6).
 
 ### F01.5 — El contador

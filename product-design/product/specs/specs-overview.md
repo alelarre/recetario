@@ -53,11 +53,13 @@ todo se resuelve contra el índice, sin abrir ningún `.md`.
 editor existe para corregir, no para componer, porque el input principal son las
 sesiones con agentes.
 
-**E06 se construyó con costo de retiro bajo.** J9 es el único job que cambiaría
+**E06 tiene costo de retiro bajo.** J9 es el único job que cambia
 la conducta del usuario en vez de acompañarla, así que el plan entra por una
 sola entrada del menú lateral, no toca el índice ni el esquema del `.md`, y
-ninguna otra épica lo nombra: sacarlo cuesta borrar una entrada, tres pantallas,
-dos módulos y un archivo de Drive (principio 6).
+ninguna otra épica lo nombra: sacarlo es borrar una entrada, tres pantallas,
+dos módulos y un archivo de Drive, y desconectarlos del store, de `main.ts`, del
+router, de la configuración y de Ajustes (principio 6, `E06-Planificar.md`
+C06.5.1).
 
 ---
 

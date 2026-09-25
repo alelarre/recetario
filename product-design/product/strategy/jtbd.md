@@ -1,9 +1,5 @@
 # Recetario — Jobs to be Done
 
-**Versión:** 1.1
-**Fecha:** 2026-09-18
-**Estado:** Final — Hito 2 cerrado
-
 ---
 
 ## Sobre este documento
@@ -21,7 +17,7 @@ real, cómo lo resuelve el producto y qué pasa si no lo resuelve.
 
 **Leyenda de estado:**
 
-- ✅ **Validado** — surgió de la entrevista con conducta real observada.
+- ✅ **Validado** — lo respalda conducta real: observada en la entrevista, o en el uso de la app.
 - 🔬 **Hipotético** — el usuario cree que lo querría; no hay conducta que lo respalde.
 
 ---
@@ -233,16 +229,17 @@ compras (`E06-Planificar.md`). El plan es un archivo, `_plan.md`.
 
 > ⚠️ **Tensión declarada.** Este job apunta a *más variedad de comidas durante
 > la semana*, pero entre semana el usuario cocina de memoria, sencillo y sin
-> receta. No es una feature que se acople a la conducta actual: **es una feature
-> que la cambiaría.** Por eso se construyó con costo de retiro bajo (principio
-> 6): una entrada en el menú lateral, ninguna entidad nueva en el núcleo, y
-> sacarla es borrar tres pantallas y un archivo.
+> receta. No es una feature que se acople a esa conducta: **es una feature
+> que la cambia.** El usuario usa el plan, y el plan conserva el costo de retiro
+> bajo (principio 6): una entrada en el menú lateral, ninguna entidad nueva en el
+> núcleo, y sacarlo es borrar sus pantallas, sus módulos y un archivo, y
+> desconectarlos del resto (`E06-Planificar.md` C06.5.1).
 
 ---
 
 ## Lo que estos jobs implican
 
-Seis conclusiones, y una advertencia.
+Seis conclusiones, y una nota sobre J9.
 
 **1. Los jobs de mayor frecuencia mandan.**
 J6 y J7 —cocinar y corregir— son los de menor frecuencia. J1, J2 y J4 son los
@@ -275,8 +272,7 @@ archivo en Drive, no un dato de la app; la lista de compras no se guarda en
 ningún lado, porque se deriva del plan cada vez.
 Es la restricción más dura, y es el principio 1 de `product-principles.md`.
 
-**⚠️ Advertencia sobre J9.** Es el único job que cambiaría la conducta en vez de
-acompañarla, y el único que pedía inventar entidades nuevas. Está construido con
-lo mínimo que lo resuelve —un plan, un archivo, y la lista derivada del plan— y
-con costo de retiro bajo: si el uso no lo confirma, se saca sin rediseñar nada
-(principio 6).
+**Sobre J9.** Es el único job que cambia la conducta en vez de acompañarla, y el
+único que pedía entidades nuevas. Está validado por el uso, y resuelto con lo
+mínimo —un plan, un archivo, y la lista derivada del plan— sin tocar el índice
+ni el esquema del `.md` (principio 6).

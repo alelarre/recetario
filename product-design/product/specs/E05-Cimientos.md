@@ -30,6 +30,7 @@ reconciliación de estados a medias.
 
 - [ ] Ningún error muestra el mensaje crudo de Google.
 - [ ] Ningún aviso de error se cierra solo.
+- [ ] **Si el control que falló sigue a la vista, ese control es el reintento**, y el aviso no lleva *Reintentar*: un *Guardar*, la `×` del plan o *Traer* se vuelven a tocar. *Reintentar* va cuando no queda a la vista nada que repita la operación —una pantalla que no pudo leer, un arranque que no llegó—.
 - [ ] Lo que el usuario escribió sigue en pantalla después del error.
 - [ ] **El aviso se trae a la vista.** Un aviso fuera de pantalla no avisa: con la pantalla scrolleada al fondo, el que se dibuja arriba se desplaza hasta verse, y sólo lo justo —si ya estaba a la vista, nada se mueve—.
 
@@ -277,7 +278,7 @@ por el usuario y además podría cambiar solo, sin que nadie tocara nada.
 - [ ] Una receta es un borrador si su lista `tags` tiene `borrador`; si no lo tiene, está terminada.
 - [ ] Se escribe siempre en la forma canónica, en minúscula. Se reconocen además sus formas alternativas como el mismo tag (C05.1.4).
 - [ ] Es el único de los cuatro tags especiales que **no** se pone y saca libremente: sólo se puede sacar cuando la receta cumple C05.3.3, y una receta nueva nace con el tag puesto (`E04-Corregir.md` C04.3b.1).
-- [ ] **Una receta sin categoría es siempre un borrador:** la categoría es parte de C05.3.3. Un `.md` escrito afuera en `_sin-categoria/` sin el tag se muestra como está (R4), y el editor no lo deja guardar sin `borrador` mientras no tenga categoría.
+- [ ] **Una receta sin categoría es siempre un borrador:** la categoría es parte de C05.3.3. Un `.md` escrito afuera en `_sin-categoria/` sin el tag **no se encuentra de ninguna forma**: ni en la búsqueda, ni en las listas —tampoco en Borradores—, ni en el conteo de tags. Sólo lo nombra el aviso de Ajustes al reindexar (C05.9b.3). El editor no deja guardar una receta sin `borrador` mientras no tenga categoría.
 - [ ] `completa` es una clave desconocida como cualquier otra (C05.1.1): la app no la lee ni la borra, y la conserva tal cual si venía en el `.md`.
 
 #### C05.3.2 — El índice no tiene columna propia *(J1, J8)*
@@ -386,7 +387,7 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 - [ ] Si a la planilla le falta la hoja `categorias`, la crea.
 - [ ] Al terminar, el índice no conserva ninguna fila anterior: lo que no está en Drive, no está.
 - [ ] Los archivos ignorados por no tener título se cuentan y quedan visibles en Ajustes.
-- [ ] **Una receta de `_sin-categoria/` sin el tag `borrador`**, en ninguna de sus formas (C05.1.4), se nombra en Ajustes al terminar, como los ignorados. No se hace nada más: no se mueve, no se le pone el tag y entra al índice como cualquier otra.
+- [ ] **Una receta de `_sin-categoria/` sin el tag `borrador`**, en ninguna de sus formas (C05.1.4), se nombra en Ajustes al terminar, como los ignorados. No se hace nada más: no se mueve y no se le pone el tag. Entra al índice, pero no se muestra en ninguna lista ni búsqueda (C05.3.1).
 - [ ] La fecha del último reindexado queda registrada en `meta` y se muestra en Ajustes.
 
 #### C05.5.2 — El reindexado muestra progreso y no se cancela *(J8)*
@@ -477,8 +478,9 @@ actuales.
 
 #### C05.8.1 — Sin red no se dibuja nada viejo *(transversal)*
 
-- [ ] Una pantalla que no pudo leer muestra el aviso, no datos de una lectura anterior.
-- [ ] El aviso dice que no se pudo conectar y ofrece reintentar.
+- [ ] **Sin red al abrir, la app no arranca:** en lugar del Recetario, el aviso *«No se pudo conectar con Drive. Sin esa lectura no hay con qué dibujar.»* con **Reintentar**.
+- [ ] Borradores, las listas y la búsqueda salen del índice en memoria y no leen Drive: una vez abierta la app, siguen andando sin red y no tienen un estado «sin red».
+- [ ] Una pantalla que lee Drive —una receta, el plan— y no pudo, muestra el aviso, no datos de una lectura anterior.
 - [ ] Ninguna pantalla promete que algo se va a guardar después.
 - [ ] La copia local del índice (C05.4.2) no reemplaza la lectura de Drive: al abrir, la búsqueda de `_indice` va primero, y sin ella se muestra el aviso.
 
@@ -490,7 +492,7 @@ Que no interrumpan no significa que no existan: lo que se ignora se cuenta.
 
 #### C05.9.1 — El aviso tiene dos niveles *(transversal)*
 
-- [ ] **Con acción:** aparece donde ocurrió el problema, dice qué pasó y trae el control para resolverlo.
+- [ ] **Con acción:** aparece donde ocurrió el problema, dice qué pasó y trae el control para resolverlo, salvo que ese control sea el que falló y siga a la vista: entonces el aviso va sin control (R1).
 - [ ] **Sin acción:** no aparece donde ocurrió; se acumula en Ajustes.
 - [ ] Los dos usan el mismo componente y el mismo tono: una frase en castellano, sin el error crudo.
 - [ ] Ningún aviso usa ilustración ni frase simpática.
@@ -541,7 +543,8 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 - [ ] Cada cambio escribe en el momento la carpeta en Drive —su nombre y sus propiedades— y su fila en la hoja `categorias`, con el velo y su tilde (R8). Guardar o borrar vuelve a *Categorías*.
 - [ ] Una categoría nueva nace con el primer color de la paleta que nadie usa.
 - [ ] Un nombre vacío, que empiece con `_`, repetido o igual a **«Sin categoría»** —sin mirar tildes ni mayúsculas en los dos casos— no se acepta, y se dice por qué. «Sin categoría» es el nombre de lo que no tiene categoría (C05.4.4).
-- [ ] Borrar una categoría con recetas lo advierte con la cantidad y los nombres: la carpeta y sus recetas van a la papelera de Drive, y sus filas salen del índice.
+- [ ] **Borrar una categoría no borra sus recetas:** pasan a `_sin-categoria/` con el tag `borrador` puesto, para que quede a la vista que hay que elegirles otra categoría, y sus filas del índice se actualizan. Sus fotos quedan en `_fotos/` como estaban: el `.md` las nombra por su id. La carpeta vacía, su fila de `categorias` y su foto propia van a la papelera de Drive.
+- [ ] Con recetas, la confirmación lo advierte con la cantidad: *«Sus N recetas pasan a Borradores, sin categoría.»*
 
 #### C05.9b.5 — Archivos locales *(J8)*
 

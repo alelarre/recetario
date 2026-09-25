@@ -53,6 +53,11 @@ con Agente»** guarda la receta, arma el pedido y lo manda al agente; la
 respuesta vuelve a la app compartida, o se pega en el editor con **Pegar**. La
 app no llama a ningún modelo.
 
+La semana se planifica en la app: el **plan de la semana** son siete días sin
+fechas que arrancan en hoy, con dos comidas —mediodía y noche— y una lista de
+recetas en cada una. Vive en Drive como `_plan.md`, y de él sale la **lista de
+compras**, que no se guarda en ningún lado y se comparte como texto.
+
 Una receta se puede **compartir** como PDF, como link a una vista de invitado
 que se lee y se cocina sin login, o como texto. Es una copia del momento: nada
 queda publicado en Drive.
@@ -67,30 +72,14 @@ Se diseña para ~1.000 recetas, no para las decenas de hoy.
 
 ---
 
-## Estado
+## Estos documentos
 
-| Hito | Estado |
-|---|---|
-| 1 — Research & Competitive Analysis | ✅ 2026-09-04 |
-| 2 — Personas + JTBD | ✅ 2026-09-05 |
-| 3 — Product Principles | ✅ 2026-09-05 |
-| 4 — Product Vision | ✅ 2026-09-05 |
-| 5 — IA + User Flows | ✅ 2026-09-06 |
-| 6 — Wireframes Lo-Fi | ✅ 2026-09-06 |
-| 7 — Specs refinamiento | ✅ 2026-09-06 |
-| 8 — Brand Identity + Design System | ✅ 2026-09-06 |
-| 9 — UI Mockups Hi-Fi | ✅ 2026-09-06 |
-| 10 — Usability Testing | ⏭ Salteado — 2026-09-06 |
-| 11 — Iteración final + Handoff | ✅ 2026-09-07 |
+Estos documentos se mantienen al día con el producto: dicen lo que la app hace
+hoy. Si un documento y el código en `src/` se contradicen, gana el código y el
+documento se corrige.
 
-**El diseño se terminó el 2026-09-07, y está implementado y publicado.** Desde
-entonces estos documentos se mantienen al día con el producto: dicen lo que la
-app hace hoy. Si un documento y el código en `src/` se contradicen, gana el
-código y el documento se corrige.
-
-Las dos decisiones que el diseño había dejado abiertas están resueltas. El
-agente no se embebe en la PWA: la app arma el pedido, lo manda al agente y
-recibe la respuesta compartida o pegada. Y la receta sí guarda fotos en Drive: tiene un
+El agente no se embebe en la PWA: la app arma el pedido, lo manda al agente y
+recibe la respuesta compartida o pegada. La receta guarda fotos en Drive: tiene un
 depósito propio —la sección `## Fotos` del `.md`— y las que se suben desde
 el editor viven en `_fotos/`, junto con las propias de las categorías. Una URL externa
 sigue valiendo (`ux/information-architecture.md` §1.7).
@@ -101,34 +90,33 @@ Lo pendiente está en [`BACKLOG.md`](../BACKLOG.md), en la raíz del repo.
 
 ## Research
 
-| Documento | Qué contiene | Hito |
-|---|---|---|
-| [Análisis competitivo](research/competitive-analysis.md) | El landscape de soluciones para guardar y consultar recetas, con vacíos e insights. | 1 |
+| Documento | Qué contiene |
+|---|---|
+| [Análisis competitivo](research/competitive-analysis.md) | El landscape de soluciones para guardar y consultar recetas, con vacíos e insights. |
 
 ## Producto
 
-| Documento | Qué contiene | Hito |
-|---|---|---|
-| [Product Vision](product/strategy/product-vision.md) | Qué es el producto, para quién, por qué existe y qué decisiones estratégicas lo condicionan. | Setup (v1.0) → 4 (v2.0) → 6 (v2.1) |
-| [Personas](product/strategy/personas.md) | Quién usa el producto y en qué contextos concretos. | 2 |
-| [Jobs to be Done](product/strategy/jtbd.md) | Los jobs que el producto resuelve, por persona y transversales. | 2 |
-| [Principios de producto](product/strategy/product-principles.md) | Los árbitros de las decisiones de diseño ambiguas. | 3 |
-| [Índice de épicas](product/specs/specs-overview.md) | Las seis épicas del producto, cómo se relacionan, y dónde viven las reglas transversales. | 5 → 7 → 11 |
-| [E01 — Captura y borradores](product/specs/E01-CapturaYBorradores.md) | Guardar algo antes de perderlo, los borradores que esperan conversión, y Convertir con Agente. | 5 → 7 → 11 |
-| [E02 — Encontrar](product/specs/E02-Encontrar.md) | Búsqueda por título, ingrediente y tag; categorías; paseo. | 5 → 7 → 11 |
-| [E03 — Leer y cocinar](product/specs/E03-LeerYCocinar.md) | La receta a la vista, con las manos ocupadas. | 5 → 7 → 11 |
-| [E04 — Corregir](product/specs/E04-Corregir.md) | El editor: arreglar un error, crear una receta mínima. | 5 → 7 → 11 |
-| [E05 — Cimientos](product/specs/E05-Cimientos.md) | Drive, el índice, el esquema del `.md`, los estados degradados. | 5 → 7 → 11 |
-| [E06 — Planificar](product/specs/E06-Planificar.md) | El plan de siete días sin fechas y la lista de compras que sale de él. | 5 → 7 → 11 |
+| Documento | Qué contiene |
+|---|---|
+| [Product Vision](product/strategy/product-vision.md) | Qué es el producto, para quién, por qué existe y qué decisiones estratégicas lo condicionan. |
+| [Personas](product/strategy/personas.md) | Quién usa el producto y en qué contextos concretos. |
+| [Jobs to be Done](product/strategy/jtbd.md) | Los jobs que el producto resuelve, por persona y transversales. |
+| [Principios de producto](product/strategy/product-principles.md) | Los árbitros de las decisiones de diseño ambiguas. |
+| [Índice de épicas](product/specs/specs-overview.md) | Las seis épicas del producto, cómo se relacionan, y dónde viven las reglas transversales. |
+| [E01 — Captura y borradores](product/specs/E01-CapturaYBorradores.md) | Guardar algo antes de perderlo, los borradores que esperan conversión, y Convertir con Agente. |
+| [E02 — Encontrar](product/specs/E02-Encontrar.md) | Búsqueda por título, ingrediente y tag; categorías; paseo. |
+| [E03 — Leer y cocinar](product/specs/E03-LeerYCocinar.md) | La receta a la vista, con las manos ocupadas. |
+| [E04 — Corregir](product/specs/E04-Corregir.md) | El editor: arreglar un error, crear una receta mínima. |
+| [E05 — Cimientos](product/specs/E05-Cimientos.md) | Drive, el índice, el esquema del `.md`, los estados degradados. |
+| [E06 — Planificar](product/specs/E06-Planificar.md) | El plan de siete días sin fechas y la lista de compras que sale de él. |
 
 ## UX
 
-| Documento | Qué contiene | Hito |
-|---|---|---|
-| [Arquitectura de información](ux/information-architecture.md) | Entidades, esquema del `.md`, inventario de pantallas y navegación. | 5 → 7 → 8 → 9 |
-| [User flows](ux/user-flows.md) | Los flujos críticos, diagramados, con sus puntos de decisión. | 5 → 7 → 8 |
-| [Wireframes](ux/wireframes.md) | Estructura y jerarquía de cada pantalla, con decisiones de layout explícitas. | 6 → 7 → 8 |
-| [Brand Identity](ux/brand-identity.md) | Cinco adjetivos con lo que descarta cada uno, dirección visual, tono de voz y vocabulario canónico. | 8 → 11 |
-| [Design System](ux/design-system.md) | Tokens con su contraste medido, paleta de categorías, tipografía, iconografía, motion y componentes core. | 8 → 9 → 11 |
-| [Auditoría tipográfica](ux/auditoria-tipografica.md) | Informe: criterios, la tipografía de las once pantallas medida sobre la app implementada, y una propuesta de cambios. | — |
-| [Mockups](ux/mockups/) | Doce pantallas en HTML+CSS, una sola versión de cada una, más su [README](ux/mockups/README.md) con los hallazgos. Son la especificación de cuando se diseñó: lo decidido después usando la app vive en `src/ui/tokens.css`. | 9 → 11 |
+| Documento | Qué contiene |
+|---|---|
+| [Arquitectura de información](ux/information-architecture.md) | Entidades, esquema del `.md`, inventario de pantallas y navegación. |
+| [User flows](ux/user-flows.md) | Los flujos críticos, diagramados, con sus puntos de decisión. |
+| [Wireframes](ux/wireframes.md) | Estructura y jerarquía de cada pantalla, con decisiones de layout explícitas. |
+| [Brand Identity](ux/brand-identity.md) | Cinco adjetivos con lo que descarta cada uno, dirección visual, tono de voz y vocabulario canónico. |
+| [Design System](ux/design-system.md) | Tokens con su contraste medido, paleta de categorías, tipografía, iconografía, motion y componentes core. |
+| [Mockups](ux/mockups/) | Doce pantallas en HTML+CSS, una sola versión de cada una, más su [README](ux/mockups/README.md) con los hallazgos. Son la especificación de cuando se diseñó: lo decidido después usando la app vive en `src/ui/tokens.css`. |

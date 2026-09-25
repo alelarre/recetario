@@ -17,10 +17,10 @@ dos comidas por día, y cada comida una lista de recetas del recetario. No hay
 semana siguiente ni historial: un día cargado se mantiene hasta que se cambie o
 se reinicie el plan.
 
-J9 es el único job del proyecto que **cambiaría** la conducta del usuario en vez
+J9 es el único job del proyecto que **cambia** la conducta del usuario en vez
 de acompañarla, así que la épica se construye con costo de retiro bajo
-(principio 6): **sacarla cuesta borrar una entrada del menú, tres pantallas, dos
-módulos y un archivo de Drive**. No define entidades en el núcleo —`_indice` no
+(principio 6): **sacarla es borrar una entrada del menú, sus tres pantallas, sus
+dos módulos y un archivo de Drive, y desconectarlos del resto** (C06.5.1). No define entidades en el núcleo —`_indice` no
 cambia, ni hoja ni columna, y el esquema del `.md` de receta tampoco— y ninguna
 otra épica la nombra.
 
@@ -93,12 +93,13 @@ significa que la receta no esté registrada.
   del nombre. Es algo abierto en la misma pantalla: el chevron o el atrás
   vuelven a la grilla sin salir (`ux/information-architecture.md` §4.6). Una
   categoría sin recetas dice *«Todavía no hay recetas en <categoría>.»*
-- [ ] Al escribir, el bloque se reemplaza por los resultados, con **la misma
+- [ ] Al buscar —con Enter o al salir de la caja, no mientras se escribe
+  (`E02-Encontrar.md` C02.2.1)—, el bloque se reemplaza por los resultados, con **la misma
   lista que la búsqueda** (`E02-Encontrar.md` C02.3.2): los tres grupos, el
   conmutador «A–Z | Duración» arriba (C02.9.2), la misma frase sin resultados y
   la carga por tramos (C02.3.5).
-- [ ] Escribir, cambiar el orden y el tramo siguiente redibujan sólo el bloque:
-  la caja no pierde el foco del teclado.
+- [ ] Buscar, cambiar el orden y el tramo siguiente redibujan sólo el bloque,
+  no la caja.
 - [ ] Los borradores no aparecen, ni en la búsqueda ni en las categorías
   (`E02-Encontrar.md` C02.1.4).
 - [ ] Tocar una tarjeta **suma la receta a esa comida**, escribe —el velo con su
@@ -203,8 +204,13 @@ en Drive:** se lee en la app y se comparte como texto.
   *Nueva receta* (IA §4.6).
 - [ ] Es la única entrada: el Recetario no cambia, y la receta no ofrece
   planificar.
-- [ ] **Sacar la épica cuesta borrar esa entrada, tres pantallas, dos módulos y
-  un archivo de Drive**, y nada más del producto cambia.
+- [ ] **Sacar la épica es borrar esa entrada, las tres pantallas
+  (`ui/plan.ts`, `ui/plan-agregar.ts`, `ui/compras.ts`), los módulos `plan.ts`
+  y `compras.ts` y `_plan.md`**, y sacar lo que los conecta con el resto: la
+  lectura y la escritura del plan en `store.ts`, sus acciones en `main.ts`, sus
+  rutas en `ui/router.ts`, `NOMBRE_PLAN` en `config.ts` y el aviso de
+  `_plan.md` repetido en `ui/ajustes.ts`. El índice y el esquema del `.md` de
+  receta no cambian.
 
 ---
 

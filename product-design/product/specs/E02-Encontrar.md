@@ -41,7 +41,7 @@ de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 - [ ] El Recetario se dibuja recién con el índice en memoria: mientras se lee está la pantalla de conexión, con *«Conectando…»*, o el progreso del reindexado. No hay un Recetario a medio cargar.
 - [ ] Sin recetas: las categorías se ven igual, vacías, y una línea dice cómo entra una receta: *«Todavía no hay recetas. Entran con Nueva receta, compartiendo desde otra app, o como archivos .md en las carpetas de Drive.»*
 - [ ] Sin recetas terminadas pero con borradores, la línea dice cuántos esperan: *«Todavía no hay recetas terminadas. Hay 3 en Borradores.»*
-- [ ] Sin red: el aviso arriba, y **ni la búsqueda ni las categorías se dibujan con datos viejos** (C05.8.1).
+- [ ] Sin red al abrir, no se llega al Recetario: el aviso del arranque (C05.8.1). Con el índice ya en memoria, la búsqueda y las categorías siguen andando sin red.
 - [ ] Si la app no puede abrir el índice, no llega al Recetario: la salida es la de C05.6.2.
 
 #### C02.1.3 — El menú lateral *(J1, J5)*
@@ -62,19 +62,20 @@ de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 
 - [ ] **Una receta con `borrador` no aparece en ninguna otra lista:** ni en la categoría, ni en las listas por tag, ni en los resultados —en ninguno de sus tres grupos, ni como motivo—, ni en el Menú diario, ni en *Agregar al plan* —su búsqueda ni sus categorías—.
 - [ ] **No cuenta** en el número de los tiles del Recetario.
+- [ ] **Una receta de `_sin-categoria/` sin el tag `borrador` no se encuentra de ninguna forma:** no está en Borradores ni en ninguna otra lista, ni en la búsqueda, ni en el conteo de tags. Sólo la nombra el aviso de Ajustes al reindexar (`E05-Cimientos.md` C05.3.1).
 - [ ] Sí aparece en Borradores (C02.1.3), en el contador del menú, abierta por su link, y en un plan que ya la tenía de antes (`E06-Planificar.md` C06.1.2).
 
 ### F02.2 — Búsqueda por nombre
 
-Visible y ocupando lugar. Resultados mientras se escribe. Sirve al job más
-frecuente y tiene que resolverse en dos toques.
+Visible y ocupando lugar. Busca con Enter o al salir de la caja. Sirve al job
+más frecuente y tiene que resolverse en dos toques.
 
 #### C02.2.1 — Buscar por título *(J1)*
 
-- [ ] Los resultados se actualizan mientras se escribe, sin apretar nada.
+- [ ] La búsqueda salta con Enter o al salir de la caja, no mientras se escribe.
 - [ ] La coincidencia no distingue mayúsculas ni acentos: *"puree"* encuentra *"Puré"*.
 - [ ] Coincide con cualquier parte del título, no solo con el principio.
-- [ ] Llegar a una receta buscada por nombre cuesta dos toques: escribir y tocar el resultado.
+- [ ] Llegar a una receta buscada por nombre cuesta dos toques, después de escribir: Enter y el resultado.
 
 **Edge case:** la caja vacía no muestra resultados ni una lista completa; muestra
 el Recetario como estaba. **Buscar con la caja vacía —o con espacios— no hace
@@ -113,9 +114,8 @@ ingrediente.
 
 #### C02.3.4 — Estados de los resultados *(J1, J4)*
 
-- [ ] Escribiendo: los resultados se actualizan en vivo.
+- [ ] Escribiendo: los resultados no cambian hasta el Enter o hasta salir de la caja (C02.2.1).
 - [ ] Sin resultados: una frase que nombra los tres criterios probados —*«Ninguna receta se llama, lleva ni tiene **berenjena**.»*—, y nada más. Sin sugerencias, sin "quisiste decir".
-- [ ] Sin red: no se puede buscar, y se dice.
 
 #### C02.3.5 — Los resultados se muestran todos *(J1, J4)*
 
@@ -164,7 +164,6 @@ la lista tiene que servir para recorrer, no solo para llegar.
 
 - [ ] No hay espera de carga: la lista sale del índice en memoria. El único indicador es el del final de un tramo (C02.5.2).
 - [ ] Categoría vacía: una frase que dice cómo entra una receta, con el nombre de su carpeta —*«Todavía no hay nada acá. Entran con Nueva receta, compartiendo desde otra app, o como archivos .md en la carpeta Pescados de Drive.»*—. Sin ilustración.
-- [ ] Sin red: el aviso, y nada dibujado con datos viejos.
 
 ### F02.5b — Las listas muestran foto
 

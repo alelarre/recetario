@@ -203,8 +203,8 @@ extrae la receta y deja el `.md` en Drive, que aparece al reindexar. Ver F9.
 ```
 Recetario
   ▸ la búsqueda está arriba, visible, no detrás de un ícono
-  → escribo parte del nombre
-  ▸ resultados mientras escribo
+  → escribo parte del nombre y toco Enter
+  ▸ resultados
   → toco el que quería
   ▸ Receta
 ```
@@ -220,7 +220,7 @@ buscar en todo es lo que hace Drive y es exactamente lo que trae ruido.
 
 ```
 Recetario
-  → escribo "berenjena"
+  → escribo "berenjena" y toco Enter
   ▸ resultados agrupados: por nombre, por ingrediente y por tag
   ⚑ los tres grupos en la misma lista, distinguidos, cada uno con su cantidad
   ⚑ dentro de cada grupo, las favoritas primero; el orden puede pasar a Duración
@@ -729,10 +729,10 @@ Menú → Ajustes → ficha Recetario → Categorías
       toco una     → cambio el nombre, el color o la foto → Guardar
                      ▸ renombrar renombra la carpeta; las recetas no se tocan
       toco una → Borrar categoría
-                     ▸ confirmación: cuántas recetas se van, cuáles, y a dónde
-                     → Borrar <categoría> y N recetas
-                     ▸ la carpeta va a la papelera de Drive con sus recetas adentro
-                     ▸ salen del índice
+                     ▸ confirmación: «Sus N recetas pasan a Borradores, sin categoría.»
+                     → Borrar
+                     ▸ las recetas pasan a _sin-categoria/ con el tag borrador
+                     ▸ la carpeta vacía y su foto propia van a la papelera de Drive
 ```
 
 - **Todas las categorías se tratan igual**, predefinidas o no.

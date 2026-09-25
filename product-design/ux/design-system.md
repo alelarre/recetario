@@ -225,10 +225,13 @@ Base 16 px, razón 1.2, redondeada a valores enteros.
 **Interlínea alta en lectura y en cocina** —1.6 y 1.65— porque en las dos hay que
 volver a encontrar el renglón después de mirar para otro lado.
 
-**Dónde va el título de una pantalla.** Las pantallas de primer
-nivel —las del menú lateral— lo llevan grande en el encabezado. Las de detalle llevan
-el encabezado chico, en *base fuerte*, y si tienen un objeto propio, su nombre grande en
-el cuerpo. **Categoría es de detalle y no tiene objeto propio**: su nombre queda en el
+**Dónde va el título de una pantalla.** **Sólo el Recetario y Ajustes lo llevan
+grande** en el encabezado. Son los dos lugares fijos de la app —la entrada y la
+configuración— y no tienen un objeto propio que los nombre. El resto de los
+destinos del menú —Borradores, el plan de la semana, Nueva receta— es una lista o
+una tarea, y lleva el encabezado chico, en *base fuerte*: lo que importa ahí es la
+lista, la grilla o el formulario, no el rótulo. Las de detalle llevan también el
+encabezado chico y, si tienen un objeto propio, su nombre grande en el cuerpo. **Categoría es de detalle y no tiene objeto propio**: su nombre queda en el
 encabezado chico, como el del Editor. Borradores, que es una lista por tag,
 lleva el mismo encabezado chico que las demás listas (§6.12).
 
@@ -350,6 +353,12 @@ Base **4 px**. Solo estos valores:
 **`--e-cocina` es la única excepción a la escala:** §3.3 pide 20 px de separación
 y ninguno de los siete valores de la base lo da. Existe porque el modo cocina es
 la única escala distinta del sistema.
+
+**La escala rige entre bloques:** entre fichas, entre controles, entre ítems de
+una lista, en el padding de una ficha y en los márgenes de la pantalla. Adentro
+de un componente chico —un chip, un badge, una pill, la fila de un ítem— se
+permiten ajustes finos de 2 a 6 px fuera de la escala, para alinear piezas que
+la escala no calza.
 
 **Densidad:** las listas usan `--e-3`, la receta abierta usa
 `--e-5` y `--e-6`. Se recorren cientos de recetas y se lee una sola.
@@ -677,6 +686,12 @@ Dos niveles, como fija `E05-Cimientos.md` C05.9.1.
 
 Ninguno se cierra solo, ninguno lleva ícono y ninguno muestra el error crudo.
 
+**Si el control que falló sigue a la vista, ese control es el reintento**, y el
+aviso no lleva *Reintentar*: lleva el botón sólo cuando no queda a la vista nada
+que vuelva a intentar —una pantalla que no pudo leer, un arranque que no llegó—.
+Un *Guardar* que falló, una `×` del plan o el botón *Traer* de una
+foto por URL se vuelven a tocar.
+
 ### 6.9 Campo de texto
 
 `--surface-alta`, borde 1 px `--borde-fuerte`, `--r-medio`, padding `--e-3`,
@@ -827,9 +842,10 @@ medio en `--txt-base` peso 600, acciones a la derecha.
 menú** —Recetario, Borradores, el plan de la semana, la receta nueva y
 Ajustes—: ahí la hamburguesa (§6.17) ocupa el lugar del volver, que queda para
 las pantallas a las que se entra desde otra. Editar una receta existente es una
-de esas: se entra desde la receta y se sale volviendo. En el Recetario y en Ajustes el
-título va además en `--txt-titulo`, centrado en la barra y no en el hueco que
-dejan los controles. Borradores es la lista por tag de `borrador` dibujada como
+de esas: se entra desde la receta y se sale volviendo. **Sólo en el Recetario y en
+Ajustes el título va además en `--txt-titulo`**, centrado en la barra y no en el
+hueco que dejan los controles (§3.2); el plan de la semana y Nueva receta lo llevan
+chico, como Borradores. Borradores es la lista por tag de `borrador` dibujada como
 destino del menú: el encabezado de la lista por tag —título chico y el total,
 sin ícono (§6.5)—, con la hamburguesa y el título «Borradores». Tocar una
 tarjeta ahí abre el editor del borrador, no la receta.
@@ -1307,7 +1323,6 @@ color de la categoría, que no lo tapa.
 |---|---|
 | Margen lateral en teléfono | `--e-4` |
 | Ancho máximo de la columna | **680 px**, centrada |
-| Ancho máximo del cuerpo de lectura | **62 caracteres** |
 | Punto de quiebre | **900 px**, uno solo: las grillas pasan de 2 a 4 columnas y el menú lateral deja de ser cajón y queda fijo (§6.17) |
 
 **No hay layout de escritorio propio.** Es la misma app, más ancha
@@ -1332,7 +1347,8 @@ Una pantalla cumple el sistema si:
 
 - [ ] No usa ningún color que no esté en §2.
 - [ ] No usa ningún tamaño de texto que no esté en §3.2.
-- [ ] No usa ningún espaciado que no esté en §4.1.
+- [ ] Entre bloques no usa ningún espaciado que no esté en §4.1; los ajustes
+      finos quedan adentro de un componente chico.
 - [ ] No tiene sombras.
 - [ ] Ningún control táctil mide menos de 48 px, ni de 64 px en cocina.
 - [ ] Ningún texto de cuerpo baja de 16 px, ni de 18 px en la receta abierta.

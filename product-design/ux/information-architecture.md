@@ -166,6 +166,11 @@ ingrediente y al menos un paso. Esa condición no filtra, no corrige y no escrib
 nada por su cuenta. Como la categoría es parte de la condición, **una receta
 sin categoría es siempre un borrador**.
 
+Un `.md` escrito afuera en `_sin-categoria/` sin el tag no cumple esa regla, y
+**no se encuentra de ninguna forma**: no está en Borradores ni en ninguna otra
+lista, ni en la búsqueda, ni en el conteo de tags. Sólo lo nombra el aviso de
+*Ajustes → Avisos* después de reindexar (§4.7), con el nombre del archivo.
+
 ### 1.7 Las fotos
 
 Una receta tiene un **depósito de fotos**: la del plato, la de un paso, la de
@@ -251,9 +256,9 @@ versiones que el formato no aguanta sin dejar de ser legible.
 |---|---|---|---|
 | **Carpeta base** | Una carpeta propia del Drive, marcada con `appProperties` `recetario=raiz` | Al crearla o elegirla en el primer arranque | Al elegir otra desde Ajustes: pierde la marca y queda en Drive como estaba |
 | **Receta** | Un `.md` en una carpeta de categoría, o en `_sin-categoria/` si no tiene categoría | Al guardar una receta nueva —escrita en el editor, compartida o pegada—, o cuando un agente la escribe directo | Al borrarla desde el editor: va a la papelera de Drive |
-| **Borrador** | Una receta con el tag `borrador` (§1.6): el mismo `.md` y la misma fila | Con la receta: toda receta nueva nace borrador | Cuando se le saca el tag, o con la receta |
-| **Foto de receta** | Una línea de la sección `## Fotos` del `.md` (§1.7). El archivo, si lo subió la app, es un `.jpg` en `_fotos/`; si no, es una URL externa | Al agregarla en el editor —también la que llega por Compartir—, o escrita a mano en el `.md` | Al sacarla del depósito, o con su receta: el archivo de `_fotos/` va a la papelera de Drive |
-| **Categoría** | Una carpeta dentro de la carpeta base, con su color y su foto en `appProperties`, y su fila en la hoja `categorias` del índice | En el setup de la carpeta base —las 16 predefinidas—, o al crearla desde *Ajustes → Recetario → Categorías* | Al borrarla desde ahí: va a la papelera de Drive con sus recetas, y su foto propia con ella |
+| **Borrador** | Una receta con el tag `borrador` (§1.6): el mismo `.md` y la misma fila | Con la receta: toda receta nueva nace borrador. También lo son las de una categoría borrada, que pasan a `_sin-categoria/` con el tag | Cuando se le saca el tag, o con la receta |
+| **Foto de receta** | Una línea de la sección `## Fotos` del `.md` (§1.7). El archivo, si lo subió la app, es un `.jpg` en `_fotos/`; si no, es una URL externa | Al agregarla en el editor —también la que llega por Compartir—, o escrita a mano en el `.md` | Al sacarla del depósito, o con su receta: el archivo de `_fotos/` va a la papelera de Drive. Borrar la categoría de la receta no la toca: la receta sigue y la nombra por su id |
+| **Categoría** | Una carpeta dentro de la carpeta base, con su color y su foto en `appProperties`, y su fila en la hoja `categorias` del índice | En el setup de la carpeta base —las 16 predefinidas—, o al crearla desde *Ajustes → Recetario → Categorías* | Al borrarla desde ahí: la carpeta vacía, su fila y su foto propia van a la papelera de Drive. Sus recetas no: pasan a `_sin-categoria/` con el tag `borrador` |
 | **Tag** | La lista `tags` del frontmatter | Al escribirlo, o al apretar el botón de un especial | Cuando ninguna receta lo usa |
 | **Fuente** | Frontmatter, o línea en itálica en una variación | Con la receta | Con ella |
 | **Variación** | Sección `###` o bullet bajo `## Variaciones` | Al escribirla | Al borrarla |

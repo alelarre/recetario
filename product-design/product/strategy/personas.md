@@ -1,9 +1,5 @@
 # Recetario — Personas y Contextos de Uso
 
-**Versión:** 1.0
-**Fecha:** 2026-09-05
-**Estado:** Final — Hito 2 cerrado
-
 ---
 
 ## Sobre este documento
@@ -129,8 +125,8 @@ que se lee y no filtra.
 | **Atención** | Mínima e interrumpida. Está en el medio de otra actividad. |
 | **Objetivo** | Que no se pierda. |
 
-**Este contexto tiene dos etapas y un limbo en el medio.** Es el hallazgo central
-del hito:
+**Este contexto tiene dos etapas y un limbo en el medio**, y es lo que más pesa
+en el diseño:
 
 1. **La ve y la guarda donde caiga.** Guarda el link, guarda el reel, anota en una app de notas. Rápido, con una mano, sin salir de donde estaba.
 2. **La convierte en `.md`** — pero recién **antes de ponerse a cocinarla**, en una sesión con un agente.
@@ -171,27 +167,28 @@ modo cocina (`src/cocina-control.ts`, Wake Lock API), intencionalmente como
 botón manual —el sol del encabezado— porque no siempre es necesario que quede
 prendida. Una vez encendido, se vuelve a pedir solo al volver de segundo plano.
 
-### 2.4 Planificar la semana — *"me gustaría probar"*
+### 2.4 Planificar la semana
 
 | | |
 |---|---|
-| **Cuándo** | Sin definir. |
+| **Cuándo** | Cuando empieza la semana. |
 | **Dónde y con qué** | Sentado, sin apuro. |
 | **Atención** | Completa. |
 | **Objetivo** | Facilitar la compra semanal y ganar variedad entre semana. |
 
-**No es un contexto observado: nace de una hipótesis del usuario.** Sus
-palabras: *"no es principal, pero me gustaría probar a ver si me resulta"*.
+El usuario planifica con la app: el plan de la semana son siete días sin fechas
+que arrancan en hoy, con dos comidas por día y una lista de recetas en cada una,
+y de ahí sale la lista de compras (`E06-Planificar.md`).
 
 Tiene una tensión que hay que dejar escrita: apunta a **más variedad de comidas
-durante la semana**, pero entre semana hoy cocina de memoria y sin receta. O sea
-que no es una feature que se acople a la conducta actual — **es una feature que
-la cambiaría**. Por eso el plan es lo mínimo que resuelve el job, y sacarlo
-cuesta borrar una entrada del menú y tres pantallas (principio 6).
+durante la semana**, cuando entre semana cocina de memoria y sin receta. No es
+una feature que se acople a esa conducta — **es una feature que la cambia**. Por
+eso el plan es lo mínimo que resuelve el job, y sacarlo es borrar una entrada del
+menú, sus pantallas y sus módulos, y desconectarlos del resto (principio 6).
 
 ---
 
-## 3. Restricciones que este hito impone al diseño
+## 3. Restricciones que condicionan el diseño
 
 Tres cosas que salieron de la entrevista y condicionan todo lo que venga:
 
