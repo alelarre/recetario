@@ -16,8 +16,9 @@ import { renderCocina } from './ui/cocina.js';
 import {
   renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado,
   renderAccionesFoto, renderElegirFoto, renderSelectorPortada, renderFotoPorUrl,
-  filaDeFotosEditor, muestraDePortada, fotosDesde, botonPonerFoto, carpetaDelEditor
+  filaDeFotosEditor, muestraDePortada, botonPonerFoto, carpetaDelEditor
 } from './ui/editor.js';
+import type { ArgsEditor } from './ui/editor.js';
 import { renderPlan } from './ui/plan.js';
 import { renderPlanAgregar, bloqueDeAgregar } from './ui/plan-agregar.js';
 import type { OpcionesBloque } from './ui/plan-agregar.js';
@@ -43,8 +44,9 @@ import { renderVisor, pasoDelVisor } from './ui/visor.js';
 import type { EstadoVisor } from './ui/visor.js';
 import type { EstadoCompartir } from './ui/compartir.js';
 import {
-  linkDeFoto, idDeDrive, resolverReceta, fotosSinUso, siguienteNumero, lineaDelCursor, ponerEn, sacarReferencias
+  linkDeFoto, idDeDrive, resolverReceta, fotosSinUso, lineaDelCursor
 } from './fotos-receta.js';
+import { crearFotosControl, SECCIONES } from './fotos-control.js';
 import { crearControlCocina } from './cocina-control.js';
 import { crearNavegacion } from './navegacion.js';
 import { crearVelo } from './velo.js';
@@ -69,7 +71,7 @@ import type { OpcionesAchicar } from './fotos.js';
 import { crearImagenes, conTope } from './imagenes.js';
 import type { DatosFormulario } from './ui/editor.js';
 import type { ResultadoArranque } from './store.js';
-import type { CambiosDeFotos, Entrada, FotoDeReceta, Momento, Plan, Receta } from './tipos.js';
+import type { Entrada, FotoDeReceta, Momento, Plan, Receta } from './tipos.js';
 
 type Store = ReturnType<typeof crearStore>;
 
@@ -90,8 +92,20 @@ const nav = crearNavegacion({ location, history });
  * `src` cuando el blob está. Va enganchado a `pintar` y a `pintarParte` en vez
  * de repetirse en cada pantalla: son treinta llamadas y ninguna tiene que
  * acordarse.
+ *
+ * Los dibujos de una misma vuelta se completan en una sola pasada: un cambio
+ * del editor redibuja la fila, la portada y el botón de poner foto, y cada
+ * pasada pediría de nuevo las fotos que la anterior todavía no terminó.
  */
-despuesDePintar(() => { void completarFotos(); });
+let completarPedido = false;
+despuesDePintar(() => {
+  if (completarPedido) return;
+  completarPedido = true;
+  queueMicrotask(() => {
+    completarPedido = false;
+    void completarFotos();
+  });
+});
 /**
  * El velo que quedó puesto después del tilde se va cuando la pantalla de
  * destino está dibujada: si se fuera antes, se vería el repintado por debajo
@@ -126,7 +140,7 @@ function mirarElAviso(): void {
  */
 async function completarFotos(): Promise<void> {
   for (const img of document.querySelectorAll<HTMLElement>('#app img[data-n]:not([src])')) {
-    const url = fotosEditor.urls.get(Number(img.dataset['n']));
+    const url = fotosEditor.urlEnMemoria(Number(img.dataset['n']));
     if (url) img.setAttribute('src', url);
   }
   const deDrive = [...document.querySelectorAll<HTMLElement>('#app img[data-drive]:not([src])')];
@@ -147,8 +161,7 @@ async function completarFotos(): Promise<void> {
  * categoría.
  */
 function sacarFoto(img: Element, recuadro: string): void {
-  // Sin `pintarParte`: esto es parte de completar las fotos, y el recuadro no
-  // deja ninguna pedida.
+  // Sin `pintarParte`: el recuadro no deja ninguna foto pedida.
   if (img.closest('.carrusel-foto, .galeria-item, .miniatura')) img.outerHTML = recuadro;
   else img.remove();
 }
@@ -410,17 +423,25 @@ let deslizoElVisor = false;
 let visorDesde: number | null = null;
 
 /**
- * Las fotos que el editor tiene en memoria hasta Guardar: el blob de
- * cada número nuevo, su object URL para la miniatura, y el id de Drive de la
- * que ya se subió en un intento que falló después —reintentar no la vuelve a
- * subir—. Va aparte del estado de la pantalla porque completar las fotos de
- * cualquier dibujo lo lee; vive lo que dura el editor y se vacía al salir.
+ * El depósito de fotos del editor: las fotos, la portada y las nuevas en
+ * memoria hasta Guardar. Va aparte del estado de la pantalla porque completar
+ * las fotos de cualquier dibujo lo lee, y porque las compartidas se suman
+ * antes de que el editor se dibuje; vive lo que dura el editor y se vacía al
+ * salir.
  */
-const fotosEditor = {
-  nuevas: new Map<number, Blob>(),
-  urls: new Map<number, string>(),
-  subidas: new Map<number, string>()
-};
+const fotosEditor = crearFotosControl({
+  achicar: foto => achicarFoto(foto),
+  crearUrl: foto => imagenes.urlDeBlob(foto),
+  soltarUrl: url => { imagenes.soltarUrl(url); },
+  campos: {
+    leer: nombre => campoDelEditor(nombre)?.value ?? null,
+    escribir: (nombre, valor) => {
+      const campo = campoDelEditor(nombre);
+      if (campo) campo.value = valor;
+    }
+  },
+  alCambiar: () => { mostrarDeposito(); }
+});
 /**
  * La receta `.md` que llegó compartida. Vive mientras la ruta la nombra
  * (`recibida=1`), y por eso sobrevive al cambio de pantalla que la abre: el
@@ -494,10 +515,19 @@ function datosDelFormulario(): DatosFormulario {
 }
 
 /** Recién dibujado, el editor no tiene cambios: su formulario es la foto contra la que se compara. */
-const abrirEditor = (html: string): void => {
-  pintar(html);
+const abrirEditor = (dibujar: () => void): void => {
+  dibujar();
   estadoDePantalla.editorAbierto = { hash: location.hash, formulario: formularioActual() };
 };
+
+/**
+ * Dibuja el editor de una receta. El depósito que dibuja es el que queda en
+ * `fotosEditor`: los ocultos del formulario y el controlador dicen lo mismo.
+ */
+function pintarEditor(args: ArgsEditor): void {
+  fotosEditor.cargar(args.receta);
+  pintar(renderEditor(args));
+}
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
@@ -760,9 +790,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
     imagenes.soltarImagenes();
     // Las fotos del editor viven lo que la pantalla: salir sin guardar no deja
     // nada en Drive, y volver a entrar abre con lo que dice el `.md`.
-    fotosEditor.nuevas.clear();
-    fotosEditor.urls.clear();
-    fotosEditor.subidas.clear();
+    fotosEditor.vaciar();
     cocina.reiniciar();
     // La pantalla nueva empieza arriba: el hash no cambia el scroll, así que
     // entrar al modo cocina desde el pie de la receta abría los ingredientes
@@ -878,7 +906,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       const valores = categoria
         ? { nombre: categoria.nombre, color: categoria.color, foto: categoria.foto }
         : { nombre: '', color: colorLibre(store.categorias().map(c => c.color)), foto: '' };
-      return abrirEditor(renderEdicionCategoria({ categoria, valores, otros }));
+      return abrirEditor(() => { pintar(renderEdicionCategoria({ categoria, valores, otros })); });
     }
 
     case 'plan':
@@ -921,7 +949,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
         const conRecibida = ruta.params['recibida'] && recibida
           ? aplicarPegada(receta, recibida, carpetaDelEditor(entrada?.carpeta_id ?? '', store.categorias()))
           : null;
-        abrirEditor(renderEditor({
+        abrirEditor(() => pintarEditor({
           entrada, receta: conRecibida ?? receta, categorias: store.categorias(),
           tagsConocidos: store.tagsDe().map(t => t.tag)
         }));
@@ -957,11 +985,11 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       }
       // Las fotos compartidas, ya en memoria: el depósito las nombra como
       // nuevas y suben al guardar.
-      receta.fotos = [...receta.fotos, ...[...fotosEditor.nuevas.keys()].map(n => ({ n, url: '' }))];
+      receta.fotos = fotosEditor.fotos();
       // Una receta nace como borrador: sacar el tag es la declaración explícita
       // de que está terminada (C04.3b.1).
       receta.tags = conEspecial(receta.tags, 'borrador', true);
-      abrirEditor(renderEditor({
+      abrirEditor(() => pintarEditor({
         entrada: null, receta, categorias: store.categorias(),
         tagsConocidos: store.tagsDe().map(t => t.tag), ...menuDe(vistaActual?.vista)
       }));
@@ -998,21 +1026,7 @@ async function leerCompartidas(): Promise<boolean> {
       } finally {
         await imagenes.descartarCompartidas().catch(err => console.error(err));
       }
-      let deposito: FotoDeReceta[] = [];
-      for (const archivo of llegadas) {
-        let blob: Blob;
-        try {
-          blob = await achicarFoto(archivo);
-        } catch (err) {
-          console.error(err);
-          noSeLeyo = true;
-          continue;
-        }
-        const n = siguienteNumero(deposito);
-        deposito = [...deposito, { n, url: '' }];
-        fotosEditor.nuevas.set(n, blob);
-        fotosEditor.urls.set(n, imagenes.urlDeBlob(blob));
-      }
+      noSeLeyo = await fotosEditor.sumarFotos(llegadas);
     } catch (err) {
       console.error(err);
       noSeLeyo = true;
@@ -1079,9 +1093,6 @@ function mostrarConvertir(conBorrador: boolean): void {
   if (convertir) convertir.hidden = !conBorrador;
 }
 
-/** Las cinco secciones de texto del editor, las que pueden nombrar una foto. */
-const SECCIONES = ['descripcion', 'ingredientes', 'preparacion', 'variaciones', 'notas'] as const;
-
 /** Lo que mide un renglón de un campo: `--txt-base` por la interlínea 1.5. */
 const ALTO_RENGLON = 24;
 
@@ -1091,18 +1102,6 @@ const enElEditor = (): boolean => vistaActual?.vista === 'editar' || vistaActual
 /** Un campo del formulario por su `name`, como lo hace `revisarBorrador`. */
 const campoDelEditor = (nombre: string) =>
   document.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#app [name="${nombre}"]`);
-
-/**
- * El depósito que el editor tiene escrito ahora: el campo oculto es la única
- * fuente. Un JSON que no se entiende cae en el depósito de la receta abierta y
- * no en uno vacío: vacío significa «las saqué a todas», y el store mandaría
- * esas fotos a la papelera.
- */
-const depositoDelEditor = (): FotoDeReceta[] =>
-  fotosDesde(campoDelEditor('fotos')?.value ?? '', recetaLeida?.receta.fotos ?? []);
-
-/** El valor crudo de la cabecera: `foto:N`, una URL, o vacío. */
-const portadaDelEditor = (): string => campoDelEditor('foto')?.value ?? '';
 
 /**
  * La receta sobre la que escribe el formulario: lo que el editor no muestra
@@ -1123,36 +1122,20 @@ const baseDelEditor = (): Receta => {
 const recetaDelEditor = (): Receta => recetaDesdeFormulario(datosDelFormulario(), baseDelEditor());
 
 /**
- * Escribe el depósito y redibuja sólo su fila de miniaturas: redibujar el
- * formulario entero perdería lo que se venía escribiendo. El campo se escribe
- * primero, así la fila sale con el uso de las fotos que quedaron.
+ * Lo que muestra el depósito, después de cada cambio de `fotosEditor`, sin
+ * redibujar el formulario, que perdería lo que se venía escribiendo:
+ * - la fila de miniaturas, con el uso de cada foto según lo que está escrito
+ *   ahora —la marca aparece al elegir una portada o al poner una foto en una
+ *   línea—;
+ * - la miniatura de la portada;
+ * - el botón de poner foto: sacar la última lo deja sin nada que ofrecer.
  */
-function escribirDeposito(fotos: FotoDeReceta[]): void {
-  const campo = campoDelEditor('fotos');
-  if (campo) campo.value = JSON.stringify(fotos);
-  redibujarFilaDeFotos();
-  // Sacar la última foto deja el botón de poner sin nada que ofrecer.
-  acomodarBotonDeFoto();
-}
-
-/**
- * La fila de miniaturas de nuevo, con el uso de cada foto según lo que está
- * escrito ahora: la marca tiene que aparecer al elegir una portada o al poner
- * una foto en una línea, sin salir del editor.
- */
-function redibujarFilaDeFotos(): void {
+function mostrarDeposito(): void {
   const fila = document.querySelector<HTMLElement>('#app .fotos-campo');
   if (fila) pintarParte(fila, filaDeFotosEditor(recetaDelEditor()), 'reemplazar');
-}
-
-/** Escribe la cabecera y cambia su miniatura, también sin redibujar. */
-function escribirPortada(valor: string): void {
-  const campo = campoDelEditor('foto');
-  if (campo) campo.value = valor;
   const boton = document.querySelector<HTMLElement>('#app .portada-boton');
-  if (boton) pintarParte(boton, muestraDePortada(valor || null, depositoDelEditor()));
-  // La marca de portada de la fila cambia de foto junto con la cabecera.
-  redibujarFilaDeFotos();
+  if (boton) pintarParte(boton, muestraDePortada(fotosEditor.portada() || null, fotosEditor.fotos()));
+  acomodarBotonDeFoto();
 }
 
 /**
@@ -1174,7 +1157,7 @@ function acomodarBotonDeFoto(): void {
   const seccion = campo?.name ?? '';
   if (!(SECCIONES as readonly string[]).includes(seccion)) return;
   // Sin depósito no hay nada que poner, y el botón no se dibuja.
-  if (!depositoDelEditor().length) return;
+  if (!fotosEditor.fotos().length) return;
   const marco = document.querySelector(`#app [data-campo-texto="${seccion}"]`);
   const antes = marco?.querySelector('[data-antes]');
   const marca = marco?.querySelector<HTMLElement>('[data-marca]');
@@ -1239,48 +1222,12 @@ function avisarEnElFormulario(texto: string): void {
 }
 
 /**
- * Suma fotos al depósito del editor, achicadas y en memoria hasta Guardar.
- * Cada una toma el número siguiente: ninguno se reusa, ni siquiera el de una
- * que se sacó.
+ * *Cámara* o *Galería*: las fotos entran al depósito del editor, achicadas y
+ * en memoria hasta Guardar. Una sola espera, aunque se elijan cinco fotos.
  */
 async function agregarFotosAlEditor(archivos: Blob[]): Promise<void> {
-  let deposito = depositoDelEditor();
-  let noSeLeyo = false;
-  // Una sola espera, aunque se elijan cinco fotos.
-  await velo.esperar(async () => {
-    for (const archivo of archivos) {
-      let blob: Blob;
-      try {
-        blob = await achicarFoto(archivo);
-      } catch (err) {
-        console.error(err);
-        noSeLeyo = true;
-        continue;
-      }
-      const n = siguienteNumero(deposito);
-      deposito = [...deposito, { n, url: '' }];
-      fotosEditor.nuevas.set(n, blob);
-      fotosEditor.urls.set(n, imagenes.urlDeBlob(blob));
-    }
-  });
-  escribirDeposito(deposito);
+  const noSeLeyo = await velo.esperar(() => fotosEditor.sumarFotos(archivos));
   avisarEnElFormulario(noSeLeyo ? NO_SE_LEYO_UNA_FOTO : '');
-}
-
-/**
- * Suma una foto al depósito del editor con el número que le toca. Con `blob`
- * es una foto que todavía no está en Drive —vive en memoria y sube al
- * guardar—; sin él, la línea es un link externo, que el `.md` acepta como
- * cualquier otra.
- */
-function sumarFotoAlEditor(url: string, blob?: Blob): void {
-  const deposito = depositoDelEditor();
-  const n = siguienteNumero(deposito);
-  if (blob) {
-    fotosEditor.nuevas.set(n, blob);
-    fotosEditor.urls.set(n, imagenes.urlDeBlob(blob));
-  }
-  escribirDeposito([...deposito, { n, url }]);
 }
 
 const NO_ES_UNA_FOTO = 'Esa URL no es una foto.';
@@ -1340,117 +1287,51 @@ async function traerFoto(url: string): Promise<FotoTraida> {
   }
 }
 
-/**
- * Lo que dio pedir una foto por su dirección: la foto ya achicada, la
- * dirección que no se pudo bajar —normalizada, lista para escribirse donde el
- * formato la acepte—, o el motivo por el que no sirve.
- */
-type PedidoDeFoto =
-  | { que: 'foto'; blob: Blob }
-  | { que: 'link'; url: string }
-  | { que: 'error'; mensaje: string };
-
-/**
- * Pide la foto de una dirección escrita a mano y la deja lista para agregar.
- * Las salidas son tres: la foto bajada, un link que no se pudo bajar, o un
- * error.
- */
-async function pedirFotoPorUrl(escrita: string): Promise<PedidoDeFoto> {
-  const url = conEsquemaEnMinuscula(escrita);
-  // Lo que ni siquiera tiene forma de dirección no se pide. En la receta, además,
-  // es lo único que se puede escribir como línea del depósito (C05.1.5).
-  if (!URL_DE_FOTO.test(url)) return { que: 'error', mensaje: NO_ES_UNA_FOTO };
-  // Desde Pages, una `http://` es contenido mixto: el pedido falla siempre y
-  // la imagen tampoco cargaría después. Entra como link y no sirve de nada.
-  if (url.startsWith('http://')) return { que: 'error', mensaje: SOLO_HTTPS };
-  // Bajarla y achicarla son una sola espera.
-  return velo.esperar(async (): Promise<PedidoDeFoto> => {
-    const traida = await traerFoto(url);
-    if (traida.que === 'no-es-foto') return { que: 'error', mensaje: NO_ES_UNA_FOTO };
-    if (traida.que === 'no-se-pudo') return { que: 'link', url };
-    try {
-      return { que: 'foto', blob: await achicarFoto(traida.blob) };
-    } catch (err) {
-      console.error(err);
-      return { que: 'error', mensaje: NO_SE_LEYO_UNA_FOTO };
-    }
-  });
-}
-
-/**
- * *Traer* en la ficha de una foto por URL. Sólo el editor la dibuja: caer al
- * editor desde una pantalla sin depósito sería escribir en un formulario que
- * no existe.
- */
-async function agregarFotoPorUrl(escrita: string): Promise<void> {
-  if (enElEditor()) return agregarFotoPorUrlAlEditor(escrita);
-  return;
-}
-
 /** Abre la ficha de *Por URL*. El aviso de un intento anterior se va al traer la próxima. */
 function abrirFotoPorUrl(): void {
   abrirFichaFoto(renderFotoPorUrl());
 }
 
 /**
- * En el editor, la foto bajada entra al depósito por el mismo camino que una
- * de la cámara. Lo que no se pudo bajar entra como link externo —el `.md` de
- * la receta acepta una URL ajena como cualquier otra—, y lo que no es una foto
- * no entra y deja la ficha abierta con lo escrito.
+ * *Traer* en la ficha de *Por URL*. La foto bajada entra al depósito por el
+ * mismo camino que una de la cámara. Lo que no se pudo bajar entra como link
+ * externo —el `.md` de la receta acepta una URL ajena como cualquier otra—, y
+ * lo que no es una foto no entra y deja la ficha abierta con lo escrito: el
+ * aviso vuelve con lo que se escribió y no con lo normalizado (R1).
  */
-async function agregarFotoPorUrlAlEditor(escrita: string): Promise<void> {
+async function agregarFotoPorUrl(escrita: string): Promise<void> {
   // Cada intento empieza sin el aviso del anterior: dos avisos a la vez no
   // dicen cuál es el de ahora.
   avisarEnElFormulario('');
-  // El aviso vuelve con lo que se escribió, y no con lo normalizado: lo que el
-  // usuario escribió sigue en pantalla (R1).
-  const pedido = await pedirFotoPorUrl(escrita);
-  if (pedido.que === 'error') return abrirFichaFoto(renderFotoPorUrl(escrita, pedido.mensaje));
-  if (pedido.que === 'link') {
-    sumarFotoAlEditor(pedido.url);
+  const url = conEsquemaEnMinuscula(escrita);
+  const reabrir = (mensaje: string): void => { abrirFichaFoto(renderFotoPorUrl(escrita, mensaje)); };
+  // Lo que ni siquiera tiene forma de dirección no se pide: es lo único que se
+  // puede escribir como línea del depósito (C05.1.5).
+  if (!URL_DE_FOTO.test(url)) return reabrir(NO_ES_UNA_FOTO);
+  // Desde Pages, una `http://` es contenido mixto: el pedido falla siempre y
+  // la imagen tampoco cargaría después. Entra como link y no sirve de nada.
+  if (url.startsWith('http://')) return reabrir(SOLO_HTTPS);
+  // Bajarla y achicarla son una sola espera.
+  const resultado = await velo.esperar(async () => {
+    const traida = await traerFoto(url);
+    if (traida.que !== 'foto') return traida.que;
+    return await fotosEditor.sumarFotos([traida.blob]) ? 'no-se-leyo' : 'sumada';
+  });
+  if (resultado === 'no-es-foto') return reabrir(NO_ES_UNA_FOTO);
+  if (resultado === 'no-se-leyo') return reabrir(NO_SE_LEYO_UNA_FOTO);
+  if (resultado === 'no-se-pudo') {
+    fotosEditor.sumarLink(url);
     cerrarFichaFoto();
     // No es un error del usuario: la foto entró, y el aviso dice con qué.
     return avisarEnElFormulario(QUEDA_COMO_LINK);
   }
-  sumarFotoAlEditor('', pedido.blob);
   cerrarFichaFoto();
-}
-
-/**
- * La receta con el link de cada foto que un intento anterior ya subió.
- * Su línea deja de estar vacía, así que el reintento la escribe en el `.md` y
- * no la vuelve a mandar como nueva.
- */
-const conSubidas = (receta: Receta): Receta => ({
-  ...receta,
-  fotos: receta.fotos.map(f => {
-    const id = f.url ? undefined : fotosEditor.subidas.get(f.n);
-    return id ? { ...f, url: linkDeFoto(id) } : f;
-  })
-});
-
-/**
- * Lo que el depósito cambió respecto del `.md` que el editor abrió: las que
- * hay que subir y las URLs que ya no están. Cada subida se anota apenas el store avisa, para el reintento.
- */
-function cambiosDeFotos(nueva: Receta, base: Receta): CambiosDeFotos {
-  const nuevas = new Map<number, Blob>();
-  for (const f of nueva.fotos) {
-    const blob = f.url ? undefined : fotosEditor.nuevas.get(f.n);
-    if (blob) nuevas.set(f.n, blob);
-  }
-  const urls = new Set(nueva.fotos.map(f => f.url));
-  return {
-    nuevas,
-    sacadas: base.fotos.map(f => f.url).filter(url => !urls.has(url)),
-    alSubir: (n, id) => { fotosEditor.subidas.set(n, id); }
-  };
 }
 
 /** Las fotos del depósito que se pueden mostrar: la subida, o la que está en memoria. */
 const fotosMostrables = (fotos: FotoDeReceta[]): { n: number; url: string }[] =>
   fotos.flatMap(f => {
-    const url = f.url || fotosEditor.urls.get(f.n) || '';
+    const url = f.url || fotosEditor.urlEnMemoria(f.n) || '';
     return url ? [{ n: f.n, url }] : [];
   });
 
@@ -1615,7 +1496,7 @@ async function escribirEditor(datos: DatosFormulario): Promise<{ id: string; rec
   const esNueva = vistaActual?.vista === 'nueva';
   let id = idActual();
   const base = esNueva ? baseDeNueva() : (await store.receta(id)).receta;
-  const escrita = conSubidas(recetaDesdeFormulario(datos, base));
+  const escrita = fotosEditor.conSubidas(recetaDesdeFormulario(datos, base));
   // Un borrador puede no tener título todavía: se guarda con el día y la
   // hora, y el nombre del archivo sale de ahí.
   const nueva = !escrita.titulo && tieneEspecial(escrita, 'borrador')
@@ -1628,10 +1509,10 @@ async function escribirEditor(datos: DatosFormulario): Promise<{ id: string; rec
 
   // Lo que el depósito cambió respecto del `.md` que se abrió: el store sube
   // las nuevas y manda a la papelera las que se sacaron.
-  const fotos = cambiosDeFotos(nueva, base);
+  const fotos = fotosEditor.cambiosDeFotos(nueva, base);
   if (esNueva) id = (await store.crear(nueva, carpetaId ? { carpetaId, fotos } : { fotos })).id;
   else await store.guardar(id, nueva, { carpetaDestino: carpetaId, fotos });
-  const receta = conSubidas(nueva);
+  const receta = fotosEditor.conSubidas(nueva);
   recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta };
   return { id, receta };
 }
@@ -1666,12 +1547,12 @@ async function guardarEditor<T>(
     // El editor otra vez, con lo que el usuario tenía escrito y el aviso.
     // Con las fotos que este intento alcanzó a subir ya en sus líneas: el
     // reintento las manda por su link en vez de volver a subirlas.
-    pintar(renderEditor({
+    pintarEditor({
       entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
-      receta: conSubidas(recetaDesdeFormulario(datos, baseDelEditor())), carpeta: datos['carpeta'] ?? '',
+      receta: fotosEditor.conSubidas(recetaDesdeFormulario(datos, baseDelEditor())), carpeta: datos['carpeta'] ?? '',
       categorias: store.categorias(), tagsConocidos: store.tagsDe().map(t => t.tag),
       error: err instanceof NoSeGuarda ? err.message : porQueNoGuardo(err), ...menuDe(vistaActual?.vista)
-    }));
+    });
     return null;
   }
 }
@@ -1753,13 +1634,13 @@ const accionesDeFotos: SeccionDeAcciones = {
     abrirFichaFoto(renderAccionesFoto(Number(n)));
   },
   'abrir-portada': () => {
-    abrirFichaFoto(renderSelectorPortada(depositoDelEditor(), portadaDelEditor() || null));
+    abrirFichaFoto(renderSelectorPortada(fotosEditor.fotos(), fotosEditor.portada() || null));
   },
   'elegir-portada': (boton) => {
-    escribirPortada(`foto:${boton.dataset['n'] ?? ''}`);
+    fotosEditor.ponerPortada(Number(boton.dataset['n'] ?? 0));
     cerrarFichaFoto();
   },
-  'sin-portada': () => { escribirPortada(''); cerrarFichaFoto(); },
+  'sin-portada': () => { fotosEditor.sacarPortada(); cerrarFichaFoto(); },
   'abrir-foto-url': () => abrirFotoPorUrl(),
   'traer-foto-url': async () => {
     const url = document.querySelector<HTMLInputElement>('#app [data-url-foto]')?.value.trim() ?? '';
@@ -1769,36 +1650,25 @@ const accionesDeFotos: SeccionDeAcciones = {
     // La sección y la línea son las que tenía el botón: las escribió
     // `acomodarBotonDeFoto` con el cursor donde estaba.
     abrirFichaFoto(renderElegirFoto(
-      depositoDelEditor(), boton.dataset['seccion'] ?? '', Number(boton.dataset['linea'] ?? 0)
+      fotosEditor.fotos(), boton.dataset['seccion'] ?? '', Number(boton.dataset['linea'] ?? 0)
     ));
   },
   'poner-en': (boton) => {
-    const campo = campoDelEditor(boton.dataset['seccion'] ?? '');
-    if (campo) {
-      campo.value = ponerEn(campo.value, Number(boton.dataset['linea'] ?? 0), Number(boton.dataset['n'] ?? 0));
-    }
     // Ahora está en el texto, y su miniatura lo dice.
-    redibujarFilaDeFotos();
+    fotosEditor.ponerEn(
+      boton.dataset['seccion'] ?? '', Number(boton.dataset['linea'] ?? 0), Number(boton.dataset['n'] ?? 0)
+    );
     cerrarFichaFoto();
   },
   'sacar-foto-editor': (boton) => {
-    const n = Number(boton.dataset['n'] ?? 0);
-    // La foto se va del depósito y de todo el texto que la nombraba. El texto
-    // primero: la fila se redibuja con el uso de las que quedaron.
-    for (const seccion of SECCIONES) {
-      const campo = campoDelEditor(seccion);
-      if (campo) campo.value = sacarReferencias(campo.value, n);
-    }
-    if (portadaDelEditor() === `foto:${n}`) escribirPortada('');
-    escribirDeposito(depositoDelEditor().filter(f => f.n !== n));
-    fotosEditor.nuevas.delete(n);
-    fotosEditor.urls.delete(n);
+    // La foto se va del depósito, de la portada y de todo el texto que la nombraba.
+    fotosEditor.sacar(Number(boton.dataset['n'] ?? 0));
     cerrarFichaFoto();
   }
 };
 
 /**
- * El visor de fotos. El depósito sale del campo oculto en el editor y de la
+ * El visor de fotos. El depósito sale de `fotosEditor` en el editor y de la
  * receta leída en la lectura: son la misma acción y el mismo `data-n` en la
  * cabecera, la galería y la ficha de acciones.
  */
@@ -1809,7 +1679,7 @@ const accionesDelVisor: SeccionDeAcciones = {
     if (enElEditor()) {
       // Sin consumir la capa de la ficha: el visor toma su lugar.
       quitarFichaFoto();
-      abrirVisor(depositoDelEditor(), n);
+      abrirVisor(fotosEditor.fotos(), n);
       dibujarVisor();
       return;
     }
@@ -2078,11 +1948,11 @@ const accionesDelEditor: SeccionDeAcciones = {
     if (vistaActual?.vista === 'nueva') recibida = pegada;
     // Sin `abrirEditor`: la foto contra la que se comparan los cambios sigue
     // siendo la de antes, y salir sin guardar pregunta.
-    pintar(renderEditor({
+    pintarEditor({
       entrada: vistaActual?.vista === 'editar' ? recetaLeida?.entrada ?? null : null,
       receta: aplicarPegada(actual, pegada, carpeta), carpeta,
       categorias: store.categorias(), tagsConocidos: store.tagsDe().map(t => t.tag), ...menuDe(vistaActual?.vista)
-    }));
+    });
   },
   'tag-especial': (boton) => {
     if (boton.hasAttribute('disabled')) return;

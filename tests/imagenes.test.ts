@@ -77,6 +77,24 @@ describe('mostrar una foto de Drive', () => {
     expect(revocadas).toEqual(['blob:1', suelta]);
   });
 
+  it('pedida dos veces a la vez, la misma foto es un solo object URL: ninguno queda sin soltar', async () => {
+    const { imagenes, revocadas } = armar();
+    const [a, b] = await Promise.all([imagenes.urlDeImagen('f1'), imagenes.urlDeImagen('f1')]);
+    expect(a).toBe(b);
+    imagenes.soltarImagenes();
+    expect(revocadas).toEqual([a]);
+  });
+
+  it('soltarUrl revoca una foto en memoria, y soltar la pantalla no la vuelve a revocar', () => {
+    const { imagenes, revocadas } = armar();
+    const suelta = imagenes.urlDeBlob(new Blob(['x']));
+    const otra = imagenes.urlDeBlob(new Blob(['y']));
+    imagenes.soltarUrl(suelta);
+    expect(revocadas).toEqual([suelta]);
+    imagenes.soltarImagenes();
+    expect(revocadas).toEqual([suelta, otra]);
+  });
+
   it('una foto que ya no está en Drive es null, y no se guarda', async () => {
     const { imagenes, cachés } = armar({ faltan: ['f1'] });
     expect(await imagenes.urlDeImagen('f1')).toBeNull();

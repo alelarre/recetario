@@ -141,7 +141,9 @@ const estadoInicial = () => ({
    * Si está, cada `urlDeImagen` se queda esperando y deja acá su resolutor: el
    * test ve cuántas van en vuelo a la vez.
    */
-  frenoDeImagen: null as null | Array<() => void>
+  frenoDeImagen: null as null | Array<() => void>,
+  /** Cada id que se le pidió a `urlDeImagen`, en orden. */
+  imagenesPedidas: [] as string[]
 });
 
 const estado = estadoInicial();
@@ -238,10 +240,12 @@ vi.mock('../src/imagenes.js', async original => ({
   crearImagenes: () => ({
     imagenDe: async (id: string) => estado.fotosPerdidas.includes(id) ? null : new Blob([id], { type: 'image/jpeg' }),
     urlDeImagen: async (id: string) => {
+      estado.imagenesPedidas.push(id);
       if (estado.frenoDeImagen) await new Promise<void>(seguir => estado.frenoDeImagen?.push(seguir));
       return estado.fotosPerdidas.includes(id) ? null : `blob:${id}`;
     },
     urlDeBlob: (b: Blob) => `blob:memoria-${b.size}`,
+    soltarUrl: () => {},
     soltarImagenes: () => {},
     guardarImagen: async () => {},
     olvidarImagen: async () => {},
@@ -3689,10 +3693,10 @@ describe('main.ts: las rutas', () => {
     });
 
     it('con el depósito vacío no hay botón: no hay foto que poner', async () => {
-      estado.md = MD_CON_FOTOS;
+      estado.md = '---\ntitulo: Milanesas\n---\n\n## Preparación\n\n1. Freír.\n';
       const { abrir, posarCursor, hayBotonDeFoto } = await montar();
       await abrir('#/r/f1/editar');
-      estado.formulario = { ...formularioConFotos(), fotos: deposito([]) };
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', preparacion: '1. Freír.', fotos: deposito([]) };
 
       await posarCursor('preparacion', 0);
 
@@ -3829,17 +3833,19 @@ describe('main.ts: las rutas', () => {
       expect(estado.formulario['foto']).toBe('catalogo:carnes');
     });
 
-    it('el depósito del editor cae en el de la receta abierta si el campo oculto no se entiende', async () => {
+    it('elegir la portada redibuja la fila y la portada, y completa sus fotos en una sola pasada', async () => {
       estado.md = MD_CON_FOTOS;
-      const { abrir, tocar } = await montar();
+      const { abrir, tocar, imgs } = await montar();
       await abrir('#/r/f1/editar');
-      // Un JSON que no se entiende no puede querer decir «las saqué a todas»:
-      // el store mandaría esas fotos a la papelera.
-      estado.formulario = { ...formularioConFotos(), fotos: 'no es json' };
+      estado.formulario = formularioConFotos();
+      // La foto de Drive de la fila y la de la portada, recién dibujadas y sin `src`.
+      imgs.push(imgFalsa({ drive: 'f9' }), imgFalsa({ drive: 'f9' }));
+      estado.imagenesPedidas = [];
 
-      await tocar('sacar-foto-editor', { n: '2' });
+      await tocar('elegir-portada', { n: '1' });
 
-      expect(JSON.parse(estado.formulario['fotos'] ?? '')).toEqual([{ n: 1, url: linkDeFoto('f9') }]);
+      expect(estado.imagenesPedidas).toEqual(['f9', 'f9']);
+      expect(imgs.map(i => i.atributos['src'])).toEqual(['blob:f9', 'blob:f9']);
     });
 
     it('el velo cierra la ficha de acciones sin tocar el formulario', async () => {

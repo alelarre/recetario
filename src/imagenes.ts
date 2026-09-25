@@ -122,15 +122,29 @@ export function crearImagenes({
   /** La imagen, del caché o de Drive; `null` si ya no está en Drive. */
   const imagenDe = (id: string): Promise<Blob | null> => pedir(id, () => abrir(CACHE_IMAGENES));
 
+  /**
+   * Los object URL que se están creando, por id. Dos pasadas que completan
+   * la misma foto a la vez reciben el mismo: si cada una creara el suyo, el
+   * primero quedaría pisado en `urls` y no se soltaría nunca.
+   */
+  const urlsEnVuelo = new Map<string, Promise<string | null>>();
+
   /** Un object URL para dibujar la imagen, o `null` si ya no está en Drive. */
-  async function urlDeImagen(id: string): Promise<string | null> {
+  function urlDeImagen(id: string): Promise<string | null> {
     const ya = urls.get(id);
-    if (ya) return ya;
-    const blob = await imagenDe(id);
-    if (!blob) return null;
-    const url = crearUrl(blob);
-    urls.set(id, url);
-    return url;
+    if (ya) return Promise.resolve(ya);
+    const enCurso = urlsEnVuelo.get(id);
+    if (enCurso) return enCurso;
+    const pedido = imagenDe(id)
+      .then(blob => {
+        if (!blob) return null;
+        const url = crearUrl(blob);
+        urls.set(id, url);
+        return url;
+      })
+      .finally(() => { urlsEnVuelo.delete(id); });
+    urlsEnVuelo.set(id, pedido);
+    return pedido;
   }
 
   /** Un object URL para una foto en memoria; se suelta con los demás. */
@@ -138,6 +152,13 @@ export function crearImagenes({
     const url = crearUrl(blob);
     sueltas.push(url);
     return url;
+  }
+
+  /** Revoca el object URL de una foto en memoria que dejó de estar: la que se sacó del editor. */
+  function soltarUrl(url: string): void {
+    const i = sueltas.indexOf(url);
+    if (i >= 0) sueltas.splice(i, 1);
+    revocarUrl(url);
   }
 
   /** Revoca los object URL de la pantalla anterior. */
@@ -201,7 +222,7 @@ export function crearImagenes({
   }
 
   return {
-    imagenDe, urlDeImagen, urlDeBlob, soltarImagenes, fotosCompartidas,
+    imagenDe, urlDeImagen, urlDeBlob, soltarUrl, soltarImagenes, fotosCompartidas,
     guardarImagen, olvidarImagen, precargar,
     borrarImagenes: () => borrar(CACHE_IMAGENES),
     descartarCompartidas: () => borrar(CACHE_COMPARTIDO)
