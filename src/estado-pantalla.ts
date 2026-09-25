@@ -58,7 +58,7 @@ export interface EstadoDePantalla {
   marcandoFavorito: boolean;
   /** Lo último que falló al marcar favorito. Lo dibuja la receta, arriba de la ficha. */
   errorFavorito: string;
-  /** El reindexado lanzado desde Ajustes falló: Ajustes lo avisa, con Reintentar. */
+  /** El reindexado lanzado desde Ajustes falló: Ajustes lo avisa arriba del botón Reindexar. */
   errorReindexado: boolean;
   /**
    * El aviso que la pantalla trajo al llegar: cómo terminó el pedido al

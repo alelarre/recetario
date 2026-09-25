@@ -421,10 +421,11 @@ describe('la estrella de favorito', () => {
     expect(html).toContain('disabled');
   });
 
-  it('si la escritura falló, avisa arriba de la ficha y ofrece reintentar', () => {
+  it('si la escritura falló, avisa arriba de la ficha sin control: se reintenta con la estrella, que sigue a la vista', () => {
     const html = renderReceta({ entrada: entradaFalsa(), receta, error: 'No se pudo marcar.' });
     expect(html).toContain('No se pudo marcar.');
-    expect(html).toContain('data-accion="favorito">Reintentar');
+    expect(html).not.toContain('Reintentar');
+    expect(html.match(/data-accion="favorito"/g)).toHaveLength(1);
     expect(html.indexOf('class="aviso"')).toBeLessThan(html.indexOf('class="ficha"'));
   });
 

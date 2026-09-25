@@ -77,12 +77,12 @@ describe('Ajustes', () => {
     expect(html).toContain('suelta.md');
   });
 
-  it('si el último reindexado falló, el aviso con Reintentar toma el lugar del botón', () => {
+  it('si el último reindexado falló, avisa sin control y el botón Reindexar sigue: es el reintento', () => {
     const html = renderAjustes({ ...base, errorReindexado: true });
     expect(html).toContain('No se pudo reindexar.');
-    expect(html).toContain('Reintentar');
+    expect(html).not.toContain('Reintentar');
     expect(html.match(/data-accion="reindexar"/g)).toHaveLength(1);
-    expect(html).not.toContain('>Reindexar</button>');
+    expect(html).toContain('>Reindexar</button>');
   });
 
   it('el progreso no se dibuja en Ajustes: va en el velo', () => {

@@ -97,7 +97,8 @@ export function renderReceta(
   return encabezado({ titulo: '', volver: true, derecha: estrella + botonCompartir + alArchivo }) +
     '<div class="cuerpo">' +
       (avisoDeLlegada ? aviso(avisoDeLlegada) : '') +
-      (error ? aviso({ texto: error, accion: { etiqueta: 'Reintentar', accion: 'favorito' } }) : '') +
+      // Sin control: se reintenta con la estrella, que sigue a la vista (R1).
+      (error ? aviso({ texto: error }) : '') +
       fichaCabecera({ receta, categoria, marcas, carrusel }) + fichasDelCuerpo(receta) +
     '</div>' +
     pieDeAcciones(botonCocinar(receta) + `<button class="btn sec" data-accion="editar">${ICO.lapiz}Editar</button>`) +

@@ -1734,7 +1734,7 @@ describe('main.ts: las rutas', () => {
       await reindexando;
     });
 
-    it('si falla, el velo se va y Ajustes avisa con Reintentar', async () => {
+    it('si falla, el velo se va y Ajustes avisa, con el botón Reindexar a la vista', async () => {
       const { app, abrir, tocarSinCerrar, velo } = await montar();
       await abrir('#/ajustes');
       const pendiente = reindexadoPendiente();
@@ -1746,9 +1746,10 @@ describe('main.ts: las rutas', () => {
       await esperar();
       expect(velo.hidden).toBe(true);
       expect(app.innerHTML).toContain('No se pudo reindexar.');
-      expect(app.innerHTML).toContain('Reintentar');
+      expect(app.innerHTML).not.toContain('Reintentar');
+      expect(app.innerHTML).toContain('>Reindexar</button>');
 
-      // Reintentar vuelve a reindexar, y al salir bien el aviso se va.
+      // Reindexar de nuevo, y al salir bien el aviso se va.
       conReconstruir.reconstruir = async () => ({ ignorados: [], sinBorrador: [] });
       await tocarSinCerrar('reindexar');
       await esperar();

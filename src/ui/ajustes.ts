@@ -75,13 +75,12 @@ export function renderAjustes(
       '<a class="btn sec compacto" href="#/categorias">Categorías ›</a></div>' +
   '</div>';
 
-  // Si el último falló, el aviso toma el lugar del botón y Reintentar hace lo
-  // mismo que él.
+  // Si el último falló, el aviso va sin control: se reintenta con el botón
+  // Reindexar, que sigue a la vista (R1).
   const seccionIndice = '<div class="ficha"><h2>Índice</h2>' +
     `<p class="aviso-mudo" style="margin:0 0 var(--e-3)">Último reindexado: ${escapar(cuando(ultimaReindexado) || 'nunca')}</p>` +
-    (errorReindexado
-      ? aviso({ texto: 'No se pudo reindexar.', accion: { etiqueta: 'Reintentar', accion: 'reindexar' } })
-      : '<button class="btn sec" style="width:100%" data-accion="reindexar">Reindexar</button>') +
+    (errorReindexado ? aviso({ texto: 'No se pudo reindexar.' }) : '') +
+    '<button class="btn sec" style="width:100%" data-accion="reindexar">Reindexar</button>' +
   '</div>';
 
   // El tono de los avisos es el hecho y el número (brand-identity §3.2).
