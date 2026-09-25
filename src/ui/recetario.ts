@@ -51,7 +51,7 @@ export function renderRecetario(
         // Los veinte más usados: con cientos de recetas la cola larga no aporta,
         // y para eso está la búsqueda.
         carruselTags(tags, { tope: 20 }) +
-        '<div><div class="rot">Categorías</div>' +
+        '<div class="grupo-res"><div class="rot">Categorías</div>' +
         `<div class="grilla">${grilla}</div></div>` +
         // Sin ninguna receta las categorías se ven igual: falta decir por dónde entran,
         // o —si hay borradores— que ya hay algo, sin terminar.

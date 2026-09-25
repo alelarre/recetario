@@ -332,9 +332,11 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
             display: flex; flex-direction: column; gap: var(--e-2); }
 .pie-plan .btn { width: 100%; }
 
+/* El bloque de Agregar al plan no es un `.cuerpo`, y apila sus filas igual. */
+[data-resultados-plan] { display: flex; flex-direction: column; gap: var(--e-3); }
 /* Agregar al plan, con una categoría elegida en la grilla: el volver y el
    nombre, en la misma fila y a la altura del rótulo que reemplazan. */
-.rot-cat { display: flex; align-items: center; gap: var(--e-2); margin-bottom: var(--e-3); }
+.rot-cat { display: flex; align-items: center; gap: var(--e-2); }
 .rot-cat span { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase; letter-spacing: .06em; }
 
 /* ---- Ajustes ---- */

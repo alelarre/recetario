@@ -37,7 +37,7 @@ export function renderSelector(
   { sugerencias, confirmando, cambiando, conPicker, error }: OpcionesSelector
 ): string {
   const encontradas = sugerencias.length
-    ? '<div><div class="rot">Encontradas</div><div class="lista">' +
+    ? '<div class="grupo-res"><div class="rot">Encontradas</div><div class="lista">' +
       sugerencias.map(c =>
         '<div class="fila carp">' +
           ICO.carpeta +

@@ -219,10 +219,14 @@ button.tarjeta { width: 100%; font: inherit; text-align: left; cursor: pointer; 
 .ph::before { content: ''; position: absolute; inset: 0; background: #000; opacity: .45; }
 
 /* ---- La lista de recetas: la pila de tarjetas, y el rótulo de cada grupo
-   en los resultados ---- */
+   en los resultados ----
+   Las filas —el carrusel, las duraciones, el orden, el rótulo— no llevan
+   margen propio: las separa el `gap` de lo que las apila, `.cuerpo` o el
+   grupo. Con margen, se sumaría a ese `gap`. */
 .lista { display: flex; flex-direction: column; gap: var(--e-2); }
+.grupo-res { display: flex; flex-direction: column; gap: var(--e-3); }
 .rot { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
-       letter-spacing: .06em; display: flex; justify-content: space-between; margin-bottom: var(--e-3); }
+       letter-spacing: .06em; display: flex; justify-content: space-between; }
 .grupo-res + .grupo-res { margin-top: var(--e-5); }
 
 /* ---- §6.4 Tile de categoría ---- */
@@ -276,7 +280,7 @@ button.chip { cursor: pointer; }
    degradé y las dos flechas. Lo comparten el carrusel de tags, la fila de
    duraciones y el de fotos de la receta, y puede haber más de uno en la misma
    pantalla: cada marco lleva su propia timeline y su propio fondo de degradé. */
-.carrusel-marco { position: relative; margin-bottom: var(--e-3); }
+.carrusel-marco { position: relative; }
 .carrusel { display: flex; gap: var(--e-2); overflow-x: auto; padding-bottom: var(--e-1);
             scrollbar-width: none; scroll-behavior: smooth; }
 .carrusel::-webkit-scrollbar { display: none; }
@@ -545,7 +549,7 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
    sus chips; y el conmutador de orden, a la derecha. */
 .fila-dur .chip { --fondo-reloj: color-mix(in srgb, var(--surface-alta) 86%, var(--fg)); }
 .fila-dur .chip.act { --fondo-reloj: var(--acento-suave); }
-.orden { display: flex; justify-content: flex-end; margin-bottom: var(--e-3); }
+.orden { display: flex; justify-content: flex-end; }
 .orden-seg { display: inline-grid; grid-template-columns: auto auto; border: 1px solid var(--borde);
              border-radius: var(--r-medio); overflow: hidden; }
 .orden-seg button { min-height: 40px; padding: 0 var(--e-3); border: 0; background: none; color: var(--fg-2);

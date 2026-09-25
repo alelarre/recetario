@@ -47,3 +47,29 @@ describe('la lista de recetas, en tokens.css', () => {
     expect(regla(TOKENS, '.ph .foto')).toBeDefined();
   });
 });
+
+describe('sin margen doble entre filas: el gap del contenedor es el único separador', () => {
+  // `.cuerpo` apila con `gap`: una fila con margen propio suma los dos.
+  for (const [css, selector] of [
+    [TOKENS, '.carrusel-marco'], [TOKENS, '.orden'], [TOKENS, '.rot'], [BASE, '.rot-cat']
+  ] as const) {
+    it(`${selector} no lleva margen abajo`, () => {
+      expect(regla(css, selector)).toBeDefined();
+      expect(regla(css, selector)).not.toMatch(/margin(-bottom)?:/);
+    });
+  }
+
+  it('el grupo de una lista apila sus partes con el gap de .cuerpo.denso', () => {
+    const grupo = regla(TOKENS, '.grupo-res') ?? '';
+    expect(grupo).toContain('display: flex');
+    expect(grupo).toContain('flex-direction: column');
+    expect(grupo).toContain('gap: var(--e-3)');
+  });
+
+  it('el bloque de Agregar al plan, que no es un .cuerpo, apila igual', () => {
+    const bloque = regla(BASE, '[data-resultados-plan]') ?? '';
+    expect(bloque).toContain('display: flex');
+    expect(bloque).toContain('flex-direction: column');
+    expect(bloque).toContain('gap: var(--e-3)');
+  });
+});
