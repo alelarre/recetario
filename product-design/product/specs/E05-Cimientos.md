@@ -121,7 +121,7 @@ El velo tiene tres formas, y cada operación usa una sola:
 - [ ] **Achicar una foto** recién elegida —cámara, galería— o recién llegada por Compartir, en el editor de recetas, y la foto propia de una categoría. Las fotos del editor no llegan a Drive hasta Guardar (F04.3d).
 - [ ] **Traer una foto por URL** (`E04-Corregir.md` C04.3d.1b): una sola espera cubre bajarla y achicarla.
 - [ ] **Leer las fotos compartidas** que dejó el service worker.
-- [ ] **Armar la lista de compras**, que lee el plan y una receta por cada una distinta del plan (`E06-Planificar.md` F06.4).
+- [ ] **Armar la lista de compras**, que lee el plan y cada receta distinta del plan que todavía no se leyó en la sesión (`E06-Planificar.md` F06.4).
 - [ ] **Las lecturas de red al dibujar** la receta, el editor y el plan.
 - [ ] Si la espera termina antes de los 250 ms, el velo no llega a verse: sería un parpadeo. Igual bloquea desde el toque.
 
@@ -326,6 +326,9 @@ escritura parcial y un JSON obligaría a reescribir el archivo entero.
 
 - [ ] Una sola lectura devuelve todas las filas: buscar entre mil recetas no lee mil archivos.
 - [ ] Lo que se lee se usa para listar y buscar; abrir una receta lee su `.md`.
+- [ ] **Una receta se lee una vez por sesión.** Lo leído queda en memoria por id: volver a una receta, o armar la lista de compras con una ya abierta, no vuelve a Drive. Lo que la app guarda queda como la receta leída; la que borra, la que Drive dice que ya no está y la que se reintenta salen. Borrar una categoría las descarta todas, porque reescribe sus recetas. Lo que se escribe afuera de la app no se ve hasta recargar.
+- [ ] **Guardar relee igual el `.md` de base**, de Drive y no de memoria: lo que la app no conoce del archivo de ese momento se preserva (`E04-Corregir.md` C04.5.1).
+- [ ] Borrar una receta ya abierta no la relee para saber sus fotos.
 - [ ] **Hay copia local del índice, y sólo del índice.** Vive en `localStorage` y guarda las tres hojas, más qué planilla y qué carpeta base son. Al abrir se pide el `modifiedTime` de `_indice` en Drive: si es el mismo que tenía la copia al guardarse, no se lee Sheets; si no, se lee la planilla y la copia se reemplaza. Con la copia vigente, abrir es un solo pedido.
 - [ ] Cada escritura en `_indice` deja la copia al día. Borrar una categoría, que reescribe una fila por receta, la deja al día una sola vez: al terminar, o donde se cortó.
 - [ ] **`meta` se lee sólo al abrir sin copia vigente** —o al preparar una carpeta base—. Después se escribe entera desde la de memoria, sin releerla, y reindexar no lee ninguna hoja.

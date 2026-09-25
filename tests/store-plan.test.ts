@@ -98,13 +98,18 @@ describe('guardar el plan', () => {
     expect(await store.plan()).toEqual({ comidas: [] });
   });
 
-  it('lo guardado es lo que devuelve la próxima lectura, sin volver a Drive', async () => {
-    const { store, drive } = await armar({ planes: [{ id: 'p1', contenido: '' }] });
+  it('lo guardado es lo que devuelve la próxima lectura', async () => {
+    const { store } = await armar({ planes: [{ id: 'p1', contenido: '' }] });
     await store.plan();
     await store.guardarPlan(plan);
-    const antes = drive.llamadas.filter(l => l[0] === 'leerTexto').length;
     expect(await store.plan()).toEqual(plan);
-    expect(drive.llamadas.filter(l => l[0] === 'leerTexto')).toHaveLength(antes);
+  });
+
+  it('creado en la sesión, la próxima lectura lo lee por su id, sin buscarlo', async () => {
+    const { store, drive } = await armar();
+    await store.guardarPlan(plan);
+    expect(await store.plan()).toEqual(plan);
+    expect(drive.llamadas.filter(l => l[0] === 'buscarPorNombre' && l[1] === '_plan.md')).toHaveLength(1);
   });
 });
 

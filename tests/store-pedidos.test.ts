@@ -7,6 +7,7 @@ import { COLUMNAS } from '../src/catalogo.js';
 import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 import { SCHEMA_VERSION } from '../src/config.js';
 import { parse } from '../src/recipe.js';
+import { serializePlan } from '../src/plan.js';
 import { linkDeFoto } from '../src/fotos-receta.js';
 import { driveFalso, sheetsFalso, indiceLocalFalso, imagenesFalsas } from './dobles.js';
 
@@ -178,3 +179,30 @@ describe('borrar una categoría', () => {
   });
 });
 
+describe('el plan', () => {
+  async function conPlan() {
+    const r = await abierto();
+    r.drive._store.set('p1', {
+      id: 'p1', name: '_plan.md', parents: ['raiz'], mimeType: 'text/markdown', modifiedTime: FECHA,
+      contenido: serializePlan({ comidas: [{ dia: 0, momento: 'noche', id: 'r2', titulo: 'Grisines' }] })
+    });
+    return r;
+  }
+
+  it('cada pedido lee el archivo, pero lo busca por nombre una sola vez', async () => {
+    const { store, drive } = await conPlan();
+    await store.plan();
+    drive._store.get('p1')!.contenido = '';
+    expect(await store.plan()).toEqual({ comidas: [] });
+    expect(drive.cuantas('leerTexto', 'p1')).toBe(2);
+    expect(drive.cuantas('buscarPorNombre')).toBe(1);
+  });
+
+  it('si el archivo ya no está, lo vuelve a buscar', async () => {
+    const { store, drive } = await conPlan();
+    await store.plan();
+    drive._store.delete('p1');
+    expect(await store.plan()).toEqual({ comidas: [] });
+    expect(drive.cuantas('buscarPorNombre')).toBe(2);
+  });
+});

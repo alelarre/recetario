@@ -138,8 +138,12 @@ y de momento se comparan sin acentos ni mayúsculas.
 #### C06.3.2 — Cómo se encuentra y cómo se escribe *(J9)*
 
 - [ ] `_plan.md` **no está en el índice**: se lo busca por nombre en la carpeta
-  base la primera vez que se abre el plan en la sesión, y el id y lo leído
-  quedan en memoria: en la misma sesión no se vuelve a leer de Drive.
+  base la primera vez que se abre el plan en la sesión, y el id queda en
+  memoria. Si después ya no está, se lo vuelve a buscar.
+- [ ] **Se lee cada vez que se entra al plan.** Mientras se navega entre sus
+  tres pantallas —el plan, *Agregar* y la lista de compras— vale lo leído al
+  entrar: redibujar no lee, y agregar, sacar y reiniciar escriben sobre eso.
+  Salir a otra pantalla lo descarta.
 - [ ] Si no existe, se crea vacío al primer cambio.
 - [ ] Si hay más de uno, manda el más reciente y queda el aviso en
   *Ajustes → Avisos*, como el `_indice` repetido.
@@ -162,13 +166,15 @@ en Drive:** se lee en la app y se comparte como texto.
 
 - [ ] Toma los ingredientes de cada receta cargada, **una vez por aparición**:
   una receta en dos comidas cuenta dos veces.
-- [ ] Las recetas se leen de Drive al entrar, una por receta distinta del plan
-  —la misma en dos comidas se lee una sola vez—; una que ya no se puede leer se
-  saltea. **Se leen solapadas, de a seis como el reindexado, y con la pantalla
+- [ ] Las recetas salen de las ya leídas en la sesión (`E05-Cimientos.md`
+  C05.4.2); las que falten se leen de Drive al entrar, una por receta distinta
+  del plan —la misma en dos comidas se lee una sola vez—, y una que ya no se
+  puede leer se saltea y se vuelve a pedir la próxima vez. **Se leen solapadas, de a seis como el reindexado, y con la pantalla
   tapada** (`E05-Cimientos.md` R8): es la espera más larga de la app, y en fila
   y sin señal parecía colgada.
-- [ ] La lista armada se guarda en memoria mientras el plan no cambie: volver a
-  entrar, o abrir la ficha de compartir, no vuelve a leer nada.
+- [ ] La lista armada se guarda en memoria mientras el plan no cambie: abrir la
+  ficha de compartir no vuelve a leer nada. Volver a entrar lee el plan, pero
+  no las recetas ya leídas.
 - [ ] Dos bloques: **Con cantidad** y **Sin cantidad** (C05.1.3).
 - [ ] **Se suman** las cantidades de mismo nombre cuando las dos empiezan con un
   número y el resto del texto —recortado y en minúsculas— coincide:

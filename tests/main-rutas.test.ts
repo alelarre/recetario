@@ -141,6 +141,8 @@ const estadoInicial = () => ({
   categoriasBorradas: [] as string[],
   /** Los ids de las recetas que se mandaron a la papelera. */
   recetasBorradas: [] as string[],
+  /** La receta que llegó con cada borrado, o `null` si el store tenía que leerla. */
+  recetasAlBorrar: [] as (Receta | null)[],
   /** Los tags con los que se guardó cada vez que se tocó la estrella, en orden. */
   guardados: [] as { tags: string[]; titulo?: string | null | undefined }[],
   /** Cuántas veces más falla `guardar` antes de andar, para probar el aviso de la estrella. */
@@ -191,7 +193,10 @@ const storeFake = {
     estado.fotosDeCategoria.push(d.fotoPropia ?? null);
   },
   borrarCategoria: async (id: string) => { estado.categoriasBorradas.push(id); },
-  borrar: async (id: string) => { estado.recetasBorradas.push(id); },
+  borrar: async (id: string, opciones?: { receta?: Receta | undefined }) => {
+    estado.recetasBorradas.push(id);
+    estado.recetasAlBorrar.push(opciones?.receta ?? null);
+  },
   cargarIndice: async () => [],
   guardarMeta: async () => {},
   ultimaReconstruccion: () => '',
@@ -2240,7 +2245,7 @@ describe('main.ts: las rutas', () => {
       expect(estado.lecturas).toBe(1);
     });
 
-    it('otra receta, o salir a otra pantalla y volver, sí vuelven a leer', async () => {
+    it('otra receta sí se lee; volver a una ya leída en la sesión, no', async () => {
       estado.md = PASOS;
       const { abrir } = await montar();
       await abrir('#/r/f1');
@@ -2248,7 +2253,47 @@ describe('main.ts: las rutas', () => {
       expect(estado.lecturas).toBe(2);
       await abrir('#/c/Carnes');
       await abrir('#/r/f2');
-      expect(estado.lecturas).toBe(3);
+      await abrir('#/r/f1');
+      expect(estado.lecturas).toBe(2);
+    });
+
+    it('una receta que ya no está en Drive no queda: volver a entrar la pide otra vez', async () => {
+      estado.falla = new RecetaQueNoEsta('f1');
+      const { abrir } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/c/Carnes');
+      await abrir('#/r/f1');
+      expect(estado.lecturas).toBe(2);
+    });
+
+    it('borrar le pasa al store la receta leída, y la saca de las leídas', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      await tocar('borrar-confirmado');
+      expect(estado.recetasAlBorrar).toEqual([parse(estado.md)]);
+      await abrir('#/r/f1');
+      expect(estado.lecturas).toBe(2);
+    });
+
+    it('borrar una categoría vacía las leídas: sus recetas se reescribieron', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/categorias/c1');
+      await tocar('borrar-categoria-confirmado');
+      await abrir('#/r/f1');
+      expect(estado.lecturas).toBe(2);
+    });
+
+    it('guardar con la estrella deja lo guardado como la receta leída', async () => {
+      estado.md = '---\ntitulo: Rabas\n---\n';
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      await tocar('favorito');
+      await abrir('#/c/Carnes');
+      await abrir('#/r/f1');
+      expect(estado.lecturas).toBe(1);
+      expect(app.innerHTML).toContain('aria-pressed="true"');
     });
 
     it('reintentar vuelve a leer', async () => {
@@ -3269,10 +3314,12 @@ describe('main.ts: las rutas', () => {
 
     it('la copia del plan se conserva entre las tres pantallas y se descarta al salir', async () => {
       estado.plan = conDos();
-      const { abrir } = await montar();
+      const { abrir, tocar } = await montar();
       await abrir('#/plan');
       await abrir('#/plan/compras');
       await abrir('#/plan');
+      // Redibujar adentro del plan tampoco lee.
+      await tocar('reiniciar-plan');
       expect(estado.lecturasPlan).toBe(1);
       await abrir('#/');
       await abrir('#/plan');
@@ -3590,6 +3637,43 @@ describe('main.ts: las rutas', () => {
         { dia: 0, momento: 'noche', id: 'f1', titulo: 'Milanesas' },
         { dia: 1, momento: 'noche', id: 'f2', titulo: 'Tarta' }
       ]
+    });
+
+    it('volver a entrar no relee las recetas, pero sí el plan', async () => {
+      estado.plan = conDosRecetas();
+      const { abrir } = await montar();
+      await abrir('#/plan/compras');
+      await abrir('#/');
+      await abrir('#/plan/compras');
+      expect(estado.lecturas).toBe(2);
+      expect(estado.lecturasPlan).toBe(2);
+    });
+
+    it('una receta abierta en la sesión no se vuelve a leer para la lista', async () => {
+      estado.plan = conDosRecetas();
+      const { abrir } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/plan/compras');
+      expect(estado.lecturas).toBe(2);
+    });
+
+    it('una que no se pudo leer se vuelve a pedir la próxima vez', async () => {
+      estado.plan = conDosRecetas();
+      const original = storeFake.receta;
+      storeFake.receta = async (id: string) => {
+        estado.lecturas++;
+        if (id === 'f2') throw new RecetaQueNoEsta(id);
+        return { entrada: entradaFalsa({ id_archivo: id }), receta: parse(estado.md) };
+      };
+      try {
+        const { abrir } = await montar();
+        await abrir('#/plan/compras');
+        await abrir('#/');
+        await abrir('#/plan/compras');
+        expect(estado.lecturas).toBe(3);
+      } finally {
+        storeFake.receta = original;
+      }
     });
 
     it('entrando directo, leer el plan y sus recetas es una sola espera: el velo no parpadea', async () => {
@@ -4560,10 +4644,13 @@ describe('main.ts: las rutas', () => {
 
     it('una receta .md con el id de una receta que existe abre su editor con lo recibido', async () => {
       const original = storeFake.receta;
+      const entradas = storeFake.entradas;
+      const entrada = entradaFalsa({ id_archivo: 'f1', carpeta_id: 'c1', categoria: 'Carnes' });
       storeFake.receta = async (id: string) => {
         estado.lecturas++;
-        return { entrada: entradaFalsa({ id_archivo: id, carpeta_id: 'c1', categoria: 'Carnes' }), receta: parse(estado.md) };
+        return { entrada, receta: parse(estado.md) };
       };
+      storeFake.entradas = () => [entrada];
       try {
         const { abrir, app, reemplazos } = await montar();
         await abrir(`#/nueva?text=${encodeURIComponent(RECIBIDA)}`);
@@ -4575,6 +4662,7 @@ describe('main.ts: las rutas', () => {
         expect(app.innerHTML).toContain('Editando');
       } finally {
         storeFake.receta = original;
+        storeFake.entradas = entradas;
       }
     });
 
@@ -4584,9 +4672,10 @@ describe('main.ts: las rutas', () => {
       ['en _sin-categoria/, la pega como «Sin categoría»', 'sin-cat', '']
     ])('una receta .md recibida para una receta existente %s', async (_caso, carpetaId, esperada) => {
       const original = storeFake.receta;
-      storeFake.receta = async (id: string) => ({
-        entrada: entradaFalsa({ id_archivo: id, carpeta_id: carpetaId }), receta: parse(estado.md)
-      });
+      const entradas = storeFake.entradas;
+      const entrada = entradaFalsa({ id_archivo: 'f1', carpeta_id: carpetaId });
+      storeFake.receta = async () => ({ entrada, receta: parse(estado.md) });
+      storeFake.entradas = () => [entrada];
       pegadas.carpetas = [];
       try {
         const { abrir } = await montar();
@@ -4595,6 +4684,7 @@ describe('main.ts: las rutas', () => {
         expect(pegadas.carpetas).toEqual([esperada]);
       } finally {
         storeFake.receta = original;
+        storeFake.entradas = entradas;
       }
     });
 

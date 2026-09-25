@@ -1328,13 +1328,27 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   }
 
   /**
-   * El plan de la semana. `_plan.md` no está en el índice: se lo busca por
-   * nombre en la carpeta base la primera vez y el id queda en memoria. Con más
-   * de uno manda el más reciente, y el aviso va a *Ajustes → Avisos*, como el
-   * `_indice` repetido.
+   * El plan de la semana, leído de Drive en cada pedido: quien llama lo pide
+   * al entrar a la pantalla y lo conserva mientras está en ella. `_plan.md`
+   * no está en el índice: se lo busca por nombre en la carpeta base la
+   * primera vez y el id queda en memoria; si después ya no está, se lo vuelve
+   * a buscar. Con más de uno manda el más reciente, y el aviso va a
+   * *Ajustes → Avisos*, como el `_indice` repetido.
    */
   async function planSemanal(): Promise<Plan> {
-    if (plan.buscado) return plan.contenido;
+    if (plan.id) {
+      try {
+        plan.contenido = parsePlan(await drive.leerTexto(plan.id));
+        return plan.contenido;
+      } catch (e) {
+        if (!noEsta(e)) throw e;
+        plan.id = '';
+        plan.contenido = { comidas: [] };
+      }
+    } else if (plan.buscado) {
+      // Buscado y no existía: nada que leer hasta que se cree.
+      return plan.contenido;
+    }
     const archivos = await drive.buscarPorNombre(NOMBRE_PLAN, ctx.raizId);
     plan.buscado = true;
     const ordenados = [...archivos].sort(

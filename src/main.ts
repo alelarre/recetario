@@ -257,14 +257,37 @@ async function usarCarpeta(elegida: CarpetaSimple | 'crear'): Promise<void> {
 let menuAbierto = false;
 
 /**
- * La receta abierta, leída una vez. Es un caché: sobrevive entre las pantallas
- * de la misma receta. La reutilizan los redibujados —marcar un
- * paso, conmutar, tocar el sol: cada lectura era un pedido a Drive que se
- * sentía en cada toque— y el ir y venir entre la receta, su modo cocina y su
- * editor, que es la misma receta. Salir a cualquier otra pantalla la descarta:
- * volver más tarde vuelve a leer, porque el archivo es la verdad (C05.8.1).
+ * Las recetas leídas en la sesión, por id. La receta, su modo cocina, su
+ * editor y la lista de compras las toman de acá: volver a una receta, o
+ * entrar otra vez a la lista, no relee nada. Lo que se escribe afuera de la
+ * app no se ve hasta recargar, como el resto de lo que la app no descubre. La
+ * app cambia la de un id al guardarlo, y la saca al borrarlo, cuando Drive
+ * dice que ya no está o cuando se reintenta. La relectura antes de guardar no
+ * pasa por acá: tiene que ser el archivo de ese momento.
+ */
+const recetasLeidas = new Map<string, Receta>();
+
+/** La receta de la sesión, o de Drive si todavía no se leyó. Lo que falla no queda. */
+async function leerReceta(id: string): Promise<Receta> {
+  const enMemoria = recetasLeidas.get(id);
+  if (enMemoria) return enMemoria;
+  const { receta } = await store.receta(id);
+  recetasLeidas.set(id, receta);
+  return receta;
+}
+
+/**
+ * La receta de la pantalla, con su entrada del índice. Sobrevive entre las
+ * pantallas de la misma receta —la receta, su modo cocina y su editor— y la
+ * reutilizan los redibujados: marcar un paso, conmutar, tocar el sol.
  */
 let recetaLeida: { id: string; entrada: Entrada | null; receta: Receta } | null = null;
+
+/** Lo que la app acaba de escribir es la receta leída de ese id, en la sesión y en la pantalla. */
+function dejarLeida(id: string, receta: Receta): void {
+  recetasLeidas.set(id, receta);
+  recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta };
+}
 
 /**
  * Un aviso y un pedido al agente que no salió, para la pantalla a la que se
@@ -277,9 +300,10 @@ let pedidoAlLlegar: PedidoAlAgente | null = null;
 const PEDIDO_COPIADO = 'Pedido copiado: pegalo en el agente';
 
 /**
- * El plan de la semana, leído de su `.md` una vez. Mismo criterio que la
- * receta: es un caché que se conserva mientras se navega entre las tres
- * pantallas del plan y se descarta al salir a cualquier otra.
+ * El plan de la semana, leído de su `.md` al entrar a sus pantallas. Se
+ * conserva mientras se navega entre las tres —agregar, sacar y reiniciar
+ * escriben sobre él— y se descarta al salir a cualquier otra: volver a entrar
+ * lo lee de nuevo.
  */
 let planLeido: Plan | null = null;
 const PANTALLAS_DE_PLAN: readonly Ruta['vista'][] = ['plan', 'plan-agregar', 'plan-compras'];
@@ -327,17 +351,18 @@ const velo = crearVelo({
 const PANTALLAS_DE_RECETA: readonly Ruta['vista'][] = ['receta', 'cocinar', 'editar'];
 
 /**
- * La receta de la pantalla: de Drive la primera vez, de memoria mientras no se
- * salga. La lectura es una espera: la pantalla no se toca hasta que llega.
+ * La receta de la pantalla: de Drive la primera vez en la sesión, de memoria
+ * después. La lectura es una espera: la pantalla no se toca hasta que llega.
  */
 async function recetaDePantalla(id: string): Promise<{ entrada: Entrada | null; receta: Receta }> {
   if (recetaLeida?.id !== id) {
-    const { entrada, receta } = await velo.esperar(() => store.receta(id));
-    recetaLeida = { id, entrada, receta };
+    const enMemoria = recetasLeidas.get(id);
+    const receta = enMemoria ?? await velo.esperar(() => leerReceta(id));
+    recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta };
     // El depósito entero, no sólo lo que está a la vista: así el visor
     // desliza sin esperar.
     const ids = idsDeDrive(receta.fotos.map(f => f.url));
-    if (ids.length) void imagenes.precargar(ids);
+    if (!enMemoria && ids.length) void imagenes.precargar(ids);
   }
   return recetaLeida;
 }
@@ -377,9 +402,10 @@ function dejarCategoriaDelPlan(): void {
 }
 
 /**
- * La lista de compras del plan. Las recetas se leen de Drive al entrar, una por
- * receta distinta; una que ya no se puede leer se saltea. Después cuentan una
- * vez por aparición: la misma receta en dos comidas cuenta dos veces.
+ * La lista de compras del plan. Las recetas salen de las leídas en la sesión,
+ * y las que falten se leen de Drive, una por receta distinta; una que ya no se
+ * puede leer se saltea. Después cuentan una vez por aparición: la misma receta
+ * en dos comidas cuenta dos veces.
  *
  * Las lecturas se solapan, de a seis como el reindexado: en fila, un plan
  * cargado son catorce viajes uno detrás de otro. Tapan la pantalla mientras
@@ -395,10 +421,10 @@ async function comprasDelPlan(plan: Plan): Promise<ListaDeCompras> {
   // El error se atrapa acá adentro y no afuera: `conConcurrencia` corta el
   // reparto con el primero que falla, y una receta borrada sólo se saltea.
   const traidas = await conConcurrencia(ids, TOPE_LECTURAS, (id: string) =>
-    store.receta(id).catch(err => { console.error(err); return null; }));
+    leerReceta(id).catch(err => { console.error(err); return null; }));
   for (const [i, id] of ids.entries()) {
     const leida = traidas[i];
-    if (leida) leidas.set(id, leida.receta);
+    if (leida) leidas.set(id, leida);
   }
   const recetas = plan.comidas.flatMap(c => {
     const receta = leidas.get(c.id);
@@ -1469,7 +1495,12 @@ async function escribirEditor(datos: DatosFormulario): Promise<{ id: string; rec
   const carpetaId = datos['carpeta'] ?? '';
   const esNueva = vistaActual?.vista === 'nueva';
   let id = idActual();
-  const base = esNueva ? baseDeNueva() : (await store.receta(id)).receta;
+  // Una lectura de Drive y no la de la sesión: lo que la app no conoce del
+  // `.md` de ese momento se preserva.
+  const base = esNueva ? baseDeNueva() : (await store.receta(id).catch((err: unknown) => {
+    if (err instanceof RecetaQueNoEsta) recetasLeidas.delete(id);
+    throw err;
+  })).receta;
   const escrita = fotosEditor.conSubidas(recetaDesdeFormulario(datos, base));
   // Un borrador puede no tener título todavía: se guarda con el día y la
   // hora, y el nombre del archivo sale de ahí.
@@ -1487,7 +1518,7 @@ async function escribirEditor(datos: DatosFormulario): Promise<{ id: string; rec
   if (esNueva) id = (await store.crear(nueva, carpetaId ? { carpetaId, fotos } : { fotos })).id;
   else await store.guardar(id, nueva, { carpetaDestino: carpetaId, fotos });
   const receta = fotosEditor.conSubidas(nueva);
-  recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta };
+  dejarLeida(id, receta);
   return { id, receta };
 }
 
@@ -1582,6 +1613,7 @@ const accionesDeNavegacion: SeccionDeAcciones = {
   // Reintentar es volver a pedir: lo leído no se reutiliza.
   reintentar: () => {
     recetaLeida = null; estadoDePantalla.selector.error = '';
+    recetasLeidas.delete(idActual());
     return render();
   }
 };
@@ -1709,7 +1741,7 @@ const accionesDeLaReceta: SeccionDeAcciones = {
     const nueva = { ...actual, tags: conEspecial(actual.tags, 'favorito', !esFavorita(actual)) };
     try {
       await store.guardar(id, nueva);
-      recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: nueva };
+      dejarLeida(id, nueva);
     } catch (err) {
       console.error(err);
       estadoDePantalla.errorFavorito = 'No se pudo marcar como favorita. Revisá la conexión.';
@@ -1803,7 +1835,8 @@ const accionesDeCategorias: SeccionDeAcciones = {
   'borrar-categoria-confirmado': async () => {
     const id = idActual();
     try {
-      await velo.escribir(() => store.borrarCategoria(id));
+      // Sus recetas se reescriben con el tag borrador: las leídas quedan viejas.
+      await velo.escribir(() => store.borrarCategoria(id).finally(() => { recetasLeidas.clear(); }));
       registrarCategorias(store.categorias());
       estadoDePantalla.editorAbierto = null;
       nav.volver('#/categorias');
@@ -1934,7 +1967,9 @@ const accionesDelEditor: SeccionDeAcciones = {
   'borrar-confirmado': async () => {
     const id = idActual();
     try {
-      await velo.escribir(() => store.borrar(id));
+      // Con la receta ya leída, el store no relee el `.md` para saber sus fotos.
+      await velo.escribir(() => store.borrar(id, { receta: recetasLeidas.get(id) }));
+      recetasLeidas.delete(id);
       estadoDePantalla.editorAbierto = null;
       // Vuelve hasta salir de la receta, a donde se la eligió —la receta y el
       // editor, o sólo el editor si se abrió desde Borradores—: la receta

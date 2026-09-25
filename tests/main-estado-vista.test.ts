@@ -9,6 +9,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { OpcionesReceta } from '../src/ui/receta.js';
 import { comoGlobal, limpiarGlobales } from './dom-falso.js';
+import { entradaFalsa } from './dobles.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
 vi.mock('../src/ui/base.css', () => ({}));
@@ -39,7 +40,8 @@ const storeFake = {
   cargarIndice: async () => [],
   guardarMeta: async () => {},
   ultimaReconstruccion: () => '',
-  entradas: () => [],
+  // La entrada de la receta abierta sale del índice en memoria, como en el store real.
+  entradas: () => [entradaFalsa({ id_archivo: 'A', titulo: 'A' }), entradaFalsa({ id_archivo: 'B', titulo: 'B' })],
   categoriasConConteo: () => [],
   categorias: () => [],
   receta: async (id: string) => ({
