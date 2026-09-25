@@ -41,6 +41,7 @@ También se cierran los cuatro puntos de P84.
 | `reemplazar(hash)` | Reemplaza la entrada actual. Hoy es `irCerrando`. |
 | `hayAtras(n = 1)` | `profundidad >= n`. |
 | `volver(respaldo, n = 1)` | Si `hayAtras(n)`, retrocede `n` entradas. Si no, `reemplazar(respaldo)`. |
+| `salirDe(prefijo, respaldo)` | Retrocede hasta la primera entrada cuyo hash no empieza con `prefijo`. El módulo lleva en memoria los hashes de las entradas de la sesión. Si no hay ninguna, `reemplazar(respaldo)`. |
 
 **Adónde lleva cada salida:**
 
@@ -52,9 +53,9 @@ También se cierran los cuatro puntos de P84.
 | Guardar una receta nueva | La receta creada: `reemplazar('#/r/<id>')` (decisión). Hoy volvía a la pantalla de antes del menú. Así termina igual que *Convertir con Agente*. |
 | Convertir con Agente | Termina en la receta, igual que Guardar. |
 | Guardar o borrar una categoría | `volver('#/categorias')` |
-| Borrar una receta | Vuelve a la pantalla de antes de abrirla, salteando la receta y el editor: `volver('#/', 2)`. La receta borrada no queda en el historial. |
+| Borrar una receta | Vuelve hasta salir de la receta: retrocede las entradas `#/r/<id>…` (la receta y su editor, o sólo el editor si se abrió desde Borradores). Sin nada atrás, `reemplazar('#/')`. La receta borrada no queda en el historial. |
 | Elegir una receta en *Agregar al plan* | `volver('#/plan')`. Una sola entrada y un solo dibujo. |
-| *Salir* del modo cocina | La categoría de la receta: `volver('#/c/<categoría>', 2)` si la cocina se abrió desde la receta. Si no, `reemplazar`. |
+| *Salir* del modo cocina | Vuelve hasta salir de la receta, a donde se la eligió: la categoría, los resultados, el plan. Sin nada atrás, `reemplazar('#/c/<categoría>')`. |
 | El chevron del modo cocina | `volver('#/r/<id>')`. Lo usan igual la app y el invitado. |
 
 El router deja de exportar `ir` y `atras`, que no usa nadie.
