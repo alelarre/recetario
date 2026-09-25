@@ -518,6 +518,34 @@ describe('guardar y crear con fotos', () => {
     expect(store.entradas()).toHaveLength(0);
   });
 
+  it('borrar la categoría manda a la papelera la carpeta, después las filas y recién después las fotos de _fotos/ de sus recetas', async () => {
+    const { store, drive, sheets, imagenes } = await conFotos();
+    drive._store.get('r1')!.contenido = PAN.replace('\n- 1:', `\n- 2: ${linkDeFoto('ajena')}\n- 3: https://ejemplo.com/pan.jpg\n- 1:`);
+    const orden: string[] = [];
+    const borrarFilas = sheets.borrarFilas.bind(sheets);
+    sheets.borrarFilas = async (id: string, hojaId: number, nros: number[]) => { orden.push('filas'); return borrarFilas(id, hojaId, nros); };
+    const borrar = drive.borrar.bind(drive);
+    drive.borrar = async (id: string) => { orden.push(id); return borrar(id); };
+
+    await store.borrarCategoria('c1');
+
+    expect(orden).toEqual(['c1', 'filas', 'fv']);
+    expect(drive._store.get('ajena')?.trashed).toBeFalsy();
+    expect(imagenes.olvidadas).toEqual(['fv']);
+    expect(store.entradas()).toHaveLength(0);
+  });
+
+  it('borrar la categoría con un .md que no se puede leer la borra igual, y sus fotos quedan huérfanas', async () => {
+    const { store, drive } = await conFotos();
+    drive.leerTexto = async () => { throw new Error('red'); };
+
+    await expect(store.borrarCategoria('c1')).resolves.toBeUndefined();
+
+    expect(drive._store.get('c1')?.trashed).toBe(true);
+    expect(drive._store.get('fv')?.trashed).toBeFalsy();
+    expect(store.entradas()).toHaveLength(0);
+  });
+
   it('si el .md no se puede leer, la receta se borra igual y sus fotos quedan huérfanas', async () => {
     const { store, drive } = await conFotos();
     drive.leerTexto = async () => { throw new Error('red'); };
