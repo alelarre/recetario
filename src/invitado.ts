@@ -11,6 +11,7 @@ import { pasoDelVisor } from './ui/visor.js';
 import { decodificar } from './link-receta.js';
 import { resueltaSinFotosDeDrive } from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
+import { crearNavegacion } from './navegacion.js';
 import type { Receta } from './tipos.js';
 import type { EstadoVisor } from './ui/visor.js';
 
@@ -25,6 +26,8 @@ export const ACCIONES_DE_INVITADO = [
 
 export function iniciarInvitado(): void {
   const cocina = crearControlCocina();
+  const nav = crearNavegacion({ location, history });
+  nav.arrancar();
   /**
    * La receta decodificada, por carga: los redibujados no vuelven a
    * descomprimir. `cruda` es la del link, con sus `foto:N`: es sobre esa que
@@ -99,15 +102,10 @@ export function iniciarInvitado(): void {
 
     if (accion === 'cocinar') {
       cocina.entrarDesdeLectura();
-      location.hash = `#/ver/cocinar?r=${leida.carga}`;
+      nav.ir(`#/ver/cocinar?r=${leida.carga}`);
       return;
     }
-    if (accion === 'volver-receta') {
-      await cocina.soltarPantalla();
-      if (cocina.salirALectura() === 'atras') return history.back();
-      location.replace(lectura);
-      return;
-    }
+    if (accion === 'volver-receta') return cocina.volverALectura(nav, lectura);
     if (accion === 'conmutar') {
       const volverA = cocina.conmutar(boton.dataset['posicion'], window.scrollY);
       if (volverA === null) return;
@@ -166,7 +164,7 @@ export function iniciarInvitado(): void {
     void render();
   });
 
-  window.addEventListener('hashchange', () => { void render(); });
+  window.addEventListener('hashchange', () => { nav.numerar(); void render(); });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     const sol = document.querySelector('[data-accion="wake"].on');

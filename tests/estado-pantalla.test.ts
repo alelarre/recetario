@@ -5,6 +5,7 @@ describe('estadoNuevo', () => {
   it('trae los valores con los que arranca cualquier pantalla', () => {
     expect(estadoNuevo()).toEqual({
       editorAbierto: null,
+      salidaPendiente: null,
       compartidasPorLeer: 0,
       tagsActivos: [],
       duracionesActivas: [],

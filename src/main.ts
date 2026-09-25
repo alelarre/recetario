@@ -43,6 +43,8 @@ import {
   linkDeFoto, idDeDrive, resolverReceta, fotosSinUso, siguienteNumero, lineaDelCursor, ponerEn, sacarReferencias
 } from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
+import { crearNavegacion } from './navegacion.js';
+import type { Llegada } from './navegacion.js';
 import { registrarAcciones, accionDe } from './acciones.js';
 import type { SeccionDeAcciones } from './acciones.js';
 import { registrarCategorias } from './ui/categorias.js';
@@ -73,6 +75,8 @@ const drive = crearDrive(() => auth.token());
 const sheets = crearSheets(() => auth.token());
 /** Las fotos de Drive, pedidas con el token y guardadas en Cache Storage. */
 const imagenes = crearImagenes({ leerBlob: id => drive.leerBlob(id) });
+/** El único que cambia la URL y se mueve por el historial. */
+const nav = crearNavegacion({ location, history });
 
 /**
  * Nada espera a una imagen para dibujarse: una foto de Drive sale como
@@ -173,7 +177,7 @@ async function usarCarpeta(elegida: CarpetaSimple): Promise<void> {
     pintar(renderConexion({ estado: 'creando-indice' }));
     await store.prepararCarpeta(elegida, progreso => pintar(renderConexion({ estado: 'creando-indice', progreso })));
     // La copia ya es la de la carpeta elegida: recargar abre con un pedido.
-    location.replace('#/');
+    nav.reemplazar('#/');
     location.reload();
   } catch (err) {
     console.error(err);
@@ -625,7 +629,9 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
   // control: ninguno muestra el mensaje crudo de Google (R1).
   if (estadoArranque.estado === 'elegir-carpeta') {
     sugerenciasDeCarpeta = estadoArranque.sugerencias.map(c => ({ id: c.id, nombre: c.name ?? '' }));
-    location.replace('#/carpeta');
+    // Sin avisar: el `hashchange` de un reemplazo dibujaría la carpeta una
+    // segunda vez.
+    nav.arrancar('#/carpeta');
     router.iniciar();
     return;
   }
@@ -667,7 +673,8 @@ function dibujarAjustes(): void {
  * Reindexar lee todos los `.md` y rearma la planilla: es la reparación
  * universal. No se puede cancelar —cortar a mitad deja el índice en el estado
  * que el reindexado existe para reparar— y mientras corre no se guarda ni se
- * borra nada (C05.5.2).
+ * borra nada (C05.5.2). Al terminar no dibuja la pantalla: la dibuja quien
+ * reindexó, así el arranque la dibuja una sola vez.
  */
 async function reconstruir({ enAjustes = false } = {}) {
   reindexando = 0;
@@ -684,7 +691,6 @@ async function reconstruir({ enAjustes = false } = {}) {
   } finally {
     reindexando = null;
   }
-  await render();
 }
 
 /**
@@ -739,6 +745,23 @@ function listaOrdenada(porTags: Entrada[]): { entradas: Entrada[]; ordenEfectivo
   return { entradas: ordenarRecetas(filtrarPorDuracion(porTags, estadoDePantalla.duracionesActivas), ordenEfectivo), ordenEfectivo };
 }
 
+/** La misma pantalla: la misma vista con los mismos parámetros, todos. */
+function mismaPantalla(a: Ruta, b: Ruta): boolean {
+  const claves = Object.keys(a.params);
+  return a.vista === b.vista && claves.length === Object.keys(b.params).length
+    && claves.every(k => a.params[k] === b.params[k]);
+}
+
+/**
+ * La pantalla no se puede dejar todavía: la URL vuelve a la suya sin dibujar
+ * nada. Una entrada nueva —un link— se deshace, así no queda en el historial;
+ * si se salía por el atrás, la pantalla se vuelve a poner adelante.
+ */
+function quedarseEn(hash: string, llegada: Llegada | null): void {
+  if (llegada === 'nueva') nav.deshacer();
+  else nav.restaurar(hash);
+}
+
 /**
  * Dibuja la pantalla que la ruta pide. Es el único lugar que decide qué se ve.
  *
@@ -747,17 +770,16 @@ function listaOrdenada(porTags: Entrada[]): { entradas: Entrada[]; ordenEfectivo
  * consecuencia buscada de no tener copia local (C05.8.1). Ningún error muestra
  * el mensaje crudo de Google (R1).
  */
-async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
+async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada | null = null): Promise<void> {
   // La vista de invitado se elige una sola vez, al cargar (`inicio.ts`), y un
   // cambio de fragmento no recarga: el dueño que toca su propio link con la PWA
   // abierta vería el Recetario. Recargar deja que `inicio.ts` vuelva a decidir.
   if (esHashDeInvitado(location.hash)) { location.reload(); return; }
-  const cambiaDePantalla = !vistaActual || ruta.vista !== vistaActual.vista
-    || ruta.params.nombre !== vistaActual.params.nombre || ruta.params.id !== vistaActual.params.id;
+  const cambiaDePantalla = !vistaActual || !mismaPantalla(ruta, vistaActual);
 
   // Sin carpeta base no hay con qué dibujar ninguna otra pantalla.
   if (estadoArranque?.estado === 'elegir-carpeta' && ruta.vista !== 'carpeta') {
-    location.replace('#/carpeta');
+    nav.reemplazar('#/carpeta');
     return;
   }
 
@@ -765,15 +787,17 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
   // llegar a la pantalla que lanzó la escritura. Como el `hashchange` no se
   // puede cancelar, la URL vuelve a la de esa pantalla, igual que con el
   // editor. El hash es el de cuando se tapó: acá `location.hash` ya es el destino.
-  if (tapadas && cambiaDePantalla) { history.pushState(null, '', hashEscritura); return; }
+  if (tapadas && cambiaDePantalla) { quedarseEn(hashEscritura, llegada); return; }
 
   // Salir del editor con cambios pregunta antes (C04.1.1). El `hashchange` no
-  // se puede cancelar: cuando llega, el volver del encabezado o el gesto de
-  // atrás ya cambiaron la URL. Así que no se dibuja la pantalla nueva —el
-  // formulario sigue en el DOM con lo escrito—, la URL vuelve a ser la del
-  // editor, y se pregunta.
+  // se puede cancelar: cuando llega, el link, el volver del encabezado o el
+  // gesto de atrás ya cambiaron la URL. Así que no se dibuja la pantalla
+  // nueva —el formulario sigue en el DOM con lo escrito—, la URL vuelve a ser
+  // la del editor, y se pregunta. Si se salía por un link, su destino queda
+  // anotado para *Salir sin guardar*.
   if (cambiaDePantalla && estadoDePantalla.editorAbierto && formularioActual() !== estadoDePantalla.editorAbierto.formulario) {
-    history.pushState(null, '', estadoDePantalla.editorAbierto.hash);
+    estadoDePantalla.salidaPendiente = llegada === 'nueva' ? location.hash : null;
+    quedarseEn(estadoDePantalla.editorAbierto.hash, llegada);
     // Si se llegó desde un destino del menú, el menú se cierra: la pregunta
     // queda en el formulario, debajo del velo.
     ponerMenu(false);
@@ -809,6 +833,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     fotosEditor.urls.clear();
     fotosEditor.subidas.clear();
     cocina.reiniciar();
+    // Si la cocina se abrió desde la receta vale sólo mientras se está en ella.
+    if (ruta.vista !== 'cocinar') cocina.olvidarLectura();
     // La pantalla nueva empieza arriba: el hash no cambia el scroll, así que
     // entrar al modo cocina desde el pie de la receta abría los ingredientes
     // ya scrolleados. La llamada es opcional por lo mismo que
@@ -922,7 +948,7 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
       const id = ruta.params['id'] ?? 'nueva';
       const categoria = id === 'nueva' ? null : store.categorias().find(c => c.id === id) ?? null;
       // Un id que ya no está —borrada en otra pestaña— vuelve a la lista.
-      if (id !== 'nueva' && !categoria) { irCerrando('#/categorias'); return; }
+      if (id !== 'nueva' && !categoria) { nav.reemplazar('#/categorias'); return; }
       const otros = store.categorias().filter(c => c.id !== id).map(c => c.nombre);
       const valores = categoria
         ? { nombre: categoria.nombre, color: categoria.color, foto: categoria.foto }
@@ -1082,7 +1108,7 @@ function recibirReceta(texto: string): void {
   const { receta, id } = recetaRecibida(texto);
   recibida = receta;
   const existe = !!id && store.entradas().some(e => e.id_archivo === id);
-  irCerrando(existe ? `#/r/${encodeURIComponent(id)}/editar?recibida=1` : '#/nueva?recibida=1');
+  nav.reemplazar(existe ? `#/r/${encodeURIComponent(id)}/editar?recibida=1` : '#/nueva?recibida=1');
 }
 
 /** Los especiales apretados y las pills, en el `hidden` que viaja en el formulario. */
@@ -1599,17 +1625,6 @@ function agregarTag(valor: string): boolean {
 }
 
 /**
- * Navega reemplazando la entrada del historial en vez de agregar una.
- *
- * Es lo que corresponde cuando la navegación es un **cierre**: volver de la
- * cocina a la receta, salir a la categoría, o dejar la receta recién guardada
- * en lugar del editor. Con `location.hash =` el historial acumula la pantalla
- * que se está dejando, y el volver de la siguiente trae de vuelta justo eso:
- * el chevron de la receta llevaría al modo cocina.
- */
-const irCerrando = (hash: string): void => { location.replace(hash); };
-
-/**
  * Manda el pedido al agente y dice cómo salió: mandado —o cancelado por el
  * usuario, que es su decisión—, copiado para pegar, o no salió: sin la
  * activación del toque, el navegador no deja abrir el menú Compartir ni la
@@ -1625,6 +1640,18 @@ async function mandarAlAgente(envio: PedidoAlAgente): Promise<'mandado' | 'copia
     console.error(err);
     return 'no-salio';
   }
+}
+
+/**
+ * Después de guardar, la app queda en la receta guardada. Editando, la
+ * receta es la pantalla de atrás, y volver no la repite en el historial; sin
+ * pantalla atrás —el editor que abrió algo compartido—, la receta toma el
+ * lugar del editor. Una receta nueva siempre toma el lugar del editor.
+ */
+function salirALaGuardada(id: string): void {
+  const hash = `#/r/${encodeURIComponent(id)}`;
+  if (vistaActual?.vista === 'nueva') nav.reemplazar(hash);
+  else nav.volver(hash);
 }
 
 /**
@@ -1707,24 +1734,24 @@ async function guardarEditor(
   return guardada ? { ...guardada, dibujado } : null;
 }
 
-const router = crearRouter(render);
+/**
+ * Cada `hashchange` numera la entrada que llegó y dibuja. La vuelta que pidió
+ * `quedarseEn` no se dibuja: la pantalla de antes nunca se dejó de ver.
+ */
+const router = crearRouter(ruta => {
+  const llegada = nav.numerar();
+  if (llegada !== 'deshecha') void render(ruta, llegada);
+});
 
 // Las acciones de la pantalla, por tema. Cada sección es un mapa
 // `data-accion → función`; el listener de click sólo busca en `acciones`.
 
 /** Navegar entre pantallas: el volver del encabezado, entrar al editor y reintentar una lectura. */
 const accionesDeNavegacion: SeccionDeAcciones = {
-  volver: async () => {
-    if (vistaActual?.vista === 'cocinar') await cocina.soltarPantalla();
-    if (history.length <= 1) {
-      // Entrar por un link directo deja el historial vacío: ahí volver es ir
-      // al Recetario, no salirse de la app.
-      location.hash = '#/';
-      return;
-    }
-    return history.back();
-  },
-  editar: () => { location.hash = `#/r/${idActual()}/editar`; },
+  // Entrar por un link directo no deja ninguna pantalla atrás: ahí volver es
+  // ir al Recetario, no salirse de la app.
+  volver: () => { nav.volver('#/'); },
+  editar: () => { nav.ir(`#/r/${idActual()}/editar`); },
   // Vacía la caja y deja el cursor ahí. No navega: buscar vacío no hace nada,
   // y salir de los resultados es el chevron.
   limpiar: () => {
@@ -1767,7 +1794,7 @@ const accionesDeLista: SeccionDeAcciones = {
 function tocarTag(tag: string): Promise<void> | undefined {
   // Desde el Recetario el carrusel no filtra nada ahí mismo: navega a la
   // lista por tag, que es donde ese chip tiene algo que mostrar.
-  if (vistaActual?.vista === 'recetario') { location.hash = `#/t/${encodeURIComponent(tag)}`; return; }
+  if (vistaActual?.vista === 'recetario') { nav.ir(`#/t/${encodeURIComponent(tag)}`); return; }
   estadoDePantalla.tagsActivos = estadoDePantalla.tagsActivos.includes(tag) ? estadoDePantalla.tagsActivos.filter(t => t !== tag) : [...estadoDePantalla.tagsActivos, tag];
   estadoDePantalla.visibles = TRAMO;
   return render();
@@ -1896,7 +1923,7 @@ const accionesDelPlan: SeccionDeAcciones = {
   'agregar-al-plan': (boton) => {
     const dia = boton.dataset['dia'] ?? '';
     const momento = boton.dataset['momento'] ?? '';
-    location.hash = `#/plan/agregar?dia=${encodeURIComponent(dia)}&momento=${encodeURIComponent(momento)}`;
+    nav.ir(`#/plan/agregar?dia=${encodeURIComponent(dia)}&momento=${encodeURIComponent(momento)}`);
   },
   'elegir-categoria-plan': (boton) => {
     estadoDePantalla.categoriaPlan = boton.dataset['nombre'] ?? '';
@@ -1926,9 +1953,9 @@ const accionesDelPlan: SeccionDeAcciones = {
     } finally {
       destapar();
     }
-    // Esta pantalla se cierra al elegir: volver tiene que dejar el plan.
-    irCerrando('#/plan');
-    return render();
+    // Esta pantalla se cierra al elegir y deja el plan, que dibuja el
+    // `hashchange`. Sin pantalla atrás, el plan toma su lugar.
+    nav.volver('#/plan');
   },
   'sacar-del-plan': async (boton) => {
     const i = Number(boton.dataset['i'] ?? -1);
@@ -1944,7 +1971,7 @@ const accionesDelPlan: SeccionDeAcciones = {
     estadoDePantalla.confirmandoReinicio = false;
     return render();
   },
-  'ir-a-compras': () => { location.hash = '#/plan/compras'; }
+  'ir-a-compras': () => { nav.ir('#/plan/compras'); }
 };
 
 /** La receta abierta y su modo cocina: la estrella, entrar, conmutar, marcar pasos, la pantalla encendida y las salidas. */
@@ -1973,7 +2000,7 @@ const accionesDeLaReceta: SeccionDeAcciones = {
   },
   cocinar: () => {
     cocina.entrarDesdeLectura();
-    location.hash = `#/r/${idActual()}/cocinar`;
+    nav.ir(`#/r/${idActual()}/cocinar`);
   },
   conmutar: async (boton) => {
     const volverA = cocina.conmutar(boton.dataset['posicion'], window.scrollY);
@@ -1993,18 +2020,11 @@ const accionesDeLaReceta: SeccionDeAcciones = {
   },
   // Las dos salidas del modo cocina tienen destinos distintos, y las dos
   // sueltan el bloqueo de pantalla: se dejó de cocinar.
-  'volver-receta': async () => {
-    await cocina.soltarPantalla();
-    if (cocina.salirALectura() === 'atras') return history.back();
-    // Se entró al modo cocina por un link directo: no hay receta atrás.
-    irCerrando(`#/r/${encodeURIComponent(idActual())}`);
-  },
-  'salir-cocina': async () => {
-    await cocina.soltarPantalla();
-    cocina.olvidarLectura();
+  'volver-receta': () => cocina.volverALectura(nav, `#/r/${encodeURIComponent(idActual())}`),
+  'salir-cocina': () => {
     const entrada = store.entradas().find(e => e.id_archivo === idActual());
-    // Sin fila del índice no se sabe de qué categoría es: se vuelve al Recetario.
-    irCerrando(entrada?.categoria ? `#/c/${encodeURIComponent(entrada.categoria)}` : '#/');
+    // Sin fila del índice no se sabe de qué categoría es: se va al Recetario.
+    return cocina.salir(nav, entrada?.categoria ? `#/c/${encodeURIComponent(entrada.categoria)}` : '#/');
   },
   'mandar-al-agente': async () => {
     // El mismo pedido que no salió, con la activación de este toque.
@@ -2038,7 +2058,8 @@ const accionesDeCategorias: SeccionDeAcciones = {
       else await escribiendo(store.editarCategoria(id, datos));
       registrarCategorias(store.categorias());
       estadoDePantalla.editorAbierto = null;
-      return history.back();
+      nav.volver('#/categorias');
+      return;
     } catch (err) {
       console.error(err);
       const otros = store.categorias().filter(c => c.id !== id).map(c => c.nombre);
@@ -2063,7 +2084,7 @@ const accionesDeCategorias: SeccionDeAcciones = {
       await escribiendo(store.borrarCategoria(id));
       registrarCategorias(store.categorias());
       estadoDePantalla.editorAbierto = null;
-      irCerrando('#/categorias');
+      nav.volver('#/categorias');
       return;
     } catch (err) {
       console.error(err);
@@ -2103,13 +2124,11 @@ const accionesDelEditor: SeccionDeAcciones = {
     const r = await mandarAlAgente(envio);
     if (r === 'copiado') avisoAlLlegar = PEDIDO_COPIADO;
     if (r === 'no-salio') pedidoAlLlegar = envio;
-    // La receta ya está guardada: el editor se cierra y la app queda en ella.
-    // Editando, la receta es la pantalla de atrás; si no, la receta toma el
-    // lugar del editor en el historial.
+    // La receta ya está guardada: el editor se cierra y la app queda en ella,
+    // igual que al guardar.
     await guardada.dibujado;
     esperarPintadoParaSacarElVelo();
-    if (vistaActual?.vista === 'editar' && !llegoDeAfuera(vistaActual)) history.back();
-    else irCerrando(`#/r/${encodeURIComponent(id)}`);
+    salirALaGuardada(id);
   },
   'pegar-receta': async () => {
     if (!enElEditor()) return;
@@ -2156,15 +2175,17 @@ const accionesDelEditor: SeccionDeAcciones = {
     if (tag) document.querySelector<HTMLInputElement>('[data-tag-nuevo]')?.focus();
   },
   'seguir-editando': () => {
+    estadoDePantalla.salidaPendiente = null;
     document.querySelector('[data-salida]')?.remove();
   },
   'salir-sin-guardar': () => {
     estadoDePantalla.editorAbierto = null;
-    // Mismo caso que el volver: sin entrada previa —el editor que abrió lo
-    // compartido desde otra app— volver no puede intentar salir de la app
-    // (C01.2.2); cierra al Recetario.
-    if (history.length <= 1) { irCerrando('#/'); return; }
-    return history.back();
+    // Se salía por un link: va a donde llevaba. Si no, se salía volviendo, y
+    // como el volver, sin pantalla atrás —el editor que abrió lo compartido
+    // desde otra app— no intenta salir de la app (C01.2.2): va al Recetario.
+    const destino = estadoDePantalla.salidaPendiente;
+    if (destino) nav.ir(destino);
+    else nav.volver('#/');
   },
   guardar: async (boton) => {
     const guardada = await guardarEditor(boton);
@@ -2176,10 +2197,7 @@ const accionesDelEditor: SeccionDeAcciones = {
     await guardada.dibujado;
     esperarPintadoParaSacarElVelo();
     // Lo escrito ya está en Drive, así que salir no tiene nada que preguntar.
-    // El editor que abrió algo compartido no tiene pantalla atrás —la entrada
-    // del historial es la del Share Target—: cierra en la receta guardada.
-    if (llegoDeAfuera(vistaActual)) irCerrando(`#/r/${encodeURIComponent(guardada.id)}`);
-    else history.back();
+    salirALaGuardada(guardada.id);
   },
   // La confirmación toma el lugar del botón, y el botón el de la confirmación:
   // redibujar el editor perdería lo escrito y la foto contra la que se
@@ -2194,10 +2212,11 @@ const accionesDelEditor: SeccionDeAcciones = {
     try {
       await escribiendo(store.borrar(id));
       estadoDePantalla.editorAbierto = null;
-      // Vuelve a la lista de donde se venía; el archivo queda en la papelera
-      // de Drive, que es la red de seguridad y es del usuario. Y la receta
-      // borrada no queda en el historial.
-      irCerrando('#/');
+      // Vuelve a la pantalla de antes de abrir la receta, salteando la receta
+      // y el editor: la receta borrada no queda en el historial. El archivo
+      // queda en la papelera de Drive, que es la red de seguridad y es del
+      // usuario.
+      nav.volver('#/', 2);
       return;
     } catch (err) {
       console.error(err);
@@ -2317,9 +2336,12 @@ const accionesDeCompartir: SeccionDeAcciones = {
 
 /** Ajustes, la conexión con Google y la carpeta base. */
 const accionesDeAjustes: SeccionDeAcciones = {
-  reindexar: () => reconstruir({ enAjustes: true }),
+  reindexar: async () => {
+    await reconstruir({ enAjustes: true });
+    return render();
+  },
   conectar: () => arrancar({ pidiendoPermiso: true }),
-  'cambiar-carpeta': () => { location.hash = '#/carpeta?cambiando=1'; },
+  'cambiar-carpeta': () => { nav.ir('#/carpeta?cambiando=1'); },
   'carpeta-sugerida': (boton) => {
     estadoDePantalla.selector.confirmando = { id: boton.dataset['id'] ?? '', nombre: boton.dataset['nombre'] ?? '' };
     return render();
@@ -2369,7 +2391,7 @@ const accionesDeAjustes: SeccionDeAcciones = {
     // volvería a dibujar. Las fotos guardadas en el navegador tampoco quedan.
     indiceLocal.borrar();
     await Promise.all([imagenes.borrarImagenes(), imagenes.descartarCompartidas()]);
-    irCerrando('#/');
+    nav.reemplazar('#/');
     location.reload();
   },
   'conectar-de-nuevo': async () => {
@@ -2695,13 +2717,14 @@ app.addEventListener('change', (e) => {
   const q = campo.value.trim();
   // Con la caja vacía no se busca, y no se avisa: no hay nada que decir.
   if (!q) return;
-  location.hash = `#/buscar?q=${encodeURIComponent(q)}`;
+  nav.ir(`#/buscar?q=${encodeURIComponent(q)}`);
 });
 
-// Lo que llega desde el menú Compartir de Android viene en la query: se pasa
-// a la receta nueva y se limpia la URL, para que recargar no lo vuelva a abrir.
+// La entrada con la que se abrió la app es la primera pantalla. Lo que llega
+// desde el menú Compartir de Android viene en la query: se pasa a la receta
+// nueva y se limpia la URL, para que recargar no lo vuelva a abrir.
 const compartido = hashDeCompartido(location.search);
-if (compartido) history.replaceState(null, '', location.pathname + compartido);
+nav.arrancar(compartido ? location.pathname + compartido : undefined);
 
 arrancar().catch(err => {
   console.error(err);

@@ -7,6 +7,7 @@
  * paso realzado ni marcado (C03.2.4). No persiste en ningún lado.
  */
 import type { PosicionCocina } from './ui/cocina.js';
+import type { Navegacion } from './navegacion.js';
 
 export function crearControlCocina() {
   let posicion: PosicionCocina = 'ingredientes';
@@ -16,9 +17,8 @@ export function crearControlCocina() {
   /** El scroll de cada lado del conmutador, para no perderlo al conmutar (C03.2.2). */
   const scroll: Record<PosicionCocina, number> = { ingredientes: 0, pasos: 0 };
   /**
-   * Si al modo cocina se entró tocando «Cocinar», la lectura ya está una entrada
-   * atrás en el historial: volver a ella es un `back`, no una navegación nueva.
-   * Con una navegación quedaba dos veces seguidas y su volver parecía no hacer nada.
+   * Si al modo cocina se entró tocando «Cocinar», la lectura está una entrada
+   * atrás en el historial: *Salir* la saltea junto con la cocina.
    */
   let desdeLectura = false;
   /** Para que la pantalla no se apague cocinando. */
@@ -80,12 +80,29 @@ export function crearControlCocina() {
       return true;
     },
     entrarDesdeLectura(): void { desdeLectura = true; },
-    salirALectura(): 'atras' | 'reemplazar' {
-      const salida = desdeLectura ? 'atras' : 'reemplazar';
-      desdeLectura = false;
-      return salida;
-    },
     olvidarLectura(): void { desdeLectura = false; },
+    /**
+     * El chevron: suelta la pantalla y vuelve a la lectura, `lectura`. Es el
+     * mismo en la app y en el invitado: vuelve una entrada, y sin pantalla
+     * atrás —un link directo a la cocina— la lectura toma su lugar.
+     */
+    async volverALectura(nav: Pick<Navegacion, 'volver'>, lectura: string): Promise<void> {
+      await soltarPantalla();
+      desdeLectura = false;
+      nav.volver(lectura);
+    },
+    /**
+     * *Salir*: suelta la pantalla y va a `destino`. Abierta desde la lectura,
+     * vuelve dos entradas, salteando la cocina y la lectura; si no, `destino`
+     * toma el lugar de la cocina.
+     */
+    async salir(nav: Pick<Navegacion, 'volver' | 'reemplazar'>, destino: string): Promise<void> {
+      await soltarPantalla();
+      const desde = desdeLectura;
+      desdeLectura = false;
+      if (desde) nav.volver(destino, 2);
+      else nav.reemplazar(destino);
+    },
     mantenerPantalla,
     soltarPantalla,
     async alternarPantalla(): Promise<void> {

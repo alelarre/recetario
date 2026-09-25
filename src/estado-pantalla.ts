@@ -30,6 +30,12 @@ export interface EstadoDePantalla {
    */
   editorAbierto: { hash: string; formulario: string } | null;
   /**
+   * Adónde se iba cuando la pregunta de cambios sin guardar frenó la salida
+   * por un link: *Salir sin guardar* va ahí. `null` si se salía por el atrás,
+   * y ahí salir es volver.
+   */
+  salidaPendiente: string | null;
+  /**
    * Cuántas fotos dejó el service worker del menú Compartir para la receta
    * nueva que se está abriendo, todavía sin leer. Se leen una sola vez: un
    * redibujado del editor no las vuelve a sumar.
@@ -82,6 +88,7 @@ export interface EstadoDePantalla {
 
 export const estadoNuevo = (): EstadoDePantalla => ({
   editorAbierto: null,
+  salidaPendiente: null,
   compartidasPorLeer: 0,
   tagsActivos: [],
   duracionesActivas: [],

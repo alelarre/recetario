@@ -7,7 +7,7 @@
 // de red avise sin dejar datos de una lectura anterior.
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { ErrorDeDrive } from '../src/drive.js';
-import { comoGlobal, limpiarGlobales } from './dom-falso.js';
+import { comoGlobal, limpiarGlobales, historialFalso } from './dom-falso.js';
 import { entradaFalsa } from './dobles.js';
 import { parse } from '../src/recipe.js';
 import { DURACIONES } from '../src/catalogo.js';
@@ -72,6 +72,8 @@ vi.mock('../src/conversion.js', async original => {
 /** Lo que los dobles le dan a main. `falla` enciende el error de lectura. */
 const estadoInicial = () => ({
   falla: false as boolean | Error,
+  /** El arranque encuentra el índice de otro esquema y reindexa antes de dibujar. */
+  reconstruirAlArrancar: false,
   /** Los títulos de las recetas que se crearon: cada una es un `.md` nuevo. */
   creadas: [] as string[],
   /** Las recetas que llegaron a `crear`, enteras. */
@@ -119,6 +121,8 @@ const estadoInicial = () => ({
   precargados: [] as string[][],
   /** Los ids de las categorías borradas. */
   categoriasBorradas: [] as string[],
+  /** Los ids de las recetas que se mandaron a la papelera. */
+  recetasBorradas: [] as string[],
   /** Los tags con los que se guardó cada vez que se tocó la estrella, en orden. */
   guardados: [] as { tags: string[] }[],
   /** Cuántas veces más falla `guardar` antes de andar, para probar el aviso de la estrella. */
@@ -146,7 +150,7 @@ const storeFake = {
   arrancar: async () => estado.eligiendo
     ? { estado: 'elegir-carpeta', sugerencias: estado.eligiendo, avisos: [] }
     : {
-        estado: 'listo', reconstruir: false, raizId: 'raiz',
+        estado: 'listo', reconstruir: estado.reconstruirAlArrancar, raizId: 'raiz',
         categorias: [{ id: 'c1', nombre: 'Carnes' }], indiceDuplicado: estado.indiceDuplicado
       },
   carpeta: () => ({ id: 'raiz', nombre: 'Recetario' }),
@@ -167,6 +171,7 @@ const storeFake = {
     estado.fotosDeCategoria.push(d.fotoPropia ?? null);
   },
   borrarCategoria: async (id: string) => { estado.categoriasBorradas.push(id); },
+  borrar: async (id: string) => { estado.recetasBorradas.push(id); },
   cargarIndice: async () => [],
   guardarMeta: async () => {},
   ultimaReconstruccion: () => '',
@@ -341,7 +346,7 @@ describe('main.ts: las rutas', () => {
   });
 
   const montar = async ({
-    search = '', readyState = 'complete' as DocumentReadyState, reducedMotion = false
+    hash = '', search = '', readyState = 'complete' as DocumentReadyState, reducedMotion = false
   } = {}) => {
     // Sólo los temporizadores: `Date` queda real, que es de donde salen las
     // fechas del plan y el título de un borrador sin título.
@@ -550,7 +555,6 @@ describe('main.ts: las rutas', () => {
     const listenersDoc: Record<string, (e?: unknown) => unknown> = {};
     /** Lo que se puso en lugar de un elemento, con `outerHTML`, sin redibujar. */
     const enLugar: string[] = [];
-    const vueltasAtras: number[] = [];
     /** Si la pantalla estaba tapada en cada vuelta atrás: tapada no se navega. */
     const tapadoAlVolver: boolean[] = [];
     const scrolls: number[] = [];
@@ -681,29 +685,24 @@ describe('main.ts: las rutas', () => {
       // Sólo la consulta de reduced motion importa acá: las demás no se usan.
       matchMedia: (q: string) => ({ matches: reducedMotion && q.includes('prefers-reduced-motion') })
     });
-    // `replace` es lo que usan las navegaciones de cierre: no agrega una
-    // entrada al historial, y el doble lo distingue de asignar `hash`.
-    const reemplazos: string[] = [];
-    const empujados: string[] = [];
+    // El historial, con sus entradas y su `state`: `replace` no agrega una
+    // entrada, asignar `hash` sí, y cada cambio de hash avisa después con
+    // `hashchange`, como el navegador.
     const recargas: number[] = [];
-    global.location = comoGlobal<Location>({
-      hash: '', pathname: '/recetario/', search, origin: 'https://h',
-      replace: (h: string) => { reemplazos.push(h); global.location.hash = h; },
-      reload: () => { recargas.push(1); }
+    const historial = historialFalso({
+      hash,
+      alCambiarHash: () => { listeners['hashchange']?.(); },
+      location: { pathname: '/recetario/', search, origin: 'https://h', reload: () => { recargas.push(1); } },
+      alVolver: () => { tapadoAlVolver.push(tapado()); }
     });
+    const { reemplazos, empujados, vueltasAtras, saltos, pila } = historial;
+    global.location = comoGlobal<Location>(historial.location);
+    global.history = comoGlobal<History>(historial.history);
     // El editor se lee con `new FormData(form)`: el doble entrega lo que diga
     // `estado.formulario`, sin importar el form.
     (global as unknown as Record<string, unknown>)['FormData'] = class {
       [Symbol.iterator]() { return Object.entries(estado.formulario)[Symbol.iterator](); }
     };
-    global.history = comoGlobal<History>({
-      back: () => { vueltasAtras.push(1); tapadoAlVolver.push(tapado()); }, length: 5,
-      replaceState: (_estado: unknown, _titulo: string, url: string) => {
-        const i = url.indexOf('#');
-        if (i >= 0) global.location.hash = url.slice(i);
-      },
-      pushState: (_estado: unknown, _titulo: string, url: string) => { empujados.push(url); global.location.hash = url; }
-    });
 
     const { PANTALLAS_CON_MENU } = await import('../src/main.js');
     await esperar();
@@ -780,11 +779,24 @@ describe('main.ts: las rutas', () => {
       fallarFoto: async (img: unknown) => { for (const fn of errores) await fn({ target: img }); },
       /** El evento `load` de `window`, para lo que quedó pendiente de él. */
       dispararLoad: async () => { listeners['load']?.(); await esperar(); },
-      abrir: async (hash: string) => {
-        global.location.hash = hash;
-        listeners['hashchange']?.();
+      /**
+       * Llega a un hash por un `<a href>`: una entrada nueva, sin `state`.
+       * Si ya se está ahí, el navegador no hace nada, y el doble tampoco.
+       */
+      abrir: async (destino: string) => {
+        global.location.hash = destino;
         await esperar();
       },
+      /** El atrás del navegador o de Android, que no pasa por la app. */
+      atras: async () => {
+        historial.atras();
+        await esperar();
+      },
+      saltos,
+      /** Las entradas del historial hasta la actual. */
+      pila,
+      retenerAvisos: historial.retenerAvisos,
+      soltarAvisos: async () => { historial.soltarAvisos(); await esperar(); },
       resultadosPlan,
       /** Una tecla en un campo, como la caja de la pantalla de agregar al plan. */
       tipear: async (accion: string, valor: string) => {
@@ -1033,16 +1045,18 @@ describe('main.ts: las rutas', () => {
     });
 
     it('con cambios, tocar un destino del menú pregunta, y el menú queda cerrado', async () => {
-      const { abrir, tocar, empujados, preguntas, menuDesplegado } = await montar();
+      const { abrir, tocar, vueltasAtras, preguntas, menuDesplegado } = await montar();
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan de campo' };
       await tocar('abrir-menu');
       expect(menuDesplegado()).toBe(true);
 
-      // El link del menú cambia el hash: el `hashchange` es el que pregunta.
+      // El link del menú cambia el hash: el `hashchange` es el que pregunta,
+      // y la entrada del link se deshace.
       await abrir('#/plan');
 
-      expect(empujados).toEqual(['#/nueva']);
+      expect(vueltasAtras).toHaveLength(1);
+      expect(global.location.hash).toBe('#/nueva');
       expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
       expect(menuDesplegado()).toBe(false);
     });
@@ -1544,21 +1558,22 @@ describe('main.ts: las rutas', () => {
     });
 
     it('borrar pregunta con las recetas, y confirmar borra y vuelve a la lista', async () => {
-      const { abrir, tocar, enLugar, reemplazos } = await montar();
+      const { abrir, tocar, enLugar } = await montar();
+      await abrir('#/categorias');
       await abrir('#/categorias/c1');
       await tocar('borrar-categoria');
       expect(enLugar.at(-1)).toContain('Carnes y su receta va a la papelera de Drive.');
       await tocar('borrar-categoria-confirmado');
       expect(estado.categoriasBorradas).toEqual(['c1']);
-      expect(reemplazos.at(-1)).toBe('#/categorias');
+      expect(global.location.hash).toBe('#/categorias');
     });
   });
 
   describe('la carpeta base', () => {
     it('sin carpeta marcada, el arranque lleva a la pantalla con las encontradas', async () => {
       estado.eligiendo = [{ id: 'r1', name: 'Recetario' }];
-      const { app, reemplazos } = await montar();
-      expect(reemplazos).toContain('#/carpeta');
+      const { app } = await montar();
+      expect(global.location.hash).toBe('#/carpeta');
       expect(app.innerHTML).toContain('Tus recetas en Drive');
       expect(app.innerHTML).toContain('data-id="r1"');
     });
@@ -1697,10 +1712,9 @@ describe('main.ts: las rutas', () => {
   });
 
   it('las dos salidas del modo cocina tienen destinos distintos', async () => {
-    const { abrir, tocar } = await montar();
+    const { abrir, tocar } = await montar({ hash: '#/r/f1/cocinar' });
 
     // El chevron vuelve a la receta, para seguir leyéndola sin la escala de cocina.
-    await abrir('#/r/f1/cocinar');
     await tocar('volver-receta');
     expect(global.location.hash).toBe('#/r/f1');
 
@@ -1723,8 +1737,7 @@ describe('main.ts: las rutas', () => {
   });
 
   it('con un link directo al modo cocina, volver navega a la receta', async () => {
-    const { abrir, tocar, reemplazos } = await montar();
-    await abrir('#/r/f1/cocinar');
+    const { tocar, reemplazos } = await montar({ hash: '#/r/f1/cocinar' });
     await tocar('volver-receta');
     expect(reemplazos).toEqual(['#/r/f1']);
   });
@@ -2006,11 +2019,12 @@ describe('main.ts: las rutas', () => {
 
     it('con cambios, el atrás no dibuja la pantalla anterior: vuelve al editor y pregunta', async () => {
       estado.formulario = { titulo: 'Milanesas' };
-      const { abrir, app, empujados, preguntas } = await montar();
+      const { abrir, atras, app, empujados, preguntas } = await montar();
+      await abrir('#/r/f1');
       await abrir('#/r/f1/editar');
 
       estado.formulario = { titulo: 'Milanesas a la napolitana' };
-      await abrir('#/r/f1');
+      await atras();
 
       expect(empujados).toEqual(['#/r/f1/editar']);
       expect(app.innerHTML).toContain('data-formulario');
@@ -2030,10 +2044,10 @@ describe('main.ts: las rutas', () => {
 
     it('seguir editando saca la pregunta y se queda en el editor', async () => {
       estado.formulario = { titulo: 'Milanesas' };
-      const { abrir, tocar, preguntas, vueltasAtras } = await montar();
+      const { abrir, atras, tocar, preguntas, vueltasAtras } = await montar();
       await abrir('#/r/f1/editar');
       estado.formulario = { titulo: 'Otra cosa' };
-      await abrir('#/r/f1');
+      await atras();
 
       await tocar('seguir-editando');
 
@@ -2069,11 +2083,11 @@ describe('main.ts: las rutas', () => {
 
     it('vale también para la receta nueva', async () => {
       estado.formulario = { titulo: '' };
-      const { abrir, empujados } = await montar();
+      const { abrir, atras, empujados } = await montar();
       await abrir('#/nueva');
 
       estado.formulario = { titulo: 'Pan' };
-      await abrir('#/');
+      await atras();
 
       expect(empujados).toEqual(['#/nueva']);
     });
@@ -2243,7 +2257,7 @@ describe('main.ts: las rutas', () => {
       const { promesa, resolver } = pendiente<{ id: string; nombre_archivo: string }>();
       storeFake.crear = () => promesa;
       try {
-        const { abrir, tocar, app, velo, empujados, vueltasAtras } = await montar();
+        const { abrir, atras, tocar, app, velo, empujados, vueltasAtras } = await montar();
         await abrir('#/nueva');
         estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
         // Sin await: el toque queda colgado de `crear` hasta que el test lo suelte.
@@ -2255,7 +2269,7 @@ describe('main.ts: las rutas', () => {
         await tocar('volver');
         expect(vueltasAtras).toEqual([]);
         // Y el gesto de atrás no dibuja la pantalla nueva: la URL vuelve al editor.
-        await abrir('#/r/f1');
+        await atras();
         expect(empujados).toEqual(['#/nueva']);
         expect(global.location.hash).toBe('#/nueva');
         expect(app.innerHTML).toContain('data-formulario');
@@ -2268,14 +2282,17 @@ describe('main.ts: las rutas', () => {
     });
 
     it('al terminar bien, el velo cierra con el tilde y el guardado sigue su camino', async () => {
-      const { abrir, tocarSinCerrar, correrElCierre, velo, vueltasAtras, tapadoAlVolver, atributosApp } = await montar();
-      await abrir('#/nueva');
-      estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+      const {
+        abrir, tocarSinCerrar, correrElCierre, velo, vueltasAtras, tapadoAlVolver, atributosApp, retenerAvisos, soltarAvisos
+      } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1' };
 
       const guardando = tocarSinCerrar('guardar');
       await esperar();
 
-      expect(estado.creadas).toEqual(['Pan']);
+      expect(estado.opcionesGuardar).toHaveLength(1);
       // Primero el tilde: el velo sigue puesto, la pantalla ya no está ocupada
       // y **todavía no se navegó**, para que el repintado no se vea en el medio.
       expect(velo.hidden).toBe(false);
@@ -2283,6 +2300,9 @@ describe('main.ts: las rutas', () => {
       expect(atributosApp['aria-busy']).toBeUndefined();
       expect(vueltasAtras).toHaveLength(0);
 
+      // La vuelta cambia la URL, y el `hashchange` se retiene para mirar el
+      // momento de antes de dibujar la receta.
+      retenerAvisos();
       await correrElCierre();
       await guardando;
 
@@ -2292,7 +2312,8 @@ describe('main.ts: las rutas', () => {
       expect(tapadoAlVolver).toEqual([false]);
       // El velo espera a que la pantalla de destino se pinte.
       expect(velo.hidden).toBe(false);
-      await abrir('#/r/f1');
+      await soltarAvisos();
+      expect(global.location.hash).toBe('#/r/f1');
       expect(velo.hidden).toBe(true);
       expect(velo.classList.contains('exito')).toBe(false);
     });
@@ -2582,13 +2603,14 @@ describe('main.ts: las rutas', () => {
     });
 
     it('tocar una tarjeta suma la receta a esa comida, escribe y cierra a #/plan', async () => {
-      const { abrir, tocar, reemplazos } = await montar();
+      const { abrir, tocar } = await montar();
+      await abrir('#/plan');
       await abrir('#/plan/agregar?dia=2&momento=noche');
       await tocar('elegir-para-el-plan', { id: 'f1' });
       expect(estado.planesGuardados).toEqual([
         { comidas: [{ dia: 2, momento: 'noche', id: 'f1', titulo: 'Milanesas' }] }
       ]);
-      expect(reemplazos).toContain('#/plan');
+      expect(global.location.hash).toBe('#/plan');
     });
 
     it('la cruz saca esa línea nada más, y escribe', async () => {
@@ -2628,6 +2650,7 @@ describe('main.ts: las rutas', () => {
     it('si falla al sumar, el aviso llega al plan: agregar cierra su pantalla igual', async () => {
       estado.fallaGuardarPlan = 1;
       const { abrir, tocar, app } = await montar();
+      await abrir('#/plan');
       await abrir('#/plan/agregar?dia=2&momento=noche');
       await tocar('elegir-para-el-plan', { id: 'f1' });
       expect(app.innerHTML).toContain('class="grilla-sem"');
@@ -3659,19 +3682,16 @@ describe('main.ts: las rutas', () => {
     });
 
     it('volver sin tocar nada pregunta: lo compartido cuenta como cambio', async () => {
-      const { abrir, empujados, preguntas } = await montar();
+      const { abrir, atras, empujados, preguntas } = await montar();
       await abrir('#/nueva?text=hola');
-      await abrir('#/');
+      await atras();
       expect(empujados).toEqual(['#/nueva?text=hola']);
       expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
     });
 
     it('salir sin guardar lo compartido, sin pantalla atrás, cierra al Recetario', async () => {
-      const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
-      // El Share Target abre la app con una sola entrada en el historial.
-      Object.defineProperty(global.history, 'length', { value: 1, configurable: true });
-      await abrir('#/nueva?text=hola');
-      await abrir('#/');
+      // El Share Target abre la app con lo compartido: no hay pantalla atrás.
+      const { tocar, reemplazos, vueltasAtras } = await montar({ hash: '#/nueva?text=hola' });
       await tocar('salir-sin-guardar');
       expect(reemplazos.at(-1)).toBe('#/');
       expect(vueltasAtras).toEqual([]);
@@ -3725,10 +3745,10 @@ describe('main.ts: las rutas', () => {
     });
 
     it('lo recibido para una receta existente cuenta como cambio', async () => {
-      const { abrir, empujados } = await montar();
+      const { abrir, atras, empujados } = await montar();
       await abrir(`#/nueva?text=${encodeURIComponent(RECIBIDA)}`);
       await abrir('#/r/f1/editar?recibida=1');
-      await abrir('#/');
+      await atras();
       expect(empujados).toEqual(['#/r/f1/editar?recibida=1']);
     });
 
@@ -3871,14 +3891,6 @@ describe('main.ts: las rutas', () => {
       estado.formulario = { titulo: 'Pan', carpeta: '', tags: 'borrador' };
       await tocar('guardar');
       expect(reemplazos.at(-1)).toBe('#/r/nuevo-1');
-    });
-
-    it('guardar una receta nueva desde el menú vuelve a donde estaba', async () => {
-      const { abrir, tocar, vueltasAtras } = await montar();
-      await abrir('#/nueva');
-      estado.formulario = { titulo: 'Pan', carpeta: '', tags: 'borrador' };
-      await tocar('guardar');
-      expect(vueltasAtras).toHaveLength(1);
     });
   });
 
@@ -4233,6 +4245,304 @@ describe('main.ts: las rutas', () => {
       const { abrir, app } = await montar();
       await abrir('#/borradores/b1');
       expect(app.innerHTML).toContain('<a class="act" href="#/borradores">');
+    });
+  });
+
+  describe('las salidas (§1): adónde lleva cada una, con historial y sin él', () => {
+    /** Cuántas veces se dibujó una pantalla con esta marca. */
+    const dibujos = (pinturas: { html: string }[], marca: string) => pinturas.filter(p => p.html.includes(marca)).length;
+
+    it('el volver del encabezado vuelve una entrada', async () => {
+      const { abrir, tocar, vueltasAtras, reemplazos } = await montar();
+      await abrir('#/c/Carnes');
+      await tocar('volver');
+      expect(vueltasAtras).toHaveLength(1);
+      expect(reemplazos).toEqual([]);
+      expect(global.location.hash).toBe('');
+    });
+
+    it('sin historial, el volver del encabezado va al Recetario sin salirse de la app', async () => {
+      const { tocar, vueltasAtras, reemplazos, pila } = await montar({ hash: '#/c/Carnes' });
+      await tocar('volver');
+      expect(vueltasAtras).toEqual([]);
+      expect(reemplazos).toEqual(['#/']);
+      expect(pila().map(e => e.hash)).toEqual(['#/']);
+    });
+
+    it('salir sin guardar vuelve una entrada', async () => {
+      estado.formulario = { titulo: 'Milanesas' };
+      const { abrir, atras, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      estado.formulario = { titulo: 'Otra cosa' };
+      await atras();
+      await tocar('salir-sin-guardar');
+      expect(global.location.hash).toBe('#/r/f1');
+      expect(app.innerHTML).not.toContain('data-formulario');
+    });
+
+    it('sin historial, salir sin guardar va al Recetario', async () => {
+      estado.formulario = { titulo: 'Milanesas' };
+      const { tocar, vueltasAtras, reemplazos } = await montar({ hash: '#/r/f1/editar' });
+      estado.formulario = { titulo: 'Otra cosa' };
+      await tocar('salir-sin-guardar');
+      expect(vueltasAtras).toEqual([]);
+      expect(reemplazos).toEqual(['#/']);
+    });
+
+    it('guardar una receta que ya existía vuelve a ella', async () => {
+      const { abrir, tocar, vueltasAtras, reemplazos } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1' };
+      await tocar('guardar');
+      expect(vueltasAtras).toHaveLength(1);
+      expect(reemplazos).toEqual([]);
+      expect(global.location.hash).toBe('#/r/f1');
+    });
+
+    it('sin historial, guardar una receta que ya existía la pone en lugar del editor', async () => {
+      const { tocar, vueltasAtras, reemplazos } = await montar({ hash: '#/r/f1/editar' });
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1' };
+      await tocar('guardar');
+      expect(vueltasAtras).toEqual([]);
+      expect(reemplazos).toEqual(['#/r/f1']);
+    });
+
+    it.each([
+      ['con historial', ''],
+      ['sin historial', '#/nueva']
+    ])('guardar una receta nueva, %s, termina en la receta creada, en lugar del editor', async (_caso, hash) => {
+      const { abrir, tocar, vueltasAtras, reemplazos, pila } = await montar({ hash });
+      await abrir('#/nueva');
+      const antes = pila().length;
+      estado.formulario = { titulo: 'Pan', carpeta: '', tags: 'borrador' };
+      await tocar('guardar');
+      expect(vueltasAtras).toEqual([]);
+      expect(reemplazos).toEqual(['#/r/nuevo-1']);
+      expect(pila()).toHaveLength(antes);
+      expect(global.location.hash).toBe('#/r/nuevo-1');
+    });
+
+    it('Convertir editando una receta vuelve a ella; sin historial, la pone en lugar del editor', async () => {
+      vi.stubGlobal('navigator', { share: async () => {}, canShare: () => true });
+      const con = await montar();
+      await con.abrir('#/r/f1');
+      await con.abrir('#/r/f1/editar');
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags: 'borrador' };
+      await con.tocar('convertir-con-agente');
+      expect(con.vueltasAtras).toHaveLength(1);
+      expect(global.location.hash).toBe('#/r/f1');
+      limpiarGlobales();
+      vi.resetModules();
+
+      vi.stubGlobal('navigator', { share: async () => {}, canShare: () => true });
+      const sin = await montar({ hash: '#/r/f1/editar' });
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags: 'borrador' };
+      await sin.tocar('convertir-con-agente');
+      expect(sin.vueltasAtras).toEqual([]);
+      expect(sin.reemplazos).toEqual(['#/r/f1']);
+    });
+
+    it('Convertir una receta nueva termina en la receta creada, en lugar del editor', async () => {
+      vi.stubGlobal('navigator', { share: async () => {}, canShare: () => true });
+      const { abrir, tocar, vueltasAtras, reemplazos } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      await tocar('convertir-con-agente');
+      expect(vueltasAtras).toEqual([]);
+      expect(reemplazos).toEqual(['#/r/nuevo-1']);
+    });
+
+    it.each([
+      ['guardar', 'guardar-categoria'],
+      ['borrar', 'borrar-categoria-confirmado']
+    ])('%s una categoría vuelve a la lista', async (_caso, accion) => {
+      const { abrir, tocar, vueltasAtras, reemplazos } = await montar();
+      await abrir('#/categorias');
+      await abrir('#/categorias/c1');
+      estado.formulario = { nombre: 'Carnes rojas', color: 'carnes', foto: 'catalogo:carnes' };
+      await tocar(accion);
+      expect(vueltasAtras).toHaveLength(1);
+      expect(reemplazos).toEqual([]);
+      expect(global.location.hash).toBe('#/categorias');
+    });
+
+    it.each([
+      ['guardar', 'guardar-categoria'],
+      ['borrar', 'borrar-categoria-confirmado']
+    ])('sin historial, %s una categoría pone la lista en su lugar', async (_caso, accion) => {
+      const { tocar, vueltasAtras, reemplazos } = await montar({ hash: '#/categorias/c1' });
+      estado.formulario = { nombre: 'Carnes rojas', color: 'carnes', foto: 'catalogo:carnes' };
+      await tocar(accion);
+      expect(vueltasAtras).toEqual([]);
+      expect(reemplazos).toEqual(['#/categorias']);
+    });
+
+    it('borrar una receta vuelve dos entradas: ni la receta ni el editor quedan atrás', async () => {
+      const { abrir, tocar, saltos, reemplazos, pila } = await montar();
+      await abrir('#/c/Carnes');
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      await tocar('borrar-confirmado');
+      expect(estado.recetasBorradas).toEqual(['f1']);
+      expect(saltos).toEqual([-2]);
+      expect(reemplazos).toEqual([]);
+      expect(pila().map(e => e.hash)).toEqual(['', '#/c/Carnes']);
+    });
+
+    it('sin dos entradas atrás, borrar una receta va al Recetario', async () => {
+      const { abrir, tocar, saltos, reemplazos } = await montar({ hash: '#/r/f1' });
+      await abrir('#/r/f1/editar');
+      await tocar('borrar-confirmado');
+      expect(saltos).toEqual([]);
+      expect(reemplazos).toEqual(['#/']);
+    });
+
+    it('elegir en Agregar al plan vuelve una entrada y dibuja el plan una sola vez', async () => {
+      const { abrir, tocar, pinturas, vueltasAtras, reemplazos } = await montar();
+      await abrir('#/plan');
+      await abrir('#/plan/agregar?dia=2&momento=noche');
+      const antes = pinturas.length;
+      await tocar('elegir-para-el-plan', { id: 'f1' });
+      expect(vueltasAtras).toHaveLength(1);
+      expect(reemplazos).toEqual([]);
+      expect(global.location.hash).toBe('#/plan');
+      expect(dibujos(pinturas.slice(antes), 'data-accion="agregar-al-plan"')).toBe(1);
+    });
+
+    it('sin historial, elegir en Agregar al plan pone el plan en su lugar, y lo dibuja una sola vez', async () => {
+      const { tocar, pinturas, vueltasAtras, reemplazos } = await montar({ hash: '#/plan/agregar?dia=2&momento=noche' });
+      const antes = pinturas.length;
+      await tocar('elegir-para-el-plan', { id: 'f1' });
+      expect(vueltasAtras).toEqual([]);
+      expect(reemplazos).toEqual(['#/plan']);
+      expect(dibujos(pinturas.slice(antes), 'data-accion="agregar-al-plan"')).toBe(1);
+    });
+
+    it('Salir de la cocina abierta desde la receta vuelve dos entradas', async () => {
+      const { abrir, tocar, saltos, reemplazos } = await montar();
+      await abrir('#/c/Carnes');
+      await abrir('#/r/f1');
+      await tocar('cocinar');
+      await tocar('salir-cocina');
+      expect(saltos).toEqual([-2]);
+      expect(reemplazos).toEqual([]);
+      expect(global.location.hash).toBe('#/c/Carnes');
+    });
+
+    it('Salir de una cocina a la que se llegó por un link pone la categoría en su lugar', async () => {
+      const { abrir, tocar, saltos, vueltasAtras, reemplazos } = await montar();
+      await abrir('#/r/f1/cocinar');
+      await tocar('salir-cocina');
+      expect(saltos).toEqual([]);
+      expect(vueltasAtras).toEqual([]);
+      expect(reemplazos).toEqual(['#/c/Carnes']);
+    });
+
+    it('sin historial, Salir de la cocina pone la categoría en su lugar', async () => {
+      const { tocar, reemplazos } = await montar({ hash: '#/r/f1/cocinar' });
+      await tocar('salir-cocina');
+      expect(reemplazos).toEqual(['#/c/Carnes']);
+    });
+
+    it('el chevron de la cocina vuelve una entrada', async () => {
+      const { abrir, tocar, vueltasAtras, reemplazos } = await montar();
+      await abrir('#/r/f1');
+      await tocar('cocinar');
+      await tocar('volver-receta');
+      expect(vueltasAtras).toHaveLength(1);
+      expect(reemplazos).toEqual([]);
+      expect(global.location.hash).toBe('#/r/f1');
+    });
+
+    it('sin historial, el chevron de la cocina pone la receta en su lugar', async () => {
+      const { tocar, vueltasAtras, reemplazos } = await montar({ hash: '#/r/f1/cocinar' });
+      await tocar('volver-receta');
+      expect(vueltasAtras).toEqual([]);
+      expect(reemplazos).toEqual(['#/r/f1']);
+    });
+  });
+
+  describe('la pregunta de cambios sin guardar, con un destino nuevo', () => {
+    it('deshace la entrada del link: la pila queda como antes', async () => {
+      estado.formulario = { titulo: 'Milanesas' };
+      const { abrir, pila, preguntas, vueltasAtras, empujados, app } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      const antes = pila();
+      estado.formulario = { titulo: 'Otra cosa' };
+      await abrir('#/plan');
+      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
+      expect(vueltasAtras).toHaveLength(1);
+      expect(empujados).toEqual([]);
+      expect(pila()).toEqual(antes);
+      expect(app.innerHTML).toContain('data-formulario');
+    });
+
+    it('Seguir editando no deja entradas de más', async () => {
+      estado.formulario = { titulo: 'Milanesas' };
+      const { abrir, tocar, pila, preguntas } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      const antes = pila();
+      estado.formulario = { titulo: 'Otra cosa' };
+      await abrir('#/plan');
+      await tocar('seguir-editando');
+      expect(preguntas).toEqual([]);
+      expect(pila()).toEqual(antes);
+    });
+
+    it('Salir sin guardar va al destino anotado', async () => {
+      estado.formulario = { titulo: 'Milanesas' };
+      const { abrir, tocar, pila, app } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      const antes = pila();
+      estado.formulario = { titulo: 'Otra cosa' };
+      await abrir('#/plan');
+      await tocar('salir-sin-guardar');
+      expect(global.location.hash).toBe('#/plan');
+      expect(pila().map(e => e.hash)).toEqual([...antes.map(e => e.hash), '#/plan']);
+      expect(app.innerHTML).not.toContain('data-formulario');
+      expect(app.innerHTML).toContain('data-accion="agregar-al-plan"');
+    });
+
+    it('en #/nueva con algo compartido, tocar Nueva receta en el menú pregunta', async () => {
+      const { abrir, preguntas, app } = await montar();
+      await abrir('#/nueva?text=hola');
+      await abrir('#/nueva');
+      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
+      expect(global.location.hash).toBe('#/nueva?text=hola');
+      expect(app.innerHTML).toContain('data-formulario');
+    });
+  });
+
+  describe('el arranque dibuja una sola vez', () => {
+    it('en #/', async () => {
+      const { pinturas } = await montar({ hash: '#/' });
+      expect(pinturas.filter(p => p.html.includes('class="grilla"'))).toHaveLength(1);
+    });
+
+    it('en #/ después de reindexar', async () => {
+      estado.reconstruirAlArrancar = true;
+      const conReconstruir = storeFake as typeof storeFake & {
+        reconstruir?: () => Promise<{ ignorados: string[]; sinBorrador: string[] }>;
+      };
+      conReconstruir.reconstruir = async () => ({ ignorados: [], sinBorrador: [] });
+      try {
+        const { pinturas } = await montar({ hash: '#/' });
+        expect(pinturas.filter(p => p.html.includes('class="grilla"'))).toHaveLength(1);
+      } finally {
+        delete conReconstruir.reconstruir;
+      }
+    });
+
+    it('en un hash que redirige a la carpeta', async () => {
+      estado.eligiendo = [{ id: 'r1', name: 'Recetario' }];
+      const { pinturas } = await montar({ hash: '#/ajustes' });
+      expect(global.location.hash).toBe('#/carpeta');
+      expect(pinturas.filter(p => p.html.includes('Tus recetas en Drive'))).toHaveLength(1);
     });
   });
 

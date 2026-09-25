@@ -128,12 +128,12 @@ export function rutaDeInvitado(hash: unknown): RutaInvitado | null {
 
 export const esHashDeInvitado = (hash: unknown): boolean => rutaDeInvitado(hash) !== null;
 
+/**
+ * Avisa cada cambio de hash con la ruta que llegó. `iniciar` avisa la del
+ * arranque. Navegar no es de acá: es de `navegacion.ts`.
+ */
 export function crearRouter(alCambiar: (ruta: Ruta) => void) {
   const disparar = () => alCambiar(parsearHash(location.hash));
   window.addEventListener('hashchange', disparar);
-  return {
-    ir: (hash: string) => { location.hash = hash; },
-    atras: () => history.back(),
-    iniciar: disparar
-  };
+  return { iniciar: disparar };
 }

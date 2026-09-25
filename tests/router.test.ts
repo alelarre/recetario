@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { parsearHash, hashDeCompartido, rutaDeInvitado, esHashDeInvitado } from '../src/ui/router.js';
+import { describe, it, expect, afterEach } from 'vitest';
+import { parsearHash, hashDeCompartido, rutaDeInvitado, esHashDeInvitado, crearRouter } from '../src/ui/router.js';
+import type { Ruta } from '../src/ui/router.js';
+import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 
 describe('parsearHash', () => {
   it('la raíz es el Recetario', () => {
@@ -149,5 +151,25 @@ describe('rutaDeInvitado', () => {
     expect(rutaDeInvitado('')).toBeNull();
     expect(esHashDeInvitado('#/ver?r=x')).toBe(true);
     expect(esHashDeInvitado('#/verduras')).toBe(false);
+  });
+});
+
+describe('crearRouter', () => {
+  afterEach(limpiarGlobales);
+
+  it('sólo avisa la ruta de cada cambio de hash y la del arranque: navegar no es de acá', () => {
+    const oyentes: Record<string, () => void> = {};
+    global.window = comoGlobal<Window & typeof globalThis>({
+      addEventListener: (ev: string, fn: () => void) => { oyentes[ev] = fn; }
+    });
+    global.location = comoGlobal<Location>({ hash: '#/plan' });
+    const rutas: Ruta[] = [];
+    const router = crearRouter(ruta => { rutas.push(ruta); });
+    expect(Object.keys(router)).toEqual(['iniciar']);
+
+    router.iniciar();
+    global.location.hash = '#/ajustes';
+    oyentes['hashchange']?.();
+    expect(rutas.map(r => r.vista)).toEqual(['plan', 'ajustes']);
   });
 });

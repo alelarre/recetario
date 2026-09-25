@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { comoGlobal, limpiarGlobales } from './dom-falso.js';
+import { comoGlobal, limpiarGlobales, historialFalso } from './dom-falso.js';
 import { parse } from '../src/recipe.js';
 import { codificar } from '../src/link-receta.js';
 
@@ -12,8 +12,6 @@ async function montar(hash: string) {
     innerHTML: '',
     addEventListener: (ev: string, fn: (e: unknown) => unknown) => { (oyentes[ev] ??= []).push(fn); }
   };
-  const reemplazos: string[] = [];
-  const atras: number[] = [];
   const recargas: number[] = [];
   global.document = comoGlobal<Document>({
     title: '', visibilityState: 'visible',
@@ -23,17 +21,20 @@ async function montar(hash: string) {
   global.window = comoGlobal<Window & typeof globalThis>({
     addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; }, scrollTo: () => {}, scrollY: 0
   });
-  global.location = comoGlobal<Location>({ hash, replace: (h: string) => { reemplazos.push(h); global.location.hash = h; },
-    reload: () => { recargas.push(1); }
+  const historial = historialFalso({
+    hash, alCambiarHash: () => { listeners['hashchange']?.(); }, location: { reload: () => { recargas.push(1); } }
   });
-  global.history = comoGlobal<History>({ back: () => { atras.push(1); } });
+  const { reemplazos, vueltasAtras: atras } = historial;
+  global.location = comoGlobal<Location>(historial.location);
+  global.history = comoGlobal<History>(historial.history);
 
   const { iniciarInvitado } = await import('../src/invitado.js');
   iniciarInvitado();
   await esperar();
   return {
     app, reemplazos, atras, recargas,
-    abrir: async (h: string) => { global.location.hash = h; listeners['hashchange']?.(); await esperar(); },
+    /** Un link o la barra del navegador: una entrada nueva, que avisa con `hashchange`. */
+    abrir: async (h: string) => { global.location.hash = h; await esperar(); },
     tocar: async (accion: string, datos: Record<string, string> = {}) => {
       const boton = { dataset: { accion, ...datos } };
       for (const fn of oyentes['click'] ?? []) await fn({ target: { closest: () => boton } });

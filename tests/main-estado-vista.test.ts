@@ -74,7 +74,7 @@ describe('main.ts: la vista de una receta', () => {
       google: {}, addEventListener: (ev: string, fn: () => void) => { hashListeners[ev] = fn; }
     });
     global.location = comoGlobal<Location>({ hash: '' });
-    global.history = comoGlobal<History>({ back: () => {} });
+    global.history = comoGlobal<History>({ back: () => {}, replaceState: () => {} });
 
     await import('../src/main.js');
     await esperarMicrotareas();

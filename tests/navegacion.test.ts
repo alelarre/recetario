@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { crearNavegacion } from '../src/navegacion.js';
 import { historialFalso } from './dom-falso.js';
 
@@ -186,3 +187,15 @@ describe('la navegación', () => {
   });
 });
 
+describe('un solo lugar toca location e history', () => {
+  // Salvo la navegación, nadie cambia la URL ni se mueve por el historial.
+  // `location.reload` no cuenta: recargar no es navegar.
+  it.each(['src/main.ts', 'src/invitado.ts', 'src/ui/router.ts', 'src/cocina-control.ts'])('%s', (archivo) => {
+    const prohibidos = [
+      /location\.hash\s*=[^=]/, /location\.replace\(/, /history\.back\(/, /history\.go\(/,
+      /pushState\(/, /replaceState\(/
+    ];
+    const lineas = readFileSync(archivo, 'utf8').split('\n');
+    expect(lineas.filter(l => prohibidos.some(p => p.test(l)))).toEqual([]);
+  });
+});
