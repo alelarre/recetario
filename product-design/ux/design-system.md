@@ -81,7 +81,7 @@ identidad prohíbe.
 | `--acento-suave` | `#39291D` | El fondo de un elemento con el acento aplicado. | — |
 | `--error` | `#D95F52` | **Solo para operaciones que fallaron.** | **4.6:1** |
 | `--error-suave` | `#33191A` | El fondo del aviso con acción. | — |
-| `--exito` | `#53DA6E` | **Solo el tilde con el que cierra el velo de escritura** (§6.17b). | **9.3:1** |
+| `--exito` | `#53DA6E` | **Solo el tilde con el que cierra el velo** (§6.17b). | **9.3:1** |
 
 **`--exito` es el hermano verde del error:** la misma saturación y la misma
 luminosidad, a 126° de matiz. Sobre el velo, que es donde se lo ve, da 10.7:1.
@@ -389,17 +389,22 @@ Un **spinner** de 24 px en `--fg-3`, centrado en el lugar donde va a aparecer el
 contenido — nunca una pantalla de carga completa. Existe porque un bloque quieto
 y vacío no se distingue de un bloque vacío de verdad.
 
-**El velo de escritura no usa spinner: usa la olla** (§6.17b). Son las dos
-únicas animaciones en bucle del sistema, y se reparten así: el spinner dice que
-se está esperando algo, la olla dice que la app está escribiendo.
+**La olla quiere decir «la app está ocupada y no se puede tocar»** (§6.17b),
+sea una escritura o una espera que no escribe. **El spinner es sólo para lo que
+no bloquea**: el botón del PDF que se arma, el final de una lista que tiene más,
+la conexión con Google. Son las dos únicas animaciones en bucle del sistema, y
+no se mezclan: donde la pantalla está tapada no hay spinner, y donde se puede
+seguir tocando no hay olla.
 
-**Y es la única que tiene final:** cuando la escritura sale bien, la olla se
-tapa y aparece un tilde antes de que el velo se vaya (§6.17b). Es la única
-excepción a que todo lo demás sea instantáneo, y dura 1850 ms.
+**La olla es la única que tiene final:** cuando una escritura sale bien, la olla
+se tapa y aparece un tilde antes de que el velo se vaya (§6.17b). Es la única
+excepción a que todo lo demás sea instantáneo, y dura 1850 ms. Una espera que no
+escribe no tiene tilde, y si dura menos de 250 ms la olla no llega a verse.
 
-**El reindexado no usa ninguno de los dos:** usa barra de progreso, porque ahí
-hay un número que decir (`E05-Cimientos.md` C05.5.2). La regla es esa — con
-número, barra; sin número, spinner.
+**El reindexado y la carpeta base no usan ninguno de los dos:** usan barra de
+progreso, en una tarjeta sobre el mismo velo, porque ahí hay un número que decir
+(`E05-Cimientos.md` C05.5.2). La regla es esa — con número, barra; sin número,
+olla si bloquea y spinner si no.
 
 **`prefers-reduced-motion: reduce` elimina los cinco movimientos:** el menú
 aparece sin transición, el carrusel salta, el spinner queda quieto, la estrella
@@ -415,9 +420,9 @@ acorta.
 
 ## 6. Componentes core
 
-Con tokens aplicados. Los que son sistema —encabezado, ficha, botón, tarjeta,
-placeholder, chip, carrusel, campo, aviso, ítem de
-ingrediente, spinner, miniatura, galería y foto en línea— están en
+Con tokens aplicados. Los que son sistema —encabezado, ficha, botón, fila,
+tarjeta, lista, placeholder, chip, carrusel, campo, aviso, ítem de
+ingrediente, spinner, cuadro de foto, miniatura, galería y foto en línea— están en
 `src/ui/tokens.css`; los que son de una pantalla, en `src/ui/base.css`.
 
 ### 6.0 Cómo responde un control
@@ -465,6 +470,20 @@ pantalla.
 
 **Estados:** normal · presionada (`--surface-alta`, §6.0) · sin foto (§6.2) ·
 con marcas.
+
+**La base es la fila** (`.fila`): la tarjeta, la fila de una categoría en
+Ajustes y una carpeta encontrada comparten el contenedor —en una línea,
+centrado, `--e-3` de padding y entre las partes, `--surface`, borde 1 px
+`--borde`, `--r-ficha`, sin subrayado aunque sea un enlace—, y cada una suma
+lo suyo.
+
+**La lista** apila las tarjetas con `--e-2` entre sí (`.lista`). En los
+resultados cada grupo (`.grupo-res`) lleva su rótulo (`.rot`) a `--e-3` de sus
+tarjetas, y los grupos se separan `--e-5` entre sí (`.grupos`): más que las
+filas de cada uno. **Ninguna fila de una lista lleva margen propio** —el
+carrusel de tags, las duraciones, el orden, el rótulo—: las separa el `gap` de
+lo que las apila, el cuerpo de la pantalla o el grupo. Un margen se sumaría a
+ese `gap`. Al final, mientras falta un tramo, el spinner (§5.1).
 
 ### 6.2 Placeholder de foto
 
@@ -566,6 +585,7 @@ foto» al elegir la foto de una categoría.
 
 **La foto propia** —una subida por el usuario, no del catálogo— se dibuja igual,
 pero se pide a Drive con el token: hasta que llega, el tile queda con su color.
+En la muestra de la edición, si ya no está en Drive lo dice (§6.27).
 Al elegirla, *Subir foto* es la primera muestra de la fila: un botón de
 `--surface-alta` con el ícono `camara`, del mismo tamaño que las demás.
 
@@ -608,10 +628,11 @@ una carpeta encontrada, en la pantalla de la carpeta base. **Su área
 táctil sigue siendo de 48 px**, porque el alto de la barra la completa; en
 cocina, de 64 (§6.12). Suelto en el cuerpo de una pantalla no se usa.
 
-**Estados:** normal · presionado y hover (§6.0) · trabajando (el texto se
-reemplaza por el verbo en gerundio: *"Guardando…"*; en la ficha de compartir, un
-spinner de 16 px adelante: *"Armando el PDF…"*) · deshabilitado (`--fg-3`, sin
-fondo, borde `--borde`).
+**Estados:** normal · presionado y hover (§6.0) · trabajando, sólo en la ficha
+de compartir (un spinner de 16 px adelante: *"Armando el PDF…"*) ·
+deshabilitado (`--fg-3`, sin fondo, borde `--borde`). **Un botón que lanza una
+operación que bloquea no cambia:** ni texto ni deshabilitado. El velo lo tapa y
+ya dice que se está trabajando (§6.17b).
 
 **Con ícono,** va a la izquierda de la palabra, a `--ico`, con `--e-2` de
 separación.
@@ -885,72 +906,88 @@ sirve para saber si el teléfono ya tomó la última publicación.
 **Dos comportamientos según el ancho, un solo menú.** Abajo de 900 px es un cajón
 que entra desde la izquierda en 200 ms, sobre un velo de `--velo` al 60 %, y se
 abre con el botón de hamburguesa del encabezado o deslizando hacia la derecha; el
-velo lo cierra al tocarlo, y deslizar hacia la izquierda también. **El gesto
+velo lo cierra al tocarlo, y deslizar hacia la izquierda y el atrás también. **El gesto
 empieza a 24 px del borde** —desde el borde mismo Android lo toma como «atrás»— y
-no arranca sobre el carrusel de tags (§6.21) ni la fila de duraciones (§6.19),
-que se deslizan en el mismo sentido. **Vale en toda la pantalla, también donde
+no arranca sobre un carrusel (§6.21), que se desliza en el mismo sentido: la
+pista de todo carrusel lleva `data-deslizable`, y el gesto no empieza sobre
+nada que la lleve. **Vale en toda la pantalla, también donde
 no hay contenido:** una lista corta deja abajo un área vacía y el dedo tiene
 que abrir el menú ahí igual.
 Desde 900 px queda fijo, el velo y la hamburguesa desaparecen, y el contenido se
-corre 260 px. **Es sólo CSS:** la misma marca dibujada, una consulta de medios
-decide. Con `prefers-reduced-motion` el cajón aparece sin transición.
+corre 260 px. **Queda fijo en todas las pantallas**, también en las que no son
+destino del menú —la receta, la cocina, el editor—: ahí no marca ninguna
+entrada, y abajo de 900 px no se dibuja. La misma marca dibujada, una consulta
+de medios decide; los dos anchos, 260 y 900, están en `ui/gesto-menu.ts` y el
+CSS usa los mismos. Con `prefers-reduced-motion` el cajón aparece sin
+transición.
 
 **Abrir y cerrar no redibuja la pantalla:** se cambian las clases del panel y del
 velo que ya están dibujados. En la receta nueva, redibujar borraría lo escrito.
 
 **Con el cajón abierto, la página de atrás no se desplaza:** el velo tapa el
 toque, pero sin eso un deslizamiento vertical scrollea justo lo que el velo
-tapa. Es la misma regla que las fichas al pie (§6.23) y el velo de escritura
+tapa. Es la misma regla que las fichas al pie (§6.23) y el velo
 (§6.17b). Desde 900 px no aplica: ahí el menú es fijo y el velo no se dibuja.
 
 **A la izquierda, también en teléfono.** Es de donde vienen los cajones en
 Android, y el pulgar que lo abre es el mismo que toca la hamburguesa, que está
 del mismo lado.
 
-### 6.17b Velo de escritura
+### 6.17b El velo
 
-Mientras la app escribe en Drive o en Sheets, un velo de `--velo` al 60 % cubre
-la pantalla entera con **la olla que se revuelve** centrada. Sin transición:
-aparece con el toque que lanza la escritura —no cuando la escritura arranca— y
-se va cuando termina, bien o mal.
+**La app ocupada no se toca.** Mientras escribe en Drive o en Sheets, o espera
+algo que tarda, un velo de `--velo` al 60 % cubre la pantalla entera con **la
+olla que se revuelve** centrada. Sin transición: aparece con el toque que lanza
+la operación —no cuando la escritura arranca— y se va cuando termina, bien o
+mal. Es uno solo para toda la app, con tres formas (`E05-Cimientos.md` R8):
+escribir, con la olla y el tilde; esperar, con la olla sin tilde y visible
+recién a los 250 ms; y con progreso, con la tarjeta de la barra.
 
-**La olla** es un dibujo de unos 96 px en `--fg-2`: el cuerpo y el borde, tres
-hilos de vapor que suben escalonados, y la tapa levantada unos milímetros sobre
-el borde. Adentro, una cuchara en `--acento` —el palo y la parte redonda— va de
-lado a lado sin girar, en un loop de 1,6 s. Con
-`prefers-reduced-motion: reduce` queda quieta, con la cuchara apoyada y el
-vapor detenido (§5.1).
+**La olla** es un dibujo de unos 96 px en `--fg-2`: el cuerpo y el borde, y
+tres hilos de vapor que suben escalonados. Adentro, una cuchara en `--acento`
+—el palo y la parte redonda— va de lado a lado sin girar, en un loop de 1,6 s.
+**La tapa no se ve mientras se revuelve**: con ella puesta no se podría
+revolver. Con `prefers-reduced-motion: reduce` queda quieta, con la cuchara
+apoyada y el vapor detenido (§5.1).
 
 **El cierre, sólo cuando la escritura salió bien:** la cuchara y el vapor se
-van, la tapa baja sobre la olla y encima se dibuja un tilde en `--exito`. Todo
-en 1850 ms: el trazo del tilde arranca a los 300, termina a los 875 y el dibujo
-se queda quieto 975 ms más, que es lo que hace falta para llegar a verlo en el
-teléfono. Recién ahí sigue lo que venía. Si la escritura falla no hay
-cierre: el velo se va de una y queda el aviso. Con
-`prefers-reduced-motion: reduce` la tapa y el tilde aparecen sin dibujarse,
-pero los 1850 ms son los mismos: se saca el movimiento, no el tiempo (§5.1).
+van, la tapa aparece y baja 6 px hasta quedar puesta sobre la olla, en 180 ms,
+y encima se dibuja un tilde en `--exito`. Todo en 1850 ms: el trazo del tilde
+arranca a los 300, termina a los 875 y el dibujo se queda quieto 975 ms más, que
+es lo que hace falta para llegar a verlo en el teléfono. Si la escritura falla,
+o si era una espera, no hay cierre: el velo se va de una. Con
+`prefers-reduced-motion: reduce` la tapa y el tilde aparecen sin moverse ni
+dibujarse, pero los 1850 ms son los mismos: se saca el movimiento, no el tiempo
+(§5.1).
 
 **El orden se ve entero, y en este orden:** la olla revolviendo mientras se
 escribe, el tilde cuando terminó, y recién después la pantalla a la que se va
-—cerrar el editor, volver a la receta—. El velo sigue tapando mientras dibuja
-el tilde, así que el repintado de esa pantalla queda por debajo y no se ve
-pasar; se va cuando esa pantalla ya está dibujada. Lo que sí se suelta apenas
-arranca el cierre es la espera: `aria-busy` se saca y la pantalla deja de estar
-ocupada, así que navegar no lo frena nadie. Si nadie dibuja nada —un guardado
+—cerrar el editor, volver a la receta—. Durante el tilde la app sigue ocupada:
+no se toca, no se desplaza y no se navega. Cuando el tilde termina se navega, y
+el velo sigue puesto hasta que la pantalla de destino está dibujada, así su
+repintado queda por debajo y no se ve pasar. Si nadie dibuja nada —un guardado
 que no lleva a ningún lado— el velo se va solo un rato después.
+
+**La tarjeta de progreso** reemplaza a la olla en el reindexado y en la
+preparación de la carpeta base: una ficha centrada de hasta 320 px de ancho
+—`--surface`, borde 1 px `--borde`, `--r-ficha`, padding `--e-4`— con el texto
+de lo que se hace, *«Reindexando…»* o *«Preparando la carpeta…»*, y debajo, a
+`--e-3`, la barra: 8 px de alto, `--surface-alta` con `--r-chico`, y lo hecho en
+`--acento`, de punta a punta. Va adentro del velo y nunca en la pantalla de
+atrás. No tiene cierre: termina y se va.
 
 **El velo tiñe el fondo y no a la olla:** es `color-mix` sobre el fondo, no
 `opacity` sobre el elemento entero, así el dibujo se ve a pleno.
 
 **Recibe el toque**, así que ningún control de abajo responde, y el contenido
-queda marcado como ocupado (`aria-busy`). **Y frena el scroll:** mientras está,
-la página de atrás no se desplaza, con la misma regla que las fichas al pie
-(`html:has(...) { overflow: hidden }`). Las dos cosas valen mientras escribe, no
-mientras cierra. No es una pantalla de carga: lo que estaba sigue dibujado
-debajo, incluido el botón que dice «Guardando…».
+queda marcado como ocupado (`aria-busy`) hasta que termina el tilde. **Y frena
+el scroll:** mientras está, también durante el tilde, la página de atrás no se
+desplaza, con la misma regla que las fichas al pie
+(`html:has(...) { overflow: hidden }`). No es una pantalla de carga: lo que
+estaba sigue dibujado debajo, tal como estaba —ningún botón cambia su texto—.
 
-Qué operaciones lo muestran, cuáles lo cierran con el tilde y cuáles no lo
-muestran está en `product/specs/E05-Cimientos.md` R8.
+Qué operaciones lo muestran, con qué forma y cuáles no lo muestran está en
+`product/specs/E05-Cimientos.md` R8.
 
 ### 6.18 Botones de duración, en el editor
 
@@ -980,8 +1017,9 @@ categoría y en la lista por tag. Mismo chip que §6.10 —`.fila-dur .chip`—,
 con el relojito (14 px, como cualquier ícono de chip) y la cantidad en
 `--fg-3` a la derecha del valor, en el orden de los cinco valores.
 
-Se desliza de costado como el carrusel de tags, pero sin degradé ni flechas, y
-con margen negativo para llegar hasta el borde de la pantalla.
+**Es un carrusel** (§6.21), igual que el de tags: se desliza de costado, con el
+degradé que dice que sigue, las flechas con mouse o trackpad y la misma
+alineación que la fila de tags de arriba.
 
 Un chip encendido usa la variante `.act` —fondo `--acento-suave`, borde y
 texto `--acento`—, la misma de un tag encendido. `--fondo-reloj` sigue al fondo
@@ -1012,9 +1050,9 @@ lista tiene duración.
 
 **El marco es un componente reusable:** una pista que se desliza de costado con
 lo que le pongan adentro, `--e-2` entre ítem e ítem, sin barra de scroll, el
-degradé a los lados y las dos flechas. Lo usan el **carrusel de tags** y el
-**carrusel de fotos de la receta** (§6.26), y puede haber más de uno en la misma
-pantalla: cada marco lleva su propia timeline de scroll, y una flecha mueve la
+degradé a los lados y las dos flechas. Lo usan el **carrusel de tags**, la
+**fila de duraciones** (§6.19) y el **carrusel de fotos de la receta** (§6.26), y
+puede haber más de uno en la misma pantalla: cada marco lleva su propia timeline de scroll, y una flecha mueve la
 pista de su marco. Cada uno define a qué color va su degradé según el fondo que
 tenga atrás.
 
@@ -1043,6 +1081,9 @@ ninguno, y donde no haya soporte se ven los dos siempre.
 `volver` a la izquierda y `chevron` a la derecha. Aparecen y desaparecen con el
 mismo rango que su degradé, y mientras están ocultas no se pueden tocar. Con
 flechas, el carrusel deja 40 px de aire a cada lado.
+
+**La pista lleva `data-deslizable`:** sobre ella el dedo es del carrusel, y el
+gesto del menú lateral no empieza (§6.17).
 
 ### 6.22 Estrella de favorito
 
@@ -1081,7 +1122,8 @@ con `--e-2` entre sí: **PDF**, **Link**, **Texto** y **Cancelar**.
 | **Sin portapapeles** | *"Copialo desde acá:"* y el contenido en un cuadro —`--bg`, borde `--borde`, `--r-medio`, `--txt-chico` `--fg-2`, hasta 40 % del alto de la pantalla, seleccionable de un toque— y *Listo*. |
 
 **Con la ficha abierta, la página de atrás no se desplaza.** La cierran
-*Cancelar*, el velo y volver. Es estado de la pantalla, no una ruta.
+*Cancelar*, el velo y el atrás, que la cierra sin salir de la pantalla. Es
+estado de la pantalla, no una ruta.
 
 **La ficha nunca pasa el alto de la ventana.** El alto se mide contra **la
 ventana chica**, la que se ve con la barra de direcciones puesta: medida contra
@@ -1175,7 +1217,8 @@ tocó**: desde el carrusel de una receta, entre las del carrusel; desde la fila
 de fotos del editor, entre las del depósito; una foto que no es de una tira —la
 portada, la de un paso— se abre sola. El dedo
 pasa a la siguiente o a la anterior, sin dar la vuelta en los extremos, y ese
-gesto no la cierra. Es estado de la pantalla, no una ruta.
+gesto no la cierra. El atrás lo cierra sin salir de la pantalla. Es estado de
+la pantalla, no una ruta.
 
 ### 6.26 Las fotos de la receta
 
@@ -1209,8 +1252,8 @@ aparece.
 **Las fichas de foto del editor** se abren al pie, sobre el velo de `--velo` al
 60 %, como la ficha de compartir (§6.23): `--surface`, `--r-ficha` en las dos
 esquinas de arriba, ancho máximo 680 px, hasta 80 % del alto de la pantalla, y
-el padding de abajo con el área segura. Tocar el velo las cierra, y por eso
-ninguna tiene *Cancelar*. Mientras una está abierta, la página de atrás no se
+el padding de abajo con el área segura. Tocar el velo o el atrás las cierra, y
+por eso ninguna tiene *Cancelar*. Mientras una está abierta, la página de atrás no se
 desplaza. Son cuatro:
 
 | Ficha | Qué muestra |
@@ -1223,6 +1266,25 @@ desplaza. Son cuatro:
 **El botón de portada**, en el campo *Portada* de Contenido, es un cuadrado de
 96 px con `--r-foto`: la miniatura de la cabecera actual, o un recuadro
 punteado de `--borde-fuerte` que dice *Sin foto* en *micro* `--fg-3`.
+
+### 6.27 Cuadro de foto
+
+Donde una foto tiene su propio cuadro —la cabecera y el carrusel de la receta,
+la fila de fotos, las galerías y la portada del editor, las fotos de una
+categoría y su muestra— es un **cuadro de foto** (`.cuadro-foto`): el cuadro
+lleva el tamaño, `--r-foto` y el fondo `--surface-alta`, que es lo que se ve
+mientras la foto llega; la imagen lo llena recortada (`object-fit: cover`). Una
+foto de Drive y una nueva del editor, que todavía está en memoria, se dibujan en
+el mismo cuadro.
+
+**Si la foto no está, el cuadro queda con el motivo** (`.miniatura-vacia`), del
+mismo tamaño: *«La foto ya no está en Drive.»* o *«No se pudo cargar la foto.»*,
+como en la fila de fotos (§6.25). Afuera de un cuadro —una foto en línea, la de
+una tarjeta— la foto que no está no se dibuja.
+
+**Adentro de un tile** (§6.4) —la muestra de la categoría que se edita— el cuadro
+no lleva radio: recorta el tile. El recuadro del motivo va encima del tinte del
+color de la categoría, que no lo tapa.
 
 ---
 

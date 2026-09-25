@@ -83,7 +83,7 @@ con Agente**: compartir y tocar Guardar alcanza para que la receta exista.
 
 - [ ] Guardar sube las fotos a `_fotos/`, escribe el `.md` en `_sin-categoria/` —o en la categoría elegida— y su fila del índice, por el store (C04.5.1).
 - [ ] Al terminar, el editor se cierra y la app queda en la receta guardada. No hay pantalla de atrás: la entrada del historial era la del menú Compartir.
-- [ ] Mientras guarda, el botón indica que está trabajando y no se puede tocar dos veces, con el velo y el tilde (R8).
+- [ ] Mientras guarda, el velo tapa la pantalla y cierra con el tilde (`E05-Cimientos.md` R8): el botón no cambia y no se puede tocar dos veces.
 
 #### C01.2.3 — Las fotos que llegan *(J2)*
 

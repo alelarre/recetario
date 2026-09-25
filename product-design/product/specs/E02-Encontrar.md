@@ -40,21 +40,29 @@ de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 
 - [ ] Cargando: la búsqueda ya usable; las categorías con su espacio reservado, sin salto al llegar.
 - [ ] Sin recetas: las categorías se ven igual, vacías, y una línea dice cómo entra una receta: *«Todavía no hay recetas. Entran con Nueva receta, compartiendo desde otra app, o como archivos .md en las carpetas de Drive.»*
+- [ ] Sin recetas terminadas pero con borradores, la línea dice cuántos esperan: *«Todavía no hay recetas terminadas. Hay 3 en Borradores.»*
 - [ ] Sin red: el aviso arriba, y **ni la búsqueda ni las categorías se dibujan con datos viejos** (C05.8.1).
 - [ ] Si la app no puede abrir el índice, no llega al Recetario: la salida es la de C05.6.2.
 
 #### C02.1.3 — El menú lateral *(J1, J5)*
 
-- [ ] Lo dibujan las pantallas a las que se llega desde él: el Recetario, Borradores, el plan de la semana, la receta nueva y Ajustes. Lleva Inicio, Borradores con su contador, Plan de la semana, Nueva receta y Ajustes, y al pie la versión de la app.
+- [ ] Lo dibujan las pantallas a las que se llega desde él: el Recetario, Borradores, el plan de la semana, la receta nueva y Ajustes. Desde 900 px lo dibujan todas, fijo (`E05-Cimientos.md` C05.10.1). Lleva Inicio, Borradores con su contador, Plan de la semana, Nueva receta y Ajustes, y al pie la versión de la app.
 - [ ] **Borradores** es la lista por tag de `borrador` (C02.6.5) dibujada como destino del menú (`E01-CapturaYBorradores.md` C01.4.1), y **es el único camino a los borradores:** el Recetario no tiene un tile para lo que no tiene categoría, y `borrador` no aparece en ninguna lista de tags (C02.6.4). **Nueva receta** abre el editor vacío (`E04-Corregir.md` C04.3b.1) y es la única entrada de la app para crear una receta a mano; como es una acción y no un lugar, no queda marcada.
-- [ ] En el teléfono está cerrado: se abre con el botón del encabezado y se cierra tocando el velo o eligiendo un destino. Desde 900 px de ancho queda fijo y el botón no se dibuja.
+- [ ] En el teléfono está cerrado: se abre con el botón del encabezado y se cierra tocando el velo, eligiendo un destino o con el atrás, que lo cierra sin salir de la pantalla. Desde 900 px de ancho queda fijo y el botón no se dibuja.
+- [ ] **Tocar el destino en el que ya se está** cierra el menú y no navega.
 - [ ] **El botón está en esas cinco y en ninguna otra**, en el lugar del volver: son las mismas donde el gesto abre el menú. Editar una receta existente no es una de ellas y lleva volver.
 - [ ] **Abrir y cerrar el menú no redibuja la pantalla**, con el botón, con el velo o con el gesto: en la receta nueva, redibujar borraría lo escrito. En la receta nueva con cambios, tocar un destino hace la pregunta de salir sin guardar (`E04-Corregir.md` C04.1.1), y el menú se cierra.
 - [ ] **Abierto, la pantalla de atrás no se desplaza**: el velo la tapa. Desde 900 px el menú es fijo, no hay velo y nada se frena.
 - [ ] **Se abre y se cierra deslizando**, y acompaña al dedo mientras se desliza. Al soltar queda abierto si pasó la mitad.
 - [ ] Cerrado, el gesto tiene que empezar **a 24 px o más del borde izquierdo**: desde el borde Android lo toma como «atrás». Abierto, empieza desde cualquier lado.
 - [ ] Sólo cuenta un movimiento claramente horizontal: en diagonal gana el scroll de la página.
-- [ ] **El gesto no arranca sobre el carrusel de tags ni sobre la fila de duraciones** cuando tienen para deslizar: ahí el dedo es de la fila.
+- [ ] **El gesto no arranca sobre un carrusel** —el de tags, la fila de duraciones, el de fotos— cuando tiene para deslizar: ahí el dedo es de la fila.
+
+#### C02.1.4 — Los borradores, sólo en Borradores *(J1, J5)*
+
+- [ ] **Una receta con `borrador` no aparece en ninguna otra lista:** ni en la categoría, ni en las listas por tag, ni en los resultados —en ninguno de sus tres grupos, ni como motivo—, ni en el Menú diario, ni en *Agregar al plan* —su búsqueda ni sus categorías—.
+- [ ] **No cuenta** en el número de los tiles del Recetario.
+- [ ] Sí aparece en Borradores (C02.1.3), en el contador del menú, abierta por su link, y en un plan que ya la tenía de antes (`E06-Planificar.md` C06.1.2).
 
 ### F02.2 — Búsqueda por nombre
 
@@ -111,9 +119,9 @@ ingrediente.
 
 #### C02.3.5 — Los resultados se muestran todos *(J1, J4)*
 
-- [ ] No hay carga por tramos ni tope de resultados: se dibujan todos los que coinciden.
-- [ ] No hace falta: la búsqueda resuelve sobre el índice ya leído, así que un resultado más no cuesta una lectura más.
-- [ ] Cada grupo dice cuántos resultados trajo.
+- [ ] No hay tope: están todos los que coinciden.
+- [ ] **Se dibujan por tramos**, como la lista de una categoría (C02.5.2): los grupos van en su orden, y el que no entra entero en el tramo sigue en el siguiente. Los tramos salen del índice ya leído: el indicador del final dice que hay más, no es una espera de red.
+- [ ] Cada grupo dice cuántos resultados trajo, dibujados o no.
 
 ### F02.4 — Las categorías
 
@@ -129,7 +137,7 @@ carpeta, y después se crean, renombran y borran desde *Ajustes → Recetario*.
 - [ ] Cada tile lleva la foto y el color de su carpeta, con el nombre completo. La foto puede ser del catálogo o una propia, subida a `_fotos/` (C05.4.4), que se pide con el token y se completa cuando llega. Una categoría sin foto se dibuja con la trama sobre su color.
 - [ ] Una categoría sin recetas se muestra igual.
 - [ ] **Las recetas sin categoría** —en `_sin-categoria/` o sueltas en la carpeta base (C05.4.4)— no tienen tile: son borradores, y se llega a ellas por *Borradores* (C02.1.3). Ninguna categoría puede llamarse «Sin categoría» (`E05-Cimientos.md` C05.9b.4).
-- [ ] **Cada tile dice cuántas recetas tiene**, en un badge sobre la foto y sólo si tiene alguna: una categoría vacía no lleva un cero encima. Sobre foto clara el badge necesita fondo casi opaco.
+- [ ] **Cada tile dice cuántas recetas tiene**, sin contar los borradores (C02.1.4), en un badge sobre la foto y sólo si tiene alguna: una categoría vacía no lleva un cero encima. Sobre foto clara el badge necesita fondo casi opaco.
 - [ ] La grilla pasa de dos a cuatro columnas en pantalla ancha (C05.10.1).
 
 ### F02.5 — La lista de una categoría
@@ -262,7 +270,7 @@ el orden suma la búsqueda.
 
 - [ ] Sólo en la categoría y en la lista por tag. No hay filtro por duración en la búsqueda ni en el Recetario.
 - [ ] Una fila de chips de duración, debajo del carrusel de tags (C02.6.4): cada chip lleva el relojito, el valor y cuántas recetas hay con ese valor, en el orden de los cinco valores.
-- [ ] La fila se desliza cuando no entra, como el carrusel, sin degradé ni flechas.
+- [ ] La fila es un carrusel, como el de tags: se desliza cuando no entra, con el degradé y, con mouse o trackpad, las flechas.
 - [ ] **Encender varios chips los suma.** Con tags encendidos, una receta tiene que llevar esos tags **y** alguna de las duraciones encendidas.
 - [ ] Las cantidades cuentan sobre la lista ya filtrada por tags.
 - [ ] Un valor sin recetas no se dibuja, salvo que esté encendido.
@@ -274,7 +282,7 @@ el orden suma la búsqueda.
 #### C02.9.2 — El orden por duración *(J1, J5)*
 
 - [ ] Un conmutador «A–Z | Duración» —*Duración* con su relojito—, en una fila propia alineada a la derecha, debajo del filtro, en la categoría y en la lista por tag.
-- [ ] **En la búsqueda va arriba de los grupos**, sin fila de filtro (C02.3.2).
+- [ ] **En la búsqueda va arriba de los grupos**, sin fila de filtro (C02.3.2). La búsqueda de *Agregar al plan* lo lleva igual (`E06-Planificar.md` C06.2.1).
 - [ ] **A–Z**, el orden con el que abre cada lista: las favoritas primero y alfabético dentro de cada bloque.
 - [ ] **Duración:** de `~15 min` a `>1 día`, con las favoritas mezcladas y alfabético dentro de cada valor; las recetas sin duración van al final, en alfabético.
 - [ ] La lista va seguida, sin rótulos por valor.
@@ -291,7 +299,7 @@ el orden suma la búsqueda.
 | C02.2.1 | J1 |
 | C02.3.1, C02.3.2, C02.3.4, C02.3.5, C02.5b.1, C02.5b.2, C02.7.1 | J1, J4 o J1, J5 |
 | C02.3.3, C02.6.1 | J4 |
-| C02.1.1, C02.1.2, C02.1.3 | J1, J5 |
+| C02.1.1, C02.1.2, C02.1.3, C02.1.4 | J1, J5 |
 | C02.4.1, C02.5.1, C02.5.2, C02.5.3, C02.6.4, C02.8.1, C02.9.1 | J5 |
 | C02.6.2, C02.6.3, C02.6.5, C02.9.2 | J4, J5 o J1, J5 |
 

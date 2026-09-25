@@ -276,6 +276,7 @@ Receta
   ▸ cocino
   → Salir, o volver a la receta
   ▸ la pantalla se libera; nada de lo marcado se guarda
+  ▸ Salir vuelve a donde elegí la receta: la categoría, los resultados, el plan
 ```
 
 **La lectura no tiene pestañas:** costaban cuatro toques para leer una receta
@@ -383,7 +384,7 @@ Abro la app por primera vez
       varias    → «Tus recetas en Drive», con las marcadas como «Encontradas»
   ⚑ ¿existe _indice adentro?
       sí  → arranca
-      no  → lo crea, leyendo los .md, con progreso: «Creando el índice: 47%.»
+      no  → lo crea, leyendo los .md, con la barra sobre el velo: «Reindexando…»
   ▸ Recetario
 ```
 
@@ -559,8 +560,8 @@ Menú lateral → Plan de la semana
 ▸ siete días desde hoy, dos comidas cada uno   ⚑ sin fechas: hoy primero y da la vuelta
   → toco el + de una comida
   → Martes a la noche
-  ▸ la búsqueda arriba, el bloque «Menú diario» debajo
-  → toco una receta                            ⚑ sólo recetas del recetario
+  ▸ la búsqueda arriba, el bloque «Menú diario» y las categorías debajo
+  → toco una receta                            ⚑ sólo recetas del recetario, sin borradores
   ▸ se suma a esa comida, se escribe `_plan.md` y vuelvo al plan
   → toco el + de la misma comida y sumo otra   ⚑ una comida es una lista, sin límite ni tipos
   → toco la × de una línea

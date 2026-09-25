@@ -84,27 +84,66 @@ al abrir, la fecha de `_indice` en Drive dice si la copia local sigue valiendo
 El producto se especifica para Android y para navegador de escritorio. **iOS no
 se soporta:** no hay Share Target y el Atajo equivalente sale del alcance.
 
-### R8 — Una escritura por vez
+### R8 — La app ocupada no se toca
 
-Mientras una operación escribe en Drive o en Sheets, **un velo con la olla que
-se revuelve cubre la pantalla** (`ux/design-system.md` §6.17b), desde el
-toque que la lanza hasta que termina. Es un solo mecanismo para todas las
-operaciones, y no uno por pantalla. Mientras dura, el resultado y el error tienen a dónde llegar:
-la pantalla que lanzó la escritura sigue siendo la que está.
+Mientras la app trabaja en algo que el usuario tiene que esperar, **un velo
+cubre la pantalla** (`ux/design-system.md` §6.17b) desde el toque que lo lanza
+hasta que termina. Es un solo mecanismo para toda la app, y no uno por
+pantalla. Mientras dura, el resultado y el error tienen a dónde llegar: la
+pantalla que lanzó la operación sigue siendo la que está.
+
+El velo tiene tres formas, y cada operación usa una sola:
+
+| Forma | Qué muestra | Para qué |
+|---|---|---|
+| **Escribir** | La olla que se revuelve y, si salió bien, el tilde | Toda escritura en Drive o en Sheets |
+| **Esperar** | La olla, sin tilde, **recién a los 250 ms** | Lo que tarda sin escribir nada |
+| **Con progreso** | Una tarjeta con el texto y la barra, en lugar de la olla | El reindexado y la preparación de la carpeta base |
 
 - [ ] **Aparece con el toque, no con la escritura:** entre uno y otra puede haber una lectura de Drive —el `.md` de base al guardar una receta, el plan al sumarle una— o un redibujado; todo eso pasa con la pantalla ya tapada. Si después nada llega a escribirse —falta el título—, el velo se saca y queda el aviso.
 - [ ] **No se toca:** ningún control responde, ni el gesto del menú lateral.
 - [ ] **No se desplaza:** la página de atrás no scrollea mientras el velo está.
-- [ ] **No se navega:** un cambio de hash —un link, el volver del encabezado, el gesto de atrás de Android— no dibuja la pantalla nueva, y la URL vuelve a la de la pantalla que está escribiendo.
+- [ ] **No se navega:** un cambio de hash —un link, el volver del encabezado, el gesto de atrás de Android— no dibuja la pantalla nueva, y la URL vuelve a la de la pantalla ocupada. El atrás que cerraría algo abierto en la misma pantalla —el menú, el visor, una ficha— también se deshace (`ux/information-architecture.md` §4.6).
 - [ ] **No se repite la acción:** volver a tocar el control no hace nada.
-- [ ] El velo se suelta siempre, termine bien o mal; después la operación sigue su camino —navega, redibuja o muestra su aviso con lo escrito todavía en pantalla (R1)—.
-- [ ] **Guardar una receta cierra con el tilde:** cuando el `.md` y su fila quedaron escritos —una receta nueva, una editada, o la que se guarda al Convertir con Agente—, el velo tarda 1850 ms más en irse, tapando la olla y dibujando el tilde, que queda quieto un momento para que se llegue a ver (§6.17b). Es la escritura que el usuario confirma con un botón y de la que la pantalla se va; las demás sueltan el velo de una. Si no se llegó a escribir —falta el título, falló Drive— no hay tilde.
-- [ ] **El orden es olla, tilde y recién después la pantalla nueva:** el editor se cierra cuando el tilde ya está dibujado, y el velo se va cuando la pantalla a la que se vuelve está pintada, así el repintado no se ve pasar. Mientras dibuja el tilde el velo sigue tapando, pero la pantalla ya no está ocupada: navegar no lo frena nadie. Si el guardado no lleva a ninguna pantalla nueva, el velo se va solo. Una escritura nueva durante ese rato corta el dibujo y vuelve a tapar.
-- [ ] Entran: guardar y crear una receta —también la que llegó por Compartir o pegada, y la que se guarda al Convertir con Agente—, borrarla, crear, editar y borrar una categoría, escribir el plan de la semana —sumarle una receta, sacarle una, reiniciarlo— y crear la carpeta base.
-- [ ] Entran también **tres operaciones que no escriben nada**, porque tardan y mientras duran vale lo mismo —no se toca y no se navega—: **armar la lista de compras**, que lee de Drive una receta por cada una distinta del plan (`E06` F06.4); **achicar una foto** recién elegida o recién llegada por Compartir, en el editor de recetas, y la foto propia de una categoría; y **bajar la foto de una URL** en el editor de recetas (`E04-Corregir.md` C04.3d.1b). Las fotos del editor no llegan a Drive hasta Guardar (F04.3d). **Con varias fotos de una, el velo se pone una sola vez para todas**: prenderlo y apagarlo entre una y otra se ve como un parpadeo.
-- [ ] **Lo que se espera a un sitio ajeno tiene un corte.** Bajar una foto de una URL es lo único del velo que depende de un servidor que no es Google: si no contesta en unos 20 segundos, el pedido se corta y sigue como si no se hubiera podido bajar. Sin eso, un servidor que acepta y calla dejaría la pantalla tapada sin salida, y salir del editor sería recargar, que se lleva lo escrito.
-- [ ] Quedan afuera cuatro, cada una con su propia señal: marcar favorito, que ya tiene su estrella animada y no debe trabar la lectura de la receta; reindexar, que oculta sus controles y muestra el avance; preparar la carpeta base, que dibuja su propia pantalla de progreso; y conectar de nuevo con Google, donde el usuario está en el popup y el velo taparía la pantalla desde otra ventana.
-- [ ] Los botones que dicen «Guardando…» se quedan como están: el velo se suma, no los reemplaza.
+- [ ] **Una operación, un velo.** Con varias fotos de una, o con dos lecturas seguidas —el plan y sus recetas en la lista de compras—, el velo se pone una sola vez para todo: prenderlo y apagarlo entre una y otra se ve como un parpadeo. Una operación que empieza adentro de otra no lo hace parpadear: se va cuando termina la última.
+- [ ] **Ningún botón cambia a «Guardando…»**, ni se deshabilita: el velo ya bloquea y dice que se está trabajando. *Convertir con Agente* conserva su ícono.
+
+**Escribir.** Entran todas las escrituras: guardar y crear una receta —también la que llegó por Compartir o pegada—, borrarla, *Convertir con Agente*, crear, editar y borrar una categoría, escribir el plan de la semana —sumarle una receta, sacarle una, reiniciarlo— y crear la carpeta base.
+
+- [ ] **Toda escritura que sale bien cierra con el tilde:** la olla se tapa y se dibuja el tilde, que queda quieto un momento para que se llegue a ver; el cierre dura 1850 ms (§6.17b). Si no se llegó a escribir —falta el título, falló Drive— no hay tilde: el velo se va de una y queda el aviso.
+- [ ] **El orden es olla, tilde y recién después la pantalla nueva.** Durante el tilde la app sigue ocupada: no se toca y no se navega. Terminado el tilde se navega, y el velo sigue puesto hasta que la pantalla de destino está pintada, así el repintado no se ve pasar. Si la escritura no lleva a ninguna pantalla nueva, el velo se va solo un momento después.
+- [ ] **Convertir con Agente** es una sola operación: el velo cubre guardar, bajar las fotos y abrir el agente, y el tilde va al final.
+- [ ] **Guardar una receta deja la guardada en memoria**, nueva o editada: la receta de destino se dibuja sin volver a leer el `.md`.
+
+**Esperar.** Lo que tarda sin escribir, y mientras dura vale lo mismo —no se toca y no se navega—:
+
+- [ ] **Achicar una foto** recién elegida —cámara, galería— o recién llegada por Compartir, en el editor de recetas, y la foto propia de una categoría. Las fotos del editor no llegan a Drive hasta Guardar (F04.3d).
+- [ ] **Traer una foto por URL** (`E04-Corregir.md` C04.3d.1b): una sola espera cubre bajarla y achicarla.
+- [ ] **Leer las fotos compartidas** que dejó el service worker.
+- [ ] **Armar la lista de compras**, que lee el plan y una receta por cada una distinta del plan (`E06-Planificar.md` F06.4).
+- [ ] **Las lecturas de red al dibujar** la receta, el editor y el plan.
+- [ ] Si la espera termina antes de los 250 ms, el velo no llega a verse: sería un parpadeo. Igual bloquea desde el toque.
+
+**Con progreso.** *Ajustes → Reindexar*, el reindexado al arrancar (C05.5.3) y crear o elegir la carpeta base y prepararla (C05.7.4):
+
+- [ ] En lugar de la olla, una tarjeta centrada con el texto —«Reindexando…» o «Preparando la carpeta…»— y la barra de C05.5.2. La barra va adentro del velo, nunca en la pantalla de atrás.
+- [ ] Bloquea igual que las otras dos: mientras corre no se navega ni se toca nada.
+- [ ] **Si falla**, el velo se va y la pantalla desde la que se lanzó muestra el aviso con **Reintentar**: *«No se pudo reindexar.»* o *«No se pudo preparar la carpeta.»*.
+- [ ] Preparada la carpeta, la app se recarga con el velo todavía puesto.
+
+**Lo que se espera tiene un corte.** Toda lectura de Drive o de Sheets se corta a
+los 20 segundos, y bajar una foto de una URL también. Al cortarse sigue el camino
+de error de siempre: el velo se va y la pantalla muestra su aviso o, con la foto
+por URL, sigue como si no se hubiera podido bajar. Sin el corte, un servidor que
+acepta y calla dejaría la pantalla tapada sin salida, y salir sería recargar,
+que en el editor se lleva lo escrito. Las escrituras no se cortan.
+
+**Quedan afuera**, cada una con su propia señal o sin espera de red:
+
+- [ ] **Marcar favorito**, que tiene su estrella animada y no debe trabar la lectura de la receta (`E03-LeerYCocinar.md` C03.1.2b).
+- [ ] **Pegar**, **armar el link de compartir** y **mandar al agente desde el aviso** de la receta: no esperan a la red.
+- [ ] **Elegir la carpeta en el Picker** y **Conectar de nuevo**: la ventana de Google es la espera, y el velo la taparía desde otra ventana.
+- [ ] **Borrar datos locales** y **Salir**, que recargan la página.
 
 ---
 
@@ -351,8 +390,8 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 - [ ] Hay **una sola barra de punta a punta, con su porcentaje**, que cubre el proceso entero: recorrer las carpetas, listar lo que hay adentro, leer los `.md` y escribir las hojas. Cada etapa avanza dentro de su tramo, con pesos fijos.
 - [ ] **Nunca hay un indicador indeterminado.** Leer los `.md` es una etapa entre otras: con una carpeta recién creada no hay ninguno que leer y el rato se lo llevan las demás, que un spinner no distingue de colgado.
 - [ ] **No hay botón de cancelar.** Una vez empezada, termina.
-- [ ] Mientras corre, la app no permite guardar ni borrar recetas.
-- [ ] Si falla a mitad, avisa (R1) y ofrece volver a empezar; el índice queda como haya quedado y se repara volviendo a reindexar.
+- [ ] Corre bajo el velo con progreso (R8): la barra va en una tarjeta sobre la pantalla, y mientras dura no se navega ni se toca nada.
+- [ ] Si falla a mitad, el velo se va y la pantalla desde la que se lanzó avisa *«No se pudo reindexar.»* con **Reintentar** (R1); el índice queda como haya quedado y se repara volviendo a reindexar.
 
 #### C05.5.3 — Cuándo se reindexa solo *(J8)*
 
@@ -404,7 +443,7 @@ verificada" una vez, que es inevitable con el scope `drive`.
 
 - [ ] Si el usuario cierra el popup, la app dice que no se pudo conectar y muestra el botón otra vez.
 - [ ] Si la respuesta demora más de lo razonable, aparece el mismo aviso con el botón.
-- [ ] **Nunca se queda en "Conectando…".**
+- [ ] **Nunca se queda en "Conectando…".** Si después del permiso el arranque falla, la pantalla dice *«No se pudo abrir el Recetario.»* con **Reintentar**, lo mismo que al abrir (C05.6.2).
 - [ ] Si el usuario deniega el permiso, el mensaje lo dice y explica que sin acceso a Drive no hay app.
 
 #### C05.7.3 — Crear el índice la primera vez *(J8)*
@@ -493,8 +532,8 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 
 - [ ] La ficha muestra el nombre de la carpeta base en uso y ofrece **Cambiar carpeta**, que abre la pantalla de C05.7.4. La carpeta anterior queda como está en Drive, sin la marca.
 - [ ] Muestra cuántas categorías hay y lleva a **Categorías** (`#/categorias`), donde se gestionan: crear, renombrar, elegir color de la paleta y foto —del catálogo o una propia—, y borrar. Las predefinidas no tienen trato especial.
-- [ ] **La foto propia** se elige con *Subir foto*, primera entre las muestras: se ve en la muestra en el momento y se sube a `_fotos/` recién al guardar la categoría, como `drive:<id>`. Reemplazar la foto manda la propia anterior a la papelera, y borrar la categoría también se lleva la suya.
-- [ ] Cada cambio escribe en el momento la carpeta en Drive —su nombre y sus propiedades— y su fila en la hoja `categorias`.
+- [ ] **La foto propia** se elige con *Subir foto*, primera entre las muestras: se ve en la muestra en el momento y se sube a `_fotos/` recién al guardar la categoría, como `drive:<id>`. Una propia que ya no está en Drive deja en la muestra el recuadro *«La foto ya no está en Drive.»*. Reemplazar la foto manda la propia anterior a la papelera, y borrar la categoría también se lleva la suya.
+- [ ] Cada cambio escribe en el momento la carpeta en Drive —su nombre y sus propiedades— y su fila en la hoja `categorias`, con el velo y su tilde (R8). Guardar o borrar vuelve a *Categorías*.
 - [ ] Una categoría nueva nace con el primer color de la paleta que nadie usa.
 - [ ] Un nombre vacío, que empiece con `_`, repetido o igual a **«Sin categoría»** —sin mirar tildes ni mayúsculas en los dos casos— no se acepta, y se dice por qué. «Sin categoría» es el nombre de lo que no tiene categoría (C05.4.4).
 - [ ] Borrar una categoría con recetas lo advierte con la cantidad y los nombres: la carpeta y sus recetas van a la papelera de Drive, y sus filas salen del índice.
@@ -520,6 +559,7 @@ azar del CSS.
 #### C05.10.1 — Una columna con máximo *(transversal)*
 
 - [ ] El contenido es una columna; pasado cierto ancho, la columna tiene un máximo y se centra. El modo cocina también.
+- [ ] **Desde 900 px el menú lateral queda fijo en todas las pantallas** y el contenido se corre: también en la receta, el modo cocina, la categoría, los resultados, el editor, *Agregar al plan* y la lista de compras. En las que no son destino del menú no marca ninguna entrada, y abajo de 900 px no se dibuja: ahí sólo lo abren la hamburguesa y el gesto de las pantallas del menú (`ux/information-architecture.md` §4.6). La pantalla de la carpeta base no lo lleva: sin carpeta no hay a dónde ir.
 - [ ] Los encabezados —y el conmutador del modo cocina— pintan su barra de lado a lado, pero sus controles se alinean con la columna.
 - [ ] Las grillas —categorías, listas de tarjetas— pasan de dos a cuatro columnas al ensancharse.
 - [ ] No hay layout de escritorio propio: es la misma app, más ancha.

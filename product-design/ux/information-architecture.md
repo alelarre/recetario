@@ -401,19 +401,19 @@ se reconoce abre el Recetario.
 | **Modo cocina** | `#/r/<id>/cocinar` | Letra grande, conmutador Ingredientes / Pasos, el paso actual realzado, y la pantalla encendida. | Cocinar | J6 |
 | **Editor** | `#/r/<id>/editar` | El único formulario de la app. Corregir un error, anotar una variación, poner y sacar los tags especiales, agregar fotos y ponerlas en el texto, cambiar la categoría, *Pegar*, *Convertir con Agente* mientras es borrador, borrar la receta. Con `?recibida=1` abre con la receta `.md` compartida aplicada como *Pegar*. | Cocinar | J3, J7 |
 | **Nueva receta** | `#/nueva` | El mismo editor, vacío, en «Sin categoría» y con `borrador`. Es destino del menú: hamburguesa en vez de volver. Con `?url=&text=&fotos=` abre con lo que llegó por el Share Target —`fotos` es cuántas dejó el service worker en su caché—; con `?recibida=1`, con la receta `.md` que llegó compartida sin un `id:` que exista. | Archivar | J2, J3, J7 |
-| **Borradores** | `#/borradores` | La lista por tag de `borrador`, como destino del menú: hamburguesa en vez de volver, y el título «Borradores». Es el único camino a los borradores, y tocar uno abre su editor. | Archivar | J2, J3 |
+| **Borradores** | `#/borradores` | La lista por tag de `borrador`, como destino del menú: hamburguesa en vez de volver, y el título «Borradores». Es el único camino a los borradores —ninguna otra lista, búsqueda ni conteo los muestra—, y tocar uno abre su editor. | Archivar | J2, J3 |
 | **Ajustes** | `#/ajustes` | Seis fichas, en este orden: Cuenta, Recetario, Índice, Archivos locales, Avisos y Registro de actividad. Ver §4.7. | Transversal | — |
 | **Categorías** | `#/categorias` | La lista de categorías con cuántas recetas tiene cada una, y *+ Nueva*. | Transversal | — |
 | **Editar categoría** | `#/categorias/<id>` · `#/categorias/nueva` | Nombre, color y foto de una categoría —del catálogo o una propia, con *Subir foto*—, y *Borrar categoría*. | Transversal | — |
 | **Carpeta base** | `#/carpeta` · `#/carpeta?cambiando=1` | Crear la carpeta, o elegir una que ya exista con el Picker de Google. **No lista nada del Drive.** Aparece sola cuando no hay una carpeta marcada, o hay más de una; con `cambiando=1` se llega desde *Ajustes → Recetario → Cambiar carpeta*. | Transversal | — |
-| **Conexión** | *(sin ruta: es el arranque)* | Primer arranque y consentimiento de Google; también el progreso de crear el índice. | Transversal | — |
+| **Conexión** | *(sin ruta: es el arranque)* | Primer arranque y consentimiento de Google. El índice que se crea o se reindexa al arrancar muestra su barra en el velo, encima (`E05-Cimientos.md` R8). | Transversal | — |
 | **Vista de invitado** | `#/ver?r=<receta>` · `#/ver/cocinar?r=<receta>` | La receta que viaja en un link compartido, sin login: se lee y se cocina, y nada más. No muestra tags, y de las fotos sólo las externas: las de Drive no viajan. | Compartir | — |
 | **Plan de la semana** | `#/plan` | Siete días desde hoy, dos comidas cada uno, y cada comida una lista de recetas. Al pie, la lista de compras y reiniciar. | Planificar | J9 |
-| **Agregar al plan** | `#/plan/agregar?dia=&momento=` | La búsqueda del Recetario y el bloque *Menú diario*: tocar una receta la suma a esa comida y vuelve. | Planificar | J9 |
+| **Agregar al plan** | `#/plan/agregar?dia=&momento=` | La búsqueda del Recetario, el bloque *Menú diario* y la grilla de las categorías: tocar una receta la suma a esa comida y vuelve. | Planificar | J9 |
 | **Lista de compras** | `#/plan/compras` | Los ingredientes de todo lo cargado, en dos bloques, y compartir como texto. | Planificar | J9 |
 
 **La ficha de compartir no es una pantalla**: es estado de la Receta, se abre al
-pie y volver la cierra.
+pie y el atrás la cierra (§4.6).
 
 **La vista de invitado es una entrada aparte.** `src/inicio.ts` mira el hash antes
 de cargar nada: un `#/ver…` carga sólo `src/invitado.ts`, sin token ni store, con
@@ -507,6 +507,14 @@ nueva y Ajustes— se sale por el menú, así que su encabezado lo abre:
 hamburguesa, no volver. Editar una receta existente se abre desde la receta y
 lleva volver.
 
+**Volver nunca sale de la app.** La app lleva la cuenta de cuántas pantallas
+suyas hay atrás; si no hay ninguna —se entró por un link directo, o por el menú
+Compartir—, volver pone el Recetario en su lugar —desde la cocina, la receta—
+en vez de irse a lo que había antes. Las salidas que no son un
+volver simple —guardar, borrar, salir de la cocina, elegir en *Agregar al
+plan*— tienen su destino escrito en `E04-Corregir.md` C04.1.2,
+`E03-LeerYCocinar.md` C03.2.1 y `E06-Planificar.md` C06.2.1.
+
 **Todos los encabezados quedan fijos arriba al bajar**, también el del modo
 cocina y la caja de los resultados: el volver, la hamburguesa y las acciones de
 la pantalla están siempre a mano.
@@ -529,25 +537,42 @@ con su nombre y su ícono:
 
 **Al pie del menú va la versión de la app.**
 
+**Qué pantallas son destino del menú está escrito en un solo lugar** (`MENU`,
+en `src/ui/router.ts`), junto con la entrada que marca cada una: de ahí salen la
+hamburguesa en lugar del volver, el gesto que lo abre y la entrada marcada.
+
 **En el teléfono se despliega desde una hamburguesa**, arriba a la izquierda —del
-lado por el que el panel entra—, y se cierra tocando el velo o cualquier destino.
-La hamburguesa está en las pantallas que se alcanzan desde el menú (§4.5), que
-son las mismas donde el gesto lo abre: el botón y el deslizamiento no se
-separan. **Abrir y cerrar el menú no redibuja la pantalla:** en la receta nueva
+lado por el que el panel entra—, y se cierra tocando el velo, con el atrás o
+eligiendo un destino. **Tocar el destino en el que ya se está** lo cierra y no
+navega. La hamburguesa está en las pantallas que se alcanzan desde el menú
+(§4.5), que son las mismas donde el gesto lo abre: el botón y el deslizamiento
+no se separan. **Abrir y cerrar el menú no redibuja la pantalla:** en la receta nueva
 borraría lo escrito. Con cambios sin guardar, tocar un destino hace la pregunta
 de salir sin guardar, y el menú se cierra.
 **También se abre y se cierra deslizando.** Cerrado, el gesto empieza a 24 px del
 borde izquierdo: desde el borde mismo Android lo toma como «atrás». No arranca
-sobre el carrusel de tags ni sobre la fila de duraciones, que se deslizan en el
-mismo sentido. **Abierto, la pantalla de atrás no se desplaza:** el velo la tapa,
+sobre un carrusel —el de tags, la fila de duraciones, el de fotos—, que se
+desliza en el mismo sentido. **Abierto, la pantalla de atrás no se desplaza:** el velo la tapa,
 y moverla sería mover justo lo que está tapado.
-**Desde 900 px queda fijo** y el contenido se corre: el mismo ancho en que la
-grilla de categorías pasa a cuatro columnas. Es la misma pantalla; lo resuelve el
-CSS.
+**Desde 900 px queda fijo en todas las pantallas** y el contenido se corre: el
+mismo ancho en que la grilla de categorías pasa a cuatro columnas. También en
+las que no son destino del menú —la receta, la cocina, el editor, los
+resultados—, donde no marca ninguna entrada; en el teléfono esas no lo dibujan
+(`E05-Cimientos.md` C05.10.1).
 
 **El contador de borradores aparece dos veces**: junto a «Borradores» dentro del
 menú, y sobre la hamburguesa cuando está cerrado. Sin eso, con el menú cerrado no
 habría manera de saber que hay algo esperando.
+
+**Lo que se abre en la misma pantalla se cierra con el atrás.** Cuatro cosas se
+abren sin cambiar de ruta: el menú en el teléfono, el visor de fotos, las fichas
+al pie —la de compartir y las de fotos del editor— y la categoría elegida en
+*Agregar al plan*. Al abrirse, cada una suma una entrada al historial con el
+mismo hash, así el atrás de Android o del navegador la cierra en vez de salir de
+la pantalla. Cerrarla de otra forma —el velo, la cruz, el chevron, un destino—
+consume esa entrada, y navegar desde ella la saltea: el historial no queda con
+entradas de más. Con la app ocupada (`E05-Cimientos.md` R8), ese atrás se
+deshace como cualquier otro.
 
 **No hay barra inferior.** El lateral resuelve las cinco entradas sin gastar
 pantalla en el teléfono y sin desperdiciar el ancho en escritorio.

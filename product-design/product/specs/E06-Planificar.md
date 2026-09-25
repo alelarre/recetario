@@ -85,11 +85,24 @@ significa que la receta no esté registrada.
 - [ ] Se llega tocando el `+` de una comida, y el título dice para cuál es:
   *Martes al mediodía*, *Martes a la noche*.
 - [ ] Arriba, la caja de búsqueda del Recetario; debajo, el bloque **Menú
-  diario** con las recetas de ese tag, alfabético. Sin ninguna, el bloque no se
-  dibuja.
-- [ ] Al escribir, el bloque se reemplaza por los resultados agrupados por
-  nombre, ingrediente y tag (C02.3.2).
-- [ ] Tocar una tarjeta **suma la receta a esa comida**, escribe y vuelve al plan.
+  diario** con las recetas de ese tag, las favoritas primero y alfabético
+  dentro de cada bloque. **Se dibuja entero, sin tramos:** es la lista corta de
+  lo que se come seguido. Sin ninguna, el bloque no se dibuja.
+- [ ] Debajo, la grilla de las categorías. Tocar una muestra sus recetas en el
+  mismo lugar, con las favoritas primero, por tramos y con un chevron al lado
+  del nombre. Es algo abierto en la misma pantalla: el chevron o el atrás
+  vuelven a la grilla sin salir (`ux/information-architecture.md` §4.6).
+- [ ] Al escribir, el bloque se reemplaza por los resultados, con **la misma
+  lista que la búsqueda** (`E02-Encontrar.md` C02.3.2): los tres grupos, el
+  conmutador «A–Z | Duración» arriba (C02.9.2), la misma frase sin resultados y
+  la carga por tramos (C02.3.5).
+- [ ] Escribir, cambiar el orden y el tramo siguiente redibujan sólo el bloque:
+  la caja no pierde el foco del teclado.
+- [ ] Los borradores no aparecen, ni en la búsqueda ni en las categorías
+  (`E02-Encontrar.md` C02.1.4).
+- [ ] Tocar una tarjeta **suma la receta a esa comida**, escribe —el velo con su
+  tilde (`E05-Cimientos.md` R8)— y vuelve al plan, sin dejar esta pantalla en el
+  historial. Si se llegó por un link directo, el plan toma su lugar.
 - [ ] En esta pantalla las tarjetas no llevan a la receta.
 - [ ] **No se puede cargar texto libre:** sólo recetas del recetario.
 - [ ] **Asignar es sólo desde acá.** La receta abierta no ofrece planificar.
@@ -124,7 +137,7 @@ y de momento se comparan sin acentos ni mayúsculas.
 - [ ] Si hay más de uno, manda el más reciente y queda el aviso en
   *Ajustes → Avisos*, como el `_indice` repetido.
 - [ ] **Cada cambio se escribe en el momento**, reescribiendo el archivo entero,
-  con el velo de escritura (R8). Reintentar reescribe todo (R2).
+  con el velo y su tilde (`E05-Cimientos.md` R8). Reintentar reescribe todo (R2).
 - [ ] **`_indice` no cambia:** ni hoja ni columna. `SCHEMA_VERSION` no sube y el
   reindexado no mira `_plan.md`.
 

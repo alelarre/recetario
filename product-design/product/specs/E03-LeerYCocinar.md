@@ -81,7 +81,7 @@ no esconde nada que haga falta.
 
 - [ ] Se entra desde **Cocinar** en la receta abierta. No es la vista por defecto: cocinar es el uso menor.
 - [ ] **El encabezado mide 64 px**, como sus controles: el chevron, el título de la receta centrado y recortado con elipsis, el sol (C03.3.1) y *Salir*. El sol y *Salir* responden en toda su área de 64 px, aunque su caja dibujada sea más chica. Queda fijo arriba al scrollear, como el de todas las pantallas.
-- [ ] **Dos salidas, con destinos distintos**: el chevron vuelve **a la receta** —seguir leyéndola sin la escala de cocina— y **Salir** vuelve **a la categoría**, que es donde se elige otra cosa. Si la receta no está en el índice no se sabe su categoría, y *Salir* vuelve al Recetario.
+- [ ] **Dos salidas, con destinos distintos**: el chevron vuelve **a la receta** —seguir leyéndola sin la escala de cocina— y **Salir** vuelve **hasta salir de la receta**, a donde se la eligió: la categoría, los resultados, el plan o Borradores. Con un link directo a la cocina no hay nada atrás: el chevron pone la receta en su lugar y *Salir*, la categoría de la receta —el Recetario si la receta no está en el índice y no se sabe su categoría—.
 - [ ] Las dos sueltan el bloqueo de pantalla: se dejó de cocinar.
 - [ ] Volver con el gesto del sistema sale del modo, no de la receta. Salir del modo **no deja la cocina en el historial**: volver desde la receta lleva a donde se estaba antes.
 - [ ] Al entrar, la pantalla **empieza arriba**: se entra desde el pie de la receta y heredar ese scroll abría los ingredientes por la mitad.
@@ -164,8 +164,8 @@ todas juntas al final. **El diseño no depende de ninguna.**
 #### C03.5.1 — La foto de la cabecera *(J6)*
 
 - [ ] Se dibuja `foto` **ya resuelta** (C05.1.5): la URL externa tal cual, o la foto del depósito que nombra `foto:N`.
-- [ ] Si es de Drive, se pide con el token: mientras llega, un recuadro del tamaño que va a ocupar. **Si ya no está en Drive, el bloque se saca** y la receta queda sin foto, sin ícono roto y sin aviso.
-- [ ] **Una URL externa que no carga se trata igual**: el bloque se saca, sin ícono roto y sin aviso. La app se entera por el `error` del `<img>`, que no burbujea y por eso se escucha en captura.
+- [ ] Si es de Drive, se pide con el token: mientras llega, un recuadro del tamaño que va a ocupar. **Si ya no está en Drive, en su lugar queda el recuadro** con *«La foto ya no está en Drive.»*, sin ícono roto.
+- [ ] **Una URL externa que no carga se trata igual**, con su propio motivo: *«No se pudo cargar la foto.»*. La app se entera por el `error` del `<img>`, que no burbujea y por eso se escucha en captura.
 - [ ] La receta sin foto se ve completa igual: empieza por el título.
 - [ ] No se muestra en modo cocina.
 
@@ -177,15 +177,15 @@ todas juntas al final. **El diseño no depende de ninguna.**
 - [ ] El carrusel se desliza de costado como el de tags: cuadradas, entran dos y media en el ancho del teléfono, el degradé dice que sigue y las flechas aparecen sólo con mouse o trackpad (`design-system.md` §6.21, §6.26).
 - [ ] **Si no queda ninguna sin uso, el carrusel no se dibuja** y la ficha queda como si no existiera. Tampoco se dibuja sin depósito.
 - [ ] **En el modo cocina**, cada paso y cada ingrediente dibujan su foto debajo, igual que en la lectura. Tocarlas no abre el visor: en la cocina un toque marca el paso (C03.2.4).
-- [ ] Una foto de Drive que ya no está se dibuja en el carrusel como un recuadro con *«La foto ya no está en Drive.»*; en la cabecera o en una línea, no se dibuja.
-- [ ] Una foto externa cuya URL no carga sigue la misma regla, con su propio motivo: en el carrusel, *«No se pudo cargar la foto.»*; en cualquier otro lado, no se dibuja.
+- [ ] Una foto de Drive que ya no está se dibuja en el carrusel, como en la cabecera (C03.5.1), como un recuadro con *«La foto ya no está en Drive.»*; en una línea, no se dibuja.
+- [ ] Una foto externa cuya URL no carga sigue la misma regla, con su propio motivo: en el carrusel y en la cabecera, *«No se pudo cargar la foto.»*; en una línea, no se dibuja.
 
 #### C03.5.3 — El visor *(J6)*
 
 - [ ] Tocar cualquier foto —la cabecera, una en línea o una del carrusel— abre el **visor**: la foto entera sobre un velo, encima de todo.
 - [ ] **El visor recorre lo que se tocó**, no el depósito entero: desde el carrusel desliza entre las del carrusel, en su orden y empezando por la que se tocó; desde la cabecera, la portada sola; desde una foto de un paso o de un ingrediente, esa sola.
 - [ ] Deslizando no da la vuelta en los extremos.
-- [ ] Se cierra tocando, en cualquier parte. Es estado de la pantalla, no una ruta.
+- [ ] Se cierra tocando, en cualquier parte, o con el atrás, que lo cierra sin salir de la receta. Es estado de la pantalla, no una ruta (`ux/information-architecture.md` §4.6).
 
 ### F03.6 — Tamaños para la distancia del brazo
 
@@ -208,7 +208,8 @@ revocar.
 #### C03.7.1 — La ficha de compartir *(J6)*
 
 - [ ] El ícono de compartir del encabezado (C03.1.2b) abre una ficha al pie con **PDF**, **Link**, **Texto** y **Cancelar**.
-- [ ] La ficha es estado de la pantalla, no una ruta: volver, *Cancelar* o tocar el velo la cierran. Mientras está abierta, la página de atrás no scrollea.
+- [ ] La ficha es estado de la pantalla, no una ruta: el atrás, *Cancelar* o tocar el velo la cierran, y el atrás lo hace sin salir de la receta. Mientras está abierta, la página de atrás no scrollea.
+- [ ] Lo que se comparte espera al sistema. Si mientras tanto la ficha se cerró, el resultado no la vuelve a abrir; si se abrió otra, no la toca.
 - [ ] Las tres opciones usan el menú Compartir del sistema. Si el usuario cancela ese menú, la ficha se cierra sin aviso.
 - [ ] Ninguna de las tres lleva los tags ni las claves extra del frontmatter.
 
