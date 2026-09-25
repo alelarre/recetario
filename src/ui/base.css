@@ -216,12 +216,20 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
 .encoc [data-accion="wake"]::before { inset: 12px; }
 .encoc .btn.compacto { min-height: 64px; min-width: 64px; }
 .encoc .btn.compacto::before { inset: 12px 0; }
+/* Se marca la caja y no el botón entero: el presionado y el hover genéricos de
+   `.ico` y `.btn.sec` pintarían los 64 × 64. Encendido, la caja sigue
+   invertida y apenas se atenúa; sin esto se oscurecería y el sol, que es del
+   color del fondo, desaparecería. */
+.encoc :is([data-accion="wake"], .btn.compacto):active { background: none; }
 .encoc :is([data-accion="wake"], .btn.compacto):active::before { background: var(--surface-alta); }
-@media (hover: hover) {
-  .encoc :is([data-accion="wake"], .btn.compacto):hover::before { background: var(--surface-alta); }
-}
 .encoc [data-accion="wake"].on { color: var(--bg); }
 .encoc [data-accion="wake"].on::before { background: var(--fg); border-color: var(--fg); }
+.encoc [data-accion="wake"].on:active::before { background: color-mix(in srgb, var(--fg) 82%, var(--bg)); }
+@media (hover: hover) {
+  .encoc :is([data-accion="wake"], .btn.compacto):hover { background: none; }
+  .encoc :is([data-accion="wake"], .btn.compacto):hover::before { background: var(--surface-alta); }
+  .encoc [data-accion="wake"].on:hover::before { background: color-mix(in srgb, var(--fg) 82%, var(--bg)); }
+}
 
 /* ---- Editor ---- */
 /* Los cuatro tags especiales, un botón cada uno. Apretado se invierte

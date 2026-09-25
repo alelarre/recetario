@@ -57,6 +57,18 @@ describe('cómo responden los controles al toque', () => {
     expect(BASE).toContain('.encoc :is([data-accion="wake"], .btn.compacto):active::before');
   });
 
+  it('en el modo cocina se marca sólo la caja del sol y de Salir, no el botón entero', () => {
+    // El hover y el presionado genéricos de `.ico` y `.btn.sec` pintan el
+    // botón de 64 × 64; acá lo que se ve es la caja del ::before.
+    expect(BASE).toContain('.encoc :is([data-accion="wake"], .btn.compacto):active { background: none; }');
+    expect(BASE).toContain('.encoc :is([data-accion="wake"], .btn.compacto):hover { background: none; }');
+  });
+
+  it('el sol encendido sigue invertido con el dedo o el puntero encima', () => {
+    expect(BASE).toMatch(/\.encoc \[data-accion="wake"\]\.on:active::before \{[^}]*color-mix\(in srgb, var\(--fg\)/);
+    expect(BASE).toMatch(/\.encoc \[data-accion="wake"\]\.on:hover::before \{[^}]*color-mix\(in srgb, var\(--fg\)/);
+  });
+
   it('con una ficha al pie abierta, la página de atrás no se desplaza', () => {
     // Compartir y, con la misma forma, las fichas de fotos del editor.
     expect(BASE).toContain('html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }');
