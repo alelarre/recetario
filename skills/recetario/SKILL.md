@@ -114,6 +114,10 @@ momento:
 Antes de pedir el «sí», mostrá exactamente qué va a pasar: qué categoría, qué
 recetas, qué cambia.
 
+Mover una receta a otra categoría que ya existe, con `guardar`, no pide esta
+confirmación: es un cambio de la receta, no de la categoría. Sigue la regla de
+mostrar antes de escribir.
+
 No valen:
 
 - una aprobación general anterior («hacé lo que haga falta»);
