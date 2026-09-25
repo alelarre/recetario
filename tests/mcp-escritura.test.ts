@@ -399,6 +399,9 @@ describe('con la app escribiendo entre dos usos', () => {
 });
 
 describe('borrar', () => {
+  const NO_COINCIDE =
+    'La confirmación no coincide con la receta de ese id. Volvé a buscarla con `leer`, mostrásela al usuario y pedile confirmación.';
+
   it('con el título exacto como confirmación manda la receta a la papelera, con su fila y sus fotos de _fotos/', async () => {
     await nuevoRecetario().borrar({ id: 'r3', confirmacion: 'Flan casero' });
     expect(drive.cuantas('borrar', 'r3')).toBe(1);
@@ -406,16 +409,18 @@ describe('borrar', () => {
     expect((await indiceDeLaApp()).find(e => e.id_archivo === 'r3')).toBeUndefined();
   });
 
-  it('sin confirmación no borra nada y dice qué título pasar', async () => {
+  it('sin confirmación no borra nada, y el error no dice el título ni el nombre de archivo', async () => {
     const error = await nuevoRecetario().borrar({ id: 'r3' }).catch((e: unknown) => e);
-    expect((error as Error).message).toBe('Para borrar hay que pasar el título exacto de la receta: "Flan casero"');
+    expect((error as Error).message).toBe(NO_COINCIDE);
+    expect((error as Error).message).not.toContain('Flan');
+    expect((error as Error).message).not.toContain('r3.md');
     expect(drive.cuantas('borrar')).toBe(0);
     expect((await indiceDeLaApp()).find(e => e.id_archivo === 'r3')).toBeDefined();
   });
 
   it.each(['flan casero', 'Flan', 'Flan casero '])('con una confirmación que no coincide («%s») no borra nada', async confirmacion => {
     const error = await nuevoRecetario().borrar({ id: 'r3', confirmacion }).catch((e: unknown) => e);
-    expect((error as Error).message).toBe('Para borrar hay que pasar el título exacto de la receta: "Flan casero"');
+    expect((error as Error).message).toBe(NO_COINCIDE);
     expect(drive.cuantas('borrar')).toBe(0);
   });
 
@@ -427,14 +432,24 @@ describe('borrar', () => {
       ]);
     });
 
+    it('un título de sólo espacios cuenta como vacío: se confirma con el nombre de archivo', async () => {
+      sheets.cargar('i1', 'recetas', [
+        [...COLUMNAS], fila('r3', 'Flan casero', 'Postres', 'c2'), fila('r4', '   ', 'Postres', 'c2')
+      ]);
+      const error = await nuevoRecetario().borrar({ id: 'r4', confirmacion: '   ' }).catch((e: unknown) => e);
+      expect((error as Error).message).toBe(NO_COINCIDE);
+      await nuevoRecetario().borrar({ id: 'r4', confirmacion: 'r4.md' });
+      expect(drive.cuantas('borrar', 'r4')).toBe(1);
+    });
+
     it('se borra con su nombre de archivo como confirmación', async () => {
       await nuevoRecetario().borrar({ id: 'r4', confirmacion: 'r4.md' });
       expect(drive.cuantas('borrar', 'r4')).toBe(1);
     });
 
-    it.each([undefined, ''])('con la confirmación %j no borra nada y pide el nombre de archivo', async confirmacion => {
+    it.each([undefined, '', 'Flan casero'])('con la confirmación %j no borra nada, y el error no dice el nombre de archivo', async confirmacion => {
       const error = await nuevoRecetario().borrar({ id: 'r4', confirmacion }).catch((e: unknown) => e);
-      expect((error as Error).message).toBe('La receta no tiene título: para borrarla hay que pasar su nombre de archivo exacto: "r4.md"');
+      expect((error as Error).message).toBe(NO_COINCIDE);
       expect(drive.cuantas('borrar')).toBe(0);
     });
   });

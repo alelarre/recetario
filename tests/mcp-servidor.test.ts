@@ -139,7 +139,8 @@ describe('llamar a una herramienta', () => {
   it('borrar con una confirmación que no coincide es un error y no borra', async () => {
     const r = await llamar(await conectar(), 'borrar', { id: 'r3', confirmacion: 'flan' });
     expect(r.isError).toBe(true);
-    expect(texto(r)).toContain('"Flan casero"');
+    expect(texto(r)).toContain('La confirmación no coincide con la receta de ese id.');
+    expect(texto(r)).not.toContain('Flan casero');
     expect(drive.cuantas('borrar')).toBe(0);
   });
 

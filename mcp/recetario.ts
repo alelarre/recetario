@@ -482,18 +482,17 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
      * A la papelera, con su fila y sus fotos de `_fotos/`, como Borrar en la
      * app. `confirmacion` es el título exacto de la receta en el índice: el
      * agente no borra con un id solo, que puede ser el de otra receta, ni sin
-     * que el usuario haya visto cuál es. Una receta sin título se confirma con
-     * su nombre de archivo: una confirmación vacía no confirma nada.
+     * que el usuario haya visto cuál es. Una receta sin título —o con uno de
+     * sólo espacios— se confirma con su nombre de archivo: una confirmación
+     * vacía no confirma nada. El error no dice qué se esperaba: un agente con
+     * el id equivocado reintentaría con eso y borraría la receta equivocada.
      */
     async borrar({ id, confirmacion }: { id: string; confirmacion?: string | undefined }): Promise<void> {
       await listo();
       const { titulo, nombre_archivo } = entradaDe(id);
-      if (!titulo) {
-        if (!confirmacion || confirmacion !== nombre_archivo) {
-          throw new Error(`La receta no tiene título: para borrarla hay que pasar su nombre de archivo exacto: "${nombre_archivo}"`);
-        }
-      } else if (confirmacion !== titulo) {
-        throw new Error(`Para borrar hay que pasar el título exacto de la receta: "${titulo}"`);
+      const esperada = titulo.trim() ? titulo : nombre_archivo;
+      if (!confirmacion || confirmacion !== esperada) {
+        throw new Error('La confirmación no coincide con la receta de ese id. Volvé a buscarla con `leer`, mostrásela al usuario y pedile confirmación.');
       }
       await store.borrar(id);
     },
