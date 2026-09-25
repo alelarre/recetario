@@ -10,7 +10,7 @@ import { TAGS_RESERVADOS, tagEspecial, tieneEspecial } from '../src/catalogo.js'
 import { normalizar } from '../src/recipe.js';
 import { idDeDrive } from '../src/fotos-receta.js';
 import { SIN_CATEGORIA } from '../src/categorias.js';
-import type { IndiceLocal } from '../src/indice-local.js';
+import type { CopiaIndice, IndiceLocal } from '../src/indice-local.js';
 import type { CambiosDeFotos, Entrada, Filtros, FotoDeReceta, Receta } from '../src/tipos.js';
 import { conLogin } from './google.js';
 import { fotosQueSeSuben, numerosDeFotos, portadaCon, type FotoASubir, type FotoPedida } from './fotos-pedidas.js';
@@ -19,15 +19,21 @@ import { ErrorDeLogin, mensajeDeGoogle, type ErrorDeGoogle } from './errores.js'
 import type { AuthEscritorio } from './auth.js';
 
 /**
- * La copia local del índice que usa el MCP: ninguna. La de la app vive en el
- * `localStorage` del navegador y el MCP no la ve; cada sesión lee la planilla
- * una vez y trabaja en memoria.
+ * La copia del índice que usa el MCP: la última, en una variable del proceso.
+ * La de la app vive en el `localStorage` del navegador y el MCP no la ve. Con
+ * ella, cada herramienta pide sólo la fecha de `_indice` y relee la planilla
+ * únicamente si cambió: el proceso vive días, y las filas se escriben por
+ * posición. Clona al guardar y al leer, como el JSON de `localStorage`, para
+ * que el store no comparta objetos con la copia.
  */
-export const indiceEnMemoria: IndiceLocal = {
-  leer: () => null,
-  guardar: () => {},
-  borrar: () => {}
-};
+export function indiceEnMemoria(): IndiceLocal {
+  let copia: CopiaIndice | null = null;
+  return {
+    leer: () => (copia ? structuredClone(copia) : null),
+    guardar: c => { copia = structuredClone(c); },
+    borrar: () => { copia = null; }
+  };
+}
 
 /**
  * Los tags reservados menos `borrador` y sus otras formas. El pedido de
@@ -279,12 +285,18 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
       }
     },
     sheets: conLogin(sheets, ganchos),
-    indiceLocal: indiceEnMemoria
+    indiceLocal: indiceEnMemoria()
   });
 
-  /** El arranque de la sesión: uno solo aunque varias herramientas lo pidan a la vez. */
+  /** El arranque en curso: uno solo aunque varias herramientas lo pidan a la vez. */
   let arranque: Promise<void> | null = null;
 
+  /**
+   * El arranque de la app, antes de cada herramienta que usa el Drive: con la
+   * copia en memoria cuesta un pedido, la fecha de `_indice`, y trae lo que la
+   * app escribió desde el anterior —recetas, filas corridas, categorías, otra
+   * carpeta—.
+   */
   async function arrancar(): Promise<void> {
     ultimoDeLogin = null;
     ultimoDeGoogle = null;
@@ -304,12 +316,9 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
     else await store.cargarIndice();
   }
 
-  /** El store listo; si el arranque falla, el próximo uso lo reintenta. */
+  /** El store al día con el Drive; cada uso vuelve a arrancar, así un error no queda pegado. */
   function listo(): Promise<void> {
-    arranque ??= arrancar().catch((e: unknown) => {
-      arranque = null;
-      throw e;
-    });
+    arranque ??= arrancar().finally(() => { arranque = null; });
     return arranque;
   }
 

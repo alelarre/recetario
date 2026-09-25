@@ -340,6 +340,64 @@ describe('guardar', () => {
   });
 });
 
+describe('con la app escribiendo entre dos usos', () => {
+  beforeEach(() => {
+    drive._store.set('r2', { id: 'r2', name: 'r2.md', parents: ['c1'], contenido: md('Bife de chorizo') });
+    sheets.cargar('i1', 'recetas', [
+      [...COLUMNAS], fila('r2', 'Bife de chorizo', 'Carnes', 'c1'), fila('r3', 'Flan casero', 'Postres', 'c2')
+    ]);
+  });
+
+  /** La app abre, borra una receta y la fecha de `_indice` cambia. */
+  async function laAppBorra(id: string): Promise<void> {
+    const app = crearStore({ drive, sheets, indiceLocal: indiceLocalFalso() });
+    await app.arrancar();
+    await app.cargarIndice();
+    await app.borrar(id);
+    drive._store.get('i1')!.modifiedTime = '2026-02-01T00:00:00.000Z';
+  }
+
+  it('guardar escribe en la fila que la receta tiene ahora, no en la que tenía', async () => {
+    const recetario = nuevoRecetario();
+    await recetario.buscar({ texto: 'flan' });
+    await laAppBorra('r2');
+
+    const r = await recetario.guardar({ id: 'r3', md: MD_FLAN.replace('Flan casero', 'Flan de la abuela') });
+    expect(r.escrita).toBe(true);
+    const recetas = (await sheets.leer('i1', 'recetas!A1:M100')).map(f => [f[0], f[2]]);
+    expect(recetas).toEqual([[COLUMNAS[0], COLUMNAS[2]], ['r3', 'Flan de la abuela']]);
+  });
+
+  it('borrar saca la fila de la receta, no la de la que ahora está en su lugar', async () => {
+    drive._store.set('r4', { id: 'r4', name: 'r4.md', parents: ['c2'], contenido: md('Budín') });
+    sheets.cargar('i1', 'recetas', [
+      [...COLUMNAS], fila('r2', 'Bife de chorizo', 'Carnes', 'c1'),
+      fila('r3', 'Flan casero', 'Postres', 'c2'), fila('r4', 'Budín', 'Postres', 'c2')
+    ]);
+    const recetario = nuevoRecetario();
+    await recetario.buscar({ texto: 'flan' });
+    await laAppBorra('r2');
+
+    await recetario.borrar({ id: 'r3', confirmacion: 'Flan casero' });
+    expect((await indiceDeLaApp()).map(e => e.id_archivo)).toEqual(['r4']);
+  });
+
+  it('crear en una categoría que la app creó entre medio', async () => {
+    const recetario = nuevoRecetario();
+    await recetario.categorias();
+    drive._store.set('c3', { id: 'c3', name: 'Verduras', mimeType: CARPETA, parents: ['raiz'] });
+    sheets.cargar('i1', 'categorias', [
+      [...COLUMNAS_CATEGORIAS], ['c1', 'Carnes', 'carnes', 'catalogo:carnes'],
+      ['c2', 'Postres', 'postres', 'catalogo:postres'], ['c3', 'Verduras', 'verduras', 'catalogo:verduras']
+    ]);
+    drive._store.get('i1')!.modifiedTime = '2026-02-01T00:00:00.000Z';
+
+    const r = await recetario.crear({ md: md('Zapallitos rellenos'), categoria: 'verduras' });
+    if (!r.escrita) throw new Error('no se escribió');
+    expect(archivo(r.id)?.parents).toEqual(['c3']);
+  });
+});
+
 describe('borrar', () => {
   it('con el título exacto como confirmación manda la receta a la papelera, con su fila y sus fotos de _fotos/', async () => {
     await nuevoRecetario().borrar({ id: 'r3', confirmacion: 'Flan casero' });

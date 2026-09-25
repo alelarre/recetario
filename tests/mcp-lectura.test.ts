@@ -63,7 +63,7 @@ const nuevoRecetario = () => crearRecetario({ drive, sheets, auth: { olvidar: ()
 beforeEach(() => sembrar());
 
 describe('arranque', () => {
-  it('el primer uso arranca el store y lee la planilla una vez; los siguientes no la releen', async () => {
+  it('el primer uso busca la carpeta y lee la planilla; los siguientes sólo piden la fecha de _indice', async () => {
     const recetario = nuevoRecetario();
     expect(sheets.cuantas('leer')).toBe(0);  // crearlo no pide nada
     await recetario.categorias();
@@ -71,17 +71,20 @@ describe('arranque', () => {
     expect(lecturas).toBeGreaterThan(0);
     expect(drive.cuantas('carpetasMarcadas')).toBe(1);
 
+    const fechas = drive.cuantas('metadatos', 'i1');
     await recetario.tags();
     await recetario.buscar({ texto: 'flan' });
     await recetario.leer('r1');
     expect(sheets.cuantas('leer')).toBe(lecturas);
     expect(drive.cuantas('carpetasMarcadas')).toBe(1);
+    expect(drive.cuantas('metadatos', 'i1')).toBe(fechas + 3);
   });
 
   it('dos herramientas a la vez comparten un solo arranque', async () => {
     const recetario = nuevoRecetario();
     await Promise.all([recetario.categorias(), recetario.tags()]);
     expect(drive.cuantas('carpetasMarcadas')).toBe(1);
+    expect(drive.cuantas('metadatos', 'i1')).toBe(0);
   });
 
   it('con el índice de otro esquema, reindexa al arrancar, como la app', async () => {
@@ -92,8 +95,62 @@ describe('arranque', () => {
     expect(categorias.find(c => c.nombre === 'Postres')?.cantidad).toBe(1);
   });
 
-  it('el índice local vive sólo en memoria: no hay copia que leer', () => {
-    expect(indiceEnMemoria.leer()).toBeNull();
+  it('si _indice cambió de fecha entre dos usos, relee la planilla y ve lo que escribió la app', async () => {
+    const recetario = nuevoRecetario();
+    await recetario.buscar({ texto: 'bife' });
+    const lecturas = sheets.cuantas('leer');
+
+    const app = await storeDeLaApp();
+    await app.borrar('r2');
+    drive._store.get('i1')!.modifiedTime = '2026-02-01T00:00:00.000Z';
+
+    expect(await recetario.buscar({ texto: 'bife' })).toEqual([]);
+    expect(sheets.cuantas('leer')).toBeGreaterThan(lecturas);
+  });
+
+  it('una categoría que la app creó entre dos usos aparece', async () => {
+    const recetario = nuevoRecetario();
+    await recetario.categorias();
+    drive._store.set('c3', { id: 'c3', name: 'Verduras', mimeType: CARPETA, parents: ['raiz'] });
+    sheets.cargar('i1', 'categorias', [
+      [...COLUMNAS_CATEGORIAS], ['c1', 'Carnes', 'carnes', 'catalogo:carnes'],
+      ['c2', 'Postres', 'postres', 'catalogo:postres'], ['c3', 'Verduras', 'verduras', 'catalogo:verduras']
+    ]);
+    drive._store.get('i1')!.modifiedTime = '2026-02-01T00:00:00.000Z';
+
+    expect((await recetario.categorias()).map(c => c.nombre)).toContain('Verduras');
+  });
+
+  it('si la app cambió de carpeta entre dos usos, sigue a la carpeta marcada nueva', async () => {
+    const recetario = nuevoRecetario();
+    await recetario.categorias();
+
+    drive._store.get('raiz')!.appProperties = {};
+    drive._store.set('raiz2', { id: 'raiz2', name: 'Recetario nuevo', mimeType: CARPETA, parents: ['drive'], appProperties: { recetario: 'raiz' } });
+    drive._store.set('c9', { id: 'c9', name: 'Pescados', mimeType: CARPETA, parents: ['raiz2'] });
+    drive._store.set('i2', { id: 'i2', name: '_indice', mimeType: PLANILLA, parents: ['raiz2'] });
+    sheets.crearPlanilla('i2', ['recetas', 'meta', 'categorias']);
+    sheets.cargar('i2', 'recetas', [[...COLUMNAS]]);
+    sheets.cargar('i2', 'meta', [['schemaVersion', String(SCHEMA_VERSION)]]);
+    sheets.cargar('i2', 'categorias', [[...COLUMNAS_CATEGORIAS], ['c9', 'Pescados', 'pescados', 'catalogo:pescados']]);
+    sheets.cargar('i1', 'meta', [['schemaVersion', String(SCHEMA_VERSION)], ['reemplazada', 'si']]);
+    drive._store.get('i1')!.modifiedTime = '2026-02-01T00:00:00.000Z';
+
+    expect((await recetario.categorias()).map(c => c.nombre)).toEqual(['Pescados']);
+  });
+
+  it('la copia del índice vive en memoria: vacía al empezar, y lo que se guarda se lee', () => {
+    const copia = indiceEnMemoria();
+    expect(copia.leer()).toBeNull();
+    const guardada = {
+      schemaVersion: SCHEMA_VERSION, indiceId: 'i1', raizId: 'raiz', raizNombre: 'Recetario',
+      modifiedTime: 'x', meta: {}, filas: [], categorias: []
+    };
+    copia.guardar(guardada);
+    expect(copia.leer()).toEqual(guardada);
+    expect(copia.leer()).not.toBe(guardada);
+    copia.borrar();
+    expect(copia.leer()).toBeNull();
   });
 });
 

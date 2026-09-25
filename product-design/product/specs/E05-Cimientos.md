@@ -349,13 +349,14 @@ escritura parcial y un JSON obligaría a reescribir el archivo entero.
 - [ ] Sin el MCP, el agente entrega el `.md` y lo guarda la app (*Convertir con Agente*, C01.9.2).
 
 **Nota técnica:** no hay bloqueo ni lógica de concurrencia. **La app y el MCP no
-se usan a la vez:** los dos numeran las filas del índice por posición y cada uno
-trabaja con el índice que leyó al arrancar, así que si uno agrega o borra filas
-mientras el otro escribe, cualquiera puede escribir en la fila equivocada. El
-MCP lee la planilla una vez por sesión y no ve lo que la app escribe después.
-Con un solo usuario y sesiones que no se solapan el riesgo es bajo, y la
-reparación es reindexar (F05.5) con una sola pestaña abierta y sin el MCP
-escribiendo.
+escriben a la vez:** los dos numeran las filas del índice por posición, así que
+si uno agrega o borra filas mientras el otro escribe con el índice que tenía,
+cualquiera puede escribir en la fila equivocada. Cada uno ve lo del otro al
+comparar la fecha de `_indice` con la de su copia (C05.4.2): la app al abrirse,
+el MCP antes de cada herramienta que usa el Drive; si cambió, relee la
+planilla. Una app que quedó abierta no ve lo nuevo hasta recargar. Con un solo
+usuario y sesiones que no se solapan el riesgo es bajo, y la reparación es
+reindexar (F05.5) con una sola pestaña abierta y sin el MCP escribiendo.
 
 #### C05.4.4 — Las categorías salen del índice *(J1, J8)*
 
