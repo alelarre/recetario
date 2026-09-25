@@ -643,6 +643,10 @@ describe('main.ts: las rutas', () => {
           return enLugar.at(-1)?.includes('data-confirmar-borrado')
             ? { set outerHTML(html: string) { enLugar.push(html); } } : null;
         }
+        if (sel === '[data-confirmar-borrado-categoria]') {
+          return enLugar.at(-1)?.includes('data-confirmar-borrado-categoria')
+            ? { set outerHTML(html: string) { enLugar.push(html); } } : null;
+        }
         // El sol encendido, tal como lo dibuja la cocina.
         if (sel === '[data-accion="wake"].on') return app.innerHTML.includes('class="ico on" data-accion="wake"') ? {} : null;
         if (sel === '#app input[name="tiempo"]') return campoTiempoDuracion;
@@ -1895,6 +1899,37 @@ describe('main.ts: las rutas', () => {
       await tocar('borrar-categoria-confirmado');
       expect(estado.categoriasBorradas).toEqual(['c1']);
       expect(global.location.hash).toBe('#/categorias');
+    });
+
+    it('si el borrado falla sin haber movido nada, avisa que la categoría sigue estando', async () => {
+      const original = storeFake.borrarCategoria;
+      storeFake.borrarCategoria = async () => { throw new Error('red'); };
+      try {
+        const { abrir, tocar, enLugar } = await montar();
+        await abrir('#/categorias');
+        await abrir('#/categorias/c1');
+        await tocar('borrar-categoria');
+        await tocar('borrar-categoria-confirmado');
+        expect(enLugar.at(-1)).toContain('No se pudo borrar. La categoría sigue estando.');
+      } finally {
+        storeFake.borrarCategoria = original;
+      }
+    });
+
+    it('si el borrado falla con recetas ya movidas, avisa que algunas pasaron a Borradores', async () => {
+      const original = storeFake.borrarCategoria;
+      storeFake.borrarCategoria = async () => { throw Object.assign(new Error('red'), { recetasMovidas: 1 }); };
+      try {
+        const { abrir, tocar, enLugar } = await montar();
+        await abrir('#/categorias');
+        await abrir('#/categorias/c1');
+        await tocar('borrar-categoria');
+        await tocar('borrar-categoria-confirmado');
+        expect(enLugar.at(-1)).toContain('No se pudo borrar. Algunas recetas ya pasaron a Borradores.');
+        expect(enLugar.at(-1)).not.toContain('La categoría sigue estando');
+      } finally {
+        storeFake.borrarCategoria = original;
+      }
     });
   });
 

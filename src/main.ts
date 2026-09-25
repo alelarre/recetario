@@ -1,7 +1,7 @@
 import { crearAuth, ErrorDeAuth } from './auth.js';
 import { crearDrive, ErrorDeDrive } from './drive.js';
 import { crearSheets, ErrorDeSheets } from './sheets.js';
-import { crearStore, conConcurrencia, TOPE_LECTURAS } from './store.js';
+import { crearStore, conConcurrencia, TOPE_LECTURAS, recetasMovidasEn } from './store.js';
 import * as indiceLocal from './indice-local.js';
 import { parse, slugArchivo, sePuedeTerminar } from './recipe.js';
 import { tagReservado, conEspecial, esFavorita, tieneEspecial, tieneAlgoCargado } from './catalogo.js';
@@ -1767,7 +1767,11 @@ const accionesDeCategorias: SeccionDeAcciones = {
     } catch (err) {
       console.error(err);
       const confirmacion = document.querySelector('[data-confirmar-borrado-categoria]');
-      if (confirmacion) pintarParte(confirmacion, aviso({ texto: 'No se pudo borrar. La categoría sigue estando.' }) + botonBorrarCategoria, 'reemplazar');
+      // Lo que ya pasó a Borradores queda ahí: la categoría sigue, pero no entera.
+      const texto = recetasMovidasEn(err)
+        ? 'No se pudo borrar. Algunas recetas ya pasaron a Borradores.'
+        : 'No se pudo borrar. La categoría sigue estando.';
+      if (confirmacion) pintarParte(confirmacion, aviso({ texto }) + botonBorrarCategoria, 'reemplazar');
       return;
     }
   }

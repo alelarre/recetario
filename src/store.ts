@@ -32,6 +32,23 @@ const noEsta = (e: unknown): boolean =>
 export const TOPE_LECTURAS = 6;
 
 /**
+ * Un `.md` de receta. Lo que empieza con `_` es de la app y no es una receta:
+ * `_plan.md` vive en la carpeta base, al lado de `_indice`, y sin esto
+ * entraría al índice como una receta suelta.
+ */
+const esMd = (a: ArchivoDrive): boolean =>
+  a.mimeType !== MIME_CARPETA && /\.md$/i.test(a.name ?? '') && !(a.name ?? '').startsWith('_');
+
+/**
+ * Cuántas recetas ya habían pasado a `_sin-categoria/` cuando falló el borrado
+ * de una categoría. Cero si el error no viene de ahí.
+ */
+export function recetasMovidasEn(error: unknown): number {
+  const n = (error as { recetasMovidas?: unknown } | null)?.recetasMovidas;
+  return typeof n === 'number' ? n : 0;
+}
+
+/**
  * Corre `tarea` sobre cada ítem con a lo sumo `tope` en vuelo, y devuelve los
  * resultados **en el orden de `items`**, no en el que fueron terminando. Un
  * error corta el reparto y se propaga, como cuando las lecturas eran en fila.
@@ -813,12 +830,6 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     ctx.sinCategoriaId = sinCategoriaId;
     usarCategorias(categorias);
 
-    // Lo que empieza con `_` es de la app y no es una receta: `_plan.md` vive
-    // en la carpeta base, al lado de `_indice`, y sin esto entraría al índice
-    // como una receta suelta.
-    const esMd = (a: ArchivoDrive): boolean =>
-      a.mimeType !== MIME_CARPETA && /\.md$/i.test(a.name ?? '') && !(a.name ?? '').startsWith('_');
-
     const lugares = [
       { id: ctx.raizId, categoria: CATEGORIA_RAIZ },
       ...(ctx.sinCategoriaId ? [{ id: ctx.sinCategoriaId, categoria: CATEGORIA_RAIZ }] : []),
@@ -1167,23 +1178,30 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
    * carpeta vacía van a la papelera ella, su fila y su foto propia, que vive
    * en `_fotos/` y no adentro de la carpeta.
    *
-   * Los `.md` se leen todos antes de mover el primero: uno que no se puede
-   * leer frena todo y la categoría queda como estaba. Si algo falla después,
-   * lo movido queda movido y la carpeta, que todavía tiene recetas, no se
-   * borra.
+   * Las recetas salen de listar la carpeta, no del índice: un `.md` subido
+   * por fuera y todavía sin reindexar también pasa, y no se va a la papelera
+   * adentro de la carpeta. Se leen todos antes de mover el primero: uno que
+   * no se puede leer frena todo y la categoría queda como estaba. Si algo
+   * falla después, lo movido queda movido, la carpeta no se borra y el error
+   * lleva cuántas se movieron (`recetasMovidasEn`).
    */
   async function borrarCategoria(id: string): Promise<void> {
     const nroCategoria = filaDeLaCategoria(id);
     if (nroCategoria < 2) return;
     const propia = idDeFotoPropia(ctx.categorias.find(c => c.id === id)?.foto ?? '');
 
-    const suyas = recetasDe(id);
-    const textos = await conConcurrencia(suyas, TOPE_LECTURAS, e => drive.leerTexto(e.id_archivo));
+    const suyas = (await drive.listarHijos(id)).filter(esMd);
+    const textos = await conConcurrencia(suyas, TOPE_LECTURAS, a => drive.leerTexto(a.id));
     // De a una: las escrituras en la planilla van en fila, y la primera crea
     // `_sin-categoria/` si todavía no existe.
-    for (const [i, e] of suyas.entries()) {
+    for (const [i, archivo] of suyas.entries()) {
       const receta = parse(textos[i] ?? '');
-      await guardar(e.id_archivo, { ...receta, tags: conEspecial(receta.tags, 'borrador', true) }, { carpetaDestino: '' });
+      try {
+        await guardar(archivo.id, { ...receta, tags: conEspecial(receta.tags, 'borrador', true) }, { carpetaDestino: '' });
+      } catch (e) {
+        if (i === 0) throw e;
+        throw Object.assign(new Error('Se cortó el paso de las recetas a _sin-categoria/.', { cause: e }), { recetasMovidas: i });
+      }
     }
 
     await drive.borrar(id);

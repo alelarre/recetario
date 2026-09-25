@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { crearStore } from '../src/store.js';
+import { crearStore, recetasMovidasEn } from '../src/store.js';
 import { COLUMNAS } from '../src/catalogo.js';
 import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 import { SCHEMA_VERSION } from '../src/config.js';
@@ -194,6 +194,45 @@ describe('borrar una categoría', () => {
     expect(drive._store.get('c1')?.trashed).toBeFalsy();
     expect(drive._store.get('r3')?.parents).toEqual(['c1']);
     expect(store.categorias().map(c => c.id)).toEqual(['c1', 'c2']);
+  });
+
+  it('un .md de la carpeta que no está en el índice también pasa a _sin-categoria/ con borrador', async () => {
+    const { store, drive } = await abierta();
+    drive._store.set('r9', { id: 'r9', name: 'r9.md', parents: ['c1'], contenido: '---\ntitulo: Subida por fuera\n---\n' });
+    drive._store.set('x1', { id: 'x1', name: 'nota.txt', parents: ['c1'], contenido: 'hola' });
+
+    await store.borrarCategoria('c1');
+
+    const sc = [...drive._store.values()].find(a => a.name === '_sin-categoria')!;
+    expect(drive._store.get('r9')?.parents).toEqual([sc.id]);
+    expect(drive._store.get('r9')?.trashed).toBeFalsy();
+    expect(parse(drive._store.get('r9')!.contenido!).tags).toContain('borrador');
+    expect(store.buscar({ tags: ['borrador'] }).map(e => e.id_archivo)).toContain('r9');
+    expect(drive._store.get('x1')?.parents).toEqual(['c1']);
+    expect(drive._store.get('c1')?.trashed).toBe(true);
+  });
+
+  it('si falla después de mover alguna, la carpeta sigue estando y el error cuenta las movidas', async () => {
+    const { store, drive } = await abierta();
+    const actualizar = drive.actualizar.bind(drive);
+    drive.actualizar = async (id: string, contenido: string) => {
+      if (id === 'r3') throw new Error('red');
+      return actualizar(id, contenido);
+    };
+
+    const error = await store.borrarCategoria('c1').then(() => null, (e: unknown) => e);
+
+    expect(recetasMovidasEn(error)).toBe(1);
+    expect(drive._store.get('c1')?.trashed).toBeFalsy();
+    expect(drive._store.get('r3')?.parents).toEqual(['c1']);
+    expect(store.categorias().map(c => c.id)).toEqual(['c1', 'c2']);
+  });
+
+  it('si falla antes de mover ninguna, el error no cuenta movidas', async () => {
+    const { store, drive } = await abierta();
+    drive.leerTexto = async () => { throw new Error('red'); };
+    const error = await store.borrarCategoria('c1').then(() => null, (e: unknown) => e);
+    expect(recetasMovidasEn(error)).toBe(0);
   });
 
   it('una categoría vacía no borra filas de recetas', async () => {
