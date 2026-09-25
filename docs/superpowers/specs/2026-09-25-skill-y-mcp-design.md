@@ -87,7 +87,22 @@ Cada foto llega como **ruta local** o como **URL**. Además lleva su **uso**:
 - **Un cliente OAuth nuevo, tipo *Aplicación de escritorio*,** en el mismo proyecto de Google Cloud que la app, con el scope `drive`.
 - **La primera vez**, el MCP abre el navegador para pedir permiso y recibe el código en un puerto local (loopback). El **refresh token** queda en el **Llavero de macOS**. Después renueva solo y no vuelve a pedir permiso.
 - **El client ID y el client secret** van en `~/.config/recetario/cliente.json`, fuera del repo. Google no considera secreto el de una app de escritorio, pero igual no se commitea.
-- **Si el permiso se revoca**, la herramienta falla con un aviso que dice cómo volver a conectar (un comando `npm run mcp:conectar`).
+- **Errores de login con código.** Cuando falla el login o un pedido a Google por permisos, la herramienta no devuelve el mensaje crudo de Google. Devuelve un error con un **código fijo** y un texto claro. El skill traduce cada código a una instrucción para el usuario:
+
+| Código | Cuándo | Qué le dice el skill al usuario |
+|---|---|---|
+| `sin-cliente` | Falta `~/.config/recetario/cliente.json` o está mal formado | Cómo crear el cliente *Aplicación de escritorio* en Google Cloud (proyecto, pantalla, tipo) y dónde guardar el archivo |
+| `sin-permiso` | Primera vez, o no hay refresh token en el Llavero | Correr `npm run mcp:conectar`, que abre el navegador para dar permiso con la cuenta del Drive |
+| `permiso-revocado` | Google rechaza el refresh token (`invalid_grant`): se revocó el acceso, se cambió la contraseña o pasaron 7 días con la app en modo *Prueba* | Correr `npm run mcp:conectar` otra vez. Si se repite cada semana, explicar que es por el modo *Prueba* del proyecto |
+| `usuario-no-habilitado` | `access_denied` porque la cuenta no está entre los usuarios de prueba | Agregar la cuenta en *Pantalla de consentimiento → Usuarios de prueba* |
+| `cliente-interno` | `Error 403: org_internal` | Pasar el tipo de usuario del proyecto a *Externo* |
+| `api-deshabilitada` | Drive o Sheets no están habilitadas en el proyecto | Qué API habilitar y dónde |
+| `scope-insuficiente` | El token no tiene el scope `drive` | Correr `npm run mcp:conectar` y aceptar el permiso completo |
+| `sin-carpeta` | La cuenta conectada no ve ninguna carpeta marcada como Recetario | Verificar que se conectó con la cuenta del Drive del recetario, o abrir la app una vez para crear o elegir la carpeta |
+| `sin-red` | No hay conexión con Google | Revisar la conexión y reintentar. No hace falta reconectar |
+
+- **Reconectar:** `npm run mcp:conectar` es el mismo flujo de la primera vez y reemplaza el token del Llavero.
+- **Tests:** cada código sale de la respuesta de Google que le corresponde, con respuestas simuladas.
 
 ### Arranque y el índice
 
@@ -120,6 +135,7 @@ Cada foto llega como **ruta local** o como **URL**. Además lleva su **uso**:
 - **Ordenar el recetario:** proponer el cambio sobre todo el recetario (qué tags se unifican, qué recetas se mueven) y aplicarlo receta por receta con `guardar`.
 - **Duplicados:** mostrarlos y preguntar antes de borrar o fusionar.
 - **Antes de empezar:** que la app no esté abierta mientras se trabaja.
+- **Errores de login:** ante un error con código (ver «Login»), el skill no intenta resolverlo solo ni reintenta a ciegas. Le dice al usuario en una o dos líneas qué pasó y qué hacer, con el paso concreto: el comando, la pantalla de Google Cloud o la cuenta. Espera a que el usuario diga que ya está, y después reintenta la operación que falló. Si a mitad de un lote falla el login, informa cuáles recetas ya se escribieron y cuáles faltan, y retoma desde ahí.
 
 ## Tests
 
