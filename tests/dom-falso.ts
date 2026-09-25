@@ -77,12 +77,16 @@ const hashDeUrl = (url: string): string => {
  * - `location.replace` reemplaza la entrada actual, también sin `state`;
  * - `pushState` y `replaceState` cambian las entradas sin avisar;
  * - `back` y `go` se mueven entre las entradas, y fuera de ellas no hacen nada;
- *   cada movimiento avisa con `popstate`, aunque el hash sea el mismo;
- * - todo cambio de hash, salvo el de `pushState` y `replaceState`, avisa con
- *   `hashchange` después. El navegador lo manda en una tarea aparte; acá va en
- *   una microtarea, que no depende del reloj falso de los tests. Lo que
- *   importa es lo mismo: la app alcanza a numerar la entrada antes de que
- *   llegue, y el `popstate` de un movimiento llega antes que su `hashchange`.
+ * - avisa con `popstate` cada movimiento, aunque el hash sea el mismo, y cada
+ *   cambio de hash de `location` —asignar `hash` o `replace`—, como el
+ *   navegador con toda navegación a un fragmento; `pushState` y
+ *   `replaceState` no avisan;
+ * - todo cambio de hash, salvo el de `pushState` y `replaceState`, avisa
+ *   además con `hashchange`, después del `popstate`.
+ *
+ * Los avisos van en una microtarea, que no depende del reloj falso de los
+ * tests; el navegador los manda en una tarea aparte. Lo que importa es lo
+ * mismo: la app alcanza a numerar la entrada antes de que lleguen.
  *
  * `location` y `history` se montan como globales; lo demás es para mirar.
  */
@@ -116,6 +120,8 @@ export function historialFalso({
     if (retenidos !== null) retenidos++;
     else void Promise.resolve().then(alCambiarHash);
   };
+  /** El `popstate` de un cambio de hash o de un movimiento: llega antes que su `hashchange`. */
+  const avisarPopstate = (): void => { void Promise.resolve().then(alPopstate); };
   const agregar = (entrada: EntradaFalsa): void => {
     entradas.splice(i + 1);
     entradas.push(entrada);
@@ -126,7 +132,7 @@ export function historialFalso({
     if (destino < 0 || destino >= entradas.length) return;
     const antes = actual().hash;
     i = destino;
-    void Promise.resolve().then(alPopstate);
+    avisarPopstate();
     if (actual().hash !== antes) avisar();
   };
 
@@ -136,13 +142,14 @@ export function historialFalso({
       const nuevo = valor.startsWith('#') ? valor : `#${valor}`;
       if (nuevo === actual().hash) return;
       agregar({ hash: nuevo, state: null });
+      avisarPopstate();
       avisar();
     },
     replace(url: string) {
       reemplazos.push(url);
       const antes = actual().hash;
       entradas[i] = { hash: hashDeUrl(url), state: null };
-      if (actual().hash !== antes) avisar();
+      if (actual().hash !== antes) { avisarPopstate(); avisar(); }
     }
   }, extraLocation);
 

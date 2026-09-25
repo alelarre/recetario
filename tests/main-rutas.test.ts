@@ -4679,6 +4679,22 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('<nav class="lat">');
     });
 
+    it('un link que no pasa por el menú, con el menú abierto y cambios: pregunta y no deja la capa', async () => {
+      const { abrir, tocar, pila, preguntas, pinturas, saltos } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Pan de campo' };
+      await tocar('abrir-menu');
+      const antes = pinturas.length;
+      // La barra del navegador: `popstate` y `hashchange`, sin pasar por la app.
+      await abrir('#/plan');
+      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
+      expect(global.location.hash).toBe('#/nueva');
+      expect(saltos).toEqual([-2]);
+      expect(pila().map(e => [e.hash, capa(e.state)])).toEqual([['', undefined], ['#/nueva', undefined]]);
+      // El `popstate` del link no redibuja: el formulario sigue con lo escrito.
+      expect(pinturas.length).toBe(antes);
+    });
+
     it('el visor de la receta: el atrás lo cierra; la cruz consume su entrada', async () => {
       estado.md = DEPOSITO;
       const { abrir, tocar, atras, app, pila } = await montar();

@@ -393,17 +393,51 @@ describe('las capas: lo que se abre sin cambiar de pantalla', () => {
   });
 
   it('un link con la capa abierta la deja atrás; deshacerlo vuelve a la pantalla, no a la capa', async () => {
-    const { nav, location, pila, saltos } = montar();
+    const { nav, location, pila, saltos, cerradas, llegadas } = montar();
     nav.ir('#/nueva');
     await esperar();
     nav.abrirCapa('menu');
+    // El navegador avisa el link con `popstate` y después con `hashchange`:
+    // el `popstate` no es el atrás de la capa, y no se la cierra a mano.
     location.hash = '#/plan';
     await esperar();
+    expect(cerradas).toEqual([]);
+    expect(llegadas.at(-1)).toBe('nueva');
     expect(nav.capaActual()).toBeNull();
     nav.deshacer();
     await esperar();
     expect(saltos).toEqual([-2]);
     expect(pila().map(e => [e.hash, capa(e.state)])).toEqual([['#/', undefined], ['#/nueva', undefined]]);
+  });
+});
+
+describe('ir sin un hashchange que lo avise', () => {
+  it('el mismo hash escrito sin # no agrega nada ni descuenta el aviso de otra entrada', async () => {
+    const { nav, location, pila, llegadas } = montar();
+    nav.ir('#/r/f1');
+    await esperar();
+    // Para el navegador es el mismo fragmento: no hay entrada ni hashchange.
+    nav.ir('/r/f1');
+    await esperar();
+    expect(pila()).toHaveLength(2);
+    // Un link después se numera como cualquier otro.
+    location.hash = '#/plan';
+    await esperar();
+    expect(llegadas.at(-1)).toBe('nueva');
+    expect(profundidad(pila().at(-1)?.state)).toBe(2);
+    expect(nav.hayAtras(2)).toBe(true);
+  });
+
+  it('cada ir avisado una vez, aunque lleguen juntos', async () => {
+    const { nav, location, llegadas, atras } = montar();
+    nav.ir('#/c/Carnes');
+    nav.ir('#/r/f1');
+    await esperar();
+    expect(llegadas).toEqual(['nueva', 'nueva']);
+    atras();
+    await esperar();
+    expect(llegadas.at(-1)).toBe('conocida');
+    expect(location.hash).toBe('#/c/Carnes');
   });
 });
 

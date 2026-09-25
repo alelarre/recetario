@@ -64,13 +64,17 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
    * la actual sigue mientras no se agregue otra entrada: el atrás no lo borra.
    */
   let hashes: string[] = [];
-  /** Cuántas entradas agregó `ir` que todavía no llegaron por `hashchange`. */
+  /**
+   * Cuántas entradas agregó `ir` que todavía no llegaron por `hashchange`.
+   * `ir` suma sólo si el hash cambió de verdad: cada una tiene su aviso.
+   */
   let propias = 0;
   /** La capa abierta, cuya entrada es la actual; o `null`. */
   let capa: string | null = null;
   /**
-   * La capa quedó atrás de la entrada actual: llegó un link con ella abierta.
-   * Deshacer ese link vuelve a la pantalla, no a la capa.
+   * La capa quedó atrás de la entrada que está llegando: llegó un link con
+   * ella abierta. Deshacer ese link vuelve a la pantalla, no a la capa. Vale
+   * hasta el `hashchange` siguiente al de ese link.
    */
   let capaAtras = false;
   /** Lo que se hace cuando llegue el `popstate` de la salida de la capa. */
@@ -147,11 +151,19 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
      */
     ir(hash: string): void {
       if (hash === location.hash) return;
-      propias++;
+      const antes = location.hash;
+      const abierta = capa;
+      // La capa se suelta antes de navegar: el `popstate` del cambio de hash
+      // no la tiene que tomar por un link.
+      const desdeCapa = soltarCapa() > 0;
       // El cambio de hash agrega la entrada en el momento; el `hashchange`
       // llega después y ya la encuentra numerada.
-      if (soltarCapa()) location.replace(hash);
+      if (desdeCapa) location.replace(hash);
       else location.hash = hash;
+      // Un hash escrito de otra forma que es el mismo —sin el `#`— no cambia
+      // nada, y no llega ningún `hashchange`.
+      if (location.hash === antes) { capa = abierta; return; }
+      propias++;
       marcar(profundidad + 1);
       anotar(location.hash, true);
     },
@@ -194,10 +206,18 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
         anotar(location.hash, false);
         return 'deshecha';
       }
-      if (propias > 0) { propias--; return 'nueva'; }
+      // Si el navegador no avisó el link por `popstate`, se lo nota acá.
+      const conCapaAtras = capaAtras || (p === null && capa !== null);
+      capaAtras = false;
+      if (propias > 0) {
+        propias--;
+        if (p !== null) profundidad = p;
+        anotar(location.hash, false);
+        return 'nueva';
+      }
       if (p !== null) { profundidad = p; anotar(location.hash, false); return 'conocida'; }
       // Un link con una capa abierta la deja atrás, y la capa deja de estar.
-      capaAtras = capa !== null;
+      capaAtras = conCapaAtras;
       capa = null;
       marcar(profundidad + 1);
       anotar(location.hash, true);
@@ -266,6 +286,12 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
       if (capa === null || capaDe(history.state) === capa) return;
       const cerrada = capa;
       capa = null;
+      // Cambió el hash: es otra pantalla —un link con la capa abierta—, y la
+      // dibuja el `hashchange` que viene. No hay capa que cerrar a mano.
+      if (location.hash !== hashes[profundidad]) {
+        capaAtras = profundidadDe(history.state) === null;
+        return;
+      }
       alCerrar(cerrada);
     }
   };
