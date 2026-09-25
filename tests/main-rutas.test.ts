@@ -15,6 +15,7 @@ import { colorDeClave } from '../src/ui/categorias.js';
 import { linkDeFoto, parsearFotos, serializarFotos } from '../src/fotos-receta.js';
 import { ICO } from '../src/ui/iconos.js';
 import { CORTE_DE_LECTURA } from '../src/config.js';
+import { MS_CIERRE, MS_RESPALDO_CIERRE } from '../src/velo.js';
 import type { CambiosDeFotos, Coincidencias, Plan, Receta } from '../src/tipos.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
@@ -271,16 +272,14 @@ vi.mock('../src/indice-local.js', () => ({
   borrar: () => { estado.copiasBorradas++; }
 }));
 
-/**
- * Los dos tiempos del velo, como los tiene `velo.ts`: lo que dura el cierre
- * con el tilde y lo que se espera después, por si nadie dibuja la pantalla de
- * destino. El reloj de estos tests es falso —esperarlos de verdad, en cada
- * test que guarda una receta, se lleva la mitad de la suite—, así que se los
- * adelanta a mano. Separados porque entre uno y otro hay un momento que se
- * mira: el tilde ya dibujado y el velo todavía puesto.
+/*
+ * Los dos tiempos del velo (`MS_CIERRE` y `MS_RESPALDO_CIERRE`, de `velo.ts`):
+ * lo que dura el cierre con el tilde y lo que se espera después, por si nadie
+ * dibuja la pantalla de destino. El reloj de estos tests es falso —esperarlos
+ * de verdad, en cada test que guarda una receta, se lleva la mitad de la
+ * suite—, así que se los adelanta a mano. Separados porque entre uno y otro
+ * hay un momento que se mira: el tilde ya dibujado y el velo todavía puesto.
  */
-const MS_CIERRE = 1850;
-const MS_RESPALDO_CIERRE = 400;
 
 /**
  * Todo el velo, con margen. No llega a los 20 s del corte de una traída por
@@ -712,11 +711,16 @@ describe('main.ts: las rutas', () => {
     // entrada, asignar `hash` sí, y cada cambio de hash avisa después con
     // `hashchange`, como el navegador.
     const recargas: number[] = [];
+    /** Cómo estaba todo al recargar: si el velo tapaba y en qué hash. */
+    const alRecargar: { velo: boolean; hash: string }[] = [];
     const historial = historialFalso({
       hash,
       alCambiarHash: () => { listeners['hashchange']?.(); },
       alPopstate: () => { listeners['popstate']?.(); },
-      location: { pathname: '/recetario/', search, origin: 'https://h', reload: () => { recargas.push(1); } },
+      location: { pathname: '/recetario/', search, origin: 'https://h', reload: () => {
+        recargas.push(1);
+        alRecargar.push({ velo: !velo.hidden, hash: global.location.hash });
+      } },
       alVolver: () => { tapadoAlVolver.push(tapado()); }
     });
     const { reemplazos, empujados, vueltasAtras, saltos, pila } = historial;
@@ -740,6 +744,7 @@ describe('main.ts: las rutas', () => {
       avisosALaVista,
       idasYVueltasDelVelo,
       recargas,
+      alRecargar,
       vueltasAtras,
       tapadoAlVolver,
       scrolls,
@@ -1875,6 +1880,25 @@ describe('main.ts: las rutas', () => {
       expect(recargas).toHaveLength(1);
     });
 
+    it('la página se recarga con el velo puesto, en el Recetario, y nada vuelve a la carpeta', async () => {
+      estado.eligiendo = [];
+      const { tocar, alRecargar, pila, empujados } = await montar();
+      await tocar('carpeta-crear');
+      expect(alRecargar).toEqual([{ velo: true, hash: '#/' }]);
+      expect(pila().at(-1)?.hash).toBe('#/');
+      expect(empujados).toEqual([]);
+    });
+
+    it('cambiando la carpeta desde Ajustes, también', async () => {
+      const { abrir, tocar, alRecargar, pila, empujados } = await montar();
+      await abrir('#/ajustes');
+      await tocar('cambiar-carpeta');
+      await tocar('carpeta-crear');
+      expect(alRecargar).toEqual([{ velo: true, hash: '#/' }]);
+      expect(pila().at(-1)?.hash).toBe('#/');
+      expect(empujados).toEqual([]);
+    });
+
     it('con el Picker, elegir una carpeta confirma y prepara', async () => {
       estado.eligiendo = [];
       picker.elegida = { id: 'p1', nombre: 'Mis recetas' };
@@ -2600,6 +2624,33 @@ describe('main.ts: las rutas', () => {
       expect(velo.classList.contains('exito')).toBe(false);
     });
 
+    it('una parte dibujada después del tilde no saca el velo: lo saca la pantalla de destino', async () => {
+      const {
+        abrir, tocarSinCerrar, correrElCierre, velo, retenerAvisos, soltarAvisos, elegirFotos, posarCursor, botonesDeFoto
+      } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      await elegirFotos([new Blob(['a'], { type: 'image/jpeg' })]);
+      estado.formulario = { ...estado.formulario, titulo: 'Milanesas', carpeta: 'c1', preparacion: '1. Freír.' };
+
+      const guardando = tocarSinCerrar('guardar');
+      await esperar();
+      retenerAvisos();
+      await correrElCierre();
+      await guardando;
+      expect(velo.hidden).toBe(false);
+
+      // El cursor se mueve antes de que llegue la receta: el botón de la foto
+      // se dibuja como una parte, y el velo sigue tapando.
+      const antes = botonesDeFoto.length;
+      await posarCursor('preparacion', 0);
+      expect(botonesDeFoto.length).toBe(antes + 1);
+      expect(velo.hidden).toBe(false);
+
+      await soltarAvisos();
+      expect(velo.hidden).toBe(true);
+    });
+
     it('si nadie dibuja nada después del tilde, el velo se va igual', async () => {
       const { abrir, tocarSinCerrar, correrElReloj, velo } = await montar();
       await abrir('#/nueva');
@@ -3288,6 +3339,27 @@ describe('main.ts: las rutas', () => {
         { dia: 0, momento: 'noche', id: 'f1', titulo: 'Milanesas' },
         { dia: 1, momento: 'noche', id: 'f2', titulo: 'Tarta' }
       ]
+    });
+
+    it('entrando directo, leer el plan y sus recetas es una sola espera: el velo no parpadea', async () => {
+      estado.plan = conDosRecetas();
+      const receta = storeFake.receta;
+      const plan = storeFake.plan;
+      const tarda = <T>(valor: T): Promise<T> => new Promise(r => { setTimeout(() => { r(valor); }, 300); });
+      storeFake.plan = () => tarda(estado.plan);
+      storeFake.receta = (id: string) => tarda({ entrada: entradaFalsa({ id_archivo: id }), receta: parse(estado.md) });
+      try {
+        const { abrir, app, idasYVueltasDelVelo } = await montar();
+        idasYVueltasDelVelo.length = 0;
+        await abrir('#/plan/compras');
+        await vi.advanceTimersByTimeAsync(700);
+        await esperar();
+        expect(app.innerHTML).toContain('data-accion="compartir-compras"');
+        expect(idasYVueltasDelVelo).toEqual([false, true]);
+      } finally {
+        storeFake.receta = receta;
+        storeFake.plan = plan;
+      }
     });
 
     it('lee una vez cada receta distinta del plan y junta los ingredientes', async () => {
@@ -5219,6 +5291,36 @@ describe('main.ts: las rutas', () => {
 
       await tocar('acciones-foto', { n: '1' });
       await tocar('cerrar-ficha-foto');
+      expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined]);
+    });
+
+    it('con la pantalla ocupada, el atrás no cierra la ficha: vuelve a su entrada', async () => {
+      estado.md = DEPOSITO;
+      let contestar!: () => void;
+      vi.stubGlobal('fetch', () => new Promise(r => {
+        contestar = () => r({
+          ok: true,
+          headers: { get: (n: string) => (n.toLowerCase() === 'content-type' ? 'image/jpeg' : null) },
+          blob: async () => new Blob(['bajada'], { type: 'image/jpeg' })
+        });
+      }));
+      const { abrir, tocar, tocarSinCerrar, atras, preguntas, pila } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+      await tocar('abrir-foto-url');
+      estado.formulario['url-foto'] = 'https://ejemplo/3.jpg';
+
+      const trayendo = tocarSinCerrar('traer-foto-url');
+      await esperar();
+      await atras();
+      expect(preguntas.some(h => h.includes('data-foto-url'))).toBe(true);
+      expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined, 'ficha-foto']);
+
+      // Traída la foto, la ficha se cierra como siempre y consume su entrada.
+      contestar();
+      await trayendo;
+      await esperar();
+      expect(preguntas.some(h => h.includes('data-foto-url'))).toBe(false);
       expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined]);
     });
 

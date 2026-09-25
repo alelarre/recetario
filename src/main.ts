@@ -109,16 +109,15 @@ despuesDePintar(() => {
   });
 });
 /**
- * El velo que quedó puesto después del tilde se va cuando la pantalla de
- * destino está dibujada: si se fuera antes, se vería el repintado por debajo
- * (§6.17b). Una parte dibujada también cuenta: la escritura que no navega
- * redibuja sólo lo suyo.
+ * Dibuja la pantalla entera. El velo que quedó puesto después del tilde se va
+ * recién acá, con la pantalla de destino dibujada: si se fuera antes, se vería
+ * el repintado por debajo (§6.17b). Una parte dibujada no cuenta —puede ser
+ * el botón de la foto que sigue al cursor antes de que llegue el destino—, y
+ * la escritura que no navega ni redibuja entera la cubre el respaldo del velo.
  */
-despuesDePintar(() => { velo.alPintar(); });
-
-/** Dibuja la pantalla entera. */
 const pintar = (html: string): void => {
   pintarEnPantalla(conLateralFijo(html));
+  velo.alPintar();
   mirarElAviso();
 };
 
@@ -188,6 +187,13 @@ let sugerenciasDeCarpeta: CarpetaSimple[] = [];
 const cambiandoCarpeta = (): boolean => vistaActual?.params['cambiando'] === '1';
 
 /**
+ * La página se está recargando: lo que llegue hasta que se descargue no se
+ * dibuja. Si no, el `hashchange` de la recarga misma encontraría la pantalla
+ * ocupada —o sin carpeta— y volvería a poner la carpeta en el historial.
+ */
+let recargando = false;
+
+/**
  * El setup de la carpeta elegida —o de la que se crea acá, con `'crear'`—
  * con el velo del progreso, y la recarga al terminar. Si falla, el aviso
  * reemplaza los botones y Reintentar vuelve a ofrecer la misma carpeta:
@@ -204,15 +210,18 @@ async function usarCarpeta(elegida: CarpetaSimple | 'crear'): Promise<void> {
       // La anotación es para los otros dispositivos: si falla, el cambio sigue.
       if (cambiandoCarpeta()) await store.marcarReemplazada().catch(err => console.error(err));
       await store.prepararCarpeta(carpeta, avance);
+      // La copia ya es la de la carpeta elegida: recargar abre con un pedido.
+      // Adentro de la tarea, para que el velo siga puesto hasta que la página
+      // se descargue.
+      recargando = true;
+      nav.reemplazar('#/');
+      location.reload();
     });
   } catch (err) {
     console.error(err);
     estadoDePantalla.selector.error = creada ? 'No se pudo preparar la carpeta.' : 'No se pudo crear la carpeta.';
     return render();
   }
-  // La copia ya es la de la carpeta elegida: recargar abre con un pedido.
-  nav.reemplazar('#/');
-  location.reload();
 }
 
 /**
@@ -348,9 +357,10 @@ function dejarCategoriaDelPlan(): void {
  * vez por aparición: la misma receta en dos comidas cuenta dos veces.
  *
  * Las lecturas se solapan, de a seis como el reindexado: en fila, un plan
- * cargado son catorce viajes uno detrás de otro. Y tapan la pantalla
- * mientras duran —no escriben nada, pero es la espera más larga de la app
- * (R8)—; con la lista ya armada no se espera nada.
+ * cargado son catorce viajes uno detrás de otro. Tapan la pantalla mientras
+ * duran —no escriben nada, pero es la espera más larga de la app (R8)—, y la
+ * espera la pone quien llama, junto con la del plan; con la lista ya armada
+ * no se lee nada.
  */
 async function comprasDelPlan(plan: Plan): Promise<ListaDeCompras> {
   const clave = plan.comidas.map(c => c.id).join(',');
@@ -359,8 +369,8 @@ async function comprasDelPlan(plan: Plan): Promise<ListaDeCompras> {
   const leidas = new Map<string, Receta>();
   // El error se atrapa acá adentro y no afuera: `conConcurrencia` corta el
   // reparto con el primero que falla, y una receta borrada sólo se saltea.
-  const traidas = await velo.esperar(() => conConcurrencia(ids, TOPE_LECTURAS, (id: string) =>
-    store.receta(id).catch(err => { console.error(err); return null; })));
+  const traidas = await conConcurrencia(ids, TOPE_LECTURAS, (id: string) =>
+    store.receta(id).catch(err => { console.error(err); return null; }));
   for (const [i, id] of ids.entries()) {
     const leida = traidas[i];
     if (leida) leidas.set(id, leida.receta);
@@ -377,13 +387,13 @@ async function comprasDelPlan(plan: Plan): Promise<ListaDeCompras> {
 /**
  * Escribe el plan entero con el cambio y lo deja en memoria; si falla, la
  * grilla no cambia y el aviso lo dice (R1). El plan puede no estar leído
- * todavía, y leerlo es otro pedido a Drive antes de escribir: el velo cubre
- * las dos cosas, desde el toque.
+ * todavía, y leerlo es otro pedido a Drive antes de escribir: la misma
+ * escritura lo cubre, desde el toque.
  */
 async function guardarPlan(cambio: (plan: Plan) => Plan): Promise<void> {
   try {
     await velo.escribir(async () => {
-      const nuevo = cambio(await planDePantalla());
+      const nuevo = cambio(planLeido ?? await store.plan());
       await store.guardarPlan(nuevo);
       planLeido = nuevo;
     });
@@ -718,6 +728,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
   // La vista de invitado se elige una sola vez, al cargar (`inicio.ts`), y un
   // cambio de fragmento no recarga: el dueño que toca su propio link con la PWA
   // abierta vería el Recetario. Recargar deja que `inicio.ts` vuelva a decidir.
+  if (recargando) return;
   if (esHashDeInvitado(location.hash)) { location.reload(); return; }
   const cambiaDePantalla = !vistaActual || !mismaPantalla(ruta, vistaActual);
 
@@ -919,7 +930,12 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
 
     case 'plan-compras':
       try {
-        const lista = await comprasDelPlan(await planDePantalla());
+        // Leer el plan y sus recetas es una sola espera: dos seguidas harían
+        // parpadear el velo entre una y otra.
+        const lista = await velo.esperar(async () => {
+          planLeido ??= await store.plan();
+          return comprasDelPlan(planLeido);
+        });
         return pintar(renderCompras({ lista, ...(estadoDePantalla.compartiendo ? { compartir: estadoDePantalla.compartiendo } : {}) }));
       } catch (err) {
         console.error(err);
@@ -1467,7 +1483,13 @@ const CIERRE_DE_CAPA: Record<string, () => unknown> = {
   'ficha-foto': () => { quitarFichaFoto(); acomodarBotonDeFoto(); },
   'categoria-plan': () => { dejarCategoriaDelPlan(); return render(); }
 };
-nav.alCerrarCapa(capa => { void CIERRE_DE_CAPA[capa]?.(); });
+// Con la pantalla ocupada, el atrás no cierra nada: la capa vuelve a su
+// entrada, como la pantalla en `render`. Lo que está trabajando termina sobre
+// lo que se estaba viendo.
+nav.alCerrarCapa(capa => {
+  if (velo.ocupado()) { nav.abrirCapa(capa); return; }
+  void CIERRE_DE_CAPA[capa]?.();
+});
 window.addEventListener('popstate', () => { nav.alPopstate(); });
 
 // Las acciones de la pantalla, por tema. Cada sección es un mapa

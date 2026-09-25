@@ -45,7 +45,7 @@ export interface Velo {
   conProgreso<T>(texto: string, tarea: (avance: (parte: number) => void) => Promise<T>): Promise<T>;
   /** Hay una operación en curso, o su tilde se está dibujando: no se navega ni se toca nada. */
   ocupado(): boolean;
-  /** Lo llama cada dibujo: saca el velo que quedó puesto después del tilde. */
+  /** Lo llama el dibujo de la pantalla entera: saca el velo que quedó puesto después del tilde. */
   alPintar(): void;
 }
 
