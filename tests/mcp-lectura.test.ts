@@ -192,7 +192,7 @@ describe('errores de Google en el arranque', () => {
     drive.fallar('carpetasMarcadas', Object.assign(new Error('Backend Error'), { status: 500 }));
     const error = await nuevoRecetario().categorias().catch((e: unknown) => e);
     expect(error).not.toBeInstanceOf(ErrorDeLogin);
-    expect((error as Error).message).toContain('Backend Error');
+    expect((error as Error).message).toBe('No se pudo leer el Drive: Google respondió 500 y no se pudo completar el pedido.');
   });
 });
 
@@ -355,5 +355,16 @@ describe('errorDeSoloLectura', () => {
 
   it('sin error de login, el motivo', () => {
     expect(errorDeSoloLectura('Backend Error', null).message).toContain('Backend Error');
+  });
+
+  it('el error de Google del arranque sale con su status, sin el cuerpo', () => {
+    const deGoogle = Object.assign(new Error('{"error":"Backend Error"}'), { status: 503 });
+    expect(errorDeSoloLectura(deGoogle.message, null, deGoogle).message)
+      .toBe('No se pudo leer el Drive: Google respondió 503 y no se pudo completar el pedido.');
+  });
+
+  it('un error de Google anterior, que el store atrapó, no reemplaza al motivo', () => {
+    const deGoogle = Object.assign(new Error('Not Found'), { status: 404 });
+    expect(errorDeSoloLectura('Sin conexión', null, deGoogle).message).toBe('No se pudo leer el Drive: Sin conexión');
   });
 });

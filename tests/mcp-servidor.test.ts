@@ -171,6 +171,14 @@ describe('los errores', () => {
     expect(texto(r)).not.toContain('Backend');
   });
 
+  it('uno de Google en el arranque dice el status, sin el cuerpo de la respuesta', async () => {
+    drive.fallar('carpetasMarcadas', new ErrorDeDrive('{"error":{"message":"Backend Error interno 7f3a"}}', 500));
+    const r = await llamar(await conectar(), 'categorias');
+    expect(r.isError).toBe(true);
+    expect(texto(r)).toContain('500');
+    expect(texto(r)).not.toContain('Backend');
+  });
+
   it('uno propio del recetario sale con su mensaje', async () => {
     const r = await llamar(await conectar(), 'leer', { id: 'nada' });
     expect(r.isError).toBe(true);

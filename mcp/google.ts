@@ -4,7 +4,7 @@
 // hasta en una escritura porque Google la rechazó antes de hacerla. Los errores
 // de login y de permisos salen como `ErrorDeLogin`, con su código; el resto
 // pasa tal cual, porque el store distingue, por ejemplo, el 404.
-import { comoErrorDeLogin, type ErrorDeLogin } from './errores.js';
+import { comoErrorDeLogin, esErrorDeGoogle, type ErrorDeGoogle, type ErrorDeLogin } from './errores.js';
 
 export interface GanchosDeLogin {
   /** Ante un 401: descartar el access token, para que el reintento pida otro. */
@@ -14,6 +14,8 @@ export interface GanchosDeLogin {
    * Drive y devuelve sólo su mensaje; así el código no se pierde.
    */
   alFallar?: (error: ErrorDeLogin) => void;
+  /** Cada error de Google que no es de login, por lo mismo. */
+  alFallarGoogle?: (error: ErrorDeGoogle) => void;
 }
 
 const esRechazo = (e: unknown): boolean =>
@@ -26,7 +28,10 @@ const esPromesa = (x: unknown): x is Promise<unknown> =>
 export function conLogin<T extends object>(cliente: T, ganchos: GanchosDeLogin): T {
   const traducir = (e: unknown): unknown => {
     const deLogin = comoErrorDeLogin(e);
-    if (!deLogin) return e;
+    if (!deLogin) {
+      if (esErrorDeGoogle(e)) ganchos.alFallarGoogle?.(e);
+      return e;
+    }
     ganchos.alFallar?.(deLogin);
     return deLogin;
   };

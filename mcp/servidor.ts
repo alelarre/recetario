@@ -7,7 +7,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { crearAuthEscritorio } from './auth.js';
-import { comoErrorDeLogin } from './errores.js';
+import { comoErrorDeLogin, esErrorDeGoogle, mensajeDeGoogle } from './errores.js';
 import { crearLlaveroMac } from './llavero.js';
 import { abrirNavegadorMac } from './navegador.js';
 import { recetarioDeGoogle, type Recetario } from './recetario.js';
@@ -33,9 +33,7 @@ const json = (valor: unknown, isError = false): CallToolResult => texto(JSON.str
 export function respuestaDeError(error: unknown): CallToolResult {
   const deLogin = comoErrorDeLogin(error);
   if (deLogin) return texto(`[${deLogin.codigo}] ${deLogin.message}`, true);
-  if (error instanceof Error && 'status' in error && typeof error.status === 'number') {
-    return texto(`Google respondió ${error.status} y no se pudo completar el pedido.`, true);
-  }
+  if (esErrorDeGoogle(error)) return texto(mensajeDeGoogle(error), true);
   return texto(error instanceof Error ? error.message : String(error), true);
 }
 

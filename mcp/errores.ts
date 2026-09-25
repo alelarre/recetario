@@ -131,8 +131,18 @@ function esFallaDeRed(error: unknown): boolean {
 export function comoErrorDeLogin(error: unknown): ErrorDeLogin | null {
   if (error instanceof ErrorDeLogin) return error;
   if (esFallaDeRed(error)) return new ErrorDeLogin('sin-red');
-  if (error instanceof Error && 'status' in error && typeof error.status === 'number') {
-    return errorDe({ status: error.status, cuerpo: error.message });
-  }
+  if (esErrorDeGoogle(error)) return errorDe({ status: error.status, cuerpo: error.message });
   return null;
+}
+
+/** Un error de Drive o de Sheets: trae el status, y en el mensaje, el cuerpo crudo de Google. */
+export type ErrorDeGoogle = Error & { status: number };
+
+export function esErrorDeGoogle(error: unknown): error is ErrorDeGoogle {
+  return error instanceof Error && 'status' in error && typeof error.status === 'number';
+}
+
+/** El texto de un error de Google que no es de login, sin el cuerpo de la respuesta. */
+export function mensajeDeGoogle(error: ErrorDeGoogle): string {
+  return `Google respondió ${error.status} y no se pudo completar el pedido.`;
 }

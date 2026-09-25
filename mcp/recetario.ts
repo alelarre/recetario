@@ -15,7 +15,7 @@ import type { CambiosDeFotos, Entrada, Filtros, FotoDeReceta, Receta } from '../
 import { conLogin } from './google.js';
 import { fotosQueSeSuben, numerosDeFotos, portadaCon, type FotoASubir, type FotoPedida } from './fotos-pedidas.js';
 import { achicarEnNode, NoSeBajo } from './fotos.js';
-import { ErrorDeLogin } from './errores.js';
+import { ErrorDeLogin, mensajeDeGoogle, type ErrorDeGoogle } from './errores.js';
 import type { AuthEscritorio } from './auth.js';
 
 /**
@@ -85,11 +85,18 @@ const MENSAJE_VARIAS_MARCADAS =
 
 /**
  * El error de un arranque que no pudo leer el Drive. El store devuelve sólo el
- * mensaje; el último error de login conserva el código, pero es el del
- * arranque sólo si su mensaje es ese: uno que el store atrapó y siguió no lo es.
+ * mensaje; el último error de login y el último de Google conservan el código
+ * y el status, pero son los del arranque sólo si su mensaje es ese: uno que el
+ * store atrapó y siguió no lo es. El mensaje de uno de Google es el cuerpo
+ * crudo de la respuesta, así que sale sólo el status.
  */
-export function errorDeSoloLectura(motivo: string, ultimoDeLogin: ErrorDeLogin | null): Error {
+export function errorDeSoloLectura(
+  motivo: string, ultimoDeLogin: ErrorDeLogin | null, ultimoDeGoogle: ErrorDeGoogle | null = null
+): Error {
   if (ultimoDeLogin && ultimoDeLogin.message === motivo) return ultimoDeLogin;
+  if (ultimoDeGoogle && ultimoDeGoogle.message === motivo) {
+    return new Error(`No se pudo leer el Drive: ${mensajeDeGoogle(ultimoDeGoogle)}`);
+  }
   return new Error(`No se pudo leer el Drive: ${motivo}`);
 }
 
@@ -232,9 +239,11 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
    * mensaje: el último error de login que salió conserva el código.
    */
   let ultimoDeLogin: ErrorDeLogin | null = null;
+  let ultimoDeGoogle: ErrorDeGoogle | null = null;
   const ganchos = {
     alRechazar: () => auth.olvidar(),
-    alFallar: (e: ErrorDeLogin) => { ultimoDeLogin = e; }
+    alFallar: (e: ErrorDeLogin) => { ultimoDeLogin = e; },
+    alFallarGoogle: (e: ErrorDeGoogle) => { ultimoDeGoogle = e; }
   };
   /**
    * Cuántas carpetas marcadas vio el arranque. `elegir-carpeta` es igual con
@@ -261,6 +270,7 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
 
   async function arrancar(): Promise<void> {
     ultimoDeLogin = null;
+    ultimoDeGoogle = null;
     marcadas = 0;
     const resultado = await store.arrancar();
     // Ninguna carpeta marcada, o más de una: la app la hace elegir, y el MCP
@@ -271,7 +281,7 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
       }
       throw new ErrorDeLogin('sin-carpeta');
     }
-    if (resultado.estado === 'solo-lectura') throw errorDeSoloLectura(resultado.motivo, ultimoDeLogin);
+    if (resultado.estado === 'solo-lectura') throw errorDeSoloLectura(resultado.motivo, ultimoDeLogin, ultimoDeGoogle);
     // Como la app: un índice viejo o a medio hacer se rehace en lugar de cargarse.
     if (resultado.reconstruir) await store.reconstruir();
     else await store.cargarIndice();
