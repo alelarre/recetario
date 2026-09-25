@@ -871,6 +871,12 @@ describe('main.ts: las rutas', () => {
         for (const fn of tecleos) await fn({ target: campo });
         await esperar();
       },
+      /** Un `change` en un campo: Enter, o salir de la caja con lo escrito. */
+      cambiar: async (accion: string, valor: string) => {
+        const campo = { dataset: { accion }, value: valor, name: '' };
+        for (const fn of cambios) await fn({ target: campo });
+        await esperar();
+      },
       panelLateral,
       menuDesplegado,
       /**
@@ -3269,16 +3275,39 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('escribir en la caja reemplaza el bloque sin repintar la pantalla', async () => {
+    it('mientras se escribe en la caja no se busca: el bloque espera al Enter o a salir de la caja', async () => {
+      const original = storeFake.buscarPorTexto;
+      let busquedas = 0;
+      storeFake.buscarPorTexto = (): Coincidencias => {
+        busquedas++;
+        return { porNombre: [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })], porIngrediente: [], porTag: [] };
+      };
+      try {
+        const { abrir, tipear, cambiar, resultadosPlan } = await montar();
+        await abrir('#/plan/agregar?dia=1&momento=noche');
+        const antes = resultadosPlan.length;
+        await tipear('buscar-en-plan', 'mi');
+        await tipear('buscar-en-plan', 'mila');
+        expect(resultadosPlan.length).toBe(antes);
+        expect(busquedas).toBe(0);
+        await cambiar('buscar-en-plan', 'mila');
+        expect(busquedas).toBeGreaterThan(0);
+        expect(resultadosPlan.at(-1)).toContain('data-accion="elegir-para-el-plan" data-id="f1"');
+      } finally {
+        storeFake.buscarPorTexto = original;
+      }
+    });
+
+    it('buscar en la caja reemplaza el bloque sin repintar la pantalla', async () => {
       const original = storeFake.buscarPorTexto;
       storeFake.buscarPorTexto = (): Coincidencias => ({
         porNombre: [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })],
         porIngrediente: [], porTag: []
       });
       try {
-        const { abrir, tipear, resultadosPlan } = await montar();
+        const { abrir, cambiar, resultadosPlan } = await montar();
         await abrir('#/plan/agregar?dia=1&momento=noche');
-        await tipear('buscar-en-plan', 'mila');
+        await cambiar('buscar-en-plan', 'mila');
         expect(resultadosPlan.at(-1)).toContain('Por nombre');
         expect(resultadosPlan.at(-1)).toContain('data-accion="elegir-para-el-plan" data-id="f1"');
       } finally {
@@ -3286,19 +3315,19 @@ describe('main.ts: las rutas', () => {
       }
     });
 
-    it('escribir en la caja completa las fotos de Drive de las tarjetas del bloque', async () => {
+    it('buscar en la caja completa las fotos de Drive de las tarjetas del bloque', async () => {
       const original = storeFake.buscarPorTexto;
       storeFake.buscarPorTexto = (): Coincidencias => ({
         porNombre: [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', foto: linkDeFoto('d1') })],
         porIngrediente: [], porTag: []
       });
       try {
-        const { abrir, tipear, resultadosPlan, imgs } = await montar();
+        const { abrir, cambiar, resultadosPlan, imgs } = await montar();
         await abrir('#/plan/agregar?dia=1&momento=noche');
         // La tarjeta que el bloque nuevo deja pedida: sale sin `src`.
         const foto = imgFalsa({ drive: 'd1' });
         imgs.push(foto);
-        await tipear('buscar-en-plan', 'mila');
+        await cambiar('buscar-en-plan', 'mila');
         expect(resultadosPlan.at(-1)).toContain('data-drive="d1"');
         expect(foto.atributos['src']).toBe('blob:d1');
       } finally {
@@ -3316,9 +3345,9 @@ describe('main.ts: las rutas', () => {
         porIngrediente: [], porTag: []
       });
       try {
-        const { abrir, tipear, resultadosPlan } = await montar();
+        const { abrir, cambiar, resultadosPlan } = await montar();
         await abrir('#/plan/agregar?dia=1&momento=noche');
-        await tipear('buscar-en-plan', 'a');
+        await cambiar('buscar-en-plan', 'a');
         const bloque = resultadosPlan.at(-1) ?? '';
         expect(bloque.indexOf('Arroz')).toBeLessThan(bloque.indexOf('Zapallo'));
       } finally {
@@ -3342,9 +3371,9 @@ describe('main.ts: las rutas', () => {
         disconnect(): void {}
       };
       try {
-        const { abrir, tipear, resultadosPlan, app } = await montar();
+        const { abrir, cambiar, resultadosPlan, app } = await montar();
         await abrir('#/plan/agregar?dia=1&momento=noche');
-        await tipear('buscar-en-plan', 'a');
+        await cambiar('buscar-en-plan', 'a');
         expect(resultadosPlan.at(-1)).not.toContain('A31');
         expect(observados.at(-1)).toEqual({ plan: true });
         const pantalla = app.innerHTML;
@@ -3367,9 +3396,9 @@ describe('main.ts: las rutas', () => {
         porIngrediente: [], porTag: []
       });
       try {
-        const { abrir, tipear, tocar, resultadosPlan, pinturas } = await montar();
+        const { abrir, cambiar, tocar, resultadosPlan, pinturas } = await montar();
         await abrir('#/plan/agregar?dia=1&momento=noche');
-        await tipear('buscar-en-plan', 'a');
+        await cambiar('buscar-en-plan', 'a');
         expect(resultadosPlan.at(-1)).toContain('data-accion="ordenar"');
         const antes = pinturas.length;
         await tocar('ordenar', { valor: 'duracion' });

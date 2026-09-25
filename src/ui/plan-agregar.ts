@@ -41,7 +41,7 @@ export type OpcionesPlanAgregar = OpcionesBloque & {
 
 /**
  * Los resultados se agrupan como en `#/buscar` (C02.3.2), con la misma lista.
- * Se dibuja aparte porque escribir lo reemplaza sin repintar la pantalla, que
+ * Se dibuja aparte porque buscar lo reemplaza sin repintar la pantalla, que
  * perdería el foco del teclado.
  */
 export function bloqueDeAgregar(bloque: OpcionesBloque): string {
@@ -71,7 +71,7 @@ export function renderPlanAgregar(opciones: OpcionesPlanAgregar): string {
   const { dia, momento, consulta } = opciones;
   return encabezado({ titulo: tituloDeComida(dia, momento), volver: true }) +
     '<div class="cuerpo denso">' +
-      // La misma caja del Recetario, con su propia acción: acá escribir filtra
+      // La misma caja del Recetario, con su propia acción: acá buscar filtra
       // en esta pantalla y no navega a los resultados.
       `<div class="buscar">${ICO.buscar}` +
         `<input data-accion="buscar-en-plan" value="${escapar(consulta)}" placeholder="Buscar receta o ingrediente">` +

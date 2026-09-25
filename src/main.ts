@@ -2189,18 +2189,6 @@ app.addEventListener('click', async (e) => {
  */
 app.addEventListener('input', (e) => {
   if (velo.ocupado()) return;
-  // En la pantalla de agregar al plan se redibuja sólo el bloque de abajo:
-  // repintar la pantalla entera perdería el foco del teclado.
-  if (vistaActual?.vista === 'plan-agregar') {
-    const caja = e.target as HTMLInputElement | null;
-    if (caja?.dataset?.['accion'] !== 'buscar-en-plan') return;
-    estadoDePantalla.consultaPlan = caja.value;
-    // Escribir es dejar la categoría elegida: son dos formas de filtrar y no
-    // conviven en el mismo bloque.
-    dejarCategoriaDelPlan();
-    nav.cerrarCapa('categoria-plan');
-    return pintarBloqueDelPlan();
-  }
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria(true);
   // En el editor, cada tecla puede habilitar o bloquear el botón de
   // `borrador`, y mueve el cursor de línea.
@@ -2441,6 +2429,17 @@ app.addEventListener('change', (e) => {
   // Mismo motivo que en `conClosest`: nada de instanceof contra globales del
   // navegador, que en los tests no existen.
   const campo = e.target as HTMLInputElement | null;
+  // La caja de agregar al plan busca como la del Recetario, con Enter o al
+  // salir de ella. Se redibuja sólo el bloque de abajo: repintar la pantalla
+  // entera perdería el foco del teclado.
+  if (vistaActual?.vista === 'plan-agregar' && campo?.dataset?.['accion'] === 'buscar-en-plan') {
+    estadoDePantalla.consultaPlan = campo.value;
+    // Buscar es dejar la categoría elegida: son dos formas de filtrar y no
+    // conviven en el mismo bloque.
+    dejarCategoriaDelPlan();
+    nav.cerrarCapa('categoria-plan');
+    return pintarBloqueDelPlan();
+  }
   if (campo?.dataset?.['accion'] !== 'buscar') return;
   const q = campo.value.trim();
   // Con la caja vacía no se busca, y no se avisa: no hay nada que decir.
