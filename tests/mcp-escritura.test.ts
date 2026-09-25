@@ -200,14 +200,6 @@ describe('crear', () => {
     expect(r.problemas[0]?.mensaje).toContain('El depósito está vacío.');
     expect(drive.cuantas('crear')).toBe(0);
   });
-
-  it('con fotos pedidas no escribe: todavía no se suben', async () => {
-    const error = await nuevoRecetario().crear({
-      md: md('Pan casero', 'foto: foto:1\n'), categoria: 'Postres', fotos: [{ origen: '/tmp/pan.jpg', uso: 'plato' }]
-    }).catch((e: unknown) => e);
-    expect(error).toBeInstanceOf(Error);
-    expect(drive.cuantas('crear')).toBe(0);
-  });
 });
 
 describe('guardar', () => {
