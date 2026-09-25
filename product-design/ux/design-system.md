@@ -1203,7 +1203,8 @@ tachado ya dice que no está, y `--error` no marca un estado del contenido (§2.
 grilla, y sus dos botones ocupan el ancho: *Lista de compras* primario y
 *Reiniciar el plan* secundario, deshabilitados con el plan vacío. La
 confirmación de reiniciar va en su lugar, en una ficha con borde `--error`, como
-borrar una receta.
+borrar una receta, y como ella se trae entera a la vista con el foco en
+*Cancelar*.
 
 ### 6.25 Fila de miniaturas y visor
 

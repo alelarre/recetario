@@ -78,7 +78,7 @@ export function renderPlan(
 
   // Vacía los siete días: la confirmación lleva el borde de error, como borrar
   // una receta, y va donde estaban los botones.
-  const confirmacion = '<div class="ficha" style="border-color:var(--error)">' +
+  const confirmacion = '<div class="ficha" data-confirmar-reinicio style="border-color:var(--error)">' +
     '<p class="lee" style="margin:0 0 var(--e-3)">¿Reiniciar el plan? Se vacían los siete días.</p>' +
     '<div class="acciones">' +
       '<button class="btn sec" data-accion="cancelar-reinicio">Cancelar</button>' +

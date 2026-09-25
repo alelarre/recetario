@@ -667,6 +667,12 @@ describe('main.ts: las rutas', () => {
           const html = enLugar.at(-1) ?? '';
           return html.includes(marca) ? confirmacionFalsa(html) : null;
         }
+        // La de reiniciar el plan es parte del dibujo: su primer botón es el
+        // primer `data-accion` que le sigue a la marca.
+        if (sel === '[data-confirmar-reinicio]') {
+          const i = app.innerHTML.indexOf('data-confirmar-reinicio');
+          return i >= 0 ? confirmacionFalsa(app.innerHTML.slice(i)) : null;
+        }
         // El sol encendido, tal como lo dibuja la cocina.
         if (sel === '[data-accion="wake"].on') return app.innerHTML.includes('class="ico on" data-accion="wake"') ? {} : null;
         if (sel === '#app input[name="tiempo"]') return campoTiempoDuracion;
@@ -3295,6 +3301,15 @@ describe('main.ts: las rutas', () => {
       await tocar('reiniciar-plan-confirmado');
       expect(estado.planesGuardados).toEqual([{ comidas: [] }]);
       expect(app.innerHTML).not.toContain('¿Reiniciar el plan?');
+    });
+
+    it('la confirmación de reiniciar se trae entera a la vista y el foco va a su primer botón', async () => {
+      estado.plan = conDos();
+      const { abrir, tocar, confirmacionesALaVista, enfocados } = await montar();
+      await abrir('#/plan');
+      await tocar('reiniciar-plan');
+      expect(confirmacionesALaVista).toEqual(['nearest']);
+      expect(enfocados).toEqual([{ accion: 'cancelar-reinicio', sinScroll: true }]);
     });
 
     it('cancelar no escribe nada', async () => {

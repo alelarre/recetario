@@ -145,10 +145,10 @@ function traerALaVista(elemento: HTMLElement | null): void {
 }
 
 /**
- * Una confirmación de borrar toma el lugar de un botón al pie de la pantalla y
- * es más alta que él: sin esto queda a medias debajo del borde. Se la trae
- * entera y el foco va a su primer botón, *Cancelar*, sin que el foco mueva el
- * scroll por su cuenta.
+ * Una confirmación —borrar, reiniciar el plan— toma el lugar de un botón al
+ * pie de la pantalla y es más alta que él: sin esto queda a medias debajo del
+ * borde. Se la trae entera y el foco va a su primer botón, *Cancelar*, sin que
+ * el foco mueva el scroll por su cuenta.
  */
 function mirarLaConfirmacion(selector: string): void {
   const confirmacion = document.querySelector<HTMLElement>(selector);
@@ -1670,7 +1670,11 @@ const accionesDelPlan: SeccionDeAcciones = {
     await guardarPlan(() => ({ comidas: plan.comidas.filter((_, n) => n !== i) }));
     return render();
   },
-  'reiniciar-plan': () => { estadoDePantalla.confirmandoReinicio = true; return render(); },
+  'reiniciar-plan': async () => {
+    estadoDePantalla.confirmandoReinicio = true;
+    await render();
+    mirarLaConfirmacion('[data-confirmar-reinicio]');
+  },
   'cancelar-reinicio': () => { estadoDePantalla.confirmandoReinicio = false; return render(); },
   'reiniciar-plan-confirmado': async () => {
     await guardarPlan(() => ({ comidas: [] }));

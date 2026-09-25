@@ -71,7 +71,8 @@ control para sacarla.
   (secundario). Con el plan vacío los dos están deshabilitados.
 - [ ] Reiniciar pregunta antes, en el lugar de los dos botones y con borde de
   error, como borrar una receta: *«¿Reiniciar el plan? Se vacían los siete
-  días.»*, *Cancelar* y *Reiniciar*.
+  días.»*, *Cancelar* y *Reiniciar*. La confirmación se trae entera a la
+  vista —lo justo, sin quedar debajo del encabezado— y el foco va a *Cancelar*.
 - [ ] Confirmado, vacía los siete días y deja el archivo vacío.
 
 ### F06.2 — Agregar una receta a una comida
