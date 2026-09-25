@@ -54,6 +54,8 @@ const fotos = z.array(z.object({
   )
 })).describe('Las fotos que se suben con la receta, en orden. El número `foto:N` de cada una lo dice `validar`.');
 
+const sacar = z.array(z.number().int()).describe('Los números de las fotos que se sacan del depósito.');
+
 export function crearServidor(recetario: Recetario): McpServer {
   const servidor = new McpServer({ name: 'recetario', version: '1.0.0' });
 
@@ -88,9 +90,18 @@ export function crearServidor(recetario: Recetario): McpServer {
   }, ({ id }) => responder(async () => json(await recetario.leer(id))));
 
   servidor.registerTool('validar', {
-    description: 'Cómo lee la app un .md y qué problemas tiene, sin escribir nada. Con las fotos que se van a pedir, dice el número `foto:N` de cada una y si se sube.',
-    inputSchema: { md: z.string(), fotos: fotos.optional() }
-  }, ({ md, fotos: pedidas }) => responder(() => json(recetario.validar(md, pedidas))));
+    description: 'Cómo lee la app un .md y qué problemas tiene, sin escribir nada. Con las fotos que se van a pedir, dice el número `foto:N` de cada una y si se sube. Al corregir una receta, pasá su `id` (y `sacar`, si se sacan fotos): así los números son los que va a usar `guardar`.',
+    inputSchema: {
+      md: z.string(),
+      fotos: fotos.optional(),
+      id: z.string().optional().describe('La receta que se corrige. Sin id, se valida como una receta nueva.'),
+      sacar: sacar.optional()
+    }
+  }, ({ md, fotos: pedidas, id, sacar: sacadas }) => responder(async () => json(
+    id === undefined
+      ? recetario.validar(md, pedidas)
+      : await recetario.validarAlCorregir({ id, md, fotos: pedidas, sacar: sacadas })
+  )));
 
   servidor.registerTool('crear', {
     description: 'Crea una receta: escribe el .md y su fila del índice, y sube las fotos. Valida primero: con errores no escribe y los devuelve.',
@@ -111,7 +122,7 @@ export function crearServidor(recetario: Recetario): McpServer {
       md: z.string(),
       categoria: z.string().optional().describe('Sólo si la receta cambia de categoría. Vacía la pasa a Sin categoría.'),
       fotos: fotos.optional(),
-      sacar: z.array(z.number().int()).optional().describe('Los números de las fotos que se sacan del depósito.')
+      sacar: sacar.optional()
     }
   }, args => responder(async () => {
     const r = await recetario.guardar(args);

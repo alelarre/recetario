@@ -376,6 +376,42 @@ describe('validar con fotos', () => {
   });
 });
 
+describe('validar al corregir, con el id de la receta', () => {
+  const conTres = (): string => MD_FLAN.replace(`- 2: ${linkDeFoto('f2')}`, `- 2: ${linkDeFoto('f2')}\n- 3: https://ejemplo.com/3.jpg`);
+  /** El .md como lo escribe el agente: sin `## Fotos`, con un paso que nombra la foto nueva. */
+  const sinDeposito = MD_FLAN.slice(0, MD_FLAN.indexOf('## Fotos'))
+    .replace('1. Batir. ![](foto:2)', '1. Batir. ![](foto:2)\n2. Hornear. ![](foto:4)');
+  const fotos = [{ origen: CHICA, uso: 'paso' as const }];
+
+  it('numera las nuevas desde el depósito de Drive, y guardar usa el mismo número', async () => {
+    archivo('r3')!.contenido = conTres();
+    const v = await nuevoRecetario().validarAlCorregir({ id: 'r3', md: sinDeposito, fotos });
+    expect(v.fotos).toEqual([{ origen: CHICA, uso: 'paso', n: 4, seSube: true }]);
+    expect(v.problemas.filter(p => p.nivel === 'error')).toEqual([]);
+    const r = await nuevoRecetario().guardar({ id: 'r3', md: sinDeposito, fotos });
+    const receta = escrita(r);
+    expect(receta.fotos.map(f => f.n)).toEqual([1, 2, 3, 4]);
+    expect(receta.fotos[3]?.url).toBe(linkDeFoto(porNombre('flan-casero-4.jpg')?.id ?? ''));
+  });
+
+  it('descuenta las que se sacan: una referencia a una sacada es error', async () => {
+    archivo('r3')!.contenido = conTres();
+    const v = await nuevoRecetario().validarAlCorregir({ id: 'r3', md: sinDeposito, fotos, sacar: [2] });
+    expect(v.fotos.map(f => f.n)).toEqual([4]);
+    expect(v.problemas.filter(p => p.nivel === 'error').map(p => p.campo)).toEqual(['fotos']);
+    const sinLaSacada = sinDeposito.replace(' ![](foto:2)', '');
+    const bien = await nuevoRecetario().validarAlCorregir({ id: 'r3', md: sinLaSacada, fotos, sacar: [2] });
+    expect(bien.problemas.filter(p => p.nivel === 'error')).toEqual([]);
+  });
+
+  it('no escribe nada', async () => {
+    archivo('r3')!.contenido = conTres();
+    await nuevoRecetario().validarAlCorregir({ id: 'r3', md: sinDeposito, fotos });
+    expect(drive.cuantas('actualizar')).toBe(0);
+    expect(drive.cuantas('crear')).toBe(0);
+  });
+});
+
 describe('las fotos al guardar', () => {
   it('las nuevas siguen al depósito de Drive y la portada del .md se respeta', async () => {
     const conPaso = MD_FLAN.replace('1. Batir. ![](foto:2)', '1. Batir. ![](foto:2)\n2. Hornear. ![](foto:3)');

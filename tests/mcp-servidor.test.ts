@@ -125,6 +125,16 @@ describe('llamar a una herramienta', () => {
     ]);
   });
 
+  it('validar con el id numera las fotos desde el depósito de Drive de la receta', async () => {
+    drive._store.get('r3')!.contenido = md('Flan casero') + '\n## Fotos\n\n- 1: https://ejemplo.com/1.jpg\n- 2: https://ejemplo.com/2.jpg\n';
+    const r = await llamar(await conectar(), 'validar', {
+      id: 'r3', md: md('Flan casero', 'foto: foto:3\n'), fotos: [{ origen: '/tmp/flan.jpg', uso: 'plato' }]
+    });
+    const v = JSON.parse(texto(r));
+    expect(v.problemas).toEqual([]);
+    expect(v.fotos).toEqual([{ origen: '/tmp/flan.jpg', uso: 'plato', n: 3, seSube: true }]);
+  });
+
   it('borrar con una confirmación que no coincide es un error y no borra', async () => {
     const r = await llamar(await conectar(), 'borrar', { id: 'r3', confirmacion: 'flan' });
     expect(r.isError).toBe(true);

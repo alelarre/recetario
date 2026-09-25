@@ -174,18 +174,27 @@ function validarConFotos(md: string, fotos: readonly FotoPedida[] = []): {
 } {
   const receta = leerRecibido(md);
   const seSuben = fotosQueSeSuben(fotos, receta.fotos, { conBorrador: tieneEspecial(receta, 'borrador') });
-  const numeros = numerosDeFotos(fotos, receta.fotos);
-  const subidas = new Set(seSuben.map(s => s.n));
   return {
     receta,
-    problemas: problemasDe(receta, { fotosPendientes: [...subidas] }),
-    // El agente escribe `foto:N` con estos números; `seSube` en falso es una
-    // `fuente` que no se sube porque la receta no lleva `borrador`.
-    fotos: fotos.map((f, i) => {
-      const n = numeros[i] ?? 0;
-      return { origen: f.origen, uso: f.uso, n, seSube: subidas.has(n) };
-    })
+    problemas: problemasDe(receta, { fotosPendientes: seSuben.map(s => s.n) }),
+    fotos: numerados(fotos, receta.fotos, seSuben)
   };
+}
+
+/**
+ * El número de cada foto pedida y si se sube: el agente escribe `foto:N` con
+ * estos números. `seSube` en falso es una `fuente` que no se sube porque la
+ * receta no lleva `borrador`.
+ */
+function numerados(
+  fotos: readonly FotoPedida[], numerarDesde: readonly FotoDeReceta[], seSuben: readonly FotoASubir[]
+): NumeroDeFoto[] {
+  const numeros = numerosDeFotos(fotos, numerarDesde);
+  const subidas = new Set(seSuben.map(s => s.n));
+  return fotos.map((f, i) => {
+    const n = numeros[i] ?? 0;
+    return { origen: f.origen, uso: f.uso, n, seSube: subidas.has(n) };
+  });
 }
 
 /**
@@ -222,6 +231,14 @@ async function prepararFotos(
     }
   }
   return { receta: { ...receta, fotos: [...receta.fotos, ...lineas] }, cambios: { nuevas, sacadas } };
+}
+
+/** Lo que recibe una corrección: la receta, el `.md` nuevo, las fotos que se suben y las que se sacan. */
+export interface Correccion {
+  id: string;
+  md: string;
+  fotos?: readonly FotoPedida[] | undefined;
+  sacar?: readonly number[] | undefined;
 }
 
 export interface DependenciasRecetario {
@@ -359,6 +376,20 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
     return [...encontradas.values()].map(({ entrada, motivos }) => resultado(entrada, [...motivos, ...deFiltros]));
   }
 
+  /**
+   * Una corrección armada sin escribir: la receta recibida con el depósito
+   * releído de Drive menos las que se sacan, las nuevas numeradas desde ese
+   * depósito, sacadas incluidas, porque los números no se reusan, y los
+   * problemas contra el depósito resultante.
+   */
+  async function armarCorreccion({ id, md, fotos = [], sacar = [] }: Correccion) {
+    const enDrive = (await store.receta(id)).receta.fotos;
+    const { quedan, sacadas, problemas: alSacar } = sacarDelDeposito(enDrive, sacar);
+    const { receta, seSuben } = conFotosPedidas(leerRecibido(md), quedan, fotos, enDrive);
+    const problemas = [...problemasDe(receta, { fotosPendientes: seSuben.map(s => s.n) }), ...alSacar];
+    return { receta, problemas, seSuben, sacadas, numeros: numerados(fotos, enDrive, seSuben) };
+  }
+
   return {
     /** Las reglas del `.md`. No necesita el Drive. */
     formato: (): string[] => reglasDelFormatoDelMcp(),
@@ -409,28 +440,33 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
     },
 
     /**
+     * `validar` al corregir una receta: con el mismo armado que `guardar`
+     * —el depósito de Drive, menos `sacar`, más las nuevas—, así los números
+     * que dice son los que `guardar` va a usar. No escribe nada.
+     */
+    async validarAlCorregir(pedido: Correccion): Promise<{ receta: Receta; problemas: Problema[]; fotos: NumeroDeFoto[] }> {
+      await listo();
+      entradaDe(pedido.id);
+      const { receta, problemas, numeros } = await armarCorreccion(pedido);
+      return { receta, problemas, fotos: numeros };
+    },
+
+    /**
      * Reescribe una receta del índice. Antes de escribir la relee de Drive,
      * como Guardar en el editor: los números de las fotos nuevas siguen al
      * depósito de ese momento, y las que se sacan se buscan ahí. Las claves y
      * las secciones que la app no conoce pasan tal cual del `.md` recibido.
      * `categoria` ausente no mueve la receta; vacía la pasa a Sin categoría.
      */
-    async guardar({ id, md, categoria, fotos = [], sacar = [] }: {
-      id: string; md: string; categoria?: string | undefined;
-      fotos?: readonly FotoPedida[] | undefined; sacar?: readonly number[] | undefined;
-    }): Promise<Escritura> {
+    async guardar({ categoria, ...pedido }: Correccion & { categoria?: string | undefined }): Promise<Escritura> {
       await listo();
-      const entrada = entradaDe(id);
+      const entrada = entradaDe(pedido.id);
       const carpetaDestino = categoria === undefined ? undefined : carpetaDeCategoria(categoria, store.categorias());
-      const enDrive = (await store.receta(id)).receta.fotos;
-      const { quedan, sacadas, problemas: alSacar } = sacarDelDeposito(enDrive, sacar);
-      // Las nuevas siguen al número más alto que había, sacadas incluidas: los números no se reusan.
-      const { receta: recibida, seSuben } = conFotosPedidas(leerRecibido(md), quedan, fotos, enDrive);
-      const problemas = [...problemasDe(recibida, { fotosPendientes: seSuben.map(s => s.n) }), ...alSacar];
+      const { receta: recibida, problemas, seSuben, sacadas } = await armarCorreccion(pedido);
       if (hayErrores(problemas)) return { escrita: false, problemas };
       const { receta, cambios } = await prepararFotos(recibida, seSuben, sacadas, achicar);
-      await store.guardar(id, receta, { carpetaDestino, fotos: cambios });
-      return { escrita: true, id, nombre_archivo: entrada.nombre_archivo, problemas };
+      await store.guardar(pedido.id, receta, { carpetaDestino, fotos: cambios });
+      return { escrita: true, id: pedido.id, nombre_archivo: entrada.nombre_archivo, problemas };
     },
 
     /**

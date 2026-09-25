@@ -75,6 +75,9 @@ Lo que hace el MCP:
 - **Los números `foto:N` son fijos** y los dice `validar`: pasale el `.md` y la
   lista de fotos, en el mismo orden en que se las vas a pasar a `crear` o
   `guardar`. Devuelve el número de cada una y si se sube.
+- **Al corregir, pasale a `validar` el `id` de la receta**, y `sacar` si sacás
+  fotos. Así numera desde el depósito que está en Drive, igual que `guardar`, y
+  los números coinciden. Sin el `id`, valida como una receta nueva.
 - **Una foto `fuente` se sube sólo si la receta queda como `borrador`.** Si su
   contenido ya pasó entero a la receta, no se sube, y su número queda sin usar.
 - **Una URL que no se puede bajar queda como link externo** en el depósito.
@@ -208,7 +211,8 @@ sabe de dónde salió, no pongas `fuente`.
    aparece, decilo antes de ofrecer crearla.
 2. Leela con `leer`. Partí siempre de lo que devuelve, nunca de lo que
    recuerdes: pudo cambiar desde la app.
-3. Proponé el cambio concreto y mostrá el `.md` entero como va a quedar.
+3. Proponé el cambio concreto. Pasalo por `validar` con el `id` de la receta
+   y las fotos, y mostrá el `.md` entero como va a quedar.
 4. Con la aprobación, escribí con `guardar`. `categoria` va sólo si la receta
    cambia de categoría.
 
