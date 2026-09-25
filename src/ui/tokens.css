@@ -342,6 +342,14 @@ button.chip { cursor: pointer; }
               background: var(--surface); border: 1px solid var(--borde-fuerte);
               border-radius: var(--r-chico); color: var(--fg-2); cursor: pointer; }
 .poner-foto:active { background: var(--surface-alta); }
+/* El pico apunta a la izquierda, al texto: la foto va en la línea donde está
+   el cursor, no en el campo entero. Dos triángulos: el de afuera es el borde y
+   el de adentro, un píxel más chico, el relleno. */
+.poner-foto::before, .poner-foto::after { content: ""; position: absolute; top: 50%;
+                                          border-style: solid; border-color: transparent; }
+.poner-foto::before { left: -6px; margin-top: -6px; border-width: 6px 6px 6px 0; border-right-color: var(--borde-fuerte); }
+.poner-foto::after { left: -5px; margin-top: -5px; border-width: 5px 5px 5px 0; border-right-color: var(--surface); }
+.poner-foto:active::after { border-right-color: var(--surface-alta); }
 .poner-foto svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5;
                   stroke-linecap: round; stroke-linejoin: round; }
 

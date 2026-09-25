@@ -688,7 +688,10 @@ con el campo enfocado y con algo en el depósito.
 
 Sin texto: el ícono `imagen` de 18 px en `--fg-2`, en una caja de 36 × 32 px de
 `--surface` —más oscuro que el campo, que es `--surface-alta`— con borde 1 px
-`--borde-fuerte` y `--r-chico`. Presionado, `--surface-alta` (§6.0). Es de
+`--borde-fuerte` y `--r-chico`. Del lado izquierdo lleva un **pico** de 6 px
+que apunta al texto, con el mismo borde y relleno: dice que la foto va en esa
+línea y no en el campo entero. Presionado, caja y pico pasan a `--surface-alta`
+(§6.0). Es de
 32 px y no de 24 para poder tocarlo, y se sube 4 px para quedar centrado sobre
 el renglón. Tapa el final de la línea, que es el precio de estar adentro del
 campo: la escritura pasa por debajo y el botón se ve entero.
