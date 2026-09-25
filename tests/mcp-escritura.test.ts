@@ -348,6 +348,28 @@ describe('guardar', () => {
   });
 });
 
+describe('herramientas a la vez', () => {
+  it('una que llega mientras otra escribe espera a que termine antes de mirar el índice', async () => {
+    const recetario = nuevoRecetario();
+    await recetario.buscar({ texto: 'flan' });
+    let soltar = (): void => {};
+    const escribiendo = new Promise<void>(r => { soltar = r; });
+    sheets.alEscribir = () => escribiendo;
+
+    const guardado = recetario.guardar({ id: 'r3', md: MD_FLAN.replace('Flan casero', 'Flan de la abuela') });
+    await new Promise(r => setTimeout(r, 0));
+    const fechas = drive.cuantas('metadatos', 'i1');
+    const buscado = recetario.buscar({ texto: 'abuela' });
+    await new Promise(r => setTimeout(r, 0));
+    expect(drive.cuantas('metadatos', 'i1')).toBe(fechas);
+
+    sheets.alEscribir = undefined;
+    soltar();
+    await guardado;
+    expect((await buscado).map(r => r.id)).toEqual(['r3']);
+  });
+});
+
 describe('con la app escribiendo entre dos usos', () => {
   beforeEach(() => {
     drive._store.set('r2', { id: 'r2', name: 'r2.md', parents: ['c1'], contenido: md('Bife de chorizo') });

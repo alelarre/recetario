@@ -82,11 +82,11 @@ describe('arranque', () => {
     expect(drive.cuantas('metadatos', 'i1')).toBe(fechas + 3);
   });
 
-  it('dos herramientas a la vez comparten un solo arranque', async () => {
+  it('dos herramientas a la vez se atienden de a una: la segunda sólo pide la fecha de _indice', async () => {
     const recetario = nuevoRecetario();
     await Promise.all([recetario.categorias(), recetario.tags()]);
     expect(drive.cuantas('carpetasMarcadas')).toBe(1);
-    expect(drive.cuantas('metadatos', 'i1')).toBe(0);
+    expect(drive.cuantas('metadatos', 'i1')).toBeGreaterThan(0);
   });
 
   it('con el índice de otro esquema, reindexa al arrancar, como la app', async () => {

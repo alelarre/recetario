@@ -309,8 +309,8 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
     indiceLocal: indiceEnMemoria()
   });
 
-  /** El arranque en curso: uno solo aunque varias herramientas lo pidan a la vez. */
-  let arranque: Promise<void> | null = null;
+  /** La última herramienta que usa el Drive: la próxima empieza cuando esta termina. */
+  let cola: Promise<unknown> = Promise.resolve();
 
   /**
    * El arranque de la app, antes de cada herramienta que usa el Drive: con la
@@ -337,10 +337,19 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
     else await store.cargarIndice();
   }
 
-  /** El store al día con el Drive; cada uso vuelve a arrancar, así un error no queda pegado. */
-  function listo(): Promise<void> {
-    arranque ??= arrancar().finally(() => { arranque = null; });
-    return arranque;
+  /**
+   * Una herramienta que usa el Drive, con el store al día y de a una: el
+   * agente puede pedir varias a la vez, y un arranque en medio de una
+   * escritura cambiaría las filas que esa escritura está usando. Un error no
+   * frena a las que siguen.
+   */
+  function conElDrive<T>(tarea: () => Promise<T>): Promise<T> {
+    const turno = cola.then(async () => {
+      await arrancar();
+      return tarea();
+    });
+    cola = turno.catch(() => {});
+    return turno;
   }
 
   /**
@@ -431,27 +440,25 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
 
     validar: validarNueva,
 
-    async categorias(): Promise<{ id: string; nombre: string; cantidad: number }[]> {
-      await listo();
-      return store.categoriasConConteo();
+    categorias(): Promise<{ id: string; nombre: string; cantidad: number }[]> {
+      return conElDrive(async () => store.categoriasConConteo());
     },
 
-    async tags(): Promise<{ tag: string; cantidad: number }[]> {
-      await listo();
-      return store.tagsDe('recetas');
+    tags(): Promise<{ tag: string; cantidad: number }[]> {
+      return conElDrive(async () => store.tagsDe('recetas'));
     },
 
-    async buscar(consulta: Consulta = {}): Promise<Resultado[]> {
-      await listo();
-      return buscarEnIndice(consulta);
+    buscar(consulta: Consulta = {}): Promise<Resultado[]> {
+      return conElDrive(async () => buscarEnIndice(consulta));
     },
 
     /** El `.md` como está ahora en Drive, con su categoría y su nombre de archivo. */
-    async leer(id: string): Promise<{ id: string; md: string; categoria: string; nombre_archivo: string }> {
-      await listo();
-      const entrada = entradaDe(id);
-      const { texto } = await store.receta(id);
-      return { id, md: texto, categoria: entrada.categoria, nombre_archivo: entrada.nombre_archivo };
+    leer(id: string): Promise<{ id: string; md: string; categoria: string; nombre_archivo: string }> {
+      return conElDrive(async () => {
+        const entrada = entradaDe(id);
+        const { texto } = await store.receta(id);
+        return { id, md: texto, categoria: entrada.categoria, nombre_archivo: entrada.nombre_archivo };
+      });
     },
 
     /**
@@ -460,16 +467,17 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
      * mal escrito no llega a escribir nada. Cada receta se escribe entera o no
      * se escribe: en un lote cortado, las anteriores quedan escritas.
      */
-    async crear({ md, categoria = '', fotos = [] }: {
+    crear({ md, categoria = '', fotos = [] }: {
       md: string; categoria?: string | undefined; fotos?: readonly FotoPedida[] | undefined;
     }): Promise<Escritura> {
-      await listo();
-      const carpetaId = carpetaDeCategoria(categoria, store.categorias());
-      const { receta: armada, problemas, seSuben } = armarNueva(md, fotos);
-      if (hayErrores(problemas)) return { escrita: false, problemas };
-      const { receta, cambios } = await prepararFotos(armada, seSuben, [], achicar);
-      const { id, nombre_archivo } = await store.crear(receta, carpetaId ? { carpetaId, fotos: cambios } : { fotos: cambios });
-      return { escrita: true, id, nombre_archivo, problemas };
+      return conElDrive<Escritura>(async () => {
+        const carpetaId = carpetaDeCategoria(categoria, store.categorias());
+        const { receta: armada, problemas, seSuben } = armarNueva(md, fotos);
+        if (hayErrores(problemas)) return { escrita: false, problemas };
+        const { receta, cambios } = await prepararFotos(armada, seSuben, [], achicar);
+        const { id, nombre_archivo } = await store.crear(receta, carpetaId ? { carpetaId, fotos: cambios } : { fotos: cambios });
+        return { escrita: true, id, nombre_archivo, problemas };
+      });
     },
 
     /**
@@ -477,11 +485,12 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
      * —el depósito de Drive, menos `sacar`, más las nuevas—, así los números
      * que dice son los que `guardar` va a usar. No escribe nada.
      */
-    async validarAlCorregir(pedido: Correccion): Promise<{ receta: Receta; problemas: Problema[]; fotos: NumeroDeFoto[] }> {
-      await listo();
-      entradaDe(pedido.id);
-      const { receta, problemas, numeros } = await armarCorreccion(pedido);
-      return { receta, problemas, fotos: numeros };
+    validarAlCorregir(pedido: Correccion): Promise<{ receta: Receta; problemas: Problema[]; fotos: NumeroDeFoto[] }> {
+      return conElDrive(async () => {
+        entradaDe(pedido.id);
+        const { receta, problemas, numeros } = await armarCorreccion(pedido);
+        return { receta, problemas, fotos: numeros };
+      });
     },
 
     /**
@@ -491,15 +500,16 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
      * las secciones que la app no conoce pasan tal cual del `.md` recibido.
      * `categoria` ausente no mueve la receta; vacía la pasa a Sin categoría.
      */
-    async guardar({ categoria, ...pedido }: Correccion & { categoria?: string | undefined }): Promise<Escritura> {
-      await listo();
-      const entrada = entradaDe(pedido.id);
-      const carpetaDestino = categoria === undefined ? undefined : carpetaDeCategoria(categoria, store.categorias());
-      const { receta: recibida, problemas, seSuben, sacadas } = await armarCorreccion(pedido);
-      if (hayErrores(problemas)) return { escrita: false, problemas };
-      const { receta, cambios } = await prepararFotos(recibida, seSuben, sacadas, achicar);
-      await store.guardar(pedido.id, receta, { carpetaDestino, fotos: cambios });
-      return { escrita: true, id: pedido.id, nombre_archivo: entrada.nombre_archivo, problemas };
+    guardar({ categoria, ...pedido }: Correccion & { categoria?: string | undefined }): Promise<Escritura> {
+      return conElDrive<Escritura>(async () => {
+        const entrada = entradaDe(pedido.id);
+        const carpetaDestino = categoria === undefined ? undefined : carpetaDeCategoria(categoria, store.categorias());
+        const { receta: recibida, problemas, seSuben, sacadas } = await armarCorreccion(pedido);
+        if (hayErrores(problemas)) return { escrita: false, problemas };
+        const { receta, cambios } = await prepararFotos(recibida, seSuben, sacadas, achicar);
+        await store.guardar(pedido.id, receta, { carpetaDestino, fotos: cambios });
+        return { escrita: true, id: pedido.id, nombre_archivo: entrada.nombre_archivo, problemas };
+      });
     },
 
     /**
@@ -511,23 +521,23 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
      * vacía no confirma nada. El error no dice qué se esperaba: un agente con
      * el id equivocado reintentaría con eso y borraría la receta equivocada.
      */
-    async borrar({ id, confirmacion }: { id: string; confirmacion?: string | undefined }): Promise<void> {
-      await listo();
-      const { titulo, nombre_archivo } = entradaDe(id);
-      const esperada = titulo.trim() ? titulo : nombre_archivo;
-      if (!confirmacion || confirmacion !== esperada) {
-        throw new Error('La confirmación no coincide con la receta de ese id. Volvé a buscarla con `leer`, mostrásela al usuario y pedile confirmación.');
-      }
-      await store.borrar(id);
+    borrar({ id, confirmacion }: { id: string; confirmacion?: string | undefined }): Promise<void> {
+      return conElDrive(async () => {
+        const { titulo, nombre_archivo } = entradaDe(id);
+        const esperada = titulo.trim() ? titulo : nombre_archivo;
+        if (!confirmacion || confirmacion !== esperada) {
+          throw new Error('La confirmación no coincide con la receta de ese id. Volvé a buscarla con `leer`, mostrásela al usuario y pedile confirmación.');
+        }
+        await store.borrar(id);
+      });
     },
 
     /**
      * Rehace el índice entero desde las carpetas, como *Reindexar* en Ajustes.
      * `alProgresar` recibe el avance, de 0 a 1.
      */
-    async reindexar(alProgresar: (p: Progreso) => void = () => {}): Promise<{ indexadas: number; ignorados: string[]; sinBorrador: string[] }> {
-      await listo();
-      return store.reconstruir(alProgresar);
+    reindexar(alProgresar: (p: Progreso) => void = () => {}): Promise<{ indexadas: number; ignorados: string[]; sinBorrador: string[] }> {
+      return conElDrive(async () => store.reconstruir(alProgresar));
     }
   };
 }
