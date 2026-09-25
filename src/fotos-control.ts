@@ -60,7 +60,7 @@ export interface FotosControl {
   ponerEn(seccion: string, linea: number, n: number): void;
   /** La receta con el link de cada foto que un intento anterior ya subió. */
   conSubidas(receta: Receta): Receta;
-  /** Lo que el depósito cambió respecto del `.md` que el editor abrió. */
+  /** Lo que el depósito cambió respecto del `.md` que el editor abrió, con las subidas que se sacaron. */
   cambiosDeFotos(nueva: Receta, base: Receta): CambiosDeFotos;
   vaciar(): void;
 }
@@ -75,6 +75,13 @@ export function crearFotosControl({ achicar, crearUrl, soltarUrl, campos, alCamb
    * después: reintentar no la vuelve a subir.
    */
   const subidas = new Map<number, string>();
+  /**
+   * Los ids de Drive de las que un intento subió y después se sacaron del
+   * depósito: no son de ninguna receta, y el guardado siguiente las manda a la
+   * papelera con las demás sacadas. Si no, quedarían en `_fotos/` sin nadie
+   * que las nombre.
+   */
+  const huerfanas = new Set<string>();
 
   function cambiar(nuevasFotos: FotoDeReceta[], nuevaPortada: string): void {
     fotos = nuevasFotos;
@@ -91,7 +98,9 @@ export function crearFotosControl({ achicar, crearUrl, soltarUrl, campos, alCamb
     urls.delete(n);
     nuevas.delete(n);
     // Su número puede volver a tocarle a la próxima que se sume: no puede
-    // heredar la subida de ésta.
+    // heredar la subida de ésta, que queda huérfana.
+    const subida = subidas.get(n);
+    if (subida) huerfanas.add(subida);
     subidas.delete(n);
   }
 
@@ -167,7 +176,10 @@ export function crearFotosControl({ achicar, crearUrl, soltarUrl, campos, alCamb
       const quedan = new Set(nueva.fotos.map(f => f.url));
       return {
         nuevas: aSubir,
-        sacadas: base.fotos.map(f => f.url).filter(url => !quedan.has(url)),
+        sacadas: [
+          ...base.fotos.map(f => f.url).filter(url => !quedan.has(url)),
+          ...[...huerfanas].map(linkDeFoto).filter(url => !quedan.has(url))
+        ],
         // Cada subida se anota apenas el store avisa, para el reintento.
         alSubir: (n, id) => { subidas.set(n, id); }
       };
@@ -181,6 +193,7 @@ export function crearFotosControl({ achicar, crearUrl, soltarUrl, campos, alCamb
       nuevas.clear();
       urls.clear();
       subidas.clear();
+      huerfanas.clear();
     }
   };
 }
@@ -284,7 +297,10 @@ export const accionesDeFotos = (fotos: FotosControl, pantalla: PantallaDeFotos):
     pantalla.abrirFicha(renderSelectorPortada(fotos.fotos(), fotos.portada() || null));
   },
   'elegir-portada': (boton) => {
-    fotos.ponerPortada(Number(boton.dataset['n'] ?? 0));
+    // Sin número no hay foto que poner: `foto:0` no nombraría ninguna.
+    const n = boton.dataset['n'];
+    if (n === undefined) return;
+    fotos.ponerPortada(Number(n));
     pantalla.cerrarFicha();
   },
   'sin-portada': () => { fotos.sacarPortada(); pantalla.cerrarFicha(); },

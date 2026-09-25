@@ -512,18 +512,31 @@ describe('main.ts: las rutas', () => {
     } | null = null;
     /**
      * La muestra de la categoría que se edita: el cuadro de arriba que sigue
-     * en vivo lo que se escribe y se elige. `main` la redibuja entera en su
-     * lugar, sin tocar el formulario; el doble guarda lo último que recibió y
-     * lee de ahí cada parte.
+     * en vivo lo que se escribe y se elige. Con un color o una foto, `main` la
+     * redibuja entera en su lugar, sin tocar el formulario; con el nombre,
+     * sólo le cambia el texto. El doble guarda lo último que recibió y lee de
+     * ahí cada parte.
      */
     const muestraDeCategoria = {
       html: '',
-      set outerHTML(html: string) { muestraDeCategoria.html = html; },
+      /** Cuántas veces se la redibujó entera. */
+      redibujos: 0,
+      /** El nombre escrito en su `.nm` sin redibujarla, desde el último redibujo. */
+      nm: null as string | null,
+      set outerHTML(html: string) {
+        muestraDeCategoria.html = html;
+        muestraDeCategoria.nm = null;
+        muestraDeCategoria.redibujos++;
+      },
+      querySelector: (sel: string) =>
+        (sel === '.nm' ? { set textContent(t: string) { muestraDeCategoria.nm = t; } } : null),
       get color() { return muestraDeCategoria.html.match(/--c:([^";]*)/)?.[1] ?? ''; },
       /** Sin foto elegida, el cuadro va con la trama sobre el color. */
       get conTrama() { return muestraDeCategoria.html.includes('class="im trama"'); },
       get imagen() { return muestraDeCategoria.html.match(/<img [^>]*>/)?.[0] ?? ''; },
-      get nombre() { return muestraDeCategoria.html.match(/<span class="nm">([^<]*)<\/span>/)?.[1] ?? ''; }
+      get nombre() {
+        return muestraDeCategoria.nm ?? muestraDeCategoria.html.match(/<span class="nm">([^<]*)<\/span>/)?.[1] ?? '';
+      }
     };
     /** La línea del nombre inválido, que aparece y se va sin redibujar. */
     const errorDeNombre = { hidden: true, textContent: '' };
@@ -1821,6 +1834,8 @@ describe('main.ts: las rutas', () => {
       await tipearEnCategoria('Fiambres');
 
       expect(muestraDeCategoria.nombre).toBe('Fiambres');
+      // Sólo cambió el nombre: la foto de la muestra no se vuelve a dibujar.
+      expect(muestraDeCategoria.redibujos).toBe(0);
       expect(guardarCategoria.disabled).toBe(false);
     });
 

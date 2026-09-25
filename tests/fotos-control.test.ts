@@ -238,6 +238,38 @@ describe('fotos-control — guardar', () => {
   });
 });
 
+describe('fotos-control — las subidas de un intento que falló', () => {
+  it('una que se subió y después se sacó va a la papelera en el guardado siguiente', async () => {
+    const { fotos } = montar();
+    fotos.cargar(receta({ fotos: [] }));
+    await fotos.sumarFotos([foto('a'), foto('b')]);
+    const escrita = receta({ fotos: fotos.fotos() });
+    const intento = fotos.cambiosDeFotos(escrita, receta({ fotos: [] }));
+    intento.alSubir?.(1, 'subida-1');
+    intento.alSubir?.(2, 'subida-2');
+
+    // El editor vuelve con los links de lo subido, y se saca la 1.
+    fotos.cargar(fotos.conSubidas(escrita));
+    fotos.sacar(1);
+
+    const cambios = fotos.cambiosDeFotos(receta({ fotos: fotos.fotos() }), receta({ fotos: [] }));
+    expect(cambios.sacadas).toEqual([linkDeFoto('subida-1')]);
+    // La que quedó no se toca: va en la receta por su link.
+    expect(fotos.fotos()).toEqual([{ n: 2, url: linkDeFoto('subida-2') }]);
+  });
+
+  it('salir del editor las olvida: no se mandan a la papelera en otro editor', async () => {
+    const { fotos } = montar();
+    fotos.cargar(receta({ fotos: [] }));
+    await fotos.sumarFotos([foto('a')]);
+    fotos.cambiosDeFotos(receta({ fotos: fotos.fotos() }), receta({ fotos: [] })).alSubir?.(1, 'subida-1');
+    fotos.sacar(1);
+    fotos.vaciar();
+    fotos.cargar(receta({ fotos: [] }));
+    expect(fotos.cambiosDeFotos(receta({ fotos: [] }), receta({ fotos: [] })).sacadas).toEqual([]);
+  });
+});
+
 describe('fotos-control — las acciones del editor', () => {
   const boton = (datos: Record<string, string> = {}): HTMLElement =>
     ({ dataset: datos }) as unknown as HTMLElement;
@@ -288,6 +320,15 @@ describe('fotos-control — las acciones del editor', () => {
     await acciones['traer-foto-url']?.(boton(), evento);
     expect(fotos.fotos()).toEqual([]);
     expect(hechos.join('\n')).toContain(NO_SE_LEYO_UNA_FOTO);
+  });
+
+  it('elegir la portada sin data-n no hace nada', () => {
+    const { acciones, hechos, fotos, cambios } = conPantalla('');
+    fotos.cargar(receta());
+    void acciones['elegir-portada']?.(boton(), evento);
+    expect(fotos.portada()).toBe('foto:1');
+    expect(cambios).toEqual([]);
+    expect(hechos).toEqual([]);
   });
 
   it('elegir la portada la pone y cierra la ficha', () => {

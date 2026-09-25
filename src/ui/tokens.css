@@ -458,6 +458,11 @@ img[data-drive]:not([src]) { display: block; width: 100%; aspect-ratio: 4 / 3; b
    (`.miniatura-vacia`): por eso el tamaño va en el cuadro y no en la imagen. */
 .cuadro-foto { overflow: hidden; border-radius: var(--r-foto); background: var(--surface-alta); }
 .cuadro-foto img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* La foto de la muestra de una categoría es un cuadro de foto adentro del
+   tile (§6.4): el que la recorta es el tile, con su radio, y el tinte del
+   `::after` va sobre la foto pero no sobre el aviso de que no está. */
+.tile .im.cuadro-foto { border-radius: 0; }
+.tile .im .miniatura-vacia { position: relative; z-index: 1; background: var(--surface-alta); }
 
 /* ---- Fotos de la receta: la fila de miniaturas y el visor ---- */
 .miniaturas { display: flex; flex-wrap: wrap; gap: var(--e-2); align-items: center; }

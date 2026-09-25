@@ -27,3 +27,16 @@ describe('el botón que pone una foto en la línea del cursor', () => {
     expect(TOKENS).toMatch(/\.poner-foto:active::after\s*\{[^}]*border-right-color:\s*var\(--surface-alta\)/);
   });
 });
+
+describe('la foto de la muestra de una categoría, que es un cuadro de foto adentro del tile', () => {
+  it('no toma el radio del cuadro de foto: la recorta el tile', () => {
+    expect(TOKENS).toMatch(/\.tile \.im\.cuadro-foto\s*\{[^}]*border-radius:\s*0/);
+  });
+
+  it('el aviso de foto ausente queda arriba del tinte del tile, sobre su propio fondo', () => {
+    const regla = TOKENS.match(/\.tile \.im \.miniatura-vacia\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(regla).toMatch(/position:\s*relative/);
+    expect(regla).toMatch(/z-index:\s*1/);
+    expect(regla).toMatch(/background:\s*var\(--surface-alta\)/);
+  });
+});

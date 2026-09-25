@@ -1304,9 +1304,10 @@ function dibujarVisor(): Promise<void> | undefined {
 /**
  * La edición de una categoría, en cada tecla y en cada elección: la muestra de
  * arriba, la línea del nombre inválido y si Guardar se puede tocar. Toca el DOM
- * en vez de redibujar, que perdería el foco y el cursor.
+ * en vez de redibujar, que perdería el foco y el cursor. Con `soloElNombre`
+ * —una tecla— la muestra cambia sólo su nombre: la foto no se vuelve a dibujar.
  */
-function revisarCategoria(): void {
+function revisarCategoria(soloElNombre = false): void {
   // Sin el `#app `: el formulario se busca igual que en `formularioActual` y
   // en `dibujarVisor`, que es el mismo formulario.
   const form = document.querySelector<HTMLFormElement>('[data-formulario]');
@@ -1317,7 +1318,9 @@ function revisarCategoria(): void {
 
   // La muestra entera, por el mismo camino que la dibujó la pantalla.
   const muestra = form.querySelector('[data-muestra]');
-  if (muestra) {
+  const nombre = soloElNombre ? muestra?.querySelector('.nm') : null;
+  if (nombre) nombre.textContent = valor('nombre');
+  else if (muestra) {
     pintarParte(muestra, muestraCategoria(
       { nombre: valor('nombre'), color: valor('color'), foto: valor('foto') }, estadoDePantalla.fotoPropia?.url
     ), 'reemplazar');
@@ -2181,7 +2184,7 @@ app.addEventListener('input', (e) => {
     nav.cerrarCapa('categoria-plan');
     return pintarBloqueDelPlan();
   }
-  if (vistaActual?.vista === 'editar-categoria') return revisarCategoria();
+  if (vistaActual?.vista === 'editar-categoria') return revisarCategoria(true);
   // En el editor, cada tecla puede habilitar o bloquear el botón de
   // `borrador`, y mueve el cursor de línea.
   if (enElEditor()) { revisarBorrador(); acomodarBotonDeFoto(); }
