@@ -2,6 +2,7 @@
 // Desktop lanzan por stdio en la Mac. Registra las herramientas de
 // `recetario.ts` en el SDK; la lógica vive ahí, y acá están sólo los esquemas
 // de entrada y la forma de las respuestas.
+import { pathToFileURL } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
@@ -166,8 +167,10 @@ async function main(): Promise<void> {
 }
 
 // `tsx mcp/servidor.ts` es el único punto de entrada real; el chequeo de
-// `import.meta.url` evita que un test que importe este módulo abra stdio.
-if (import.meta.url === `file://${process.argv[1]}`) {
+// `import.meta.url` evita que un test que importe este módulo abra stdio. La
+// ruta pasa por `pathToFileURL` porque la URL escapa los espacios y los
+// caracteres especiales que la ruta trae tal cual.
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error: unknown) => {
     console.error(error);
     process.exit(1);
