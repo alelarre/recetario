@@ -717,6 +717,18 @@ function quedarseEn(hash: string, llegada: Llegada | null): void {
 }
 
 /**
+ * La ficha de fotos o el visor que estaban abiertos en el editor, cuando una
+ * guarda de `render` deshace la navegación: el link ya consumió la entrada de
+ * su capa, así que se cierran en el DOM, sin tocar el historial.
+ */
+function cerrarLoAbiertoDelEditor(): void {
+  if (!enElEditor()) return;
+  visor.olvidar();
+  // Saca el visor cerrado y, con él, la ficha.
+  void dibujarVisor();
+}
+
+/**
  * Dibuja la pantalla que la ruta pide. Es el único lugar que decide qué se ve.
  *
  * Cada rama que lee de red envuelve la lectura y dibuja un aviso si falla,
@@ -742,7 +754,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
   // llegar a la pantalla que lanzó la operación. Como el `hashchange` no se
   // puede cancelar, la URL vuelve a la de esa pantalla, igual que con el
   // editor. El hash es el de cuando se tapó: acá `location.hash` ya es el destino.
-  if (velo.ocupado() && cambiaDePantalla) { quedarseEn(hashAlTapar, llegada); return; }
+  if (velo.ocupado() && cambiaDePantalla) { quedarseEn(hashAlTapar, llegada); cerrarLoAbiertoDelEditor(); return; }
 
   // Salir del editor con cambios pregunta antes (C04.1.1). El `hashchange` no
   // se puede cancelar: cuando llega, el link, el volver del encabezado o el
@@ -754,8 +766,9 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
     estadoDePantalla.salidaPendiente = llegada === 'nueva' ? location.hash : null;
     quedarseEn(estadoDePantalla.editorAbierto.hash, llegada);
     // Si se llegó desde un destino del menú, el menú se cierra: la pregunta
-    // queda en el formulario, debajo del velo.
+    // queda en el formulario, debajo del velo. Lo mismo una ficha o el visor.
     ponerMenu(false);
+    cerrarLoAbiertoDelEditor();
     const formulario = document.querySelector('[data-formulario]');
     if (formulario && !document.querySelector('[data-salida]')) pintarParte(formulario, confirmacionSalida, 'al-principio');
     window.scrollTo?.(0, 0);
@@ -1865,6 +1878,14 @@ const accionesDelEditor: SeccionDeAcciones = {
   }
 };
 
+/**
+ * Cuántas veces se abrió la ficha de compartir. Lo que se comparte espera al
+ * sistema —el portapapeles, el menú Compartir, el PDF—, y mientras tanto el
+ * atrás puede cerrar la ficha y un toque abrir otra: el resultado es de la
+ * apertura en la que empezó, y en otra no se aplica.
+ */
+let aperturaDeCompartir = 0;
+
 /** Lo que la ficha de compartir escucha. Con el PDF armándose, ninguna responde. */
 const ACCIONES_DE_LA_FICHA = ['compartir', 'cerrar-compartir', 'compartir-pdf', 'enviar-pdf', 'compartir-link', 'compartir-texto'];
 
@@ -1875,12 +1896,15 @@ const ACCIONES_DE_LA_FICHA = ['compartir', 'cerrar-compartir', 'compartir-pdf', 
 async function compartirPdfDeLaReceta(accion: 'compartir-pdf' | 'enviar-pdf'): Promise<void> {
   if (!recetaLeida) return;
   const { entrada, receta } = recetaLeida;
+  const apertura = aperturaDeCompartir;
   if (accion === 'compartir-pdf' || !estadoDePantalla.pdfListo) {
     estadoDePantalla.compartiendo = { paso: 'generando' };
     await render();
     // Si mientras se armaba se navegó, `render` ya cerró la ficha: el PDF es
     // de una pantalla que no está, y aplicarlo mostraría «listo» en otra receta.
-    const sigueGenerando = (): boolean => estadoDePantalla.compartiendo?.paso === 'generando';
+    // Tampoco se aplica en otra ficha abierta después.
+    const sigueGenerando = (): boolean =>
+      apertura === aperturaDeCompartir && estadoDePantalla.compartiendo?.paso === 'generando';
     try {
       // El PDF lleva las fotos adentro: las de Drive salen del caché de
       // `imagenes`, y el canvas para achicarlas es el mismo de siempre.
@@ -1913,6 +1937,7 @@ async function compartirLaReceta(que: 'link' | 'texto'): Promise<void> {
   if (!recetaLeida) return;
   const { entrada, receta } = recetaLeida;
   const categoria = entrada?.categoria ?? '';
+  const apertura = aperturaDeCompartir;
   let contenido = '';
   try {
     const plataforma = plataformaDelNavegador();
@@ -1920,36 +1945,38 @@ async function compartirLaReceta(que: 'link' | 'texto'): Promise<void> {
     const r = que === 'link'
       ? await compartirLink(plataforma, receta.titulo ?? '', contenido)
       : await compartirTexto(plataforma, contenido);
-    return seguirCompartiendo(r === 'copiado' ? { paso: 'copiado', que }
+    return seguirCompartiendo(apertura, r === 'copiado' ? { paso: 'copiado', que }
       : r === 'sin-portapapeles' ? { paso: 'mostrar', que, contenido }
       : null);
   } catch (err) {
     console.error(err);
-    return seguirCompartiendo(contenido ? { paso: 'mostrar', que, contenido } : null);
+    return seguirCompartiendo(apertura, contenido ? { paso: 'mostrar', que, contenido } : null);
   }
 }
 
 /** La lista de compras, que se comparte sólo como texto. */
 async function compartirLasCompras(): Promise<void> {
   const contenido = textoCompras(comprasLeidas?.lista ?? { conCantidad: [], sinCantidad: [] });
+  const apertura = aperturaDeCompartir;
   try {
     const r = await compartirTexto(plataformaDelNavegador(), contenido);
-    return seguirCompartiendo(r === 'copiado' ? { paso: 'copiado', que: 'texto' }
+    return seguirCompartiendo(apertura, r === 'copiado' ? { paso: 'copiado', que: 'texto' }
       : r === 'sin-portapapeles' ? { paso: 'mostrar', que: 'texto', contenido }
       : null);
   } catch (err) {
     console.error(err);
-    return seguirCompartiendo({ paso: 'mostrar', que: 'texto', contenido });
+    return seguirCompartiendo(apertura, { paso: 'mostrar', que: 'texto', contenido });
   }
 }
 
 /**
- * El paso que sigue de la ficha de compartir, o cerrarla con `null`. Si
- * mientras se compartía el atrás ya la cerró —o se cambió de pantalla—, no se
- * la vuelve a abrir: su capa ya no está.
+ * El paso que sigue de la ficha de compartir que se abrió en `apertura`, o
+ * cerrarla con `null`. Si mientras se compartía el atrás ya la cerró —o se
+ * cambió de pantalla—, no se la vuelve a abrir: su capa ya no está. Y si
+ * después se abrió otra, el resultado no es de ésa.
  */
-function seguirCompartiendo(siguiente: EstadoCompartir | null): Promise<void> | undefined {
-  if (!estadoDePantalla.compartiendo) return;
+function seguirCompartiendo(apertura: number, siguiente: EstadoCompartir | null): Promise<void> | undefined {
+  if (apertura !== aperturaDeCompartir || !estadoDePantalla.compartiendo) return;
   estadoDePantalla.compartiendo = siguiente;
   if (!siguiente) nav.cerrarCapa('compartir');
   return render();
@@ -1968,6 +1995,7 @@ function sacarCompartir(): Promise<void> {
  */
 const accionesDeCompartir: SeccionDeAcciones = {
   compartir: () => {
+    aperturaDeCompartir++;
     estadoDePantalla.compartiendo = { paso: 'opciones' };
     nav.abrirCapa('compartir');
     // Lo pesado del PDF empieza a bajar ya: el toque que lo genera es otro.
@@ -1982,6 +2010,7 @@ const accionesDeCompartir: SeccionDeAcciones = {
   'enviar-pdf': () => compartirPdfDeLaReceta('enviar-pdf'),
   'compartir-compras': () => {
     // La lista se comparte sólo como texto: no es una receta y no tiene link.
+    aperturaDeCompartir++;
     estadoDePantalla.compartiendo = { paso: 'opciones', solo: 'texto' };
     nav.abrirCapa('compartir');
     return render();

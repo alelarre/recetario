@@ -411,21 +411,44 @@ describe('las capas: lo que se abre sin cambiar de pantalla', () => {
   });
 });
 
-describe('ir sin un hashchange que lo avise', () => {
-  it('el mismo hash escrito sin # no agrega nada ni descuenta el aviso de otra entrada', async () => {
-    const { nav, location, pila, llegadas } = montar();
+describe('un link al mismo fragmento', () => {
+  it('sin capa, la entrada que el navegador reemplazó queda numerada', async () => {
+    const { nav, pila, mismoFragmento, llegadas } = montar();
     nav.ir('#/r/f1');
     await esperar();
-    // Para el navegador es el mismo fragmento: no hay entrada ni hashchange.
-    nav.ir('/r/f1');
+    mismoFragmento();
     await esperar();
+    expect(pila().map(e => [e.hash, profundidad(e.state)])).toEqual([['#/', 0], ['#/r/f1', 1]]);
+    expect(llegadas).toEqual(['nueva']);
+    expect(nav.hayAtras()).toBe(true);
+  });
+
+  it('con una capa abierta, la cierra y la entrada queda numerada', async () => {
+    const { nav, pila, mismoFragmento, cerradas } = montar();
+    nav.ir('#/r/f1');
+    await esperar();
+    nav.abrirCapa('visor');
+    mismoFragmento();
+    await esperar();
+    expect(cerradas).toEqual(['visor']);
+    expect(nav.capaActual()).toBeNull();
+    expect(pila().map(e => [e.hash, profundidad(e.state), capa(e.state)]))
+      .toEqual([['#/', 0, undefined], ['#/r/f1', 1, undefined], ['#/r/f1', 1, undefined]]);
+  });
+});
+
+describe('ir sin un hashchange que lo avise', () => {
+  it('un hash sin # es un error: no navega fuera de la app ni agrega nada', async () => {
+    const { nav, location, pila } = montar();
+    nav.ir('#/r/f1');
+    await esperar();
+    // Asignado a `location.hash` iría al mismo fragmento, pero pasado a una
+    // URL sería una ruta relativa: fuera de la app.
+    expect(() => { nav.ir('/r/f1'); }).toThrow();
+    expect(() => { nav.ir('plan'); }).toThrow();
+    await esperar();
+    expect(location.hash).toBe('#/r/f1');
     expect(pila()).toHaveLength(2);
-    // Un link después se numera como cualquier otro.
-    location.hash = '#/plan';
-    await esperar();
-    expect(llegadas.at(-1)).toBe('nueva');
-    expect(profundidad(pila().at(-1)?.state)).toBe(2);
-    expect(nav.hayAtras(2)).toBe(true);
   });
 
   it('cada ir avisado una vez, aunque lleguen juntos', async () => {
@@ -451,5 +474,24 @@ describe('un solo lugar toca location e history', () => {
     ];
     const lineas = readFileSync(archivo, 'utf8').split('\n');
     expect(lineas.filter(l => prohibidos.some(p => p.test(l)))).toEqual([]);
+  });
+});
+
+describe('el historial falso de los tests', () => {
+  it('avisa en el orden del navegador: el popstate de location.hash en el acto, el de back después', async () => {
+    const orden: string[] = [];
+    const h = historialFalso({
+      hash: '#/',
+      alCambiarHash: () => { orden.push(`hashchange ${h.location.hash}`); },
+      alPopstate: () => { orden.push(`popstate ${h.location.hash}`); }
+    });
+    h.location.hash = '#/plan';
+    orden.push('asignado');
+    h.history.back();
+    orden.push(`back ${h.location.hash}`);
+    await esperar();
+    expect(orden).toEqual([
+      'popstate #/plan', 'asignado', 'back #/plan', 'hashchange #/plan', 'popstate #/', 'hashchange #/'
+    ]);
   });
 });

@@ -84,9 +84,15 @@ const hashDeUrl = (url: string): string => {
  * - todo cambio de hash, salvo el de `pushState` y `replaceState`, avisa
  *   además con `hashchange`, después del `popstate`.
  *
- * Los avisos van en una microtarea, que no depende del reloj falso de los
- * tests; el navegador los manda en una tarea aparte. Lo que importa es lo
- * mismo: la app alcanza a numerar la entrada antes de que lleguen.
+ * Y en el mismo orden que el navegador:
+ * - el `popstate` de un cambio de hash de `location` sale adentro de la
+ *   asignación, antes de que vuelva;
+ * - `back` y `go` vuelven sin moverse: la entrada cambia después, y ahí sale
+ *   su `popstate`;
+ * - el `hashchange` llega después, siempre.
+ *
+ * Lo que el navegador hace en una tarea aparte, acá va en una microtarea, que
+ * no depende del reloj falso de los tests.
  *
  * `location` y `history` se montan como globales; lo demás es para mirar.
  */
@@ -120,20 +126,27 @@ export function historialFalso({
     if (retenidos !== null) retenidos++;
     else void Promise.resolve().then(alCambiarHash);
   };
-  /** El `popstate` de un cambio de hash o de un movimiento: llega antes que su `hashchange`. */
-  const avisarPopstate = (): void => { void Promise.resolve().then(alPopstate); };
+  /**
+   * El `popstate`: sale en el momento, antes que su `hashchange`. El de un
+   * cambio de hash sale adentro de la asignación; el de un movimiento, cuando
+   * el movimiento se hace.
+   */
+  const avisarPopstate = (): void => { alPopstate(); };
   const agregar = (entrada: EntradaFalsa): void => {
     entradas.splice(i + 1);
     entradas.push(entrada);
     i = entradas.length - 1;
   };
+  /** Se mueve `n` entradas, más tarde: `back` y `go` vuelven antes de moverse. */
   const moverse = (n: number): void => {
-    const destino = i + n;
-    if (destino < 0 || destino >= entradas.length) return;
-    const antes = actual().hash;
-    i = destino;
-    avisarPopstate();
-    if (actual().hash !== antes) avisar();
+    void Promise.resolve().then(() => {
+      const destino = i + n;
+      if (destino < 0 || destino >= entradas.length) return;
+      const antes = actual().hash;
+      i = destino;
+      avisarPopstate();
+      if (actual().hash !== antes) avisar();
+    });
   };
 
   const location = Object.assign({
@@ -179,6 +192,15 @@ export function historialFalso({
     pila: (): EntradaFalsa[] => entradas.slice(0, i + 1).map(e => ({ ...e })),
     /** El atrás del navegador o de Android: se mueve sin pasar por la app. */
     atras: (): void => moverse(-1),
+    /**
+     * Un link o la barra del navegador al fragmento en el que ya se está: el
+     * navegador reemplaza la entrada actual por una sin `state` y avisa con
+     * `popstate`, sin `hashchange`.
+     */
+    mismoFragmento: (): void => {
+      entradas[i] = { hash: actual().hash, state: null };
+      avisarPopstate();
+    },
     /** Los `hashchange` quedan sin mandar hasta `soltarAvisos`: la URL cambia, la pantalla no. */
     retenerAvisos: (): void => { retenidos ??= 0; },
     soltarAvisos: (): void => {

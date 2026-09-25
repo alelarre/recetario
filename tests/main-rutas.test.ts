@@ -5273,6 +5273,27 @@ describe('main.ts: las rutas', () => {
       expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined]);
     });
 
+    it('si la ficha se cerró y se abrió otra mientras se copiaba, lo copiado no pisa la nueva', async () => {
+      const copias: (() => void)[] = [];
+      vi.stubGlobal('navigator', { clipboard: { writeText: () => new Promise<void>(r => { copias.push(r); }) } });
+      const { abrir, tocar, tocarSinCerrar, atras, app, pila } = await montar();
+      await abrir('#/r/f1');
+      await tocar('compartir');
+      const copiando = tocarSinCerrar('compartir-texto');
+      await esperar();
+      await atras();
+      await tocar('compartir');
+      expect(app.innerHTML).toContain('hoja-compartir');
+
+      copias[0]?.();
+      await copiando;
+      await esperar();
+      // La ficha nueva sigue en sus opciones, con su capa.
+      expect(app.innerHTML).toContain('hoja-compartir');
+      expect(app.innerHTML).not.toContain('Texto copiado.');
+      expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined, 'compartir']);
+    });
+
     it('las fichas de fotos del editor: el atrás las cierra sin tocar el formulario; el velo consume su entrada', async () => {
       estado.md = DEPOSITO;
       const { abrir, tocar, atras, app, preguntas, pila } = await montar();
@@ -5322,6 +5343,57 @@ describe('main.ts: las rutas', () => {
       await esperar();
       expect(preguntas.some(h => h.includes('data-foto-url'))).toBe(false);
       expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined]);
+    });
+
+    it('la pregunta de cambios sin guardar cierra la ficha de fotos que estaba abierta', async () => {
+      estado.md = DEPOSITO;
+      estado.formulario = formularioConFotos();
+      const { abrir, tocar, tocarDestino, preguntas, pila } = await montar({ ancha: true });
+      await abrir('#/r/f1/editar');
+      await tocar('acciones-foto', { n: '1' });
+      estado.formulario = { ...formularioConFotos(), titulo: 'Otra cosa' };
+
+      await tocarDestino('#/plan');
+      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
+      expect(preguntas.some(h => h.includes('hoja-foto'))).toBe(false);
+      expect(pila().map(e => [e.hash, capa(e.state)])).toEqual([['', undefined], ['#/r/f1/editar', undefined]]);
+    });
+
+    it('la pregunta de cambios sin guardar cierra el visor del editor', async () => {
+      estado.md = DEPOSITO;
+      estado.formulario = formularioConFotos();
+      const { abrir, tocar, tocarDestino, preguntas } = await montar({ ancha: true });
+      await abrir('#/r/f1/editar');
+      await tocar('ver-foto-receta', { n: '1' });
+      expect(preguntas.some(h => h.includes('class="visor"'))).toBe(true);
+      estado.formulario = { ...formularioConFotos(), titulo: 'Otra cosa' };
+
+      await tocarDestino('#/plan');
+      expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
+      expect(preguntas.some(h => h.includes('class="visor"'))).toBe(false);
+    });
+
+    it('con la pantalla ocupada, un link deshecho cierra la ficha que estaba abierta', async () => {
+      estado.md = DEPOSITO;
+      let contestar!: () => void;
+      vi.stubGlobal('fetch', () => new Promise((_, rechazar) => { contestar = () => { rechazar(new TypeError('bloqueado')); }; }));
+      const { abrir, tocar, tocarSinCerrar, preguntas } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+      await tocar('abrir-foto-url');
+      estado.formulario['url-foto'] = 'https://ejemplo/3.jpg';
+
+      const trayendo = tocarSinCerrar('traer-foto-url');
+      await esperar();
+      await abrir('#/plan');
+      expect(global.location.hash).toBe('#/r/f1/editar');
+      expect(preguntas.some(h => h.includes('data-foto-url'))).toBe(false);
+
+      contestar();
+      await trayendo;
+      await esperar();
+      // No se pudo bajar: entra como link, igual que con la ficha abierta.
+      expect(JSON.parse(estado.formulario['fotos'] ?? '[]')).toContainEqual({ n: 3, url: 'https://ejemplo/3.jpg' });
     });
 
     it('el visor abierto desde una ficha toma su lugar, y el atrás lo cierra', async () => {

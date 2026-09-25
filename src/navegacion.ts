@@ -7,7 +7,7 @@
  * actual queda con 0; cada entrada nueva lleva la de la anterior más uno; y
  * volver a una entrada anterior la recupera de su `state`. `history.length` no
  * sirve para esto: cuenta también las entradas de adelante y las de otros
- * sitios, y con eso el volver se salía de la app.
+ * sitios, y un volver que se guiara por él saldría de la app.
  *
  * Las navegaciones propias cambian el hash y dejan que el `hashchange` dibuje,
  * igual que un `<a href>`: hay un solo camino hasta la pantalla.
@@ -148,8 +148,12 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
     /**
      * Agrega una entrada. Ir al hash en el que ya se está no agrega nada.
      * Desde una capa, la entrada nueva toma el lugar de la de la capa.
+     *
+     * Un hash sin `#` es un error de programación: desde una capa va a
+     * `location.replace`, que lo tomaría por una ruta y saldría de la app.
      */
     ir(hash: string): void {
+      if (!hash.startsWith('#')) throw new Error(`ir recibe un hash con #; recibí ${JSON.stringify(hash)}`);
       if (hash === location.hash) return;
       const antes = location.hash;
       const abierta = capa;
@@ -160,8 +164,9 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
       // llega después y ya la encuentra numerada.
       if (desdeCapa) location.replace(hash);
       else location.hash = hash;
-      // Un hash escrito de otra forma que es el mismo —sin el `#`— no cambia
-      // nada, y no llega ningún `hashchange`.
+      // Un hash escrito de otra forma que es el mismo —con algo sin
+      // codificar que el navegador codifica— no cambia nada, y no llega
+      // ningún `hashchange`.
       if (location.hash === antes) { capa = abierta; return; }
       propias++;
       marcar(profundidad + 1);
@@ -283,6 +288,11 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
       const pendiente = alSalirDeLaCapa;
       alSalirDeLaCapa = null;
       if (pendiente) { pendiente(); return; }
+      // Un link o la barra al fragmento en el que ya se está: el navegador
+      // reemplaza la entrada actual por una sin `state`, sin `hashchange` que
+      // la numere. Se la numera acá; si era la de una capa, la capa se cierra
+      // abajo, como con el atrás.
+      if (profundidadDe(history.state) === null && location.hash === hashes[profundidad]) marcar(profundidad);
       if (capa === null || capaDe(history.state) === capa) return;
       const cerrada = capa;
       capa = null;
