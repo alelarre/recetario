@@ -377,8 +377,6 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
 /* ---- Ajustes ---- */
 .fila-a { display: flex; align-items: center; gap: var(--e-3); min-height: 48px; }
 .fila-a .t { flex: 1; }
-.barra { height: 8px; background: var(--surface-alta); border-radius: var(--r-chico); overflow: hidden; }
-.barra i { display: block; height: 100%; background: var(--acento); }
 
 /* ---- Conexión ---- */
 .arr { min-height: 100%; display: flex; flex-direction: column; justify-content: center;
@@ -431,9 +429,9 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
   .lat.solo-ancho { display: none; }
 }
 
-/* El velo de la escritura en curso: mientras dura, ningún control de abajo
-   recibe el toque. Sin transición: aparece con el toque que lanza la escritura
-   y se va cuando termina.
+/* El velo: la app está ocupada y ningún control de abajo recibe el toque,
+   tampoco mientras dibuja el tilde, hasta que la pantalla de destino está
+   pintada. Sin transición: aparece con el toque que lanza la operación.
    El fondo usa color-mix en vez de opacity sobre todo el elemento, para que
    la olla se vea a pleno y no lavada al 60%. */
 #velo-escritura { position: fixed; inset: 0; z-index: 30;
@@ -441,8 +439,8 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
                   pointer-events: auto; display: grid; place-items: center; }
 #velo-escritura[hidden] { display: none; }
 /* Y la página de atrás no se desplaza mientras dura, como con las fichas al
-   pie: el velo tapa el toque, pero no el desplazamiento. Mientras dibuja el
-   cierre ya no tapa nada, así que tampoco frena el scroll. */
+   pie: el velo tapa el toque, pero no el desplazamiento. El cierre con el
+   tilde también cuenta: abajo sigue la pantalla que escribió. */
 html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 
 /* La olla que se revuelve: la cuchara va de lado a lado sin girar, y el vapor
@@ -479,14 +477,27 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
                            to { opacity: 1; stroke-dashoffset: 0; } }
 
 /* El cierre, cuando la escritura salió bien: la cuchara y el vapor se van, la
-   tapa baja y el tilde se dibuja. El trazo termina antes de que el velo se
-   vaya (`MS_CIERRE`, 1850 ms en main.ts) y el tilde se queda quieto el resto,
-   que es lo que hace falta para llegar a verlo. Mientras tanto no tapa: el
-   toque pasa de largo. */
+   tapa baja y el tilde se dibuja. El trazo termina antes de que se navegue
+   (`MS_CIERRE`, 1850 ms en velo.ts) y el tilde se queda quieto el resto, que
+   es lo que hace falta para llegar a verlo. El velo sigue tapando el toque. */
 #velo-escritura.exito :is(.cuchara, .vapores) { animation: none; opacity: 0; }
 #velo-escritura.exito .vapores path { animation: none; }
 #velo-escritura.exito .tapa { opacity: 1; transform: translateY(6px); }
 #velo-escritura.exito .tilde { animation: dibujar-tilde .575s .3s ease-out forwards; }
+
+/* La tarjeta del progreso: el reindexado y la carpeta base dicen qué hacen y
+   cuánto va, en lugar de la olla. Puede tardar minutos, así que barra y nunca
+   olla sola: sin avance, un rato largo no se distingue de colgado. La barra
+   va adentro del velo, nunca en la pantalla de atrás. */
+#velo-escritura .velo-progreso { display: none; }
+#velo-escritura.progreso svg { display: none; }
+#velo-escritura.progreso .velo-progreso {
+  display: flex; flex-direction: column; gap: var(--e-3);
+  width: min(320px, calc(100% - 2 * var(--e-4))); padding: var(--e-4);
+  background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha); }
+.velo-progreso p { margin: 0; }
+.barra { height: 8px; background: var(--surface-alta); border-radius: var(--r-chico); overflow: hidden; }
+.barra i { display: block; height: 100%; background: var(--acento); }
 
 @media (prefers-reduced-motion: reduce) {
   #velo-escritura :is(.cuchara, .vapores, .tapa) { animation: none; transition: none; }

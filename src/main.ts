@@ -47,6 +47,7 @@ import {
 } from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
 import { crearNavegacion } from './navegacion.js';
+import { crearVelo } from './velo.js';
 import type { Llegada } from './navegacion.js';
 import { registrarAcciones, accionDe } from './acciones.js';
 import type { SeccionDeAcciones } from './acciones.js';
@@ -66,7 +67,7 @@ import { achicar } from './fotos.js';
 import type { OpcionesAchicar } from './fotos.js';
 import { crearImagenes, conTope } from './imagenes.js';
 import type { DatosFormulario } from './ui/editor.js';
-import type { ResultadoArranque, Progreso } from './store.js';
+import type { ResultadoArranque } from './store.js';
 import type { CambiosDeFotos, Entrada, FotoDeReceta, Momento, Plan, Receta } from './tipos.js';
 
 type Store = ReturnType<typeof crearStore>;
@@ -90,13 +91,17 @@ const nav = crearNavegacion({ location, history });
  * acordarse.
  */
 despuesDePintar(() => { void completarFotos(); });
+/**
+ * El velo que quedó puesto después del tilde se va cuando la pantalla de
+ * destino está dibujada: si se fuera antes, se vería el repintado por debajo
+ * (§6.17b). Una parte dibujada también cuenta: la escritura que no navega
+ * redibuja sólo lo suyo.
+ */
+despuesDePintar(() => { velo.alPintar(); });
 
 /** Dibuja la pantalla entera. */
 const pintar = (html: string): void => {
   pintarEnPantalla(conLateralFijo(html));
-  // El velo del cierre espera a que la pantalla de destino esté dibujada: si
-  // se fuera antes, se vería el repintado por debajo (§6.17b).
-  if (veloEsperaPintado) sacarVeloDelCierre();
   mirarElAviso();
 };
 
@@ -169,24 +174,31 @@ let sugerenciasDeCarpeta: CarpetaSimple[] = [];
 const cambiandoCarpeta = (): boolean => vistaActual?.params['cambiando'] === '1';
 
 /**
- * El setup de la carpeta elegida o recién creada, con su progreso, y la recarga
- * al terminar. Si falla, el aviso reemplaza los botones y Reintentar vuelve a
- * ofrecer la misma carpeta: repetir el setup no duplica nada.
+ * El setup de la carpeta elegida —o de la que se crea acá, con `'crear'`—
+ * con el velo del progreso, y la recarga al terminar. Si falla, el aviso
+ * reemplaza los botones y Reintentar vuelve a ofrecer la misma carpeta:
+ * repetir el setup no duplica nada. La carpeta creada queda como
+ * `confirmando`, así un fallo después se reintenta sobre ella y no crea otra.
  */
-async function usarCarpeta(elegida: CarpetaSimple): Promise<void> {
+async function usarCarpeta(elegida: CarpetaSimple | 'crear'): Promise<void> {
+  let creada = elegida !== 'crear';
   try {
-    // La anotación es para los otros dispositivos: si falla, el cambio sigue.
-    if (cambiandoCarpeta()) await store.marcarReemplazada().catch(err => console.error(err));
-    pintar(renderConexion({ estado: 'creando-indice' }));
-    await store.prepararCarpeta(elegida, progreso => pintar(renderConexion({ estado: 'creando-indice', progreso })));
-    // La copia ya es la de la carpeta elegida: recargar abre con un pedido.
-    nav.reemplazar('#/');
-    location.reload();
+    await velo.conProgreso('Preparando la carpeta…', async avance => {
+      const carpeta = elegida === 'crear' ? await store.crearCarpeta(NOMBRE_RAIZ, 'root') : elegida;
+      creada = true;
+      estadoDePantalla.selector.confirmando = carpeta;
+      // La anotación es para los otros dispositivos: si falla, el cambio sigue.
+      if (cambiandoCarpeta()) await store.marcarReemplazada().catch(err => console.error(err));
+      await store.prepararCarpeta(carpeta, avance);
+    });
   } catch (err) {
     console.error(err);
-    estadoDePantalla.selector.error = 'No se pudo preparar la carpeta. Revisá la conexión.';
-    await render();
+    estadoDePantalla.selector.error = creada ? 'No se pudo preparar la carpeta.' : 'No se pudo crear la carpeta.';
+    return render();
   }
+  // La copia ya es la de la carpeta elegida: recargar abre con un pedido.
+  nav.reemplazar('#/');
+  location.reload();
 }
 
 /**
@@ -248,141 +260,31 @@ const porQueNoGuardo = (err: unknown): string =>
   sinSesion(err) ? SIN_SESION : 'No se pudo guardar. Revisá la conexión.';
 
 /**
- * Cuántos pedidos de tapar la pantalla hay abiertos, y la pantalla desde la
- * que se tapó. Es la única verdad sobre el velo: cada escritura abre el suyo,
- * y el manejador que tarda en llegar a escribir abre el suyo antes. Con
- * la pantalla tapada no se navega ni responde ningún control.
+ * La pantalla desde la que se tapó: mientras el velo está puesto, un
+ * `hashchange` vuelve a ella (ver `render`).
  */
-let tapadas = 0;
-let hashEscritura = '';
+let hashAlTapar = '';
 
 /**
- * Lo que dura el cierre con el tilde antes de navegar (§6.17b): el tilde
- * termina de dibujarse a los 875 ms —0,3 s de espera y 0,575 s de trazo— y se
- * queda 975 ms más quieto, para que se llegue a ver que salió bien. El
- * reparto se elige mirando la animación en el teléfono: con menos, el tilde
- * aparece y la pantalla ya cambió.
+ * El velo (R8). Con la pantalla ocupada no se navega ni responde ningún
+ * control; lo lee cada oyente con `velo.ocupado()`.
  */
-const MS_CIERRE = 1850;
-
-/** Lo que se espera a que la pantalla de destino se dibuje antes de sacar el velo igual. */
-const MS_RESPALDO_CIERRE = 400;
-
-/** El temporizador del cierre con el tilde, mientras se dibuja. */
-let cierreEnCurso: ReturnType<typeof setTimeout> | null = null;
-
-/**
- * Cómo dar por terminado el dibujo del cierre. Una escritura nueva lo corta, y
- * ahí también hay que soltar al que lo espera: si no, el manejador que guardó
- * se queda esperando un dibujo que ya no va a pasar.
- */
-let terminarCierre: (() => void) | null = null;
-
-/** El velo, con `aria-busy` en `#app`. Los tests corren sobre un DOM mínimo: puede no estar. */
-function mostrarVelo(mostrar: boolean): void {
-  // Una escritura nueva corta el cierre de la anterior: el velo vuelve a tapar.
-  if (cierreEnCurso !== null) { clearTimeout(cierreEnCurso); cierreEnCurso = null; }
-  if (terminarCierre) { const listo = terminarCierre; terminarCierre = null; listo(); }
-  veloEsperaPintado = false;
-  veloDelCierre = null;
-  if (respaldoDelCierre !== null) { clearTimeout(respaldoDelCierre); respaldoDelCierre = null; }
-  const velo = document.querySelector<HTMLElement>('#velo-escritura');
-  if (velo) { velo.hidden = !mostrar; velo.classList.remove('exito'); }
-  if (mostrar) app?.setAttribute('aria-busy', 'true');
-  else app?.removeAttribute('aria-busy');
-}
-
-/**
- * El cierre de una escritura que salió bien: la tapa baja sobre la olla y se
- * dibuja el tilde. La promesa termina cuando el dibujo terminó, **con el velo
- * todavía puesto**: así el que guardó navega recién después del tilde, y el
- * repintado de la pantalla de destino queda tapado (§6.17b). Del velo se
- * encarga `sacarVeloDelCierre`, cuando esa pantalla ya está dibujada.
- *
- * La pantalla, eso sí, ya no está tapada: el contador quedó en cero y el velo
- * deja pasar el toque.
- */
-function cerrarConExito(): Promise<void> {
-  const velo = document.querySelector<HTMLElement>('#velo-escritura');
-  if (!velo) { mostrarVelo(false); return Promise.resolve(); }
-  velo.classList.add('exito');
-  veloDelCierre = velo;
-  app?.removeAttribute('aria-busy');
-  return new Promise(listo => {
-    terminarCierre = listo;
-    cierreEnCurso = setTimeout(() => {
-      cierreEnCurso = null;
-      terminarCierre = null;
-      listo();
-    }, MS_CIERRE);
-  });
-}
-
-/**
- * El velo del cierre se va cuando la pantalla de destino está dibujada. El
- * respaldo es para el guardado que no navega a ningún lado: sin él, el velo se
- * quedaría puesto esperando un dibujo que no viene.
- */
-let veloEsperaPintado = false;
-let respaldoDelCierre: ReturnType<typeof setTimeout> | null = null;
-/**
- * El velo que está dibujando el cierre. Se guarda en vez de volver a buscarlo:
- * para cuando toca sacarlo, la pantalla de abajo ya se redibujó, y el que lo
- * tiene que esconder es el mismo elemento que lo empezó a dibujar.
- */
-let veloDelCierre: HTMLElement | null = null;
-
-function esperarPintadoParaSacarElVelo(): void {
-  veloEsperaPintado = true;
-  if (respaldoDelCierre !== null) clearTimeout(respaldoDelCierre);
-  respaldoDelCierre = setTimeout(sacarVeloDelCierre, MS_RESPALDO_CIERRE);
-}
-
-function sacarVeloDelCierre(): void {
-  veloEsperaPintado = false;
-  if (respaldoDelCierre !== null) { clearTimeout(respaldoDelCierre); respaldoDelCierre = null; }
-  const velo = veloDelCierre;
-  veloDelCierre = null;
-  if (velo) { velo.hidden = true; velo.classList.remove('exito'); }
-}
-
-/**
- * Tapa la pantalla y devuelve cómo destaparla. Destapar dos veces no descuenta
- * de más: el manejador que la tapó puede soltarla por varios caminos. Con
- * `{ exito: true }` el velo no se va de golpe: se queda los milisegundos del
- * cierre con el tilde, ya sin tapar nada.
- */
-function tapar(): (opciones?: { exito?: boolean }) => Promise<void> {
-  if (tapadas++ === 0) { hashEscritura = location.hash; mostrarVelo(true); }
-  let soltado = false;
-  return opciones => {
-    if (soltado) return Promise.resolve();
-    soltado = true;
-    if (--tapadas > 0) return Promise.resolve();
-    if (opciones?.exito) return cerrarConExito();
-    mostrarVelo(false);
-    return Promise.resolve();
-  };
-}
-
-/**
- * Envuelve la promesa de una escritura: la pantalla tapada mientras dura, y se
- * suelta siempre, termine bien o mal. Envuelve sólo la llamada que escribe y no
- * el manejador entero, para que éste pueda navegar o redibujar al terminar.
- */
-async function escribiendo<T>(p: Promise<T>): Promise<T> {
-  const destapar = tapar();
-  try { return await p; }
-  finally { destapar(); }
-}
+const velo = crearVelo({
+  velo: () => document.querySelector<HTMLElement>('#velo-escritura'),
+  app: () => app,
+  alTapar: () => { hashAlTapar = location.hash; }
+});
 
 /** Las pantallas de una misma receta, entre las que la copia leída se conserva. */
 const PANTALLAS_DE_RECETA: readonly Ruta['vista'][] = ['receta', 'cocinar', 'editar'];
 
-/** La receta de la pantalla: de Drive la primera vez, de memoria mientras no se salga. */
+/**
+ * La receta de la pantalla: de Drive la primera vez, de memoria mientras no se
+ * salga. La lectura es una espera: la pantalla no se toca hasta que llega.
+ */
 async function recetaDePantalla(id: string): Promise<{ entrada: Entrada | null; receta: Receta }> {
   if (recetaLeida?.id !== id) {
-    const { entrada, receta } = await store.receta(id);
+    const { entrada, receta } = await velo.esperar(() => store.receta(id));
     recetaLeida = { id, entrada, receta };
     // El depósito entero, no sólo lo que está a la vista: así el visor
     // desliza sin esperar.
@@ -392,9 +294,9 @@ async function recetaDePantalla(id: string): Promise<{ entrada: Entrada | null; 
   return recetaLeida;
 }
 
-/** El plan de la pantalla: de Drive la primera vez, de memoria mientras no se salga. */
+/** El plan de la pantalla: de Drive la primera vez, de memoria mientras no se salga. Leerlo es una espera. */
 async function planDePantalla(): Promise<Plan> {
-  if (!planLeido) planLeido = await store.plan();
+  if (!planLeido) planLeido = await velo.esperar(() => store.plan());
   return planLeido;
 }
 
@@ -443,25 +345,20 @@ const delaCategoria = (nombre: string): Entrada[] =>
  * Las lecturas se solapan, de a seis como el reindexado: en fila, un plan
  * cargado son catorce viajes uno detrás de otro. Y tapan la pantalla
  * mientras duran —no escriben nada, pero es la espera más larga de la app
- * (R8)—; con la lista ya armada no se tapa nada, que sería un parpadeo.
+ * (R8)—; con la lista ya armada no se espera nada.
  */
 async function comprasDelPlan(plan: Plan): Promise<ListaDeCompras> {
   const clave = plan.comidas.map(c => c.id).join(',');
   if (comprasLeidas?.clave === clave) return comprasLeidas.lista;
   const ids = [...new Set(plan.comidas.map(c => c.id))];
   const leidas = new Map<string, Receta>();
-  const destapar = tapar();
-  try {
-    // El error se atrapa acá adentro y no afuera: `conConcurrencia` corta el
-    // reparto con el primero que falla, y una receta borrada sólo se saltea.
-    const traidas = await conConcurrencia(ids, TOPE_LECTURAS, (id: string) =>
-      store.receta(id).catch(err => { console.error(err); return null; }));
-    for (const [i, id] of ids.entries()) {
-      const leida = traidas[i];
-      if (leida) leidas.set(id, leida.receta);
-    }
-  } finally {
-    destapar();
+  // El error se atrapa acá adentro y no afuera: `conConcurrencia` corta el
+  // reparto con el primero que falla, y una receta borrada sólo se saltea.
+  const traidas = await velo.esperar(() => conConcurrencia(ids, TOPE_LECTURAS, (id: string) =>
+    store.receta(id).catch(err => { console.error(err); return null; })));
+  for (const [i, id] of ids.entries()) {
+    const leida = traidas[i];
+    if (leida) leidas.set(id, leida.receta);
   }
   const recetas = plan.comidas.flatMap(c => {
     const receta = leidas.get(c.id);
@@ -472,11 +369,19 @@ async function comprasDelPlan(plan: Plan): Promise<ListaDeCompras> {
   return lista;
 }
 
-/** Escribe el plan entero y lo deja en memoria; si falla, la grilla no cambia y el aviso lo dice (R1). */
-async function guardarPlan(nuevo: Plan): Promise<void> {
+/**
+ * Escribe el plan entero con el cambio y lo deja en memoria; si falla, la
+ * grilla no cambia y el aviso lo dice (R1). El plan puede no estar leído
+ * todavía, y leerlo es otro pedido a Drive antes de escribir: el velo cubre
+ * las dos cosas, desde el toque.
+ */
+async function guardarPlan(cambio: (plan: Plan) => Plan): Promise<void> {
   try {
-    await escribiendo(store.guardarPlan(nuevo));
-    planLeido = nuevo;
+    await velo.escribir(async () => {
+      const nuevo = cambio(await planDePantalla());
+      await store.guardarPlan(nuevo);
+      planLeido = nuevo;
+    });
     errorPlan = '';
   } catch (err) {
     console.error(err);
@@ -490,8 +395,6 @@ let ignorados: string[] = [];
 let sinBorrador: string[] = [];
 /** El mail de la cuenta conectada. Se pide una vez, al entrar a Ajustes. */
 let cuenta = '';
-/** El progreso del reindexado en curso, o `null`. Mientras corre no se guarda ni se borra. */
-let reindexando: Progreso | null = null;
 
 /**
  * El deslizamiento cambió de foto: el click que viene después del `touchend`
@@ -645,12 +548,27 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
     }) + '</div>');
   }
 
-  // Reindexar rearma el índice entero: cargarlo antes es leer de más, y una
-  // planilla de un esquema viejo puede no tener todas sus hojas.
-  if (estadoArranque.reconstruir) await reconstruir();
-  else await store.cargarIndice();
-  registrarCategorias(store.categorias());
+  return terminarArranque(estadoArranque.reconstruir);
+}
 
+/**
+ * El índice y la primera pantalla. Reindexar rearma el índice entero:
+ * cargarlo antes es leer de más, y una planilla de un esquema viejo puede no
+ * tener todas sus hojas. Si el reindexado falla, el aviso lo dice y
+ * Reintentar vuelve acá.
+ */
+async function terminarArranque(reindexar: boolean): Promise<void> {
+  if (reindexar) {
+    try {
+      await reconstruir();
+    } catch (err) {
+      console.error(err);
+      return pintar('<div class="cuerpo">' + aviso({
+        texto: 'No se pudo reindexar.', accion: { etiqueta: 'Reintentar', accion: 'reindexar-al-arrancar' }
+      }) + '</div>');
+    }
+  } else await store.cargarIndice();
+  registrarCategorias(store.categorias());
   router.iniciar();
 }
 
@@ -675,11 +593,12 @@ function conLateralFijo(html: string): string {
   return lateralFijo(cuantosBorradores(), html);
 }
 
-/** Ajustes, igual al entrar que mientras reindexa: sólo cambia `reindexando`. */
+/** Ajustes, con lo que dejó el último reindexado. */
 function dibujarAjustes(): void {
   pintar(renderAjustes({
     cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados, sinBorrador,
-    indiceDuplicado: indiceDuplicado(), planDuplicado: store.planDuplicado(), reindexando,
+    indiceDuplicado: indiceDuplicado(), planDuplicado: store.planDuplicado(),
+    errorReindexado: estadoDePantalla.errorReindexado,
     ...menuDe('ajustes'),
     informe: informeArranque(), recetas: store.entradas().length, categorias: store.categorias().length,
     carpeta: store.carpeta().nombre
@@ -688,26 +607,17 @@ function dibujarAjustes(): void {
 
 /**
  * Reindexar lee todos los `.md` y rearma la planilla: es la reparación
- * universal. No se puede cancelar —cortar a mitad deja el índice en el estado
- * que el reindexado existe para reparar— y mientras corre no se guarda ni se
- * borra nada (C05.5.2). Al terminar no dibuja la pantalla: la dibuja quien
- * reindexó, así el arranque la dibuja una sola vez.
+ * universal. Corre con el velo del progreso, que bloquea todo: no se puede
+ * cancelar —cortar a mitad deja el índice en el estado que el reindexado
+ * existe para reparar— y mientras corre no se guarda, ni se borra, ni se
+ * navega (C05.5.2). No dibuja la pantalla: la dibuja quien reindexó, así el
+ * arranque la dibuja una sola vez. Si falla, rechaza, y el aviso lo pone él.
  */
-async function reconstruir({ enAjustes = false } = {}) {
-  reindexando = 0;
-  const dibujar = () => enAjustes
-    ? dibujarAjustes()
-    : pintar(renderConexion({ estado: 'creando-indice', ...(reindexando !== null ? { progreso: reindexando } : {}) }));
-
-  dibujar();
-  try {
-    const r = await store.reconstruir(progreso => { reindexando = progreso; dibujar(); });
-    ignorados = r.ignorados;
-    sinBorrador = r.sinBorrador;
-    registrarCategorias(store.categorias());
-  } finally {
-    reindexando = null;
-  }
+async function reconstruir(): Promise<void> {
+  const r = await velo.conProgreso('Reindexando…', avance => store.reconstruir(avance));
+  ignorados = r.ignorados;
+  sinBorrador = r.sinBorrador;
+  registrarCategorias(store.categorias());
 }
 
 /**
@@ -800,11 +710,11 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
     return;
   }
 
-  // Con la pantalla tapada no se navega: el resultado o el error tienen que
-  // llegar a la pantalla que lanzó la escritura. Como el `hashchange` no se
+  // Con la pantalla ocupada no se navega: el resultado o el error tienen que
+  // llegar a la pantalla que lanzó la operación. Como el `hashchange` no se
   // puede cancelar, la URL vuelve a la de esa pantalla, igual que con el
   // editor. El hash es el de cuando se tapó: acá `location.hash` ya es el destino.
-  if (tapadas && cambiaDePantalla) { quedarseEn(hashEscritura, llegada); return; }
+  if (velo.ocupado() && cambiaDePantalla) { quedarseEn(hashAlTapar, llegada); return; }
 
   // Salir del editor con cambios pregunta antes (C04.1.1). El `hashchange` no
   // se puede cancelar: cuando llega, el link, el volver del encabezado o el
@@ -1077,39 +987,39 @@ const llegoDeAfuera = (ruta: Ruta | null): boolean =>
 async function leerCompartidas(): Promise<boolean> {
   const cantidad = estadoDePantalla.compartidasPorLeer;
   estadoDePantalla.compartidasPorLeer = 0;
-  let noSeLeyo = false;
-  const destapar = tapar();
-  try {
-    let llegadas: Blob[];
-    // El caché se vacía aunque la lectura falle: si no, las fotos quedarían
-    // ahí hasta la próxima vez que se comparta algo.
+  // Leer y achicar es una espera: una sola para todas las fotos.
+  return velo.esperar(async () => {
+    let noSeLeyo = false;
     try {
-      llegadas = await imagenes.fotosCompartidas(cantidad);
-    } finally {
-      await imagenes.descartarCompartidas().catch(err => console.error(err));
-    }
-    let deposito: FotoDeReceta[] = [];
-    for (const archivo of llegadas) {
-      let blob: Blob;
+      let llegadas: Blob[];
+      // El caché se vacía aunque la lectura falle: si no, las fotos quedarían
+      // ahí hasta la próxima vez que se comparta algo.
       try {
-        blob = await achicarFoto(archivo);
-      } catch (err) {
-        console.error(err);
-        noSeLeyo = true;
-        continue;
+        llegadas = await imagenes.fotosCompartidas(cantidad);
+      } finally {
+        await imagenes.descartarCompartidas().catch(err => console.error(err));
       }
-      const n = siguienteNumero(deposito);
-      deposito = [...deposito, { n, url: '' }];
-      fotosEditor.nuevas.set(n, blob);
-      fotosEditor.urls.set(n, imagenes.urlDeBlob(blob));
+      let deposito: FotoDeReceta[] = [];
+      for (const archivo of llegadas) {
+        let blob: Blob;
+        try {
+          blob = await achicarFoto(archivo);
+        } catch (err) {
+          console.error(err);
+          noSeLeyo = true;
+          continue;
+        }
+        const n = siguienteNumero(deposito);
+        deposito = [...deposito, { n, url: '' }];
+        fotosEditor.nuevas.set(n, blob);
+        fotosEditor.urls.set(n, imagenes.urlDeBlob(blob));
+      }
+    } catch (err) {
+      console.error(err);
+      noSeLeyo = true;
     }
-  } catch (err) {
-    console.error(err);
-    noSeLeyo = true;
-  } finally {
-    destapar();
-  }
-  return noSeLeyo;
+    return noSeLeyo;
+  });
 }
 
 /**
@@ -1337,13 +1247,12 @@ function avisarEnElFormulario(texto: string): void {
 async function agregarFotosAlEditor(archivos: Blob[]): Promise<void> {
   let deposito = depositoDelEditor();
   let noSeLeyo = false;
-  // Una sola vez el velo, aunque se elijan cinco fotos.
-  const destapar = tapar();
-  try {
+  // Una sola espera, aunque se elijan cinco fotos.
+  await velo.esperar(async () => {
     for (const archivo of archivos) {
       let blob: Blob;
       try {
-        blob = await escribiendo(achicarFoto(archivo));
+        blob = await achicarFoto(archivo);
       } catch (err) {
         console.error(err);
         noSeLeyo = true;
@@ -1354,9 +1263,7 @@ async function agregarFotosAlEditor(archivos: Blob[]): Promise<void> {
       fotosEditor.nuevas.set(n, blob);
       fotosEditor.urls.set(n, imagenes.urlDeBlob(blob));
     }
-  } finally {
-    destapar();
-  }
+  });
   escribirDeposito(deposito);
   avisarEnElFormulario(noSeLeyo ? NO_SE_LEYO_UNA_FOTO : '');
 }
@@ -1415,7 +1322,7 @@ const CORTE_DE_TRAIDA = 20_000;
  * desde el navegador, y en los dos casos la salida es la misma, quedarse con
  * la URL como link.
  *
- * **El pedido se corta solo.** Es el único pedido a un sitio ajeno que tapa la
+ * **El pedido se corta solo.** Es el único pedido a un sitio ajeno que ocupa la
  * pantalla (R8), y un servidor que acepta y nunca contesta dejaría el editor
  * tapado sin salida: salir sería recargar, y con eso se va lo escrito.
  */
@@ -1457,15 +1364,18 @@ async function pedirFotoPorUrl(escrita: string): Promise<PedidoDeFoto> {
   // Desde Pages, una `http://` es contenido mixto: el pedido falla siempre y
   // la imagen tampoco cargaría después. Entra como link y no sirve de nada.
   if (url.startsWith('http://')) return { que: 'error', mensaje: SOLO_HTTPS };
-  const traida = await escribiendo(traerFoto(url));
-  if (traida.que === 'no-es-foto') return { que: 'error', mensaje: NO_ES_UNA_FOTO };
-  if (traida.que === 'no-se-pudo') return { que: 'link', url };
-  try {
-    return { que: 'foto', blob: await escribiendo(achicarFoto(traida.blob)) };
-  } catch (err) {
-    console.error(err);
-    return { que: 'error', mensaje: NO_SE_LEYO_UNA_FOTO };
-  }
+  // Bajarla y achicarla son una sola espera.
+  return velo.esperar(async (): Promise<PedidoDeFoto> => {
+    const traida = await traerFoto(url);
+    if (traida.que === 'no-es-foto') return { que: 'error', mensaje: NO_ES_UNA_FOTO };
+    if (traida.que === 'no-se-pudo') return { que: 'link', url };
+    try {
+      return { que: 'foto', blob: await achicarFoto(traida.blob) };
+    } catch (err) {
+      console.error(err);
+      return { que: 'error', mensaje: NO_SE_LEYO_UNA_FOTO };
+    }
+  });
 }
 
 /**
@@ -1691,84 +1601,80 @@ function salirALaGuardada(id: string): void {
   else nav.volver(hash);
 }
 
+/** La validación del editor no deja guardar: el mensaje va al aviso y no se escribe nada. */
+class NoSeGuarda extends Error {}
+
 /**
- * Guarda lo que el editor tiene escrito: crea el `.md` o reescribe el abierto,
- * con su fila. Devuelve el id y la receta guardada, con el dibujo del tilde en
- * curso; `null` si no escribió nada —la validación o un error—, y en ese caso
- * el editor ya está redibujado con lo escrito y el aviso (C04.5.2).
+ * Escribe lo que el editor tiene: crea el `.md` o reescribe el abierto, con su
+ * fila, y deja lo guardado como la receta leída —la de destino se dibuja sin
+ * volver a leer, y con el link de cada foto que se acaba de subir en su
+ * línea—. Si la validación no deja, rechaza con `NoSeGuarda`.
  */
-async function guardarEditor(
-  boton: HTMLElement
-): Promise<{ id: string; receta: Receta; dibujado: Promise<void> } | null> {
+async function escribirEditor(datos: DatosFormulario): Promise<{ id: string; receta: Receta }> {
+  // `''` es «Sin categoría»: la receta va a `_sin-categoria/`.
+  const carpetaId = datos['carpeta'] ?? '';
+  const esNueva = vistaActual?.vista === 'nueva';
+  let id = idActual();
+  const base = esNueva ? baseDeNueva() : (await store.receta(id)).receta;
+  const escrita = conSubidas(recetaDesdeFormulario(datos, base));
+  // Un borrador puede no tener título todavía: se guarda con el día y la
+  // hora, y el nombre del archivo sale de ahí.
+  const nueva = !escrita.titulo && tieneEspecial(escrita, 'borrador')
+    ? { ...escrita, titulo: tituloPorDefecto(new Date()) } : escrita;
+
+  // Una receta nueva sin nada escrito no se crea: el título por defecto del
+  // borrador no es contenido (C04.3b.1). Editando, el `.md` ya existe.
+  if (esNueva && !tieneAlgoCargado(escrita)) throw new NoSeGuarda('Completá algún campo antes de guardar.');
+  if (!nueva.titulo) throw new NoSeGuarda('Ponele un título antes de guardar.');
+
+  // Lo que el depósito cambió respecto del `.md` que se abrió: el store sube
+  // las nuevas y manda a la papelera las que se sacaron.
+  const fotos = cambiosDeFotos(nueva, base);
+  if (esNueva) id = (await store.crear(nueva, carpetaId ? { carpetaId, fotos } : { fotos })).id;
+  else await store.guardar(id, nueva, { carpetaDestino: carpetaId, fotos });
+  const receta = conSubidas(nueva);
+  recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta };
+  return { id, receta };
+}
+
+/**
+ * Guarda el editor con el velo, desde el toque: entre el toque y la escritura
+ * hay una relectura del `.md` de base, que es un pedido a Drive. `yDespues`
+ * corre adentro del mismo velo —*Convertir con Agente* baja las fotos y abre
+ * el agente— y el tilde va al final de todo.
+ *
+ * Devuelve el id y lo que dio `yDespues`, con el tilde ya dibujado: el que
+ * guardó navega recién ahí, y el velo se va cuando la pantalla de destino
+ * está pintada (§6.17b). `null` si no escribió nada —la validación o un
+ * error—, y en ese caso el editor ya está redibujado con lo escrito y el
+ * aviso (C04.5.2).
+ */
+async function guardarEditor<T>(
+  yDespues: (guardada: { id: string; receta: Receta }) => Promise<T>
+): Promise<{ id: string; despues: T } | null> {
   if (!document.querySelector('[data-formulario]')) return null;
-  // El velo antes que nada: entre el toque y la escritura hay una relectura
-  // del `.md` de base, que es un pedido a Drive, y la validación puede
-  // devolver el editor sin escribir nada. Se suelta por cualquier
-  // camino, así que no queda pegado.
-  const destapar = tapar();
-  let guardada: { id: string; receta: Receta } | null = null;
-  let dibujado: Promise<void> = Promise.resolve();
+  const datos = datosDelFormulario();
   try {
-    const datos = datosDelFormulario();
-    // `''` es «Sin categoría»: la receta va a `_sin-categoria/`.
-    const carpetaId = datos['carpeta'] ?? '';
+    return await velo.escribir(async () => {
+      const guardada = await escribirEditor(datos);
+      estadoDePantalla.editorAbierto = null;
+      return { id: guardada.id, despues: await yDespues(guardada) };
+    });
+  } catch (err) {
+    if (!(err instanceof NoSeGuarda)) console.error(err);
     const esNueva = vistaActual?.vista === 'nueva';
     const id = idActual();
-
-    // Mientras trabaja, el botón lo dice y no se puede tocar dos veces (C04.5.1).
-    boton.setAttribute('disabled', '');
-    boton.textContent = 'Guardando…';
-
-    const base = esNueva ? baseDeNueva() : (await store.receta(id)).receta;
-    const escrita = conSubidas(recetaDesdeFormulario(datos, base));
-    // Un borrador puede no tener título todavía: se guarda con el día y la
-    // hora, y el nombre del archivo sale de ahí.
-    const nueva = !escrita.titulo && tieneEspecial(escrita, 'borrador')
-      ? { ...escrita, titulo: tituloPorDefecto(new Date()) } : escrita;
-
-    /** El editor otra vez, con lo que el usuario tenía escrito y el aviso (C04.5.2). */
-    const conError = (mensaje: string): null => {
-      pintar(renderEditor({
-        entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
-        // Con las fotos que este intento alcanzó a subir ya en sus líneas: el
-        // reintento las manda por su link en vez de volver a subirlas.
-        receta: conSubidas(escrita), carpeta: carpetaId, categorias: store.categorias(),
-        tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje, ...menuDe(vistaActual?.vista)
-      }));
-      return null;
-    };
-
-    // Una receta nueva sin nada escrito no se crea: el título por defecto del
-    // borrador no es contenido (C04.3b.1). Editando, el `.md` ya existe.
-    if (esNueva && !tieneAlgoCargado(escrita)) return conError('Completá algún campo antes de guardar.');
-    if (!nueva.titulo) return conError('Ponele un título antes de guardar.');
-
-    // Lo que el depósito cambió respecto del `.md` que se abrió: el store sube
-    // las nuevas y manda a la papelera las que se sacaron.
-    const fotos = cambiosDeFotos(nueva, base);
-
-    try {
-      if (esNueva) {
-        const creada = await escribiendo(store.crear(nueva, carpetaId ? { carpetaId, fotos } : { fotos }));
-        guardada = { id: creada.id, receta: conSubidas(nueva) };
-      } else {
-        await escribiendo(store.guardar(id, nueva, { carpetaDestino: carpetaId, fotos }));
-        guardada = { id, receta: conSubidas(nueva) };
-        // Lo guardado es la copia: volver a la receta la muestra sin releer, y
-        // con el link de cada foto que se acaba de subir en su línea.
-        recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta: guardada.receta };
-      }
-      estadoDePantalla.editorAbierto = null;
-    } catch (err) {
-      console.error(err);
-      return conError(porQueNoGuardo(err));
-    }
-  } finally {
-    // El tilde sólo cuando se escribió: ni la validación ni el error llegan a
-    // `guardada`, y ahí el velo se va solo, sin tilde.
-    dibujado = destapar({ exito: guardada !== null });
+    // El editor otra vez, con lo que el usuario tenía escrito y el aviso.
+    // Con las fotos que este intento alcanzó a subir ya en sus líneas: el
+    // reintento las manda por su link en vez de volver a subirlas.
+    pintar(renderEditor({
+      entrada: esNueva ? null : store.entradas().find(e => e.id_archivo === id) ?? null,
+      receta: conSubidas(recetaDesdeFormulario(datos, baseDelEditor())), carpeta: datos['carpeta'] ?? '',
+      categorias: store.categorias(), tagsConocidos: store.tagsDe().map(t => t.tag),
+      error: err instanceof NoSeGuarda ? err.message : porQueNoGuardo(err), ...menuDe(vistaActual?.vista)
+    }));
+    return null;
   }
-  return guardada ? { ...guardada, dibujado } : null;
 }
 
 /**
@@ -1995,20 +1901,9 @@ const accionesDelPlan: SeccionDeAcciones = {
     if (!entrada) return;
     const dia = Number(vistaActual?.params['dia'] ?? 0);
     const momento: Momento = vistaActual?.params['momento'] === 'mediodia' ? 'mediodia' : 'noche';
-    // El plan puede no estar leído todavía, y leerlo es otro pedido a Drive
-    // antes de escribir: la pantalla se tapa desde el toque.
-    const destapar = tapar();
-    try {
-      const plan = await planDePantalla();
-      // Agregar suma al final: la misma receta dos veces se permite, y cada
-      // línea tiene su cruz.
-      await guardarPlan({ comidas: [...plan.comidas, { dia, momento, id, titulo: entrada.titulo }] });
-    } catch (err) {
-      console.error(err);
-      errorPlan = 'No se pudo guardar el plan. Revisá la conexión.';
-    } finally {
-      destapar();
-    }
+    // Agregar suma al final: la misma receta dos veces se permite, y cada
+    // línea tiene su cruz.
+    await guardarPlan(plan => ({ comidas: [...plan.comidas, { dia, momento, id, titulo: entrada.titulo }] }));
     // Esta pantalla se cierra al elegir y deja el plan, que dibuja el
     // `hashchange`. Sin pantalla atrás, el plan toma su lugar.
     nav.volver('#/plan');
@@ -2017,13 +1912,13 @@ const accionesDelPlan: SeccionDeAcciones = {
     const i = Number(boton.dataset['i'] ?? -1);
     const plan = planLeido;
     if (!plan || !Number.isInteger(i) || i < 0 || i >= plan.comidas.length) return;
-    await guardarPlan({ comidas: plan.comidas.filter((_, n) => n !== i) });
+    await guardarPlan(() => ({ comidas: plan.comidas.filter((_, n) => n !== i) }));
     return render();
   },
   'reiniciar-plan': () => { estadoDePantalla.confirmandoReinicio = true; return render(); },
   'cancelar-reinicio': () => { estadoDePantalla.confirmandoReinicio = false; return render(); },
   'reiniciar-plan-confirmado': async () => {
-    await guardarPlan({ comidas: [] });
+    await guardarPlan(() => ({ comidas: [] }));
     estadoDePantalla.confirmandoReinicio = false;
     return render();
   },
@@ -2109,8 +2004,10 @@ const accionesDeCategorias: SeccionDeAcciones = {
       ...(propia ? { fotoPropia: propia } : {})
     };
     try {
-      if (id === 'nueva') await escribiendo(store.crearCategoria(datos));
-      else await escribiendo(store.editarCategoria(id, datos));
+      await velo.escribir(async () => {
+        if (id === 'nueva') await store.crearCategoria(datos);
+        else await store.editarCategoria(id, datos);
+      });
       registrarCategorias(store.categorias());
       estadoDePantalla.editorAbierto = null;
       nav.volver('#/categorias');
@@ -2136,7 +2033,7 @@ const accionesDeCategorias: SeccionDeAcciones = {
   'borrar-categoria-confirmado': async () => {
     const id = idActual();
     try {
-      await escribiendo(store.borrarCategoria(id));
+      await velo.escribir(() => store.borrarCategoria(id));
       registrarCategorias(store.categorias());
       estadoDePantalla.editorAbierto = null;
       nav.volver('#/categorias');
@@ -2155,35 +2052,35 @@ const accionesDeCategorias: SeccionDeAcciones = {
  * la duración, salir y borrar.
  */
 const accionesDelEditor: SeccionDeAcciones = {
-  'convertir-con-agente': async (boton) => {
+  'convertir-con-agente': async () => {
     // Guarda y después manda: el pedido lleva el id del `.md`, que en una
-    // receta nueva recién existe al crearla. Si no se guardó, no se manda nada.
-    const guardada = await guardarEditor(boton);
+    // receta nueva recién existe al crearla. Si no se guardó, no se manda
+    // nada. Bajar las fotos y abrir el agente van adentro del mismo velo.
+    const guardada = await guardarEditor(async ({ id, receta }) => {
+      // Las fotos que el agente puede leer son las de Drive que se pudieron
+      // leer, en el orden del depósito y con su número: la receta que vuelve
+      // las nombra con ese número.
+      const leidas = await fotosParaElAgente(receta.fotos);
+      const numeradas = leidas.map(({ n, id }) => ({ n, id }));
+      const datos = {
+        id, titulo: receta.titulo ?? '', fuente: receta.fuente ?? '', descripcion: receta.descripcion,
+        rinde: receta.rinde ?? '', ingredientes: receta.ingredientes, preparacion: receta.preparacion, notas: receta.notas
+      };
+      const envio: PedidoAlAgente = {
+        pedido: pedidoDeConversion(datos, { fotos: numeradas }),
+        fotos: leidas.length
+          ? { archivos: leidas.map(f => f.archivo), conLinks: pedidoDeConversion(datos, { fotos: numeradas, links: true }) }
+          : null
+      };
+      return { envio, r: await mandarAlAgente(envio) };
+    });
     if (!guardada) return;
-    const { id, receta } = guardada;
-    // Las fotos que el agente puede leer son las de Drive que se pudieron
-    // leer, en el orden del depósito y con su número: la receta que vuelve las
-    // nombra con ese número.
-    const leidas = await fotosParaElAgente(receta.fotos);
-    const numeradas = leidas.map(({ n, id }) => ({ n, id }));
-    const datos = {
-      id, titulo: receta.titulo ?? '', fuente: receta.fuente ?? '', descripcion: receta.descripcion,
-      rinde: receta.rinde ?? '', ingredientes: receta.ingredientes, preparacion: receta.preparacion, notas: receta.notas
-    };
-    const envio: PedidoAlAgente = {
-      pedido: pedidoDeConversion(datos, { fotos: numeradas }),
-      fotos: leidas.length
-        ? { archivos: leidas.map(f => f.archivo), conLinks: pedidoDeConversion(datos, { fotos: numeradas, links: true }) }
-        : null
-    };
-    const r = await mandarAlAgente(envio);
+    const { envio, r } = guardada.despues;
     if (r === 'copiado') avisoAlLlegar = PEDIDO_COPIADO;
     if (r === 'no-salio') pedidoAlLlegar = envio;
     // La receta ya está guardada: el editor se cierra y la app queda en ella,
     // igual que al guardar.
-    await guardada.dibujado;
-    esperarPintadoParaSacarElVelo();
-    salirALaGuardada(id);
+    salirALaGuardada(guardada.id);
   },
   'pegar-receta': async () => {
     if (!enElEditor()) return;
@@ -2242,17 +2139,12 @@ const accionesDelEditor: SeccionDeAcciones = {
     if (destino) nav.ir(destino);
     else nav.volver('#/');
   },
-  guardar: async (boton) => {
-    const guardada = await guardarEditor(boton);
-    if (!guardada) return;
+  guardar: async () => {
     // El orden que se ve: la olla revolviendo, el tilde, y recién después la
-    // pantalla nueva. Por eso se espera a que el tilde esté dibujado antes de
-    // navegar —la pantalla ya no está tapada, así que navegar se puede— y el
-    // velo se saca cuando esa pantalla ya se pintó, con el repintado tapado.
-    await guardada.dibujado;
-    esperarPintadoParaSacarElVelo();
+    // pantalla nueva, con su dibujo tapado por el velo.
+    const guardada = await guardarEditor(async () => undefined);
     // Lo escrito ya está en Drive, así que salir no tiene nada que preguntar.
-    salirALaGuardada(guardada.id);
+    if (guardada) salirALaGuardada(guardada.id);
   },
   // La confirmación toma el lugar del botón, y el botón el de la confirmación:
   // redibujar el editor perdería lo escrito y la foto contra la que se
@@ -2265,7 +2157,7 @@ const accionesDelEditor: SeccionDeAcciones = {
   'borrar-confirmado': async () => {
     const id = idActual();
     try {
-      await escribiendo(store.borrar(id));
+      await velo.escribir(() => store.borrar(id));
       estadoDePantalla.editorAbierto = null;
       // Vuelve hasta salir de la receta, a donde se la eligió —la receta y el
       // editor, o sólo el editor si se abrió desde Borradores—: la receta
@@ -2413,9 +2305,16 @@ const accionesDeCompartir: SeccionDeAcciones = {
 /** Ajustes, la conexión con Google y la carpeta base. */
 const accionesDeAjustes: SeccionDeAcciones = {
   reindexar: async () => {
-    await reconstruir({ enAjustes: true });
+    try {
+      await reconstruir();
+      estadoDePantalla.errorReindexado = false;
+    } catch (err) {
+      console.error(err);
+      estadoDePantalla.errorReindexado = true;
+    }
     return render();
   },
+  'reindexar-al-arrancar': () => terminarArranque(true),
   conectar: () => arrancar({ pidiendoPermiso: true }),
   'cambiar-carpeta': () => { nav.ir('#/carpeta?cambiando=1'); },
   'carpeta-sugerida': (boton) => {
@@ -2435,19 +2334,8 @@ const accionesDeAjustes: SeccionDeAcciones = {
     return render();
   },
   'carpeta-cancelar': () => { estadoDePantalla.selector.confirmando = null; return render(); },
-  // Crear no confirma: el botón ya dice qué carpeta y dónde. Queda como
-  // `confirmando` igual, para que un fallo del setup se pueda reintentar sobre
-  // la carpeta que ya se creó y no cree otra.
-  'carpeta-crear': async () => {
-    try {
-      estadoDePantalla.selector.confirmando = await escribiendo(store.crearCarpeta(NOMBRE_RAIZ, 'root'));
-    } catch (err) {
-      console.error(err);
-      estadoDePantalla.selector.error = 'No se pudo crear la carpeta.';
-      return render();
-    }
-    return usarCarpeta(estadoDePantalla.selector.confirmando);
-  },
+  // Crear no confirma: el botón ya dice qué carpeta y dónde.
+  'carpeta-crear': () => usarCarpeta('crear'),
   'carpeta-confirmar': () => {
     if (!estadoDePantalla.selector.confirmando) return;
     return usarCarpeta(estadoDePantalla.selector.confirmando);
@@ -2516,7 +2404,7 @@ const acciones = registrarAcciones({
 app.addEventListener('click', async (e) => {
   // Con la pantalla tapada no responde nada: el velo ya tapa los controles, y
   // esto cubre lo que llegue igual.
-  if (tapadas) return;
+  if (velo.ocupado()) return;
   // Todo el manejo de clicks es delegación desde #app, así que el destino
   // llega como EventTarget y hay que estrecharlo una sola vez, acá.
   const destino = conClosest(e.target);
@@ -2542,7 +2430,7 @@ app.addEventListener('click', async (e) => {
  * directo, sin volver a pintar la pantalla.
  */
 app.addEventListener('input', (e) => {
-  if (tapadas) return;
+  if (velo.ocupado()) return;
   // En la pantalla de agregar al plan se redibuja sólo el bloque de abajo:
   // repintar la pantalla entera perdería el foco del teclado.
   if (vistaActual?.vista === 'plan-agregar') {
@@ -2651,7 +2539,7 @@ function sobreFilaDeslizable(destino: EventTarget | null): boolean {
 // debajo del contenido un área que no es de `#app`, donde el toque no llegaría
 // a ningún lado.
 document.addEventListener('touchstart', (e) => {
-  if (tapadas) return;
+  if (velo.ocupado()) return;
   deslizando = null;
   visorDesde = null;
   deslizoElVisor = false;
@@ -2667,7 +2555,7 @@ document.addEventListener('touchstart', (e) => {
 }, { passive: true });
 
 document.addEventListener('touchmove', (e) => {
-  if (tapadas) return;
+  if (velo.ocupado()) return;
   const toque = (e as TouchEvent).touches[0];
   if (!deslizando || !toque) return;
   const dx = toque.clientX - deslizando.x;
@@ -2680,7 +2568,7 @@ document.addEventListener('touchmove', (e) => {
 }, { passive: true });
 
 const soltarDeslizamiento = (): void => {
-  if (tapadas || !deslizando) return;
+  if (velo.ocupado() || !deslizando) return;
   const { decidido, p } = deslizando;
   deslizando = null;
   if (decidido !== 'horizontal') return;
@@ -2697,7 +2585,7 @@ document.addEventListener('touchcancel', soltarDeslizamiento);
 // gesto del menú: ahí el deslizamiento arrastra el panel al ritmo del dedo, y
 // acá la foto cambia de una vez, al soltar.
 document.addEventListener('touchend', (e) => {
-  if (tapadas || visorDesde === null || !estadoDePantalla.visor) return;
+  if (velo.ocupado() || visorDesde === null || !estadoDePantalla.visor) return;
   const toque = (e as TouchEvent).changedTouches[0];
   const desde = visorDesde;
   visorDesde = null;
@@ -2710,7 +2598,7 @@ document.addEventListener('touchend', (e) => {
 });
 
 app.addEventListener('keydown', (e) => {
-  if (tapadas) return;
+  if (velo.ocupado()) return;
   const campo = (e.target as HTMLInputElement | null);
   if (!campo?.dataset || !('tagNuevo' in campo.dataset)) return;
   // Seguir escribiendo borra el aviso del intento anterior.
@@ -2729,7 +2617,7 @@ app.addEventListener('keydown', (e) => {
  * un toque, de una tecla o de las manijas de la selección.
  */
 document.addEventListener('selectionchange', () => {
-  if (tapadas) return;
+  if (velo.ocupado()) return;
   acomodarBotonDeFoto();
 });
 
@@ -2739,7 +2627,7 @@ document.addEventListener('selectionchange', () => {
  * `selectionchange`.
  */
 app.addEventListener('focusin', () => {
-  if (tapadas) return;
+  if (velo.ocupado()) return;
   acomodarBotonDeFoto();
 });
 
@@ -2749,7 +2637,7 @@ app.addEventListener('focusin', () => {
  * oyente va en captura porque el `scroll` de un campo no burbujea.
  */
 app.addEventListener('scroll', () => {
-  if (tapadas) return;
+  if (velo.ocupado()) return;
   acomodarBotonDeFoto();
 }, true);
 
@@ -2759,7 +2647,7 @@ app.addEventListener('scroll', () => {
  * de iOS el foco ni siquiera llega al botón—, así que el toque se pierde.
  */
 app.addEventListener('pointerdown', (e) => {
-  if (tapadas) return;
+  if (velo.ocupado()) return;
   if (!conClosest(e.target)?.closest('.poner-foto')) return;
   e.preventDefault();
 });
@@ -2767,7 +2655,7 @@ app.addEventListener('pointerdown', (e) => {
 // Salir del campo con algo escrito lo agrega igual: no se pierde por
 // distraerse y tocar Guardar.
 app.addEventListener('focusout', (e) => {
-  if (tapadas) return;
+  if (velo.ocupado()) return;
   const campo = (e.target as HTMLInputElement | null);
   if (!campo?.dataset || !('tagNuevo' in campo.dataset)) return;
   if (agregarTag(campo.value)) campo.value = '';
@@ -2785,7 +2673,7 @@ app.addEventListener('error', (e) => {
 }, true);
 
 app.addEventListener('change', (e) => {
-  if (tapadas) return;
+  if (velo.ocupado()) return;
   // *Cámara* o *Galería*: el selector del sistema devolvió los archivos.
   const campoFotos = e.target as HTMLInputElement | null;
   if (campoFotos?.dataset && 'fotos' in campoFotos.dataset) {
@@ -2801,7 +2689,7 @@ app.addEventListener('change', (e) => {
     if (!archivo) return;
     void (async () => {
       try {
-        const blob = await escribiendo(achicarFoto(archivo));
+        const blob = await velo.esperar(() => achicarFoto(archivo));
         estadoDePantalla.fotoPropia = { blob, url: imagenes.urlDeBlob(blob) };
         // Queda elegida como cualquier otra: el campo oculto la nombra, y de
         // ahí salen la muestra de arriba y «cambios sin guardar».

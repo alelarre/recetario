@@ -62,13 +62,15 @@ describe('main.ts: la vista de una receta', () => {
     const hashListeners: Record<string, () => void> = {};
     const clickListeners: ((e: unknown) => unknown)[] = [];
     const app = {
-      innerHTML: '', insertAdjacentHTML: () => {},
+      innerHTML: '', insertAdjacentHTML: () => {}, setAttribute: () => {}, removeAttribute: () => {},
       addEventListener: (ev: string, fn: (e: unknown) => unknown) => {
         if (ev === 'click') clickListeners.push(fn);
       }
     };
     global.document = comoGlobal<Document>({
-      querySelector: () => app, querySelectorAll: () => [], addEventListener: () => {}
+      // Sin el velo: acá sólo importa qué receta se dibuja.
+      querySelector: (sel: string) => (sel === '#velo-escritura' ? null : app),
+      querySelectorAll: () => [], addEventListener: () => {}
     });
     global.window = comoGlobal<Window & typeof globalThis>({
       google: {}, addEventListener: (ev: string, fn: () => void) => { hashListeners[ev] = fn; }

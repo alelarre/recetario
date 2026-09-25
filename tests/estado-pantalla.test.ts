@@ -21,6 +21,7 @@ describe('estadoNuevo', () => {
       pdfListo: null,
       marcandoFavorito: false,
       errorFavorito: '',
+      errorReindexado: false,
       avisoDeLlegada: '',
       pedidoPendiente: null
     });

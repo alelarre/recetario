@@ -72,6 +72,8 @@ export interface EstadoDePantalla {
   marcandoFavorito: boolean;
   /** Lo último que falló al marcar favorito. Lo dibuja la receta, arriba de la ficha. */
   errorFavorito: string;
+  /** El reindexado lanzado desde Ajustes falló: Ajustes lo avisa, con Reintentar. */
+  errorReindexado: boolean;
   /**
    * El aviso que la pantalla trajo al llegar: cómo terminó el pedido al
    * agente se lee en la receta, porque el editor desde el que se mandó ya se
@@ -104,6 +106,7 @@ export const estadoNuevo = (): EstadoDePantalla => ({
   pdfListo: null,
   marcandoFavorito: false,
   errorFavorito: '',
+  errorReindexado: false,
   avisoDeLlegada: '',
   pedidoPendiente: null
 });

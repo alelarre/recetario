@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { renderAjustes, cuando } from '../src/ui/ajustes.js';
 import type { InformeArranque } from '../src/store.js';
 
-const base = { cuenta: 'a@b.c', ultimaReindexado: '', ignorados: [] as string[], reindexando: null };
+const base = { cuenta: 'a@b.c', ultimaReindexado: '', ignorados: [] as string[] };
 
 describe('Ajustes', () => {
   it('la ficha Recetario dice qué carpeta se usa, cuántas categorías hay, y ofrece cambiar y gestionar', () => {
@@ -77,24 +77,16 @@ describe('Ajustes', () => {
     expect(html).toContain('suelta.md');
   });
 
-  // Una sola barra de punta a punta, igual que en el primer arranque.
-  it('recién arrancando la barra está en cero, y no hay spinner', () => {
-    const html = renderAjustes({ ...base, reindexando: 0 });
-    expect(html).toContain('Reindexando');
-    expect(html).toContain('class="barra"');
-    expect(html).not.toContain('class="spin"');
+  it('si el último reindexado falló, el aviso con Reintentar toma el lugar del botón', () => {
+    const html = renderAjustes({ ...base, errorReindexado: true });
+    expect(html).toContain('No se pudo reindexar.');
+    expect(html).toContain('Reintentar');
+    expect(html.match(/data-accion="reindexar"/g)).toHaveLength(1);
+    expect(html).not.toContain('>Reindexar</button>');
   });
 
-  it('reindexando hay barra con el porcentaje, y no hay cancelar', () => {
-    const html = renderAjustes({ ...base, reindexando: 0.2 });
-    expect(html).toContain('20%');
-    expect(html).toContain('width:20%');
-    expect(html).not.toMatch(/cancelar/i);
-  });
-
-  it('mientras reindexa no se ofrece reindexar de nuevo', () => {
-    expect(renderAjustes({ ...base, reindexando: 0.5 }))
-      .not.toContain('data-accion="reindexar"');
+  it('el progreso no se dibuja en Ajustes: va en el velo', () => {
+    expect(renderAjustes(base)).not.toContain('class="barra"');
   });
 });
 
@@ -164,11 +156,6 @@ describe('Ajustes: borrar los datos locales', () => {
     expect(html).toContain('<h2>Archivos locales</h2>');
     expect(html).toContain('data-accion="borrar-datos-locales"');
     expect(html).toMatch(/se baja todo de Drive/);
-  });
-
-  it('mientras reindexa no se ofrece', () => {
-    expect(renderAjustes({ ...base, reindexando: 0.5 }))
-      .not.toContain('data-accion="borrar-datos-locales"');
   });
 });
 

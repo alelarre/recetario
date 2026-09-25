@@ -3,9 +3,9 @@
  * interrumpen. Está a tres toques a propósito: lo de acá es raro y caro.
  */
 import { escapar } from './markdown.js';
-import { encabezado, barra, porCiento, conLateral, izquierdaDelEncabezado } from './componentes.js';
+import { encabezado, aviso, conLateral, izquierdaDelEncabezado } from './componentes.js';
 import type { MenuDePantalla } from './componentes.js';
-import type { Progreso, IndiceDuplicado, InformeArranque } from '../store.js';
+import type { IndiceDuplicado, InformeArranque } from '../store.js';
 
 const DIA = 86400000;
 
@@ -39,7 +39,11 @@ export interface OpcionesAjustes {
   indiceDuplicado?: IndiceDuplicado | null;
   /** Lo mismo con `_plan.md`, que tampoco está en el índice y se busca por nombre. */
   planDuplicado?: IndiceDuplicado | null;
-  reindexando: Progreso | null;
+  /**
+   * El último reindexado falló. El progreso no se dibuja acá: va en el velo,
+   * que tapa la pantalla mientras dura.
+   */
+  errorReindexado?: boolean;
   /** Lo que verificó el arranque de esta sesión. */
   informe?: InformeArranque | null;
   /** Cuántas recetas tiene el índice ahora, para el registro de actividad. */
@@ -53,46 +57,32 @@ export interface OpcionesAjustes {
 }
 
 export function renderAjustes(
-  { cuenta, ultimaReindexado, ignorados, sinBorrador = [], indiceDuplicado, planDuplicado, reindexando, menu, informe, recetas = 0, categorias = 0, carpeta = '' }: OpcionesAjustes
+  { cuenta, ultimaReindexado, ignorados, sinBorrador = [], indiceDuplicado, planDuplicado, errorReindexado = false, menu, informe, recetas = 0, categorias = 0, carpeta = '' }: OpcionesAjustes
 ): string {
-  // El progreso es un número de 0 a 1: recién arrancado vale 0, que no es «no
-  // está reindexando».
-  const enCurso = reindexando !== null && reindexando !== undefined;
-
   const seccionCuenta = '<div class="ficha"><h2>Cuenta</h2>' +
     `<div class="fila-a"><span class="t">${escapar(cuenta || 'Sin cuenta conectada')}</span>` +
     '<button class="btn sec compacto" data-accion="salir">Salir</button></div>' +
     '<p class="aviso-mudo" style="margin:var(--e-2) 0 0">Salir no borra nada de Drive.</p>' +
   '</div>';
 
-  // La carpeta y sus categorías, juntas y fuera de Cuenta. Mientras reindexa no
-  // se ofrece nada, igual que Índice.
+  // La carpeta y sus categorías, juntas y fuera de Cuenta.
   const seccionRecetario = '<div class="ficha"><h2>Recetario</h2>' +
     (carpeta
       ? `<div class="fila-a"><span class="t">Carpeta: ${escapar(carpeta)}</span>` +
-        (enCurso ? '' : '<button class="btn sec compacto" data-accion="cambiar-carpeta">Cambiar carpeta</button>') + '</div>'
+        '<button class="btn sec compacto" data-accion="cambiar-carpeta">Cambiar carpeta</button></div>'
       : '') +
     `<div class="fila-a" style="margin-top:var(--e-3)"><span class="t">${categorias} ${categorias === 1 ? 'categoría' : 'categorías'}</span>` +
-      (enCurso ? '' : '<a class="btn sec compacto" href="#/categorias">Categorías ›</a>') + '</div>' +
+      '<a class="btn sec compacto" href="#/categorias">Categorías ›</a></div>' +
   '</div>';
 
-  // Una sola barra de punta a punta y nunca un spinner: leer los `.md` es una
-  // etapa entre otras, y las de antes también tardan. No hay cancelar,
-  // porque cortar a mitad deja el índice en el estado que el reindexado existe
-  // para reparar (C05.5.2).
-  const parte = reindexando ?? 0;
-  const avance =
-    `<p style="margin:0 0 var(--e-3);font-variant-numeric:tabular-nums">Reindexando: ${porCiento(parte)}%.</p>` +
-    barra(parte);
-
-  const seccionIndice = enCurso
-    ? '<div class="ficha"><h2>Índice</h2>' + avance +
-      '<p class="aviso-mudo" style="margin:var(--e-3) 0 0">No se puede guardar ni borrar recetas mientras tanto.</p>' +
-    '</div>'
-    : '<div class="ficha"><h2>Índice</h2>' +
-      `<p class="aviso-mudo" style="margin:0 0 var(--e-3)">Último reindexado: ${escapar(cuando(ultimaReindexado) || 'nunca')}</p>` +
-      '<button class="btn sec" style="width:100%" data-accion="reindexar">Reindexar</button>' +
-    '</div>';
+  // Si el último falló, el aviso toma el lugar del botón y Reintentar hace lo
+  // mismo que él.
+  const seccionIndice = '<div class="ficha"><h2>Índice</h2>' +
+    `<p class="aviso-mudo" style="margin:0 0 var(--e-3)">Último reindexado: ${escapar(cuando(ultimaReindexado) || 'nunca')}</p>` +
+    (errorReindexado
+      ? aviso({ texto: 'No se pudo reindexar.', accion: { etiqueta: 'Reintentar', accion: 'reindexar' } })
+      : '<button class="btn sec" style="width:100%" data-accion="reindexar">Reindexar</button>') +
+  '</div>';
 
   // El tono de los avisos es el hecho y el número (brand-identity §3.2).
   const duplicado = indiceDuplicado
@@ -123,7 +113,7 @@ export function renderAjustes(
       encabezado({ titulo: 'Ajustes', grande: true, ...izquierdaDelEncabezado(menu) }) +
       // Lo de la cuenta y el índice primero, lo raro al final.
       '<div class="cuerpo">' + seccionCuenta + seccionRecetario + seccionIndice +
-        (enCurso ? '' : FICHA_DATOS_LOCALES) +
+        FICHA_DATOS_LOCALES +
         `<div class="ficha"><h2>Avisos</h2>${lista}</div>` +
         (informe ? fichaAlAbrir(informe, recetas, categorias) : '') +
       '</div>');
@@ -131,8 +121,7 @@ export function renderAjustes(
 
 /**
  * Borrar lo guardado en el navegador, sin salir de la cuenta: la salida para
- * una copia local corrupta o vieja. Mientras reindexa no se ofrece, igual que
- * Reindexar.
+ * una copia local corrupta o vieja.
  */
 const FICHA_DATOS_LOCALES = '<div class="ficha"><h2>Archivos locales</h2>' +
   '<p class="aviso-mudo" style="margin:0 0 var(--e-3)">La copia del índice se guarda acá para abrir más rápido. ' +

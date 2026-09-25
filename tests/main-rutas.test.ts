@@ -261,7 +261,7 @@ vi.mock('../src/indice-local.js', () => ({
 }));
 
 /**
- * Los dos tiempos del velo, como los tiene `main.ts`: lo que dura el cierre
+ * Los dos tiempos del velo, como los tiene `velo.ts`: lo que dura el cierre
  * con el tilde y lo que se espera después, por si nadie dibuja la pantalla de
  * destino. El reloj de estos tests es falso —esperarlos de verdad, en cada
  * test que guarda una receta, se lleva la mitad de la suite—, así que se los
@@ -411,26 +411,36 @@ describe('main.ts: las rutas', () => {
       },
       classList: {
         add: (c: string) => { clasesVelo.add(c); },
-        remove: (c: string) => { clasesVelo.delete(c); },
+        remove: (...cs: string[]) => { for (const c of cs) clasesVelo.delete(c); },
+        toggle: (c: string, si: boolean) => { if (si) clasesVelo.add(c); else clasesVelo.delete(c); },
         contains: (c: string) => clasesVelo.has(c)
+      },
+      /** La tarjeta del progreso: el texto y la barra. */
+      progreso: { texto: { textContent: '' }, barra: { style: { width: '' } } },
+      querySelector(sel: string) {
+        if (sel === '[data-progreso-texto]') return this.progreso.texto;
+        if (sel === '[data-progreso-barra]') return this.progreso.barra;
+        return null;
       }
     };
     /**
-     * Si la pantalla está tapada: el velo puesto y todavía tapando. Mientras
-     * dibuja el cierre con el tilde sigue en pantalla, pero ya no tapa.
+     * Si el velo está puesto con la olla: una operación en curso. El tilde del
+     * cierre no cuenta, aunque siga tapando hasta que se pinta el destino.
      */
     const tapado = () => !velo.hidden && !clasesVelo.has('exito');
     /**
      * Cada vez que se pintó `#app`, con la pantalla tapada o no en ese momento:
      * es la forma de ver el orden entre tapar la pantalla y redibujarla.
      */
-    const pinturas: { html: string; velo: boolean }[] = [];
+    const pinturas: { html: string; velo: boolean; puesto: boolean }[] = [];
     let htmlApp = '';
     const app = {
       get innerHTML() { return htmlApp; },
       set innerHTML(html: string) {
         htmlApp = html;
-        pinturas.push({ html, velo: tapado() });
+        // `puesto`: el velo estaba en pantalla, con la olla o con el tilde, y
+        // el dibujo quedó abajo, sin verse.
+        pinturas.push({ html, velo: tapado(), puesto: !velo.hidden });
         clasesPanel.clear();
         clasesVeloLat.clear();
         if (html.includes('class="lat abierto"')) clasesPanel.add('abierto');
@@ -1564,25 +1574,142 @@ describe('main.ts: las rutas', () => {
     }
   });
 
-  it('mientras reindexa, Ajustes se dibuja con los mismos datos que al entrar', async () => {
-    const { app, abrir, tocar } = await montar();
-    let aMitad = '';
-    const conReconstruir = storeFake as typeof storeFake & {
-      reconstruir?: (alProgresar: (p: number) => void) => Promise<{ ignorados: string[]; sinBorrador: string[] }>;
-    };
-    conReconstruir.reconstruir = async alProgresar => {
-      alProgresar(0.5);
-      aMitad = app.innerHTML;
-      return { ignorados: [], sinBorrador: [] };
-    };
-    try {
-      await abrir('#/ajustes');
-      await tocar('reindexar');
-      expect(aMitad).toContain('Reindexando: 50%.');
-      expect(aMitad).toContain('Carpeta: Recetario');
-    } finally {
-      delete conReconstruir.reconstruir;
+  describe('el reindexado y la carpeta base, con el velo del progreso', () => {
+    type Reconstruir = (alProgresar: (p: number) => void) => Promise<{ ignorados: string[]; sinBorrador: string[] }>;
+    const conReconstruir = storeFake as typeof storeFake & { reconstruir?: Reconstruir };
+    afterEach(() => { delete conReconstruir.reconstruir; });
+
+    /** Un reindexado que avanza hasta la mitad y queda esperando a que el test lo suelte o lo haga fallar. */
+    function reindexadoPendiente() {
+      let soltar!: () => void;
+      let fallar!: () => void;
+      conReconstruir.reconstruir = alProgresar => new Promise((ok, mal) => {
+        alProgresar(0.5);
+        soltar = () => ok({ ignorados: [], sinBorrador: [] });
+        fallar = () => mal(new Error('sin red'));
+      });
+      return { soltar: () => soltar(), fallar: () => fallar() };
     }
+
+    it('Reindexar dibuja la tarjeta del velo con el texto y la barra; la pantalla de atrás no se pinta', async () => {
+      const { app, abrir, tocarSinCerrar, velo, pinturas } = await montar();
+      await abrir('#/ajustes');
+      const pendiente = reindexadoPendiente();
+      const antes = pinturas.length;
+
+      const reindexando = tocarSinCerrar('reindexar');
+      await esperar();
+      expect(velo.hidden).toBe(false);
+      expect(velo.classList.contains('progreso')).toBe(true);
+      expect(velo.progreso.texto.textContent).toBe('Reindexando…');
+      expect(velo.progreso.barra.style.width).toBe('50%');
+      expect(pinturas).toHaveLength(antes);
+
+      pendiente.soltar();
+      await reindexando;
+      await esperar();
+      expect(velo.hidden).toBe(true);
+      expect(velo.classList.contains('progreso')).toBe(false);
+      expect(app.innerHTML).toContain('data-accion="reindexar"');
+    });
+
+    it('mientras reindexa, un cambio de hash se deshace y los toques no hacen nada', async () => {
+      const { app, abrir, tocarSinCerrar, empujados } = await montar();
+      await abrir('#/ajustes');
+      const pendiente = reindexadoPendiente();
+      const reindexando = tocarSinCerrar('reindexar');
+      await esperar();
+
+      const pantalla = app.innerHTML;
+      await abrir('#/plan');
+      expect(global.location.hash).toBe('#/ajustes');
+      expect(app.innerHTML).toBe(pantalla);
+      const empujadosAntes = empujados.length;
+      await tocarSinCerrar('cambiar-carpeta');
+      await esperar();
+      expect(empujados).toHaveLength(empujadosAntes);
+
+      pendiente.soltar();
+      await reindexando;
+    });
+
+    it('si falla, el velo se va y Ajustes avisa con Reintentar', async () => {
+      const { app, abrir, tocarSinCerrar, velo } = await montar();
+      await abrir('#/ajustes');
+      const pendiente = reindexadoPendiente();
+      const reindexando = tocarSinCerrar('reindexar');
+      await esperar();
+
+      pendiente.fallar();
+      await reindexando;
+      await esperar();
+      expect(velo.hidden).toBe(true);
+      expect(app.innerHTML).toContain('No se pudo reindexar.');
+      expect(app.innerHTML).toContain('Reintentar');
+
+      // Reintentar vuelve a reindexar, y al salir bien el aviso se va.
+      conReconstruir.reconstruir = async () => ({ ignorados: [], sinBorrador: [] });
+      await tocarSinCerrar('reindexar');
+      await esperar();
+      expect(app.innerHTML).not.toContain('No se pudo reindexar.');
+    });
+
+    it('al arrancar, reindexa con la tarjeta del velo y no con una pantalla propia', async () => {
+      estado.reconstruirAlArrancar = true;
+      let aMitad: { progreso: boolean; texto: string } | null = null;
+      conReconstruir.reconstruir = async alProgresar => {
+        alProgresar(0.5);
+        // El velo del documento que armó `montar`, a mitad del reindexado.
+        const velo = global.document.querySelector('#velo-escritura') as unknown as
+          { classList: { contains: (c: string) => boolean }; progreso: { texto: { textContent: string } } };
+        aMitad = { progreso: velo.classList.contains('progreso'), texto: velo.progreso.texto.textContent };
+        return { ignorados: [], sinBorrador: [] };
+      };
+      const { pinturas, velo, app } = await montar({ hash: '#/' });
+      expect(aMitad).toEqual({ progreso: true, texto: 'Reindexando…' });
+      expect(pinturas.some(p => p.html.includes('Creando el índice'))).toBe(false);
+      expect(app.innerHTML).toContain('class="grilla"');
+      expect(velo.hidden).toBe(true);
+    });
+
+    it('al arrancar, si el reindexado falla, el aviso con Reintentar vuelve a reindexar', async () => {
+      estado.reconstruirAlArrancar = true;
+      conReconstruir.reconstruir = async () => { throw new Error('sin red'); };
+      const { app, tocar, velo } = await montar({ hash: '#/' });
+      expect(velo.hidden).toBe(true);
+      expect(app.innerHTML).toContain('No se pudo reindexar.');
+      expect(app.innerHTML).toContain('data-accion="reindexar-al-arrancar"');
+
+      conReconstruir.reconstruir = async () => ({ ignorados: [], sinBorrador: [] });
+      await tocar('reindexar-al-arrancar');
+      expect(app.innerHTML).toContain('class="grilla"');
+    });
+
+    it('preparar la carpeta usa la tarjeta del velo; si falla, el aviso con Reintentar', async () => {
+      estado.eligiendo = [{ id: 'r1', name: 'Recetario' }];
+      const original = storeFake.prepararCarpeta;
+      let aMitad: { progreso: boolean; texto: string; barra: string } | null = null;
+      try {
+        const { app, tocar, velo, recargas } = await montar();
+        storeFake.prepararCarpeta = async (_c: { id: string }, alProgresar?: (p: number) => void) => {
+          alProgresar?.(0.25);
+          aMitad = {
+            progreso: velo.classList.contains('progreso'), texto: velo.progreso.texto.textContent,
+            barra: velo.progreso.barra.style.width
+          };
+          throw new Error('sin red');
+        };
+        await tocar('carpeta-sugerida', { id: 'r1', nombre: 'Recetario' });
+        await tocar('carpeta-confirmar');
+        expect(aMitad).toEqual({ progreso: true, texto: 'Preparando la carpeta…', barra: '25%' });
+        expect(velo.hidden).toBe(true);
+        expect(app.innerHTML).toContain('No se pudo preparar la carpeta.');
+        expect(app.innerHTML).toContain('data-accion="reintentar"');
+        expect(recargas).toHaveLength(0);
+      } finally {
+        storeFake.prepararCarpeta = original;
+      }
+    });
   });
 
   describe('la gestión de categorías', () => {
@@ -1936,6 +2063,16 @@ describe('main.ts: las rutas', () => {
       await abrir('#/r/f1');
       expect(estado.lecturas).toBe(2);
       expect(app.innerHTML).toContain('Milanesas a caballo');
+    });
+
+    it('guardar una receta nueva la deja leída: la receta creada se dibuja sin volver a leer', async () => {
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Pan casero', carpeta: 'c1' };
+      await tocar('guardar');
+      expect(global.location.hash).toBe('#/r/nuevo-1');
+      expect(estado.lecturas).toBe(0);
+      expect(app.innerHTML).toContain('Pan casero');
     });
 
     it('si la lectura falla, reintentar vuelve a pedirla', async () => {
@@ -2397,11 +2534,11 @@ describe('main.ts: las rutas', () => {
       await esperar();
 
       expect(estado.opcionesGuardar).toHaveLength(1);
-      // Primero el tilde: el velo sigue puesto, la pantalla ya no está ocupada
+      // Primero el tilde: el velo sigue puesto, la pantalla sigue ocupada
       // y **todavía no se navegó**, para que el repintado no se vea en el medio.
       expect(velo.hidden).toBe(false);
       expect(velo.classList.contains('exito')).toBe(true);
-      expect(atributosApp['aria-busy']).toBeUndefined();
+      expect(atributosApp['aria-busy']).toBe('true');
       expect(vueltasAtras).toHaveLength(0);
 
       // La vuelta cambia la URL, y el `hashchange` se retiene para mirar el
@@ -2411,9 +2548,10 @@ describe('main.ts: las rutas', () => {
       await guardando;
 
       // Dibujado el tilde, recién ahí se cierra el editor, y con la pantalla
-      // sin tapar: la navegación no la frena nadie.
+      // libre: la navegación no la frena nadie.
       expect(vueltasAtras).toHaveLength(1);
       expect(tapadoAlVolver).toEqual([false]);
+      expect(atributosApp['aria-busy']).toBeUndefined();
       // El velo espera a que la pantalla de destino se pinte.
       expect(velo.hidden).toBe(false);
       await soltarAvisos();
@@ -2439,8 +2577,8 @@ describe('main.ts: las rutas', () => {
       expect(velo.classList.contains('exito')).toBe(false);
     });
 
-    it('con el cierre a medio dibujar, un cambio de hash dibuja igual', async () => {
-      const { abrir, tocarSinCerrar, correrElReloj, app, velo, empujados } = await montar();
+    it('mientras se dibuja el tilde, un cambio de hash vuelve a la pantalla que escribió', async () => {
+      const { abrir, tocarSinCerrar, correrElReloj, app, velo, reemplazos } = await montar();
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
 
@@ -2448,56 +2586,146 @@ describe('main.ts: las rutas', () => {
       await esperar();
       expect(velo.classList.contains('exito')).toBe(true);
 
-      // Con la pantalla tapada, un cambio de hash vuelve a la que escribía; acá
-      // no: la receta se dibuja, aunque el tilde todavía se esté dibujando.
-      const antes = empujados.length;
+      // El velo sigue tapando: un link no dibuja otra pantalla.
+      const antes = app.innerHTML;
       await abrir('#/r/f1');
-      expect(empujados).toHaveLength(antes);
-      expect(global.location.hash).toBe('#/r/f1');
-      expect(app.innerHTML).toContain('Milanesas');
+      expect(global.location.hash).toBe('#/nueva');
+      expect(app.innerHTML).toBe(antes);
+
+      // Terminado el tilde, la receta nueva toma el lugar del editor.
       await correrElReloj();
       await guardando;
+      await esperar();
+      expect(reemplazos.at(-1)).toBe('#/r/nuevo-1');
     });
 
-    it('una escritura nueva durante el cierre lo corta y vuelve a tapar', async () => {
-      const original = storeFake.plan;
-      try {
-        const { promesa, resolver } = pendiente<Plan>();
-        storeFake.plan = () => { estado.lecturasPlan++; return promesa; };
-        const { abrir, tocarSinCerrar, correrElReloj, velo, atributosApp } = await montar();
+    /** Una escritura de R8: cómo llegar a su pantalla, el toque, y adónde queda la app. */
+    type Escritura = {
+      nombre: string;
+      preparar: (abrir: (hash: string) => Promise<void>) => Promise<void>;
+      accion: string;
+      datos?: Record<string, string>;
+      destino: string;
+    };
+    const unaComida = (): Plan => ({ comidas: [{ dia: 0, momento: 'noche', id: 'f1', titulo: 'Milanesas' }] });
+    const ESCRITURAS: Escritura[] = [
+      { nombre: 'guardar una receta', accion: 'guardar', destino: '#/r/f1', preparar: async abrir => {
+        await abrir('#/r/f1'); await abrir('#/r/f1/editar');
+        estado.formulario = { titulo: 'Milanesas', carpeta: 'c1' };
+      } },
+      { nombre: 'crear una receta', accion: 'guardar', destino: '#/r/nuevo-1', preparar: async abrir => {
         await abrir('#/nueva');
         estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+      } },
+      { nombre: 'borrar una receta', accion: 'borrar-confirmado', destino: '#/c/Carnes', preparar: async abrir => {
+        await abrir('#/c/Carnes'); await abrir('#/r/f1'); await abrir('#/r/f1/editar');
+      } },
+      { nombre: 'convertir con el agente', accion: 'convertir-con-agente', destino: '#/r/nuevo-1', preparar: async abrir => {
+        await abrir('#/nueva');
+        estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      } },
+      { nombre: 'crear una categoría', accion: 'guardar-categoria', destino: '#/categorias', preparar: async abrir => {
+        await abrir('#/categorias'); await abrir('#/categorias/nueva');
+        estado.formulario = { nombre: 'Fiambres', color: 'carnes', foto: '' };
+      } },
+      { nombre: 'editar una categoría', accion: 'guardar-categoria', destino: '#/categorias', preparar: async abrir => {
+        await abrir('#/categorias'); await abrir('#/categorias/c1');
+        estado.formulario = { nombre: 'Carnes rojas', color: 'carnes', foto: '' };
+      } },
+      { nombre: 'borrar una categoría', accion: 'borrar-categoria-confirmado', destino: '#/categorias', preparar: async abrir => {
+        await abrir('#/categorias'); await abrir('#/categorias/c1');
+      } },
+      { nombre: 'agregar al plan', accion: 'elegir-para-el-plan', datos: { id: 'f1' }, destino: '#/plan', preparar: async abrir => {
+        await abrir('#/plan'); await abrir('#/plan/agregar?dia=1&momento=noche');
+      } },
+      { nombre: 'sacar del plan', accion: 'sacar-del-plan', datos: { i: '0' }, destino: '#/plan', preparar: async abrir => {
+        estado.plan = unaComida();
+        await abrir('#/plan');
+      } },
+      { nombre: 'reiniciar el plan', accion: 'reiniciar-plan-confirmado', destino: '#/plan', preparar: async abrir => {
+        estado.plan = unaComida();
+        await abrir('#/plan');
+      } }
+    ];
 
-        const guardando = tocarSinCerrar('guardar');
-        await esperar();
-        expect(velo.classList.contains('exito')).toBe(true);
+    it.each(ESCRITURAS)('$nombre: cierra con el tilde, recién después navega, y el redibujo no se ve', async e => {
+      const { abrir, tocarSinCerrar, correrElCierre, correrElReloj, velo, pinturas, idasYVueltasDelVelo } = await montar();
+      await e.preparar(abrir);
+      const desde = global.location.hash;
+      const pintadas = pinturas.length;
+      idasYVueltasDelVelo.length = 0;
 
-        // Sin esperar a que el tilde termine, otra escritura: el velo vuelve a
-        // tapar, sin el dibujo del cierre y con la pantalla otra vez ocupada.
-        await abrir('#/plan/agregar?dia=1&momento=noche');
-        const eligiendo = tocarSinCerrar('elegir-para-el-plan', { id: 'f1' });
-        await esperar();
+      const escribiendo = tocarSinCerrar(e.accion, e.datos);
+      await esperar();
+      // El tilde, con la app todavía en la pantalla que escribió y sin redibujar nada.
+      expect(velo.hidden).toBe(false);
+      expect(velo.classList.contains('exito')).toBe(true);
+      expect(global.location.hash).toBe(desde);
+      expect(pinturas).toHaveLength(pintadas);
 
-        expect(velo.hidden).toBe(false);
-        expect(velo.classList.contains('exito')).toBe(false);
-        expect(atributosApp['aria-busy']).toBe('true');
+      await correrElCierre();
+      await esperar();
+      expect(global.location.hash).toBe(e.destino);
+      // Lo que se dibujó después del tilde quedó abajo del velo, y recién ahí se fue.
+      const despues = pinturas.slice(pintadas);
+      expect(despues.length).toBeGreaterThan(0);
+      expect(despues.every(p => p.puesto)).toBe(true);
+      expect(velo.hidden).toBe(true);
+      // Puesto una vez y sacado una vez.
+      expect(idasYVueltasDelVelo).toEqual([false, true]);
+      await correrElReloj();
+      await escribiendo;
+    });
 
-        // Y el temporizador del cierre anterior quedó cancelado: pasado el rato
-        // que habría durado, el velo de esta escritura sigue tapando.
-        await vi.advanceTimersByTimeAsync(MS_HASTA_EL_FINAL);
-        expect(velo.hidden).toBe(false);
-        expect(velo.classList.contains('exito')).toBe(false);
-
-        resolver({ comidas: [] });
-        await esperar();
-        await correrElReloj();
-        await eligiendo;
-        await guardando;
-
+    it.each([
+      ['la receta', '#/r/f1', 'receta'],
+      ['el editor', '#/r/f1/editar', 'receta'],
+      ['el plan', '#/plan', 'plan']
+    ] as const)('leer %s al dibujar es una espera: se ve pasados 250 ms y no deja salir', async (_, hash, lectura) => {
+      const original = { receta: storeFake.receta, plan: storeFake.plan };
+      let soltar!: () => void;
+      const frenada = new Promise<void>(listo => { soltar = listo; });
+      if (lectura === 'receta') storeFake.receta = async (id: string) => { await frenada; return original.receta(id); };
+      else storeFake.plan = async () => { await frenada; return original.plan(); };
+      try {
+        const { abrir, velo, app } = await montar();
+        await abrir(hash);
         expect(velo.hidden).toBe(true);
+        await vi.advanceTimersByTimeAsync(250);
+        expect(velo.hidden).toBe(false);
+        expect(velo.classList.contains('exito')).toBe(false);
+        // Mientras lee, un link no se va a otra pantalla.
+        await abrir('#/ajustes');
+        expect(global.location.hash).toBe(hash);
+
+        soltar();
+        await esperar();
+        expect(velo.hidden).toBe(true);
+        expect(app.innerHTML).not.toContain('Ajustes</span>');
       } finally {
-        storeFake.plan = original;
+        Object.assign(storeFake, original);
       }
+    });
+
+    it('ningún botón cambia su texto ni se deshabilita mientras guarda: el velo ya lo dice', async () => {
+      const { abrir, tocar } = await montar();
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Pan', carpeta: 'c1' };
+      const atributos = await tocar('guardar');
+      expect(atributos).toEqual({});
+    });
+
+    it('convertir con el agente: el velo cubre bajar las fotos y abrir el agente, y el tilde va al final', async () => {
+      let alMandar: { puesto: boolean; tilde: boolean } | null = null;
+      const { abrir, tocar, velo } = await montar();
+      vi.stubGlobal('navigator', {
+        share: async () => { alMandar = { puesto: !velo.hidden, tilde: velo.classList.contains('exito') }; },
+        canShare: () => true
+      });
+      await abrir('#/nueva');
+      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      await tocar('convertir-con-agente');
+      expect(alMandar).toEqual({ puesto: true, tilde: false });
     });
 
     it('el aviso de un guardado que falló se trae a la vista', async () => {
@@ -2636,14 +2864,15 @@ describe('main.ts: las rutas', () => {
   describe('las fotos en memoria y en el navegador', () => {
     const foto = (texto: string): Blob => new Blob([texto], { type: 'image/jpeg' });
 
-    it('en el editor, tres fotos tampoco hacen parpadear el velo', async () => {
+    it('en el editor, tres fotos son una sola espera: el velo no parpadea', async () => {
       const { abrir, elegirFotos, idasYVueltasDelVelo } = await montar();
       await abrir('#/r/f1/editar');
       idasYVueltasDelVelo.length = 0;
 
       await elegirFotos([foto('a'), foto('bb'), foto('ccc')]);
 
-      expect(idasYVueltasDelVelo).toEqual([false, true]);
+      // Achicarlas acá es inmediato: una espera de menos de 250 ms no llega a verse.
+      expect(idasYVueltasDelVelo).toEqual([]);
     });
 
     it('Borrar datos locales y Salir borran las fotos guardadas en el navegador', async () => {
@@ -2981,7 +3210,8 @@ describe('main.ts: las rutas', () => {
         // otra, que con un plan cargado son catorce viajes en fila.
         expect(pico).toBe(4);
         // Y mientras lee, la pantalla está tapada: es la espera más larga de
-        // la app y antes no daba ninguna señal.
+        // la app. Pasado el plazo de una espera, la olla se ve.
+        await vi.advanceTimersByTimeAsync(250);
         expect(velo.hidden).toBe(false);
 
         for (const listo of soltar) listo();

@@ -46,16 +46,8 @@ export function conmutadorOrden(orden: Orden): string {
   '</div></div>';
 }
 
-/** El spinner del final de la lista y de las esperas. */
+/** El spinner de lo que no bloquea, como el final de la lista: lo que bloquea es el velo. */
 export const SPINNER = '<div class="spin"></div>';
-
-/** Lo hecho, de 0 a 1, como entero de 0 a 100: el texto y el ancho salen de acá. */
-export const porCiento = (parte: number): number =>
-  Math.min(100, Math.max(0, Math.round(parte * 100)));
-
-/** La barra del reindexado, la misma en la conexión y en Ajustes. */
-export const barra = (parte: number): string =>
-  `<div class="barra"><i style="width:${porCiento(parte)}%"></i></div>`;
 
 export interface OpcionesEncabezado {
   titulo: string;

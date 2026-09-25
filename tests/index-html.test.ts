@@ -39,4 +39,11 @@ describe('el velo de escritura en index.html', () => {
     expect(bloque).not.toContain('libro');
     expect(bloque).not.toContain('lapiz');
   });
+
+  it('tiene la tarjeta del progreso: el texto y la barra que mueve velo.ts', () => {
+    const bloque = veloEscritura();
+    expect(bloque).toContain('class="velo-progreso"');
+    expect(bloque).toContain('data-progreso-texto');
+    expect(bloque).toMatch(/<div class="barra"><i data-progreso-barra[^>]*><\/i><\/div>/);
+  });
 });

@@ -60,6 +60,7 @@ interface Operacion {
   reloj: ReturnType<typeof setTimeout> | null;
 }
 
+/** Lo hecho, de 0 a 1, como entero de 0 a 100: el ancho de la barra. */
 const porCiento = (parte: number): number => Math.min(100, Math.max(0, Math.round(parte * 100)));
 
 export function crearVelo(dom: DomDelVelo): Velo {
