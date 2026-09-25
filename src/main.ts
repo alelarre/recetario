@@ -833,8 +833,6 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
     fotosEditor.urls.clear();
     fotosEditor.subidas.clear();
     cocina.reiniciar();
-    // Si la cocina se abrió desde la receta vale sólo mientras se está en ella.
-    if (ruta.vista !== 'cocinar') cocina.olvidarLectura();
     // La pantalla nueva empieza arriba: el hash no cambia el scroll, así que
     // entrar al modo cocina desde el pie de la receta abría los ingredientes
     // ya scrolleados. La llamada es opcional por lo mismo que
@@ -1998,10 +1996,7 @@ const accionesDeLaReceta: SeccionDeAcciones = {
     estadoDePantalla.marcandoFavorito = false;
     return render();
   },
-  cocinar: () => {
-    cocina.entrarDesdeLectura();
-    nav.ir(`#/r/${idActual()}/cocinar`);
-  },
+  cocinar: () => { nav.ir(`#/r/${idActual()}/cocinar`); },
   conmutar: async (boton) => {
     const volverA = cocina.conmutar(boton.dataset['posicion'], window.scrollY);
     if (volverA === null) return;
@@ -2024,7 +2019,9 @@ const accionesDeLaReceta: SeccionDeAcciones = {
   'salir-cocina': () => {
     const entrada = store.entradas().find(e => e.id_archivo === idActual());
     // Sin fila del índice no se sabe de qué categoría es: se va al Recetario.
-    return cocina.salir(nav, entrada?.categoria ? `#/c/${encodeURIComponent(entrada.categoria)}` : '#/');
+    return cocina.salir(
+      nav, `#/r/${encodeURIComponent(idActual())}`, entrada?.categoria ? `#/c/${encodeURIComponent(entrada.categoria)}` : '#/'
+    );
   },
   'mandar-al-agente': async () => {
     // El mismo pedido que no salió, con la activación de este toque.
@@ -2212,11 +2209,11 @@ const accionesDelEditor: SeccionDeAcciones = {
     try {
       await escribiendo(store.borrar(id));
       estadoDePantalla.editorAbierto = null;
-      // Vuelve a la pantalla de antes de abrir la receta, salteando la receta
-      // y el editor: la receta borrada no queda en el historial. El archivo
-      // queda en la papelera de Drive, que es la red de seguridad y es del
-      // usuario.
-      nav.volver('#/', 2);
+      // Vuelve hasta salir de la receta, a donde se la eligió —la receta y el
+      // editor, o sólo el editor si se abrió desde Borradores—: la receta
+      // borrada no queda en el historial. El archivo queda en la papelera de
+      // Drive, que es la red de seguridad y es del usuario.
+      nav.salirDe(`#/r/${encodeURIComponent(id)}`, '#/');
       return;
     } catch (err) {
       console.error(err);

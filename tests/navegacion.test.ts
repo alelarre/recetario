@@ -187,6 +187,69 @@ describe('la navegación', () => {
   });
 });
 
+describe('salirDe: volver hasta salir de una pantalla', () => {
+  it('lleva los hashes de la sesión por profundidad: ir, reemplazar, links y el atrás', async () => {
+    const { nav, location, atras } = montar();
+    nav.ir('#/c/Carnes');
+    location.hash = '#/r/f1';
+    await esperar();
+    nav.reemplazar('#/r/f1/editar');
+    expect(nav.pila()).toEqual(['#/', '#/c/Carnes', '#/r/f1/editar']);
+    atras();
+    await esperar();
+    // El atrás no borra lo de adelante: sigue en el historial.
+    expect(nav.pila()).toEqual(['#/', '#/c/Carnes', '#/r/f1/editar']);
+    nav.ir('#/plan');
+    expect(nav.pila()).toEqual(['#/', '#/c/Carnes', '#/plan']);
+  });
+
+  it('con una entrada de la receta, retrocede una', async () => {
+    const { nav, location, vueltasAtras, saltos } = montar();
+    nav.ir('#/borradores');
+    nav.ir('#/r/f1/editar');
+    await esperar();
+    nav.salirDe('#/r/f1', '#/');
+    await esperar();
+    expect(vueltasAtras).toHaveLength(1);
+    expect(saltos).toEqual([]);
+    expect(location.hash).toBe('#/borradores');
+  });
+
+  it('con dos entradas de la receta, retrocede dos', async () => {
+    const { nav, location, saltos } = montar();
+    nav.ir('#/buscar?q=pan');
+    nav.ir('#/r/f1');
+    nav.ir('#/r/f1/cocinar');
+    await esperar();
+    nav.salirDe('#/r/f1', '#/c/Carnes');
+    await esperar();
+    expect(saltos).toEqual([-2]);
+    expect(location.hash).toBe('#/buscar?q=pan');
+  });
+
+  it('sin ninguna entrada de otra pantalla atrás, reemplaza por el respaldo', async () => {
+    const { nav, location, vueltasAtras, saltos, reemplazos } = montar('#/r/f1');
+    nav.ir('#/r/f1/cocinar');
+    await esperar();
+    nav.salirDe('#/r/f1', '#/c/Carnes');
+    await esperar();
+    expect(vueltasAtras).toEqual([]);
+    expect(saltos).toEqual([]);
+    expect(reemplazos).toEqual(['#/c/Carnes']);
+    expect(location.hash).toBe('#/c/Carnes');
+  });
+
+  it('el prefijo es la ruta entera: otra receta cuyo id empieza igual es otra pantalla', async () => {
+    const { nav, location } = montar();
+    nav.ir('#/r/f10');
+    nav.ir('#/r/f1');
+    await esperar();
+    nav.salirDe('#/r/f1', '#/');
+    await esperar();
+    expect(location.hash).toBe('#/r/f10');
+  });
+});
+
 describe('un solo lugar toca location e history', () => {
   // Salvo la navegación, nadie cambia la URL ni se mueve por el historial.
   // `location.reload` no cuenta: recargar no es navegar.

@@ -101,7 +101,6 @@ export function iniciarInvitado(): void {
     const lectura = `#/ver?r=${leida.carga}`;
 
     if (accion === 'cocinar') {
-      cocina.entrarDesdeLectura();
       nav.ir(`#/ver/cocinar?r=${leida.carga}`);
       return;
     }

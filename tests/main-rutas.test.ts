@@ -1743,10 +1743,11 @@ describe('main.ts: las rutas', () => {
   });
 
   it('salir de la cocina no la deja en el historial', async () => {
-    const { abrir, tocar, reemplazos } = await montar();
-    await abrir('#/r/f1/cocinar');
+    const { abrir, tocar, pila } = await montar();
+    await abrir('#/r/f1');
+    await tocar('cocinar');
     await tocar('salir-cocina');
-    expect(reemplazos).toEqual(['#/c/Carnes']);
+    expect(pila().map(e => e.hash)).toEqual(['']);
   });
 
   it('el modo cocina arranca con el paso 1 como actual', async () => {
@@ -4379,7 +4380,7 @@ describe('main.ts: las rutas', () => {
       expect(reemplazos).toEqual(['#/categorias']);
     });
 
-    it('borrar una receta vuelve dos entradas: ni la receta ni el editor quedan atrás', async () => {
+    it('borrar desde la receta abierta vuelve a la lista: ni la receta ni el editor quedan atrás', async () => {
       const { abrir, tocar, saltos, reemplazos, pila } = await montar();
       await abrir('#/c/Carnes');
       await abrir('#/r/f1');
@@ -4391,11 +4392,23 @@ describe('main.ts: las rutas', () => {
       expect(pila().map(e => e.hash)).toEqual(['', '#/c/Carnes']);
     });
 
-    it('sin dos entradas atrás, borrar una receta va al Recetario', async () => {
-      const { abrir, tocar, saltos, reemplazos } = await montar({ hash: '#/r/f1' });
+    it('borrar una receta cuyo editor se abrió desde Borradores vuelve a Borradores', async () => {
+      const { abrir, tocar, saltos, vueltasAtras, reemplazos } = await montar();
+      await abrir('#/borradores');
+      await abrir('#/r/f1/editar');
+      await tocar('borrar-confirmado');
+      expect(vueltasAtras).toHaveLength(1);
+      expect(saltos).toEqual([]);
+      expect(reemplazos).toEqual([]);
+      expect(global.location.hash).toBe('#/borradores');
+    });
+
+    it('sin nada atrás que no sea la receta, borrarla va al Recetario', async () => {
+      const { abrir, tocar, saltos, vueltasAtras, reemplazos } = await montar({ hash: '#/r/f1' });
       await abrir('#/r/f1/editar');
       await tocar('borrar-confirmado');
       expect(saltos).toEqual([]);
+      expect(vueltasAtras).toEqual([]);
       expect(reemplazos).toEqual(['#/']);
     });
 
@@ -4431,16 +4444,29 @@ describe('main.ts: las rutas', () => {
       expect(global.location.hash).toBe('#/c/Carnes');
     });
 
-    it('Salir de una cocina a la que se llegó por un link pone la categoría en su lugar', async () => {
+    it('Salir de la cocina con la receta abierta desde resultados vuelve a resultados', async () => {
+      const { abrir, tocar, saltos, reemplazos } = await montar();
+      await abrir('#/buscar?q=mila');
+      await abrir('#/r/f1');
+      await tocar('cocinar');
+      await tocar('salir-cocina');
+      expect(saltos).toEqual([-2]);
+      expect(reemplazos).toEqual([]);
+      expect(global.location.hash).toBe('#/buscar?q=mila');
+    });
+
+    it('Salir de una cocina a la que se llegó sin pasar por la receta vuelve a la pantalla de antes', async () => {
       const { abrir, tocar, saltos, vueltasAtras, reemplazos } = await montar();
+      await abrir('#/plan');
       await abrir('#/r/f1/cocinar');
       await tocar('salir-cocina');
       expect(saltos).toEqual([]);
-      expect(vueltasAtras).toEqual([]);
-      expect(reemplazos).toEqual(['#/c/Carnes']);
+      expect(vueltasAtras).toHaveLength(1);
+      expect(reemplazos).toEqual([]);
+      expect(global.location.hash).toBe('#/plan');
     });
 
-    it('sin historial, Salir de la cocina pone la categoría en su lugar', async () => {
+    it('Salir de la cocina abierta por un link directo va a la categoría', async () => {
       const { tocar, reemplazos } = await montar({ hash: '#/r/f1/cocinar' });
       await tocar('salir-cocina');
       expect(reemplazos).toEqual(['#/c/Carnes']);

@@ -38,15 +38,36 @@ const profundidadDe = (state: unknown): number | null => {
   return typeof p === 'number' && Number.isInteger(p) && p >= 0 ? p : null;
 };
 
+/** Si `hash` es la pantalla `prefijo` o una de las suyas: `#/r/f1` abarca `#/r/f1/editar`, no `#/r/f10`. */
+const esDe = (hash: string, prefijo: string): boolean =>
+  hash === prefijo || hash.startsWith(`${prefijo}/`) || hash.startsWith(`${prefijo}?`);
+
 export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
   let profundidad = 0;
   /** Se pidió `deshacer`: el próximo `hashchange` es esa vuelta. */
   let deshaciendo = false;
+  /**
+   * El hash de cada entrada de la sesión, por profundidad. Lo de adelante de
+   * la actual sigue mientras no se agregue otra entrada: el atrás no lo borra.
+   */
+  let hashes: string[] = [];
+
+  /** La entrada actual tiene este hash; `nueva` descarta las de adelante, como el navegador. */
+  const anotar = (hash: string, nueva: boolean): void => {
+    if (nueva) hashes = hashes.slice(0, profundidad);
+    hashes[profundidad] = hash;
+  };
 
   /** Le pone a la entrada actual la profundidad `p`, sin cambiar la URL. */
   const marcar = (p: number): void => {
     profundidad = p;
     history.replaceState({ profundidad: p }, '');
+  };
+
+  /** Retrocede `n` entradas, que tienen que estar. */
+  const retroceder = (n: number): void => {
+    if (n === 1) history.back();
+    else history.go(-n);
   };
 
   const hayAtras = (n = 1): boolean => profundidad >= n;
@@ -55,6 +76,7 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
   function reemplazar(hash: string): void {
     if (hash !== location.hash) location.replace(hash);
     marcar(profundidad);
+    anotar(location.hash, false);
   }
 
   return {
@@ -68,6 +90,8 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
       deshaciendo = false;
       if (url === undefined) history.replaceState({ profundidad: 0 }, '');
       else history.replaceState({ profundidad: 0 }, '', url);
+      hashes = [];
+      anotar(location.hash, true);
     },
 
     /** Agrega una entrada. Ir al hash en el que ya se está no agrega nada. */
@@ -77,6 +101,7 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
       // llega después y ya la encuentra numerada.
       location.hash = hash;
       marcar(profundidad + 1);
+      anotar(location.hash, true);
     },
 
     reemplazar,
@@ -85,9 +110,25 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
     /** Retrocede `n` entradas si las hay; si no, reemplaza la actual por `respaldo`. */
     volver(respaldo: string, n = 1): void {
       if (!hayAtras(n)) { reemplazar(respaldo); return; }
-      if (n === 1) history.back();
-      else history.go(-n);
+      retroceder(n);
     },
+
+    /**
+     * Retrocede hasta la primera entrada que no es de la pantalla `prefijo`
+     * —la receta y su editor, o su cocina—. Si atrás no hay ninguna de otra
+     * pantalla, `respaldo` toma el lugar de la actual.
+     */
+    salirDe(prefijo: string, respaldo: string): void {
+      for (let p = profundidad - 1; p >= 0; p--) {
+        const hash = hashes[p];
+        // Una entrada sin anotar es de otra pantalla: no se sabe que sea de esta.
+        if (hash === undefined || !esDe(hash, prefijo)) { retroceder(profundidad - p); return; }
+      }
+      reemplazar(respaldo);
+    },
+
+    /** Los hashes de la sesión, por profundidad. */
+    pila: (): string[] => [...hashes],
 
     /**
      * Lo primero de cada `hashchange`. La entrada que llega sin `state` la
@@ -99,10 +140,12 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
       if (deshaciendo) {
         deshaciendo = false;
         if (p !== null) profundidad = p;
+        anotar(location.hash, false);
         return 'deshecha';
       }
-      if (p !== null) { profundidad = p; return 'conocida'; }
+      if (p !== null) { profundidad = p; anotar(location.hash, false); return 'conocida'; }
       marcar(profundidad + 1);
+      anotar(location.hash, true);
       return 'nueva';
     },
 
@@ -124,6 +167,7 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
     restaurar(hash: string): void {
       profundidad += 1;
       history.pushState({ profundidad }, '', hash);
+      anotar(hash, true);
     }
   };
 }

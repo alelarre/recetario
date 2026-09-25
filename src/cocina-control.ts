@@ -16,11 +16,6 @@ export function crearControlCocina() {
   let hechos: number[] = [];
   /** El scroll de cada lado del conmutador, para no perderlo al conmutar (C03.2.2). */
   const scroll: Record<PosicionCocina, number> = { ingredientes: 0, pasos: 0 };
-  /**
-   * Si al modo cocina se entró tocando «Cocinar», la lectura está una entrada
-   * atrás en el historial: *Salir* la saltea junto con la cocina.
-   */
-  let desdeLectura = false;
   /** Para que la pantalla no se apague cocinando. */
   let bloqueo: WakeLockSentinel | null = null;
 
@@ -79,8 +74,6 @@ export function crearControlCocina() {
       }
       return true;
     },
-    entrarDesdeLectura(): void { desdeLectura = true; },
-    olvidarLectura(): void { desdeLectura = false; },
     /**
      * El chevron: suelta la pantalla y vuelve a la lectura, `lectura`. Es el
      * mismo en la app y en el invitado: vuelve una entrada, y sin pantalla
@@ -88,20 +81,16 @@ export function crearControlCocina() {
      */
     async volverALectura(nav: Pick<Navegacion, 'volver'>, lectura: string): Promise<void> {
       await soltarPantalla();
-      desdeLectura = false;
       nav.volver(lectura);
     },
     /**
-     * *Salir*: suelta la pantalla y va a `destino`. Abierta desde la lectura,
-     * vuelve dos entradas, salteando la cocina y la lectura; si no, `destino`
-     * toma el lugar de la cocina.
+     * *Salir*: suelta la pantalla y vuelve hasta salir de la receta, `receta`,
+     * a donde se la eligió. Sin nada atrás —un link directo a la cocina—,
+     * `respaldo` toma su lugar.
      */
-    async salir(nav: Pick<Navegacion, 'volver' | 'reemplazar'>, destino: string): Promise<void> {
+    async salir(nav: Pick<Navegacion, 'salirDe'>, receta: string, respaldo: string): Promise<void> {
       await soltarPantalla();
-      const desde = desdeLectura;
-      desdeLectura = false;
-      if (desde) nav.volver(destino, 2);
-      else nav.reemplazar(destino);
+      nav.salirDe(receta, respaldo);
     },
     mantenerPantalla,
     soltarPantalla,

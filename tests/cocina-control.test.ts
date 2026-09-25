@@ -40,35 +40,22 @@ describe('el control del modo cocina', () => {
     return {
       pedidos,
       volver: (respaldo: string, n = 1) => { pedidos.push(`volver ${respaldo} ${n}`); },
-      reemplazar: (hash: string) => { pedidos.push(`reemplazar ${hash}`); }
+      salirDe: (prefijo: string, respaldo: string) => { pedidos.push(`salirDe ${prefijo} ${respaldo}`); }
     };
   };
 
-  it('el chevron vuelve a la lectura, se haya entrado desde ella o no', async () => {
+  it('el chevron vuelve a la lectura', async () => {
     const c = crearControlCocina();
     const nav = navFalsa();
     await c.volverALectura(nav, '#/r/f1');
-    c.entrarDesdeLectura();
-    await c.volverALectura(nav, '#/r/f1');
-    expect(nav.pedidos).toEqual(['volver #/r/f1 1', 'volver #/r/f1 1']);
+    expect(nav.pedidos).toEqual(['volver #/r/f1 1']);
   });
 
-  it('Salir saltea la lectura sólo si se entró desde ella, una vez', async () => {
+  it('Salir vuelve hasta salir de la receta, con la categoría de respaldo', async () => {
     const c = crearControlCocina();
     const nav = navFalsa();
-    await c.salir(nav, '#/c/Carnes');
-    c.entrarDesdeLectura();
-    await c.salir(nav, '#/c/Carnes');
-    await c.salir(nav, '#/c/Carnes');
-    c.entrarDesdeLectura(); c.olvidarLectura();
-    await c.salir(nav, '#/c/Carnes');
-    c.entrarDesdeLectura();
-    await c.volverALectura(nav, '#/r/f1');
-    await c.salir(nav, '#/c/Carnes');
-    expect(nav.pedidos).toEqual([
-      'reemplazar #/c/Carnes', 'volver #/c/Carnes 2', 'reemplazar #/c/Carnes', 'reemplazar #/c/Carnes',
-      'volver #/r/f1 1', 'reemplazar #/c/Carnes'
-    ]);
+    await c.salir(nav, '#/r/f1', '#/c/Carnes');
+    expect(nav.pedidos).toEqual(['salirDe #/r/f1 #/c/Carnes']);
   });
 
   it('la pantalla encendida: pedir, soltar, y volver a pedir si se perdió', async () => {
