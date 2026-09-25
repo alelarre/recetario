@@ -37,7 +37,7 @@ import { API_KEY, NOMBRE_RAIZ } from './config.js';
 import { puedeEmpezar, direccion, progreso, seAbre } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
 import { aviso, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js';
-import { pintar as pintarEnPantalla, conClosest, desplazarCarrusel, movimientoReducido } from './ui/pintar.js';
+import { pintar as pintarEnPantalla, pintarParte, despuesDePintar, conClosest, desplazarCarrusel, movimientoReducido } from './ui/pintar.js';
 import { renderVisor, pasoDelVisor } from './ui/visor.js';
 import {
   linkDeFoto, idDeDrive, resolverReceta, fotosSinUso, siguienteNumero, lineaDelCursor, ponerEn, sacarReferencias
@@ -75,21 +75,22 @@ const sheets = crearSheets(() => auth.token());
 const imagenes = crearImagenes({ leerBlob: id => drive.leerBlob(id) });
 
 /**
- * Dibuja la pantalla y completa las fotos que quedaron pedidas.
- *
- * Nada espera a una imagen para dibujarse: una foto de Drive sale
- * como `<img data-drive>` sin `src` —un recuadro del mismo tamaño— y una foto
- * nueva del editor como `<img data-n>`, y acá se les pone el `src` cuando el
- * blob está. Envuelve a `pintar` en vez de repetirse en cada pantalla: son
- * treinta llamadas y ninguna tiene que acordarse.
+ * Nada espera a una imagen para dibujarse: una foto de Drive sale como
+ * `<img data-drive>` sin `src` —un recuadro del mismo tamaño— y una foto nueva
+ * del editor como `<img data-n>`, y después de cada dibujo se les pone el
+ * `src` cuando el blob está. Va enganchado a `pintar` y a `pintarParte` en vez
+ * de repetirse en cada pantalla: son treinta llamadas y ninguna tiene que
+ * acordarse.
  */
+despuesDePintar(() => { void completarFotos(); });
+
+/** Dibuja la pantalla entera. */
 const pintar = (html: string): void => {
   pintarEnPantalla(html);
   // El velo del cierre espera a que la pantalla de destino esté dibujada: si
   // se fuera antes, se vería el repintado por debajo (§6.17b).
   if (veloEsperaPintado) sacarVeloDelCierre();
   mirarElAviso();
-  void completarFotos();
 };
 
 /**
@@ -133,6 +134,8 @@ async function completarFotos(): Promise<void> {
  * categoría.
  */
 function sacarFoto(img: Element, recuadro: string): void {
+  // Sin `pintarParte`: esto es parte de completar las fotos, y el recuadro no
+  // deja ninguna pedida.
   if (img.closest('.carrusel-foto, .galeria-item, .miniatura')) img.outerHTML = recuadro;
   else img.remove();
 }
@@ -774,9 +777,8 @@ async function render(ruta: Ruta = parsearHash(location.hash)): Promise<void> {
     // Si se llegó desde un destino del menú, el menú se cierra: la pregunta
     // queda en el formulario, debajo del velo.
     ponerMenu(false);
-    if (!document.querySelector('[data-salida]')) {
-      document.querySelector('[data-formulario]')?.insertAdjacentHTML('afterbegin', confirmacionSalida);
-    }
+    const formulario = document.querySelector('[data-formulario]');
+    if (formulario && !document.querySelector('[data-salida]')) pintarParte(formulario, confirmacionSalida, 'al-principio');
     window.scrollTo?.(0, 0);
     return;
   }
@@ -1191,8 +1193,7 @@ function escribirDeposito(fotos: FotoDeReceta[]): void {
  */
 function redibujarFilaDeFotos(): void {
   const fila = document.querySelector<HTMLElement>('#app .fotos-campo');
-  if (fila) fila.outerHTML = filaDeFotosEditor(recetaDelEditor());
-  void completarFotos();
+  if (fila) pintarParte(fila, filaDeFotosEditor(recetaDelEditor()), 'reemplazar');
 }
 
 /** Escribe la cabecera y cambia su miniatura, también sin redibujar. */
@@ -1200,7 +1201,7 @@ function escribirPortada(valor: string): void {
   const campo = campoDelEditor('foto');
   if (campo) campo.value = valor;
   const boton = document.querySelector<HTMLElement>('#app .portada-boton');
-  if (boton) boton.innerHTML = muestraDePortada(valor || null, depositoDelEditor());
+  if (boton) pintarParte(boton, muestraDePortada(valor || null, depositoDelEditor()));
   // La marca de portada de la fila cambia de foto junto con la cabecera.
   redibujarFilaDeFotos();
 }
@@ -1240,7 +1241,7 @@ function acomodarBotonDeFoto(): void {
   if (altura + ALTO_RENGLON <= 0 || altura >= visible) return;
   // Y el renglón a medio entrar se recorta, para que el botón quede adentro.
   const tope = Math.min(Math.max(altura, 0), Math.max(visible - ALTO_RENGLON, 0));
-  marco.insertAdjacentHTML('beforeend', botonPonerFoto(seccion, lineaDelCursor(texto, posicion), tope));
+  pintarParte(marco, botonPonerFoto(seccion, lineaDelCursor(texto, posicion), tope), 'al-final');
 }
 
 /** Las fichas al pie del editor y el velo con el que se cierran. */
@@ -1260,8 +1261,8 @@ function cerrarFichaFoto(): void {
  */
 function abrirFichaFoto(html: string): void {
   cerrarFichaFoto();
-  document.querySelector('[data-formulario]')?.insertAdjacentHTML('beforeend', html);
-  void completarFotos();
+  const formulario = document.querySelector('[data-formulario]');
+  if (formulario) pintarParte(formulario, html, 'al-final');
 }
 
 /**
@@ -1272,8 +1273,8 @@ function abrirFichaFoto(html: string): void {
 function avisarEnElFormulario(texto: string): void {
   document.querySelector('#app [data-aviso-fotos]')?.remove();
   if (!texto) return;
-  document.querySelector('[data-formulario]')
-    ?.insertAdjacentHTML('afterbegin', `<div data-aviso-fotos>${aviso({ texto })}</div>`);
+  const formulario = document.querySelector('[data-formulario]');
+  if (formulario) pintarParte(formulario, `<div data-aviso-fotos>${aviso({ texto })}</div>`, 'al-principio');
   // Arriba del formulario, con la ficha Fotos al fondo, el aviso queda fuera de
   // pantalla; nadie lo redibuja, así que se lo trae acá (R1).
   mirarElAviso();
@@ -1515,8 +1516,8 @@ function abrirVisor(fotos: FotoDeReceta[], n: number | undefined, suelta?: strin
 function dibujarVisor(): void {
   if (!enElEditor()) { void render(); return; }
   document.querySelector('#app .visor')?.remove();
-  if (estadoDePantalla.visor) document.querySelector('[data-formulario]')?.insertAdjacentHTML('beforeend', renderVisor(estadoDePantalla.visor));
-  void completarFotos();
+  const formulario = document.querySelector('[data-formulario]');
+  if (estadoDePantalla.visor && formulario) pintarParte(formulario, renderVisor(estadoDePantalla.visor), 'al-final');
 }
 
 /**
@@ -1540,7 +1541,7 @@ function revisarCategoria(): void {
     // que una foto propia de Drive también se pueda mostrar.
     const im = muestra.querySelector<HTMLElement>('.im');
     const url = urlDeFoto(valor('foto'));
-    if (im) { im.classList.toggle('trama', !url); im.innerHTML = url ? imgDe(url) : ''; }
+    if (im) { im.classList.toggle('trama', !url); pintarParte(im, url ? imgDe(url) : ''); }
     const nm = muestra.querySelector<HTMLElement>('.nm');
     if (nm) nm.textContent = valor('nombre');
   }
@@ -1592,7 +1593,7 @@ function agregarTag(valor: string): boolean {
   avisarTag(false);
   const yaEsta = [...contenedor.querySelectorAll<HTMLElement>('[data-valor]')]
     .some(p => (p.dataset['valor'] ?? '').toLowerCase() === tag.toLowerCase());
-  if (!yaEsta) contenedor.insertAdjacentHTML('beforeend', pillTag(tag));
+  if (!yaEsta) pintarParte(contenedor, pillTag(tag), 'al-final');
   sincronizarTags();
   return !yaEsta;
 }
@@ -2050,11 +2051,11 @@ const accionesDeCategorias: SeccionDeAcciones = {
   'borrar-categoria': (boton) => {
     const id = idActual();
     const categoria = store.categorias().find(c => c.id === id);
-    if (categoria) boton.outerHTML = confirmacionBorrarCategoria(categoria.nombre, store.recetasDe(id).map(e => e.titulo));
+    if (categoria) pintarParte(boton, confirmacionBorrarCategoria(categoria.nombre, store.recetasDe(id).map(e => e.titulo)), 'reemplazar');
   },
   'cancelar-borrar-categoria': () => {
     const confirmacion = document.querySelector('[data-confirmar-borrado-categoria]');
-    if (confirmacion) confirmacion.outerHTML = botonBorrarCategoria;
+    if (confirmacion) pintarParte(confirmacion, botonBorrarCategoria, 'reemplazar');
   },
   'borrar-categoria-confirmado': async () => {
     const id = idActual();
@@ -2067,7 +2068,7 @@ const accionesDeCategorias: SeccionDeAcciones = {
     } catch (err) {
       console.error(err);
       const confirmacion = document.querySelector('[data-confirmar-borrado-categoria]');
-      if (confirmacion) confirmacion.outerHTML = aviso({ texto: 'No se pudo borrar. La categoría sigue estando.' }) + botonBorrarCategoria;
+      if (confirmacion) pintarParte(confirmacion, aviso({ texto: 'No se pudo borrar. La categoría sigue estando.' }) + botonBorrarCategoria, 'reemplazar');
       return;
     }
   }
@@ -2183,10 +2184,10 @@ const accionesDelEditor: SeccionDeAcciones = {
   // La confirmación toma el lugar del botón, y el botón el de la confirmación:
   // redibujar el editor perdería lo escrito y la foto contra la que se
   // comparan los cambios sin guardar.
-  borrar: (boton) => { boton.outerHTML = confirmacionBorrado(recetaLeida?.receta.titulo ?? null); },
+  borrar: (boton) => { pintarParte(boton, confirmacionBorrado(recetaLeida?.receta.titulo ?? null), 'reemplazar'); },
   'cancelar-borrado': () => {
     const confirmacion = document.querySelector('[data-confirmar-borrado]');
-    if (confirmacion) confirmacion.outerHTML = botonBorrar;
+    if (confirmacion) pintarParte(confirmacion, botonBorrar, 'reemplazar');
   },
   'borrar-confirmado': async () => {
     const id = idActual();
@@ -2203,7 +2204,7 @@ const accionesDelEditor: SeccionDeAcciones = {
       // El aviso va donde estaba la pregunta, y el botón vuelve: lo escrito en
       // el formulario sigue ahí (R1).
       const confirmacion = document.querySelector('[data-confirmar-borrado]');
-      if (confirmacion) confirmacion.outerHTML = aviso({ texto: 'No se pudo borrar. La receta sigue estando.' }) + botonBorrar;
+      if (confirmacion) pintarParte(confirmacion, aviso({ texto: 'No se pudo borrar. La receta sigue estando.' }) + botonBorrar, 'reemplazar');
       return;
     }
   }
@@ -2453,11 +2454,11 @@ app.addEventListener('input', (e) => {
     estadoDePantalla.categoriaPlan = null;
     const bloque = document.querySelector('[data-resultados-plan]');
     if (bloque) {
-      bloque.innerHTML = bloqueDeAgregar({
+      pintarParte(bloque, bloqueDeAgregar({
         menuDiario: delMenuDiario(), categorias: store.categorias(),
         categoriaElegida: null, deLaCategoria: [],
         consulta: estadoDePantalla.consultaPlan, grupos: store.buscarPorTexto(estadoDePantalla.consultaPlan)
-      });
+      }));
     }
     return;
   }

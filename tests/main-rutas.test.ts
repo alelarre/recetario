@@ -2687,6 +2687,26 @@ describe('main.ts: las rutas', () => {
       }
     });
 
+    it('escribir en la caja completa las fotos de Drive de las tarjetas del bloque', async () => {
+      const original = storeFake.buscarPorTexto;
+      storeFake.buscarPorTexto = (): Coincidencias => ({
+        porNombre: [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', foto: linkDeFoto('d1') })],
+        porIngrediente: [], porTag: []
+      });
+      try {
+        const { abrir, tipear, resultadosPlan, imgs } = await montar();
+        await abrir('#/plan/agregar?dia=1&momento=noche');
+        // La tarjeta que el bloque nuevo deja pedida: sale sin `src`.
+        const foto = imgFalsa({ drive: 'd1' });
+        imgs.push(foto);
+        await tipear('buscar-en-plan', 'mila');
+        expect(resultadosPlan.at(-1)).toContain('data-drive="d1"');
+        expect(foto.atributos['src']).toBe('blob:d1');
+      } finally {
+        storeFake.buscarPorTexto = original;
+      }
+    });
+
     it('el bloque Menú diario sale de las recetas con ese tag', async () => {
       const original = storeFake.entradas;
       storeFake.entradas = () => [
