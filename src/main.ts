@@ -117,9 +117,18 @@ despuesDePintar(() => {
  */
 const pintar = (html: string): void => {
   pintarEnPantalla(conLateralFijo(html));
+  for (const pendiente of alPintarLaNueva.splice(0)) pendiente();
   velo.alPintar();
   mirarElAviso();
 };
+
+/**
+ * Lo que el cambio de pantalla deja para cuando la nueva está pintada: subir
+ * el scroll y soltar las imágenes de la vieja. Mientras se lee la receta, la
+ * lista queda a la vista como estaba; hacerlo antes la mostraría saltando
+ * arriba, o con las fotos rotas, justo antes de irse.
+ */
+const alPintarLaNueva: (() => void)[] = [];
 
 /**
  * Un aviso que queda fuera de pantalla no avisa: el que falla al guardar con la
@@ -831,18 +840,18 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
     if (!PANTALLAS_DE_PLAN.includes(ruta.vista)) { planLeido = null; comprasLeidas = null; errorPlan = ''; }
     // Navegar cierra el menú: se abrió para elegir a dónde ir.
     menuAbierto = false;
-    // Las imágenes de la pantalla anterior se sueltan: el visor es de esa pantalla.
-    imagenes.soltarImagenes();
+    // Las imágenes de la pantalla anterior se sueltan cuando ya no se ven.
+    alPintarLaNueva.push(imagenes.apartarImagenes());
     visor.olvidar();
     // Las fotos del editor viven lo que la pantalla: salir sin guardar no deja
     // nada en Drive, y volver a entrar abre con lo que dice el `.md`.
     fotosEditor.vaciar();
     cocina.reiniciar();
     // La pantalla nueva empieza arriba: el hash no cambia el scroll, así que
-    // entrar al modo cocina desde el pie de la receta abría los ingredientes
+    // entrar al modo cocina desde el pie de la receta abriría los ingredientes
     // ya scrolleados. La llamada es opcional por lo mismo que
     // `IntersectionObserver`: los tests corren sobre un DOM mínimo.
-    window.scrollTo?.(0, 0);
+    alPintarLaNueva.push(() => window.scrollTo?.(0, 0));
   }
   vistaActual = ruta;
 

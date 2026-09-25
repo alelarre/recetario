@@ -161,11 +161,17 @@ export function crearImagenes({
     revocarUrl(url);
   }
 
-  /** Revoca los object URL de la pantalla anterior. */
-  function soltarImagenes(): void {
-    for (const url of [...urls.values(), ...sueltas]) revocarUrl(url);
+  /**
+   * Aparta los object URL de la pantalla que se va y devuelve con qué
+   * revocarlos. Se revocan recién con la pantalla nueva pintada: la vieja
+   * sigue a la vista mientras se lee la nueva, y sin sus URL mostraría las
+   * fotos rotas. Lo que se cree después de apartar ya es de la pantalla nueva.
+   */
+  function apartarImagenes(): () => void {
+    const apartadas = [...urls.values(), ...sueltas];
     urls.clear();
     sueltas.length = 0;
+    return () => { for (const url of apartadas) revocarUrl(url); };
   }
 
   const borrar = async (nombre: string): Promise<void> => {
@@ -222,7 +228,7 @@ export function crearImagenes({
   }
 
   return {
-    imagenDe, urlDeImagen, urlDeBlob, soltarUrl, soltarImagenes, fotosCompartidas,
+    imagenDe, urlDeImagen, urlDeBlob, soltarUrl, apartarImagenes, fotosCompartidas,
     guardarImagen, olvidarImagen, precargar,
     borrarImagenes: () => borrar(CACHE_IMAGENES),
     descartarCompartidas: () => borrar(CACHE_COMPARTIDO)

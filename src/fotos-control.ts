@@ -187,7 +187,7 @@ export function crearFotosControl({ achicar, crearUrl, soltarUrl, campos, alCamb
 
     vaciar() {
       // Los object URL no se sueltan acá: son de la pantalla, y los suelta
-      // `imagenes.soltarImagenes` con los demás.
+      // `imagenes.apartarImagenes` con los demás.
       fotos = [];
       portada = '';
       nuevas.clear();

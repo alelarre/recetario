@@ -58,7 +58,7 @@ describe('mostrar una foto de Drive', () => {
   it('la segunda vez sale del caché, sin pedir a Drive', async () => {
     const { imagenes, pedidas } = armar();
     await imagenes.urlDeImagen('f1');
-    imagenes.soltarImagenes();
+    imagenes.apartarImagenes()();
     await imagenes.urlDeImagen('f1');
     expect(pedidas).toEqual(['f1']);
     expect(await (await imagenes.imagenDe('f1'))?.text()).toBe('foto f1');
@@ -73,15 +73,26 @@ describe('mostrar una foto de Drive', () => {
     const { imagenes, revocadas } = armar();
     await imagenes.urlDeImagen('f1');
     const suelta = imagenes.urlDeBlob(new Blob(['x']));
-    imagenes.soltarImagenes();
+    imagenes.apartarImagenes()();
     expect(revocadas).toEqual(['blob:1', suelta]);
+  });
+
+  it('apartar no revoca hasta que se lo pide, y la foto que se vuelve a pedir tiene un URL nuevo', async () => {
+    const { imagenes, revocadas } = armar();
+    const vieja = await imagenes.urlDeImagen('f1');
+    const soltar = imagenes.apartarImagenes();
+    expect(revocadas).toEqual([]);
+    const nueva = await imagenes.urlDeImagen('f1');
+    expect(nueva).not.toBe(vieja);
+    soltar();
+    expect(revocadas).toEqual([vieja]);
   });
 
   it('pedida dos veces a la vez, la misma foto es un solo object URL: ninguno queda sin soltar', async () => {
     const { imagenes, revocadas } = armar();
     const [a, b] = await Promise.all([imagenes.urlDeImagen('f1'), imagenes.urlDeImagen('f1')]);
     expect(a).toBe(b);
-    imagenes.soltarImagenes();
+    imagenes.apartarImagenes()();
     expect(revocadas).toEqual([a]);
   });
 
@@ -91,7 +102,7 @@ describe('mostrar una foto de Drive', () => {
     const otra = imagenes.urlDeBlob(new Blob(['y']));
     imagenes.soltarUrl(suelta);
     expect(revocadas).toEqual([suelta]);
-    imagenes.soltarImagenes();
+    imagenes.apartarImagenes()();
     expect(revocadas).toEqual([suelta, otra]);
   });
 
@@ -128,7 +139,7 @@ describe('mostrar una foto de Drive', () => {
   it('terminado el pedido, la foto se vuelve a poder pedir —también si falló—', async () => {
     const { imagenes, pedidas } = armar();
     await Promise.all([imagenes.imagenDe('f1'), imagenes.imagenDe('f1')]);
-    imagenes.soltarImagenes();
+    imagenes.apartarImagenes()();
     await imagenes.olvidarImagen('f1');
     await imagenes.imagenDe('f1');
     expect(pedidas).toEqual(['f1', 'f1']);

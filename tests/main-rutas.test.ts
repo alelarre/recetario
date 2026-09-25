@@ -81,6 +81,12 @@ vi.mock('../src/conversion.js', async original => {
 /** Lo que los dobles le dan a main. `falla` enciende el error de lectura. */
 const estadoInicial = () => ({
   falla: false as boolean | Error,
+  /**
+   * Lo que se hizo sobre la pantalla, en orden: cada pintura de `#app` (con la
+   * vista que dibujó), cada `scrollTo` y cada vez que se soltaron las imágenes
+   * de la pantalla anterior.
+   */
+  orden: [] as string[],
   /** El arranque encuentra el índice de otro esquema y reindexa antes de dibujar. */
   reconstruirAlArrancar: false,
   /** Los títulos de las recetas que se crearon: cada una es un `.md` nuevo. */
@@ -260,7 +266,8 @@ vi.mock('../src/imagenes.js', async original => ({
     },
     urlDeBlob: (b: Blob) => `blob:memoria-${b.size}`,
     soltarUrl: () => {},
-    soltarImagenes: () => {},
+    soltarImagenes: () => { estado.orden.push('soltar-imagenes'); },
+    apartarImagenes: () => () => { estado.orden.push('soltar-imagenes'); },
     guardarImagen: async () => {},
     olvidarImagen: async () => {},
     precargar: async (ids: string[]) => { estado.precargados.push(ids); },
@@ -460,6 +467,8 @@ describe('main.ts: las rutas', () => {
         // `puesto`: el velo estaba en pantalla, con la olla o con el tilde, y
         // el dibujo quedó abajo, sin verse.
         pinturas.push({ html, velo: tapado(), puesto: !velo.hidden });
+        estado.orden.push(html.includes('data-formulario') ? 'pintura:editor'
+          : html.includes('class="lista') || html.includes('data-tramo') ? 'pintura:lista' : 'pintura:otra');
         clasesPanel.clear();
         clasesVeloLat.clear();
         if (html.includes('class="lat abierto"')) clasesPanel.add('abierto');
@@ -732,7 +741,7 @@ describe('main.ts: las rutas', () => {
     const alCruzarElCorte: ((e: { matches: boolean }) => void)[] = [];
     global.window = comoGlobal<Window & typeof globalThis>({
       google: {}, addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; },
-      scrollTo: (_x: number, y: number) => { scrolls.push(y); }, scrollY: 0, close: () => {},
+      scrollTo: (_x: number, y: number) => { scrolls.push(y); estado.orden.push('scroll'); }, scrollY: 0, close: () => {},
       // La consulta de reduced motion y la del corte de 900 px, que avisa al cruzarlo.
       matchMedia: (q: string) => ({
         get matches() {
@@ -5061,6 +5070,28 @@ describe('main.ts: las rutas', () => {
       const { abrir, app } = await montar();
       await abrir('#/borradores/b1');
       expect(app.innerHTML).toContain('<a class="act" href="#/borradores">');
+    });
+  });
+
+  describe('abrir una receta desde una lista deja la lista quieta hasta pintar la receta', () => {
+    it.each([
+      ['#/t/horno', '#/r/f1'],
+      ['#/c/Carnes', '#/r/f1'],
+      ['#/borradores', '#/r/f1/editar']
+    ])('de %s a %s: ni scroll, ni imágenes soltadas, ni redibujo de la lista antes de la pintura', async (lista, receta) => {
+      const { abrir } = await montar();
+      await abrir(lista);
+      expect(estado.orden).toContain('pintura:lista');
+      estado.orden.length = 0;
+
+      await abrir(receta);
+
+      const pintura = estado.orden.findIndex(o => o.startsWith('pintura:'));
+      expect(estado.orden.slice(0, pintura)).toEqual([]);
+      expect(estado.orden[pintura]).not.toBe('pintura:lista');
+      // La receta abre desde arriba, y la lista vieja suelta sus imágenes
+      // recién cuando ya no se ve.
+      expect(estado.orden.slice(pintura + 1)).toEqual(expect.arrayContaining(['scroll', 'soltar-imagenes']));
     });
   });
 

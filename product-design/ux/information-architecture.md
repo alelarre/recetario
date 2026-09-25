@@ -528,6 +528,10 @@ plan*— tienen su destino escrito en `E04-Corregir.md` C04.1.2,
 cocina y la caja de los resultados: el volver, la hamburguesa y las acciones de
 la pantalla están siempre a mano.
 
+**Cada pantalla nueva abre desde arriba**, y la de antes se queda como está
+—con su scroll y sus fotos— hasta que la nueva está dibujada: mientras se lee
+la receta tocada al fondo de una lista, la lista no salta ni se redibuja.
+
 Sale de la regla de tamaños del principio 7: el tamaño de los controles es una
 regla del sistema, no una decisión por pantalla.
 
