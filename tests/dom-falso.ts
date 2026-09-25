@@ -59,3 +59,118 @@ export function windowConGis(): Window & typeof globalThis {
     google: { accounts: { oauth2: { initTokenClient: () => clienteGisFalso() } } }
   });
 }
+
+/** Una entrada del historial: su hash y lo que la app le dejó en `state`. */
+export interface EntradaFalsa { hash: string; state: unknown }
+
+/** El hash de una URL como la reciben `pushState`, `replaceState` y `location.replace`. */
+const hashDeUrl = (url: string): string => {
+  const i = url.indexOf('#');
+  return i >= 0 ? url.slice(i) : '';
+};
+
+/**
+ * El historial del navegador, con sus entradas y su `state`, para los tests
+ * que navegan. Se porta como el de verdad en lo que la app usa:
+ * - asignar `location.hash` agrega una entrada sin `state`, y descarta las de
+ *   adelante; asignar el hash que ya está no hace nada;
+ * - `location.replace` reemplaza la entrada actual, también sin `state`;
+ * - `pushState` y `replaceState` cambian las entradas sin avisar;
+ * - `back` y `go` se mueven entre las entradas, y fuera de ellas no hacen nada;
+ * - todo cambio de hash, salvo el de `pushState` y `replaceState`, avisa con
+ *   `hashchange` después, en una microtarea: el navegador lo encola, y la app
+ *   alcanza a numerar la entrada antes de que llegue.
+ *
+ * `location` y `history` se montan como globales; lo demás es para mirar.
+ */
+export function historialFalso({
+  hash = '',
+  alCambiarHash,
+  location: extraLocation = {},
+  alVolver = () => {}
+}: {
+  hash?: string;
+  /** El `hashchange`: lo que el test haya registrado como oyente. */
+  alCambiarHash: () => void;
+  /** Lo demás de `location` que el test necesite: `pathname`, `reload`… */
+  location?: Record<string, unknown>;
+  /** Corre en cada `back`, antes de moverse. */
+  alVolver?: () => void;
+}) {
+  const entradas: EntradaFalsa[] = [{ hash, state: null }];
+  let i = 0;
+  const reemplazos: string[] = [];
+  const empujados: string[] = [];
+  const vueltasAtras: number[] = [];
+  const saltos: number[] = [];
+  const actual = (): EntradaFalsa => entradas[i]!;
+  /** Los avisos que se retienen mientras el test mira lo de antes de dibujar, o `null`. */
+  let retenidos: number | null = null;
+  const avisar = (): void => {
+    if (retenidos !== null) retenidos++;
+    else void Promise.resolve().then(alCambiarHash);
+  };
+  const agregar = (entrada: EntradaFalsa): void => {
+    entradas.splice(i + 1);
+    entradas.push(entrada);
+    i = entradas.length - 1;
+  };
+  const moverse = (n: number): void => {
+    const destino = i + n;
+    if (destino < 0 || destino >= entradas.length) return;
+    const antes = actual().hash;
+    i = destino;
+    if (actual().hash !== antes) avisar();
+  };
+
+  const location = Object.assign({
+    get hash(): string { return actual().hash; },
+    set hash(valor: string) {
+      const nuevo = valor.startsWith('#') ? valor : `#${valor}`;
+      if (nuevo === actual().hash) return;
+      agregar({ hash: nuevo, state: null });
+      avisar();
+    },
+    replace(url: string) {
+      reemplazos.push(url);
+      const antes = actual().hash;
+      entradas[i] = { hash: hashDeUrl(url), state: null };
+      if (actual().hash !== antes) avisar();
+    }
+  }, extraLocation);
+
+  const history = {
+    get state(): unknown { return actual().state; },
+    get length(): number { return entradas.length; },
+    back() { vueltasAtras.push(1); alVolver(); moverse(-1); },
+    go(n = 0) { saltos.push(n); moverse(n); },
+    forward() { moverse(1); },
+    pushState(state: unknown, _titulo: string, url?: string | null) {
+      if (url) empujados.push(url);
+      agregar({ hash: url ? hashDeUrl(url) : actual().hash, state });
+    },
+    replaceState(state: unknown, _titulo: string, url?: string | null) {
+      entradas[i] = { hash: url ? hashDeUrl(url) : actual().hash, state };
+    }
+  };
+
+  return {
+    location,
+    history,
+    reemplazos,
+    empujados,
+    vueltasAtras,
+    saltos,
+    /** Las entradas hasta la actual, que son las que el atrás alcanza. */
+    pila: (): EntradaFalsa[] => entradas.slice(0, i + 1).map(e => ({ ...e })),
+    /** El atrás del navegador o de Android: se mueve sin pasar por la app. */
+    atras: (): void => moverse(-1),
+    /** Los `hashchange` quedan sin mandar hasta `soltarAvisos`: la URL cambia, la pantalla no. */
+    retenerAvisos: (): void => { retenidos ??= 0; },
+    soltarAvisos: (): void => {
+      const cuantos = retenidos ?? 0;
+      retenidos = null;
+      for (let n = 0; n < cuantos; n++) avisar();
+    }
+  };
+}
