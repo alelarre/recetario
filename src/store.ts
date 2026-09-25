@@ -906,6 +906,16 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     return { indexadas: entradas.length, ignorados, sinBorrador };
   }
 
+  /**
+   * Lo que se lista: todo menos una receta de `_sin-categoria/` sin el tag
+   * `borrador`. Esa la escribieron afuera y no es receta ni borrador; hasta que
+   * el usuario la acomode, sólo la nombra el aviso del reindexado en Ajustes.
+   */
+  function listables(): Entrada[] {
+    if (!ctx.sinCategoriaId) return entradas;
+    return entradas.filter(e => e.carpeta_id !== ctx.sinCategoriaId || tieneEspecial(e, 'borrador'));
+  }
+
   function buscar(filtros?: Filtros | unknown): Entrada[] {
     // Lo que no es un objeto plano se trata como {}, y cada campo por su tipo.
     const filtrosValidos: Filtros =
@@ -920,7 +930,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     // app llega a los borradores por el menú, no por una búsqueda o un filtro.
     const pideBorradores = tagList.some(tag => tagEspecial(tag) === 'borrador');
 
-    return entradas.filter(e => {
+    return listables().filter(e => {
       if (!pideBorradores && tieneEspecial(e, 'borrador')) return false;
       if (cat && e.categoria !== cat) return false;
       if (diff && e.dificultad !== diff) return false;
@@ -946,7 +956,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const porIngrediente: Coincidencia[] = [];
     const porTag: Coincidencia[] = [];
 
-    for (const e of entradas) {
+    for (const e of listables()) {
       // Los borradores no aparecen en ninguna búsqueda: se llega a ellos por
       // el menú, y el tag `borrador` no cuenta ni como motivo.
       if (tieneEspecial(e, 'borrador')) continue;
@@ -979,7 +989,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     const cat = typeof categoria === 'string' ? categoria : '';
 
     const cuenta = new Map<string, number>();
-    for (const e of entradas) {
+    for (const e of listables()) {
       if (cat && e.categoria !== cat) continue;
       for (const tag of e.tags) {
         // `borrador` no se ofrece como filtro ni como sugerencia: a los

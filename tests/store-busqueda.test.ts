@@ -131,6 +131,43 @@ describe('buscar', () => {
   });
 });
 
+describe('una receta en _sin-categoria/ sin el tag borrador', () => {
+  beforeEach(async () => {
+    drive._store.set('sc', { id: 'sc', name: '_sin-categoria', mimeType: CARPETA, parents: ['raiz'] });
+    await sheets.append('i1', 'meta', [['carpeta_sin_categoria', 'sc']]);
+    await sheets.append('i1', 'recetas', [
+      fila('r5', 'Guiso perdido', 'Sin categoría', 'sc', 'invierno|favorito', 'lentejas'),
+      fila('r6', 'Pan a medio hacer', 'Sin categoría', 'sc', 'borrador', 'harina')
+    ]);
+    await abrirDeNuevo();
+  });
+
+  it('no aparece en buscar, ni pidiendo sus tags', () => {
+    expect(store.buscar().map(e => e.id_archivo)).not.toContain('r5');
+    expect(store.buscar({ texto: 'guiso' })).toHaveLength(0);
+    expect(store.buscar({ tags: ['invierno'] }).map(e => e.id_archivo)).not.toContain('r5');
+    expect(store.buscar({ tags: ['favorito'] }).map(e => e.id_archivo)).not.toContain('r5');
+  });
+
+  it('no aparece en buscarPorTexto por título, ingrediente ni tag', () => {
+    for (const q of ['guiso', 'lentejas', 'invierno']) {
+      const { porNombre, porIngrediente, porTag } = store.buscarPorTexto(q);
+      expect(porNombre.map(e => e.id_archivo)).not.toContain('r5');
+      expect(porIngrediente.map(c => c.entrada.id_archivo)).not.toContain('r5');
+      expect(porTag.map(c => c.entrada.id_archivo)).not.toContain('r5');
+    }
+  });
+
+  it('sus tags no cuentan en tagsDe', () => {
+    expect(store.tagsDe().map(t => t.tag)).not.toContain('invierno');
+    expect(store.tagsDe().map(t => t.tag)).not.toContain('favorito');
+  });
+
+  it('un borrador de _sin-categoria/ sí aparece pidiendo el tag borrador', () => {
+    expect(store.buscar({ tags: ['borrador'] }).map(e => e.id_archivo)).toEqual(['r6']);
+  });
+});
+
 describe('buscarPorTexto: los tres criterios', () => {
   beforeEach(async () => {
     // Un fixture propio: lo que importa acá es que el mismo texto coincida por
