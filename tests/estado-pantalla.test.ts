@@ -15,7 +15,6 @@ describe('estadoNuevo', () => {
       consultaPlan: '',
       categoriaPlan: null,
       selector: { confirmando: null, error: '' },
-      visor: null,
       fotoPropia: null,
       compartiendo: null,
       pdfListo: null,

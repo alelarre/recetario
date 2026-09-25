@@ -12,7 +12,6 @@ import type { ListaControl } from './lista-control.js';
 import type { FotosDelPedido } from './compartir.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
 import type { EstadoCompartir } from './ui/compartir.js';
-import type { EstadoVisor } from './ui/visor.js';
 
 /** El pedido al agente, listo para mandar: el texto y las fotos. */
 export type PedidoAlAgente = { pedido: string; fotos: FotosDelPedido | null };
@@ -49,8 +48,6 @@ export interface EstadoDePantalla {
    * falló. Las sugerencias no van acá: vienen del arranque.
    */
   selector: { confirmando: CarpetaSimple | null; error: string };
-  /** El visor de fotos abierto: las URLs que recorre y en cuál está. */
-  visor: EstadoVisor | null;
   /** La foto propia recién elegida para una categoría: se sube al guardarla. */
   fotoPropia: { blob: Blob; url: string } | null;
   /** La ficha de compartir abierta, o `null`. */
@@ -86,7 +83,6 @@ export const estadoNuevo = (): EstadoDePantalla => ({
   consultaPlan: '',
   categoriaPlan: null,
   selector: { confirmando: null, error: '' },
-  visor: null,
   fotoPropia: null,
   compartiendo: null,
   pdfListo: null,

@@ -129,7 +129,7 @@ describe('La vista de invitado', () => {
   it('el visor abierto se dibuja sobre la receta', () => {
     const html = renderInvitado({ receta: CON_FOTOS, categoria: '', visor: { urls: ['https://x/plato.jpg'], i: 0 } });
     expect(html).toContain('class="visor"');
-    expect(html).toContain('data-total="1"');
+    expect(html).toContain('src="https://x/plato.jpg"');
   });
 
   it('por el camino real —codificar, decodificar, dibujar— ninguna foto sale dos veces', async () => {

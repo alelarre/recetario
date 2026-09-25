@@ -41,8 +41,8 @@ import type { CarpetaSimple } from './ui/carpeta.js';
 import { aviso, lateralFijo, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js';
 import type { MenuDePantalla } from './ui/componentes.js';
 import { pintar as pintarEnPantalla, pintarParte, despuesDePintar, conClosest, desplazarCarrusel, movimientoReducido } from './ui/pintar.js';
-import { renderVisor, pasoDelVisor } from './ui/visor.js';
-import type { EstadoVisor } from './ui/visor.js';
+import { renderVisor } from './ui/visor.js';
+import { crearVisorControl } from './visor-control.js';
 import type { EstadoCompartir } from './ui/compartir.js';
 import {
   linkDeFoto, idDeDrive, resolverReceta, fotosSinUso, lineaDelCursor
@@ -416,12 +416,10 @@ let sinBorrador: string[] = [];
 let cuenta = '';
 
 /**
- * El deslizamiento cambió de foto: el click que viene después del `touchend`
- * no cierra el visor, que si no se cerraría en cada gesto.
+ * El visor de fotos. Va aparte del estado de la pantalla porque abrirlo es una
+ * capa del historial; es de la pantalla igual, y se olvida al cambiar.
  */
-let deslizoElVisor = false;
-/** Dónde empezó el deslizamiento sobre el visor, o `null`. */
-let visorDesde: number | null = null;
+const visor = crearVisorControl(nav);
 
 /**
  * El depósito de fotos del editor: las fotos, la portada y las nuevas en
@@ -789,6 +787,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
     menuAbierto = false;
     // Las imágenes de la pantalla anterior se sueltan: el visor es de esa pantalla.
     imagenes.soltarImagenes();
+    visor.olvidar();
     // Las fotos del editor viven lo que la pantalla: salir sin guardar no deja
     // nada en Drive, y volver a entrar abre con lo que dice el `.md`.
     fotosEditor.vaciar();
@@ -850,7 +849,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
         const { entrada, receta } = await recetaDePantalla(ruta.params['id'] ?? '');
         pintar(renderReceta({
           entrada, receta,
-          ...(estadoDePantalla.visor ? { visor: estadoDePantalla.visor } : {}),
+          ...(visor.estado ? { visor: visor.estado } : {}),
           ...(estadoDePantalla.compartiendo ? { compartir: estadoDePantalla.compartiendo } : {}),
           ...(estadoDePantalla.marcandoFavorito ? { favorito: 'escribiendo' as const } : {}),
           ...(estadoDePantalla.errorFavorito ? { error: estadoDePantalla.errorFavorito } : {}),
@@ -1337,28 +1336,10 @@ const fotosMostrables = (fotos: FotoDeReceta[]): { n: number; url: string }[] =>
   });
 
 /**
- * Abre el visor con **lo que se tocó**: `fotos` es la tira que
- * recorre —las del carrusel en la lectura, el depósito entero en el editor—.
- * Una foto que no está en esa tira —la portada, la de un paso— se abre sola,
- * con la URL que venga en `suelta`.
+ * Saca de la pantalla el visor que su controlador ya cerró. En el editor, del
+ * DOM; en la lectura, redibujando.
  */
-function abrirVisor(fotos: FotoDeReceta[], n: number | undefined, suelta?: string | undefined): void {
-  const lista = fotosMostrables(fotos);
-  const i = n === undefined ? -1 : lista.findIndex(f => f.n === n);
-  if (i >= 0) ponerVisor({ urls: lista.map(f => f.url), i });
-  else if (suelta) ponerVisor({ urls: [suelta], i: 0 });
-}
-
-/** El visor abierto es una capa: el atrás lo cierra sin salir de la pantalla. */
-function ponerVisor(visor: EstadoVisor): void {
-  estadoDePantalla.visor = visor;
-  nav.abrirCapa('visor');
-}
-
-/** Saca el visor. En el editor, del DOM; en la lectura, redibujando. */
 function sacarVisor(): Promise<void> | undefined {
-  estadoDePantalla.visor = null;
-  deslizoElVisor = false;
   if (enElEditor()) { document.querySelector('#app .visor')?.remove(); return; }
   return render();
 }
@@ -1371,7 +1352,7 @@ function dibujarVisor(): void {
   if (!enElEditor()) { void render(); return; }
   document.querySelector('#app .visor')?.remove();
   const formulario = document.querySelector('[data-formulario]');
-  if (estadoDePantalla.visor && formulario) pintarParte(formulario, renderVisor(estadoDePantalla.visor), 'al-final');
+  if (visor.estado && formulario) pintarParte(formulario, renderVisor(visor.estado), 'al-final');
 }
 
 /**
@@ -1571,7 +1552,7 @@ const router = crearRouter(ruta => {
  */
 const CIERRE_DE_CAPA: Record<string, () => unknown> = {
   menu: () => { mostrarMenu(false); },
-  visor: () => sacarVisor(),
+  visor: () => { visor.olvidar(); return sacarVisor(); },
   compartir: () => sacarCompartir(),
   'ficha-foto': () => { quitarFichaFoto(); acomodarBotonDeFoto(); },
   'categoria-plan': () => { dejarCategoriaDelPlan(); return render(); }
@@ -1677,7 +1658,7 @@ const accionesDelVisor: SeccionDeAcciones = {
     if (enElEditor()) {
       // Sin consumir la capa de la ficha: el visor toma su lugar.
       quitarFichaFoto();
-      abrirVisor(fotosEditor.fotos(), n);
+      visor.abrir(fotosMostrables(fotosEditor.fotos()), n);
       dibujarVisor();
       return;
     }
@@ -1686,15 +1667,11 @@ const accionesDelVisor: SeccionDeAcciones = {
     // El carrusel son las sin uso, calculadas sobre la cruda: desde ahí el
     // visor las recorre. La portada no está ahí y se abre sola.
     const sola = (n === undefined ? undefined : receta.fotos.find(f => f.n === n)?.url) ?? receta.foto ?? undefined;
-    abrirVisor(fotosSinUso(recetaLeida.receta), n, sola);
+    visor.abrir(fotosMostrables(fotosSinUso(recetaLeida.receta)), n, sola);
     return render();
   },
-  'cerrar-visor': () => {
-    // Un deslizamiento termina en un click: ese no cierra, ya cambió de foto.
-    if (deslizoElVisor) { deslizoElVisor = false; return; }
-    nav.cerrarCapa('visor');
-    return sacarVisor();
-  }
+  // El click con el que termina un deslizamiento no cierra: ya cambió de foto.
+  'cerrar-visor': () => (visor.tocar() ? sacarVisor() : undefined)
 };
 
 /**
@@ -1710,7 +1687,7 @@ function tocarFotoEnLinea(destino: Element): Promise<void> | undefined {
   const id = img.dataset['drive'] ?? '';
   const suelta = id ? linkDeFoto(id) : img.getAttribute('src') ?? '';
   if (!suelta) return;
-  ponerVisor({ urls: [suelta], i: 0 });
+  visor.abrir([], undefined, suelta);
   return render();
 }
 
@@ -2381,14 +2358,11 @@ function sobreFilaDeslizable(destino: EventTarget | null): boolean {
 document.addEventListener('touchstart', (e) => {
   if (velo.ocupado()) return;
   deslizando = null;
-  visorDesde = null;
-  deslizoElVisor = false;
   const toques = (e as TouchEvent).touches;
-  const toque = toques[0];
-  if (!toque || toques.length !== 1) return;
+  const toque = toques.length === 1 ? toques[0] : undefined;
   // Con el visor abierto, el dedo pasa de una foto a la siguiente y no abre
   // el menú: es lo único que se puede hacer ahí.
-  if (estadoDePantalla.visor) { visorDesde = toque.clientX; return; }
+  if (visor.empezarToque(toque?.clientX ?? null) || !toque) return;
   if (!vistaActual || !esDelMenu(vistaActual.vista) || menuFijo()) return;
   if (!puedeEmpezar(toque.clientX, menuAbierto, sobreFilaDeslizable(e.target))) return;
   deslizando = { x: toque.clientX, y: toque.clientY, decidido: 'indeciso', p: menuAbierto ? 1 : 0 };
@@ -2425,16 +2399,8 @@ document.addEventListener('touchcancel', soltarDeslizamiento);
 // gesto del menú: ahí el deslizamiento arrastra el panel al ritmo del dedo, y
 // acá la foto cambia de una vez, al soltar.
 document.addEventListener('touchend', (e) => {
-  if (velo.ocupado() || visorDesde === null || !estadoDePantalla.visor) return;
-  const toque = (e as TouchEvent).changedTouches[0];
-  const desde = visorDesde;
-  visorDesde = null;
-  if (!toque) return;
-  const i = pasoDelVisor(estadoDePantalla.visor.i, toque.clientX - desde, estadoDePantalla.visor.urls.length);
-  if (i === estadoDePantalla.visor.i) return;
-  estadoDePantalla.visor = { ...estadoDePantalla.visor, i };
-  deslizoElVisor = true;
-  dibujarVisor();
+  if (velo.ocupado()) return;
+  if (visor.terminarToque((e as TouchEvent).changedTouches[0]?.clientX ?? null)) dibujarVisor();
 });
 
 app.addEventListener('keydown', (e) => {

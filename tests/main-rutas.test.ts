@@ -3797,7 +3797,7 @@ describe('main.ts: las rutas', () => {
       await tocar('ver-foto-receta', { n: '2' });
 
       expect(preguntas.at(-1)).toContain('class="visor"');
-      expect(preguntas.at(-1)).toContain('data-i="1"');
+      expect(preguntas.at(-1)).toContain(`src="${EXTERNA}"`);
       // Abrir el visor cierra la ficha, y el formulario no se vuelve a pintar.
       expect(preguntas.some(h => h.includes('data-acciones-foto'))).toBe(false);
       expect(app.innerHTML).toBe(antes);
@@ -3889,41 +3889,53 @@ describe('main.ts: las rutas', () => {
       '## Fotos', '', `- 1: ${linkDeFoto('f9')}`, `- 2: ${EXTERNA}`, '- 3: https://ejemplo/otra.jpg', ''
     ].join('\n');
 
+    /** Lo que muestra el visor abierto, que va al final de la pantalla. */
+    const enElVisor = (html: string): string => html.slice(html.indexOf('class="visor"'));
+
     it('desde el carrusel, el visor recorre las del carrusel, y se cierra tocando', async () => {
       estado.md = MD_CON_SUELTAS;
-      const { abrir, app, tocar } = await montar();
+      const { abrir, app, tocar, deslizar } = await montar();
       await abrir('#/r/f1');
 
       await tocar('ver-foto-receta', { n: '3' });
       expect(app.innerHTML).toContain('class="visor"');
-      // La portada no está en la tira: son las dos sin uso, y ésta es la segunda.
-      expect(app.innerHTML).toContain('data-i="1"');
-      expect(app.innerHTML).toContain('data-total="2"');
+      expect(enElVisor(app.innerHTML)).toContain('src="https://ejemplo/otra.jpg"');
+      // La portada no está en la tira: son las dos sin uso, y la anterior es la 2.
+      await deslizar({ desde: 100, hasta: 200 });
+      expect(enElVisor(app.innerHTML)).toContain(`src="${EXTERNA}"`);
+      await deslizar({ desde: 100, hasta: 200 });
+      expect(enElVisor(app.innerHTML)).toContain(`src="${EXTERNA}"`);
 
+      // El click con el que termina el deslizamiento no cierra; el siguiente, sí.
+      await deslizar({ desde: 200, hasta: 100 });
+      await tocar('cerrar-visor');
+      expect(app.innerHTML).toContain('class="visor"');
       await tocar('cerrar-visor');
       expect(app.innerHTML).not.toContain('class="visor"');
     });
 
     it('desde la portada, el visor la abre sola: no recorre el depósito', async () => {
       estado.md = MD_CON_SUELTAS;
-      const { abrir, app, tocar } = await montar();
+      const { abrir, app, tocar, deslizar } = await montar();
       await abrir('#/r/f1');
 
       await tocar('ver-foto-receta', { n: '1' });
-      expect(app.innerHTML).toContain('data-i="0"');
-      expect(app.innerHTML).toContain('data-total="1"');
+      expect(enElVisor(app.innerHTML)).toContain('data-drive="f9"');
+      await deslizar({ desde: 200, hasta: 100 });
+      expect(enElVisor(app.innerHTML)).toContain('data-drive="f9"');
     });
 
     it('tocar una foto en línea del texto la abre sola', async () => {
       estado.md = MD_CON_FOTOS;
-      const { abrir, app, tocarFotoEnLinea } = await montar();
+      const { abrir, app, tocarFotoEnLinea, deslizar } = await montar();
       await abrir('#/r/f1');
 
       await tocarFotoEnLinea({ src: EXTERNA });
 
       expect(app.innerHTML).toContain('class="visor"');
-      expect(app.innerHTML).toContain('data-i="0"');
-      expect(app.innerHTML).toContain('data-total="1"');
+      expect(enElVisor(app.innerHTML)).toContain(`src="${EXTERNA}"`);
+      await deslizar({ desde: 100, hasta: 200 });
+      expect(enElVisor(app.innerHTML)).toContain(`src="${EXTERNA}"`);
     });
 
     it('una foto en línea que no está en el depósito se abre sola', async () => {
@@ -3933,8 +3945,7 @@ describe('main.ts: las rutas', () => {
 
       await tocarFotoEnLinea({ src: 'https://ejemplo/suelta.jpg' });
 
-      expect(app.innerHTML).toContain('data-i="0"');
-      expect(app.innerHTML).toContain('data-total="1"');
+      expect(enElVisor(app.innerHTML)).toContain('src="https://ejemplo/suelta.jpg"');
     });
 
     it('las imágenes de Drive se completan al llegar; la que no está deja el recuadro', async () => {

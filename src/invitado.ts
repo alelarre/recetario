@@ -7,13 +7,12 @@ import { pintar, conClosest, desplazarCarrusel } from './ui/pintar.js';
 import { renderInvitado, renderLinkRoto, carruselDeInvitado } from './ui/invitado.js';
 import { renderCocina } from './ui/cocina.js';
 import { rutaDeInvitado } from './ui/router.js';
-import { pasoDelVisor } from './ui/visor.js';
+import { crearVisorControl } from './visor-control.js';
 import { decodificar } from './link-receta.js';
 import { resueltaSinFotosDeDrive } from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
 import { crearNavegacion } from './navegacion.js';
 import type { Receta } from './tipos.js';
-import type { EstadoVisor } from './ui/visor.js';
 
 // `ver-foto-receta` y `cerrar-visor` llegan por `fichaCabecera`/`fichasDelCuerpo`
 // y por el visor, que comparte con la receta: acá abren y cierran el visor de
@@ -36,12 +35,8 @@ export function iniciarInvitado(): void {
    */
   let leida: { carga: string; cruda: Receta; receta: Receta; categoria: string } | null = null;
   let vistaAnterior: 'lectura' | 'cocina' | null = null;
-  /** El visor de fotos abierto, o nada. Sólo en la lectura: en la cocina un toque marca el paso. */
-  let visor: EstadoVisor | null = null;
-  /** Dónde empezó el deslizamiento sobre el visor, o `null`. */
-  let visorDesde: number | null = null;
-  /** Un deslizamiento termina en un click: ese no cierra el visor, que si no se cerraría en cada gesto. */
-  let deslizoElVisor = false;
+  /** El visor de fotos. Sólo en la lectura: en la cocina un toque marca el paso. */
+  const visor = crearVisorControl(nav);
 
   /**
    * Abre el visor con lo que se tocó: una foto del carrusel desliza entre
@@ -51,11 +46,8 @@ export function iniciarInvitado(): void {
     if (!leida) return;
     const carrusel = carruselDeInvitado(leida.cruda);
     const n = marca === undefined ? undefined : Number(marca);
-    const i = n === undefined ? -1 : carrusel.findIndex(f => f.n === n);
     const sola = (n === undefined ? undefined : leida.receta.fotos.find(f => f.n === n)?.url) ?? leida.receta.foto;
-    visor = i >= 0 ? { urls: carrusel.map(f => f.url), i } : sola ? { urls: [sola], i: 0 } : null;
-    // Abierto es una capa, como en la app: el atrás lo cierra sin salir de la receta.
-    if (visor) nav.abrirCapa('visor');
+    visor.abrir(carrusel, n, sola ?? undefined);
   }
 
   async function render(): Promise<void> {
@@ -71,7 +63,7 @@ export function iniciarInvitado(): void {
       leida = datos
         ? { carga: ruta.carga, ...datos, cruda: datos.receta, receta: resueltaSinFotosDeDrive(datos.receta) }
         : null;
-      visor = null;
+      visor.olvidar();
     }
     if (!leida) {
       document.title = 'Recetario';
@@ -83,12 +75,12 @@ export function iniciarInvitado(): void {
       cocina.reiniciar();
       window.scrollTo?.(0, 0);
       vistaAnterior = ruta.vista;
-      visor = null;
+      visor.olvidar();
     }
     if (ruta.vista === 'lectura') {
       // La cruda: `renderInvitado` resuelve y limpia, y necesita las `foto:N`
       // para saber cuáles están ubicadas y cuáles van al carrusel.
-      return pintar(renderInvitado({ receta: leida.cruda, categoria: leida.categoria, ...(visor ? { visor } : {}) }));
+      return pintar(renderInvitado({ receta: leida.cruda, categoria: leida.categoria, ...(visor.estado ? { visor: visor.estado } : {}) }));
     }
     return pintar(renderCocina({ receta: leida.receta, ...cocina.estado(), salidas: 'solo-volver' }));
   }
@@ -133,41 +125,26 @@ export function iniciarInvitado(): void {
       return;
     }
     if (accion === 'cerrar-visor') {
-      // Un deslizamiento termina en un click: ese no cierra, ya cambió de foto.
-      if (deslizoElVisor) { deslizoElVisor = false; return; }
-      nav.cerrarCapa('visor');
-      visor = null;
-      return render();
+      if (visor.tocar()) return render();
+      return;
     }
   });
 
   // El único gesto del invitado: con el visor abierto, el dedo pasa de una
   // foto a la siguiente. La foto cambia de una vez, al soltar.
   app?.addEventListener('touchstart', (e) => {
-    deslizoElVisor = false;
-    visorDesde = null;
     const toques = (e as TouchEvent).touches;
     const toque = toques[0];
-    if (!visor || !toque || toques.length !== 1) return;
-    visorDesde = toque.clientX;
+    visor.empezarToque(toque && toques.length === 1 ? toque.clientX : null);
   }, { passive: true });
 
   app?.addEventListener('touchend', (e) => {
-    if (visorDesde === null || !visor) return;
-    const toque = (e as TouchEvent).changedTouches[0];
-    const desde = visorDesde;
-    visorDesde = null;
-    if (!toque) return;
-    const i = pasoDelVisor(visor.i, toque.clientX - desde, visor.urls.length);
-    if (i === visor.i) return;
-    visor = { ...visor, i };
-    deslizoElVisor = true;
-    void render();
+    if (visor.terminarToque((e as TouchEvent).changedTouches[0]?.clientX ?? null)) void render();
   });
 
   window.addEventListener('hashchange', () => { nav.numerar(); void render(); });
   // El atrás que cierra el visor no cambia el hash: llega sólo como `popstate`.
-  nav.alCerrarCapa(() => { visor = null; deslizoElVisor = false; void render(); });
+  nav.alCerrarCapa(() => { visor.olvidar(); void render(); });
   window.addEventListener('popstate', () => { nav.alPopstate(); });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
