@@ -260,6 +260,11 @@ recetas quedaron escritas y cuáles faltan, y retomá desde la que falló.
 antes de reintentar esa receta, y después buscala con `buscar`: si ya está,
 no la vuelvas a crear.
 
+**Si falló un `guardar`, volvé a `leer` la receta antes de reintentar.** Las
+fotos nuevas pudieron quedar subidas y en su depósito: las que ya están no las
+pidas otra vez en `fotos`, porque se subirían de nuevo con otro número. Armá
+el `.md` sobre lo que devolvió `leer` y pasalo por `validar` con el `id`.
+
 ### Errores de login
 
 Un error de login llega con su código entre corchetes: `[sin-permiso] …`. No
