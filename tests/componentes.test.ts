@@ -409,9 +409,13 @@ describe('la tarjeta con acción', () => {
   });
 });
 
-describe('filaDeFotos: Cámara y Galería', () => {
-  it('con agregar, hay dos inputs de archivo: uno directo a la cámara y otro a la galería', () => {
-    const html = filaDeFotos({ fotos: [], agregar: true });
+/** Una miniatura como la arma el editor: sin uso, salvo que se diga. */
+const mini = (n: number, url: string, uso = { portada: false, enElTexto: false }) =>
+  ({ n, url, uso, ver: { accion: 'acciones-foto', etiqueta: `Qué hacer con la foto ${n}` } });
+
+describe('filaDeFotos: Cámara, Galería y Por URL', () => {
+  it('hay dos inputs de archivo: uno directo a la cámara y otro a la galería', () => {
+    const html = filaDeFotos({ fotos: [] });
     const inputs = html.match(/<input type="file"[^>]*>/g) ?? [];
     expect(inputs).toHaveLength(2);
     expect(inputs[0]).toContain('capture="environment"');
@@ -426,7 +430,7 @@ describe('filaDeFotos: Cámara y Galería', () => {
   });
 
   it('Cámara no se dibuja con mouse: lo esconde el CSS por puntero', () => {
-    const html = filaDeFotos({ fotos: [], agregar: true });
+    const html = filaDeFotos({ fotos: [] });
     const camara = html.slice(html.indexOf('Cámara') - 200, html.indexOf('Cámara'));
     expect(camara).toContain('solo-tactil');
     // Galería sí se usa en los dos lados.
@@ -434,8 +438,8 @@ describe('filaDeFotos: Cámara y Galería', () => {
     expect(galeria).not.toContain('solo-tactil');
   });
 
-  it('los dos botones van en su propia fila, debajo de las miniaturas', () => {
-    const html = filaDeFotos({ fotos: [{ url: 'https://ejemplo/a.jpg', n: 1 }], agregar: true });
+  it('los botones van en su propia fila, debajo de las miniaturas', () => {
+    const html = filaDeFotos({ fotos: [mini(1, 'https://ejemplo/a.jpg')] });
     expect(html.indexOf('class="miniaturas"')).toBeLessThan(html.indexOf('class="fotos-botones"'));
     // Los botones quedan afuera de la fila de fotos, no mezclados con ellas.
     const fila = html.slice(html.indexOf('class="miniaturas"'), html.indexOf('class="fotos-botones"'));
@@ -443,21 +447,14 @@ describe('filaDeFotos: Cámara y Galería', () => {
   });
 
   it('Galería también lleva ícono, y no es el de la foto del depósito', () => {
-    const html = filaDeFotos({ fotos: [], agregar: true });
+    const html = filaDeFotos({ fotos: [] });
     expect(html).toContain(`${ICO.galeria}Galería`);
     expect(html).toContain(`${ICO.camara}Cámara`);
     expect(ICO.galeria).not.toBe(ICO.imagen);
   });
 
-  it('sin agregar, no hay ningún input', () => {
-    const html = filaDeFotos({ fotos: [], agregar: false });
-    expect(html).not.toContain('type="file"');
-    expect(html).not.toContain('Cámara');
-    expect(html).not.toContain('Galería');
-  });
-
-  it('*Por URL* es el tercer botón de la fila, y sólo donde se lo pide', () => {
-    const html = filaDeFotos({ fotos: [], agregar: true, porUrl: true });
+  it('*Por URL* es el tercer botón de la fila', () => {
+    const html = filaDeFotos({ fotos: [] });
     expect(html).toContain(`${ICO.link}Por URL`);
     expect(html).toContain('data-accion="abrir-foto-url"');
     // Va en la misma fila que los otros dos, después de ellos.
@@ -467,17 +464,23 @@ describe('filaDeFotos: Cámara y Galería', () => {
     expect((html.match(/<input type="file"[^>]*>/g) ?? [])).toHaveLength(2);
   });
 
-  it('en la captura y en el borrador no hay *Por URL*: es sólo de la receta', () => {
-    expect(filaDeFotos({ fotos: [], agregar: true })).not.toContain('Por URL');
-    expect(filaDeFotos({ fotos: [], agregar: false, porUrl: true })).not.toContain('Por URL');
+  it('tocar una miniatura dispara su acción con su número', () => {
+    const html = filaDeFotos({ fotos: [mini(3, 'https://ejemplo/a.jpg')] });
+    expect(html).toContain('data-accion="acciones-foto" data-n="3"');
+    expect(html).toContain('aria-label="Qué hacer con la foto 3"');
+    // Desde la fila no se saca: sacar es una acción de la ficha de la foto.
+    expect(html).not.toContain('miniatura-sacar');
+  });
+
+  it('una foto nueva queda con su número y sin `src`: la completa quien la tiene en memoria', () => {
+    const html = filaDeFotos({ fotos: [mini(4, '')] });
+    expect(html).toContain('<img data-n="4" alt="">');
   });
 
   it('las marcas de uso son de la receta: sin uso, la miniatura no lleva ninguna', () => {
-    const sinUso = filaDeFotos({ fotos: [{ url: 'https://ejemplo/a.jpg', n: 1 }], agregar: false });
+    const sinUso = filaDeFotos({ fotos: [mini(1, 'https://ejemplo/a.jpg')] });
     expect(sinUso).not.toContain('miniatura-usos');
-    const conUso = filaDeFotos({
-      fotos: [{ url: 'https://ejemplo/a.jpg', n: 1, uso: { portada: true, enElTexto: false } }], agregar: false
-    });
+    const conUso = filaDeFotos({ fotos: [mini(1, 'https://ejemplo/a.jpg', { portada: true, enElTexto: false })] });
     expect(conUso).toContain(`<span class="miniatura-usos">${ICO.portada}</span>`);
     expect(conUso).not.toContain(ICO.enElTexto);
     // El número no se mueve de su esquina: la marca va arriba a la derecha.

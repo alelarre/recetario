@@ -419,112 +419,71 @@ export function tile(nombre: string, { cantidad, accion }: OpcionesTile = {}): s
     `${fondo}${cuenta}<span class="nm">${escapar(nombre)}</span>` + (accion ? '</button>' : '</a>');
 }
 
-/** Qué acción dispara un botón de la miniatura, y con qué valor si lo lleva. */
-interface AccionDeMiniatura {
-  accion: string;
-  valor?: string;
-  /** Qué dice el botón cuando no se lo ve. Sin esto, lo que hace por defecto. */
-  etiqueta?: string;
-}
-
 /**
- * Una miniatura de la fila de fotos. `url` en `null` es una foto que ya no
- * está en Drive; en `''`, una foto nueva que todavía no se subió y de la que
- * sólo se sabe su número —la miniatura se la pone quien la tenga en memoria,
- * buscándola por `data-n`—.
+ * Una miniatura de la fila de fotos del editor. `url` en `''` es una foto
+ * nueva que todavía no se subió y de la que sólo se sabe su número: la
+ * miniatura se la pone quien la tenga en memoria, buscándola por `data-n`.
  */
 export interface Miniatura {
-  url: string | null;
-  /** La × que la saca. Sin esto, desde la fila no se saca. */
-  sacar?: AccionDeMiniatura;
-  /** Tocarla; sin esto, la miniatura no se toca. */
-  ver?: AccionDeMiniatura;
-  /** Su número en el depósito de la receta: el badge, y `data-n` en los botones. */
-  n?: number;
-  /**
-   * En qué se usa la foto (`usosDeFotos`): una marca por uso, arriba a la
-   * derecha. Sin `uso`, la foto no lleva marca.
-   */
-  uso?: UsoDeFoto;
+  /** Su número en el depósito de la receta: el badge, y `data-n` en el botón. */
+  n: number;
+  url: string;
+  /** En qué se usa la foto (`usosDeFotos`): una marca por uso, arriba a la derecha. */
+  uso: UsoDeFoto;
+  /** Lo que hace tocarla, y cómo lo dice para quien no la ve. */
+  ver: { accion: string; etiqueta: string };
 }
 
 /**
- * El recuadro de una foto de Drive que ya no está. Lo dibuja la fila
- * de miniaturas, y `main` lo pone en lugar de una imagen que tenga su propio
- * cuadrado —el carrusel de la receta, una grilla— cuando Drive contesta que el
- * archivo no existe.
+ * El recuadro de una foto de Drive que ya no está. `main` lo pone en lugar de
+ * una imagen que tenga su propio cuadrado —el carrusel de la receta, una
+ * grilla, una miniatura— cuando Drive contesta que el archivo no existe.
  */
 export const FOTO_AUSENTE = '<span class="miniatura-vacia">La foto ya no está en Drive.</span>';
 
 /** El recuadro de una foto externa cuya URL no carga. Mismo lugar, otro motivo. */
 export const FOTO_ROTA = '<span class="miniatura-vacia">No se pudo cargar la foto.</span>';
 
-/** `data-accion`, y el valor o el número con los que viaja. */
-const datosDeAccion = (a: AccionDeMiniatura, n: number | undefined): string =>
-  ` data-accion="${escapar(a.accion)}"` +
-  (a.valor === undefined ? '' : ` data-valor="${escapar(a.valor)}"`) +
-  (n === undefined ? '' : ` data-n="${n}"`);
-
 /**
- * La fila de fotos del editor: miniaturas cuadradas y, al
- * final, dos botones —*Cámara* y *Galería*— para agregar. El `capture`
- * de un input es lo único que lleva directo a la cámara, y saca la galería:
- * por eso hacen falta dos inputs, cada uno en su propio `label` —tocarlo lo
- * abre sin script—, los dos con `data-fotos` para llegar al mismo manejador
- * de `change` en `main.ts`. La cámara entrega una foto a la vez; la galería
- * sigue aceptando varias.
+ * La fila de fotos del editor: miniaturas cuadradas y, al final, tres botones
+ * para agregar —*Cámara*, *Galería* y *Por URL*—. El `capture` de un input es
+ * lo único que lleva directo a la cámara, y saca la galería: por eso hacen
+ * falta dos inputs, cada uno en su propio `label` —tocarlo lo abre sin
+ * script—, los dos con `data-fotos` para llegar al mismo manejador de
+ * `change` en `main.ts`. La cámara entrega una foto a la vez; la galería
+ * acepta varias.
  *
- * `porUrl` suma un tercer botón, **Por URL**, que no es un input de archivo:
- * la app baja la foto de la dirección que se le escriba. Qué pasa con la que
- * no se pudo bajar lo decide `main.ts`.
+ * *Por URL* no es un input de archivo: la app baja la foto de la dirección
+ * que se le escriba. Qué pasa con la que no se pudo bajar lo decide `main.ts`.
  */
-export function filaDeFotos(
-  { fotos, agregar, porUrl = false }: { fotos: Miniatura[]; agregar: boolean; porUrl?: boolean }
-): string {
-  const miniaturas = fotos.map((f, i) => {
-    // Con depósito, la foto se nombra por su número —el que va en el texto de
-    // la receta—; sin depósito, por su posición en la fila.
-    const cual = f.n ?? i + 1;
-    const imagen = f.url === null
-      ? FOTO_AUSENTE
-      // Sin URL, el `<img>` queda vacío y marcado con su número: recién
-      // subida no hay nada que pedirle a Drive todavía.
-      : f.url === '' ? `<img data-n="${f.n}" alt="Foto ${cual}">` : imgDe(f.url);
+export function filaDeFotos({ fotos }: { fotos: Miniatura[] }): string {
+  const miniaturas = fotos.map(f => {
     // Las marcas de uso, arriba a la derecha y sobre el mismo fondo oscuro que
     // el número: una foto sin uso no lleva ninguna, y la esquina queda limpia.
-    const marcas = (f.uso?.portada ? ICO.portada : '') + (f.uso?.enElTexto ? ICO.enElTexto : '');
+    const marcas = (f.uso.portada ? ICO.portada : '') + (f.uso.enElTexto ? ICO.enElTexto : '');
     // El número va adentro del botón: encima de la foto, tocarlo es tocarla.
-    const contenido = imagen + (f.n === undefined ? '' : `<span class="miniatura-n">#${f.n}</span>`) +
+    const contenido = (f.url ? imgDe(f.url) : `<img data-n="${f.n}" alt="">`) +
+      `<span class="miniatura-n">#${f.n}</span>` +
       (marcas ? `<span class="miniatura-usos">${marcas}</span>` : '');
-    const cuerpo = f.ver && f.url !== null
-      ? `<button type="button" class="miniatura-ver"${datosDeAccion(f.ver, f.n)} ` +
-        `aria-label="${escapar(f.ver.etiqueta ?? `Ver la foto ${cual}`)}">${contenido}</button>`
-      : contenido;
-    const sacar = f.sacar
-      ? `<button type="button" class="miniatura-sacar"${datosDeAccion(f.sacar, f.n)} ` +
-        `aria-label="${escapar(f.sacar.etiqueta ?? `Sacar la foto ${cual}`)}">${ICO.cerrar}</button>`
-      : '';
-    return `<div class="miniatura">${cuerpo}${sacar}</div>`;
+    return '<div class="miniatura">' +
+      `<button type="button" class="miniatura-ver" data-accion="${escapar(f.ver.accion)}" data-n="${f.n}" ` +
+      `aria-label="${escapar(f.ver.etiqueta)}">${contenido}</button></div>`;
   }).join('');
-  // Los dos botones van en su propia fila, abajo: con las miniaturas al lado
-  // se mezclaban con las fotos y costaba ver dónde terminaba una cosa y
-  // empezaba la otra.
-  const botones = agregar
-    ? '<div class="fotos-botones">' +
-      // *Cámara* sólo donde hay una de mano: el `capture` no hace nada en una
-      // computadora —abre el mismo selector que *Galería*— y sacar una foto con
-      // la webcam de la Mac no es algo que se use. Lo esconde el CSS, por
-      // puntero, que es lo mismo que decide las flechas del carrusel.
-      `<label class="btn sec miniatura-agregar solo-tactil">${ICO.camara}Cámara` +
-      '<input type="file" accept="image/*" capture="environment" data-fotos hidden></label>' +
-      `<label class="btn sec miniatura-agregar">${ICO.galeria}Galería` +
-      '<input type="file" accept="image/*" multiple data-fotos hidden></label>' +
-      (porUrl
-        ? '<button type="button" class="btn sec miniatura-agregar" data-accion="abrir-foto-url">' +
-          `${ICO.link}Por URL</button>`
-        : '') +
-      '</div>'
-    : '';
+  // Los botones van en su propia fila, abajo: con las miniaturas al lado se
+  // mezclaban con las fotos y costaba ver dónde terminaba una cosa y empezaba
+  // la otra.
+  const botones = '<div class="fotos-botones">' +
+    // *Cámara* sólo donde hay una de mano: el `capture` no hace nada en una
+    // computadora —abre el mismo selector que *Galería*— y sacar una foto con
+    // la webcam de la Mac no es algo que se use. Lo esconde el CSS, por
+    // puntero, que es lo mismo que decide las flechas del carrusel.
+    `<label class="btn sec miniatura-agregar solo-tactil">${ICO.camara}Cámara` +
+    '<input type="file" accept="image/*" capture="environment" data-fotos hidden></label>' +
+    `<label class="btn sec miniatura-agregar">${ICO.galeria}Galería` +
+    '<input type="file" accept="image/*" multiple data-fotos hidden></label>' +
+    '<button type="button" class="btn sec miniatura-agregar" data-accion="abrir-foto-url">' +
+    `${ICO.link}Por URL</button>` +
+    '</div>';
   return `<div class="fotos-campo"><div class="miniaturas">${miniaturas}</div>${botones}</div>`;
 }
 

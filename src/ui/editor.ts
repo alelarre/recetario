@@ -145,9 +145,7 @@ export const filaDeFotosEditor = (receta: Receta): string => {
       url: f.url, n: f.n,
       uso: usos.get(f.n) ?? { portada: false, enElTexto: false },
       ver: { accion: 'acciones-foto', etiqueta: `Qué hacer con la foto ${f.n}` }
-    })),
-    agregar: true,
-    porUrl: true
+    }))
   });
 };
 
