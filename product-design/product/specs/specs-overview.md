@@ -1,9 +1,5 @@
 # Recetario — Índice de Épicas
 
-**Versión:** 3.1
-**Fecha:** 2026-09-18
-**Estado:** Vigente
-
 ---
 
 ## Sobre este documento

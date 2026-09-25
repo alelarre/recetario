@@ -166,7 +166,8 @@ ingrediente y al menos un paso. Esa condición no filtra, no corrige y no escrib
 nada por su cuenta. Como la categoría es parte de la condición, **una receta
 sin categoría es siempre un borrador**.
 
-Un `.md` escrito afuera en `_sin-categoria/` sin el tag no cumple esa regla, y
+Un `.md` escrito afuera sin categoría —en `_sin-categoria/` o suelto en la
+carpeta base— y sin el tag no cumple esa regla, y
 **no se encuentra de ninguna forma**: no está en Borradores ni en ninguna otra
 lista, ni en la búsqueda, ni en el conteo de tags. Sólo lo nombra el aviso de
 *Ajustes → Avisos* después de reindexar (§4.7), con el nombre del archivo.
@@ -599,7 +600,7 @@ Seis fichas, en este orden: lo de la cuenta y el índice primero, lo raro al fin
 | **Recetario** | La carpeta base en uso con *Cambiar carpeta*, y cuántas categorías hay con el link a *Categorías* |
 | **Índice** | Cuándo fue el último reindexado y *Reindexar* |
 | **Archivos locales** | *Borrar datos locales*: descarta la copia del índice y las imágenes guardadas, y recarga |
-| **Avisos** | Lo que no interrumpe: los `.md` ignorados por no tener título, con su nombre; las recetas de `_sin-categoria/` sin el tag `borrador`, con su nombre, que el reindexado no toca; y si hay más de una planilla `_indice` o más de un `_plan.md` |
+| **Avisos** | Lo que no interrumpe: los `.md` ignorados por no tener título, con su nombre; las recetas sin categoría —en `_sin-categoria/` o sueltas en la carpeta base— sin el tag `borrador`, con su nombre, que el reindexado no toca; y si hay más de una planilla `_indice` o más de un `_plan.md` |
 | **Registro de actividad** | Lo que pasó al abrir: cuándo, la fecha de `_indice`, si la copia local coincidió, cuántas recetas y categorías hay, y si se reindexó y por qué |
 
 El reindexado corre con el velo y su barra (`E05-Cimientos.md` R8): mientras

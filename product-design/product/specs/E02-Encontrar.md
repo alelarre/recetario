@@ -1,6 +1,5 @@
 # E02 — Encontrar
 
-**Versión:** 3.4 · **Fecha:** 2026-09-24 · **Estado:** Final — Hito 11
 **Jobs:** J1, J4, J5 · **Prioridad:** alta · **Flujos:** F3, F4, F5
 
 **Reglas transversales:** ver `E05-Cimientos.md` §Reglas.
@@ -62,7 +61,7 @@ de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 
 - [ ] **Una receta con `borrador` no aparece en ninguna otra lista:** ni en la categoría, ni en las listas por tag, ni en los resultados —en ninguno de sus tres grupos, ni como motivo—, ni en el Menú diario, ni en *Agregar al plan* —su búsqueda ni sus categorías—.
 - [ ] **No cuenta** en el número de los tiles del Recetario.
-- [ ] **Una receta de `_sin-categoria/` sin el tag `borrador` no se encuentra de ninguna forma:** no está en Borradores ni en ninguna otra lista, ni en la búsqueda, ni en el conteo de tags. Sólo la nombra el aviso de Ajustes al reindexar (`E05-Cimientos.md` C05.3.1).
+- [ ] **Una receta sin categoría —en `_sin-categoria/` o suelta en la carpeta base— sin el tag `borrador` no se encuentra de ninguna forma:** no está en Borradores ni en ninguna otra lista, ni en la búsqueda, ni en el conteo de tags. Sólo la nombra el aviso de Ajustes al reindexar (`E05-Cimientos.md` C05.3.1).
 - [ ] Sí aparece en Borradores (C02.1.3), en el contador del menú, abierta por su link, y en un plan que ya la tenía de antes (`E06-Planificar.md` C06.1.2).
 
 ### F02.2 — Búsqueda por nombre

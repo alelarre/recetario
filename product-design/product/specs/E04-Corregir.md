@@ -1,6 +1,5 @@
 # E04 — Corregir
 
-**Versión:** 3.4 · **Fecha:** 2026-09-24 · **Estado:** Final — Hito 11
 **Job:** J7 · **Prioridad:** baja · **Flujo:** F7
 
 **Reglas transversales:** ver `E05-Cimientos.md` §Reglas.

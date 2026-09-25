@@ -1,6 +1,5 @@
 # E01 — Captura y Borradores
 
-**Versión:** 4.0 · **Fecha:** 2026-09-24 · **Estado:** Final — Hito 11
 **Jobs:** J2, J3 · **Prioridad:** la más alta · **Flujos:** F1, F2
 
 **Reglas transversales:** ver `E05-Cimientos.md` §Reglas. Acá se anota solo lo

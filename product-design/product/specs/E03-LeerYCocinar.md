@@ -1,6 +1,5 @@
 # E03 — Leer y cocinar
 
-**Versión:** 3.3 · **Fecha:** 2026-09-24 · **Estado:** Final — Hito 11
 **Job:** J6 · **Prioridad:** media · **Flujo:** F6
 
 **Reglas transversales:** ver `E05-Cimientos.md` §Reglas.
@@ -55,7 +54,7 @@ receta entera.
 - [ ] **Los tres dicen qué son al apoyar el mouse**: *Marcar como favorita* —o *Sacar de favoritos*, según cómo esté—, *Compartir* y *Ver el archivo en Drive*. En el teléfono no hay dónde apoyar el dedo: ahí lo que los nombra es el lector de pantalla.
 - [ ] El **link al `.md` en Drive** va con el logo de Drive y la etiqueta `.md`, que abre en otra pestaña. Es un dato al margen y no un botón: sin caja y más chico que los controles.
 - [ ] El link sólo aparece si la receta está en el índice: sin fila no se conoce su id de archivo.
-- [ ] **La estrella de favorito** vive en el encabezado, a la izquierda de compartir. Un toque pone el tag `favorito` y otro lo saca; mientras se escribe en Drive se llena de izquierda a derecha en loop, y el resultado se dibuja recién con la respuesta —si falla, vuelve como estaba y avisa arriba de la receta, con *Reintentar*. Mientras escribe no acepta otro toque.
+- [ ] **La estrella de favorito** vive en el encabezado, a la izquierda de compartir. Un toque pone el tag `favorito` y otro lo saca; mientras se escribe en Drive se llena de izquierda a derecha en loop, y el resultado se dibuja recién con la respuesta —si falla, vuelve como estaba y avisa arriba de la receta, sin *Reintentar*: la estrella sigue a la vista y es el reintento (`E05-Cimientos.md` R1). Mientras escribe no acepta otro toque.
 - [ ] **El ícono de compartir** abre la ficha de compartir (C03.7.1).
 
 #### C03.1.3 — Estados de la receta *(J6)*

@@ -484,7 +484,7 @@ archivo sea la única fuente de verdad.
     no, al abrir      → aviso: «No se pudo conectar con Drive. Sin esa lectura no hay con qué dibujar.», con Reintentar.
                         La copia local del índice no se usa: la consulta a Drive va antes.
     no, al guardar    → aviso: no se pudo guardar. El texto queda en pantalla.
-    no, al marcar favorita → aviso: no se pudo marcar, con Reintentar. La estrella queda como estaba.
+    no, al marcar favorita → aviso: no se pudo marcar. La estrella queda como estaba y es el reintento.
 ```
 
 **Sin reintentos silenciosos, sin cola, sin "se guardará más tarde".** El
@@ -675,7 +675,8 @@ ni columna nueva.
 
 ```
   ✗ no hay red
-  ▸ aviso: «No se pudo marcar como favorita. Revisá la conexión.», con Reintentar
+  ▸ aviso: «No se pudo marcar como favorita. Revisá la conexión.», sin Reintentar:
+    la estrella sigue a la vista y es el reintento
   ▸ la estrella queda como estaba
 ```
 
@@ -730,7 +731,7 @@ Menú → Ajustes → ficha Recetario → Categorías
                      ▸ renombrar renombra la carpeta; las recetas no se tocan
       toco una → Borrar categoría
                      ▸ confirmación: «Sus N recetas pasan a Borradores, sin categoría.»
-                     → Borrar
+                     → Borrar <categoría>
                      ▸ las recetas pasan a _sin-categoria/ con el tag borrador
                      ▸ la carpeta vacía y su foto propia van a la papelera de Drive
 ```

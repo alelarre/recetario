@@ -1,6 +1,5 @@
 # E05 — Cimientos
 
-**Versión:** 4.1 · **Fecha:** 2026-09-24 · **Estado:** Vigente
 **Job:** J8 y transversal · **Prioridad:** alta · **Flujos:** F8, F9, F10, F11, F12
 
 ---
@@ -129,7 +128,7 @@ El velo tiene tres formas, y cada operación usa una sola:
 
 - [ ] En lugar de la olla, una tarjeta centrada con el texto —«Reindexando…» o «Preparando la carpeta…»— y la barra de C05.5.2. La barra va adentro del velo, nunca en la pantalla de atrás.
 - [ ] Bloquea igual que las otras dos: mientras corre no se navega ni se toca nada.
-- [ ] **Si falla**, el velo se va y la pantalla desde la que se lanzó muestra el aviso con **Reintentar**: *«No se pudo reindexar.»* o *«No se pudo preparar la carpeta.»*.
+- [ ] **Si falla**, el velo se va y la pantalla desde la que se lanzó muestra el aviso: *«No se pudo reindexar.»* o *«No se pudo preparar la carpeta.»*. En Ajustes no lleva *Reintentar*: el botón **Reindexar** sigue a la vista y es el reintento (R1). Donde no queda a la vista el control que falló, el aviso lleva **Reintentar**.
 - [ ] Preparada la carpeta, la app se recarga con el velo todavía puesto.
 
 **Lo que se espera tiene un corte.** Toda lectura de Drive o de Sheets se corta a
@@ -278,7 +277,7 @@ por el usuario y además podría cambiar solo, sin que nadie tocara nada.
 - [ ] Una receta es un borrador si su lista `tags` tiene `borrador`; si no lo tiene, está terminada.
 - [ ] Se escribe siempre en la forma canónica, en minúscula. Se reconocen además sus formas alternativas como el mismo tag (C05.1.4).
 - [ ] Es el único de los cuatro tags especiales que **no** se pone y saca libremente: sólo se puede sacar cuando la receta cumple C05.3.3, y una receta nueva nace con el tag puesto (`E04-Corregir.md` C04.3b.1).
-- [ ] **Una receta sin categoría es siempre un borrador:** la categoría es parte de C05.3.3. Un `.md` escrito afuera en `_sin-categoria/` sin el tag **no se encuentra de ninguna forma**: ni en la búsqueda, ni en las listas —tampoco en Borradores—, ni en el conteo de tags. Sólo lo nombra el aviso de Ajustes al reindexar (C05.9b.3). El editor no deja guardar una receta sin `borrador` mientras no tenga categoría.
+- [ ] **Una receta sin categoría es siempre un borrador:** la categoría es parte de C05.3.3. Un `.md` escrito afuera sin categoría —en `_sin-categoria/` o suelto en la carpeta base— y sin el tag **no se encuentra de ninguna forma**: ni en la búsqueda, ni en las listas —tampoco en Borradores—, ni en el conteo de tags. Sólo lo nombra el aviso de Ajustes al reindexar (C05.9b.3). El editor no deja guardar una receta sin `borrador` mientras no tenga categoría.
 - [ ] `completa` es una clave desconocida como cualquier otra (C05.1.1): la app no la lee ni la borra, y la conserva tal cual si venía en el `.md`.
 
 #### C05.3.2 — El índice no tiene columna propia *(J1, J8)*
@@ -387,7 +386,7 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 - [ ] Si a la planilla le falta la hoja `categorias`, la crea.
 - [ ] Al terminar, el índice no conserva ninguna fila anterior: lo que no está en Drive, no está.
 - [ ] Los archivos ignorados por no tener título se cuentan y quedan visibles en Ajustes.
-- [ ] **Una receta de `_sin-categoria/` sin el tag `borrador`**, en ninguna de sus formas (C05.1.4), se nombra en Ajustes al terminar, como los ignorados. No se hace nada más: no se mueve y no se le pone el tag. Entra al índice, pero no se muestra en ninguna lista ni búsqueda (C05.3.1).
+- [ ] **Una receta sin categoría —en `_sin-categoria/` o suelta en la carpeta base— sin el tag `borrador`**, en ninguna de sus formas (C05.1.4), se nombra en Ajustes al terminar, como los ignorados. No se hace nada más: no se mueve y no se le pone el tag. Entra al índice, pero no se muestra en ninguna lista ni búsqueda (C05.3.1).
 - [ ] La fecha del último reindexado queda registrada en `meta` y se muestra en Ajustes.
 
 #### C05.5.2 — El reindexado muestra progreso y no se cancela *(J8)*
@@ -396,7 +395,7 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 - [ ] **Nunca hay un indicador indeterminado.** Leer los `.md` es una etapa entre otras: con una carpeta recién creada no hay ninguno que leer y el rato se lo llevan las demás, que un spinner no distingue de colgado.
 - [ ] **No hay botón de cancelar.** Una vez empezada, termina.
 - [ ] Corre bajo el velo con progreso (R8): la barra va en una tarjeta sobre la pantalla, y mientras dura no se navega ni se toca nada.
-- [ ] Si falla a mitad, el velo se va y la pantalla desde la que se lanzó avisa *«No se pudo reindexar.»* con **Reintentar** (R1); el índice queda como haya quedado y se repara volviendo a reindexar.
+- [ ] Si falla a mitad, el velo se va y la pantalla desde la que se lanzó avisa *«No se pudo reindexar.»*; desde Ajustes, el reintento es el mismo botón **Reindexar** (R1); el índice queda como haya quedado y se repara volviendo a reindexar.
 
 #### C05.5.3 — Cuándo se reindexa solo *(J8)*
 
@@ -532,7 +531,7 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 
 - [ ] Lista los avisos sin acción acumulados (C05.9.2).
 - [ ] Si hay más de una planilla `_indice` en Drive, dice cuántas y cuál se usa: la modificada más recientemente. Lo mismo con más de un `_plan.md` (`E06-Planificar.md` C06.3.2).
-- [ ] Después del reindexado, los `.md` ignorados por no tener título y, aparte, las recetas de `_sin-categoria/` sin la marca de borrador (C05.5.1), con el nombre de cada archivo: *«En Sin categoría hay 2 recetas sin la marca de borrador.»*
+- [ ] Después del reindexado, los `.md` ignorados por no tener título y, aparte, las recetas sin categoría —en `_sin-categoria/` o sueltas en la carpeta base— sin la marca de borrador (C05.5.1), con el nombre de cada archivo: *«En Sin categoría hay 2 recetas sin la marca de borrador.»*
 - [ ] Sin avisos, la sección dice «No hay nada para avisar.», sin ilustración.
 
 #### C05.9b.4 — Recetario: la carpeta y las categorías *(transversal)*
@@ -544,7 +543,7 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 - [ ] Una categoría nueva nace con el primer color de la paleta que nadie usa.
 - [ ] Un nombre vacío, que empiece con `_`, repetido o igual a **«Sin categoría»** —sin mirar tildes ni mayúsculas en los dos casos— no se acepta, y se dice por qué. «Sin categoría» es el nombre de lo que no tiene categoría (C05.4.4).
 - [ ] **Borrar una categoría no borra sus recetas:** pasan a `_sin-categoria/` con el tag `borrador` puesto, para que quede a la vista que hay que elegirles otra categoría, y sus filas del índice se actualizan. Sus fotos quedan en `_fotos/` como estaban: el `.md` las nombra por su id. La carpeta vacía, su fila de `categorias` y su foto propia van a la papelera de Drive.
-- [ ] Con recetas, la confirmación lo advierte con la cantidad: *«Sus N recetas pasan a Borradores, sin categoría.»*
+- [ ] Con recetas, la confirmación lo advierte con la cantidad: *«Sus N recetas pasan a Borradores, sin categoría.»*, y el botón dice **Borrar <nombre de la categoría>**.
 
 #### C05.9b.5 — Archivos locales *(J8)*
 

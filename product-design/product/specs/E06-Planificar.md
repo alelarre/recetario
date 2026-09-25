@@ -1,6 +1,5 @@
 # E06 — Planificar
 
-**Versión:** 4.0 · **Fecha:** 2026-09-18 · **Estado:** Final
 **Job:** J9 · **Prioridad:** Baja · **Flujo:** F13
 
 **Reglas transversales:** ver `E05-Cimientos.md` §Reglas. Acá se anota solo lo
