@@ -40,3 +40,10 @@ describe('la foto de la muestra de una categoría, que es un cuadro de foto aden
     expect(regla).toMatch(/background:\s*var\(--surface-alta\)/);
   });
 });
+
+describe('la ayuda de la ficha Fotos', () => {
+  it('es prosa: va en chico, no en micro', () => {
+    const regla = TOKENS.match(/^\.fotos-ayuda\s*\{([^}]*)\}/m)?.[1] ?? '';
+    expect(regla).toContain('font-size: var(--txt-chico)');
+  });
+});

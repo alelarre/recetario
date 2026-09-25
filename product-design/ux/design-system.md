@@ -1235,8 +1235,8 @@ sólo en la ficha *Fotos* de una receta: el mismo badge de `--velo` al 75 % y
 13 px en `--fg` —los dos si la foto es las dos cosas, ninguno si no se usa—.
 Van arriba a la derecha porque es la esquina que queda libre.
 
-**El epígrafe de la ficha *Fotos*** va debajo de la fila, en *micro* `--fg-3`,
-con `--e-3` arriba y un interlineado de 1,8. Es **un párrafo**, no una fila de
+**El epígrafe de la ficha *Fotos*** va debajo de la fila, en *chico* `--fg-3`
+—es prosa, y *micro* nunca lo es (§3.2)—, con `--e-3` arriba y un interlineado de 1,8. Es **un párrafo**, no una fila de
 flex: los íconos van en línea con el texto —`inline-block` de 1,15 em con
 `vertical-align: -0.22em`—, así el párrafo corta como cualquier texto y la
 última línea no queda ni estirada ni partida a la mitad de una palabra.
