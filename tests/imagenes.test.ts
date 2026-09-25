@@ -21,10 +21,7 @@ function cachesFalso() {
   return { almacen, cachés };
 }
 
-function armar({ faltan = [] as string[], conexion }: {
-  faltan?: string[];
-  conexion?: () => { saveData?: boolean } | undefined;
-} = {}) {
+function armar({ faltan = [] as string[] }: { faltan?: string[] } = {}) {
   const { almacen, cachés } = cachesFalso();
   const pedidas: string[] = [];
   const revocadas: string[] = [];
@@ -37,14 +34,10 @@ function armar({ faltan = [] as string[], conexion }: {
     },
     caches: () => almacen,
     crearUrl: () => `blob:${++n}`,
-    revocarUrl: (u: string) => { revocadas.push(u); },
-    ...(conexion ? { conexion } : {})
+    revocarUrl: (u: string) => { revocadas.push(u); }
   });
   return { imagenes, cachés, pedidas, revocadas, almacen };
 }
-
-/** Deja correr las tareas ya encoladas antes de seguir. */
-const tic = (): Promise<void> => new Promise(resolver => setTimeout(resolver, 0));
 
 describe('mostrar una foto de Drive', () => {
   it('la primera vez la pide a Drive y la guarda en el caché por id', async () => {
@@ -233,87 +226,5 @@ describe('olvidarImagen', () => {
       crearUrl: () => 'blob:1', revocarUrl: () => {}
     });
     await expect(imagenes.olvidarImagen('f1')).resolves.toBeUndefined();
-  });
-});
-
-describe('precargar', () => {
-  it('pide sólo lo que falta: lo que ya está en el caché no se vuelve a pedir', async () => {
-    const { imagenes, pedidas } = armar();
-    await imagenes.guardarImagen('f1', new Blob(['x']));
-    await imagenes.precargar(['f1', 'f2', 'f3']);
-    expect(pedidas.sort()).toEqual(['f2', 'f3']);
-  });
-
-  it('de a dos por default: nunca más de dos pedidos en vuelo', async () => {
-    const enVuelo: string[] = [];
-    let maxEnVuelo = 0;
-    const resolutores: Array<() => void> = [];
-    const almacen = cachesFalso().almacen;
-    const imagenes = crearImagenes({
-      leerBlob: (id: string) => {
-        enVuelo.push(id);
-        maxEnVuelo = Math.max(maxEnVuelo, enVuelo.length);
-        return new Promise<Blob>(resolver => {
-          resolutores.push(() => { enVuelo.splice(enVuelo.indexOf(id), 1); resolver(new Blob([id])); });
-        });
-      },
-      caches: () => almacen
-    });
-
-    const p = imagenes.precargar(['f1', 'f2', 'f3', 'f4']);
-    await tic();
-    expect(enVuelo.sort()).toEqual(['f1', 'f2']);
-
-    resolutores.shift()!();
-    await tic();
-    expect(enVuelo.length).toBe(2);
-
-    while (resolutores.length) { resolutores.shift()!(); await tic(); }
-    await p;
-    expect(maxEnVuelo).toBeLessThanOrEqual(2);
-  });
-
-  it('un tope explícito cambia cuántos pedidos van en vuelo', async () => {
-    const enVuelo: string[] = [];
-    let maxEnVuelo = 0;
-    const resolutores: Array<() => void> = [];
-    const almacen = cachesFalso().almacen;
-    const imagenes = crearImagenes({
-      leerBlob: (id: string) => {
-        enVuelo.push(id);
-        maxEnVuelo = Math.max(maxEnVuelo, enVuelo.length);
-        return new Promise<Blob>(resolver => {
-          resolutores.push(() => { enVuelo.splice(enVuelo.indexOf(id), 1); resolver(new Blob([id])); });
-        });
-      },
-      caches: () => almacen
-    });
-
-    const p = imagenes.precargar(['f1', 'f2', 'f3'], { tope: 1 });
-    await tic();
-    expect(enVuelo).toEqual(['f1']);
-    while (resolutores.length) { resolutores.shift()!(); await tic(); }
-    await p;
-    expect(maxEnVuelo).toBe(1);
-  });
-
-  it('un error en una foto —red o 404— no corta las demás ni rechaza la promesa', async () => {
-    const { imagenes, pedidas } = armar({ faltan: ['f1'] });
-    await expect(imagenes.precargar(['f1', 'f2'])).resolves.toBeUndefined();
-    expect(pedidas.sort()).toEqual(['f1', 'f2']);
-  });
-
-  it('con saveData no se precarga nada', async () => {
-    const { imagenes, pedidas } = armar({ conexion: () => ({ saveData: true }) });
-    await imagenes.precargar(['f1', 'f2']);
-    expect(pedidas).toEqual([]);
-  });
-
-  it('sin Cache Storage no rompe', async () => {
-    const imagenes = crearImagenes({
-      leerBlob: async (id: string) => new Blob([id]), caches: () => undefined,
-      crearUrl: () => 'blob:1', revocarUrl: () => {}
-    });
-    await expect(imagenes.precargar(['f1'])).resolves.toBeUndefined();
   });
 });

@@ -135,8 +135,6 @@ const estadoInicial = () => ({
   cambiosDeFotos: [] as (CambiosDeFotos | null)[],
   /** Las recetas escritas, con su depósito: lo que quedaría en el `.md`. */
   depositos: [] as { n: number; url: string }[][],
-  /** Los ids que se pidieron precargar, por tanda. */
-  precargados: [] as string[][],
   /** Los ids de las categorías borradas. */
   categoriasBorradas: [] as string[],
   /** Los ids de las recetas que se mandaron a la papelera. */
@@ -276,7 +274,6 @@ vi.mock('../src/imagenes.js', async original => ({
     apartarImagenes: () => () => { estado.orden.push('soltar-imagenes'); },
     guardarImagen: async () => {},
     olvidarImagen: async () => {},
-    precargar: async (ids: string[]) => { estado.precargados.push(ids); },
     fotosCompartidas: async (n: number) => {
       if (estado.frenoCompartidas) await estado.frenoCompartidas;
       if (estado.fallanCompartidas) throw new Error('caché');
@@ -4519,26 +4516,26 @@ describe('main.ts: las rutas', () => {
       expect(imgs.map(i => i.atributos['src'])).toEqual(['blob:f1', 'blob:f2', 'blob:f3', 'blob:f4']);
     });
 
-    it('dibujado el home se precargan las fotos del índice y de las categorías', async () => {
-      const original = storeFake.entradas;
-      storeFake.entradas = () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', foto: linkDeFoto('f9') })];
-      const conFoto = storeFake.categorias;
-      storeFake.categorias = () => [{ id: 'c1', nombre: 'Carnes', color: 'carnes', foto: 'drive:cf1' }];
-      try {
-        const { abrir } = await montar();
-        await abrir('#/');
-        expect(estado.precargados[0]).toEqual(['f9', 'cf1']);
-      } finally {
-        storeFake.entradas = original;
-        storeFake.categorias = conFoto;
-      }
+    it('dibujado el home no se pide ninguna foto que no esté en pantalla', async () => {
+      const { abrir } = await montar();
+      await abrir('#/');
+      await esperar();
+      expect(estado.imagenesPedidas).toEqual([]);
     });
 
-    it('al abrir una receta se precarga su depósito entero', async () => {
-      estado.md = MD_CON_FOTOS;
-      const { abrir } = await montar();
+    it('al abrir una receta sólo se piden las fotos que la pantalla dejó dibujadas, no el depósito entero', async () => {
+      // El depósito tiene dos fotos de Drive, f9 y f8, pero sólo f9 quedó
+      // dibujada: la pantalla no pide de más porque estén las dos en el `.md`.
+      estado.md = [
+        '---', 'titulo: Milanesas', 'foto: foto:1', '---', '',
+        '## Preparación', '', '1. Freír.', '',
+        '## Fotos', '', `- 1: ${linkDeFoto('f9')}`, `- 2: ${linkDeFoto('f8')}`, ''
+      ].join('\n');
+      const { abrir, imgs } = await montar();
+      imgs.push(imgFalsa({ drive: 'f9' }));
       await abrir('#/r/f1');
-      expect(estado.precargados.at(-1)).toEqual(['f9']);
+      await esperar();
+      expect(estado.imagenesPedidas).toEqual(['f9']);
     });
 
     it('en una categoría, la foto subida se ve en la muestra y se manda al guardar', async () => {

@@ -158,11 +158,12 @@ function mirarLaConfirmacion(selector: string): void {
 
 /**
  * Las fotos que la pantalla dejó pedidas. Las del editor salen del blob que
- * está en memoria; las de Drive, del caché o de la red. Una de Drive que ya no
- * está pasa al recuadro de aviso si está en un cuadro de foto, y no se dibuja
- * en ningún otro lado.
- * Las de Drive van de a dos, como la precarga: de
- * a una, una lista entera se completa de arriba a abajo y se ve llegar.
+ * está en memoria; las de Drive, del caché o de la red —recién cuando la
+ * pantalla las muestra, nunca antes. Una de Drive que ya no está pasa al
+ * recuadro de aviso si está en un cuadro de foto, y no se dibuja en ningún
+ * otro lado.
+ * Las de Drive van de a dos: de a una, una lista entera se completa de
+ * arriba a abajo y se ve llegar.
  */
 async function completarFotos(): Promise<void> {
   for (const img of document.querySelectorAll<HTMLElement>('#app img[data-n]:not([src])')) {
@@ -359,10 +360,6 @@ async function recetaDePantalla(id: string): Promise<{ entrada: Entrada | null; 
     const enMemoria = recetasLeidas.get(id);
     const receta = enMemoria ?? await velo.esperar(() => leerReceta(id));
     recetaLeida = { id, entrada: store.entradas().find(e => e.id_archivo === id) ?? null, receta };
-    // El depósito entero, no sólo lo que está a la vista: así el visor
-    // desliza sin esperar.
-    const ids = idsDeDrive(receta.fotos.map(f => f.url));
-    if (!enMemoria && ids.length) void imagenes.precargar(ids);
   }
   return recetaLeida;
 }
@@ -371,28 +368,6 @@ async function recetaDePantalla(id: string): Promise<{ entrada: Entrada | null; 
 async function planDePantalla(): Promise<Plan> {
   if (!planLeido) planLeido = await velo.esperar(() => store.plan());
   return planLeido;
-}
-
-/** Los ids de Drive de estas URLs; las externas quedan afuera. */
-const idsDeDrive = (urls: readonly string[]): string[] =>
-  urls.flatMap(url => { const id = idDeDrive(url); return id ? [id] : []; });
-
-/** Ya se precargaron las fotos del home: es una sola vez por sesión. */
-let precargado = false;
-
-/**
- * Dibujado el home, en segundo plano: las cabeceras de Drive del índice y las
- * fotos propias de las categorías. Lo que ya está en el caché no se
- * vuelve a pedir, y con `saveData` no se pide nada.
- */
-function precargarElHome(): void {
-  if (precargado) return;
-  precargado = true;
-  const deLasRecetas = idsDeDrive(store.entradas().map(e => e.foto));
-  const deLasCategorias = store.categorias()
-    .flatMap(c => c.foto.startsWith('drive:') ? [c.foto.slice('drive:'.length)] : []);
-  const ids = [...deLasRecetas, ...deLasCategorias];
-  if (ids.length) void imagenes.precargar(ids);
 }
 
 /** Deja la categoría elegida en *Agregar al plan*: lo que se lista cambia, y vuelve al primer tramo. */
@@ -897,7 +872,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
         categorias: store.categoriasConConteo(), borradores: cuantosBorradores(),
         tags: store.tagsDe('recetas'), ...menuDe('recetario')
       }));
-      return precargarElHome();
+      return;
 
     case 'categoria': {
       const nombre = ruta.params['nombre'] ?? '';

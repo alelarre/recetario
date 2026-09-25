@@ -230,7 +230,7 @@ pescados usa `Anchoítas — 18-20 medianas` y el recetario original usa
 - [ ] **La app sólo manda a la papelera fotos que están en `_fotos/`.** Un link de Drive pegado a mano que apunta a otra carpeta se saca del depósito y el archivo no se toca.
 - [ ] **Una foto de Drive se muestra pidiéndola con el token** y queda en Cache Storage por id de archivo, sin vencimiento: un id de Drive no cambia de contenido. *Borrar datos locales* y *Salir* borran ese caché.
 - [ ] **La pantalla no espera las fotos:** una de Drive se dibuja como un recuadro del mismo tamaño y se completa cuando llega. Abrir una receta no tarda más por tenerlas.
-- [ ] **Se cachea todo lo posible:** al arrancar se pide almacenamiento persistente, una vez y sin mirar el resultado; dibujado el Recetario, se precargan en segundo plano las cabeceras de Drive del índice y las fotos propias de las categorías que falten, de a dos; y al abrir una receta se pide el depósito entero, no sólo lo que está a la vista. Con `saveData` no se precarga nada.
+- [ ] **Se cachea todo lo posible, pero nada por adelantado:** al arrancar se pide almacenamiento persistente, una vez y sin mirar el resultado. Ninguna foto se baja hasta que aparece en pantalla; recién ahí se pide, de a dos, y queda en Cache Storage.
 - [ ] Una foto recién subida entra al caché con el blob que ya está en memoria, y una que va a la papelera sale del caché.
 
 **Edge cases:** un `.md` escrito por fuera con un `## Fotos` mal formado → se

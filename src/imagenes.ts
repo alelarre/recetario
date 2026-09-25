@@ -34,8 +34,6 @@ export interface DependenciasImagenes {
   caches?: () => AlmacenDeCaches | undefined;
   crearUrl?: (blob: Blob) => string;
   revocarUrl?: (url: string) => void;
-  /** El estado de la conexión para la precarga; sin `navigator.connection` —Node, o un navegador que no la expone— no frena nada. */
-  conexion?: () => { saveData?: boolean } | undefined;
 }
 
 const noEsta = (e: unknown): boolean =>
@@ -47,8 +45,8 @@ const claveImagen = (id: string): string => `imagen/${id}`;
 /**
  * Corre `tarea` sobre cada cosa con a lo sumo `tope` en vuelo. A diferencia de
  * la reconstrucción del índice, un error de una foto no corta a las demás:
- * nadie espera el resultado de una sola. Lo usan la precarga y `main.ts`, para
- * completar las imágenes que una pantalla dejó pedidas.
+ * nadie espera el resultado de una sola. Lo usa `main.ts` para completar las
+ * imágenes que una pantalla dejó pedidas.
  */
 export async function conTope<T>(cosas: readonly T[], tope: number, tarea: (cosa: T) => Promise<void>): Promise<void> {
   let siguiente = 0;
@@ -65,11 +63,7 @@ export function crearImagenes({
   leerBlob,
   caches = () => (typeof globalThis.caches === 'undefined' ? undefined : globalThis.caches),
   crearUrl = b => URL.createObjectURL(b),
-  revocarUrl = u => URL.revokeObjectURL(u),
-  conexion = () =>
-    typeof navigator === 'undefined'
-      ? undefined
-      : (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
+  revocarUrl = u => URL.revokeObjectURL(u)
 }: DependenciasImagenes) {
   /** Los object URL de la pantalla, por id: la misma foto no se vuelve a leer al redibujar. */
   const urls = new Map<string, string>();
@@ -88,8 +82,8 @@ export function crearImagenes({
   const enVuelo = new Map<string, Promise<Blob | null>>();
 
   /** El pedido en sí: del caché o de Drive, y de vuelta al caché; `null` si ya no está en Drive. */
-  async function leerImagen(id: string, cacheDe: () => Promise<CacheMinimo | undefined>): Promise<Blob | null> {
-    const cache = await cacheDe();
+  async function leerImagen(id: string): Promise<Blob | null> {
+    const cache = await abrir(CACHE_IMAGENES);
     const clave = claveImagen(id);
     const guardada = await cache?.match(clave);
     if (guardada) return guardada.blob();
@@ -108,19 +102,18 @@ export function crearImagenes({
   /**
    * El pedido de una foto, uno solo por id mientras dure: el que llega segundo
    * espera el mismo. Termine bien o mal, se olvida, así que un error no deja
-   * la foto pegada. `cacheDe` es una función para que la precarga reuse el
-   * caché que ya abrió.
+   * la foto pegada.
    */
-  function pedir(id: string, cacheDe: () => Promise<CacheMinimo | undefined>): Promise<Blob | null> {
+  function pedir(id: string): Promise<Blob | null> {
     const ya = enVuelo.get(id);
     if (ya) return ya;
-    const pedido = leerImagen(id, cacheDe).finally(() => { enVuelo.delete(id); });
+    const pedido = leerImagen(id).finally(() => { enVuelo.delete(id); });
     enVuelo.set(id, pedido);
     return pedido;
   }
 
   /** La imagen, del caché o de Drive; `null` si ya no está en Drive. */
-  const imagenDe = (id: string): Promise<Blob | null> => pedir(id, () => abrir(CACHE_IMAGENES));
+  const imagenDe = pedir;
 
   /**
    * Los object URL que se están creando, por id. Dos pasadas que completan
@@ -197,24 +190,6 @@ export function crearImagenes({
     }
   }
 
-  /**
-   * Pide de a `tope` las fotos que todavía no están en el caché, en segundo
-   * plano. Con `saveData` no pide nada; el error de una foto no corta a las
-   * demás ni rechaza esta promesa.
-   */
-  async function precargar(ids: string[], { tope = 2 }: { tope?: number } = {}): Promise<void> {
-    if (conexion()?.saveData) return;
-    // El caché se abre una sola vez para toda la tanda, también para bajar
-    // cada foto: abrirlo por foto es trabajo de más en el peor momento.
-    const cache = await abrir(CACHE_IMAGENES);
-    const elCache = async () => cache;
-    const faltan: string[] = [];
-    for (const id of ids) {
-      if (!(await cache?.match(claveImagen(id)))) faltan.push(id);
-    }
-    await conTope(faltan, tope, async id => { await pedir(id, elCache); });
-  }
-
   /** Las fotos que dejó el service worker, en orden. Las que falten no están. */
   async function fotosCompartidas(cantidad: number): Promise<Blob[]> {
     const cache = await abrir(CACHE_COMPARTIDO);
@@ -229,7 +204,7 @@ export function crearImagenes({
 
   return {
     imagenDe, urlDeImagen, urlDeBlob, soltarUrl, apartarImagenes, fotosCompartidas,
-    guardarImagen, olvidarImagen, precargar,
+    guardarImagen, olvidarImagen,
     borrarImagenes: () => borrar(CACHE_IMAGENES),
     descartarCompartidas: () => borrar(CACHE_COMPARTIDO)
   };
