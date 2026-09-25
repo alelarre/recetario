@@ -52,9 +52,10 @@ export function iniciarInvitado(): void {
     const carrusel = carruselDeInvitado(leida.cruda);
     const n = marca === undefined ? undefined : Number(marca);
     const i = n === undefined ? -1 : carrusel.findIndex(f => f.n === n);
-    if (i >= 0) { visor = { urls: carrusel.map(f => f.url), i }; return; }
     const sola = (n === undefined ? undefined : leida.receta.fotos.find(f => f.n === n)?.url) ?? leida.receta.foto;
-    if (sola) visor = { urls: [sola], i: 0 };
+    visor = i >= 0 ? { urls: carrusel.map(f => f.url), i } : sola ? { urls: [sola], i: 0 } : null;
+    // Abierto es una capa, como en la app: el atrás lo cierra sin salir de la receta.
+    if (visor) nav.abrirCapa('visor');
   }
 
   async function render(): Promise<void> {
@@ -134,6 +135,7 @@ export function iniciarInvitado(): void {
     if (accion === 'cerrar-visor') {
       // Un deslizamiento termina en un click: ese no cierra, ya cambió de foto.
       if (deslizoElVisor) { deslizoElVisor = false; return; }
+      nav.cerrarCapa('visor');
       visor = null;
       return render();
     }
@@ -164,6 +166,9 @@ export function iniciarInvitado(): void {
   });
 
   window.addEventListener('hashchange', () => { nav.numerar(); void render(); });
+  // El atrás que cierra el visor no cambia el hash: llega sólo como `popstate`.
+  nav.alCerrarCapa(() => { visor = null; deslizoElVisor = false; void render(); });
+  window.addEventListener('popstate', () => { nav.alPopstate(); });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     const sol = document.querySelector('[data-accion="wake"].on');

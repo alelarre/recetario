@@ -22,7 +22,10 @@ async function montar(hash: string) {
     addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; }, scrollTo: () => {}, scrollY: 0
   });
   const historial = historialFalso({
-    hash, alCambiarHash: () => { listeners['hashchange']?.(); }, location: { reload: () => { recargas.push(1); } }
+    hash,
+    alCambiarHash: () => { listeners['hashchange']?.(); },
+    alPopstate: () => { listeners['popstate']?.(); },
+    location: { reload: () => { recargas.push(1); } }
   });
   const { reemplazos, vueltasAtras: atras } = historial;
   global.location = comoGlobal<Location>(historial.location);
@@ -33,6 +36,9 @@ async function montar(hash: string) {
   await esperar();
   return {
     app, reemplazos, atras, recargas,
+    /** El atrás del navegador o de Android, que no pasa por el invitado. */
+    volverAtras: async () => { historial.atras(); await esperar(); },
+    pila: historial.pila,
     /** Un link o la barra del navegador: una entrada nueva, que avisa con `hashchange`. */
     abrir: async (h: string) => { global.location.hash = h; await esperar(); },
     tocar: async (accion: string, datos: Record<string, string> = {}) => {
@@ -108,6 +114,23 @@ describe('el controlador del invitado', () => {
     await deslizar(100, 100);
     await tocar('cerrar-visor');
     expect(app.innerHTML).not.toContain('class="visor"');
+  });
+
+  it('el atrás cierra el visor sin salir de la receta; cerrarlo tocando consume su entrada', async () => {
+    const carga = await codificar(parse(MD_CON_SUELTAS), 'Pescados');
+    const { app, tocar, volverAtras, pila } = await montar(`#/ver?r=${carga}`);
+    await tocar('ver-foto-receta', { n: '2' });
+    expect(pila()).toHaveLength(2);
+    await volverAtras();
+    expect(app.innerHTML).not.toContain('class="visor"');
+    expect(app.innerHTML).toContain('class="rec-tit">Rabas<');
+    expect(global.location.hash).toBe(`#/ver?r=${carga}`);
+    expect(pila()).toHaveLength(1);
+
+    await tocar('ver-foto-receta', { n: '2' });
+    await tocar('cerrar-visor');
+    expect(app.innerHTML).not.toContain('class="visor"');
+    expect(pila()).toHaveLength(1);
   });
 
   it('el carrusel del invitado no repite la portada, y tocarla la abre sola', async () => {

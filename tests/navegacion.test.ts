@@ -7,17 +7,26 @@ import { historialFalso } from './dom-falso.js';
 const esperar = async () => { for (let i = 0; i < 3; i++) await Promise.resolve(); };
 
 /**
- * El módulo sobre un historial falso. Cada `hashchange` numera, como hace
- * la app; `llegadas` es lo que devolvió cada vez.
+ * El módulo sobre un historial falso. Cada `hashchange` numera y cada
+ * `popstate` revisa la capa, como hace la app; `llegadas` es lo que devolvió
+ * cada `numerar`, y `cerradas` las capas que el atrás cerró.
  */
 function montar(hash = '#/') {
   const llegadas: string[] = [];
+  const cerradas: string[] = [];
   let nav: ReturnType<typeof crearNavegacion> | null = null;
-  const h = historialFalso({ hash, alCambiarHash: () => { if (nav) llegadas.push(nav.numerar()); } });
+  const h = historialFalso({
+    hash,
+    alCambiarHash: () => { if (nav) llegadas.push(nav.numerar()); },
+    alPopstate: () => { nav?.alPopstate(); }
+  });
   nav = crearNavegacion({ location: h.location, history: h.history });
   nav.arrancar();
-  return { nav, llegadas, ...h };
+  nav.alCerrarCapa(capa => { cerradas.push(capa); });
+  return { nav, llegadas, cerradas, ...h };
 }
+
+const capa = (state: unknown): unknown => (state as { capa?: unknown } | null)?.capa;
 
 const profundidad = (state: unknown): unknown => (state as { profundidad?: unknown } | null)?.profundidad;
 
@@ -43,8 +52,9 @@ describe('la navegación', () => {
     expect(location.hash).toBe('#/r/f1');
     expect(pila().map(e => profundidad(e.state))).toEqual([0, 1, 2]);
     expect(profundidad(history.state)).toBe(2);
-    // Las dos llegan ya numeradas: el `hashchange` no las cuenta de nuevo.
-    expect(llegadas).toEqual(['conocida', 'conocida']);
+    // Las dos llegan ya numeradas: el `hashchange` no las cuenta de nuevo, y
+    // son entradas nuevas, adelante, como las de un link.
+    expect(llegadas).toEqual(['nueva', 'nueva']);
     expect(nav.hayAtras(2)).toBe(true);
   });
 
@@ -188,19 +198,39 @@ describe('la navegación', () => {
 });
 
 describe('salirDe: volver hasta salir de una pantalla', () => {
-  it('lleva los hashes de la sesión por profundidad: ir, reemplazar, links y el atrás', async () => {
+  it('lleva los hashes de la sesión: una entrada que se dejó adelante con el atrás no cuenta', async () => {
     const { nav, location, atras } = montar();
     nav.ir('#/c/Carnes');
     location.hash = '#/r/f1';
     await esperar();
     nav.reemplazar('#/r/f1/editar');
-    expect(nav.pila()).toEqual(['#/', '#/c/Carnes', '#/r/f1/editar']);
     atras();
     await esperar();
-    // El atrás no borra lo de adelante: sigue en el historial.
-    expect(nav.pila()).toEqual(['#/', '#/c/Carnes', '#/r/f1/editar']);
-    nav.ir('#/plan');
-    expect(nav.pila()).toEqual(['#/', '#/c/Carnes', '#/plan']);
+    // Lo de adelante sigue en el historial, pero una entrada nueva lo pisa.
+    nav.ir('#/r/f1');
+    await esperar();
+    nav.salirDe('#/r/f1', '#/');
+    await esperar();
+    expect(location.hash).toBe('#/c/Carnes');
+  });
+
+  it('una entrada sin anotar —de antes de recargar— no se cruza: reemplaza por el respaldo', async () => {
+    const { nav, location, history, vueltasAtras, saltos, reemplazos } = montar('#/c/Carnes');
+    // La recarga: las entradas del navegador siguen, pero el módulo arranca
+    // de nuevo y sólo conoce la actual.
+    location.hash = '#/r/f1';
+    history.replaceState({ profundidad: 1 }, '');
+    location.hash = '#/r/f1/cocinar';
+    history.replaceState({ profundidad: 2 }, '');
+    await esperar();
+    const recargada = crearNavegacion({ location, history });
+    // La entrada actual, tal como la dejó la sesión de antes.
+    recargada.numerar();
+    recargada.salirDe('#/r/f1', '#/c/Carnes');
+    await esperar();
+    expect(vueltasAtras).toEqual([]);
+    expect(saltos).toEqual([]);
+    expect(reemplazos).toEqual(['#/c/Carnes']);
   });
 
   it('con una entrada de la receta, retrocede una', async () => {
@@ -247,6 +277,133 @@ describe('salirDe: volver hasta salir de una pantalla', () => {
     nav.salirDe('#/r/f1', '#/');
     await esperar();
     expect(location.hash).toBe('#/r/f10');
+  });
+});
+
+describe('las capas: lo que se abre sin cambiar de pantalla', () => {
+  it('abrirCapa suma una entrada con el mismo hash, la misma profundidad y state.capa', async () => {
+    const { nav, pila, llegadas } = montar();
+    nav.ir('#/r/f1');
+    await esperar();
+    const antes = llegadas.length;
+    nav.abrirCapa('visor');
+    await esperar();
+    expect(pila().map(e => [e.hash, profundidad(e.state), capa(e.state)]))
+      .toEqual([['#/', 0, undefined], ['#/r/f1', 1, undefined], ['#/r/f1', 1, 'visor']]);
+    expect(nav.capaActual()).toBe('visor');
+    // No es otra pantalla: ni hashchange ni pantalla atrás de más.
+    expect(llegadas).toHaveLength(antes);
+    expect(nav.hayAtras(2)).toBe(false);
+  });
+
+  it('otra capa abierta encima toma el lugar de la anterior', async () => {
+    const { nav, pila } = montar();
+    nav.abrirCapa('ficha-foto');
+    nav.abrirCapa('visor');
+    expect(pila().map(e => capa(e.state))).toEqual([undefined, 'visor']);
+    expect(nav.capaActual()).toBe('visor');
+  });
+
+  it('el atrás cierra la capa sin cambiar de pantalla, y se le avisa a quien la abrió', async () => {
+    const { nav, atras, location, llegadas, cerradas } = montar();
+    nav.ir('#/r/f1');
+    await esperar();
+    const antes = llegadas.length;
+    nav.abrirCapa('visor');
+    atras();
+    await esperar();
+    expect(cerradas).toEqual(['visor']);
+    expect(nav.capaActual()).toBeNull();
+    expect(location.hash).toBe('#/r/f1');
+    expect(llegadas).toHaveLength(antes);
+  });
+
+  it('cerrarCapa consume la entrada con un atrás, sin avisar', async () => {
+    const { nav, pila, vueltasAtras, cerradas } = montar();
+    nav.abrirCapa('menu');
+    nav.cerrarCapa();
+    await esperar();
+    expect(vueltasAtras).toHaveLength(1);
+    expect(pila()).toHaveLength(1);
+    expect(cerradas).toEqual([]);
+    expect(nav.capaActual()).toBeNull();
+  });
+
+  it('cerrarCapa no hace nada si la entrada actual no es una capa', async () => {
+    const { nav, vueltasAtras } = montar();
+    nav.ir('#/r/f1');
+    await esperar();
+    nav.cerrarCapa();
+    expect(vueltasAtras).toEqual([]);
+  });
+
+  it('cerrarCapa con nombre sólo cierra esa', async () => {
+    const { nav, vueltasAtras } = montar();
+    nav.abrirCapa('visor');
+    nav.cerrarCapa('menu');
+    expect(vueltasAtras).toEqual([]);
+    expect(nav.capaActual()).toBe('visor');
+    nav.cerrarCapa('visor');
+    expect(vueltasAtras).toHaveLength(1);
+  });
+
+  it('ir desde una capa pone la entrada nueva en su lugar', async () => {
+    const { nav, pila, llegadas, cerradas } = montar();
+    nav.abrirCapa('menu');
+    nav.ir('#/plan');
+    await esperar();
+    expect(pila().map(e => [e.hash, profundidad(e.state), capa(e.state)]))
+      .toEqual([['#/', 0, undefined], ['#/plan', 1, undefined]]);
+    expect(llegadas).toEqual(['nueva']);
+    expect(nav.capaActual()).toBeNull();
+    expect(cerradas).toEqual([]);
+  });
+
+  it('volver desde una capa retrocede también su entrada', async () => {
+    const { nav, location, saltos, pila } = montar();
+    nav.ir('#/plan/agregar?dia=1&momento=noche');
+    await esperar();
+    nav.abrirCapa('categoria-plan');
+    nav.volver('#/plan');
+    await esperar();
+    expect(saltos).toEqual([-2]);
+    expect(location.hash).toBe('#/');
+    expect(pila()).toHaveLength(1);
+  });
+
+  it('sin pantalla atrás, volver desde una capa sale de ella y reemplaza la pantalla', async () => {
+    const { nav, location, pila, reemplazos } = montar('#/plan/agregar?dia=1&momento=noche');
+    nav.abrirCapa('categoria-plan');
+    nav.volver('#/plan');
+    await esperar();
+    expect(reemplazos).toEqual(['#/plan']);
+    expect(location.hash).toBe('#/plan');
+    expect(pila().map(e => [e.hash, capa(e.state)])).toEqual([['#/plan', undefined]]);
+  });
+
+  it('salirDe desde una capa retrocede también su entrada', async () => {
+    const { nav, location, saltos } = montar();
+    nav.ir('#/r/f1');
+    await esperar();
+    nav.abrirCapa('visor');
+    nav.salirDe('#/r/f1', '#/');
+    await esperar();
+    expect(saltos).toEqual([-2]);
+    expect(location.hash).toBe('#/');
+  });
+
+  it('un link con la capa abierta la deja atrás; deshacerlo vuelve a la pantalla, no a la capa', async () => {
+    const { nav, location, pila, saltos } = montar();
+    nav.ir('#/nueva');
+    await esperar();
+    nav.abrirCapa('menu');
+    location.hash = '#/plan';
+    await esperar();
+    expect(nav.capaActual()).toBeNull();
+    nav.deshacer();
+    await esperar();
+    expect(saltos).toEqual([-2]);
+    expect(pila().map(e => [e.hash, capa(e.state)])).toEqual([['#/', undefined], ['#/nueva', undefined]]);
   });
 });
 

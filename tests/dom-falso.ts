@@ -77,21 +77,27 @@ const hashDeUrl = (url: string): string => {
  * - `location.replace` reemplaza la entrada actual, también sin `state`;
  * - `pushState` y `replaceState` cambian las entradas sin avisar;
  * - `back` y `go` se mueven entre las entradas, y fuera de ellas no hacen nada;
+ *   cada movimiento avisa con `popstate`, aunque el hash sea el mismo;
  * - todo cambio de hash, salvo el de `pushState` y `replaceState`, avisa con
- *   `hashchange` después, en una microtarea: el navegador lo encola, y la app
- *   alcanza a numerar la entrada antes de que llegue.
+ *   `hashchange` después. El navegador lo manda en una tarea aparte; acá va en
+ *   una microtarea, que no depende del reloj falso de los tests. Lo que
+ *   importa es lo mismo: la app alcanza a numerar la entrada antes de que
+ *   llegue, y el `popstate` de un movimiento llega antes que su `hashchange`.
  *
  * `location` y `history` se montan como globales; lo demás es para mirar.
  */
 export function historialFalso({
   hash = '',
   alCambiarHash,
+  alPopstate = () => {},
   location: extraLocation = {},
   alVolver = () => {}
 }: {
   hash?: string;
   /** El `hashchange`: lo que el test haya registrado como oyente. */
   alCambiarHash: () => void;
+  /** El `popstate`: lo que el test haya registrado como oyente. */
+  alPopstate?: () => void;
   /** Lo demás de `location` que el test necesite: `pathname`, `reload`… */
   location?: Record<string, unknown>;
   /** Corre en cada `back`, antes de moverse. */
@@ -120,6 +126,7 @@ export function historialFalso({
     if (destino < 0 || destino >= entradas.length) return;
     const antes = actual().hash;
     i = destino;
+    void Promise.resolve().then(alPopstate);
     if (actual().hash !== antes) avisar();
   };
 
