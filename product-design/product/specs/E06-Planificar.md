@@ -50,6 +50,10 @@ demás se alcanza desde acá.
   principal y un postre, o dos principales.
 - [ ] Cada línea muestra el título de la receta, con el color de su categoría en
   el borde izquierdo, y lleva a la receta.
+- [ ] El título es **el del índice en memoria**, buscado por id: una receta
+  renombrada se ve con su nombre nuevo, sin leer nada más de Drive ni del
+  índice. El escrito en `_plan.md` se muestra sólo si la receta ya no está en
+  el índice.
 - [ ] El orden de las líneas es aquel en que se agregaron.
 - [ ] Una comida vacía es sólo el control de agregar, con borde punteado.
 - [ ] **La misma receta se puede cargar dos veces** en la misma comida: cada

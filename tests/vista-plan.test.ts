@@ -49,6 +49,19 @@ describe('la grilla del plan', () => {
     expect(html).toContain('href="#/r/f2"');
   });
 
+  it('una receta renombrada muestra el título del índice, no el que quedó en el plan', () => {
+    const viejo: Plan = { comidas: [{ dia: 1, momento: 'noche', id: 'f1', titulo: 'Rabas fritas' }] };
+    const html = dibujar({ plan: viejo });
+    expect(html).toContain('href="#/r/f1">Rabas</a>');
+    expect(html).toContain('aria-label="Sacar Rabas"');
+    expect(html).not.toContain('Rabas fritas');
+  });
+
+  it('una receta que no está en el índice muestra el título del plan', () => {
+    const ida: Plan = { comidas: [{ dia: 1, momento: 'noche', id: 'zz', titulo: 'Guiso de lentejas' }] };
+    expect(dibujar({ plan: ida })).toContain('<s>Guiso de lentejas</s>');
+  });
+
   it('cada línea lleva el color de su categoría', () => {
     expect(dibujar()).toContain('--c:var(--cat-pescados)');
   });

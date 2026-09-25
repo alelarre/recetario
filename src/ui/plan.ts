@@ -29,9 +29,13 @@ export interface OpcionesPlan {
   menu?: MenuDePantalla;
 }
 
-/** Una línea de una celda: el título, que lleva a la receta, y su cruz. */
+/**
+ * Una línea de una celda: el título, que lleva a la receta, y su cruz. Manda
+ * el título del índice, que sigue a la receta si se la renombra; el escrito en
+ * `_plan.md` queda sólo para la que ya no tiene fila.
+ */
 function linea(indice: number, titulo: string, entrada: Entrada | undefined): string {
-  const nombre = escapar(titulo);
+  const nombre = escapar(entrada?.titulo || titulo);
   // Sin fila en el índice la receta ya no está: se marca y no se borra sola
   // —el `.md` puede seguir en Drive—, pero deja de tomar color de categoría.
   const cuerpo = entrada
