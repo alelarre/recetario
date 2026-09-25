@@ -1,9 +1,10 @@
 // El servidor MCP contra un cliente del SDK en memoria y el recetario sobre los
 // dobles de Drive y Sheets: sin stdio, sin red y sin el Llavero.
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { crearServidor, respuestaDeError } from '../mcp/servidor.js';
+import { crearServidor, respuestaDeError, abrirNavegadorDelServidor } from '../mcp/servidor.js';
+import { ErrorDeLogin } from '../mcp/errores.js';
 import { crearRecetario } from '../mcp/recetario.js';
 import { ErrorDeDrive } from '../src/drive.js';
 import { ErrorDeSheets } from '../src/sheets.js';
@@ -207,5 +208,20 @@ describe('los errores', () => {
     const r = await llamar(await conectar(), 'leer', { id: 'nada' });
     expect(r.isError).toBe(true);
     expect(texto(r)).toContain('No hay ninguna receta con el id nada');
+  });
+});
+
+describe('el login dentro del servidor', () => {
+  it('no abre el navegador ni escribe en stdout, que es el canal del protocolo: es sin-permiso', () => {
+    const escribir = vi.spyOn(process.stdout, 'write');
+    try {
+      let error: unknown;
+      try { abrirNavegadorDelServidor('https://accounts.google.com/o/oauth2/v2/auth'); } catch (e) { error = e; }
+      expect(error).toBeInstanceOf(ErrorDeLogin);
+      expect((error as ErrorDeLogin).codigo).toBe('sin-permiso');
+      expect(escribir).not.toHaveBeenCalled();
+    } finally {
+      escribir.mockRestore();
+    }
   });
 });

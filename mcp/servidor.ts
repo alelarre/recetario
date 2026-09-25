@@ -8,9 +8,8 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { crearAuthEscritorio } from './auth.js';
-import { comoErrorDeLogin, esErrorDeGoogle, mensajeDeGoogle } from './errores.js';
+import { comoErrorDeLogin, esErrorDeGoogle, ErrorDeLogin, mensajeDeGoogle } from './errores.js';
 import { crearLlaveroMac } from './llavero.js';
-import { abrirNavegadorMac } from './navegador.js';
 import { recetarioDeGoogle, type Recetario } from './recetario.js';
 
 // La marca que el test de publicación busca en `dist/`: si aparece ahí, el
@@ -156,11 +155,20 @@ export function crearServidor(recetario: Recetario): McpServer {
   return servidor;
 }
 
+/**
+ * El servidor no da el permiso: stdout es el canal del protocolo, y una línea
+ * suelta ahí rompe la conexión con el cliente. El permiso se da con
+ * `npm run mcp:conectar`, que es lo que dice `sin-permiso`.
+ */
+export function abrirNavegadorDelServidor(_url: string): never {
+  throw new ErrorDeLogin('sin-permiso');
+}
+
 async function main(): Promise<void> {
   // El login no toca la red ni el Llavero hasta la primera herramienta que usa el Drive.
   const auth = crearAuthEscritorio({
     llavero: crearLlaveroMac(),
-    abrirNavegador: url => { abrirNavegadorMac(url); },
+    abrirNavegador: abrirNavegadorDelServidor,
     fetch
   });
   await crearServidor(recetarioDeGoogle(auth)).connect(new StdioServerTransport());
