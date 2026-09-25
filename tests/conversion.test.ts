@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  pedidoDeConversion, esRecetaEnMd, recetaRecibida, aplicarPegada, reglasDelFormato, limpiarRecibido
+  pedidoDeConversion, esRecetaEnMd, recetaRecibida, aplicarPegada, reglasDelFormato, limpiarRecibido, reglaDeReservados
 } from '../src/conversion.js';
 import { recetaFalsa } from './dobles.js';
 import { DURACIONES, DIFICULTADES, TAGS_RESERVADOS } from '../src/catalogo.js';
@@ -58,6 +58,11 @@ describe('las reglas del formato', () => {
     for (const t of TAGS_RESERVADOS) expect(texto).toContain(`\`${t}\``);
     expect(texto).toContain('## Ingredientes');
     expect(texto).toContain('`- nombre — cantidad`');
+  });
+
+  it('la línea de los reservados sale de reglaDeReservados', () => {
+    expect(reglas).toContain(reglaDeReservados(TAGS_RESERVADOS));
+    expect(reglaDeReservados(['a', 'b c'])).toBe('- En `tags` no usar estos: `a`, `b c`.');
   });
 
   it('no dependen de ninguna receta: no piden un id', () => {

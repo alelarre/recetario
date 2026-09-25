@@ -95,12 +95,20 @@ function camposCargados(d: DatosDelPedido): { lineas: string[]; nombres: string[
 
 const lista = (xs: readonly string[]): string => xs.map(x => `\`${x}\``).join(', ');
 
+/**
+ * La regla que prohíbe escribir `tags` a mano. Recibe la lista porque el
+ * pedido prohíbe todos los reservados y un agente que escribe por el MCP
+ * puede poner `borrador`: la frase es la misma para los dos.
+ */
+export const reglaDeReservados = (tags: readonly string[]): string =>
+  `- En \`tags\` no usar estos: ${lista(tags)}.`;
+
 /** Las reglas del frontmatter: claves, valores cerrados y tags reservados. */
 const REGLAS_DEL_FRONTMATTER: readonly string[] = [
   '- Frontmatter entre `---`, con estas claves y ninguna otra: `titulo` (obligatoria), `tags` como lista `[a, b]`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`.',
   `- \`tiempo\` es uno de estos valores, tal cual: ${lista(DURACIONES)}. Cuenta el tiempo hasta comer, con reposo y horno. Si no se sabe, no ponerlo.`,
   `- \`dificultad\` es uno de estos valores: ${lista(DIFICULTADES)}. Si no se puede saber, no ponerla.`,
-  `- En \`tags\` no usar estos: ${lista(TAGS_RESERVADOS)}.`
+  reglaDeReservados(TAGS_RESERVADOS)
 ];
 
 /** Las reglas del cuerpo: secciones, ingredientes y pasos. */

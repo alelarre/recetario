@@ -1,10 +1,10 @@
 // Las herramientas de lectura del MCP contra los dobles de Drive y Sheets: lo
 // que devuelven tiene que ser lo mismo que ve la app.
 import { describe, it, expect, beforeEach } from 'vitest';
-import { crearRecetario, indiceEnMemoria } from '../mcp/recetario.js';
+import { crearRecetario, indiceEnMemoria, errorDeSoloLectura } from '../mcp/recetario.js';
 import { ErrorDeLogin, MENSAJES } from '../mcp/errores.js';
 import { crearStore } from '../src/store.js';
-import { reglasDelFormato } from '../src/conversion.js';
+import { reglasDelFormato, reglaDeReservados } from '../src/conversion.js';
 import { validarMd } from '../src/validar.js';
 import { COLUMNAS, TAGS_RESERVADOS, tagEspecial } from '../src/catalogo.js';
 import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
@@ -172,6 +172,22 @@ describe('errores de Google en el arranque', () => {
     expect((error as ErrorDeLogin).codigo).toBe('sin-red');
   });
 
+  it('después de un sin-red en el arranque, el próximo uso arranca', async () => {
+    const recetario = nuevoRecetario();
+    drive.fallar('carpetasMarcadas', new TypeError('fetch failed'));
+    expect(((await recetario.categorias().catch((e: unknown) => e)) as ErrorDeLogin).codigo).toBe('sin-red');
+    drive.fallar('carpetasMarcadas', undefined);
+    expect(await recetario.categorias()).toHaveLength(2);
+  });
+
+  it('después de un permiso-revocado en el arranque, el próximo uso arranca', async () => {
+    const recetario = nuevoRecetario();
+    drive.fallar('carpetasMarcadas', Object.assign(new Error('{"error":{"code":401}}'), { status: 401 }));
+    expect(((await recetario.categorias().catch((e: unknown) => e)) as ErrorDeLogin).codigo).toBe('permiso-revocado');
+    drive.fallar('carpetasMarcadas', undefined);
+    expect(await recetario.categorias()).toHaveLength(2);
+  });
+
   it('un fallo de Drive que no es de login no se disfraza de login', async () => {
     drive.fallar('carpetasMarcadas', Object.assign(new Error('Backend Error'), { status: 500 }));
     const error = await nuevoRecetario().categorias().catch((e: unknown) => e);
@@ -184,31 +200,32 @@ describe('las herramientas', () => {
   it('formato: las reglas de la app, con los reservados menos borrador y la regla de borrador al lado', () => {
     const reglas = nuevoRecetario().formato();
     const deLaApp = reglasDelFormato();
-    const i = deLaApp.findIndex(l => l.includes('`borrador`'));
+    const i = deLaApp.indexOf(reglaDeReservados(TAGS_RESERVADOS));
     expect(i).toBeGreaterThanOrEqual(0);
-    expect(deLaApp.filter(l => l.includes('`borrador`'))).toHaveLength(1);
 
-    const reservados = reglas[i]!;
-    expect(reservados.startsWith('- En `tags` no usar estos:')).toBe(true);
-    for (const t of TAGS_RESERVADOS) {
-      if (tagEspecial(t) === 'borrador') expect(reservados).not.toContain(`\`${t}\``);
-      else expect(reservados).toContain(`\`${t}\``);
-    }
-    expect(reservados).toContain('`terminado`');
-    expect(reservados).toContain('`favorita`');
+    expect(reglas.slice(0, i)).toEqual(deLaApp.slice(0, i));
+    expect(reglas[i]).toBe(reglaDeReservados(TAGS_RESERVADOS.filter(t => tagEspecial(t) !== 'borrador')));
+    expect(reglas[i]).toContain('`terminado`');
+    expect(reglas[i]).toContain('`favorita`');
+    expect(reglas[i]).not.toContain('`borrador`');
+    expect(reglas[i]).not.toContain('`incompleta`');
     expect(reglas[i + 1]).toContain('El tag `borrador` va cuando');
-
-    // Lo demás de la app, tal cual y en su orden; al final, la regla de las fotos.
-    expect(reglas).toEqual([...deLaApp.slice(0, i), reglas[i], reglas[i + 1], ...deLaApp.slice(i + 1), reglas.at(-1)]);
-    expect(reglas.at(-1)).toContain('`foto: foto:N`');
+    // Lo demás de la app, tal cual y en su orden; después, las reglas de las fotos.
+    const resto = deLaApp.slice(i + 1);
+    expect(reglas.slice(i + 2, i + 2 + resto.length)).toEqual(resto);
+    expect(reglas.slice(i + 2 + resto.length).join('\n')).toContain('`foto: foto:N`');
   });
 
-  it('formato dice cuándo va borrador y cómo se nombran las fotos', () => {
+  it('formato dice cómo se numeran las fotos antes de subirlas', () => {
     const texto = nuevoRecetario().formato().join('\n');
-    expect(texto).toContain('`borrador`');
     expect(texto).toContain('`foto: foto:N`');
     expect(texto).toContain('`![](foto:N)`');
-    expect(texto).toContain('## Fotos');
+    expect(texto).toContain('`foto:i`');
+    expect(texto).toContain('número más alto del depósito');
+    expect(texto).toContain('`fuente`');
+    expect(texto).toContain('nunca se reusan');
+    expect(texto).toContain('URL externa');
+    expect(texto).toContain('tal como vino de `leer`');
   });
 
   it('categorias: id, nombre y cantidad, sin contar los borradores', async () => {
@@ -288,8 +305,41 @@ describe('las herramientas', () => {
     expect(drive.cuantas('leerTexto', 'otro')).toBe(0);
   });
 
+  it('validar: un .md escrito según formato, con dos fotos pedidas, pasa', () => {
+    const md = '---\ntitulo: Tarta\nfoto: foto:1\n---\n\n## Preparación\n\n1. Hornear. ![](foto:2)\n';
+    const fotos = [{ origen: '/tmp/plato.jpg', uso: 'plato' }, { origen: '/tmp/paso.jpg', uso: 'paso' }] as const;
+    const recetario = nuevoRecetario();
+    expect(recetario.validar(md, fotos).problemas).toEqual([]);
+    expect(recetario.validar(md).problemas.map(p => p.campo)).toEqual(['foto', 'fotos']);
+  });
+
+  it('validar al guardar: las fotos nuevas siguen al número más alto del depósito', () => {
+    const md = '---\ntitulo: Tarta\nfoto: foto:4\n---\n\n## Preparación\n\n1. Hornear. ![](foto:5)\n\n' +
+      '## Fotos\n\n- 1: https://ejemplo.com/1.jpg\n- 3: https://ejemplo.com/3.jpg\n';
+    const fotos = [{ origen: 'a.jpg', uso: 'plato' }, { origen: 'b.jpg', uso: 'paso' }] as const;
+    expect(nuevoRecetario().validar(md, fotos).problemas).toEqual([]);
+    expect(nuevoRecetario().validar(md.replace('foto:5', 'foto:6'), fotos).problemas.map(p => p.campo)).toEqual(['fotos']);
+  });
+
   it('validar: lo mismo que validarMd', () => {
     const md = '---\ntitulo: Algo\ntiempo: un rato\n---\n';
     expect(nuevoRecetario().validar(md)).toEqual(validarMd(md));
+  });
+});
+
+describe('errorDeSoloLectura', () => {
+  it('el error de login es el del arranque sólo si su mensaje es el motivo', () => {
+    const deLogin = new ErrorDeLogin('sin-red');
+    expect(errorDeSoloLectura(deLogin.message, deLogin)).toBe(deLogin);
+  });
+
+  it('un error de login anterior, que el store atrapó, no reemplaza al motivo', () => {
+    const error = errorDeSoloLectura('Backend Error', new ErrorDeLogin('sin-red'));
+    expect(error).not.toBeInstanceOf(ErrorDeLogin);
+    expect(error.message).toContain('Backend Error');
+  });
+
+  it('sin error de login, el motivo', () => {
+    expect(errorDeSoloLectura('Backend Error', null).message).toContain('Backend Error');
   });
 });

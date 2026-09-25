@@ -160,6 +160,19 @@ describe('las fotos', () => {
     expect(problemas.map(p => p.mensaje).join(' ')).toContain('foto:9');
   });
 
+  it('los números pendientes cuentan como si estuvieran en el depósito', () => {
+    const md = CORRECTA.replace(/\n## Fotos[\s\S]*$/, '\n');
+    const { receta, problemas } = validarMd(md, { fotosPendientes: [1, 2] });
+    expect(problemas).toEqual([]);
+    expect(receta.fotos).toEqual([]);  // la receta sigue siendo la del .md
+  });
+
+  it('un número que no está ni en el depósito ni pendiente sigue siendo error', () => {
+    const md = CORRECTA.replace(/\n## Fotos[\s\S]*$/, '\n');
+    expect(campos(validarMd(md, { fotosPendientes: [1] }).problemas)).toEqual(['fotos']);
+    expect(campos(validarMd(md, { fotosPendientes: [2] }).problemas)).toEqual(['foto']);
+  });
+
   it('una foto:N sin sección Fotos', () => {
     const md = CORRECTA.replace(/\n## Fotos[\s\S]*$/, '\n');
     expect(campos(validarMd(md).problemas)).toEqual(['foto', 'fotos']);

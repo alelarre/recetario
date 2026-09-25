@@ -88,7 +88,13 @@ function problemasDeIngredientes(ingredientes: string): Problema[] {
     }));
 }
 
-function problemasDeFotos(receta: Receta): Problema[] {
+/**
+ * `pendientes`: números de fotos que todavía no están en el depósito pero van
+ * a estar al escribir. Quien escribe con fotos nuevas las nombra antes de
+ * subirlas, y esas referencias no se borran al dibujar.
+ */
+function problemasDeFotos(leida: Receta, pendientes: readonly number[]): Problema[] {
+  const receta: Receta = { ...leida, fotos: [...leida.fotos, ...pendientes.map(n => ({ n, url: `pendiente:${n}` }))] };
   const problemas: Problema[] = [];
   // `resolver` devuelve tal cual lo que no es `foto:N`: `null` es un número sin foto.
   if (receta.foto !== null && resolver(receta.foto, receta.fotos) === null) {
@@ -111,9 +117,13 @@ function problemasDeFotos(receta: Receta): Problema[] {
 /**
  * La receta como la lee la app y lo que tiene fuera del formato. El texto se
  * limpia antes como al pegar: un agente lo puede devolver con CRLF, en un
- * bloque de código o citado.
+ * bloque de código o citado. `fotosPendientes` son los números de las fotos
+ * que se suben junto con el `.md`: cuentan como si ya estuvieran en el
+ * depósito, y la receta devuelta sigue siendo la del `.md`.
  */
-export function validarMd(md: string): { receta: Receta; problemas: Problema[] } {
+export function validarMd(
+  md: string, { fotosPendientes = [] }: { fotosPendientes?: readonly number[] } = {}
+): { receta: Receta; problemas: Problema[] } {
   const receta = parse(limpiarRecibido(md) + '\n');
   const problemas: Problema[] = receta.avisos.map(a => ({ ...POR_AVISO[a] }));
 
@@ -138,7 +148,7 @@ export function validarMd(md: string): { receta: Receta; problemas: Problema[] }
   problemas.push(
     ...problemasDeTags(receta.tags),
     ...problemasDeIngredientes(receta.ingredientes),
-    ...problemasDeFotos(receta)
+    ...problemasDeFotos(receta, fotosPendientes)
   );
   return { receta, problemas };
 }
