@@ -133,7 +133,7 @@ categoría si ya la tiene, o en `_sin-categoria/` si no (C05.4.4).
 
 #### C01.4.3 — Estados de Borradores *(J3)*
 
-- [ ] Vacía: *«No hay borradores.»*. Sin ilustración.
+- [ ] Vacía: *«No hay borradores.»*. Sin ilustración. Vacía por un tag prendido en el carrusel, dice lo mismo que la lista por tag: *«Ninguna receta tiene estos tags.»* (`E02-Encontrar.md` C02.6.5).
 - [ ] Un `.md` que un agente deja directo en Drive aparece recién al reindexar (R6).
 
 ### F01.5 — El contador

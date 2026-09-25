@@ -30,9 +30,12 @@ export interface OpcionesTag {
 export function renderTag({ tag, lista, tagsActivos, tags, borradores, menu, titulo }: OpcionesTag): string {
   // El tag de la ruta no se puede sacar —cambiar de tag es volver—, así que el
   // vacío dice el hecho y no invita a «sacar un filtro» que no se puede sacar.
+  // «No hay borradores.» es sólo sin otro tag prendido: con uno, los
+  // borradores pueden estar y el filtro no los deja ver.
+  const otroTag = tagsActivos.some(t => t !== tag);
   const siVacia = vacio(lista.duracionesActivas.length
     ? 'Ninguna receta con esos filtros. Probá sacando alguno de los filtros de arriba.'
-    : borradores ? 'No hay borradores.' : 'Ninguna receta tiene estos tags.');
+    : borradores && !otroTag ? 'No hay borradores.' : 'Ninguna receta tiene estos tags.');
 
   const icono = iconoDeTag(tag);
   const pantalla = encabezado({

@@ -125,6 +125,15 @@ describe('la lista por tag', () => {
       expect(html).toContain('No hay borradores.');
     });
 
+    it('con otro tag prendido y sin resultados, dice lo mismo que la lista por tag', () => {
+      const html = renderTag({
+        ...borradores, tagsActivos: ['borrador', 'dulce'], borradores: true,
+        menu: { activo: 'borradores', abierto: false, borradores: 2 }
+      });
+      expect(html).not.toContain('No hay borradores.');
+      expect(html).toContain('Ninguna receta tiene estos tags.');
+    });
+
     it('el carrusel no ofrece borrador como chip: `tagsDe` no lo lista, y la ruta no lo agrega', () => {
       const html = renderTag({
         ...borradores, borradores: true, menu: { activo: 'borradores', abierto: false, borradores: 2 },
