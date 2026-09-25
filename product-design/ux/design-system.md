@@ -1196,7 +1196,8 @@ leería como una comida ya elegida.
 borde izquierdo en el color de su categoría**: el mismo hilo de color que el pin
 de la tarjeta y el filo del tile (§2.3). Lleva el título, que abre la receta, y
 una `×` de 12 px en `--fg-3` que saca esa línea y nada más. Una receta que ya no
-está en el índice va tachada, en `--fg-3`, y su borde izquierdo pasa a `--error`.
+está en el índice va tachada, en `--fg-3`, y su borde izquierdo también: el
+tachado ya dice que no está, y `--error` no marca un estado del contenido (§2.2).
 
 **El pie** queda pegado abajo, con un degradé a `--bg` que lo despega de la
 grilla, y sus dos botones ocupan el ancho: *Lista de compras* primario y

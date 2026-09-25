@@ -17,9 +17,8 @@ describe('el CSS del plan de la semana', () => {
     expect(BASE).toContain('border-left: 3px solid var(--c, var(--borde))');
   });
 
-  it('la receta que ya no está va tachada, con el borde en error', () => {
-    expect(BASE).toContain('.celda .it.ida');
-    expect(BASE).toContain('border-left-color: var(--error)');
+  it('la receta que ya no está va tachada y apagada, sin el error: no es una falla', () => {
+    expect(BASE).toContain('.celda .it.ida { color: var(--fg-3); border-left-color: var(--fg-3); }');
   });
 
   it('el pie queda pegado abajo y sus botones ocupan el ancho', () => {
