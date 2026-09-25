@@ -142,7 +142,7 @@ sin servidor. Funciona en Android, con la PWA instalada.
 
 **Frecuencia:** alta, y **acoplada al momento de cocinar**: la conversión ocurre
 *"generalmente antes de ponerme a cocinarlo"*, no cuando se encuentra la receta.
-**Hoy:** lo hace un agente, por fuera de la app, que no llama a ningún modelo.
+**Hoy:** lo hace un agente, por fuera de la app; la app no llama a ningún modelo.
 Desde el editor del borrador, «Convertir con Agente» guarda la receta, arma el
 pedido y lo manda; la receta vuelve compartida o pegada en el editor, y se
 termina soltando el tag `borrador` — ver `personas.md` §3.3.

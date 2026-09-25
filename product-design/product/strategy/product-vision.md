@@ -99,7 +99,7 @@ Las ocho primeras vienen del encuadre del proyecto y están fijas
 | Alcance de este proyecto | Redefinición de producto y UX desde cero, hasta wireframes. La visión y el stack están fijos; todo lo demás se rediseña. |
 | **Escala de diseño** | **~1.000 recetas.** Toda decisión de navegación, índice y arranque se evalúa a esa escala, no a las decenas actuales. |
 | **Alcance del editor** | **Corregir, y crear una receta que ya tenés en la cabeza.** Lo que no hace es componer desde una fuente: transcribir un PDF, un video o la foto de un libro es trabajo del agente. |
-| **Dónde vive el agente** | **Es parte del producto, afuera de la PWA.** Recetario es un ecosistema de dos partes que escriben sobre los mismos archivos; la conversión ocurre en una sesión con el agente, no adentro de la app. **La app no llama a ningún modelo:** recibe borradores y espera, y cuando se quiere convertir uno arma el pedido —el borrador y las reglas del formato—, lo manda a Claude y recibe la receta compartida o pegada. |
+| **Dónde vive el agente** | **Es parte del producto, afuera de la PWA.** Recetario es un ecosistema de dos partes que escriben sobre los mismos archivos; la conversión ocurre en una sesión con el agente, no adentro de la app. **La app no llama a ningún modelo:** recibe borradores y espera, y cuando se quiere convertir uno arma el pedido —el borrador y las reglas del formato—, lo manda al agente y recibe la receta compartida o pegada. |
 
 ---
 

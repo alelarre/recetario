@@ -91,7 +91,8 @@ significa que la receta no esté registrada.
 - [ ] Debajo, la grilla de las categorías. Tocar una muestra sus recetas en el
   mismo lugar, con las favoritas primero, por tramos y con un chevron al lado
   del nombre. Es algo abierto en la misma pantalla: el chevron o el atrás
-  vuelven a la grilla sin salir (`ux/information-architecture.md` §4.6).
+  vuelven a la grilla sin salir (`ux/information-architecture.md` §4.6). Una
+  categoría sin recetas dice *«Todavía no hay recetas en <categoría>.»*
 - [ ] Al escribir, el bloque se reemplaza por los resultados, con **la misma
   lista que la búsqueda** (`E02-Encontrar.md` C02.3.2): los tres grupos, el
   conmutador «A–Z | Duración» arriba (C02.9.2), la misma frase sin resultados y
@@ -132,7 +133,8 @@ y de momento se comparan sin acentos ni mayúsculas.
 #### C06.3.2 — Cómo se encuentra y cómo se escribe *(J9)*
 
 - [ ] `_plan.md` **no está en el índice**: se lo busca por nombre en la carpeta
-  base la primera vez que se abre el plan en la sesión, y el id queda en memoria.
+  base la primera vez que se abre el plan en la sesión, y el id y lo leído
+  quedan en memoria: en la misma sesión no se vuelve a leer de Drive.
 - [ ] Si no existe, se crea vacío al primer cambio.
 - [ ] Si hay más de uno, manda el más reciente y queda el aviso en
   *Ajustes → Avisos*, como el `_indice` repetido.
@@ -141,8 +143,10 @@ y de momento se comparan sin acentos ni mayúsculas.
 - [ ] **`_indice` no cambia:** ni hoja ni columna. `SCHEMA_VERSION` no sube y el
   reindexado no mira `_plan.md`.
 
-**Edge case:** sin red al escribir → el aviso va en el plan y reintentar es
-volver a tocar (R1). La grilla sigue mostrando lo que dice Drive.
+**Edge case:** sin red al escribir → el aviso, *«No se pudo guardar el plan.
+Revisá la conexión.»*, va en el plan y reintentar es volver a tocar (R1). La
+grilla sigue mostrando lo que dice Drive. Sin red al leer → *«No se pudo leer
+el plan.»* con **Reintentar**.
 
 ### F06.4 — La lista de compras
 
@@ -179,6 +183,11 @@ en Drive:** se lee en la app y se comparte como texto.
 
 - [ ] Los dos bloques son fichas, con las filas de ingredientes de la receta:
   nombre a la izquierda, cantidad a la derecha. Un bloque vacío no se dibuja.
+- [ ] Sin ningún ingrediente —las recetas del plan no los tienen, o ya no se
+  pueden leer—, la pantalla dice *«Las recetas del plan no tienen ingredientes
+  cargados.»*
+- [ ] Si la lectura falla, la pantalla avisa *«No se pudo armar la lista de
+  compras.»* con **Reintentar** (R1).
 - [ ] **No se tilda nada.** La lista se lee en el supermercado y no guarda
   estado: sin ítems tachados, sin progreso, sin nada que sincronizar.
 - [ ] El ícono de compartir del encabezado abre la ficha de compartir con

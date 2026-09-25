@@ -182,16 +182,19 @@ línea por foto, y no suma ninguna clave al frontmatter.
   alto más uno, ninguno se reusa, y puede haber huecos. El orden de las líneas
   es el del carrusel.
 - **La URL es un archivo de Drive o una externa.** La de Drive es
-  `https://drive.google.com/file/d/<id>/view`, el único formato que la app
-  reconoce como tal, y se pide con el token; la externa va a un `<img>`
-  directo.
+  `https://drive.google.com/file/d/<id>`, con `/view`, `/edit`, `/preview` o
+  nada al final y con la query que traiga (`?usp=sharing`): es el único
+  formato que la app reconoce como tal, y se pide con el token. La app la
+  escribe con `/view`. La externa va a un `<img>` directo.
 - **Si alguna línea no tiene esa forma, la sección entera se lee como una
   sección ajena** y se conserva tal cual: la receta queda sin depósito y nada se
   pierde por pasar por el editor. Sin fotos, la sección no se escribe.
 - **La sección va última en el archivo**, después de las secciones ajenas. En
-  pantalla, en cambio, el depósito se dibuja como un carrusel en la primera
-  ficha (`E03-LeerYCocinar.md` C03.5.2), y en el PDF la galería va al final,
-  después de Notas y antes de las secciones ajenas.
+  pantalla, en cambio, las fotos que no son la cabecera ni están nombradas en
+  el texto se dibujan como un carrusel en la primera ficha
+  (`E03-LeerYCocinar.md` C03.5.2): las demás ya se ven donde van. En el PDF
+  esas mismas forman la galería, al final, después de Notas y antes de las
+  secciones ajenas.
 
 **El texto nombra una foto con `![epígrafe](foto:N)`**, en cualquier sección, y
 la cabecera acepta `foto: foto:N` además de una URL. **Antes de dibujarse, la
@@ -255,7 +258,7 @@ versiones que el formato no aguanta sin dejar de ser legible.
 | **Fuente** | Frontmatter, o línea en itálica en una variación | Con la receta | Con ella |
 | **Variación** | Sección `###` o bullet bajo `## Variaciones` | Al escribirla | Al borrarla |
 | **Índice** | Google Sheet `_indice` en la carpeta base, con tres hojas: `recetas`, `meta` y `categorias` | Al primer arranque, o al reindexar | Se puede borrar en cualquier momento: se reconstruye |
-| **Copia local del índice** | `localStorage` del navegador | Al cargar o reindexar; cada escritura la deja al día | Con *Borrar datos locales*, o cuando deja de coincidir con `_indice` |
+| **Copia local del índice** | `localStorage` del navegador | Al cargar o reindexar; cada escritura la deja al día | Con *Borrar datos locales* o *Salir*, o cuando deja de coincidir con `_indice` |
 | **Imágenes guardadas** | Cache Storage del navegador: `recetario-imagenes`, por id de archivo | La primera vez que se muestra una foto de Drive, o al subirla —entra con el blob que ya está en memoria—; también por precarga en segundo plano | Con *Borrar datos locales* o *Salir*, o al mandar esa foto a la papelera. Un id de Drive no cambia de contenido: no vence |
 | **Receta compartida** | En ningún lado: un PDF, un texto o un link que lleva la receta comprimida en el fragmento | Al compartir | Es una copia del momento; nada queda publicado en Drive |
 | **Plan de la semana** | **`_plan.md`** en la carpeta base, al lado de `_indice` | Al primer cambio, si el archivo no existía | Con *Reiniciar el plan*, que lo deja vacío. El archivo queda |
@@ -397,7 +400,7 @@ se reconoce abre el Recetario.
 | **Resultados** | `#/buscar?q=` | Lo que devuelve la búsqueda, agrupado por título, ingrediente y tag. Se ordena A–Z o por duración dentro de cada grupo. | Recuperar | J1, J4 |
 | **Categoría** | `#/c/<nombre>` | Las recetas de una carpeta, con el carrusel de tags, la fila de duraciones y el conmutador de orden. | Recuperar | J5 |
 | **Lista por tag** | `#/t/<tag>` | Las recetas del recetario entero con ese tag. Se llega tocando un chip del carrusel del Recetario. Mismos filtros que la categoría. | Recuperar | J5 |
-| **Receta** | `#/r/<id>` | La receta entera, en una columna de fichas, con el carrusel de sus fotos en la primera y cada una donde el texto la nombra —tocar una abre el visor—. En el encabezado, la estrella de favorito y Compartir; al pie, *Cocinar* y *Editar*. | Recuperar | J6 |
+| **Receta** | `#/r/<id>` | La receta entera, en una columna de fichas: la cabecera arriba, cada foto donde el texto la nombra y, en un carrusel en la primera ficha, las que no están en ningún otro lado —tocar una abre el visor—. En el encabezado, la estrella de favorito, Compartir y el link al `.md` en Drive; al pie, *Cocinar* —si hay ingredientes o pasos— y *Editar*. | Recuperar | J6 |
 | **Modo cocina** | `#/r/<id>/cocinar` | Letra grande, conmutador Ingredientes / Pasos, el paso actual realzado, y la pantalla encendida. | Cocinar | J6 |
 | **Editor** | `#/r/<id>/editar` | El único formulario de la app. Corregir un error, anotar una variación, poner y sacar los tags especiales, agregar fotos y ponerlas en el texto, cambiar la categoría, *Pegar*, *Convertir con Agente* mientras es borrador, borrar la receta. Con `?recibida=1` abre con la receta `.md` compartida aplicada como *Pegar*. | Cocinar | J3, J7 |
 | **Nueva receta** | `#/nueva` | El mismo editor, vacío, en «Sin categoría» y con `borrador`. Es destino del menú: hamburguesa en vez de volver. Con `?url=&text=&fotos=` abre con lo que llegó por el Share Target —`fotos` es cuántas dejó el service worker en su caché—; con `?recibida=1`, con la receta `.md` que llegó compartida sin un `id:` que exista. | Archivar | J2, J3, J7 |
@@ -418,7 +421,7 @@ pie y el atrás la cierra (§4.6).
 **La vista de invitado es una entrada aparte.** `src/inicio.ts` mira el hash antes
 de cargar nada: un `#/ver…` carga sólo `src/invitado.ts`, sin token ni store, con
 una lista cerrada de acciones —cocinar, volver, conmutar, marcar un paso, la
-pantalla encendida, abrir y cerrar el visor—. Lo que se agregue a la Receta no
+pantalla encendida, abrir y cerrar el visor, y las flechas del carrusel—. Lo que se agregue a la Receta no
 aparece ahí sin querer.
 
 **El Share Target llega por `POST`** a `/recetario/compartir`, y lo atiende el
@@ -589,13 +592,13 @@ Seis fichas, en este orden: lo de la cuenta y el índice primero, lo raro al fin
 |---|---|
 | **Cuenta** | La cuenta conectada y *Salir*, que no borra nada de Drive |
 | **Recetario** | La carpeta base en uso con *Cambiar carpeta*, y cuántas categorías hay con el link a *Categorías* |
-| **Índice** | Cuándo fue el último reindexado y *Reindexar*; mientras reindexa, el progreso |
-| **Archivos locales** | *Borrar datos locales*: descarta la copia del índice y recarga |
-| **Avisos** | Lo que no interrumpe: los `.md` ignorados por no tener título, con su nombre, y si hay más de una planilla `_indice` o más de un `_plan.md` |
+| **Índice** | Cuándo fue el último reindexado y *Reindexar* |
+| **Archivos locales** | *Borrar datos locales*: descarta la copia del índice y las imágenes guardadas, y recarga |
+| **Avisos** | Lo que no interrumpe: los `.md` ignorados por no tener título, con su nombre; las recetas de `_sin-categoria/` sin el tag `borrador`, con su nombre, que el reindexado no toca; y si hay más de una planilla `_indice` o más de un `_plan.md` |
 | **Registro de actividad** | Lo que pasó al abrir: cuándo, la fecha de `_indice`, si la copia local coincidió, cuántas recetas y categorías hay, y si se reindexó y por qué |
 
-Mientras reindexa no se ofrece *Cambiar carpeta*, *Categorías*, *Reindexar* ni
-*Borrar datos locales*.
+El reindexado corre con el velo y su barra (`E05-Cimientos.md` R8): mientras
+dura, la pantalla entera está tapada y no se toca nada.
 
 ---
 
@@ -642,8 +645,8 @@ demás, pero tienen forma propia:
 - **En el carrusel de tags van primero**; después, los demás por cantidad de
   recetas. **`borrador` no va en ninguna lista de tags**: ni en el carrusel ni
   en las sugerencias del editor. A los borradores se llega por el menú.
-- **Las favoritas van primero en toda lista de recetas**, y alfabético dentro de
-  cada bloque.
+- **Las favoritas van primero en toda lista de recetas ordenada A–Z**, y
+  alfabético dentro de cada bloque. Ordenada por duración, van mezcladas.
 
 **El carrusel de tags** está en el Recetario y en cada categoría. En la categoría
 y en la lista por tag filtra: tocar un chip lo enciende, y varios encendidos

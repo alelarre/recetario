@@ -117,7 +117,8 @@ del documento temático. Ninguno de los dos es barrido visual: la recuperación 
 **Filtros que declaró no usar:** tiempo disponible, cantidad de comensales,
 dificultad, y no repetir lo reciente. De esos, el producto sólo tiene la
 **duración** —cinco valores fijos—, que filtra y ordena las listas de recetas.
-Los otros tres no existen.
+Los otros tres no existen como filtro: la dificultad es un dato de la receta,
+que se lee y no filtra.
 
 ### 2.2 Archivar — *"la vi, no la quiero perder"* 🥇 Principal
 
@@ -209,8 +210,8 @@ usuario: la app trae 16 predefinidas, y se crean, renombran y borran desde
 **3.3 El agente vive afuera de la app.**
 La app no llama a ningún modelo: **está diseñada para recibir borradores y
 esperar**, no para procesar. Cuando se quiere convertir uno, «Convertir con
-Claude» arma el pedido —el borrador y las reglas del formato— y lo manda a
-Claude; la respuesta vuelve compartida o pegada y abre el editor.
+Agente» arma el pedido —el borrador y las reglas del formato— y lo manda al
+agente; la respuesta vuelve compartida o pegada y abre el editor.
 
 Para la captura en sí no hace falta ningún agente: la **Share Target API**
 permite que la PWA sea destino del "Compartir" del sistema y escriba el borrador

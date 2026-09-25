@@ -128,7 +128,7 @@ habla de sí misma en primera persona.
 | **Sin conexión con Google** | El hecho, y el control al lado. | *"No se pudo reconectar con Google."* → `[Reintentar]` · *"Hay que conectarse de nuevo con Google."* → `[Conectar]` |
 | **Estado vacío** | Qué hay, en una frase. Sin ilustración. Si está vacío por un filtro, cómo salir. | *"No hay borradores."* · *"Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba."* |
 | **Confirmación destructiva** | Qué se va a borrar, nombrándolo. | *"¿Borrar Milanesas napolitanas?"* |
-| **Operación larga** | Cuánto va, con número. Cuando no se puede saber, el verbo y un spinner. | *"Reindexando: 34%."* · *"Armando el PDF…"* |
+| **Operación larga** | Qué se hace, y cuánto va en una barra. Cuando no se puede saber cuánto va, el verbo y un spinner. | *"Reindexando…"* con la barra · *"Armando el PDF…"* |
 | **Aviso sin acción** | El hecho y el número. | *"2 archivos ignorados por no tener título."* · *"No hay nada para avisar."* |
 | **Falta información** | Lo que falta, no lo que está mal. | *"Se va a poder sacar borrador cuando se cargue: título, categoría, ingredientes y pasos."* |
 | **Explicación de un control** | Una oración, debajo, sólo donde el control no se explica solo. | *"Salir no borra nada de Drive."* · *"Hasta comer, con reposo y horno incluidos."* |
@@ -144,7 +144,7 @@ habla de sí misma en primera persona.
 | *"No hay borradores."* | *"¡Todo al día! No tenés nada pendiente 🎉"* | Es una celebración por no haber hecho nada. |
 | El botón `borrador` apretado, y debajo qué falta cargar. | *"Esta receta es un borrador. Completala para poder buscarla."* | Reta, y da una instrucción que nadie pidió. |
 | *"No se pudo reconectar con Google."* | *"Tu sesión de Google expiró. Por favor volvé a conectarte para continuar."* | Tres líneas para lo que se resuelve con una y un botón. |
-| *"Reindexando: 34%."* | *"Esto puede tardar un ratito…"* | Un número es una espera medible; "un ratito" no. |
+| *"Reindexando…"* con la barra de avance | *"Esto puede tardar un ratito…"* | Una barra es una espera medible; "un ratito" no. |
 | *"No se pudo guardar."* | *"Unable to parse range: meta!A1:B20"* | El error crudo del servidor no se muestra nunca. |
 
 ### 3.4 Prohibido siempre
@@ -194,7 +194,7 @@ la interfaz**, y no tienen sinónimos.
 | Cuánto lleva la receta, hasta comer | **Duración** —uno de `~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`— | "tiempo", "tiempo de cocción", "preparación" |
 | Para cuántos alcanza | **Rinde** | "porciones", "comensales" |
 | El modo de lectura con la pantalla encendida | **Cocinar**, y **Salir** para dejarlo | "modo cocina" como etiqueta, "empezar" |
-| Rehacer la planilla del índice | **Reindexar** —*"Reindexando: 34%."*, *"Último reindexado: …"*— | **"reconstruir"**, "reparar", "sincronizar" |
+| Rehacer la planilla del índice | **Reindexar** —*"Reindexando…"*, *"Último reindexado: …"*— | **"reconstruir"**, "reparar", "sincronizar" |
 | La planilla derivada | **el índice** —la ficha de Ajustes se titula **Índice**— | "la base", "el cache", "la planilla" |
 | Lo que la app guarda en el navegador | **Archivos locales** es la ficha de Ajustes; **Borrar datos locales**, su botón; *la copia del índice*, lo que guarda | "caché", "almacenamiento", "datos de la app" |
 | Lo que pasó al abrir la app | **Registro de actividad** | "log", "diagnóstico", "depuración" |

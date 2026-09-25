@@ -89,10 +89,10 @@ app hace hoy. Si un documento y el código en `src/` se contradicen, gana el
 código y el documento se corrige.
 
 Las dos decisiones que el diseño había dejado abiertas están resueltas. El
-agente no se embebe en la PWA: la app arma el pedido, lo manda a Claude y recibe
-la respuesta compartida o pegada. Y la receta sí guarda fotos en Drive: tiene un
-depósito propio —la sección `## Fotos` del `.md`— y las que suben desde el
-editor viven en `_fotos/`, al lado de las de los borradores. Una URL externa
+agente no se embebe en la PWA: la app arma el pedido, lo manda al agente y
+recibe la respuesta compartida o pegada. Y la receta sí guarda fotos en Drive: tiene un
+depósito propio —la sección `## Fotos` del `.md`— y las que se suben desde
+el editor viven en `_fotos/`, junto con las propias de las categorías. Una URL externa
 sigue valiendo (`ux/information-architecture.md` §1.7).
 
 Lo pendiente está en [`BACKLOG.md`](../BACKLOG.md), en la raíz del repo.
@@ -129,6 +129,6 @@ Lo pendiente está en [`BACKLOG.md`](../BACKLOG.md), en la raíz del repo.
 | [User flows](ux/user-flows.md) | Los flujos críticos, diagramados, con sus puntos de decisión. | 5 → 7 → 8 |
 | [Wireframes](ux/wireframes.md) | Estructura y jerarquía de cada pantalla, con decisiones de layout explícitas. | 6 → 7 → 8 |
 | [Brand Identity](ux/brand-identity.md) | Cinco adjetivos con lo que descarta cada uno, dirección visual, tono de voz y vocabulario canónico. | 8 → 11 |
-| [Design System](ux/design-system.md) | Tokens con su contraste medido, paleta de categorías, tipografía, iconografía, motion y 15 componentes core. | 8 → 9 → 11 |
+| [Design System](ux/design-system.md) | Tokens con su contraste medido, paleta de categorías, tipografía, iconografía, motion y componentes core. | 8 → 9 → 11 |
 | [Auditoría tipográfica](ux/auditoria-tipografica.md) | Informe: criterios, la tipografía de las once pantallas medida sobre la app implementada, y una propuesta de cambios. | — |
 | [Mockups](ux/mockups/) | Doce pantallas en HTML+CSS, una sola versión de cada una, más su [README](ux/mockups/README.md) con los hallazgos. Son la especificación de cuando se diseñó: lo decidido después usando la app vive en `src/ui/tokens.css`. | 9 → 11 |

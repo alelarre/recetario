@@ -101,7 +101,7 @@ alguien contó— se crea la receta a mano desde la app.
 
 - [ ] *Nueva receta*, en el menú lateral, es la única entrada para crear a mano (C02.1.3).
 - [ ] Abre el mismo editor, vacío, en «Sin categoría» y con `borrador` puesto (C04.3b.1). La fuente se escribe a mano, como texto libre: una URL o *"libro de pescados, pág. 84"*.
-- [ ] Las fotos entran por la ficha *Fotos*: **Cámara**, **Galería** y **Por URL** (C04.3d.1, C04.3d.1b).
+- [ ] Las fotos entran por la ficha *Fotos*: **Cámara** —sólo en un dispositivo táctil—, **Galería** y **Por URL** (C04.3d.1, C04.3d.1b).
 - [ ] El título es opcional con la misma regla que lo compartido (C01.2.1).
 
 ### F01.4 — Borradores
@@ -118,7 +118,7 @@ categoría si ya la tiene, o en `_sin-categoria/` si no (C05.4.4).
 - [ ] **Es el único camino a los borradores:** el Recetario no tiene tile para lo que no tiene categoría (`E02-Encontrar.md` C02.4.1).
 - [ ] Es un destino del menú: el encabezado dice **«Borradores»**, con el total, y a la izquierda lleva el botón del menú con su contador, no el volver (C02.1.3).
 - [ ] Entra una receta que lleve `borrador` escrito en cualquiera de sus formas (C05.1.4).
-- [ ] Una receta de `_sin-categoria/` se dibuja con la trama neutra en lugar del color de una categoría.
+- [ ] Una receta de `_sin-categoria/` se dibuja con el color neutro —el de `Otros`— y sin foto de categoría debajo, en lugar del color de una categoría.
 - [ ] La lista no tiene «+» ni «Pegar»: crear es *Nueva receta* (C01.3.1), y pegar está en el editor (C01.9.3).
 - [ ] **Tocar una tarjeta abre el editor de ese borrador** (`#/r/<id>/editar`), no la receta: a un borrador se entra a completarlo. Es la única lista que lo hace; las demás abren la receta. Volver desde ese editor vuelve a Borradores, por el historial.
 - [ ] Las tarjetas **no llevan marca de borrador**: en esta lista lo son todas, y en ninguna otra aparece una (`E02-Encontrar.md` C02.7.1).
@@ -161,14 +161,14 @@ Es el único punto donde el producto acepta a sabiendas un riesgo sobre este job
 
 #### C01.8.1 — Falla, lo dice, y no pierde lo escrito *(J2)*
 
-- [ ] El aviso dice que no se pudo guardar. Sin el error crudo.
+- [ ] El aviso dice **«No se pudo guardar. Revisá la conexión.»**, arriba del formulario. Sin el error crudo.
 - [ ] **Lo escrito queda en pantalla**, con las fotos, y se puede reintentar. Las fotos que ya se subieron no se vuelven a subir (C04.5.2).
 - [ ] El editor no se cierra solo después del error.
 - [ ] No se promete guardar más tarde.
 
 #### C01.8.2 — Sin sesión al guardar *(J2)*
 
-- [ ] Si el token venció, el aviso dice que hay que conectarse de nuevo y ofrece el control (R3).
+- [ ] Si el token venció, el aviso dice **«Hay que conectarse de nuevo con Google.»** y ofrece **Conectar** (R3).
 - [ ] Al volver, lo escrito sigue ahí y el usuario reintenta a mano.
 - [ ] Es el peor caso de este flujo y el mensaje lo dice claro, sin tecnicismos.
 
@@ -192,7 +192,7 @@ compartida o pegada. La vuelta no depende de la ida: **cualquier receta en
 - [ ] La última línea del frontmatter que pide es `id: <id>`, con el id del `.md` de la receta. La categoría no viaja: se elige en el editor.
 - [ ] **Con fotos**, manda las de Drive del depósito, en su orden, y el pedido suma cuántas van, qué pueden ser —páginas de un libro, una receta escrita a mano, una captura, el plato terminado—, que se transcriba lo que se lee sin inventar cantidades ni pasos, y que una foto del plato sirve para el título y la descripción, no para la receta.
 - [ ] **Y le dice cómo nombrarlas en la receta:** cada foto va con su número del depósito —*la 1.ª es foto:1, la 2.ª es foto:3*—; la del plato terminado va como `foto: foto:N`; la de un paso, como `![](foto:N)` al final de ese paso; y la sección Fotos no la escribe él, la arma la app (C05.1.5). Así la receta que vuelve ya trae la portada y las referencias, y el depósito del editor las resuelve.
-- [ ] **Con el menú Compartir del sistema** (Android): se abre con el pedido como texto, y las fotos como archivos (`foto-1.jpg`…), y se elige el agente.
+- [ ] **Con el menú Compartir del sistema** (Android): se abre con el pedido como texto, y las fotos como archivos que llevan su número del depósito (`foto-1.jpg`, `foto-3.jpg`…), y se elige el agente.
 - [ ] **Sin menú Compartir, o sin poder compartir archivos**, el pedido suma una línea por foto con su número y su link de Drive —`foto:1: https://drive.google.com/file/d/<id>/view`— y **«Las fotos están en mi Google Drive: leerlas con el conector de Drive.»** El conector tiene que estar en la misma cuenta.
 - [ ] **Sin él** (Chrome en la Mac): abre `https://claude.ai/new?q=<pedido codificado>` si entra en 8.000 caracteres. Si no entra, copia el pedido al portapapeles, abre `https://claude.ai/new` vacío y avisa **«Pedido copiado: pegalo en el agente»**.
 - [ ] Después de mandarlo, el editor queda cerrado y la app en la receta guardada.

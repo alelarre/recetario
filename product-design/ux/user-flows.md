@@ -120,9 +120,10 @@ Menú → Borradores           ⚑ el contador dice cuántos esperan
   ▸ el editor, con Convertir con Agente al final, arriba de Guardar
   → Convertir con Agente
   ▸ guarda la receta, como Guardar     ⚑ si no se pudo guardar, no manda nada
-  ▸ la app arma el pedido: título, fuente, Notas, el id del .md, las reglas
-    del formato y, si hay fotos en el depósito, cuántas van, cómo leerlas y
-    cómo nombrarlas —cada una con su número, foto:N—
+  ▸ la app arma el pedido: título, fuente, lo que ya está cargado
+    —descripción, rinde, ingredientes, preparación—, Notas, el id del .md,
+    las reglas del formato y, si hay fotos en el depósito, cuántas van, cómo
+    leerlas y cómo nombrarlas —cada una con su número, foto:N—
   ⚑ ¿hay menú Compartir del sistema que comparta archivos?
       sí (Android)  → se abre con el pedido como texto y las fotos como
                       archivos; elijo el agente
@@ -184,7 +185,7 @@ salir pregunta.
 **2. Completarla a mano.** Para una receta que ya tenés en la cabeza.
 
 ```
-Borradores → toco una receta → Editar
+Menú → Borradores → toco una receta   ▸ abre su editor
   → elijo la categoría y escribo la receta
   → suelto borrador → Guardar
   ▸ se reescribe el .md y su fila, y el archivo se mueve a su categoría
@@ -290,10 +291,11 @@ volver se pide de nuevo. Si el navegador no lo soporta, el sol no se muestra.
 fuente.
 
 **Las fotos se leen donde el texto las nombra:** debajo del paso o del
-ingrediente, en la receta y también en el modo cocina; todas juntas, en el
-carrusel de la primera ficha, debajo de la descripción. Tocar cualquiera abre el
-visor, que desliza entre todas y se cierra tocando. En la cocina no: ahí un
-toque marca el paso.
+ingrediente, en la receta y también en el modo cocina. Las que no son la
+cabecera ni están en el texto van en el carrusel de la primera ficha, debajo
+de la descripción. Tocar una abre el visor, que se cierra tocando: desde el
+carrusel desliza entre las del carrusel; la cabecera y una foto del texto se
+abren solas. En la cocina no: ahí un toque marca el paso.
 
 ---
 
@@ -349,7 +351,8 @@ Editor → escribo un paso
 
 **El campo «Portada», primero de Contenido, es la foto de la cabecera** y el
 único lugar donde se elige: la miniatura de lo que hay, y al tocarla, el
-depósito para elegir, una URL externa o *Sin foto*.
+depósito para elegir o *Sin foto*. Una cabecera que es una URL suelta se
+muestra como la actual y queda mientras no se elija otra cosa.
 **Salir sin guardar no deja nada en Drive:** las fotos nuevas nunca llegaron.
 
 **El editor corrige, no compone.** Componer es trabajo del agente
@@ -357,7 +360,7 @@ depósito para elegir, una URL externa o *Sin foto*.
 
 **El tag `borrador` no se puede sacar** sin título, categoría, al menos un
 ingrediente y al menos un paso. **Borrar receta** pide confirmación y manda el
-`.md` a la papelera de Drive.
+`.md` a la papelera de Drive, con sus fotos de `_fotos/`.
 
 **Salir con cambios sin guardar pregunta**, también con el gesto de atrás de
 Android.
@@ -402,10 +405,10 @@ Carpeta base
   ▸ confirmación: «Voy a usar <carpeta>. Si faltan categorías, las creo, y
     después indexo lo que haya adentro.»
   → Usar
-  ▸ setup:
+  ▸ setup, con la barra sobre el velo: «Preparando la carpeta…»
       ▸ crea las predefinidas que falten, de las 16, con su color y su foto
-      ▸ busca _indice adentro; si no está, lo crea con sus cuatro hojas
-      ▸ reindexa, con progreso
+      ▸ busca _indice adentro; si no está, lo crea con sus tres hojas
+      ▸ reindexa
       ▸ marca la carpeta, y le saca la marca a cualquier otra
   ▸ la app recarga en el Recetario
 ```
@@ -424,7 +427,8 @@ paso hace sólo lo que falta.
   ✗ el Picker no abre
   ▸ aviso: «No se pudo abrir el selector de Google.», con Reintentar
   ✗ el setup falla a mitad
-  ▸ aviso con Reintentar, que lo repite sobre la misma carpeta
+  ▸ aviso: «No se pudo preparar la carpeta.» —o «No se pudo crear la
+    carpeta.»—, con Reintentar, que lo repite sobre la misma carpeta
 ```
 
 **Las aperturas siguientes son un pedido:** con la copia local del índice, la app
@@ -480,7 +484,7 @@ archivo sea la única fuente de verdad.
     no, al abrir      → aviso: «No se pudo conectar con Drive. Sin esa lectura no hay con qué dibujar.», con Reintentar.
                         La copia local del índice no se usa: la consulta a Drive va antes.
     no, al guardar    → aviso: no se pudo guardar. El texto queda en pantalla.
-    no, al marcar favorita → aviso: no se pudo marcar. La estrella queda como estaba.
+    no, al marcar favorita → aviso: no se pudo marcar, con Reintentar. La estrella queda como estaba.
 ```
 
 **Sin reintentos silenciosos, sin cola, sin "se guardará más tarde".** El
@@ -503,13 +507,14 @@ Abro la app
       le faltan o le sobran filas        → Menú → Ajustes → Reindexar
       no se puede leer y la app no abre  → borro _indice en Drive; la próxima
                                            apertura lo crea de nuevo
-  ▸ progreso: «Reindexando: 47%.»
+  ▸ progreso: «Reindexando…», con la barra sobre el velo
   ▸ Recetario
 ```
 
 **Reindexar no se cancela:** cortar a mitad deja el índice en el estado que el
-reindexado existe para reparar. Mientras dura no se puede guardar ni borrar
-recetas. Puede tardar: los `.md` se leen de a uno.
+reindexado existe para reparar. Mientras dura, el velo tapa la pantalla: no se
+guarda, no se borra y no se navega. Puede tardar: los `.md` se leen de a seis a
+la vez.
 
 **Si crear la planilla falla a mitad, la app borra el archivo a medio hacer**
 antes de avisar, así la próxima apertura la crea de nuevo y no encuentra una
@@ -535,9 +540,12 @@ El reindexado lee cada .md
       sí  → entra al índice y se muestra
             ⚑ ¿lleva el tag borrador, o incompleta?
                 sí  → aparece en Borradores
+            ⚑ ¿está en _sin-categoria/ sin el tag borrador?
+                sí  → se avisa; el archivo no se toca
             ⚑ ¿tiempo o dificultad fuera de sus valores?
                 sí  → se leen como sin dato; el archivo no se toca
-  ▸ los ignorados se informan en Ajustes → Avisos, con su nombre, no en la cara
+  ▸ los ignorados y los de _sin-categoria/ sin el tag se informan en
+    Ajustes → Avisos, con su nombre, no en la cara
 ```
 
 **Se lee lo que llega** (principio 3). Una clave o una sección que el esquema no
@@ -610,7 +618,7 @@ Receta
       ✗ sin portapapeles: «Copialo desde acá:», con el contenido a la vista
 ```
 
-- **El PDF** se arma en el teléfono: 105 × 180 mm, tema oscuro, con texto de verdad. Lleva las fotos —la cabecera arriba del título, cada una debajo de su línea, y la galería al final—, achicadas para que pese poco. El menú Compartir sólo se abre desde un toque del usuario: si el toque ya venció cuando el PDF termina, *Enviar PDF* es el segundo.
+- **El PDF** se arma en el teléfono: 105 × 180 mm, tema oscuro, con texto de verdad. Lleva las fotos —la cabecera arriba del título, cada una debajo de su línea, y al final la galería con las que no están en ningún otro lado—, achicadas para que pese poco. El menú Compartir sólo se abre desde un toque del usuario: si el toque ya venció cuando el PDF termina, *Enviar PDF* es el segundo.
 - **El link** lleva la receta comprimida en el fragmento, sin los tags y **sin las fotos de Drive**: quien lo abre no tiene token. Las externas sí viajan. No usa Drive ni pide login a quien lo abre: ver F15.
 - **El texto** conserva `*negrita*`, `_itálica_`, `- ` y `1. `, que WhatsApp entiende. Una foto externa se escribe como su URL; una de Drive no se escribe.
 - **La ficha es estado de la pantalla, no una ruta:** volver, *Cancelar* o tocar el velo la cierran, y mientras está abierta la página de atrás no se desplaza.
@@ -657,7 +665,8 @@ Receta
   ▸ la estrella se anima mientras Drive contesta, y no acepta otro toque
   ▸ se reescribe el .md con el tag favorito en su lista, y su fila en el índice
   ▸ la estrella queda encendida
-  ▸ en toda lista, la receta va primero, con su marca en la esquina de la tarjeta
+  ▸ en toda lista en orden A–Z, la receta va primero, con su marca en la
+    esquina de la tarjeta
 ```
 
 **El resultado se dibuja cuando Drive contesta, no antes.** Tocarla de nuevo saca
@@ -666,7 +675,7 @@ ni columna nueva.
 
 ```
   ✗ no hay red
-  ▸ aviso: «No se pudo marcar como favorita. Revisá la conexión.»
+  ▸ aviso: «No se pudo marcar como favorita. Revisá la conexión.», con Reintentar
   ▸ la estrella queda como estaba
 ```
 
@@ -681,7 +690,8 @@ sacan desde el editor (F7).
 
 ```
 Recetario
-  ▸ el carrusel de tags: los cuatro especiales primero, después por cantidad
+  ▸ el carrusel de tags: los especiales primero —borrador no está—, después
+    los demás por cantidad
   → toco un chip
   ▸ Lista por tag: las recetas del recetario entero con ese tag
   ▸ su chip está encendido y fijo; los demás se pueden sumar
@@ -767,7 +777,7 @@ app se abre hasta que el job está cumplido.
 |---|---|---|
 | J1 — Recuperar por nombre | F3 | Recetario → Resultados → Receta |
 | J2 — No perder lo que encontré | F1 | *(app externa)* → Editor → Receta |
-| J3 — Convertir en receta completa | F2, F9 | Recetario → Borradores → Receta → Editor → *(agente)* → Editor → Receta |
+| J3 — Convertir en receta completa | F2, F9 | Menú → Borradores → Editor → Receta → *(agente)* → Editor → Receta |
 | J4 — Buscar con lo que tengo | F4 | Recetario → Resultados → Receta |
 | J5 — Mirar sin buscar | F5, F16, F17 | Recetario → Categoría o Lista por tag → Receta |
 | J6 — Seguir la receta cocinando | F6 | Receta → Modo cocina |

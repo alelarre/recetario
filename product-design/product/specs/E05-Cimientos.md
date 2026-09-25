@@ -167,10 +167,11 @@ Es lo que permite J4 sin ensuciar el archivo. Definido en
 - [ ] **`tiempo` es uno de cinco valores:** `~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`. Cuenta el tiempo hasta comer, con reposo y horno incluidos. Cualquier otro texto se lee como sin duración —no se muestra, no filtra y no ordena— y el `.md` no se corrige. La validación es al leer.
 - [ ] **Hay tags reservados** (C05.1.4): viven en la lista `tags` como cualquier otro, y la app los dibuja y los carga con forma propia.
 - [ ] **`foto` es una URL externa o una foto del depósito**, escrita `foto:N` (C05.1.5). Un `foto:N` cuyo número no está en el depósito se lee como ausente. **El editor sólo escribe `foto:N`** (C04.2.1d), pero el formato sigue aceptando la URL: un agente puede escribirla, y se conserva.
-- [ ] Un archivo sin bloque de frontmatter es válido si el cuerpo permite deducir el título; si no, cae en C05.2.3.
+- [ ] Un archivo sin bloque de frontmatter no tiene título: todo es cuerpo, y cae en C05.2.3.
 
-**Edge cases:** frontmatter con YAML inválido → el archivo se trata como sin
-frontmatter, y si no hay título se ignora y se cuenta (C05.2.3) · `tags` escrito
+**Edge cases:** frontmatter con YAML inválido → se rescata lo que se puede: cada
+línea que no es `clave: valor` se saltea, y si no queda título se ignora y se
+cuenta (C05.2.3) · `tags` escrito
 como texto suelto, sin corchetes ni guiones → se lee como sin tags · `foto` que no es una URL
 → se conserva y no se dibuja · `foto: foto:9` sin el 9 en el depósito → la
 receta no tiene cabecera.
@@ -192,6 +193,7 @@ receta no tiene cabecera.
 - [ ] **La coma solo separa si lo que sigue empieza con un dígito.** `Provenzal, 1 cucharada` se parte; `Sal, pimienta` no.
 - [ ] Un ítem sin separador es un ingrediente sin cantidad, y su nombre es el ítem entero.
 - [ ] Los espacios alrededor del separador se descartan; el resto del texto se conserva tal cual.
+- [ ] Un separador dentro de una imagen o un link —`![…](…)`, `[…](…)`— no cuenta: el guión de un id de Drive no parte el ingrediente.
 - [ ] La cantidad es **texto libre**: no se parsea, no se normaliza y no se convierte a número.
 
 **Edge cases:** `Harina 0000, 200gr?` → nombre "Harina 0000", cantidad "200gr?"; el signo de pregunta se conserva · `500gr de anillos de calamar`, con la cantidad adelante y sin separador → es el nombre entero, sin cantidad, y entra al filtro por "500gr de anillos de calamar" · ítem que empieza con el separador → cantidad sin nombre, no entra al filtro y no rompe · ítem vacío → se ignora.
@@ -295,7 +297,8 @@ por el usuario y además podría cambiar solo, sin que nadie tocara nada.
 El índice es una Google Sheet, `_indice`, dentro de la carpeta base: derivada y
 reconstruible. Tiene tres hojas: **`recetas`** —una fila por receta
 (F05.4b), borradores incluidos—, **`meta`** —la versión del esquema, la fecha
-del último reindexado y la marca de un reindexado en curso— y **`categorias`**
+del último reindexado, la marca de un reindexado en curso, los ids de `_fotos/`
+y `_sin-categoria/`, y la marca de una carpeta reemplazada (C05.7.4)— y **`categorias`**
 —una fila por subcarpeta: id, nombre, color y foto (C05.4.4)—.
 
 **Lo escribe un solo camino: el store** (`src/store.ts`). Crear y guardar una
@@ -379,6 +382,7 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 #### C05.5.1 — Reindexar *(J8)*
 
 - [ ] Lista las subcarpetas de la carpeta base, lee cada `.md` —los de cada categoría, los de `_sin-categoria/` y los sueltos en la carpeta base, estos dos sin categoría— y escribe las hojas `recetas` y `categorias` enteras.
+- [ ] Un `.md` cuyo nombre empieza con `_` es de la app y no es una receta: `_plan.md` no entra al índice.
 - [ ] Si a la planilla le falta la hoja `categorias`, la crea.
 - [ ] Al terminar, el índice no conserva ninguna fila anterior: lo que no está en Drive, no está.
 - [ ] Los archivos ignorados por no tener título se cuentan y quedan visibles en Ajustes.
@@ -463,6 +467,7 @@ verificada" una vez, que es inevitable con el scope `drive`.
 - [ ] El setup, en este orden: crea las predefinidas que falten —comparando nombres sin mirar tildes ni mayúsculas—, cada una con su color y su foto; crea `_indice` si no está; reindexa, con la barra de C05.5.2; y **recién al final pone la marca** y se la saca a cualquier otra carpeta. Si algo falla antes, la carpeta queda sin marcar y la pantalla la vuelve a ofrecer. Repetirlo no duplica nada.
 - [ ] Un fallo —el Picker que no abre, la carpeta que no se pudo crear, el setup que se cortó— se avisa en el lugar de los botones, con **Reintentar** (R1).
 - [ ] La carpeta se cambia desde Ajustes (C05.9b.4): la misma pantalla, con el título *Cambiar carpeta*, volver, y la aclaración de que la carpeta actual queda como está en Drive.
+- [ ] **Al cambiar, la `meta` de la carpeta anterior queda anotada como `reemplazada`:** otro dispositivo con la copia local de esa carpeta la descarta al abrir y busca la marcada. Si la anotación falla, el cambio sigue. Volver a usar esa carpeta borra la anotación.
 
 ### F05.8 — Sin red
 
@@ -503,8 +508,8 @@ reindexado y los avisos que no interrumpen. Se llega desde el menú lateral.
 
 Seis fichas, en este orden: **Cuenta**, **Recetario**, **Índice**, **Archivos
 locales**, **Avisos** y **Registro de actividad**. Lo de la cuenta y el índice va
-primero; lo raro, al final. Mientras corre un reindexado, Recetario no ofrece
-sus controles y Archivos locales no se muestra.
+primero; lo raro, al final. Mientras corre un reindexado, el velo tapa la
+pantalla (R8).
 
 **La versión del build** —el commit corto y cuándo se compiló— se ve al pie del
 menú lateral, para saber si el teléfono ya tomó el último deploy.
@@ -512,7 +517,7 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 #### C05.9b.1 — Cuenta *(transversal)*
 
 - [ ] Muestra con qué cuenta de Google está conectada la app.
-- [ ] Ofrece **Salir**, que revoca el token en Google, borra la copia local del índice y recarga la app: vuelve a la pantalla de conexión sin nada del usuario en memoria.
+- [ ] Ofrece **Salir**, que revoca el token en Google, borra la copia local del índice y las fotos guardadas en el navegador, y recarga la app: vuelve a la pantalla de conexión sin nada del usuario en memoria.
 - [ ] Salir no borra nada de Drive y lo dice.
 
 #### C05.9b.2 — Índice *(J8)*
@@ -524,7 +529,7 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 #### C05.9b.3 — Avisos *(transversal)*
 
 - [ ] Lista los avisos sin acción acumulados (C05.9.2).
-- [ ] Si hay más de una planilla `_indice` en Drive, dice cuántas y cuál se usa: la modificada más recientemente.
+- [ ] Si hay más de una planilla `_indice` en Drive, dice cuántas y cuál se usa: la modificada más recientemente. Lo mismo con más de un `_plan.md` (`E06-Planificar.md` C06.3.2).
 - [ ] Después del reindexado, los `.md` ignorados por no tener título y, aparte, las recetas de `_sin-categoria/` sin la marca de borrador (C05.5.1), con el nombre de cada archivo: *«En Sin categoría hay 2 recetas sin la marca de borrador.»*
 - [ ] Sin avisos, la sección dice «No hay nada para avisar.», sin ilustración.
 
@@ -541,7 +546,7 @@ menú lateral, para saber si el teléfono ya tomó el último deploy.
 #### C05.9b.5 — Archivos locales *(J8)*
 
 - [ ] Dice que la copia del índice se guarda en el navegador para abrir más rápido.
-- [ ] Ofrece **Borrar datos locales**: borra lo guardado en el navegador sin salir de la cuenta, la app se recarga y baja todo de Drive.
+- [ ] Ofrece **Borrar datos locales**: borra lo guardado en el navegador —la copia del índice y las fotos— sin salir de la cuenta, la app se recarga y baja todo de Drive.
 - [ ] No toca nada de Drive.
 
 #### C05.9b.6 — Registro de actividad *(J8)*

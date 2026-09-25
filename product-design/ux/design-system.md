@@ -57,7 +57,7 @@ Todos cálidos. Ninguno tiene matiz frío (`brand-identity.md` §2.2).
 | Token | Valor | Uso | Contraste |
 |---|---|---|---|
 | `--bg` | `#17140F` | El fondo de la app. | — |
-| `--surface` | `#211D17` | La ficha: el fondo de cada bloque con borde. | 1.4:1 sobre `--bg` |
+| `--surface` | `#211D17` | La ficha: el fondo de cada bloque con borde. | 1.1:1 sobre `--bg` |
 | `--surface-alta` | `#2B261E` | Un bloque dentro de otro, y el estado presionado. | — |
 | `--borde` | `#3A342B` | El borde de una ficha. Opaco, no translúcido. | 1.5:1 |
 | `--borde-fuerte` | `#544C40` | El borde de un control, y el separador dentro de una ficha. | 2.2:1 |
@@ -84,7 +84,7 @@ identidad prohíbe.
 | `--exito` | `#53DA6E` | **Solo el tilde con el que cierra el velo** (§6.17b). | **9.3:1** |
 
 **`--exito` es el hermano verde del error:** la misma saturación y la misma
-luminosidad, a 126° de matiz. Sobre el velo, que es donde se lo ve, da 10.7:1.
+luminosidad, a 126° de matiz. Sobre el velo, que es donde se lo ve, da 10.9:1.
 No es ninguno de los verdes de categoría —son de otra paleta y viven en otra
 pantalla— y no se usa en ningún texto ni en ningún control: el éxito no se
 escribe (`brand-identity.md` §3.2), se dibuja una sola vez y se va.
@@ -101,8 +101,9 @@ sin ingredientes, un archivo ignorado o una categoría vacía **nunca** usan
 `--error`.
 
 La excepción son los controles que borran algo —*Borrar* una receta, borrar una
-categoría, *Sacar* una foto—, con la variante de peligro del botón (§6.7), y
-el borde de la ficha que pide la confirmación. La operación **es** destructiva, y
+categoría, *Sacar* una foto, *Salir* del editor sin guardar los cambios—, con la
+variante de peligro del botón (§6.7), y el borde de la ficha que pide la
+confirmación, también la de reiniciar el plan (§6.24). La operación **es** destructiva, y
 es el único aviso que el usuario tiene antes de tocarla.
 
 ### 2.3 Los colores de categoría
@@ -114,7 +115,7 @@ Quince colores, uno por categoría, más un neutro para `Otros`.
 1. **Separación mínima de 18° de matiz**, y **una distancia percibida (CIEDE2000) de al menos 12 respecto del acento**. 18° es la distancia a la que dos colores se distinguen sin compararlos lado a lado, que es como se ven en una lista. La segunda regla existe porque el acento es de la app y una categoría no puede parecerse a un botón: por eso la serie arranca en 36° y deja libre el vecindario del acento. Se mide en distancia percibida y no en matiz porque la saturación también separa: la arcilla está a 15° de Carnes pero a 14.1 de distancia, porque Carnes es un beige apagado. Carnes es la más cercana.
 2. **Se evita el rango 255°-300°**, el violeta corporativo que la identidad prohíbe.
 3. **Luminosidad compensada por matiz:** los amarillo-verdes (55°-115°) van más oscuros y los azules (175°-255°) más claros, porque a igual valor de HSL se perciben distinto.
-4. **Todos superan 4.5:1 sobre `--surface`.** El más bajo es Entradas y picadas, con 4.9:1.
+4. **Todos superan 4.5:1 sobre `--surface`.** El más bajo es Entradas y picadas, con 5.0:1.
 5. **La afinidad manda donde es obvia:** lo tostado y lo horneado en los ámbar, los vegetales en los verdes, el pescado y las bebidas en los celestes, lo dulce en los magentas. Donde no es obvia, reparte la separación.
 
 | Categoría | Matiz | Token | Contraste |
@@ -241,7 +242,7 @@ distancia de lectura cambia.
 | Cuerpo | 18 px | **22 px** | ×1.22 |
 | Encabezado de sección | 18 px | **28 px** | ×1.56 · *sin aplicar* (§3.2) |
 | Área táctil | 48 px | **64 px** | ×1.33 |
-| Espaciado entre ítems | 12 px | **20 px** | ×1.67 |
+| Aire arriba y abajo de cada ingrediente y cada paso | 8 px | **20 px** | ×2.5 |
 
 **El espaciado crece más que la letra**, y es deliberado: a 50 cm lo que hace
 perder el renglón no es que la letra sea chica, es que los renglones estén juntos.
@@ -268,32 +269,42 @@ tamaños de base:
 | `--ico-cocina` | 24 px | Solo en modo cocina. |
 
 Adentro de otro componente el ícono se achica a su medida: 16 px en la marca de
-la tarjeta, el botón de tag especial, el conmutador de orden y la flecha del
-carrusel; 15 px pegado a la duración en una línea de contexto; 14 px en un chip;
-24 px en el botón de duración.
+la tarjeta, el botón de tag especial, el conmutador de orden, la flecha del
+carrusel y el `+` de una comida del plan; 15 px pegado a la duración en una línea
+de contexto; 14 px en un chip; 18 px en el botón de poner una foto; 13 px en las
+marcas de uso de una miniatura; 12 px en la cruz de una línea del plan; 24 px en
+el botón de duración.
+
+**Donde el ícono queda chico sobre un fondo cargado, el trazo sube:** a 2 px en
+las marcas de uso de una miniatura (§6.25), en los íconos en línea del epígrafe
+de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en el
+«+» de agregar de la tarjeta (§6.1).
 
 **Los íconos son funcionales, nunca decorativos.** `iconos.ts` tiene
-**veintitrés**: dieciocho en `ICO` y los cinco relojitos de
+**treinta y uno**: veintiséis en `ICO` y los cinco relojitos de
 `ICONO_DE_DURACION`.
 
 | Ícono | Dónde |
 |---|---|
-| `volver` | El volver del encabezado, el de cocina y el de la búsqueda; y la flecha izquierda del carrusel. |
+| `volver` | El volver del encabezado, el de cocina, el de la búsqueda y el de una categoría elegida en *Agregar al plan*; y la flecha izquierda del carrusel. |
 | `chevron` | La flecha derecha del carrusel. |
 | `buscar` | La caja de búsqueda. |
 | `menu` | La hamburguesa que abre el menú lateral, con el contador de borradores encima. |
-| `casa`, `bandeja`, `mas`, `ajustes` | Los destinos del menú lateral: Inicio, Borradores, Nueva receta y Ajustes. |
+| `casa`, `bandeja`, `mas`, `ajustes` | Los destinos del menú lateral: Inicio, Borradores, Nueva receta y Ajustes. `mas` es además el «+» de la tarjeta que suma al plan (§6.1) y el de una comida del plan (§6.24). |
 | `lapiz` | *Editar*, en el pie de la receta. |
-| `compartir` | *Compartir*, en el encabezado de la receta. |
+| `compartir` | *Compartir*, en el encabezado de la receta y en el de la lista de compras; y *Convertir con Agente*, al pie del editor. |
 | `estrella` | Favorito: en el encabezado de la receta (§6.22), en la marca de la tarjeta, en el chip y en el botón del editor. |
 | `marcador` | El tag *probar*. |
-| `calendario` | El tag *menú diario*. |
+| `calendario` | El tag *menú diario*, y Plan de la semana en el menú lateral. |
 | `tacho` | La acción destructiva del editor: *Borrar receta*. |
+| `portapapeles` | *Pegar*, en el encabezado del editor. |
+| `carpeta` | Cada carpeta encontrada, en la pantalla de la carpeta base. |
 | `cerrar` | La cruz: la del chip removible del editor, la que limpia la búsqueda y la que saca una receta de una comida del plan. |
 | `camara` | *Cámara*, en la ficha *Fotos* del editor (§6.25), y *Subir foto* al elegir la de una categoría (§6.4). |
 | `imagen` | El botón que pone en una línea una foto que ya está en el depósito (§6.9b). Es una foto sacada y no la cámara: no agrega ninguna. |
 | `portada` | La marca de la foto que es la portada, en la fila de fotos del editor (§6.25). Una ficha con un señalador adentro; el señalador va relleno con `currentColor`. **No es una estrella:** en esta app la estrella es favorito. |
 | `enElTexto` | La marca de la foto que está puesta en un paso o un ingrediente (§6.25). Tres renglones de largo distinto. |
+| `galeria` | *Galería*, en la fila de fotos (§6.25): elegir fotos del teléfono. Dos fotos, una detrás de la otra. |
 | `link` | *Por URL*, en la fila de fotos (§6.25): agregar una foto pegando su dirección. Dos eslabones. |
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `zanahoria`, `listaNumerada` | Las dos posiciones del conmutador de cocina —*Ingredientes* y *Pasos*—, al lado de la palabra. |
@@ -354,8 +365,8 @@ la única escala distinta del sistema.
 
 **Ningún control con texto es de radio completo.** Un chip con `border-radius:
 999px` es la píldora de Material, que está descartada. Lo redondo es lo que no
-lleva palabras: los contadores (§6.4, §6.17), la flecha del carrusel (§6.21) y las
-muestras de color de una categoría.
+lleva palabras: los contadores (§6.4, §6.17), la flecha del carrusel (§6.21), el
+«+» de agregar de la tarjeta (§6.1) y las muestras de color de una categoría.
 
 ### 4.3 Borde
 
@@ -369,7 +380,7 @@ para los controles y los separadores internos.
 
 ## 5. Motion
 
-**Casi nada se mueve.** El sistema tiene cuatro movimientos:
+**Casi nada se mueve.** El sistema tiene cinco movimientos:
 
 | Qué | Duración | Curva |
 |---|---|---|
@@ -377,6 +388,7 @@ para los controles y los separadores internos.
 | El desplazamiento de un carrusel al tocar una flecha | el del navegador (`scroll-behavior: smooth`) | — |
 | La estrella de favorito que se llena mientras Drive contesta (§6.22) | 2 s, en bucle | lineal |
 | Giro del indicador de carga | 900 ms, en bucle | lineal |
+| La olla del velo (§6.17b): la cuchara que va de lado a lado y el vapor que sube | 1,6 s la cuchara y 1,2 s el vapor, en bucle | la cuchara, `ease-in-out`; el vapor, lineal |
 
 **Todo lo demás es instantáneo:** el cambio de estado de un control, la aparición
 de un aviso, el conmutador de cocina. No hay transiciones de pantalla, ni
@@ -392,8 +404,9 @@ y vacío no se distingue de un bloque vacío de verdad.
 **La olla quiere decir «la app está ocupada y no se puede tocar»** (§6.17b),
 sea una escritura o una espera que no escribe. **El spinner es sólo para lo que
 no bloquea**: el botón del PDF que se arma, el final de una lista que tiene más,
-la conexión con Google. Son las dos únicas animaciones en bucle del sistema, y
-no se mezclan: donde la pantalla está tapada no hay spinner, y donde se puede
+la conexión con Google. Son las dos animaciones de espera del sistema —la
+estrella de favorito (§6.22) espera adentro de su propio botón—, y no se
+mezclan: donde la pantalla está tapada no hay spinner, y donde se puede
 seguir tocando no hay olla.
 
 **La olla es la única que tiene final:** cuando una escritura sale bien, la olla
@@ -622,7 +635,7 @@ Alto 48 px (64 en cocina), padding lateral `--e-4`, `--r-medio`,
 **Variante compacta: 40 px de alto.** Existe para **un botón dentro de otra
 barra**: el encabezado de pantalla, que mide 56 px y no puede contener uno de 48
 con aire alrededor —*Pegar* en el editor, *Salir* en cocina, *+ Nueva* en
-Categorías—, el botón de un aviso con acción (§6.8), el de
+Categorías, *Guardar* en la edición de una categoría—, el botón de un aviso con acción (§6.8), el de
 una fila de Ajustes —*Salir*, *Cambiar carpeta*, *Categorías ›*— y el *Usar* de
 una carpeta encontrada, en la pantalla de la carpeta base. **Su área
 táctil sigue siendo de 48 px**, porque el alto de la barra la completa; en
@@ -1117,7 +1130,7 @@ con `--e-2` entre sí: **PDF**, **Link**, **Texto** y **Cancelar**.
 |---|---|
 | **Armando el PDF** | El botón de PDF deshabilitado, con un spinner de 16 px y *"Armando el PDF…"*; los otros dos, deshabilitados. |
 | **PDF listo** | *"El PDF está listo."*, **Enviar PDF** como primario y *Cancelar*. |
-| **Falló el PDF** | El aviso con acción: *"No se pudo armar el PDF."* y *Reintentar*. |
+| **Falló el PDF** | El aviso con acción: *"No se pudo armar el PDF."* y *Reintentar*; debajo, *Cancelar*. |
 | **Copiado** | *"Link copiado."* o *"Texto copiado."*, y *Listo*. |
 | **Sin portapapeles** | *"Copialo desde acá:"* y el contenido en un cuadro —`--bg`, borde `--borde`, `--r-medio`, `--txt-chico` `--fg-2`, hasta 40 % del alto de la pantalla, seleccionable de un toque— y *Listo*. |
 
@@ -1151,11 +1164,11 @@ epígrafe en texto chico `--fg-3`; y la galería al final, de a dos por fila.
 ### 6.24 Grilla del plan de la semana
 
 Tres columnas —`52px 1fr 1fr`— con `--e-2` de separación: la del día, *Mediodía*
-y *Noche*. Los encabezados de columna van en *micro* `--fg-3`, en versalita con
-`.06em` y centrados; la columna del día lleva el nombre abreviado en *chico
-fuerte* `--fg` y, sólo en la fila de hoy, la palabra *hoy* debajo. **La fila de
-hoy es lo único marcado**, entera en `--acento`: el plan no tiene fechas, y es
-lo que dice dónde estás parado.
+y *Noche*. Los encabezados de columna van en *micro* `--fg-3`, en mayúsculas con
+`.06em` y centrados; la columna del día lleva el nombre abreviado en *base
+fuerte* `--fg` y, sólo en la fila de hoy, la palabra *hoy* debajo, en *chico*.
+**La fila de hoy es lo único marcado**: su día y la palabra *hoy* van en
+`--acento`. El plan no tiene fechas, y es lo que dice dónde estás parado.
 
 **La celda** es una comida: `--surface`, borde 1 px `--borde`, `--r-medio`, 56 px
 de alto mínimo, y adentro una línea por receta más el `+` al pie. Vacía se dibuja
@@ -1176,11 +1189,11 @@ borrar una receta.
 
 ### 6.25 Fila de miniaturas y visor
 
-**La fila** es la ficha *Fotos* del editor de recetas (§6.26). Lleva el rótulo
-*Fotos* de un campo (§6.9): miniaturas **cuadradas de 64 px** con `--e-2` entre
-sí, que bajan de renglón si no entran. Cada una es la foto recortada al cuadrado
+**La fila** es la ficha *Fotos* del editor de recetas (§6.26), titulada
+*Fotos* como cualquier ficha (§6.6): miniaturas **cuadradas de 64 px** con
+`--e-2` entre sí, que bajan de renglón si no entran. Cada una es la foto recortada al cuadrado
 (`object-fit: cover`) sobre `--surface-alta`, con `--r-foto`. No lleva ×:
-*Sacar* es una de las acciones de la ficha (§6.26). Al final de la fila, botones
+*Sacar* es una de las acciones de la ficha (§6.26). Debajo, botones
 secundarios de 64 px de alto: **Cámara**, con el ícono `camara`, que saca una
 foto por vez; **Galería**, con el ícono `galeria` —dos fotos, una detrás de
 la otra—, que abre el selector del sistema y acepta varias a la vez; y **Por
@@ -1260,8 +1273,8 @@ desplaza. Son cuatro:
 |---|---|
 | **Acciones** | *Foto N* y dos botones, uno al lado del otro: **Ver**, secundario, y **Sacar**, con la variante de peligro (§6.7). **No ofrece Portada**: la portada se elige sólo en su campo. |
 | **Poner una foto** | La galería del depósito, y nada más: es la que abre el botón de §6.9b. **No ofrece agregar**, que es la ficha *Fotos*. |
-| **Foto de portada** | La galería del depósito con la actual marcada, y **Sin foto**. **No ofrece agregar**: la portada sale de lo que ya está. Es el único lugar donde se elige. |
-| **Foto por URL** | El campo *Dirección de la foto*, con `https://…` de placeholder, y **Traer**. Si algo falla, el aviso (§6.12) va arriba del campo y la ficha queda abierta con lo escrito. |
+| **Foto de portada** | La galería del depósito con la actual marcada, y **Sin foto**. Sin fotos en el depósito, en lugar de la galería dice *"Subí una foto en la ficha Fotos para poder elegirla de portada."* **No ofrece agregar**: la portada sale de lo que ya está. Es el único lugar donde se elige. |
+| **Foto por URL** | El campo *Dirección de la foto*, con `https://…` de placeholder, y **Traer**. Si algo falla, el aviso (§6.8) va arriba del campo y la ficha queda abierta con lo escrito. |
 
 **El botón de portada**, en el campo *Portada* de Contenido, es un cuadrado de
 96 px con `--r-foto`: la miniatura de la cabecera actual, o un recuadro

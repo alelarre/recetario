@@ -68,10 +68,11 @@ y el archivo se arma solo al guardar.
 - [ ] Solo el título es obligatorio, salvo en un borrador; una receta nueva, además, tiene que tener algo cargado (C04.3b.1).
 - [ ] Un campo que se deja vacío **no se escribe** en el frontmatter: no quedan claves vacías.
 - [ ] `rinde` es texto libre, no un número: *"4 porciones"*.
+- [ ] La dificultad es un desplegable con *—* —sin dificultad—, *fácil*, *media* y *difícil*. Un valor fuera de esos tres abre el editor en *—*, igual que un `tiempo` inválido (C04.2.1c).
 
 #### C04.2.1b — Los tags, y las palabras que la app se reserva *(J7)*
 
-- [ ] Los tags comunes puestos se dibujan como pills, cada una con su cruz, que la saca; debajo va el campo para agregar otro, que se suma con Enter y sugiere los tags que ya existen —nunca los reservados—. Lo que quedó a medio escribir en ese campo no se guarda. Los especiales no: tienen su botón (C04.4.1) y no se dibujan dos veces.
+- [ ] Los tags comunes puestos se dibujan como pills, cada una con su cruz, que la saca; debajo va el campo para agregar otro, que sugiere los tags que ya existen —nunca los reservados—. Se suma con Enter o con una coma, y también al salir del campo: lo escrito no se pierde por tocar *Guardar* sin apretar Enter. Los especiales no: tienen su botón (C04.4.1) y no se dibujan dos veces.
 - [ ] Hay **palabras reservadas** que el editor no deja escribir a mano: `favorito`, `menú diario`, `probar` y `borrador`, cada uno en sus formas alternativas, más `terminado` en sus cuatro formas —masculino, femenino, singular y plural—.
 - [ ] `terminado` está reservada porque contradice a `borrador` (C05.3.1): un tag que contradiga a otro tag especial es ambigüedad pura.
 - [ ] Los cuatro especiales están reservados porque tienen su propio control: escribirlos a mano duplicaría el botón.
@@ -129,12 +130,13 @@ campo de texto y se guarda tal cual en su lugar del `.md`.
 - [ ] **No hay un control por ingrediente**: es un único campo, como la preparación.
 - [ ] La estructura es por convención: cada bullet es un ingrediente, los `###` son grupos, y la cantidad va después del separador (C05.1.3).
 - [ ] El editor **no corrige, no autocompleta y no valida** la convención.
+- [ ] Debajo del campo, un desplegable **Formato** muestra un ejemplo: un ingrediente por línea con guión, el nombre antes del separador, y los `###` como grupos. Es una ayuda, no una regla.
 - [ ] Una receta mal tipeada queda fuera del filtro por ingrediente. Es el costo aceptado y es consistente con el principio 3.
 
 #### C04.3.3 — El editor no impone formato *(J7, J8)*
 
-- [ ] Lo escrito se guarda literal: el editor no reordena secciones, no normaliza bullets y no cambia el markdown.
-- [ ] El orden de las secciones del archivo original se conserva.
+- [ ] Lo escrito en cada campo se guarda literal: el editor no normaliza bullets y no cambia el markdown.
+- [ ] Las secciones se escriben siempre en el mismo orden (`E05-Cimientos.md` C05.1.2): un `.md` que las traía en otro orden queda en ése al guardarlo.
 
 ### F04.3b — Crear una receta nueva
 
@@ -162,7 +164,7 @@ usuario escribieron afuera.
 #### C04.3c.1 — Nada se pierde por pasar por el editor *(J8)*
 
 - [ ] Las claves desconocidas del frontmatter se reescriben tal cual.
-- [ ] Las secciones desconocidas del cuerpo se reescriben tal cual, en su posición.
+- [ ] Las secciones desconocidas del cuerpo se reescriben tal cual, después de las conocidas y en el orden en que estaban (C05.1.2).
 - [ ] Un `## Fotos` mal formado —escrito afuera— es una sección desconocida más: se conserva tal cual y la receta queda sin depósito (C05.1.5).
 - [ ] El editor no las muestra ni permite editarlas: no son suyas.
 - [ ] Guardar una receta sin tocar ningún campo produce un archivo equivalente al original.
@@ -187,7 +189,8 @@ ya achicadas y con su número asignado.
 - [ ] **Cada miniatura dice en qué se usa** (`E05-Cimientos.md` C05.1.5), con un ícono por uso arriba a la derecha, sobre el mismo fondo oscuro que el número: la ficha con un señalador si es la portada, los tres renglones si está en un paso o un ingrediente, **los dos si es las dos cosas**. Una foto sin uso no lleva ninguna marca.
 - [ ] **Debajo de la fila, el epígrafe dice qué significa cada marca**, con los íconos dibujados en línea con el texto: *«[portada] es la portada / [en el texto] está en un paso o un ingrediente / Las que no tienen marca solo se ven en el carrusel de la receta: para poner una en un paso, tocá el [imagen] que aparece al costado del renglón que estás escribiendo.»*
 - [ ] Las marcas se rehacen en el momento: poner una foto de portada o en una línea la marca sin salir del editor.
-- [ ] **Cámara**, **Galería** y **Por URL** al final, sin tope: la primera saca una foto nueva de a una, la segunda abre el selector del sistema y acepta varias a la vez, y la tercera la trae de una dirección (C04.3d.1b). Las fotos que llegan por Compartir entran al mismo depósito (`E01-CapturaYBorradores.md` C01.2.3).
+- [ ] **Cámara**, **Galería** y **Por URL** en una fila debajo de las miniaturas, sin tope: la primera saca una foto nueva de a una, la segunda abre el selector del sistema y acepta varias a la vez, y la tercera la trae de una dirección (C04.3d.1b). Las fotos que llegan por Compartir entran al mismo depósito (`E01-CapturaYBorradores.md` C01.2.3).
+- [ ] **Cámara no se dibuja con mouse:** en una computadora abriría el mismo selector que *Galería*.
 - [ ] Cada foto nueva toma el número más alto más uno; ninguno se reusa, ni siquiera el de una que se sacó.
 - [ ] Mientras se achica, el velo cubre la pantalla (R8): tarda, aunque no escriba nada en Drive.
 - [ ] Una foto que el navegador no puede decodificar —HEIC, un archivo roto— no se agrega, y el aviso lo dice: *«No se pudo leer una de las fotos.»*
@@ -204,7 +207,7 @@ cuando el sitio la borra.
 - [ ] Lo que trae **es una foto más del depósito**: se achica y se sube al guardar, igual que una de la cámara (C04.3d.1). Nada toca Drive hasta Guardar.
 - [ ] **Mientras la baja y la achica, el velo cubre la pantalla** (R8), y el pedido se corta solo si el sitio no contesta.
 - [ ] **Si el sitio no la deja bajar** —CORS, que es lo habitual—, la URL **entra igual al depósito como link externo** (C05.1.5), y el aviso lo dice: *«No se pudo traer la foto —el sitio no lo permite o no hay conexión—: queda como link, y si el sitio la borra se pierde.»* No es un error: la foto entró, y el aviso va sin control, arriba del formulario y a la vista (R1). Sin red pasa lo mismo: desde el navegador no se distinguen.
-- [ ] **Una dirección que no es una foto** —una página, un archivo que no existe, algo que no empieza con `http(s)://` o que lleva un espacio adentro— **no entra**: el aviso va en la ficha, que queda abierta con lo escrito (R1). **Una `http://` tampoco**, y su aviso lo dice: *«La dirección tiene que empezar con https://.»* Desde Pages es contenido mixto, así que no se puede bajar y la imagen tampoco cargaría después.
+- [ ] **Una dirección que no es una foto** —una página, un archivo que no existe, algo que no empieza con `http(s)://` o que lleva un espacio adentro— **no entra**: el aviso, *«Esa URL no es una foto.»*, va en la ficha, que queda abierta con lo escrito (R1). **Una `http://` tampoco**, y su aviso lo dice: *«La dirección tiene que empezar con https://.»* Desde Pages es contenido mixto, así que no se puede bajar y la imagen tampoco cargaría después.
 - [ ] **Sólo entra al depósito una URL que se pueda volver a leer**: la línea es `- <n>: <url>` con el esquema en minúsculas y sin espacios, y una que no tenga esa forma dejaría toda la sección `## Fotos` como sección ajena al reabrir la receta (C05.1.5).
 - [ ] **El esquema en mayúsculas no se rechaza, se arregla:** `Https://` —lo que manda el teclado del teléfono con la primera letra— se escribe en minúsculas, y el chequeo de `http://` lo ve igual. El resto de la dirección se deja tal cual: distingue mayúsculas.
 - [ ] **Cada intento limpia el aviso del anterior**: nunca quedan dos a la vez.

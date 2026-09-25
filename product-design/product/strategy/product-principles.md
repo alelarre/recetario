@@ -144,10 +144,11 @@ segundos.
 
 **Ejemplo de arbitraje:** en el arranque está la opción de auto-reparar el
 índice sin preguntar, porque el índice es derivado y reconstruirlo no pierde
-datos. Este principio la descarta: reconstruir puede tardar mucho —los `.md` se
-leen de a uno— y arrancar la app no es el momento de decidirlo por el usuario.
-Se ofrece. Las dos excepciones son las que no tienen alternativa: cuando
-`_indice` no existe, y cuando cambió la versión del esquema.
+datos. Este principio la descarta: reconstruir puede tardar mucho —hay que leer
+cada `.md`— y arrancar la app no es el momento de decidirlo por el usuario.
+Se ofrece. Las excepciones son las que no tienen alternativa: cuando `_indice`
+no existe, cuando cambió la versión del esquema, y cuando una reconstrucción
+quedó a medias.
 
 ---
 
@@ -258,5 +259,5 @@ Registrado para no forzarlos donde no llegan:
 | El popup de autenticación de Google | Es una restricción de plataforma, no una decisión de producto: sin backend no hay alternativa. |
 | La estética concreta —paleta, tipografía, densidad, tema— | Se decide en `ux/design-system.md`. El principio 7 exige cohesión y una regla de tamaños; no dice de qué color es nada. |
 | El formato exacto del `.md` | El principio 3 fija el criterio —mínimo chico, lectura tolerante—; el formato está en `ux/information-architecture.md`. |
-| Si el agente se embebe en la PWA | Ningún principio lo fuerza en ninguna dirección. No se embebe: la app arma el pedido, lo manda a Claude y recibe la respuesta. |
+| Si el agente se embebe en la PWA | Ningún principio lo fuerza en ninguna dirección. No se embebe: la app arma el pedido, lo manda al agente y recibe la respuesta. |
 | Qué categorías hay | El principio 5 les asigna un lugar en la pantalla, no una forma: las define el usuario. |

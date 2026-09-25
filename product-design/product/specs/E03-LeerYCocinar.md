@@ -62,7 +62,7 @@ receta entera.
 
 - [ ] Borrador: **se muestra como cualquier receta.** El tag `borrador` no aparece en la fila de tags, en ninguna de sus formas (C05.1.4), y no hay marca, estado ni aviso de lo que falta: a un borrador se llega desde Borradores, que abre el editor (`E01-CapturaYBorradores.md` C01.4.1). Si la fila de tags queda vacía, no se dibuja.
 - [ ] Sin foto: el bloque de foto no se dibuja y la receta empieza por el título.
-- [ ] Cargando: el esqueleto de la pantalla está mientras se lee el `.md`.
+- [ ] Cargando: mientras se lee el `.md`, el velo tapa la pantalla de la que se llegó (`E05-Cimientos.md` R8), en su forma de espera. La receta se dibuja entera cuando llega.
 - [ ] Sin red: no se puede abrir; el aviso (C05.8.1).
 - [ ] El `.md` ya no está en Drive: el aviso dice que la receta ya no existe y ofrece volver. La app **no corrige el índice** (R4).
 
@@ -93,8 +93,8 @@ no esconde nada que haga falta.
 - [ ] Cambiar de posición es un toque, en un control de tamaño grande.
 - [ ] Notas, variaciones y descripción **no se muestran** en este modo.
 
-**Edge cases:** la receta no tiene ingredientes o no tiene pasos → el conmutador
-muestra solo lo que existe, sin una posición vacía · la receta no tiene ninguna
+**Edge cases:** la receta no tiene ingredientes o no tiene pasos → no hay
+conmutador: se muestra sólo lo que existe, sin una posición vacía · la receta no tiene ninguna
 de las dos → **Cocinar** no se ofrece.
 
 #### C03.2.4 — Seguir el hilo entre los pasos *(J6)*
@@ -132,7 +132,7 @@ dejarla prendida.
 - [ ] Arranca apagado cada vez que se entra al modo: no recuerda la elección anterior.
 - [ ] Salir del modo cocina lo libera.
 - [ ] El bloqueo se pierde solo cuando la app pasa a segundo plano: al volver con el modo abierto y el sol encendido, se vuelve a pedir.
-- [ ] Si el navegador no lo soporta o lo niega, el control **no se muestra**. No se avisa: no es un problema del usuario.
+- [ ] Si el navegador no lo soporta, el control **no se muestra**. Si lo niega, el sol queda apagado. En ningún caso se avisa: no es un problema del usuario.
 
 **Nota técnica:** Wake Lock API. El control y el estado del modo cocina viven en
 `src/cocina-control.ts`, que comparten la app y la vista de invitado (C03.7.5).
@@ -146,6 +146,7 @@ versiones es una receta, no tres.
 #### C03.4.1 — Cómo se muestran *(J6)*
 
 - [ ] Cada `###` bajo `## Variaciones` es una variación con su nombre.
+- [ ] Sin ningún `###`, cada renglón de la lista es una variación suelta, sin nombre (`E05-Cimientos.md` C05.1.2).
 - [ ] Si la variación empieza con una línea en itálica de fuente, se muestra como fuente propia y no como texto del cuerpo.
 - [ ] Sus ingredientes y pasos, si los trae, se muestran dentro de la variación.
 - [ ] **No hay pantalla propia ni navegación entre variaciones:** están en la misma columna.
@@ -221,7 +222,7 @@ revocar.
 - [ ] Las fotos se achican a 800 px de lado mayor y viajan adentro del archivo. Las de Drive salen del caché o se piden con el token; una externa se pide con `fetch`, y si falla —CORS, red— se omite sin aviso. *«Armando el PDF…»* ya cubre esa espera.
 - [ ] No lleva tags, link al `.md` ni botones. Una sección vacía no se dibuja.
 - [ ] Ningún ingrediente, paso, variación ni ítem de nota se parte entre páginas —tampoco una línea con su foto—, y un título de sección nunca queda solo al pie.
-- [ ] El archivo se llama como el `.md` de la receta, con extensión `.pdf`.
+- [ ] El archivo se llama como el título pasado a nombre de archivo —minúsculas, sin acentos, con guiones, la misma regla que el `.md` nuevo—, con extensión `.pdf`.
 - [ ] Mientras se arma, *PDF* muestra el spinner con *"Armando el PDF…"* y la ficha no acepta otro toque.
 - [ ] Si armarlo tardó más de lo que dura el permiso del toque, la ficha pasa a *"El PDF está listo."* con **Enviar PDF**, que manda el archivo ya armado.
 - [ ] Si el navegador no puede compartir archivos, el PDF se descarga.
@@ -250,7 +251,7 @@ revocar.
 - [ ] Lectura (`#/ver?r=…`): la misma pila de fichas de la receta, con el contexto sin el color de la categoría —es de la carpeta del dueño—. **No tiene encabezado** —ni volver, ni estrella, ni compartir, ni `.md`—, ni fila de tags. Al pie, sólo **Cocinar**, si hay ingredientes o pasos.
 - [ ] **Dibuja sólo las fotos externas** —las que viajaron en el link—, y las resuelve él. Nunca le pide nada a Drive.
 - [ ] **Sigue la misma regla de uso que la receta** (C03.5.2): el carrusel de la primera ficha lleva sólo las que viajaron y no usa ni la cabecera ni el texto, y si no queda ninguna no se dibuja. Las dos flechas del carrusel son de su lista cerrada de acciones y sólo lo desplazan.
-- [ ] El visor recorre lo mismo que en la receta (C03.5.3): desde el carrusel, las del carrusel; la portada, sola.
+- [ ] El visor recorre lo mismo que en la receta (C03.5.3): desde el carrusel, las del carrusel; la portada, sola. Una foto en línea no abre el visor.
 - [ ] Cocinar (`#/ver/cocinar?r=…`): el mismo modo cocina de la app —conmutador, paso actual, pasos hechos, sol—. **La única salida es el chevron**, que vuelve a la lectura; *Salir* no se dibuja.
 - [ ] El título de la pestaña es el de la receta.
 - [ ] Si la carga no se puede leer —cortada, alterada, de otra versión—, la pantalla dice *"Este link está roto o incompleto."* y nada más.

@@ -13,9 +13,10 @@ partidas en **capacidades**, cada una con sus criterios de aceptación, sus edge
 cases y sus notas técnicas.
 
 **Las reglas transversales viven en `E05-Cimientos.md` §Reglas** y valen para las
-seis épicas: manejo de errores mínimo, reintento idempotente, el `.md` como
-verdad sin autorreparación, el `fileId` como identidad, que la app no descubre
-cambios de afuera, y Android como plataforma. Una épica que no diga lo contrario, las cumple.
+seis épicas: manejo de errores mínimo, reintento idempotente, la sesión vencida
+como un error más, el `.md` como verdad sin autorreparación, el `fileId` como
+identidad, que la app no descubre cambios de afuera, Android como plataforma, y
+el velo que tapa la pantalla mientras la app trabaja. Una épica que no diga lo contrario, las cumple.
 
 Las épicas salen de los módulos de la arquitectura de información, no de las
 pantallas: una épica es un pedazo de producto con sentido propio, y puede tocar

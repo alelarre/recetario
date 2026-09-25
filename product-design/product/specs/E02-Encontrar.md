@@ -38,7 +38,7 @@ de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 
 #### C02.1.2 — Estados del Recetario *(J1, J5)*
 
-- [ ] Cargando: la búsqueda ya usable; las categorías con su espacio reservado, sin salto al llegar.
+- [ ] El Recetario se dibuja recién con el índice en memoria: mientras se lee está la pantalla de conexión, con *«Conectando…»*, o el progreso del reindexado. No hay un Recetario a medio cargar.
 - [ ] Sin recetas: las categorías se ven igual, vacías, y una línea dice cómo entra una receta: *«Todavía no hay recetas. Entran con Nueva receta, compartiendo desde otra app, o como archivos .md en las carpetas de Drive.»*
 - [ ] Sin recetas terminadas pero con borradores, la línea dice cuántos esperan: *«Todavía no hay recetas terminadas. Hay 3 en Borradores.»*
 - [ ] Sin red: el aviso arriba, y **ni la búsqueda ni las categorías se dibujan con datos viejos** (C05.8.1).
@@ -114,7 +114,7 @@ ingrediente.
 #### C02.3.4 — Estados de los resultados *(J1, J4)*
 
 - [ ] Escribiendo: los resultados se actualizan en vivo.
-- [ ] Sin resultados: una frase que nombra los tres criterios probados, y nada más. Sin sugerencias, sin "quisiste decir".
+- [ ] Sin resultados: una frase que nombra los tres criterios probados —*«Ninguna receta se llama, lleva ni tiene **berenjena**.»*—, y nada más. Sin sugerencias, sin "quisiste decir".
 - [ ] Sin red: no se puede buscar, y se dice.
 
 #### C02.3.5 — Los resultados se muestran todos *(J1, J4)*
@@ -162,7 +162,7 @@ la lista tiene que servir para recorrer, no solo para llegar.
 
 #### C02.5.3 — Estados de la lista *(J5)*
 
-- [ ] Cargando: indicador donde va el contenido, no pantalla de carga.
+- [ ] No hay espera de carga: la lista sale del índice en memoria. El único indicador es el del final de un tramo (C02.5.2).
 - [ ] Categoría vacía: una frase que dice cómo entra una receta, con el nombre de su carpeta —*«Todavía no hay nada acá. Entran con Nueva receta, compartiendo desde otra app, o como archivos .md en la carpeta Pescados de Drive.»*—. Sin ilustración.
 - [ ] Sin red: el aviso, y nada dibujado con datos viejos.
 
@@ -277,7 +277,7 @@ el orden suma la búsqueda.
 - [ ] **Si ninguna receta de la lista tiene duración, la fila no se dibuja.**
 - [ ] El filtro se pierde al cambiar de pantalla, como el de tags (C02.6.2).
 - [ ] El total del encabezado cuenta la lista filtrada, como con los tags.
-- [ ] Filtrar hasta cero resultados muestra el vacío de siempre: *"Probá sacando alguno de los filtros de arriba."*
+- [ ] Filtrar hasta cero resultados con alguna duración encendida muestra *"Ninguna receta con esos filtros. Probá sacando alguno de los filtros de arriba."*
 
 #### C02.9.2 — El orden por duración *(J1, J5)*
 
