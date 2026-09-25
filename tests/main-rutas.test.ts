@@ -346,7 +346,9 @@ describe('main.ts: las rutas', () => {
   });
 
   const montar = async ({
-    hash = '', search = '', readyState = 'complete' as DocumentReadyState, reducedMotion = false
+    hash = '', search = '', readyState = 'complete' as DocumentReadyState, reducedMotion = false,
+    /** La pantalla mide 900 px o más: el menú es fijo. */
+    ancha = false
   } = {}) => {
     // Sólo los temporizadores: `Date` queda real, que es de donde salen las
     // fechas del plan y el título de un borrador sin título.
@@ -683,7 +685,9 @@ describe('main.ts: las rutas', () => {
       google: {}, addEventListener: (ev: string, fn: () => void) => { listeners[ev] = fn; },
       scrollTo: (_x: number, y: number) => { scrolls.push(y); }, scrollY: 0, close: () => {},
       // Sólo la consulta de reduced motion importa acá: las demás no se usan.
-      matchMedia: (q: string) => ({ matches: reducedMotion && q.includes('prefers-reduced-motion') })
+      matchMedia: (q: string) => ({
+        matches: (reducedMotion && q.includes('prefers-reduced-motion')) || (ancha && q.includes('min-width: 900px'))
+      })
     });
     // El historial, con sus entradas y su `state`: `replace` no agrega una
     // entrada, asignar `hash` sí, y cada cambio de hash avisa después con
@@ -692,6 +696,7 @@ describe('main.ts: las rutas', () => {
     const historial = historialFalso({
       hash,
       alCambiarHash: () => { listeners['hashchange']?.(); },
+      alPopstate: () => { listeners['popstate']?.(); },
       location: { pathname: '/recetario/', search, origin: 'https://h', reload: () => { recargas.push(1); } },
       alVolver: () => { tapadoAlVolver.push(tapado()); }
     });
@@ -704,12 +709,10 @@ describe('main.ts: las rutas', () => {
       [Symbol.iterator]() { return Object.entries(estado.formulario)[Symbol.iterator](); }
     };
 
-    const { PANTALLAS_CON_MENU } = await import('../src/main.js');
+    await import('../src/main.js');
     await esperar();
 
     return {
-      /** La lista con la que `main` decide el gesto del menú lateral. */
-      PANTALLAS_CON_MENU,
       botonConvertir,
       app,
       velo,
@@ -786,6 +789,19 @@ describe('main.ts: las rutas', () => {
       abrir: async (destino: string) => {
         global.location.hash = destino;
         await esperar();
+      },
+      /**
+       * Un toque en un destino del lateral. Si la app no frena el link, el
+       * navegador navega: una entrada nueva, sin `state`.
+       */
+      tocarDestino: async (href: string) => {
+        let frenado = false;
+        const link = { getAttribute: (n: string) => (n === 'href' ? href : null) };
+        const destino = { closest: (sel: string) => (sel.includes('.lat a') ? link : null) };
+        for (const fn of clicks) await fn({ target: destino, preventDefault: () => { frenado = true; } });
+        if (!frenado) global.location.hash = href;
+        await esperar();
+        return frenado;
       },
       /** El atrás del navegador o de Android, que no pasa por la app. */
       atras: async () => {
@@ -960,20 +976,90 @@ describe('main.ts: las rutas', () => {
     expect(vueltasAtras).toEqual([]);
   });
 
-  it('las pantallas del menú abren el menú desde su encabezado', async () => {
-    // El gesto sale de `PANTALLAS_CON_MENU`; el botón lo decide a mano cada
-    // pantalla. Acá se recorre la lista: si mañana entra otra y su encabezado
-    // sigue con el volver, falla.
-    const { abrir, app, PANTALLAS_CON_MENU } = await montar();
-    const hashes: Record<string, string> = {
+  describe('MENU es la única fuente del menú', () => {
+    const HASH_DE: Record<string, string> = {
       recetario: '#/', borradores: '#/borradores', plan: '#/plan', ajustes: '#/ajustes', nueva: '#/nueva'
     };
-    expect(Object.keys(hashes).sort()).toEqual([...PANTALLAS_CON_MENU].sort());
-    for (const vista of PANTALLAS_CON_MENU) {
-      await abrir(hashes[vista]!);
-      expect(app.innerHTML, vista).toContain('data-accion="abrir-menu"');
-      expect(app.innerHTML, vista).not.toContain('data-accion="volver"');
-    }
+    const SIN_MENU = ['#/c/Carnes', '#/r/f1', '#/r/f1/editar', '#/buscar?q=pan', '#/t/horno', '#/categorias', '#/plan/compras'];
+
+    it('cada vista de MENU dibuja la hamburguesa, el lateral con su entrada marcada, y el gesto lo abre', async () => {
+      const { MENU } = await import('../src/ui/router.js');
+      const { abrir, app, deslizar, menuDesplegado } = await montar();
+      expect(Object.keys(HASH_DE).sort()).toEqual(Object.keys(MENU).sort());
+      for (const [vista, activo] of Object.entries(MENU)) {
+        await abrir(HASH_DE[vista]!);
+        expect(app.innerHTML, vista).toContain('data-accion="abrir-menu"');
+        expect(app.innerHTML, vista).not.toContain('data-accion="volver"');
+        expect(app.innerHTML, vista).toContain('<nav class="lat">');
+        const marcadas = [...app.innerHTML.matchAll(/<a class="act" href="([^"]*)"/g)].map(m => m[1]);
+        expect(marcadas, vista).toEqual(activo ? [HASH_DE[activo]] : []);
+        await deslizar({ desde: 30, hasta: 220 });
+        expect(menuDesplegado(), vista).toBe(true);
+        await deslizar({ desde: 200, hasta: 10 });
+      }
+    });
+
+    it('las demás dibujan el volver, y el gesto no abre nada', async () => {
+      const { abrir, app, deslizar, menuDesplegado } = await montar();
+      for (const hash of SIN_MENU) {
+        await abrir(hash);
+        expect(app.innerHTML, hash).toContain('data-accion="volver"');
+        expect(app.innerHTML, hash).not.toContain('data-accion="abrir-menu"');
+        await deslizar({ desde: 30, hasta: 220 });
+        expect(menuDesplegado(), hash).toBe(false);
+      }
+    });
+
+    it('desde 900 px, todas las pantallas dibujan el lateral fijo: las demás, sin velo ni marca', async () => {
+      const { abrir, app } = await montar({ ancha: true });
+      for (const hash of SIN_MENU) {
+        await abrir(hash);
+        expect(app.innerHTML, hash).toContain('<nav class="lat solo-ancho">');
+        expect(app.innerHTML, hash).toContain('<div class="conten">');
+        expect(app.innerHTML, hash).not.toContain('velo-lat');
+        expect(app.innerHTML, hash).not.toContain('<a class="act"');
+      }
+    });
+
+    it('la receta, la categoría y el editor llevan el lateral', async () => {
+      const { abrir, app } = await montar({ ancha: true });
+      for (const hash of ['#/r/f1', '#/c/Carnes', '#/r/f1/editar']) {
+        await abrir(hash);
+        expect(app.innerHTML, hash).toMatch(/^<nav class="lat solo-ancho">[^]*<\/nav><div class="conten">/);
+      }
+    });
+
+    it('en pantalla ancha el gesto no abre el menú: es fijo', async () => {
+      const { abrir, deslizar, menuDesplegado, pila } = await montar({ ancha: true });
+      await abrir('#/borradores');
+      await deslizar({ desde: 30, hasta: 220 });
+      expect(menuDesplegado()).toBe(false);
+      expect(pila()).toHaveLength(2);
+    });
+  });
+
+  describe('tocar el destino en el que ya se está', () => {
+    it('cierra el menú y no navega', async () => {
+      const { abrir, tocar, tocarDestino, menuDesplegado, pila } = await montar();
+      await abrir('#/plan');
+      await tocar('abrir-menu');
+      expect(await tocarDestino('#/plan')).toBe(true);
+      expect(menuDesplegado()).toBe(false);
+      expect(global.location.hash).toBe('#/plan');
+      // Ni el link ni la capa del menú quedan en el historial.
+      expect(pila().map(e => e.hash)).toEqual(['', '#/plan']);
+    });
+
+    it("con la app abierta en '', Inicio es la pantalla actual", async () => {
+      const { tocar, tocarDestino, menuDesplegado, pila, pinturas } = await montar();
+      await tocar('abrir-menu');
+      const antes = pinturas.length;
+      expect(await tocarDestino('#/')).toBe(true);
+      expect(menuDesplegado()).toBe(false);
+      expect(global.location.hash).toBe('');
+      expect(pila()).toHaveLength(1);
+      expect(pinturas.length).toBe(antes);
+    });
   });
 
   describe('abrir y cerrar el menú no redibuja la pantalla', () => {
@@ -1022,12 +1108,13 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).not.toContain('<a class="act"');
     });
 
-    it('editar una receta mantiene el volver, sin menú', async () => {
+    it('editar una receta mantiene el volver, sin menú: el lateral es sólo el de pantalla ancha', async () => {
       const { abrir, app } = await montar();
       await abrir('#/r/f1/editar');
       expect(app.innerHTML).toContain('data-accion="volver"');
       expect(app.innerHTML).not.toContain('data-accion="abrir-menu"');
-      expect(app.innerHTML).not.toContain('class="lat');
+      expect(app.innerHTML).not.toContain('velo-lat');
+      expect(app.innerHTML).toContain('<nav class="lat solo-ancho">');
     });
 
     it('abrir el menú no borra lo escrito', async () => {
@@ -1045,18 +1132,19 @@ describe('main.ts: las rutas', () => {
     });
 
     it('con cambios, tocar un destino del menú pregunta, y el menú queda cerrado', async () => {
-      const { abrir, tocar, vueltasAtras, preguntas, menuDesplegado } = await montar();
+      const { abrir, tocar, tocarDestino, vueltasAtras, preguntas, menuDesplegado, pila } = await montar();
       await abrir('#/nueva');
       estado.formulario = { titulo: 'Pan de campo' };
       await tocar('abrir-menu');
       expect(menuDesplegado()).toBe(true);
 
-      // El link del menú cambia el hash: el `hashchange` es el que pregunta,
-      // y la entrada del link se deshace.
-      await abrir('#/plan');
+      // El destino toma el lugar de la capa del menú, el `hashchange` es el
+      // que pregunta, y la entrada del destino se deshace.
+      await tocarDestino('#/plan');
 
       expect(vueltasAtras).toHaveLength(1);
       expect(global.location.hash).toBe('#/nueva');
+      expect(pila().map(e => e.hash)).toEqual(['', '#/nueva']);
       expect(preguntas.join('')).toContain('¿Salir sin guardar los cambios?');
       expect(menuDesplegado()).toBe(false);
     });
@@ -1071,10 +1159,11 @@ describe('main.ts: las rutas', () => {
     };
 
     it('en las pantallas del menú, deslizar desde el borde lo abre', async () => {
-      const { abrir, deslizar, menuDesplegado, PANTALLAS_CON_MENU } = await montar();
-      expect(Object.keys(HASHES).sort()).toEqual([...PANTALLAS_CON_MENU].sort());
+      const { MENU } = await import('../src/ui/router.js');
+      const { abrir, deslizar, menuDesplegado } = await montar();
+      expect(Object.keys(HASHES).sort()).toEqual(Object.keys(MENU).sort());
 
-      for (const vista of PANTALLAS_CON_MENU) {
+      for (const vista of Object.keys(MENU)) {
         await abrir(HASHES[vista]!);
         expect(menuDesplegado(), vista).toBe(false);
 
@@ -1133,12 +1222,13 @@ describe('main.ts: las rutas', () => {
     });
 
     it('en una pantalla sin menú el dedo no lo abre', async () => {
-      const { abrir, app, deslizar } = await montar();
+      const { abrir, deslizar, menuDesplegado, pila } = await montar();
       await abrir('#/r/f1');
 
       await deslizar({ desde: 30, hasta: 220 });
 
-      expect(app.innerHTML).not.toContain('class="lat');
+      expect(menuDesplegado()).toBe(false);
+      expect(pila()).toHaveLength(2);
     });
 
     it('un toque que el sistema cancela termina el gesto igual, sin dejarlo a medias', async () => {
@@ -4542,6 +4632,167 @@ describe('main.ts: las rutas', () => {
       expect(global.location.hash).toBe('#/nueva?text=hola');
       expect(app.innerHTML).toContain('data-formulario');
     });
+  });
+
+  describe('lo que se abre en la misma pantalla se cierra con el atrás (§1)', () => {
+    const DEPOSITO = [
+      '---', 'titulo: Milanesas', '---', '',
+      '## Fotos', '', '- 1: https://ejemplo/1.jpg', '- 2: https://ejemplo/2.jpg', ''
+    ].join('\n');
+    const formularioConFotos = () => ({
+      titulo: 'Milanesas', carpeta: 'c1', foto: '',
+      fotos: JSON.stringify([{ n: 1, url: 'https://ejemplo/1.jpg' }, { n: 2, url: 'https://ejemplo/2.jpg' }])
+    });
+    const capa = (state: unknown): unknown => (state as { capa?: unknown } | null)?.capa;
+
+    it('el menú, en el teléfono: el atrás lo cierra sin cambiar de pantalla', async () => {
+      const { abrir, tocar, atras, menuDesplegado, pila, pinturas } = await montar();
+      await abrir('#/plan');
+      await tocar('abrir-menu');
+      expect(capa(pila().at(-1)?.state)).toBe('menu');
+      const antes = pinturas.length;
+      await atras();
+      expect(menuDesplegado()).toBe(false);
+      expect(global.location.hash).toBe('#/plan');
+      expect(pila().map(e => e.hash)).toEqual(['', '#/plan']);
+      expect(pinturas.length).toBe(antes);
+    });
+
+    it('el menú abierto por el gesto también es una capa; cerrarlo con el velo la consume', async () => {
+      const { abrir, tocar, deslizar, pila, vueltasAtras } = await montar();
+      await abrir('#/plan');
+      await deslizar({ desde: 30, hasta: 220 });
+      expect(capa(pila().at(-1)?.state)).toBe('menu');
+      await tocar('cerrar-menu');
+      expect(vueltasAtras).toHaveLength(1);
+      expect(pila().map(e => [e.hash, capa(e.state)])).toEqual([['', undefined], ['#/plan', undefined]]);
+    });
+
+    it('un destino tocado con el menú abierto no deja la capa en el historial', async () => {
+      const { abrir, tocar, tocarDestino, pila, app } = await montar();
+      await abrir('#/plan');
+      await tocar('abrir-menu');
+      expect(await tocarDestino('#/ajustes')).toBe(true);
+      expect(global.location.hash).toBe('#/ajustes');
+      expect(pila().map(e => [e.hash, capa(e.state)])).toEqual([['', undefined], ['#/plan', undefined], ['#/ajustes', undefined]]);
+      expect(app.innerHTML).toContain('Reindexar');
+      expect(app.innerHTML).toContain('<nav class="lat">');
+    });
+
+    it('el visor de la receta: el atrás lo cierra; la cruz consume su entrada', async () => {
+      estado.md = DEPOSITO;
+      const { abrir, tocar, atras, app, pila } = await montar();
+      await abrir('#/r/f1');
+      await tocar('ver-foto-receta', { n: '1' });
+      expect(app.innerHTML).toContain('class="visor"');
+      await atras();
+      expect(app.innerHTML).not.toContain('class="visor"');
+      expect(app.innerHTML).toContain('class="rec-tit"');
+      expect(pila()).toHaveLength(2);
+
+      await tocar('ver-foto-receta', { n: '1' });
+      await tocar('cerrar-visor');
+      expect(app.innerHTML).not.toContain('class="visor"');
+      expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined]);
+    });
+
+    it('la ficha de compartir: el atrás la cierra; cancelar consume su entrada', async () => {
+      const { abrir, tocar, atras, app, pila } = await montar();
+      await abrir('#/r/f1');
+      await tocar('compartir');
+      expect(app.innerHTML).toContain('hoja-compartir');
+      await atras();
+      expect(app.innerHTML).not.toContain('hoja-compartir');
+      expect(global.location.hash).toBe('#/r/f1');
+
+      await tocar('compartir');
+      await tocar('cerrar-compartir');
+      expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined]);
+    });
+
+    it('las fichas de fotos del editor: el atrás las cierra sin tocar el formulario; el velo consume su entrada', async () => {
+      estado.md = DEPOSITO;
+      const { abrir, tocar, atras, app, preguntas, pila } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+      const antes = app.innerHTML;
+
+      await tocar('acciones-foto', { n: '1' });
+      // Otra ficha encima toma el lugar de la anterior: una sola entrada.
+      await tocar('abrir-portada');
+      expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined, 'ficha-foto']);
+      await atras();
+      expect(preguntas.some(h => h.includes('hoja-foto'))).toBe(false);
+      expect(app.innerHTML).toBe(antes);
+      expect(global.location.hash).toBe('#/r/f1/editar');
+
+      await tocar('acciones-foto', { n: '1' });
+      await tocar('cerrar-ficha-foto');
+      expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined]);
+    });
+
+    it('el visor abierto desde una ficha toma su lugar, y el atrás lo cierra', async () => {
+      estado.md = DEPOSITO;
+      const { abrir, tocar, atras, preguntas, pila } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = formularioConFotos();
+      await tocar('acciones-foto', { n: '2' });
+      await tocar('ver-foto-receta', { n: '2' });
+      expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined, 'visor']);
+      await atras();
+      expect(preguntas.some(h => h.includes('class="visor"'))).toBe(false);
+      expect(pila()).toHaveLength(2);
+    });
+
+    it('la categoría de Agregar al plan: el atrás vuelve a la grilla; el chevron consume su entrada', async () => {
+      const { abrir, tocar, atras, app, pila } = await montar();
+      await abrir('#/plan');
+      await abrir('#/plan/agregar?dia=1&momento=noche');
+      await tocar('elegir-categoria-plan', { nombre: 'Carnes' });
+      expect(app.innerHTML).not.toContain('data-accion="elegir-categoria-plan"');
+      await atras();
+      expect(app.innerHTML).toContain('data-accion="elegir-categoria-plan" data-nombre="Carnes"');
+      expect(global.location.hash).toBe('#/plan/agregar?dia=1&momento=noche');
+
+      await tocar('elegir-categoria-plan', { nombre: 'Carnes' });
+      await tocar('volver-categorias-plan');
+      expect(app.innerHTML).toContain('data-accion="elegir-categoria-plan" data-nombre="Carnes"');
+      expect(pila().map(e => capa(e.state))).toEqual([undefined, undefined, undefined]);
+    });
+
+    it('elegir una receta con la categoría abierta vuelve al plan sin pasar por la capa', async () => {
+      const { abrir, tocar, pila, app } = await montar();
+      await abrir('#/plan');
+      await abrir('#/plan/agregar?dia=1&momento=noche');
+      await tocar('elegir-categoria-plan', { nombre: 'Carnes' });
+      await tocar('elegir-para-el-plan', { id: 'f1' });
+      expect(global.location.hash).toBe('#/plan');
+      expect(pila().map(e => e.hash)).toEqual(['', '#/plan']);
+      expect(app.innerHTML).toContain('data-accion="agregar-al-plan"');
+    });
+  });
+
+  it('un link tocado mientras se escribe deshace la navegación, y la pila queda igual', async () => {
+    const original = storeFake.guardar;
+    let soltar!: () => void;
+    storeFake.guardar = () => new Promise<void>(r => { soltar = r; });
+    try {
+      const { abrir, tocar, pila, app } = await montar();
+      await abrir('#/r/f1');
+      await abrir('#/r/f1/editar');
+      estado.formulario = { titulo: 'Milanesas' };
+      const antes = pila();
+      const guardando = tocar('guardar');
+      await esperar();
+      await abrir('#/plan');
+      expect(global.location.hash).toBe('#/r/f1/editar');
+      expect(pila()).toEqual(antes);
+      expect(app.innerHTML).toContain('data-formulario');
+      soltar();
+      await guardando;
+    } finally {
+      storeFake.guardar = original;
+    }
   });
 
   describe('el arranque dibuja una sola vez', () => {

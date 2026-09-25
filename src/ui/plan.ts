@@ -8,7 +8,8 @@
  * su `+` ya lo dicen.
  */
 import { escapar } from './markdown.js';
-import { encabezado, aviso, lateral, botonMenu } from './componentes.js';
+import { encabezado, aviso, conLateral, izquierdaDelEncabezado } from './componentes.js';
+import type { MenuDePantalla } from './componentes.js';
 import { colorCategoria } from './categorias.js';
 import { ICO } from './iconos.js';
 import { DIAS_CORTOS, MOMENTOS, NOMBRE_DEL_MOMENTO, diasDesde, tituloDeComida } from '../plan.js';
@@ -24,10 +25,8 @@ export interface OpcionesPlan {
   confirmandoReinicio?: boolean;
   /** Lo último que falló al escribir. La grilla sigue mostrando lo que dice Drive. */
   error?: string;
-  /** Cuántos borradores esperan, para el contador del menú. */
-  borradores?: number;
-  /** El menú lateral está desplegado (sólo en pantalla angosta). */
-  menuAbierto?: boolean;
+  /** El plan es destino del menú: el lateral y la hamburguesa. */
+  menu?: MenuDePantalla;
 }
 
 /** Una línea de una celda: el título, que lleva a la receta, y su cruz. */
@@ -60,7 +59,7 @@ function celda(
 }
 
 export function renderPlan(
-  { plan, entradas, hoy, confirmandoReinicio, error, borradores = 0, menuAbierto }: OpcionesPlan
+  { plan, entradas, hoy, confirmandoReinicio, error, menu }: OpcionesPlan
 ): string {
   const filas = diasDesde(hoy).map(dia =>
     `<div class="d${dia === hoy ? ' hoy' : ''}"><b>${DIAS_CORTOS[dia]}</b>` +
@@ -87,16 +86,13 @@ export function renderPlan(
     '</div></div>';
 
   // Se llega desde el menú, así que el encabezado lo abre: la hamburguesa y no
-  // el volver, igual que en el Recetario, Borradores y Ajustes. El botón y el
-  // deslizamiento son la misma lista de pantallas (`PANTALLAS_CON_MENU`).
-  return lateral({ activo: 'plan', borradores, ...(menuAbierto ? { abierto: true } : {}) }) +
-    '<div class="conten">' +
-      encabezado({ titulo: 'Plan de la semana', izquierda: botonMenu(borradores) }) +
+  // el volver, igual que en las demás pantallas de `MENU` (`router.ts`).
+  return conLateral(menu,
+      encabezado({ titulo: 'Plan de la semana', ...izquierdaDelEncabezado(menu) }) +
       '<div class="cuerpo denso">' +
         // Sin control de reintento: reintentar es volver a tocar lo que falló (R1).
         (error ? aviso({ texto: error }) : '') +
         grilla +
         `<div class="pie-plan">${confirmandoReinicio ? confirmacion : botones}</div>` +
-      '</div>' +
-    '</div>';
+      '</div>');
 }

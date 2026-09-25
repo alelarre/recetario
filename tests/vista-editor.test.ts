@@ -40,7 +40,7 @@ const dibujar = (extra = {}) => renderEditor({ entrada: null, receta: cargada, c
 
 describe('el encabezado de la receta nueva', () => {
   it('con el menú, lleva la hamburguesa y el lateral sin ningún destino marcado', () => {
-    const html = renderEditor({ entrada: null, receta: cargada, categorias, menu: { abierto: false, borradores: 2 } });
+    const html = renderEditor({ entrada: null, receta: cargada, categorias, menu: { activo: null, abierto: false, borradores: 2 } });
     expect(html).toContain('data-accion="abrir-menu"');
     expect(html).toContain('<span class="n">2</span>');
     expect(html).not.toContain('data-accion="volver"');
@@ -50,7 +50,7 @@ describe('el encabezado de la receta nueva', () => {
   });
 
   it('con el menú abierto, el lateral sale desplegado', () => {
-    const html = renderEditor({ entrada: null, receta: cargada, categorias, menu: { abierto: true, borradores: 0 } });
+    const html = renderEditor({ entrada: null, receta: cargada, categorias, menu: { activo: null, abierto: true, borradores: 0 } });
     expect(html).toContain('<nav class="lat abierto">');
   });
 
@@ -83,8 +83,8 @@ describe('renderEditor', () => {
     expect(html).not.toContain('---\ntitulo:');
   });
 
-  // *Nueva receta* se alcanza desde el Recetario y se sale volviendo: no está
-  // en `PANTALLAS_CON_MENU`, así que el encabezado no abre el menú.
+  // Sin `menu` —editar una receta existente, que no está en `MENU`—, el
+  // encabezado vuelve y no abre el menú.
   it('el encabezado lleva el volver, no la hamburguesa', () => {
     const html = dibujar();
     expect(html).toContain('Nueva receta');

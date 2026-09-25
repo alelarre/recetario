@@ -9,8 +9,10 @@
  * tarjeta abriendo el editor, que es donde se completa un borrador.
  */
 import {
-  encabezado, tarjeta, vacio, carruselTags, iconoDeTag, SPINNER, filaDuraciones, conmutadorOrden, lateral, botonMenu
+  encabezado, tarjeta, vacio, carruselTags, iconoDeTag, SPINNER, filaDuraciones, conmutadorOrden,
+  conLateral, izquierdaDelEncabezado
 } from './componentes.js';
+import type { MenuDePantalla } from './componentes.js';
 import { ordenarRecetas } from '../catalogo.js';
 import type { Entrada } from '../tipos.js';
 import type { Duracion, Orden } from '../catalogo.js';
@@ -26,19 +28,18 @@ export interface OpcionesTag {
   duraciones: { valor: Duracion; cantidad: number }[];
   duracionesActivas: string[];
   orden: Orden;
-  /**
-   * La lista es un destino del menú —Borradores—: el lateral, desplegado o
-   * no, y cuántos borradores esperan, para el contador de la hamburguesa.
-   */
-  menu?: { abierto: boolean; borradores: number };
+  /** La lista es Borradores: cada tarjeta abre el editor, y el vacío lo dice. */
+  borradores?: boolean;
+  /** Borradores es destino del menú: el lateral y la hamburguesa. */
+  menu?: MenuDePantalla;
   /** El título del encabezado, si no es el tag: Borradores se llama como en el menú. */
   titulo?: string;
 }
 
 export function renderTag(
-  { tag, entradas, total, visibles, tagsActivos, tags, duraciones, duracionesActivas, orden, menu, titulo }: OpcionesTag
+  { tag, entradas, total, visibles, tagsActivos, tags, duraciones, duracionesActivas, orden, borradores, menu, titulo }: OpcionesTag
 ): string {
-  const destino = menu ? 'editor' : 'receta';
+  const destino = borradores ? 'editor' : 'receta';
   const lista = ordenarRecetas(entradas, orden).map(e => tarjeta(e, { destino })).join('');
   // El tag de la ruta no se puede sacar —cambiar de tag es volver—, así que el
   // vacío dice el hecho y no invita a «sacar un filtro» que no se puede sacar.
@@ -46,7 +47,7 @@ export function renderTag(
     ? `<div class="lista">${lista}</div>` + (visibles < total ? SPINNER : '')
     : vacio(duracionesActivas.length
         ? 'Ninguna receta con esos filtros. Probá sacando alguno de los filtros de arriba.'
-        : menu ? 'No hay borradores.' : 'Ninguna receta tiene estos tags.');
+        : borradores ? 'No hay borradores.' : 'Ninguna receta tiene estos tags.');
 
   const hayDuraciones = duraciones.length > 0 || duracionesActivas.length > 0;
   const filtroDuracion = filaDuraciones(duraciones, duracionesActivas);
@@ -56,11 +57,9 @@ export function renderTag(
   const icono = iconoDeTag(tag);
   const pantalla = encabezado({
     titulo: titulo ?? tag, total, ...(icono ? { icono } : {}),
-    ...(menu ? { izquierda: botonMenu(menu.borradores) } : { volver: true })
+    ...izquierdaDelEncabezado(menu)
   }) +
     `<div class="cuerpo denso">${carruselTags(tags, { activos: tagsActivos, tope: 20, fijo: tag })}` +
     `${filtroDuracion}${conmutador}${cuerpo}</div>`;
-  if (!menu) return pantalla;
-  return lateral({ activo: 'borradores', borradores: menu.borradores, ...(menu.abierto ? { abierto: true } : {}) }) +
-    `<div class="conten">${pantalla}</div>`;
+  return conLateral(menu, pantalla);
 }

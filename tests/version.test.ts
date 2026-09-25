@@ -17,7 +17,7 @@ describe('la versión visible', () => {
   });
 
   it('el menú lateral la dibuja al pie', () => {
-    const html = lateral({ activo: 'recetario', borradores: 0 });
+    const html = lateral({ activo: 'recetario', abierto: false, borradores: 0 });
     expect(html).toContain(`<div class="version">${textoVersion()}</div></nav>`);
   });
 });

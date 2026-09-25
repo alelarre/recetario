@@ -13,6 +13,7 @@ import { textoVersion } from '../version.js';
 import { tagEspecial, ordenarTags, tieneEspecial, TAGS_ESPECIALES, duracionValida, DURACIONES } from '../catalogo.js';
 import type { Entrada, UsoDeFoto } from '../tipos.js';
 import type { TagEspecial, Duracion, Orden } from '../catalogo.js';
+import type { DestinoLateral } from './router.js';
 
 /** La duración con su relojito, o nada si el tiempo no es uno de los cinco valores. */
 export function duracionConReloj(tiempo: unknown): string {
@@ -315,33 +316,43 @@ export function vacio(texto: string): string {
   return `<div class="vacio">${escapar(texto)}</div>`;
 }
 
-/** Los destinos del menú lateral. Es la navegación primaria de la app. */
-export type DestinoLateral = 'recetario' | 'borradores' | 'plan' | 'ajustes';
-
-export interface OpcionesLateral {
-  /** Cuál se está mirando: se marca con el acento. Sin él no se marca ninguno. */
-  activo?: DestinoLateral;
+/**
+ * El menú de una pantalla que es destino del menú (`MENU` en `router.ts`):
+ * qué entrada marca, si está desplegado y cuántos borradores esperan.
+ */
+export interface MenuDePantalla {
+  activo: DestinoLateral | null;
+  /** Desplegado. Sólo en pantalla angosta: desde 900 px es fijo y esto no aplica. */
+  abierto: boolean;
   /** Cuántos borradores esperan. En cero no se dibuja el número. */
   borradores: number;
-  /** El menú está desplegado. En pantalla ancha el lateral es fijo y esto no aplica. */
-  abierto?: boolean;
+}
+
+export interface OpcionesLateral extends MenuDePantalla {
+  /**
+   * Sólo en pantalla ancha, donde queda fijo: la pantalla no es destino del
+   * menú, y en el teléfono no lo abre nada. Va sin velo.
+   */
+  soloAncho?: boolean;
 }
 
 /**
- * El menú lateral: Recetario, Borradores y Ajustes, con su nombre.
+ * El menú lateral: Inicio, Borradores, Plan de la semana, Nueva receta y
+ * Ajustes, con su nombre.
  *
- * En el teléfono se despliega desde la hamburguesa y se cierra tocando el velo
- * o cualquier destino; en pantalla ancha queda fijo y la hamburguesa no se
- * dibuja —eso lo resuelve el CSS, no este HTML, que es el mismo en los dos
- * casos—.
+ * En el teléfono se despliega desde la hamburguesa o el gesto y se cierra
+ * tocando el velo o cualquier destino; en pantalla ancha queda fijo y la
+ * hamburguesa no se dibuja —eso lo resuelve el CSS, no este HTML, que es el
+ * mismo en los dos casos—.
  */
-export function lateral({ activo, borradores, abierto }: OpcionesLateral): string {
+export function lateral({ activo, borradores, abierto, soloAncho }: OpcionesLateral): string {
   const item = (destino: DestinoLateral, hash: string, icono: string, texto: string, cuenta = 0): string =>
     `<a class="${destino === activo ? 'act' : ''}" href="${hash}">${icono}${texto}` +
     (cuenta > 0 ? `<span class="cu">${cuenta}</span>` : '') + '</a>';
 
-  return `<div class="velo-lat${abierto ? ' on' : ''}" data-accion="cerrar-menu"></div>` +
-    `<nav class="lat${abierto ? ' abierto' : ''}">` +
+  const clases = ['lat', ...(abierto ? ['abierto'] : []), ...(soloAncho ? ['solo-ancho'] : [])].join(' ');
+  return (soloAncho ? '' : `<div class="velo-lat${abierto ? ' on' : ''}" data-accion="cerrar-menu"></div>`) +
+    `<nav class="${clases}">` +
       '<div class="marca">Recetario</div>' +
       // «Inicio» y no «Recetario»: ese nombre ya es la marca de arriba del menú.
       item('recetario', '#/', ICO.casa, 'Inicio') +
@@ -367,6 +378,18 @@ export function botonMenu(borradores: number): string {
   const cuenta = borradores > 0 ? `<span class="n">${borradores}</span>` : '';
   return `<button class="ico cuenta menu-lat" data-accion="abrir-menu" aria-label="Menú">${ICO.menu}${cuenta}</button>`;
 }
+
+/** Lo de la izquierda del encabezado: con menú, la hamburguesa; sin él, el volver. */
+export const izquierdaDelEncabezado = (menu: MenuDePantalla | undefined): Pick<OpcionesEncabezado, 'izquierda' | 'volver'> =>
+  menu ? { izquierda: botonMenu(menu.borradores) } : { volver: true };
+
+/**
+ * La pantalla con el lateral al costado y el contenido corrido. Sin menú es
+ * la pantalla sola: el lateral de las pantallas que no son destino lo pone
+ * `main`, sólo para pantalla ancha.
+ */
+export const conLateral = (menu: MenuDePantalla | undefined, pantalla: string, soloAncho = false): string =>
+  menu ? lateral({ ...menu, ...(soloAncho ? { soloAncho } : {}) }) + `<div class="conten">${pantalla}</div>` : pantalla;
 
 export interface OpcionesTile {
   cantidad?: number;

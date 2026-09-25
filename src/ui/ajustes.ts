@@ -3,7 +3,8 @@
  * interrumpen. Está a tres toques a propósito: lo de acá es raro y caro.
  */
 import { escapar } from './markdown.js';
-import { encabezado, lateral, botonMenu, barra, porCiento } from './componentes.js';
+import { encabezado, barra, porCiento, conLateral, izquierdaDelEncabezado } from './componentes.js';
+import type { MenuDePantalla } from './componentes.js';
 import type { Progreso, IndiceDuplicado, InformeArranque } from '../store.js';
 
 const DIA = 86400000;
@@ -39,8 +40,6 @@ export interface OpcionesAjustes {
   /** Lo mismo con `_plan.md`, que tampoco está en el índice y se busca por nombre. */
   planDuplicado?: IndiceDuplicado | null;
   reindexando: Progreso | null;
-  /** Cuántas recetas tienen el tag borrador, para el contador del menú. */
-  borradores?: number;
   /** Lo que verificó el arranque de esta sesión. */
   informe?: InformeArranque | null;
   /** Cuántas recetas tiene el índice ahora, para el registro de actividad. */
@@ -49,12 +48,12 @@ export interface OpcionesAjustes {
   categorias?: number;
   /** El nombre de la carpeta base en uso. */
   carpeta?: string;
-  /** El menú lateral está desplegado (sólo en pantalla angosta). */
-  menuAbierto?: boolean;
+  /** Ajustes es destino del menú: el lateral y la hamburguesa. */
+  menu?: MenuDePantalla;
 }
 
 export function renderAjustes(
-  { cuenta, ultimaReindexado, ignorados, sinBorrador = [], indiceDuplicado, planDuplicado, reindexando, borradores = 0, menuAbierto, informe, recetas = 0, categorias = 0, carpeta = '' }: OpcionesAjustes
+  { cuenta, ultimaReindexado, ignorados, sinBorrador = [], indiceDuplicado, planDuplicado, reindexando, menu, informe, recetas = 0, categorias = 0, carpeta = '' }: OpcionesAjustes
 ): string {
   // El progreso es un número de 0 a 1: recién arrancado vale 0, que no es «no
   // está reindexando».
@@ -120,16 +119,14 @@ export function renderAjustes(
   const lista = duplicado + planRepetido + deIgnorados + deSinBorrador ||
     '<p class="aviso-mudo" style="margin:0">No hay nada para avisar.</p>';
 
-  return lateral({ activo: 'ajustes', borradores, ...(menuAbierto ? { abierto: true } : {}) }) +
-    '<div class="conten">' +
-      encabezado({ titulo: 'Ajustes', grande: true, izquierda: botonMenu(borradores) }) +
+  return conLateral(menu,
+      encabezado({ titulo: 'Ajustes', grande: true, ...izquierdaDelEncabezado(menu) }) +
       // Lo de la cuenta y el índice primero, lo raro al final.
       '<div class="cuerpo">' + seccionCuenta + seccionRecetario + seccionIndice +
         (enCurso ? '' : FICHA_DATOS_LOCALES) +
         `<div class="ficha"><h2>Avisos</h2>${lista}</div>` +
         (informe ? fichaAlAbrir(informe, recetas, categorias) : '') +
-      '</div>' +
-    '</div>';
+      '</div>');
 }
 
 /**

@@ -8,7 +8,8 @@
  *
  * Mockup 03.
  */
-import { encabezado, tile, lateral, botonMenu, carruselTags, vacio } from './componentes.js';
+import { encabezado, tile, carruselTags, vacio, conLateral, izquierdaDelEncabezado } from './componentes.js';
+import type { MenuDePantalla } from './componentes.js';
 import { ICO } from './iconos.js';
 
 const SIN_RECETAS = 'Todavía no hay recetas. Entran con Nueva receta, compartiendo desde otra app, ' +
@@ -20,16 +21,16 @@ const sinTerminadasConBorradores = (n: number): string =>
 
 export interface OpcionesRecetario {
   categorias: { id: string; nombre: string; cantidad: number }[];
-  /** Cuántos borradores esperan. En cero no se dibuja el número. */
+  /** Cuántos borradores esperan: el vacío los nombra. */
   borradores: number;
-  /** El menú lateral está desplegado (sólo en pantalla angosta). */
-  menuAbierto?: boolean;
+  /** El Recetario es destino del menú: el lateral y la hamburguesa. */
+  menu?: MenuDePantalla;
   /** Los tags del recetario entero, ya ordenados por cantidad. */
   tags: { tag: string; cantidad: number }[];
 }
 
 export function renderRecetario(
-  { categorias, borradores, menuAbierto, tags }: OpcionesRecetario
+  { categorias, borradores, menu, tags }: OpcionesRecetario
 ): string {
   // Alfabético y no por cantidad: la posición de la categoría en la grilla es
   // justo lo que se aprende, y reacomodarla cada vez que entra una receta la
@@ -39,11 +40,10 @@ export function renderRecetario(
     .map(c => tile(c.nombre, { cantidad: c.cantidad }))
     .join('');
 
-  // Los tres destinos viven en el lateral: el encabezado sólo lleva la
+  // Los destinos viven en el lateral: el encabezado sólo lleva la
   // hamburguesa, que en pantalla ancha no se dibuja porque el lateral es fijo.
-  return lateral({ activo: 'recetario', borradores, ...(menuAbierto ? { abierto: true } : {}) }) +
-    '<div class="conten">' +
-        encabezado({ titulo: 'Recetario', grande: true, izquierda: botonMenu(borradores) }) +
+  return conLateral(menu,
+        encabezado({ titulo: 'Recetario', grande: true, ...izquierdaDelEncabezado(menu) }) +
       '<div class="cuerpo">' +
         '<div class="buscar">' + ICO.buscar +
           '<input data-accion="buscar" placeholder="Buscar receta o ingrediente">' +
@@ -58,6 +58,5 @@ export function renderRecetario(
         (categorias.some(c => c.cantidad > 0)
           ? ''
           : vacio(borradores > 0 ? sinTerminadasConBorradores(borradores) : SIN_RECETAS)) +
-      '</div>' +
-    '</div>';
+      '</div>');
 }

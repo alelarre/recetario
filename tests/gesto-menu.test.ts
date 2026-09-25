@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { puedeEmpezar, direccion, progreso, seAbre, ANCHO_MENU, MARGEN_BORDE } from '../src/ui/gesto-menu.js';
+import { readFileSync } from 'node:fs';
+import { puedeEmpezar, direccion, progreso, seAbre, ANCHO_MENU, ANCHO_MENU_FIJO, MARGEN_BORDE } from '../src/ui/gesto-menu.js';
 
 describe('el gesto del menú lateral', () => {
   it('cerrado, no empieza pegado al borde: ese deslizamiento es el «atrás» de Android', () => {
@@ -45,5 +46,39 @@ describe('el gesto del menú lateral', () => {
   it('queda abierto si pasó la mitad', () => {
     expect(seAbre(0.6)).toBe(true);
     expect(seAbre(0.4)).toBe(false);
+  });
+});
+
+describe('los anchos del menú son los mismos en TS y en el CSS', () => {
+  const css = readFileSync('src/ui/base.css', 'utf8');
+  /** Los bloques `@media (min-width: …)` con ese ancho, enteros. */
+  const bloquesDesde = (ancho: number): string[] => {
+    const bloques: string[] = [];
+    const inicio = `@media (min-width: ${ancho}px) {`;
+    for (let i = css.indexOf(inicio); i >= 0; i = css.indexOf(inicio, i + 1)) {
+      let nivel = 0;
+      for (let j = i + inicio.length - 1; j < css.length; j++) {
+        if (css[j] === '{') nivel++;
+        else if (css[j] === '}' && --nivel === 0) { bloques.push(css.slice(i, j + 1)); break; }
+      }
+    }
+    return bloques;
+  };
+
+  it('el lateral mide ANCHO_MENU', () => {
+    expect(css).toMatch(new RegExp(`\\.lat \\{[^}]*width: ${ANCHO_MENU}px`));
+  });
+
+  it(`desde ANCHO_MENU_FIJO el lateral queda fijo y el contenido se corre ANCHO_MENU`, () => {
+    const fijo = bloquesDesde(ANCHO_MENU_FIJO).join('\n');
+    expect(fijo).toContain('.lat { transform: none; }');
+    expect(fijo).toContain(`.conten { padding-left: ${ANCHO_MENU}px; }`);
+  });
+
+  it('el velo y la traba del scroll son de la pantalla angosta: por debajo de ANCHO_MENU_FIJO', () => {
+    expect(css).toContain(`@media (width < ${ANCHO_MENU_FIJO}px) {`);
+    // Ningún otro corte del menú: si cambia uno, cambian todos.
+    const cortes = [...css.matchAll(/@media \((?:min-width: |width < )(\d+)px\)/g)].map(m => Number(m[1]));
+    expect(new Set(cortes)).toEqual(new Set([ANCHO_MENU_FIJO]));
   });
 });

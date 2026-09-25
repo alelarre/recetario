@@ -427,6 +427,8 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
    destrabe, para que ninguna traba dependa de quién tiene más especificidad. */
 @media (width < 900px) {
   html:has(:where(.velo-lat.on)) { overflow: hidden; }
+  /* El lateral de una pantalla que no es destino del menú: sólo existe fijo. */
+  .lat.solo-ancho { display: none; }
 }
 
 /* El velo de la escritura en curso: mientras dura, ningún control de abajo

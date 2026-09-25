@@ -10,6 +10,12 @@
 /** El ancho del menú en px: el que fija `.lat` en `base.css`. */
 export const ANCHO_MENU = 260;
 
+/**
+ * Desde este ancho de pantalla el menú queda fijo y el contenido se corre
+ * (`base.css`): no hay nada que abrir ni cerrar.
+ */
+export const ANCHO_MENU_FIJO = 900;
+
 /** Lo que Android se reserva desde el borde izquierdo para «atrás». */
 export const MARGEN_BORDE = 24;
 

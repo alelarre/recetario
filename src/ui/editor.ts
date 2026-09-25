@@ -11,7 +11,8 @@
  * (C04.3c.1).
  */
 import { escapar, imgDe } from './markdown.js';
-import { encabezado, aviso, avisoAlGuardar, iconoDeTag, filaDeFotos, lateral, botonMenu } from './componentes.js';
+import { encabezado, aviso, avisoAlGuardar, iconoDeTag, filaDeFotos, conLateral, izquierdaDelEncabezado } from './componentes.js';
+import type { MenuDePantalla } from './componentes.js';
 import { ICO, ICONO_DE_DURACION } from './iconos.js';
 import {
   DIFICULTADES, dificultadValida, tagReservado, TAGS_ESPECIALES, tagEspecial, tieneEspecial,
@@ -35,10 +36,10 @@ export interface ArgsEditor {
   /** Borrar es destructivo: la confirmación nombra la receta (C04.6.1). */
   confirmandoBorrado?: boolean;
   /**
-   * La receta nueva es un destino del menú: el lateral, desplegado o no, y
-   * cuántos borradores esperan. Sin esto, el encabezado lleva el volver.
+   * La receta nueva es un destino del menú: el lateral y la hamburguesa. Sin
+   * esto, el encabezado lleva el volver.
    */
-  menu?: { abierto: boolean; borradores: number };
+  menu?: MenuDePantalla;
 }
 
 /** Suelto al pie y no en una ficha: es una acción destructiva, no un campo más. */
@@ -445,7 +446,7 @@ export function renderEditor(
 
   const pantalla = encabezado({
     titulo: entrada ? 'Editando' : 'Nueva receta',
-    ...(menu ? { izquierda: botonMenu(menu.borradores) } : { volver: true }),
+    ...izquierdaDelEncabezado(menu),
     derecha: `<button class="btn prim compacto" data-accion="pegar-receta">${ICO.portapapeles}Pegar</button>`
   }) +
     // Nada acá manda el formulario: Guardar es de tipo `button`, y sin esto
@@ -454,10 +455,7 @@ export function renderEditor(
       (error ? avisoAlGuardar(error) : '') +
       datos + fichaFotos(receta) + contenido + acciones + borrar +
     '</form>';
-  if (!menu) return pantalla;
-  // Sin destino marcado: Nueva receta es una acción, no un lugar del menú.
-  return lateral({ borradores: menu.borradores, ...(menu.abierto ? { abierto: true } : {}) }) +
-    `<div class="conten">${pantalla}</div>`;
+  return conLateral(menu, pantalla);
 }
 
 /** Los valores crudos del formulario: cada campo es el `name` de su input. */

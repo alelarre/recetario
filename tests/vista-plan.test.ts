@@ -21,8 +21,9 @@ const plan: Plan = {
   ]
 };
 
-const dibujar = (opciones: Partial<Parameters<typeof renderPlan>[0]> = {}) =>
-  renderPlan({ plan, entradas, hoy: 1, ...opciones });
+/** Como lo llama `main`: el plan es destino del menú. */
+const dibujar = ({ borradores = 0, ...opciones }: Partial<Parameters<typeof renderPlan>[0]> & { borradores?: number } = {}) =>
+  renderPlan({ plan, entradas, hoy: 1, menu: { activo: 'plan', abierto: false, borradores }, ...opciones });
 
 describe('la grilla del plan', () => {
   it('arranca en hoy y da la vuelta', () => {

@@ -363,15 +363,22 @@ describe('tile', () => {
 
 describe('el menú lateral', () => {
   it('lleva las cinco entradas, con el plan entre Borradores y Nueva receta', () => {
-    const html = lateral({ activo: 'recetario', borradores: 0 });
+    const html = lateral({ activo: 'recetario', abierto: false, borradores: 0 });
     const orden = ['Inicio', 'Borradores', 'Plan de la semana', 'Nueva receta', 'Ajustes']
       .map(t => html.indexOf(t));
     expect(orden.every((n, i) => n >= 0 && (i === 0 || n > (orden[i - 1] ?? -1)))).toBe(true);
     expect(html).toContain('href="#/plan"');
   });
 
+  it('sólo para pantalla ancha va sin velo y con su clase, que lo esconde en el teléfono', () => {
+    const html = lateral({ activo: null, abierto: false, borradores: 0, soloAncho: true });
+    expect(html).not.toContain('velo-lat');
+    expect(html).toContain('<nav class="lat solo-ancho">');
+    expect(html).not.toContain('<a class="act"');
+  });
+
   it('en el plan, su entrada queda marcada', () => {
-    expect(lateral({ activo: 'plan', borradores: 0 })).toContain('<a class="act" href="#/plan">');
+    expect(lateral({ activo: 'plan', abierto: false, borradores: 0 })).toContain('<a class="act" href="#/plan">');
   });
 });
 

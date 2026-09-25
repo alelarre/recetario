@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { renderRecetario } from '../src/ui/recetario.js';
 
-const dibujar = (o = {}) => renderRecetario({
-  categorias: [{ id: 'c1', nombre: 'Carnes', cantidad: 4 }, { id: 'c2', nombre: 'Postres', cantidad: 0 }],
-  borradores: 3, tags: [], ...o
-});
+/** Como lo llama `main`: el Recetario es destino del menú, y el contador es el de los borradores. */
+const dibujar = ({ borradores = 3, abierto = false, ...o }: Record<string, unknown> & { borradores?: number; abierto?: boolean } = {}) =>
+  renderRecetario({
+    categorias: [{ id: 'c1', nombre: 'Carnes', cantidad: 4 }, { id: 'c2', nombre: 'Postres', cantidad: 0 }],
+    borradores, tags: [], menu: { activo: 'recetario', abierto, borradores }, ...o
+  });
 
 describe('Recetario', () => {
   it('el título de la app va centrado en la barra', () => {
@@ -108,7 +110,13 @@ describe('Recetario', () => {
 
   it('el menú arranca cerrado y se despliega con la clase', () => {
     expect(dibujar()).not.toContain('lat abierto');
-    expect(dibujar({ menuAbierto: true })).toContain('lat abierto');
+    expect(dibujar({ abierto: true })).toContain('lat abierto');
+  });
+
+  it('sin el menú, el volver y ningún lateral', () => {
+    const html = renderRecetario({ categorias: [], borradores: 0, tags: [] });
+    expect(html).toContain('data-accion="volver"');
+    expect(html).not.toContain('class="lat');
   });
 
   it('no hay barra de navegación inferior', () => {

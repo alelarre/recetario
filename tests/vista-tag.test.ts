@@ -101,14 +101,14 @@ describe('la lista por tag', () => {
     const borradores = { ...base, tag: 'borrador', tagsActivos: ['borrador'] };
 
     it('lleva la hamburguesa con el contador, y no el volver', () => {
-      const html = renderTag({ ...borradores, entradas: [], menu: { abierto: false, borradores: 3 } });
+      const html = renderTag({ ...borradores, entradas: [], borradores: true, menu: { activo: 'borradores', abierto: false, borradores: 3 } });
       expect(html).toContain('data-accion="abrir-menu"');
       expect(html).toContain('<span class="n">3</span>');
       expect(html).not.toContain('data-accion="volver"');
     });
 
     it('se titula como el menú, no con el nombre del tag', () => {
-      const html = renderTag({ ...borradores, titulo: 'Borradores', entradas: [], menu: { abierto: false, borradores: 0 } });
+      const html = renderTag({ ...borradores, titulo: 'Borradores', entradas: [], borradores: true, menu: { activo: 'borradores', abierto: false, borradores: 0 } });
       expect(html).toContain('Borradores</');
       expect(html).not.toContain('borrador</');
       // Sin ícono: el borrador no tiene presentación propia.
@@ -118,26 +118,26 @@ describe('la lista por tag', () => {
     it('tocar un borrador abre su editor, no la receta', () => {
       const html = renderTag({
         ...borradores, entradas: [entradaFalsa({ id_archivo: 'b1', tags: ['borrador'] })],
-        menu: { abierto: false, borradores: 1 }
+        borradores: true, menu: { activo: 'borradores', abierto: false, borradores: 1 }
       });
       expect(html).toContain('href="#/r/b1/editar"');
       expect(html).not.toContain('href="#/r/b1"');
     });
 
     it('dibuja el menú lateral con Borradores marcado', () => {
-      const html = renderTag({ ...borradores, entradas: [], menu: { abierto: true, borradores: 3 } });
+      const html = renderTag({ ...borradores, entradas: [], borradores: true, menu: { activo: 'borradores', abierto: true, borradores: 3 } });
       expect(html).toContain('<nav class="lat abierto">');
       expect(html).toContain('<a class="act" href="#/borradores">');
     });
 
     it('vacía, dice que no hay borradores', () => {
-      const html = renderTag({ ...borradores, entradas: [], total: 0, visibles: 0, menu: { abierto: false, borradores: 0 } });
+      const html = renderTag({ ...borradores, entradas: [], total: 0, visibles: 0, borradores: true, menu: { activo: 'borradores', abierto: false, borradores: 0 } });
       expect(html).toContain('No hay borradores.');
     });
 
     it('el carrusel no ofrece borrador como chip: `tagsDe` no lo lista, y la ruta no lo agrega', () => {
       const html = renderTag({
-        ...borradores, entradas: [], menu: { abierto: false, borradores: 2 },
+        ...borradores, entradas: [], borradores: true, menu: { activo: 'borradores', abierto: false, borradores: 2 },
         tags: [{ tag: 'dulce', cantidad: 2 }, { tag: 'probar', cantidad: 1 }]
       });
       expect(html).toContain('data-tag="dulce"');
@@ -146,7 +146,7 @@ describe('la lista por tag', () => {
     });
 
     it('no ofrece crear ni pegar: para eso está Nueva receta', () => {
-      const html = renderTag({ ...borradores, entradas: [], menu: { abierto: false, borradores: 0 } });
+      const html = renderTag({ ...borradores, entradas: [], borradores: true, menu: { activo: 'borradores', abierto: false, borradores: 0 } });
       expect(html).not.toContain('pegar-receta');
       expect(html).not.toContain('Nuevo');
     });

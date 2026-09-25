@@ -7,7 +7,7 @@ import { parse, slugArchivo } from './recipe.js';
 import { tagReservado, conEspecial, esFavorita, tieneEspecial, contarDuraciones, filtrarPorDuracion, ordenarRecetas, tieneAlgoCargado } from './catalogo.js';
 import type { Orden } from './catalogo.js';
 import { sePuedeTerminar } from './recipe.js';
-import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado } from './ui/router.js';
+import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado, MENU, esDelMenu } from './ui/router.js';
 import { renderRecetario } from './ui/recetario.js';
 import { renderCategoria } from './ui/categoria.js';
 import { renderTag } from './ui/tag.js';
@@ -34,11 +34,13 @@ import { imgDe } from './ui/markdown.js';
 import { renderSelector } from './ui/carpeta.js';
 import { elegirCarpeta } from './picker.js';
 import { API_KEY, NOMBRE_RAIZ } from './config.js';
-import { puedeEmpezar, direccion, progreso, seAbre } from './ui/gesto-menu.js';
+import { puedeEmpezar, direccion, progreso, seAbre, ANCHO_MENU_FIJO } from './ui/gesto-menu.js';
 import type { CarpetaSimple } from './ui/carpeta.js';
-import { aviso, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js';
+import { aviso, conLateral, SIN_SESION, FOTO_AUSENTE, FOTO_ROTA } from './ui/componentes.js';
+import type { MenuDePantalla } from './ui/componentes.js';
 import { pintar as pintarEnPantalla, pintarParte, despuesDePintar, conClosest, desplazarCarrusel, movimientoReducido } from './ui/pintar.js';
 import { renderVisor, pasoDelVisor } from './ui/visor.js';
+import type { EstadoVisor } from './ui/visor.js';
 import {
   linkDeFoto, idDeDrive, resolverReceta, fotosSinUso, siguienteNumero, lineaDelCursor, ponerEn, sacarReferencias
 } from './fotos-receta.js';
@@ -56,7 +58,7 @@ import { esRecetaEnMd, recetaRecibida, aplicarPegada, pedidoDeConversion } from 
 import { desdeCompartido, tituloPorDefecto } from './compartido.js';
 import { codificar, urlDeLink } from './link-receta.js';
 import { textoReceta } from './texto-receta.js';
-import type { Ruta } from './ui/router.js';
+import type { Ruta, Vista } from './ui/router.js';
 import { estadoNuevo, TRAMO } from './estado-pantalla.js';
 import type { EstadoDePantalla, PedidoAlAgente } from './estado-pantalla.js';
 import { achicar } from './fotos.js';
@@ -90,7 +92,7 @@ despuesDePintar(() => { void completarFotos(); });
 
 /** Dibuja la pantalla entera. */
 const pintar = (html: string): void => {
-  pintarEnPantalla(html);
+  pintarEnPantalla(conLateralFijo(html));
   // El velo del cierre espera a que la pantalla de destino esté dibujada: si
   // se fuera antes, se vería el repintado por debajo (§6.17b).
   if (veloEsperaPintado) sacarVeloDelCierre();
@@ -654,16 +656,30 @@ async function arrancar({ pidiendoPermiso = false } = {}) {
 /** El contador del menú: las recetas con el tag `borrador`. */
 const cuantosBorradores = (): number => store.buscar({ tags: ['borrador'] }).length;
 
-/** La receta nueva es un destino del menú; editar una existente, no. */
-const menuDelEditor = (): { menu?: { abierto: boolean; borradores: number } } =>
-  vistaActual?.vista === 'nueva' ? { menu: { abierto: menuAbierto, borradores: cuantosBorradores() } } : {};
+/** El menú de la pantalla, si es destino del menú (`MENU`); si no, nada. */
+const menuDe = (vista: Vista | undefined): { menu?: MenuDePantalla } =>
+  vista && esDelMenu(vista)
+    ? { menu: { activo: MENU[vista] ?? null, abierto: menuAbierto, borradores: cuantosBorradores() } }
+    : {};
+
+/**
+ * Desde 900 px el lateral queda fijo en todas las pantallas (C05.10.1). Las
+ * de `MENU` lo dibujan ellas, con su hamburguesa; a las demás se lo pone acá,
+ * sólo para pantalla ancha: en el teléfono no lo abre nada. Sin carpeta base
+ * —o sin arranque— no hay a dónde ir.
+ */
+function conLateralFijo(html: string): string {
+  const vista = vistaActual?.vista;
+  if (!vista || esDelMenu(vista) || vista === 'carpeta' || estadoArranque?.estado !== 'listo') return html;
+  return conLateral({ activo: null, abierto: false, borradores: cuantosBorradores() }, html, true);
+}
 
 /** Ajustes, igual al entrar que mientras reindexa: sólo cambia `reindexando`. */
 function dibujarAjustes(): void {
   pintar(renderAjustes({
     cuenta, ultimaReindexado: store.ultimaReconstruccion(), ignorados, sinBorrador,
     indiceDuplicado: indiceDuplicado(), planDuplicado: store.planDuplicado(), reindexando,
-    borradores: cuantosBorradores(), menuAbierto,
+    ...menuDe('ajustes'),
     informe: informeArranque(), recetas: store.entradas().length, categorias: store.categorias().length,
     carpeta: store.carpeta().nombre
   }));
@@ -849,7 +865,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
     case 'recetario':
       pintar(renderRecetario({
         categorias: store.categoriasConConteo(), borradores: cuantosBorradores(),
-        menuAbierto, tags: store.tagsDe()
+        tags: store.tagsDe(), ...menuDe('recetario')
       }));
       return precargarElHome();
 
@@ -870,8 +886,8 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       // Se llega tocando un chip del carrusel del Recetario: el tag tocado
       // entra como filtro igual que en la categoría, para poder sumarle otros.
       // Borradores es la misma lista con `borrador`, como destino del menú.
-      const enElMenu = ruta.vista === 'borradores';
-      const nombre = enElMenu ? 'borrador' : ruta.params['nombre'] ?? '';
+      const esBorradores = ruta.vista === 'borradores';
+      const nombre = esBorradores ? 'borrador' : ruta.params['nombre'] ?? '';
       const activos = estadoDePantalla.tagsActivos.includes(nombre) ? estadoDePantalla.tagsActivos : [nombre, ...estadoDePantalla.tagsActivos];
       const porTags = store.buscar({ tags: activos });
       const { entradas, ordenEfectivo } = listaOrdenada(porTags);
@@ -879,7 +895,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
         tag: nombre, entradas: entradas.slice(0, estadoDePantalla.visibles), total: entradas.length,
         visibles: Math.min(estadoDePantalla.visibles, entradas.length), tagsActivos: activos, tags: store.tagsDe(),
         duraciones: contarDuraciones(porTags), duracionesActivas: estadoDePantalla.duracionesActivas, orden: ordenEfectivo,
-        ...(enElMenu ? { titulo: 'Borradores', menu: { abierto: menuAbierto, borradores: cuantosBorradores() } } : {})
+        ...(esBorradores ? { titulo: 'Borradores', borradores: true } : {}), ...menuDe(ruta.vista)
       }));
       return observarTramo();
     }
@@ -958,8 +974,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       try {
         const plan = await planDePantalla();
         return pintar(renderPlan({
-          plan, entradas: store.entradas(), hoy: diaDeHoy(),
-          borradores: cuantosBorradores(), menuAbierto,
+          plan, entradas: store.entradas(), hoy: diaDeHoy(), ...menuDe('plan'),
           ...(estadoDePantalla.confirmandoReinicio ? { confirmandoReinicio: true } : {}),
           ...(errorPlan ? { error: errorPlan } : {})
         }));
@@ -1038,7 +1053,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       receta.tags = conEspecial(receta.tags, 'borrador', true);
       abrirEditor(renderEditor({
         entrada: null, receta, categorias: store.categorias(),
-        tagsConocidos: store.tagsDe().map(t => t.tag), ...menuDelEditor()
+        tagsConocidos: store.tagsDe().map(t => t.tag), ...menuDe(vistaActual?.vista)
       }));
       // Lo que llegó de otra app cuenta como cambio desde que se abre: salir
       // sin guardar lo perdería.
@@ -1273,20 +1288,29 @@ const FICHAS_DE_FOTO =
   '#app [data-acciones-foto], #app [data-elegir-foto], #app [data-selector-portada], ' +
   '#app [data-foto-url], #app .velo[data-accion="cerrar-ficha-foto"]';
 
-/** Saca del DOM la ficha que esté abierta, sin tocar el formulario. */
-function cerrarFichaFoto(): void {
+/** Saca del DOM la ficha que esté abierta, sin tocar el formulario ni el historial. */
+function quitarFichaFoto(): void {
   for (const e of document.querySelectorAll(FICHAS_DE_FOTO)) e.remove();
+}
+
+/** Cierra la ficha desde la app —el velo, una elección—: su capa se consume. */
+function cerrarFichaFoto(): void {
+  quitarFichaFoto();
+  nav.cerrarCapa('ficha-foto');
 }
 
 /**
  * Abre una ficha al pie: siempre una sola, como la hoja de Compartir. Se
  * cuelga del formulario del editor, que no se redibuja; la ficha es fija
- * (`tokens.css`), así que de dónde cuelgue no le cambia nada.
+ * (`tokens.css`), así que de dónde cuelgue no le cambia nada. Es una capa: el
+ * atrás la cierra, y otra ficha toma su lugar en el historial.
  */
 function abrirFichaFoto(html: string): void {
-  cerrarFichaFoto();
+  quitarFichaFoto();
   const formulario = document.querySelector('[data-formulario]');
-  if (formulario) pintarParte(formulario, html, 'al-final');
+  if (!formulario) return;
+  pintarParte(formulario, html, 'al-final');
+  nav.abrirCapa('ficha-foto');
 }
 
 /**
@@ -1529,8 +1553,22 @@ const fotosMostrables = (fotos: FotoDeReceta[]): { n: number; url: string }[] =>
 function abrirVisor(fotos: FotoDeReceta[], n: number | undefined, suelta?: string | undefined): void {
   const lista = fotosMostrables(fotos);
   const i = n === undefined ? -1 : lista.findIndex(f => f.n === n);
-  if (i >= 0) estadoDePantalla.visor = { urls: lista.map(f => f.url), i };
-  else if (suelta) estadoDePantalla.visor = { urls: [suelta], i: 0 };
+  if (i >= 0) ponerVisor({ urls: lista.map(f => f.url), i });
+  else if (suelta) ponerVisor({ urls: [suelta], i: 0 });
+}
+
+/** El visor abierto es una capa: el atrás lo cierra sin salir de la pantalla. */
+function ponerVisor(visor: EstadoVisor): void {
+  estadoDePantalla.visor = visor;
+  nav.abrirCapa('visor');
+}
+
+/** Saca el visor. En el editor, del DOM; en la lectura, redibujando. */
+function sacarVisor(): Promise<void> | undefined {
+  estadoDePantalla.visor = null;
+  deslizoElVisor = false;
+  if (enElEditor()) { document.querySelector('#app .visor')?.remove(); return; }
+  return render();
 }
 
 /**
@@ -1694,7 +1732,7 @@ async function guardarEditor(
         // Con las fotos que este intento alcanzó a subir ya en sus líneas: el
         // reintento las manda por su link en vez de volver a subirlas.
         receta: conSubidas(escrita), carpeta: carpetaId, categorias: store.categorias(),
-        tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje, ...menuDelEditor()
+        tagsConocidos: store.tagsDe().map(t => t.tag), error: mensaje, ...menuDe(vistaActual?.vista)
       }));
       return null;
     };
@@ -1740,6 +1778,21 @@ const router = crearRouter(ruta => {
   const llegada = nav.numerar();
   if (llegada !== 'deshecha') void render(ruta, llegada);
 });
+
+/**
+ * Lo que se cierra cuando el atrás sale de su capa. Es la misma pantalla —el
+ * hash no cambia y no hay `hashchange`—: cada una se saca sola, sin tocar el
+ * historial, que ya retrocedió.
+ */
+const CIERRE_DE_CAPA: Record<string, () => unknown> = {
+  menu: () => { mostrarMenu(false); },
+  visor: () => sacarVisor(),
+  compartir: () => sacarCompartir(),
+  'ficha-foto': () => { quitarFichaFoto(); acomodarBotonDeFoto(); },
+  'categoria-plan': () => { estadoDePantalla.categoriaPlan = null; return render(); }
+};
+nav.alCerrarCapa(capa => { void CIERRE_DE_CAPA[capa]?.(); });
+window.addEventListener('popstate', () => { nav.alPopstate(); });
 
 // Las acciones de la pantalla, por tema. Cada sección es un mapa
 // `data-accion → función`; el listener de click sólo busca en `acciones`.
@@ -1868,7 +1921,8 @@ const accionesDelVisor: SeccionDeAcciones = {
     const marca = boton.dataset['n'];
     const n = marca === undefined ? undefined : Number(marca);
     if (enElEditor()) {
-      cerrarFichaFoto();
+      // Sin consumir la capa de la ficha: el visor toma su lugar.
+      quitarFichaFoto();
       abrirVisor(depositoDelEditor(), n);
       dibujarVisor();
       return;
@@ -1884,9 +1938,8 @@ const accionesDelVisor: SeccionDeAcciones = {
   'cerrar-visor': () => {
     // Un deslizamiento termina en un click: ese no cierra, ya cambió de foto.
     if (deslizoElVisor) { deslizoElVisor = false; return; }
-    estadoDePantalla.visor = null;
-    if (enElEditor()) { document.querySelector('#app .visor')?.remove(); return; }
-    return render();
+    nav.cerrarCapa('visor');
+    return sacarVisor();
   }
 };
 
@@ -1903,7 +1956,7 @@ function tocarFotoEnLinea(destino: Element): Promise<void> | undefined {
   const id = img.dataset['drive'] ?? '';
   const suelta = id ? linkDeFoto(id) : img.getAttribute('src') ?? '';
   if (!suelta) return;
-  estadoDePantalla.visor = { urls: [suelta], i: 0 };
+  ponerVisor({ urls: [suelta], i: 0 });
   return render();
 }
 
@@ -1923,11 +1976,15 @@ const accionesDelPlan: SeccionDeAcciones = {
     const momento = boton.dataset['momento'] ?? '';
     nav.ir(`#/plan/agregar?dia=${encodeURIComponent(dia)}&momento=${encodeURIComponent(momento)}`);
   },
+  // La categoría elegida es una capa: el atrás vuelve a la grilla sin salir
+  // de la pantalla, y el chevron hace lo mismo.
   'elegir-categoria-plan': (boton) => {
     estadoDePantalla.categoriaPlan = boton.dataset['nombre'] ?? '';
+    nav.abrirCapa('categoria-plan');
     return render();
   },
   'volver-categorias-plan': () => {
+    nav.cerrarCapa('categoria-plan');
     estadoDePantalla.categoriaPlan = null;
     return render();
   },
@@ -2146,7 +2203,7 @@ const accionesDelEditor: SeccionDeAcciones = {
     pintar(renderEditor({
       entrada: vistaActual?.vista === 'editar' ? recetaLeida?.entrada ?? null : null,
       receta: aplicarPegada(actual, pegada, carpeta), carpeta,
-      categorias: store.categorias(), tagsConocidos: store.tagsDe().map(t => t.tag), ...menuDelEditor()
+      categorias: store.categorias(), tagsConocidos: store.tagsDe().map(t => t.tag), ...menuDe(vistaActual?.vista)
     }));
   },
   'tag-especial': (boton) => {
@@ -2265,7 +2322,7 @@ async function compartirPdfDeLaReceta(accion: 'compartir-pdf' | 'enviar-pdf'): P
     console.error(err);
     estadoDePantalla.compartiendo = { paso: 'error-pdf' };
   }
-  if (!estadoDePantalla.compartiendo) estadoDePantalla.pdfListo = null;
+  if (!estadoDePantalla.compartiendo) { estadoDePantalla.pdfListo = null; nav.cerrarCapa('compartir'); }
   return render();
 }
 
@@ -2288,6 +2345,7 @@ async function compartirLaReceta(que: 'link' | 'texto'): Promise<void> {
     console.error(err);
     estadoDePantalla.compartiendo = contenido ? { paso: 'mostrar', que, contenido } : null;
   }
+  if (!estadoDePantalla.compartiendo) nav.cerrarCapa('compartir');
   return render();
 }
 
@@ -2303,27 +2361,39 @@ async function compartirLasCompras(): Promise<void> {
     console.error(err);
     estadoDePantalla.compartiendo = { paso: 'mostrar', que: 'texto', contenido };
   }
+  if (!estadoDePantalla.compartiendo) nav.cerrarCapa('compartir');
   return render();
 }
 
-/** La ficha de compartir de la receta y de la lista de compras. */
+/** Saca la ficha de compartir, con el PDF que se haya armado. */
+function sacarCompartir(): Promise<void> {
+  estadoDePantalla.compartiendo = null;
+  estadoDePantalla.pdfListo = null;
+  return render();
+}
+
+/**
+ * La ficha de compartir de la receta y de la lista de compras. Abierta es una
+ * capa: el atrás la cierra sin salir de la pantalla.
+ */
 const accionesDeCompartir: SeccionDeAcciones = {
   compartir: () => {
     estadoDePantalla.compartiendo = { paso: 'opciones' };
+    nav.abrirCapa('compartir');
     // Lo pesado del PDF empieza a bajar ya: el toque que lo genera es otro.
     void precargar().catch(() => {});
     return render();
   },
   'cerrar-compartir': () => {
-    estadoDePantalla.compartiendo = null;
-    estadoDePantalla.pdfListo = null;
-    return render();
+    nav.cerrarCapa('compartir');
+    return sacarCompartir();
   },
   'compartir-pdf': () => compartirPdfDeLaReceta('compartir-pdf'),
   'enviar-pdf': () => compartirPdfDeLaReceta('enviar-pdf'),
   'compartir-compras': () => {
     // La lista se comparte sólo como texto: no es una receta y no tiene link.
     estadoDePantalla.compartiendo = { paso: 'opciones', solo: 'texto' };
+    nav.abrirCapa('compartir');
     return render();
   },
   'compartir-texto': () =>
@@ -2441,6 +2511,8 @@ app.addEventListener('click', async (e) => {
   // Todo el manejo de clicks es delegación desde #app, así que el destino
   // llega como EventTarget y hay que estrecharlo una sola vez, acá.
   const destino = conClosest(e.target);
+  const link = destino?.closest<HTMLElement>('.lat a[href]');
+  if (link) { if (tocarDestino(link.getAttribute('href') ?? '')) e.preventDefault(); return; }
   const boton = destino?.closest<HTMLElement>('[data-accion], [data-tag]') ?? null;
   if (!boton && destino && recetaLeida) return tocarFotoEnLinea(destino);
   if (!boton) return;
@@ -2471,6 +2543,7 @@ app.addEventListener('input', (e) => {
     // Escribir es dejar la categoría elegida: son dos formas de filtrar y no
     // conviven en el mismo bloque.
     estadoDePantalla.categoriaPlan = null;
+    nav.cerrarCapa('categoria-plan');
     const bloque = document.querySelector('[data-resultados-plan]');
     if (bloque) {
       pintarParte(bloque, bloqueDeAgregar({
@@ -2487,31 +2560,49 @@ app.addEventListener('input', (e) => {
   if (enElEditor()) { revisarBorrador(); acomodarBotonDeFoto(); }
 });
 
-/**
- * Las pantallas que dibujan el menú lateral: sólo ahí se desliza para abrirlo,
- * y sólo ahí el encabezado lleva la hamburguesa en vez del volver. El botón lo
- * decide a mano cada `ui/*.ts`, así que la lista se exporta para que un test
- * la recorra y compruebe que ninguna se desalineó del gesto. La receta nueva
- * está: es un destino del menú. Editar una existente no: lleva el volver.
- */
-export const PANTALLAS_CON_MENU: readonly Ruta['vista'][] = ['recetario', 'borradores', 'plan', 'ajustes', 'nueva'];
-
 /** El deslizamiento en curso: dónde empezó, si ya se sabe que es gesto, y cuánto va abierto. */
 let deslizando: { x: number; y: number; decidido: 'indeciso' | 'horizontal' | 'vertical'; p: number } | null = null;
 
-/** Desde 900 px el menú es fijo (`base.css`): no hay nada que abrir. */
+/** Desde `ANCHO_MENU_FIJO` el menú es fijo (`base.css`): no hay nada que abrir. */
 const menuFijo = (): boolean =>
-  typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 900px)').matches;
+  typeof window.matchMedia === 'function' && window.matchMedia(`(min-width: ${ANCHO_MENU_FIJO}px)`).matches;
 
 /**
- * Abre o cierra el menú sobre lo que ya está pintado: cambia las clases del
+ * Muestra u oculta el menú sobre lo que ya está pintado: cambia las clases del
  * panel y del velo, y no redibuja. En la receta nueva, redibujar borraría lo
  * escrito. `menuAbierto` queda como la verdad para el próximo dibujo.
  */
-function ponerMenu(abierto: boolean): void {
+function mostrarMenu(abierto: boolean): void {
   menuAbierto = abierto;
   document.querySelector<HTMLElement>('#app .lat')?.classList.toggle('abierto', abierto);
   document.querySelector<HTMLElement>('#app .velo-lat')?.classList.toggle('on', abierto);
+}
+
+/**
+ * Abre o cierra el menú desde la app —la hamburguesa, el velo, el gesto—.
+ * Desplegado es una capa: el atrás lo cierra sin salir de la pantalla.
+ */
+function ponerMenu(abierto: boolean): void {
+  if (abierto === menuAbierto) return;
+  mostrarMenu(abierto);
+  if (abierto) nav.abrirCapa('menu');
+  else nav.cerrarCapa('menu');
+}
+
+/**
+ * Un destino del lateral. El que ya se está mirando cierra el menú y no
+ * navega —con `''` y `#/` es el mismo Inicio—. Con el menú desplegado, el
+ * destino toma el lugar de su capa en el historial, así el atrás no pasa por
+ * un menú abierto. En pantalla ancha, sin capa, el link navega solo.
+ * Devuelve si se ocupó del toque.
+ */
+function tocarDestino(href: string): boolean {
+  if (vistaActual && mismaPantalla(parsearHash(href), vistaActual)) { ponerMenu(false); return true; }
+  if (nav.capaActual() !== 'menu') return false;
+  // Cerrarlo va después de navegar: con la capa consumida, cerrar no vuelve atrás.
+  nav.ir(href);
+  mostrarMenu(false);
+  return true;
 }
 
 /** El menú y el velo al ritmo del dedo, sin transición; con `null` vuelven a lo que diga el CSS. */
@@ -2552,7 +2643,7 @@ document.addEventListener('touchstart', (e) => {
   // Con el visor abierto, el dedo pasa de una foto a la siguiente y no abre
   // el menú: es lo único que se puede hacer ahí.
   if (estadoDePantalla.visor) { visorDesde = toque.clientX; return; }
-  if (!vistaActual || !PANTALLAS_CON_MENU.includes(vistaActual.vista) || menuFijo()) return;
+  if (!vistaActual || !esDelMenu(vistaActual.vista) || menuFijo()) return;
   if (!puedeEmpezar(toque.clientX, menuAbierto, sobreFilaDeslizable(e.target))) return;
   deslizando = { x: toque.clientX, y: toque.clientY, decidido: 'indeciso', p: menuAbierto ? 1 : 0 };
 }, { passive: true });

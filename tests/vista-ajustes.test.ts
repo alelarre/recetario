@@ -105,7 +105,7 @@ describe('Ajustes: la ficha «Registro de actividad»', () => {
     copiaModificada: f(13, 14, 30), reindexado: ''
   };
   const conInforme = (cambios: Partial<InformeArranque> = {}) =>
-    renderAjustes({ ...base, informe: { ...informe, ...cambios }, recetas: 61, borradores: 3, categorias: 16 });
+    renderAjustes({ ...base, informe: { ...informe, ...cambios }, recetas: 61, categorias: 16 });
 
   it('dice cuándo abrió, la fecha de _indice, lo que hay y que no reindexó', () => {
     const html = conInforme();
@@ -149,7 +149,7 @@ describe('Ajustes: la ficha «Registro de actividad»', () => {
   });
 
   it('una receta va en singular', () => {
-    const html = renderAjustes({ ...base, informe, recetas: 1, borradores: 1, categorias: 16 });
+    const html = renderAjustes({ ...base, informe, recetas: 1, categorias: 16 });
     expect(html).toContain('1 receta · 16 categorías.');
   });
 

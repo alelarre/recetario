@@ -10,6 +10,27 @@ export interface Ruta {
   params: Record<string, string>;
 }
 
+/** Los destinos del menú lateral que se marcan. Es la navegación primaria de la app. */
+export type DestinoLateral = 'recetario' | 'borradores' | 'plan' | 'ajustes';
+
+/**
+ * Las pantallas que son destino del menú, y qué entrada marca cada una. Es la
+ * única fuente: de acá salen el gesto que lo abre, la hamburguesa en lugar
+ * del volver y la entrada marcada. *Nueva receta* es destino pero no marca
+ * ninguna: es una acción, no un lugar. Editar una receta existente no está:
+ * lleva el volver.
+ */
+export const MENU: Partial<Record<Vista, DestinoLateral | null>> = {
+  recetario: 'recetario',
+  borradores: 'borradores',
+  plan: 'plan',
+  ajustes: 'ajustes',
+  nueva: null
+};
+
+/** Si la vista es destino del menú. */
+export const esDelMenu = (vista: Vista): boolean => Object.hasOwn(MENU, vista);
+
 /** Los parámetros de la query que están y no vienen vacíos, de esta lista. */
 const presentes = (params: Record<string, string>, claves: readonly string[]): Record<string, string> =>
   Object.fromEntries(claves.flatMap(c => (params[c] ? [[c, params[c]]] : [])));
