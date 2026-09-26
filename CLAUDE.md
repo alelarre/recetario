@@ -91,7 +91,7 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
 | Cómo se ve | `product-design/ux/design-system.md`; lo que manda es `src/ui/tokens.css` |
 | Cómo habla la app | `product-design/ux/brand-identity.md` §3 y §4 |
 | Qué está pendiente | `BACKLOG.md` |
-| El skill con el que un agente carga recetas | `skills/recetario/SKILL.md` |
+| El skill con el que un agente carga recetas | `skills/recetario/SKILL.md`; en Claude Code se instala como el plugin `recetario` de `alejandro-marketplace` (repo `alelarre/claude-code-marketplace`), que trae el skill y registra el MCP |
 | Cómo conectar y registrar el MCP, y qué hacer con cada error de login | `mcp/LEEME.md` |
 
 `product-design/` es la especificación del producto y se mantiene al día: un

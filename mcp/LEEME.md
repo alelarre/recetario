@@ -42,7 +42,10 @@ corre `npm run mcp:conectar` de nuevo: reemplaza el token del Llavero.
 El `--silent` es necesario: sin él, `npm` escribe su encabezado por la salida
 estándar, que es el canal del protocolo MCP.
 
-**Claude Code:**
+**Claude Code:** instalar el plugin `recetario` de `alejandro-marketplace`
+(`/plugin`). Trae el skill y registra el MCP con este mismo comando, con el
+repo en `/Users/alelarre/Documents/recetario`. Si el repo está en otra ruta,
+registrarlo a mano:
 
 ```sh
 claude mcp add recetario -- npm --silent --prefix <repo> run mcp
@@ -66,7 +69,9 @@ la app:
 Si Claude Desktop no encuentra `npm`, poner en `command` la ruta completa que
 da `which npm`.
 
-El skill que usa estas herramientas está en `skills/recetario/SKILL.md`.
+El skill que usa estas herramientas está en `skills/recetario/SKILL.md`. En
+Claude Code llega con el plugin; en Claude Desktop se sube como `.zip` desde
+*Configuración → Capacidades*.
 
 ## Si algo falla
 
