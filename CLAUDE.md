@@ -209,11 +209,12 @@ Todo `src/`, `mcp/` y `tests/` es TypeScript con `strict`, más
   va restringida por referente a esos dos orígenes y a la Picker API. Vacía, la
   app sólo ofrece crear la carpeta.
 - **El MCP tiene su propio cliente OAuth**, tipo *App de escritorio*, en el mismo
-  proyecto y con el mismo scope `drive`. Su client ID y su client secret van en
-  `~/.config/recetario/cliente.json`, fuera del repo: Google no considera
-  secreto el de una app de escritorio, pero igual no se commitea. El permiso se
-  da con loopback (un puerto local en `127.0.0.1`). **El refresh token vive sólo
-  en el Llavero de macOS**, en el ítem `recetario-mcp`; nunca en un archivo. En
+  proyecto y con el mismo scope `drive`. `npm run mcp:conectar -- <JSON>` guarda
+  su client ID y su client secret en el Llavero de macOS (ítem
+  `recetario-mcp-cliente`), y el JSON bajado se puede borrar: Google no
+  considera secreto el de una app de escritorio, pero igual no queda en ningún
+  archivo. El permiso se da con loopback (un puerto local en `127.0.0.1`).
+  **El refresh token vive sólo en el Llavero**, en el ítem `recetario-mcp`. En
   modo *Prueba*, Google lo revoca a los 7 días y hay que correr
   `npm run mcp:conectar` de nuevo.
 

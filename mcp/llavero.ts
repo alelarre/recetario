@@ -1,10 +1,13 @@
-// El refresh token del MCP en el Llavero de macOS, con el comando `security`.
-// Nunca se escribe en un archivo.
+// El refresh token y el cliente OAuth del MCP en el Llavero de macOS, con el
+// comando `security`. Ninguno de los dos se escribe en un archivo.
 import { spawn } from 'node:child_process';
 import { userInfo } from 'node:os';
 import type { Llavero } from './auth.js';
 
-const SERVICIO = 'recetario-mcp';
+/** El ítem del refresh token. */
+export const SERVICIO_TOKEN = 'recetario-mcp';
+/** El ítem del cliente OAuth de escritorio. */
+export const SERVICIO_CLIENTE = 'recetario-mcp-cliente';
 
 /** `security find-generic-password` sale con 44 cuando no hay nada guardado. */
 const NO_ENCONTRADO = 44;
@@ -36,14 +39,17 @@ export interface OpcionesLlavero {
   ejecutar?: EjecutarComando;
   /** La cuenta del ítem del Llavero; por defecto, el usuario de la Mac. */
   cuenta?: string;
+  /** El servicio del ítem; por defecto, el del refresh token. */
+  servicio?: string;
 }
 
 export function crearLlaveroMac(opciones: OpcionesLlavero = {}): Llavero {
   const ejecutar = opciones.ejecutar ?? ejecutarReal;
   const cuenta = opciones.cuenta ?? userInfo().username;
+  const servicio = opciones.servicio ?? SERVICIO_TOKEN;
 
   async function leer(): Promise<string | null> {
-    const { codigo, salida } = await ejecutar('security', ['find-generic-password', '-s', SERVICIO, '-a', cuenta, '-w']);
+    const { codigo, salida } = await ejecutar('security', ['find-generic-password', '-s', servicio, '-a', cuenta, '-w']);
     if (codigo === NO_ENCONTRADO) return null;
     if (codigo !== 0) throw new Error(`No se pudo leer el Llavero (security salió con ${codigo}).`);
     return salida.trim() || null;
@@ -53,16 +59,16 @@ export function crearLlaveroMac(opciones: OpcionesLlavero = {}): Llavero {
     leer,
 
     async guardar(token) {
-      if (!TOKEN_SEGURO.test(token)) throw new Error('El token de Google tiene caracteres inesperados; no se guardó.');
+      if (!TOKEN_SEGURO.test(token)) throw new Error('El valor para el Llavero tiene caracteres inesperados; no se guardó.');
       if (!CUENTA_SEGURA.test(cuenta)) throw new Error(`La cuenta «${cuenta}» no sirve para el Llavero.`);
       // `add-generic-password -w <token>` como argumento dejaría el token a la
       // vista en `ps` mientras corre. Con `security -i` el comando entero entra
       // por stdin y los argumentos del proceso son sólo `-i`.
-      const linea = `add-generic-password -U -s ${SERVICIO} -a ${cuenta} -w "${token}"\n`;
+      const linea = `add-generic-password -U -s ${servicio} -a ${cuenta} -w "${token}"\n`;
       await ejecutar('security', ['-i'], linea);
       // En modo `-i` el código de salida no siempre refleja un fallo del
       // comando: se relee para confirmar que quedó guardado.
-      if (await leer() !== token) throw new Error('El token no quedó guardado en el Llavero.');
+      if (await leer() !== token) throw new Error('El valor no quedó guardado en el Llavero.');
     }
   };
 }

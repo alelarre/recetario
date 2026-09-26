@@ -9,7 +9,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { crearAuthEscritorio } from './auth.js';
 import { comoErrorDeLogin, esErrorDeGoogle, ErrorDeLogin, mensajeDeGoogle } from './errores.js';
-import { crearLlaveroMac } from './llavero.js';
+import { crearLlaveroMac, SERVICIO_CLIENTE } from './llavero.js';
 import { recetarioDeGoogle, type Recetario } from './recetario.js';
 
 // La marca que el test de publicación busca en `dist/`: si aparece ahí, el
@@ -168,6 +168,7 @@ async function main(): Promise<void> {
   // El login no toca la red ni el Llavero hasta la primera herramienta que usa el Drive.
   const auth = crearAuthEscritorio({
     llavero: crearLlaveroMac(),
+    llaveroCliente: crearLlaveroMac({ servicio: SERVICIO_CLIENTE }),
     abrirNavegador: abrirNavegadorDelServidor,
     fetch
   });

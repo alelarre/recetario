@@ -4,9 +4,6 @@
 // solo. Los errores de login salen con un código fijo y un texto claro, que el
 // skill traduce a un paso concreto para el usuario; nunca el crudo de Google.
 import { createHash, randomBytes } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
 import { SCOPE } from '../src/config.js';
 import { abrirLoopback } from './loopback.js';
 import { ErrorDeLogin, errorDe } from './errores.js';
@@ -15,8 +12,6 @@ export {
   ErrorDeLogin, MENSAJES, codigoDe, comoErrorDeLogin, errorDe,
   type CodigoAuth, type RespuestaDeGoogle
 } from './errores.js';
-
-export const RUTA_CLIENTE = join(homedir(), '.config', 'recetario', 'cliente.json');
 
 /**
  * El canje del código recién dado que Google rechaza (`invalid_grant`) no es
@@ -29,7 +24,7 @@ const MENSAJE_CANJE_FALLIDO =
 
 const MENSAJE_ILEGIBLE = 'Google respondió algo que no se pudo leer. Hay que reintentar en un rato.';
 
-/** Donde vive el refresh token: el Llavero de macOS (`llavero.ts`). */
+/** Donde viven el refresh token y el cliente: el Llavero de macOS (`llavero.ts`). */
 export interface Llavero {
   leer(): Promise<string | null>;
   guardar(v: string): Promise<void>;
@@ -37,17 +32,45 @@ export interface Llavero {
 
 interface Cliente { clientId: string; clientSecret: string }
 
-/** El JSON que descarga Google Cloud para una app de escritorio: `{ installed: {...} }`. */
-async function leerCliente(ruta: string): Promise<Cliente> {
+/**
+ * El JSON que descarga Google Cloud para una app de escritorio:
+ * `{ installed: {...} }`. Lo lee `mcp:conectar` una sola vez; después vive en
+ * el Llavero y el archivo se puede borrar.
+ */
+export function clienteDeJson(texto: string): Cliente {
   let datos: unknown;
   try {
-    datos = JSON.parse(await readFile(ruta, 'utf-8'));
+    datos = JSON.parse(texto);
   } catch {
     throw new ErrorDeLogin('sin-cliente');
   }
   const installed = (datos as { installed?: { client_id?: unknown; client_secret?: unknown } } | null)?.installed;
   const clientId = installed?.client_id;
   const clientSecret = installed?.client_secret;
+  if (typeof clientId !== 'string' || !clientId || typeof clientSecret !== 'string' || !clientSecret) {
+    throw new ErrorDeLogin('sin-cliente');
+  }
+  return { clientId, clientSecret };
+}
+
+/**
+ * El cliente se guarda en base64url: el Llavero sólo acepta caracteres que no
+ * rompan la línea de `security -i`, y un JSON trae comillas.
+ */
+export async function guardarCliente(llaveroCliente: Llavero, cliente: Cliente): Promise<void> {
+  await llaveroCliente.guardar(Buffer.from(JSON.stringify(cliente)).toString('base64url'));
+}
+
+async function leerCliente(llaveroCliente: Llavero): Promise<Cliente> {
+  const guardado = await llaveroCliente.leer();
+  if (!guardado) throw new ErrorDeLogin('sin-cliente');
+  let datos: Partial<Cliente> | null;
+  try {
+    datos = JSON.parse(Buffer.from(guardado, 'base64url').toString('utf-8')) as Partial<Cliente> | null;
+  } catch {
+    throw new ErrorDeLogin('sin-cliente');
+  }
+  const { clientId, clientSecret } = datos ?? {};
   if (typeof clientId !== 'string' || !clientId || typeof clientSecret !== 'string' || !clientSecret) {
     throw new ErrorDeLogin('sin-cliente');
   }
@@ -70,8 +93,8 @@ export interface OpcionesAuth {
   llavero: Llavero;
   abrirNavegador: (url: string) => void | Promise<void>;
   fetch: typeof fetch;
-  /** El archivo del cliente; por defecto, `~/.config/recetario/cliente.json`. */
-  rutaCliente?: string;
+  /** Donde vive el cliente OAuth de escritorio, aparte del refresh token. */
+  llaveroCliente: Llavero;
   ahora?: () => number;
 }
 
@@ -96,7 +119,7 @@ function leerJson<T>(texto: string): T {
 
 export function crearAuthEscritorio(opciones: OpcionesAuth): AuthEscritorio {
   const { llavero, abrirNavegador, fetch } = opciones;
-  const rutaCliente = opciones.rutaCliente ?? RUTA_CLIENTE;
+  const { llaveroCliente } = opciones;
   const ahora = opciones.ahora ?? Date.now;
 
   let vigente: { token: string; vence: number } | null = null;
@@ -145,7 +168,7 @@ export function crearAuthEscritorio(opciones: OpcionesAuth): AuthEscritorio {
   }
 
   async function renovar(): Promise<string> {
-    const cliente = await leerCliente(rutaCliente);
+    const cliente = await leerCliente(llaveroCliente);
     const refresco = await llavero.leer();
     if (!refresco) throw new ErrorDeLogin('sin-permiso');
     return recordar(await pedirToken({
@@ -165,7 +188,7 @@ export function crearAuthEscritorio(opciones: OpcionesAuth): AuthEscritorio {
     },
 
     async conectar() {
-      const cliente = await leerCliente(rutaCliente);
+      const cliente = await leerCliente(llaveroCliente);
       const state = aBase64Url(randomBytes(24));
       const verificador = aBase64Url(randomBytes(48));
       const desafio = aBase64Url(createHash('sha256').update(verificador).digest());

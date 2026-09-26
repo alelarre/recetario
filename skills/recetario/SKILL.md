@@ -273,7 +273,7 @@ tiene que hacer, con el paso concreto:
 
 | Código | Qué pasó | Cómo lo corrige el usuario |
 |---|---|---|
-| `sin-cliente` | Falta `~/.config/recetario/cliente.json`, está mal formado o Google no reconoce el cliente. | En Google Cloud Console, con el proyecto de la app: *APIs y servicios → Credenciales → Crear credenciales → ID de cliente de OAuth*, tipo *App de escritorio*. Bajar el JSON y guardarlo como `~/.config/recetario/cliente.json`. Después, `npm run mcp:conectar`. |
+| `sin-cliente` | El cliente de Google del MCP no está en el Llavero, no es de una app de escritorio o Google no lo reconoce. | En Google Cloud Console, con el proyecto de la app: *APIs y servicios → Credenciales → Crear credenciales → ID de cliente de OAuth*, tipo *App de escritorio*. Bajar el JSON y correr `npm run mcp:conectar -- <ruta del JSON>`; después el JSON se puede borrar. |
 | `sin-permiso` | El MCP todavía no tiene permiso para usar el Drive. | Correr `npm run mcp:conectar` y dar permiso con la cuenta del Drive del recetario. |
 | `permiso-revocado` | Google rechazó el permiso guardado: se revocó, se cambió la contraseña o venció. | Correr `npm run mcp:conectar` otra vez. Si pasa cada semana, es porque el proyecto está en modo *Prueba*, donde el permiso dura 7 días. |
 | `usuario-no-habilitado` | Google no dio el permiso: se tocó *Cancelar*, o la cuenta no está entre los usuarios de prueba. | Si tocó *Cancelar*, correr `npm run mcp:conectar` y aceptar. Si no, agregar la cuenta en *Pantalla de consentimiento de OAuth → Usuarios de prueba*. |

@@ -8,8 +8,9 @@ export type CodigoAuth =
 
 export const MENSAJES: Record<CodigoAuth, string> = {
   'sin-cliente':
-    'Falta el cliente de Google del MCP: ~/.config/recetario/cliente.json no está, está mal formado o Google no lo reconoce. ' +
-    'Hay que crear un cliente «Aplicación de escritorio» en Google Cloud y guardar ahí el JSON que se descarga.',
+    'Falta el cliente de Google del MCP: no está en el Llavero, no es de una app de escritorio o Google no lo reconoce. ' +
+    'Hay que crear un cliente «Aplicación de escritorio» en Google Cloud, bajar el JSON y correr ' +
+    '`npm run mcp:conectar -- <ruta del JSON>`.',
   'sin-permiso':
     'El MCP todavía no tiene permiso para usar el Drive. ' +
     'Hay que correr `npm run mcp:conectar` y dar permiso con la cuenta del Drive del recetario.',

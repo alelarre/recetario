@@ -1,42 +1,35 @@
 // El login de escritorio del MCP, sin red, sin el Llavero real y sin
 // navegador: Google es un `fetch` falso y el navegador es una función que
 // hace el pedido de vuelta al loopback local, como haría Google al redirigir.
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import {
-  crearAuthEscritorio, codigoDe, comoErrorDeLogin, cuentaConectada, ErrorDeLogin,
+  clienteDeJson, crearAuthEscritorio, codigoDe, guardarCliente, comoErrorDeLogin, cuentaConectada, ErrorDeLogin,
   MENSAJES, type Llavero
 } from '../mcp/auth.js';
-import { crearLlaveroMac, type EjecutarComando } from '../mcp/llavero.js';
+import { crearLlaveroMac, SERVICIO_CLIENTE, type EjecutarComando } from '../mcp/llavero.js';
 import { abrirLoopback } from '../mcp/loopback.js';
 import { abrirNavegadorMac } from '../mcp/navegador.js';
 import { EventEmitter } from 'node:events';
 
 const SCOPE_DRIVE = 'https://www.googleapis.com/auth/drive';
 
-let carpeta: string;
-let rutaCliente: string;
-
-beforeEach(() => {
-  carpeta = mkdtempSync(join(tmpdir(), 'recetario-auth-'));
-  rutaCliente = join(carpeta, 'cliente.json');
-  writeFileSync(rutaCliente, JSON.stringify({
-    installed: {
-      client_id: 'id-de-prueba.apps.googleusercontent.com',
-      project_id: 'recetario',
-      auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-      token_uri: 'https://oauth2.googleapis.com/token',
-      client_secret: 'secreto-de-prueba',
-      redirect_uris: ['http://localhost']
-    }
-  }));
+const JSON_DE_GOOGLE = JSON.stringify({
+  installed: {
+    client_id: 'id-de-prueba.apps.googleusercontent.com',
+    project_id: 'recetario',
+    auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+    token_uri: 'https://oauth2.googleapis.com/token',
+    client_secret: 'secreto-de-prueba',
+    redirect_uris: ['http://localhost']
+  }
 });
 
-afterEach(() => {
-  rmSync(carpeta, { recursive: true, force: true });
+let llaveroCliente: Llavero & { valor: string | null };
+
+beforeEach(async () => {
+  llaveroCliente = llaveroFalso(null);
+  await guardarCliente(llaveroCliente, clienteDeJson(JSON_DE_GOOGLE));
 });
 
 function llaveroFalso(inicial: string | null = null): Llavero & { valor: string | null } {
@@ -70,28 +63,39 @@ function googleFalso(responder: (p: Pedido) => Response | Promise<Response>) {
 const nuncaAbre = () => { throw new Error('no tenía que abrir el navegador'); };
 
 describe('mcp/auth: el cliente de escritorio', () => {
-  it('sin el archivo del cliente, token() falla con sin-cliente', async () => {
+  it('sin el cliente en el Llavero, token() y conectar() fallan con sin-cliente', async () => {
     const { fetch } = googleFalso(() => json({}));
     const auth = crearAuthEscritorio({
-      llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch,
-      rutaCliente: join(carpeta, 'no-existe.json')
+      llavero: llaveroFalso('refresco'), llaveroCliente: llaveroFalso(null), abrirNavegador: nuncaAbre, fetch
     });
     await expect(auth.token()).rejects.toMatchObject({ codigo: 'sin-cliente' });
+    await expect(auth.conectar()).rejects.toMatchObject({ codigo: 'sin-cliente' });
   });
 
-  it('con el archivo mal formado, falla con sin-cliente', async () => {
+  it('con lo guardado en el Llavero ilegible, falla con sin-cliente', async () => {
     const { fetch } = googleFalso(() => json({}));
-    for (const contenido of ['{ no es json', '{}', JSON.stringify({ installed: { client_id: 'x' } }), JSON.stringify({ web: { client_id: 'x', client_secret: 'y' } })]) {
-      writeFileSync(rutaCliente, contenido);
-      const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch, rutaCliente });
+    for (const guardado of ['no-es-base64-de-json', Buffer.from('{"clientId":"x"}').toString('base64url')]) {
+      const auth = crearAuthEscritorio({
+        llavero: llaveroFalso('refresco'), llaveroCliente: llaveroFalso(guardado), abrirNavegador: nuncaAbre, fetch
+      });
       await expect(auth.token()).rejects.toMatchObject({ codigo: 'sin-cliente' });
-      await expect(auth.conectar()).rejects.toMatchObject({ codigo: 'sin-cliente' });
     }
+  });
+
+  it('el JSON que baja Google Cloud tiene que ser de una app de escritorio', () => {
+    for (const contenido of ['{ no es json', '{}', JSON.stringify({ installed: { client_id: 'x' } }), JSON.stringify({ web: { client_id: 'x', client_secret: 'y' } })]) {
+      expect(() => clienteDeJson(contenido)).toThrow(expect.objectContaining({ codigo: 'sin-cliente' }));
+    }
+    expect(clienteDeJson(JSON_DE_GOOGLE)).toEqual({ clientId: 'id-de-prueba.apps.googleusercontent.com', clientSecret: 'secreto-de-prueba' });
+  });
+
+  it('el cliente entra al Llavero con caracteres que `security -i` acepta', () => {
+    expect(llaveroCliente.valor).toMatch(/^[A-Za-z0-9_-]+$/);
   });
 
   it('sin refresh token en el Llavero, token() falla con sin-permiso y no pide nada a Google', async () => {
     const google = googleFalso(() => json({}));
-    const auth = crearAuthEscritorio({ llavero: llaveroFalso(null), abrirNavegador: nuncaAbre, fetch: google.fetch, rutaCliente });
+    const auth = crearAuthEscritorio({ llavero: llaveroFalso(null), abrirNavegador: nuncaAbre, fetch: google.fetch, llaveroCliente });
     const error = await auth.token().catch((e: unknown) => e);
     expect(error).toBeInstanceOf(ErrorDeLogin);
     expect(error).toMatchObject({ codigo: 'sin-permiso', message: MENSAJES['sin-permiso'] });
@@ -113,7 +117,7 @@ describe('mcp/auth: conectar', () => {
     });
     const llavero = llaveroFalso('refresco-viejo');
     const auth = crearAuthEscritorio({
-      llavero, fetch: google.fetch, rutaCliente,
+      llavero, fetch: google.fetch, llaveroCliente,
       abrirNavegador: async (url) => {
         urlAbierta = url;
         const p = new URL(url).searchParams;
@@ -159,7 +163,7 @@ describe('mcp/auth: conectar', () => {
     const llavero = llaveroFalso(null);
     let redirect = '';
     const auth = crearAuthEscritorio({
-      llavero, fetch: google.fetch, rutaCliente,
+      llavero, fetch: google.fetch, llaveroCliente,
       abrirNavegador: async (url) => {
         redirect = new URL(url).searchParams.get('redirect_uri') ?? '';
         void globalThis.fetch(`${redirect}/?code=robado&state=otro`);
@@ -174,7 +178,7 @@ describe('mcp/auth: conectar', () => {
   it('si Google vuelve con access_denied, falla con usuario-no-habilitado', async () => {
     const google = googleFalso(() => json({}));
     const auth = crearAuthEscritorio({
-      llavero: llaveroFalso(null), fetch: google.fetch, rutaCliente,
+      llavero: llaveroFalso(null), fetch: google.fetch, llaveroCliente,
       abrirNavegador: async (url) => {
         const p = new URL(url).searchParams;
         void globalThis.fetch(`${p.get('redirect_uri')}/?error=access_denied&state=${p.get('state')}`);
@@ -191,7 +195,7 @@ describe('mcp/auth: conectar', () => {
     }));
     const llavero = llaveroFalso(null);
     const auth = crearAuthEscritorio({
-      llavero, fetch: google.fetch, rutaCliente,
+      llavero, fetch: google.fetch, llaveroCliente,
       abrirNavegador: async (url) => {
         const p = new URL(url).searchParams;
         void globalThis.fetch(`${p.get('redirect_uri')}/?code=c&state=${p.get('state')}`);
@@ -208,7 +212,7 @@ describe('mcp/auth: token', () => {
     let n = 0;
     const google = googleFalso(() => json({ access_token: `acceso-${++n}`, expires_in: 3600, scope: SCOPE_DRIVE }));
     const auth = crearAuthEscritorio({
-      llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: google.fetch, rutaCliente,
+      llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: google.fetch, llaveroCliente,
       ahora: () => reloj
     });
 
@@ -230,14 +234,14 @@ describe('mcp/auth: token', () => {
 
   it('dos pedidos a la vez hacen una sola renovación', async () => {
     const google = googleFalso(() => json({ access_token: 'acceso', expires_in: 3600 }));
-    const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: google.fetch, rutaCliente });
+    const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: google.fetch, llaveroCliente });
     expect(await Promise.all([auth.token(), auth.token()])).toEqual(['acceso', 'acceso']);
     expect(google.pedidos).toHaveLength(1);
   });
 
   it('un refresh token rechazado es permiso-revocado, con el texto claro y sin el crudo de Google', async () => {
     const google = googleFalso(() => json({ error: 'invalid_grant', error_description: 'Token has been expired or revoked.' }, 400));
-    const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: google.fetch, rutaCliente });
+    const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: google.fetch, llaveroCliente });
     const error = await auth.token().catch((e: unknown) => e);
     expect(error).toMatchObject({ codigo: 'permiso-revocado', message: MENSAJES['permiso-revocado'] });
     expect((error as Error).message).not.toContain('expired or revoked');
@@ -245,7 +249,7 @@ describe('mcp/auth: token', () => {
 
   it('sin conexión, falla con sin-red', async () => {
     const fetchCaido = (async () => { throw new TypeError('fetch failed'); }) as typeof fetch;
-    const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: fetchCaido, rutaCliente });
+    const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: fetchCaido, llaveroCliente });
     await expect(auth.token()).rejects.toMatchObject({ codigo: 'sin-red' });
   });
 });
@@ -345,6 +349,12 @@ describe('mcp/llavero: el Llavero de macOS con `security`', () => {
     expect(llamadas).toEqual([]);
   });
 
+  it('el cliente va en su propio ítem, aparte del refresh token', async () => {
+    const { ejecutar, llamadas } = ejecutarFalso([{ codigo: 0, salida: 'abc\n' }]);
+    expect(await crearLlaveroMac({ ejecutar, cuenta: 'ale', servicio: SERVICIO_CLIENTE }).leer()).toBe('abc');
+    expect(llamadas[0].args).toEqual(['find-generic-password', '-s', 'recetario-mcp-cliente', '-a', 'ale', '-w']);
+  });
+
   it('lee el token, o null si no hay', async () => {
     const hay = ejecutarFalso([{ codigo: 0, salida: 'refresco\n' }]);
     expect(await crearLlaveroMac({ ejecutar: hay.ejecutar, cuenta: 'ale' }).leer()).toBe('refresco');
@@ -357,7 +367,7 @@ describe('mcp/llavero: el Llavero de macOS con `security`', () => {
 /** Un `conectar` cuyo navegador vuelve al loopback con los parámetros que se le den. */
 function conectarConVuelta(google: ReturnType<typeof googleFalso>, llavero: Llavero, parametros: Record<string, string>) {
   return crearAuthEscritorio({
-    llavero, fetch: google.fetch, rutaCliente,
+    llavero, fetch: google.fetch, llaveroCliente,
     abrirNavegador: async (url) => {
       const p = new URL(url).searchParams;
       const vuelta = new URL(p.get('redirect_uri') ?? '');
@@ -382,7 +392,7 @@ describe('mcp/auth: los errores de login dicen qué hacer', () => {
   it('olvidar() descarta el access token en memoria y el próximo token() renueva', async () => {
     let n = 0;
     const google = googleFalso(() => json({ access_token: `acceso-${++n}`, expires_in: 3600 }));
-    const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: google.fetch, rutaCliente });
+    const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: google.fetch, llaveroCliente });
     expect(await auth.token()).toBe('acceso-1');
     auth.olvidar();
     expect(await auth.token()).toBe('acceso-2');
@@ -432,7 +442,7 @@ describe('mcp/auth: los errores de login dicen qué hacer', () => {
 
   it('un 200 que no es JSON falla con un mensaje fijo, sin el cuerpo', async () => {
     const google = googleFalso(() => new Response('<html>algo-raro-del-proxy</html>', { status: 200 }));
-    const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: google.fetch, rutaCliente });
+    const auth = crearAuthEscritorio({ llavero: llaveroFalso('refresco'), abrirNavegador: nuncaAbre, fetch: google.fetch, llaveroCliente });
     const error = await auth.token().catch((e: unknown) => e);
     expect((error as Error).message).toMatch(/no se pudo leer/);
     expect((error as Error).message).not.toContain('algo-raro');
