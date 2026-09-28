@@ -50,7 +50,7 @@ const fotos = z.array(z.object({
   origen: z.string().describe('Una ruta local, o una URL http o https.'),
   uso: z.enum(['plato', 'paso', 'fuente']).describe(
     '`plato`: la foto del plato. `paso`: la foto de un paso. ' +
-    '`fuente`: la página o la captura de donde salió la receta; se sube sólo si la receta lleva `borrador`.'
+    '`fuente`: la página o la captura de donde salió la receta; se sube sólo si la receta lleva `borrador` en `tags_especiales`.'
   )
 })).describe('Las fotos que se suben con la receta, en orden. El número `foto:N` de cada una lo dice `validar`.');
 
@@ -60,7 +60,7 @@ export function crearServidor(recetario: Recetario): McpServer {
   const servidor = new McpServer({ name: 'recetario', version: '1.0.0' });
 
   servidor.registerTool('formato', {
-    description: 'Las reglas del .md de una receta: frontmatter, tiempo, dificultad, tags reservados, secciones, ingredientes y fotos. Pedilas antes de escribir una receta.',
+    description: 'Las reglas del .md de una receta: frontmatter, tiempo, dificultad, tags reservados y especiales, secciones, ingredientes y fotos. Pedilas antes de escribir una receta.',
     inputSchema: {}
   }, () => responder(() => texto(recetario.formato().join('\n'))));
 

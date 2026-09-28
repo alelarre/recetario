@@ -107,7 +107,7 @@ alguien contó— se crea la receta a mano desde la app.
 
 Uno de los dos lugares primarios. Lista las recetas que todavía son borradores.
 
-**Un borrador es una receta con el tag `borrador`.** Tiene el mismo formato, el
+**Un borrador es una receta con `borrador` en `tags_especiales`.** Tiene el mismo formato, el
 mismo editor y la misma fila del índice que cualquier otra receta. Vive en su
 categoría si ya la tiene, o en `_sin-categoria/` si no (C05.4.4).
 
@@ -116,7 +116,7 @@ categoría si ya la tiene, o en `_sin-categoria/` si no (C05.4.4).
 - [ ] Está en `#/borradores` y es **la lista por tag** (C02.6.5) de `borrador`: las mismas tarjetas, las favoritas primero, la carga por tramos, el carrusel, el filtro y el orden por duración. El carrusel no lleva el chip de `borrador`, que no va en ninguna lista de tags (C02.6.4).
 - [ ] **Es el único camino a los borradores:** el Recetario no tiene tile para lo que no tiene categoría (`E02-Encontrar.md` C02.4.1).
 - [ ] Es un destino del menú: el encabezado dice **«Borradores»**, con el total, y a la izquierda lleva el botón del menú con su contador, no el volver (C02.1.3).
-- [ ] Entra una receta que lleve `borrador` escrito en cualquiera de sus formas (C05.1.4).
+- [ ] Entra una receta que lleve `borrador` en `tags_especiales` (C05.1.4).
 - [ ] Una receta de `_sin-categoria/` se dibuja con el color neutro —el de `Otros`— y sin foto de categoría debajo, en lugar del color de una categoría.
 - [ ] La lista no tiene «+» ni «Pegar»: crear es *Nueva receta* (C01.3.1), y pegar está en el editor (C01.9.3).
 - [ ] **Tocar una tarjeta abre el editor de ese borrador** (`#/r/<id>/editar`), no la receta: a un borrador se entra a completarlo. Es la única lista que lo hace; las demás abren la receta. Volver desde ese editor vuelve a Borradores, por el historial.
@@ -125,7 +125,7 @@ categoría si ya la tiene, o en `_sin-categoria/` si no (C05.4.4).
 
 #### C01.4.2 — Un borrador es una receta *(J2)*
 
-- [ ] Es un `.md` con el formato de una receta (C05.1.1) y el tag `borrador` en la lista `tags`. No hay formato propio, ni carpeta propia de borradores, ni hoja propia en el índice.
+- [ ] Es un `.md` con el formato de una receta (C05.1.1) y `borrador` en `tags_especiales`. No hay formato propio, ni carpeta propia de borradores, ni hoja propia en el índice.
 - [ ] Un borrador sin categoría vive en `_sin-categoria/`, al lado de las categorías. Un borrador con categoría vive en ella.
 - [ ] Sus fotos son el depósito de la receta y viven en `_fotos/` (C05.1.5).
 - [ ] El identificador es el id del `.md` en Drive, como el de cualquier receta (R5).
@@ -144,7 +144,7 @@ limbo se reproduzca adentro del producto.
 #### C01.5.1 — El contador en el Recetario *(J3)*
 
 - [ ] El número de borradores va sobre el botón del menú, arriba a la izquierda de las pantallas del menú, y junto a *Borradores* dentro del menú lateral: con el menú cerrado, es lo que dice que hay algo esperando.
-- [ ] Cuenta las recetas con `borrador`, escrito en cualquiera de sus formas.
+- [ ] Cuenta las recetas con `borrador` en `tags_especiales`.
 - [ ] En cero, la entrada sigue visible sin número: Borradores no desaparece.
 - [ ] Es un aviso sin acción: no interrumpe, no abre nada solo, no cambia de color para alarmar.
 - [ ] El número sale de la misma lectura que usa Borradores; no se pide aparte.
@@ -181,7 +181,7 @@ compartida o pegada. La vuelta no depende de la ida: **cualquier receta en
 
 - [ ] **«Convertir con Agente»** va al final del editor, arriba de *Guardar*, sólo mientras la receta tiene `borrador` (C04.1.1).
 - [ ] **Primero guarda**, como *Guardar* (C04.5.1): el pedido lleva el id del `.md`, que en una receta nueva recién existe al crearla. Si la validación o la escritura fallan —también una receta nueva sin nada cargado (`E04-Corregir.md` C04.3b.1)—, no manda nada.
-- [ ] El pedido va escrito en infinitivo. Lleva la fuente, las Notas y las reglas del formato armadas desde las mismas constantes que usa la app —duraciones, dificultades, tags reservados—, así no se desactualiza cuando cambia el esquema.
+- [ ] El pedido va escrito en infinitivo. Lleva la fuente, las Notas y las reglas del formato armadas desde las mismas constantes que usa la app —duraciones, dificultades, tags reservados—, así no se desactualiza cuando cambia el esquema. No menciona `tags_especiales`: los especiales los pone el usuario, no salen de la fuente.
 - [ ] **El título** viaja tal cual si lo escribió el usuario. El que se pone solo a un borrador —*Borrador dd/mm hh:mm*— o uno vacío no viajan: en su lugar, el pedido pide proponer un título corto que represente el plato.
 - [ ] **Lo ya cargado en el editor** —descripción, rinde, ingredientes, preparación— viaja con su rótulo, sólo lo que tiene algo. Si hay algo, el pedido pide partir de ahí: conservarlo y refinarlo con la fuente, las fotos, las notas y la búsqueda, sin descartar lo que no esté contradicho. Así lo que vuelve no pisa lo que el usuario había escrito.
 - [ ] **Con fuente**, pide leerla y transcribir la receta, y después corroborarla con una búsqueda web contra una o más fuentes externas. Si difieren en cantidades, tiempos o temperaturas, se queda la fuente original y la diferencia se anota en `## Notas`.
@@ -210,8 +210,8 @@ compartida o pegada. La vuelta no depende de la ida: **cualquier receta en
 #### C01.9.3 — Pegar *(J3)*
 
 - [ ] **«Pegar»** está en el encabezado de todo editor, a la derecha (C04.1.1), y lee el portapapeles.
-- [ ] Si lo copiado es una receta en `.md` (C01.9.2), **llena el formulario**: título, datos, tags y secciones se reemplazan por lo pegado. **No guarda.**
-- [ ] Se conservan el **depósito de fotos** y la **categoría elegida**: la receta pegada nombra las fotos por su número, y el depósito es el del editor. La portada que lo pegado no traiga queda la que estaba. Si la categoría es «Sin categoría», `borrador` queda puesto aunque lo pegado no lo traiga.
+- [ ] Si lo copiado es una receta en `.md` (C01.9.2), **llena el formulario**: título, datos, tags comunes y secciones se reemplazan por lo pegado. **No guarda.**
+- [ ] Se conservan el **depósito de fotos** y la **categoría elegida**: la receta pegada nombra las fotos por su número, y el depósito es el del editor. La portada que lo pegado no traiga queda la que estaba. **Los especiales son los que tenía el editor**, no los de lo pegado, salvo `borrador`: queda puesto sólo si la categoría es «Sin categoría».
 - [ ] Pisa lo escrito sin preguntar; la pregunta al salir sin guardar protege el archivo (C04.1.1).
 - [ ] **Ignora el `id:` que traiga lo pegado**: pega en el editor abierto.
 - [ ] Lo pegado que no es una receta avisa **«Lo copiado no es una receta en .md.»**, arriba del formulario y sin tocar lo escrito.

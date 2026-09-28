@@ -98,15 +98,17 @@ describe('reconstruir', () => {
   it('avisa las recetas de _sin-categoria/ y de la raíz sin borrador, y no hace nada más con ellas', async () => {
     drive._store.set('sc', { id: 'sc', name: '_sin-categoria', mimeType: CARPETA, parents: ['raiz'] });
     const conTags = (titulo: string, tags: string) => `---\ntitulo: ${titulo}\ntags: [${tags}]\n---\n`;
-    drive._store.set('s1', { id: 's1', name: 'con-tag.md', parents: ['sc'], contenido: conTags('Con tag', 'borrador') });
-    drive._store.set('s2', { id: 's2', name: 'forma-vieja.md', parents: ['sc'], contenido: conTags('Vieja', 'Incompleta') });
+    drive._store.set('s1', { id: 's1', name: 'con-tag.md', parents: ['sc'],
+      contenido: '---\ntitulo: Con tag\ntags_especiales: [borrador]\n---\n' });
+    // `borrador` en `tags` no es el especial: es el formato anterior.
+    drive._store.set('s2', { id: 's2', name: 'formato-viejo.md', parents: ['sc'], contenido: conTags('Vieja', 'borrador') });
     drive._store.set('s3', { id: 's3', name: 'sin-tag.md', parents: ['sc'], contenido: conTags('Sin tag', 'dulce') });
     const antes = drive._store.get('s3')?.contenido;
 
     const r = await store.reconstruir();
 
     // La suelta de la raíz tampoco tiene el tag: va al mismo aviso.
-    expect(r.sinBorrador).toEqual(['suelta.md', 'sin-tag.md']);
+    expect(r.sinBorrador).toEqual(['suelta.md', 'formato-viejo.md', 'sin-tag.md']);
     const entrada = store.entradas().find(e => e.id_archivo === 's3')!;
     expect(entrada.carpeta_id).toBe('sc');
     expect(entrada.tags).toEqual(['dulce']);
@@ -120,7 +122,7 @@ describe('reconstruir', () => {
   });
 
   it('una suelta de la raíz con borrador no se avisa', async () => {
-    drive._store.get('r3')!.contenido = '---\ntitulo: Suelta\ntags: [borrador]\n---\n';
+    drive._store.get('r3')!.contenido = '---\ntitulo: Suelta\ntags_especiales: [borrador]\n---\n';
     const r = await store.reconstruir();
     expect(r.sinBorrador).toEqual([]);
   });

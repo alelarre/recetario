@@ -29,11 +29,12 @@ describe('el link de una receta', () => {
     expect(vuelta?.receta.fuente).toBe(BABA.fuente);
   });
 
-  it('tags y claves extra no viajan', async () => {
-    const r = parse('---\ntitulo: A\ntags: [secreto]\nautor: yo\n---\n## Notas\nx');
+  it('tags, especiales y claves extra no viajan', async () => {
+    const r = parse('---\ntitulo: A\ntags: [secreto]\ntags_especiales: [favorito]\nautor: yo\n---\n## Notas\nx');
     const carga = await codificar(r, '');
     const vuelta = await decodificar(carga);
     expect(vuelta?.receta.tags).toEqual([]);
+    expect(vuelta?.receta.tags_especiales).toEqual([]);
     expect(vuelta?.receta.extras).toEqual({});
   });
 

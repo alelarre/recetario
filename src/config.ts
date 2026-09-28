@@ -43,4 +43,4 @@ export const CORTE_DE_LECTURA = 20_000;
 // Subir esta versión fuerza una reconstrucción del índice en el próximo
 // arranque. La sube cambiar la forma de la fila o de las hojas; lo que se
 // valida al leer —`tiempo`, `dificultad`— no.
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;

@@ -15,7 +15,7 @@ import { ICO } from './iconos.js';
 import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones } from './fichas-receta.js';
 import { renderFichaCompartir } from './compartir.js';
 import { renderVisor } from './visor.js';
-import { esFavorita, tagEspecial } from '../catalogo.js';
+import { esFavorita } from '../catalogo.js';
 import { fotosSinUso, resolverReceta } from '../fotos-receta.js';
 // El logo de Drive, en el repo y no pedido a `gstatic.com`: una dependencia de
 // red para 513 bytes es una dependencia de más, y así entra a `/assets/`, que es
@@ -73,7 +73,7 @@ export function renderReceta(
   // Los tags, con los especiales primero y con su ícono. Favorito no va: ya
   // lo dice la estrella del encabezado, y un chip igual parecía otro control
   // para marcarla.
-  const chips = chipsSueltos(receta.tags.filter(t => tagEspecial(t) !== 'favorito'));
+  const chips = chipsSueltos(receta.tags, receta.tags_especiales.filter(t => t !== 'favorito'));
   const marcas = chips ? `<div class="chips">${chips}</div>` : '';
 
   // El `.md` en Drive, en una pestaña nueva. Sólo si la receta está en el

@@ -173,9 +173,10 @@ El pedido se arma con las mismas constantes que usa la app —las claves del
 frontmatter, las cinco duraciones, las tres dificultades, los tags reservados—,
 así que no se desactualiza cuando cambia el esquema. Pide no inventar lo que la
 fuente no dice y no agregar datos nutricionales. La clave `id` que trae la
-respuesta no se muestra ni se guarda. Pegar no guarda y pisa lo escrito sin
-preguntar; la receta recibida por Compartir cuenta como cambios sin guardar:
-salir pregunta.
+respuesta no se muestra ni se guarda. El pedido no menciona `tags_especiales`:
+Pegar conserva los especiales del editor, y `borrador` queda sólo si no hay
+categoría. Pegar no guarda y pisa lo demás sin preguntar; la receta recibida
+por Compartir cuenta como cambios sin guardar: salir pregunta.
 
 ```
   ✗ el navegador no deja leer el portapapeles
@@ -552,8 +553,11 @@ El reindexado lee cada .md
   ⚑ ¿el archivo tiene título?
       no  → se ignora, y se cuenta
       sí  → entra al índice y se muestra
-            ⚑ ¿lleva el tag borrador, o incompleta?
+            ⚑ ¿lleva borrador en tags_especiales?
                 sí  → aparece en Borradores
+            ⚑ ¿un reservado en tags, o en tags_especiales un valor
+              que no es de la lista?
+                sí  → se ignora; el archivo no se toca
             ⚑ ¿está en _sin-categoria/ sin el tag borrador?
                 sí  → se avisa; el archivo no se toca
             ⚑ ¿tiempo o dificultad fuera de sus valores?
@@ -677,15 +681,15 @@ las fotos que viajaron. No hay editar, ni favorito, ni compartir, ni menú.
 Receta
   → toco la estrella del encabezado
   ▸ la estrella se anima mientras Drive contesta, y no acepta otro toque
-  ▸ se reescribe el .md con el tag favorito en su lista, y su fila en el índice
+  ▸ se reescribe el .md con favorito en tags_especiales, y su fila en el índice
   ▸ la estrella queda encendida
   ▸ en toda lista en orden A–Z, la receta va primero, con su marca en la
     esquina de la tarjeta
 ```
 
 **El resultado se dibuja cuando Drive contesta, no antes.** Tocarla de nuevo saca
-el tag. `favorito` es un tag de la lista `tags` como cualquier otro: no hay clave
-ni columna nueva.
+el tag. `favorito` vive en `tags_especiales`, con los otros tres especiales, y
+en su columna del índice.
 
 ```
   ✗ no hay red

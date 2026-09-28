@@ -2,8 +2,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { rangoDeFila, crearSheets } from '../src/sheets.js';
 
 describe('rangos A1', () => {
-  it('una fila entera abarca las trece columnas', () => {
-    expect(rangoDeFila(2)).toBe('recetas!A2:M2');
+  it('una fila entera abarca las catorce columnas', () => {
+    expect(rangoDeFila(2)).toBe('recetas!A2:N2');
   });
 
   describe('defensa de parámetros en rangoDeFila', () => {
@@ -28,9 +28,9 @@ describe('rangos A1', () => {
     });
 
     it('un número positivo entero retorna la fila correcta', () => {
-      expect(rangoDeFila(1)).toBe('recetas!A1:M1');
-      expect(rangoDeFila(10)).toBe('recetas!A10:M10');
-      expect(rangoDeFila(100)).toBe('recetas!A100:M100');
+      expect(rangoDeFila(1)).toBe('recetas!A1:N1');
+      expect(rangoDeFila(10)).toBe('recetas!A10:N10');
+      expect(rangoDeFila(100)).toBe('recetas!A100:N100');
     });
   });
 });

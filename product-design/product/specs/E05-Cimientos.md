@@ -155,7 +155,7 @@ que en el editor se lleva lo escrito. Las escrituras no se cortan.
 
 ### F05.1 — El esquema del `.md`
 
-Frontmatter de siete claves, solo `titulo` obligatorio; cuerpo markdown con cuatro
+Frontmatter de ocho claves, solo `titulo` obligatorio; cuerpo markdown con cuatro
 secciones conocidas y opcionales, más el depósito de fotos. Los ingredientes
 llevan el nombre primero y la cantidad después de un separador.
 
@@ -164,12 +164,12 @@ Es lo que permite J4 sin ensuciar el archivo. Definido en
 
 #### C05.1.1 — Parsear el frontmatter *(J8)*
 
-- [ ] Se leen las siete claves: `titulo`, `tags`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`. La completitud no es una clave: es un tag (F05.3).
+- [ ] Se leen las ocho claves: `titulo`, `tags`, `tags_especiales`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`, y se escriben en ese orden. `tags_especiales` va justo después de `tags` y, vacía, no se escribe. La completitud no es una clave: es el especial `borrador` (F05.3).
 - [ ] Una clave ausente se representa como ausente, no como cadena vacía.
 - [ ] Una clave desconocida se conserva sin interpretarse.
 - [ ] `dificultad` fuera de `fácil` · `media` · `difícil` se muestra tal cual y no se corrige.
 - [ ] **`tiempo` es uno de cinco valores:** `~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`. Cuenta el tiempo hasta comer, con reposo y horno incluidos. Cualquier otro texto se lee como sin duración —no se muestra, no filtra y no ordena— y el `.md` no se corrige. La validación es al leer.
-- [ ] **Hay tags reservados** (C05.1.4): viven en la lista `tags` como cualquier otro, y la app los dibuja y los carga con forma propia.
+- [ ] **Hay tags especiales** (C05.1.4): viven en su propia clave, `tags_especiales`, y la app los dibuja y los carga con forma propia. `tags` lleva sólo los tags comunes.
 - [ ] **`foto` es una URL externa o una foto del depósito**, escrita `foto:N` (C05.1.5). Un `foto:N` cuyo número no está en el depósito se lee como ausente. **El editor sólo escribe `foto:N`** (C04.2.1d), pero el formato sigue aceptando la URL: un agente puede escribirla, y se conserva.
 - [ ] Un archivo sin bloque de frontmatter no tiene título: todo es cuerpo, y cae en C05.2.3.
 
@@ -206,13 +206,14 @@ receta no tiene cabecera.
 pescados usa `Anchoítas — 18-20 medianas` y el recetario original usa
 `Provenzal, 1 cucharada`: las dos fuentes ponen el nombre adelante.
 
-#### C05.1.4 — Los tags reservados *(J8)*
+#### C05.1.4 — Los tags especiales y los reservados *(J8)*
 
-- [ ] Cuatro tags son **especiales**: `favorito`, `menú diario`, `probar` y `borrador`, en ese orden en cualquier fila de tags y antes que los demás.
-- [ ] Se reconocen sin mirar mayúsculas ni tildes. `favorito` se reconoce además como `favorita`, `favoritos` y `favoritas`; `borrador`, como `borradores`, `incompleta`, `incompleto`, `incompletos` e `incompletas`. Un `.md` que trae una forma alternativa se lee como el especial sin reescribirse; al guardarlo desde el editor queda con la forma canónica.
-- [ ] Buscar o filtrar por un especial encuentra también sus formas alternativas: la lista por tag de `borrador` y el contador de Borradores cuentan las recetas con `incompleta` (`E01-CapturaYBorradores.md` C01.4.1).
-- [ ] Ninguno se escribe a mano en el campo de tags: cada uno tiene su botón en el editor (`E04-Corregir.md`). Tampoco se acepta `terminado` ni sus formas de género y número, que contradicen a `borrador`.
-- [ ] No suman claves al frontmatter ni columnas al índice: son valores de `tags`.
+- [ ] Cuatro especiales —`favorito`, `menú diario`, `probar` y `borrador`— viven en la clave `tags_especiales`, en ese orden en cualquier fila de tags y antes que los demás.
+- [ ] `tags_especiales` es una lista cerrada: se reconoce sin mirar mayúsculas ni tildes, se escribe en la forma canónica, y un valor que no es de la lista se lee como ausente.
+- [ ] `tags` no lleva especiales: un reservado en `tags` —un especial, `favoritas`, `borradores`, `incompleta` y sus formas, `terminado` y sus formas— se ignora al leer.
+- [ ] Ninguno se escribe a mano en el campo de tags: cada especial tiene su botón en el editor (`E04-Corregir.md`).
+- [ ] El índice tiene una columna `tags_especiales`.
+- [ ] Cada especial declara su ícono, su marca en la tarjeta, si se ofrece en los chips, si se muestra en la receta y si lo encuentra la búsqueda por texto; ninguno lo encuentra.
 
 #### C05.1.5 — El depósito de fotos *(J8)*
 
@@ -269,7 +270,7 @@ el usuario a mano, y eso es el caso normal.
 ### F05.3 — La completitud la declara el usuario
 
 Una receta está terminada cuando el usuario lo dice, y no cuando el texto alcanza
-una forma. **Es un dato del archivo** —el tag `borrador` en la lista `tags`—,
+una forma. **Es un dato del archivo** —`borrador` en `tags_especiales`—,
 no un cálculo: la app lo lee y lo muestra, nunca lo deduce.
 
 Terminar una receta es un juicio. Hay recetas escritas enteras que todavía no
@@ -278,15 +279,15 @@ por el usuario y además podría cambiar solo, sin que nadie tocara nada.
 
 #### C05.3.1 — La completitud es el tag `borrador` *(J8)*
 
-- [ ] Una receta es un borrador si su lista `tags` tiene `borrador`; si no lo tiene, está terminada.
-- [ ] Se escribe siempre en la forma canónica, en minúscula. Se reconocen además sus formas alternativas como el mismo tag (C05.1.4).
+- [ ] Una receta es un borrador si su lista `tags_especiales` tiene `borrador`; si no lo tiene, está terminada.
+- [ ] Se escribe siempre en la forma canónica, en minúscula, y sólo en `tags_especiales` (C05.1.4).
 - [ ] Es el único de los cuatro tags especiales que **no** se pone y saca libremente: sólo se puede sacar cuando la receta cumple C05.3.3, y una receta nueva nace con el tag puesto (`E04-Corregir.md` C04.3b.1).
 - [ ] **Una receta sin categoría es siempre un borrador:** la categoría es parte de C05.3.3. Un `.md` escrito afuera sin categoría —en `_sin-categoria/` o suelto en la carpeta base— y sin el tag **no se encuentra de ninguna forma**: ni en la búsqueda, ni en las listas —tampoco en Borradores—, ni en el conteo de tags. Sólo lo nombra el aviso de Ajustes al reindexar (C05.9b.3). El editor no deja guardar una receta sin `borrador` mientras no tenga categoría.
 - [ ] `completa` es una clave desconocida como cualquier otra (C05.1.1): la app no la lee ni la borra, y la conserva tal cual si venía en el `.md`.
 
 #### C05.3.2 — El índice no tiene columna propia *(J1, J8)*
 
-- [ ] La fila no tiene columna de completitud. Si una receta es un borrador se sabe por su columna `tags`, igual que si es favorita (F05.4b).
+- [ ] La fila no tiene columna de completitud. Si una receta es un borrador se sabe por su columna `tags_especiales`, igual que si es favorita (F05.4b).
 - [ ] Sigue siendo cache: un `.md` editado afuera deja la fila atrasada hasta el próximo guardado o reindexado (R4).
 
 #### C05.3.3 — Cuándo se puede sacar el tag *(J7)*
@@ -344,6 +345,7 @@ escritura parcial y un JSON obligaría a reescribir el archivo entero.
 - [ ] Toda escritura de una receta pasa por el store, que escribe el `.md` y su fila: no hay una ruta paralela dentro de la app.
 - [ ] **El agente escribe por el MCP local** (`mcp/`), un proceso de Node en la Mac que importa el store de la app: crear, guardar y borrar una receta son `store.crear`, `store.guardar` y `store.borrar`, y el `.md` y su fila se escriben juntos.
 - [ ] El MCP valida el `.md` antes de escribir, con la misma lectura que la app: si hay errores, no escribe nada y los devuelve.
+- [ ] Para el MCP es un error lo que la app ignora al leer los tags (C05.1.4): un reservado en `tags` o un valor de `tags_especiales` que no es de la lista. El agente escribe `borrador` en `tags_especiales`.
 - [ ] Borrar por el MCP pide como confirmación el título exacto de la receta, o su nombre de archivo si no tiene título; si no coincide, no borra.
 - [ ] Si una escritura del MCP falla por red o por login, el `.md` pudo quedar sin su fila: antes de reintentar, el agente reindexa y busca la receta, y si ya está no la crea de nuevo.
 - [ ] Sin el MCP, el agente entrega el `.md` y lo guarda la app (*Convertir con Agente*, C01.9.2).
@@ -372,8 +374,9 @@ reindexar (F05.5) con una sola pestaña abierta y sin el MCP escribiendo.
 ### F05.4b — La fila del índice es completa
 
 Lo que hace falta para listar, buscar, filtrar y ordenar sin abrir ningún `.md`:
-título, categoría, tags, rinde, tiempo, dificultad, fuente, foto y **los nombres
-de los ingredientes**, tal como están escritos, sin normalizar.
+título, categoría, tags, tags especiales, rinde, tiempo, dificultad, fuente,
+foto y **los nombres de los ingredientes**, tal como están escritos, sin
+normalizar.
 
 Los ingredientes están ahí porque J4 tiene que resolverse sin leer mil `.md`. No
 se normalizan porque cualquier regla que la app y el agente tuvieran que replicar
@@ -381,7 +384,7 @@ es una fuente de divergencia.
 
 #### C05.4b.1 — Las columnas de la fila *(J1, J4, J5)*
 
-- [ ] En este orden: `fileId`, nombre del archivo, título, categoría, id de la carpeta, rinde, tiempo, dificultad, fuente, tags, nombres de ingredientes, fecha de modificación y foto. No hay columna de completitud: se sabe por `tags`.
+- [ ] En este orden: `fileId`, nombre del archivo, título, categoría, id de la carpeta, rinde, tiempo, dificultad, fuente, tags, nombres de ingredientes, fecha de modificación, foto y `tags_especiales`. No hay columna de completitud: se sabe por `tags_especiales`.
 - [ ] `tiempo` se guarda como está en el `.md` y se valida al leer la fila (C05.1.1); una `dificultad` inválida se guarda vacía.
 - [ ] La columna `foto` guarda la cabecera **ya resuelta a su URL** (C05.1.5), así las listas la dibujan sin leer el `.md`.
 - [ ] La categoría se deriva de la carpeta que contiene al archivo, no del frontmatter.
@@ -405,7 +408,7 @@ Disponible desde Ajustes. Además corre solo al abrir en tres casos (C05.5.3).
 - [ ] Si a la planilla le falta la hoja `categorias`, la crea.
 - [ ] Al terminar, el índice no conserva ninguna fila anterior: lo que no está en Drive, no está.
 - [ ] Los archivos ignorados por no tener título se cuentan y quedan visibles en Ajustes.
-- [ ] **Una receta sin categoría —en `_sin-categoria/` o suelta en la carpeta base— sin el tag `borrador`**, en ninguna de sus formas (C05.1.4), se nombra en Ajustes al terminar, como los ignorados. No se hace nada más: no se mueve y no se le pone el tag. Entra al índice, pero no se muestra en ninguna lista ni búsqueda (C05.3.1).
+- [ ] **Una receta sin categoría —en `_sin-categoria/` o suelta en la carpeta base— sin `borrador` en `tags_especiales`** se nombra en Ajustes al terminar, como los ignorados. No se hace nada más: no se mueve y no se le pone el tag. Entra al índice, pero no se muestra en ninguna lista ni búsqueda (C05.3.1).
 - [ ] La fecha del último reindexado queda registrada en `meta` y se muestra en Ajustes.
 
 #### C05.5.2 — El reindexado muestra progreso y no se cancela *(J8)*

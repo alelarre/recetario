@@ -473,11 +473,12 @@ let recibida: Receta | null = null;
 
 /**
  * La base de una receta nueva: la recibida o pegada, o una vacía, siempre sin
- * depósito. Una receta nueva no tiene nada en Drive, y las fotos que traiga un
- * `.md` ajeno son de otra receta: contadas como suyas, guardar las daría por
- * sacadas y las mandaría a la papelera.
+ * depósito ni especiales. Una receta nueva no tiene nada en Drive, y las fotos
+ * que traiga un `.md` ajeno son de otra receta: contadas como suyas, guardar
+ * las daría por sacadas y las mandaría a la papelera. Los especiales son del
+ * usuario, no del contenido que llega.
  */
-const baseDeNueva = (): Receta => ({ ...(recibida ?? parse('')), fotos: [] });
+const baseDeNueva = (): Receta => ({ ...(recibida ?? parse('')), fotos: [], tags_especiales: [] });
 
 /** La foto achicada; rechaza si el navegador no la decodifica. Sin opciones, al lado de Drive. */
 const achicarFoto = (archivo: Blob, opciones?: OpcionesAchicar): Promise<Blob> =>
@@ -1056,7 +1057,7 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       receta.fotos = fotosEditor.fotos();
       // Una receta nace como borrador: sacar el tag es la declaración explícita
       // de que está terminada (C04.3b.1).
-      receta.tags = conEspecial(receta.tags, 'borrador', true);
+      receta.tags_especiales = conEspecial(receta.tags_especiales, 'borrador', true);
       abrirEditor(() => pintarEditor({
         entrada: null, receta, categorias: store.categorias(),
         tagsConocidos: store.tagsDe('todas').map(t => t.tag), ...menuDe(vistaActual?.vista)
@@ -1116,14 +1117,16 @@ function recibirReceta(texto: string): void {
   nav.reemplazar(existe ? `#/r/${encodeURIComponent(id)}/editar?recibida=1` : '#/nueva?recibida=1');
 }
 
-/** Los especiales apretados y las pills, en el `hidden` que viaja en el formulario. */
+/** Las pills y los especiales apretados, cada uno en su `hidden` del formulario. */
 function sincronizarTags(): void {
   const especiales = [...document.querySelectorAll<HTMLElement>('#app [data-accion="tag-especial"][aria-pressed="true"]')]
     .map(b => b.dataset['valor'] ?? '');
   const pills = [...document.querySelectorAll<HTMLElement>('[data-pills] [data-valor]')]
     .map(p => p.dataset['valor'] ?? '');
-  const oculto = document.querySelector<HTMLInputElement>('input[name="tags"]');
-  if (oculto) oculto.value = [...especiales, ...pills].filter(Boolean).join(', ');
+  const tags = document.querySelector<HTMLInputElement>('input[name="tags"]');
+  if (tags) tags.value = pills.filter(Boolean).join(', ');
+  const ocultoEspeciales = document.querySelector<HTMLInputElement>('input[name="tags_especiales"]');
+  if (ocultoEspeciales) ocultoEspeciales.value = especiales.filter(Boolean).join(', ');
 }
 
 /**
@@ -1713,7 +1716,7 @@ const accionesDeLaReceta: SeccionDeAcciones = {
     estadoDePantalla.errorFavorito = '';
     await render();
 
-    const nueva = { ...actual, tags: conEspecial(actual.tags, 'favorito', !esFavorita(actual)) };
+    const nueva = { ...actual, tags_especiales: conEspecial(actual.tags_especiales, 'favorito', !esFavorita(actual)) };
     try {
       await store.guardar(id, nueva);
       dejarLeida(id, nueva);

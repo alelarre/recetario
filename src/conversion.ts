@@ -4,8 +4,8 @@
  * formato salen de las mismas constantes que usa la app, así el pedido no se
  * desactualiza cuando cambia el esquema.
  */
-import { DURACIONES, DIFICULTADES, TAGS_RESERVADOS, conEspecial } from './catalogo.js';
-import { parse } from './recipe.js';
+import { DURACIONES, DIFICULTADES, TAGS_RESERVADOS, TAGS_ESPECIALES, conEspecial } from './catalogo.js';
+import { parse, CLAVES_FRONTMATTER, type ClaveFrontmatter } from './recipe.js';
 import { linkDeFoto } from './fotos-receta.js';
 import { esTituloPorDefecto } from './compartido.js';
 import type { Receta } from './tipos.js';
@@ -103,12 +103,26 @@ const lista = (xs: readonly string[]): string => xs.map(x => `\`${x}\``).join(',
 export const reglaDeReservados = (tags: readonly string[]): string =>
   `- En \`tags\` no usar estos: ${lista(tags)}.`;
 
+const descripcionDeClave = (clave: ClaveFrontmatter, forma: 'texto' | 'lista'): string =>
+  clave === 'titulo' ? '`titulo` (obligatoria)' : forma === 'lista' ? `\`${clave}\` como lista \`[a, b]\`` : `\`${clave}\``;
+
+/**
+ * Las claves que se piden, de la declaración del formato. `tags_especiales`
+ * va sólo si se pide: el pedido de *Convertir con Agente* no la lleva, porque
+ * los especiales son del usuario y no del contenido de la receta.
+ */
+function reglaDeClaves(especiales: boolean): string {
+  const claves = CLAVES_FRONTMATTER.filter(c => especiales || c.clave !== 'tags_especiales');
+  return `- Frontmatter entre \`---\`, con estas claves y ninguna otra: ${claves.map(c => descripcionDeClave(c.clave, c.forma)).join(', ')}.`;
+}
+
 /** Las reglas del frontmatter: claves, valores cerrados y tags reservados. */
-const REGLAS_DEL_FRONTMATTER: readonly string[] = [
-  '- Frontmatter entre `---`, con estas claves y ninguna otra: `titulo` (obligatoria), `tags` como lista `[a, b]`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`.',
+const reglasDelFrontmatter = (especiales: boolean): string[] => [
+  reglaDeClaves(especiales),
   `- \`tiempo\` es uno de estos valores, tal cual: ${lista(DURACIONES)}. Cuenta el tiempo hasta comer, con reposo y horno. Si no se sabe, no ponerlo.`,
   `- \`dificultad\` es uno de estos valores: ${lista(DIFICULTADES)}. Si no se puede saber, no ponerla.`,
-  reglaDeReservados(TAGS_RESERVADOS)
+  reglaDeReservados(TAGS_RESERVADOS),
+  ...(especiales ? [`- \`tags_especiales\` acepta sólo: ${lista(TAGS_ESPECIALES)}.`] : [])
 ];
 
 /** Las reglas del cuerpo: secciones, ingredientes y pasos. */
@@ -124,8 +138,8 @@ const REGLAS_DEL_CUERPO: readonly string[] = [
  * Salen de las constantes de la app, así que no se desactualizan cuando
  * cambia el esquema. No llevan el `id` del pedido, que es de una receta.
  */
-export function reglasDelFormato(): string[] {
-  return [...REGLAS_DEL_FRONTMATTER, ...REGLAS_DEL_CUERPO];
+export function reglasDelFormato({ especiales = false }: { especiales?: boolean } = {}): string[] {
+  return [...reglasDelFrontmatter(especiales), ...REGLAS_DEL_CUERPO];
 }
 
 export function pedidoDeConversion(
@@ -162,7 +176,7 @@ export function pedidoDeConversion(
     ...parrafoDeFotos(fotos, links),
     '',
     'Formato:',
-    ...REGLAS_DEL_FRONTMATTER,
+    ...reglasDelFrontmatter(false),
     `- La última línea del frontmatter es \`id: ${datos.id}\`.`,
     ...REGLAS_DEL_CUERPO,
     '',
@@ -229,10 +243,13 @@ export function recetaRecibida(texto: string): { receta: Receta; id: string } {
  * Lo pegado o recibido sobre la receta que el editor tiene abierta: título,
  * datos, tags y secciones son los de lo pegado, y el depósito de fotos es el
  * del editor —las fotos ya están ahí, y lo pegado las nombra por número—. La
- * portada que no venga queda la que estaba. Sin categoría la receta sólo puede
- * ser un borrador, así que el tag queda puesto aunque lo pegado no lo traiga.
+ * portada que no venga queda la que estaba. Los especiales son los del editor:
+ * son del usuario, no del contenido de la receta, y lo pegado no los pisa.
+ * `borrador` queda sólo sin categoría, donde la receta no puede ser otra cosa.
  */
 export function aplicarPegada(actual: Receta, pegada: Receta, carpeta: string): Receta {
-  const receta = { ...pegada, fotos: actual.fotos, foto: pegada.foto ?? actual.foto };
-  return carpeta === '' ? { ...receta, tags: conEspecial(receta.tags, 'borrador', true) } : receta;
+  return {
+    ...pegada, fotos: actual.fotos, foto: pegada.foto ?? actual.foto,
+    tags_especiales: conEspecial(actual.tags_especiales, 'borrador', carpeta === '')
+  };
 }

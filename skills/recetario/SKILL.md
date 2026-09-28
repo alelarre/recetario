@@ -94,8 +94,8 @@ Lo que hace el MCP:
 **La regla de las fotos fuente.** Si todo lo de la fuente pasó a la receta, la
 receta no lleva `borrador` y la foto fuente no se sube. Si algo quedó sin volcar
 (un renglón ilegible, la receta sigue en otra página, una cantidad dudosa), la
-receta lleva el tag `borrador`, una nota en `## Notas` que dice qué falta, y la
-foto fuente se sube para terminarla mirando el original.
+receta lleva `borrador` en `tags_especiales`, una nota en `## Notas` que dice
+qué falta, y la foto fuente se sube para terminarla mirando el original.
 
 ## Mostrar antes de escribir
 
@@ -230,8 +230,8 @@ sabe de dónde salió, no pongas `fuente`.
 
 Preservá lo que no tocás: las claves del frontmatter y las secciones que la
 app no conoce (`## Maridaje`), y el resto del cuerpo. Si la corrección completó
-lo que faltaba, sacá el tag `borrador` y la nota que decía qué faltaba. El
-nombre de archivo no cambia aunque cambie el título.
+lo que faltaba, sacá `borrador` de `tags_especiales` y la nota que decía qué
+faltaba. El nombre de archivo no cambia aunque cambie el título.
 
 ## Ordenar el recetario
 
@@ -239,6 +239,8 @@ nombre de archivo no cambia aunque cambie el título.
 2. Proponé el cambio sobre todo el recetario: qué tags se unifican (por ejemplo
    `clasica` y `clásica`), qué recetas se mueven y a qué categoría.
 3. Con la aprobación, aplicalo receta por receta: `leer`, cambiar y `guardar`.
+   Los especiales (`tags_especiales`) no se unifican ni se tocan salvo que el
+   usuario lo pida.
 4. Al terminar, decí cuántas recetas cambiaron.
 
 ## Duplicados

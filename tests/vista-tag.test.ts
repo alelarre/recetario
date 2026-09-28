@@ -107,7 +107,7 @@ describe('la lista por tag', () => {
 
     it('tocar un borrador abre su editor, no la receta', () => {
       const html = renderTag({
-        ...borradores, lista: con([entradaFalsa({ id_archivo: 'b1', tags: ['borrador'] })]),
+        ...borradores, lista: con([entradaFalsa({ id_archivo: 'b1', tags_especiales: ['borrador'] })]),
         borradores: true, menu: { activo: 'borradores', abierto: false, borradores: 1 }
       });
       expect(html).toContain('href="#/r/b1/editar"');

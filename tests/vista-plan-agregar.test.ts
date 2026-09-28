@@ -13,8 +13,8 @@ const categorias: Categoria[] = [
 beforeEach(() => registrarCategorias(categorias));
 
 const recetasDelMenu = [
-  entradaFalsa({ id_archivo: 'f2', titulo: 'Tortilla de papas', categoria: 'Carnes', tags: ['menú diario'] }),
-  entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas napolitanas', categoria: 'Carnes', tags: ['menú diario'] })
+  entradaFalsa({ id_archivo: 'f2', titulo: 'Tortilla de papas', categoria: 'Carnes', tags_especiales: ['menú diario'] }),
+  entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas napolitanas', categoria: 'Carnes', tags_especiales: ['menú diario'] })
 ];
 
 /** Las listas como las arma la pantalla: por el controlador, que ordena y corta. */

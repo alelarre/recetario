@@ -12,10 +12,11 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   framework, sin backend. Un único scope OAuth, `drive`.
 - **Las recetas son `.md` en Drive.** La carpeta contenedora es la categoría y es
   la única verdad; el frontmatter no lleva `categoria`.
-- **El frontmatter es cerrado, siete claves:** `titulo`, `rinde`, `tiempo`,
-  `dificultad`, `fuente`, `foto` y `tags`. `tiempo` es uno de cinco valores
-  (`~15 min`, `~30 min`, `~60 min`, `>60 min`, `>1 día`); `foto` es una URL
-  externa. Un valor inválido de `tiempo` o `dificultad` se lee como ausente.
+- **El frontmatter es cerrado, ocho claves:** `titulo`, `tags`,
+  `tags_especiales`, `rinde`, `tiempo`, `dificultad`, `fuente` y `foto`,
+  declaradas en un solo lugar (`CLAVES_FRONTMATTER` en `recipe.ts`). `tiempo`
+  es uno de cinco valores (`~15 min`, `~30 min`, `~60 min`, `>60 min`,
+  `>1 día`); `foto` es una URL externa. Un valor inválido de `tiempo` o `dificultad` se lee como ausente.
 - **Las fotos de la receta son un depósito**, la sección `## Fotos` del cuerpo:
   una línea `- <número>: <url>` por foto, con el número estable y nunca reusado.
   El texto las nombra con `![epígrafe](foto:N)` en cualquier sección y `foto`
@@ -23,11 +24,13 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   sube la app van a `_fotos/` (`carpeta_fotos` en `meta`), achicadas a JPEG;
   se piden a Drive con el token y quedan en Cache Storage por id de archivo
   (`src/imagenes.ts`). La foto propia de una categoría vive ahí también.
-- **Cuatro tags especiales**, reservados y con forma propia: `favorito`,
-  `menú diario`, `probar` y `borrador` (la completitud de la receta). Van en
-  la lista `tags` como cualquier otro. Cada uno tiene formas alternativas que
-  se leen como él sin reescribir el `.md`: `incompleta` y sus formas son
-  `borrador`.
+- **Cuatro tags especiales**, en su propia clave, `tags_especiales`:
+  `favorito`, `menú diario`, `probar` y `borrador` (la completitud de la
+  receta). Es una lista cerrada, sin formas alternativas; `tags` no los lleva,
+  y un reservado escrito en `tags` se ignora al leer. Cada especial se declara
+  en la tabla de `src/especiales.ts` —ícono, marca en la tarjeta, si va en los
+  chips, en la receta y en la búsqueda— y el resto del código la consulta en
+  vez de preguntar por nombre.
 - **El índice es una Google Sheet** (`_indice`, con las hojas de recetas, `meta`
   y `categorias`). Es un cache derivado: los `.md` y las carpetas
   son siempre la verdad, y *Ajustes → Reindexar* lo rehace entero. La fila se
@@ -36,13 +39,13 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   `localStorage`; al abrir se compara el `modifiedTime` de `_indice` y, si
   coincide, no se lee Sheets. Parte de que nunca hay escritura concurrente. No
   sirve para funcionar sin conexión.
-- **Un borrador es una receta con el tag `borrador`**: el mismo `.md`, el
-  mismo editor y la misma fila. Borradores es la lista por tag de `borrador`,
-  en el menú, y **es el único camino a ellos**: el home no tiene tile «Sin
-  categoría» y `borrador` no aparece en ninguna lista de tags (`store.tagsDe`
-  lo filtra). **`borrador` no tiene presentación propia:** ni marca en la
-  tarjeta, ni chip en la receta, ni ícono; tocar un borrador en Borradores
-  abre su editor. La categoría es opcional al crear: lo que no tiene categoría vive
+- **Un borrador es una receta con `borrador` en `tags_especiales`**: el mismo
+  `.md`, el mismo editor y la misma fila. Borradores es la lista por tag de
+  `borrador`, en el menú, y **es el único camino a ellos**: el home no tiene
+  tile «Sin categoría» y `borrador` no aparece en ninguna lista de tags (su
+  definición no va en los chips). **`borrador` no tiene presentación
+  propia:** ni marca en la tarjeta, ni chip en la receta, ni ícono; tocar un
+  borrador en Borradores abre su editor. La categoría es opcional al crear: lo que no tiene categoría vive
   en `_sin-categoria/` (`carpeta_sin_categoria` en `meta`), que no es una
   categoría, y se muestra como «Sin categoría»; ninguna categoría puede
   llamarse así. Sacar `borrador` exige categoría, así que ahí todo es
@@ -111,7 +114,7 @@ El MCP vive en `mcp/`, importa de `src/` y nunca al revés:
 | Navegación y velo | `navegacion.ts` es el único que toca `location` y `history`: la profundidad viaja en `history.state` y dice si hay una pantalla atrás; `ir`, `reemplazar`, `volver`, `salirDe` (retrocede hasta salir de una pantalla, como al borrar una receta o salir de la cocina) y las **capas**, lo que se abre sin cambiar de ruta y se cierra con el atrás (IA §4.6). `velo.ts` es el dueño del velo de R8, con sus tres formas: `escribir`, `esperar` y `conProgreso`; `ocupado()` es lo que miran las guardas de navegación y de toque. |
 | Controladores | Cada uno tiene su estado y registra sus acciones en el mapa. `lista-control.ts`: filtros, orden y tramo de una lista de recetas, y el observador del tramo (`filtrar-duracion`, `ordenar`; el chip de un tag lo atiende `main.ts`). `fotos-control.ts`: el depósito del editor de recetas —las fotos, la portada, las nuevas en memoria, las ya subidas— y los campos ocultos, que se escriben sólo desde ahí (las fichas de foto, *Por URL*, portada, poner y sacar). `visor-control.ts`: la foto a pantalla completa y su gesto (`ver-foto-receta`, `cerrar-visor`). `carrusel-control.ts`: las flechas (`carrusel-izq`, `carrusel-der`). Visor, carrusel y `cocina-control.ts` los usan la app y el invitado. La foto propia de una categoría que se edita no es de `fotos-control`: vive en el estado de pantalla. |
 | Google | `auth.ts`, `drive.ts`, `sheets.ts`; los tipos de Google Identity Services están escritos a mano en `gis.d.ts` (el SDK se carga por `<script>`). `config.ts` tiene el client ID, el scope, los nombres fijos y `SCHEMA_VERSION`. |
-| Dominio | `recipe.ts` (parsear y escribir el `.md`), `plan.ts` (el `.md` del plan de la semana), `compras.ts` (la lista que sale del plan, y su texto), `catalogo.ts` (la fila del índice, tags reservados, búsqueda), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts` (lo que llega por el menú Compartir: la fuente, las notas y el título por defecto), `conversion.ts` (el pedido al agente y sus reglas del formato, la receta que vuelve y cómo se pega), `validar.ts` (cómo lee la app un `.md` recibido y qué tiene fuera del formato; lo usa el MCP), `fotos.ts` (achicar una foto antes de subirla), `fotos-receta.ts` (el depósito: parsear y escribir `## Fotos`, resolver `foto:N`, poner y sacar referencias), `tipos.ts`. |
+| Dominio | `recipe.ts` (parsear y escribir el `.md`), `plan.ts` (el `.md` del plan de la semana), `compras.ts` (la lista que sale del plan, y su texto), `especiales.ts` (la tabla de los tags especiales y los reservados), `normalizar.ts`, `catalogo.ts` (la fila del índice y la búsqueda; reexporta `especiales.ts`), `categorias.ts` (las 16 predefinidas: nombre, color, foto), `store.ts` (arranque, índice, reindexado), `indice-local.ts`, `compartido.ts` (lo que llega por el menú Compartir: la fuente, las notas y el título por defecto), `conversion.ts` (el pedido al agente y sus reglas del formato, la receta que vuelve y cómo se pega), `validar.ts` (cómo lee la app un `.md` recibido y qué tiene fuera del formato; lo usa el MCP), `fotos.ts` (achicar una foto antes de subirla), `fotos-receta.ts` (el depósito: parsear y escribir `## Fotos`, resolver `foto:N`, poner y sacar referencias), `tipos.ts`. |
 | Compartir | `compartir.ts` (menú Compartir del sistema y portapapeles, con sus respaldos), `link-receta.ts` (la receta comprimida en el fragmento del link), `texto-receta.ts`, `pdf/` (pdfmake con Inter embebida), `cocina-control.ts` (modo cocina y pantalla encendida, compartido entre receta e invitado). |
 | UI | `src/ui/`: una pantalla por archivo, sobre `componentes.ts` (con `cuadroDeFoto` y `carrusel`), `iconos.ts`, `pintar.ts`, `fichas-receta.ts`, `lista-recetas.ts` (la lista de recetas que dibujan la categoría, la lista por tag, Borradores, los resultados y *Agregar al plan*) y `visor.ts` (la foto a pantalla completa, compartida entre receta, editor e invitado); `router.ts` tiene las rutas y `MENU`, la única fuente de qué pantallas son destino del menú. `pintar` dibuja la pantalla entera y `pintarParte` una parte —un bloque, una ficha, la fila de fotos— sin repintar: los dos completan las fotos que el HTML deja pedidas, así que todo HTML con fotos pasa por uno de los dos. **`tokens.css` es el sistema del producto** —tokens y componentes— y se edita directamente; `base.css` es lo propio de cada pantalla. Todo encabezado queda fijo arriba por CSS (`.enc`, `.encoc`, `.cajaenc`). Abrir y cerrar el menú lateral cambia las clases del panel y del velo sin redibujar (`ponerMenu` en `main.ts`): en la receta nueva, redibujar borraría lo escrito. Desde 900 px (`ANCHO_MENU_FIJO` en `gesto-menu.ts`, igual que el CSS) el lateral queda fijo en todas las pantallas. |
 | MCP (`mcp/`) | Un proceso de Node que Claude Code o Claude Desktop lanzan por stdio con `tsx`. `servidor.ts` registra las diez herramientas —`formato`, `categorias`, `tags`, `buscar`, `leer`, `validar`, `crear`, `guardar`, `borrar` y `reindexar`— con sus esquemas; la lógica está en `recetario.ts`, sobre `crearStore` de la app con la copia del índice en una variable del proceso (`indiceEnMemoria`): las herramientas que usan el Drive corren de a una, y antes de cada una corre el arranque de la app, que pide la fecha de `_indice` y relee la planilla sólo si cambió. `crear` y `guardar` validan primero con `src/validar.ts` y no escriben si hay errores. `validar` sin `id` valida como `crear`, con el depósito vacío; al corregir recibe también el `id` y `sacar`, para numerar las fotos desde el depósito que está en Drive, igual que `guardar`. `borrar` pide `confirmacion`: el título exacto, o el nombre de archivo si no hay título. **El depósito `## Fotos` lo arma el MCP** y el que trae el `.md` se ignora, con un aviso (al corregir, sólo si difiere del de Drive): cada foto se pide con su origen y su uso —`plato` (portada si el `.md` no trae `foto:`), `paso` o `fuente` (se sube sólo si la receta queda `borrador`)—, y el número de cada una se sabe antes de subirla (`fotos-pedidas.ts`). `fotos.ts` achica con el `achicar()` de la app sobre `@napi-rs/canvas`, pasa los HEIC por `sips` y acepta rutas locales o URLs `http` y `https` de hasta 25 MB; una `https` que no se baja por red, tiempo o un 5xx queda como link externo, y un 4xx, o una `http` que no se baja, es error: la app no agrega una URL rota ni puede mostrar una `http` desde Pages. Login: `auth.ts` (OAuth de escritorio con `loopback.ts`), `llavero.ts` (el refresh token en el Llavero con `security`), `google.ts` (Drive y Sheets con ese token) y `errores.ts`: los errores de login salen como `[código] texto`, con nueve códigos fijos que el skill traduce a un paso para el usuario. `conectar.ts` es `npm run mcp:conectar`. Tiene su propio `tsconfig.json` y sus tests son `tests/mcp-*.test.ts`. |

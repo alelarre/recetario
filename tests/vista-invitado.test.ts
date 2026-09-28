@@ -69,7 +69,7 @@ describe('La vista de invitado', () => {
     expect(acciones(lectura)).toContain('cocinar');
   });
 
-  it('no tiene tags, ni marca de incompleta, ni .md, ni compartir, ni editar', () => {
+  it('no tiene tags, ni marca de borrador, ni .md, ni compartir, ni editar', () => {
     const html = renderInvitado({ receta: RECETA, categoria: 'Pescados' });
     expect(html).not.toContain('class="chips"');
     expect(html).not.toContain('data-tag');

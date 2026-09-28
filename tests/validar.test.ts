@@ -4,7 +4,8 @@ import { validarMd, type Problema } from '../src/validar.js';
 
 const CORRECTA = `---
 titulo: Milanesas napolitanas
-tags: [carne, favorito, borrador]
+tags: [carne]
+tags_especiales: [favorito, borrador]
 rinde: 4 porciones
 tiempo: ~60 min
 dificultad: media
@@ -97,26 +98,35 @@ describe('el frontmatter', () => {
 });
 
 describe('los tags', () => {
-  it('los especiales, escritos como la app los escribe, se permiten', () => {
-    const md = conFrontmatter('tags: [carne, favorito, borrador]', 'tags: [favorito, menú diario, probar, borrador]');
+  it('los especiales en su clave se permiten', () => {
+    const md = conFrontmatter('tags_especiales: [favorito, borrador]', 'tags_especiales: [favorito, menú diario, probar, borrador]');
     expect(validarMd(md).problemas).toEqual([]);
   });
 
-  it('otra forma de un especial es un problema y dice cuál usar', () => {
-    const md = conFrontmatter('tags: [carne, favorito, borrador]', 'tags: [carne, favoritas, incompleta, Menu Diario]');
-    const { problemas } = validarMd(md);
-    expect(campos(problemas)).toEqual(['tags', 'tags', 'tags']);
-    expect(problemas[0]?.mensaje).toContain('favoritas');
-    expect(problemas[0]?.mensaje).toContain('`favorito`');
-    expect(problemas[1]?.mensaje).toContain('`borrador`');
-    expect(problemas[2]?.mensaje).toContain('`menú diario`');
+  it('un especial en tags es error y dice dónde va', () => {
+    const { problemas } = validarMd(conFrontmatter('tags: [carne]', 'tags: [carne, favorito]'));
+    expect(problemas).toEqual([{ campo: 'tags', nivel: 'error',
+      mensaje: '`favorito` es un tag especial: va en `tags_especiales`.' }]);
+  });
+
+  it('una forma reservada es error y nombra su especial', () => {
+    const { problemas } = validarMd(conFrontmatter('tags: [carne]', 'tags: [incompleta, favoritas]'));
+    expect(problemas).toEqual([
+      { campo: 'tags', nivel: 'error', mensaje: '`incompleta` está reservado. Si es `borrador`, va en `tags_especiales`.' },
+      { campo: 'tags', nivel: 'error', mensaje: '`favoritas` está reservado. Si es `favorito`, va en `tags_especiales`.' }
+    ]);
   });
 
   it('terminado, en cualquiera de sus formas, es reservado', () => {
-    const md = conFrontmatter('tags: [carne, favorito, borrador]', 'tags: [carne, Terminada]');
-    const { problemas } = validarMd(md);
-    expect(campos(problemas)).toEqual(['tags']);
-    expect(problemas[0]?.mensaje).toContain('Terminada');
+    const { problemas } = validarMd(conFrontmatter('tags: [carne]', 'tags: [carne, Terminada]'));
+    expect(problemas).toEqual([{ campo: 'tags', nivel: 'error',
+      mensaje: 'El tag `Terminada` está reservado y no se usa.' }]);
+  });
+
+  it('un valor fuera de la lista en tags_especiales es error', () => {
+    const { problemas } = validarMd(conFrontmatter('tags_especiales: [favorito, borrador]', 'tags_especiales: [pan]'));
+    expect(problemas).toEqual([{ campo: 'tags_especiales', nivel: 'error',
+      mensaje: '`pan` no es un tag especial. `tags_especiales` acepta: `favorito`, `menú diario`, `probar`, `borrador`.' }]);
   });
 });
 
@@ -223,14 +233,9 @@ describe('el nivel de cada problema', () => {
     expect(niveles(conFrontmatter('dificultad: media', 'dificultad: intermedia'))).toEqual({ dificultad: ['error'] });
   });
 
-  it('error: un tag reservado que no es ningún especial', () => {
-    expect(niveles(conFrontmatter('tags: [carne, favorito, borrador]', 'tags: [terminado, Terminadas]')))
-      .toEqual({ tags: ['error', 'error'] });
-  });
-
-  it('aviso: otra forma de un especial, que la app lee como el especial', () => {
-    const md = conFrontmatter('tags: [carne, favorito, borrador]', 'tags: [incompleta, Borradores, favorita, Menu Diario]');
-    expect(niveles(md)).toEqual({ tags: ['aviso', 'aviso', 'aviso', 'aviso'] });
+  it('error: cualquier reservado en tags', () => {
+    expect(niveles(conFrontmatter('tags: [carne]', 'tags: [terminado, incompleta, Borradores, favorita, Menu Diario]')))
+      .toEqual({ tags: ['error', 'error', 'error', 'error', 'error'] });
   });
 
   it('error: una foto:N que no está en el depósito, en la portada o en el texto', () => {

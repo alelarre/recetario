@@ -12,11 +12,12 @@
 import { parse, gruposDe } from './recipe.js';
 import {
   DURACIONES, DIFICULTADES, TAGS_ESPECIALES,
-  duracionValida, dificultadValida, tagReservado, tagEspecial
+  duracionValida, dificultadValida, tagEspecial
 } from './catalogo.js';
+import { especialDeReservada } from './especiales.js';
 import { resolver, referenciasSinFoto } from './fotos-receta.js';
 import { limpiarRecibido } from './conversion.js';
-import type { Aviso, FotoDeReceta, Receta } from './tipos.js';
+import type { Aviso, FotoDeReceta, Receta, ValorIgnorado } from './tipos.js';
 
 /**
  * `error`: la receta no se escribe, porque se guardaría perdiendo algo o
@@ -46,7 +47,7 @@ const POR_AVISO: Record<Aviso, Problema> = {
   'frontmatter-ilegible': {
     campo: 'frontmatter',
     nivel: 'aviso',
-    mensaje: 'El frontmatter tiene líneas que no son `clave: valor` ni ítems de `tags`.'
+    mensaje: 'El frontmatter tiene líneas que no son `clave: valor` ni ítems de una lista (`tags`, `tags_especiales`).'
   },
   'sin-titulo': {
     campo: 'titulo',
@@ -61,19 +62,23 @@ const POR_AVISO: Record<Aviso, Problema> = {
 };
 
 /**
- * Otra forma de un especial es aviso: la app la lee como el especial, y las
- * recetas viejas que la traen tienen que poder reescribirse. Lo reservado que
- * no es ningún especial —`terminado`— contradice a `borrador` y es error.
+ * Lo que el parser descartó de `tags` y `tags_especiales`. Todo es error: la
+ * receta se guardaría perdiéndolo.
  */
-function problemasDeTags(tags: string[]): Problema[] {
-  return tags
-    .filter(t => tagReservado(t) && !(TAGS_ESPECIALES as readonly string[]).includes(t))
-    .map((t): Problema => {
-      const especial = tagEspecial(t);
-      return especial
-        ? { campo: 'tags', nivel: 'aviso', mensaje: `El tag \`${t}\` es otra forma de un tag especial: escribirlo \`${especial}\`.` }
-        : { campo: 'tags', nivel: 'error', mensaje: `El tag \`${t}\` está reservado y no se usa.` };
-    });
+function problemasDeIgnorados(ignorados: readonly ValorIgnorado[]): Problema[] {
+  return ignorados.map(({ clave, valor }): Problema => {
+    if (clave === 'tags_especiales') {
+      return { campo: clave, nivel: 'error',
+        mensaje: `\`${valor}\` no es un tag especial. \`tags_especiales\` acepta: ${lista(TAGS_ESPECIALES)}.` };
+    }
+    const especial = especialDeReservada(valor);
+    if (especial && tagEspecial(valor) === especial) {
+      return { campo: clave, nivel: 'error', mensaje: `\`${valor}\` es un tag especial: va en \`tags_especiales\`.` };
+    }
+    return especial
+      ? { campo: clave, nivel: 'error', mensaje: `\`${valor}\` está reservado. Si es \`${especial}\`, va en \`tags_especiales\`.` }
+      : { campo: clave, nivel: 'error', mensaje: `El tag \`${valor}\` está reservado y no se usa.` };
+  });
 }
 
 /** Un ingrediente que no se parte en nombre y cantidad y empieza con un número tiene la cantidad adelante. */
@@ -161,7 +166,7 @@ export function problemasDe(
   }
 
   problemas.push(
-    ...problemasDeTags(receta.tags),
+    ...problemasDeIgnorados(receta.ignorados),
     ...problemasDeIngredientes(receta.ingredientes),
     ...problemasDeFotos(receta, fotosPendientes)
   );

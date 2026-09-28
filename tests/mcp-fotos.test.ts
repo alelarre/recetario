@@ -313,9 +313,9 @@ describe('las fotos al crear', () => {
     expect(drive.cuantas('crear')).toBe(1);
   });
 
-  it('fuente: con borrador, en cualquiera de sus formas, se sube al depósito', async () => {
+  it('fuente: con borrador se sube al depósito', async () => {
     const receta = escrita(await nuevoRecetario().crear({
-      md: md('Pan casero', { extra: 'tags: [Borrador]\n' }), categoria: 'Postres', fotos: [{ origen: CHICA, uso: 'fuente' }]
+      md: md('Pan casero', { extra: 'tags_especiales: [Borrador]\n' }), categoria: 'Postres', fotos: [{ origen: CHICA, uso: 'fuente' }]
     }));
     expect(receta.fotos).toEqual([{ n: 1, url: linkDeFoto(porNombre('pan-casero-1.jpg')?.id ?? '') }]);
     expect(receta.foto).toBeNull();
@@ -394,7 +394,7 @@ describe('validar con fotos', () => {
     const conRef = md('Pan casero', { pasos: '1. Amasar. ![](foto:1)' });
     const fuente = [{ origen: CHICA, uso: 'fuente' as const }];
     expect(nuevoRecetario().validar(conRef, fuente).problemas.filter(p => p.nivel === 'error')).toHaveLength(1);
-    const conBorrador = md('Pan casero', { extra: 'tags: [borrador]\n', pasos: '1. Amasar. ![](foto:1)' });
+    const conBorrador = md('Pan casero', { extra: 'tags_especiales: [borrador]\n', pasos: '1. Amasar. ![](foto:1)' });
     expect(nuevoRecetario().validar(conBorrador, fuente).problemas.filter(p => p.nivel === 'error')).toEqual([]);
   });
 });

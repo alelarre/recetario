@@ -85,13 +85,13 @@ describe('lista-control — la lista plana', () => {
 
   it('A–Z: las favoritas primero y alfabético dentro de cada bloque, venga como venga', () => {
     const plana = crearListaControl().plana([
-      e('Vitel toné'), e('Osobuco', { tags: ['favorito'] }), e('Bife'), e('Asado', { tags: ['favorito'] })
+      e('Vitel toné'), e('Osobuco', { tags_especiales: ['favorito'] }), e('Bife'), e('Asado', { tags_especiales: ['favorito'] })
     ]);
     expect(titulos(plana.entradas)).toEqual(['Asado', 'Osobuco', 'Bife', 'Vitel toné']);
   });
 
-  it('una receta incompleta no se ordena distinto', () => {
-    const plana = crearListaControl().plana([e('B'), e('A', { tags: ['incompleta'] })]);
+  it('un borrador no se ordena distinto', () => {
+    const plana = crearListaControl().plana([e('B'), e('A', { tags_especiales: ['borrador'] })]);
     expect(titulos(plana.entradas)).toEqual(['A', 'B']);
   });
 
@@ -125,7 +125,7 @@ describe('lista-control — la lista plana', () => {
   it('sin ninguna duración no hay conmutador, y el orden por duración se ignora', () => {
     const lista = crearListaControl();
     lista.ordenar('duracion');
-    const plana = lista.plana([e('Zapallo', { tags: ['favorito'] }), e('Arroz')]);
+    const plana = lista.plana([e('Zapallo', { tags_especiales: ['favorito'] }), e('Arroz')]);
     expect(plana.orden).toBeNull();
     expect(titulos(plana.entradas)).toEqual(['Zapallo', 'Arroz']);
   });
@@ -163,10 +163,10 @@ describe('lista-control — la lista agrupada', () => {
 
   it('cada grupo ordena sus favoritas primero, sin mezclarse con los otros, y conserva el motivo', () => {
     const agrupada = crearListaControl().agrupada({
-      porNombre: [e('Zapallo'), e('Arroz', { tags: ['favorito'] })],
+      porNombre: [e('Zapallo'), e('Arroz', { tags_especiales: ['favorito'] })],
       porIngrediente: [
         { entrada: e('Budín'), motivo: 'lleva huevo' },
-        { entrada: e('Alfajor', { tags: ['favorito'] }), motivo: 'lleva dulce' }
+        { entrada: e('Alfajor', { tags_especiales: ['favorito'] }), motivo: 'lleva dulce' }
       ],
       porTag: []
     });

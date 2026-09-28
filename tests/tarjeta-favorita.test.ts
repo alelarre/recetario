@@ -29,6 +29,6 @@ describe('la reserva de espacio para las marcas de la tarjeta', () => {
     // Con `fav`, `.fav svg:last-child { clip-path: inset(0 100% 0 0) }` de
     // base.css dejaba la estrella de la tarjeta recortada a cero.
     expect(BASE).toContain('.fav svg:last-child');
-    expect(tarjeta(entradaFalsa({ tags: ['favorito'] }))).not.toMatch(/class="[^"]*\bfav\b/);
+    expect(tarjeta(entradaFalsa({ tags_especiales: ['favorito'] }))).not.toMatch(/class="[^"]*\bfav\b/);
   });
 });

@@ -21,6 +21,10 @@ describe('el pedido al agente', () => {
     expect(pedido).toContain('Notas: La de la abuela, sin romero');
   });
 
+  it('no menciona tags_especiales: los especiales son del usuario', () => {
+    expect(pedido).not.toContain('tags_especiales');
+  });
+
   it('pide el id como última línea del frontmatter, y no borrador:', () => {
     expect(pedido).toMatch(/`id: r1`/);
     expect(pedido).not.toContain('borrador:');
@@ -63,6 +67,18 @@ describe('las reglas del formato', () => {
   it('la línea de los reservados sale de reglaDeReservados', () => {
     expect(reglas).toContain(reglaDeReservados(TAGS_RESERVADOS));
     expect(reglaDeReservados(['a', 'b c'])).toBe('- En `tags` no usar estos: `a`, `b c`.');
+  });
+
+  it('la línea de las claves sale de la declaración del formato', () => {
+    expect(reglas[0]).toBe('- Frontmatter entre `---`, con estas claves y ninguna otra: `titulo` (obligatoria), ' +
+      '`tags` como lista `[a, b]`, `rinde`, `tiempo`, `dificultad`, `fuente`, `foto`.');
+    expect(reglas.join('\n')).not.toContain('tags_especiales');
+  });
+
+  it('con los especiales, suma la clave y su lista cerrada', () => {
+    const conEspeciales = reglasDelFormato({ especiales: true });
+    expect(conEspeciales[0]).toContain('`tags` como lista `[a, b]`, `tags_especiales` como lista `[a, b]`, `rinde`');
+    expect(conEspeciales).toContain('- `tags_especiales` acepta sólo: `favorito`, `menú diario`, `probar`, `borrador`.');
   });
 
   it('no dependen de ninguna receta: no piden un id', () => {
@@ -301,7 +317,7 @@ describe('limpiarRecibido', () => {
 
 describe('lo pegado sobre el editor abierto', () => {
   const actual = recetaFalsa({
-    titulo: 'Viejo', tags: ['horno'], notas: 'lo escrito',
+    titulo: 'Viejo', tags: ['horno'], tags_especiales: ['favorito', 'borrador'], notas: 'lo escrito',
     fotos: [{ n: 1, url: 'https://drive.google.com/file/d/a/view' }], foto: 'foto:1'
   });
   const pegada = recetaFalsa({ titulo: 'Focaccia', tags: ['pan'], ingredientes: '- Harina — 500 g', notas: '' });
@@ -324,13 +340,13 @@ describe('lo pegado sobre el editor abierto', () => {
     expect(aplicarPegada(actual, recetaFalsa({ ...pegada, foto: 'foto:2' }), 'c1').foto).toBe('foto:2');
   });
 
-  it('sin categoría, queda borrador aunque lo pegado no lo traiga', () => {
-    expect(aplicarPegada(actual, pegada, '').tags).toEqual(['borrador', 'pan']);
-    expect(aplicarPegada(actual, pegada, 'c1').tags).not.toContain('borrador');
+  it('los especiales son los del editor: borrador queda sólo sin categoría', () => {
+    expect(aplicarPegada(actual, pegada, '').tags_especiales).toEqual(['favorito', 'borrador']);
+    expect(aplicarPegada(actual, pegada, 'c1').tags_especiales).toEqual(['favorito']);
   });
 
-  it('una forma alternativa de borrador no se duplica', () => {
-    const vieja = recetaFalsa({ ...pegada, tags: ['incompleta'] });
-    expect(aplicarPegada(actual, vieja, '').tags).toEqual(['borrador']);
+  it('los especiales que traiga lo pegado se ignoran', () => {
+    const conEspeciales = recetaFalsa({ ...pegada, tags_especiales: ['probar'] });
+    expect(aplicarPegada(actual, conEspeciales, 'c1').tags_especiales).toEqual(['favorito']);
   });
 });

@@ -82,8 +82,8 @@ describe('tarjeta', () => {
     expect(html).not.toMatch(/<img/);
   });
 
-  it('el tag borrador no lleva marca: el borrador sólo se ve en su lista', () => {
-    const html = tarjeta(entradaFalsa({ tags: ['incompleta'] }));
+  it('borrador no lleva marca: el borrador sólo se ve en su lista', () => {
+    const html = tarjeta(entradaFalsa({ tags_especiales: ['borrador'] }));
     expect(html).not.toContain('marcas-esq');
     expect(html).not.toContain('--marcas');
   });
@@ -105,7 +105,7 @@ describe('tarjeta', () => {
 
 describe('las marcas de la tarjeta', () => {
   it('van juntas arriba a la derecha, en el orden de los especiales', () => {
-    const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['probar', 'horno', 'favorito', 'menú diario', 'borrador'] }));
+    const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['horno'], tags_especiales: ['probar', 'favorito', 'menú diario', 'borrador'] }));
     const esq = html.slice(html.indexOf('class="marcas-esq"'));
     expect(esq).not.toContain('Borrador');
     const orden = ['Favorita', 'Menú diario', 'Para probar'].map(n => esq.indexOf(`aria-label="${n}"`));
@@ -115,24 +115,24 @@ describe('las marcas de la tarjeta', () => {
   });
 
   it('la línea de contexto no lleva ninguna marca', () => {
-    const html = tarjeta(entradaFalsa({ titulo: 'Pan', categoria: 'Panes', tags: ['probar'] }));
+    const html = tarjeta(entradaFalsa({ titulo: 'Pan', categoria: 'Panes', tags_especiales: ['probar'] }));
     const inicio = html.indexOf('class="ctx"');
     const ctx = html.slice(inicio, html.indexOf('</span></span>', inicio));
     expect(ctx).not.toContain('class="marca');
   });
 
-  it('sin especiales no hay esquina', () => {
-    expect(tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['horno'] }))).not.toContain('marcas-esq');
+  it('sin especiales no hay esquina, aunque un tag común se llame como uno', () => {
+    expect(tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['horno', 'favorito'] }))).not.toContain('marcas-esq');
   });
 
   it('la marca de favorito lleva su propia clase, para el relleno de tokens.css', () => {
-    const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['favorito', 'probar'] }));
+    const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags_especiales: ['favorito', 'probar'] }));
     expect(html).toContain('<span class="marca favorita" role="img" aria-label="Favorita" title="Favorita">');
     expect(html).toContain('<span class="marca" role="img" aria-label="Para probar" title="Para probar">');
   });
 
   it('cada marca dice qué es al apoyar el mouse', () => {
-    const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags: ['menú diario', 'probar'] }));
+    const html = tarjeta(entradaFalsa({ titulo: 'Pan', tags_especiales: ['menú diario', 'probar'] }));
     expect(html).toContain('title="Menú diario"');
     expect(html).toContain('title="Para probar"');
   });
@@ -167,10 +167,10 @@ describe('encabezado', () => {
 });
 
 describe('chipsSueltos', () => {
-  it('en la fila de tags de la receta, borrador no aparece, ni en su forma vieja', () => {
-    const html = chipsSueltos(['horno', 'incompleta', 'borrador']);
+  it('en la fila de tags de la receta, borrador no aparece', () => {
+    const html = chipsSueltos(['horno'], ['probar', 'borrador']);
     expect(html).toContain('horno');
-    expect(html).not.toContain('incompleta');
+    expect(html).toContain('probar');
     expect(html).not.toContain('borrador');
     expect(html).not.toContain('data-accion');
   });
@@ -184,9 +184,9 @@ describe('los chips de tags', () => {
     expect(iconoDeTag('horno')).toBe('');
   });
 
-  it('borrador no tiene ícono, ni en su forma vieja', () => {
+  it('borrador no tiene ícono, ni una forma que no es la canónica', () => {
     expect(iconoDeTag('borrador')).toBe('');
-    expect(iconoDeTag('incompleta')).toBe('');
+    expect(iconoDeTag('favoritas')).toBe('');
   });
 
   it('el chip lleva el ícono adelante del nombre', () => {
@@ -201,8 +201,8 @@ describe('los chips de tags', () => {
     expect(chipTag('horno', { activo: true })).toContain('class="chip act"');
   });
 
-  it('la fila de tags de una receta pone los especiales primero', () => {
-    const html = chipsSueltos(['horno', 'menú diario', 'favorito']);
+  it('la fila de tags de una receta pone los especiales primero, en su orden', () => {
+    const html = chipsSueltos(['horno'], ['favorito', 'menú diario']);
     expect(html.indexOf('favorito')).toBeLessThan(html.indexOf('menú diario'));
     expect(html.indexOf('menú diario')).toBeLessThan(html.indexOf('horno'));
   });

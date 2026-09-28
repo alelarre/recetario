@@ -252,7 +252,7 @@ describe('renderEditor', () => {
   });
 
   it('el orden de las marcas va de arriba a abajo', () => {
-    const html = dibujar({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['borrador'] } });
+    const html = dibujar({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags_especiales: ['borrador'] } });
     const marcas = [
       'name="titulo"', 'name="carpeta"', 'name="fuente"', '<h2>Fotos</h2>', '<h2>Contenido</h2>',
       'data-portada', 'name="descripcion"', 'name="notas"',
@@ -303,33 +303,34 @@ describe('los tags especiales en el editor', () => {
   });
 
   it('apretado si la receta tiene el tag, suelto si no', () => {
-    const conProbar = { ...cargada, tags: ['probar', 'horno'] };
+    const conProbar = { ...cargada, tags: ['horno'], tags_especiales: ['probar' as const] };
     const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: conProbar, categorias });
     expect(html).toContain('data-valor="probar" aria-pressed="true"');
     expect(html).toContain('data-valor="favorito" aria-pressed="false"');
   });
 
   it('las pills son sólo de los tags comunes', () => {
-    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['probar', 'horno'] }, categorias });
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['horno'], tags_especiales: ['probar'] }, categorias });
     expect(html).toContain('data-accion="tag-quitar" data-valor="horno"');
     expect(html).not.toContain('data-accion="tag-quitar" data-valor="probar"');
   });
 
-  it('el hidden de tags lleva los especiales apretados y los comunes', () => {
-    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['horno', 'probar'] }, categorias });
-    expect(html).toContain('name="tags" value="probar, horno"');
+  it('los especiales viajan en su propio hidden, separados de los tags', () => {
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['horno'], tags_especiales: ['favorito', 'probar'] }, categorias });
+    expect(html).toContain('<input type="hidden" name="tags" value="horno">');
+    expect(html).toContain('<input type="hidden" name="tags_especiales" value="favorito, probar">');
   });
 
   it('sin lo mínimo, borrador queda apretado y deshabilitado, con la leyenda', () => {
-    const vacia = { ...cargada, tags: [], preparacion: '' };
+    const vacia = { ...cargada, tags: [], tags_especiales: [], preparacion: '' };
     const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: vacia, categorias });
     expect(html).toContain('data-valor="borrador" aria-pressed="true" disabled');
     expect(html).toMatch(/class="aviso-mudo leyenda-borrador"(?! hidden)/);
-    expect(html).toContain('name="tags" value="borrador"');
+    expect(html).toContain('name="tags_especiales" value="borrador"');
   });
 
-  it('con lo mínimo, borrador se puede soltar y la leyenda no se ve, aunque el tag esté en su forma vieja', () => {
-    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['incompleta'] }, categorias });
+  it('con lo mínimo, borrador se puede soltar y la leyenda no se ve', () => {
+    const html = renderEditor({ entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags_especiales: ['borrador'] }, categorias });
     expect(html).toContain('data-valor="borrador" aria-pressed="true">');
     expect(html).toContain('leyenda-borrador" hidden');
   });
@@ -345,21 +346,21 @@ describe('los tags especiales en el editor', () => {
 describe('las acciones al pie del editor', () => {
   it('Convertir con Agente se ve con el tag borrador puesto, y queda oculto sin él', () => {
     const conBorrador = renderEditor({
-      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['borrador'] }, categorias
+      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags_especiales: ['borrador'] }, categorias
     });
     expect(conBorrador).toContain('data-accion="convertir-con-agente" type="button">');
     expect(conBorrador).toContain(`${ICO.compartir}Convertir con Agente`);
 
     // Oculto y no ausente: apretar el tag lo muestra sin redibujar el formulario.
     const sinBorrador = renderEditor({
-      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: [] }, categorias
+      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags_especiales: [] }, categorias
     });
     expect(sinBorrador).toContain('data-accion="convertir-con-agente" type="button" hidden>');
   });
 
   it('Convertir con Agente es secundario', () => {
     const html = renderEditor({
-      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['borrador'] }, categorias
+      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags_especiales: ['borrador'] }, categorias
     });
     expect(html).toContain('<button class="btn sec" data-accion="convertir-con-agente" type="button">');
   });
@@ -381,7 +382,7 @@ describe('el pie del editor', () => {
 
   it('Convertir con Agente, Guardar y Borrar receta van en el mismo bloque: un solo separador entre los tres', () => {
     const html = renderEditor({
-      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags: ['borrador'] }, categorias
+      entrada: entradaFalsa({ carpeta_id: 'c1' }), receta: { ...cargada, tags_especiales: ['borrador'] }, categorias
     });
     const bloque = pie(html);
     expect(bloque).toMatch(/^<div class="acciones-editor">.*data-accion="convertir-con-agente".*data-accion="guardar".*data-accion="borrar".*<\/div>$/s);
@@ -437,6 +438,12 @@ describe('recetaDesdeFormulario', () => {
   it('los tags se separan por coma y se limpian', () => {
     const r = recetaDesdeFormulario({ titulo: 'A', tags: ' horno , , rápido ' }, parse(''));
     expect(r.tags).toEqual(['horno', 'rápido']);
+  });
+
+  it('los especiales se leen de su campo, sólo los de la lista', () => {
+    const r = recetaDesdeFormulario({ titulo: 'A', tags: 'horno, favorito', tags_especiales: 'probar, pan, favorito' }, parse(''));
+    expect(r.tags).toEqual(['horno']);
+    expect(r.tags_especiales).toEqual(['favorito', 'probar']);
   });
 
   it('no corrige la convención de los ingredientes: los guarda tal cual', () => {

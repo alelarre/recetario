@@ -17,9 +17,11 @@ import {
 import type { MenuDePantalla } from './componentes.js';
 import { ICO, ICONO_DE_DURACION } from './iconos.js';
 import {
-  DIFICULTADES, dificultadValida, tagReservado, TAGS_ESPECIALES, tagEspecial, tieneEspecial,
+  DIFICULTADES, dificultadValida, tagReservado, TAGS_ESPECIALES, ESPECIALES,
   DURACIONES, duracionValida
 } from '../catalogo.js';
+import type { TagEspecial } from '../catalogo.js';
+import { especialesValidos } from '../especiales.js';
 import { sePuedeTerminar } from '../recipe.js';
 import { resolver, usosDeFotos } from '../fotos-receta.js';
 import type { Receta, Entrada, FotoDeReceta } from '../tipos.js';
@@ -295,17 +297,17 @@ const area = (
   '</div></label>';
 
 /**
- * Los cuatro tags especiales, un botón cada uno: apretado si la receta
- * lo tiene, suelto si no. `borrador` no se suelta sin lo mínimo —título,
- * categoría, ingredientes y pasos—: mientras falte, queda apretado y
- * deshabilitado, y la leyenda dice qué hace falta.
+ * Los tags especiales, un botón cada uno: apretado si la receta lo tiene,
+ * suelto si no. `borrador` no se suelta sin lo mínimo —título, categoría,
+ * ingredientes y pasos—: mientras falte, queda apretado y deshabilitado, y la
+ * leyenda dice qué hace falta.
  */
-function botonesEspeciales(tags: string[], puedeTerminar: boolean): string {
-  const botones = TAGS_ESPECIALES.map(t => {
-    const bloqueado = t === 'borrador' && !puedeTerminar;
-    const apretado = bloqueado || tieneEspecial({ tags }, t);
-    return `<button type="button" class="tag-esp" data-accion="tag-especial" data-valor="${escapar(t)}" ` +
-      `aria-pressed="${apretado}"${bloqueado ? ' disabled' : ''}>${iconoDeTag(t)}${escapar(t)}</button>`;
+function botonesEspeciales(especiales: readonly TagEspecial[], puedeTerminar: boolean): string {
+  const botones = ESPECIALES.map(d => {
+    const bloqueado = d.nombre === 'borrador' && !puedeTerminar;
+    const apretado = bloqueado || especiales.includes(d.nombre);
+    return `<button type="button" class="tag-esp" data-accion="tag-especial" data-valor="${escapar(d.nombre)}" ` +
+      `aria-pressed="${apretado}"${bloqueado ? ' disabled' : ''}>${iconoDeTag(d.nombre)}${escapar(d.etiquetaEditor)}</button>`;
   }).join('');
   return `<div class="tags-esp" role="group" aria-label="Tags especiales">${botones}</div>` +
     `<p class="aviso-mudo leyenda-borrador"${puedeTerminar ? ' hidden' : ''}>` +
@@ -362,9 +364,9 @@ export function renderEditor(
   const tags = receta.tags ?? [];
 
   const puede = sePuedeTerminar(receta, carpetaElegida);
-  const comunes = tags.filter(t => !tagEspecial(t));
-  const especiales = TAGS_ESPECIALES.filter(t =>
-    (t === 'borrador' && !puede) || tieneEspecial({ tags }, t));
+  const comunes = tags;
+  const puestos = receta.tags_especiales ?? [];
+  const especiales = TAGS_ESPECIALES.filter(t => (t === 'borrador' && !puede) || puestos.includes(t));
 
   // Las tres fichas llevan título: el formulario es largo, y al hacer scroll es lo
   // que dice en qué parte se está.
@@ -375,9 +377,10 @@ export function renderEditor(
     // El valor que viaja en el formulario es el `hidden`: el campo de agregar
     // no se llama `tags` justamente para que lo a medio escribir no se guarde.
     '<div class="campo" data-tags><span>Tags</span>' +
-      botonesEspeciales(tags, puede) +
+      botonesEspeciales(especiales, puede) +
       `<div class="chips" data-pills>${comunes.map(pillTag).join('')}</div>` +
-      `<input type="hidden" name="tags" value="${escapar([...especiales, ...comunes].join(', '))}">` +
+      `<input type="hidden" name="tags" value="${escapar(comunes.join(', '))}">` +
+      `<input type="hidden" name="tags_especiales" value="${escapar(especiales.join(', '))}">` +
       '<input data-tag-nuevo list="tags-conocidos" placeholder="Agregar tags">' +
       // Los reservados no se sugieren: no se pueden escribir a mano.
       `<datalist id="tags-conocidos">${tagsConocidos.filter(t => !tagReservado(t))
@@ -463,6 +466,7 @@ export function formularioDesde(receta: Receta): DatosFormulario {
   return {
     titulo: receta.titulo ?? '',
     tags: (receta.tags ?? []).join(', '),
+    tags_especiales: (receta.tags_especiales ?? []).join(', '),
     rinde: receta.rinde ?? '',
     tiempo: receta.tiempo ?? '',
     dificultad: receta.dificultad ?? '',
@@ -507,13 +511,16 @@ export function fotosDesde(crudo: string, base: FotoDeReceta[]): FotoDeReceta[] 
  */
 export function recetaDesdeFormulario(datos: DatosFormulario, base: Receta): Receta {
   const texto = (clave: string): string | null => datos[clave]?.trim() || null;
+  const lista = (valor: string | undefined): string[] =>
+    String(valor ?? '').split(',').map(t => t.trim()).filter(Boolean);
 
   return {
     ...base,
     // Vaciado no vuelve al anterior: queda vacío, y guardar avisa (C04.5.2)
     // o, en un borrador, le pone el título por defecto.
     titulo: datos['titulo'] === undefined ? base.titulo : texto('titulo'),
-    tags: String(datos['tags'] ?? '').split(',').map(t => t.trim()).filter(Boolean),
+    tags: lista(datos['tags']).filter(t => !tagReservado(t)),
+    tags_especiales: especialesValidos(lista(datos['tags_especiales'])).validos,
     rinde: texto('rinde'),
     tiempo: duracionValida(datos['tiempo']) || null,
     dificultad: dificultadValida(datos['dificultad']) || null,

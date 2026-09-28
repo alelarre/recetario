@@ -8,8 +8,8 @@ import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
 const fila = (id: string, titulo: string, categoria: string, carpeta: string,
-              tags: string, ingredientes: string, dificultad = ''): string[] =>
-  [id, `${id}.md`, titulo, categoria, carpeta, '', '', dificultad, '', tags, ingredientes, '1000'];
+              tags: string, ingredientes: string, dificultad = '', especiales = ''): string[] =>
+  [id, `${id}.md`, titulo, categoria, carpeta, '', '', dificultad, '', tags, ingredientes, '1000', '', especiales];
 
 let store: ReturnType<typeof crearStore>;
 let sheets: SheetsFalso;
@@ -104,17 +104,27 @@ describe('buscar', () => {
     expect(store.buscar({ texto: undefined, categoria: undefined })).toHaveLength(3);
   });
 
-  it('filtra por el tag especial aunque la fila tenga la forma vieja', async () => {
+  it('filtrar por un especial mira tags_especiales; por un tag común, tags', async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'Tarta', 'Postres', 'c2', 'dulce', 'harina', '', 'favorito')
+    ]);
+    await abrirDeNuevo();
+    expect(store.buscar({ tags: ['favorito'] }).map(e => e.id_archivo)).toEqual(['r4']);
+    expect(store.buscar({ tags: ['Favorito', 'dulce'] }).map(e => e.id_archivo)).toEqual(['r4']);
+    expect(store.buscar({ tags: ['parrilla'] }).map(e => e.id_archivo)).toEqual(['r2']);
+  });
+
+  it('un especial en la columna de tags no cuenta como especial', async () => {
     await sheets.append('i1', 'recetas', [
       fila('r4', 'Torta a medio hacer', 'Postres', 'c2', 'incompleta', 'harina')
     ]);
     await abrirDeNuevo();
-    expect(store.buscar({ tags: ['borrador'] }).map(e => e.id_archivo)).toEqual(['r4']);
+    expect(store.buscar({ tags: ['borrador'] })).toEqual([]);
   });
 
   it('sin pedirlo, un borrador no aparece en ningún resultado: a los borradores se llega por el menú', async () => {
     await sheets.append('i1', 'recetas', [
-      fila('r4', 'Torta a medio hacer', 'Postres', 'c2', 'borrador', 'harina')
+      fila('r4', 'Torta a medio hacer', 'Postres', 'c2', '', 'harina', '', 'borrador')
     ]);
     await abrirDeNuevo();
     expect(store.buscar({}).map(e => e.id_archivo)).not.toContain('r4');
@@ -122,12 +132,12 @@ describe('buscar', () => {
     expect(store.buscar({ categoria: 'Postres' }).map(e => e.id_archivo)).not.toContain('r4');
   });
 
-  it('pidiendo el tag borrador, sí lo devuelve, en cualquiera de sus formas', async () => {
+  it('pidiendo el tag borrador, sí lo devuelve', async () => {
     await sheets.append('i1', 'recetas', [
-      fila('r4', 'Torta a medio hacer', 'Postres', 'c2', 'Borradores', 'harina')
+      fila('r4', 'Torta a medio hacer', 'Postres', 'c2', '', 'harina', '', 'borrador')
     ]);
     await abrirDeNuevo();
-    expect(store.buscar({ tags: ['incompleta'] }).map(e => e.id_archivo)).toEqual(['r4']);
+    expect(store.buscar({ tags: ['borrador'] }).map(e => e.id_archivo)).toEqual(['r4']);
   });
 });
 
@@ -136,8 +146,8 @@ describe('una receta en _sin-categoria/ sin el tag borrador', () => {
     drive._store.set('sc', { id: 'sc', name: '_sin-categoria', mimeType: CARPETA, parents: ['raiz'] });
     await sheets.append('i1', 'meta', [['carpeta_sin_categoria', 'sc']]);
     await sheets.append('i1', 'recetas', [
-      fila('r5', 'Guiso perdido', 'Sin categoría', 'sc', 'invierno|favorito', 'lentejas'),
-      fila('r6', 'Pan a medio hacer', 'Sin categoría', 'sc', 'borrador', 'harina')
+      fila('r5', 'Guiso perdido', 'Sin categoría', 'sc', 'invierno', 'lentejas', '', 'favorito'),
+      fila('r6', 'Pan a medio hacer', 'Sin categoría', 'sc', '', 'harina', '', 'borrador')
     ]);
     await abrirDeNuevo();
   });
@@ -171,8 +181,8 @@ describe('una receta en _sin-categoria/ sin el tag borrador', () => {
 describe('una receta suelta en la carpeta base sin el tag borrador', () => {
   beforeEach(async () => {
     await sheets.append('i1', 'recetas', [
-      fila('r7', 'Guiso suelto', 'Sin categoría', 'raiz', 'otoño|favorito', 'porotos'),
-      fila('r8', 'Pan suelto', 'Sin categoría', 'raiz', 'borrador', 'harina')
+      fila('r7', 'Guiso suelto', 'Sin categoría', 'raiz', 'otoño', 'porotos', '', 'favorito'),
+      fila('r8', 'Pan suelto', 'Sin categoría', 'raiz', '', 'harina', '', 'borrador')
     ]);
     await abrirDeNuevo();
   });
@@ -255,13 +265,22 @@ describe('buscarPorTexto: los tres criterios', () => {
 
   it('no devuelve un borrador en ningún grupo, ni el tag borrador como motivo', async () => {
     await sheets.append('i1', 'recetas', [
-      fila('f-borrador', 'Merluza a medio hacer', 'Carnes', 'c1', 'borrador', 'Merluza')
+      fila('f-borrador', 'Merluza a medio hacer', 'Carnes', 'c1', '', 'Merluza', '', 'borrador')
     ]);
     await abrirDeNuevo();
     const g = store.buscarPorTexto('merluza');
     expect(g.porNombre.map(e => e.id_archivo)).not.toContain('f-borrador');
     expect(g.porIngrediente.map(r => r.entrada.id_archivo)).not.toContain('f-borrador');
     expect(store.buscarPorTexto('borrador').porTag).toEqual([]);
+  });
+
+  it('no encuentra los especiales por texto', async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'Tarta', 'Postres', 'c2', 'dulce', 'harina', '', 'favorito|probar')
+    ]);
+    await abrirDeNuevo();
+    expect(store.buscarPorTexto('favorito').porTag).toEqual([]);
+    expect(store.buscarPorTexto('probar').porTag).toEqual([]);
   });
 });
 
@@ -278,8 +297,8 @@ describe('categoriasConConteo', () => {
 
   it('no muestra Sin categoría aunque haya recetas sueltas: a los borradores se llega por el menú', async () => {
     await sheets.append('i1', 'recetas', [
-      fila('r4', 'Suelta', 'Sin categoría', 'raiz', 'borrador', 'harina'),
-      fila('r5', 'Otra suelta', 'Sin categoría', 'sin-cat', 'borrador', 'harina')
+      fila('r4', 'Suelta', 'Sin categoría', 'raiz', '', 'harina', '', 'borrador'),
+      fila('r5', 'Otra suelta', 'Sin categoría', 'sin-cat', '', 'harina', '', 'borrador')
     ]);
     await abrirDeNuevo();
     const c = store.categoriasConConteo();
@@ -288,7 +307,7 @@ describe('categoriasConConteo', () => {
 
   it('no cuenta una receta de la categoría marcada como borrador', async () => {
     await sheets.append('i1', 'recetas', [
-      fila('r4', 'A medio hacer', 'Carnes', 'c1', 'borrador', 'harina')
+      fila('r4', 'A medio hacer', 'Carnes', 'c1', '', 'harina', '', 'borrador')
     ]);
     await abrirDeNuevo();
     expect(store.categoriasConConteo().find(x => x.nombre === 'Carnes')!.cantidad).toBe(2);
@@ -301,21 +320,30 @@ describe('tagsDe', () => {
     expect(store.tagsDe('recetas', 'Carnes').map(t => t.tag)).toEqual(['horno', 'parrilla', 'rápido']);
   });
 
-  it('no lista borrador en ninguna de sus formas: a los borradores se llega por el menú', async () => {
+  it('no lista borrador: a los borradores se llega por el menú', async () => {
     await sheets.append('i1', 'recetas', [
-      fila('r4', 'Torta', 'Postres', 'c2', 'borrador|dulce', 'harina'),
-      fila('r5', 'Budín', 'Postres', 'c2', 'incompleta', 'harina'),
-      fila('r6', 'Tarta', 'Postres', 'c2', 'Borradores|probar', 'harina')
+      fila('r4', 'Torta', 'Postres', 'c2', 'dulce', 'harina', '', 'borrador'),
+      fila('r6', 'Tarta', 'Postres', 'c2', '', 'harina', '', 'probar|borrador')
     ]);
     await abrirDeNuevo();
     expect(store.tagsDe('todas').map(t => t.tag)).toEqual(['dulce', 'horno', 'parrilla', 'probar', 'rápido']);
     expect(store.tagsDe('borradores').map(t => t.tag)).toEqual(['dulce', 'probar']);
   });
 
+  it('cuenta los especiales que van en los chips desde su columna', async () => {
+    await sheets.append('i1', 'recetas', [
+      fila('r4', 'Tarta', 'Postres', 'c2', 'dulce', 'harina', '', 'favorito|menú diario'),
+      fila('r5', 'Budín', 'Postres', 'c2', '', 'harina', '', 'favorito')
+    ]);
+    await abrirDeNuevo();
+    expect(store.tagsDe()).toContainEqual({ tag: 'favorito', cantidad: 2 });
+    expect(store.tagsDe()).toContainEqual({ tag: 'menú diario', cantidad: 1 });
+  });
+
   it('cuenta lo mismo que la lista que abre el chip: sin los borradores', async () => {
     await sheets.append('i1', 'recetas', [
-      fila('r4', 'Torta', 'Postres', 'c2', 'borrador|dulce', 'harina'),
-      fila('r5', 'Tarta', 'Postres', 'c2', 'incompleta|probar', 'harina')
+      fila('r4', 'Torta', 'Postres', 'c2', 'dulce', 'harina', '', 'borrador'),
+      fila('r5', 'Tarta', 'Postres', 'c2', '', 'harina', '', 'probar|borrador')
     ]);
     await abrirDeNuevo();
     expect(store.tagsDe()).toEqual(store.tagsDe('recetas'));
@@ -328,8 +356,8 @@ describe('tagsDe', () => {
     drive._store.set('sc', { id: 'sc', name: '_sin-categoria', mimeType: CARPETA, parents: ['raiz'] });
     await sheets.append('i1', 'meta', [['carpeta_sin_categoria', 'sc']]);
     await sheets.append('i1', 'recetas', [
-      fila('r4', 'Torta', 'Postres', 'c2', 'borrador|dulce', 'harina'),
-      fila('r5', 'Pan', 'Sin categoría', 'sc', 'borrador|dulce|horno', 'harina')
+      fila('r4', 'Torta', 'Postres', 'c2', 'dulce', 'harina', '', 'borrador'),
+      fila('r5', 'Pan', 'Sin categoría', 'sc', 'dulce|horno', 'harina', '', 'borrador')
     ]);
     await abrirDeNuevo();
     expect(store.tagsDe('borradores')).toEqual([{ tag: 'dulce', cantidad: 2 }, { tag: 'horno', cantidad: 1 }]);
@@ -337,7 +365,7 @@ describe('tagsDe', () => {
 
   it('las sugerencias del editor juntan los tags de recetas y borradores', async () => {
     await sheets.append('i1', 'recetas', [
-      fila('r4', 'Tarta', 'Postres', 'c2', 'borrador|probar', 'harina')
+      fila('r4', 'Tarta', 'Postres', 'c2', '', 'harina', '', 'probar|borrador')
     ]);
     await abrirDeNuevo();
     expect(store.tagsDe('todas').map(t => t.tag)).toContain('probar');

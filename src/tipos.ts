@@ -16,6 +16,8 @@
  *   resuelve en el borde.
  */
 
+import type { TagEspecial } from './especiales.js';
+
 /** Las cuatro secciones que la app entiende; el resto cae en `otras`. */
 export type ClaveSeccion = 'ingredientes' | 'preparacion' | 'variaciones' | 'notas';
 
@@ -39,12 +41,13 @@ export interface OtraSeccion {
 export interface Receta {
   titulo: string | null;
   tags: string[];
+  tags_especiales: TagEspecial[];
   rinde: string | null;
   tiempo: string | null;
   dificultad: string | null;
   fuente: string | null;
   foto: string | null;
-  /** Claves del frontmatter que no son las siete. Se preservan al guardar. */
+  /** Claves del frontmatter que no son las del formato. Se preservan al guardar. */
   extras: Record<string, string>;
   descripcion: string;
   ingredientes: string;
@@ -55,6 +58,14 @@ export interface Receta {
   /** El depósito de fotos: la sección `## Fotos`, ya parseada. Vacío si no hay. */
   fotos: FotoDeReceta[];
   avisos: Aviso[];
+  /** Lo que el parser descartó de `tags` y `tags_especiales`. No se escribe. */
+  ignorados: ValorIgnorado[];
+}
+
+/** Un valor de una lista del frontmatter que la app no lee. */
+export interface ValorIgnorado {
+  clave: 'tags' | 'tags_especiales';
+  valor: string;
 }
 
 /** Una foto del depósito: la línea `- N: URL` de `## Fotos` (`src/fotos-receta.ts`). */
@@ -133,7 +144,7 @@ export interface Ubicacion {
  * Una fila del índice, ya deserializada.
  *
  * Es un cache derivado de los `.md`: si dice algo distinto del archivo,
- * el archivo gana. `tags` e `ingredientes` viajan en la planilla como una celda
+ * el archivo gana. `tags`, `tags_especiales` e `ingredientes` viajan en la planilla como una celda
  * con `|` entre valores y vuelven acá como arreglos.
  */
 export interface Entrada {
@@ -151,7 +162,7 @@ export interface Entrada {
   ingredientes: string[];
   mtime: number;
   /** URL externa, o cadena vacía. Se dibuja donde esté (IA §1.7). */
-  foto: string;
+  foto: string;  tags_especiales: TagEspecial[];
 }
 
 /** Las dos comidas de un día. */

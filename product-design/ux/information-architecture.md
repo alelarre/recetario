@@ -89,7 +89,8 @@ para la lista de compras.
 ````markdown
 ---
 titulo: Milanesas napolitanas
-tags: [favorito, italiana, horno, invitados]
+tags: [italiana, horno, invitados]
+tags_especiales: [favorito]
 rinde: 4 porciones
 tiempo: ~60 min
 dificultad: fácil
@@ -122,14 +123,15 @@ Cambiar la salsa y la muzzarella por salsa blanca y gruyere.
 - 2: https://ejemplo.com/milanesas.jpg
 ````
 
-**Frontmatter.** Siete claves, todas opcionales menos `titulo`. El esquema es
-cerrado: una clave que no es de estas siete no se interpreta, y se conserva al
-guardar.
+**Frontmatter.** Ocho claves, todas opcionales menos `titulo`, que se escriben
+en este orden. El esquema es cerrado: una clave que no es de estas ocho no se
+interpreta, y se conserva al guardar.
 
 | clave | tipo | obligatorio | notas |
 |---|---|---|---|
 | `titulo` | texto | **sí** | Sin él la receta no se muestra |
-| `tags` | lista | no | Vocabulario libre, más los cuatro tags especiales (§1.6 y §5.2) |
+| `tags` | lista | no | Vocabulario libre, sin los tags reservados (§5.2) |
+| `tags_especiales` | lista cerrada | no | Sólo `favorito`, `menú diario`, `probar` y `borrador` (§1.6 y §5.2). Vacía, no se escribe |
 | `rinde` | texto | no | Libre, no un número |
 | `tiempo` | enumerado | no | La duración hasta comer, con reposo y horno: `~15 min` · `~30 min` · `~60 min` · `>60 min` · `>1 día`. Cualquier otro texto se lee como sin duración |
 | `dificultad` | enumerado | no | `fácil` · `media` · `difícil`. Otro valor se lee como sin dificultad |
@@ -148,8 +150,8 @@ y la numeración de los pasos vuelve a empezar en cada uno, tal como está escri
 
 ### 1.6 Completitud
 
-**La completitud es el tag especial `borrador`**, en la lista `tags` del
-archivo. No hay clave propia en el frontmatter ni columna en el índice, y la app
+**La completitud es el tag especial `borrador`**, en la lista `tags_especiales`
+del archivo. No hay clave propia en el frontmatter ni columna en el índice, y la app
 nunca la deduce del contenido: una receta es un borrador si lleva el tag, y
 terminada si no lo lleva. Lo que falta terminar es eso: una receta con el tag, y
 no una entidad aparte.
@@ -258,10 +260,10 @@ legible.
 |---|---|---|---|
 | **Carpeta base** | Una carpeta propia del Drive, marcada con `appProperties` `recetario=raiz` | Al crearla o elegirla en el primer arranque | Al elegir otra desde Ajustes: pierde la marca y queda en Drive como estaba |
 | **Receta** | Un `.md` en una carpeta de categoría, o en `_sin-categoria/` si no tiene categoría | Al guardar una receta nueva —escrita en el editor, compartida o pegada—, o cuando un agente la escribe directo | Al borrarla desde el editor: va a la papelera de Drive |
-| **Borrador** | Una receta con el tag `borrador` (§1.6): el mismo `.md` y la misma fila | Con la receta: toda receta nueva nace borrador. También lo son las de una categoría borrada, que pasan a `_sin-categoria/` con el tag | Cuando se le saca el tag, o con la receta |
+| **Borrador** | Una receta con `borrador` en `tags_especiales` (§1.6): el mismo `.md` y la misma fila | Con la receta: toda receta nueva nace borrador. También lo son las de una categoría borrada, que pasan a `_sin-categoria/` con el tag | Cuando se le saca el tag, o con la receta |
 | **Foto de receta** | Una línea de la sección `## Fotos` del `.md` (§1.7). El archivo, si lo subió la app, es un `.jpg` en `_fotos/`; si no, es una URL externa | Al agregarla en el editor —también la que llega por Compartir—, o escrita a mano en el `.md` | Al sacarla del depósito, o con su receta: el archivo de `_fotos/` va a la papelera de Drive. Borrar la categoría de la receta no la toca: la receta sigue y la nombra por su id |
 | **Categoría** | Una carpeta dentro de la carpeta base, con su color y su foto en `appProperties`, y su fila en la hoja `categorias` del índice | En el setup de la carpeta base —las 16 predefinidas—, o al crearla desde *Ajustes → Recetario → Categorías* | Al borrarla desde ahí: la carpeta vacía, su fila y su foto propia van a la papelera de Drive. Sus recetas no: pasan a `_sin-categoria/` con el tag `borrador` |
-| **Tag** | La lista `tags` del frontmatter | Al escribirlo, o al apretar el botón de un especial | Cuando ninguna receta lo usa |
+| **Tag** | La lista `tags` del frontmatter; los especiales, la lista `tags_especiales` | Al escribirlo, o al apretar el botón de un especial | Cuando ninguna receta lo usa |
 | **Fuente** | Frontmatter, o línea en itálica en una variación | Con la receta | Con ella |
 | **Variación** | Sección `###` o bullet bajo `## Variaciones` | Al escribirla | Al borrarla |
 | **Índice** | Google Sheet `_indice` en la carpeta base, con tres hojas: `recetas`, `meta` y `categorias` | Al primer arranque, o al reindexar | Se puede borrar en cualquier momento: se reconstruye |
@@ -358,10 +360,10 @@ una vez con una sola pestaña abierta. La reparación siempre es reindexar, desd
 
 **La fila de una receta es completa.** Id y nombre del archivo, título,
 categoría y id de su carpeta, rinde, tiempo, dificultad, fuente, tags, **la lista
-de nombres de ingredientes**, fecha de modificación y foto —la cabecera ya
-resuelta a su URL, para que las listas la dibujen sin leer el `.md`—. Los tags
-especiales —la completitud incluida— van en la columna `tags`, sin columna
-propia.
+de nombres de ingredientes**, fecha de modificación, foto —la cabecera ya
+resuelta a su URL, para que las listas la dibujen sin leer el `.md`— y los tags
+especiales, en su columna `tags_especiales`. La completitud es uno de ellos, sin
+columna propia.
 
 Los ingredientes están ahí porque la búsqueda de J4 tiene que resolverse sin leer
 mil `.md`. Se guardan **tal como están escritos en la receta**, sin normalizar:
@@ -640,14 +642,21 @@ controlado obliga a mantenerlo y a que el agente lo conozca, y el costo del
 desorden es bajo con un solo autor.
 
 **Cuatro tags son especiales: `favorito`, `menú diario`, `probar` y
-`borrador`**, siempre en ese orden. Viven en la misma lista `tags` que los
-demás, pero tienen forma propia:
+`borrador`**, siempre en ese orden y antes que los demás. Viven en su propia
+clave, `tags_especiales`, y tienen forma propia:
 
-- **No se escriben a mano.** Cada uno tiene su botón en el campo «Tags» del
-  editor; escribirlos —o `terminado`, que contradice a `borrador`— no se
-  acepta. Se reconocen sin importar mayúsculas ni tildes, y también `favorita`,
-  `favoritos` y `favoritas`; `borrador` se reconoce además como `borradores` y
-  como `incompleta`, `incompleto` y sus plurales, sin reescribir el `.md`.
+- **`tags_especiales` es una lista cerrada.** Se reconoce sin mirar mayúsculas
+  ni tildes, se escribe en la forma canónica, y un valor que no es de la lista
+  se lee como ausente.
+- **`tags` no lleva especiales.** Un reservado en `tags` —un especial,
+  `favoritas`, `borradores`, `incompleta` y sus formas, `terminado` y sus
+  formas— se ignora al leer.
+- **No se escriben a mano.** Cada especial tiene su botón en el campo «Tags»
+  del editor; escribir un reservado no se acepta. La columna
+  `tags_especiales` del índice los lleva.
+- **Cada especial declara su ícono, su marca en la tarjeta, si se ofrece en los
+  chips, si se muestra en la receta y si lo encuentra la búsqueda por texto.**
+  Ninguno lo encuentra: a los especiales se llega por su chip.
 - **`favorito` además tiene una estrella en el encabezado de la receta**, que lo
   pone y lo saca sin pasar por el editor.
 - **`borrador` es la completitud** (§1.6): una receta nueva nace con él.

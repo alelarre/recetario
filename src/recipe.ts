@@ -3,10 +3,32 @@ import type {
   GrupoIngredientes, TramoPreparacion, Variacion
 } from './tipos.js';
 import { parsearFotos, serializarFotos } from './fotos-receta.js';
+import { normalizar } from './normalizar.js';
+import { especialesValidos, tagReservado } from './especiales.js';
 
-/** Las claves del frontmatter que se escriben tal cual, sin `tags`, que es lista. */
-const CLAVES = ['titulo', 'rinde', 'tiempo', 'dificultad', 'fuente', 'foto'] as const;
-type ClaveSimple = (typeof CLAVES)[number];
+export { normalizar } from './normalizar.js';
+
+/**
+ * Las claves del frontmatter, en el orden en que se escriben. Es la única
+ * declaración del formato: el parser, el serializador, `validar` y las reglas
+ * para los agentes salen de acá.
+ */
+export const CLAVES_FRONTMATTER = [
+  { clave: 'titulo', forma: 'texto' },
+  { clave: 'tags', forma: 'lista' },
+  { clave: 'tags_especiales', forma: 'lista' },
+  { clave: 'rinde', forma: 'texto' },
+  { clave: 'tiempo', forma: 'texto' },
+  { clave: 'dificultad', forma: 'texto' },
+  { clave: 'fuente', forma: 'texto' },
+  { clave: 'foto', forma: 'texto' }
+] as const;
+export type ClaveFrontmatter = (typeof CLAVES_FRONTMATTER)[number]['clave'];
+type ClaveTexto = Extract<(typeof CLAVES_FRONTMATTER)[number], { forma: 'texto' }>['clave'];
+type ClaveLista = Extract<(typeof CLAVES_FRONTMATTER)[number], { forma: 'lista' }>['clave'];
+
+const formaDe = (clave: string): 'texto' | 'lista' | null =>
+  CLAVES_FRONTMATTER.find(c => c.clave === clave)?.forma ?? null;
 
 /**
  * La duración no es texto libre: es uno de estos cinco valores, escritos tal
@@ -22,25 +44,13 @@ export function duracionValida(valor: unknown): Duracion | '' {
   return (DURACIONES as readonly string[]).includes(s) ? s as Duracion : '';
 }
 
-const esClaveSimple = (c: string): c is ClaveSimple =>
-  (CLAVES as readonly string[]).includes(c);
-
-/** Minúsculas y sin tildes. Es la única normalización del sistema. */
-export function normalizar(texto: unknown): string {
-  return String(texto ?? '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')  // marcas de combinación
-    .toLowerCase()
-    .trim();
-}
-
 function recetaVacia(): Receta {
   return {
-    titulo: null, tags: [], rinde: null, tiempo: null, dificultad: null, fuente: null,
+    titulo: null, tags: [], tags_especiales: [], rinde: null, tiempo: null, dificultad: null, fuente: null,
     foto: null,
     extras: {},
     descripcion: '', ingredientes: '', preparacion: '', variaciones: '', notas: '',
-    otras: [], fotos: [], avisos: []
+    otras: [], fotos: [], avisos: [], ignorados: []
   };
 }
 
@@ -62,12 +72,15 @@ function parsearLista(valor: string, resto: string[]): string[] {
 
 function parsearFrontmatter(bloque: string, receta: Receta): void {
   const lineas = bloque.split('\n');
+  // Las listas se juntan crudas y se asignan al final: el filtro de cada una
+  // necesita la lista entera.
+  const listas: Partial<Record<ClaveLista, string[]>> = {};
   let ultimaClave: string | null = null;
   for (let i = 0; i < lineas.length; i++) {
     const linea = lineas[i];
     if (linea === undefined || !linea.trim()) continue;
     if (/^\s*-\s+/.test(linea)) {
-      if (ultimaClave !== 'tags') receta.avisos.push('frontmatter-ilegible');
+      if (ultimaClave === null || formaDe(ultimaClave) !== 'lista') receta.avisos.push('frontmatter-ilegible');
       continue; // ya consumida por una lista
     }
     const m = linea.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(.*)$/);
@@ -78,14 +91,25 @@ function parsearFrontmatter(bloque: string, receta: Receta): void {
     const clave = m[1];
     const valor = m[2];
     ultimaClave = clave;
-    if (clave === 'tags') {
-      receta.tags = parsearLista(valor.trim(), lineas.slice(i + 1));
-    } else if (esClaveSimple(clave)) {
-      receta[clave] = valor.trim() === '' ? null : valor.trim();
+    const forma = formaDe(clave);
+    if (forma === 'lista') {
+      listas[clave as ClaveLista] = parsearLista(valor.trim(), lineas.slice(i + 1));
+    } else if (forma === 'texto') {
+      receta[clave as ClaveTexto] = valor.trim() === '' ? null : valor.trim();
     } else {
       receta.extras[clave] = valor.trim();
     }
   }
+
+  // Un reservado en `tags` no es un tag común: los especiales tienen su clave.
+  const tags = listas.tags ?? [];
+  receta.tags = tags.filter(t => !tagReservado(t));
+  const { validos, ignorados } = especialesValidos(listas.tags_especiales ?? []);
+  receta.tags_especiales = validos;
+  receta.ignorados = [
+    ...tags.filter(t => tagReservado(t)).map(valor => ({ clave: 'tags' as const, valor })),
+    ...ignorados.map(valor => ({ clave: 'tags_especiales' as const, valor }))
+  ];
 }
 
 export function parse(texto: unknown): Receta {
@@ -189,12 +213,14 @@ const ORDEN_CUERPO: ReadonlyArray<readonly [ClaveSeccion, string]> = [
 export function serialize(receta?: Partial<Receta> | null): string {
   const r: Partial<Receta> = receta ?? {};
   const fm: string[] = [];
-  if (r.titulo) fm.push(`titulo: ${r.titulo}`);
-  if (Array.isArray(r.tags) && r.tags.length) fm.push(`tags: [${r.tags.join(', ')}]`);
-  for (const clave of ['rinde', 'tiempo', 'dificultad', 'fuente'] as const) {
-    if (r[clave]) fm.push(`${clave}: ${r[clave]}`);
+  for (const { clave, forma } of CLAVES_FRONTMATTER) {
+    if (forma === 'lista') {
+      const valores = r[clave];
+      if (Array.isArray(valores) && valores.length) fm.push(`${clave}: [${valores.join(', ')}]`);
+    } else if (r[clave]) {
+      fm.push(`${clave}: ${r[clave]}`);
+    }
   }
-  if (r.foto) fm.push(`foto: ${r.foto}`);
   for (const [clave, valor] of Object.entries(typeof r.extras === 'object' && r.extras !== null ? r.extras : {})) {
     fm.push(`${clave}: ${valor}`);
   }

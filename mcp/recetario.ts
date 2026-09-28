@@ -4,9 +4,9 @@
 import { crearStore, type DriveDelStore, type SheetsDelStore, type Progreso } from '../src/store.js';
 import { crearDrive } from '../src/drive.js';
 import { crearSheets } from '../src/sheets.js';
-import { reglasDelFormato, reglaDeReservados } from '../src/conversion.js';
+import { reglasDelFormato } from '../src/conversion.js';
 import { leerRecibido, problemasDe, type Problema } from '../src/validar.js';
-import { TAGS_RESERVADOS, tagEspecial, tieneEspecial } from '../src/catalogo.js';
+import { tagEspecial, tieneEspecial } from '../src/catalogo.js';
 import { normalizar } from '../src/recipe.js';
 import { idDeDrive } from '../src/fotos-receta.js';
 import { SIN_CATEGORIA } from '../src/categorias.js';
@@ -36,15 +36,11 @@ export function indiceEnMemoria(): IndiceLocal {
 }
 
 /**
- * Los tags reservados menos `borrador` y sus otras formas. El pedido de
- * *Convertir con Agente* prohíbe `borrador` porque la app lo pone sola; acá lo
- * decide el agente, y el resto de la prohibición sigue: `terminado`
- * contradice a `borrador`, y `favorita` es una segunda forma de `favorito`.
+ * El pedido de *Convertir con Agente* no lleva los especiales, porque ahí la
+ * app pone `borrador` sola; acá lo decide el agente.
  */
-const REGLA_RESERVADOS = reglaDeReservados(TAGS_RESERVADOS.filter(t => tagEspecial(t) !== 'borrador'));
-
 const REGLA_BORRADOR =
-  '- El tag `borrador` va cuando algo de la fuente quedó sin volcar a la receta (un renglón ilegible, la receta sigue en otra página, una cantidad dudosa), o cuando faltan los ingredientes o los pasos. Si no, no va.';
+  '- `borrador` va en `tags_especiales` cuando algo de la fuente quedó sin volcar a la receta (un renglón ilegible, la receta sigue en otra página, una cantidad dudosa), o cuando faltan los ingredientes o los pasos. Si no, no va.';
 
 /**
  * Las fotos las sube el MCP, que arma el depósito. El número de cada una se
@@ -56,16 +52,9 @@ const REGLAS_FOTOS: readonly string[] = [
   '- No escribas la sección `## Fotos`: la arma el MCP, y la que traiga el `.md` se ignora. `leer` la muestra para que sepas qué números hay. Una foto se saca sólo pidiendo su número en `sacar`, después de sacar del texto su `foto:N`.'
 ];
 
-/**
- * Las reglas de la app, con la línea de los reservados cambiada por la del
- * MCP y la regla de `borrador` al lado, y al final las de las fotos.
- */
+/** Las reglas de la app con `tags_especiales`, la de `borrador` y al final las de las fotos. */
 function reglasDelFormatoDelMcp(): string[] {
-  const deLaApp = reglaDeReservados(TAGS_RESERVADOS);
-  return [
-    ...reglasDelFormato().flatMap(l => l === deLaApp ? [REGLA_RESERVADOS, REGLA_BORRADOR] : [l]),
-    ...REGLAS_FOTOS
-  ];
+  return [...reglasDelFormato({ especiales: true }), REGLA_BORRADOR, ...REGLAS_FOTOS];
 }
 
 /** Lo que recibe `buscar`: texto, filtros o las dos cosas. */

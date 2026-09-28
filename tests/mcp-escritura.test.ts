@@ -136,6 +136,20 @@ describe('crear', () => {
     expect(sheets.cuantas('escribir') + sheets.cuantas('append')).toBe(0);
   });
 
+  it('un especial en tags es error: no escribe, y dice que va en tags_especiales', async () => {
+    const r = await nuevoRecetario().crear({ md: md('Pan casero', 'tags: [borrador]\n'), categoria: 'Postres' });
+    expect(r.escrita).toBe(false);
+    expect(r.problemas).toEqual([{ campo: 'tags', nivel: 'error', mensaje: '`borrador` es un tag especial: va en `tags_especiales`.' }]);
+    expect(drive.cuantas('crear')).toBe(0);
+  });
+
+  it('con tags_especiales escribe la clave', async () => {
+    const r = await nuevoRecetario().crear({ md: md('Pan casero', 'tags_especiales: [probar]\n'), categoria: 'Postres' });
+    expect(r.escrita).toBe(true);
+    if (!r.escrita) return;
+    expect(archivo(r.id)?.contenido).toContain('tags_especiales: [probar]');
+  });
+
   it('con avisos escribe igual y los devuelve', async () => {
     const r = await nuevoRecetario().crear({ md: md('Pan casero', 'origen: la abuela\n'), categoria: 'Postres' });
     expect(r.escrita).toBe(true);

@@ -32,7 +32,7 @@ export async function codificar(receta: Receta, categoria: string): Promise<stri
   // con su línea del depósito, para que del otro lado se pueda calcular el uso
   // de cada una y ninguna se dibuje dos veces. Resolver es cosa del
   // lector (`resueltaSinFotosDeDrive`), no del que arma el link.
-  const md = serialize({ ...sinFotosDeDrive(receta), tags: [], extras: {} });
+  const md = serialize({ ...sinFotosDeDrive(receta), tags: [], tags_especiales: [], extras: {} });
   const json = new TextEncoder().encode(JSON.stringify({ c: categoria, md }));
   return VERSION + aBase64url(await pasarPor(json, new CompressionStream('deflate-raw')));
 }

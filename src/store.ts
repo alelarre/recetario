@@ -1,5 +1,6 @@
 import { NOMBRE_RAIZ, NOMBRE_INDICE, NOMBRE_FOTOS, NOMBRE_SIN_CATEGORIA, NOMBRE_PLAN, MARCA_RAIZ, SCHEMA_VERSION } from './config.js';
-import { COLUMNAS, entradaDesdeFila, filaDesde, coincideTag, tagEspecial, tieneEspecial, conEspecial } from './catalogo.js';
+import { COLUMNAS, entradaDesdeFila, filaDesde, coincideTag, tagEspecial, tieneEspecial, conEspecial, definicion } from './catalogo.js';
+import type { TagEspecial } from './catalogo.js';
 import { HOJA_RECETAS, HOJA_META, HOJA_CATEGORIAS, rangoDeFila } from './sheets.js';
 import { parse, serialize, slugArchivo, normalizar } from './recipe.js';
 import { COLUMNAS_CATEGORIAS, PREDEFINIDAS, categoriaDesdeFila, filaDeCategoria, predefinidaPorNombre, problemaDelNombre, SIN_CATEGORIA } from './categorias.js';
@@ -376,7 +377,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     try {
       // Google crea una planilla con una hoja por defecto cuyo nombre depende del idioma.
       // Necesitamos renombrarla a 'recetas' antes de escribir, porque todo el resto del
-      // código usa rangos como 'recetas!A1:M1'.
+      // código usa rangos como 'recetas!A1:N1'.
       const hojas = await sheets.hojas(archivo.id);
       const hojaPorDefecto = hojas[0];
       if (!hojaPorDefecto) throw new Error('La planilla se creó sin ninguna hoja');
@@ -982,7 +983,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
    * Una receta suelta —en la carpeta base o en `_sin-categoria/`— sin el tag
    * `borrador`: la escribieron afuera y no es receta ni borrador.
    */
-  function sueltaSinBorrador(carpeta: string, receta: { tags: string[] }): boolean {
+  function sueltaSinBorrador(carpeta: string, receta: { tags_especiales: TagEspecial[] }): boolean {
     const suelta = carpeta === ctx.raizId || (!!ctx.sinCategoriaId && carpeta === ctx.sinCategoriaId);
     return suelta && !tieneEspecial(receta, 'borrador');
   }
@@ -1013,7 +1014,11 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       if (!pideBorradores && tieneEspecial(e, 'borrador')) return false;
       if (cat && e.categoria !== cat) return false;
       if (diff && e.dificultad !== diff) return false;
-      if (tagList.length && !tagList.every(tag => e.tags.some(x => coincideTag(x, tag)))) return false;
+      // Un especial no puede ser un tag común: el nombre dice dónde mirar.
+      if (tagList.length && !tagList.every(tag => {
+        const esp = tagEspecial(tag);
+        return esp ? e.tags_especiales.includes(esp) : e.tags.some(x => coincideTag(x, tag));
+      })) return false;
       if (!t) return true;
       return normalizar(e.titulo).includes(t) || e.ingredientes.some(i => normalizar(i).includes(t));
     });
@@ -1037,7 +1042,8 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
 
     for (const e of listables()) {
       // Los borradores no aparecen en ninguna búsqueda: se llega a ellos por
-      // el menú, y el tag `borrador` no cuenta ni como motivo.
+      // el menú. Sólo se busca en `tags`: ningún especial se encuentra por
+      // texto (`enBusqueda`).
       if (tieneEspecial(e, 'borrador')) continue;
 
       if (normalizar(e.titulo).includes(t)) porNombre.push(e);
@@ -1078,11 +1084,11 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       const esBorrador = tieneEspecial(e, 'borrador');
       if (alcance === 'recetas' && esBorrador) continue;
       if (alcance === 'borradores' && !esBorrador) continue;
-      for (const tag of e.tags) {
-        // `borrador` no se ofrece como filtro ni como sugerencia: a los
-        // borradores se llega por el menú, y el editor tiene su botón.
-        if (tagEspecial(tag) === 'borrador') continue;
-        cuenta.set(tag, (cuenta.get(tag) ?? 0) + 1);
+      for (const tag of e.tags) cuenta.set(tag, (cuenta.get(tag) ?? 0) + 1);
+      // Los especiales, según su definición: `borrador` no se ofrece como
+      // filtro, porque a los borradores se llega por el menú.
+      for (const esp of e.tags_especiales) {
+        if (definicion(esp).enChips) cuenta.set(esp, (cuenta.get(esp) ?? 0) + 1);
       }
     }
     return [...cuenta].map(([tag, cantidad]) => ({ tag, cantidad }))
@@ -1301,7 +1307,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
     for (const [i, archivo] of suyas.entries()) {
       const receta = parse(textos[i] ?? '');
       try {
-        await guardar(archivo.id, { ...receta, tags: conEspecial(receta.tags, 'borrador', true) },
+        await guardar(archivo.id, { ...receta, tags_especiales: conEspecial(receta.tags_especiales, 'borrador', true) },
           { carpetaDestino: '', persistir: false });
       } catch (e) {
         await persistir();

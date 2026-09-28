@@ -6,7 +6,7 @@ import { ErrorDeLogin, MENSAJES } from '../mcp/errores.js';
 import { crearStore } from '../src/store.js';
 import { reglasDelFormato, reglaDeReservados } from '../src/conversion.js';
 import { validarMd } from '../src/validar.js';
-import { COLUMNAS, TAGS_RESERVADOS, tagEspecial } from '../src/catalogo.js';
+import { COLUMNAS, TAGS_RESERVADOS } from '../src/catalogo.js';
 import { COLUMNAS_CATEGORIAS } from '../src/categorias.js';
 import { SCHEMA_VERSION } from '../src/config.js';
 import { driveFalso, sheetsFalso, indiceLocalFalso } from './dobles.js';
@@ -16,8 +16,8 @@ const CARPETA = 'application/vnd.google-apps.folder';
 const PLANILLA = 'application/vnd.google-apps.spreadsheet';
 
 const fila = (id: string, titulo: string, categoria: string, carpeta: string,
-              tags: string, ingredientes: string, dificultad = ''): string[] =>
-  [id, `${id}.md`, titulo, categoria, carpeta, '', '', dificultad, '', tags, ingredientes, '1000', ''];
+              tags: string, ingredientes: string, dificultad = '', especiales = ''): string[] =>
+  [id, `${id}.md`, titulo, categoria, carpeta, '', '', dificultad, '', tags, ingredientes, '1000', '', especiales];
 
 const FOTOS_IGNORADAS = 'Se ignoró la sección `## Fotos` del .md; el depósito lo arma el MCP.';
 
@@ -35,7 +35,7 @@ function sembrar(meta: string[][] = [['schemaVersion', String(SCHEMA_VERSION)]])
     { id: 'r1', name: 'r1.md', parents: ['c1'], contenido: MD_MILANESAS },
     { id: 'r2', name: 'r2.md', parents: ['c1'], contenido: '---\ntitulo: Bife de chorizo\n---\n' },
     { id: 'r3', name: 'r3.md', parents: ['c2'], contenido: '---\ntitulo: Flan casero\n---\n' },
-    { id: 'r4', name: 'r4.md', parents: ['c2'], contenido: '---\ntitulo: Flan de dulce de leche\ntags: [borrador]\n---\n' }
+    { id: 'r4', name: 'r4.md', parents: ['c2'], contenido: '---\ntitulo: Flan de dulce de leche\ntags: [dulce]\ntags_especiales: [borrador]\n---\n' }
   ]);
   sheets = sheetsFalso();
   sheets.crearPlanilla('i1', ['recetas', 'meta', 'categorias']);
@@ -44,7 +44,7 @@ function sembrar(meta: string[][] = [['schemaVersion', String(SCHEMA_VERSION)]])
     fila('r1', 'Milanesas napolitanas', 'Carnes', 'c1', 'horno|rápido', 'muzzarella|nalga', 'fácil'),
     fila('r2', 'Bife de chorizo', 'Carnes', 'c1', 'parrilla', 'bife', 'fácil'),
     fila('r3', 'Flan casero', 'Postres', 'c2', 'dulce|horno', 'huevo|leche', 'media'),
-    fila('r4', 'Flan de dulce de leche', 'Postres', 'c2', 'borrador|dulce', 'dulce de leche')
+    fila('r4', 'Flan de dulce de leche', 'Postres', 'c2', 'dulce', 'dulce de leche', '', 'borrador')
   ]);
   sheets.cargar('i1', 'meta', meta);
   sheets.cargar('i1', 'categorias', [
@@ -256,23 +256,16 @@ describe('errores de Google en el arranque', () => {
 });
 
 describe('las herramientas', () => {
-  it('formato: las reglas de la app, con los reservados menos borrador y la regla de borrador al lado', () => {
+  it('formato: las reglas de la app con tags_especiales, la regla de borrador y después las de las fotos', () => {
     const reglas = nuevoRecetario().formato();
-    const deLaApp = reglasDelFormato();
-    const i = deLaApp.indexOf(reglaDeReservados(TAGS_RESERVADOS));
-    expect(i).toBeGreaterThanOrEqual(0);
-
-    expect(reglas.slice(0, i)).toEqual(deLaApp.slice(0, i));
-    expect(reglas[i]).toBe(reglaDeReservados(TAGS_RESERVADOS.filter(t => tagEspecial(t) !== 'borrador')));
-    expect(reglas[i]).toContain('`terminado`');
-    expect(reglas[i]).toContain('`favorita`');
-    expect(reglas[i]).not.toContain('`borrador`');
-    expect(reglas[i]).not.toContain('`incompleta`');
-    expect(reglas[i + 1]).toContain('El tag `borrador` va cuando');
-    // Lo demás de la app, tal cual y en su orden; después, las reglas de las fotos.
-    const resto = deLaApp.slice(i + 1);
-    expect(reglas.slice(i + 2, i + 2 + resto.length)).toEqual(resto);
-    expect(reglas.slice(i + 2 + resto.length).join('\n')).toContain('`foto: foto:N`');
+    const deLaApp = reglasDelFormato({ especiales: true });
+    expect(reglas.slice(0, deLaApp.length)).toEqual(deLaApp);
+    expect(reglas[0]).toContain('`tags_especiales` como lista `[a, b]`');
+    expect(reglas).toContain('- `tags_especiales` acepta sólo: `favorito`, `menú diario`, `probar`, `borrador`.');
+    // Los reservados en `tags` son los mismos que para el pedido de la app, sin excepción.
+    expect(reglas).toContain(reglaDeReservados(TAGS_RESERVADOS));
+    expect(reglas[deLaApp.length]).toMatch(/^- `borrador` va en `tags_especiales` cuando/);
+    expect(reglas.slice(deLaApp.length + 1).join('\n')).toContain('`foto: foto:N`');
   });
 
   it('formato dice cómo se numeran las fotos antes de subirlas', () => {
@@ -356,9 +349,9 @@ describe('las herramientas', () => {
   });
 
   it('buscar por Sin categoría trae los borradores sin categoría', async () => {
-    drive._store.set('r5', { id: 'r5', name: 'r5.md', parents: ['raiz'], contenido: '---\ntitulo: Suelta\ntags: [borrador]\n---\n' });
+    drive._store.set('r5', { id: 'r5', name: 'r5.md', parents: ['raiz'], contenido: '---\ntitulo: Suelta\ntags_especiales: [borrador]\n---\n' });
     sheets.cargar('i1', 'recetas', [
-      ...(await sheets.leer('i1', 'recetas!A1:M100')), fila('r5', 'Suelta', '', 'raiz', 'borrador', '')
+      ...(await sheets.leer('i1', 'recetas!A1:N100')), fila('r5', 'Suelta', '', 'raiz', '', '', '', 'borrador')
     ]);
     const sueltas = await nuevoRecetario().buscar({ categoria: 'sin categoria', tags: ['borrador'] });
     expect(sueltas.map(r => r.id)).toEqual(['r5']);
@@ -430,7 +423,7 @@ describe('las herramientas', () => {
       { origen: 'libro.jpg', uso: 'fuente', n: 1, seSube: false },
       { origen: 'plato.jpg', uso: 'plato', n: 2, seSube: true }
     ]);
-    const conBorrador = md.replace('titulo: Tarta\n', 'titulo: Tarta\ntags: [borrador]\n');
+    const conBorrador = md.replace('titulo: Tarta\n', 'titulo: Tarta\ntags_especiales: [borrador]\n');
     expect(nuevoRecetario().validar(conBorrador, fotos).fotos.map(f => f.seSube)).toEqual([true, true]);
   });
 });

@@ -1,5 +1,6 @@
 import { normalizar, ingredientesIndexables, duracionValida, DURACIONES, type Duracion } from './recipe.js';
 import { resolver } from './fotos-receta.js';
+import { TAGS_ESPECIALES, especialesValidos, type TagEspecial } from './especiales.js';
 import type {
   Receta, Ubicacion, Entrada
 } from './tipos.js';
@@ -22,12 +23,17 @@ export const COLUMNAS = [
   'tags',
   'ingredientes',
   'mtime',
-  'foto'
+  'foto',
+  'tags_especiales'
 ] as const satisfies ReadonlyArray<keyof Entrada>;
 
 export const DIFICULTADES = ['fácil', 'media', 'difícil'] as const;
 
 export { DURACIONES, duracionValida } from './recipe.js';
+export {
+  ESPECIALES, TAGS_ESPECIALES, TAGS_RESERVADOS, definicion, tagEspecial, tagReservado
+} from './especiales.js';
+export type { TagEspecial, DefinicionEspecial } from './especiales.js';
 export type { Duracion } from './recipe.js';
 
 /** Un valor que no matchea cae en "sin definir" en vez de romper el filtro. */
@@ -75,7 +81,8 @@ export function filaDesde(receta?: Partial<Receta> | null, ubicacion?: Partial<U
     ingredientes: unirConBarra(ingredientesIndexables(r)),
     mtime: String(typeof u.mtime === 'number' ? u.mtime : 0),
     // La cabecera ya resuelta a su URL: las listas la dibujan sin leer el `.md`.
-    foto: resolver(typeof r.foto === 'string' ? r.foto : null, Array.isArray(r.fotos) ? r.fotos : []) ?? ''
+    foto: resolver(typeof r.foto === 'string' ? r.foto : null, Array.isArray(r.fotos) ? r.fotos : []) ?? '',
+    tags_especiales: unirConBarra(Array.isArray(r.tags_especiales) ? r.tags_especiales : [])
   };
 
   return COLUMNAS.map(c => String(celdas[c] ?? ''));
@@ -110,84 +117,27 @@ export function entradaDesdeFila(fila?: unknown): Entrada {
     tags: partir(texto.tags),
     ingredientes: partir(texto.ingredientes),
     mtime: isNaN(mtimeNum) || mtimeNum < 0 ? 0 : mtimeNum,
-    foto: texto.foto
+    foto: texto.foto,
+    tags_especiales: especialesValidos(partir(texto.tags_especiales)).validos
   };
 }
 
-/**
- * Los tags que la app dibuja distinto: ícono propio y lugar fijo al principio
- * de cualquier fila de tags. No son estados: son tags, y viven en la
- * lista `tags` del `.md` como cualquier otro. El orden es el mismo en todos
- * lados: primero lo que se busca para cocinar, al final lo que falta terminar.
- */
-export const TAGS_ESPECIALES = ['favorito', 'menú diario', 'probar', 'borrador'] as const;
-export type TagEspecial = (typeof TAGS_ESPECIALES)[number];
-
-/**
- * Formas que se leen como cada especial, además de lo que ya cubre
- * `normalizar` (mayúsculas y tildes). `favorito` tiene género y número;
- * `borrador` además acepta `incompleta` y sus formas, para que los `.md`
- * escritos afuera con esa palabra se lean como borrador.
- */
-const FORMAS_ALTERNATIVAS: Record<TagEspecial, readonly string[]> = {
-  favorito: ['favorita', 'favoritos', 'favoritas'],
-  'menú diario': [],
-  probar: [],
-  borrador: ['borradores', 'incompleta', 'incompleto', 'incompletos', 'incompletas']
-};
-
-/** Contradicen a `borrador`: un tag así diría lo contrario que el especial. */
-const FORMAS_TERMINADO = ['terminado', 'terminada', 'terminados', 'terminadas'] as const;
-
-/**
- * Tags que no se escriben a mano. Los cuatro especiales tienen su botón en el
- * editor, y escribirlos crearía una segunda forma de poner lo mismo;
- * `terminado` contradice a `borrador`. Derivada, para que no diverja de la
- * lista de especiales.
- */
-export const TAGS_RESERVADOS: readonly string[] = [
-  ...TAGS_ESPECIALES,
-  ...TAGS_ESPECIALES.flatMap(t => FORMAS_ALTERNATIVAS[t]),
-  ...FORMAS_TERMINADO
-];
-
-/** Si el tag es uno de los reservados, sin importar mayúsculas ni acentos. */
-export function tagReservado(valor: unknown): boolean {
-  const n = normalizar(String(valor ?? ''));
-  return TAGS_RESERVADOS.some(t => normalizar(t) === n);
+/** Lleva ese especial. */
+export function tieneEspecial(x: { tags_especiales: readonly TagEspecial[] }, especial: TagEspecial): boolean {
+  return (Array.isArray(x?.tags_especiales) ? x.tags_especiales : []).includes(especial);
 }
 
-/** El especial que le corresponde a un tag escrito de cualquier forma, o `null`. */
-export function tagEspecial(valor: unknown): TagEspecial | null {
-  const n = normalizar(String(valor ?? ''));
-  if (!n) return null;
-  return TAGS_ESPECIALES.find(t =>
-    normalizar(t) === n || FORMAS_ALTERNATIVAS[t].some(f => normalizar(f) === n)) ?? null;
-}
+export const esFavorita = (x: { tags_especiales: readonly TagEspecial[] }): boolean => tieneEspecial(x, 'favorito');
 
-/**
- * Si dos tags escritos son el mismo. Uno igual siempre coincide; si el
- * buscado es un especial, también coincide cualquier forma —vieja o
- * nueva— de ese mismo especial.
- */
+/** Si dos tags escritos son el mismo, sin mirar mayúsculas ni tildes. */
 export function coincideTag(escrito: string, buscado: string): boolean {
-  if (normalizar(escrito) === normalizar(buscado)) return true;
-  const esp = tagEspecial(buscado);
-  return esp !== null && tagEspecial(escrito) === esp;
+  return normalizar(escrito) === normalizar(buscado);
 }
-
-/** Lleva ese especial, escrito como sea. */
-export function tieneEspecial(x: { tags: string[] }, especial: TagEspecial): boolean {
-  const tags = Array.isArray(x?.tags) ? x.tags : [];
-  return tags.some(t => tagEspecial(t) === especial);
-}
-
-export const esFavorita = (x: { tags: string[] }): boolean => tieneEspecial(x, 'favorito');
 
 /**
  * Si una receta nueva tiene algo que guardar (C04.3b.1): algún campo escrito
- * —por el usuario o precargado por Compartir—, una foto en el depósito, o un
- * tag que no sea `borrador`, que se pone solo. Sin esto, el título por defecto
+ * —por el usuario o precargado por Compartir—, una foto en el depósito, un
+ * tag, o un especial que no sea `borrador`, que se pone solo. Sin esto, el título por defecto
  * de un borrador dejaría guardar un formulario vacío.
  */
 export function tieneAlgoCargado(receta: Receta): boolean {
@@ -197,17 +147,8 @@ export function tieneAlgoCargado(receta: Receta): boolean {
   ];
   return campos.some(c => (c ?? '').trim() !== '') ||
     receta.fotos.length > 0 ||
-    receta.tags.some(t => tagEspecial(t) !== 'borrador');
-}
-
-/** Los especiales primero, en el orden de `TAGS_ESPECIALES`; el resto como venía. */
-export function ordenarTags(tags: string[]): string[] {
-  const lista = Array.isArray(tags) ? tags : [];
-  const peso = (t: string): number => {
-    const esp = tagEspecial(t);
-    return esp ? TAGS_ESPECIALES.indexOf(esp) : TAGS_ESPECIALES.length;
-  };
-  return [...lista].sort((a, b) => peso(a) - peso(b));
+    receta.tags.length > 0 ||
+    receta.tags_especiales.some(t => t !== 'borrador');
 }
 
 /** A–Z es el orden de siempre; `duracion` es el del conmutador de las listas. */
@@ -247,9 +188,9 @@ export function filtrarPorDuracion(entradas: Entrada[], activas: string[]): Entr
   return lista.filter(e => activas.includes(duracionValida(e.tiempo)));
 }
 
-/** La lista de tags con ese especial puesto o sacado, en su forma canónica y sin tocar los demás. */
-export function conEspecial(tags: string[], especial: TagEspecial, puesto: boolean): string[] {
-  const sin = (Array.isArray(tags) ? tags : []).filter(t => tagEspecial(t) !== especial);
-  return puesto ? [especial, ...sin] : sin;
+/** Los especiales con ese puesto o sacado, en el orden de la tabla. */
+export function conEspecial(especiales: readonly TagEspecial[], especial: TagEspecial, puesto: boolean): TagEspecial[] {
+  const puestos = new Set((Array.isArray(especiales) ? especiales : []).filter(t => t !== especial));
+  if (puesto) puestos.add(especial);
+  return TAGS_ESPECIALES.filter(t => puestos.has(t));
 }
-

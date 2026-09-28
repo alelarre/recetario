@@ -21,9 +21,9 @@ fuente: Cuaderno
 `);
 
 describe('filaDesde', () => {
-  it('tiene exactamente las trece columnas, en orden', () => {
-    expect(COLUMNAS).toHaveLength(13);
-    expect(filaDesde(RECETA, UBICACION)).toHaveLength(13);
+  it('tiene exactamente las catorce columnas, en orden', () => {
+    expect(COLUMNAS).toHaveLength(14);
+    expect(filaDesde(RECETA, UBICACION)).toHaveLength(14);
   });
 
   it('la fila no tiene la columna completa', () => {
@@ -103,37 +103,37 @@ foto: foto:3
   // Tests de defensa
   it('tolera receta null', () => {
     const f = filaDesde(null, UBICACION);
-    expect(f).toHaveLength(13);
+    expect(f).toHaveLength(14);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera receta como número', () => {
     const f = filaDesde(invalido(42), UBICACION);
-    expect(f).toHaveLength(13);
+    expect(f).toHaveLength(14);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera receta como objeto incompleto', () => {
     const f = filaDesde({ titulo: 'X' }, UBICACION);
-    expect(f).toHaveLength(13);
+    expect(f).toHaveLength(14);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera ubicacion null', () => {
     const f = filaDesde(RECETA, null);
-    expect(f).toHaveLength(13);
+    expect(f).toHaveLength(14);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera ubicacion como número', () => {
     const f = filaDesde(RECETA, invalido(42));
-    expect(f).toHaveLength(13);
+    expect(f).toHaveLength(14);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 
   it('tolera ubicacion como objeto incompleto', () => {
     const f = filaDesde(RECETA, { id: 'id1' });
-    expect(f).toHaveLength(13);
+    expect(f).toHaveLength(14);
     expect(f.every(celda => typeof celda === 'string')).toBe(true);
   });
 });
@@ -206,7 +206,7 @@ describe('dificultadValida', () => {
 });
 
 describe('tagReservado', () => {
-  it('las cuatro formas de cada palabra reservada', () => {
+  it('los especiales, sus formas y las de terminado', () => {
     for (const t of TAGS_RESERVADOS) expect(tagReservado(t)).toBe(true);
     for (const t of ['incompleta', 'incompletos', 'terminada', 'terminadas',
                      'favorita', 'favoritos', 'favoritas', 'probar']) {

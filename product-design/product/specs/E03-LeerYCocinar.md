@@ -54,12 +54,12 @@ receta entera.
 - [ ] **Los tres dicen qué son al apoyar el mouse**: *Marcar como favorita* —o *Sacar de favoritos*, según cómo esté—, *Compartir* y *Ver el archivo en Drive*. En el teléfono no hay dónde apoyar el dedo: ahí lo que los nombra es el lector de pantalla.
 - [ ] El **link al `.md` en Drive** va con el logo de Drive y la etiqueta `.md`, que abre en otra pestaña. Es un dato al margen y no un botón: sin caja y más chico que los controles.
 - [ ] El link sólo aparece si la receta está en el índice: sin fila no se conoce su id de archivo.
-- [ ] **La estrella de favorito** vive en el encabezado, a la izquierda de compartir. Un toque pone el tag `favorito` y otro lo saca; mientras se escribe en Drive se llena de izquierda a derecha en loop, y el resultado se dibuja recién con la respuesta —si falla, vuelve como estaba y avisa arriba de la receta, sin *Reintentar*: la estrella sigue a la vista y es el reintento (`E05-Cimientos.md` R1). Mientras escribe no acepta otro toque.
+- [ ] **La estrella de favorito** vive en el encabezado, a la izquierda de compartir. Un toque pone `favorito` en `tags_especiales` y otro lo saca; mientras se escribe en Drive se llena de izquierda a derecha en loop, y el resultado se dibuja recién con la respuesta —si falla, vuelve como estaba y avisa arriba de la receta, sin *Reintentar*: la estrella sigue a la vista y es el reintento (`E05-Cimientos.md` R1). Mientras escribe no acepta otro toque.
 - [ ] **El ícono de compartir** abre la ficha de compartir (C03.7.1).
 
 #### C03.1.3 — Estados de la receta *(J6)*
 
-- [ ] Borrador: **se muestra como cualquier receta.** El tag `borrador` no aparece en la fila de tags, en ninguna de sus formas (C05.1.4), y no hay marca, estado ni aviso de lo que falta: a un borrador se llega desde Borradores, que abre el editor (`E01-CapturaYBorradores.md` C01.4.1). Si la fila de tags queda vacía, no se dibuja.
+- [ ] Borrador: **se muestra como cualquier receta.** `borrador` no aparece en la fila de tags (`E05-Cimientos.md` C05.1.4), y no hay marca, estado ni aviso de lo que falta: a un borrador se llega desde Borradores, que abre el editor (`E01-CapturaYBorradores.md` C01.4.1). Si la fila de tags queda vacía, no se dibuja.
 - [ ] Sin foto: el bloque de foto no se dibuja y la receta empieza por el título.
 - [ ] Cargando: mientras se lee el `.md`, el velo tapa la pantalla de la que se llegó (`E05-Cimientos.md` R8), en su forma de espera. La receta se dibuja entera cuando llega.
 - [ ] Sin red: no se puede abrir; el aviso *«No se pudo leer la receta.»* con **Reintentar** (C05.8.1).
@@ -229,7 +229,7 @@ revocar.
 #### C03.7.3 — Link *(J6)*
 
 - [ ] El link abre la vista de invitado (C03.7.5): `…/#/ver?r=<carga>`.
-- [ ] **La receta viaja entera en el fragmento del link**, comprimida: el `.md` sin tags ni claves extra, más el nombre de la categoría, que el `.md` no lleva. No llega a ningún servidor.
+- [ ] **La receta viaja entera en el fragmento del link**, comprimida: el `.md` sin `tags`, sin `tags_especiales` y sin claves extra, más el nombre de la categoría, que el `.md` no lleva. No llega a ningún servidor.
 - [ ] **Las fotos de Drive no viajan:** el depósito va sólo con las externas, la cabecera sólo si apunta a una de ellas, y las referencias a las que no viajaron se sacan del texto (C05.1.5). Quien abre el link no tiene token.
 - [ ] **Lo que viaja va sin resolver:** las externas siguen siendo `foto:N` con su línea del depósito, y resuelve el lector. Así el invitado puede calcular el uso de cada foto y no dibujar ninguna dos veces (C05.1.5), y la URL de una foto usada viaja una sola vez en vez de repetirse en cada referencia.
 - [ ] La carga empieza con la versión del formato; una carga de otra versión se trata como link roto.

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { parse, sePuedeTerminar } from '../src/recipe.js';
 import { tieneAlgoCargado } from '../src/catalogo.js';
+import type { Receta } from '../src/tipos.js';
 
 describe('sePuedeTerminar: sólo habilita el control del editor', () => {
   const completa = parse(`---
@@ -48,17 +49,16 @@ titulo: Rabas
 describe('tieneAlgoCargado: lo mínimo para guardar una receta nueva', () => {
   const vacia = parse('');
 
-  it('vacía, o con sólo el tag borrador, no tiene nada', () => {
+  it('vacía, o con sólo borrador, no tiene nada', () => {
     expect(tieneAlgoCargado(vacia)).toBe(false);
-    expect(tieneAlgoCargado({ ...vacia, tags: ['borrador'] })).toBe(false);
-    expect(tieneAlgoCargado({ ...vacia, tags: ['incompleta'] })).toBe(false);
+    expect(tieneAlgoCargado({ ...vacia, tags_especiales: ['borrador'] })).toBe(false);
   });
 
   it('lo que es sólo espacio no cuenta', () => {
     expect(tieneAlgoCargado({ ...vacia, titulo: '  ', notas: '\n \n' })).toBe(false);
   });
 
-  it.each([
+  it.each<[string, Partial<Receta>]>([
     ['el título', { titulo: 'Pan' }],
     ['la fuente', { fuente: 'https://ejemplo.com' }],
     ['el rinde', { rinde: '4 porciones' }],
@@ -71,8 +71,8 @@ describe('tieneAlgoCargado: lo mínimo para guardar una receta nueva', () => {
     ['las variaciones', { variaciones: '- Con semillas.' }],
     ['las notas', { notas: 'De la abuela.' }],
     ['una foto en el depósito', { fotos: [{ n: 1, url: '' }] }],
-    ['un tag que no es borrador', { tags: ['borrador', 'horno'] }],
-    ['otro tag especial', { tags: ['probar'] }]
+    ['un tag', { tags: ['horno'], tags_especiales: ['borrador'] }],
+    ['otro especial', { tags_especiales: ['borrador', 'probar'] }]
   ])('con %s, tiene algo', (_que, campo) => {
     expect(tieneAlgoCargado({ ...vacia, ...campo })).toBe(true);
   });

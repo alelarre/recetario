@@ -57,13 +57,13 @@ error.
 
 ### F04.2 — Un formulario de campos separados
 
-Título, categoría, tags, rinde, duración, dificultad, fuente y foto, cada uno
-con su control. **El frontmatter YAML no se ve:** es estructura, no contenido,
+Título, categoría, tags, tags especiales, rinde, duración, dificultad, fuente
+y foto, cada uno con su control. **El frontmatter YAML no se ve:** es estructura, no contenido,
 y el archivo se arma solo al guardar.
 
 #### C04.2.1 — Los campos del frontmatter *(J7)*
 
-- [ ] Un control por clave: título (texto), tags (lista editable), rinde y fuente (texto), dificultad (elección de tres), `tiempo` con los cinco botones de duración (C04.2.1c) y `foto` con el selector de **Portada** (C04.2.1d).
+- [ ] Un control por clave: título (texto), tags (lista editable), `tags_especiales` (un botón por especial, C04.4.1), rinde y fuente (texto), dificultad (elección de tres), `tiempo` con los cinco botones de duración (C04.2.1c) y `foto` con el selector de **Portada** (C04.2.1d).
 - [ ] **El YAML no se muestra en ningún momento.**
 - [ ] Solo el título es obligatorio, salvo en un borrador; una receta nueva, además, tiene que tener algo cargado (C04.3b.1). **Vaciar el título de una receta que ya existe no vuelve al que tenía:** sin `borrador`, el aviso dice *«Ponele un título antes de guardar.»*; en un borrador, se guarda con el título por defecto, como al crearlo (C04.3b.1).
 - [ ] Un campo que se deja vacío **no se escribe** en el frontmatter: no quedan claves vacías.
@@ -73,12 +73,12 @@ y el archivo se arma solo al guardar.
 #### C04.2.1b — Los tags, y las palabras que la app se reserva *(J7)*
 
 - [ ] Los tags comunes puestos se dibujan como pills, cada una con su cruz, que la saca; debajo va el campo para agregar otro, que sugiere los tags que ya existen —nunca los reservados—. Se suma con Enter o con una coma, y también al salir del campo: lo escrito no se pierde por tocar *Guardar* sin apretar Enter. Los especiales no: tienen su botón (C04.4.1) y no se dibujan dos veces.
-- [ ] Hay **palabras reservadas** que el editor no deja escribir a mano: `favorito`, `menú diario`, `probar` y `borrador`, cada uno en sus formas alternativas, más `terminado` en sus cuatro formas —masculino, femenino, singular y plural—.
+- [ ] Hay **palabras reservadas** que el editor no deja escribir a mano: los cuatro especiales —`favorito`, `menú diario`, `probar` y `borrador`—, `favorita`, `favoritos`, `favoritas`, `borradores`, `incompleta` en sus cuatro formas y `terminado` en sus cuatro formas —masculino, femenino, singular y plural— (`E05-Cimientos.md` C05.1.4).
 - [ ] `terminado` está reservada porque contradice a `borrador` (C05.3.1): un tag que contradiga a otro tag especial es ambigüedad pura.
 - [ ] Los cuatro especiales están reservados porque tienen su propio control: escribirlos a mano duplicaría el botón.
 - [ ] Al intentar agregar una reservada, el tag **no entra** y aparece una línea de aviso sin acción, *"Tag no permitido"* (C05.9.1): no es un error del usuario, es un nombre tomado.
 - [ ] La comparación ignora mayúsculas y acentos, igual que la búsqueda.
-- [ ] **La app no borra ni corrige** una palabra reservada que ya esté en un `.md` escrito afuera: la muestra como cualquier otro tag (R4).
+- [ ] **Una palabra reservada que ya esté en `tags` en un `.md` escrito afuera se ignora al leer** (`E05-Cimientos.md` C05.1.4): no se dibuja como pill y no se escribe al guardar.
 
 #### C04.2.1c — El campo «Duración» *(J7)*
 
@@ -241,8 +241,8 @@ cuándo se lo puede sacar.
 
 - [ ] Dentro del campo **«Tags»**, una fila con **un botón por tag especial**
   —`favorito`, `menú diario`, `probar` y `borrador`, en ese orden—, arriba de
-  los tags comunes y del campo para agregar. Apretado: la receta tiene el tag.
-  Suelto: no lo tiene. Tocarlo lo pone o lo saca, con su `aria-pressed`. Cada
+  los tags comunes y del campo para agregar. Apretado: la receta tiene el tag
+  en `tags_especiales`. Suelto: no lo tiene. Tocarlo lo pone o lo saca, con su `aria-pressed`. Cada
   botón lleva el ícono de su tag, salvo `borrador`, que no tiene. No hay fila
   «Estado» ni otro control de completitud: es este botón.
 - [ ] **Una receta nueva nace con `borrador` puesto** (C04.3b.1): no está

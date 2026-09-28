@@ -19,7 +19,7 @@ describe('config', () => {
     expect(Number.isInteger(SCHEMA_VERSION)).toBe(true);
   });
 
-  it('SCHEMA_VERSION es 7: _sin-categoria/ entra al índice', () => {
-    expect(SCHEMA_VERSION).toBe(7);
+  it('SCHEMA_VERSION es 8: el índice tiene la columna tags_especiales', () => {
+    expect(SCHEMA_VERSION).toBe(8);
   });
 });

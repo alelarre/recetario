@@ -10,7 +10,7 @@ import { escapar, imgDe } from './markdown.js';
 import { colorCategoria, fotoCategoria, slugCategoria } from './categorias.js';
 import { ICO, ICONO_DE_DURACION } from './iconos.js';
 import { textoVersion } from '../version.js';
-import { tagEspecial, ordenarTags, tieneEspecial, TAGS_ESPECIALES, duracionValida, DURACIONES } from '../catalogo.js';
+import { tagEspecial, definicion, ESPECIALES, duracionValida, DURACIONES } from '../catalogo.js';
 import type { Entrada, FotoDeReceta, UsoDeFoto } from '../tipos.js';
 import type { TagEspecial, Duracion, Orden } from '../catalogo.js';
 import type { DestinoLateral } from './router.js';
@@ -124,17 +124,6 @@ export interface OpcionesTarjeta {
   destino?: 'receta' | 'editor';
 }
 
-/**
- * Los especiales que llevan marca en la tarjeta, y cómo dice cada una lo que
- * es para quien no la ve. `borrador` no tiene: el borrador se ve sólo en su
- * lista, y ahí una marca en cada tarjeta no diría nada.
- */
-type ConMarca = Exclude<TagEspecial, 'borrador'>;
-const NOMBRE_DE_MARCA: Record<ConMarca, string> = {
-  favorito: 'Favorita', 'menú diario': 'Menú diario', probar: 'Para probar'
-};
-const CON_MARCA = TAGS_ESPECIALES.filter((t): t is ConMarca => t !== 'borrador');
-
 /** Foto, título y una línea de contexto. Alto total 80 px. */
 export function tarjeta(e: Entrada, { motivo, accion, destino = 'receta' }: OpcionesTarjeta = {}): string {
   const dur = duracionConReloj(e.tiempo);
@@ -148,12 +137,14 @@ export function tarjeta(e: Entrada, { motivo, accion, destino = 'receta' }: Opci
   // El `title` es el globito del escritorio: en el teléfono no hay dónde
   // apoyar el dedo, y ahí lo que dice qué es cada marca sigue siendo el
   // `aria-label`.
-  const puestas = CON_MARCA.filter(t => tieneEspecial(e, t));
+  // Llevan marca los especiales que se muestran en la receta y tienen ícono:
+  // `borrador` no, porque se ve sólo en su lista y ahí una marca no diría nada.
+  const puestas = ESPECIALES.filter(d => d.enReceta && d.icono && e.tags_especiales.includes(d.nombre));
   const marcas = puestas.length
-    ? '<span class="marcas-esq">' + puestas.map(t =>
-        `<span class="marca${t === 'favorito' ? ' favorita' : ''}" role="img" ` +
-        `aria-label="${NOMBRE_DE_MARCA[t]}" title="${NOMBRE_DE_MARCA[t]}">` +
-        `${iconoDeTag(t)}</span>`).join('') +
+    ? '<span class="marcas-esq">' + puestas.map(d =>
+        `<span class="marca${d.nombre === 'favorito' ? ' favorita' : ''}" role="img" ` +
+        `aria-label="${d.etiquetaMarca ?? ''}" title="${d.etiquetaMarca ?? ''}">` +
+        `${iconoDeTag(d.nombre)}</span>`).join('') +
       '</span>'
     : '';
   const estilo = puestas.length ? ` style="--marcas:${puestas.length}"` : '';
@@ -199,13 +190,11 @@ export function avisoAlGuardar(error: string): string {
     : aviso({ texto: error });
 }
 
-/** El ícono del tag especial, o nada si es un tag común o `borrador`, que no tiene presentación propia. */
+/** El ícono del tag especial, o nada si es un tag común o un especial sin presentación propia. */
 export function iconoDeTag(tag: string): string {
   const esp = tagEspecial(tag);
-  if (esp === 'favorito') return ICO.estrella;
-  if (esp === 'probar') return ICO.marcador;
-  if (esp === 'menú diario') return ICO.calendario;
-  return '';
+  const icono = esp ? definicion(esp).icono : null;
+  return icono ? ICO[icono] : '';
 }
 
 export interface OpcionesChip {
@@ -234,12 +223,13 @@ export function chipTag(tag: string, { activo, cantidad, fijo, quieto }: Opcione
 
 /**
  * Los chips sueltos, sin el contenedor: los usa la receta, donde los tags se
- * leen y no se tocan (C02.6.3). `borrador` no va: como en toda lista de tags,
- * el borrador se ve sólo en su propia lista.
+ * leen y no se tocan (C02.6.3). Primero los especiales que se muestran en la
+ * receta, en su orden —`borrador` no: el borrador se ve sólo en su propia
+ * lista—, y después los comunes.
  */
-export function chipsSueltos(tags: string[]): string {
-  return ordenarTags(Array.isArray(tags) ? tags : [])
-    .filter(tag => tagEspecial(tag) !== 'borrador')
+export function chipsSueltos(tags: string[], especiales: readonly TagEspecial[] = []): string {
+  const propios = ESPECIALES.filter(d => d.enReceta && especiales.includes(d.nombre)).map(d => d.nombre);
+  return [...propios, ...(Array.isArray(tags) ? tags : [])]
     .map(tag => chipTag(tag, { quieto: true })).join('');
 }
 
@@ -293,8 +283,9 @@ export function carruselTags(
   tags: { tag: string; cantidad: number }[], { activos = [], tope, fijo }: OpcionesCarrusel = {}
 ): string {
   const lista = Array.isArray(tags) ? tags : [];
-  const especiales = TAGS_ESPECIALES
-    .map(t => lista.find(x => tagEspecial(x.tag) === t))
+  const especiales = ESPECIALES
+    .filter(d => d.enChips)
+    .map(d => lista.find(x => tagEspecial(x.tag) === d.nombre))
     .filter((x): x is { tag: string; cantidad: number } => !!x && x.cantidad > 0);
   const comunes = lista
     .filter(x => !tagEspecial(x.tag))

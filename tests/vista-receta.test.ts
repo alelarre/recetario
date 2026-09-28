@@ -171,11 +171,11 @@ describe('Receta en lectura', () => {
     expect(html).toContain('Un tinto.');
   });
 
-  it('el tag borrador no se muestra en la receta, ni en su forma vieja', () => {
-    const r = parse('---\ntitulo: Pan\ntags: [incompleta, horno]\n---\n');
+  it('borrador no se muestra en la receta', () => {
+    const r = parse('---\ntitulo: Pan\ntags: [horno]\ntags_especiales: [borrador]\n---\n');
     const html = renderReceta({ entrada: entradaFalsa(), receta: r });
     expect(html).toContain('horno');
-    expect(html).not.toContain('incompleta');
+    expect(html).not.toContain('>borrador<');
     expect(html).not.toContain('chip pend');
     expect(html).not.toContain('class="borr"');
     // El único camino al editor es el botón Editar.
@@ -183,7 +183,7 @@ describe('Receta en lectura', () => {
   });
 
   it('con sólo borrador no hay fila de tags', () => {
-    const r = parse('---\ntitulo: A\ntags: [borrador]\n---\n');
+    const r = parse('---\ntitulo: A\ntags_especiales: [borrador]\n---\n');
     expect(renderReceta({ entrada: null, receta: r })).not.toContain('<div class="chips">');
   });
 
@@ -256,7 +256,7 @@ describe('Receta en lectura', () => {
   });
 
   it('con la receta ya favorita, el globito de la estrella ofrece sacarla', () => {
-    const html = renderReceta({ entrada: entradaFalsa(), receta: parse('---\ntitulo: A\ntags: [favorito]\n---\n') });
+    const html = renderReceta({ entrada: entradaFalsa(), receta: parse('---\ntitulo: A\ntags_especiales: [favorito]\n---\n') });
     expect(html).toContain('title="Sacar de favoritos"');
   });
 
@@ -409,7 +409,7 @@ describe('la estrella de favorito', () => {
   });
 
   it('se enciende cuando la receta lleva el tag', () => {
-    const conTag = parse('---\ntitulo: Asado\ntags: [favorito]\n---\n');
+    const conTag = parse('---\ntitulo: Asado\ntags_especiales: [favorito]\n---\n');
     const html = renderReceta({ entrada: entradaFalsa(), receta: conTag });
     expect(html).toContain('class="fav on"');
     expect(html).toContain('aria-pressed="true"');
@@ -445,21 +445,23 @@ describe('la estrella de favorito', () => {
   });
 
   it('los tags especiales van primeros y con su ícono', () => {
-    const conTags = parse('---\ntitulo: Asado\ntags: [horno, probar]\n---\n');
+    const conTags = parse('---\ntitulo: Asado\ntags: [horno]\ntags_especiales: [probar]\n---\n');
     const html = renderReceta({ entrada: entradaFalsa(), receta: conTags });
     expect(html.indexOf('probar')).toBeLessThan(html.indexOf('horno'));
     expect(html).toContain(ICO.marcador);
   });
 
   it('favorito no va en la fila de tags: ya está la estrella del encabezado', () => {
-    const fav = parse('---\ntitulo: Asado\ntags: [favorito, horno]\n---\n');
+    const fav = parse('---\ntitulo: Asado\ntags: [horno]\ntags_especiales: [favorito, probar]\n---\n');
     const html = renderReceta({ entrada: entradaFalsa(), receta: fav });
     expect(html).not.toContain('favorito</span>');
+    expect(html).toContain('probar</span>');
+    expect(html).toContain('aria-pressed="true"');
     expect(html).toContain('<span class="chip">horno</span>');
   });
 
   it('una receta con sólo favorito no arma la fila de chips vacía', () => {
-    const fav = parse('---\ntitulo: Asado\ntags: [favoritas]\n---\n');
+    const fav = parse('---\ntitulo: Asado\ntags_especiales: [favorito]\n---\n');
     expect(renderReceta({ entrada: entradaFalsa(), receta: fav })).not.toContain('<div class="chips">');
   });
 });

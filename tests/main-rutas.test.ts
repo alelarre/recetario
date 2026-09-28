@@ -142,7 +142,7 @@ const estadoInicial = () => ({
   /** La receta que llegó con cada borrado, o `null` si el store tenía que leerla. */
   recetasAlBorrar: [] as (Receta | null)[],
   /** Los tags con los que se guardó cada vez que se tocó la estrella, en orden. */
-  guardados: [] as { tags: string[]; titulo?: string | null | undefined }[],
+  guardados: [] as { tags: string[]; tags_especiales: string[]; titulo?: string | null | undefined }[],
   /** Cuántas veces más falla `guardar` antes de andar, para probar el aviso de la estrella. */
   fallaGuardar: 0,
   /** Lo que devuelve `store.tagsDe()`, ya ordenado por cantidad. */
@@ -217,12 +217,12 @@ const storeFake = {
   },
   guardar: async (
     _id: string,
-    receta: { titulo?: string | null; tags: string[]; fotos?: { n: number; url: string }[] },
+    receta: { titulo?: string | null; tags: string[]; tags_especiales: string[]; fotos?: { n: number; url: string }[] },
     opciones?: { fotos?: CambiosDeFotos; carpetaDestino?: string }
   ) => {
     estado.opcionesGuardar.push({ ...opciones });
     if (estado.fallaGuardar > 0) { estado.fallaGuardar--; throw new Error('red'); }
-    estado.guardados.push({ tags: receta.tags, titulo: receta.titulo });
+    estado.guardados.push({ tags: receta.tags, tags_especiales: receta.tags_especiales, titulo: receta.titulo });
     estado.cambiosDeFotos.push(opciones?.fotos ?? null);
     estado.depositos.push(receta.fotos ?? []);
   },
@@ -1500,7 +1500,7 @@ describe('main.ts: las rutas', () => {
       const todas = [
         entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags: ['horno'], tiempo: '~30 min' }),
         entradaFalsa({ id_archivo: 'f2', titulo: 'Arroz', categoria: 'Carnes', tags: ['sinTiempo'] }),
-        entradaFalsa({ id_archivo: 'f3', titulo: 'Zapallo', categoria: 'Carnes', tags: ['sinTiempo', 'favorito'] })
+        entradaFalsa({ id_archivo: 'f3', titulo: 'Zapallo', categoria: 'Carnes', tags: ['sinTiempo'], tags_especiales: ['favorito'] })
       ];
       return todas.filter(e => activos.every(t => e.tags.includes(t)));
     };
@@ -1529,7 +1529,7 @@ describe('main.ts: las rutas', () => {
       const todas = [
         entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags: ['horno'], tiempo: '~30 min' }),
         entradaFalsa({ id_archivo: 'f2', titulo: 'Arroz', categoria: 'Carnes', tags: ['horno', 'sinTiempo'] }),
-        entradaFalsa({ id_archivo: 'f3', titulo: 'Zapallo', categoria: 'Carnes', tags: ['horno', 'sinTiempo', 'favorito'] })
+        entradaFalsa({ id_archivo: 'f3', titulo: 'Zapallo', categoria: 'Carnes', tags: ['horno', 'sinTiempo'], tags_especiales: ['favorito'] })
       ];
       return todas.filter(e => activos.every(t => e.tags.includes(t)));
     };
@@ -2407,7 +2407,7 @@ describe('main.ts: las rutas', () => {
     });
 
     it('soltar y apretar borrador oculta y muestra Convertir con Agente, sin redibujar', async () => {
-      estado.md = '---\ntitulo: Milanesas\ntags: [borrador]\n---\n';
+      estado.md = '---\ntitulo: Milanesas\ntags_especiales: [borrador]\n---\n';
       const { abrir, tocar, botonConvertir, pinturas } = await montar();
       await abrir('#/r/f1/editar');
       const antes = pinturas.length;
@@ -2736,17 +2736,19 @@ describe('main.ts: las rutas', () => {
 
       await tocar('favorito');
 
-      expect(estado.guardados.at(-1)?.tags).toEqual(['favorito', 'frito']);
+      expect(estado.guardados.at(-1)?.tags_especiales).toEqual(['favorito']);
+      expect(estado.guardados.at(-1)?.tags).toEqual(['frito']);
       expect(app.innerHTML).toContain('class="fav on"');
     });
 
     it('tocarla de nuevo lo saca', async () => {
-      estado.md = '---\ntitulo: Rabas\ntags: [favorito, frito]\n---\n';
+      estado.md = '---\ntitulo: Rabas\ntags: [frito]\ntags_especiales: [favorito]\n---\n';
       const { abrir, tocar, app } = await montar();
       await abrir('#/r/f1');
 
       await tocar('favorito');
 
+      expect(estado.guardados.at(-1)?.tags_especiales).toEqual([]);
       expect(estado.guardados.at(-1)?.tags).toEqual(['frito']);
       expect(app.innerHTML).not.toContain('class="fav on"');
     });
@@ -2934,7 +2936,7 @@ describe('main.ts: las rutas', () => {
       } },
       { nombre: 'convertir con el agente', accion: 'convertir-con-agente', destino: '#/r/nuevo-1', preparar: async abrir => {
         await abrir('#/nueva');
-        estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+        estado.formulario = { titulo: 'Focaccia', carpeta: '', tags_especiales: 'borrador' };
       } },
       { nombre: 'crear una categoría', accion: 'guardar-categoria', destino: '#/categorias', preparar: async abrir => {
         await abrir('#/categorias'); await abrir('#/categorias/nueva');
@@ -3035,7 +3037,7 @@ describe('main.ts: las rutas', () => {
         canShare: () => true
       });
       await abrir('#/nueva');
-      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags_especiales: 'borrador' };
       await tocar('convertir-con-agente');
       expect(alMandar).toEqual({ puesto: true, tilde: false });
     });
@@ -3495,7 +3497,7 @@ describe('main.ts: las rutas', () => {
       storeFake.buscarPorTexto = (): Coincidencias => ({
         porNombre: [
           entradaFalsa({ id_archivo: 'f1', titulo: 'Zapallo', categoria: 'Carnes' }),
-          entradaFalsa({ id_archivo: 'f2', titulo: 'Arroz', categoria: 'Carnes', tags: ['favorito'] })
+          entradaFalsa({ id_archivo: 'f2', titulo: 'Arroz', categoria: 'Carnes', tags_especiales: ['favorito'] })
         ],
         porIngrediente: [], porTag: []
       });
@@ -3569,7 +3571,7 @@ describe('main.ts: las rutas', () => {
       const original = storeFake.buscar;
       storeFake.buscar = ((filtros: { tags?: string[] } = {}) => filtros.tags?.includes('menú diario')
         ? Array.from({ length: 35 }, (_, i) => entradaFalsa({
-            id_archivo: `m${i}`, titulo: `M${String(i + 1).padStart(2, '0')}`, categoria: 'Carnes', tags: ['menú diario']
+            id_archivo: `m${i}`, titulo: `M${String(i + 1).padStart(2, '0')}`, categoria: 'Carnes', tags_especiales: ['menú diario']
           }))
         : []) as typeof storeFake.buscar;
       try {
@@ -3587,7 +3589,7 @@ describe('main.ts: las rutas', () => {
       const pedidos: unknown[] = [];
       storeFake.buscar = ((filtros: unknown) => {
         pedidos.push(filtros);
-        return [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags: ['menú diario'] })];
+        return [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags_especiales: ['menú diario'] })];
       }) as typeof storeFake.buscar;
       try {
         const { abrir, app } = await montar();
@@ -4344,7 +4346,7 @@ describe('main.ts: las rutas', () => {
       let intentos = 0;
       storeFake.guardar = async (
         id: string,
-        receta: { tags: string[]; fotos?: { n: number; url: string }[] },
+        receta: { tags: string[]; tags_especiales: string[]; fotos?: { n: number; url: string }[] },
         opciones?: { fotos?: CambiosDeFotos }
       ) => {
         if (intentos++ === 0) {
@@ -4611,7 +4613,7 @@ describe('main.ts: las rutas', () => {
       estado.compartidas = [new Blob(['a']), new Blob(['bb'])];
       const { abrir, tocar } = await montar();
       await abrir('#/nueva?fotos=2');
-      estado.formulario = { titulo: 'Pan', carpeta: '', tags: 'borrador', fotos: JSON.stringify([{ n: 1, url: '' }, { n: 2, url: '' }]) };
+      estado.formulario = { titulo: 'Pan', carpeta: '', tags_especiales: 'borrador', fotos: JSON.stringify([{ n: 1, url: '' }, { n: 2, url: '' }]) };
       await tocar('guardar');
       expect([...(estado.cambiosDeFotos[0]?.nuevas.keys() ?? [])]).toEqual([1, 2]);
     });
@@ -4707,6 +4709,15 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('data-valor="borrador" aria-pressed="true"');
     });
 
+    it('los especiales que trae una receta .md nueva se ignoran: sólo queda borrador', async () => {
+      const conEspeciales = RECIBIDA.replace('id: f1\n', 'tags_especiales: [favorito, probar]\n');
+      const { abrir, app } = await montar();
+      await abrir(`#/nueva?text=${encodeURIComponent(conEspeciales)}`);
+      await abrir('#/nueva?recibida=1');
+      expect(app.innerHTML).toContain('name="tags_especiales" value="borrador"');
+      expect(app.innerHTML).toContain('data-valor="favorito" aria-pressed="false"');
+    });
+
     it('las fotos que llegan con una receta .md se descartan sin entrar al depósito', async () => {
       estado.compartidas = [new Blob(['a'])];
       const { abrir, app } = await montar();
@@ -4720,7 +4731,7 @@ describe('main.ts: las rutas', () => {
       const { abrir, tocar } = await montar();
       await abrir(`#/nueva?text=${encodeURIComponent(RECIBIDA.replace('id: f1', 'id: otro'))}`);
       await abrir('#/nueva?recibida=1');
-      estado.formulario = { titulo: 'Focaccia recibida', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Focaccia recibida', carpeta: '', tags_especiales: 'borrador' };
       await tocar('guardar');
       expect(estado.recetasCreadas[0]?.extras).toEqual({});
     });
@@ -4730,7 +4741,7 @@ describe('main.ts: las rutas', () => {
     it('con «Sin categoría» crea sin carpeta, y no pide elegir una', async () => {
       const { abrir, tocar, app } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: 'Pan', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Pan', carpeta: '', tags_especiales: 'borrador' };
       await tocar('guardar');
       expect(estado.creadas).toEqual(['Pan']);
       expect(estado.opcionesCrear[0]).not.toHaveProperty('carpetaId');
@@ -4740,7 +4751,7 @@ describe('main.ts: las rutas', () => {
     it('con una categoría crea en su carpeta', async () => {
       const { abrir, tocar } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: 'Pan', carpeta: 'c1', tags: 'borrador' };
+      estado.formulario = { titulo: 'Pan', carpeta: 'c1', tags_especiales: 'borrador' };
       await tocar('guardar');
       expect(estado.opcionesCrear[0]?.['carpetaId']).toBe('c1');
     });
@@ -4748,7 +4759,7 @@ describe('main.ts: las rutas', () => {
     it('sin título, un borrador con algo cargado se guarda con el día y la hora', async () => {
       const { abrir, tocar } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador', notas: 'La de la abuela.' };
+      estado.formulario = { titulo: '', carpeta: '', tags_especiales: 'borrador', notas: 'La de la abuela.' };
       await tocar('guardar');
       expect(estado.creadas).toHaveLength(1);
       expect(estado.creadas[0]).toMatch(/^Borrador \d{2}\/\d{2} \d{2}:\d{2}$/);
@@ -4757,7 +4768,7 @@ describe('main.ts: las rutas', () => {
     it('una receta nueva sin nada cargado avisa y no la crea', async () => {
       const { abrir, tocar, app } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador', fotos: '[]' };
+      estado.formulario = { titulo: '', carpeta: '', tags_especiales: 'borrador', fotos: '[]' };
       await tocar('guardar');
       expect(estado.creadas).toEqual([]);
       expect(app.innerHTML).toContain('Completá algún campo antes de guardar.');
@@ -4766,7 +4777,7 @@ describe('main.ts: las rutas', () => {
     it('una receta nueva con sólo la fuente se guarda', async () => {
       const { abrir, tocar } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador', fuente: 'https://ejemplo.com/pan' };
+      estado.formulario = { titulo: '', carpeta: '', tags_especiales: 'borrador', fuente: 'https://ejemplo.com/pan' };
       await tocar('guardar');
       expect(estado.creadas).toHaveLength(1);
     });
@@ -4774,7 +4785,7 @@ describe('main.ts: las rutas', () => {
     it('una receta nueva con sólo una foto se guarda', async () => {
       const { abrir, tocar } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador', fotos: JSON.stringify([{ n: 1, url: linkDeFoto('d1') }]) };
+      estado.formulario = { titulo: '', carpeta: '', tags_especiales: 'borrador', fotos: JSON.stringify([{ n: 1, url: linkDeFoto('d1') }]) };
       await tocar('guardar');
       expect(estado.creadas).toHaveLength(1);
     });
@@ -4783,7 +4794,7 @@ describe('main.ts: las rutas', () => {
       const { abrir, tocar, app } = await montar();
       await abrir('#/r/f1/editar');
       estado.formulario = {
-        titulo: '', carpeta: '', tags: 'borrador', fotos: '[]',
+        titulo: '', carpeta: '', tags_especiales: 'borrador', fotos: '[]',
         descripcion: '', ingredientes: '', preparacion: '', variaciones: '', notas: ''
       };
       await tocar('guardar');
@@ -4803,7 +4814,7 @@ describe('main.ts: las rutas', () => {
     it('editando con «Sin categoría» elegida, guarda con carpetaDestino vacío', async () => {
       const { abrir, tocar } = await montar();
       await abrir('#/r/f1/editar');
-      estado.formulario = { titulo: 'Milanesas', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Milanesas', carpeta: '', tags_especiales: 'borrador' };
       await tocar('guardar');
       expect(estado.opcionesGuardar[0]?.['carpetaDestino']).toBe('');
     });
@@ -4820,7 +4831,7 @@ describe('main.ts: las rutas', () => {
     it('editando un borrador, vaciar el título guarda con el título por defecto', async () => {
       const { abrir, tocar } = await montar();
       await abrir('#/r/f1/editar');
-      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: '', carpeta: '', tags_especiales: 'borrador' };
       await tocar('guardar');
       expect(estado.opcionesGuardar).toHaveLength(1);
       expect(estado.guardados.at(-1)?.titulo).not.toBe('Milanesas');
@@ -4839,7 +4850,7 @@ describe('main.ts: las rutas', () => {
       const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
       await abrir(`#/nueva?text=${encodeURIComponent('---\ntitulo: Focaccia\n---\n')}`);
       await abrir('#/nueva?recibida=1');
-      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags_especiales: 'borrador' };
       await tocar('guardar');
       expect(reemplazos.at(-1)).toBe('#/r/nuevo-1');
       expect(vueltasAtras).toEqual([]);
@@ -4848,7 +4859,7 @@ describe('main.ts: las rutas', () => {
     it('guardar lo compartido también cierra en la receta nueva', async () => {
       const { abrir, tocar, reemplazos } = await montar();
       await abrir('#/nueva?text=hola');
-      estado.formulario = { titulo: 'Pan', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Pan', carpeta: '', tags_especiales: 'borrador' };
       await tocar('guardar');
       expect(reemplazos.at(-1)).toBe('#/r/nuevo-1');
     });
@@ -4913,7 +4924,7 @@ describe('main.ts: las rutas', () => {
       const { abrir, tocar } = await montar();
       await abrir('#/nueva');
       await tocar('pegar-receta');
-      estado.formulario = { titulo: 'Focaccia pegada', carpeta: '', tags: 'borrador', fotos: '[]' };
+      estado.formulario = { titulo: 'Focaccia pegada', carpeta: '', tags_especiales: 'borrador', fotos: '[]' };
       await tocar('guardar');
       expect(estado.creadas).toEqual(['Focaccia pegada']);
       expect(estado.cambiosDeFotos[0]?.sacadas).toEqual([]);
@@ -4924,7 +4935,7 @@ describe('main.ts: las rutas', () => {
       const { abrir, tocar } = await montar();
       await abrir(`#/nueva?text=${encodeURIComponent(md)}`);
       await abrir('#/nueva?recibida=1');
-      estado.formulario = { titulo: 'Focaccia recibida', carpeta: '', tags: 'borrador', fotos: '[]' };
+      estado.formulario = { titulo: 'Focaccia recibida', carpeta: '', tags_especiales: 'borrador', fotos: '[]' };
       await tocar('guardar');
       expect(estado.cambiosDeFotos[0]?.sacadas).toEqual([]);
     });
@@ -4950,7 +4961,7 @@ describe('main.ts: las rutas', () => {
       expect(global.location.hash).toBe('#/nueva');
       expect(reemplazos).toEqual([]);
       expect(app.innerHTML).toContain('name="titulo" value="Focaccia pegada"');
-      estado.formulario = { titulo: 'Focaccia pegada', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Focaccia pegada', carpeta: '', tags_especiales: 'borrador' };
       await tocar('guardar');
       expect(estado.recetasCreadas[0]?.extras).toEqual({});
     });
@@ -4969,7 +4980,7 @@ describe('main.ts: las rutas', () => {
       conShare();
       const { abrir, tocar } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: 'Focaccia', fuente: 'https://ig.com/r', notas: 'la de la abuela', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Focaccia', fuente: 'https://ig.com/r', notas: 'la de la abuela', carpeta: '', tags_especiales: 'borrador' };
       await tocar('convertir-con-agente');
       expect(estado.creadas).toEqual(['Focaccia']);
       expect(mandados).toHaveLength(1);
@@ -4985,7 +4996,7 @@ describe('main.ts: las rutas', () => {
       conShare();
       const { abrir, tocar, reemplazos } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags_especiales: 'borrador' };
       await tocar('convertir-con-agente');
       expect(reemplazos.at(-1)).toBe('#/r/nuevo-1');
     });
@@ -4994,7 +5005,7 @@ describe('main.ts: las rutas', () => {
       conShare();
       const { abrir, tocar, reemplazos, vueltasAtras } = await montar();
       await abrir('#/r/f1/editar');
-      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags: 'borrador' };
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags_especiales: 'borrador' };
       await tocar('convertir-con-agente');
       expect(mandados).toHaveLength(1);
       expect(vueltasAtras).toHaveLength(1);
@@ -5008,7 +5019,7 @@ describe('main.ts: las rutas', () => {
       try {
         const { abrir, tocar, app, reemplazos } = await montar();
         await abrir('#/nueva');
-        estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+        estado.formulario = { titulo: 'Focaccia', carpeta: '', tags_especiales: 'borrador' };
         await tocar('convertir-con-agente');
         expect(mandados).toEqual([]);
         expect(reemplazos).toEqual([]);
@@ -5022,7 +5033,7 @@ describe('main.ts: las rutas', () => {
       conShare();
       const { abrir, tocar, app } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: '', carpeta: '', tags: 'borrador', fotos: '[]' };
+      estado.formulario = { titulo: '', carpeta: '', tags_especiales: 'borrador', fotos: '[]' };
       await tocar('convertir-con-agente');
       expect(estado.creadas).toEqual([]);
       expect(mandados).toEqual([]);
@@ -5047,7 +5058,7 @@ describe('main.ts: las rutas', () => {
       const fotos = [
         { n: 3, url: linkDeFoto('d3') }, { n: 1, url: linkDeFoto('d1') }, { n: 2, url: 'https://x/y.jpg' }
       ];
-      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags: 'borrador', fotos: JSON.stringify(fotos) };
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags_especiales: 'borrador', fotos: JSON.stringify(fotos) };
       await tocar('convertir-con-agente');
       const archivos = (mandados[0]?.datos.files ?? []) as File[];
       // El archivo lleva el número con el que el depósito la nombra: la externa
@@ -5066,7 +5077,7 @@ describe('main.ts: las rutas', () => {
       const { abrir, tocar } = await montar();
       await abrir('#/r/f1/editar');
       const fotos = [{ n: 1, url: linkDeFoto('d1') }, { n: 2, url: linkDeFoto('d2') }];
-      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags: 'borrador', fotos: JSON.stringify(fotos) };
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags_especiales: 'borrador', fotos: JSON.stringify(fotos) };
       await tocar('convertir-con-agente');
       const archivos = (mandados[0]?.datos.files ?? []) as File[];
       expect(archivos.map(a => a.name)).toEqual(['foto-2.jpg']);
@@ -5081,7 +5092,7 @@ describe('main.ts: las rutas', () => {
       const { abrir, tocar, app } = await montar();
       (global.window as unknown as { open: () => null }).open = () => null;
       await abrir('#/nueva');
-      estado.formulario = { titulo: 'Focaccia', notas: 'la de la abuela', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Focaccia', notas: 'la de la abuela', carpeta: '', tags_especiales: 'borrador' };
       await tocar('convertir-con-agente');
       await abrir('#/r/nuevo-1');
       expect(app.innerHTML).toContain('La receta quedó guardada. Tocá para mandarla al agente.');
@@ -5102,7 +5113,7 @@ describe('main.ts: las rutas', () => {
       const abiertas: string[] = [];
       (global.window as unknown as { open: (u: string) => null }).open = u => { abiertas.push(u); return null; };
       await abrir('#/nueva');
-      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags_especiales: 'borrador' };
       await tocar('convertir-con-agente');
       expect(abiertas).toHaveLength(1);
       await abrir('#/r/nuevo-1');
@@ -5114,7 +5125,7 @@ describe('main.ts: las rutas', () => {
       const { abrir, tocar, app } = await montar();
       (global.window as unknown as { open: () => null }).open = () => null;
       await abrir('#/nueva');
-      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags_especiales: 'borrador' };
       await tocar('convertir-con-agente');
       await abrir('#/r/nuevo-1');
       await tocar('mandar-al-agente');
@@ -5128,7 +5139,7 @@ describe('main.ts: las rutas', () => {
       (global.window as unknown as { open: () => void }).open = () => {};
       await abrir('#/nueva');
       // Unas notas largas no entran en el link a claude.ai: el pedido se copia.
-      estado.formulario = { titulo: 'Focaccia', notas: 'x'.repeat(9000), carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Focaccia', notas: 'x'.repeat(9000), carpeta: '', tags_especiales: 'borrador' };
       await tocar('convertir-con-agente');
       expect(copiados).toHaveLength(1);
       await abrir('#/r/nuevo-1');
@@ -5146,7 +5157,7 @@ describe('main.ts: las rutas', () => {
       const pedidas: unknown[] = [];
       storeFake.buscar = (filtro?: unknown) => {
         pedidas.push(filtro);
-        return [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags: ['borrador'] })];
+        return [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', tags_especiales: ['borrador'] })];
       };
       try {
         const { abrir, app } = await montar();
@@ -5166,7 +5177,7 @@ describe('main.ts: las rutas', () => {
 
     it('tocar un borrador abre su editor, y volver vuelve a la lista por el historial', async () => {
       const original = storeFake.buscar;
-      storeFake.buscar = () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', tags: ['borrador'] })];
+      storeFake.buscar = () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', tags_especiales: ['borrador'] })];
       try {
         const { abrir, tocar, app, vueltasAtras } = await montar();
         await abrir('#/borradores');
@@ -5314,7 +5325,7 @@ describe('main.ts: las rutas', () => {
       const { abrir, tocar, vueltasAtras, reemplazos, pila } = await montar({ hash });
       await abrir('#/nueva');
       const antes = pila().length;
-      estado.formulario = { titulo: 'Pan', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Pan', carpeta: '', tags_especiales: 'borrador' };
       await tocar('guardar');
       expect(vueltasAtras).toEqual([]);
       expect(reemplazos).toEqual(['#/r/nuevo-1']);
@@ -5327,7 +5338,7 @@ describe('main.ts: las rutas', () => {
       const con = await montar();
       await con.abrir('#/r/f1');
       await con.abrir('#/r/f1/editar');
-      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags: 'borrador' };
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags_especiales: 'borrador' };
       await con.tocar('convertir-con-agente');
       expect(con.vueltasAtras).toHaveLength(1);
       expect(global.location.hash).toBe('#/r/f1');
@@ -5336,7 +5347,7 @@ describe('main.ts: las rutas', () => {
 
       vi.stubGlobal('navigator', { share: async () => {}, canShare: () => true });
       const sin = await montar({ hash: '#/r/f1/editar' });
-      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags: 'borrador' };
+      estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', tags_especiales: 'borrador' };
       await sin.tocar('convertir-con-agente');
       expect(sin.vueltasAtras).toEqual([]);
       expect(sin.reemplazos).toEqual(['#/r/f1']);
@@ -5346,7 +5357,7 @@ describe('main.ts: las rutas', () => {
       vi.stubGlobal('navigator', { share: async () => {}, canShare: () => true });
       const { abrir, tocar, vueltasAtras, reemplazos } = await montar();
       await abrir('#/nueva');
-      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags: 'borrador' };
+      estado.formulario = { titulo: 'Focaccia', carpeta: '', tags_especiales: 'borrador' };
       await tocar('convertir-con-agente');
       expect(vueltasAtras).toEqual([]);
       expect(reemplazos).toEqual(['#/r/nuevo-1']);

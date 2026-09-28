@@ -150,7 +150,7 @@ describe('editar una categoría', () => {
 });
 
 describe('borrar una categoría', () => {
-  const NOQUIS = `---\ntitulo: Ñoquis\ntags: [favorito]\n---\n\n## Preparación\n1. Amasar\n\n## Fotos\n- 1: ${linkDeFoto('fv')}\n`;
+  const NOQUIS = `---\ntitulo: Ñoquis\ntags_especiales: [favorito]\n---\n\n## Preparación\n1. Amasar\n\n## Fotos\n- 1: ${linkDeFoto('fv')}\n`;
 
   it('sus recetas pasan a _sin-categoria/ con el tag borrador, y después la carpeta va a la papelera', async () => {
     const { store, drive, sheets, indiceLocal } = await abierta();
@@ -170,11 +170,11 @@ describe('borrar una categoría', () => {
     for (const id of ['r1', 'r3']) {
       expect(drive._store.get(id)?.parents).toEqual([sc.id]);
       expect(drive._store.get(id)?.trashed).toBeFalsy();
-      expect(parse(drive._store.get(id)!.contenido!).tags).toContain('borrador');
+      expect(parse(drive._store.get(id)!.contenido!).tags_especiales).toContain('borrador');
     }
     // Las fotos se quedan: el `.md` las sigue nombrando por su id.
     expect(parse(drive._store.get('r1')!.contenido!).fotos).toEqual([{ n: 1, url: linkDeFoto('fv') }]);
-    expect(parse(drive._store.get('r1')!.contenido!).tags).toContain('favorito');
+    expect(parse(drive._store.get('r1')!.contenido!).tags_especiales).toContain('favorito');
     expect(drive._store.get('fv')?.trashed).toBeFalsy();
     expect(drive._store.get('c1')?.trashed).toBe(true);
     expect(store.buscar({ tags: ['borrador'] }).map(e => e.id_archivo).sort()).toEqual(['r1', 'r3']);
@@ -206,7 +206,7 @@ describe('borrar una categoría', () => {
     const sc = [...drive._store.values()].find(a => a.name === '_sin-categoria')!;
     expect(drive._store.get('r9')?.parents).toEqual([sc.id]);
     expect(drive._store.get('r9')?.trashed).toBeFalsy();
-    expect(parse(drive._store.get('r9')!.contenido!).tags).toContain('borrador');
+    expect(parse(drive._store.get('r9')!.contenido!).tags_especiales).toContain('borrador');
     expect(store.buscar({ tags: ['borrador'] }).map(e => e.id_archivo)).toContain('r9');
     expect(drive._store.get('x1')?.parents).toEqual(['c1']);
     expect(drive._store.get('c1')?.trashed).toBe(true);

@@ -93,7 +93,7 @@ ingrediente.
 #### C02.3.1 — Los tres criterios en la misma caja *(J1, J4)*
 
 - [ ] Una sola caja. El usuario no elige criterio.
-- [ ] Se busca en título, en los nombres de ingredientes de la fila del índice, y en los tags.
+- [ ] Se busca en título, en los nombres de ingredientes de la fila del índice, y en los tags comunes. **Ningún especial se encuentra por texto** (`E05-Cimientos.md` C05.1.4): a ellos se llega por su chip.
 - [ ] **No se busca en la descripción, en los pasos ni en las notas.**
 - [ ] La misma insensibilidad a mayúsculas y acentos que C02.2.1.
 
@@ -207,13 +207,13 @@ tag.
 #### C02.6.3 — En la receta los tags se leen *(J4, J5)*
 
 - [ ] Los tags se muestran en la receta abierta como chips, y no son tocables: al filtro se entra por el carrusel (C02.6.4).
-- [ ] `borrador` no aparece, en ninguna de sus formas (C03.1.3).
+- [ ] `borrador` no aparece (C03.1.3).
 
 #### C02.6.4 — El carrusel de tags *(J5)*
 
 - [ ] Vive en el Recetario —debajo de la búsqueda, arriba de *Categorías*—, en cada categoría y en la lista por tag, debajo del encabezado.
 - [ ] Cada chip lleva el tag tal como está escrito, su ícono si es especial, y **cuántas recetas lo llevan**, contando lo mismo que la lista que abre: en el Recetario y en la lista por tag cuenta todo el recetario; en una categoría, sólo esa categoría. Los borradores no cuentan, salvo en Borradores, donde se cuentan sólo ellos.
-- [ ] **`borrador` no aparece**, en ninguna de sus formas (C05.1.4): ni en el Recetario, ni en una categoría, ni en la lista por tag, tampoco en la de Borradores. A los borradores se llega por el menú (C02.1.3).
+- [ ] **`borrador` no aparece** (C05.1.4): ni en el Recetario, ni en una categoría, ni en la lista por tag, tampoco en la de Borradores. A los borradores se llega por el menú (C02.1.3).
 - [ ] **El orden:** los especiales primero y en orden fijo —`favorito`, `menú diario`, `probar`—; después los demás **por cantidad de recetas**, de mayor a menor, con los empates en alfabético.
 - [ ] En una categoría van todos los tags. En el Recetario y en la lista por tag, los especiales y los **veinte** comunes más usados: para la cola larga está la búsqueda.
 - [ ] Un tag especial sin ninguna receta no se dibuja. Sin ningún tag, el carrusel no se dibuja.
@@ -240,7 +240,7 @@ en su lista, Borradores, y ahí lo son todas.
 #### C02.7.1 — Las marcas *(J1, J5)*
 
 - [ ] Van **juntas en la esquina superior derecha de la tarjeta**, en el orden fijo de los especiales, cada una con su ícono: la estrella, el calendario y el marcador. El título no pasa por debajo.
-- [ ] Salen de la lista `tags` de la fila del índice (C05.3.1). Cada marca tiene su nombre accesible: *Favorita*, *Menú diario*, *Para probar*.
+- [ ] Salen de la columna `tags_especiales` de la fila del índice (`E05-Cimientos.md` C05.4b.1). Cada marca tiene su nombre accesible: *Favorita*, *Menú diario*, *Para probar*.
 - [ ] **`borrador` no lleva marca**, en ninguna lista. Su lista propia es Borradores (`E01-CapturaYBorradores.md` C01.4.1).
 - [ ] **De los especiales, sólo `favorito` cambia el orden:** las favoritas van primero en las listas (C02.5.1).
 
