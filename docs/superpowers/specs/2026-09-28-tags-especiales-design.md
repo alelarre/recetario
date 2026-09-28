@@ -71,12 +71,21 @@ export const CLAVES_FRONTMATTER = [
 
 - **Tipos:** `Receta` y `Entrada` ganan `tags_especiales: TagEspecial[]`. En
   la receta parseada siempre está, vacía si no hay.
+- **Lo que no se lee queda anotado.** `Receta` gana `ignorados`: cada valor de
+  `tags` o de `tags_especiales` que el parser descartó, con su clave. No se
+  escribe al guardar; es lo que `validar` informa (§4).
 - **Índice:** columna nueva `tags_especiales`, unida con barra como `tags`.
   `SCHEMA_VERSION` pasa de 7 a 8: la app reindexa sola al próximo arranque.
   Lo prolijo es migrar los `.md` antes de abrir la app nueva, o reindexar a
   mano después de migrar.
 
-### La tabla de especiales (`catalogo.ts`)
+### La tabla de especiales (`especiales.ts`)
+
+La tabla vive en un módulo propio, `src/especiales.ts`, porque la usa el
+parser: `recipe.ts` no puede importar `catalogo.ts`, que ya importa de
+`recipe.ts`. Por lo mismo, `normalizar` pasa a `src/normalizar.ts`, y
+`recipe.ts` lo reexporta. `catalogo.ts` reexporta lo de `especiales.ts`, así
+los que ya importan de ahí no cambian.
 
 Un objeto por especial, todos con la misma interfaz, en un arreglo cuyo orden
 es el de cualquier fila de tags:
@@ -110,9 +119,9 @@ export interface DefinicionEspecial {
   ni tildes.
 - `tieneEspecial`, `esFavorita` y `conEspecial` pasan a trabajar sobre
   `tags_especiales`. `conEspecial` devuelve la lista en el orden de la tabla.
-- `NombreIcono` es el tipo de las claves de `ICO` en `iconos.ts`, declarado
-  en `catalogo.ts` o `tipos.ts` como unión de cadenas para que el dominio no
-  importe la UI; un test verifica que cada `icono` de la tabla exista en `ICO`.
+- `NombreIcono` es una unión de cadenas declarada en `especiales.ts`
+  (`'estrella' | 'calendario' | 'marcador'`), para que el dominio no importe
+  la UI; un test verifica que cada `icono` de la tabla exista en `ICO`.
 
 ## 3. La app
 
