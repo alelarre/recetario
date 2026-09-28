@@ -12,3 +12,8 @@ probar; una que quedó a medias vuelve a `Abierto`.
 
 | ID | Descripción | Detalle | Estado |
 |---|---|---|---|
+| P105 | Skill: investigar una receta a partir de un título o una idea | Hoy el skill parte de una fuente (PDF, foto, video, sitio, links). Instruirlo para que, con sólo un título o una idea, busque fuentes, compare versiones y escriba la receta. | Abierto |
+| P106 | Herramientas complementarias al recetario | Calculadoras de cocina: cantidades para pan (harina, agua, sal y levadura según el tipo de pan), porcentaje de sal para fermentados, y otras a definir. | En espera |
+| P107 | Escalar una receta | Multiplicar las cantidades de cualquier receta (×2, ×½) desde la receta. | Abierto |
+| P108 | `tags_especiales` en el frontmatter | Clave nueva con los especiales (`favorito`, `menú diario`, `probar`, `borrador`) y las marcas de herramienta (`pan`, `fermentado`), separados de `tags`. Migrar los `.md` existentes. P106 espera por esta. | Implementando |
+| P109 | Dos filas de chips: tags y especiales | Separar la fila de chips de las listas en dos: una con los tags comunes (la de hoy, con su carrusel) y otra con los especiales que se muestran ahí (`borrador` no va). Después de P108. | Abierto |
