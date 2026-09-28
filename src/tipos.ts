@@ -144,8 +144,8 @@ export interface Ubicacion {
  * Una fila del índice, ya deserializada.
  *
  * Es un cache derivado de los `.md`: si dice algo distinto del archivo,
- * el archivo gana. `tags`, `tags_especiales` e `ingredientes` viajan en la planilla como una celda
- * con `|` entre valores y vuelven acá como arreglos.
+ * el archivo gana. `tags`, `tags_especiales` e `ingredientes` viajan en la
+ * planilla como una celda con `|` entre valores y vuelven acá como arreglos.
  */
 export interface Entrada {
   id_archivo: string;
@@ -162,7 +162,9 @@ export interface Entrada {
   ingredientes: string[];
   mtime: number;
   /** URL externa, o cadena vacía. Se dibuja donde esté (IA §1.7). */
-  foto: string;  tags_especiales: TagEspecial[];
+  foto: string;
+  /** Los especiales de la receta, en el orden de la tabla (`src/especiales.ts`). */
+  tags_especiales: TagEspecial[];
 }
 
 /** Las dos comidas de un día. */

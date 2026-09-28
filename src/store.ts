@@ -1042,8 +1042,7 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
 
     for (const e of listables()) {
       // Los borradores no aparecen en ninguna búsqueda: se llega a ellos por
-      // el menú. Sólo se busca en `tags`: ningún especial se encuentra por
-      // texto (`enBusqueda`).
+      // el menú. De los especiales, sólo los que su definición deja buscar.
       if (tieneEspecial(e, 'borrador')) continue;
 
       if (normalizar(e.titulo).includes(t)) porNombre.push(e);
@@ -1051,7 +1050,8 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       const ingrediente = e.ingredientes.find(i => normalizar(i).includes(t));
       if (ingrediente) porIngrediente.push({ entrada: e, motivo: `tiene ${ingrediente}` });
 
-      const tag = e.tags.find(x => normalizar(x).includes(t));
+      const buscables = [...e.tags, ...e.tags_especiales.filter(x => definicion(x).enBusqueda)];
+      const tag = buscables.find(x => normalizar(x).includes(t));
       if (tag) porTag.push({ entrada: e, motivo: `tiene tag ${tag}` });
     }
 

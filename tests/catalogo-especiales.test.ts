@@ -19,7 +19,7 @@ describe('especiales en tags_especiales', () => {
     expect(conEspecial(['favorito'], 'favorito', true)).toEqual(['favorito']);
   });
 
-  it('coincideTag compara por igualdad y ya no conoce formas alternativas', () => {
+  it('coincideTag compara sin mayúsculas ni tildes; favoritas no es favorito', () => {
     expect(coincideTag('Horno', 'horno')).toBe(true);
     expect(coincideTag('pollo', 'borrador')).toBe(false);
     expect(coincideTag('favoritas', 'favorito')).toBe(false);
