@@ -13,6 +13,7 @@ probar; una que quedó a medias vuelve a `Abierto`.
 | ID | Descripción | Detalle | Estado |
 |---|---|---|---|
 | P105 | Skill: investigar una receta a partir de un título o una idea | Hoy el skill parte de una fuente (PDF, foto, video, sitio, links). Instruirlo para que, con sólo un título o una idea, busque fuentes, compare versiones y escriba la receta. | Abierto |
-| P106 | Herramientas complementarias al recetario | Calculadoras de cocina: cantidades para pan (harina, agua, sal y levadura según el tipo de pan), porcentaje de sal para fermentados, y otras a definir. Las recetas que las usan llevan `pan` o `fermentado` en `tags_especiales`: dos filas nuevas en `src/especiales.ts` y el botón *Calcular* en la receta. | Abierto |
+| P106 | Herramientas complementarias al recetario | Calculadoras de cocina: cantidades para pan (harina, agua, sal y levadura según el tipo de pan), porcentaje de sal para fermentados, y otras a definir. Las recetas que las usan llevan `pan` o `fermentado` en `tags_especiales`: dos filas nuevas en `src/especiales.ts` y el botón *Calcular* en la receta. | Implementando |
 | P107 | Escalar una receta | Multiplicar las cantidades de cualquier receta (×2, ×½) desde la receta. | Abierto |
 | P109 | Dos filas de chips: tags y especiales | Separar la fila de chips de las listas en dos: una con los tags comunes (la de hoy, con su carrusel) y otra con los especiales que se muestran ahí (`borrador` no va). | Abierto |
+| P110 | Editor: «Fuente» debajo de los tags | En *Nueva receta* y al editar, el campo *Fuente original* pasa a ir justo debajo del campo *Tags*. | Abierto |
