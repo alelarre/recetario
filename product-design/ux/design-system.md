@@ -398,6 +398,7 @@ para los controles y los separadores internos.
 | La estrella de favorito que se llena mientras Drive contesta (§6.22) | 2 s, en bucle | lineal |
 | Giro del indicador de carga | 900 ms, en bucle | lineal |
 | La olla del velo (§6.17b): la cuchara que va de lado a lado y el vapor que sube | 1,6 s la cuchara y 1,2 s el vapor, en bucle | la cuchara, `ease-in-out`; el vapor, lineal |
+| Lo que llegó por el menú Compartir, al abrir el editor: la fuente, las fotos y las notas precargadas arrancan con `--acento-suave` y borde `--acento` y se apagan | 1500 ms cada uno, una vez, con 150 ms entre uno y otro, de arriba hacia abajo | `ease-out` |
 
 **Todo lo demás es instantáneo:** el cambio de estado de un control, la aparición
 de un aviso, el conmutador de cocina. No hay transiciones de pantalla, ni
@@ -419,8 +420,12 @@ mezclan: donde la pantalla está tapada no hay spinner, y donde se puede
 seguir tocando no hay olla.
 
 **La olla es la única que tiene final:** cuando una escritura sale bien, la olla
-se tapa y aparece un tilde antes de que el velo se vaya (§6.17b). Es la única
-excepción a que todo lo demás sea instantáneo, y dura 1850 ms. Una espera que no
+se tapa y aparece un tilde antes de que el velo se vaya (§6.17b). Dura 1850 ms.
+
+**Las excepciones a que todo lo demás sea instantáneo son dos:** el tilde de la
+olla y la marca de lo que llegó por el menú Compartir. La marca sólo cambia
+color —no mueve nada—, corre una vez en el primer dibujo del editor que abre lo
+compartido, no se repite en un redibujo y, con movimiento reducido, no está. Una espera que no
 escribe no tiene tilde, y si dura menos de 250 ms la olla no llega a verse.
 
 **El reindexado y la carpeta base no usan ninguno de los dos:** usan barra de

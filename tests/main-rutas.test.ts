@@ -1102,6 +1102,18 @@ describe('main.ts: las rutas', () => {
     expect(resultadosHerramienta.at(-1)).toContain('24 g');
   });
 
+  it('el editor que abre lo compartido marca lo precargado', async () => {
+    const { abrir, app } = await montar();
+    await abrir('#/nueva?url=https%3A%2F%2Fwww.instagram.com%2Fp%2Fabc');
+    expect(app.innerHTML).toContain('<form class="cuerpo llegada" data-formulario');
+  });
+
+  it('la receta nueva abierta desde el menú no marca nada', async () => {
+    const { abrir, app } = await montar();
+    await abrir('#/nueva');
+    expect(app.innerHTML).toContain('<form class="cuerpo" data-formulario');
+  });
+
   it('una receta con pan lleva a su calculadora', async () => {
     estado.md = '---\ntitulo: Pan\ntags_especiales: [pan]\n---\n\n## Ingredientes\n- Harina — 500 g\n';
     const { abrir, app } = await montar();

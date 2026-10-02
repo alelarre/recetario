@@ -1077,7 +1077,10 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       receta.tags_especiales = conEspecial(receta.tags_especiales, 'borrador', true);
       abrirEditor(() => pintarEditor({
         entrada: null, receta, categorias: store.categorias(),
-        tagsConocidos: store.tagsDe('todas').map(t => t.tag), ...menuDe(vistaActual?.vista)
+        tagsConocidos: store.tagsDe('todas').map(t => t.tag), ...menuDe(vistaActual?.vista),
+        // Lo que llegó por el menú Compartir se marca al abrir. Una receta
+        // recibida no: llega entera, y marcarla toda no diría nada.
+        llegada: !recibida && ['url', 'text', 'fotos'].some(clave => !!ruta.params[clave])
       }));
       // Lo que llegó de otra app cuenta como cambio desde que se abre: salir
       // sin guardar lo perdería.

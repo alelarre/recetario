@@ -512,3 +512,20 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 .advertencias { margin: var(--e-4) 0 0; padding-left: var(--e-4); font-size: var(--txt-chico); color: var(--fg-2); }
 .advertencias li + li { margin-top: var(--e-1); }
 .calcular { display: flex; flex-wrap: wrap; gap: var(--e-2); margin-top: var(--e-4); }
+
+/* Lo que llegó por el menú Compartir, una vez al abrir el editor: los campos
+   precargados arrancan con el acento y se apagan, de arriba hacia abajo. Sólo
+   color: nada se mueve. Es la única excepción a lo instantáneo, además del
+   tilde de la olla (design-system §5). */
+.llegada input[name="fuente"]:not([value=""]) { animation: llegada 1500ms ease-out 0ms both; }
+.llegada .miniatura { animation: llegada-foto 1500ms ease-out 150ms both; border-radius: var(--r-medio); }
+.llegada textarea[name="notas"]:not(:empty) { animation: llegada 1500ms ease-out 300ms both; }
+@keyframes llegada {
+  from { background-color: var(--acento-suave); border-color: var(--acento); }
+  to { background-color: var(--surface-alta); border-color: var(--borde-fuerte); }
+}
+@keyframes llegada-foto {
+  from { box-shadow: 0 0 0 2px var(--acento), 0 0 0 6px var(--acento-suave); }
+  to { box-shadow: 0 0 0 2px transparent, 0 0 0 6px transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .llegada input, .llegada .miniatura, .llegada textarea { animation: none; } }

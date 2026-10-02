@@ -817,3 +817,21 @@ it('el grupo de especiales suma pan y fermentado, después de borrador', () => {
   expect(orden.every(i => i > 0)).toBe(true);
   expect(orden).toEqual([...orden].sort((a, b) => a - b));
 });
+
+describe('la llegada desde Compartir', () => {
+  const BASE_CSS = readFileSync(new URL('../src/ui/base.css', import.meta.url), 'utf8');
+
+  it('con llegada, el formulario lleva la clase que anima lo precargado; sin ella, no', () => {
+    const receta = parse('---\ntitulo: A\nfuente: https://x.com/p\n---\n## Notas\nAlgo');
+    expect(renderEditor({ entrada: null, receta, llegada: true })).toContain('<form class="cuerpo llegada" data-formulario');
+    expect(renderEditor({ entrada: null, receta })).toContain('<form class="cuerpo" data-formulario');
+  });
+
+  it('el CSS anima la fuente, las fotos y las notas, 1500 ms con 150 ms entre uno y otro, y nada con movimiento reducido', () => {
+    expect(BASE_CSS).toContain('@keyframes llegada');
+    expect(BASE_CSS).toMatch(/\.llegada input\[name="fuente"\]:not\(\[value=""\]\)[^{]*\{[^}]*1500ms/);
+    expect(BASE_CSS).toMatch(/\.llegada \.miniatura[^{]*\{[^}]*150ms/);
+    expect(BASE_CSS).toMatch(/\.llegada textarea\[name="notas"\]:not\(:empty\)[^{]*\{[^}]*300ms/);
+    expect(BASE_CSS).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{[^}]*\.llegada[^}]*animation: none/);
+  });
+});

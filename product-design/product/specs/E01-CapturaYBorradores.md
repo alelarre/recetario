@@ -40,7 +40,8 @@ fuente, el texto y las fotos ya cargados.
 
 - [ ] Recetario aparece en la hoja de compartir de Android una vez instalada como PWA.
 - [ ] Acepta texto, URLs e imágenes. **La fuente es el link**: `url` si vino; si no, el primer link que aparezca en el texto. **Lo que sobra del texto va a Notas**, sin el link. El título que manda la app de origen se ignora: suele ser el de la página, no el de la receta.
-- [ ] Compartir abre el editor de una receta nueva (C01.2.1).
+- [ ] Compartir abre el editor de una receta nueva (C01.2.1). La fuente va justo debajo de los tags, así se ve sin desplazarse.
+- [ ] **Lo precargado se marca una vez al abrir:** la fuente, las fotos y las notas que llegaron arrancan con el acento y se apagan, de arriba hacia abajo (design-system §5). Una receta `.md` recibida no se marca, y con movimiento reducido no hay animación.
 - [ ] **Las fotos compartidas** —de la cámara, Fotos, una galería— llegan al depósito de la receta (C01.2.3), todas: no hay tope.
 - [ ] **Lo compartido puede ser una receta entera en `.md`**: en ese caso no se toma como fuente, sigue la regla de C01.9.2.
 

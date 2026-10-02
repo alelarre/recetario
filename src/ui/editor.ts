@@ -44,6 +44,12 @@ export interface ArgsEditor {
    * esto, el encabezado lleva el volver.
    */
   menu?: MenuDePantalla;
+  /**
+   * Se abre con lo que llegó por el menú Compartir: lo precargado —la fuente,
+   * las fotos, las notas— se marca una vez (`.llegada` en `base.css`). Sólo
+   * en el primer dibujo: un redibujo no lo repite.
+   */
+  llegada?: boolean;
 }
 
 /**
@@ -343,7 +349,7 @@ export function carpetaDelEditor(
 }
 
 export function renderEditor(
-  { receta, entrada, carpeta, categorias = [], tagsConocidos = [], error, confirmandoBorrado, menu }: ArgsEditor
+  { receta, entrada, carpeta, categorias = [], tagsConocidos = [], error, confirmandoBorrado, menu, llegada }: ArgsEditor
 ): string {
   // «Sin categoría» es una opción más, elegible como cualquier otra —guardar
   // así escribe en `_sin-categoria/` (C04.3b.1)—, así que no hace falta un
@@ -453,7 +459,7 @@ export function renderEditor(
   }) +
     // Nada acá manda el formulario: Guardar es de tipo `button`, y sin esto
     // Enter en cualquier campo de texto recargaría la página.
-    '<form class="cuerpo" data-formulario onsubmit="return false">' +
+    `<form class="cuerpo${llegada ? ' llegada' : ''}" data-formulario onsubmit="return false">` +
       (error ? avisoAlGuardar(error) : '') +
       datos + fichaFotos(receta) + contenido + acciones +
     '</form>';
