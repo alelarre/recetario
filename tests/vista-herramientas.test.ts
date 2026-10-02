@@ -93,4 +93,13 @@ describe('la calculadora de sal', () => {
     expect(html).toContain('20 g');
     expect(html).toContain('2 %');
   });
+
+  it('la temperatura va entre el fermento y el peso, y el tiempo con su advertencia en el resultado', () => {
+    const html = renderSal(SAL_POR_DEFECTO);
+    expect(html).toContain('data-grupo="temperatura" data-valor="18-24" aria-pressed="true"');
+    expect(pos(html, 'fermento')).toBeLessThan(pos(html, 'temperatura'));
+    expect(pos(html, 'temperatura')).toBeLessThan(html.indexOf('data-cantidad="peso"'));
+    expect(html).toContain('6 a 16 días');
+    expect(html).toContain('empezar a probar');
+  });
 });

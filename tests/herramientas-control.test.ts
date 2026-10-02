@@ -83,6 +83,14 @@ describe('el control de Herramientas', () => {
     expect(control.sal().fermento).toBe('pepinos');
   });
 
+  it('la temperatura de la sal', () => {
+    const { control, elegir } = armar();
+    elegir('temperatura', 'mas-24');
+    expect(control.sal().temperatura).toBe('mas-24');
+    elegir('temperatura', 'heladera');
+    expect(control.sal().temperatura).toBe('18-24');
+  });
+
   it('con un almacén que falla, funciona igual', () => {
     const roto = { getItem: () => { throw new Error('x'); }, setItem: () => { throw new Error('x'); } };
     const { control, elegir } = armar(roto);

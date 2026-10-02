@@ -13,7 +13,7 @@ import { crearLlaveroMac, SERVICIO_CLIENTE } from './llavero.js';
 import { recetarioDeGoogle, type Recetario } from './recetario.js';
 import { calcularPanParaElAgente, calcularSalParaElAgente } from './calculadoras.js';
 import { PANES, HARINAS, LEVADURAS, PORCENTAJES_SEGUNDA, FERMENTACIONES } from '../src/calculadoras/pan.js';
-import { FERMENTOS } from '../src/calculadoras/fermentados.js';
+import { FERMENTOS, TEMPERATURAS } from '../src/calculadoras/fermentados.js';
 
 // La marca que el test de publicación busca en `dist/`: si aparece ahí, el
 // build de la PWA incluyó código del MCP, que no tiene que salir por Pages.
@@ -167,10 +167,12 @@ export function crearServidor(recetario: Recetario): McpServer {
 
   servidor.registerTool('calcular_sal', {
     description: 'La sal de un fermentado: el porcentaje del fermento sobre el peso total del frasco (la verdura y, si va en salmuera, el agua). ' +
+      'Con la temperatura del ambiente, también cuántos días hasta empezar a probarlo. ' +
       'Si falta un dato, devuelve qué falta y sus opciones. No completes datos por tu cuenta.',
     inputSchema: {
       fermento: z.string().optional().describe(`Uno de: ${opciones(FERMENTOS)}.`),
-      peso_total: z.number().optional().describe('En gramos.')
+      peso_total: z.number().optional().describe('En gramos.'),
+      temperatura: z.string().optional().describe(`Opcional: sin ella no hay tiempo. Una de: ${opciones(TEMPERATURAS)}.`)
     }
   }, (pedido) => responder(() => json(calcularSalParaElAgente(pedido))));
 

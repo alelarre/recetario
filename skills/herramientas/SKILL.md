@@ -1,6 +1,6 @@
 ---
 name: herramientas
-description: Usar cuando el usuario quiere calcular las cantidades de un pan (harina, agua, sal, levadura o masa madre, hidratación, para un peso de harina o de masa) o la sal de un fermentado (chucrut, kimchi, ajíes, pepinos, verduras en salmuera). Por ejemplo «quiero hacer un pan con 500 g de 000» o «cuánta sal le pongo a un frasco de pepinos de 1200 g». Trabaja con las herramientas `calcular_pan` y `calcular_sal` del MCP `recetario`.
+description: Usar cuando el usuario quiere calcular las cantidades de un pan (harina, agua, sal, levadura o masa madre, hidratación, para un peso de harina o de masa) o la sal de un fermentado (chucrut, kimchi, ajíes, pepinos, verduras en salmuera) y cuántos días tarda según la temperatura. Por ejemplo «quiero hacer un pan con 500 g de 000» o «cuánta sal le pongo a un frasco de pepinos de 1200 g». Trabaja con las herramientas `calcular_pan` y `calcular_sal` del MCP `recetario`.
 ---
 
 # Herramientas
@@ -54,6 +54,12 @@ vuelta siguiente devuelve las horas que van con masa madre en frío (12, 24,
 
 Están los dos datos: se llama a `calcular_sal` y se muestra el resultado, sin
 preguntar nada.
+
+**La temperatura de la sal es opcional.** Va sólo si el usuario la dijo o
+pregunta cuánto tarda; sin ella no hay tiempo. Si pregunta cuánto tarda y no
+la dijo, preguntásela con las cuatro franjas de la herramienta. El tiempo es
+cuándo empezar a probar: mostralo con su advertencia, y una franja sin dato
+se muestra como viene, sin estimarla.
 
 ## Si el pedido viene de una receta
 

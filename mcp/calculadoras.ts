@@ -7,7 +7,7 @@
  * para que el agente se lo pregunte al usuario.
  */
 import { leerPedidoPan, calcularPan, lineasPan, advertenciasPan, type PedidoPan } from '../src/calculadoras/pan.js';
-import { leerPedidoSal, lineasSal } from '../src/calculadoras/fermentados.js';
+import { leerPedidoSal, lineasSal, advertenciasSal, type PedidoSal } from '../src/calculadoras/fermentados.js';
 import { gramos } from '../src/calculadoras/gramos.js';
 import type { Faltante } from '../src/calculadoras/pedido.js';
 
@@ -26,8 +26,8 @@ export function calcularPanParaElAgente(pedido: PedidoPan):
   };
 }
 
-export function calcularSalParaElAgente(pedido: { fermento?: string | undefined; peso_total?: number | undefined }):
-  { faltan: Faltante[] } | { resultado: Linea[] } {
+export function calcularSalParaElAgente(pedido: PedidoSal):
+  { faltan: Faltante[] } | { resultado: Linea[]; advertencias: string[] } {
   const leido = leerPedidoSal(pedido);
-  return 'faltan' in leido ? leido : { resultado: lineasSal(leido.datos) };
+  return 'faltan' in leido ? leido : { resultado: lineasSal(leido.datos), advertencias: [...advertenciasSal(leido.datos)] };
 }

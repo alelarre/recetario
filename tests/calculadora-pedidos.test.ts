@@ -49,11 +49,18 @@ it('un valor que no es de la tabla es un faltante', () => {
 });
 
 it('sal: el fermento por su nombre', () => {
-  expect(leerPedidoSal({ fermento: 'pepinos', peso_total: 1200 })).toEqual({ datos: { fermento: 'pepinos', pesoTotal: 1200 } });
-  expect(leerPedidoSal({ fermento: 'AJIES', peso_total: 1200 })).toEqual({ datos: { fermento: 'ajies', pesoTotal: 1200 } });
+  expect(leerPedidoSal({ fermento: 'pepinos', peso_total: 1200 })).toEqual({ datos: { fermento: 'pepinos', pesoTotal: 1200, temperatura: null } });
+  expect(leerPedidoSal({ fermento: 'AJIES', peso_total: 1200 })).toEqual({ datos: { fermento: 'ajies', pesoTotal: 1200, temperatura: null } });
   expect(leerPedidoSal({ peso_total: 1200 })).toEqual({ faltan: [{ dato: 'fermento',
     opciones: ['Chucrut', 'Kimchi', 'Ajíes', 'Verduras en salmuera', 'Pepinos'] }] });
   expect(leerPedidoSal({ fermento: 'chucrut' })).toEqual({ faltan: [{ dato: 'peso_total', opciones: [] }] });
+});
+
+it('sal: la temperatura es opcional, por su nombre, y una que no es franja falta', () => {
+  expect(leerPedidoSal({ fermento: 'kimchi', peso_total: 1000, temperatura: '18 a 24 °C' }))
+    .toEqual({ datos: { fermento: 'kimchi', pesoTotal: 1000, temperatura: '18-24' } });
+  expect(leerPedidoSal({ fermento: 'kimchi', peso_total: 1000, temperatura: '20 grados' })).toEqual({ faltan: [{ dato: 'temperatura',
+    opciones: ['Menos de 13 °C', '13 a 18 °C', '18 a 24 °C', 'Más de 24 °C'] }] });
 });
 
 it('un dato que depende de otro que falta no se pide todavía', () => {

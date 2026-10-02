@@ -25,6 +25,11 @@ it('con datos faltantes, qué falta y sus opciones', () => {
 
 it('sal: con datos y sin', () => {
   expect(calcularSalParaElAgente({ fermento: 'pepinos', peso_total: 1200 }))
-    .toEqual({ resultado: lineasSal({ fermento: 'pepinos', pesoTotal: 1200 }) });
+    .toEqual({ resultado: lineasSal({ fermento: 'pepinos', pesoTotal: 1200, temperatura: null }), advertencias: [] });
+  expect(calcularSalParaElAgente({ fermento: 'kimchi', peso_total: 1000, temperatura: 'más de 24 °C' }))
+    .toEqual({
+      resultado: lineasSal({ fermento: 'kimchi', pesoTotal: 1000, temperatura: 'mas-24' }),
+      advertencias: [expect.stringContaining('empezar a probar')]
+    });
   expect(calcularSalParaElAgente({ peso_total: 1200 })).toHaveProperty('faltan');
 });

@@ -14,7 +14,7 @@ import {
   PANES, HARINAS, LEVADURAS, PORCENTAJES_SEGUNDA, calcularPan, fermentacionesPara, FERMENTACIONES,
   lineasPan, advertenciasPan, type DatosPan
 } from '../calculadoras/pan.js';
-import { FERMENTOS, lineasSal, type DatosSal } from '../calculadoras/fermentados.js';
+import { FERMENTOS, TEMPERATURAS, lineasSal, advertenciasSal, type DatosSal } from '../calculadoras/fermentados.js';
 
 /** Una fila de opciones: un botón por opción, uno solo apretado. */
 function fila(etiqueta: string, grupo: string, opciones: readonly { valor: string; texto: string }[], elegido: string): string {
@@ -45,7 +45,7 @@ export function renderHerramientas({ menu }: { menu?: MenuDePantalla }): string 
     encabezado({ titulo: 'Herramientas', ...izquierdaDelEncabezado(menu) }) +
     '<div class="cuerpo"><div class="ficha">' +
       entrada('#/herramientas/pan', 'Pan', 'Harinas, agua, sal y levadura') +
-      entrada('#/herramientas/fermentados', 'Sal para fermentados', 'La sal de un frasco') +
+      entrada('#/herramientas/fermentados', 'Sal para fermentados', 'La sal de un frasco y cuándo probarlo') +
     '</div></div>');
 }
 
@@ -86,10 +86,11 @@ export function renderPan(d: DatosPan): string {
     '</div>';
 }
 
-/** El bloque del resultado de la sal. */
+/** El bloque del resultado de la sal: la sal, el porcentaje, el tiempo y su advertencia. */
 export function resultadoSal(d: DatosSal): string {
   return '<div class="ficha" data-resultado><h2>Resultado</h2>' +
     lineasSal(d).map(l => linea(l.nombre, l.valor)).join('') +
+    advertencias(advertenciasSal(d)) +
   '</div>';
 }
 
@@ -97,6 +98,7 @@ export function renderSal(d: DatosSal): string {
   return encabezado({ titulo: 'Sal para fermentados', volver: true }) +
     '<div class="cuerpo"><div class="ficha calculadora">' +
       fila('Fermento', 'fermento', FERMENTOS.map(f => ({ valor: f.clave, texto: f.nombre })), d.fermento) +
+      fila('Temperatura del ambiente', 'temperatura', TEMPERATURAS.map(t => ({ valor: t.clave, texto: t.nombre })), d.temperatura ?? '') +
       campoGramos('Peso total (g): la verdura y, si va en salmuera, el agua', 'peso', d.pesoTotal) +
     '</div>' +
     resultadoSal(d) +

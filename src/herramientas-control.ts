@@ -68,8 +68,8 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
     'elegir-opcion': (boton) => {
       const grupo = boton.dataset['grupo'] ?? '';
       const valor = boton.dataset['valor'] ?? '';
-      if (grupo === 'fermento') {
-        sal = completarSal({ ...sal, fermento: valor });
+      if (grupo === 'fermento' || grupo === 'temperatura') {
+        sal = completarSal({ ...sal, [grupo]: valor });
         guardar(almacen, CLAVE_SAL, sal);
       } else {
         // `completarPan` descarta lo que no es una opción y corrige la segunda

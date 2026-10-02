@@ -152,18 +152,28 @@ resultado: cada línea muestra un guion y el otro campo queda vacío.
 
 #### C07.3.1 — Sal para fermentados *(J6)*
 
-- [ ] Dos datos: el **fermento**, una fila de botones con los de la tabla de
-  fermentos, y el **peso total** en gramos.
+- [ ] Tres datos, en este orden: el **fermento**, una fila de botones con los
+  de la tabla de fermentos; la **temperatura del ambiente**, una fila con
+  cuatro franjas —menos de 13 °C, 13 a 18, 18 a 24 y más de 24—; y el
+  **peso total** en gramos.
 - [ ] El peso total es **todo lo que hay en el frasco**: la verdura y, si va
   en salmuera, el agua. El campo lo dice.
 - [ ] La sal es el porcentaje del fermento sobre el peso total. Es la misma
   cuenta para la sal seca y para la salmuera.
 - [ ] El resultado al pie, en una ficha **Resultado**: los gramos de sal y el
-  porcentaje usado, con el mismo redondeo que el pan (C07.2.5).
+  porcentaje usado, con el mismo redondeo que el pan (C07.2.5), y el
+  **tiempo**: cuántos días hasta empezar a probar, como un rango —*6 a 16
+  días*—.
+- [ ] El tiempo sale de una tabla fermento × franja, con la fuente de cada
+  fila al lado del valor. **Una franja sin fuente dice *sin dato a esta
+  temperatura*:** no se extrapola.
+- [ ] Debajo del resultado, la advertencia: es cuándo empezar a probar, no
+  cuándo termina.
 - [ ] Escribir el peso pinta sólo el resultado, sin redibujar.
 
-**Edge case:** peso vacío, en cero, negativo o que no es un número → las dos
-líneas muestran un guion.
+**Edge case:** peso vacío, en cero, negativo o que no es un número → la sal y
+el porcentaje muestran un guion; el tiempo no depende del peso y se muestra
+igual.
 
 ### F07.4 — Las últimas elecciones
 
@@ -227,6 +237,9 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   «centeno», «masa madre», «ambiente» o «frío»—, sin mirar mayúsculas ni
   tildes. La segunda harina es «ninguna» o una distinta de la principal.
 - [ ] La cantidad es `harina_total` o `masa_total`, **una sola de las dos**.
+- [ ] En `calcular_sal`, la `temperatura` es **opcional**: sin ella no hay
+  tiempo ni su advertencia. Una que no es una de las franjas falta, con las
+  franjas como opciones.
 - [ ] **No tienen valores por defecto.** Si falta un dato o no es una opción,
   no calculan: devuelven la lista de lo que falta y, para cada dato, las
   opciones válidas.

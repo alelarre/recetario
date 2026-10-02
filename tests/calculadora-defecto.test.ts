@@ -35,7 +35,10 @@ it('la cantidad sólo si es un número positivo, y de harina o de masa', () => {
 });
 
 it('sal: lo mismo', () => {
-  expect(SAL_POR_DEFECTO).toEqual({ fermento: 'chucrut', pesoTotal: 1000 });
-  expect(completarSal({ fermento: 'kimchi', pesoTotal: -3 })).toEqual({ fermento: 'kimchi', pesoTotal: 1000 });
+  expect(SAL_POR_DEFECTO).toEqual({ fermento: 'chucrut', pesoTotal: 1000, temperatura: '18-24' });
+  expect(completarSal({ fermento: 'kimchi', pesoTotal: -3, temperatura: 'heladera' }))
+    .toEqual({ fermento: 'kimchi', pesoTotal: 1000, temperatura: '18-24' });
+  expect(completarSal({ fermento: 'kimchi', pesoTotal: 500, temperatura: 'mas-24' }))
+    .toEqual({ fermento: 'kimchi', pesoTotal: 500, temperatura: 'mas-24' });
   expect(completarSal(undefined)).toEqual(SAL_POR_DEFECTO);
 });
