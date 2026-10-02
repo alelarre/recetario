@@ -19,3 +19,4 @@ probar; una que quedó a medias vuelve a `Abierto`.
 | P110 | Editor: «Fuente» debajo de los tags | En *Nueva receta* y al editar, el campo *Fuente original* pasa a ir justo debajo del campo *Tags*. | Abierto |
 | P111 | Herramientas: referencia rápida | Tablas de consulta en *Herramientas*: minutos de los huevos según el punto, temperatura interna de la carne, temperatura del aceite para freír, y temperaturas y tiempos de horno. Sin cálculo. | Abierto |
 | P112 | Herramientas: cronómetro y cuenta regresiva | Un cronómetro y una cuenta regresiva en *Herramientas*. | Abierto |
+| P113 | Calculadora de pan: prefermentos | Analizar si la calculadora de pan ofrece prefermentos (biga, poolish, etc.) además de levadura fresca, seca y masa madre. | Abierto |
