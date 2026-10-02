@@ -248,6 +248,12 @@ Cada una se midió o se discutió a fondo.
   reindexar:** la salida siempre es borrar `_indice` o *Reindexar*, con una sola
   pestaña abierta.
 - **AppSheet, Apps Script, apps nativas, un Artifact de Claude** como plataforma.
+- **Un temporizador que pase por el Reloj de Android o por una app externa:**
+  Chrome no le entrega un `intent:` al Reloj —su pantalla no es `BROWSABLE` y
+  exige el permiso `SET_ALARM`, que Chrome no tiene—, no hay links al Asistente
+  que lleven un comando, y las notificaciones programadas (Notification
+  Triggers) quedaron detrás de un flag. Las apps puente (MacroDroid, Tasker,
+  ntfy) se descartaron: ninguna app externa.
 - **Cooklang** en el cuerpo de la receta, o **`schema.org/Recipe`** como modelo.
 - **Claves nuevas en el frontmatter** (`ultima_vez`, `veces`, `puntaje`,
   porciones numéricas) y **datos nutricionales:** si la fuente los trae, se
