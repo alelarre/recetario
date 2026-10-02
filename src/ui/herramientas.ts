@@ -59,6 +59,10 @@ const interruptor = (etiqueta: string, grupo: string, encendido: boolean): strin
   `data-grupo="${grupo}" data-valor="${encendido ? '' : '1'}"><span class="n">${escapar(etiqueta)}</span>` +
   '<span class="perilla" aria-hidden="true"></span></button>';
 
+/** Una explicación que se despliega debajo de un dato: cerrada, sólo su título. */
+const explicacion = (titulo: string, texto: string): string =>
+  `<details class="explica"><summary>${escapar(titulo)}</summary><p>${escapar(texto)}</p></details>`;
+
 /** Las filas de datos que van juntas, en una ficha. Sin filas, nada. */
 const fichaDeDatos = (...filas: string[]): string => {
   const contenido = filas.join('');
@@ -130,6 +134,7 @@ export function renderPan(d: DatosPan): string {
   const modo = FERMENTACIONES.find(f => f.clave === d.fermentacion)?.modo ?? 'ambiente';
   const horas = fermentacionesPara(d.prefermento).filter(f => f.modo === modo);
   const pref = prefermentoConLevadura(d.prefermento);
+  const elegido = PREFERMENTOS.find(p => p.clave === d.prefermento);
   const c = d.cantidad;
   // Una pizza va en bollos. En un pan, el campo que manda muestra lo escrito; el otro, lo que resulta.
   const cantidad = c.de === 'bollos'
@@ -157,6 +162,7 @@ export function renderPan(d: DatosPan): string {
         ] : [])) +
       fichaDeDatos(
         desplegable('Prefermento', 'prefermento', [{ valor: '', texto: 'Ninguno' }, ...enTexto(PREFERMENTOS)], d.prefermento ?? ''),
+        elegido ? explicacion(elegido.titulo, elegido.descripcion) : '',
         pref && pref.horas.length > 1
           ? conmutador(`Horas del ${pref.nombre.toLowerCase()}`, 'horas-prefermento',
               pref.horas.map(h => ({ valor: String(h.horas), texto: `${h.horas} h` })), String(d.horasPrefermento))

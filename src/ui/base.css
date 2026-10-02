@@ -532,6 +532,12 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 .dato select:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
 /* El selector del sistema dibuja las opciones: que no hereden la alineación. */
 .dato select option, .dato select optgroup { text-align: left; }
+/* §6.28 La explicación de lo elegido: una fila más, cerrada, que se abre al
+   tocar su título. Es prosa, así que el texto no baja de 16 (§3.2). */
+.explica { border-bottom: 1px solid var(--borde); }
+.explica:last-child { border-bottom: 0; }
+.explica summary { padding: var(--e-3) 0; font-size: var(--txt-chico); color: var(--fg-2); cursor: pointer; }
+.explica p { margin: 0 0 var(--e-3); color: var(--fg-2); line-height: 1.5; }
 /* §6.28 El conmutador de un dato: el del orden (§6.20) con las posiciones que
    hagan falta, todas del mismo ancho. */
 .seg { flex: 0 0 auto; margin-left: auto; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr;

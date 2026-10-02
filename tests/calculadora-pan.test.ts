@@ -125,8 +125,12 @@ describe('las pizzas', () => {
 });
 
 describe('los prefermentos', () => {
-  it('lo que se elige: la masa madre primero, y los tres con levadura', () => {
+  it('lo que se elige: la masa madre primero, y los tres con levadura; cada uno con su explicación', () => {
     expect(PREFERMENTOS.map(p => p.nombre)).toEqual(['Masa madre', 'Poolish', 'Biga', 'Pâte fermentée']);
+    for (const p of PREFERMENTOS) {
+      expect(p.titulo).toMatch(/^Qué es (el|la) /);
+      expect(p.descripcion.length).toBeGreaterThan(80);
+    }
   });
 
   it('la tabla de los que llevan levadura, con su harina, hidratación, sal y horas', () => {

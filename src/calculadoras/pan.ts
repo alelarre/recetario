@@ -111,34 +111,49 @@ export const SEGUNDA_POR_DEFECTO: ClaveHarina = 'integral';
  * suma más. La pâte fermentée da sabor y no levado: la masa final suma la
  * levadura de la tabla de fermentación. `ambiente` dice si el prefermento
  * fermenta a la temperatura de la cocina, y entonces su levadura se ajusta
- * con ella (`LEVADURA_POR_TEMPERATURA`). Las fuentes de cada valor están en
+ * con ella (`LEVADURA_POR_TEMPERATURA`). `titulo` y `descripcion` son la
+ * explicación que se despliega debajo del elegido. Las fuentes de cada valor están en
  * `product-design/research/herramientas/panaderia-pizza-masas.md`.
  */
 export const PREFERMENTOS_CON_LEVADURA: readonly {
   clave: Exclude<ClavePrefermento, 'masa-madre'>; nombre: string; harina: number; hidratacion: number; sal: number;
   horas: readonly { horas: number; fresca: number }[]; levaduraFinal: boolean; ambiente: boolean; advertencia: string;
+  titulo: string; descripcion: string;
 }[] = [
   // Bianco Lievito: 20 a 40 % de la harina; levadura a 23 °C.
   { clave: 'poolish', nombre: 'Poolish', harina: 30, hidratacion: 100, sal: 0,
     horas: [{ horas: 8, fresca: 0.75 }, { horas: 12, fresca: 0.2 }, { horas: 18, fresca: 0.1 }],
     levaduraFinal: false, ambiente: true,
-    advertencia: 'El poolish fermenta a temperatura ambiente. La masa final no lleva levadura: leva con la del poolish.' },
+    advertencia: 'El poolish fermenta a temperatura ambiente. La masa final no lleva levadura: leva con la del poolish.',
+    titulo: 'Qué es el poolish',
+    descripcion: 'Una mezcla líquida de harina y agua en partes iguales, con muy poca levadura, que se prepara de 8 a 18 horas ' +
+      'antes y fermenta a temperatura ambiente. Suma sabor y hace la masa más fácil de estirar. Lleva toda la levadura del pan.' },
   // Bianco Lievito, biga corta: 30 a 50 % de la harina; 16 a 20 h a 18 °C.
   { clave: 'biga', nombre: 'Biga', harina: 40, hidratacion: 44, sal: 0,
     horas: [{ horas: 18, fresca: 1 }], levaduraFinal: false, ambiente: false,
-    advertencia: 'La biga fermenta de 16 a 20 h a unos 18 °C. La masa final no lleva levadura: leva con la de la biga.' },
+    advertencia: 'La biga fermenta de 16 a 20 h a unos 18 °C. La masa final no lleva levadura: leva con la de la biga.',
+    titulo: 'Qué es la biga',
+    descripcion: 'Una masa firme, con poca agua y levadura, que se prepara de 16 a 20 horas antes y fermenta en un lugar ' +
+      'fresco, a unos 18 °C. Suma sabor y le da fuerza a la masa. Lleva toda la levadura del pan.' },
   // King Arthur: 0,1 % de instantánea, que es 0,3 % de fresca; 14 h a temperatura ambiente.
   { clave: 'pate', nombre: 'Pâte fermentée', harina: 27, hidratacion: 68, sal: 1.4,
     horas: [{ horas: 14, fresca: 0.3 }], levaduraFinal: true, ambiente: true,
-    advertencia: 'La pâte fermentée fermenta unas 14 h a temperatura ambiente. La masa final lleva su propia levadura.' }
+    advertencia: 'La pâte fermentée fermenta unas 14 h a temperatura ambiente. La masa final lleva su propia levadura.',
+    titulo: 'Qué es la pâte fermentée',
+    descripcion: 'Masa de pan ya fermentada —harina, agua, sal y levadura—: un pedazo guardado de la tanda anterior, o ' +
+      'preparada unas 14 horas antes. Suma sabor, pero no leva el pan: la masa final lleva su propia levadura.' }
 ];
 
 /**
  * Lo que se elige como prefermento. La masa madre es uno más: leva el pan
  * sola, sin levadura, y su cantidad sale de la tabla de fermentación.
  */
-export const PREFERMENTOS: readonly { clave: ClavePrefermento; nombre: string }[] = [
-  { clave: 'masa-madre', nombre: 'Masa madre' },
+export const PREFERMENTOS: readonly { clave: ClavePrefermento; nombre: string; titulo: string; descripcion: string }[] = [
+  { clave: 'masa-madre', nombre: 'Masa madre',
+    titulo: 'Qué es la masa madre',
+    descripcion: 'Un cultivo de harina y agua que se mantiene vivo alimentándolo, con sus propias levaduras y bacterias. ' +
+      'Leva el pan sola, sin levadura, y le da acidez. Acá se cuenta al 100 % de hidratación: la mitad de su peso es ' +
+      'harina y la mitad, agua.' },
   ...PREFERMENTOS_CON_LEVADURA
 ];
 

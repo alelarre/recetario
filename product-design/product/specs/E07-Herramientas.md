@@ -206,6 +206,10 @@ queda vacío.
 
 - [ ] **Cuatro prefermentos:** la masa madre, que leva sola (C07.2.3), y
   tres con levadura comercial.
+- [ ] **Con uno elegido, debajo de su fila va su explicación,** cerrada:
+  *«Qué es la biga»*. Al tocarla se despliega un párrafo que dice qué es,
+  cuánto y dónde fermenta, y si la masa final lleva levadura. Sin
+  prefermento no está, y vuelve a cerrarse cada vez que se elige algo.
 - [ ] Los de levadura comercial salen de una tabla. Cada uno dice qué
   parte de la harina total va al prefermento, su hidratación, su sal y la
   levadura fresca según sus horas, las tres sobre su harina, con la fuente

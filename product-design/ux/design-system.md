@@ -1376,6 +1376,12 @@ perilla a la derecha, de 48 × 28 px. Lleva `role="switch"` y `aria-checked`.
 Encendido se dibuja invertido, como todo lo elegido (§6.0), y cambia sin
 transición (§5).
 
+**La explicación** (`.explica`) de lo elegido, para lo que no se entiende
+por el nombre —un prefermento—: una fila más, debajo de su dato, que se
+despliega al tocar su título. El título va en `--txt-chico` `--fg-2`, con el
+triángulo del navegador; el texto, en `--txt-base` `--fg-2`, porque es prosa
+(§3.2). Arranca cerrada: el que ya sabe no la ve.
+
 **Las cantidades que se escriben son campos** (§6.9), en su propia ficha y
 con la etiqueta arriba: un número se tipea, no se elige. Una aclaración del
 campo va debajo, en `--txt-chico` `--fg-2`.

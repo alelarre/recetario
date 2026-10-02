@@ -204,6 +204,20 @@ describe('la calculadora de pan — el prefermento', () => {
     expect(opcionesDe(h, 'prefermento')).toEqual(['', 'masa-madre', 'poolish', 'biga', 'pate']);
   });
 
+  it('con un prefermento elegido, debajo va su explicación, cerrada; sin prefermento, no hay', () => {
+    expect(renderPan(PAN_POR_DEFECTO)).not.toContain('<details');
+    for (const [clave, titulo] of [
+      ['masa-madre', 'Qué es la masa madre'], ['poolish', 'Qué es el poolish'],
+      ['biga', 'Qué es la biga'], ['pate', 'Qué es la pâte fermentée']
+    ] as const) {
+      const h = renderPan({ ...PAN_POR_DEFECTO, prefermento: clave });
+      expect(h).toContain(`<details class="explica"><summary>${titulo}</summary><p>`);
+      expect(h).not.toContain('<details class="explica" open');
+      expect(pos(h, 'prefermento')).toBeLessThan(h.indexOf('<details'));
+      expect(h.indexOf('<details')).toBeLessThan(h.indexOf('data-cantidad='));
+    }
+  });
+
   it('con poolish: sus horas, la levadura, y sin la fermentación de la tabla; el resultado, en dos grupos', () => {
     const poolish = renderPan({ ...PAN_POR_DEFECTO, prefermento: 'poolish', horasPrefermento: 12 });
     expect(poolish).toContain('data-grupo="horas-prefermento" data-valor="12" aria-pressed="true"');
