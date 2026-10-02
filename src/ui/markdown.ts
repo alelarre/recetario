@@ -242,3 +242,6 @@ export function tramosDeFuente(fuente: string): TramoEnLinea[] {
   if (/^https?:\/\/\S+$/i.test(limpia)) return [{ texto: sinEsquema(limpia), link: limpia }];
   return limpia ? [{ texto: limpia }] : [];
 }
+
+/** La dirección que abre una fuente, o ninguna si es texto libre. */
+export const linkDeFuente = (fuente: string): string | null => tramosDeFuente(fuente)[0]?.link ?? null;

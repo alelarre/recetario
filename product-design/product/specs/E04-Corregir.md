@@ -68,6 +68,7 @@ y el archivo se arma solo al guardar.
 - [ ] Solo el título es obligatorio, salvo en un borrador; una receta nueva, además, tiene que tener algo cargado (C04.3b.1). **Vaciar el título de una receta que ya existe no vuelve al que tenía:** sin `borrador`, el aviso dice *«Ponele un título antes de guardar.»*; en un borrador, se guarda con el título por defecto, como al crearlo (C04.3b.1).
 - [ ] Un campo que se deja vacío **no se escribe** en el frontmatter: no quedan claves vacías.
 - [ ] `rinde` es texto libre, no un número: *"4 porciones"*.
+- [ ] **Fuente original lleva al lado un botón que la abre** en otra pestaña, para mirar la receta original mientras se corrige. Está habilitado sólo cuando lo escrito es un link —una URL pelada o un link markdown, lo mismo que la receta abierta dibuja como link (`E03-LeerYCocinar.md`)— y se habilita o deshabilita a cada tecla; con texto libre, *«libro de pescados, pág. 84»*, queda deshabilitado. No guarda nada.
 - [ ] La dificultad es un desplegable con *—* —sin dificultad—, *fácil*, *media* y *difícil*. Un valor fuera de esos tres abre el editor en *—*, igual que un `tiempo` inválido (C04.2.1c).
 
 #### C04.2.1b — Los tags, y las palabras que la app se reserva *(J7)*

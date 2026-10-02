@@ -355,6 +355,10 @@ button.chip { cursor: pointer; }
                 background-position: right var(--e-4) center; }
 .campo input:focus, .campo textarea:focus { outline: none; border: 2px solid var(--acento); }
 .campo ::placeholder { color: var(--fg-3); }
+/* Un campo con un botón al lado: el campo toma el ancho y el botón es cuadrado. */
+.con-boton { display: flex; gap: var(--e-2); }
+.con-boton input { flex: 1; min-width: 0; }
+.con-boton .btn { flex: none; width: 48px; padding: 0; }
 
 /* El marco de un campo de sección del editor: el `textarea`, su espejo y el
    botón de poner una foto, que se cuelga encima (§6.9b). */

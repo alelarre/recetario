@@ -60,6 +60,7 @@ import {
   compartirPdf, compartirLink, compartirTexto, plataformaDelNavegador, leerPortapapeles, enviarAlAgente
 } from './compartir.js';
 import { esRecetaEnMd, recetaRecibida, aplicarPegada, pedidoDeConversion } from './conversion.js';
+import { linkDeFuente } from './ui/markdown.js';
 import { desdeCompartido, tituloPorDefecto } from './compartido.js';
 import { codificar, urlDeLink } from './link-receta.js';
 import { textoReceta } from './texto-receta.js';
@@ -1190,6 +1191,13 @@ const ALTO_RENGLON = 24;
 /** Se está en el editor de una receta, la que sea: ahí nada se redibuja sin perder lo escrito. */
 const enElEditor = (): boolean => vistaActual?.vista === 'editar' || vistaActual?.vista === 'nueva';
 
+/** El botón de abrir la fuente se habilita sólo con un link en el campo. */
+function revisarFuente(): void {
+  const boton = document.querySelector<HTMLButtonElement>('#app [data-accion="abrir-fuente"]');
+  const campo = document.querySelector<HTMLInputElement>('#app [name="fuente"]');
+  if (boton && campo) boton.disabled = !linkDeFuente(campo.value);
+}
+
 /** Un campo del formulario por su `name`, como lo hace `revisarBorrador`. */
 const campoDelEditor = (nombre: string) =>
   document.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#app [name="${nombre}"]`);
@@ -1857,6 +1865,11 @@ const accionesDeCategorias: SeccionDeAcciones = {
  * la duración, salir y borrar.
  */
 const accionesDelEditor: SeccionDeAcciones = {
+  'abrir-fuente': () => {
+    const campo = document.querySelector<HTMLInputElement>('#app [name="fuente"]');
+    const link = linkDeFuente(campo?.value ?? '');
+    if (link) plataformaDelNavegador().abrir?.(link);
+  },
   'convertir-con-agente': async () => {
     // Guarda y después manda: el pedido lleva el id del `.md`, que en una
     // receta nueva recién existe al crearla. Si no se guardó, no se manda
@@ -2310,7 +2323,7 @@ app.addEventListener('input', (e) => {
   if (opcion) return herramientas.alElegir(opcion.dataset['opcion'] ?? '', opcion.value);
   // En el editor, cada tecla puede habilitar o bloquear el botón de
   // `borrador`, y mueve el cursor de línea.
-  if (enElEditor()) { revisarBorrador(); acomodarBotonDeFoto(); }
+  if (enElEditor()) { revisarBorrador(); revisarFuente(); acomodarBotonDeFoto(); }
 });
 
 /** El deslizamiento en curso: dónde empezó, si ya se sabe que es gesto, y cuánto va abierto. */

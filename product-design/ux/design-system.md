@@ -309,7 +309,7 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `portada` | La marca de la foto que es la portada, en la fila de fotos del editor (§6.25). Una ficha con un señalador adentro; el señalador va relleno con `currentColor`. **No es una estrella:** en esta app la estrella es favorito. |
 | `enElTexto` | La marca de la foto que está puesta en un paso o un ingrediente (§6.25). Tres renglones de largo distinto. |
 | `galeria` | *Galería*, en la fila de fotos (§6.25): elegir fotos del teléfono. Dos fotos, una detrás de la otra. |
-| `link` | *Por URL*, en la fila de fotos (§6.25): agregar una foto pegando su dirección. Dos eslabones. |
+| `link` | *Por URL*, en la fila de fotos (§6.25): agregar una foto pegando su dirección; y el botón que abre la fuente original, al lado de su campo (§6.9). Dos eslabones. |
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `balanza` | *Herramientas*, en el menú lateral, y delante del título de la ficha del resultado de una calculadora (§6.28). |
 | `idaYVuelta` | Entre dos cantidades que salen una de la otra, en las calculadoras (§6.28). Dos flechas, una para cada lado. |
@@ -717,6 +717,12 @@ Placeholder en `--fg-3`, y **nunca reemplaza a la etiqueta**.
 
 Los campos de contenido —ingredientes, preparación, notas— son `textarea` que
 crecen con el contenido, con un mínimo de tres renglones.
+
+**Un campo puede llevar un botón al lado**, en la misma fila y a `--e-2`: el
+campo toma todo el ancho y el botón es un secundario (§6.8) cuadrado, 48 px,
+sólo con su ícono y nombrado para el lector de pantalla. Hoy es uno: el que
+abre la fuente original del editor (`E04-Corregir.md` C04.2.1), con el ícono
+`link`, deshabilitado mientras lo escrito no sea un link.
 
 ### 6.9b Botón de poner una foto
 

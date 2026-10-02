@@ -811,6 +811,21 @@ describe('renderFotoPorUrl', () => {
   });
 });
 
+describe('el botón de abrir la fuente', () => {
+  const boton = 'data-accion="abrir-fuente" aria-label="Abrir la fuente"';
+
+  it('va al lado del campo, habilitado cuando la fuente es un link', () => {
+    const html = renderEditor({ entrada: null, receta: parse('---\ntitulo: A\nfuente: https://x.com/p\n---\n') });
+    expect(html).toMatch(new RegExp(`<input name="fuente" value="https://x.com/p"><button class="btn sec" type="button" ${boton}>`));
+    expect(html).toContain(`${boton}>${ICO.link}</button>`);
+  });
+
+  it('deshabilitado con texto libre o sin fuente', () => {
+    expect(dibujar()).toContain(`${boton} disabled>`);
+    expect(renderEditor({ entrada: null, receta: parse('---\ntitulo: A\n---\n') })).toContain(`${boton} disabled>`);
+  });
+});
+
 describe('el bloque Herramientas del editor', () => {
   const html = renderEditor({ entrada: null, receta: parse('---\ntitulo: A\ntags: [horno]\n---\n') });
   const pos = (t: string) => html.indexOf(`data-accion="tag-especial" data-valor="${t}"`);

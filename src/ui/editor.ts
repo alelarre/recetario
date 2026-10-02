@@ -10,7 +10,7 @@
  * reescribe el `.md` entero y lo que el editor no preservara se perdería
  * (C04.3c.1).
  */
-import { escapar, imgDe } from './markdown.js';
+import { escapar, imgDe, linkDeFuente } from './markdown.js';
 import {
   encabezado, aviso, avisoAlGuardar, iconoDeTag, filaDeFotos, cuadroDeFoto, conLateral, izquierdaDelEncabezado
 } from './componentes.js';
@@ -87,6 +87,20 @@ export const confirmacionSalida =
 const campo = (nombre: string, etiqueta: string, valor?: string | null, ph = ''): string =>
   `<label class="campo"><span>${escapar(etiqueta)}</span>` +
   `<input name="${nombre}" value="${escapar(valor ?? '')}"${ph ? ` placeholder="${escapar(ph)}"` : ''}></label>`;
+
+/**
+ * La fuente, con el botón que la abre en otra pestaña: para mirar la receta
+ * original mientras se corrige. Habilitado sólo cuando el valor es un link
+ * —URL pelada o link markdown, lo mismo que la receta dibuja como link—;
+ * `main` lo revisa a cada tecla. No es un `<label>`: un botón adentro de
+ * una etiqueta también le daría el foco al campo.
+ */
+const campoFuente = (valor: string | null): string =>
+  '<div class="campo"><span>Fuente original</span><div class="con-boton">' +
+  `<input name="fuente" value="${escapar(valor ?? '')}">` +
+  '<button class="btn sec" type="button" data-accion="abrir-fuente" aria-label="Abrir la fuente"' +
+  `${linkDeFuente(valor ?? '') ? '' : ' disabled'}>${ICO.link}</button>` +
+  '</div></div>';
 
 /**
  * Un tag del editor: una pill con su propia cruz. Se exporta porque `main`
@@ -415,7 +429,7 @@ export function renderEditor(
     bloqueHerramientas(especiales) +
     // La fuente va antes que Rinde: lo que llega por el menú Compartir la trae
     // precargada, y así se ve en la primera pantalla del teléfono sin desplazarse.
-    campo('fuente', 'Fuente original', receta.fuente) +
+    campoFuente(receta.fuente) +
     campo('rinde', 'Rinde', receta.rinde) +
     campoDuracion(receta.tiempo) +
     `<label class="campo"><span>Dificultad</span><select name="dificultad">${opcionesDificultad}</select></label>` +

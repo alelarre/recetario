@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { aHtml, escapar, aTexto, aPdf, tramosEnLinea, tramosDeFuente, imgDe } from '../src/ui/markdown.js';
+import { aHtml, escapar, aTexto, aPdf, tramosEnLinea, tramosDeFuente, linkDeFuente, imgDe } from '../src/ui/markdown.js';
 
 describe('aHtml', () => {
   it('escapa el HTML de entrada', () => {
@@ -230,6 +230,15 @@ describe('tramosDeFuente', () => {
   });
   it('texto libre, sin formato', () => {
     expect(tramosDeFuente('libro *viejo*, pág. 84')).toEqual([{ texto: 'libro *viejo*, pág. 84' }]);
+  });
+});
+
+describe('linkDeFuente', () => {
+  it('la dirección que se abre: de la URL pelada o del link markdown; del texto libre, ninguna', () => {
+    expect(linkDeFuente('https://cookpad.com/r/1')).toBe('https://cookpad.com/r/1');
+    expect(linkDeFuente('  [Paladar](https://p.com/x) ')).toBe('https://p.com/x');
+    expect(linkDeFuente('libro viejo, pág. 84')).toBeNull();
+    expect(linkDeFuente('')).toBeNull();
   });
 });
 
