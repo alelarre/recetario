@@ -239,8 +239,9 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
 
 /* Un tag que la app se reserva: el aviso es una línea, sin caja ni botón. */
 .error-tag { margin: var(--e-1) 0 0; font-size: var(--txt-chico); color: var(--error); }
-/* Y un poco de aire entre los tags puestos y el campo para sumar otro. */
-[data-pills]:not(:empty) { margin-bottom: var(--e-3); }
+/* Las pills van debajo del campo de agregar, con el aire de una fila; vacías
+   no ocupan nada. */
+[data-pills]:not(:empty) { margin-top: var(--e-3); }
 
 /* Convertir con Agente, Guardar y Borrar receta, al pie del formulario y a lo
    ancho: una columna, no la fila a mitades de `.acciones`. El único aire entre

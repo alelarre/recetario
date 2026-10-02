@@ -811,11 +811,38 @@ describe('renderFotoPorUrl', () => {
   });
 });
 
-it('el grupo de especiales suma pan y fermentado, después de borrador', () => {
-  const html = renderEditor({ entrada: null, receta: parse('---\ntitulo: A\n---\n') });
-  const orden = ['borrador', 'pan', 'fermentado'].map(t => html.indexOf(`data-accion="tag-especial" data-valor="${t}"`));
-  expect(orden.every(i => i > 0)).toBe(true);
-  expect(orden).toEqual([...orden].sort((a, b) => a - b));
+describe('el bloque Herramientas del editor', () => {
+  const html = renderEditor({ entrada: null, receta: parse('---\ntitulo: A\ntags: [horno]\n---\n') });
+  const pos = (t: string) => html.indexOf(`data-accion="tag-especial" data-valor="${t}"`);
+
+  it('pan y fermentado van en su bloque, después de Tags y antes de la fuente', () => {
+    const tags = html.indexOf('data-tags');
+    const herramientas = html.indexOf('data-herramientas');
+    const fuente = html.indexOf('name="fuente"');
+    expect(tags).toBeGreaterThan(0);
+    expect(herramientas).toBeGreaterThan(tags);
+    expect(fuente).toBeGreaterThan(herramientas);
+    expect(pos('borrador')).toBeLessThan(herramientas);
+    expect(pos('pan')).toBeGreaterThan(herramientas);
+    expect(pos('fermentado')).toBeGreaterThan(pos('pan'));
+    expect(pos('fermentado')).toBeLessThan(fuente);
+  });
+
+  it('el bloque se titula Herramientas, con su emoji', () => {
+    expect(html).toContain('<span>🛠️ Herramientas</span>');
+  });
+
+  it('en Tags, el campo de agregar va antes de las pills', () => {
+    const agregar = html.indexOf('data-tag-nuevo');
+    const pills = html.indexOf('data-pills');
+    expect(agregar).toBeGreaterThan(pos('borrador'));
+    expect(pills).toBeGreaterThan(agregar);
+    expect(pills).toBeLessThan(html.indexOf('data-herramientas'));
+  });
+
+  it('el botón de borrador lleva su ícono', () => {
+    expect(html).toContain(`data-valor="borrador" aria-pressed="true" disabled>${ICO.borrador}borrador`);
+  });
 });
 
 describe('la llegada desde Compartir', () => {

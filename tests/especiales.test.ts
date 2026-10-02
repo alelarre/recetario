@@ -15,7 +15,7 @@ describe('la tabla de especiales', () => {
     ['favorito', 'estrella', 'Favorita', true, true, false],
     ['menú diario', 'calendario', 'Menú diario', true, true, false],
     ['probar', 'marcador', 'Para probar', true, true, false],
-    ['borrador', null, null, false, false, false],
+    ['borrador', 'borrador', null, false, false, false],
     ['pan', null, null, false, false, false],
     ['fermentado', null, null, false, false, false]
   ] as const)('%s: ícono, marca, chips, receta y búsqueda', (nombre, icono, marca, chips, receta, busqueda) => {

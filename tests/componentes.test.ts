@@ -184,8 +184,8 @@ describe('los chips de tags', () => {
     expect(iconoDeTag('horno')).toBe('');
   });
 
-  it('borrador no tiene ícono, ni una forma que no es la canónica', () => {
-    expect(iconoDeTag('borrador')).toBe('');
+  it('borrador lleva el círculo a medio llenar; una forma que no es la canónica, nada', () => {
+    expect(iconoDeTag('borrador')).toBe(ICO.borrador);
     expect(iconoDeTag('favoritas')).toBe('');
   });
 

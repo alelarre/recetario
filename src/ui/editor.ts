@@ -20,7 +20,7 @@ import {
   DIFICULTADES, dificultadValida, tagReservado, TAGS_ESPECIALES, ESPECIALES,
   DURACIONES, duracionValida
 } from '../catalogo.js';
-import type { TagEspecial } from '../catalogo.js';
+import type { TagEspecial, DefinicionEspecial } from '../catalogo.js';
 import { especialesValidos } from '../especiales.js';
 import { sePuedeTerminar } from '../recipe.js';
 import { resolver, usosDeFotos } from '../fotos-receta.js';
@@ -306,18 +306,35 @@ const area = (
  * Los tags especiales, un botón cada uno: apretado si la receta lo tiene,
  * suelto si no. `borrador` no se suelta sin lo mínimo —título, categoría,
  * ingredientes y pasos—: mientras falte, queda apretado y deshabilitado, y la
- * leyenda dice qué hace falta.
+ * leyenda dice qué hace falta. Los que abren una calculadora no van acá: son
+ * el bloque Herramientas, `bloqueHerramientas`.
  */
 function botonesEspeciales(especiales: readonly TagEspecial[], puedeTerminar: boolean): string {
-  const botones = ESPECIALES.map(d => {
+  const botones = ESPECIALES.filter(d => !d.herramienta).map(d => {
     const bloqueado = d.nombre === 'borrador' && !puedeTerminar;
     const apretado = bloqueado || especiales.includes(d.nombre);
-    return `<button type="button" class="tag-esp" data-accion="tag-especial" data-valor="${escapar(d.nombre)}" ` +
-      `aria-pressed="${apretado}"${bloqueado ? ' disabled' : ''}>${iconoDeTag(d.nombre)}${escapar(d.etiquetaEditor)}</button>`;
+    return botonEspecial(d, apretado, bloqueado);
   }).join('');
   return `<div class="tags-esp" role="group" aria-label="Tags especiales">${botones}</div>` +
     `<p class="aviso-mudo leyenda-borrador"${puedeTerminar ? ' hidden' : ''}>` +
     'Se va a poder sacar <i>borrador</i> cuando se cargue: título, categoría, ingredientes y pasos.</p>';
+}
+
+const botonEspecial = (d: DefinicionEspecial, apretado: boolean, bloqueado = false): string =>
+  `<button type="button" class="tag-esp" data-accion="tag-especial" data-valor="${escapar(d.nombre)}" ` +
+  `aria-pressed="${apretado}"${bloqueado ? ' disabled' : ''}>${iconoDeTag(d.nombre)}${escapar(d.etiquetaEditor)}</button>`;
+
+/**
+ * Los especiales que dicen qué calculadora sirve para la receta, en un bloque
+ * propio: no clasifican la receta, le ponen un botón *Calcular*. Son los
+ * mismos botones que los demás especiales, y `main` los lee todos juntos
+ * para armar el `hidden` de `tags_especiales`.
+ */
+function bloqueHerramientas(especiales: readonly TagEspecial[]): string {
+  const botones = ESPECIALES.filter(d => d.herramienta)
+    .map(d => botonEspecial(d, especiales.includes(d.nombre))).join('');
+  return '<div class="campo" data-herramientas><span>🛠️ Herramientas</span>' +
+    `<div class="tags-esp" role="group" aria-label="Herramientas">${botones}</div></div>`;
 }
 
 /**
@@ -384,7 +401,6 @@ export function renderEditor(
     // no se llama `tags` justamente para que lo a medio escribir no se guarde.
     '<div class="campo" data-tags><span>Tags</span>' +
       botonesEspeciales(especiales, puede) +
-      `<div class="chips" data-pills>${comunes.map(pillTag).join('')}</div>` +
       `<input type="hidden" name="tags" value="${escapar(comunes.join(', '))}">` +
       `<input type="hidden" name="tags_especiales" value="${escapar(especiales.join(', '))}">` +
       '<input data-tag-nuevo list="tags-conocidos" placeholder="Agregar tags">' +
@@ -392,7 +408,11 @@ export function renderEditor(
       `<datalist id="tags-conocidos">${tagsConocidos.filter(t => !tagReservado(t))
         .map(t => `<option value="${escapar(t)}">`).join('')}</datalist>` +
       '<p class="error-tag" hidden>Tag no permitido</p>' +
+      // Las pills debajo del campo: lo recién agregado aparece justo abajo de
+      // donde se escribió.
+      `<div class="chips" data-pills>${comunes.map(pillTag).join('')}</div>` +
     '</div>' +
+    bloqueHerramientas(especiales) +
     // La fuente va antes que Rinde: lo que llega por el menú Compartir la trae
     // precargada, y así se ve en la primera pantalla del teléfono sin desplazarse.
     campo('fuente', 'Fuente original', receta.fuente) +

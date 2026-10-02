@@ -37,7 +37,7 @@ error.
 - [ ] **El encabezado queda fijo arriba** al bajar por el formulario, como el de todas las pantallas (`../../ux/design-system.md` §6.12).
 - [ ] Salir sin guardar con cambios pendientes **pregunta antes**: *"¿Salir sin guardar los cambios?"*, con *Seguir editando* y *Salir*. Vale para el volver del encabezado, para un destino del menú lateral —también *Nueva receta* con otra receta nueva abierta— y para el gesto de atrás de Android. La pregunta se inserta arriba del formulario sin redibujarlo, para no perder lo escrito.
 - [ ] **Con un destino nuevo** —un link del menú—, esa navegación se deshace mientras se pregunta: *Seguir editando* no deja nada en el historial, y *Salir* va al destino.
-- [ ] El formulario va en tres fichas con título, en este orden: **Datos** —Título, Categoría, Tags, Fuente original, Rinde, Duración y Dificultad—, **Fotos** (F04.3d) y **Contenido** —Portada, Descripción, Ingredientes, Preparación, Variaciones y Notas—.
+- [ ] El formulario va en tres fichas con título, en este orden: **Datos** —Título, Categoría, Tags, Herramientas, Fuente original, Rinde, Duración y Dificultad—, **Fotos** (F04.3d) y **Contenido** —Portada, Descripción, Ingredientes, Preparación, Variaciones y Notas—.
 - [ ] **Las acciones van al final, a lo ancho:** **Convertir con Agente** (secundario, sólo mientras la receta tiene `borrador`; `E01-CapturaYBorradores.md` C01.9.1) y debajo **Guardar** (principal). *Guardar* está sólo ahí, no en el encabezado. Al editar una receta existente, *Borrar receta* va debajo (C04.6.1). Entre los tres botones hay un solo aire, `--e-2`.
 - [ ] Agregar, sacar o poner una foto cuenta como cambio sin guardar, igual que escribir en un campo.
 - [ ] Salir sin cambios no pregunta nada.
@@ -72,7 +72,7 @@ y el archivo se arma solo al guardar.
 
 #### C04.2.1b — Los tags, y las palabras que la app se reserva *(J7)*
 
-- [ ] Los tags comunes puestos se dibujan como pills, cada una con su cruz, que la saca; debajo va el campo para agregar otro, que sugiere los tags que ya existen —nunca los reservados—. Se suma con Enter o con una coma, y también al salir del campo: lo escrito no se pierde por tocar *Guardar* sin apretar Enter. Los especiales no: tienen su botón (C04.4.1) y no se dibujan dos veces.
+- [ ] Los tags comunes puestos se dibujan como pills, cada una con su cruz, que la saca, debajo del campo para agregar otro, que sugiere los tags que ya existen —nunca los reservados—; lo recién agregado aparece justo abajo de donde se escribió. Se suma con Enter o con una coma, y también al salir del campo: lo escrito no se pierde por tocar *Guardar* sin apretar Enter. Los especiales no: tienen su botón (C04.4.1) y no se dibujan dos veces.
 - [ ] Hay **palabras reservadas** que el editor no deja escribir a mano: los seis especiales —`favorito`, `menú diario`, `probar`, `borrador`, `pan` y `fermentado`—, `favorita`, `favoritos`, `favoritas`, `borradores`, `incompleta` en sus cuatro formas y `terminado` en sus cuatro formas —masculino, femenino, singular y plural— (`E05-Cimientos.md` C05.1.4).
 - [ ] `terminado` está reservada porque contradice a `borrador` (C05.3.1): un tag que contradiga a otro tag especial es ambigüedad pura.
 - [ ] Los seis especiales están reservados porque tienen su propio control: escribirlos a mano duplicaría el botón.
@@ -239,13 +239,16 @@ cuándo se lo puede sacar.
 
 #### C04.4.1 — El control *(J7)*
 
-- [ ] Dentro del campo **«Tags»**, una fila con **un botón por tag especial**
-  —`favorito`, `menú diario`, `probar`, `borrador`, `pan` y `fermentado`, en
-  ese orden—, arriba de los tags comunes y del campo para agregar. Apretado: la receta tiene el tag
+- [ ] Dentro del campo **«Tags»**, una fila con **un botón por tag especial
+  que no abre calculadora** —`favorito`, `menú diario`, `probar` y `borrador`,
+  en ese orden—, arriba del campo para agregar y de los tags comunes. Los que
+  abren una (`herramienta`: `pan` y `fermentado`) van en el campo **«🛠️
+  Herramientas»**, debajo de Tags, con los mismos botones: no clasifican la
+  receta, le ponen su botón *Calcular*. Apretado: la receta tiene el tag
   en `tags_especiales`. Suelto: no lo tiene. Tocarlo lo pone o lo saca, con su `aria-pressed`. Cada
-  botón lleva el ícono de su tag, salvo `borrador`, `pan` y `fermentado`, que
-  no tienen. No hay fila
-  «Estado» ni otro control de completitud: es este botón.
+  botón lleva el ícono de su tag —el de `borrador`, el círculo a medio llenar—,
+  salvo `pan` y `fermentado`, que no tienen. No hay fila
+  «Estado» ni otro control de completitud: es el botón de `borrador`.
 - [ ] **Una receta nueva nace con `borrador` puesto** (C04.3b.1): no está
   terminada hasta que alguien lo diga.
 - [ ] `borrador` **no se puede soltar** hasta que la receta cumpla C05.3.3

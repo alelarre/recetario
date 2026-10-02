@@ -9,7 +9,7 @@
 import { normalizar } from './normalizar.js';
 
 /** Las claves de `ICO` que usa un especial. El dominio no importa la UI. */
-export type NombreIcono = 'estrella' | 'calendario' | 'marcador';
+export type NombreIcono = 'estrella' | 'calendario' | 'marcador' | 'borrador';
 
 export type TagEspecial = 'favorito' | 'menú diario' | 'probar' | 'borrador' | 'pan' | 'fermentado';
 
@@ -52,10 +52,11 @@ export const ESPECIALES: readonly DefinicionEspecial[] = [
     icono: 'marcador', etiquetaMarca: 'Para probar',
     enChips: true, enReceta: true, enBusqueda: false, etiquetaEditor: 'probar', herramienta: null
   },
-  // Sin presentación propia: al borrador se llega por su lista, en el menú.
+  // Sin marca ni chip: al borrador se llega por su lista, en el menú. El
+  // ícono lo llevan sólo su botón del editor y el título de esa lista.
   {
     nombre: 'borrador', reservadas: ['borradores', 'incompleta', 'incompleto', 'incompletos', 'incompletas'],
-    icono: null, etiquetaMarca: null,
+    icono: 'borrador', etiquetaMarca: null,
     enChips: false, enReceta: false, enBusqueda: false, etiquetaEditor: 'borrador', herramienta: null
   },
   // Dicen qué calculadora sirve para la receta: abren la suya desde la

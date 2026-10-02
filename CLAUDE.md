@@ -33,7 +33,8 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   búsqueda, y la calculadora que abre (`herramienta`)— y el resto del código
   la consulta en vez de preguntar por nombre. `pan` y `fermentado` abren su
   calculadora desde la receta (*Calcular pan*, *Calcular sal*, al pie de los
-  ingredientes) y no se muestran en ningún otro lado.
+  ingredientes) y no se muestran en ningún otro lado; en el editor sus
+  botones van en el bloque **Herramientas**, aparte de los de Tags.
 - **El índice es una Google Sheet** (`_indice`, con las hojas de recetas, `meta`
   y `categorias`). Es un cache derivado: los `.md` y las carpetas
   son siempre la verdad, y *Ajustes → Reindexar* lo rehace entero. La fila se
@@ -46,8 +47,9 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   `.md`, el mismo editor y la misma fila. Borradores es la lista por tag de
   `borrador`, en el menú, y **es el único camino a ellos**: el home no tiene
   tile «Sin categoría» y `borrador` no aparece en ninguna lista de tags (su
-  definición no va en los chips). **`borrador` no tiene presentación
-  propia:** ni marca en la tarjeta, ni chip en la receta, ni ícono; tocar un
+  definición no va en los chips). **`borrador` no tiene marca ni chip:**
+  ni en la tarjeta ni en la receta; su ícono —el círculo a medio llenar— va
+  sólo en su botón del editor y en el título de Borradores. Tocar un
   borrador en Borradores abre su editor. La categoría es opcional al crear: lo que no tiene categoría vive
   en `_sin-categoria/` (`carpeta_sin_categoria` en `meta`), que no es una
   categoría, y se muestra como «Sin categoría»; ninguna categoría puede

@@ -671,9 +671,10 @@ clave, `tags_especiales`, y tienen forma propia:
   presentación: sin ícono, sin marca, sin chip, sin aparecer en la receta y
   sin que la búsqueda los encuentre.
 - **Cada uno tiene su ícono**, y las marcas de los que lleva una receta van juntas
-  en la esquina de su tarjeta. `borrador`, `pan` y `fermentado` no: no tienen
-  ícono ni marca, y en la receta abierta no aparecen; un borrador se ve sólo en
-  Borradores.
+  en la esquina de su tarjeta. `borrador`, `pan` y `fermentado` no tienen marca
+  y en la receta abierta no aparecen; un borrador se ve sólo en Borradores. El
+  ícono de `borrador` —el círculo a medio llenar— va sólo en su botón del
+  editor y en el título de Borradores; `pan` y `fermentado` no tienen.
 - **En las listas tienen su propia fila**, fija y arriba del carrusel de los
   comunes, que van por cantidad de recetas. **`borrador`, `pan` y `fermentado`
   no van en ninguna lista de tags**: ni en las filas de tags ni en las

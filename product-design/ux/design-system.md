@@ -299,6 +299,7 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `estrella` | Favorito: en el encabezado de la receta (§6.22), en la marca de la tarjeta, en el chip y en el botón del editor. |
 | `marcador` | El tag *probar*. |
 | `calendario` | El tag *menú diario*, y Plan de la semana en el menú lateral. |
+| `borrador` | El tag *borrador*: un círculo a medio llenar, en su botón del editor y en el título de Borradores (§6.5). |
 | `tacho` | La acción destructiva del editor: *Borrar receta*. |
 | `portapapeles` | *Pegar*, en el encabezado del editor. |
 | `carpeta` | Cada carpeta encontrada, en la pantalla de la carpeta base. |
@@ -621,11 +622,12 @@ Al elegirla, *Subir foto* es la primera muestra de la fila: un botón de
 
 ### 6.5 Borrador
 
-**El tag `borrador` no tiene presentación propia.** Un borrador se ve sólo en su
-lista, Borradores, donde lo son todas: no lleva marca en la tarjeta (§6.1), no
-aparece en la fila de tags de la receta abierta, y su botón del editor (§6.10b)
-no lleva ícono, como los de `pan` y `fermentado`. El encabezado de Borradores lleva el título
-y el total, sin ícono.
+**El tag `borrador` no tiene marca ni chip.** Un borrador se ve sólo en su
+lista, Borradores, donde lo son todas: no lleva marca en la tarjeta (§6.1) y no
+aparece en la fila de tags de la receta abierta. Su ícono es un **círculo a
+medio llenar** —la mitad izquierda rellena; un aro vacío se leería como
+viñeta— y va en dos lugares: su botón del editor (§6.10b) y el encabezado de
+Borradores, delante del título.
 
 ### 6.6 Ficha
 
@@ -786,12 +788,14 @@ dice en una línea de `--txt-chico` en `--error`, sin caja ni botón
 
 ### 6.10b Botón de tag especial
 
-Seis botones —uno por tag especial: `favorito`, `menú diario`, `probar`,
-`borrador`, `pan` y `fermentado`—, dentro del campo **«Tags»**
-del editor, en una **grilla de dos columnas** arriba de los tags comunes y del campo
-para agregar (`E04-Corregir.md` C04.2.1b, C04.4.1), con `--e-2` entre sí. Cada
+Seis botones, uno por tag especial, en dos campos del editor: `favorito`,
+`menú diario`, `probar` y `borrador` dentro de **«Tags»**, arriba del campo
+para agregar y de los tags comunes; `pan` y `fermentado` dentro de **«🛠️
+Herramientas»**, el campo que sigue (`E04-Corregir.md` C04.2.1b, C04.4.1).
+Cada campo los pone en una **grilla de dos columnas** con `--e-2` entre sí. Cada
 uno mide 48 px de alto mínimo, `--r-medio`, `--txt-base` peso 600, y lleva su
-ícono (§3.4) a 16 px —`borrador`, `pan` y `fermentado` no tienen (§6.5)— y el tag tal como se escribe,
+ícono (§3.4) a 16 px —`pan` y `fermentado` no tienen; el de `borrador` es el
+círculo a medio llenar (§6.5)— y el tag tal como se escribe,
 con `aria-pressed`.
 
 | Estado | Fondo | Texto | Borde |
@@ -854,8 +858,8 @@ de esas: se entra desde la receta y se sale volviendo. **Sólo en el Recetario y
 Ajustes el título va además en `--txt-titulo`**, centrado en la barra y no en el
 hueco que dejan los controles (§3.2); el plan de la semana y Nueva receta lo llevan
 chico, como Borradores. Borradores es la lista por tag de `borrador` dibujada como
-destino del menú: el encabezado de la lista por tag —título chico y el total,
-sin ícono (§6.5)—, con la hamburguesa y el título «Borradores». Tocar una
+destino del menú: el encabezado de la lista por tag —título chico con el
+ícono de `borrador` adelante (§6.5), y el total—, con la hamburguesa y el título «Borradores». Tocar una
 tarjeta ahí abre el editor del borrador, no la receta.
 
 El total de una lista —las recetas de una categoría, los borradores— va a la
