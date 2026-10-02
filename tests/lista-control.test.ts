@@ -148,17 +148,19 @@ describe('lista-control — la lista plana', () => {
 });
 
 describe('lista-control — la lista agrupada', () => {
-  const sinNada = { porNombre: [], porIngrediente: [], porTag: [] };
+  const sinNada = { porNombre: [], porIngrediente: [], porTag: [], porFuente: [] };
 
-  it('los tres grupos, con su rótulo y su total; uno vacío no está', () => {
+  it('los cuatro grupos, con su rótulo y su total, en orden; uno vacío no está', () => {
     const agrupada = crearListaControl().agrupada({
       ...sinNada,
       porNombre: [e('Filet')],
-      porTag: [{ entrada: e('Caballa'), motivo: 'tiene tag merluza' }]
+      porTag: [{ entrada: e('Caballa'), motivo: 'tiene tag merluza' }],
+      porFuente: [{ entrada: e('Pan'), motivo: 'de El gran libro del pan' }]
     });
-    expect(agrupada.grupos.map(g => [g.rotulo, g.total])).toEqual([['Por nombre', 1], ['Por tag', 1]]);
+    expect(agrupada.grupos.map(g => [g.rotulo, g.total])).toEqual([['Por nombre', 1], ['Por tag', 1], ['Por fuente', 1]]);
     expect(agrupada.grupos[1]?.items[0]?.motivo).toBe('tiene tag merluza');
-    expect(agrupada.total).toBe(2);
+    expect(agrupada.grupos[2]?.items[0]?.motivo).toBe('de El gran libro del pan');
+    expect(agrupada.total).toBe(3);
   });
 
   it('cada grupo ordena sus favoritas primero, sin mezclarse con los otros, y conserva el motivo', () => {
@@ -168,7 +170,7 @@ describe('lista-control — la lista agrupada', () => {
         { entrada: e('Budín'), motivo: 'lleva huevo' },
         { entrada: e('Alfajor', { tags_especiales: ['favorito'] }), motivo: 'lleva dulce' }
       ],
-      porTag: []
+      porTag: [], porFuente: []
     });
     expect(titulos(agrupada.grupos[0]!.items.map(i => i.entrada))).toEqual(['Arroz', 'Zapallo']);
     expect(agrupada.grupos[1]!.items.map(i => [i.entrada.titulo, i.motivo])).toEqual([['Alfajor', 'lleva dulce'], ['Budín', 'lleva huevo']]);
@@ -180,7 +182,8 @@ describe('lista-control — la lista agrupada', () => {
     const agrupada = lista.agrupada({
       porNombre: [e('Besugo', { tiempo: '>60 min' }), e('Pollo', { tiempo: '~30 min' })],
       porIngrediente: [],
-      porTag: [{ entrada: e('Arroz', { tiempo: '~15 min' }), motivo: 'tiene tag horno' }]
+      porTag: [{ entrada: e('Arroz', { tiempo: '~15 min' }), motivo: 'tiene tag horno' }],
+      porFuente: []
     });
     expect(titulos(agrupada.grupos[0]!.items.map(i => i.entrada))).toEqual(['Pollo', 'Besugo']);
     expect(agrupada.orden).toBe('duracion');
@@ -195,7 +198,8 @@ describe('lista-control — la lista agrupada', () => {
     const grupos = {
       porNombre: muchas(TRAMO - 2),
       porIngrediente: [e('B1'), e('B2'), e('B3')].map(entrada => ({ entrada, motivo: 'lleva algo' })),
-      porTag: [{ entrada: e('C1'), motivo: 'tiene tag x' }]
+      porTag: [{ entrada: e('C1'), motivo: 'tiene tag x' }],
+      porFuente: []
     };
     const primera = lista.agrupada(grupos);
     expect(primera.grupos.map(g => [g.rotulo, g.total, g.items.length])).toEqual([

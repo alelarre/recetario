@@ -23,7 +23,7 @@ const inicio = (menu: Entrada[] = recetasDelMenu) => ({ menuDiario: plana(menu),
 const busqueda = (consulta: string, grupos: Coincidencias) =>
   ({ busqueda: { consulta, lista: crearListaControl().agrupada(grupos) } });
 
-const sinResultados: Coincidencias = { porNombre: [], porIngrediente: [], porTag: [] };
+const sinResultados: Coincidencias = { porNombre: [], porIngrediente: [], porTag: [], porFuente: [] };
 
 describe('agregar una receta a una comida', () => {
   it('el título dice para qué comida es, y se vuelve con el chevron', () => {
@@ -69,7 +69,7 @@ describe('agregar una receta a una comida', () => {
     const grupos: Coincidencias = {
       porNombre: [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas napolitanas', categoria: 'Carnes' })],
       porIngrediente: [{ entrada: entradaFalsa({ id_archivo: 'f3', titulo: 'Guiso', categoria: 'Carnes' }), motivo: 'tiene Papa' }],
-      porTag: []
+      porTag: [], porFuente: []
     };
     const html = bloqueDeAgregar(busqueda('papa', grupos));
     expect(html).not.toContain('Menú diario');
@@ -80,7 +80,7 @@ describe('agregar una receta a una comida', () => {
   });
 
   it('una búsqueda sin resultados lo dice, nombrando los tres criterios', () => {
-    expect(bloqueDeAgregar(busqueda('kiwi', sinResultados))).toContain('Ninguna receta se llama, lleva ni tiene <b>kiwi</b>.');
+    expect(bloqueDeAgregar(busqueda('kiwi', sinResultados))).toContain('Ninguna receta se llama, lleva, tiene ni sale de <b>kiwi</b>.');
   });
 
   it('el bloque que se redibuja tiene su marca en el HTML de la pantalla', () => {

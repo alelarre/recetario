@@ -121,6 +121,8 @@ const reglasDelFrontmatter = (especiales: boolean): string[] => [
   reglaDeClaves(especiales),
   `- \`tiempo\` es uno de estos valores, tal cual: ${lista(DURACIONES)}. Cuenta el tiempo hasta comer, con reposo y horno. Si no se sabe, no ponerlo.`,
   `- \`dificultad\` es uno de estos valores: ${lista(DIFICULTADES)}. Si no se puede saber, no ponerla.`,
+  // Se busca por fuente (E02 C02.3.1): escrita igual, junta todas las recetas de un libro.
+  '- `fuente` es de dónde sale la receta, escrita igual en todas las de la misma fuente: un libro va por su título, sin la página (si se quiere conservar, va en `## Notas`). Una receta propia no lleva `fuente`.',
   reglaDeReservados(TAGS_RESERVADOS),
   ...(especiales ? [`- \`tags_especiales\` acepta sólo: ${lista(TAGS_ESPECIALES)}.`] : [])
 ];

@@ -99,7 +99,7 @@ significa que la receta no esté registrada.
   categoría sin recetas dice *«Todavía no hay recetas en <categoría>.»*
 - [ ] Al buscar —con Enter o al salir de la caja, no mientras se escribe
   (`E02-Encontrar.md` C02.2.1)—, el bloque se reemplaza por los resultados, con **la misma
-  lista que la búsqueda** (`E02-Encontrar.md` C02.3.2): los tres grupos, el
+  lista que la búsqueda** (`E02-Encontrar.md` C02.3.2): los cuatro grupos, el
   conmutador «A–Z | Duración» arriba (C02.9.2), la misma frase sin resultados y
   la carga por tramos (C02.3.5).
 - [ ] Buscar, cambiar el orden y el tramo siguiente redibujan sólo el bloque,

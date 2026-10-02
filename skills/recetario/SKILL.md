@@ -208,7 +208,10 @@ usuario que la fuente traía eso.
   introducción del capítulo, los tiempos en una tabla al final. Mirá alrededor
   antes de dar un dato por faltante.
 - Si la receta sigue en otra página que no tenés, es `borrador`.
-- `fuente`: el libro y la página, por ejemplo `El gran libro del pan, p. 24`.
+- `fuente`: el título del libro, sin la página y escrito igual en todas las
+  recetas del mismo libro, por ejemplo `El gran libro del pan`. Antes de
+  escribirla, buscá con `buscar` cómo quedó en las recetas que ya están. La
+  página, si se quiere conservar, va en `## Notas`.
 
 ### Foto
 
@@ -220,7 +223,7 @@ usuario que la fuente traía eso.
 - Si la receta sigue fuera del encuadre, decilo en lugar de completar de
   memoria.
 - `fuente`: qué se fotografió, por ejemplo `Libreta de la abuela` o
-  `Cocina al natural, p. 88`.
+  `Cocina al natural`; un libro, como en «PDF o libro».
 
 ### Video
 

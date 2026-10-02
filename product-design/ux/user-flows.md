@@ -223,8 +223,8 @@ buscar en todo es lo que hace Drive y es exactamente lo que trae ruido.
 ```
 Recetario
   → escribo "berenjena" y toco Enter
-  ▸ resultados agrupados: por nombre, por ingrediente y por tag
-  ⚑ los tres grupos en la misma lista, distinguidos, cada uno con su cantidad
+  ▸ resultados agrupados: por nombre, por ingrediente, por tag y por fuente
+  ⚑ los cuatro grupos en la misma lista, distinguidos, cada uno con su cantidad
   ⚑ dentro de cada grupo, las favoritas primero; el orden puede pasar a Duración
   → toco una
 ```

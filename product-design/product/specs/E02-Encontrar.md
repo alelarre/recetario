@@ -59,7 +59,7 @@ de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 
 #### C02.1.4 — Los borradores, sólo en Borradores *(J1, J5)*
 
-- [ ] **Una receta con `borrador` no aparece en ninguna otra lista:** ni en la categoría, ni en las listas por tag, ni en los resultados —en ninguno de sus tres grupos, ni como motivo—, ni en el Menú diario, ni en *Agregar al plan* —su búsqueda ni sus categorías—.
+- [ ] **Una receta con `borrador` no aparece en ninguna otra lista:** ni en la categoría, ni en las listas por tag, ni en los resultados —en ninguno de sus cuatro grupos, ni como motivo—, ni en el Menú diario, ni en *Agregar al plan* —su búsqueda ni sus categorías—.
 - [ ] **No cuenta** en el número de los tiles del Recetario.
 - [ ] **Una receta sin categoría —en `_sin-categoria/` o suelta en la carpeta base— sin el tag `borrador` no se encuentra de ninguna forma:** no está en Borradores ni en ninguna otra lista, ni en la búsqueda, ni en el conteo de tags. Sólo la nombra el aviso de Ajustes al reindexar (`E05-Cimientos.md` C05.3.1).
 - [ ] Sí aparece en Borradores (C02.1.3), en el contador del menú, abierta por su link, y en un plan que ya la tenía de antes (`E06-Planificar.md` C06.1.2).
@@ -82,27 +82,28 @@ nada y no avisa**: no hay nada que decir.
 
 ### F02.3 — Búsqueda por ingrediente y por tag
 
-La misma caja busca en tres criterios: **título, ingredientes y tags**. Escribir
-"berenjena" devuelve las recetas que se llaman así, las que la tienen como
-ingrediente y las que la llevan como tag, agrupadas y distinguidas.
+La misma caja busca en cuatro criterios: **título, ingredientes, tags y
+fuente**. Escribir "berenjena" devuelve las recetas que se llaman así, las que
+la tienen como ingrediente, las que la llevan como tag y las que salen de una
+fuente que la nombra, agrupadas y distinguidas.
 
 **No busca en el cuerpo entero.** Eso es lo que hace el buscador de Drive y es
 exactamente lo que trae ruido: una mención al pasar en una nota no es un
 ingrediente.
 
-#### C02.3.1 — Los tres criterios en la misma caja *(J1, J4)*
+#### C02.3.1 — Los cuatro criterios en la misma caja *(J1, J4)*
 
 - [ ] Una sola caja. El usuario no elige criterio.
-- [ ] Se busca en título, en los nombres de ingredientes de la fila del índice, y en los tags comunes. **Ningún especial se encuentra por texto** (`E05-Cimientos.md` C05.1.4): a ellos se llega por su chip.
+- [ ] Se busca en título, en los nombres de ingredientes de la fila del índice, en los tags comunes y en la `fuente`, entera: un libro, un sitio o una URL. **Ningún especial se encuentra por texto** (`E05-Cimientos.md` C05.1.4): a ellos se llega por su chip.
 - [ ] **No se busca en la descripción, en los pasos ni en las notas.**
 - [ ] La misma insensibilidad a mayúsculas y acentos que C02.2.1.
 
 #### C02.3.2 — Los resultados van agrupados por criterio *(J1, J4)*
 
-- [ ] Tres grupos, con su encabezado: **Por nombre**, **Por ingrediente**, **Por tag**.
+- [ ] Cuatro grupos, con su encabezado y en este orden: **Por nombre**, **Por ingrediente**, **Por tag**, **Por fuente**.
 - [ ] Un grupo sin resultados no se dibuja.
 - [ ] Una receta que coincide por dos criterios aparece en los dos grupos.
-- [ ] En los grupos de ingrediente y de tag, cada tarjeta dice **por qué apareció**, citando el valor tal como está escrito: *"tiene Merluza o pescadilla"* por ingrediente, *"tiene tag horno"* por tag.
+- [ ] En los grupos de ingrediente, de tag y de fuente, cada tarjeta dice **por qué apareció**, citando el valor tal como está escrito: *"tiene Merluza o pescadilla"* por ingrediente, *"tiene tag horno"* por tag, *"de El gran libro del pan"* por fuente.
 
 #### C02.3.3 — Se resuelve contra el índice *(J4)*
 
@@ -114,7 +115,7 @@ ingrediente.
 #### C02.3.4 — Estados de los resultados *(J1, J4)*
 
 - [ ] Escribiendo: los resultados no cambian hasta el Enter o hasta salir de la caja (C02.2.1).
-- [ ] Sin resultados: una frase que nombra los tres criterios probados —*«Ninguna receta se llama, lleva ni tiene **berenjena**.»*—, y nada más. Sin sugerencias, sin "quisiste decir".
+- [ ] Sin resultados: una frase que nombra los cuatro criterios probados —*«Ninguna receta se llama, lleva, tiene ni sale de **berenjena**.»*—, y nada más. Sin sugerencias, sin "quisiste decir".
 
 #### C02.3.5 — Los resultados se muestran todos *(J1, J4)*
 
@@ -175,7 +176,7 @@ muestran la foto de la receta. **Una receta sin foto lleva un placeholder genér
 - [ ] La duración sólo se dibuja si `tiempo` es uno de los cinco valores (`E05-Cimientos.md` C05.1.1).
 - [ ] Las marcas de los tags especiales van en la esquina de la tarjeta, no en la línea de contexto (C02.7.1).
 - [ ] La foto va **al costado y no arriba**: al costado entran ocho o nueve por pantalla, arriba tres.
-- [ ] En resultados por ingrediente o por tag, la línea de contexto es el motivo (C02.3.2) seguido de la duración.
+- [ ] En resultados por ingrediente, por tag o por fuente, la línea de contexto es el motivo (C02.3.2) seguido de la duración.
 
 #### C02.5b.2 — El placeholder es el caso normal *(J1, J5)*
 
@@ -284,7 +285,7 @@ el orden suma la búsqueda.
 - [ ] **A–Z**, el orden con el que abre cada lista: las favoritas primero y alfabético dentro de cada bloque.
 - [ ] **Duración:** de `~15 min` a `>1 día`, con las favoritas mezcladas y alfabético dentro de cada valor; las recetas sin duración van al final, en alfabético.
 - [ ] La lista va seguida, sin rótulos por valor.
-- [ ] En la búsqueda, el orden se aplica dentro de cada grupo —Por nombre, Por ingrediente, Por tag—, sin mezclarlos.
+- [ ] En la búsqueda, el orden se aplica dentro de cada grupo —Por nombre, Por ingrediente, Por tag, Por fuente—, sin mezclarlos.
 - [ ] Vuelve a A–Z al cambiar de pantalla.
 - [ ] **Si ninguna receta de la lista tiene duración, la fila no se dibuja.**
 

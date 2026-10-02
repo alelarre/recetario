@@ -4,7 +4,7 @@ import { crearListaControl } from '../src/lista-control.js';
 import { entradaFalsa } from './dobles.js';
 import type { Coincidencias } from '../src/tipos.js';
 
-const sinNada = { porNombre: [], porIngrediente: [], porTag: [] };
+const sinNada = { porNombre: [], porIngrediente: [], porTag: [], porFuente: [] };
 /** La lista como la arma la pantalla: por el controlador, que ordena y corta. */
 const lista = (grupos: Coincidencias) => crearListaControl().agrupada(grupos);
 
@@ -22,16 +22,19 @@ describe('Resultados', () => {
     expect(html).toContain('>2<');
   });
 
-  it('los tres criterios se dibujan por separado, con su motivo', () => {
+  it('los cuatro criterios se dibujan por separado, con su motivo', () => {
     const html = renderResultados({
       consulta: 'merluza',
       lista: lista({
         porNombre: [entradaFalsa({ titulo: 'Filet de merluza' })],
         porIngrediente: [{ entrada: entradaFalsa({ titulo: 'Gratin' }), motivo: 'tiene Merluza o pescadilla' }],
-        porTag: [{ entrada: entradaFalsa({ titulo: 'Caballa' }), motivo: 'tiene tag merluza' }]
+        porTag: [{ entrada: entradaFalsa({ titulo: 'Caballa' }), motivo: 'tiene tag merluza' }],
+        porFuente: [{ entrada: entradaFalsa({ titulo: 'Merluza a la vasca' }), motivo: 'de Merluzas del sur' }]
       })
     });
     expect(html).toContain('Por nombre');
+    expect(html).toContain('Por fuente');
+    expect(html).toContain('de Merluzas del sur');
     expect(html).toContain('tiene Merluza o pescadilla');
     expect(html).toContain('tiene tag merluza');
   });
@@ -50,7 +53,7 @@ describe('Resultados', () => {
 
   it('sin resultados, una frase y nada más', () => {
     const html = renderResultados({ consulta: 'berenjena', lista: lista(sinNada) });
-    expect(html).toContain('Ninguna receta se llama, lleva ni tiene <b>berenjena</b>.');
+    expect(html).toContain('Ninguna receta se llama, lleva, tiene ni sale de <b>berenjena</b>.');
     expect(html).not.toContain('quisiste decir');
     expect(html).not.toContain('<img');
     expect(html).not.toContain('class="cuerpo');

@@ -64,6 +64,12 @@ describe('las reglas del formato', () => {
     expect(texto).toContain('`- nombre — cantidad`');
   });
 
+  it('dicen que la fuente va igual en todas las recetas de un libro, sin la página, y que una propia no la lleva', () => {
+    const texto = reglas.join('\n');
+    expect(texto).toContain('sin la página');
+    expect(texto).toContain('Una receta propia no lleva `fuente`.');
+  });
+
   it('dicen cómo es la cantidad y que el paréntesis después de ella es una nota', () => {
     const texto = reglas.join('\n');
     expect(texto).toContain('`a gusto`, `c/n` o `para …`');

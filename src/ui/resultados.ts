@@ -1,5 +1,5 @@
 /**
- * Los resultados de la búsqueda, separados por los tres criterios (C02.3.1),
+ * Los resultados de la búsqueda, separados por los cuatro criterios (C02.3.1),
  * con la lista agrupada de `lista-recetas.ts`.
  *
  * Mockup 05.

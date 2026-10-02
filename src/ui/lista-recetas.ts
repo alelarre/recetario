@@ -53,14 +53,14 @@ export interface OpcionesListaAgrupada {
 }
 
 /**
- * Los resultados separados por los tres criterios (C02.3.1): un grupo sin
+ * Los resultados separados por los cuatro criterios (C02.3.1): un grupo sin
  * resultados no está, y cada uno dice cuántos trajo. Sin resultados no hay
- * ilustración ni «quisiste decir»: una frase que nombra los tres criterios
+ * ilustración ni «quisiste decir»: una frase que nombra los cuatro criterios
  * probados, para que quede claro que no es que se buscó mal.
  */
 export function listaAgrupada({ lista, consulta, accion }: OpcionesListaAgrupada): string {
   if (!lista.grupos.length) {
-    return `<div class="vacio">Ninguna receta se llama, lleva ni tiene <b>${escapar(consulta)}</b>.</div>`;
+    return `<div class="vacio">Ninguna receta se llama, lleva, tiene ni sale de <b>${escapar(consulta)}</b>.</div>`;
   }
   const grupos = lista.grupos.map(g =>
     '<div class="grupo-res">' +

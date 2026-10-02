@@ -140,12 +140,13 @@ export function crearListaControl(): ListaControl {
       };
     },
 
-    agrupada({ porNombre, porIngrediente, porTag }) {
+    agrupada({ porNombre, porIngrediente, porTag, porFuente }) {
       const conMotivo = (cs: Coincidencia[]): ItemDeLista[] => cs.map(c => ({ entrada: c.entrada, motivo: c.motivo }));
       const crudos: [string, ItemDeLista[]][] = [
         ['Por nombre', porNombre.map(entrada => ({ entrada }))],
         ['Por ingrediente', conMotivo(porIngrediente)],
-        ['Por tag', conMotivo(porTag)]
+        ['Por tag', conMotivo(porTag)],
+        ['Por fuente', conMotivo(porFuente)]
       ];
       const conConmutador = crudos.some(([, items]) => items.some(i => duracionValida(i.entrada.tiempo)));
       const efectivo: Orden = conConmutador ? orden : 'alfa';

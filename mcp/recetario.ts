@@ -377,7 +377,7 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
 
   /**
    * Como la app: con texto, la búsqueda de la app, que separa por título,
-   * ingrediente y tag y no trae borradores; los filtros recortan esos
+   * ingrediente, tag y fuente y no trae borradores; los filtros recortan esos
    * resultados. Sin texto, o pidiendo borradores, el filtro de la app, que
    * trae borradores sólo si se piden con el tag.
    */
@@ -401,7 +401,7 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
     }
 
     const permitidas = new Set(store.buscar(filtros).map(e => e.id_archivo));
-    const { porNombre, porIngrediente, porTag } = store.buscarPorTexto(texto);
+    const { porNombre, porIngrediente, porTag, porFuente } = store.buscarPorTexto(texto);
     const encontradas = new Map<string, { entrada: Entrada; motivos: string[] }>();
     const sumar = (entrada: Entrada, motivo: string): void => {
       if (!permitidas.has(entrada.id_archivo)) return;
@@ -412,6 +412,7 @@ export function crearRecetario({ drive, sheets, auth, achicar = origen => achica
     for (const e of porNombre) sumar(e, 'título');
     for (const c of porIngrediente) sumar(c.entrada, c.motivo);
     for (const c of porTag) sumar(c.entrada, c.motivo);
+    for (const c of porFuente) sumar(c.entrada, c.motivo);
     return [...encontradas.values()].map(({ entrada, motivos }) => resultado(entrada, [...motivos, ...deFiltros]));
   }
 

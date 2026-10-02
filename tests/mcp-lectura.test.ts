@@ -300,7 +300,7 @@ describe('las herramientas', () => {
     const resultados = await nuevoRecetario().buscar({ texto: 'horno' });
     const app = (await storeDeLaApp()).buscarPorTexto('horno');
     expect(resultados.map(r => r.id).sort()).toEqual(
-      [...app.porNombre, ...app.porIngrediente.map(c => c.entrada), ...app.porTag.map(c => c.entrada)]
+      [...app.porNombre, ...[...app.porIngrediente, ...app.porTag, ...app.porFuente].map(c => c.entrada)]
         .map(e => e.id_archivo).sort());
     expect(resultados.find(r => r.id === 'r3')).toEqual({
       id: 'r3', titulo: 'Flan casero', categoria: 'Postres', nombre_archivo: 'r3.md',
@@ -355,6 +355,15 @@ describe('las herramientas', () => {
     ]);
     const sueltas = await nuevoRecetario().buscar({ categoria: 'sin categoria', tags: ['borrador'] });
     expect(sueltas.map(r => r.id)).toEqual(['r5']);
+  });
+
+  it('buscar por texto encuentra por la fuente, con la fuente como motivo', async () => {
+    const conFuente = fila('r6', 'Pan de campo', 'Carnes', 'c1', '', 'harina');
+    conFuente[COLUMNAS.indexOf('fuente')] = 'El gran libro del pan';
+    drive._store.set('r6', { id: 'r6', name: 'r6.md', parents: ['c1'], contenido: '---\ntitulo: Pan de campo\n---\n' });
+    sheets.cargar('i1', 'recetas', [...(await sheets.leer('i1', 'recetas!A1:N100')), conFuente]);
+    const resultados = await nuevoRecetario().buscar({ texto: 'gran libro' });
+    expect(resultados.map(r => [r.id, r.motivos])).toEqual([['r6', ['de El gran libro del pan']]]);
   });
 
   it('buscar por una categoría que no existe falla y lista las que hay', async () => {

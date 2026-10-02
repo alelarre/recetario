@@ -111,7 +111,7 @@ describe('lista-recetas — la lista agrupada', () => {
 
   it('sin resultados, una frase que nombra los tres criterios, con lo buscado escapado', () => {
     const html = listaAgrupada({ lista: agrupada(), consulta: '"><script>' });
-    expect(html).toContain('Ninguna receta se llama, lleva ni tiene <b>');
+    expect(html).toContain('Ninguna receta se llama, lleva, tiene ni sale de <b>');
     expect(html).not.toContain('<script>');
     expect(html).not.toContain('grupo-res');
   });

@@ -1025,20 +1025,22 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
   }
 
   /**
-   * Busca por texto con los tres criterios —título, ingredientes y tags— y
-   * separa por cuál coincidió (C02.3.1). Tres pasadas sin `else`: una receta
-   * que coincide por dos entra en los dos grupos, que es lo que fija C02.3.2.
+   * Busca por texto con los cuatro criterios —título, ingredientes, tags y
+   * fuente— y separa por cuál coincidió (C02.3.1). Cuatro pasadas sin `else`:
+   * una receta que coincide por dos entra en los dos grupos, que es lo que fija
+   * C02.3.2.
    *
    * El motivo cita el valor **tal como está escrito**: la normalización es de
    * la comparación, no del texto que se muestra (C02.3.2).
    */
   function buscarPorTexto(texto: unknown): Coincidencias {
     const t = normalizar(String(texto ?? ''));
-    if (!t) return { porNombre: [], porIngrediente: [], porTag: [] };
+    if (!t) return { porNombre: [], porIngrediente: [], porTag: [], porFuente: [] };
 
     const porNombre: Entrada[] = [];
     const porIngrediente: Coincidencia[] = [];
     const porTag: Coincidencia[] = [];
+    const porFuente: Coincidencia[] = [];
 
     for (const e of listables()) {
       // Los borradores no aparecen en ninguna búsqueda: se llega a ellos por
@@ -1053,9 +1055,11 @@ export function crearStore({ drive, sheets, indiceLocal, imagenes }: Dependencia
       const buscables = [...e.tags, ...e.tags_especiales.filter(x => definicion(x).enBusqueda)];
       const tag = buscables.find(x => normalizar(x).includes(t));
       if (tag) porTag.push({ entrada: e, motivo: `tiene tag ${tag}` });
+
+      if (e.fuente && normalizar(e.fuente).includes(t)) porFuente.push({ entrada: e, motivo: `de ${e.fuente}` });
     }
 
-    return { porNombre, porIngrediente, porTag };
+    return { porNombre, porIngrediente, porTag, porFuente };
   }
 
   function categoriasConConteo(): { id: string; nombre: string; cantidad: number }[] {

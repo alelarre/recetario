@@ -202,7 +202,7 @@ const storeFake = {
   categoriasConConteo: () => [{ id: 'c1', nombre: 'Carnes', cantidad: 1 }],
   categorias: () => [{ id: 'c1', nombre: 'Carnes', color: 'carnes', foto: 'catalogo:carnes' }],
   buscar: () => [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })],
-  buscarPorTexto: (): Coincidencias => ({ porNombre: [], porIngrediente: [], porTag: [] }),
+  buscarPorTexto: (): Coincidencias => ({ porNombre: [], porIngrediente: [], porTag: [], porFuente: [] }),
   tagsDe: () => estado.tags,
   crear: async (
     receta: Receta,
@@ -1710,7 +1710,7 @@ describe('main.ts: las rutas', () => {
     storeFake.buscarPorTexto = () => ({
       porNombre: Array.from({ length: 31 }, (_, i) =>
         entradaFalsa({ id_archivo: `f${i}`, titulo: `A${String(i + 1).padStart(2, '0')}`, categoria: 'Carnes' })),
-      porIngrediente: [], porTag: []
+      porIngrediente: [], porTag: [], porFuente: []
     });
     let llegarAlPie = (): void => {};
     const g = global as unknown as Record<string, unknown>;
@@ -1740,7 +1740,7 @@ describe('main.ts: las rutas', () => {
         entradaFalsa({ id_archivo: 'f1', titulo: 'Asado', tiempo: '>60 min' }),
         entradaFalsa({ id_archivo: 'f2', titulo: 'Rabas', tiempo: '~15 min' })
       ],
-      porIngrediente: [], porTag: []
+      porIngrediente: [], porTag: [], porFuente: []
     });
     try {
       const { abrir, tocar, app } = await montar();
@@ -3514,7 +3514,7 @@ describe('main.ts: las rutas', () => {
       let busquedas = 0;
       storeFake.buscarPorTexto = (): Coincidencias => {
         busquedas++;
-        return { porNombre: [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })], porIngrediente: [], porTag: [] };
+        return { porNombre: [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })], porIngrediente: [], porTag: [], porFuente: [] };
       };
       try {
         const { abrir, tipear, cambiar, resultadosPlan } = await montar();
@@ -3536,7 +3536,7 @@ describe('main.ts: las rutas', () => {
       const original = storeFake.buscarPorTexto;
       storeFake.buscarPorTexto = (): Coincidencias => ({
         porNombre: [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes' })],
-        porIngrediente: [], porTag: []
+        porIngrediente: [], porTag: [], porFuente: []
       });
       try {
         const { abrir, cambiar, resultadosPlan } = await montar();
@@ -3553,7 +3553,7 @@ describe('main.ts: las rutas', () => {
       const original = storeFake.buscarPorTexto;
       storeFake.buscarPorTexto = (): Coincidencias => ({
         porNombre: [entradaFalsa({ id_archivo: 'f1', titulo: 'Milanesas', categoria: 'Carnes', foto: linkDeFoto('d1') })],
-        porIngrediente: [], porTag: []
+        porIngrediente: [], porTag: [], porFuente: []
       });
       try {
         const { abrir, cambiar, resultadosPlan, imgs } = await montar();
@@ -3576,7 +3576,7 @@ describe('main.ts: las rutas', () => {
           entradaFalsa({ id_archivo: 'f1', titulo: 'Zapallo', categoria: 'Carnes' }),
           entradaFalsa({ id_archivo: 'f2', titulo: 'Arroz', categoria: 'Carnes', tags_especiales: ['favorito'] })
         ],
-        porIngrediente: [], porTag: []
+        porIngrediente: [], porTag: [], porFuente: []
       });
       try {
         const { abrir, cambiar, resultadosPlan } = await montar();
@@ -3594,7 +3594,7 @@ describe('main.ts: las rutas', () => {
       storeFake.buscarPorTexto = (): Coincidencias => ({
         porNombre: Array.from({ length: 31 }, (_, i) =>
           entradaFalsa({ id_archivo: `f${i}`, titulo: `A${String(i + 1).padStart(2, '0')}`, categoria: 'Carnes' })),
-        porIngrediente: [], porTag: []
+        porIngrediente: [], porTag: [], porFuente: []
       });
       let llegarAlPie = (): void => {};
       const observados: unknown[] = [];
@@ -3627,7 +3627,7 @@ describe('main.ts: las rutas', () => {
           entradaFalsa({ id_archivo: 'f1', titulo: 'Arroz', categoria: 'Carnes', tiempo: '~60 min' }),
           entradaFalsa({ id_archivo: 'f2', titulo: 'Zapallo', categoria: 'Carnes', tiempo: '~15 min' })
         ],
-        porIngrediente: [], porTag: []
+        porIngrediente: [], porTag: [], porFuente: []
       });
       try {
         const { abrir, cambiar, tocar, resultadosPlan, pinturas } = await montar();

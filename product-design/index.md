@@ -105,7 +105,7 @@ Lo pendiente está en [`BACKLOG.md`](../BACKLOG.md), en la raíz del repo.
 | [Principios de producto](product/strategy/product-principles.md) | Los árbitros de las decisiones de diseño ambiguas. |
 | [Índice de épicas](product/specs/specs-overview.md) | Las seis épicas del producto, cómo se relacionan, y dónde viven las reglas transversales. |
 | [E01 — Captura y borradores](product/specs/E01-CapturaYBorradores.md) | Guardar algo antes de perderlo, los borradores que esperan conversión, y Convertir con Agente. |
-| [E02 — Encontrar](product/specs/E02-Encontrar.md) | Búsqueda por título, ingrediente y tag; categorías; paseo. |
+| [E02 — Encontrar](product/specs/E02-Encontrar.md) | Búsqueda por título, ingrediente, tag y fuente; categorías; paseo. |
 | [E03 — Leer y cocinar](product/specs/E03-LeerYCocinar.md) | La receta a la vista, con las manos ocupadas. |
 | [E04 — Corregir](product/specs/E04-Corregir.md) | El editor: arreglar un error, crear una receta mínima. |
 | [E05 — Cimientos](product/specs/E05-Cimientos.md) | Drive, el índice, el esquema del `.md`, los estados degradados. |

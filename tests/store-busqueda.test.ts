@@ -209,7 +209,7 @@ describe('una receta suelta en la carpeta base sin el tag borrador', () => {
   });
 });
 
-describe('buscarPorTexto: los tres criterios', () => {
+describe('buscarPorTexto: los cuatro criterios', () => {
   beforeEach(async () => {
     // Un fixture propio: lo que importa acá es que el mismo texto coincida por
     // título, por ingrediente y por tag, y en recetas distintas.
@@ -255,11 +255,11 @@ describe('buscarPorTexto: los tres criterios', () => {
   });
 
   it('la caja vacía no devuelve nada', () => {
-    expect(store.buscarPorTexto('')).toEqual({ porNombre: [], porIngrediente: [], porTag: [] });
+    expect(store.buscarPorTexto('')).toEqual({ porNombre: [], porIngrediente: [], porTag: [], porFuente: [] });
   });
 
   it('no lanza con argumentos inválidos', () => {
-    expect(store.buscarPorTexto(null)).toEqual({ porNombre: [], porIngrediente: [], porTag: [] });
+    expect(store.buscarPorTexto(null)).toEqual({ porNombre: [], porIngrediente: [], porTag: [], porFuente: [] });
     expect(() => store.buscarPorTexto(42)).not.toThrow();
   });
 
@@ -272,6 +272,24 @@ describe('buscarPorTexto: los tres criterios', () => {
     expect(g.porNombre.map(e => e.id_archivo)).not.toContain('f-borrador');
     expect(g.porIngrediente.map(r => r.entrada.id_archivo)).not.toContain('f-borrador');
     expect(store.buscarPorTexto('borrador').porTag).toEqual([]);
+  });
+
+  it('busca en la fuente, sin mayúsculas ni tildes, y el motivo la cita tal como está escrita', async () => {
+    const conFuente = (id: string, titulo: string, fuente: string) => {
+      const f = fila(id, titulo, 'Carnes', 'c1', '', 'Harina');
+      f[COLUMNAS.indexOf('fuente')] = fuente;
+      return f;
+    };
+    await sheets.append('i1', 'recetas', [
+      conFuente('f-campo', 'Pan de campo', 'El gran libro del pan'),
+      conFuente('f-chipa', 'Chipá', 'https://www.recetasdelpais.com/chipa')
+    ]);
+    await abrirDeNuevo();
+    expect(store.buscarPorTexto('GRAN LIBRO').porFuente)
+      .toEqual([{ entrada: expect.objectContaining({ id_archivo: 'f-campo' }), motivo: 'de El gran libro del pan' }]);
+    expect(store.buscarPorTexto('recetasdelpais').porFuente.map(c => c.entrada.id_archivo)).toEqual(['f-chipa']);
+    // Sin fuente no hay nada que comparar: la receta no aparece por un texto vacío.
+    expect(store.buscarPorTexto('merluza').porFuente).toEqual([]);
   });
 
   it('no encuentra los especiales por texto', async () => {

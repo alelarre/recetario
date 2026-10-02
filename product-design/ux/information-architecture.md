@@ -408,7 +408,7 @@ se reconoce abre el Recetario.
 | Pantalla | Ruta | Propósito | Contexto | Jobs |
 |---|---|---|---|---|
 | **Recetario** | `#/` | Punto de entrada. Búsqueda arriba, las filas de tags —los especiales y el carrusel de los comunes—, y las categorías abajo, en orden alfabético. Lo que no tiene categoría no tiene tile: es borrador, y se llega por *Borradores*. | Recuperar | J1, J5 |
-| **Resultados** | `#/buscar?q=` | Lo que devuelve la búsqueda, agrupado por título, ingrediente y tag. Se ordena A–Z o por duración dentro de cada grupo. | Recuperar | J1, J4 |
+| **Resultados** | `#/buscar?q=` | Lo que devuelve la búsqueda, agrupado por título, ingrediente, tag y fuente. Se ordena A–Z o por duración dentro de cada grupo. | Recuperar | J1, J4 |
 | **Categoría** | `#/c/<nombre>` | Las recetas de una carpeta, con las filas de tags, la fila de duraciones y el conmutador de orden. | Recuperar | J5 |
 | **Lista por tag** | `#/t/<tag>` | Las recetas del recetario entero con ese tag. Se llega tocando un chip de las filas de tags del Recetario. Mismos filtros que la categoría. | Recuperar | J5 |
 | **Receta** | `#/r/<id>` | La receta entera, en una columna de fichas: la cabecera arriba, cada foto donde el texto la nombra y, en un carrusel en la primera ficha, las que no están en ningún otro lado —tocar una abre el visor—. En el encabezado, la estrella de favorito, Compartir y el link al `.md` en Drive; al pie, *Cocinar* —si hay ingredientes o pasos— y *Editar*. | Recuperar | J6 |

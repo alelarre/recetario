@@ -202,13 +202,13 @@ export interface Filtros {
 /** Una coincidencia que necesita decir por qué apareció (C02.3.2). */
 export interface Coincidencia {
   entrada: Entrada;
-  /** «tiene Merluza o pescadilla», «tiene tag horno». El valor, sin normalizar. */
+  /** «tiene Merluza o pescadilla», «tiene tag horno», «de El gran libro del pan». El valor, sin normalizar. */
   motivo: string;
 }
 
 /**
- * Resultados de búsqueda, separados por los tres criterios: el título, los
- * ingredientes y los tags (C02.3.1). Son coincidencias de peso distinto y la
+ * Resultados de búsqueda, separados por los cuatro criterios: el título, los
+ * ingredientes, los tags y la fuente (C02.3.1). Son coincidencias de peso distinto y la
  * vista las rotula aparte; una receta que coincide por dos entra en los dos
  * grupos (C02.3.2).
  */
@@ -216,6 +216,7 @@ export interface Coincidencias {
   porNombre: Entrada[];
   porIngrediente: Coincidencia[];
   porTag: Coincidencia[];
+  porFuente: Coincidencia[];
 }
 
 /* ------------------------------------------------------------------ */
