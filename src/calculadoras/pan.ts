@@ -12,20 +12,32 @@ import { porNombre, positivo, type Faltante, type Pedido } from './pedido.js';
 import { gramos, porciento } from './gramos.js';
 
 export type ClavePan =
-  | 'frances' | 'molde' | 'miga' | 'pizza-molde' | 'pizza-piedra' | 'baguette' | 'campo' | 'ciabatta' | 'focaccia';
+  | 'frances' | 'molde' | 'miga' | 'pizza-molde' | 'pizza-piedra' | 'napolitana' | 'new-york'
+  | 'baguette' | 'campo' | 'ciabatta' | 'focaccia';
 export type ClaveHarina = '0000' | '000' | '000-pizza' | 'semolin' | 'integral' | 'centeno';
 export type Levadura = 'fresca' | 'seca' | 'masa-madre';
 export type ClaveFermentacion =
   | 'ambiente-2' | 'ambiente-4' | 'ambiente-8' | 'frio-12' | 'frio-24' | 'frio-48' | 'frio-72';
 export type PorcentajeSegunda = 10 | 20 | 30 | 50;
 
-/** El tipo de pan pone la hidratación base, con harina 000. */
-export const PANES: readonly { clave: ClavePan; nombre: string; hidratacion: number }[] = [
+/**
+ * El tipo de pan pone la hidratación base, con harina 000. Una pizza lleva
+ * además el peso sugerido del bollo, en gramos, y su cantidad se pide en
+ * bollos. Las fuentes de las pizzas están en
+ * `product-design/research/herramientas/panaderia-pizza-masas.md`.
+ */
+export const PANES: readonly { clave: ClavePan; nombre: string; hidratacion: number; bollo?: number }[] = [
   { clave: 'frances', nombre: 'Pan francés', hidratacion: 60 },
   { clave: 'molde', nombre: 'Pan de molde', hidratacion: 62 },
   { clave: 'miga', nombre: 'Pan de miga', hidratacion: 56 },
-  { clave: 'pizza-molde', nombre: 'Pizza al molde', hidratacion: 61 },
-  { clave: 'pizza-piedra', nombre: 'Pizza a la piedra', hidratacion: 57 },
+  // Bollo para un molde n.º 32 (comemelapizza).
+  { clave: 'pizza-molde', nombre: 'Pizza al molde', hidratacion: 61, bollo: 380 },
+  // Bollo: las fuentes van de 210 a 350 g y ninguna dice el diámetro.
+  { clave: 'pizza-piedra', nombre: 'Pizza a la piedra', hidratacion: 57, bollo: 250 },
+  // Hidratación y bollo de Ooni, para 30 cm.
+  { clave: 'napolitana', nombre: 'Pizza napolitana', hidratacion: 65, bollo: 250 },
+  // Hidratación y bollo de Ooni, para 40 cm.
+  { clave: 'new-york', nombre: 'Pizza New York', hidratacion: 65, bollo: 380 },
   { clave: 'baguette', nombre: 'Baguette', hidratacion: 68 },
   { clave: 'campo', nombre: 'Pan de campo', hidratacion: 72 },
   { clave: 'ciabatta', nombre: 'Ciabatta', hidratacion: 80 },
@@ -70,6 +82,9 @@ export const FERMENTACIONES: readonly {
 
 export const PORCENTAJES_SEGUNDA: readonly PorcentajeSegunda[] = [10, 20, 30, 50];
 
+/** Los bollos con que arranca una pizza si no había. */
+export const BOLLOS_POR_DEFECTO = 4;
+
 /** La sal, % de la harina total. */
 export const SAL = 2;
 /** La seca (instantánea) es más concentrada: va la fresca dividida por esto. */
@@ -91,8 +106,13 @@ export interface DatosPan {
   porcentajeSegunda: PorcentajeSegunda;
   levadura: Levadura;
   fermentacion: ClaveFermentacion;
-  cantidad: { de: 'harina' | 'masa'; gramos: number };
+  cantidad: CantidadPan;
 }
+
+/** Un pan se pide por la harina o la masa total; una pizza, en bollos y gramos por bollo. */
+export type CantidadPan =
+  | { de: 'harina' | 'masa'; gramos: number }
+  | { de: 'bollos'; bollos: number; gramos: number };
 
 export interface ResultadoPan {
   /** Una por harina. Con masa madre, lo que se agrega aparte de la que trae ella. */
@@ -119,9 +139,29 @@ function buscar<T extends { clave: string }>(tabla: readonly T[], clave: T['clav
 export const fermentacionesPara = (levadura: Levadura): typeof FERMENTACIONES =>
   FERMENTACIONES.filter(f => levadura !== 'masa-madre' || f.masaMadre !== null);
 
+/** El peso sugerido del bollo, o `null` si el pan no es una pizza. */
+export const bolloDe = (pan: ClavePan): number | null => PANES.find(p => p.clave === pan)?.bollo ?? null;
+
+const esPositivo = (n: number): boolean => Number.isFinite(n) && n > 0;
+
+/**
+ * La cantidad al pasar a otro pan. Una pizza conserva los bollos y toma el
+ * peso sugerido de su estilo; al pasar de una pizza a un pan, se conserva la
+ * masa total.
+ */
+export function cantidadAlCambiar(antes: DatosPan, pan: ClavePan): CantidadPan {
+  if (pan === antes.pan) return antes.cantidad;
+  const c = antes.cantidad;
+  const bollo = bolloDe(pan);
+  if (bollo !== null) return { de: 'bollos', bollos: c.de === 'bollos' ? c.bollos : BOLLOS_POR_DEFECTO, gramos: bollo };
+  return c.de === 'bollos' ? { de: 'masa', gramos: c.bollos * c.gramos } : c;
+}
+
 /** Las cantidades, o `null` si la cantidad pedida no es un número positivo. */
 export function calcularPan(d: DatosPan): ResultadoPan | null {
-  if (!Number.isFinite(d.cantidad.gramos) || d.cantidad.gramos <= 0) return null;
+  const c = d.cantidad;
+  if (!esPositivo(c.gramos) || (c.de === 'bollos' && !esPositivo(c.bollos))) return null;
+  const masaPedida = c.de === 'bollos' ? c.bollos * c.gramos : c.gramos;
   const pan = buscar(PANES, d.pan);
   const fermentacion = buscar(FERMENTACIONES, d.fermentacion);
   const p = d.segunda ? d.porcentajeSegunda / 100 : 0;
@@ -134,9 +174,9 @@ export function calcularPan(d: DatosPan): ResultadoPan | null {
   // están contadas en la harina total y en el agua.
   const pctLevadura = conMasaMadre ? 0
     : d.levadura === 'seca' ? fermentacion.fresca / DIVISOR_SECA : fermentacion.fresca;
-  const H = d.cantidad.de === 'harina'
-    ? d.cantidad.gramos
-    : d.cantidad.gramos / (1 + (hidratacion + SAL + pctLevadura) / 100);
+  const H = c.de === 'harina'
+    ? c.gramos
+    : masaPedida / (1 + (hidratacion + SAL + pctLevadura) / 100);
   const agua = H * hidratacion / 100;
   const sal = H * SAL / 100;
   // Si llegara 2 h con masa madre, se toma la de 4 h: es lo mínimo que se ofrece.
@@ -172,6 +212,9 @@ export interface PedidoPan {
   horas?: number | undefined;
   harina_total?: number | undefined;
   masa_total?: number | undefined;
+  /** En una pizza, la cantidad es bollos y gramos por bollo. */
+  bollos?: number | undefined;
+  peso_bollo?: number | undefined;
 }
 
 const MODOS = [{ clave: 'ambiente', nombre: 'Ambiente' }, { clave: 'frio', nombre: 'Frío' }] as const;
@@ -181,8 +224,9 @@ const MODOS = [{ clave: 'ambiente', nombre: 'Ambiente' }, { clave: 'frio', nombr
  * valores por defecto: lo que no vino se le pregunta al usuario.
  *
  * Un dato cuyas opciones dependen de otro que falta no se pide todavía: la
- * segunda harina espera a la principal, y las horas a la levadura y al modo.
- * Se pide en la vuelta siguiente, con opciones que van seguro.
+ * segunda harina espera a la principal, las horas a la levadura y al modo, y
+ * la cantidad al pan, porque una pizza se pide en bollos. Se pide en la
+ * vuelta siguiente, con opciones que van seguro.
  */
 export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   const faltan: Faltante[] = [];
@@ -208,19 +252,29 @@ export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   const fermentacion = posibles.find(f => f.horas === p.horas);
   if (levadura && modo && !fermentacion) falta('horas', posibles.map(f => String(f.horas)));
 
-  const harinaTotal = positivo(p.harina_total);
-  const masaTotal = positivo(p.masa_total);
-  const deHarina = harinaTotal !== null && p.masa_total === undefined;
-  const deMasa = masaTotal !== null && p.harina_total === undefined;
-  if (!deHarina && !deMasa) falta('cantidad', ['harina_total', 'masa_total']);
+  const bollo = pan ? bolloDe(pan.clave) : null;
+  let cantidad: CantidadPan | null = null;
+  if (pan && bollo !== null) {
+    const bollos = positivo(p.bollos);
+    const peso = positivo(p.peso_bollo);
+    if (bollos === null) falta('bollos', []);
+    if (peso === null) falta('peso_bollo', [String(bollo)]);
+    if (bollos !== null && peso !== null) cantidad = { de: 'bollos', bollos, gramos: peso };
+  } else if (pan) {
+    const harinaTotal = positivo(p.harina_total);
+    const masaTotal = positivo(p.masa_total);
+    if (harinaTotal !== null && p.masa_total === undefined) cantidad = { de: 'harina', gramos: harinaTotal };
+    else if (masaTotal !== null && p.harina_total === undefined) cantidad = { de: 'masa', gramos: masaTotal };
+    else falta('cantidad', ['harina_total', 'masa_total']);
+  }
 
-  if (faltan.length || !pan || !harina || (!ninguna && !segunda) || !levadura || !fermentacion) return { faltan };
+  if (faltan.length || !pan || !harina || (!ninguna && !segunda) || !levadura || !fermentacion || !cantidad) return { faltan };
   return {
     datos: {
       pan: pan.clave, harina: harina.clave, segunda: segunda?.clave ?? null,
       porcentajeSegunda: porcentaje ?? PORCENTAJES_SEGUNDA[0] ?? 10,
       levadura: levadura.clave, fermentacion: fermentacion.clave,
-      cantidad: deHarina ? { de: 'harina', gramos: harinaTotal } : { de: 'masa', gramos: masaTotal ?? 0 }
+      cantidad
     }
   };
 }
@@ -238,7 +292,8 @@ const deLaTabla = <T extends { clave: string }>(tabla: readonly T[], valor: unkn
  * Las últimas elecciones guardadas, dato por dato: lo que no se puede leer o
  * ya no es una opción vuelve al valor por defecto, y el resto se conserva.
  * También corrige las combinaciones que no van: la segunda igual a la
- * principal, y las 2 h con masa madre.
+ * principal, las 2 h con masa madre, y una cantidad que no es la del pan
+ * —una pizza va en bollos; un pan, en harina o masa—.
  */
 export function completarPan(guardado: unknown): DatosPan {
   const g: Record<string, unknown> = typeof guardado === 'object' && guardado !== null && !Array.isArray(guardado)
@@ -249,12 +304,23 @@ export function completarPan(guardado: unknown): DatosPan {
   const levadura = deLaTabla(LEVADURAS, g['levadura']) ?? d.levadura;
   const fermentacion = deLaTabla(fermentacionesPara(levadura), g['fermentacion'])
     ?? (g['fermentacion'] === 'ambiente-2' ? 'ambiente-4' : d.fermentacion);
+  const pan = deLaTabla(PANES, g['pan']) ?? d.pan;
   const c = typeof g['cantidad'] === 'object' && g['cantidad'] !== null ? g['cantidad'] as Record<string, unknown> : {};
-  const de: DatosPan['cantidad']['de'] | null = c['de'] === 'harina' ? 'harina' : c['de'] === 'masa' ? 'masa' : null;
-  const gramos = c['gramos'];
-  const cantidad = de && typeof gramos === 'number' && Number.isFinite(gramos) && gramos > 0 ? { de, gramos } : d.cantidad;
+  const numero = (x: unknown): number | null => (typeof x === 'number' && esPositivo(x) ? x : null);
+  const gramos = numero(c['gramos']);
+  const bollos = numero(c['bollos']);
+  const leida: CantidadPan | null = gramos === null ? null
+    : c['de'] === 'harina' || c['de'] === 'masa' ? { de: c['de'], gramos }
+    : c['de'] === 'bollos' && bollos !== null ? { de: 'bollos', bollos, gramos }
+    : null;
+  const bollo = bolloDe(pan);
+  const cantidad: CantidadPan = bollo !== null
+    ? (leida?.de === 'bollos' ? leida : { de: 'bollos', bollos: BOLLOS_POR_DEFECTO, gramos: bollo })
+    : leida === null ? d.cantidad
+    : leida.de === 'bollos' ? { de: 'masa', gramos: leida.bollos * leida.gramos }
+    : leida;
   return {
-    pan: deLaTabla(PANES, g['pan']) ?? d.pan,
+    pan,
     harina,
     segunda: segunda && segunda !== harina ? segunda : null,
     porcentajeSegunda: PORCENTAJES_SEGUNDA.find(x => x === g['porcentajeSegunda']) ?? d.porcentajeSegunda,

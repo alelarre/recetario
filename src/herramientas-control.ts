@@ -7,7 +7,7 @@
  * Un toque redibuja la pantalla; escribir una cantidad pinta sólo el
  * resultado, para no sacarle el foco al campo.
  */
-import { completarPan, fermentacionesPara, type DatosPan } from './calculadoras/pan.js';
+import { completarPan, fermentacionesPara, cantidadAlCambiar, type DatosPan, type ClavePan } from './calculadoras/pan.js';
 import { completarSal, type DatosSal } from './calculadoras/fermentados.js';
 import type { SeccionDeAcciones } from './acciones.js';
 
@@ -58,7 +58,8 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
         const primera = fermentacionesPara(pan.levadura).find(f => f.modo === valor);
         return primera ? { ...pan, fermentacion: primera.clave } : pan;
       }
-      case 'pan': case 'harina': case 'levadura': case 'fermentacion':
+      case 'pan': return { ...pan, pan: valor as ClavePan, cantidad: cantidadAlCambiar(pan, valor as ClavePan) };
+      case 'harina': case 'levadura': case 'fermentacion':
         return { ...pan, [grupo]: valor };
       default: return pan;
     }
@@ -74,8 +75,10 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
       } else {
         // `completarPan` descarta lo que no es una opción y corrige la segunda
         // igual a la principal y las 2 h con masa madre. La cantidad se
-        // conserva aunque esté vacía: es lo que el usuario dejó escrito.
-        pan = { ...completarPan(conElegido(grupo, valor)), cantidad: pan.cantidad };
+        // conserva aunque esté vacía: es lo que el usuario dejó escrito. Al
+        // cambiar de pan, la que corresponde al pan nuevo (bollos en pizza).
+        const elegido = conElegido(grupo, valor);
+        pan = { ...completarPan(elegido), cantidad: elegido.cantidad };
         guardar(almacen, CLAVE_PAN, pan);
       }
       redibujar();
@@ -90,6 +93,9 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
       guardar(almacen, CLAVE_SAL, sal);
     } else if (de === 'harina' || de === 'masa') {
       pan = { ...pan, cantidad: { de, gramos } };
+      guardar(almacen, CLAVE_PAN, pan);
+    } else if ((de === 'bollos' || de === 'bollo') && pan.cantidad.de === 'bollos') {
+      pan = { ...pan, cantidad: de === 'bollos' ? { ...pan.cantidad, bollos: gramos } : { ...pan.cantidad, gramos } };
       guardar(almacen, CLAVE_PAN, pan);
     } else {
       return;

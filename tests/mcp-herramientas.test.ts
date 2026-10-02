@@ -33,3 +33,8 @@ it('sal: con datos y sin', () => {
     });
   expect(calcularSalParaElAgente({ peso_total: 1200 })).toHaveProperty('faltan');
 });
+
+it('una pizza: la masa total sale de los bollos', () => {
+  const r = calcularPanParaElAgente({ ...pedido, pan: 'pizza new york', harina_total: undefined, bollos: 2, peso_bollo: 380 });
+  expect(r).toHaveProperty('masa_total', '760 g');
+});

@@ -63,7 +63,8 @@ al pie.
 
 - [ ] De arriba abajo:
   1. **Pan:** uno de la tabla de panes. Cada pan pone la hidratación base,
-     pensada para harina 000.
+     pensada para harina 000. Cuatro son pizzas —al molde, a la piedra,
+     napolitana y New York— y llevan además un peso de bollo sugerido.
   2. **Harina:** la principal, de la tabla de harinas. Cada harina suma o
      resta puntos de hidratación.
   3. **Segunda harina:** *Ninguna* o una de la tabla **sin la principal**.
@@ -72,8 +73,8 @@ al pie.
   5. **Levadura:** fresca, seca o masa madre.
   6. **Fermentación:** *Ambiente* o *En frío*.
   7. **Horas:** las del modo elegido.
-  8. **Cantidad:** dos campos en gramos, *Harina total* y *Masa total*
-     (C07.2.4).
+  8. **Cantidad:** dos campos en gramos, *Harina total* y *Masa total*; en
+     una pizza, *Bollos* y *Gramos por bollo* (C07.2.4).
 - [ ] Tocar una opción la aprieta y redibuja la pantalla.
 - [ ] Cambiar de modo elige las primeras horas de ese modo.
 - [ ] Elegir como principal la harina que estaba de segunda deja la segunda
@@ -113,8 +114,18 @@ al pie.
 - [ ] **Escribir no redibuja la pantalla:** se pintan sólo el resultado y el
   otro campo, para no sacarle el foco al que se está escribiendo.
 
-**Edge case:** cantidad vacía, en cero, negativa o que no es un número → no hay
-resultado: cada línea muestra un guion y el otro campo queda vacío.
+- [ ] **Una pizza se pide en bollos:** *Bollos* y *Gramos por bollo*
+  reemplazan a *Harina total* y *Masa total*. La masa total es los bollos
+  por los gramos, y de ahí sale la harina como desde la masa total.
+- [ ] Al elegir una pizza, *Gramos por bollo* toma el sugerido del estilo y
+  *Bollos* conserva los que había, o arranca en 4. Cambiar de estilo vuelve
+  al sugerido del nuevo.
+- [ ] Al pasar de una pizza a un pan se conserva la masa total: queda
+  escrita en *Masa total*.
+
+**Edge case:** cantidad vacía, en cero, negativa o que no es un número —o
+bollos así— → no hay resultado: cada línea muestra un guion y el otro campo
+queda vacío.
 
 #### C07.2.5 — El resultado *(J6)*
 
@@ -236,7 +247,9 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 - [ ] Reciben los datos por su nombre en las tablas —«pan de campo», «000»,
   «centeno», «masa madre», «ambiente» o «frío»—, sin mirar mayúsculas ni
   tildes. La segunda harina es «ninguna» o una distinta de la principal.
-- [ ] La cantidad es `harina_total` o `masa_total`, **una sola de las dos**.
+- [ ] La cantidad es `harina_total` o `masa_total`, **una sola de las dos**;
+  en una pizza, `bollos` y `peso_bollo`, con el peso sugerido del estilo como
+  opción si falta.
 - [ ] En `calcular_sal`, la `temperatura` es **opcional**: sin ella no hay
   tiempo ni su advertencia. Una que no es una de las franjas falta, con las
   franjas como opciones.
@@ -244,8 +257,9 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   no calculan: devuelven la lista de lo que falta y, para cada dato, las
   opciones válidas.
 - [ ] **Un dato cuyas opciones dependen de otro que falta no se pide
-  todavía:** la segunda harina espera a la principal, y las horas a la
-  levadura y al modo (con masa madre, sin 2 h). Se piden en la vuelta
+  todavía:** la segunda harina espera a la principal, las horas a la
+  levadura y al modo (con masa madre, sin 2 h), y la cantidad al pan, porque
+  una pizza va en bollos. Se piden en la vuelta
   siguiente, así ninguna opción ofrecida queda inválida después. Completar
   un pan puede llevar más de una vuelta de preguntas.
 - [ ] Con todo, devuelven las mismas líneas que la pantalla, la harina total,

@@ -42,3 +42,14 @@ it('sal: lo mismo', () => {
     .toEqual({ fermento: 'kimchi', pesoTotal: 500, temperatura: 'mas-24' });
   expect(completarSal(undefined)).toEqual(SAL_POR_DEFECTO);
 });
+
+it('pan: una pizza va en bollos y un pan en harina o masa, aunque lo guardado diga otra cosa', () => {
+  expect(completarPan({ pan: 'napolitana', cantidad: { de: 'bollos', bollos: 6, gramos: 270 } }).cantidad)
+    .toEqual({ de: 'bollos', bollos: 6, gramos: 270 });
+  expect(completarPan({ pan: 'napolitana', cantidad: { de: 'harina', gramos: 500 } }).cantidad)
+    .toEqual({ de: 'bollos', bollos: 4, gramos: 250 });
+  expect(completarPan({ pan: 'campo', cantidad: { de: 'bollos', bollos: 4, gramos: 250 } }).cantidad)
+    .toEqual({ de: 'masa', gramos: 1000 });
+  expect(completarPan({ pan: 'napolitana', cantidad: { de: 'bollos', bollos: -1, gramos: 250 } }).cantidad)
+    .toEqual({ de: 'bollos', bollos: 4, gramos: 250 });
+});

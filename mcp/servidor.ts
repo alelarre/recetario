@@ -147,9 +147,11 @@ export function crearServidor(recetario: Recetario): McpServer {
   const opciones = (xs: readonly { nombre: string }[]): string => xs.map(x => x.nombre).join(', ');
   const horas = (modo: 'ambiente' | 'frio'): string =>
     FERMENTACIONES.filter(f => f.modo === modo).map(f => f.horas).join(', ');
+  const pizzas = (): string => PANES.filter(p => p.bollo !== undefined).map(p => p.nombre).join(', ');
 
   servidor.registerTool('calcular_pan', {
     description: 'Las cantidades de un pan: harinas, agua, sal y levadura o masa madre, con las tablas de la app. ' +
+      'Un pan se pide por la harina o la masa total; una pizza, en bollos y gramos por bollo. ' +
       'Si falta un dato o no es una opción, no calcula: devuelve qué falta y sus opciones. ' +
       'No completes datos por tu cuenta: preguntáselos al usuario.',
     inputSchema: {
@@ -160,8 +162,10 @@ export function crearServidor(recetario: Recetario): McpServer {
       levadura: z.string().optional().describe(`Una de: ${opciones(LEVADURAS)}.`),
       fermentacion: z.string().optional().describe('«ambiente» o «frío».'),
       horas: z.number().optional().describe(`Ambiente: ${horas('ambiente')} (con masa madre, sin 2). Frío: ${horas('frio')}.`),
-      harina_total: z.number().optional().describe('En gramos. Una sola de las dos cantidades.'),
-      masa_total: z.number().optional().describe('En gramos. Una sola de las dos cantidades.')
+      harina_total: z.number().optional().describe('En un pan que no es pizza: en gramos. Una sola de las dos cantidades.'),
+      masa_total: z.number().optional().describe('En un pan que no es pizza: en gramos. Una sola de las dos cantidades.'),
+      bollos: z.number().optional().describe(`En una pizza (${pizzas()}): cuántos bollos.`),
+      peso_bollo: z.number().optional().describe('En una pizza: gramos por bollo. Si falta, se ofrece el sugerido del estilo.')
     }
   }, (pedido) => responder(() => json(calcularPanParaElAgente(pedido))));
 

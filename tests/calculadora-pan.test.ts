@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calcularPan, fermentacionesPara, HIDRATACION_MAXIMA, type DatosPan } from '../src/calculadoras/pan.js';
+import { calcularPan, fermentacionesPara, cantidadAlCambiar, bolloDe, PANES, BOLLOS_POR_DEFECTO, HIDRATACION_MAXIMA, type DatosPan } from '../src/calculadoras/pan.js';
 import { gramos } from '../src/calculadoras/gramos.js';
 
 const base: DatosPan = {
@@ -79,4 +79,39 @@ it('gramos: enteros; por debajo de 10, un decimal; por debajo de 1, dos, y nunca
   expect(gramos(0.996)).toBe('1,0');
   expect(gramos(9.96)).toBe('10');
   expect(gramos(9.94)).toBe('9,9');
+});
+
+describe('las pizzas', () => {
+  it('cuatro estilos, cada uno con su bollo sugerido; los panes no tienen', () => {
+    expect(PANES.filter(p => p.bollo !== undefined).map(p => [p.nombre, p.hidratacion, p.bollo])).toEqual([
+      ['Pizza al molde', 61, 380], ['Pizza a la piedra', 57, 250], ['Pizza napolitana', 65, 250], ['Pizza New York', 65, 380]
+    ]);
+    expect(bolloDe('campo')).toBeNull();
+  });
+
+  it('4 bollos de 250 g dan lo mismo que 1000 g de masa', () => {
+    const napolitana: DatosPan = { ...base, pan: 'napolitana' };
+    const porBollos = calcularPan({ ...napolitana, cantidad: { de: 'bollos', bollos: 4, gramos: 250 } })!;
+    const porMasa = calcularPan({ ...napolitana, cantidad: { de: 'masa', gramos: 1000 } })!;
+    expect(porBollos).toEqual(porMasa);
+    expect(porBollos.masaTotal).toBeCloseTo(1000);
+    expect(porBollos.hidratacion).toBe(65);
+  });
+
+  it.each([0, -1, Number.NaN])('bollos %s: sin resultado', bollos => {
+    expect(calcularPan({ ...base, pan: 'napolitana', cantidad: { de: 'bollos', bollos, gramos: 250 } })).toBeNull();
+  });
+
+  it('al pasar a una pizza: los bollos que había, o los de por defecto, con el peso del estilo', () => {
+    expect(cantidadAlCambiar(base, 'new-york')).toEqual({ de: 'bollos', bollos: BOLLOS_POR_DEFECTO, gramos: 380 });
+    const pizza: DatosPan = { ...base, pan: 'napolitana', cantidad: { de: 'bollos', bollos: 6, gramos: 270 } };
+    expect(cantidadAlCambiar(pizza, 'pizza-molde')).toEqual({ de: 'bollos', bollos: 6, gramos: 380 });
+    expect(cantidadAlCambiar(pizza, 'napolitana')).toBe(pizza.cantidad);
+  });
+
+  it('al pasar de una pizza a un pan se conserva la masa total; entre panes, la cantidad', () => {
+    const pizza: DatosPan = { ...base, pan: 'napolitana', cantidad: { de: 'bollos', bollos: 6, gramos: 270 } };
+    expect(cantidadAlCambiar(pizza, 'campo')).toEqual({ de: 'masa', gramos: 1620 });
+    expect(cantidadAlCambiar(base, 'focaccia')).toBe(base.cantidad);
+  });
 });

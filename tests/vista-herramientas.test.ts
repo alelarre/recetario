@@ -103,3 +103,14 @@ describe('la calculadora de sal', () => {
     expect(html).toContain('empezar a probar');
   });
 });
+
+describe('la calculadora de pan — la pizza', () => {
+  it('en una pizza, bollos y gramos por bollo en lugar de harina y masa total', () => {
+    const html = renderPan({ ...PAN_POR_DEFECTO, pan: 'napolitana', cantidad: { de: 'bollos', bollos: 4, gramos: 250 } });
+    expect(html).toContain('data-cantidad="bollos" value="4"');
+    expect(html).toContain('data-cantidad="bollo" value="250"');
+    expect(html).not.toContain('data-cantidad="harina"');
+    expect(html).not.toContain('data-cantidad="masa"');
+    expect(html).toContain('Pizza napolitana');
+  });
+});

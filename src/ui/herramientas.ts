@@ -62,9 +62,12 @@ export function renderPan(d: DatosPan): string {
   const modo = FERMENTACIONES.find(f => f.clave === d.fermentacion)?.modo ?? 'ambiente';
   const horas = fermentacionesPara(d.levadura).filter(f => f.modo === modo);
   const segundas = HARINAS.filter(h => h.clave !== d.harina);
-  // El campo que manda muestra lo escrito; el otro, lo que resulta.
-  const harinaTotal = d.cantidad.de === 'harina' ? d.cantidad.gramos : r ? Math.round(r.harinaTotal) : null;
-  const masaTotal = d.cantidad.de === 'masa' ? d.cantidad.gramos : r ? Math.round(r.masaTotal) : null;
+  const c = d.cantidad;
+  // Una pizza va en bollos. En un pan, el campo que manda muestra lo escrito; el otro, lo que resulta.
+  const cantidad = c.de === 'bollos'
+    ? campoGramos('Bollos', 'bollos', c.bollos) + campoGramos('Gramos por bollo', 'bollo', c.gramos)
+    : campoGramos('Harina total (g)', 'harina', c.de === 'harina' ? c.gramos : r ? Math.round(r.harinaTotal) : null) +
+      campoGramos('Masa total (g)', 'masa', c.de === 'masa' ? c.gramos : r ? Math.round(r.masaTotal) : null);
 
   return encabezado({ titulo: 'Pan', volver: true }) +
     '<div class="cuerpo"><div class="ficha calculadora">' +
@@ -79,8 +82,7 @@ export function renderPan(d: DatosPan): string {
       fila('Levadura', 'levadura', LEVADURAS.map(l => ({ valor: l.clave, texto: l.nombre })), d.levadura) +
       fila('Fermentación', 'modo', [{ valor: 'ambiente', texto: 'Ambiente' }, { valor: 'frio', texto: 'En frío' }], modo) +
       fila('Horas', 'fermentacion', horas.map(f => ({ valor: f.clave, texto: `${f.horas} h` })), d.fermentacion) +
-      campoGramos('Harina total (g)', 'harina', harinaTotal) +
-      campoGramos('Masa total (g)', 'masa', masaTotal) +
+      cantidad +
     '</div>' +
     resultadoPan(d) +
     '</div>';

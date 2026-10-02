@@ -1,6 +1,6 @@
 ---
 name: herramientas
-description: Usar cuando el usuario quiere calcular las cantidades de un pan (harina, agua, sal, levadura o masa madre, hidratación, para un peso de harina o de masa) o la sal de un fermentado (chucrut, kimchi, ajíes, pepinos, verduras en salmuera) y cuántos días tarda según la temperatura. Por ejemplo «quiero hacer un pan con 500 g de 000» o «cuánta sal le pongo a un frasco de pepinos de 1200 g». Trabaja con las herramientas `calcular_pan` y `calcular_sal` del MCP `recetario`.
+description: Usar cuando el usuario quiere calcular las cantidades de un pan o de una masa de pizza (harina, agua, sal, levadura o masa madre, hidratación, para un peso de harina o de masa, o para una cantidad de bollos) o la sal de un fermentado (chucrut, kimchi, ajíes, pepinos, verduras en salmuera) y cuántos días tarda según la temperatura. Por ejemplo «quiero hacer un pan con 500 g de 000» o «cuánta sal le pongo a un frasco de pepinos de 1200 g». Trabaja con las herramientas `calcular_pan` y `calcular_sal` del MCP `recetario`.
 ---
 
 # Herramientas
@@ -22,11 +22,12 @@ cuentas son las de la app: `calcular_pan` y `calcular_sal` del MCP
   2. harinas: la principal y si hay una segunda (con su porcentaje);
   3. levadura;
   4. fermentación: ambiente o frío, y cuántas horas;
-  5. cantidad: harina total o masa total, en gramos.
+  5. cantidad: harina total o masa total, en gramos; en una pizza, cuántos
+     bollos y de cuántos gramos, ofreciendo el peso sugerido que devuelve.
 
   Preguntá sólo lo que devolvió, aunque sepas que falta algo más: un dato que
   depende de otro que falta —la segunda harina de la principal, las horas de
-  la levadura y el modo— no viene todavía, porque sus opciones cambian según
+  la levadura y el modo, la cantidad del pan— no viene todavía, porque sus opciones cambian según
   la respuesta. Con las respuestas, volvé a llamar a la herramienta y repetí
   hasta que calcule. Puede llevar más de una vuelta.
 - **Mostrá el resultado** como una lista, una línea por ingrediente y la
@@ -41,7 +42,7 @@ Ya están la harina principal (000) y la cantidad (500 g de harina). Se
 pregunta, en un mensaje:
 
 > Para calcularlo me faltan:
-> 1. ¿Qué pan? Pan francés, Pan de molde, Pan de miga, Pizza al molde, Pizza a la piedra, Baguette, Pan de campo, Ciabatta o Focaccia.
+> 1. ¿Qué pan? Pan francés, Pan de molde, Pan de miga, Pizza al molde, Pizza a la piedra, Pizza napolitana, Pizza New York, Baguette, Pan de campo, Ciabatta o Focaccia.
 > 2. ¿Le sumás una segunda harina? Ninguna, 0000, 000 para pizza, Semolín, Integral o Centeno.
 > 3. ¿Qué levadura? Fresca, Seca o Masa madre.
 > 4. ¿Fermentación a temperatura ambiente o en frío?

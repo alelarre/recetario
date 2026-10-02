@@ -79,3 +79,18 @@ it('con lo que se respondió, la vuelta siguiente pide lo que dependía de eso',
   const r = leerPedidoPan({ ...completo, levadura: 'masa madre', horas: undefined });
   expect(r).toEqual({ faltan: [{ dato: 'horas', opciones: ['4', '8'] }] });
 });
+
+it('pan: una pizza se pide en bollos y gramos por bollo, con el sugerido como opción', () => {
+  const pizza = { ...completo, pan: 'Pizza napolitana', harina_total: undefined };
+  expect(leerPedidoPan({ ...pizza, bollos: 6, peso_bollo: 270 }))
+    .toEqual({ datos: expect.objectContaining({ pan: 'napolitana', cantidad: { de: 'bollos', bollos: 6, gramos: 270 } }) });
+  expect(leerPedidoPan({ ...pizza, bollos: 6 })).toEqual({ faltan: [{ dato: 'peso_bollo', opciones: ['250'] }] });
+  expect(leerPedidoPan(pizza)).toEqual({ faltan: [{ dato: 'bollos', opciones: [] }, { dato: 'peso_bollo', opciones: ['250'] }] });
+  // La harina total no sirve en una pizza.
+  expect(leerPedidoPan({ ...pizza, harina_total: 500 })).toEqual({ faltan: [{ dato: 'bollos', opciones: [] }, { dato: 'peso_bollo', opciones: ['250'] }] });
+});
+
+it('pan: sin el pan no se pide la cantidad, porque depende de si es pizza', () => {
+  const sinPan = leerPedidoPan({ ...completo, pan: undefined, harina_total: undefined });
+  expect('faltan' in sinPan && sinPan.faltan.map(f => f.dato)).toEqual(['pan']);
+});

@@ -235,6 +235,12 @@ Encontré 51 herramientas distintas, agrupadas en 10 subtemas.
 - Qué hace: diámetro + estilo → peso del bollo.
 - Dónde: https://www.pizzablab.com/calculators/pizza-dough-calculator/ · https://www.pizzamaking.com/expanded-calculator.html (resumen de búsqueda) · https://superglobalcalculator.com/calculators/baking/pizza-dough/ (resumen de búsqueda).
 - Notas: peso = factor de espesor × π × r². Pesos típicos: napolitana 200–280 g, NY 280–350 g, Detroit o siciliana 400–600 g (resumen de búsqueda). Los factores por estilo que aparecieron en la búsqueda no son coherentes entre sí; hay que tomarlos de una sola fuente.
+- **Por estilo, lo que usa la calculadora de pan** (hidratación y bollo sugerido). [V] abierta, [B] sólo en resultados de búsqueda:
+  - Napolitana: [V] https://ooni.com/blogs/recipes/ooni-neapolitan-style-pizza-dough — 65 % (780 g de agua por 1200 g de harina 00), bollo de 250 g para 30 cm (336 g para 35 cm). [V] https://www.pizzanapoletana.org/public/pdf/Disciplinare-2024-ENG.pdf (AVPN) — 55,6–62,5 %, bollo de 280 g para 28–35 cm, sin aceite.
+  - New York: [V] https://ooni.com/blogs/recipes/new-york-style-pizza-dough — 65 % (567/872), bollo de 380 g para 40 cm, aceite 5 %, azúcar 1 %, sal 3 %.
+  - A la piedra: [V] https://vinomanos.com/2020/08/receta-de-pizza-media-masa-y-a-la-piedra/ (APPyCE) — 50–55 % con 000, aceite ~2,3 %. [V] https://www.elartedeamasar.com/2012/03/masa-para-pizza-a-la-piedra-tecnicas-basicas/ — 60 % con 0000, ~210 g por pizza. [V] https://cocinerosargentinos.com/recetas/pizzas/pizza-a-la-piedra — 70 %, ~350 g. Ninguna da el diámetro.
+  - Al molde: [V] https://www.comemelapizza.com/masa-de-pizza-argentina/ — 60 %, 350–380 g para molde n.º 32, 380–420 para n.º 34, 420–500 para n.º 36. [V] vinomanos (APPyCE) — 60–65 % con 000. [V] https://cocinerosargentinos.com/pizzas/pizza-de-molde-clasica — 60 % con 0000, ~410 g. [V] https://pizzapasion.blogspot.com/2019/02/pizza-al-molde-media-masa.html — 62 %.
+  - Ooni queda por arriba de la AVPN en la hidratación de la napolitana, y por debajo en el peso. La piedra es lo más disperso (50–70 %, 210–350 g).
 
 **35. Pizza en molde o bandeja**
 - Qué hace: largo × ancho (o diámetro) + nivel de espesor + hidratación + horas → peso de masa e ingredientes.

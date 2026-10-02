@@ -99,3 +99,27 @@ describe('el control de Herramientas', () => {
     expect(control.pan().pan).toBe('focaccia');
   });
 });
+
+describe('el control de Herramientas — la pizza', () => {
+  it('elegir una pizza pasa la cantidad a bollos; escribir los bollos y el peso los guarda', () => {
+    const { control, elegir, pintarResultado } = armar();
+    elegir('pan', 'napolitana');
+    expect(control.pan().cantidad).toEqual({ de: 'bollos', bollos: 4, gramos: 250 });
+    control.alEscribir(campo('bollos', '6'));
+    control.alEscribir(campo('bollo', '270'));
+    expect(control.pan().cantidad).toEqual({ de: 'bollos', bollos: 6, gramos: 270 });
+    expect(pintarResultado).toHaveBeenCalledTimes(2);
+    elegir('pan', 'new-york');
+    expect(control.pan().cantidad).toEqual({ de: 'bollos', bollos: 6, gramos: 380 });
+    elegir('pan', 'campo');
+    expect(control.pan().cantidad).toEqual({ de: 'masa', gramos: 2280 });
+  });
+
+  it('otra elección no cambia los bollos', () => {
+    const { control, elegir } = armar();
+    elegir('pan', 'napolitana');
+    control.alEscribir(campo('bollos', '3'));
+    elegir('levadura', 'seca');
+    expect(control.pan().cantidad).toEqual({ de: 'bollos', bollos: 3, gramos: 250 });
+  });
+});
