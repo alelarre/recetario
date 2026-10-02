@@ -24,11 +24,50 @@ describe('parseIngrediente', () => {
       .toMatchObject({ nombre: 'Aceite de oliva', cantidad: '50 cc (2 cdas.); tibio' });
   });
 
-  it('la coma solo separa si lo que sigue empieza con un dígito', () => {
+  it('la coma solo separa si le sigue un espacio y un número', () => {
     expect(parseIngrediente('Sal, pimienta')).toMatchObject({ nombre: 'Sal, pimienta', cantidad: null });
     expect(parseIngrediente('Orégano, pimentón, comino, etc'))
       .toMatchObject({ nombre: 'Orégano, pimentón, comino, etc', cantidad: null });
     expect(parseIngrediente('Harina 0000, 200gr?')).toMatchObject({ nombre: 'Harina 0000', cantidad: '200gr?' });
+    expect(parseIngrediente('Harina 0000, ½ taza')).toMatchObject({ nombre: 'Harina 0000', cantidad: '½ taza' });
+  });
+
+  it('un separador sin espacio no parte un número', () => {
+    for (const linea of [
+      '1,5 l de caldo de pollo',
+      '8-10 granos de pimienta negra',
+      '2,5 gr (½ cucharada de té) de bicarbonato de sodio',
+      'Harina 0000,200 g',
+      'queso|crema',
+      'Sal;pimienta',
+      'Hora 10:30'
+    ]) {
+      expect(parseIngrediente(linea)).toMatchObject({ nombre: linea, cantidad: null });
+    }
+  });
+
+  it('el guión y la barra piden espacio a los dos lados; el punto y coma y los dos puntos, después', () => {
+    expect(parseIngrediente('Carne picada - 500 grs')).toMatchObject({ nombre: 'Carne picada', cantidad: '500 grs' });
+    expect(parseIngrediente('Carne picada -500 grs')).toMatchObject({ nombre: 'Carne picada -500 grs', cantidad: null });
+    expect(parseIngrediente('Limón (para la crema de limón): 1.5'))
+      .toMatchObject({ nombre: 'Limón (para la crema de limón)', cantidad: '1.5' });
+    expect(parseIngrediente('Sal: a gusto')).toMatchObject({ nombre: 'Sal', cantidad: 'a gusto' });
+  });
+
+  it('la raya separa con o sin espacios', () => {
+    expect(parseIngrediente('Anchoítas—18-20 medianas')).toMatchObject({ nombre: 'Anchoítas', cantidad: '18-20 medianas' });
+  });
+
+  it('un separador entre paréntesis no cuenta', () => {
+    expect(parseIngrediente('harina leudante (o harina común - polvo de hornear) — 1 taza generosa'))
+      .toMatchObject({ nombre: 'harina leudante (o harina común - polvo de hornear)', cantidad: '1 taza generosa' });
+    expect(parseIngrediente('Queso (rallado, 2 cucharadas para gratinar)'))
+      .toMatchObject({ nombre: 'Queso (rallado, 2 cucharadas para gratinar)', cantidad: null });
+  });
+
+  it('el paréntesis después de la cantidad queda en la cantidad, con sus separadores', () => {
+    expect(parseIngrediente('tomates perita maduros — 1 kg (800 g si es de lata)'))
+      .toMatchObject({ nombre: 'tomates perita maduros', cantidad: '1 kg (800 g si es de lata)' });
   });
 
   it('un ítem sin separador es un ingrediente sin cantidad', () => {

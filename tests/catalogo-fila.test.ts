@@ -55,9 +55,10 @@ describe('filaDesde', () => {
   it('un ingrediente con barra vertical no rompe la celda al releer', () => {
     const receta = { ...RECETA, ingredientes: '- queso|crema\n- 200 g de sal' };
     const f = filaDesde(receta, UBICACION);
-    expect(f[COLUMNAS.indexOf('ingredientes')]).toBe('queso|200 g de sal');
+    // Sin espacios, la barra no separa: queda en el nombre y se saca de la celda.
+    expect(f[COLUMNAS.indexOf('ingredientes')]).toBe('quesocrema|200 g de sal');
     const e = entradaDesdeFila(f);
-    expect(e.ingredientes).toEqual(['queso', '200 g de sal']);  // dos ingredientes, no tres tras el split
+    expect(e.ingredientes).toEqual(['quesocrema', '200 g de sal']);  // dos ingredientes, no tres tras el split
   });
 
   it('escribe cadena vacía y nunca null para lo que falta', () => {

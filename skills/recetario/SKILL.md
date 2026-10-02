@@ -66,6 +66,33 @@ devuelven. Los avisos no frenan la escritura; mostráselos al usuario igual.
 7. Escribilo con `crear` y decí dónde quedó: título, categoría y nombre de
    archivo. Aparece en la app sin hacer nada más.
 
+## Los ingredientes
+
+`formato` dice la forma de la línea; esto es cómo se redacta. Vale igual para
+las listas de ingredientes de `## Variaciones`.
+
+- El nombre va pelado y el tamaño va en la cantidad: `pepino — 1 mediano`, no
+  `pepino mediano — 1`.
+- Las palabras del nombre no se reordenan ni se reescriben.
+- Un paréntesis con una cantidad aproximada se saca y queda la exacta:
+  `papa blanca — 400 g (2 grandes)` pasa a `papa blanca — 400 g`. Si la exacta
+  está adentro, se invierte: `2 vasos (unos 400 gramos)` pasa a `400 g`. Vale
+  también para el formato de compra: `(1 lata)`.
+- Un paréntesis que describe el ingrediente se conserva, del lado del nombre:
+  `harina leudante (o harina común + polvo de hornear) — 1 taza generosa`.
+- Si el paréntesis trae cantidad y descripción juntas, la cantidad aproximada
+  se va y la descripción pasa al nombre: `Merluza — 800 g (4 filets sin
+  espinas)` pasa a `Merluza en filets sin espinas — 800 g`.
+- Lo que va entre paréntesis después de la cantidad y no es una cantidad
+  aproximada es una nota y se conserva: `ají molido — 1/2 a 1 cucharada
+  (según el picante deseado)`.
+- Los comentarios del autor se sacan (`(yo uso neutro, no invade tanto)`); los
+  que aportan un dato van a `## Notas`.
+- Una línea por ingrediente: la que trae varios se separa.
+- Los separadores `—`, `-` y `:` conviven en el recetario y no se unifican
+  entre recetas. Dentro de la receta que escribís o corregís, sí: todas sus
+  líneas con el mismo.
+
 ## Fotos
 
 Cada foto se pide con su origen (una ruta local o una URL) y su uso:

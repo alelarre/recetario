@@ -64,6 +64,12 @@ describe('las reglas del formato', () => {
     expect(texto).toContain('`- nombre — cantidad`');
   });
 
+  it('dicen cómo es la cantidad y que el paréntesis después de ella es una nota', () => {
+    const texto = reglas.join('\n');
+    expect(texto).toContain('`a gusto`, `c/n` o `para …`');
+    expect(texto).toContain('`- tomates perita — 1 kg (800 g si es de lata)`');
+  });
+
   it('la línea de los reservados sale de reglaDeReservados', () => {
     expect(reglas).toContain(reglaDeReservados(TAGS_RESERVADOS));
     expect(reglaDeReservados(['a', 'b c'])).toBe('- En `tags` no usar estos: `a`, `b c`.');

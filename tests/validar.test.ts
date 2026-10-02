@@ -151,6 +151,48 @@ describe('los ingredientes', () => {
   it('sin cantidad y sin número adelante no es un problema: es un ingrediente sin cantidad', () => {
     expect(validarMd(CORRECTA.replace('- Sal', '- Sal y pimienta')).problemas).toEqual([]);
   });
+
+  it('avisan, una vez cada uno', () => {
+    const lineas = [
+      '1,5 l de caldo de pollo',
+      '8-10 granos de pimienta negra',
+      '2,5 gr (½ cucharada de té) de bicarbonato de sodio',
+      '½ zanahoria, 1 trozo chico de hinojo, 1 rama de apio (opcionales)',
+      'una cucharada de aceite vegetal',
+      'una baguette',
+      '4 o 5 cucharadas de aceite de oliva',
+      'Sal - pimienta'
+    ];
+    const md = CORRECTA.replace('- Huevos — 3', lineas.map(l => `- ${l}`).join('\n'));
+    const { problemas } = validarMd(md);
+    expect(problemas.map(p => p.mensaje)).toEqual(lineas.map(l => expect.stringContaining(`«${l}»`)));
+    expect(campos(problemas)).toEqual(lineas.map(() => 'ingredientes'));
+  });
+
+  it('una cantidad que no parece cantidad dice cuál es', () => {
+    const { problemas } = validarMd(CORRECTA.replace('- Huevos — 3', '- Sal; pimienta'));
+    expect(problemas[0]?.mensaje).toContain('«pimienta» no parece una cantidad');
+  });
+
+  it('no avisan', () => {
+    const lineas = [
+      'Carne picada - 500 grs',
+      'Limón (para la crema de limón): 1.5',
+      'sal',
+      'Sal, pimienta',
+      'Aceite — a gusto',
+      'Aceite — al gusto (oliva o neutro)',
+      'Perejil — c/n',
+      'Aceite — para freír',
+      'Leche — media taza',
+      'Huevos — dos',
+      'tomates perita maduros — 1 kg (800 g si es de lata)',
+      'ají molido — 1/2 a 1 cucharada (según el picante deseado)',
+      'Manteca — ½ taza'
+    ];
+    const md = CORRECTA.replace('- Huevos — 3', lineas.map(l => `- ${l}`).join('\n'));
+    expect(validarMd(md).problemas).toEqual([]);
+  });
 });
 
 describe('las fotos', () => {

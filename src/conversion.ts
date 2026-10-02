@@ -128,7 +128,9 @@ const reglasDelFrontmatter = (especiales: boolean): string[] => [
 /** Las reglas del cuerpo: secciones, ingredientes y pasos. */
 const REGLAS_DEL_CUERPO: readonly string[] = [
   '- Después del frontmatter, una descripción corta opcional y las secciones `## Ingredientes`, `## Preparación`, `## Variaciones` y `## Notas`, sólo las que haya.',
-  '- Un ingrediente por línea: `- nombre — cantidad`. Los `###` agrupan ingredientes o tramos de la preparación.',
+  '- Un ingrediente por línea: `- nombre — cantidad`. Una línea que trae varios ingredientes se separa en varias. Los `###` agrupan ingredientes o tramos de la preparación.',
+  '- La cantidad va después de la raya y empieza con un número o una fracción, o es `a gusto`, `c/n` o `para …` (`para freír`). Un ingrediente sin cantidad va sin raya: `- sal`.',
+  '- Lo que va entre paréntesis después de la cantidad es una nota, texto libre: `- tomates perita — 1 kg (800 g si es de lata)`. Un paréntesis que describe el ingrediente va del lado del nombre: `- harina leudante (o harina común y polvo de hornear) — 1 taza`.',
   '- La preparación en pasos numerados.'
 ];
 

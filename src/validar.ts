@@ -9,7 +9,7 @@
  * que la app lee como ausente —un `tiempo` fuera de sus cinco valores— se
  * informa, porque la receta se guardaría perdiéndolo sin avisar.
  */
-import { parse, gruposDe } from './recipe.js';
+import { parse, gruposDe, lineaDeIngrediente, empiezaConCantidad, pareceCantidad } from './recipe.js';
 import {
   DURACIONES, DIFICULTADES, TAGS_ESPECIALES,
   duracionValida, dificultadValida, tagEspecial
@@ -81,16 +81,26 @@ function problemasDeIgnorados(ignorados: readonly ValorIgnorado[]): Problema[] {
   });
 }
 
-/** Un ingrediente que no se parte en nombre y cantidad y empieza con un número tiene la cantidad adelante. */
+/**
+ * Un aviso por ingrediente, el primero que corresponda: el nombre que empieza
+ * con una cantidad —`4 milanesas`, `una baguette`, `1,5 l de caldo`— la tiene
+ * adelante; si no, una cantidad que no parece cantidad suele ser otro
+ * ingrediente en la misma línea (`Sal - pimienta`).
+ */
 function problemasDeIngredientes(ingredientes: string): Problema[] {
-  return gruposDe(ingredientes)
-    .flatMap(g => g.items)
-    .filter(i => i.cantidad === null && /^\p{N}/u.test(i.nombre))
-    .map(i => ({
-      campo: 'ingredientes',
-      nivel: 'aviso' as const,
-      mensaje: `El ingrediente «${i.nombre}» no tiene la forma \`- nombre — cantidad\`: la cantidad va después del nombre.`
-    }));
+  return gruposDe(ingredientes).flatMap(g => g.items).flatMap((i): Problema[] => {
+    const linea = lineaDeIngrediente(i.crudo);
+    if (empiezaConCantidad(i.nombre)) {
+      return [{ campo: 'ingredientes', nivel: 'aviso',
+        mensaje: `El ingrediente «${linea}» no tiene la forma \`- nombre — cantidad\`: la cantidad va después del nombre.` }];
+    }
+    if (i.cantidad !== null && !pareceCantidad(i.cantidad)) {
+      return [{ campo: 'ingredientes', nivel: 'aviso',
+        mensaje: `En el ingrediente «${linea}», «${i.cantidad}» no parece una cantidad: empieza con un número o es ` +
+          '`a gusto`, `c/n` o `para …`. Si son dos ingredientes, van en dos líneas.' }];
+    }
+    return [];
+  });
 }
 
 /** Los números que hay en el depósito, dichos para quien tiene que elegir uno. */

@@ -193,14 +193,17 @@ receta no tiene cabecera.
 #### C05.1.3 — Separar nombre y cantidad en un ingrediente *(J4)*
 
 - [ ] El ítem se parte en **nombre + separador + cantidad**, en ese orden.
-- [ ] Los separadores son `-`, `—`, `;`, `,` y `|`. **Manda el primero que aparezca.**
-- [ ] **La coma solo separa si lo que sigue empieza con un dígito.** `Provenzal, 1 cucharada` se parte; `Sal, pimienta` no.
+- [ ] Los separadores son `—`, `-`, `|`, `;`, `:` y `,`. **Manda el primero que aparezca.**
+- [ ] **Los separadores, salvo la raya `—`, piden espacio**, para no partir un número: `-` y `|`, a los dos lados; `;` y `:`, después. `8-10 granos de pimienta` y `1,5 l de caldo` no se parten.
+- [ ] **La coma solo separa si le siguen un espacio y un número.** `Provenzal, 1 cucharada` se parte; `Sal, pimienta` no.
+- [ ] Un separador entre paréntesis no cuenta: el paréntesis antes del separador describe el ingrediente, y el que va después de la cantidad es una nota, texto libre, que queda en la cantidad.
 - [ ] Un ítem sin separador es un ingrediente sin cantidad, y su nombre es el ítem entero.
 - [ ] Los espacios alrededor del separador se descartan; el resto del texto se conserva tal cual.
 - [ ] Un separador dentro de una imagen o un link —`![…](…)`, `[…](…)`— no cuenta: el guión de un id de Drive no parte el ingrediente.
 - [ ] La cantidad es **texto libre**: no se parsea, no se normaliza y no se convierte a número.
+- [ ] **`validar` avisa, una vez por ingrediente,** si el nombre empieza con una cantidad —un número, una fracción o un número en palabras: `4 milanesas`, `una baguette`, `½ zanahoria, 1 rama de apio`—, o si no, si la cantidad no parece una cantidad. Una cantidad lo parece si, sin la nota, empieza con un número, una fracción o un número en palabras (`un`, `una`, `media`, `dos`…), o con `a gusto`, `al gusto`, `c/n`, `c/s` o `para`. Es un aviso: la receta se escribe igual.
 
-**Edge cases:** `Harina 0000, 200gr?` → nombre "Harina 0000", cantidad "200gr?"; el signo de pregunta se conserva · `500gr de anillos de calamar`, con la cantidad adelante y sin separador → es el nombre entero, sin cantidad, y entra al filtro por "500gr de anillos de calamar" · ítem que empieza con el separador → cantidad sin nombre, no entra al filtro y no rompe · ítem vacío → se ignora.
+**Edge cases:** `Harina 0000, 200gr?` → nombre "Harina 0000", cantidad "200gr?"; el signo de pregunta se conserva · `Limón (para la crema de limón): 1.5` → nombre "Limón (para la crema de limón)", cantidad "1.5" · `tomates perita — 1 kg (800 g si es de lata)` → la cantidad es "1 kg (800 g si es de lata)" y para el aviso cuenta "1 kg" · `500gr de anillos de calamar`, con la cantidad adelante y sin separador → es el nombre entero, sin cantidad, entra al filtro por "500gr de anillos de calamar" y `validar` avisa · `Sal - pimienta` → nombre "Sal", cantidad "pimienta", y `validar` avisa · ítem que empieza con el separador → cantidad sin nombre, no entra al filtro y no rompe · ítem vacío → se ignora.
 
 **Nota técnica:** la convención sale del contenido real del Drive. El libro de
 pescados usa `Anchoítas — 18-20 medianas` y el recetario original usa

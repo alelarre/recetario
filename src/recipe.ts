@@ -245,10 +245,23 @@ export function serialize(receta?: Partial<Receta> | null): string {
 
 /**
  * Nombre + separador + cantidad (C05.1.3). Manda el primer separador que
- * aparece, salvo la coma, que solo separa si le sigue un dígito: sin esa
- * regla `Sal, pimienta` daría el ingrediente "Sal" con cantidad "pimienta".
+ * aparece. La raya `—` separa sola; el resto pide espacio para no partir un
+ * número: `-` y `|` lo piden a los dos lados (`8-10 granos` no se parte), y
+ * `,`, `;` y `:` después (`1,5 l` tampoco). La coma, además, sólo separa si
+ * le sigue un número: sin esa regla `Sal, pimienta` daría el ingrediente
+ * "Sal" con cantidad "pimienta".
  */
-const SEPARADORES = ['-', '—', ';', ',', '|'] as const;
+function esSeparador(texto: string, i: number): boolean {
+  const c = texto[i];
+  const antes = texto[i - 1];
+  const despues = texto[i + 1];
+  const espacio = (x: string | undefined) => x !== undefined && /\s/.test(x);
+  if (c === '—') return true;
+  if (c === '-' || c === '|') return espacio(antes) && espacio(despues);
+  if (c === ',') return /^\s+\p{N}/u.test(texto.slice(i + 1));
+  if (c === ';' || c === ':') return espacio(despues);
+  return false;
+}
 
 /**
  * Dónde caen `![texto](destino)` y `[texto](destino)`: adentro, un guión del
@@ -265,27 +278,72 @@ function rangosDeMarkdown(texto: string): Array<readonly [number, number]> {
 export function parseIngrediente(linea: unknown): Ingrediente | null {
   if (typeof linea !== 'string') return null;
   const crudo = linea;
-  const limpia = crudo.replace(/^\s*[-*]\s+/, '').trim();
+  const limpia = lineaDeIngrediente(crudo);
   if (!limpia || limpia.startsWith('#')) return null;
 
   const rangos = rangosDeMarkdown(limpia);
   const dentroDeMarkdown = (i: number) => rangos.some(([ini, fin]) => i >= ini && i < fin);
 
+  // Un separador entre paréntesis es parte del texto: el paréntesis describe
+  // el ingrediente o es una nota de la cantidad (C05.1.3).
+  let parentesis = 0;
   let corte = -1;
   for (let i = 0; i < limpia.length; i++) {
     if (dentroDeMarkdown(i)) continue;
     const c = limpia[i];
-    if (!c || !(SEPARADORES as readonly string[]).includes(c)) continue;
-    // La coma pide un dígito después, salteando espacios.
-    if (c === ',' && !/^\s*\d/.test(limpia.slice(i + 1))) continue;
-    corte = i;
-    break;
+    if (c === '(') parentesis++;
+    else if (c === ')') parentesis = Math.max(0, parentesis - 1);
+    else if (parentesis === 0 && esSeparador(limpia, i)) { corte = i; break; }
   }
 
   if (corte === -1) return { nombre: limpia, cantidad: null, crudo };
   const nombre = limpia.slice(0, corte).trim();
   const cantidad = limpia.slice(corte + 1).trim();
   return { nombre, cantidad: cantidad || null, crudo };
+}
+
+/** La línea de un ingrediente sin la viñeta ni los espacios de los bordes. */
+export function lineaDeIngrediente(crudo: string): string {
+  return crudo.replace(/^\s*[-*]\s+/, '').trim();
+}
+
+/**
+ * La cantidad sin la nota: lo que va entre paréntesis después de la cantidad
+ * es texto libre —`1 kg (800 g si es de lata)`— y no se lee como cantidad.
+ */
+export function cantidadSinNota(cantidad: string): string {
+  const i = cantidad.indexOf('(');
+  return (i === -1 ? cantidad : cantidad.slice(0, i)).trim();
+}
+
+/** Las cantidades escritas en palabras, al principio de la cantidad o del nombre. */
+const CANTIDADES_EN_PALABRAS = [
+  'un', 'una', 'unos', 'unas', 'medio', 'media',
+  'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'doce'
+] as const;
+
+/** Las cantidades que no son un número. `para` abre una cantidad por uso: `para freír`. */
+const CANTIDADES_SIN_NUMERO = ['a gusto', 'al gusto', 'c/n', 'c/s', 'para'] as const;
+
+/** Si el texto empieza con alguna de las palabras, entera. */
+function empiezaCon(texto: string, palabras: readonly string[]): boolean {
+  const t = normalizar(texto);
+  return palabras.some(p => t === p || t.startsWith(p + ' '));
+}
+
+/** Si el texto empieza con una cantidad: un número, una fracción o un número en palabras. */
+export function empiezaConCantidad(texto: string): boolean {
+  return /^\p{N}/u.test(texto.trim()) || empiezaCon(texto, CANTIDADES_EN_PALABRAS);
+}
+
+/**
+ * Si la cantidad de un ingrediente parece una cantidad (C05.1.3): empieza con
+ * un número o una fracción, o es una de las cantidades sin número. Una que
+ * no lo parece suele ser otro ingrediente en la misma línea: `Sal - pimienta`.
+ */
+export function pareceCantidad(cantidad: string): boolean {
+  const sinNota = cantidadSinNota(cantidad);
+  return empiezaConCantidad(sinNota) || empiezaCon(sinNota, CANTIDADES_SIN_NUMERO);
 }
 
 /** Parte un texto de sección por sus `###`. El texto antes del primero es el tramo sin nombre. */
