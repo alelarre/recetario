@@ -799,7 +799,7 @@ app se abre hasta que el job está cumplido.
 | J3 — Convertir en receta completa | F2, F9 | Menú → Borradores → Editor → Receta → *(agente)* → Editor → Receta |
 | J4 — Buscar con lo que tengo | F4 | Recetario → Resultados → Receta |
 | J5 — Mirar sin buscar | F5, F16, F17 | Recetario → Categoría o Lista por tag → Receta |
-| J6 — Seguir la receta cocinando | F6 | Receta → Modo cocina |
+| J6 — Usar la app de apoyo mientras cocino | F6 | Receta → Modo cocina; Herramientas |
 | J7 — Corregir | F7 | Receta → Editor → Receta |
 | J8 — Legible sin la app | F9, F12 | *(fuera de la app: los `.md` en Drive)* |
 | J9 — Planificar | F13 | Menú → Plan de la semana → Agregar al plan · Lista de compras |

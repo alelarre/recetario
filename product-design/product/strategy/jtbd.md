@@ -31,7 +31,7 @@ real, cómo lo resuelve el producto y qué pasa si no lo resuelve.
 | J3 | Convertir lo que guardé en una receta completa | Archivar | Alta | ✅ | El agente convierte; la app manda el pedido y recibe la receta |
 | J4 | Buscar qué cocinar con lo que tengo | Recuperar | Media | ✅ | Sí |
 | J5 | Mirar sin buscar, para hacer algo distinto | Recuperar | Media | ✅ | Sí |
-| J6 | Seguir una receta mientras cocino | Cocinar | Baja | ✅ | Sí |
+| J6 | Usar la app de apoyo mientras cocino | Cocinar | Baja | ✅ | Sí |
 | J7 | Corregir una receta que estaba mal | Cocinar | Baja | ✅ | Sí |
 | J8 | Que el recetario sea legible sin la app | Transversal | Permanente | ✅ | Sí |
 | J9 | Planificar la semana y armar la compra | Planificar | Baja | ✅ | Sí |
@@ -154,21 +154,26 @@ tener la receta completa guardada para revisar"*.
 
 ### Contexto: Cocinar
 
-#### J6 — Seguir una receta mientras cocino ✅
+#### J6 — Usar la app de apoyo mientras cocino ✅
 
-> **Cuando** estoy cocinando algo complejo o que hago muy de vez en cuando,
-> **quiero** tener la receta a la vista sin tocar el teléfono,
-> **para** no perder el hilo con las manos ocupadas.
+> **Cuando** estoy por cocinar o cocinando,
+> **quiero** tener a mano lo que necesito: la receta a la vista sin tocar el
+> teléfono, los ingredientes para armar el *mise en place*, una calculadora
+> para las cantidades,
+> **para** no perder el hilo con las manos ocupadas ni hacer cuentas de cabeza.
 
-**Frecuencia:** baja. Solo para recetas complejas o poco frecuentes; lo que
-domina no lo mira. Es el uso menor de los cuatro.
-**Hoy:** resuelto por el modo cocina.
+**Frecuencia:** baja. Sobre todo con recetas complejas o poco frecuentes, y
+con panes y fermentados; lo que domina no lo mira. Es el uso menor de los
+cuatro.
+**Hoy:** resuelto por el modo cocina —la pantalla encendida y el conmutador
+Ingredientes/Pasos— y por *Herramientas*, con las calculadoras de pan y de sal
+(`E07-Herramientas.md`), que se abren desde el menú o desde la receta.
 **Si no se resuelve:** molesta, pero no rompe el producto.
 
-> El único dolor de este contexto es que la pantalla se apaga, y ya está
-> resuelto (`src/cocina-control.ts`). Es un **botón manual por decisión**, no por
-> omisión: mantener la pantalla encendida no siempre hace falta, y activarlo
-> solo cuando corresponde es el comportamiento buscado.
+> Que la pantalla se apague está resuelto (`src/cocina-control.ts`). Es un
+> **botón manual por decisión**, no por omisión: mantener la pantalla
+> encendida no siempre hace falta, y activarlo solo cuando corresponde es el
+> comportamiento buscado.
 
 #### J7 — Corregir una receta que estaba mal ✅
 
