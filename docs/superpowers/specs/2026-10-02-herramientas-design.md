@@ -196,9 +196,11 @@ calculadora funciona igual con los valores por defecto.
   mano en `tags`. No hay recetas que los tengan como tag común.
 - **Editor:** el grupo de los especiales suma *pan* y *fermentado*, que se
   aprietan y se sueltan como los demás.
-- **Receta:** si la receta tiene un especial con herramienta, al pie de la
-  ficha de ingredientes va un botón por cada uno: *Calcular pan*, *Calcular
-  sal*. Abre la calculadora con las últimas elecciones; no lee la receta.
+- **Receta:** si la receta tiene un especial con herramienta, va un botón por
+  cada uno: *Calcular pan*, *Calcular sal*. La única condición es la marca. Va
+  al pie de la ficha de ingredientes; si la receta no tiene ingredientes, en
+  una ficha propia en ese mismo lugar. Abre la calculadora con las últimas
+  elecciones; no lee la receta.
 - **Invitado:** el link compartido no lleva especiales, así que no hay botón.
 
 ## 5. MCP y skills

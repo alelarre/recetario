@@ -418,7 +418,8 @@ número finito y positivo.
     ficha de ingredientes termina con
     `<a class="btn sec" href="#/herramientas/pan">Calcular pan</a>`; con
     `fermentado`, *Calcular sal* hacia `#/herramientas/fermentados`; sin marca,
-    ninguno; sin ingredientes, ninguno; y no hay chip `pan`.
+    ninguno; sin ingredientes, el botón va igual, en una ficha propia antes de
+    *Preparación*; y no hay chip `pan`.
   - `vista-editor.test.ts`: hay botones `data-valor="pan"` y
     `data-valor="fermentado"` en el grupo de especiales, después de
     `borrador`.
@@ -438,8 +439,9 @@ número finito y positivo.
     con un comentario: abren su calculadora desde la receta y no se muestran
     en ningún otro lado.
   - `fichas-receta.ts`: `fichasDelCuerpo(receta, { alPieDeIngredientes = '' } = {})`
-    agrega ese HTML al final del contenido de la ficha de ingredientes, sólo si
-    hay ingredientes. La vista de invitado no lo pasa.
+    agrega ese HTML al final de la ficha de ingredientes; si no hay
+    ingredientes, lo dibuja en una ficha propia, sin título, en ese mismo
+    lugar. La vista de invitado no lo pasa.
   - `receta.ts`: arma los botones con
     `ESPECIALES.filter(d => d.herramienta && receta.tags_especiales.includes(d.nombre))`,
     con el texto de una tabla local
