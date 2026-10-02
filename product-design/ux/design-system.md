@@ -719,7 +719,7 @@ Los campos de contenido —ingredientes, preparación, notas— son `textarea` q
 crecen con el contenido, con un mínimo de tres renglones.
 
 **Un campo puede llevar un botón al lado**, en la misma fila y a `--e-2`: el
-campo toma todo el ancho y el botón es un secundario (§6.8) cuadrado, 48 px,
+campo toma todo el ancho y el botón es un secundario (§6.7) cuadrado, 48 px,
 sólo con su ícono y nombrado para el lector de pantalla. Hoy es uno: el que
 abre la fuente original del editor (`E04-Corregir.md` C04.2.1), con el ícono
 `link`, deshabilitado mientras lo escrito no sea un link.
