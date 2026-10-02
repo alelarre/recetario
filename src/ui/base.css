@@ -504,22 +504,54 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 .muestra-color[aria-pressed="true"], .muestra-foto[aria-pressed="true"] { border-color: var(--fg); }
 
 
-/* Herramientas: la lista y las calculadoras. Las opciones reusan `.tag-esp`. */
+/* Herramientas: la lista y las calculadoras (§6.28). */
 .herramienta { flex-direction: column; align-items: flex-start; gap: var(--e-1); text-decoration: none; color: var(--fg); }
 .herramienta + .herramienta { margin-top: var(--e-2); }
 .herramienta .ctx { font-size: var(--txt-chico); color: var(--fg-2); }
-.fila-opc { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+/* Las fichas de datos van juntas, más cerca entre sí que del resultado. */
+.calculadora { display: flex; flex-direction: column; gap: var(--e-3); }
+/* §6.28 La fila de un dato: el nombre a la izquierda y lo elegido a la
+   derecha, como un ingrediente y su cantidad. Las filas le dan el alto a la
+   ficha: sin padding vertical, la primera y la última quedan a la misma
+   distancia del borde que entre sí. */
+.ficha.datos { padding-block: 0; }
+.dato { width: 100%; min-height: 56px; display: flex; align-items: center; gap: var(--e-3);
+        padding: var(--e-2) 0; border: 0; border-bottom: 1px solid var(--borde);
+        background: none; color: var(--fg); font: 400 var(--txt-base)/1.3 var(--tipo); text-align: left; }
+.dato:last-child { border-bottom: 0; }
+.dato .n { flex: 0 1 auto; min-width: 0; }
+/* El desplegable ocupa todo lo que deja el nombre, para que la fila entera
+   abra el selector, y escribe lo elegido contra la derecha. El chevron es el
+   del campo (§6.9). */
+.dato select { flex: 1; min-width: 0; min-height: 40px; -webkit-appearance: none; appearance: none; cursor: pointer;
+               background: none; border: 0; border-radius: var(--r-chico); color: var(--fg);
+               font: 600 var(--txt-base)/1.3 var(--tipo); text-align: right; text-align-last: right;
+               padding: 0 calc(16px + var(--e-2)) 0 0; text-overflow: ellipsis;
+               background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B3A99B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+               background-repeat: no-repeat; background-size: 16px; background-position: right center; }
+.dato select:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+/* El selector del sistema dibuja las opciones: que no hereden la alineación. */
+.dato select option, .dato select optgroup { text-align: left; }
+/* §6.28 El conmutador de un dato: el del orden (§6.20) con las posiciones que
+   hagan falta, todas del mismo ancho. */
+.seg { flex: 0 0 auto; margin-left: auto; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+       border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio); overflow: hidden; }
+.seg button { min-height: 40px; min-width: 48px; padding: 0 var(--e-2); border: 0; background: none; color: var(--fg-2);
+              font: 600 var(--txt-chico)/1 var(--tipo); cursor: pointer; white-space: nowrap; }
+.seg button + button { border-left: 1px solid var(--borde-fuerte); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
 /* §6.28 El interruptor: la fila entera se toca, con la perilla a la derecha.
    Encendido se dibuja invertido (§6.0). */
-.interruptor { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: space-between;
-               gap: var(--e-3); padding: 0; margin-bottom: var(--e-4); background: none; border: 0; cursor: pointer;
-               color: var(--fg); font: 400 var(--txt-base)/1.3 var(--tipo); text-align: left; }
+.interruptor { justify-content: space-between; cursor: pointer; }
 .interruptor .perilla { flex: 0 0 48px; height: 28px; border-radius: 14px; position: relative;
                         background: var(--surface-alta); border: 1px solid var(--borde-fuerte); }
 .interruptor .perilla::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
                                border-radius: 50%; background: var(--fg-2); }
 .interruptor[aria-checked="true"] .perilla { background: var(--fg); border-color: var(--fg); }
 .interruptor[aria-checked="true"] .perilla::after { left: auto; right: 3px; background: var(--bg); }
+/* El campo de una cantidad cierra su ficha: sin el margen de abajo del campo (§6.9). */
+.calculadora .ficha > .campo { margin-bottom: 0; }
+.calculadora .ficha > .campo + .aviso-mudo { margin: var(--e-2) 0 0; font-size: var(--txt-chico); }
 /* §6.28 Dos cantidades en una fila, con lo que las une en el medio, a la
    altura de los campos: las flechas si una sale de la otra, × si se multiplican. */
 .par-cantidades { display: flex; align-items: flex-end; gap: var(--e-2); }

@@ -55,34 +55,43 @@ aparece.
 
 ### F07.2 — La calculadora de pan
 
-Una sola pantalla. Cada dato es una fila de botones con una opción apretada,
-como la duración en el editor (`E04-Corregir.md` C04.2.1c), y el resultado va
-al pie. Los componentes propios —el interruptor, el par de cantidades y la
-ficha del resultado— están en `design-system.md` §6.28.
+Una sola pantalla. **Cada dato es una fila:** su nombre a la izquierda y lo
+elegido a la derecha, como un ingrediente y su cantidad. Un dato con muchas
+opciones es un desplegable, que abre el selector del sistema; uno con dos a
+cuatro opciones cortas es un conmutador, con todas a la vista. Las filas van
+en tres fichas —el pan y sus harinas, cómo leva, y la cantidad— y el
+resultado va al pie. Los componentes están en `design-system.md` §6.28.
 
 #### C07.2.1 — Los datos, en su orden *(J6)*
 
-- [ ] De arriba abajo:
-  1. **Pan:** uno de la tabla de panes. Cada pan pone la hidratación base,
-     pensada para harina 000. Cuatro son pizzas —al molde, a la piedra,
-     napolitana y New York— y llevan además un peso de bollo sugerido.
-  2. **Harina:** la principal, de la tabla de harinas. Cada harina suma o
-     resta puntos de hidratación.
+- [ ] De arriba abajo, en tres fichas. **El pan y sus harinas:**
+  1. **Pan:** un desplegable con los de la tabla de panes, los panes
+     primero y las pizzas —al molde, a la piedra, napolitana y New York—
+     aparte. Cada pan pone la hidratación base, pensada para harina 000; las
+     pizzas llevan además un peso de bollo sugerido.
+  2. **Harina:** la principal, un desplegable con la tabla de harinas. Cada
+     harina suma o resta puntos de hidratación.
   3. **Mezclar con otra harina:** un interruptor, apagado por defecto.
-     Encendido, debajo van **Otra harina** —las de la tabla **sin la
-     principal**— y su **porcentaje**, con las opciones de la tabla.
-  4. **Prefermento:** *Ninguno*, *Masa madre*, *Poolish*, *Biga* o *Pâte
-     fermentée* (C07.2.8). Con poolish, sus horas.
-  5. **Levadura:** fresca o seca. **Va después del prefermento, que dice si
-     hace falta:** con masa madre no está.
-  6. **Fermentación:** *Ambiente* o *En frío*; con poolish o biga no está,
-     y con pâte fermentée es la de la masa final.
-  7. **Horas:** las del modo elegido.
-  8. **Temperatura del ambiente:** las cuatro franjas de los fermentados
-     (C07.3.1). Sólo con la fermentación a temperatura ambiente (C07.2.3).
-  9. **Cantidad:** dos campos en gramos en una misma fila, *Harina total* y
-     *Masa total*; en una pizza, *Bollos* y *Gramos por bollo* (C07.2.4).
-- [ ] Tocar una opción la aprieta y redibuja la pantalla.
+     Encendido, debajo van **Otra harina** —un desplegable con las de la
+     tabla **sin la principal**— y su **Porcentaje**, un conmutador con las
+     opciones de la tabla.
+- [ ] **Cómo leva:**
+  4. **Prefermento:** un desplegable con *Ninguno*, *Masa madre*, *Poolish*,
+     *Biga* y *Pâte fermentée* (C07.2.8). Con poolish, sus horas, en un
+     conmutador.
+  5. **Levadura:** un conmutador, fresca o seca. **Va después del
+     prefermento, que dice si hace falta:** con masa madre no está.
+  6. **Fermentación:** un conmutador, *Ambiente* o *En frío*; con poolish o
+     biga no está, y con pâte fermentée es la de la masa final.
+  7. **Horas:** un conmutador con las del modo elegido.
+  8. **Temperatura ambiente:** un desplegable con las cuatro franjas de los
+     fermentados (C07.3.1). Sólo con la fermentación a temperatura ambiente
+     (C07.2.3).
+- [ ] **La cantidad:**
+  9. Dos campos en gramos en una misma fila, *Harina total* y *Masa total*;
+     en una pizza, *Bollos* y *Gramos por bollo* (C07.2.4).
+- [ ] Elegir una opción —en un desplegable, un conmutador o el interruptor—
+  redibuja la pantalla.
 - [ ] Cambiar de modo elige las primeras horas de ese modo.
 - [ ] **Encender la mezcla** suma la harina integral, o la primera de la
   tabla si la principal es la integral; apagarla la saca. Elegir como
@@ -223,12 +232,13 @@ queda vacío.
 
 - [ ] La pantalla se titula **Fermentados**, como su entrada en la lista.
 
-- [ ] Tres datos, en este orden: el **fermento**, una fila de botones con los
-  de la tabla de fermentos; la **temperatura del ambiente**, una fila con
-  cuatro franjas —menos de 13 °C, 13 a 18, 18 a 24 y más de 24—; y el
-  **peso total** en gramos.
+- [ ] Tres datos, con las filas de la calculadora de pan (F07.2). En una
+  ficha, el **fermento**, un desplegable con los de la tabla de fermentos, y
+  la **temperatura ambiente**, un desplegable con cuatro franjas —menos de
+  13 °C, 13 a 18, 18 a 24 y más de 24—. En otra, el **peso total** en
+  gramos.
 - [ ] El peso total es **todo lo que hay en el frasco**: la verdura y, si va
-  en salmuera, el agua. El campo lo dice.
+  en salmuera, el agua. Lo dice una línea debajo del campo.
 - [ ] La sal es el porcentaje del fermento sobre el peso total. Es la misma
   cuenta para la sal seca y para la salmuera.
 - [ ] El resultado al pie, en la misma ficha **Resultado** destacada del pan

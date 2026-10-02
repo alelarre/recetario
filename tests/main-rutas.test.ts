@@ -917,6 +917,12 @@ describe('main.ts: las rutas', () => {
         for (const fn of tecleos) await fn({ target: campo });
         await esperar();
       },
+      /** Elegir una opción en un desplegable de una calculadora. */
+      elegirOpcion: async (opcion: string, valor: string) => {
+        const campo = { dataset: { opcion }, value: valor, closest: (sel: string) => (sel === '[data-opcion]' ? campo : null) };
+        for (const fn of tecleos) await fn({ target: campo });
+        await esperar();
+      },
       /** Una tecla en un campo, como la caja de la pantalla de agregar al plan. */
       tipear: async (accion: string, valor: string) => {
         const campo = { dataset: { accion }, value: valor, name: '' };
@@ -1068,19 +1074,28 @@ describe('main.ts: las rutas', () => {
       ['#/buscar?q=nada', 'class="cajaenc"'],
       ['#/ajustes', 'Reindexar'],
       ['#/herramientas', 'href="#/herramientas/pan"'],
-      ['#/herramientas/pan', 'data-grupo="pan"'],
-      ['#/herramientas/fermentados', 'data-grupo="fermento"']
+      ['#/herramientas/pan', 'data-opcion="pan"'],
+      ['#/herramientas/fermentados', 'data-opcion="fermento"']
     ] as const) {
       await abrir(hash);
       expect(app.innerHTML, hash).toContain(marca);
     }
   });
 
-  it('en la calculadora, tocar una opción la aprieta', async () => {
+  it('en la calculadora, tocar una opción de un conmutador la aprieta', async () => {
     const { abrir, tocar, app } = await montar();
     await abrir('#/herramientas/pan');
-    await tocar('elegir-opcion', { grupo: 'pan', valor: 'focaccia' });
-    expect(app.innerHTML).toContain('data-grupo="pan" data-valor="focaccia" aria-pressed="true"');
+    await tocar('elegir-opcion', { grupo: 'levadura', valor: 'seca' });
+    expect(app.innerHTML).toContain('data-grupo="levadura" data-valor="seca" aria-pressed="true"');
+  });
+
+  it('en la calculadora, elegir en un desplegable redibuja con lo elegido', async () => {
+    const { abrir, elegirOpcion, app, pinturas } = await montar();
+    await abrir('#/herramientas/pan');
+    const antes = pinturas.length;
+    await elegirOpcion('pan', 'focaccia');
+    expect(pinturas.length).toBe(antes + 1);
+    expect(app.innerHTML).toContain('<option value="focaccia" selected>');
   });
 
   it('escribir una cantidad pinta sólo el resultado y el otro campo', async () => {

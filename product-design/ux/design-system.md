@@ -1332,15 +1332,41 @@ color de la categoría, que no lo tapa.
 
 ### 6.28 Las calculadoras
 
-Las pantallas de *Herramientas* (`E07-Herramientas.md`) son una ficha con los
-datos y, al pie, la ficha del resultado. Cada dato que se elige es una fila
-de botones de tag especial (§6.10b), uno solo apretado, bajo su etiqueta de
-campo (§6.9). Tres componentes son propios:
+Las pantallas de *Herramientas* (`E07-Herramientas.md`) se leen como una
+ficha de ingredientes (§6.11): **cada dato es una fila con su nombre a la
+izquierda y lo elegido a la derecha** (`.dato`), y el resultado, al pie, es
+la lista de lo que va. Las filas miden 56 px de alto mínimo, con el nombre en
+`--txt-base` `--fg` y un borde de 1 px `--borde` entre una y otra. Van en
+fichas (§6.6) sin título ni padding vertical (`.ficha.datos`), separadas
+`--e-3` entre sí (`.calculadora`) y `--e-5` del resultado: lo que va junto se
+agrupa por cercanía, no por rótulo.
+
+**Lo que se elige depende de cuántas opciones hay:**
+
+| Opciones | Control | Por qué |
+|---|---|---|
+| Muchas, o de nombre largo | **Desplegable** | La fila muestra sólo lo elegido; el selector del sistema muestra el resto. |
+| Dos a cuatro, cortas | **Conmutador** | Todas a la vista y un solo toque. |
+| Encendido o apagado | **Interruptor** | Abre más filas debajo. |
+
+**No hay filas de botones sueltos:** con anchos distintos se acomodan en
+renglones desparejos, y once panes son cuatro renglones de botones con el
+mismo peso que el elegido.
+
+**El desplegable** es un `<select>` sin caja: lo elegido en `--txt-base`
+peso 600, contra la derecha, con el chevron del campo (§6.9) al final. Ocupa
+todo el ancho que deja el nombre, así toda la fila abre el selector. Las
+opciones pueden ir en grupos: los panes y las pizzas.
+
+**El conmutador** (`.seg`) es el del orden (§6.20) con las posiciones que
+hagan falta, todas del mismo ancho: un panel con borde de 1 px
+`--borde-fuerte` y `--r-medio`, botones de 40 px de alto en `--txt-chico`
+peso 600 `--fg-2`, y el elegido invertido (§6.0). Va contra la derecha de la
+fila.
 
 **El interruptor** (`.interruptor`), para lo que se enciende y abre más
-datos: *Mezclar con otra harina*. Es una fila entera que se toca, de 48 px de
-alto mínimo: la etiqueta a la izquierda, en `--txt-base` `--fg`, y la perilla
-a la derecha, de 48 × 28 px. Lleva `role="switch"` y `aria-checked`.
+datos: *Mezclar con otra harina*. Es la fila entera la que se toca, con la
+perilla a la derecha, de 48 × 28 px. Lleva `role="switch"` y `aria-checked`.
 
 | Estado | Pista | Perilla |
 |---|---|---|
@@ -1349,6 +1375,10 @@ a la derecha, de 48 × 28 px. Lleva `role="switch"` y `aria-checked`.
 
 Encendido se dibuja invertido, como todo lo elegido (§6.0), y cambia sin
 transición (§5).
+
+**Las cantidades que se escriben son campos** (§6.9), en su propia ficha y
+con la etiqueta arriba: un número se tipea, no se elige. Una aclaración del
+campo va debajo, en `--txt-chico` `--fg-2`.
 
 **El par de cantidades** (`.par-cantidades`): dos campos numéricos (§6.9) en
 una misma fila, del mismo ancho, con lo que los une en el medio, en `--fg-2`

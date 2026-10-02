@@ -172,3 +172,16 @@ describe('el control de Herramientas — la temperatura del pan', () => {
     expect(control.pan().temperatura).toBe('mas-24');
   });
 });
+
+describe('el control de Herramientas — los desplegables', () => {
+  it('lo elegido en un desplegable guarda y redibuja, igual que un botón', () => {
+    const almacen = localStorageFalso();
+    const { control, redibujar } = armar(almacen);
+    control.alElegir('pan', 'focaccia');
+    control.alElegir('fermento', 'kimchi');
+    expect(control.pan().pan).toBe('focaccia');
+    expect(control.sal().fermento).toBe('kimchi');
+    expect(JSON.parse(almacen.getItem(CLAVE_PAN)!).pan).toBe('focaccia');
+    expect(redibujar).toHaveBeenCalledTimes(2);
+  });
+});

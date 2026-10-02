@@ -2306,6 +2306,8 @@ app.addEventListener('input', (e) => {
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria(true);
   const cantidad = conClosest(e.target)?.closest<HTMLInputElement>('[data-cantidad]');
   if (cantidad) return herramientas.alEscribir(cantidad);
+  const opcion = conClosest(e.target)?.closest<HTMLSelectElement>('[data-opcion]');
+  if (opcion) return herramientas.alElegir(opcion.dataset['opcion'] ?? '', opcion.value);
   // En el editor, cada tecla puede habilitar o bloquear el botón de
   // `borrador`, y mueve el cursor de línea.
   if (enElEditor()) { revisarBorrador(); acomodarBotonDeFoto(); }

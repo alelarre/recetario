@@ -22,6 +22,8 @@ export interface ControlHerramientas {
   pan(): DatosPan;
   sal(): DatosSal;
   acciones: SeccionDeAcciones;
+  /** Una opción elegida en un desplegable `[data-opcion]`: su grupo y su valor. */
+  alElegir(grupo: string, valor: string): void;
   /** Un campo `[data-cantidad]` que cambió. */
   alEscribir(campo: HTMLInputElement): void;
 }
@@ -71,24 +73,25 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
     }
   }
 
-  const acciones: SeccionDeAcciones = {
-    'elegir-opcion': (boton) => {
-      const grupo = boton.dataset['grupo'] ?? '';
-      const valor = boton.dataset['valor'] ?? '';
-      if (grupo === 'fermento' || grupo === 'temperatura') {
-        sal = completarSal({ ...sal, [grupo]: valor });
-        guardar(almacen, CLAVE_SAL, sal);
-      } else {
-        // `completarPan` descarta lo que no es una opción y corrige la segunda
-        // igual a la principal y las 2 h con masa madre. La cantidad se
-        // conserva aunque esté vacía: es lo que el usuario dejó escrito. Al
-        // cambiar de pan, la que corresponde al pan nuevo (bollos en pizza).
-        const elegido = conElegido(grupo, valor);
-        pan = { ...completarPan(elegido), cantidad: elegido.cantidad };
-        guardar(almacen, CLAVE_PAN, pan);
-      }
-      redibujar();
+  /** Lo elegido en un conmutador, un interruptor o un desplegable: guarda y redibuja. */
+  function alElegir(grupo: string, valor: string): void {
+    if (grupo === 'fermento' || grupo === 'temperatura') {
+      sal = completarSal({ ...sal, [grupo]: valor });
+      guardar(almacen, CLAVE_SAL, sal);
+    } else {
+      // `completarPan` descarta lo que no es una opción y corrige la segunda
+      // igual a la principal y las 2 h con masa madre. La cantidad se
+      // conserva aunque esté vacía: es lo que el usuario dejó escrito. Al
+      // cambiar de pan, la que corresponde al pan nuevo (bollos en pizza).
+      const elegido = conElegido(grupo, valor);
+      pan = { ...completarPan(elegido), cantidad: elegido.cantidad };
+      guardar(almacen, CLAVE_PAN, pan);
     }
+    redibujar();
+  }
+
+  const acciones: SeccionDeAcciones = {
+    'elegir-opcion': (boton) => alElegir(boton.dataset['grupo'] ?? '', boton.dataset['valor'] ?? '')
   };
 
   function alEscribir(campo: HTMLInputElement): void {
@@ -109,5 +112,5 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
     pintarResultado();
   }
 
-  return { pan: () => pan, sal: () => sal, acciones, alEscribir };
+  return { pan: () => pan, sal: () => sal, acciones, alElegir, alEscribir };
 }
