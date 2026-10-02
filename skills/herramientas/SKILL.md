@@ -16,16 +16,19 @@ cuentas son las de la app: `calcular_pan` y `calcular_sal` del MCP
 - **Lo que vino en el pedido no se repregunta.** «Quiero hacer un pan con
   500 g de 000» ya trae la harina principal y la cantidad.
 - **No asumas ningún otro dato.** Llamá a la herramienta con lo que hay. Si
-  devuelve `faltan`, preguntá todo lo que falta **en un solo mensaje**, en
-  este orden y con las opciones que devolvió:
+  devuelve `faltan`, preguntá **en un solo mensaje** todo lo que devolvió,
+  con sus opciones y en este orden:
   1. pan;
   2. harinas: la principal y si hay una segunda (con su porcentaje);
   3. levadura;
   4. fermentación: ambiente o frío, y cuántas horas;
   5. cantidad: harina total o masa total, en gramos.
 
-  Con las respuestas, volvé a llamar a la herramienta. Si todavía falta algo,
-  preguntá sólo eso.
+  Preguntá sólo lo que devolvió, aunque sepas que falta algo más: un dato que
+  depende de otro que falta —la segunda harina de la principal, las horas de
+  la levadura y el modo— no viene todavía, porque sus opciones cambian según
+  la respuesta. Con las respuestas, volvé a llamar a la herramienta y repetí
+  hasta que calcule. Puede llevar más de una vuelta.
 - **Mostrá el resultado** como una lista, una línea por ingrediente y la
   hidratación, con la harina total y la masa total. Debajo, las advertencias
   tal como vienen.
@@ -39,9 +42,13 @@ pregunta, en un mensaje:
 
 > Para calcularlo me faltan:
 > 1. ¿Qué pan? Pan francés, Pan de molde, Pan de miga, Pizza al molde, Pizza a la piedra, Baguette, Pan de campo, Ciabatta o Focaccia.
-> 2. ¿Le sumás una segunda harina? Ninguna, 0000, 000 para pizza, Semolín, Integral o Centeno (y en qué porcentaje: 10, 20, 30 o 50 %).
+> 2. ¿Le sumás una segunda harina? Ninguna, 0000, 000 para pizza, Semolín, Integral o Centeno.
 > 3. ¿Qué levadura? Fresca, Seca o Masa madre.
-> 4. ¿Fermentación a temperatura ambiente o en frío, y cuántas horas?
+> 4. ¿Fermentación a temperatura ambiente o en frío?
+
+Si contesta «pan de campo, sin segunda harina, masa madre, en frío», la
+vuelta siguiente devuelve las horas que van con masa madre en frío (12, 24,
+48 o 72), y se pregunta sólo eso.
 
 **«¿Cuánta sal para un frasco de pepinos de 1200 g?»**
 

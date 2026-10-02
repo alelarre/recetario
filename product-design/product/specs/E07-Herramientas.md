@@ -229,8 +229,12 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 - [ ] La cantidad es `harina_total` o `masa_total`, **una sola de las dos**.
 - [ ] **No tienen valores por defecto.** Si falta un dato o no es una opción,
   no calculan: devuelven la lista de lo que falta y, para cada dato, las
-  opciones válidas. Las horas que ofrecen son las del modo y la levadura
-  pedidos: con masa madre, sin 2 h.
+  opciones válidas.
+- [ ] **Un dato cuyas opciones dependen de otro que falta no se pide
+  todavía:** la segunda harina espera a la principal, y las horas a la
+  levadura y al modo (con masa madre, sin 2 h). Se piden en la vuelta
+  siguiente, así ninguna opción ofrecida queda inválida después. Completar
+  un pan puede llevar más de una vuelta de preguntas.
 - [ ] Con todo, devuelven las mismas líneas que la pantalla, la harina total,
   la masa total —en el pan— y las advertencias.
 - [ ] La descripción de cada herramienta lista las opciones tomadas de las

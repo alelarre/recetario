@@ -179,6 +179,10 @@ const MODOS = [{ clave: 'ambiente', nombre: 'Ambiente' }, { clave: 'frio', nombr
 /**
  * Los datos de un pedido del MCP, o lo que falta con sus opciones. No hay
  * valores por defecto: lo que no vino se le pregunta al usuario.
+ *
+ * Un dato cuyas opciones dependen de otro que falta no se pide todavía: la
+ * segunda harina espera a la principal, y las horas a la levadura y al modo.
+ * Se pide en la vuelta siguiente, con opciones que van seguro.
  */
 export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   const faltan: Faltante[] = [];
@@ -192,7 +196,7 @@ export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   const posiblesSegundas = HARINAS.filter(x => x.clave !== harina?.clave);
   const ninguna = p.segunda_harina !== undefined && porNombre([{ clave: 'ninguna', nombre: 'Ninguna' }], p.segunda_harina);
   const segunda = ninguna ? null : porNombre(posiblesSegundas, p.segunda_harina);
-  if (!ninguna && !segunda) falta('segunda_harina', ['Ninguna', ...posiblesSegundas.map(x => x.nombre)]);
+  if (harina && !ninguna && !segunda) falta('segunda_harina', ['Ninguna', ...posiblesSegundas.map(x => x.nombre)]);
   const porcentaje = PORCENTAJES_SEGUNDA.find(x => x === p.porcentaje_segunda);
   if (segunda && !porcentaje) falta('porcentaje_segunda', PORCENTAJES_SEGUNDA.map(String));
 
@@ -200,9 +204,9 @@ export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   if (!levadura) falta('levadura', LEVADURAS.map(x => x.nombre));
   const modo = porNombre(MODOS, p.fermentacion);
   if (!modo) falta('fermentacion', MODOS.map(x => x.nombre));
-  const posibles = fermentacionesPara(levadura?.clave ?? 'fresca').filter(f => !modo || f.modo === modo.clave);
-  const fermentacion = modo ? posibles.find(f => f.horas === p.horas) : undefined;
-  if (!fermentacion) falta('horas', posibles.map(f => String(f.horas)));
+  const posibles = levadura && modo ? fermentacionesPara(levadura.clave).filter(f => f.modo === modo.clave) : [];
+  const fermentacion = posibles.find(f => f.horas === p.horas);
+  if (levadura && modo && !fermentacion) falta('horas', posibles.map(f => String(f.horas)));
 
   const harinaTotal = positivo(p.harina_total);
   const masaTotal = positivo(p.masa_total);
@@ -210,7 +214,7 @@ export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   const deMasa = masaTotal !== null && p.harina_total === undefined;
   if (!deHarina && !deMasa) falta('cantidad', ['harina_total', 'masa_total']);
 
-  if (faltan.length || !pan || !harina || !levadura || !fermentacion) return { faltan };
+  if (faltan.length || !pan || !harina || (!ninguna && !segunda) || !levadura || !fermentacion) return { faltan };
   return {
     datos: {
       pan: pan.clave, harina: harina.clave, segunda: segunda?.clave ?? null,
