@@ -246,8 +246,8 @@ sabe de dónde salió, no pongas `fuente`.
 - No inventes lo que la fuente no dice: ni la dificultad, ni el tiempo sumando
   pasos, ni una temperatura.
 - No «mejores» pasos ni cantidades: una receta que funcionaba deja de funcionar.
-- No conviertas cantidades a otro sistema: `1 cup` queda como está, o se
-  convierte y se aclara en una nota.
+- No conviertas cantidades ni temperaturas si no te lo piden: `1 lb` y
+  `350 °F` quedan como están (ver «Pasar a métricas»).
 - Los datos nutricionales no se copian.
 
 ## Corregir una receta
@@ -266,6 +266,20 @@ Preservá lo que no tocás: las claves del frontmatter y las secciones que la
 app no conoce (`## Maridaje`), y el resto del cuerpo. Si la corrección completó
 lo que faltaba, sacá `borrador` de `tags_especiales` y la nota que decía qué
 faltaba. El nombre de archivo no cambia aunque cambie el título.
+
+## Pasar a métricas
+
+Sólo cuando se pide, al cargar una receta o sobre una que ya está; sobre una
+que ya está, con los pasos de «Corregir una receta».
+
+- Las temperaturas pasan a Celsius, redondeadas a 5: `350 °F` es `175 °C`.
+- Las medidas imperiales pasan a métricas: `oz` a g (× 28,35), `lb` a g
+  (× 454), `fl oz` a ml (× 29,6), pinta a ml (473; la británica, 568),
+  cuarto a ml (946), galón a l (3,785) y pulgadas a cm (× 2,54). Los gramos y
+  los mililitros, enteros.
+- Las tazas, las cucharadas y las cucharaditas no se tocan.
+- Los nombres de los ingredientes no se traducen.
+- No se agrega nada a `## Notas`.
 
 ## Ordenar el recetario
 
