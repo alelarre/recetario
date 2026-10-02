@@ -279,6 +279,7 @@ queda vacío.
   (C07.2.4)—.
 - [ ] Después de elegir el tipo se cambia cualquier dato, y el tipo sigue
   mostrando de cuál se partió.
+- [ ] El tipo de fermento hace lo mismo con su porcentaje de sal (C07.3.1).
 - [ ] **La cuenta no mira el tipo:** usa sólo los datos del formulario.
 
 ### F07.3 — La calculadora de sal
@@ -287,29 +288,36 @@ queda vacío.
 
 - [ ] La pantalla se titula **Fermentados**, como su entrada en la lista.
 
-- [ ] Tres datos, con las filas de la calculadora de pan (F07.2). En una
-  ficha, el **fermento**, un desplegable con los de la tabla de fermentos, y
-  la **temperatura ambiente**, un conmutador con cuatro franjas —menos de
-  13 °C, 13 a 18, 18 a 24 y más de 24—. En otra, el **peso total** en
-  gramos.
+- [ ] Cuatro datos, con las filas de la calculadora de pan (F07.2). En una
+  ficha: el **tipo**, un desplegable con los de la tabla de fermentos; la
+  **sal (%)**, un número que se escribe; y la **temperatura ambiente**, un
+  conmutador con cuatro franjas —menos de 13 °C, 13 a 18, 18 a 24 y más de
+  24—. En otra, el **peso total** en gramos.
+- [ ] **El tipo de fermento es un punto de partida, como el de pan
+  (C07.2.9):** elegirlo carga el porcentaje de sal que sugiere —chucrut,
+  2 %; kimchi, 2,5 %; ajíes y verduras en salmuera, 3 %; pepinos, 3,5 %—, y
+  pisa el que estuviera escrito, también si es el mismo tipo. Después se
+  cambia. El peso y la temperatura no son del tipo: se conservan.
 - [ ] El peso total es **todo lo que hay en el frasco**: la verdura y, si va
   en salmuera, el agua. Lo dice una línea debajo del campo.
-- [ ] La sal es el porcentaje del fermento sobre el peso total. Es la misma
-  cuenta para la sal seca y para la salmuera.
+- [ ] La sal es el porcentaje escrito sobre el peso total. Es la misma
+  cuenta para la sal seca y para la salmuera. **La cuenta no mira el tipo.**
 - [ ] El resultado al pie, en la misma ficha **Resultado** destacada del pan
   (C07.2.5): arriba, en grande, los gramos de sal y el porcentaje usado, con
   el mismo redondeo; debajo, el **tiempo**: cuántos días hasta empezar a
   probar, como un rango —*6 a 16 días*—.
-- [ ] El tiempo sale de una tabla fermento × franja, con la fuente de cada
+- [ ] El tiempo es del tipo, no del porcentaje de sal: sale de una tabla
+  fermento × franja, con la fuente de cada
   fila al lado del valor. **Una franja sin fuente dice *sin dato a esta
   temperatura*:** no se extrapola.
 - [ ] Debajo del resultado, la advertencia: es cuándo empezar a probar, no
   cuándo termina.
 - [ ] Escribir el peso pinta sólo el resultado, sin redibujar.
 
-**Edge case:** peso vacío, en cero, negativo o que no es un número → la sal y
-el porcentaje muestran un guion; el tiempo no depende del peso y se muestra
-igual.
+**Edge case:** peso o porcentaje de sal vacío, en cero, negativo o que no es
+un número → la sal y el porcentaje muestran un guion; el tiempo no depende de
+ellos y se muestra igual. Un porcentaje vacío queda así hasta que se escribe
+o se elige un tipo.
 
 ### F07.4 — Las últimas elecciones
 
@@ -396,12 +404,16 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   la fermentación ni las horas de la tabla. Con poolish, biga o pâte
   fermentée devuelve las líneas del prefermento aparte, y el resultado es el
   de la masa final.
+- [ ] **En `calcular_sal`, el tipo (`fermento`) precarga igual:** con él, el
+  `porcentaje_sal` que no viene es el que sugiere el tipo, y el que viene lo
+  pisa. Sin tipo, calcula si viene el porcentaje; si no, lo primero que falta
+  es el tipo. El `peso_total` se pide siempre.
 - [ ] En `calcular_sal`, la `temperatura` es **opcional**: sin ella no hay
   tiempo ni su advertencia. Una que no es una de las franjas falta, con las
-  franjas como opciones.
+  franjas como opciones. El tiempo es del tipo: sin tipo no hay.
 - [ ] **Lo que no sale de un tipo no se completa.** Si falta un dato o no es
   una opción, no calculan: devuelven la lista de lo que falta y, para cada
-  dato, las opciones válidas. `calcular_sal` no tiene tipos: pide sus datos.
+  dato, las opciones válidas.
 - [ ] **Un dato cuyas opciones dependen de otro que falta no se pide
   todavía:** la segunda harina espera a la principal; las horas, al
   prefermento y al modo (con masa madre, sin 2 h); y la cantidad al tipo,
@@ -427,6 +439,8 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 - [ ] **En un pan, parte del tipo:** pregunta el tipo, la cantidad y la
   temperatura del ambiente, y pasa además sólo lo que el usuario dijo. No
   pregunta lo que el tipo ya trae.
+- [ ] **En un fermentado, igual:** pregunta el tipo y el peso, y pasa el
+  porcentaje de sal sólo si el usuario lo dijo.
 - [ ] **No asume ningún dato por su cuenta:** lo que la herramienta devuelve
   como faltante lo pregunta en un solo mensaje, con sus opciones.
 - [ ] Muestra los datos usados junto al resultado, para que el usuario vea

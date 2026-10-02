@@ -51,11 +51,14 @@ it('la cantidad sólo si es un número positivo, y de harina o de masa', () => {
 });
 
 it('sal: lo mismo', () => {
-  expect(SAL_POR_DEFECTO).toEqual({ fermento: 'chucrut', pesoTotal: 1000, temperatura: '18-24' });
+  expect(SAL_POR_DEFECTO).toEqual({ fermento: 'chucrut', sal: 2, pesoTotal: 1000, temperatura: '18-24' });
+  // El porcentaje de sal que falta o no vale es el que sugiere el tipo guardado.
   expect(completarSal({ fermento: 'kimchi', pesoTotal: -3, temperatura: 'heladera' }))
-    .toEqual({ fermento: 'kimchi', pesoTotal: 1000, temperatura: '18-24' });
-  expect(completarSal({ fermento: 'kimchi', pesoTotal: 500, temperatura: 'mas-24' }))
-    .toEqual({ fermento: 'kimchi', pesoTotal: 500, temperatura: 'mas-24' });
+    .toEqual({ fermento: 'kimchi', sal: 2.5, pesoTotal: 1000, temperatura: '18-24' });
+  expect(completarSal({ fermento: 'kimchi', sal: -1, pesoTotal: 500, temperatura: 'mas-24' }))
+    .toEqual({ fermento: 'kimchi', sal: 2.5, pesoTotal: 500, temperatura: 'mas-24' });
+  expect(completarSal({ fermento: 'kimchi', sal: 3.2, pesoTotal: 500, temperatura: 'mas-24' }).sal).toBe(3.2);
+  expect(completarSal({ fermento: 'no-existe', sal: 4 })).toMatchObject({ fermento: 'chucrut', sal: 4 });
   expect(completarSal(undefined)).toEqual(SAL_POR_DEFECTO);
 });
 

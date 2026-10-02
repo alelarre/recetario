@@ -205,7 +205,9 @@ export function renderSal(d: DatosSal): string {
   return encabezado({ titulo: 'Fermentados', volver: true }) +
     '<div class="cuerpo"><div class="calculadora">' +
       fichaDeDatos(
-        desplegable('Fermento', 'fermento', enTexto(FERMENTOS), d.fermento),
+        // El tipo carga el porcentaje de sal que sugiere; después se cambia.
+        desplegable('Tipo', 'fermento', enTexto(FERMENTOS), d.fermento ?? ''),
+        numeroEnFila('Sal (%)', 'sal', d.sal),
         temperatura('temperatura', d.temperatura ?? '')) +
       `<div class="ficha">${campoGramos('Peso total (g)', 'peso', d.pesoTotal)}` +
         '<p class="aviso-mudo">Todo lo que va en el frasco: la verdura y, si va en salmuera, el agua.</p></div>' +

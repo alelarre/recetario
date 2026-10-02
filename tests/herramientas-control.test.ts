@@ -244,3 +244,31 @@ describe('el control de Herramientas — el tipo y la hidratación', () => {
     expect(control.pan().hidratacion).toBe(75);
   });
 });
+
+describe('el control de Herramientas — el tipo de fermento y la sal', () => {
+  it('elegir un tipo carga el porcentaje que sugiere, y pisa el escrito; quedan el peso y la temperatura', () => {
+    const { control, elegir } = armar();
+    control.alEscribir(campo('sal', '4,5'));
+    control.alEscribir(campo('peso', '800'));
+    elegir('temperatura', 'mas-24');
+    expect(control.sal()).toEqual({ fermento: 'chucrut', sal: 4.5, pesoTotal: 800, temperatura: 'mas-24' });
+    elegir('fermento', 'pepinos');
+    expect(control.sal()).toEqual({ fermento: 'pepinos', sal: 3.5, pesoTotal: 800, temperatura: 'mas-24' });
+    elegir('fermento', 'no-existe');
+    expect(control.sal().fermento).toBe('pepinos');
+  });
+
+  it('escribir el porcentaje lo guarda y pinta sólo el resultado; vacío, queda vacío hasta elegir un tipo', () => {
+    const almacen = localStorageFalso();
+    const { control, elegir, redibujar, pintarResultado } = armar(almacen);
+    control.alEscribir(campo('sal', '2,5'));
+    expect(JSON.parse(almacen.getItem(CLAVE_SAL)!).sal).toBe(2.5);
+    expect(pintarResultado).toHaveBeenCalledTimes(1);
+    expect(redibujar).not.toHaveBeenCalled();
+    control.alEscribir(campo('sal', ''));
+    elegir('temperatura', '13-18');
+    expect(control.sal().sal).toBeNaN();
+    elegir('fermento', 'kimchi');
+    expect(control.sal().sal).toBe(2.5);
+  });
+});

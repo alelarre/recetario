@@ -28,13 +28,16 @@ it('con datos faltantes, qué falta y sus opciones', () => {
 it('sal: con datos y sin', () => {
   expect(calcularSalParaElAgente({ fermento: 'pepinos', peso_total: 1200 }))
     .toEqual({ resultado: [{ nombre: 'Sal', valor: '42 g' }, { nombre: 'Porcentaje', valor: '3,5 %' }], advertencias: [] });
-  const kimchi: DatosSal = { fermento: 'kimchi', pesoTotal: 1000, temperatura: 'mas-24' };
+  const kimchi: DatosSal = { fermento: 'kimchi', sal: 2.5, pesoTotal: 1000, temperatura: 'mas-24' };
   expect(calcularSalParaElAgente({ fermento: 'kimchi', peso_total: 1000, temperatura: 'más de 24 °C' }))
     .toEqual({
       resultado: [...cifrasSal(kimchi), ...lineasSal(kimchi)],
       advertencias: [expect.stringContaining('empezar a probar')]
     });
   expect(calcularSalParaElAgente({ peso_total: 1200 })).toHaveProperty('faltan');
+  // Sin tipo y con el porcentaje: la sal, sin tiempo aunque venga la temperatura.
+  expect(calcularSalParaElAgente({ porcentaje_sal: 4, peso_total: 500, temperatura: 'más de 24 °C' }))
+    .toEqual({ resultado: [{ nombre: 'Sal', valor: '20 g' }, { nombre: 'Porcentaje', valor: '4 %' }], advertencias: [] });
 });
 
 it('una pizza: la masa total sale de los bollos', () => {

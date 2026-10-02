@@ -145,17 +145,31 @@ it('pan: la 00, la 000 y la 0000 son tres harinas distintas, por su nombre exact
   }
 });
 
-it('sal: el fermento por su nombre', () => {
-  expect(leerPedidoSal({ fermento: 'pepinos', peso_total: 1200 })).toEqual({ datos: { fermento: 'pepinos', pesoTotal: 1200, temperatura: null } });
-  expect(leerPedidoSal({ fermento: 'AJIES', peso_total: 1200 })).toEqual({ datos: { fermento: 'ajies', pesoTotal: 1200, temperatura: null } });
-  expect(leerPedidoSal({ peso_total: 1200 })).toEqual({ faltan: [{ dato: 'fermento',
-    opciones: ['Chucrut', 'Kimchi', 'Ajíes', 'Verduras en salmuera', 'Pepinos'] }] });
+it('sal: con el tipo, por su nombre, el porcentaje es el que sugiere; el que viene lo pisa', () => {
+  expect(leerPedidoSal({ fermento: 'pepinos', peso_total: 1200 }))
+    .toEqual({ datos: { fermento: 'pepinos', sal: 3.5, pesoTotal: 1200, temperatura: null } });
+  expect(leerPedidoSal({ fermento: 'AJIES', peso_total: 1200 }))
+    .toEqual({ datos: { fermento: 'ajies', sal: 3, pesoTotal: 1200, temperatura: null } });
+  expect(leerPedidoSal({ fermento: 'chucrut', porcentaje_sal: 2.5, peso_total: 1000 }))
+    .toEqual({ datos: { fermento: 'chucrut', sal: 2.5, pesoTotal: 1000, temperatura: null } });
+  expect(leerPedidoSal({ fermento: 'chucrut', porcentaje_sal: 0, peso_total: 1000 }))
+    .toEqual({ faltan: [{ dato: 'porcentaje_sal', opciones: [] }] });
+  // El peso no sale del tipo.
   expect(leerPedidoSal({ fermento: 'chucrut' })).toEqual({ faltan: [{ dato: 'peso_total', opciones: [] }] });
+});
+
+it('sal: sin tipo calcula si viene el porcentaje; si no, el tipo es lo primero que falta', () => {
+  expect(leerPedidoSal({ porcentaje_sal: 4, peso_total: 1200 }))
+    .toEqual({ datos: { fermento: null, sal: 4, pesoTotal: 1200, temperatura: null } });
+  const opciones = ['Chucrut', 'Kimchi', 'Ajíes', 'Verduras en salmuera', 'Pepinos'];
+  expect(leerPedidoSal({ peso_total: 1200 })).toEqual({ faltan: [{ dato: 'fermento', opciones }, { dato: 'porcentaje_sal', opciones: [] }] });
+  // Un tipo que no existe se corrige antes que nada.
+  expect(leerPedidoSal({ fermento: 'repollo' })).toEqual({ faltan: [{ dato: 'fermento', opciones }] });
 });
 
 it('sal: la temperatura es opcional, por su nombre, y una que no es franja falta', () => {
   expect(leerPedidoSal({ fermento: 'kimchi', peso_total: 1000, temperatura: '18 a 24 °C' }))
-    .toEqual({ datos: { fermento: 'kimchi', pesoTotal: 1000, temperatura: '18-24' } });
+    .toEqual({ datos: { fermento: 'kimchi', sal: 2.5, pesoTotal: 1000, temperatura: '18-24' } });
   expect(leerPedidoSal({ fermento: 'kimchi', peso_total: 1000, temperatura: '20 grados' })).toEqual({ faltan: [{ dato: 'temperatura',
     opciones: ['Menos de 13 °C', '13 a 18 °C', '18 a 24 °C', 'Más de 24 °C'] }] });
 });

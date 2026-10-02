@@ -180,11 +180,14 @@ export function crearServidor(recetario: Recetario): McpServer {
   }, (pedido) => responder(() => json(calcularPanParaElAgente(pedido))));
 
   servidor.registerTool('calcular_sal', {
-    description: 'La sal de un fermentado: el porcentaje del fermento sobre el peso total del frasco (la verdura y, si va en salmuera, el agua). ' +
-      'Con la temperatura del ambiente, también cuántos días hasta empezar a probarlo. ' +
-      'Si falta un dato, devuelve qué falta y sus opciones. No completes datos por tu cuenta.',
+    description: 'La sal de un fermentado: un porcentaje sobre el peso total del frasco (la verdura y, si va en salmuera, el agua). ' +
+      'El tipo (`fermento`) es un punto de partida: con él, el porcentaje de sal que no pases es el que sugiere el tipo. ' +
+      'Sin tipo, hace falta el porcentaje. El peso se pregunta siempre. ' +
+      'Con el tipo y la temperatura del ambiente, también cuántos días hasta empezar a probarlo. ' +
+      'Si falta un dato, devuelve qué falta y sus opciones.',
     inputSchema: {
-      fermento: z.string().optional().describe(`Uno de: ${opciones(FERMENTOS)}.`),
+      fermento: z.string().optional().describe(`El tipo, uno de: ${opciones(FERMENTOS)}.`),
+      porcentaje_sal: z.number().optional().describe('En %, sobre el peso total. Sin él, el que sugiere el tipo.'),
       peso_total: z.number().optional().describe('En gramos.'),
       temperatura: z.string().optional().describe(`Opcional: sin ella no hay tiempo. Una de: ${opciones(TEMPERATURAS)}.`)
     }

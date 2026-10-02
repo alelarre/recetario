@@ -1390,9 +1390,10 @@ triángulo del navegador; el texto, en `--txt-base` `--fg-2`, porque es prosa
 con la etiqueta arriba: un número se tipea, no se elige. Una aclaración del
 campo va debajo, en `--txt-chico` `--fg-2`.
 
-**Un número que es un dato más** —la hidratación— va en su fila, como los
-que se eligen: el nombre a la izquierda y, contra la derecha, el campo
-(§6.9) en corto, de 88 px, con el valor en peso 600 y alineado a la derecha.
+**Un número que es un dato más** —la hidratación, el porcentaje de sal— va
+en su fila, como los que se eligen: el nombre a la izquierda y, contra la
+derecha, el campo (§6.9) en corto, de 88 px, con el valor en peso 600 y
+alineado a la derecha.
 
 **El par de cantidades** (`.par-cantidades`): dos campos numéricos (§6.9) en
 una misma fila, del mismo ancho, con lo que los une en el medio, en `--fg-2`

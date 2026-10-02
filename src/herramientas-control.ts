@@ -11,7 +11,7 @@ import {
   PANES, completarPan, fermentacionesPara, alElegirTipo, hidratacionAlCambiarHarinas, segundaAlMezclar,
   type DatosPan
 } from './calculadoras/pan.js';
-import { completarSal, type DatosSal } from './calculadoras/fermentados.js';
+import { FERMENTOS, completarSal, alElegirFermento, type DatosSal } from './calculadoras/fermentados.js';
 import type { SeccionDeAcciones } from './acciones.js';
 
 export const CLAVE_PAN = 'recetario.herramientas.pan';
@@ -83,7 +83,12 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
   /** Lo elegido en un conmutador, un interruptor o un desplegable: guarda y redibuja. */
   function alElegir(grupo: string, valor: string): void {
     if (grupo === 'fermento' || grupo === 'temperatura') {
-      sal = completarSal({ ...sal, [grupo]: valor });
+      // El tipo carga de nuevo el porcentaje de sal que sugiere; el que quedó
+      // escrito, aunque esté vacío, se conserva al cambiar la temperatura.
+      const tipo = FERMENTOS.find(f => f.clave === valor);
+      sal = grupo === 'fermento'
+        ? (tipo ? alElegirFermento(sal, tipo.clave) : sal)
+        : { ...completarSal({ ...sal, temperatura: valor }), sal: sal.sal, pesoTotal: sal.pesoTotal };
       guardar(almacen, CLAVE_SAL, sal);
     } else {
       // `completarPan` descarta lo que no es una opción y corrige la segunda
@@ -110,6 +115,9 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
     const gramos = gramosEscritos(campo.value);
     if (de === 'peso') {
       sal = { ...sal, pesoTotal: gramos };
+      guardar(almacen, CLAVE_SAL, sal);
+    } else if (de === 'sal') {
+      sal = { ...sal, sal: gramos };
       guardar(almacen, CLAVE_SAL, sal);
     } else if (de === 'harina' || de === 'masa') {
       pan = { ...pan, cantidad: { de, gramos } };

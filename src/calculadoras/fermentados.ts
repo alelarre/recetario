@@ -5,6 +5,10 @@
  * el peso total, que es todo lo que hay en el frasco —la verdura y, si va en
  * salmuera, el agua—. Con el tiempo, la sal se reparte entre las dos.
  *
+ * **El tipo de fermento es un punto de partida, no una regla:** al elegirlo
+ * carga su porcentaje de sal, que después se puede cambiar. La cuenta usa el
+ * porcentaje escrito, no el del tipo.
+ *
  * El tiempo es cuándo empezar a probar según la temperatura del ambiente, en
  * días, por franja. Una franja sin fuente queda sin dato: no se extrapola.
  * Las fuentes de cada valor están en
@@ -19,7 +23,7 @@ export type ClaveFermento = 'chucrut' | 'kimchi' | 'ajies' | 'salmuera' | 'pepin
 /** Días hasta empezar a probar: desde y hasta. `null` es una franja sin dato. */
 type Dias = readonly [number, number] | null;
 
-/** Cada fermento con su % de sal sobre el peso total y sus días por franja. */
+/** Cada fermento con el % de sal que sugiere, sobre el peso total, y sus días por franja. */
 export const FERMENTOS: readonly {
   clave: ClaveFermento; nombre: string; sal: number; dias: Readonly<Record<ClaveTemperatura, Dias>>;
 }[] = [
@@ -45,19 +49,29 @@ export const ADVERTENCIAS_SAL: readonly string[] = [
 ];
 
 export interface DatosSal {
-  fermento: ClaveFermento;
+  /** El tipo del que se partió. `null`: un pedido del agente con su porcentaje y sin tipo. */
+  fermento: ClaveFermento | null;
+  /** En %, sobre el peso total. */
+  sal: number;
   /** En gramos: la verdura, y el agua si va en salmuera. */
   pesoTotal: number;
   /** Sin temperatura no hay tiempo: el agente puede pedir sólo la sal. */
   temperatura: ClaveTemperatura | null;
 }
 
-/** Los gramos de sal y el porcentaje usado, o `null` si el peso no es un número positivo. */
+const esPositivo = (n: number): boolean => Number.isFinite(n) && n > 0;
+
+/** Los datos al elegir un tipo: el porcentaje de sal vuelve al que sugiere. Quedan el peso y la temperatura. */
+export function alElegirFermento(antes: Pick<DatosSal, 'pesoTotal' | 'temperatura'>, fermento: ClaveFermento): DatosSal {
+  const tipo = FERMENTOS.find(f => f.clave === fermento);
+  if (!tipo) throw new Error(`Opción desconocida: ${fermento}`);
+  return { fermento, sal: tipo.sal, pesoTotal: antes.pesoTotal, temperatura: antes.temperatura };
+}
+
+/** Los gramos de sal y el porcentaje usado, o `null` si el peso o el porcentaje no son un número positivo. */
 export function calcularSal(d: DatosSal): { sal: number; porcentaje: number } | null {
-  if (!Number.isFinite(d.pesoTotal) || d.pesoTotal <= 0) return null;
-  const fermento = FERMENTOS.find(f => f.clave === d.fermento);
-  if (!fermento) throw new Error(`Opción desconocida: ${d.fermento}`);
-  return { sal: d.pesoTotal * fermento.sal / 100, porcentaje: fermento.sal };
+  if (!esPositivo(d.pesoTotal) || !esPositivo(d.sal)) return null;
+  return { sal: d.pesoTotal * d.sal / 100, porcentaje: d.sal };
 }
 
 /** El tiempo hasta empezar a probar, como se muestra. */
@@ -67,43 +81,65 @@ function textoTiempo(fermento: ClaveFermento, temperatura: ClaveTemperatura): st
 }
 
 export interface PedidoSal {
+  /** El tipo. Con él, el porcentaje de sal que no venga es el que sugiere. */
   fermento?: string | undefined;
+  /** En %, sobre el peso total. */
+  porcentaje_sal?: number | undefined;
   peso_total?: number | undefined;
   temperatura?: string | undefined;
 }
 
 /**
- * Los datos de un pedido del MCP, o lo que falta con sus opciones. Sin valores
- * por defecto. La temperatura es opcional: sin ella no hay tiempo, pero una
- * que no es una de las franjas falta.
+ * Los datos de un pedido del MCP, o lo que falta con sus opciones.
+ *
+ * **Con el tipo, el porcentaje de sal que no viene es el que sugiere el
+ * tipo**, como en la pantalla, y el que viene lo pisa. Sin el tipo hace
+ * falta el porcentaje; si no está, lo primero que falta es el tipo. El peso
+ * nunca sale del tipo.
+ *
+ * La temperatura es opcional: sin ella no hay tiempo, pero una que no es una
+ * de las franjas falta. El tiempo es del tipo: sin tipo no hay.
  */
 export function leerPedidoSal(p: PedidoSal): Pedido<DatosSal> {
-  const faltan: Faltante[] = [];
   const fermento = porNombre(FERMENTOS, p.fermento);
-  if (!fermento) faltan.push({ dato: 'fermento', opciones: FERMENTOS.map(f => f.nombre) });
+  // Un tipo que no existe se corrige antes que nada.
+  if (p.fermento !== undefined && !fermento) return { faltan: [{ dato: 'fermento', opciones: FERMENTOS.map(f => f.nombre) }] };
+
+  const faltan: Faltante[] = [];
+  const sal = p.porcentaje_sal !== undefined ? positivo(p.porcentaje_sal) : fermento?.sal ?? null;
+  if (sal === null) {
+    if (!fermento) faltan.push({ dato: 'fermento', opciones: FERMENTOS.map(f => f.nombre) });
+    if (p.porcentaje_sal !== undefined || !fermento) faltan.push({ dato: 'porcentaje_sal', opciones: [] });
+  }
   const peso = positivo(p.peso_total);
   if (peso === null) faltan.push({ dato: 'peso_total', opciones: [] });
   const temperatura = p.temperatura === undefined ? null : porNombre(TEMPERATURAS, p.temperatura);
   if (p.temperatura !== undefined && !temperatura) faltan.push({ dato: 'temperatura', opciones: TEMPERATURAS.map(t => t.nombre) });
-  return fermento && peso !== null && !faltan.length
-    ? { datos: { fermento: fermento.clave, pesoTotal: peso, temperatura: temperatura?.clave ?? null } }
+  return sal !== null && peso !== null && !faltan.length
+    ? { datos: { fermento: fermento?.clave ?? null, sal, pesoTotal: peso, temperatura: temperatura?.clave ?? null } }
     : { faltan };
 }
 
-/** Lo que muestra la calculadora la primera vez. */
-export const SAL_POR_DEFECTO: DatosSal = { fermento: 'chucrut', pesoTotal: 1000, temperatura: '18-24' };
+/** El tipo con que arranca la calculadora. */
+const FERMENTO_POR_DEFECTO: ClaveFermento = 'chucrut';
 
-/** Las últimas elecciones guardadas, dato por dato: lo que no vale vuelve al valor por defecto. */
+/** Lo que muestra la calculadora la primera vez: el tipo de por defecto, con 1 kg y entre 18 y 24 °C. */
+export const SAL_POR_DEFECTO: DatosSal = alElegirFermento({ pesoTotal: 1000, temperatura: '18-24' }, FERMENTO_POR_DEFECTO);
+
+/**
+ * Las últimas elecciones guardadas, dato por dato: lo que no vale vuelve al
+ * valor por defecto —el porcentaje de sal, al que sugiere el tipo guardado—.
+ */
 export function completarSal(guardado: unknown): DatosSal {
   const g: Record<string, unknown> = typeof guardado === 'object' && guardado !== null && !Array.isArray(guardado)
     ? guardado as Record<string, unknown> : {};
-  const fermento = FERMENTOS.find(f => f.clave === g['fermento'])?.clave ?? SAL_POR_DEFECTO.fermento;
-  const peso = g['pesoTotal'];
-  const temperatura = TEMPERATURAS.find(t => t.clave === g['temperatura'])?.clave ?? SAL_POR_DEFECTO.temperatura;
+  const numero = (x: unknown): number | null => (typeof x === 'number' && esPositivo(x) ? x : null);
+  const tipo = FERMENTOS.find(f => f.clave === g['fermento']) ?? FERMENTOS.find(f => f.clave === FERMENTO_POR_DEFECTO);
   return {
-    fermento,
-    pesoTotal: typeof peso === 'number' && Number.isFinite(peso) && peso > 0 ? peso : SAL_POR_DEFECTO.pesoTotal,
-    temperatura
+    fermento: tipo?.clave ?? FERMENTO_POR_DEFECTO,
+    sal: numero(g['sal']) ?? tipo?.sal ?? SAL_POR_DEFECTO.sal,
+    pesoTotal: numero(g['pesoTotal']) ?? SAL_POR_DEFECTO.pesoTotal,
+    temperatura: TEMPERATURAS.find(t => t.clave === g['temperatura'])?.clave ?? SAL_POR_DEFECTO.temperatura
   };
 }
 
@@ -118,9 +154,9 @@ export function cifrasSal(d: DatosSal): Linea[] {
   ];
 }
 
-/** El resto del resultado: con temperatura, el tiempo. Lo usan la pantalla y el MCP. */
+/** El resto del resultado: con temperatura y tipo, el tiempo. Lo usan la pantalla y el MCP. */
 export const lineasSal = (d: DatosSal): Linea[] =>
-  (d.temperatura ? [{ nombre: 'Tiempo', valor: textoTiempo(d.fermento, d.temperatura) }] : []);
+  (d.temperatura && d.fermento ? [{ nombre: 'Tiempo', valor: textoTiempo(d.fermento, d.temperatura) }] : []);
 
 /** Las advertencias del resultado: con tiempo, que es cuándo empezar a probar. */
-export const advertenciasSal = (d: DatosSal): readonly string[] => (d.temperatura ? ADVERTENCIAS_SAL : []);
+export const advertenciasSal = (d: DatosSal): readonly string[] => (lineasSal(d).length ? ADVERTENCIAS_SAL : []);

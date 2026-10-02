@@ -43,6 +43,9 @@ cuentas son las de la app: `calcular_pan` y `calcular_sal` del MCP
   «con masa madre», va en `prefermento` y no hace falta la levadura.
 - **Una pizza se pide en bollos.** Los gramos por bollo son los del tipo,
   salvo que el usuario diga otros.
+- **Un fermentado también parte de su tipo.** El tipo (`fermento`) trae el
+  porcentaje de sal que sugiere; pasá `porcentaje_sal` sólo si el usuario
+  dijo uno. Preguntá el tipo y el peso. Sin tipo, hace falta el porcentaje.
 
 ## Ejemplos
 
@@ -73,8 +76,12 @@ temperatura ambiente, así que la herramienta devuelve que faltan las horas
 
 **«¿Cuánta sal para un frasco de pepinos de 1200 g?»**
 
-Están los dos datos: se llama a `calcular_sal` y se muestra el resultado, sin
-preguntar nada.
+Están el tipo y el peso: se llama a `calcular_sal` y se muestra el resultado,
+sin preguntar nada. La sal sale al 3,5 %, que es lo que sugiere el tipo.
+
+**«Chucrut con 2 kg de repollo, pero al 2,5 % de sal»**
+
+Se pasan el tipo, el peso y `porcentaje_sal: 2.5`, que pisa el 2 % del tipo.
 
 **La temperatura de la sal es opcional.** Va sólo si el usuario la dijo o
 pregunta cuánto tarda; sin ella no hay tiempo. Si pregunta cuánto tarda y no
