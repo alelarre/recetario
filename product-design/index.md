@@ -93,6 +93,7 @@ Lo pendiente está en [`BACKLOG.md`](../BACKLOG.md), en la raíz del repo.
 | Documento | Qué contiene |
 |---|---|
 | [Análisis competitivo](research/competitive-analysis.md) | El landscape de soluciones para guardar y consultar recetas, con vacíos e insights. |
+| [Herramientas: inventario de ideas](research/herramientas/ideas.md) | Las herramientas genéricas que ofrecen los sitios y las apps de cocina, numeradas, para elegir qué sumar a *Herramientas*. El detalle por frente está en la misma carpeta. |
 
 ## Producto
 
