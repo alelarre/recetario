@@ -59,6 +59,8 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
         return primera ? { ...pan, fermentacion: primera.clave } : pan;
       }
       case 'pan': return { ...pan, pan: valor as ClavePan, cantidad: cantidadAlCambiar(pan, valor as ClavePan) };
+      case 'prefermento': return { ...pan, prefermento: (valor || null) as DatosPan['prefermento'] };
+      case 'horas-prefermento': return { ...pan, horasPrefermento: Number(valor) };
       case 'harina': case 'levadura': case 'fermentacion':
         return { ...pan, [grupo]: valor };
       default: return pan;

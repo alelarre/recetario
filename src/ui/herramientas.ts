@@ -11,8 +11,8 @@ import { escapar } from './markdown.js';
 import { encabezado, conLateral, izquierdaDelEncabezado } from './componentes.js';
 import type { MenuDePantalla } from './componentes.js';
 import {
-  PANES, HARINAS, LEVADURAS, PORCENTAJES_SEGUNDA, calcularPan, fermentacionesPara, FERMENTACIONES,
-  lineasPan, advertenciasPan, type DatosPan
+  PANES, HARINAS, LEVADURAS, PORCENTAJES_SEGUNDA, PREFERMENTOS, calcularPan, fermentacionesPara, FERMENTACIONES,
+  conFermentacion, lineasPan, lineasPrefermento, advertenciasPan, type DatosPan
 } from '../calculadoras/pan.js';
 import { FERMENTOS, TEMPERATURAS, lineasSal, advertenciasSal, type DatosSal } from '../calculadoras/fermentados.js';
 
@@ -49,11 +49,18 @@ export function renderHerramientas({ menu }: { menu?: MenuDePantalla }): string 
     '</div></div>');
 }
 
-/** El bloque del resultado del pan: lo que va, la hidratación y las advertencias. */
+/**
+ * El bloque del resultado del pan: lo que va, la hidratación y las
+ * advertencias. Con prefermento son dos fichas, el prefermento y la masa
+ * final, en un mismo bloque para pintarlas juntas.
+ */
 export function resultadoPan(d: DatosPan): string {
-  return '<div class="ficha" data-resultado><h2>Resultado</h2>' +
-    lineasPan(d).map(l => linea(l.nombre, l.valor)).join('') +
-    advertencias(advertenciasPan(d)) +
+  const prefermento = lineasPrefermento(d);
+  const ficha = (titulo: string, lineas: { nombre: string; valor: string }[], pie = ''): string =>
+    `<div class="ficha"><h2>${escapar(titulo)}</h2>${lineas.map(l => linea(l.nombre, l.valor)).join('')}${pie}</div>`;
+  return '<div class="resultado" data-resultado>' +
+    (prefermento.length ? ficha('Prefermento', prefermento) : '') +
+    ficha(prefermento.length ? 'Masa final' : 'Resultado', lineasPan(d), advertencias(advertenciasPan(d))) +
   '</div>';
 }
 
@@ -62,6 +69,7 @@ export function renderPan(d: DatosPan): string {
   const modo = FERMENTACIONES.find(f => f.clave === d.fermentacion)?.modo ?? 'ambiente';
   const horas = fermentacionesPara(d.levadura).filter(f => f.modo === modo);
   const segundas = HARINAS.filter(h => h.clave !== d.harina);
+  const prefermento = d.levadura === 'masa-madre' ? undefined : PREFERMENTOS.find(p => p.clave === d.prefermento);
   const c = d.cantidad;
   // Una pizza va en bollos. En un pan, el campo que manda muestra lo escrito; el otro, lo que resulta.
   const cantidad = c.de === 'bollos'
@@ -80,8 +88,19 @@ export function renderPan(d: DatosPan): string {
             PORCENTAJES_SEGUNDA.map(p => ({ valor: String(p), texto: `${p} %` })), String(d.porcentajeSegunda))
         : '') +
       fila('Levadura', 'levadura', LEVADURAS.map(l => ({ valor: l.clave, texto: l.nombre })), d.levadura) +
-      fila('Fermentación', 'modo', [{ valor: 'ambiente', texto: 'Ambiente' }, { valor: 'frio', texto: 'En frío' }], modo) +
-      fila('Horas', 'fermentacion', horas.map(f => ({ valor: f.clave, texto: `${f.horas} h` })), d.fermentacion) +
+      // El prefermento no va con masa madre.
+      (d.levadura === 'masa-madre' ? '' :
+        fila('Prefermento', 'prefermento',
+          [{ valor: '', texto: 'Ninguno' }, ...PREFERMENTOS.map(p => ({ valor: p.clave, texto: p.nombre }))], d.prefermento ?? '') +
+        (prefermento && prefermento.horas.length > 1
+          ? fila(`Horas del ${prefermento.nombre.toLowerCase()}`, 'horas-prefermento',
+              prefermento.horas.map(h => ({ valor: String(h.horas), texto: `${h.horas} h` })), String(d.horasPrefermento))
+          : '')) +
+      (conFermentacion(d)
+        ? fila(prefermento ? 'Fermentación de la masa final' : 'Fermentación', 'modo',
+            [{ valor: 'ambiente', texto: 'Ambiente' }, { valor: 'frio', texto: 'En frío' }], modo) +
+          fila('Horas', 'fermentacion', horas.map(f => ({ valor: f.clave, texto: `${f.horas} h` })), d.fermentacion)
+        : '') +
       cantidad +
     '</div>' +
     resultadoPan(d) +

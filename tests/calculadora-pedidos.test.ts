@@ -10,14 +10,14 @@ const completo = {
 it('con todo, sin mirar mayúsculas ni tildes', () => {
   expect(leerPedidoPan({ ...completo, pan: 'PAN DE CAMPO', fermentacion: 'frio', horas: 24 }))
     .toEqual({ datos: { pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 10, levadura: 'fresca',
-      fermentacion: 'frio-24', cantidad: { de: 'harina', gramos: 500 } } });
+      fermentacion: 'frio-24', cantidad: { de: 'harina', gramos: 500 }, prefermento: null, horasPrefermento: 0 } });
 });
 
 it('con segunda harina y la masa total', () => {
   const { harina_total: _, ...sinHarina } = completo;
   expect(leerPedidoPan({ ...sinHarina, segunda_harina: 'Centeno', porcentaje_segunda: 30, masa_total: 900 }))
     .toEqual({ datos: { pan: 'campo', harina: '000', segunda: 'centeno', porcentajeSegunda: 30, levadura: 'fresca',
-      fermentacion: 'ambiente-8', cantidad: { de: 'masa', gramos: 900 } } });
+      fermentacion: 'ambiente-8', cantidad: { de: 'masa', gramos: 900 }, prefermento: null, horasPrefermento: 0 } });
 });
 
 it('sólo con la harina y la cantidad: dice qué falta y las opciones; las horas, todavía no', () => {
@@ -93,4 +93,28 @@ it('pan: una pizza se pide en bollos y gramos por bollo, con el sugerido como op
 it('pan: sin el pan no se pide la cantidad, porque depende de si es pizza', () => {
   const sinPan = leerPedidoPan({ ...completo, pan: undefined, harina_total: undefined });
   expect('faltan' in sinPan && sinPan.faltan.map(f => f.dato)).toEqual(['pan']);
+});
+
+it('pan: el prefermento es opcional; con poolish faltan sus horas, y no pide la fermentación de la masa final', () => {
+  const { fermentacion: _f, horas: _h, ...sinFermentacion } = completo;
+  expect(leerPedidoPan({ ...sinFermentacion, prefermento: 'poolish' }))
+    .toEqual({ faltan: [{ dato: 'horas_prefermento', opciones: ['8', '12', '18'] }] });
+  expect(leerPedidoPan({ ...sinFermentacion, prefermento: 'Poolish', horas_prefermento: 12 }))
+    .toEqual({ datos: expect.objectContaining({ prefermento: 'poolish', horasPrefermento: 12 }) });
+  expect(leerPedidoPan({ ...sinFermentacion, prefermento: 'biga' }))
+    .toEqual({ datos: expect.objectContaining({ prefermento: 'biga', horasPrefermento: 18 }) });
+  expect(leerPedidoPan({ ...completo, prefermento: 'ninguno' })).toEqual({ datos: expect.objectContaining({ prefermento: null }) });
+});
+
+it('pan: la pâte fermentée sí pide la fermentación de la masa final', () => {
+  const { fermentacion: _f, horas: _h, ...sinFermentacion } = completo;
+  const r = leerPedidoPan({ ...sinFermentacion, prefermento: 'pâte fermentée' });
+  expect('faltan' in r && r.faltan.map(f => f.dato)).toEqual(['fermentacion']);
+});
+
+it('pan: un prefermento que no es de la tabla, o con masa madre, falta con sus opciones', () => {
+  expect(leerPedidoPan({ ...completo, prefermento: 'levain' }))
+    .toEqual({ faltan: [{ dato: 'prefermento', opciones: ['Ninguno', 'Poolish', 'Biga', 'Pâte fermentée'] }] });
+  expect(leerPedidoPan({ ...completo, prefermento: 'biga', levadura: 'masa madre' }))
+    .toEqual({ faltan: [{ dato: 'levadura', opciones: ['Fresca', 'Seca'] }] });
 });

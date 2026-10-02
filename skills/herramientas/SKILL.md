@@ -31,8 +31,12 @@ cuentas son las de la app: `calcular_pan` y `calcular_sal` del MCP
   la respuesta. Con las respuestas, volvé a llamar a la herramienta y repetí
   hasta que calcule. Puede llevar más de una vuelta.
 - **Mostrá el resultado** como una lista, una línea por ingrediente y la
-  hidratación, con la harina total y la masa total. Debajo, las advertencias
-  tal como vienen.
+  hidratación, con la harina total y la masa total. Con prefermento, dos
+  listas: *Prefermento* y *Masa final*. Debajo, las advertencias tal como
+  vienen.
+- **El prefermento (poolish, biga o pâte fermentée) es opcional:** pasalo
+  sólo si el usuario lo nombra; si no, el pan va sin. No lo ofrezcas como
+  pregunta.
 
 ## Ejemplos
 

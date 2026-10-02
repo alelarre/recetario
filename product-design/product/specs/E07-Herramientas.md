@@ -71,9 +71,12 @@ al pie.
   4. **Porcentaje de la segunda:** sólo si hay segunda, con las opciones de
      la tabla.
   5. **Levadura:** fresca, seca o masa madre.
-  6. **Fermentación:** *Ambiente* o *En frío*.
-  7. **Horas:** las del modo elegido.
-  8. **Cantidad:** dos campos en gramos, *Harina total* y *Masa total*; en
+  6. **Prefermento:** *Ninguno*, *Poolish*, *Biga* o *Pâte fermentée*; no
+     está con masa madre (C07.2.8). Con poolish, sus horas.
+  7. **Fermentación:** *Ambiente* o *En frío*; con poolish o biga no está,
+     y con pâte fermentée es la de la masa final.
+  8. **Horas:** las del modo elegido.
+  9. **Cantidad:** dos campos en gramos, *Harina total* y *Masa total*; en
      una pizza, *Bollos* y *Gramos por bollo* (C07.2.4).
 - [ ] Tocar una opción la aprieta y redibuja la pantalla.
 - [ ] Cambiar de modo elige las primeras horas de ese modo.
@@ -130,7 +133,8 @@ queda vacío.
 #### C07.2.5 — El resultado *(J6)*
 
 - [ ] Una ficha **Resultado** al pie, con las filas de la ficha de
-  ingredientes: nombre a la izquierda, valor a la derecha.
+  ingredientes: nombre a la izquierda, valor a la derecha. Con prefermento
+  son dos: **Prefermento** y **Masa final** (C07.2.8).
 - [ ] En este orden: una línea por harina, el agua, la sal, la levadura
   —*Levadura fresca*, *Levadura seca* o *Masa madre*— y la hidratación final.
 - [ ] **Con masa madre, las harinas y el agua dicen «a agregar»**: son lo que
@@ -158,6 +162,34 @@ queda vacío.
   - *«En frío, se cuentan 1 o 2 horas a temperatura ambiente antes y después
     de la heladera.»*
 - [ ] Y la del tope, sólo si se aplicó (C07.2.6).
+
+#### C07.2.8 — El prefermento *(J6)*
+
+- [ ] Una tabla de prefermentos con levadura comercial. Cada uno dice qué
+  parte de la harina total va al prefermento, su hidratación, su sal y la
+  levadura fresca según sus horas, las tres sobre su harina, con la fuente
+  de cada fila al lado del valor:
+
+  | Prefermento | Harina | Hidratación | Sal | Levadura fresca | Horas |
+  |---|---|---|---|---|---|
+  | Poolish | 30 % | 100 % | — | 0,75 / 0,2 / 0,1 % | 8 / 12 / 18 h, a unos 23 °C |
+  | Biga | 40 % | 44 % | — | 1 % | 16 a 20 h, a unos 18 °C |
+  | Pâte fermentée | 27 % | 68 % | 1,4 % | 0,3 % | 14 h, a temperatura ambiente |
+
+- [ ] **El prefermento sale del pan, no se suma:** la harina total, la
+  hidratación, la sal y la masa total son las mismas; se reparten entre el
+  prefermento y la masa final. Su harina sale de la principal: la segunda va
+  entera a la masa final.
+- [ ] **En poolish y biga, toda la levadura va en el prefermento:** la masa
+  final no lleva y la pantalla no ofrece fermentación ni horas de la tabla.
+- [ ] **La pâte fermentée da sabor, no levado:** la masa final lleva la
+  levadura de la tabla de fermentación (C07.2.3), con sus filas.
+- [ ] La levadura seca es la fresca dividida por la misma constante.
+- [ ] **No va con masa madre:** con masa madre la fila no está, y elegir masa
+  madre deja el prefermento en *Ninguno*.
+- [ ] Las advertencias suman la del prefermento —a qué temperatura y cuánto
+  fermenta, y si la masa final lleva levadura—; las de los tiempos de la
+  tabla van sólo si la masa final lleva levadura.
 
 ### F07.3 — La calculadora de sal
 
@@ -250,6 +282,10 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 - [ ] La cantidad es `harina_total` o `masa_total`, **una sola de las dos**;
   en una pizza, `bollos` y `peso_bollo`, con el peso sugerido del estilo como
   opción si falta.
+- [ ] En `calcular_pan`, el `prefermento` es **opcional**: sin él, el pan va
+  sin prefermento. Con poolish pide `horas_prefermento`; con poolish o biga
+  no pide la fermentación ni las horas de la tabla. Devuelve las líneas del
+  prefermento aparte, y el resultado es el de la masa final.
 - [ ] En `calcular_sal`, la `temperatura` es **opcional**: sin ella no hay
   tiempo ni su advertencia. Una que no es una de las franjas falta, con las
   franjas como opciones.

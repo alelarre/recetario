@@ -509,6 +509,8 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 .herramienta + .herramienta { margin-top: var(--e-2); }
 .herramienta .ctx { font-size: var(--txt-chico); color: var(--fg-2); }
 .fila-opc { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+/* El resultado del pan puede ser dos fichas: el bloque no agrega caja, las apila el `gap` de `.cuerpo`. */
+.resultado { display: contents; }
 .advertencias { margin: var(--e-4) 0 0; padding-left: var(--e-4); font-size: var(--txt-chico); color: var(--fg-2); }
 .advertencias li + li { margin-top: var(--e-1); }
 .calcular { display: flex; flex-wrap: wrap; gap: var(--e-2); margin-top: var(--e-4); }

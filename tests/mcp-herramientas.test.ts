@@ -38,3 +38,12 @@ it('una pizza: la masa total sale de los bollos', () => {
   const r = calcularPanParaElAgente({ ...pedido, pan: 'pizza new york', harina_total: undefined, bollos: 2, peso_bollo: 380 });
   expect(r).toHaveProperty('masa_total', '760 g');
 });
+
+it('con prefermento, sus líneas aparte y el resultado de la masa final', () => {
+  const { fermentacion: _f, horas: _h, ...sinFermentacion } = pedido;
+  const r = calcularPanParaElAgente({ ...sinFermentacion, prefermento: 'biga' });
+  expect(r).toHaveProperty('prefermento', [
+    { nombre: 'Harina 000', valor: '400 g' }, { nombre: 'Agua', valor: '176 g' }, { nombre: 'Levadura fresca', valor: '4,0 g' }
+  ]);
+  expect(r).toHaveProperty('masa_total', '1744 g');
+});

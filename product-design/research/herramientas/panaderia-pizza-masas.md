@@ -138,7 +138,13 @@ Encontré 51 herramientas distintas, agrupadas en 10 subtemas.
 **22. Levadura del prefermento según las horas**
 - Qué hace: horas de anticipación → % de levadura instantánea sobre la harina del poolish.
 - Dónde: https://www.weekendbakery.com/posts/more-artisan-bread-baking-tips-poolish-biga/
-- Notas: hasta 8 h, 0,23–0,33 %; hasta 12 h, 0,1–0,2 %; hasta 16 h, 0,03–0,08 %. El valor bajo es para verano. Fresca = × 3. Biga: 0,3 % de instantánea o 1 % de fresca para 16–24 h (resumen de búsqueda).
+- Notas: hasta 8 h, 0,23–0,33 %; hasta 12 h, 0,1–0,2 %; hasta 16 h, 0,03–0,08 %. El valor bajo es para verano. Fresca = × 3.
+- **Lo que usa la calculadora de pan** ([V] abierta, [B] sólo en resultados):
+  - Poolish y biga: [V] https://biancolievito.it/en/biga-poolish/ — poolish 100 %, 20–40 % de la harina, fresca a 23 °C: 2 h 3 %, 4 h 1,5 %, 8 h 0,75 %, 12 h 0,2 %, 18 h 0,1 %. Biga corta (16–20 h a 18–19 °C) 30–50 % de la harina, larga (36–48 h) 20–25 %; 44 %, fresca 1 % (0,7 % en verano), sin sal; la larga suma 0,2 % de fresca en la masa final.
+  - Biga, otras: [V] https://www.quellidibonci.com/biga-giorilli-guida-completa-a-idratazione-45-18-c-per-18-ore-dosi-e-uso-in-pane-e-pizza/ — ≈45 %, fresca ≈1 %, ≈18 h a ≈18 °C, bloque de ≈30 min sin levadura nueva. [V] https://www.artebiancaconrita.com/post/la-biga-caratteristiche-procedura-e-tempi-per-biga-classica-o-biga-fredda — 44–45 %, fresca 1 % o seca 0,35–0,4 %; biga fría en heladera 24–48 h. [V] https://bakerpedia.com/processes/biga/ — 50–60 %.
+  - Pâte fermentée: [V] https://www.kingarthurbaking.com/recipes/five-grain-bread-with-pate-fermentee-recipe — ≈27 % de la harina, ≈68 %, sal ≈1,4 %, instantánea ≈0,1 %, 14 h; la masa final suma levadura. [B] Hamelman: 65 %, sal 1,8–2 %.
+  - [V] https://www.kingarthurbaking.com/pro/reference/preferment — poolish 100 %, biga sin sal desde 0,1 % de levadura, 12–16 h.
+  - La biga de Weekend Bakery (0,3 % de instantánea) no está en su página. Ninguna fuente da el poolish a 24 h, y ninguna pone toda la levadura en el poolish.
 
 ## 5. Temperatura de la masa
 

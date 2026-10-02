@@ -123,3 +123,18 @@ describe('el control de Herramientas — la pizza', () => {
     expect(control.pan().cantidad).toEqual({ de: 'bollos', bollos: 3, gramos: 250 });
   });
 });
+
+describe('el control de Herramientas — el prefermento', () => {
+  it('elegir poolish y sus horas; elegir masa madre lo saca', () => {
+    const { control, elegir } = armar();
+    elegir('prefermento', 'poolish');
+    expect(control.pan()).toMatchObject({ prefermento: 'poolish', horasPrefermento: 8 });
+    elegir('horas-prefermento', '18');
+    expect(control.pan().horasPrefermento).toBe(18);
+    elegir('levadura', 'masa-madre');
+    expect(control.pan().prefermento).toBeNull();
+    elegir('levadura', 'fresca');
+    elegir('prefermento', '');
+    expect(control.pan().prefermento).toBeNull();
+  });
+});

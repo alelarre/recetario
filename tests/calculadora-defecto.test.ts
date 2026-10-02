@@ -5,7 +5,8 @@ import { completarSal, SAL_POR_DEFECTO } from '../src/calculadoras/fermentados.j
 it('el defecto del pan: campo, 000, sin segunda, fresca, 8 h, 1 kg de harina', () => {
   expect(PAN_POR_DEFECTO).toEqual({
     pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 30,
-    levadura: 'fresca', fermentacion: 'ambiente-8', cantidad: { de: 'harina', gramos: 1000 }
+    levadura: 'fresca', fermentacion: 'ambiente-8', cantidad: { de: 'harina', gramos: 1000 },
+    prefermento: null, horasPrefermento: 0
   });
 });
 
@@ -52,4 +53,11 @@ it('pan: una pizza va en bollos y un pan en harina o masa, aunque lo guardado di
     .toEqual({ de: 'masa', gramos: 1000 });
   expect(completarPan({ pan: 'napolitana', cantidad: { de: 'bollos', bollos: -1, gramos: 250 } }).cantidad)
     .toEqual({ de: 'bollos', bollos: 4, gramos: 250 });
+});
+
+it('pan: el prefermento con masa madre se descarta, y unas horas que no son las suyas toman las primeras', () => {
+  expect(completarPan({ levadura: 'masa-madre', prefermento: 'biga' }).prefermento).toBeNull();
+  expect(completarPan({ prefermento: 'poolish', horasPrefermento: 12 })).toMatchObject({ prefermento: 'poolish', horasPrefermento: 12 });
+  expect(completarPan({ prefermento: 'poolish', horasPrefermento: 5 })).toMatchObject({ prefermento: 'poolish', horasPrefermento: 8 });
+  expect(completarPan({ prefermento: 'sourdough' })).toMatchObject({ prefermento: null, horasPrefermento: 0 });
 });

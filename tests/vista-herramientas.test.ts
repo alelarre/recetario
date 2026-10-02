@@ -114,3 +114,31 @@ describe('la calculadora de pan — la pizza', () => {
     expect(html).toContain('Pizza napolitana');
   });
 });
+
+describe('la calculadora de pan — el prefermento', () => {
+  it('sin masa madre, la fila de prefermento; con poolish, sus horas y sin la fermentación de la tabla', () => {
+    expect(renderPan(PAN_POR_DEFECTO)).toContain('data-grupo="prefermento" data-valor="" aria-pressed="true"');
+    const poolish = renderPan({ ...PAN_POR_DEFECTO, prefermento: 'poolish', horasPrefermento: 12 });
+    expect(poolish).toContain('data-grupo="horas-prefermento" data-valor="12" aria-pressed="true"');
+    expect(poolish).not.toContain('data-grupo="modo"');
+    expect(poolish).toContain('<h2>Prefermento</h2>');
+    expect(poolish).toContain('<h2>Masa final</h2>');
+    expect(poolish).not.toContain('<h2>Resultado</h2>');
+  });
+
+  it('con masa madre no se ofrece', () => {
+    const h = renderPan({ ...PAN_POR_DEFECTO, levadura: 'masa-madre', fermentacion: 'ambiente-4' });
+    expect(h).not.toContain('data-grupo="prefermento"');
+  });
+
+  it('con pâte fermentée, sin fila de horas propias y con la fermentación de la masa final', () => {
+    const h = renderPan({ ...PAN_POR_DEFECTO, prefermento: 'pate', horasPrefermento: 14 });
+    expect(h).not.toContain('data-grupo="horas-prefermento"');
+    expect(h).toContain('Fermentación de la masa final');
+  });
+
+  it('el resultado es un solo bloque, con una o dos fichas', () => {
+    expect(resultadoPan(PAN_POR_DEFECTO).match(/data-resultado/g)).toHaveLength(1);
+    expect(resultadoPan({ ...PAN_POR_DEFECTO, prefermento: 'biga', horasPrefermento: 18 }).match(/class="ficha"/g)).toHaveLength(2);
+  });
+});
