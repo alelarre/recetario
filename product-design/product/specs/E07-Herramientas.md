@@ -42,7 +42,7 @@ aparece.
   lleva la hamburguesa en vez del volver, y su entrada queda marcada.
 - [ ] La pantalla es una lista con dos entradas, cada una con una línea que
   dice qué calcula: **Pan** —*Harinas, agua, sal y levadura*— y
-  **Fermentados** —*La sal de un frasco y cuándo probarlo*—.
+  **Fermentados** —*Porcentaje de sal y tiempos*—.
 
 #### C07.1.2 — Las rutas *(J6)*
 

@@ -118,7 +118,7 @@ export function renderHerramientas({ menu }: { menu?: MenuDePantalla }): string 
     encabezado({ titulo: 'Herramientas', ...izquierdaDelEncabezado(menu) }) +
     '<div class="cuerpo"><div class="ficha">' +
       entrada('#/herramientas/pan', 'Pan', 'Harinas, agua, sal y levadura') +
-      entrada('#/herramientas/fermentados', 'Fermentados', 'La sal de un frasco y cuándo probarlo') +
+      entrada('#/herramientas/fermentados', 'Fermentados', 'Porcentaje de sal y tiempos') +
     '</div></div>');
 }
 
