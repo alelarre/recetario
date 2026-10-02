@@ -8,7 +8,7 @@
  *
  * Mockup 03.
  */
-import { encabezado, tile, carruselTags, vacio, conLateral, izquierdaDelEncabezado } from './componentes.js';
+import { encabezado, tile, filasTags, vacio, conLateral, izquierdaDelEncabezado } from './componentes.js';
 import type { MenuDePantalla } from './componentes.js';
 import { ICO } from './iconos.js';
 
@@ -48,9 +48,9 @@ export function renderRecetario(
         '<div class="buscar">' + ICO.buscar +
           '<input data-accion="buscar" placeholder="Buscar receta o ingrediente">' +
         '</div>' +
-        // Los veinte más usados: con cientos de recetas la cola larga no aporta,
-        // y para eso está la búsqueda.
-        carruselTags(tags, { tope: 20 }) +
+        // Los veinte comunes más usados: con cientos de recetas la cola larga
+        // no aporta, y para eso está la búsqueda.
+        filasTags(tags, { tope: 20 }) +
         '<div class="grupo-res"><div class="rot">Categorías</div>' +
         `<div class="grilla">${grilla}</div></div>` +
         // Sin ninguna receta las categorías se ven igual: falta decir por dónde entran,

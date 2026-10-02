@@ -34,6 +34,19 @@ describe('la lista por tag', () => {
     expect(html).toContain('class="chip act"');
   });
 
+  it('en la lista de un especial, su chip va fijo en la fila de especiales, arriba de los comunes', () => {
+    const html = renderTag({
+      ...base, tag: 'favorito', tagsActivos: ['favorito'],
+      tags: [{ tag: 'favorito', cantidad: 2 }, { tag: 'probar', cantidad: 1 }, { tag: 'horno', cantidad: 1 }]
+    });
+    const cuerpo = html.slice(html.indexOf('class="cuerpo'));
+    const especiales = cuerpo.slice(cuerpo.indexOf('<div class="chips">'), cuerpo.indexOf('carrusel-marco'));
+    expect(especiales).toContain('<span class="chip act">');
+    expect(especiales).toContain('data-tag="probar"');
+    expect(cuerpo).not.toContain('data-tag="favorito"');
+    expect(cuerpo.indexOf('data-tag="horno"')).toBeGreaterThan(cuerpo.indexOf('carrusel-marco'));
+  });
+
   it('el chip del tag de la ruta no es tocable: cambiar de tag es volver', () => {
     const html = renderTag({
       ...base, tags: [{ tag: 'horno', cantidad: 2 }, { tag: 'rápido', cantidad: 1 }]

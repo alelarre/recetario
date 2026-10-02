@@ -47,6 +47,14 @@ describe('Recetario', () => {
     expect(html.indexOf('carrusel-marco')).toBeLessThan(html.indexOf('Categorías'));
   });
 
+  it('los especiales van en su fila, arriba del carrusel de los comunes y debajo de la búsqueda', () => {
+    const html = dibujar({ tags: [{ tag: 'horno', cantidad: 3 }, { tag: 'favorito', cantidad: 1 }] });
+    expect(html.indexOf('data-accion="buscar"')).toBeLessThan(html.indexOf('<div class="chips">'));
+    expect(html.indexOf('<div class="chips">')).toBeLessThan(html.indexOf('carrusel-marco'));
+    expect(html.indexOf('>favorito<')).toBeLessThan(html.indexOf('carrusel-marco'));
+    expect(html.indexOf('>horno<')).toBeGreaterThan(html.indexOf('carrusel-marco'));
+  });
+
   it('sin tags no hay carrusel', () => {
     expect(dibujar({ tags: [] })).not.toContain('carrusel-marco');
   });

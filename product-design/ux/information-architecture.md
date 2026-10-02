@@ -407,10 +407,10 @@ se reconoce abre el Recetario.
 
 | Pantalla | Ruta | Propósito | Contexto | Jobs |
 |---|---|---|---|---|
-| **Recetario** | `#/` | Punto de entrada. Búsqueda arriba, el carrusel de tags, y las categorías abajo, en orden alfabético. Lo que no tiene categoría no tiene tile: es borrador, y se llega por *Borradores*. | Recuperar | J1, J5 |
+| **Recetario** | `#/` | Punto de entrada. Búsqueda arriba, las filas de tags —los especiales y el carrusel de los comunes—, y las categorías abajo, en orden alfabético. Lo que no tiene categoría no tiene tile: es borrador, y se llega por *Borradores*. | Recuperar | J1, J5 |
 | **Resultados** | `#/buscar?q=` | Lo que devuelve la búsqueda, agrupado por título, ingrediente y tag. Se ordena A–Z o por duración dentro de cada grupo. | Recuperar | J1, J4 |
-| **Categoría** | `#/c/<nombre>` | Las recetas de una carpeta, con el carrusel de tags, la fila de duraciones y el conmutador de orden. | Recuperar | J5 |
-| **Lista por tag** | `#/t/<tag>` | Las recetas del recetario entero con ese tag. Se llega tocando un chip del carrusel del Recetario. Mismos filtros que la categoría. | Recuperar | J5 |
+| **Categoría** | `#/c/<nombre>` | Las recetas de una carpeta, con las filas de tags, la fila de duraciones y el conmutador de orden. | Recuperar | J5 |
+| **Lista por tag** | `#/t/<tag>` | Las recetas del recetario entero con ese tag. Se llega tocando un chip de las filas de tags del Recetario. Mismos filtros que la categoría. | Recuperar | J5 |
 | **Receta** | `#/r/<id>` | La receta entera, en una columna de fichas: la cabecera arriba, cada foto donde el texto la nombra y, en un carrusel en la primera ficha, las que no están en ningún otro lado —tocar una abre el visor—. En el encabezado, la estrella de favorito, Compartir y el link al `.md` en Drive; al pie, *Cocinar* —si hay ingredientes o pasos— y *Editar*. | Recuperar | J6 |
 | **Modo cocina** | `#/r/<id>/cocinar` | Letra grande, conmutador Ingredientes / Pasos, el paso actual realzado, y la pantalla encendida. | Cocinar | J6 |
 | **Editor** | `#/r/<id>/editar` | El único formulario de la app. Corregir un error, anotar una variación, poner y sacar los tags especiales, agregar fotos y ponerlas en el texto, cambiar la categoría, *Pegar*, *Convertir con Agente* mientras es borrador, borrar la receta. Con `?recibida=1` abre con la receta `.md` compartida aplicada como *Pegar*. | Cocinar | J3, J7 |
@@ -489,7 +489,7 @@ acción asociada, así que no interrumpe (principio 4).
 | Una receta que sé cómo se llama | 2 | Recetario → escribir → tocar el resultado |
 | Recetas con un ingrediente | 2 | Recetario → escribir el ingrediente → resultados |
 | Pasear una categoría | 2 | Recetario → categoría → receta *(3 hasta la receta)* |
-| Las recetas de un tag | 1 | Recetario → chip del carrusel |
+| Las recetas de un tag | 1 | Recetario → chip de las filas de tags |
 | Marcar una favorita | 1 | Receta → estrella |
 | Compartir una receta | 2 | Receta → Compartir → PDF, Link o Texto |
 | Un borrador | 2 | Menú → Borradores → su editor |
@@ -573,7 +573,7 @@ borraría lo escrito. Con cambios sin guardar, tocar un destino hace la pregunta
 de salir sin guardar, y el menú se cierra.
 **También se abre y se cierra deslizando.** Cerrado, el gesto empieza a 24 px del
 borde izquierdo: desde el borde mismo Android lo toma como «atrás». No arranca
-sobre un carrusel —el de tags, la fila de duraciones, el de fotos—, que se
+sobre un carrusel —el de los tags comunes, la fila de duraciones, el de fotos—, que se
 desliza en el mismo sentido. **Abierto, la pantalla de atrás no se desplaza:** el velo la tapa,
 y moverla sería mover justo lo que está tapado.
 **Desde 900 px queda fijo en todas las pantallas** y el contenido se corre: el
@@ -636,7 +636,7 @@ catálogo de `src/categorias/` o una propia, con *Subir foto*: se sube a
 `_fotos/` al guardar la categoría y la carpeta la nombra `drive:<id>`.
 
 En el Recetario van **en orden alfabético** —la posición es lo que se aprende, y
-ordenar por cantidad la movería—, debajo de la búsqueda y del carrusel de tags,
+ordenar por cantidad la movería—, debajo de la búsqueda y de las filas de tags,
 cada una con un badge con cuántas recetas tiene si tiene alguna.
 
 ### 5.2 Los tags quedan libres
@@ -674,15 +674,17 @@ clave, `tags_especiales`, y tienen forma propia:
   en la esquina de su tarjeta. `borrador`, `pan` y `fermentado` no: no tienen
   ícono ni marca, y en la receta abierta no aparecen; un borrador se ve sólo en
   Borradores.
-- **En el carrusel de tags van primero**; después, los demás por cantidad de
-  recetas. **`borrador`, `pan` y `fermentado` no van en ninguna lista de
-  tags**: ni en el carrusel ni en las sugerencias del editor. A los borradores
+- **En las listas tienen su propia fila**, fija y arriba del carrusel de los
+  comunes, que van por cantidad de recetas. **`borrador`, `pan` y `fermentado`
+  no van en ninguna lista de tags**: ni en las filas de tags ni en las
+  sugerencias del editor. A los borradores
   se llega por el menú.
 - **Las favoritas van primero en toda lista de recetas ordenada A–Z**, y
   alfabético dentro de cada bloque. Ordenada por duración, van mezcladas.
 
-**El carrusel de tags** está en el Recetario y en cada categoría. En la categoría
-y en la lista por tag filtra: tocar un chip lo enciende, y varios encendidos
+**Las filas de tags** —la de especiales y el carrusel de los comunes— están en
+el Recetario, en cada categoría y en la lista por tag. En la categoría y en la
+lista por tag filtran: tocar un chip lo enciende, y varios encendidos
 suman condiciones. En el Recetario abre la lista por tag (`#/t/<tag>`), con ese
 chip encendido y fijo. **La fila de duraciones** filtra igual por `tiempo`, y el
 conmutador *A–Z / Duración* cambia el orden; las dos aparecen sólo si alguna

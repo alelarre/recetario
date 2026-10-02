@@ -24,7 +24,7 @@ export interface DefinicionEspecial {
   icono: NombreIcono | null;
   /** Lo que dice la marca de la tarjeta para quien no la ve. */
   etiquetaMarca: string | null;
-  /** Se ofrece en la fila de chips de las listas. */
+  /** Se ofrece como chip en la fila de especiales de las listas. */
   enChips: boolean;
   /** Se muestra en la receta y como marca en la tarjeta. */
   enReceta: boolean;

@@ -1487,6 +1487,18 @@ describe('main.ts: las rutas', () => {
     expect(global.location.hash).toBe('#/t/horno');
   });
 
+  it('en la categoría, un chip especial filtra igual que uno común y se combina con él', async () => {
+    estado.tags = [{ tag: 'horno', cantidad: 3 }, { tag: 'favorito', cantidad: 1 }];
+    const { abrir, tocar, app } = await montar();
+    await abrir('#/c/Carnes');
+    expect(app.innerHTML.indexOf('>favorito<')).toBeLessThan(app.innerHTML.indexOf('carrusel-marco'));
+    await tocar('', { tag: 'favorito' });
+    await tocar('', { tag: 'horno' });
+    expect(global.location.hash).toBe('#/c/Carnes');
+    expect(app.innerHTML).toContain('<button class="chip act" data-tag="favorito">');
+    expect(app.innerHTML).toContain('<button class="chip act" data-tag="horno">');
+  });
+
   it('en la categoría, tocar un chip sigue filtrando ahí mismo, sin navegar', async () => {
     estado.tags = [{ tag: 'horno', cantidad: 3 }];
     const { abrir, tocar, app } = await montar();

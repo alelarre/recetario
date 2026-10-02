@@ -161,7 +161,7 @@ está buscando una receta o una idea.
 
 **En la práctica, esto significa:**
 
-- **La pantalla principal es la búsqueda arriba y las categorías abajo**, con el carrusel de tags entre las dos. Nada va arriba de la búsqueda.
+- **La pantalla principal es la búsqueda arriba y las categorías abajo**, con las filas de tags entre las dos. Nada va arriba de la búsqueda.
 - Pasear es un modo de uso de primera clase, no un efecto secundario de navegar el árbol.
 - La forma concreta de la clasificación es del usuario: hay 16 categorías predefinidas, y se crean, renombran y borran desde *Ajustes → Recetario*.
 - **Novedad no es un dato.** No hay historial, `ultima_vez` ni `veces`. Se resuelve mostrando, no registrando.

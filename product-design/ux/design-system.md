@@ -503,7 +503,7 @@ lo suyo.
 resultados cada grupo (`.grupo-res`) lleva su rótulo (`.rot`) a `--e-3` de sus
 tarjetas, y los grupos se separan `--e-5` entre sí (`.grupos`): más que las
 filas de cada uno. **Ninguna fila de una lista lleva margen propio** —el
-carrusel de tags, las duraciones, el orden, el rótulo—: las separa el `gap` de
+las filas de tags, las duraciones, el orden, el rótulo—: las separa el `gap` de
 lo que las apila, el cuerpo de la pantalla o el grupo. Un margen se sumaría a
 ese `gap`. Al final, mientras falta un tramo, el spinner (§5.1).
 
@@ -754,7 +754,7 @@ pantallas: un tag se tiene que ver igual donde se pone y donde se lee.
 **Con ícono** —un tag especial lleva el suyo adelante (§3.4), y un chip de
 duración su relojito—: 14 px, trazo de 1.5 px, al 70 % de opacidad.
 
-**Con número** —en el carrusel de tags (§6.21) y en la fila de duraciones
+**Con número** —en las filas de tags (§6.21) y en la fila de duraciones
 (§6.19)—: la cantidad de recetas a la derecha, en `--fg-3` y cifras tabulares.
 
 **Encendido** —un tag o una duración aplicados como filtro— usa `--acento-suave`
@@ -1041,14 +1041,14 @@ con reposo y horno incluidos."*
 
 ### 6.19 Fila de chips de duración
 
-Debajo del carrusel de tags (§6.21), en la
+Debajo de las filas de tags (§6.21), en la
 categoría y en la lista por tag. Mismo chip que §6.10 —`.fila-dur .chip`—,
 con el relojito (14 px, como cualquier ícono de chip) y la cantidad en
 `--fg-3` a la derecha del valor, en el orden de los cinco valores.
 
-**Es un carrusel** (§6.21), igual que el de tags: se desliza de costado, con el
+**Es un carrusel** (§6.21), igual que el de los tags comunes: se desliza de costado, con el
 degradé que dice que sigue, las flechas con mouse o trackpad y la misma
-alineación que la fila de tags de arriba.
+alineación que el carrusel de tags de arriba.
 
 Un chip encendido usa la variante `.act` —fondo `--acento-suave`, borde y
 texto `--acento`—, la misma de un tag encendido. `--fondo-reloj` sigue al fondo
@@ -1079,25 +1079,30 @@ lista tiene duración.
 
 **El marco es un componente reusable:** una pista que se desliza de costado con
 lo que le pongan adentro, `--e-2` entre ítem e ítem, sin barra de scroll, el
-degradé a los lados y las dos flechas. Lo usan el **carrusel de tags**, la
+degradé a los lados y las dos flechas. Lo usan el **carrusel de los tags comunes**, la
 **fila de duraciones** (§6.19) y el **carrusel de fotos de la receta** (§6.26), y
 puede haber más de uno en la misma pantalla: cada marco lleva su propia timeline de scroll, y una flecha mueve la
 pista de su marco. Cada uno define a qué color va su degradé según el fondo que
 tenga atrás.
 
-**El carrusel de tags** es una fila de chips (§6.10). Vive entre la búsqueda y
+**Las filas de tags son dos**, de chips (§6.10), y viven entre la búsqueda y
 las categorías en el Recetario, y arriba de la lista en la categoría y en la
-lista por tag.
+lista por tag. **Arriba, la fila de especiales:** no es un carrusel sino una
+fila fija (`.chips`, `--e-2` entre chip y chip), sin flechas, que pasa a otra
+línea si no entra; lleva favorito, menú diario y probar en ese orden, sólo los
+que tienen alguna receta —`borrador` no va en ninguna lista de tags—, y sin
+ninguno no está. **Abajo, el carrusel de los comunes,** por cantidad de recetas
+y alfabético en el empate; en el Recetario y en la lista por tag entran hasta
+veinte. Como cualquier fila de la lista, ninguna lleva margen propio: las
+separa el `gap` del cuerpo.
 
-**El orden:** los tags especiales primero, en su orden —favorito, menú diario,
-probar; `borrador` no va en ninguna lista de tags— y sólo los que tienen alguna receta; después los comunes,
-por cantidad de recetas y alfabético en el empate. Cada chip lleva su número,
-que cuenta lo mismo que la lista que abre —sin los borradores, salvo en
-Borradores, donde cuenta sólo ellos—, y los especiales su ícono. En el Recetario y en la lista por tag entran hasta
-veinte comunes.
+Cada chip lleva su número, que cuenta lo mismo que la lista que abre —sin los
+borradores, salvo en Borradores, donde cuenta sólo ellos—, y los especiales su
+ícono.
 
-**Qué hace un toque:** en la categoría y en la lista por tag, enciende el chip y
-filtra la lista; en el Recetario, abre la lista de ese tag.
+**Qué hace un toque**, igual en las dos filas: en la categoría y en la lista por
+tag, enciende el chip y filtra la lista; en el Recetario, abre la lista de ese
+tag.
 
 **Un degradé de 40 px al fondo de atrás dice que sigue** —`--bg` en el de tags,
 `--surface` en el de fotos, que vive sobre una ficha—: a la derecha mientras

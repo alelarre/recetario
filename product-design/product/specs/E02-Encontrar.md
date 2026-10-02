@@ -14,8 +14,8 @@ recetas —en su mayoría nunca cocinadas y de nombre no recordado— pesan casi
 igual.
 
 La búsqueda es lo primero de la pantalla principal, y la misma caja busca por
-ingrediente y por tag. Para recorrer sin buscar están las categorías, el
-carrusel de tags y la duración.
+ingrediente y por tag. Para recorrer sin buscar están las categorías, las
+filas de tags y la duración.
 
 ---
 
@@ -23,13 +23,13 @@ carrusel de tags y la duración.
 
 ### F02.1 — La pantalla principal
 
-Búsqueda arriba, el carrusel de tags debajo y las categorías abajo. Es el punto
+Búsqueda arriba, las filas de tags debajo y las categorías abajo. Es el punto
 de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 
 #### C02.1.1 — La jerarquía *(J1, J5)*
 
 - [ ] La caja de búsqueda está arriba, visible y ocupando lugar. **No detrás de un ícono.** Su texto de ayuda es *"Buscar receta o ingrediente"*.
-- [ ] Debajo de la búsqueda, el carrusel de tags (C02.6.4).
+- [ ] Debajo de la búsqueda, las filas de tags (C02.6.4).
 - [ ] Las categorías van debajo, en grilla, bajo el rótulo *Categorías*.
 - [ ] Los destinos —Inicio, Borradores, Plan de la semana, Nueva receta y Ajustes— viven en el menú lateral (C02.1.3). El encabezado lleva sólo el título y, a la izquierda, el botón del menú con el contador de borradores encima (C01.5.1).
 - [ ] **El Recetario no nombra el plan de la semana:** su única entrada es la del menú (C06.5.1).
@@ -55,7 +55,7 @@ de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 - [ ] **Se abre y se cierra deslizando**, y acompaña al dedo mientras se desliza. Al soltar queda abierto si pasó la mitad.
 - [ ] Cerrado, el gesto tiene que empezar **a 24 px o más del borde izquierdo**: desde el borde Android lo toma como «atrás». Abierto, empieza desde cualquier lado.
 - [ ] Sólo cuenta un movimiento claramente horizontal: en diagonal gana el scroll de la página.
-- [ ] **El gesto no arranca sobre un carrusel** —el de tags, la fila de duraciones, el de fotos— cuando tiene para deslizar: ahí el dedo es de la fila.
+- [ ] **El gesto no arranca sobre un carrusel** —el de los tags comunes, la fila de duraciones, el de fotos— cuando tiene para deslizar: ahí el dedo es de la fila.
 
 #### C02.1.4 — Los borradores, sólo en Borradores *(J1, J5)*
 
@@ -149,7 +149,7 @@ la lista tiene que servir para recorrer, no solo para llegar.
 - [ ] Tarjetas miniatura, densas: la lista es para recorrer.
 - [ ] El encabezado muestra el **total** de recetas de la categoría antes de scrollear.
 - [ ] **Las favoritas van primero**, y el orden es alfabético por título dentro de cada bloque. Se puede pasar a ordenar por duración (C02.9.2).
-- [ ] Debajo del encabezado van el carrusel de tags (C02.6.4), la fila de duraciones (C02.9.1) y el conmutador de orden (C02.9.2); después, la lista.
+- [ ] Debajo del encabezado van las filas de tags (C02.6.4), la fila de duraciones (C02.9.1) y el conmutador de orden (C02.9.2); después, la lista.
 
 #### C02.5.2 — Carga por tramos *(J5)*
 
@@ -197,7 +197,7 @@ tag.
 
 #### C02.6.2 — El tag como filtro sobre una lista *(J4, J5)*
 
-- [ ] Un tag se aplica como filtro sobre la lista de una categoría o sobre la lista por tag, **tocando su chip en el carrusel** (C02.6.4).
+- [ ] Un tag se aplica como filtro sobre la lista de una categoría o sobre la lista por tag, **tocando su chip en las filas de tags** (C02.6.4).
 - [ ] El chip tocado queda encendido, y se saca tocándolo de nuevo. No hay una fila aparte con los filtros puestos.
 - [ ] Los filtros se acumulan: dos tags dejan las recetas que llevan los dos.
 - [ ] El total del encabezado pasa a ser el de las recetas filtradas.
@@ -206,27 +206,27 @@ tag.
 
 #### C02.6.3 — En la receta los tags se leen *(J4, J5)*
 
-- [ ] Los tags se muestran en la receta abierta como chips, y no son tocables: al filtro se entra por el carrusel (C02.6.4).
+- [ ] Los tags se muestran en la receta abierta como chips, y no son tocables: al filtro se entra por las filas de tags (C02.6.4).
 - [ ] `borrador` no aparece (C03.1.3).
 
-#### C02.6.4 — El carrusel de tags *(J5)*
+#### C02.6.4 — Las filas de tags *(J5)*
 
-- [ ] Vive en el Recetario —debajo de la búsqueda, arriba de *Categorías*—, en cada categoría y en la lista por tag, debajo del encabezado.
+- [ ] Son dos: **arriba, la de los especiales**; **abajo, el carrusel de los tags comunes.** Viven en el Recetario —debajo de la búsqueda, arriba de *Categorías*—, en cada categoría y en la lista por tag, debajo del encabezado.
 - [ ] Cada chip lleva el tag tal como está escrito, su ícono si es especial, y **cuántas recetas lo llevan**, contando lo mismo que la lista que abre: en el Recetario y en la lista por tag cuenta todo el recetario; en una categoría, sólo esa categoría. Los borradores no cuentan, salvo en Borradores, donde se cuentan sólo ellos.
 - [ ] **`borrador` no aparece** (C05.1.4): ni en el Recetario, ni en una categoría, ni en la lista por tag, tampoco en la de Borradores. A los borradores se llega por el menú (C02.1.3).
-- [ ] **El orden:** los especiales primero y en orden fijo —`favorito`, `menú diario`, `probar`—; después los demás **por cantidad de recetas**, de mayor a menor, con los empates en alfabético.
-- [ ] En una categoría van todos los tags. En el Recetario y en la lista por tag, los especiales y los **veinte** comunes más usados: para la cola larga está la búsqueda.
-- [ ] Un tag especial sin ninguna receta no se dibuja. Sin ningún tag, el carrusel no se dibuja.
-- [ ] Se desliza de costado, sin barra de scroll. Un degradé a la derecha dice que sigue; a la izquierda aparece cuando ya se corrió. Con mouse o trackpad hay una flecha a cada lado, que corre el 80% del ancho visible.
+- [ ] **La fila de especiales** lleva `favorito`, `menú diario` y `probar`, en ese orden fijo. Es fija: no se desliza ni tiene flechas, y si no entran en el ancho pasan a la línea de abajo. Un especial sin ninguna receta no se dibuja; sin ninguno, la fila no está.
+- [ ] **El carrusel de comunes** los ordena **por cantidad de recetas**, de mayor a menor, con los empates en alfabético. En una categoría van todos. En el Recetario y en la lista por tag, los **veinte** más usados —los especiales no cuentan—: para la cola larga está la búsqueda. Sin ningún tag común, el carrusel no está.
+- [ ] Las dos filas filtran igual: un chip especial y uno común se encienden y se apagan de la misma manera, y se combinan entre sí.
+- [ ] El carrusel se desliza de costado, sin barra de scroll. Un degradé a la derecha dice que sigue; a la izquierda aparece cuando ya se corrió. Con mouse o trackpad hay una flecha a cada lado, que corre el 80% del ancho visible.
 - [ ] **En el Recetario, tocar un chip abre la lista por tag** (C02.6.5). En una categoría y en la lista por tag, filtra ahí mismo (C02.6.2).
 - [ ] No hay nube de tags ni sección de tags en la navegación.
 - [ ] El vocabulario de tags es libre: la app no propone ni valida, salvo los especiales, que se reserva (`E05-Cimientos.md` C05.1.4).
 
 #### C02.6.5 — La lista por tag *(J4, J5)*
 
-- [ ] `#/t/<tag>`: las recetas de todo el recetario que llevan ese tag. Se llega desde el carrusel del Recetario.
+- [ ] `#/t/<tag>`: las recetas de todo el recetario que llevan ese tag. Se llega desde las filas de tags del Recetario.
 - [ ] El encabezado lleva el nombre del tag —con su ícono adelante si es especial—, el volver y el total, como el de una categoría.
-- [ ] El mismo carrusel, para sumar otro tag. **El chip del tag de la ruta va encendido y no es tocable:** cambiar de tag es volver y elegir otro. En Borradores no hay chip de la ruta: `borrador` no va en el carrusel (C02.6.4).
+- [ ] Las mismas filas de tags, para sumar otro tag. **El chip del tag de la ruta va encendido y no es tocable,** en la fila que le toca —la de especiales o la de comunes—: cambiar de tag es volver y elegir otro. En Borradores no hay chip de la ruta: `borrador` no va en ninguna fila (C02.6.4).
 - [ ] La lista es la de una categoría: las mismas tarjetas, las favoritas primero, la carga por tramos (C02.5.2), el filtro y el orden por duración (F02.9).
 - [ ] Vacía, dice el hecho —*"Ninguna receta tiene estos tags."*— sin invitar a sacar un filtro: el de la ruta no se puede sacar.
 - [ ] No es la pantalla de resultados: esa agrupa por el motivo de cada coincidencia, y acá hay uno solo.
@@ -267,8 +267,8 @@ el orden suma la búsqueda.
 #### C02.9.1 — El filtro por duración *(J5)*
 
 - [ ] Sólo en la categoría y en la lista por tag. No hay filtro por duración en la búsqueda ni en el Recetario.
-- [ ] Una fila de chips de duración, debajo del carrusel de tags (C02.6.4): cada chip lleva el relojito, el valor y cuántas recetas hay con ese valor, en el orden de los cinco valores.
-- [ ] La fila es un carrusel, como el de tags: se desliza cuando no entra, con el degradé y, con mouse o trackpad, las flechas.
+- [ ] Una fila de chips de duración, debajo de las filas de tags (C02.6.4): cada chip lleva el relojito, el valor y cuántas recetas hay con ese valor, en el orden de los cinco valores.
+- [ ] La fila es un carrusel, como el de los tags comunes: se desliza cuando no entra, con el degradé y, con mouse o trackpad, las flechas.
 - [ ] **Encender varios chips los suma.** Con tags encendidos, una receta tiene que llevar esos tags **y** alguna de las duraciones encendidas.
 - [ ] Las cantidades cuentan sobre la lista ya filtrada por tags.
 - [ ] Un valor sin recetas no se dibuja, salvo que esté encendido.

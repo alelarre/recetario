@@ -249,7 +249,7 @@ recuerda, este job pesa casi tanto como J1.
 
 ```
 Recetario
-  ▸ debajo de la búsqueda, el carrusel de tags y las categorías, alfabéticas
+  ▸ debajo de la búsqueda, las filas de tags y las categorías, alfabéticas
   → toco una
   ▸ Categoría: sus recetas, las favoritas primero
   → toco una que me llamó la atención
@@ -709,8 +709,8 @@ sacan desde el editor (F7).
 
 ```
 Recetario
-  ▸ el carrusel de tags: los especiales primero —borrador no está—, después
-    los demás por cantidad
+  ▸ las filas de tags: arriba los especiales —borrador no está—, abajo el
+    carrusel de los demás, por cantidad
   → toco un chip
   ▸ Lista por tag: las recetas del recetario entero con ese tag
   ▸ su chip está encendido y fijo; los demás se pueden sumar
@@ -718,7 +718,7 @@ Recetario
 
 ```
 Categoría, o Lista por tag
-  → toco un chip del carrusel          ⚑ se enciende; tocarlo de nuevo lo apaga
+  → toco un chip de las filas de tags  ⚑ se enciende; tocarlo de nuevo lo apaga
   ▸ quedan las recetas que tienen todos los tags encendidos
   → toco una duración de la fila: ~15 min · ~30 min · ~60 min · >60 min · >1 día
   ▸ quedan las de esa duración; se pueden encender varias

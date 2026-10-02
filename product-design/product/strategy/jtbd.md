@@ -86,8 +86,8 @@ queda inútil en el caso inverso.
 > sugiere nada.
 
 **Frecuencia:** media. Es el otro filtro declarado: *novedad*.
-**Hoy:** se pasea por las categorías, con su foto, y por el carrusel de tags
-—`probar` y `favorito` entre ellos—, que filtra una categoría o abre la lista de
+**Hoy:** se pasea por las categorías, con su foto, y por las filas de tags
+—`probar` y `favorito` en la suya, arriba de los comunes—, que filtran una categoría o abren la lista de
 un tag.
 **Si no se resuelve:** el recetario se convierte en un archivo de consulta y las
 recetas que no se recuerdan por nombre no existen — lo cual, a ~1.000 recetas

@@ -208,7 +208,7 @@ pescados usa `Anchoítas — 18-20 medianas` y el recetario original usa
 
 #### C05.1.4 — Los tags especiales y los reservados *(J8)*
 
-- [ ] Seis especiales —`favorito`, `menú diario`, `probar`, `borrador`, `pan` y `fermentado`— viven en la clave `tags_especiales`, en ese orden en cualquier fila de tags y antes que los demás.
+- [ ] Seis especiales —`favorito`, `menú diario`, `probar`, `borrador`, `pan` y `fermentado`— viven en la clave `tags_especiales`, y van en ese orden dondequiera que aparezcan. En las listas, los que se ofrecen como chip tienen su propia fila, arriba de la de los comunes (`E02-Encontrar.md` C02.6.4).
 - [ ] `tags_especiales` es una lista cerrada: se reconoce sin mirar mayúsculas ni tildes, se escribe en la forma canónica, y un valor que no es de la lista se lee como ausente.
 - [ ] `tags` no lleva especiales: un reservado en `tags` —un especial, `pan` y `fermentado` incluidos, `favoritas`, `borradores`, `incompleta` y sus formas, `terminado` y sus formas— se ignora al leer.
 - [ ] Ninguno se escribe a mano en el campo de tags: cada especial tiene su botón en el editor (`E04-Corregir.md`).

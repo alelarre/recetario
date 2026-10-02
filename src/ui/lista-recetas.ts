@@ -7,7 +7,7 @@
  * cortada al tramo— y la dibuja en ese orden: acá no se ordena nada.
  */
 import { escapar } from './markdown.js';
-import { tarjeta, carruselTags, filaDuraciones, conmutadorOrden } from './componentes.js';
+import { tarjeta, filasTags, filaDuraciones, conmutadorOrden } from './componentes.js';
 import type { OpcionesCarrusel, OpcionesTarjeta } from './componentes.js';
 import type { ListaAgrupada, ListaPlana } from '../lista-control.js';
 
@@ -21,7 +21,7 @@ export const SPINNER_TRAMO = '<div class="spin" data-tramo></div>';
 
 export interface OpcionesListaPlana {
   lista: ListaPlana;
-  /** El carrusel de tags que filtra, arriba de todo. Sin esto, no hay carrusel. */
+  /** Las filas de tags que filtran, arriba de todo. Sin esto, no están. */
   carrusel?: OpcionesCarrusel & { tags: { tag: string; cantidad: number }[] };
   /** El HTML de lo que se ve sin ninguna receta: cada pantalla dice lo suyo. */
   vacio: string;
@@ -30,9 +30,9 @@ export interface OpcionesListaPlana {
 }
 
 export function listaPlana({ lista, carrusel, vacio, tarjeta: deLaTarjeta = {} }: OpcionesListaPlana): string {
-  // Los tags puestos se ven encendidos en el carrusel mismo, y se sacan
+  // Los tags puestos se ven encendidos en su propia fila, y se sacan
   // tocándolos de nuevo: no hay una fila aparte de filtros activos.
-  const tags = carrusel ? carruselTags(carrusel.tags, carrusel) : '';
+  const tags = carrusel ? filasTags(carrusel.tags, carrusel) : '';
   // La fila de duraciones sólo existe si hay algo que filtrar, y el
   // conmutador si hay algo que ordenar.
   const duraciones = filaDuraciones(lista.duraciones, lista.duracionesActivas);

@@ -53,6 +53,17 @@ describe('lista-recetas — la lista plana', () => {
     expect(html).toContain('class="chip act"');
   });
 
+  it('la fila de especiales va arriba del carrusel de los comunes', () => {
+    const html = listaPlana({
+      lista: plana({ entradas: [e('A')], total: 1 }),
+      carrusel: { tags: [{ tag: 'horno', cantidad: 2 }, { tag: 'probar', cantidad: 1 }], activos: ['probar'] },
+      vacio: ''
+    });
+    expect(html).toContain('<div class="chips">');
+    expect(html.indexOf('<div class="chips">')).toBeLessThan(html.indexOf('carrusel-marco'));
+    expect(html).toContain('<button class="chip act" data-tag="probar">');
+  });
+
   it('las tarjetas llevan su destino o su acción', () => {
     expect(listaPlana({ lista: plana({ entradas: [e('A')], total: 1 }), vacio: '', tarjeta: { destino: 'editor' } }))
       .toContain('href="#/r/A/editar"');

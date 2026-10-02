@@ -229,7 +229,7 @@ una decisión de producto. Una receta puede ser a la vez "pescados" y "para el
 horno": el archivo va en una carpeta, y el segundo criterio es un tag.
 
 Por eso la navegación cruza criterios y no está obligada al árbol de carpetas:
-el carrusel de tags filtra dentro de una categoría, y desde el Recetario abre
+las filas de tags filtran dentro de una categoría, y desde el Recetario abre
 una lista por tag que junta recetas de todas.
 
 ---

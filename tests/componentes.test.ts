@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  tarjeta, placeholder, aviso, encabezado, chipsSueltos, chipTag, iconoDeTag, vacio, tile, carrusel, carruselTags,
+  tarjeta, placeholder, aviso, encabezado, chipsSueltos, chipTag, iconoDeTag, vacio, tile, carrusel, filasTags,
   filaDuraciones, conmutadorOrden, lateral, lateralFijo, conLateral, filaDeFotos, cuadroDeFoto
 } from '../src/ui/componentes.js';
 import { linkDeFoto } from '../src/fotos-receta.js';
@@ -261,50 +261,101 @@ describe('el carrusel: el marco que comparten los tags y las fotos', () => {
   });
 });
 
-describe('el carrusel de tags', () => {
+describe('las filas de tags', () => {
   const tags = [
     { tag: 'horno', cantidad: 11 }, { tag: 'favorito', cantidad: 3 },
     { tag: 'clásica', cantidad: 14 }, { tag: 'menú diario', cantidad: 2 }
   ];
+  /** La fila de especiales y el carrusel de los comunes, por separado. */
+  const partes = (html: string) => {
+    const corte = html.indexOf('class="carrusel-marco"');
+    return corte < 0 ? { especiales: html, comunes: '' } : { especiales: html.slice(0, corte), comunes: html.slice(corte) };
+  };
 
-  it('pone los especiales primero y después los demás por cantidad', () => {
-    const html = carruselTags(tags);
-    const orden = ['favorito', 'menú diario', 'clásica', 'horno'].map(t => html.indexOf(`>${t}<`));
+  it('dos filas: los especiales arriba, en una fila fija, y los comunes abajo, en el carrusel', () => {
+    const { especiales, comunes } = partes(filasTags(tags));
+    expect(especiales).toMatch(/^<div class="chips">/);
+    expect(especiales).toContain('>favorito<');
+    expect(especiales).toContain('>menú diario<');
+    expect(especiales).not.toContain('>horno<');
+    expect(especiales).not.toContain('carrusel');
+    expect(comunes).toContain('>horno<');
+    expect(comunes).toContain('>clásica<');
+    expect(comunes).not.toContain('>favorito<');
+  });
+
+  it('los especiales van en el orden de la tabla, con su ícono y su número', () => {
+    const { especiales } = partes(filasTags([
+      { tag: 'probar', cantidad: 9 }, { tag: 'menú diario', cantidad: 2 }, { tag: 'favorito', cantidad: 1 }
+    ]));
+    const orden = ['favorito', 'menú diario', 'probar'].map(t => especiales.indexOf(`>${t}<`));
+    expect(orden).toEqual([...orden].sort((a, b) => a - b));
+    expect(especiales).toContain(ICO.estrella);
+    expect(especiales).toContain('<span class="cuenta">9</span>');
+  });
+
+  it('un especial sin recetas no aparece; sin ninguno, no hay fila de especiales', () => {
+    const html = filasTags([{ tag: 'horno', cantidad: 2 }, { tag: 'probar', cantidad: 0 }]);
+    expect(html).not.toContain('>probar<');
+    expect(html).not.toContain('class="chips"');
+    expect(html).toMatch(/^<div class="carrusel-marco">/);
+  });
+
+  it('sin comunes no hay carrusel, sólo la fila de especiales', () => {
+    const html = filasTags([{ tag: 'favorito', cantidad: 1 }]);
+    expect(html).toContain('>favorito<');
+    expect(html).not.toContain('carrusel');
+  });
+
+  it('los comunes van por cantidad, y a igual cantidad alfabéticos', () => {
+    const html = filasTags([{ tag: 'b', cantidad: 1 }, { tag: 'c', cantidad: 5 }, { tag: 'a', cantidad: 1 }]);
+    const orden = ['c', 'a', 'b'].map(t => html.indexOf(`>${t}<`));
     expect(orden).toEqual([...orden].sort((a, b) => a - b));
   });
 
   it('cada chip lleva su número', () => {
-    expect(carruselTags(tags)).toContain('<span class="cuenta">14</span>');
+    expect(filasTags(tags)).toContain('<span class="cuenta">14</span>');
   });
 
   it('sin tags no dibuja nada', () => {
-    expect(carruselTags([])).toBe('');
+    expect(filasTags([])).toBe('');
   });
 
-  it('corta en el tope cuando se lo pasan, sin contar los especiales', () => {
+  it('corta los comunes en el tope cuando se lo pasan, sin contar los especiales', () => {
     const muchos = Array.from({ length: 25 }, (_, i) => ({ tag: `t${i}`, cantidad: 25 - i }));
-    const html = carruselTags([...muchos, { tag: 'favorito', cantidad: 1 }], { tope: 20 });
+    const html = filasTags([...muchos, { tag: 'favorito', cantidad: 1 }], { tope: 20 });
     expect(html).toContain('>favorito<');
     expect(html).toContain('>t19<');
     expect(html).not.toContain('>t20<');
   });
 
-  it('lleva las dos flechas y el marco del degradé', () => {
-    const html = carruselTags(tags);
-    expect(html).toContain('class="carrusel-marco"');
-    expect(html).toContain('data-accion="carrusel-izq"');
-    expect(html).toContain('data-accion="carrusel-der"');
+  it('el carrusel de comunes lleva las dos flechas y el marco del degradé', () => {
+    const { comunes } = partes(filasTags(tags));
+    expect(comunes).toContain('class="carrusel-marco"');
+    expect(comunes).toContain('data-accion="carrusel-izq"');
+    expect(comunes).toContain('data-accion="carrusel-der"');
   });
 
-  it('marca los activos', () => {
-    expect(carruselTags(tags, { activos: ['horno'] })).toContain('class="chip act"');
+  it('marca los activos en las dos filas, con el mismo data-tag', () => {
+    const { especiales, comunes } = partes(filasTags(tags, { activos: ['horno', 'favorito'] }));
+    expect(especiales).toContain('<button class="chip act" data-tag="favorito">');
+    expect(especiales).toContain('<button class="chip" data-tag="menú diario">');
+    expect(comunes).toContain('<button class="chip act" data-tag="horno">');
   });
 
   it('el tag fijo —el de la ruta en la lista por tag— no es tocable', () => {
-    const html = carruselTags(tags, { fijo: 'horno' });
+    const html = filasTags(tags, { fijo: 'horno' });
     expect(html).not.toContain('data-tag="horno"');
     // Los demás siguen siendo botones que acumulan como siempre.
     expect(html).toContain('data-tag="clásica"');
+    expect(html).toContain('data-tag="favorito"');
+  });
+
+  it('el fijo especial va fijo en la fila de especiales', () => {
+    const { especiales, comunes } = partes(filasTags(tags, { fijo: 'favorito' }));
+    expect(especiales).toContain('<span class="chip act">');
+    expect(especiales).not.toContain('data-tag="favorito"');
+    expect(comunes).not.toContain('<span class="chip act">');
   });
 });
 

@@ -273,33 +273,52 @@ export interface OpcionesCarrusel {
   fijo?: string;
 }
 
-/**
- * El carrusel de tags que filtra: los especiales primero y en su orden,
- * después los demás por cantidad. `store.tagsDe()` ya entrega los comunes así
- * de ordenados, pero se reordena igual acá: el carrusel no debe depender de
- * que quien lo llame respete ese contrato.
- */
-export function carruselTags(
-  tags: { tag: string; cantidad: number }[], { activos = [], tope, fijo }: OpcionesCarrusel = {}
-): string {
-  const lista = Array.isArray(tags) ? tags : [];
-  const especiales = ESPECIALES
-    .filter(d => d.enChips)
-    .map(d => lista.find(x => tagEspecial(x.tag) === d.nombre))
-    .filter((x): x is { tag: string; cantidad: number } => !!x && x.cantidad > 0);
-  const comunes = lista
-    .filter(x => !tagEspecial(x.tag))
-    .sort((a, b) => b.cantidad - a.cantidad || a.tag.localeCompare(b.tag, 'es'));
-  const cortados = tope === undefined ? comunes : comunes.slice(0, tope);
-  const todos = [...especiales, ...cortados];
-  if (!todos.length) return '';
+type TagConCantidad = { tag: string; cantidad: number };
 
-  const chips = todos
+/**
+ * Los tags que filtran, en dos filas: arriba los especiales que se ofrecen
+ * como chip, en una fila fija y en el orden de su tabla; abajo los comunes,
+ * en el carrusel, por cantidad. Los dos se encienden y se apagan igual y se
+ * combinan entre sí: la fila no cambia qué hace el chip. El `fijo` va fijo
+ * en la fila que le toque.
+ */
+export function filasTags(tags: TagConCantidad[], opciones: OpcionesCarrusel = {}): string {
+  const lista = Array.isArray(tags) ? tags : [];
+  return filaEspeciales(lista, opciones) + carruselTags(lista, opciones);
+}
+
+function chipsQueFiltran(tags: TagConCantidad[], { activos = [], fijo }: OpcionesCarrusel): string {
+  return tags
     .map(({ tag, cantidad }) => tag === fijo
       ? chipTag(tag, { cantidad, fijo: true })
       : chipTag(tag, { cantidad, activo: activos.includes(tag) }))
     .join('');
-  return carrusel(chips, { etiquetaIzq: 'Tags anteriores', etiquetaDer: 'Más tags' });
+}
+
+/**
+ * Los especiales de la fila de chips, sin carrusel: son pocos y entran
+ * siempre. Uno sin recetas no se ofrece, porque filtrar por él no deja nada;
+ * sin ninguno, la fila no está.
+ */
+function filaEspeciales(tags: TagConCantidad[], opciones: OpcionesCarrusel): string {
+  const especiales = ESPECIALES
+    .filter(d => d.enChips)
+    .map(d => tags.find(x => tagEspecial(x.tag) === d.nombre))
+    .filter((x): x is TagConCantidad => !!x && x.cantidad > 0);
+  return especiales.length ? `<div class="chips">${chipsQueFiltran(especiales, opciones)}</div>` : '';
+}
+
+/**
+ * El carrusel de los tags comunes, por cantidad. `store.tagsDe()` ya los
+ * entrega así de ordenados, pero se reordena igual acá: el carrusel no debe
+ * depender de que quien lo llame respete ese contrato.
+ */
+function carruselTags(tags: TagConCantidad[], opciones: OpcionesCarrusel): string {
+  const comunes = tags
+    .filter(x => !tagEspecial(x.tag))
+    .sort((a, b) => b.cantidad - a.cantidad || a.tag.localeCompare(b.tag, 'es'));
+  const cortados = opciones.tope === undefined ? comunes : comunes.slice(0, opciones.tope);
+  return carrusel(chipsQueFiltran(cortados, opciones), { etiquetaIzq: 'Tags anteriores', etiquetaDer: 'Más tags' });
 }
 
 /** Una frase y nada más: sin ilustración y sin sugerencias (mockup 05). */
