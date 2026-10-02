@@ -5,8 +5,8 @@ import { completarSal, SAL_POR_DEFECTO } from '../src/calculadoras/fermentados.j
 it('el defecto del pan: campo, 000, sin segunda, fresca, 8 h, 1 kg de harina', () => {
   expect(PAN_POR_DEFECTO).toEqual({
     pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 30,
-    levadura: 'fresca', fermentacion: 'ambiente-8', cantidad: { de: 'harina', gramos: 1000 },
-    prefermento: null, horasPrefermento: 0
+    prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8', cantidad: { de: 'harina', gramos: 1000 },
+    horasPrefermento: 0
   });
 });
 
@@ -23,7 +23,7 @@ it('una opción que ya no existe vuelve al defecto sólo en ese dato', () => {
 });
 
 it('masa madre con 2 h pasa a 4 h', () => {
-  expect(completarPan({ ...PAN_POR_DEFECTO, levadura: 'masa-madre', fermentacion: 'ambiente-2' }).fermentacion).toBe('ambiente-4');
+  expect(completarPan({ ...PAN_POR_DEFECTO, prefermento: 'masa-madre', fermentacion: 'ambiente-2' }).fermentacion).toBe('ambiente-4');
 });
 
 it('la segunda igual a la principal se descarta', () => {
@@ -55,8 +55,9 @@ it('pan: una pizza va en bollos y un pan en harina o masa, aunque lo guardado di
     .toEqual({ de: 'bollos', bollos: 4, gramos: 250 });
 });
 
-it('pan: el prefermento con masa madre se descarta, y unas horas que no son las suyas toman las primeras', () => {
-  expect(completarPan({ levadura: 'masa-madre', prefermento: 'biga' }).prefermento).toBeNull();
+it('pan: la levadura es fresca o seca; el prefermento, uno de la tabla; y unas horas que no son las suyas toman las primeras', () => {
+  expect(completarPan({ levadura: 'masa-madre', prefermento: 'biga' })).toMatchObject({ levadura: 'fresca', prefermento: 'biga' });
+  expect(completarPan({ prefermento: 'masa-madre', horasPrefermento: 12 })).toMatchObject({ prefermento: 'masa-madre', horasPrefermento: 0 });
   expect(completarPan({ prefermento: 'poolish', horasPrefermento: 12 })).toMatchObject({ prefermento: 'poolish', horasPrefermento: 12 });
   expect(completarPan({ prefermento: 'poolish', horasPrefermento: 5 })).toMatchObject({ prefermento: 'poolish', horasPrefermento: 8 });
   expect(completarPan({ prefermento: 'sourdough' })).toMatchObject({ prefermento: null, horasPrefermento: 0 });

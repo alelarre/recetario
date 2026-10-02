@@ -115,15 +115,20 @@ export function completarSal(guardado: unknown): DatosSal {
   };
 }
 
-/** El resultado como se muestra; lo usan la pantalla y el MCP. Sin resultado, guiones. */
-export function lineasSal(d: DatosSal): { nombre: string; valor: string }[] {
+type Linea = { nombre: string; valor: string };
+
+/** Lo que se destaca del resultado: la sal y su porcentaje. Sin resultado, guiones. */
+export function cifrasSal(d: DatosSal): Linea[] {
   const r = calcularSal(d);
   return [
     { nombre: 'Sal', valor: r ? `${gramos(r.sal)} g` : '—' },
-    { nombre: 'Porcentaje', valor: r ? porciento(r.porcentaje) : '—' },
-    ...(d.temperatura ? [{ nombre: 'Tiempo', valor: textoTiempo(d.fermento, d.temperatura) }] : [])
+    { nombre: 'Porcentaje', valor: r ? porciento(r.porcentaje) : '—' }
   ];
 }
+
+/** El resto del resultado: con temperatura, el tiempo. Lo usan la pantalla y el MCP. */
+export const lineasSal = (d: DatosSal): Linea[] =>
+  (d.temperatura ? [{ nombre: 'Tiempo', valor: textoTiempo(d.fermento, d.temperatura) }] : []);
 
 /** Las advertencias del resultado: con tiempo, que es cuándo empezar a probar. */
 export const advertenciasSal = (d: DatosSal): readonly string[] => (d.temperatura ? ADVERTENCIAS_SAL : []);

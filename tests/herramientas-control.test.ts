@@ -37,9 +37,9 @@ describe('el control de Herramientas', () => {
     const almacen = localStorageFalso();
     const { control, elegir, redibujar } = armar(almacen);
     elegir('fermentacion', 'ambiente-2');
-    elegir('levadura', 'masa-madre');
+    elegir('prefermento', 'masa-madre');
     expect(control.pan().fermentacion).toBe('ambiente-4');
-    expect(JSON.parse(almacen.getItem(CLAVE_PAN)!).levadura).toBe('masa-madre');
+    expect(JSON.parse(almacen.getItem(CLAVE_PAN)!).prefermento).toBe('masa-madre');
     expect(redibujar).toHaveBeenCalledTimes(2);
   });
 
@@ -125,16 +125,38 @@ describe('el control de Herramientas — la pizza', () => {
 });
 
 describe('el control de Herramientas — el prefermento', () => {
-  it('elegir poolish y sus horas; elegir masa madre lo saca', () => {
+  it('elegir poolish y sus horas; la levadura elegida se conserva al pasar por masa madre', () => {
     const { control, elegir } = armar();
+    elegir('levadura', 'seca');
     elegir('prefermento', 'poolish');
     expect(control.pan()).toMatchObject({ prefermento: 'poolish', horasPrefermento: 8 });
     elegir('horas-prefermento', '18');
     expect(control.pan().horasPrefermento).toBe(18);
-    elegir('levadura', 'masa-madre');
-    expect(control.pan().prefermento).toBeNull();
-    elegir('levadura', 'fresca');
+    elegir('prefermento', 'masa-madre');
+    expect(control.pan()).toMatchObject({ prefermento: 'masa-madre', horasPrefermento: 0, levadura: 'seca' });
     elegir('prefermento', '');
     expect(control.pan().prefermento).toBeNull();
+    // «Masa madre» ya no es una levadura.
+    elegir('levadura', 'masa-madre');
+    expect(control.pan().levadura).toBe('fresca');
+  });
+});
+
+describe('el control de Herramientas — la mezcla de harinas', () => {
+  it('encender la mezcla suma la harina de por defecto; apagarla la saca', () => {
+    const { control, elegir } = armar();
+    elegir('mezcla', '1');
+    expect(control.pan().segunda).toBe('integral');
+    elegir('segunda', 'centeno');
+    expect(control.pan().segunda).toBe('centeno');
+    elegir('mezcla', '');
+    expect(control.pan().segunda).toBeNull();
+  });
+
+  it('con integral de principal, la mezcla arranca en otra harina', () => {
+    const { control, elegir } = armar();
+    elegir('harina', 'integral');
+    elegir('mezcla', '1');
+    expect(control.pan().segunda).toBe('0000');
   });
 });

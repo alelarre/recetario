@@ -1,11 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { calcularPan, fermentacionesPara, cantidadAlCambiar, bolloDe, conFermentacion, lineasPan, lineasPrefermento, advertenciasPan, PANES, PREFERMENTOS, BOLLOS_POR_DEFECTO, HIDRATACION_MAXIMA, ADVERTENCIAS_PAN, type DatosPan } from '../src/calculadoras/pan.js';
+import {
+  calcularPan, fermentacionesPara, cantidadAlCambiar, bolloDe, conFermentacion, conLevadura, segundaAlMezclar,
+  cifrasPan, lineasPan, lineasPrefermento, advertenciasPan,
+  PANES, PREFERMENTOS, PREFERMENTOS_CON_LEVADURA, BOLLOS_POR_DEFECTO, HIDRATACION_MAXIMA, ADVERTENCIAS_PAN, type DatosPan
+} from '../src/calculadoras/pan.js';
 import { gramos } from '../src/calculadoras/gramos.js';
 
 const base: DatosPan = {
   pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 30,
-  levadura: 'fresca', fermentacion: 'ambiente-8', cantidad: { de: 'harina', gramos: 1000 },
-  prefermento: null, horasPrefermento: 0
+  prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8', cantidad: { de: 'harina', gramos: 1000 },
+  horasPrefermento: 0
 };
 
 describe('calcularPan', () => {
@@ -26,7 +30,7 @@ describe('calcularPan', () => {
   });
 
   it('masa madre: la harina y el agua a agregar descuentan la mitad de la masa madre', () => {
-    const r = calcularPan({ ...base, levadura: 'masa-madre', fermentacion: 'ambiente-4' })!;
+    const r = calcularPan({ ...base, prefermento: 'masa-madre', fermentacion: 'ambiente-4' })!;
     expect(r.levadura).toBeCloseTo(200);
     expect(r.harinas[0]!.gramos).toBeCloseTo(900);
     expect(r.agua).toBeCloseTo(620);
@@ -35,7 +39,7 @@ describe('calcularPan', () => {
   });
 
   it('el agua a agregar nunca es negativa: peor caso de la tabla', () => {
-    const r = calcularPan({ ...base, pan: 'miga', harina: '0000', levadura: 'masa-madre', fermentacion: 'ambiente-4' })!;
+    const r = calcularPan({ ...base, pan: 'miga', harina: '0000', prefermento: 'masa-madre', fermentacion: 'ambiente-4' })!;
     expect(r.agua).toBeGreaterThan(0);
   });
 
@@ -55,7 +59,7 @@ describe('calcularPan', () => {
     const ida = calcularPan(base)!;
     const vuelta = calcularPan({ ...base, cantidad: { de: 'masa', gramos: ida.masaTotal } })!;
     expect(vuelta.harinaTotal).toBeCloseTo(1000);
-    const conMasaMadre = { ...base, levadura: 'masa-madre' as const, fermentacion: 'frio-24' as const };
+    const conMasaMadre = { ...base, prefermento: 'masa-madre' as const, fermentacion: 'frio-24' as const };
     const idaMM = calcularPan(conMasaMadre)!;
     const vueltaMM = calcularPan({ ...conMasaMadre, cantidad: { de: 'masa', gramos: idaMM.masaTotal } })!;
     expect(vueltaMM.harinaTotal).toBeCloseTo(1000);
@@ -68,7 +72,8 @@ describe('calcularPan', () => {
 
 it('con masa madre no se ofrecen 2 h', () => {
   expect(fermentacionesPara('masa-madre').map(f => f.clave)).not.toContain('ambiente-2');
-  expect(fermentacionesPara('fresca').map(f => f.clave)).toContain('ambiente-2');
+  expect(fermentacionesPara(null).map(f => f.clave)).toContain('ambiente-2');
+  expect(fermentacionesPara('pate').map(f => f.clave)).toContain('ambiente-2');
 });
 
 it('gramos: enteros; por debajo de 10, un decimal; por debajo de 1, dos, y nunca menos de 0,01', () => {
@@ -118,8 +123,12 @@ describe('las pizzas', () => {
 });
 
 describe('los prefermentos', () => {
-  it('la tabla: poolish, biga y pâte fermentée, con su harina, hidratación, sal y horas', () => {
-    expect(PREFERMENTOS.map(p => [p.nombre, p.harina, p.hidratacion, p.sal, p.horas.map(h => h.horas), p.levaduraFinal])).toEqual([
+  it('lo que se elige: la masa madre primero, y los tres con levadura', () => {
+    expect(PREFERMENTOS.map(p => p.nombre)).toEqual(['Masa madre', 'Poolish', 'Biga', 'Pâte fermentée']);
+  });
+
+  it('la tabla de los que llevan levadura, con su harina, hidratación, sal y horas', () => {
+    expect(PREFERMENTOS_CON_LEVADURA.map(p => [p.nombre, p.harina, p.hidratacion, p.sal, p.horas.map(h => h.horas), p.levaduraFinal])).toEqual([
       ['Poolish', 30, 100, 0, [8, 12, 18], false],
       ['Biga', 40, 44, 0, [18], false],
       ['Pâte fermentée', 27, 68, 1.4, [14], true]
@@ -160,9 +169,30 @@ describe('los prefermentos', () => {
     expect(r.harinas.map(h => [h.clave, Math.round(h.gramos)])).toEqual([['000', 300], ['integral', 300]]);
   });
 
-  it('con masa madre no hay prefermento', () => {
-    const r = calcularPan({ ...base, levadura: 'masa-madre', fermentacion: 'ambiente-4', prefermento: 'biga', horasPrefermento: 18 })!;
-    expect(r.prefermento).toBeNull();
+  it('la masa madre es un prefermento que leva sola: sin levadura, sin grupo propio y con lo demás «a agregar»', () => {
+    const d: DatosPan = { ...base, prefermento: 'masa-madre', fermentacion: 'ambiente-4' };
+    expect(calcularPan(d)!.prefermento).toBeNull();
+    expect(conLevadura(d)).toBe(false);
+    expect(conLevadura(base)).toBe(true);
+    expect(conFermentacion(d)).toBe(true);
+    expect(lineasPrefermento(d)).toEqual([]);
+    expect(lineasPan(d)).toEqual([
+      { nombre: 'Harina 000 a agregar', valor: '900 g' }, { nombre: 'Agua a agregar', valor: '620 g' },
+      { nombre: 'Sal', valor: '20 g' }, { nombre: 'Masa madre', valor: '200 g' }
+    ]);
+    // La levadura que hubiera quedado elegida no cambia nada.
+    expect(calcularPan({ ...d, levadura: 'seca' })).toEqual(calcularPan(d));
+  });
+
+  it('las cifras: la masa total y la hidratación del pan entero', () => {
+    expect(cifrasPan(base)).toEqual([{ nombre: 'Masa total', valor: '1745 g' }, { nombre: 'Hidratación', valor: '72 %' }]);
+    expect(cifrasPan({ ...base, prefermento: 'biga', horasPrefermento: 18 })[1]).toEqual({ nombre: 'Hidratación', valor: '72 %' });
+    expect(cifrasPan({ ...base, cantidad: { de: 'harina', gramos: 0 } }).map(c => c.valor)).toEqual(['—', '—']);
+  });
+
+  it('al encender la mezcla: integral, o la primera que no sea la principal', () => {
+    expect(segundaAlMezclar('000')).toBe('integral');
+    expect(segundaAlMezclar('integral')).toBe('0000');
   });
 
   it('las líneas: el prefermento aparte; la masa final sin levadura si va toda en el prefermento', () => {
@@ -170,7 +200,7 @@ describe('los prefermentos', () => {
     expect(lineasPrefermento(d)).toEqual([
       { nombre: 'Harina 000', valor: '400 g' }, { nombre: 'Agua', valor: '176 g' }, { nombre: 'Levadura fresca', valor: '4,0 g' }
     ]);
-    expect(lineasPan(d).map(l => l.nombre)).toEqual(['Harina 000', 'Agua', 'Sal', 'Hidratación']);
+    expect(lineasPan(d).map(l => l.nombre)).toEqual(['Harina 000', 'Agua', 'Sal']);
     expect(lineasPrefermento(base)).toEqual([]);
     expect(lineasPrefermento({ ...base, prefermento: 'pate', horasPrefermento: 14 }).map(l => l.nombre))
       .toEqual(['Harina 000', 'Agua', 'Sal', 'Levadura fresca']);

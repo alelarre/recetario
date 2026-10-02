@@ -7,7 +7,9 @@
  * Un toque redibuja la pantalla; escribir una cantidad pinta sólo el
  * resultado, para no sacarle el foco al campo.
  */
-import { completarPan, fermentacionesPara, cantidadAlCambiar, type DatosPan, type ClavePan } from './calculadoras/pan.js';
+import {
+  completarPan, fermentacionesPara, cantidadAlCambiar, segundaAlMezclar, type DatosPan, type ClavePan
+} from './calculadoras/pan.js';
 import { completarSal, type DatosSal } from './calculadoras/fermentados.js';
 import type { SeccionDeAcciones } from './acciones.js';
 
@@ -52,10 +54,11 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
   /** El pan con un dato cambiado, sin combinaciones que no van. */
   function conElegido(grupo: string, valor: string): DatosPan {
     switch (grupo) {
+      case 'mezcla': return { ...pan, segunda: valor ? segundaAlMezclar(pan.harina) : null };
       case 'segunda': return { ...pan, segunda: (valor || null) as DatosPan['segunda'] };
       case 'porcentaje': return { ...pan, porcentajeSegunda: Number(valor) as DatosPan['porcentajeSegunda'] };
       case 'modo': {
-        const primera = fermentacionesPara(pan.levadura).find(f => f.modo === valor);
+        const primera = fermentacionesPara(pan.prefermento).find(f => f.modo === valor);
         return primera ? { ...pan, fermentacion: primera.clave } : pan;
       }
       case 'pan': return { ...pan, pan: valor as ClavePan, cantidad: cantidadAlCambiar(pan, valor as ClavePan) };

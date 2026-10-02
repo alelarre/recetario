@@ -57,7 +57,8 @@ aparece.
 
 Una sola pantalla. Cada dato es una fila de botones con una opción apretada,
 como la duración en el editor (`E04-Corregir.md` C04.2.1c), y el resultado va
-al pie.
+al pie. Los componentes propios —el interruptor, el par de cantidades y la
+ficha del resultado— están en `design-system.md` §6.28.
 
 #### C07.2.1 — Los datos, en su orden *(J6)*
 
@@ -67,21 +68,23 @@ al pie.
      napolitana y New York— y llevan además un peso de bollo sugerido.
   2. **Harina:** la principal, de la tabla de harinas. Cada harina suma o
      resta puntos de hidratación.
-  3. **Segunda harina:** *Ninguna* o una de la tabla **sin la principal**.
-  4. **Porcentaje de la segunda:** sólo si hay segunda, con las opciones de
-     la tabla.
-  5. **Levadura:** fresca, seca o masa madre.
-  6. **Prefermento:** *Ninguno*, *Poolish*, *Biga* o *Pâte fermentée*; no
-     está con masa madre (C07.2.8). Con poolish, sus horas.
-  7. **Fermentación:** *Ambiente* o *En frío*; con poolish o biga no está,
+  3. **Mezclar con otra harina:** un interruptor, apagado por defecto.
+     Encendido, debajo van **Otra harina** —las de la tabla **sin la
+     principal**— y su **porcentaje**, con las opciones de la tabla.
+  4. **Prefermento:** *Ninguno*, *Masa madre*, *Poolish*, *Biga* o *Pâte
+     fermentée* (C07.2.8). Con poolish, sus horas.
+  5. **Levadura:** fresca o seca. **Va después del prefermento, que dice si
+     hace falta:** con masa madre no está.
+  6. **Fermentación:** *Ambiente* o *En frío*; con poolish o biga no está,
      y con pâte fermentée es la de la masa final.
-  8. **Horas:** las del modo elegido.
-  9. **Cantidad:** dos campos en gramos, *Harina total* y *Masa total*; en
-     una pizza, *Bollos* y *Gramos por bollo* (C07.2.4).
+  7. **Horas:** las del modo elegido.
+  8. **Cantidad:** dos campos en gramos en una misma fila, *Harina total* y
+     *Masa total*; en una pizza, *Bollos* y *Gramos por bollo* (C07.2.4).
 - [ ] Tocar una opción la aprieta y redibuja la pantalla.
 - [ ] Cambiar de modo elige las primeras horas de ese modo.
-- [ ] Elegir como principal la harina que estaba de segunda deja la segunda
-  en *Ninguna*.
+- [ ] **Encender la mezcla** suma la harina integral, o la primera de la
+  tabla si la principal es la integral; apagarla la saca. Elegir como
+  principal la harina que estaba de segunda apaga la mezcla.
 
 #### C07.2.2 — Las dos harinas *(J6)*
 
@@ -95,6 +98,8 @@ al pie.
 
 - [ ] La levadura fresca sale de una tabla por fermentación, en % sobre la
   harina total. **La seca es la fresca dividida por una constante.**
+- [ ] **La masa madre es un prefermento que leva el pan sola:** con ella no
+  se elige levadura, y la que hubiera quedado elegida no cuenta.
 - [ ] **La masa madre es al 100 % de hidratación** y sale de su propia tabla
   por fermentación, en % sobre la harina total. Trae la mitad de su peso en
   harina y la mitad en agua, que se descuentan de lo que hay que agregar.
@@ -106,8 +111,9 @@ al pie.
 
 #### C07.2.4 — La cantidad: manda el último escrito *(J6)*
 
-- [ ] *Harina total* y *Masa total* son dos campos numéricos. **El que se
-  escribe manda** y el otro muestra lo que resulta, en gramos enteros.
+- [ ] *Harina total* y *Masa total* son dos campos numéricos, en una misma
+  fila y con las flechas de ida y vuelta en el medio. **El que se escribe
+  manda** y el otro muestra lo que resulta, en gramos enteros.
 - [ ] Desde la masa total, la harina sale de dividirla por uno más la
   hidratación, la sal y la levadura; con masa madre, la levadura cuenta cero,
   porque su harina y su agua ya están dentro de las otras dos.
@@ -118,7 +124,8 @@ al pie.
   otro campo, para no sacarle el foco al que se está escribiendo.
 
 - [ ] **Una pizza se pide en bollos:** *Bollos* y *Gramos por bollo*
-  reemplazan a *Harina total* y *Masa total*. La masa total es los bollos
+  reemplazan a *Harina total* y *Masa total*, en la misma fila y con un ×
+  en el medio. La masa total es los bollos
   por los gramos, y de ahí sale la harina como desde la masa total.
 - [ ] Al elegir una pizza, *Gramos por bollo* toma el sugerido del estilo y
   *Bollos* conserva los que había, o arranca en 4. Cambiar de estilo vuelve
@@ -132,11 +139,15 @@ queda vacío.
 
 #### C07.2.5 — El resultado *(J6)*
 
-- [ ] Una ficha **Resultado** al pie, con las filas de la ficha de
-  ingredientes: nombre a la izquierda, valor a la derecha. Con prefermento
-  son dos: **Prefermento** y **Masa final** (C07.2.8).
-- [ ] En este orden: una línea por harina, el agua, la sal, la levadura
-  —*Levadura fresca*, *Levadura seca* o *Masa madre*— y la hidratación final.
+- [ ] Una ficha **Resultado** al pie, destacada (`design-system.md` §6.28).
+  Arriba, en grande, **la masa total y la hidratación**, que son las del pan
+  entero. Debajo, las filas de la ficha de ingredientes: nombre a la
+  izquierda, valor a la derecha.
+- [ ] En este orden: una línea por harina, el agua, la sal y la levadura
+  —*Levadura fresca*, *Levadura seca* o *Masa madre*—.
+- [ ] Con poolish, biga o pâte fermentée, las líneas van en dos grupos,
+  **Prefermento** y **Masa final** (C07.2.8). Con masa madre no hay grupos:
+  es una línea más.
 - [ ] **Con masa madre, las harinas y el agua dicen «a agregar»**: son lo que
   va aparte de lo que trae la masa madre.
 - [ ] Se recalcula con cada toque y cada tecla.
@@ -165,7 +176,9 @@ queda vacío.
 
 #### C07.2.8 — El prefermento *(J6)*
 
-- [ ] Una tabla de prefermentos con levadura comercial. Cada uno dice qué
+- [ ] **Cuatro prefermentos:** la masa madre, que leva sola (C07.2.3), y
+  tres con levadura comercial.
+- [ ] Los de levadura comercial salen de una tabla. Cada uno dice qué
   parte de la harina total va al prefermento, su hidratación, su sal y la
   levadura fresca según sus horas, las tres sobre su harina, con la fuente
   de cada fila al lado del valor:
@@ -176,7 +189,7 @@ queda vacío.
   | Biga | 40 % | 44 % | — | 1 % | 16 a 20 h, a unos 18 °C |
   | Pâte fermentée | 27 % | 68 % | 1,4 % | 0,3 % | 14 h, a temperatura ambiente |
 
-- [ ] **El prefermento sale del pan, no se suma:** la harina total, la
+- [ ] **El prefermento con levadura sale del pan, no se suma:** la harina total, la
   hidratación, la sal y la masa total son las mismas; se reparten entre el
   prefermento y la masa final. Su harina sale de la principal: la segunda va
   entera a la masa final.
@@ -185,8 +198,6 @@ queda vacío.
 - [ ] **La pâte fermentée da sabor, no levado:** la masa final lleva la
   levadura de la tabla de fermentación (C07.2.3), con sus filas.
 - [ ] La levadura seca es la fresca dividida por la misma constante.
-- [ ] **No va con masa madre:** con masa madre la fila no está, y elegir masa
-  madre deja el prefermento en *Ninguno*.
 - [ ] Las advertencias suman la del prefermento —a qué temperatura y cuánto
   fermenta, y si la masa final lleva levadura—; las de los tiempos de la
   tabla van sólo si la masa final lleva levadura.
@@ -203,10 +214,10 @@ queda vacío.
   en salmuera, el agua. El campo lo dice.
 - [ ] La sal es el porcentaje del fermento sobre el peso total. Es la misma
   cuenta para la sal seca y para la salmuera.
-- [ ] El resultado al pie, en una ficha **Resultado**: los gramos de sal y el
-  porcentaje usado, con el mismo redondeo que el pan (C07.2.5), y el
-  **tiempo**: cuántos días hasta empezar a probar, como un rango —*6 a 16
-  días*—.
+- [ ] El resultado al pie, en la misma ficha **Resultado** destacada del pan
+  (C07.2.5): arriba, en grande, los gramos de sal y el porcentaje usado, con
+  el mismo redondeo; debajo, el **tiempo**: cuántos días hasta empezar a
+  probar, como un rango —*6 a 16 días*—.
 - [ ] El tiempo sale de una tabla fermento × franja, con la fuente de cada
   fila al lado del valor. **Una franja sin fuente dice *sin dato a esta
   temperatura*:** no se extrapola.
@@ -282,10 +293,12 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 - [ ] La cantidad es `harina_total` o `masa_total`, **una sola de las dos**;
   en una pizza, `bollos` y `peso_bollo`, con el peso sugerido del estilo como
   opción si falta.
-- [ ] En `calcular_pan`, el `prefermento` es **opcional**: sin él, el pan va
-  sin prefermento. Con poolish pide `horas_prefermento`; con poolish o biga
-  no pide la fermentación ni las horas de la tabla. Devuelve las líneas del
-  prefermento aparte, y el resultado es el de la masa final.
+- [ ] En `calcular_pan`, el `prefermento` es un dato más: «ninguno», «masa
+  madre», «poolish», «biga» o «pâte fermentée». Con masa madre no pide la
+  levadura; con poolish pide `horas_prefermento`; con poolish o biga no pide
+  la fermentación ni las horas de la tabla. Con poolish, biga o pâte
+  fermentée devuelve las líneas del prefermento aparte, y el resultado es el
+  de la masa final.
 - [ ] En `calcular_sal`, la `temperatura` es **opcional**: sin ella no hay
   tiempo ni su advertencia. Una que no es una de las franjas falta, con las
   franjas como opciones.
@@ -293,13 +306,15 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   no calculan: devuelven la lista de lo que falta y, para cada dato, las
   opciones válidas.
 - [ ] **Un dato cuyas opciones dependen de otro que falta no se pide
-  todavía:** la segunda harina espera a la principal, las horas a la
-  levadura y al modo (con masa madre, sin 2 h), y la cantidad al pan, porque
-  una pizza va en bollos. Se piden en la vuelta
-  siguiente, así ninguna opción ofrecida queda inválida después. Completar
-  un pan puede llevar más de una vuelta de preguntas.
-- [ ] Con todo, devuelven las mismas líneas que la pantalla, la harina total,
-  la masa total —en el pan— y las advertencias.
+  todavía:** la segunda harina espera a la principal; las horas, al
+  prefermento y al modo (con masa madre, sin 2 h); y la cantidad al pan,
+  porque una pizza va en bollos. Se piden en la vuelta siguiente, así
+  ninguna opción ofrecida queda inválida después. Completar un pan puede
+  llevar más de una vuelta de preguntas.
+- [ ] La levadura y la fermentación se piden junto con el prefermento, y
+  dejan de pedirse cuando el elegido no las usa.
+- [ ] Con todo, devuelven las mismas líneas que la pantalla, las advertencias
+  y, en el pan, la harina total, la masa total y la hidratación.
 - [ ] La descripción de cada herramienta lista las opciones tomadas de las
   tablas: si una tabla cambia, cambia ahí también.
 
@@ -309,8 +324,8 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   un fermentado.
 - [ ] Los datos que ya vienen en el pedido **no se repreguntan**.
 - [ ] **No asume ningún otro dato:** pregunta los que faltan en un solo
-  mensaje, en el orden de la pantalla —pan, harinas, levadura, fermentación,
-  cantidad—, con las opciones que devolvió la herramienta.
+  mensaje, en el orden de la pantalla —pan, harinas, prefermento, levadura,
+  fermentación, cantidad—, con las opciones que devolvió la herramienta.
 - [ ] **Los números salen siempre de `calcular_pan` o `calcular_sal`**: no
   inventa porcentajes ni hace la cuenta a mano.
 - [ ] Muestra el resultado con las advertencias.

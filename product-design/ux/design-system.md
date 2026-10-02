@@ -284,7 +284,7 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 «+» de agregar de la tarjeta (§6.1).
 
 **Los íconos son funcionales, nunca decorativos.** `iconos.ts` tiene
-**treinta y uno**: veintiséis en `ICO` y los cinco relojitos de
+**treinta y tres**: veintiocho en `ICO` y los cinco relojitos de
 `ICONO_DE_DURACION`.
 
 | Ícono | Dónde |
@@ -310,6 +310,8 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `galeria` | *Galería*, en la fila de fotos (§6.25): elegir fotos del teléfono. Dos fotos, una detrás de la otra. |
 | `link` | *Por URL*, en la fila de fotos (§6.25): agregar una foto pegando su dirección. Dos eslabones. |
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
+| `balanza` | *Herramientas*, en el menú lateral, y delante del título de la ficha del resultado de una calculadora (§6.28). |
+| `idaYVuelta` | Entre dos cantidades que salen una de la otra, en las calculadoras (§6.28). Dos flechas, una para cada lado. |
 | `zanahoria`, `listaNumerada` | Las dos posiciones del conmutador de cocina —*Ingredientes* y *Pasos*—, al lado de la palabra. |
 | Los cinco relojitos | Uno por valor de la duración, el mismo mapa en el editor (§6.18), la tarjeta, la receta, la búsqueda, el filtro (§6.19) y el orden (§6.20). |
 
@@ -1327,6 +1329,46 @@ una tarjeta— la foto que no está no se dibuja.
 **Adentro de un tile** (§6.4) —la muestra de la categoría que se edita— el cuadro
 no lleva radio: recorta el tile. El recuadro del motivo va encima del tinte del
 color de la categoría, que no lo tapa.
+
+### 6.28 Las calculadoras
+
+Las pantallas de *Herramientas* (`E07-Herramientas.md`) son una ficha con los
+datos y, al pie, la ficha del resultado. Cada dato que se elige es una fila
+de botones de tag especial (§6.10b), uno solo apretado, bajo su etiqueta de
+campo (§6.9). Tres componentes son propios:
+
+**El interruptor** (`.interruptor`), para lo que se enciende y abre más
+datos: *Mezclar con otra harina*. Es una fila entera que se toca, de 48 px de
+alto mínimo: la etiqueta a la izquierda, en `--txt-base` `--fg`, y la perilla
+a la derecha, de 48 × 28 px. Lleva `role="switch"` y `aria-checked`.
+
+| Estado | Pista | Perilla |
+|---|---|---|
+| **Apagado** | `--surface-alta`, borde 1 px `--borde-fuerte` | `--fg-2`, a la izquierda |
+| **Encendido** | `--fg` | `--bg`, a la derecha |
+
+Encendido se dibuja invertido, como todo lo elegido (§6.0), y cambia sin
+transición (§5).
+
+**El par de cantidades** (`.par-cantidades`): dos campos numéricos (§6.9) en
+una misma fila, del mismo ancho, con lo que los une en el medio, en `--fg-2`
+y a la altura de los campos. **Las flechas de ida y vuelta** —el ícono de
+Lucide `arrow-left-right` (§3.4)— cuando cada campo sale del otro: *Harina
+total* y *Masa total*. **Un ×** cuando se multiplican: *Bollos* y *Gramos por
+bollo*.
+
+**La ficha del resultado** (`.resultado`) es una ficha (§6.6) con el borde en
+`--borde-fuerte` y la balanza de *Herramientas* delante del título. Arriba
+van **las cifras** (`.cifras`): lo que manda en el resultado, en recuadros
+`--surface-alta` de `--r-medio` y del mismo ancho, con el valor en
+`--txt-titulo` peso 600 y cifras tabulares, y su nombre debajo en
+`--txt-chico` `--fg-2`. Son dos: la masa total y la hidratación en el pan; la
+sal y su porcentaje en los fermentados. Debajo, el detalle como ítems de
+ingrediente (§6.11), con sus grupos si los hay, y las advertencias como una
+lista en `--txt-chico` `--fg-2`.
+
+**Las cifras no llevan el acento:** el resultado no es una acción (§6.0). Se
+destacan por tamaño y por su recuadro.
 
 ---
 

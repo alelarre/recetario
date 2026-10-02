@@ -24,7 +24,8 @@ describe('la calculadora de pan', () => {
   const html = renderPan(PAN_POR_DEFECTO);
 
   it('las filas en el orden del embudo, y el volver', () => {
-    const orden = ['pan', 'harina', 'segunda', 'levadura', 'modo', 'fermentacion'].map(g => pos(html, g));
+    // El prefermento va antes que la levadura: dice si hace falta.
+    const orden = ['pan', 'harina', 'mezcla', 'prefermento', 'levadura', 'modo', 'fermentacion'].map(g => pos(html, g));
     expect(orden.every(i => i > 0)).toBe(true);
     expect(orden).toEqual([...orden].sort((a, b) => a - b));
     expect(pos(html, 'fermentacion')).toBeLessThan(html.indexOf('data-cantidad="harina"'));
@@ -45,17 +46,27 @@ describe('la calculadora de pan', () => {
     expect(html).toContain(r);
   });
 
-  it('la segunda harina no ofrece la principal, y sin segunda no hay porcentaje', () => {
-    expect(html).not.toContain('data-grupo="segunda" data-valor="000"');
-    expect(html).toContain('data-grupo="segunda" data-valor="" aria-pressed="true"');
+  it('la mezcla es un interruptor apagado: sin él no hay otra harina ni porcentaje', () => {
+    expect(html).toContain('role="switch" aria-checked="false" data-accion="elegir-opcion" data-grupo="mezcla" data-valor="1"');
+    expect(pos(html, 'segunda')).toBe(-1);
     expect(pos(html, 'porcentaje')).toBe(-1);
-    const conSegunda = renderPan({ ...PAN_POR_DEFECTO, segunda: 'centeno' });
-    expect(conSegunda).toContain('data-grupo="porcentaje" data-valor="30" aria-pressed="true"');
   });
 
-  it('con masa madre: sin 2 h, y harina y agua «a agregar»', () => {
-    const d: DatosPan = { ...PAN_POR_DEFECTO, levadura: 'masa-madre', fermentacion: 'ambiente-4' };
+  it('con la mezcla encendida: la otra harina, sin la principal ni «Ninguna», y su porcentaje', () => {
+    const conMezcla = renderPan({ ...PAN_POR_DEFECTO, segunda: 'centeno' });
+    expect(conMezcla).toContain('role="switch" aria-checked="true" data-accion="elegir-opcion" data-grupo="mezcla" data-valor=""');
+    expect(conMezcla).toContain('data-grupo="segunda" data-valor="centeno" aria-pressed="true"');
+    expect(conMezcla).not.toContain('data-grupo="segunda" data-valor="000"');
+    expect(conMezcla).not.toContain('data-grupo="segunda" data-valor=""');
+    expect(conMezcla).toContain('data-grupo="porcentaje" data-valor="30" aria-pressed="true"');
+    expect(pos(conMezcla, 'mezcla')).toBeLessThan(pos(conMezcla, 'segunda'));
+  });
+
+  it('con masa madre: sin levadura que elegir, sin 2 h, y harina y agua «a agregar»', () => {
+    const d: DatosPan = { ...PAN_POR_DEFECTO, prefermento: 'masa-madre', fermentacion: 'ambiente-4' };
     const h = renderPan(d);
+    expect(h).toContain('data-grupo="prefermento" data-valor="masa-madre" aria-pressed="true"');
+    expect(h).not.toContain('data-grupo="levadura"');
     expect(h).not.toContain('data-valor="ambiente-2"');
     expect(h).toContain('a agregar');
     expect(h).toContain('Masa madre');
@@ -69,9 +80,20 @@ describe('la calculadora de pan', () => {
     expect(frio).toContain('data-valor="frio-24"');
   });
 
-  it('el campo que manda lleva lo escrito; el otro, lo calculado', () => {
+  it('el campo que manda lleva lo escrito; el otro, lo calculado; los dos en una fila, con las flechas en el medio', () => {
     expect(html).toContain('data-cantidad="harina" value="1000"');
     expect(html).toContain('data-cantidad="masa" value="1745"');
+    const par = html.slice(html.indexOf('class="par-cantidades"'));
+    expect(par.indexOf('data-cantidad="harina"')).toBeLessThan(par.indexOf('class="entre"'));
+    expect(par.indexOf('class="entre"')).toBeLessThan(par.indexOf('data-cantidad="masa"'));
+    expect(par).toContain('<svg');
+  });
+
+  it('el resultado destaca la masa total y la hidratación, arriba de las líneas', () => {
+    const r = resultadoPan(PAN_POR_DEFECTO);
+    expect(r).toContain('<span class="v">1745 g</span><span class="n">Masa total</span>');
+    expect(r).toContain('<span class="v">72 %</span><span class="n">Hidratación</span>');
+    expect(r.indexOf('class="cifras"')).toBeLessThan(r.indexOf('class="ing"'));
   });
 
   it('topeado, lo avisa', () => {
@@ -111,24 +133,26 @@ describe('la calculadora de pan — la pizza', () => {
     expect(html).toContain('data-cantidad="bollo" value="250"');
     expect(html).not.toContain('data-cantidad="harina"');
     expect(html).not.toContain('data-cantidad="masa"');
+    expect(html).toContain('<span class="entre" aria-hidden="true">×</span>');
     expect(html).toContain('Pizza napolitana');
   });
 });
 
 describe('la calculadora de pan — el prefermento', () => {
-  it('sin masa madre, la fila de prefermento; con poolish, sus horas y sin la fermentación de la tabla', () => {
-    expect(renderPan(PAN_POR_DEFECTO)).toContain('data-grupo="prefermento" data-valor="" aria-pressed="true"');
-    const poolish = renderPan({ ...PAN_POR_DEFECTO, prefermento: 'poolish', horasPrefermento: 12 });
-    expect(poolish).toContain('data-grupo="horas-prefermento" data-valor="12" aria-pressed="true"');
-    expect(poolish).not.toContain('data-grupo="modo"');
-    expect(poolish).toContain('<h2>Prefermento</h2>');
-    expect(poolish).toContain('<h2>Masa final</h2>');
-    expect(poolish).not.toContain('<h2>Resultado</h2>');
+  it('la fila de prefermento ofrece ninguno, la masa madre y los tres con levadura', () => {
+    const h = renderPan(PAN_POR_DEFECTO);
+    expect(h).toContain('data-grupo="prefermento" data-valor="" aria-pressed="true"');
+    for (const clave of ['masa-madre', 'poolish', 'biga', 'pate']) expect(h).toContain(`data-grupo="prefermento" data-valor="${clave}"`);
   });
 
-  it('con masa madre no se ofrece', () => {
-    const h = renderPan({ ...PAN_POR_DEFECTO, levadura: 'masa-madre', fermentacion: 'ambiente-4' });
-    expect(h).not.toContain('data-grupo="prefermento"');
+  it('con poolish: sus horas, la levadura, y sin la fermentación de la tabla; el resultado, en dos grupos', () => {
+    const poolish = renderPan({ ...PAN_POR_DEFECTO, prefermento: 'poolish', horasPrefermento: 12 });
+    expect(poolish).toContain('data-grupo="horas-prefermento" data-valor="12" aria-pressed="true"');
+    expect(poolish).toContain('data-grupo="levadura" data-valor="fresca" aria-pressed="true"');
+    expect(poolish).not.toContain('data-grupo="modo"');
+    expect(poolish).toContain('<div class="grupo">Prefermento</div>');
+    expect(poolish).toContain('<div class="grupo">Masa final</div>');
+    expect(poolish.indexOf('>Prefermento</div>')).toBeLessThan(poolish.indexOf('>Masa final</div>'));
   });
 
   it('con pâte fermentée, sin fila de horas propias y con la fermentación de la masa final', () => {
@@ -137,8 +161,13 @@ describe('la calculadora de pan — el prefermento', () => {
     expect(h).toContain('Fermentación de la masa final');
   });
 
-  it('el resultado es un solo bloque, con una o dos fichas', () => {
-    expect(resultadoPan(PAN_POR_DEFECTO).match(/data-resultado/g)).toHaveLength(1);
-    expect(resultadoPan({ ...PAN_POR_DEFECTO, prefermento: 'biga', horasPrefermento: 18 }).match(/class="ficha"/g)).toHaveLength(2);
+  it('el resultado es siempre una sola ficha; sin prefermento con levadura, sin grupos', () => {
+    const conBiga = resultadoPan({ ...PAN_POR_DEFECTO, prefermento: 'biga', horasPrefermento: 18 });
+    for (const r of [resultadoPan(PAN_POR_DEFECTO), conBiga]) {
+      expect(r.match(/data-resultado/g)).toHaveLength(1);
+      expect(r.match(/class="ficha/g)).toHaveLength(1);
+    }
+    expect(resultadoPan(PAN_POR_DEFECTO)).not.toContain('class="grupo"');
+    expect(resultadoPan({ ...PAN_POR_DEFECTO, prefermento: 'masa-madre' })).not.toContain('class="grupo"');
   });
 });

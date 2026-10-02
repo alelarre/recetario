@@ -1,6 +1,6 @@
 ---
 name: herramientas
-description: Usar cuando el usuario quiere calcular las cantidades de un pan o de una masa de pizza (harina, agua, sal, levadura o masa madre, hidratación, para un peso de harina o de masa, o para una cantidad de bollos) o la sal de un fermentado (chucrut, kimchi, ajíes, pepinos, verduras en salmuera) y cuántos días tarda según la temperatura. Por ejemplo «quiero hacer un pan con 500 g de 000» o «cuánta sal le pongo a un frasco de pepinos de 1200 g». Trabaja con las herramientas `calcular_pan` y `calcular_sal` del MCP `recetario`.
+description: Usar cuando el usuario quiere calcular las cantidades de un pan o de una masa de pizza (harina, agua, sal, levadura, masa madre u otro prefermento, hidratación, para un peso de harina o de masa, o para una cantidad de bollos) o la sal de un fermentado (chucrut, kimchi, ajíes, pepinos, verduras en salmuera) y cuántos días tarda según la temperatura. Por ejemplo «quiero hacer un pan con 500 g de 000» o «cuánta sal le pongo a un frasco de pepinos de 1200 g». Trabaja con las herramientas `calcular_pan` y `calcular_sal` del MCP `recetario`.
 ---
 
 # Herramientas
@@ -20,23 +20,24 @@ cuentas son las de la app: `calcular_pan` y `calcular_sal` del MCP
   con sus opciones y en este orden:
   1. pan;
   2. harinas: la principal y si hay una segunda (con su porcentaje);
-  3. levadura;
-  4. fermentación: ambiente o frío, y cuántas horas;
-  5. cantidad: harina total o masa total, en gramos; en una pizza, cuántos
+  3. prefermento: ninguno, masa madre, poolish, biga o pâte fermentée;
+  4. levadura: fresca o seca (con masa madre no va);
+  5. fermentación: ambiente o frío, y cuántas horas (con poolish o biga no
+     va);
+  6. cantidad: harina total o masa total, en gramos; en una pizza, cuántos
      bollos y de cuántos gramos, ofreciendo el peso sugerido que devuelve.
 
   Preguntá sólo lo que devolvió, aunque sepas que falta algo más: un dato que
-  depende de otro que falta —la segunda harina de la principal, las horas de
-  la levadura y el modo, la cantidad del pan— no viene todavía, porque sus opciones cambian según
-  la respuesta. Con las respuestas, volvé a llamar a la herramienta y repetí
+  depende de otro que falta —la segunda harina de la principal; las horas,
+  del prefermento y el modo; la cantidad, del pan— no viene todavía, porque
+  sus opciones cambian según la respuesta. Con las respuestas, volvé a llamar a la herramienta y repetí
   hasta que calcule. Puede llevar más de una vuelta.
 - **Mostrá el resultado** como una lista, una línea por ingrediente y la
-  hidratación, con la harina total y la masa total. Con prefermento, dos
-  listas: *Prefermento* y *Masa final*. Debajo, las advertencias tal como
-  vienen.
-- **El prefermento (poolish, biga o pâte fermentée) es opcional:** pasalo
-  sólo si el usuario lo nombra; si no, el pan va sin. No lo ofrezcas como
-  pregunta.
+  hidratación, con la harina total y la masa total. Con poolish, biga o pâte
+  fermentée, dos listas: *Prefermento* y *Masa final*. Debajo, las
+  advertencias tal como vienen.
+- **La masa madre es un prefermento, no una levadura:** si el usuario dice
+  «con masa madre», va en `prefermento` y no se pregunta la levadura.
 
 ## Ejemplos
 
@@ -48,8 +49,9 @@ pregunta, en un mensaje:
 > Para calcularlo me faltan:
 > 1. ¿Qué pan? Pan francés, Pan de molde, Pan de miga, Pizza al molde, Pizza a la piedra, Pizza napolitana, Pizza New York, Baguette, Pan de campo, Ciabatta o Focaccia.
 > 2. ¿Le sumás una segunda harina? Ninguna, 0000, 000 para pizza, Semolín, Integral o Centeno.
-> 3. ¿Qué levadura? Fresca, Seca o Masa madre.
-> 4. ¿Fermentación a temperatura ambiente o en frío?
+> 3. ¿Con algún prefermento? Ninguno, Masa madre, Poolish, Biga o Pâte fermentée.
+> 4. ¿Qué levadura? Fresca o Seca (con masa madre no hace falta).
+> 5. ¿Fermentación a temperatura ambiente o en frío? (Con poolish o biga no hace falta.)
 
 Si contesta «pan de campo, sin segunda harina, masa madre, en frío», la
 vuelta siguiente devuelve las horas que van con masa madre en frío (12, 24,

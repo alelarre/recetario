@@ -12,7 +12,9 @@ import { comoErrorDeLogin, esErrorDeGoogle, ErrorDeLogin, mensajeDeGoogle } from
 import { crearLlaveroMac, SERVICIO_CLIENTE } from './llavero.js';
 import { recetarioDeGoogle, type Recetario } from './recetario.js';
 import { calcularPanParaElAgente, calcularSalParaElAgente } from './calculadoras.js';
-import { PANES, HARINAS, LEVADURAS, PORCENTAJES_SEGUNDA, FERMENTACIONES, PREFERMENTOS } from '../src/calculadoras/pan.js';
+import {
+  PANES, HARINAS, LEVADURAS, PORCENTAJES_SEGUNDA, FERMENTACIONES, PREFERMENTOS, PREFERMENTOS_CON_LEVADURA
+} from '../src/calculadoras/pan.js';
 import { FERMENTOS, TEMPERATURAS } from '../src/calculadoras/fermentados.js';
 
 // La marca que el test de publicación busca en `dist/`: si aparece ahí, el
@@ -150,9 +152,9 @@ export function crearServidor(recetario: Recetario): McpServer {
   const pizzas = (): string => PANES.filter(p => p.bollo !== undefined).map(p => p.nombre).join(', ');
 
   servidor.registerTool('calcular_pan', {
-    description: 'Las cantidades de un pan: harinas, agua, sal y levadura o masa madre, con las tablas de la app. ' +
+    description: 'Las cantidades de un pan: harinas, agua, sal y levadura, masa madre u otro prefermento, con las tablas de la app. ' +
       'Un pan se pide por la harina o la masa total; una pizza, en bollos y gramos por bollo. ' +
-      'Con prefermento, devuelve aparte lo del prefermento, y `resultado` es la masa final. ' +
+      'Con poolish, biga o pâte fermentée, devuelve aparte lo del prefermento, y `resultado` es la masa final. ' +
       'Si falta un dato o no es una opción, no calcula: devuelve qué falta y sus opciones. ' +
       'No completes datos por tu cuenta: preguntáselos al usuario.',
     inputSchema: {
@@ -160,15 +162,15 @@ export function crearServidor(recetario: Recetario): McpServer {
       harina: z.string().optional().describe(`La harina principal, una de: ${opciones(HARINAS)}.`),
       segunda_harina: z.string().optional().describe('«ninguna», o una harina distinta de la principal.'),
       porcentaje_segunda: z.number().optional().describe(`Con segunda harina: ${PORCENTAJES_SEGUNDA.join(', ')}.`),
-      levadura: z.string().optional().describe(`Una de: ${opciones(LEVADURAS)}.`),
-      fermentacion: z.string().optional().describe('«ambiente» o «frío».'),
+      prefermento: z.string().optional().describe(`«ninguno» o uno de: ${opciones(PREFERMENTOS)}. La masa madre leva sola, sin levadura.`),
+      horas_prefermento: z.number().optional().describe(`Las horas del prefermento: ${PREFERMENTOS_CON_LEVADURA.map(p => `${p.nombre} ${p.horas.map(h => h.horas).join(', ')}`).join('; ')}.`),
+      levadura: z.string().optional().describe(`Una de: ${opciones(LEVADURAS)}. Con masa madre no va.`),
+      fermentacion: z.string().optional().describe('«ambiente» o «frío». Con poolish o biga no va.'),
       horas: z.number().optional().describe(`Ambiente: ${horas('ambiente')} (con masa madre, sin 2). Frío: ${horas('frio')}.`),
       harina_total: z.number().optional().describe('En un pan que no es pizza: en gramos. Una sola de las dos cantidades.'),
       masa_total: z.number().optional().describe('En un pan que no es pizza: en gramos. Una sola de las dos cantidades.'),
       bollos: z.number().optional().describe(`En una pizza (${pizzas()}): cuántos bollos.`),
-      peso_bollo: z.number().optional().describe('En una pizza: gramos por bollo. Si falta, se ofrece el sugerido del estilo.'),
-      prefermento: z.string().optional().describe(`Opcional; sin él, el pan va sin prefermento. «ninguno» o uno de: ${opciones(PREFERMENTOS)}. No va con masa madre.`),
-      horas_prefermento: z.number().optional().describe(`Las horas del prefermento: ${PREFERMENTOS.map(p => `${p.nombre} ${p.horas.map(h => h.horas).join(', ')}`).join('; ')}.`)
+      peso_bollo: z.number().optional().describe('En una pizza: gramos por bollo. Si falta, se ofrece el sugerido del estilo.')
     }
   }, (pedido) => responder(() => json(calcularPanParaElAgente(pedido))));
 

@@ -3,7 +3,7 @@ import { leerPedidoPan } from '../src/calculadoras/pan.js';
 import { leerPedidoSal } from '../src/calculadoras/fermentados.js';
 
 const completo = {
-  pan: 'campo', harina: '000', segunda_harina: 'ninguna', levadura: 'fresca',
+  pan: 'campo', harina: '000', segunda_harina: 'ninguna', prefermento: 'ninguno', levadura: 'fresca',
   fermentacion: 'ambiente', horas: 8, harina_total: 500
 };
 
@@ -22,7 +22,8 @@ it('con segunda harina y la masa total', () => {
 
 it('sólo con la harina y la cantidad: dice qué falta y las opciones; las horas, todavía no', () => {
   const r = leerPedidoPan({ harina: '000', harina_total: 500 });
-  expect('faltan' in r && r.faltan.map(f => f.dato)).toEqual(['pan', 'segunda_harina', 'levadura', 'fermentacion']);
+  expect('faltan' in r && r.faltan.map(f => f.dato)).toEqual(['pan', 'segunda_harina', 'prefermento', 'levadura', 'fermentacion']);
+  expect('faltan' in r && r.faltan[2]!.opciones).toEqual(['Ninguno', 'Masa madre', 'Poolish', 'Biga', 'Pâte fermentée']);
   expect('faltan' in r && r.faltan[0]!.opciones).toContain('Pan de campo');
   expect('faltan' in r && r.faltan[1]!.opciones).toEqual(['Ninguna', '0000', '000 para pizza', 'Semolín', 'Integral', 'Centeno']);
 });
@@ -33,7 +34,7 @@ it('con segunda harina sin porcentaje, falta el porcentaje', () => {
 });
 
 it('masa madre con 2 h no vale, y ofrece las horas posibles', () => {
-  const r = leerPedidoPan({ ...completo, levadura: 'masa madre', horas: 2 });
+  const r = leerPedidoPan({ ...completo, prefermento: 'masa madre', horas: 2 });
   expect(r).toEqual({ faltan: [{ dato: 'horas', opciones: ['4', '8'] }] });
 });
 
@@ -65,10 +66,12 @@ it('sal: la temperatura es opcional, por su nombre, y una que no es franja falta
 
 it('un dato que depende de otro que falta no se pide todavía', () => {
   // Sin la harina principal no se sabe qué segunda se puede ofrecer.
-  const sinHarina = leerPedidoPan({ pan: 'campo', levadura: 'fresca', fermentacion: 'ambiente', horas: 8, harina_total: 500 });
+  const sinHarina = leerPedidoPan({ ...completo, harina: undefined, segunda_harina: undefined });
   expect('faltan' in sinHarina && sinHarina.faltan.map(f => f.dato)).toEqual(['harina']);
-  // Sin la levadura no se sabe si van las 2 h.
-  const sinLevadura = leerPedidoPan({ ...completo, levadura: undefined, horas: undefined });
+  // Sin el prefermento no se sabe si van las 2 h.
+  const sinPrefermento = leerPedidoPan({ ...completo, prefermento: undefined, horas: undefined });
+  expect('faltan' in sinPrefermento && sinPrefermento.faltan.map(f => f.dato)).toEqual(['prefermento']);
+  const sinLevadura = leerPedidoPan({ ...completo, levadura: undefined });
   expect('faltan' in sinLevadura && sinLevadura.faltan.map(f => f.dato)).toEqual(['levadura']);
   // Sin el modo no se sabe qué horas ofrecer.
   const sinModo = leerPedidoPan({ ...completo, fermentacion: undefined, horas: undefined });
@@ -76,8 +79,15 @@ it('un dato que depende de otro que falta no se pide todavía', () => {
 });
 
 it('con lo que se respondió, la vuelta siguiente pide lo que dependía de eso', () => {
-  const r = leerPedidoPan({ ...completo, levadura: 'masa madre', horas: undefined });
+  const r = leerPedidoPan({ ...completo, prefermento: 'masa madre', horas: undefined });
   expect(r).toEqual({ faltan: [{ dato: 'horas', opciones: ['4', '8'] }] });
+});
+
+it('pan: la masa madre es un prefermento y no pide levadura', () => {
+  expect(leerPedidoPan({ ...completo, prefermento: 'Masa Madre', levadura: undefined }))
+    .toEqual({ datos: expect.objectContaining({ prefermento: 'masa-madre', fermentacion: 'ambiente-8' }) });
+  const sinNada = leerPedidoPan({ ...completo, prefermento: 'masa madre', levadura: undefined, fermentacion: undefined, horas: undefined });
+  expect('faltan' in sinNada && sinNada.faltan.map(f => f.dato)).toEqual(['fermentacion']);
 });
 
 it('pan: una pizza se pide en bollos y gramos por bollo, con el sugerido como opción', () => {
@@ -95,7 +105,7 @@ it('pan: sin el pan no se pide la cantidad, porque depende de si es pizza', () =
   expect('faltan' in sinPan && sinPan.faltan.map(f => f.dato)).toEqual(['pan']);
 });
 
-it('pan: el prefermento es opcional; con poolish faltan sus horas, y no pide la fermentación de la masa final', () => {
+it('pan: con poolish faltan sus horas, y no pide la fermentación de la masa final', () => {
   const { fermentacion: _f, horas: _h, ...sinFermentacion } = completo;
   expect(leerPedidoPan({ ...sinFermentacion, prefermento: 'poolish' }))
     .toEqual({ faltan: [{ dato: 'horas_prefermento', opciones: ['8', '12', '18'] }] });
@@ -112,9 +122,9 @@ it('pan: la pâte fermentée sí pide la fermentación de la masa final', () => 
   expect('faltan' in r && r.faltan.map(f => f.dato)).toEqual(['fermentacion']);
 });
 
-it('pan: un prefermento que no es de la tabla, o con masa madre, falta con sus opciones', () => {
+it('pan: un prefermento que no es de la tabla falta con sus opciones, y la masa madre no es una levadura', () => {
   expect(leerPedidoPan({ ...completo, prefermento: 'levain' }))
-    .toEqual({ faltan: [{ dato: 'prefermento', opciones: ['Ninguno', 'Poolish', 'Biga', 'Pâte fermentée'] }] });
+    .toEqual({ faltan: [{ dato: 'prefermento', opciones: ['Ninguno', 'Masa madre', 'Poolish', 'Biga', 'Pâte fermentée'] }] });
   expect(leerPedidoPan({ ...completo, prefermento: 'biga', levadura: 'masa madre' }))
     .toEqual({ faltan: [{ dato: 'levadura', opciones: ['Fresca', 'Seca'] }] });
 });

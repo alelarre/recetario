@@ -42,6 +42,8 @@ export const ICO = {
     '<path d="M4 13h5l1 2h4l1-2h5"/>'),
   /** Los dos tags especiales que no son favorito: «probar» y «menú diario». */
   marcador: svg('<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>'),
+  /** Entre los dos campos de una cantidad que se calculan uno al otro. De Lucide (arrow-left-right). */
+  idaYVuelta: svg('<path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/>'),
   /** Herramientas, en el menú: una balanza de cocina. */
   balanza: svg('<path d="M5 20h14l-1.5-9h-11z"/><path d="M12 11V7"/><circle cx="12" cy="5" r="2"/>'),
   calendario: svg('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),

@@ -15,11 +15,11 @@ export type ClavePan =
   | 'frances' | 'molde' | 'miga' | 'pizza-molde' | 'pizza-piedra' | 'napolitana' | 'new-york'
   | 'baguette' | 'campo' | 'ciabatta' | 'focaccia';
 export type ClaveHarina = '0000' | '000' | '000-pizza' | 'semolin' | 'integral' | 'centeno';
-export type Levadura = 'fresca' | 'seca' | 'masa-madre';
+export type Levadura = 'fresca' | 'seca';
 export type ClaveFermentacion =
   | 'ambiente-2' | 'ambiente-4' | 'ambiente-8' | 'frio-12' | 'frio-24' | 'frio-48' | 'frio-72';
 export type PorcentajeSegunda = 10 | 20 | 30 | 50;
-export type ClavePrefermento = 'poolish' | 'biga' | 'pate';
+export type ClavePrefermento = 'masa-madre' | 'poolish' | 'biga' | 'pate';
 
 /**
  * El tipo de pan pone la hidratación base, con harina 000. Una pizza lleva
@@ -60,8 +60,7 @@ export const HARINAS: readonly { clave: ClaveHarina; nombre: string; ajuste: num
 
 export const LEVADURAS: readonly { clave: Levadura; nombre: string }[] = [
   { clave: 'fresca', nombre: 'Fresca' },
-  { clave: 'seca', nombre: 'Seca' },
-  { clave: 'masa-madre', nombre: 'Masa madre' }
+  { clave: 'seca', nombre: 'Seca' }
 ];
 
 /**
@@ -82,6 +81,8 @@ export const FERMENTACIONES: readonly {
 ];
 
 export const PORCENTAJES_SEGUNDA: readonly PorcentajeSegunda[] = [10, 20, 30, 50];
+/** La harina con que arranca la mezcla al encenderla. */
+export const SEGUNDA_POR_DEFECTO: ClaveHarina = 'integral';
 
 /**
  * Los prefermentos con levadura comercial: qué parte de la harina total va al
@@ -94,8 +95,8 @@ export const PORCENTAJES_SEGUNDA: readonly PorcentajeSegunda[] = [10, 20, 30, 50
  * levadura de la tabla de fermentación. Las fuentes de cada valor están en
  * `product-design/research/herramientas/panaderia-pizza-masas.md`.
  */
-export const PREFERMENTOS: readonly {
-  clave: ClavePrefermento; nombre: string; harina: number; hidratacion: number; sal: number;
+export const PREFERMENTOS_CON_LEVADURA: readonly {
+  clave: Exclude<ClavePrefermento, 'masa-madre'>; nombre: string; harina: number; hidratacion: number; sal: number;
   horas: readonly { horas: number; fresca: number }[]; levaduraFinal: boolean; advertencia: string;
 }[] = [
   // Bianco Lievito: 20 a 40 % de la harina; levadura a 23 °C.
@@ -110,6 +111,15 @@ export const PREFERMENTOS: readonly {
   { clave: 'pate', nombre: 'Pâte fermentée', harina: 27, hidratacion: 68, sal: 1.4,
     horas: [{ horas: 14, fresca: 0.3 }], levaduraFinal: true,
     advertencia: 'La pâte fermentée fermenta unas 14 h a temperatura ambiente. La masa final lleva su propia levadura.' }
+];
+
+/**
+ * Lo que se elige como prefermento. La masa madre es uno más: leva el pan
+ * sola, sin levadura, y su cantidad sale de la tabla de fermentación.
+ */
+export const PREFERMENTOS: readonly { clave: ClavePrefermento; nombre: string }[] = [
+  { clave: 'masa-madre', nombre: 'Masa madre' },
+  ...PREFERMENTOS_CON_LEVADURA
 ];
 
 /** Los bollos con que arranca una pizza si no había. */
@@ -134,12 +144,13 @@ export interface DatosPan {
   segunda: ClaveHarina | null;
   /** Sin segunda harina no se usa. */
   porcentajeSegunda: PorcentajeSegunda;
+  /** `null` es un pan directo, sólo con levadura. */
+  prefermento: ClavePrefermento | null;
+  /** Fresca o seca. Con masa madre no se usa. */
   levadura: Levadura;
   fermentacion: ClaveFermentacion;
   cantidad: CantidadPan;
-  /** No va con masa madre. */
-  prefermento: ClavePrefermento | null;
-  /** Las horas del prefermento, una de las de su tabla. */
+  /** Las horas de un prefermento con levadura, una de las de su tabla. */
   horasPrefermento: number;
 }
 
@@ -166,7 +177,6 @@ export interface ResultadoPan {
   sal: number;
   /** La levadura fresca o seca, o la masa madre. */
   levadura: number;
-  levaduraTipo: Levadura;
   hidratacion: number;
   topeada: boolean;
   /** Toda la harina, con la de la masa madre. */
@@ -180,14 +190,19 @@ function buscar<T extends { clave: string }>(tabla: readonly T[], clave: T['clav
   return fila;
 }
 
-export const fermentacionesPara = (levadura: Levadura): typeof FERMENTACIONES =>
-  FERMENTACIONES.filter(f => levadura !== 'masa-madre' || f.masaMadre !== null);
+export const fermentacionesPara = (prefermento: ClavePrefermento | null): typeof FERMENTACIONES =>
+  FERMENTACIONES.filter(f => prefermento !== 'masa-madre' || f.masaMadre !== null);
 
-const prefermentoDe = (d: DatosPan): (typeof PREFERMENTOS)[number] | null =>
-  d.levadura === 'masa-madre' ? null : PREFERMENTOS.find(p => p.clave === d.prefermento) ?? null;
+type ConLevadura = (typeof PREFERMENTOS_CON_LEVADURA)[number];
+
+/** El prefermento con levadura elegido, o `null` si no hay o es la masa madre. */
+export const prefermentoConLevadura = (clave: ClavePrefermento | null): ConLevadura | null =>
+  PREFERMENTOS_CON_LEVADURA.find(p => p.clave === clave) ?? null;
+
+const prefermentoDe = (d: DatosPan): ConLevadura | null => prefermentoConLevadura(d.prefermento);
 
 /** Las horas del prefermento elegidas, o las primeras de su tabla. */
-const horasDe = (pref: (typeof PREFERMENTOS)[number], horas: number) =>
+const horasDe = (pref: ConLevadura, horas: number) =>
   pref.horas.find(h => h.horas === horas) ?? pref.horas[0] ?? { horas: 0, fresca: 0 };
 
 /**
@@ -195,6 +210,13 @@ const horasDe = (pref: (typeof PREFERMENTOS)[number], horas: number) =>
  * prefermento o con uno que deja a la masa final su propia levadura.
  */
 export const conFermentacion = (d: DatosPan): boolean => prefermentoDe(d)?.levaduraFinal ?? true;
+
+/** Si hay que elegir levadura: siempre, salvo con masa madre. */
+export const conLevadura = (d: DatosPan): boolean => d.prefermento !== 'masa-madre';
+
+/** La harina que se suma al encender la mezcla: la de por defecto, o la primera que no sea la principal. */
+export const segundaAlMezclar = (harina: ClaveHarina): ClaveHarina =>
+  harina !== SEGUNDA_POR_DEFECTO ? SEGUNDA_POR_DEFECTO : HARINAS.find(h => h.clave !== harina)?.clave ?? SEGUNDA_POR_DEFECTO;
 
 /** El peso sugerido del bollo, o `null` si el pan no es una pizza. */
 export const bolloDe = (pan: ClavePan): number | null => PANES.find(p => p.clave === pan)?.bollo ?? null;
@@ -225,7 +247,7 @@ export function calcularPan(d: DatosPan): ResultadoPan | null {
   const ajuste = buscar(HARINAS, d.harina).ajuste * (1 - p) + (d.segunda ? buscar(HARINAS, d.segunda).ajuste * p : 0);
   const sinTope = pan.hidratacion + ajuste;
   const hidratacion = Math.min(sinTope, HIDRATACION_MAXIMA);
-  const conMasaMadre = d.levadura === 'masa-madre';
+  const conMasaMadre = d.prefermento === 'masa-madre';
 
   const pref = prefermentoDe(d);
   const seca = (fresca: number): number => (d.levadura === 'seca' ? fresca / DIVISOR_SECA : fresca);
@@ -264,7 +286,6 @@ export function calcularPan(d: DatosPan): ResultadoPan | null {
     agua: agua - masaMadre / 2 - (prefermento?.agua ?? 0),
     sal: sal - (prefermento?.sal ?? 0),
     levadura: conMasaMadre ? masaMadre : H * pctFinal / 100,
-    levaduraTipo: d.levadura,
     hidratacion,
     topeada: sinTope > HIDRATACION_MAXIMA,
     harinaTotal: H,
@@ -288,7 +309,7 @@ export interface PedidoPan {
   /** En una pizza, la cantidad es bollos y gramos por bollo. */
   bollos?: number | undefined;
   peso_bollo?: number | undefined;
-  /** `ninguno` o uno de la tabla. Sin él, el pan va sin prefermento. */
+  /** `ninguno` o uno de la tabla, la masa madre incluida. */
   prefermento?: string | undefined;
   horas_prefermento?: number | undefined;
 }
@@ -300,9 +321,13 @@ const MODOS = [{ clave: 'ambiente', nombre: 'Ambiente' }, { clave: 'frio', nombr
  * valores por defecto: lo que no vino se le pregunta al usuario.
  *
  * Un dato cuyas opciones dependen de otro que falta no se pide todavía: la
- * segunda harina espera a la principal, las horas a la levadura y al modo, y
- * la cantidad al pan, porque una pizza se pide en bollos. Se pide en la
+ * segunda harina espera a la principal; las horas, al prefermento y al modo;
+ * y la cantidad al pan, porque una pizza se pide en bollos. Se pide en la
  * vuelta siguiente, con opciones que van seguro.
+ *
+ * La levadura y la fermentación se piden junto con el prefermento, y dejan de
+ * pedirse cuando el elegido no las usa: la masa madre no lleva levadura, y
+ * con poolish o biga la masa final no tiene fermentación que elegir.
  */
 export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   const faltan: Faltante[] = [];
@@ -320,24 +345,27 @@ export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   const porcentaje = PORCENTAJES_SEGUNDA.find(x => x === p.porcentaje_segunda);
   if (segunda && !porcentaje) falta('porcentaje_segunda', PORCENTAJES_SEGUNDA.map(String));
 
-  const ningunPrefermento = p.prefermento === undefined || !!porNombre([{ clave: 'ninguno', nombre: 'Ninguno' }], p.prefermento);
-  const prefermento = ningunPrefermento ? null : porNombre(PREFERMENTOS, p.prefermento);
-  if (!ningunPrefermento && !prefermento) falta('prefermento', ['Ninguno', ...PREFERMENTOS.map(x => x.nombre)]);
-  const horasPrefermento = prefermento?.horas.length === 1 ? prefermento.horas[0] : prefermento?.horas.find(h => h.horas === p.horas_prefermento);
-  if (prefermento && !horasPrefermento) falta('horas_prefermento', prefermento.horas.map(h => String(h.horas)));
+  const ninguno = !!porNombre([{ clave: 'ninguno', nombre: 'Ninguno' }], p.prefermento);
+  const elegido = ninguno ? null : porNombre(PREFERMENTOS, p.prefermento);
+  const sabePrefermento = ninguno || !!elegido;
+  if (!sabePrefermento) falta('prefermento', ['Ninguno', ...PREFERMENTOS.map(x => x.nombre)]);
+  const pref = prefermentoConLevadura(elegido?.clave ?? null);
+  const horasPrefermento = pref?.horas.length === 1 ? pref.horas[0] : pref?.horas.find(h => h.horas === p.horas_prefermento);
+  if (pref && !horasPrefermento) falta('horas_prefermento', pref.horas.map(h => String(h.horas)));
 
-  // Con prefermento no va la masa madre.
-  const levaduras = prefermento ? LEVADURAS.filter(x => x.clave !== 'masa-madre') : LEVADURAS;
-  const levadura = porNombre(levaduras, p.levadura);
-  if (!levadura) falta('levadura', levaduras.map(x => x.nombre));
+  // La masa madre no lleva levadura.
+  const pideLevadura = elegido?.clave !== 'masa-madre';
+  const levadura = porNombre(LEVADURAS, p.levadura);
+  if (pideLevadura && !levadura) falta('levadura', LEVADURAS.map(x => x.nombre));
 
   // Sin levadura en la masa final, no hay fermentación que elegir.
-  const conTabla = !prefermento || prefermento.levaduraFinal;
+  const conTabla = !pref || pref.levaduraFinal;
   const modo = conTabla ? porNombre(MODOS, p.fermentacion) : null;
   if (conTabla && !modo) falta('fermentacion', MODOS.map(x => x.nombre));
-  const posibles = levadura && modo ? fermentacionesPara(levadura.clave).filter(f => f.modo === modo.clave) : [];
+  // Las horas esperan al prefermento: con masa madre no van las 2 h.
+  const posibles = modo && sabePrefermento ? fermentacionesPara(elegido?.clave ?? null).filter(f => f.modo === modo.clave) : [];
   const fermentacion = conTabla ? posibles.find(f => f.horas === p.horas) : buscar(FERMENTACIONES, PAN_POR_DEFECTO.fermentacion);
-  if (levadura && modo && !fermentacion) falta('horas', posibles.map(f => String(f.horas)));
+  if (modo && sabePrefermento && !fermentacion) falta('horas', posibles.map(f => String(f.horas)));
 
   const bollo = pan ? bolloDe(pan.clave) : null;
   let cantidad: CantidadPan | null = null;
@@ -355,14 +383,15 @@ export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
     else falta('cantidad', ['harina_total', 'masa_total']);
   }
 
-  if (faltan.length || !pan || !harina || (!ninguna && !segunda) || !levadura || !fermentacion || !cantidad) return { faltan };
+  if (faltan.length || !pan || !harina || (!ninguna && !segunda) || !fermentacion || !cantidad) return { faltan };
   return {
     datos: {
       pan: pan.clave, harina: harina.clave, segunda: segunda?.clave ?? null,
       porcentajeSegunda: porcentaje ?? PORCENTAJES_SEGUNDA[0] ?? 10,
-      levadura: levadura.clave, fermentacion: fermentacion.clave,
+      prefermento: elegido?.clave ?? null,
+      levadura: levadura?.clave ?? PAN_POR_DEFECTO.levadura,
+      fermentacion: fermentacion.clave,
       cantidad,
-      prefermento: prefermento?.clave ?? null,
       horasPrefermento: horasPrefermento?.horas ?? 0
     }
   };
@@ -371,8 +400,8 @@ export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
 /** Lo que muestra la calculadora la primera vez. */
 export const PAN_POR_DEFECTO: DatosPan = {
   pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 30,
-  levadura: 'fresca', fermentacion: 'ambiente-8', cantidad: { de: 'harina', gramos: 1000 },
-  prefermento: null, horasPrefermento: 0
+  prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8', cantidad: { de: 'harina', gramos: 1000 },
+  horasPrefermento: 0
 };
 
 const deLaTabla = <T extends { clave: string }>(tabla: readonly T[], valor: unknown): T['clave'] | undefined =>
@@ -383,8 +412,8 @@ const deLaTabla = <T extends { clave: string }>(tabla: readonly T[], valor: unkn
  * ya no es una opción vuelve al valor por defecto, y el resto se conserva.
  * También corrige las combinaciones que no van: la segunda igual a la
  * principal, las 2 h con masa madre, una cantidad que no es la del pan
- * —una pizza va en bollos; un pan, en harina o masa—, un prefermento con
- * masa madre y unas horas que no son de su prefermento.
+ * —una pizza va en bollos; un pan, en harina o masa— y unas horas que no son
+ * de su prefermento.
  */
 export function completarPan(guardado: unknown): DatosPan {
   const g: Record<string, unknown> = typeof guardado === 'object' && guardado !== null && !Array.isArray(guardado)
@@ -393,7 +422,9 @@ export function completarPan(guardado: unknown): DatosPan {
   const harina = deLaTabla(HARINAS, g['harina']) ?? d.harina;
   const segunda = deLaTabla(HARINAS, g['segunda']);
   const levadura = deLaTabla(LEVADURAS, g['levadura']) ?? d.levadura;
-  const fermentacion = deLaTabla(fermentacionesPara(levadura), g['fermentacion'])
+  const prefermento = deLaTabla(PREFERMENTOS, g['prefermento']) ?? null;
+  const pref = prefermentoConLevadura(prefermento);
+  const fermentacion = deLaTabla(fermentacionesPara(prefermento), g['fermentacion'])
     ?? (g['fermentacion'] === 'ambiente-2' ? 'ambiente-4' : d.fermentacion);
   const pan = deLaTabla(PANES, g['pan']) ?? d.pan;
   const c = typeof g['cantidad'] === 'object' && g['cantidad'] !== null ? g['cantidad'] as Record<string, unknown> : {};
@@ -410,43 +441,58 @@ export function completarPan(guardado: unknown): DatosPan {
     : leida === null ? d.cantidad
     : leida.de === 'bollos' ? { de: 'masa', gramos: leida.bollos * leida.gramos }
     : leida;
-  const prefermento = levadura === 'masa-madre' ? null : PREFERMENTOS.find(x => x.clave === g['prefermento']) ?? null;
   return {
     pan,
     harina,
     segunda: segunda && segunda !== harina ? segunda : null,
     porcentajeSegunda: PORCENTAJES_SEGUNDA.find(x => x === g['porcentajeSegunda']) ?? d.porcentajeSegunda,
+    prefermento,
     levadura,
     fermentacion,
     cantidad,
-    prefermento: prefermento?.clave ?? null,
-    horasPrefermento: prefermento ? horasDe(prefermento, typeof g['horasPrefermento'] === 'number' ? g['horasPrefermento'] : 0).horas : 0
+    horasPrefermento: pref ? horasDe(pref, typeof g['horasPrefermento'] === 'number' ? g['horasPrefermento'] : 0).horas : 0
   };
 }
 
-const NOMBRE_LEVADURA: Record<Levadura, string> = { fresca: 'Levadura fresca', seca: 'Levadura seca', 'masa-madre': 'Masa madre' };
+const NOMBRE_LEVADURA: Record<Levadura, string> = { fresca: 'Levadura fresca', seca: 'Levadura seca' };
+
+type Linea = { nombre: string; valor: string };
 
 /**
- * El resultado como se muestra, una línea por ingrediente y la hidratación:
- * lo usan la pantalla y el MCP, así dicen lo mismo. Sin resultado, cada valor
- * es un guion. Con prefermento son las de la masa final, sin la levadura si
- * va toda en el prefermento; la hidratación es la del pan entero.
+ * Lo que se destaca del resultado: la masa total y la hidratación, que son
+ * las del pan entero aunque haya prefermento. Sin resultado, guiones.
  */
-export function lineasPan(d: DatosPan): { nombre: string; valor: string }[] {
+export function cifrasPan(d: DatosPan): Linea[] {
   const r = calcularPan(d);
-  const aAgregar = d.levadura === 'masa-madre' ? ' a agregar' : '';
+  return [
+    { nombre: 'Masa total', valor: r ? `${gramos(r.masaTotal)} g` : '—' },
+    { nombre: 'Hidratación', valor: r ? porciento(r.hidratacion) : '—' }
+  ];
+}
+
+/**
+ * El resultado como se muestra, una línea por ingrediente: lo usan la
+ * pantalla y el MCP, así dicen lo mismo. Sin resultado, cada valor es un
+ * guion. Con un prefermento con levadura son las de la masa final, sin la
+ * levadura si va toda en el prefermento. Con masa madre, la harina y el agua
+ * son lo que se agrega aparte de lo que trae ella.
+ */
+export function lineasPan(d: DatosPan): Linea[] {
+  const r = calcularPan(d);
+  const conMasaMadre = d.prefermento === 'masa-madre';
+  const aAgregar = conMasaMadre ? ' a agregar' : '';
   const g = (valor: number | undefined): string => (r && valor !== undefined ? `${gramos(valor)} g` : '—');
   return [
     ...(r ? r.harinas.map(h => ({ nombre: `Harina ${h.nombre}${aAgregar}`, valor: g(h.gramos) })) : [{ nombre: 'Harina', valor: '—' }]),
     { nombre: `Agua${aAgregar}`, valor: g(r?.agua) },
     { nombre: 'Sal', valor: g(r?.sal) },
-    ...(conFermentacion(d) ? [{ nombre: NOMBRE_LEVADURA[d.levadura], valor: g(r?.levadura) }] : []),
-    { nombre: 'Hidratación', valor: r ? porciento(r.hidratacion) : '—' }
+    ...(conMasaMadre ? [{ nombre: 'Masa madre', valor: g(r?.levadura) }]
+      : conFermentacion(d) ? [{ nombre: NOMBRE_LEVADURA[d.levadura], valor: g(r?.levadura) }] : [])
   ];
 }
 
-/** Las líneas del prefermento, o ninguna si no hay. Sin resultado, guiones. */
-export function lineasPrefermento(d: DatosPan): { nombre: string; valor: string }[] {
+/** Las líneas de un prefermento con levadura, o ninguna si no hay. Sin resultado, guiones. */
+export function lineasPrefermento(d: DatosPan): Linea[] {
   const pref = prefermentoDe(d);
   if (!pref) return [];
   const r = calcularPan(d)?.prefermento;

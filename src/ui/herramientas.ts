@@ -10,11 +10,14 @@
 import { escapar } from './markdown.js';
 import { encabezado, conLateral, izquierdaDelEncabezado } from './componentes.js';
 import type { MenuDePantalla } from './componentes.js';
+import { ICO } from './iconos.js';
 import {
   PANES, HARINAS, LEVADURAS, PORCENTAJES_SEGUNDA, PREFERMENTOS, calcularPan, fermentacionesPara, FERMENTACIONES,
-  conFermentacion, lineasPan, lineasPrefermento, advertenciasPan, type DatosPan
+  conFermentacion, conLevadura, prefermentoConLevadura, cifrasPan, lineasPan, lineasPrefermento, advertenciasPan, type DatosPan
 } from '../calculadoras/pan.js';
-import { FERMENTOS, TEMPERATURAS, lineasSal, advertenciasSal, type DatosSal } from '../calculadoras/fermentados.js';
+import {
+  FERMENTOS, TEMPERATURAS, cifrasSal, lineasSal, advertenciasSal, type DatosSal
+} from '../calculadoras/fermentados.js';
 
 /** Una fila de opciones: un botón por opción, uno solo apretado. */
 function fila(etiqueta: string, grupo: string, opciones: readonly { valor: string; texto: string }[], elegido: string): string {
@@ -25,17 +28,46 @@ function fila(etiqueta: string, grupo: string, opciones: readonly { valor: strin
     `<div class="fila-opc" role="group" aria-label="${escapar(etiqueta)}">${botones}</div></div>`;
 }
 
+/**
+ * El interruptor: una fila entera que se toca, apagada o encendida. Manda el
+ * estado al que pasa, no el que tiene.
+ */
+const interruptor = (etiqueta: string, grupo: string, encendido: boolean): string =>
+  `<button type="button" class="interruptor" role="switch" aria-checked="${encendido}" data-accion="elegir-opcion" ` +
+  `data-grupo="${grupo}" data-valor="${encendido ? '' : '1'}"><span>${escapar(etiqueta)}</span>` +
+  '<span class="perilla" aria-hidden="true"></span></button>';
+
 /** Un campo de gramos. */
 const campoGramos = (etiqueta: string, cantidad: string, valor: number | null): string =>
   `<label class="campo"><span>${escapar(etiqueta)}</span>` +
   `<input type="number" inputmode="decimal" min="0" data-cantidad="${cantidad}" value="${valor === null ? '' : valor}"></label>`;
 
-/** Una línea del resultado, como las de la ficha de ingredientes. */
-const linea = (nombre: string, valor: string): string =>
-  `<div class="ing"><span class="n">${escapar(nombre)}</span><span class="c">${escapar(valor)}</span></div>`;
+/** Dos cantidades en una fila, con lo que las une en el medio. */
+const parDeCantidades = (una: string, entre: string, otra: string): string =>
+  `<div class="par-cantidades">${una}<span class="entre" aria-hidden="true">${entre}</span>${otra}</div>`;
+
+type Linea = { nombre: string; valor: string };
+
+/** Las líneas del resultado, como las de la ficha de ingredientes. */
+const lineas = (xs: readonly Linea[]): string =>
+  xs.map(l => `<div class="ing"><span class="n">${escapar(l.nombre)}</span><span class="c">${escapar(l.valor)}</span></div>`).join('');
+
+/** Lo que manda en el resultado, en grande: el valor arriba y su nombre abajo. */
+const cifras = (xs: readonly Linea[]): string =>
+  `<div class="cifras">${xs.map(x =>
+    `<div class="cifra"><span class="v">${escapar(x.valor)}</span><span class="n">${escapar(x.nombre)}</span></div>`).join('')}</div>`;
+
+const grupo = (titulo: string): string => `<div class="grupo">${escapar(titulo)}</div>`;
 
 const advertencias = (textos: readonly string[]): string =>
-  `<ul class="advertencias">${textos.map(t => `<li>${escapar(t)}</li>`).join('')}</ul>`;
+  (textos.length ? `<ul class="advertencias">${textos.map(t => `<li>${escapar(t)}</li>`).join('')}</ul>` : '');
+
+/**
+ * La ficha del resultado de una calculadora. Es un solo bloque para pintarlo
+ * entero mientras se escribe una cantidad.
+ */
+const fichaResultado = (contenido: string): string =>
+  `<div class="ficha resultado" data-resultado><h2>${ICO.balanza}Resultado</h2>${contenido}</div>`;
 
 export function renderHerramientas({ menu }: { menu?: MenuDePantalla }): string {
   const entrada = (hash: string, titulo: string, detalle: string): string =>
@@ -50,54 +82,53 @@ export function renderHerramientas({ menu }: { menu?: MenuDePantalla }): string 
 }
 
 /**
- * El bloque del resultado del pan: lo que va, la hidratación y las
- * advertencias. Con prefermento son dos fichas, el prefermento y la masa
- * final, en un mismo bloque para pintarlas juntas.
+ * El resultado del pan: la masa total y la hidratación en grande, lo que va
+ * —con un prefermento con levadura, en dos grupos— y las advertencias.
  */
 export function resultadoPan(d: DatosPan): string {
   const prefermento = lineasPrefermento(d);
-  const ficha = (titulo: string, lineas: { nombre: string; valor: string }[], pie = ''): string =>
-    `<div class="ficha"><h2>${escapar(titulo)}</h2>${lineas.map(l => linea(l.nombre, l.valor)).join('')}${pie}</div>`;
-  return '<div class="resultado" data-resultado>' +
-    (prefermento.length ? ficha('Prefermento', prefermento) : '') +
-    ficha(prefermento.length ? 'Masa final' : 'Resultado', lineasPan(d), advertencias(advertenciasPan(d))) +
-  '</div>';
+  return fichaResultado(
+    cifras(cifrasPan(d)) +
+    (prefermento.length ? grupo('Prefermento') + lineas(prefermento) + grupo('Masa final') : '') +
+    lineas(lineasPan(d)) +
+    advertencias(advertenciasPan(d)));
 }
 
 export function renderPan(d: DatosPan): string {
   const r = calcularPan(d);
   const modo = FERMENTACIONES.find(f => f.clave === d.fermentacion)?.modo ?? 'ambiente';
-  const horas = fermentacionesPara(d.levadura).filter(f => f.modo === modo);
-  const segundas = HARINAS.filter(h => h.clave !== d.harina);
-  const prefermento = d.levadura === 'masa-madre' ? undefined : PREFERMENTOS.find(p => p.clave === d.prefermento);
+  const horas = fermentacionesPara(d.prefermento).filter(f => f.modo === modo);
+  const otras = HARINAS.filter(h => h.clave !== d.harina);
+  const pref = prefermentoConLevadura(d.prefermento);
   const c = d.cantidad;
   // Una pizza va en bollos. En un pan, el campo que manda muestra lo escrito; el otro, lo que resulta.
   const cantidad = c.de === 'bollos'
-    ? campoGramos('Bollos', 'bollos', c.bollos) + campoGramos('Gramos por bollo', 'bollo', c.gramos)
-    : campoGramos('Harina total (g)', 'harina', c.de === 'harina' ? c.gramos : r ? Math.round(r.harinaTotal) : null) +
-      campoGramos('Masa total (g)', 'masa', c.de === 'masa' ? c.gramos : r ? Math.round(r.masaTotal) : null);
+    ? parDeCantidades(campoGramos('Bollos', 'bollos', c.bollos), '×', campoGramos('Gramos por bollo', 'bollo', c.gramos))
+    : parDeCantidades(
+        campoGramos('Harina total (g)', 'harina', c.de === 'harina' ? c.gramos : r ? Math.round(r.harinaTotal) : null),
+        ICO.idaYVuelta,
+        campoGramos('Masa total (g)', 'masa', c.de === 'masa' ? c.gramos : r ? Math.round(r.masaTotal) : null));
 
   return encabezado({ titulo: 'Pan', volver: true }) +
     '<div class="cuerpo"><div class="ficha calculadora">' +
       fila('Pan', 'pan', PANES.map(p => ({ valor: p.clave, texto: p.nombre })), d.pan) +
       fila('Harina', 'harina', HARINAS.map(h => ({ valor: h.clave, texto: h.nombre })), d.harina) +
-      fila('Segunda harina', 'segunda',
-        [{ valor: '', texto: 'Ninguna' }, ...segundas.map(h => ({ valor: h.clave, texto: h.nombre }))], d.segunda ?? '') +
+      interruptor('Mezclar con otra harina', 'mezcla', d.segunda !== null) +
       (d.segunda
-        ? fila('Porcentaje de la segunda', 'porcentaje',
+        ? fila('Otra harina', 'segunda', otras.map(h => ({ valor: h.clave, texto: h.nombre })), d.segunda) +
+          fila('Porcentaje de la otra harina', 'porcentaje',
             PORCENTAJES_SEGUNDA.map(p => ({ valor: String(p), texto: `${p} %` })), String(d.porcentajeSegunda))
         : '') +
-      fila('Levadura', 'levadura', LEVADURAS.map(l => ({ valor: l.clave, texto: l.nombre })), d.levadura) +
-      // El prefermento no va con masa madre.
-      (d.levadura === 'masa-madre' ? '' :
-        fila('Prefermento', 'prefermento',
-          [{ valor: '', texto: 'Ninguno' }, ...PREFERMENTOS.map(p => ({ valor: p.clave, texto: p.nombre }))], d.prefermento ?? '') +
-        (prefermento && prefermento.horas.length > 1
-          ? fila(`Horas del ${prefermento.nombre.toLowerCase()}`, 'horas-prefermento',
-              prefermento.horas.map(h => ({ valor: String(h.horas), texto: `${h.horas} h` })), String(d.horasPrefermento))
-          : '')) +
+      fila('Prefermento', 'prefermento',
+        [{ valor: '', texto: 'Ninguno' }, ...PREFERMENTOS.map(p => ({ valor: p.clave, texto: p.nombre }))], d.prefermento ?? '') +
+      (pref && pref.horas.length > 1
+        ? fila(`Horas del ${pref.nombre.toLowerCase()}`, 'horas-prefermento',
+            pref.horas.map(h => ({ valor: String(h.horas), texto: `${h.horas} h` })), String(d.horasPrefermento))
+        : '') +
+      // La levadura va después del prefermento, que dice si hace falta: la masa madre leva sola.
+      (conLevadura(d) ? fila('Levadura', 'levadura', LEVADURAS.map(l => ({ valor: l.clave, texto: l.nombre })), d.levadura) : '') +
       (conFermentacion(d)
-        ? fila(prefermento ? 'Fermentación de la masa final' : 'Fermentación', 'modo',
+        ? fila(pref ? 'Fermentación de la masa final' : 'Fermentación', 'modo',
             [{ valor: 'ambiente', texto: 'Ambiente' }, { valor: 'frio', texto: 'En frío' }], modo) +
           fila('Horas', 'fermentacion', horas.map(f => ({ valor: f.clave, texto: `${f.horas} h` })), d.fermentacion)
         : '') +
@@ -107,12 +138,9 @@ export function renderPan(d: DatosPan): string {
     '</div>';
 }
 
-/** El bloque del resultado de la sal: la sal, el porcentaje, el tiempo y su advertencia. */
+/** El resultado de la sal: la sal y su porcentaje en grande, el tiempo y su advertencia. */
 export function resultadoSal(d: DatosSal): string {
-  return '<div class="ficha" data-resultado><h2>Resultado</h2>' +
-    lineasSal(d).map(l => linea(l.nombre, l.valor)).join('') +
-    advertencias(advertenciasSal(d)) +
-  '</div>';
+  return fichaResultado(cifras(cifrasSal(d)) + lineas(lineasSal(d)) + advertencias(advertenciasSal(d)));
 }
 
 export function renderSal(d: DatosSal): string {
