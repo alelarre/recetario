@@ -3,7 +3,8 @@ export type Vista =
   | 'recetario' | 'categoria' | 'resultados' | 'receta' | 'cocinar'
   | 'editar' | 'nueva' | 'borradores' | 'ajustes' | 'carpeta'
   | 'categorias' | 'editar-categoria' | 'tag'
-  | 'plan' | 'plan-agregar' | 'plan-compras';
+  | 'plan' | 'plan-agregar' | 'plan-compras'
+  | 'herramientas' | 'calculadora-pan' | 'calculadora-sal';
 
 export interface Ruta {
   vista: Vista;
@@ -11,7 +12,7 @@ export interface Ruta {
 }
 
 /** Los destinos del menú lateral que se marcan. Es la navegación primaria de la app. */
-export type DestinoLateral = 'recetario' | 'borradores' | 'plan' | 'ajustes';
+export type DestinoLateral = 'recetario' | 'borradores' | 'plan' | 'herramientas' | 'ajustes';
 
 /**
  * Las pantallas que son destino del menú, y qué entrada marca cada una. Es la
@@ -24,6 +25,7 @@ export const MENU: Partial<Record<Vista, DestinoLateral | null>> = {
   recetario: 'recetario',
   borradores: 'borradores',
   plan: 'plan',
+  herramientas: 'herramientas',
   ajustes: 'ajustes',
   nueva: null
 };
@@ -100,6 +102,13 @@ export function parsearHash(hash: unknown): Ruta {
         : { vista: 'plan', params: {} };
     }
     if (!partes[1]) return { vista: 'plan', params: {} };
+  }
+
+  // Las calculadoras. Una que no existe cae en la lista.
+  if (partes[0] === 'herramientas') {
+    if (partes[1] === 'pan') return { vista: 'calculadora-pan', params: {} };
+    if (partes[1] === 'fermentados') return { vista: 'calculadora-sal', params: {} };
+    return { vista: 'herramientas', params: {} };
   }
 
   // La lista por tag: se llega tocando un chip del carrusel del Recetario.

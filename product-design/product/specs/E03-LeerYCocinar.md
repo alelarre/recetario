@@ -35,7 +35,7 @@ receta entera.
 - [ ] En la primera ficha: foto si la hay, título, línea de contexto, tags, descripción, el **carrusel de fotos** si la receta tiene depósito (C03.5.2) y, al pie tras un divisor, la fuente. Después ingredientes, preparación, variaciones y notas, cada una en su ficha.
 - [ ] La línea de contexto lleva el color y el nombre de la categoría, lo que rinde, **la duración con su relojito** y la dificultad. La duración sólo se dibuja si `tiempo` es uno de los cinco valores (`E05-Cimientos.md` C05.1.1).
 - [ ] **El punto del color va siempre pegado al texto:** en una pantalla angosta el texto corta en varios renglones y el punto queda al lado del primero, nunca solo en un renglón propio.
-- [ ] Los tags van como chips, los especiales primero y con su ícono. **Se leen y no se tocan** (C02.6.3); *borrador* no va (C03.1.3). **`favorito` no lleva chip:** ya lo dice la estrella del encabezado (C03.1.2b).
+- [ ] Los tags van como chips, los especiales primero y con su ícono. **Se leen y no se tocan** (C02.6.3); *borrador* no va (C03.1.3), ni *pan* ni *fermentado*, que sólo ponen su botón *Calcular* (C03.1.2). **`favorito` no lleva chip:** ya lo dice la estrella del encabezado (C03.1.2b).
 - [ ] Una sección ausente no se dibuja: no queda encabezado vacío.
 - [ ] Una sección desconocida del `.md` se muestra tal cual, después de Notas, sin interpretarse (C05.1.2).
 - [ ] Toda la receta se lee scrolleando, sin ningún toque.
@@ -44,6 +44,7 @@ receta entera.
 
 - [ ] Al pie: **Cocinar** y **Editar**. Sin ingredientes ni pasos, **Cocinar no se ofrece**: no hay nada que cocinar.
 - [ ] Volver es un control de tamaño normal en el encabezado, y el gesto del sistema hace lo mismo.
+- [ ] **Calcular pan** y **Calcular sal**: con `pan` en `tags_especiales`, la receta lleva *Calcular pan*; con `fermentado`, *Calcular sal*; con los dos, los dos. **La única condición es la marca.** Van al pie de la ficha de ingredientes, como botones secundarios; si la receta no tiene ingredientes, en una ficha propia en ese mismo lugar. Abren la calculadora de *Herramientas* con las últimas elecciones, sin leer la receta, y su volver regresa a la receta (`E07-Herramientas.md` C07.5.2).
 - [ ] **No hay menú ⋯ de acciones secundarias:** las dos acciones están al pie, y favorito y compartir tienen su ícono en el encabezado (C03.1.2b).
 
 #### C03.1.2b — El encabezado *(J6)*

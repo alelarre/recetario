@@ -261,7 +261,7 @@ describe('las herramientas', () => {
     const deLaApp = reglasDelFormato({ especiales: true });
     expect(reglas.slice(0, deLaApp.length)).toEqual(deLaApp);
     expect(reglas[0]).toContain('`tags_especiales` como lista `[a, b]`');
-    expect(reglas).toContain('- `tags_especiales` acepta sólo: `favorito`, `menú diario`, `probar`, `borrador`.');
+    expect(reglas).toContain('- `tags_especiales` acepta sólo: `favorito`, `menú diario`, `probar`, `borrador`, `pan`, `fermentado`.');
     // Los reservados en `tags` son los mismos que para el pedido de la app, sin excepción.
     expect(reglas).toContain(reglaDeReservados(TAGS_RESERVADOS));
     expect(reglas[deLaApp.length]).toMatch(/^- `borrador` va en `tags_especiales` cuando/);

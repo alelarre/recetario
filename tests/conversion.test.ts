@@ -78,7 +78,7 @@ describe('las reglas del formato', () => {
   it('con los especiales, suma la clave y su lista cerrada', () => {
     const conEspeciales = reglasDelFormato({ especiales: true });
     expect(conEspeciales[0]).toContain('`tags` como lista `[a, b]`, `tags_especiales` como lista `[a, b]`, `rinde`');
-    expect(conEspeciales).toContain('- `tags_especiales` acepta sólo: `favorito`, `menú diario`, `probar`, `borrador`.');
+    expect(conEspeciales).toContain('- `tags_especiales` acepta sólo: `favorito`, `menú diario`, `probar`, `borrador`, `pan`, `fermentado`.');
   });
 
   it('no dependen de ninguna receta: no piden un id', () => {

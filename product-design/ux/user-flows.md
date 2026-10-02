@@ -310,7 +310,7 @@ Receta
   → Editar
   ▸ Editor: tres fichas, Datos, Fotos y Contenido, y al final Guardar
   → corrijo el error, o agrego una variación
-  ⚑ también acá: la categoría, la duración —cinco botones—, los cuatro tags
+  ⚑ también acá: la categoría, la duración —cinco botones—, los seis tags
     especiales —un botón cada uno—, Pegar en el encabezado y Borrar receta
   → Guardar
   ▸ se reescribe el .md

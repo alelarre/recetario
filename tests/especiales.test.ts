@@ -6,8 +6,8 @@ import {
 import { ICO } from '../src/ui/iconos.js';
 
 describe('la tabla de especiales', () => {
-  it('tiene los cuatro, en su orden', () => {
-    expect(TAGS_ESPECIALES).toEqual(['favorito', 'menú diario', 'probar', 'borrador']);
+  it('tiene los seis, en su orden', () => {
+    expect(TAGS_ESPECIALES).toEqual(['favorito', 'menú diario', 'probar', 'borrador', 'pan', 'fermentado']);
     expect(ESPECIALES.map(d => d.nombre)).toEqual([...TAGS_ESPECIALES]);
   });
 
@@ -15,7 +15,9 @@ describe('la tabla de especiales', () => {
     ['favorito', 'estrella', 'Favorita', true, true, false],
     ['menú diario', 'calendario', 'Menú diario', true, true, false],
     ['probar', 'marcador', 'Para probar', true, true, false],
-    ['borrador', null, null, false, false, false]
+    ['borrador', null, null, false, false, false],
+    ['pan', null, null, false, false, false],
+    ['fermentado', null, null, false, false, false]
   ] as const)('%s: ícono, marca, chips, receta y búsqueda', (nombre, icono, marca, chips, receta, busqueda) => {
     const d = definicion(nombre);
     expect(d.icono).toBe(icono);
@@ -24,6 +26,15 @@ describe('la tabla de especiales', () => {
     expect(d.enReceta).toBe(receta);
     expect(d.enBusqueda).toBe(busqueda);
     expect(d.etiquetaEditor).toBe(nombre);
+  });
+
+  it('pan y fermentado abren su calculadora; los demás, ninguna', () => {
+    expect(ESPECIALES.map(d => [d.nombre, d.herramienta])).toEqual([
+      ['favorito', null], ['menú diario', null], ['probar', null], ['borrador', null],
+      ['pan', 'pan'], ['fermentado', 'fermentados']
+    ]);
+    expect(tagReservado('pan')).toBe(true);
+    expect(tagReservado('Fermentado')).toBe(true);
   });
 
   it('cada ícono existe en ICO', () => {
@@ -60,7 +71,7 @@ describe('reconocer', () => {
 
 describe('especialesValidos', () => {
   it('canónicos, sin repetir, en el orden de la tabla, y aparte lo que no es', () => {
-    expect(especialesValidos(['BORRADOR', 'Favorito', 'favorito', 'favoritas', 'pan']))
-      .toEqual({ validos: ['favorito', 'borrador'], ignorados: ['favoritas', 'pan'] });
+    expect(especialesValidos(['BORRADOR', 'Favorito', 'favorito', 'favoritas', 'brioche']))
+      .toEqual({ validos: ['favorito', 'borrador'], ignorados: ['favoritas', 'brioche'] });
   });
 });

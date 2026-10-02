@@ -494,3 +494,33 @@ describe('La ficha de compartir', () => {
     expect(html).toContain('&lt;b&gt;Rabas&lt;/b&gt;');
   });
 });
+
+describe('el botón Calcular', () => {
+  const con = (fm: string, cuerpo = '## Ingredientes\n- Harina — 500 g\n\n## Preparación\n1. Amasar.\n') =>
+    parse(`---\ntitulo: Pan\n${fm}---\n\n${cuerpo}`);
+
+  it('con pan, al pie de la ficha de ingredientes', () => {
+    const html = renderReceta({ entrada: entradaFalsa(), receta: con('tags_especiales: [pan]\n') });
+    const boton = '<a class="btn sec" href="#/herramientas/pan">Calcular pan</a>';
+    expect(html).toContain(boton);
+    expect(html.indexOf('Harina')).toBeLessThan(html.indexOf(boton));
+    expect(html.indexOf(boton)).toBeLessThan(html.indexOf('Preparación'));
+    expect(html).not.toContain('>pan</span>');
+  });
+
+  it('con fermentado, Calcular sal', () => {
+    const html = renderReceta({ entrada: entradaFalsa(), receta: con('tags_especiales: [fermentado]\n') });
+    expect(html).toContain('<a class="btn sec" href="#/herramientas/fermentados">Calcular sal</a>');
+  });
+
+  it('sin la marca, ninguno', () => {
+    expect(renderReceta({ entrada: entradaFalsa(), receta: con('tags: [horno]\n') })).not.toContain('Calcular');
+  });
+
+  it('sin ingredientes, el botón va igual, en una ficha propia antes de Preparación', () => {
+    const html = renderReceta({ entrada: entradaFalsa(), receta: con('tags_especiales: [pan]\n', '## Preparación\n1. Amasar.\n') });
+    const boton = '<a class="btn sec" href="#/herramientas/pan">Calcular pan</a>';
+    expect(html).toContain(boton);
+    expect(html.indexOf(boton)).toBeLessThan(html.indexOf('Preparación'));
+  });
+});

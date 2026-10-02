@@ -67,6 +67,9 @@ import type { Ruta, Vista } from './ui/router.js';
 import { estadoNuevo } from './estado-pantalla.js';
 import { accionesDeLista } from './lista-control.js';
 import { accionesDelCarrusel } from './carrusel-control.js';
+import { crearControlHerramientas } from './herramientas-control.js';
+import { renderHerramientas, renderPan, renderSal, resultadoPan, resultadoSal } from './ui/herramientas.js';
+import { calcularPan } from './calculadoras/pan.js';
 import type { EstadoDePantalla, PedidoAlAgente } from './estado-pantalla.js';
 import { achicar } from './fotos.js';
 import type { OpcionesAchicar } from './fotos.js';
@@ -436,6 +439,13 @@ let ignorados: string[] = [];
 let sinBorrador: string[] = [];
 /** El mail de la cuenta conectada. Se pide una vez, al entrar a Ajustes. */
 let cuenta = '';
+
+/** Lo elegido en las calculadoras de *Herramientas*. Antes del primer dibujo: `render` lo usa. */
+const herramientas = crearControlHerramientas({
+  almacen: almacenLocal(),
+  redibujar: () => { void render(); },
+  pintarResultado: pintarResultadoDeHerramienta
+});
 
 /**
  * El visor de fotos. Va aparte del estado de la pantalla porque abrirlo es una
@@ -995,6 +1005,13 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
         consulta: estadoDePantalla.consultaPlan, ...bloqueDelPlan()
       }));
       return estadoDePantalla.lista.observar(spinnerDelPlan, pintarBloqueDelPlan);
+
+    case 'herramientas':
+      return pintar(renderHerramientas({ ...menuDe('herramientas') }));
+    case 'calculadora-pan':
+      return pintar(renderPan(herramientas.pan()));
+    case 'calculadora-sal':
+      return pintar(renderSal(herramientas.sal()));
 
     case 'plan-compras':
       try {
@@ -2195,6 +2212,35 @@ const accionesDeAjustes: SeccionDeAcciones = {
   }
 };
 
+/**
+ * El `localStorage` del navegador, o nada si no se puede usar (navegación
+ * privada, o un entorno sin él): las calculadoras funcionan igual, sin
+ * recordar lo elegido.
+ */
+function almacenLocal(): Pick<Storage, 'getItem' | 'setItem'> | null {
+  try { return typeof localStorage === 'undefined' ? null : localStorage; } catch { return null; }
+}
+
+/**
+ * Pinta sólo el resultado de la calculadora abierta, y en el otro campo de
+ * cantidad lo que resulta de lo escrito: se escribe en un campo, y redibujar
+ * la pantalla le sacaría el foco.
+ */
+function pintarResultadoDeHerramienta(): void {
+  const bloque = document.querySelector('#app [data-resultado]');
+  if (!bloque) return;
+  if (vistaActual?.vista === 'calculadora-sal') {
+    pintarParte(bloque, resultadoSal(herramientas.sal()), 'reemplazar');
+    return;
+  }
+  const datos = herramientas.pan();
+  pintarParte(bloque, resultadoPan(datos), 'reemplazar');
+  const otro = datos.cantidad.de === 'harina' ? 'masa' : 'harina';
+  const campo = document.querySelector<HTMLInputElement>(`#app [data-cantidad="${otro}"]`);
+  const r = calcularPan(datos);
+  if (campo) campo.value = r ? String(Math.round(otro === 'masa' ? r.masaTotal : r.harinaTotal)) : '';
+}
+
 const acciones = registrarAcciones({
   navegacion: accionesDeNavegacion,
   menu: accionesDelMenu,
@@ -2220,7 +2266,8 @@ const acciones = registrarAcciones({
   categorias: accionesDeCategorias,
   editor: accionesDelEditor,
   compartir: accionesDeCompartir,
-  ajustes: accionesDeAjustes
+  ajustes: accionesDeAjustes,
+  herramientas: herramientas.acciones
 });
 
 app.addEventListener('click', async (e) => {
@@ -2254,6 +2301,8 @@ app.addEventListener('click', async (e) => {
 app.addEventListener('input', (e) => {
   if (velo.ocupado()) return;
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria(true);
+  const cantidad = conClosest(e.target)?.closest<HTMLInputElement>('[data-cantidad]');
+  if (cantidad) return herramientas.alEscribir(cantidad);
   // En el editor, cada tecla puede habilitar o bloquear el botón de
   // `borrador`, y mueve el cursor de línea.
   if (enElEditor()) { revisarBorrador(); acomodarBotonDeFoto(); }

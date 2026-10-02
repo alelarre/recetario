@@ -54,7 +54,7 @@ describe('la columna del índice', () => {
 
   it('una celda con algo que no es especial lo descarta', () => {
     const fila = filaDesde(recetaFalsa({ titulo: 'X' }), { id: 'a' });
-    fila[fila.length - 1] = 'favorito|pan';
+    fila[fila.length - 1] = 'favorito|brioche';
     expect(entradaDesdeFila(fila).tags_especiales).toEqual(['favorito']);
   });
 });

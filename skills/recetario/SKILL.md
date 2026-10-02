@@ -17,6 +17,9 @@ el mismo código que la app: el `.md` y su fila del índice se escriben juntos.
 3. **Corregir o completar** recetas que ya están.
 4. **Ordenar el recetario:** unificar tags, recategorizar, encontrar duplicados.
 
+Calcular las cantidades de un pan o la sal de un fermentado no es de este
+skill: usá el skill `herramientas`.
+
 ## Antes de empezar
 
 - **La app tiene que estar cerrada** mientras trabajás, en el celular y en la
@@ -53,7 +56,11 @@ devuelven. Los avisos no frenan la escritura; mostráselos al usuario igual.
    principales. Si aparece una parecida, ver «Duplicados».
 3. Elegí la categoría con `categorias`. Si ninguna corresponde, va sin
    categoría. Si hace falta una nueva, ver «Confirmación explícita».
-4. Escribí el `.md` con las reglas de `formato`.
+4. Escribí el `.md` con las reglas de `formato`. Si es un pan de masa con
+   levadura o masa madre, poné `pan` en `tags_especiales` (no en un pan de
+   carne ni en un budín); si es un fermento con sal (chucrut, kimchi,
+   encurtidos en salmuera), `fermentado`. Con esa marca, la receta abre su
+   calculadora en la app.
 5. Pasalo por `validar`, con las fotos que vas a pedir. Corregí los problemas.
 6. Mostralo y esperá la aprobación (ver «Mostrar antes de escribir»).
 7. Escribilo con `crear` y decí dónde quedó: título, categoría y nombre de
@@ -240,7 +247,8 @@ faltaba. El nombre de archivo no cambia aunque cambie el título.
    `clasica` y `clásica`), qué recetas se mueven y a qué categoría.
 3. Con la aprobación, aplicalo receta por receta: `leer`, cambiar y `guardar`.
    Los especiales (`tags_especiales`) no se unifican ni se tocan salvo que el
-   usuario lo pida.
+   usuario lo pida. Lo único que podés proponer es poner `pan` o `fermentado`
+   en las recetas que corresponden, como parte del cambio.
 4. Al terminar, decí cuántas recetas cambiaron.
 
 ## Duplicados

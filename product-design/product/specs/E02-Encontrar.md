@@ -220,7 +220,7 @@ tag.
 - [ ] Se desliza de costado, sin barra de scroll. Un degradé a la derecha dice que sigue; a la izquierda aparece cuando ya se corrió. Con mouse o trackpad hay una flecha a cada lado, que corre el 80% del ancho visible.
 - [ ] **En el Recetario, tocar un chip abre la lista por tag** (C02.6.5). En una categoría y en la lista por tag, filtra ahí mismo (C02.6.2).
 - [ ] No hay nube de tags ni sección de tags en la navegación.
-- [ ] El vocabulario de tags es libre: la app no propone ni valida, salvo los cuatro especiales, que se reserva.
+- [ ] El vocabulario de tags es libre: la app no propone ni valida, salvo los especiales, que se reserva (`E05-Cimientos.md` C05.1.4).
 
 #### C02.6.5 — La lista por tag *(J4, J5)*
 

@@ -616,7 +616,7 @@ Al elegirla, *Subir foto* es la primera muestra de la fila: un botón de
 **El tag `borrador` no tiene presentación propia.** Un borrador se ve sólo en su
 lista, Borradores, donde lo son todas: no lleva marca en la tarjeta (§6.1), no
 aparece en la fila de tags de la receta abierta, y su botón del editor (§6.10b)
-es el único de los cuatro sin ícono. El encabezado de Borradores lleva el título
+no lleva ícono, como los de `pan` y `fermentado`. El encabezado de Borradores lleva el título
 y el total, sin ícono.
 
 ### 6.6 Ficha
@@ -778,12 +778,12 @@ dice en una línea de `--txt-chico` en `--error`, sin caja ni botón
 
 ### 6.10b Botón de tag especial
 
-Cuatro botones —uno por tag especial: `favorito`, `menú diario`, `probar`,
-`borrador`—, dentro del campo **«Tags»**
-del editor, en una **grilla de 2 × 2** arriba de los tags comunes y del campo
+Seis botones —uno por tag especial: `favorito`, `menú diario`, `probar`,
+`borrador`, `pan` y `fermentado`—, dentro del campo **«Tags»**
+del editor, en una **grilla de dos columnas** arriba de los tags comunes y del campo
 para agregar (`E04-Corregir.md` C04.2.1b, C04.4.1), con `--e-2` entre sí. Cada
 uno mide 48 px de alto mínimo, `--r-medio`, `--txt-base` peso 600, y lleva su
-ícono (§3.4) a 16 px —`borrador` no tiene (§6.5)— y el tag tal como se escribe,
+ícono (§3.4) a 16 px —`borrador`, `pan` y `fermentado` no tienen (§6.5)— y el tag tal como se escribe,
 con `aria-pressed`.
 
 | Estado | Fondo | Texto | Borde |

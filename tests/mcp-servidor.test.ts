@@ -63,10 +63,10 @@ async function llamar(cliente: Client, name: string, args: Record<string, unknow
 const texto = (r: Respuesta): string => r.content.map(c => c.text).join('\n');
 
 describe('las herramientas', () => {
-  it('lista las diez, cada una con su descripción y su esquema de entrada', async () => {
+  it('lista las doce, cada una con su descripción y su esquema de entrada', async () => {
     const { tools } = await (await conectar()).listTools();
     expect(tools.map(t => t.name).sort()).toEqual(
-      ['borrar', 'buscar', 'categorias', 'crear', 'formato', 'guardar', 'leer', 'reindexar', 'tags', 'validar']
+      ['borrar', 'buscar', 'calcular_pan', 'calcular_sal', 'categorias', 'crear', 'formato', 'guardar', 'leer', 'reindexar', 'tags', 'validar']
     );
     for (const t of tools) {
       expect(t.description).toBeTruthy();

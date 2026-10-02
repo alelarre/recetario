@@ -15,7 +15,8 @@ import { ICO } from './iconos.js';
 import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones } from './fichas-receta.js';
 import { renderFichaCompartir } from './compartir.js';
 import { renderVisor } from './visor.js';
-import { esFavorita } from '../catalogo.js';
+import { esFavorita, ESPECIALES } from '../catalogo.js';
+import type { Herramienta } from '../especiales.js';
 import { fotosSinUso, resolverReceta } from '../fotos-receta.js';
 // El logo de Drive, en el repo y no pedido a `gstatic.com`: una dependencia de
 // red para 513 bytes es una dependencia de más, y así entra a `/assets/`, que es
@@ -60,6 +61,20 @@ function botonFavorito(receta: Receta, escribiendo: boolean): string {
     `<span class="${clase}">${ICO.estrella}${ICO.estrella}</span></button>`;
 }
 
+const TEXTO_CALCULAR: Record<Herramienta, string> = { pan: 'Calcular pan', fermentados: 'Calcular sal' };
+
+/**
+ * Un botón por cada especial de la receta que abre una calculadora. La
+ * calculadora no lee la receta: abre con las últimas elecciones.
+ */
+function botonesCalcular(receta: Receta): string {
+  const botones = ESPECIALES
+    .filter(d => d.herramienta && receta.tags_especiales.includes(d.nombre))
+    .map(d => d.herramienta ? `<a class="btn sec" href="#/herramientas/${d.herramienta}">${TEXTO_CALCULAR[d.herramienta]}</a>` : '')
+    .join('');
+  return botones ? `<div class="calcular">${botones}</div>` : '';
+}
+
 export function renderReceta(
   { entrada, receta: sinResolver, compartir, favorito, error, aviso: avisoDeLlegada, visor }: OpcionesReceta
 ): string {
@@ -99,7 +114,8 @@ export function renderReceta(
       (avisoDeLlegada ? aviso(avisoDeLlegada) : '') +
       // Sin control: se reintenta con la estrella, que sigue a la vista (R1).
       (error ? aviso({ texto: error }) : '') +
-      fichaCabecera({ receta, categoria, marcas, carrusel }) + fichasDelCuerpo(receta) +
+      fichaCabecera({ receta, categoria, marcas, carrusel }) +
+      fichasDelCuerpo(receta, { alPieDeIngredientes: botonesCalcular(receta) }) +
     '</div>' +
     pieDeAcciones(botonCocinar(receta) + `<button class="btn sec" data-accion="editar">${ICO.lapiz}Editar</button>`) +
     (compartir ? renderFichaCompartir(compartir) : '') +

@@ -131,7 +131,7 @@ interpreta, y se conserva al guardar.
 |---|---|---|---|
 | `titulo` | texto | **sí** | Sin él la receta no se muestra |
 | `tags` | lista | no | Vocabulario libre, sin los tags reservados (§5.2) |
-| `tags_especiales` | lista cerrada | no | Sólo `favorito`, `menú diario`, `probar` y `borrador` (§1.6 y §5.2). Vacía, no se escribe |
+| `tags_especiales` | lista cerrada | no | Sólo `favorito`, `menú diario`, `probar`, `borrador`, `pan` y `fermentado` (§1.6 y §5.2). Vacía, no se escribe |
 | `rinde` | texto | no | Libre, no un número |
 | `tiempo` | enumerado | no | La duración hasta comer, con reposo y horno: `~15 min` · `~30 min` · `~60 min` · `>60 min` · `>1 día`. Cualquier otro texto se lee como sin duración |
 | `dificultad` | enumerado | no | `fácil` · `media` · `difícil`. Otro valor se lee como sin dificultad |
@@ -162,7 +162,7 @@ que sí. Es una declaración, y es del usuario, no del agente — la única exce
 del principio 3.
 
 **Se pone y se saca con su botón en el campo «Tags» del editor**, igual que los
-otros tres especiales. Una receta nueva nace con el tag puesto. El contenido sólo
+demás especiales. Una receta nueva nace con el tag puesto. El contenido sólo
 decide **cuándo se puede sacar**: hace falta título, categoría, al menos un
 ingrediente y al menos un paso. Esa condición no filtra, no corrige y no escribe
 nada por su cuenta. Como la categoría es parte de la condición, **una receta
@@ -272,6 +272,7 @@ legible.
 | **Receta compartida** | En ningún lado: un PDF, un texto o un link que lleva la receta comprimida en el fragmento | Al compartir | Es una copia del momento; nada queda publicado en Drive |
 | **Plan de la semana** | **`_plan.md`** en la carpeta base, al lado de `_indice` | Al primer cambio, si el archivo no existía | Con *Reiniciar el plan*, que lo deja vacío. El archivo queda |
 | **Lista de compras** | En ningún lado: se arma al entrar, desde el plan y los `.md` de sus recetas | Al abrirla | Al salir de la pantalla |
+| **Últimas elecciones de las calculadoras** | `localStorage` del navegador, una entrada por calculadora | Al primer cambio en la calculadora; cada cambio la reescribe | Nunca por sí sola. Un dato que ya no se puede leer vuelve a su valor por defecto al abrir |
 
 ### 2.1 Las reglas del modelo
 
@@ -424,6 +425,9 @@ se reconoce abre el Recetario.
 | **Plan de la semana** | `#/plan` | Siete días desde hoy, dos comidas cada uno, y cada comida una lista de recetas. Al pie, la lista de compras y reiniciar. | Planificar | J9 |
 | **Agregar al plan** | `#/plan/agregar?dia=&momento=` | La búsqueda del Recetario, el bloque *Menú diario* y la grilla de las categorías: tocar una receta la suma a esa comida y vuelve. | Planificar | J9 |
 | **Lista de compras** | `#/plan/compras` | Los ingredientes de todo lo cargado, en dos bloques, y compartir como texto. | Planificar | J9 |
+| **Herramientas** | `#/herramientas` | La lista de las calculadoras: *Pan* y *Sal para fermentados*. Es destino del menú: hamburguesa en vez de volver. Una ruta `#/herramientas/…` que no es una calculadora abre esta lista. | Cocinar | J6 |
+| **Calculadora de pan** | `#/herramientas/pan` | Pan, harinas, levadura, fermentación y cantidad —harina total o masa total—, y al pie el resultado con sus advertencias. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
+| **Calculadora de sal** | `#/herramientas/fermentados` | Fermento y peso total del frasco, y al pie los gramos de sal. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
 
 **La ficha de compartir no es una pantalla**: es estado de la Receta, se abre al
 pie y el atrás la cierra (§4.6).
@@ -515,8 +519,8 @@ del sistema —swipe en Android, back del navegador— funciona igual y es el ca
 que la mayoría va a usar; el botón es el respaldo visible.
 
 **El volver es para las pantallas a las que se entra desde otra.** A las que se
-alcanzan desde el menú —Recetario, Borradores, el plan de la semana, la receta
-nueva y Ajustes— se sale por el menú, así que su encabezado lo abre:
+alcanzan desde el menú —Recetario, Borradores, el plan de la semana,
+Herramientas, la receta nueva y Ajustes— se sale por el menú, así que su encabezado lo abre:
 hamburguesa, no volver. Editar una receta existente se abre desde la receta y
 lleva volver.
 
@@ -541,7 +545,7 @@ regla del sistema, no una decisión por pantalla.
 
 ### 4.6 Un menú lateral, sin barra inferior
 
-La navegación primaria vive en un **menú lateral** con cinco entradas, cada una
+La navegación primaria vive en un **menú lateral** con seis entradas, cada una
 con su nombre y su ícono:
 
 | | |
@@ -549,6 +553,7 @@ con su nombre y su ícono:
 | **Inicio** | El punto de entrada: la pantalla del Recetario. Se llama *Inicio* porque «Recetario» ya es la marca de arriba del menú |
 | **Borradores** | La cola: las recetas con `borrador`, con su contador |
 | **Plan de la semana** | La única entrada al plan, con el ícono del calendario |
+| **Herramientas** | Las calculadoras de pan y de sal, con el ícono de la balanza. Las calculadoras llevan volver; desde una receta se llega también por su botón *Calcular* |
 | **Nueva receta** | Una acción, no un lugar: nunca queda marcada, ni en el editor al que lleva |
 | **Ajustes** | Secundario, pero alcanzable desde cualquier parte |
 
@@ -591,7 +596,7 @@ consume esa entrada, y navegar desde ella la saltea: el historial no queda con
 entradas de más. Con la app ocupada (`E05-Cimientos.md` R8), ese atrás se
 deshace como cualquier otro.
 
-**No hay barra inferior.** El lateral resuelve las cinco entradas sin gastar
+**No hay barra inferior.** El lateral resuelve las seis entradas sin gastar
 pantalla en el teléfono y sin desperdiciar el ancho en escritorio.
 
 **Capturar sigue sin estar en la navegación** (§4.1): entra por el Share Target.
@@ -641,8 +646,8 @@ Vocabulario libre en el frontmatter, sin lista controlada. Nada impide escribir
 controlado obliga a mantenerlo y a que el agente lo conozca, y el costo del
 desorden es bajo con un solo autor.
 
-**Cuatro tags son especiales: `favorito`, `menú diario`, `probar` y
-`borrador`**, siempre en ese orden y antes que los demás. Viven en su propia
+**Seis tags son especiales: `favorito`, `menú diario`, `probar`, `borrador`,
+`pan` y `fermentado`**, siempre en ese orden y antes que los demás. Viven en su propia
 clave, `tags_especiales`, y tienen forma propia:
 
 - **`tags_especiales` es una lista cerrada.** Se reconoce sin mirar mayúsculas
@@ -656,16 +661,23 @@ clave, `tags_especiales`, y tienen forma propia:
   `tags_especiales` del índice los lleva.
 - **Cada especial declara su ícono, su marca en la tarjeta, si se ofrece en los
   chips, si se muestra en la receta y si lo encuentra la búsqueda por texto.**
-  Ninguno lo encuentra: a los especiales se llega por su chip.
+  Ninguno lo encuentra: a los que se ofrecen en los chips se llega por su chip.
 - **`favorito` además tiene una estrella en el encabezado de la receta**, que lo
   pone y lo saca sin pasar por el editor.
 - **`borrador` es la completitud** (§1.6): una receta nueva nace con él.
+- **`pan` y `fermentado` dicen qué calculadora sirve para la receta.** Cada
+  especial declara cuál abre (`herramienta`): con `pan`, la receta lleva
+  *Calcular pan*; con `fermentado`, *Calcular sal*. No tienen ninguna otra
+  presentación: sin ícono, sin marca, sin chip, sin aparecer en la receta y
+  sin que la búsqueda los encuentre.
 - **Cada uno tiene su ícono**, y las marcas de los que lleva una receta van juntas
-  en la esquina de su tarjeta. `borrador` no: no tiene ícono ni marca, y en la
-  receta abierta no aparece; un borrador se ve sólo en Borradores.
+  en la esquina de su tarjeta. `borrador`, `pan` y `fermentado` no: no tienen
+  ícono ni marca, y en la receta abierta no aparecen; un borrador se ve sólo en
+  Borradores.
 - **En el carrusel de tags van primero**; después, los demás por cantidad de
-  recetas. **`borrador` no va en ninguna lista de tags**: ni en el carrusel ni
-  en las sugerencias del editor. A los borradores se llega por el menú.
+  recetas. **`borrador`, `pan` y `fermentado` no van en ninguna lista de
+  tags**: ni en el carrusel ni en las sugerencias del editor. A los borradores
+  se llega por el menú.
 - **Las favoritas van primero en toda lista de recetas ordenada A–Z**, y
   alfabético dentro de cada bloque. Ordenada por duración, van mezcladas.
 

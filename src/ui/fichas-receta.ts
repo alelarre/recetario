@@ -120,8 +120,12 @@ export function fichaCabecera({ receta, categoria, marcas = '', pin = true, carr
  * conoce. Ninguna vacía. Las fotos del depósito no están acá: van en el
  * carrusel de la primera ficha. Recibe la receta ya resuelta: las referencias
  * en línea ya son URLs.
+ *
+ * `alPieDeIngredientes` va al final de la ficha de ingredientes, o en una
+ * ficha propia en su lugar si la receta no tiene: lo que se pone ahí depende
+ * de la receta y no de que tenga ingredientes.
  */
-export function fichasDelCuerpo(receta: Receta): string {
+export function fichasDelCuerpo(receta: Receta, { alPieDeIngredientes = '' }: { alPieDeIngredientes?: string } = {}): string {
   const grupos = gruposDe(receta.ingredientes).filter(g => g.items.length);
   const tramos = tramosDe(receta.preparacion).filter(t => t.pasos.length);
   const { lista, secciones } = variacionesDe(receta.variaciones);
@@ -132,7 +136,8 @@ export function fichasDelCuerpo(receta: Receta): string {
         `<p>${aHtml(v.cuerpo)}</p></div>`).join('')
     : lista.map(v => `<div class="var"><p>${aHtml(v)}</p></div>`).join('');
 
-  return ficha(listaIngredientes(grupos), 'Ingredientes') +
+  const ingredientes = grupos.length ? listaIngredientes(grupos) : '';
+  return (ingredientes ? ficha(ingredientes + alPieDeIngredientes, 'Ingredientes') : ficha(alPieDeIngredientes)) +
     ficha(preparacion(tramos), 'Preparación') +
     ficha(variaciones, 'Variaciones') +
     ficha(receta.notas ? `<div class="lee">${aHtml(receta.notas)}</div>` : '', 'Notas') +

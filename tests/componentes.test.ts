@@ -396,9 +396,9 @@ describe('tile', () => {
 });
 
 describe('el menú lateral', () => {
-  it('lleva las cinco entradas, con el plan entre Borradores y Nueva receta', () => {
+  it('lleva las seis entradas, con Herramientas entre el plan y Nueva receta', () => {
     const html = lateral({ activo: 'recetario', abierto: false, borradores: 0 });
-    const orden = ['Inicio', 'Borradores', 'Plan de la semana', 'Nueva receta', 'Ajustes']
+    const orden = ['Inicio', 'Borradores', 'Plan de la semana', 'Herramientas', 'Nueva receta', 'Ajustes']
       .map(t => html.indexOf(t));
     expect(orden.every((n, i) => n >= 0 && (i === 0 || n > (orden[i - 1] ?? -1)))).toBe(true);
     expect(html).toContain('href="#/plan"');
@@ -421,6 +421,10 @@ describe('el menú lateral', () => {
 
   it('en el plan, su entrada queda marcada', () => {
     expect(lateral({ activo: 'plan', abierto: false, borradores: 0 })).toContain('<a class="act" href="#/plan">');
+  });
+
+  it('en Herramientas, su entrada queda marcada', () => {
+    expect(lateral({ activo: 'herramientas', abierto: false, borradores: 0 })).toContain('<a class="act" href="#/herramientas">');
   });
 });
 

@@ -9,7 +9,7 @@ partidas en **capacidades**, cada una con sus criterios de aceptación, sus edge
 cases y sus notas técnicas.
 
 **Las reglas transversales viven en `E05-Cimientos.md` §Reglas** y valen para las
-seis épicas: manejo de errores mínimo, reintento idempotente, la sesión vencida
+siete épicas: manejo de errores mínimo, reintento idempotente, la sesión vencida
 como un error más, el `.md` como verdad sin autorreparación, el `fileId` como
 identidad, que la app no descubre cambios de afuera, Android como plataforma, y
 el velo que tapa la pantalla mientras la app trabaja. Una épica que no diga lo contrario, las cumple.
@@ -30,6 +30,7 @@ varias pantallas.
 | **E04** | [Corregir](E04-Corregir.md) | El editor, único formulario de la app: arreglar un error, anotar una variación, crear una receta, poner los tags especiales y la duración | J7 | Baja |
 | **E05** | [Cimientos](E05-Cimientos.md) | El esquema del `.md`, la carpeta base y las categorías en Drive, el índice y su copia local, los estados degradados, Ajustes | J8, transversal | Alta |
 | **E06** | [Planificar](E06-Planificar.md) | El plan de siete días sin fechas y la lista de compras que sale de él | J9 | Baja |
+| **E07** | [Herramientas](E07-Herramientas.md) | Las calculadoras de pan y de sal para fermentados, el botón *Calcular* de la receta marcada con `pan` o `fermentado`, y las mismas cuentas para el agente por el MCP | J6 | Baja |
 
 ---
 
@@ -56,6 +57,11 @@ ninguna otra épica lo nombra: sacarlo es borrar una entrada, tres pantallas,
 dos módulos y un archivo de Drive, y desconectarlos del store, de `main.ts`, del
 router, de la configuración y de Ajustes (principio 6, `E06-Planificar.md`
 C06.5.1).
+
+**E07 no usa Drive.** Las calculadoras no leen recetas ni escriben nada: lo
+único que toca a las demás épicas son los especiales `pan` y `fermentado`
+(`E05-Cimientos.md` C05.1.4), que ponen el botón *Calcular* en la receta. Toda
+la fórmula de cada calculadora vive en su archivo de `src/calculadoras/`.
 
 ---
 

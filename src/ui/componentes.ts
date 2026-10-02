@@ -332,8 +332,8 @@ export interface OpcionesLateral {
 }
 
 /**
- * El menú lateral: Inicio, Borradores, Plan de la semana, Nueva receta y
- * Ajustes, con su nombre.
+ * El menú lateral: Inicio, Borradores, Plan de la semana, Herramientas, Nueva
+ * receta y Ajustes, con su nombre.
  *
  * En el teléfono se despliega desde la hamburguesa o el gesto y se cierra
  * tocando el velo o cualquier destino; en pantalla ancha queda fijo y la
@@ -354,6 +354,7 @@ export function lateral({ activo, borradores, abierto, soloAncho }: OpcionesLate
       item('borradores', '#/borradores', ICO.bandeja, 'Borradores', borradores) +
       // El plan es su única entrada: el Recetario no lo nombra.
       item('plan', '#/plan', ICO.calendario, 'Plan de la semana') +
+      item('herramientas', '#/herramientas', ICO.balanza, 'Herramientas') +
       // Nueva receta es una acción y no un lugar: nunca queda marcada, ni
       // siquiera en el editor al que lleva. Es la única entrada para crear una
       // receta a mano.

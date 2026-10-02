@@ -395,6 +395,8 @@ describe('main.ts: las rutas', () => {
     const tecleos: ((e: unknown) => unknown)[] = [];
     /** Lo que se escribió en `[data-resultados-plan]` sin repintar la pantalla. */
     const resultadosPlan: string[] = [];
+    /** El resultado de una calculadora pintado solo, sin redibujar la pantalla. */
+    const resultadosHerramienta: string[] = [];
     /**
      * El menú lateral y su velo mientras el dedo los arrastra: `main` les
      * escribe `transform` y `opacity` sin redibujar, para que sigan al dedo.
@@ -710,6 +712,14 @@ describe('main.ts: las rutas', () => {
         if (conCampo) return marcoDeCampo(conCampo);
         if (sel === '#app .visor') return quitarInsertado('class="visor"')[0] ?? null;
         if (sel === '#app [data-aviso-fotos]') return quitarInsertado('data-aviso-fotos')[0] ?? null;
+        // El resultado de una calculadora y sus campos de cantidad: se pintan
+        // sin redibujar, para no sacarle el foco al campo que se escribe.
+        if (sel === '#app [data-resultado]') {
+          return app.innerHTML.includes('data-resultado')
+            ? { set outerHTML(html: string) { resultadosHerramienta.push(html); } } : null;
+        }
+        const cantidad = sel.match(/^#app \[data-cantidad="(\w+)"\]$/)?.[1];
+        if (cantidad) return campo(`cantidad-${cantidad}`);
         // El bloque de la pantalla de agregar al plan: se redibuja solo, para
         // no perder el foco del teclado.
         if (sel === '[data-resultados-plan]') {
@@ -900,6 +910,13 @@ describe('main.ts: las rutas', () => {
       retenerAvisos: historial.retenerAvisos,
       soltarAvisos: async () => { historial.soltarAvisos(); await esperar(); },
       resultadosPlan,
+      resultadosHerramienta,
+      /** Escribir en un campo de cantidad de una calculadora. */
+      tipearCantidad: async (cantidad: string, valor: string) => {
+        const campo = { dataset: { cantidad }, value: valor, closest: (sel: string) => (sel === '[data-cantidad]' ? campo : null) };
+        for (const fn of tecleos) await fn({ target: campo });
+        await esperar();
+      },
       /** Una tecla en un campo, como la caja de la pantalla de agregar al plan. */
       tipear: async (accion: string, valor: string) => {
         const campo = { dataset: { accion }, value: valor, name: '' };
@@ -1049,11 +1066,47 @@ describe('main.ts: las rutas', () => {
       ['#/r/f1', 'class="rec-tit"'],
       ['#/r/f1/cocinar', 'class="coc"'],
       ['#/buscar?q=nada', 'class="cajaenc"'],
-      ['#/ajustes', 'Reindexar']
+      ['#/ajustes', 'Reindexar'],
+      ['#/herramientas', 'href="#/herramientas/pan"'],
+      ['#/herramientas/pan', 'data-grupo="pan"'],
+      ['#/herramientas/fermentados', 'data-grupo="fermento"']
     ] as const) {
       await abrir(hash);
       expect(app.innerHTML, hash).toContain(marca);
     }
+  });
+
+  it('en la calculadora, tocar una opción la aprieta', async () => {
+    const { abrir, tocar, app } = await montar();
+    await abrir('#/herramientas/pan');
+    await tocar('elegir-opcion', { grupo: 'pan', valor: 'focaccia' });
+    expect(app.innerHTML).toContain('data-grupo="pan" data-valor="focaccia" aria-pressed="true"');
+  });
+
+  it('escribir una cantidad pinta sólo el resultado y el otro campo', async () => {
+    const { abrir, tipearCantidad, pinturas, resultadosHerramienta } = await montar();
+    await abrir('#/herramientas/pan');
+    const antes = pinturas.length;
+    await tipearCantidad('masa', '1745');
+    expect(pinturas.length).toBe(antes);
+    expect(resultadosHerramienta.at(-1)).toContain('720 g');
+    expect(estado.formulario['cantidad-harina']).toBe('1000');
+  });
+
+  it('en la de sal, igual', async () => {
+    const { abrir, tipearCantidad, pinturas, resultadosHerramienta } = await montar();
+    await abrir('#/herramientas/fermentados');
+    const antes = pinturas.length;
+    await tipearCantidad('peso', '1200');
+    expect(pinturas.length).toBe(antes);
+    expect(resultadosHerramienta.at(-1)).toContain('24 g');
+  });
+
+  it('una receta con pan lleva a su calculadora', async () => {
+    estado.md = '---\ntitulo: Pan\ntags_especiales: [pan]\n---\n\n## Ingredientes\n- Harina — 500 g\n';
+    const { abrir, app } = await montar();
+    await abrir('#/r/f1');
+    expect(app.innerHTML).toContain('href="#/herramientas/pan">Calcular pan</a>');
   });
 
   it('una acción que no está registrada no hace nada', async () => {
@@ -1070,9 +1123,9 @@ describe('main.ts: las rutas', () => {
 
   describe('MENU es la única fuente del menú', () => {
     const HASH_DE: Record<string, string> = {
-      recetario: '#/', borradores: '#/borradores', plan: '#/plan', ajustes: '#/ajustes', nueva: '#/nueva'
+      recetario: '#/', borradores: '#/borradores', plan: '#/plan', herramientas: '#/herramientas', ajustes: '#/ajustes', nueva: '#/nueva'
     };
-    const SIN_MENU = ['#/c/Carnes', '#/r/f1', '#/r/f1/editar', '#/buscar?q=pan', '#/t/horno', '#/categorias', '#/plan/compras'];
+    const SIN_MENU = ['#/c/Carnes', '#/r/f1', '#/r/f1/editar', '#/buscar?q=pan', '#/t/horno', '#/categorias', '#/plan/compras', '#/herramientas/pan'];
 
     it('cada vista de MENU dibuja la hamburguesa, el lateral con su entrada marcada, y el gesto lo abre', async () => {
       const { MENU } = await import('../src/ui/router.js');
@@ -1247,7 +1300,7 @@ describe('main.ts: las rutas', () => {
     // `ui/gesto-menu.ts` son unitarios y el del botón mira el encabezado. Sin
     // esto, una pantalla puede dejar de responder al dedo sin que nada avise.
     const HASHES: Record<string, string> = {
-      recetario: '#/', borradores: '#/borradores', plan: '#/plan', ajustes: '#/ajustes', nueva: '#/nueva'
+      recetario: '#/', borradores: '#/borradores', plan: '#/plan', herramientas: '#/herramientas', ajustes: '#/ajustes', nueva: '#/nueva'
     };
 
     it('en las pantallas del menú, deslizar desde el borde lo abre', async () => {

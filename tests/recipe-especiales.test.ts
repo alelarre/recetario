@@ -11,11 +11,11 @@ describe('tags_especiales al leer', () => {
   });
 
   it('un valor que no es de la lista se ignora y queda anotado', () => {
-    const r = parse(md('tags_especiales: [favoritas, pan]'));
+    const r = parse(md('tags_especiales: [favoritas, brioche]'));
     expect(r.tags_especiales).toEqual([]);
     expect(r.ignorados).toEqual([
       { clave: 'tags_especiales', valor: 'favoritas' },
-      { clave: 'tags_especiales', valor: 'pan' }
+      { clave: 'tags_especiales', valor: 'brioche' }
     ]);
   });
 

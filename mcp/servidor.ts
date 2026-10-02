@@ -11,6 +11,9 @@ import { crearAuthEscritorio } from './auth.js';
 import { comoErrorDeLogin, esErrorDeGoogle, ErrorDeLogin, mensajeDeGoogle } from './errores.js';
 import { crearLlaveroMac, SERVICIO_CLIENTE } from './llavero.js';
 import { recetarioDeGoogle, type Recetario } from './recetario.js';
+import { calcularPanParaElAgente, calcularSalParaElAgente } from './calculadoras.js';
+import { PANES, HARINAS, LEVADURAS, PORCENTAJES_SEGUNDA, FERMENTACIONES } from '../src/calculadoras/pan.js';
+import { FERMENTOS } from '../src/calculadoras/fermentados.js';
 
 // La marca que el test de publicación busca en `dist/`: si aparece ahí, el
 // build de la PWA incluyó código del MCP, que no tiene que salir por Pages.
@@ -139,6 +142,37 @@ export function crearServidor(recetario: Recetario): McpServer {
     await recetario.borrar(args);
     return texto(`La receta ${args.id} quedó en la papelera de Drive.`);
   }));
+
+  // Las opciones salen de las tablas de la app: si cambian, cambian acá.
+  const opciones = (xs: readonly { nombre: string }[]): string => xs.map(x => x.nombre).join(', ');
+  const horas = (modo: 'ambiente' | 'frio'): string =>
+    FERMENTACIONES.filter(f => f.modo === modo).map(f => f.horas).join(', ');
+
+  servidor.registerTool('calcular_pan', {
+    description: 'Las cantidades de un pan: harinas, agua, sal y levadura o masa madre, con las tablas de la app. ' +
+      'Si falta un dato o no es una opción, no calcula: devuelve qué falta y sus opciones. ' +
+      'No completes datos por tu cuenta: preguntáselos al usuario.',
+    inputSchema: {
+      pan: z.string().optional().describe(`Uno de: ${opciones(PANES)}.`),
+      harina: z.string().optional().describe(`La harina principal, una de: ${opciones(HARINAS)}.`),
+      segunda_harina: z.string().optional().describe('«ninguna», o una harina distinta de la principal.'),
+      porcentaje_segunda: z.number().optional().describe(`Con segunda harina: ${PORCENTAJES_SEGUNDA.join(', ')}.`),
+      levadura: z.string().optional().describe(`Una de: ${opciones(LEVADURAS)}.`),
+      fermentacion: z.string().optional().describe('«ambiente» o «frío».'),
+      horas: z.number().optional().describe(`Ambiente: ${horas('ambiente')} (con masa madre, sin 2). Frío: ${horas('frio')}.`),
+      harina_total: z.number().optional().describe('En gramos. Una sola de las dos cantidades.'),
+      masa_total: z.number().optional().describe('En gramos. Una sola de las dos cantidades.')
+    }
+  }, (pedido) => responder(() => json(calcularPanParaElAgente(pedido))));
+
+  servidor.registerTool('calcular_sal', {
+    description: 'La sal de un fermentado: el porcentaje del fermento sobre el peso total del frasco (la verdura y, si va en salmuera, el agua). ' +
+      'Si falta un dato, devuelve qué falta y sus opciones. No completes datos por tu cuenta.',
+    inputSchema: {
+      fermento: z.string().optional().describe(`Uno de: ${opciones(FERMENTOS)}.`),
+      peso_total: z.number().optional().describe('En gramos.')
+    }
+  }, (pedido) => responder(() => json(calcularSalParaElAgente(pedido))));
 
   servidor.registerTool('reindexar', {
     description: 'Rehace el índice entero desde las carpetas de Drive, como Reindexar en Ajustes. Informa el avance.',

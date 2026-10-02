@@ -441,7 +441,7 @@ describe('recetaDesdeFormulario', () => {
   });
 
   it('los especiales se leen de su campo, sólo los de la lista', () => {
-    const r = recetaDesdeFormulario({ titulo: 'A', tags: 'horno, favorito', tags_especiales: 'probar, pan, favorito' }, parse(''));
+    const r = recetaDesdeFormulario({ titulo: 'A', tags: 'horno, favorito', tags_especiales: 'probar, brioche, favorito' }, parse(''));
     expect(r.tags).toEqual(['horno']);
     expect(r.tags_especiales).toEqual(['favorito', 'probar']);
   });
@@ -797,4 +797,11 @@ describe('renderFotoPorUrl', () => {
   it('sin aviso no se dibuja ninguno', () => {
     expect(renderFotoPorUrl('https://ejemplo.com/a.jpg')).not.toContain('class="aviso"');
   });
+});
+
+it('el grupo de especiales suma pan y fermentado, después de borrador', () => {
+  const html = renderEditor({ entrada: null, receta: parse('---\ntitulo: A\n---\n') });
+  const orden = ['borrador', 'pan', 'fermentado'].map(t => html.indexOf(`data-accion="tag-especial" data-valor="${t}"`));
+  expect(orden.every(i => i > 0)).toBe(true);
+  expect(orden).toEqual([...orden].sort((a, b) => a - b));
 });

@@ -11,7 +11,10 @@ import { normalizar } from './normalizar.js';
 /** Las claves de `ICO` que usa un especial. El dominio no importa la UI. */
 export type NombreIcono = 'estrella' | 'calendario' | 'marcador';
 
-export type TagEspecial = 'favorito' | 'menú diario' | 'probar' | 'borrador';
+export type TagEspecial = 'favorito' | 'menú diario' | 'probar' | 'borrador' | 'pan' | 'fermentado';
+
+/** Las calculadoras de *Herramientas* que abre un especial desde la receta. */
+export type Herramienta = 'pan' | 'fermentados';
 
 export interface DefinicionEspecial {
   /** La forma canónica: la única que se lee y la que se escribe. */
@@ -29,29 +32,41 @@ export interface DefinicionEspecial {
   enBusqueda: boolean;
   /** El texto de su botón en el editor. */
   etiquetaEditor: string;
+  /** La calculadora que abre el botón *Calcular* de la receta, o ninguna. */
+  herramienta: Herramienta | null;
 }
 
 export const ESPECIALES: readonly DefinicionEspecial[] = [
   {
     nombre: 'favorito', reservadas: ['favorita', 'favoritos', 'favoritas'],
     icono: 'estrella', etiquetaMarca: 'Favorita',
-    enChips: true, enReceta: true, enBusqueda: false, etiquetaEditor: 'favorito'
+    enChips: true, enReceta: true, enBusqueda: false, etiquetaEditor: 'favorito', herramienta: null
   },
   {
     nombre: 'menú diario', reservadas: [],
     icono: 'calendario', etiquetaMarca: 'Menú diario',
-    enChips: true, enReceta: true, enBusqueda: false, etiquetaEditor: 'menú diario'
+    enChips: true, enReceta: true, enBusqueda: false, etiquetaEditor: 'menú diario', herramienta: null
   },
   {
     nombre: 'probar', reservadas: [],
     icono: 'marcador', etiquetaMarca: 'Para probar',
-    enChips: true, enReceta: true, enBusqueda: false, etiquetaEditor: 'probar'
+    enChips: true, enReceta: true, enBusqueda: false, etiquetaEditor: 'probar', herramienta: null
   },
   // Sin presentación propia: al borrador se llega por su lista, en el menú.
   {
     nombre: 'borrador', reservadas: ['borradores', 'incompleta', 'incompleto', 'incompletos', 'incompletas'],
     icono: null, etiquetaMarca: null,
-    enChips: false, enReceta: false, enBusqueda: false, etiquetaEditor: 'borrador'
+    enChips: false, enReceta: false, enBusqueda: false, etiquetaEditor: 'borrador', herramienta: null
+  },
+  // Dicen qué calculadora sirve para la receta: abren la suya desde la
+  // receta y no se muestran en ningún otro lado.
+  {
+    nombre: 'pan', reservadas: [], icono: null, etiquetaMarca: null,
+    enChips: false, enReceta: false, enBusqueda: false, etiquetaEditor: 'pan', herramienta: 'pan'
+  },
+  {
+    nombre: 'fermentado', reservadas: [], icono: null, etiquetaMarca: null,
+    enChips: false, enReceta: false, enBusqueda: false, etiquetaEditor: 'fermentado', herramienta: 'fermentados'
   }
 ];
 

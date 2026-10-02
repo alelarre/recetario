@@ -42,6 +42,8 @@ export const ICO = {
     '<path d="M4 13h5l1 2h4l1-2h5"/>'),
   /** Los dos tags especiales que no son favorito: «probar» y «menú diario». */
   marcador: svg('<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>'),
+  /** Herramientas, en el menú: una balanza de cocina. */
+  balanza: svg('<path d="M5 20h14l-1.5-9h-11z"/><path d="M12 11V7"/><circle cx="12" cy="5" r="2"/>'),
   calendario: svg('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
   /** Favorito: la misma estrella en la receta, en la tarjeta y en el carrusel. */
   estrella: svg('<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/>'),

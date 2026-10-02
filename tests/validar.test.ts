@@ -124,9 +124,9 @@ describe('los tags', () => {
   });
 
   it('un valor fuera de la lista en tags_especiales es error', () => {
-    const { problemas } = validarMd(conFrontmatter('tags_especiales: [favorito, borrador]', 'tags_especiales: [pan]'));
+    const { problemas } = validarMd(conFrontmatter('tags_especiales: [favorito, borrador]', 'tags_especiales: [brioche]'));
     expect(problemas).toEqual([{ campo: 'tags_especiales', nivel: 'error',
-      mensaje: '`pan` no es un tag especial. `tags_especiales` acepta: `favorito`, `menú diario`, `probar`, `borrador`.' }]);
+      mensaje: '`brioche` no es un tag especial. `tags_especiales` acepta: `favorito`, `menú diario`, `probar`, `borrador`, `pan`, `fermentado`.' }]);
   });
 });
 

@@ -208,12 +208,13 @@ pescados usa `Anchoítas — 18-20 medianas` y el recetario original usa
 
 #### C05.1.4 — Los tags especiales y los reservados *(J8)*
 
-- [ ] Cuatro especiales —`favorito`, `menú diario`, `probar` y `borrador`— viven en la clave `tags_especiales`, en ese orden en cualquier fila de tags y antes que los demás.
+- [ ] Seis especiales —`favorito`, `menú diario`, `probar`, `borrador`, `pan` y `fermentado`— viven en la clave `tags_especiales`, en ese orden en cualquier fila de tags y antes que los demás.
 - [ ] `tags_especiales` es una lista cerrada: se reconoce sin mirar mayúsculas ni tildes, se escribe en la forma canónica, y un valor que no es de la lista se lee como ausente.
-- [ ] `tags` no lleva especiales: un reservado en `tags` —un especial, `favoritas`, `borradores`, `incompleta` y sus formas, `terminado` y sus formas— se ignora al leer.
+- [ ] `tags` no lleva especiales: un reservado en `tags` —un especial, `pan` y `fermentado` incluidos, `favoritas`, `borradores`, `incompleta` y sus formas, `terminado` y sus formas— se ignora al leer.
 - [ ] Ninguno se escribe a mano en el campo de tags: cada especial tiene su botón en el editor (`E04-Corregir.md`).
 - [ ] El índice tiene una columna `tags_especiales`.
-- [ ] Cada especial declara su ícono, su marca en la tarjeta, si se ofrece en los chips, si se muestra en la receta y si lo encuentra la búsqueda por texto; ninguno lo encuentra.
+- [ ] Cada especial declara su ícono, su marca en la tarjeta, si se ofrece en los chips, si se muestra en la receta, si lo encuentra la búsqueda por texto y qué calculadora de *Herramientas* abre desde la receta (`herramienta`, `E07-Herramientas.md` C07.5.2); la búsqueda no encuentra ninguno.
+- [ ] **`pan` y `fermentado` no tienen presentación propia:** sin ícono, sin marca en la tarjeta, sin chip, sin aparecer en la receta y sin que la búsqueda los encuentre. Lo único que hacen es poner en la receta el botón de su calculadora: `pan`, la de pan; `fermentado`, la de sal. Los otros cuatro no abren ninguna.
 
 #### C05.1.5 — El depósito de fotos *(J8)*
 
@@ -281,7 +282,7 @@ por el usuario y además podría cambiar solo, sin que nadie tocara nada.
 
 - [ ] Una receta es un borrador si su lista `tags_especiales` tiene `borrador`; si no lo tiene, está terminada.
 - [ ] Se escribe siempre en la forma canónica, en minúscula, y sólo en `tags_especiales` (C05.1.4).
-- [ ] Es el único de los cuatro tags especiales que **no** se pone y saca libremente: sólo se puede sacar cuando la receta cumple C05.3.3, y una receta nueva nace con el tag puesto (`E04-Corregir.md` C04.3b.1).
+- [ ] Es el único de los seis tags especiales que **no** se pone y saca libremente: sólo se puede sacar cuando la receta cumple C05.3.3, y una receta nueva nace con el tag puesto (`E04-Corregir.md` C04.3b.1).
 - [ ] **Una receta sin categoría es siempre un borrador:** la categoría es parte de C05.3.3. Un `.md` escrito afuera sin categoría —en `_sin-categoria/` o suelto en la carpeta base— y sin el tag **no se encuentra de ninguna forma**: ni en la búsqueda, ni en las listas —tampoco en Borradores—, ni en el conteo de tags. Sólo lo nombra el aviso de Ajustes al reindexar (C05.9b.3). El editor no deja guardar una receta sin `borrador` mientras no tenga categoría.
 - [ ] `completa` es una clave desconocida como cualquier otra (C05.1.1): la app no la lee ni la borra, y la conserva tal cual si venía en el `.md`.
 

@@ -73,9 +73,9 @@ y el archivo se arma solo al guardar.
 #### C04.2.1b — Los tags, y las palabras que la app se reserva *(J7)*
 
 - [ ] Los tags comunes puestos se dibujan como pills, cada una con su cruz, que la saca; debajo va el campo para agregar otro, que sugiere los tags que ya existen —nunca los reservados—. Se suma con Enter o con una coma, y también al salir del campo: lo escrito no se pierde por tocar *Guardar* sin apretar Enter. Los especiales no: tienen su botón (C04.4.1) y no se dibujan dos veces.
-- [ ] Hay **palabras reservadas** que el editor no deja escribir a mano: los cuatro especiales —`favorito`, `menú diario`, `probar` y `borrador`—, `favorita`, `favoritos`, `favoritas`, `borradores`, `incompleta` en sus cuatro formas y `terminado` en sus cuatro formas —masculino, femenino, singular y plural— (`E05-Cimientos.md` C05.1.4).
+- [ ] Hay **palabras reservadas** que el editor no deja escribir a mano: los seis especiales —`favorito`, `menú diario`, `probar`, `borrador`, `pan` y `fermentado`—, `favorita`, `favoritos`, `favoritas`, `borradores`, `incompleta` en sus cuatro formas y `terminado` en sus cuatro formas —masculino, femenino, singular y plural— (`E05-Cimientos.md` C05.1.4).
 - [ ] `terminado` está reservada porque contradice a `borrador` (C05.3.1): un tag que contradiga a otro tag especial es ambigüedad pura.
-- [ ] Los cuatro especiales están reservados porque tienen su propio control: escribirlos a mano duplicaría el botón.
+- [ ] Los seis especiales están reservados porque tienen su propio control: escribirlos a mano duplicaría el botón.
 - [ ] Al intentar agregar una reservada, el tag **no entra** y aparece una línea de aviso sin acción, *"Tag no permitido"* (C05.9.1): no es un error del usuario, es un nombre tomado.
 - [ ] La comparación ignora mayúsculas y acentos, igual que la búsqueda.
 - [ ] **Una palabra reservada que ya esté en `tags` en un `.md` escrito afuera se ignora al leer** (`E05-Cimientos.md` C05.1.4): no se dibuja como pill y no se escribe al guardar.
@@ -240,10 +240,11 @@ cuándo se lo puede sacar.
 #### C04.4.1 — El control *(J7)*
 
 - [ ] Dentro del campo **«Tags»**, una fila con **un botón por tag especial**
-  —`favorito`, `menú diario`, `probar` y `borrador`, en ese orden—, arriba de
-  los tags comunes y del campo para agregar. Apretado: la receta tiene el tag
+  —`favorito`, `menú diario`, `probar`, `borrador`, `pan` y `fermentado`, en
+  ese orden—, arriba de los tags comunes y del campo para agregar. Apretado: la receta tiene el tag
   en `tags_especiales`. Suelto: no lo tiene. Tocarlo lo pone o lo saca, con su `aria-pressed`. Cada
-  botón lleva el ícono de su tag, salvo `borrador`, que no tiene. No hay fila
+  botón lleva el ícono de su tag, salvo `borrador`, `pan` y `fermentado`, que
+  no tienen. No hay fila
   «Estado» ni otro control de completitud: es este botón.
 - [ ] **Una receta nueva nace con `borrador` puesto** (C04.3b.1): no está
   terminada hasta que alguien lo diga.
@@ -258,9 +259,13 @@ cuándo se lo puede sacar.
   título, se elige «Sin categoría»— mientras `borrador` está suelto, el botón **vuelve a apretarse
   solo**.
 - [ ] Sacar `borrador` es una declaración del usuario, no una edición de
-  contenido: es la única excepción del principio 3 entre los cuatro
-  especiales, y es del usuario, no del agente. Los otros tres se ponen y
+  contenido: es la única excepción del principio 3 entre los seis
+  especiales, y es del usuario, no del agente. Los otros cinco se ponen y
   sacan libremente.
+- [ ] **`pan` y `fermentado`** dicen qué calculadora sirve para la receta:
+  con uno puesto, la receta lleva su botón *Calcular pan* o *Calcular sal*
+  (`E07-Herramientas.md` C07.5.2). Fuera de ese botón y del editor no se
+  muestran en ningún lado (`E05-Cimientos.md` C05.1.4).
 - [ ] Mientras la receta tiene `borrador`, el editor ofrece **Convertir con
   Agente** al final (`E01-CapturaYBorradores.md` C01.9.1). Aparece y
   desaparece **en el momento** de apretar o soltar el botón, sin redibujar el
@@ -270,7 +275,7 @@ cuándo se lo puede sacar.
 
 **Por qué apretado y no una casilla:** una casilla tiene un estado implícito
 —lo que significa *no tildada*—. Apretado e invertido dice las dos cosas, y es
-la misma convención para los cuatro especiales y para la duración (C04.2.1c).
+la misma convención para los seis especiales y para la duración (C04.2.1c).
 
 ### F04.5 — Guardar
 
