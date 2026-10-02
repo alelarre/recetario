@@ -25,7 +25,7 @@ it('sólo con la harina y la cantidad: dice qué falta y las opciones; las horas
   expect('faltan' in r && r.faltan.map(f => f.dato)).toEqual(['pan', 'segunda_harina', 'prefermento', 'levadura', 'fermentacion', 'temperatura']);
   expect('faltan' in r && r.faltan[2]!.opciones).toEqual(['Ninguno', 'Masa madre', 'Poolish', 'Biga', 'Pâte fermentée']);
   expect('faltan' in r && r.faltan[0]!.opciones).toContain('Pan de campo');
-  expect('faltan' in r && r.faltan[1]!.opciones).toEqual(['Ninguna', '0000', '000 para pizza', 'Semolín', 'Integral', 'Centeno']);
+  expect('faltan' in r && r.faltan[1]!.opciones).toEqual(['Ninguna', '0000', '00', 'Semolín', 'Integral', 'Centeno']);
 });
 
 it('con segunda harina sin porcentaje, falta el porcentaje', () => {
@@ -142,4 +142,10 @@ it('pan: la temperatura del ambiente se pide si algo fermenta a temperatura ambi
   expect('faltan' in poolish && poolish.faltan.map(f => f.dato)).toEqual(['temperatura']);
   const pate = leerPedidoPan({ ...sinTemperatura, prefermento: 'pâte fermentée', fermentacion: 'frío', horas: 24 });
   expect('faltan' in pate && pate.faltan.map(f => f.dato)).toEqual(['temperatura']);
+});
+
+it('pan: la 00, la 000 y la 0000 son tres harinas distintas, por su nombre exacto', () => {
+  for (const [nombre, clave] of [['00', '00'], ['000', '000'], ['0000', '0000']] as const) {
+    expect(leerPedidoPan({ ...completo, harina: nombre })).toEqual({ datos: expect.objectContaining({ harina: clave }) });
+  }
 });

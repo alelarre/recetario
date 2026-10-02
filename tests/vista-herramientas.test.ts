@@ -96,7 +96,7 @@ describe('la calculadora de pan', () => {
     const conMezcla = renderPan({ ...PAN_POR_DEFECTO, segunda: 'centeno' });
     expect(conMezcla).toContain('role="switch" aria-checked="true" data-accion="elegir-opcion" data-grupo="mezcla" data-valor=""');
     expect(elegidoEn(conMezcla, 'segunda')).toBe('centeno');
-    expect(opcionesDe(conMezcla, 'segunda')).toEqual(['0000', '000-pizza', 'semolin', 'integral', 'centeno']);
+    expect(opcionesDe(conMezcla, 'segunda')).toEqual(['0000', '00', 'semolin', 'integral', 'centeno']);
     expect(conMezcla).toContain('data-grupo="porcentaje" data-valor="30" aria-pressed="true"');
     expect(pos(conMezcla, 'mezcla')).toBeLessThan(pos(conMezcla, 'segunda'));
   });

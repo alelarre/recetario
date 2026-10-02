@@ -50,7 +50,7 @@ pregunta, en un mensaje:
 
 > Para calcularlo me faltan:
 > 1. ¿Qué pan? Pan francés, Pan de molde, Pan de miga, Pizza al molde, Pizza a la piedra, Pizza napolitana, Pizza New York, Baguette, Pan de campo, Ciabatta o Focaccia.
-> 2. ¿Le sumás una segunda harina? Ninguna, 0000, 000 para pizza, Semolín, Integral o Centeno.
+> 2. ¿Le sumás una segunda harina? Ninguna, 0000, 00, Semolín, Integral o Centeno.
 > 3. ¿Con algún prefermento? Ninguno, Masa madre, Poolish, Biga o Pâte fermentée.
 > 4. ¿Qué levadura? Fresca o Seca (con masa madre no hace falta).
 > 5. ¿Fermentación a temperatura ambiente o en frío? (Con poolish o biga no hace falta.)

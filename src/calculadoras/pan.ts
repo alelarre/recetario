@@ -14,7 +14,7 @@ import { TEMPERATURAS, type ClaveTemperatura } from './temperaturas.js';
 export type ClavePan =
   | 'frances' | 'molde' | 'miga' | 'pizza-molde' | 'pizza-piedra' | 'napolitana' | 'new-york'
   | 'baguette' | 'campo' | 'ciabatta' | 'focaccia';
-export type ClaveHarina = '0000' | '000' | '000-pizza' | 'semolin' | 'integral' | 'centeno';
+export type ClaveHarina = '0000' | '000' | '00' | 'semolin' | 'integral' | 'centeno';
 export type Levadura = 'fresca' | 'seca';
 export type ClaveFermentacion =
   | 'ambiente-2' | 'ambiente-4' | 'ambiente-8' | 'frio-12' | 'frio-24' | 'frio-48' | 'frio-72';
@@ -52,7 +52,8 @@ export const PANES: readonly { clave: ClavePan; nombre: string; hidratacion: num
 export const HARINAS: readonly { clave: ClaveHarina; nombre: string; ajuste: number }[] = [
   { clave: '0000', nombre: '0000', ajuste: -4 },
   { clave: '000', nombre: '000', ajuste: 0 },
-  { clave: '000-pizza', nombre: '000 para pizza', ajuste: 2 },
+  // La de fuerza para pizza, sin nada agregado: las premezclas «para pizza» ya traen levadura.
+  { clave: '00', nombre: '00', ajuste: 2 },
   { clave: 'semolin', nombre: 'Semolín', ajuste: 3 },
   { clave: 'integral', nombre: 'Integral', ajuste: 8 },
   { clave: 'centeno', nombre: 'Centeno', ajuste: 20 }
