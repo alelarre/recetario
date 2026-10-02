@@ -1,6 +1,6 @@
 import { it, expect } from 'vitest';
 import { calcularPanParaElAgente, calcularSalParaElAgente } from '../mcp/calculadoras.js';
-import { lineasPan, advertenciasPan, leerPedidoPan } from '../src/calculadoras/pan.js';
+import { lineasPan, advertenciasPan, datosUsados, leerPedidoPan } from '../src/calculadoras/pan.js';
 import { cifrasSal, lineasSal, type DatosSal } from '../src/calculadoras/fermentados.js';
 
 const pedido = {
@@ -12,6 +12,7 @@ it('con todos los datos, el mismo resultado que la pantalla', () => {
   const datos = leerPedidoPan(pedido);
   if (!('datos' in datos)) throw new Error('el pedido de prueba está incompleto');
   expect(calcularPanParaElAgente(pedido)).toEqual({
+    usado: datosUsados(datos.datos),
     resultado: lineasPan(datos.datos),
     harina_total: '1000 g',
     masa_total: '1745 g',
@@ -48,4 +49,15 @@ it('con prefermento, sus líneas aparte y el resultado de la masa final', () => 
     { nombre: 'Harina 000', valor: '400 g' }, { nombre: 'Agua', valor: '176 g' }, { nombre: 'Levadura fresca', valor: '4,0 g' }
   ]);
   expect(r).toHaveProperty('masa_total', '1744 g');
+});
+
+it('sólo con el tipo, la cantidad y la temperatura: calcula con lo que trae el tipo, y dice con qué', () => {
+  const r = calcularPanParaElAgente({ pan: 'baguette', harina_total: 1000, temperatura: '18 a 24 °C' });
+  expect(r).toHaveProperty('usado', [
+    { nombre: 'Tipo', valor: 'Baguette' }, { nombre: 'Harina', valor: '000' }, { nombre: 'Hidratación', valor: '68 %' },
+    { nombre: 'Prefermento', valor: 'Poolish, 12 h' }, { nombre: 'Levadura', valor: 'Fresca' },
+    { nombre: 'Temperatura ambiente', valor: '18 a 24 °C' }
+  ]);
+  expect(r).toHaveProperty('hidratacion', '68 %');
+  expect(r).toHaveProperty('prefermento');
 });

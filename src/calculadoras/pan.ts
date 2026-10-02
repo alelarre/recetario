@@ -22,32 +22,54 @@ export type PorcentajeSegunda = 10 | 20 | 30 | 50;
 export type ClavePrefermento = 'masa-madre' | 'poolish' | 'biga' | 'pate';
 
 /**
- * El tipo de pan pone la hidratación base, con harina 000. Una pizza lleva
- * además el peso sugerido del bollo, en gramos, y su cantidad se pide en
- * bollos. Las fuentes de las pizzas están en
+ * Los tipos de pan. **Un tipo es un punto de partida, no una regla:** al
+ * elegirlo carga su hidratación, su harina, su prefermento, su levadura y su
+ * fermentación, y después se cambia lo que haga falta. Ninguno trae mezcla
+ * de harinas. La `fermentacion` de un tipo con poolish o biga es la que queda
+ * si se le saca el prefermento.
+ *
+ * Una pizza lleva además el peso sugerido del bollo, en gramos, y su cantidad
+ * se pide en bollos. La hidratación de cada tipo es la de su harina. Las
+ * fuentes de las pizzas están en
  * `product-design/research/herramientas/panaderia-pizza-masas.md`.
  */
-export const PANES: readonly { clave: ClavePan; nombre: string; hidratacion: number; bollo?: number }[] = [
-  { clave: 'frances', nombre: 'Pan francés', hidratacion: 60 },
-  { clave: 'molde', nombre: 'Pan de molde', hidratacion: 62 },
-  { clave: 'miga', nombre: 'Pan de miga', hidratacion: 56 },
+export const PANES: readonly {
+  clave: ClavePan; nombre: string; bollo?: number;
+  hidratacion: number; harina: ClaveHarina; prefermento: ClavePrefermento | null; horasPrefermento?: number;
+  levadura: Levadura; fermentacion: ClaveFermentacion;
+}[] = [
+  { clave: 'frances', nombre: 'Pan francés',
+    hidratacion: 60, harina: '000', prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-4' },
+  { clave: 'molde', nombre: 'Pan de molde',
+    hidratacion: 62, harina: '000', prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-4' },
+  { clave: 'miga', nombre: 'Pan de miga',
+    hidratacion: 56, harina: '000', prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-2' },
   // Bollo para un molde n.º 32 (comemelapizza).
-  { clave: 'pizza-molde', nombre: 'Pizza al molde', hidratacion: 61, bollo: 380 },
+  { clave: 'pizza-molde', nombre: 'Pizza al molde', bollo: 380,
+    hidratacion: 61, harina: '000', prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-4' },
   // Bollo: las fuentes van de 210 a 350 g y ninguna dice el diámetro.
-  { clave: 'pizza-piedra', nombre: 'Pizza a la piedra', hidratacion: 57, bollo: 250 },
-  // Hidratación y bollo de Ooni, para 30 cm.
-  { clave: 'napolitana', nombre: 'Pizza napolitana', hidratacion: 65, bollo: 250 },
-  // Hidratación y bollo de Ooni, para 40 cm.
-  { clave: 'new-york', nombre: 'Pizza New York', hidratacion: 65, bollo: 380 },
-  { clave: 'baguette', nombre: 'Baguette', hidratacion: 68 },
-  { clave: 'campo', nombre: 'Pan de campo', hidratacion: 72 },
-  { clave: 'ciabatta', nombre: 'Ciabatta', hidratacion: 80 },
-  { clave: 'focaccia', nombre: 'Focaccia', hidratacion: 75 }
+  { clave: 'pizza-piedra', nombre: 'Pizza a la piedra', bollo: 250,
+    hidratacion: 57, harina: '000', prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-4' },
+  // Ooni: harina 00 al 65 %, bollo para 30 cm.
+  { clave: 'napolitana', nombre: 'Pizza napolitana', bollo: 250,
+    hidratacion: 65, harina: '00', prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8' },
+  // Ooni: 65 %, bollo para 40 cm, en frío de 24 a 72 h.
+  { clave: 'new-york', nombre: 'Pizza New York', bollo: 380,
+    hidratacion: 65, harina: '000', prefermento: null, levadura: 'fresca', fermentacion: 'frio-24' },
+  { clave: 'baguette', nombre: 'Baguette',
+    hidratacion: 68, harina: '000', prefermento: 'poolish', horasPrefermento: 12, levadura: 'fresca', fermentacion: 'ambiente-4' },
+  { clave: 'campo', nombre: 'Pan de campo',
+    hidratacion: 72, harina: '000', prefermento: 'masa-madre', levadura: 'fresca', fermentacion: 'ambiente-8' },
+  { clave: 'ciabatta', nombre: 'Ciabatta',
+    hidratacion: 80, harina: '000', prefermento: 'biga', horasPrefermento: 18, levadura: 'fresca', fermentacion: 'ambiente-4' },
+  { clave: 'focaccia', nombre: 'Focaccia',
+    hidratacion: 75, harina: '000', prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-4' }
 ];
 
 /**
- * Cuántos puntos de hidratación suma o resta cada harina, pura. Con dos
- * harinas el ajuste es el promedio según la proporción.
+ * Cuántos puntos de hidratación suma o resta cada harina, pura, contra la
+ * 000. Con dos harinas el ajuste es el promedio según la proporción. Al
+ * cambiar de harina, la hidratación se corre por la diferencia.
  */
 export const HARINAS: readonly { clave: ClaveHarina; nombre: string; ajuste: number }[] = [
   { clave: '0000', nombre: '0000', ajuste: -4 },
@@ -164,6 +186,8 @@ export const BOLLOS_POR_DEFECTO = 4;
 export const SAL = 2;
 /** La seca (instantánea) es más concentrada: va la fresca dividida por esto. */
 export const DIVISOR_SECA = 3;
+/** Con qué porcentaje arranca la mezcla al encenderla. */
+export const PORCENTAJE_SEGUNDA_POR_DEFECTO: PorcentajeSegunda = 30;
 /** Más agua que esto no se maneja con estas harinas: la cuenta se topea acá. */
 export const HIDRATACION_MAXIMA = 85;
 
@@ -175,11 +199,14 @@ export const ADVERTENCIA_FRIO = 'En frío, se cuentan 1 o 2 horas a temperatura 
 export const AVISO_TOPE = 'La hidratación se limitó a 85 %.';
 
 export interface DatosPan {
-  pan: ClavePan;
+  /** El tipo del que se partió. `null`: un pedido del agente con todos los datos y sin tipo. */
+  pan: ClavePan | null;
   harina: ClaveHarina;
   segunda: ClaveHarina | null;
   /** Sin segunda harina no se usa. */
   porcentajeSegunda: PorcentajeSegunda;
+  /** En %, sobre la harina total. Lo que pase del tope se cuenta como el tope. */
+  hidratacion: number;
   /** `null` es un pan directo, sólo con levadura. */
   prefermento: ClavePrefermento | null;
   /** Fresca o seca. Con masa madre no se usa. */
@@ -267,7 +294,43 @@ export const segundaAlMezclar = (harina: ClaveHarina): ClaveHarina =>
   harina !== SEGUNDA_POR_DEFECTO ? SEGUNDA_POR_DEFECTO : HARINAS.find(h => h.clave !== harina)?.clave ?? SEGUNDA_POR_DEFECTO;
 
 /** El peso sugerido del bollo, o `null` si el pan no es una pizza. */
-export const bolloDe = (pan: ClavePan): number | null => PANES.find(p => p.clave === pan)?.bollo ?? null;
+export const bolloDe = (pan: ClavePan | null): number | null => PANES.find(p => p.clave === pan)?.bollo ?? null;
+
+/** El ajuste de hidratación de una harina o de una mezcla, ponderado por la proporción. */
+function ajusteDe({ harina, segunda, porcentajeSegunda }: Pick<DatosPan, 'harina' | 'segunda' | 'porcentajeSegunda'>): number {
+  const p = segunda ? porcentajeSegunda / 100 : 0;
+  return buscar(HARINAS, harina).ajuste * (1 - p) + (segunda ? buscar(HARINAS, segunda).ajuste * p : 0);
+}
+
+/** Un decimal: la suma de ajustes no deja colas de punto flotante en el campo. */
+const aUnDecimal = (n: number): number => Math.round(n * 10) / 10;
+
+/**
+ * La hidratación al cambiar la harina o la mezcla: se corre por la diferencia
+ * de absorción entre las harinas de antes y las de ahora. Lo que se ajustó a
+ * mano se conserva.
+ */
+export function hidratacionAlCambiarHarinas(
+  antes: Pick<DatosPan, 'hidratacion' | 'harina' | 'segunda' | 'porcentajeSegunda'>,
+  ahora: Pick<DatosPan, 'harina' | 'segunda' | 'porcentajeSegunda'>
+): number {
+  return aUnDecimal(antes.hidratacion + ajusteDe(ahora) - ajusteDe(antes));
+}
+
+/**
+ * Los datos al elegir un tipo: todo vuelve a lo que trae el tipo. No son
+ * parte del tipo, y se conservan, la temperatura del ambiente y la cantidad
+ * —que pasa a bollos si es una pizza, y a gramos si no—.
+ */
+export function alElegirTipo(antes: Pick<DatosPan, 'pan' | 'cantidad' | 'temperatura'>, pan: ClavePan): DatosPan {
+  const tipo = buscar(PANES, pan);
+  return {
+    pan, harina: tipo.harina, segunda: null, porcentajeSegunda: PORCENTAJE_SEGUNDA_POR_DEFECTO,
+    hidratacion: tipo.hidratacion, prefermento: tipo.prefermento, levadura: tipo.levadura,
+    fermentacion: tipo.fermentacion, temperatura: antes.temperatura,
+    cantidad: cantidadAlCambiar(antes, pan), horasPrefermento: tipo.horasPrefermento ?? 0
+  };
+}
 
 const esPositivo = (n: number): boolean => Number.isFinite(n) && n > 0;
 
@@ -276,7 +339,7 @@ const esPositivo = (n: number): boolean => Number.isFinite(n) && n > 0;
  * peso sugerido de su estilo; al pasar de una pizza a un pan, se conserva la
  * masa total.
  */
-export function cantidadAlCambiar(antes: DatosPan, pan: ClavePan): CantidadPan {
+export function cantidadAlCambiar(antes: Pick<DatosPan, 'pan' | 'cantidad'>, pan: ClavePan): CantidadPan {
   if (pan === antes.pan) return antes.cantidad;
   const c = antes.cantidad;
   const bollo = bolloDe(pan);
@@ -284,16 +347,14 @@ export function cantidadAlCambiar(antes: DatosPan, pan: ClavePan): CantidadPan {
   return c.de === 'bollos' ? { de: 'masa', gramos: c.bollos * c.gramos } : c;
 }
 
-/** Las cantidades, o `null` si la cantidad pedida no es un número positivo. */
+/** Las cantidades, o `null` si la cantidad pedida o la hidratación no son un número positivo. */
 export function calcularPan(d: DatosPan): ResultadoPan | null {
   const c = d.cantidad;
-  if (!esPositivo(c.gramos) || (c.de === 'bollos' && !esPositivo(c.bollos))) return null;
+  if (!esPositivo(c.gramos) || (c.de === 'bollos' && !esPositivo(c.bollos)) || !esPositivo(d.hidratacion)) return null;
   const masaPedida = c.de === 'bollos' ? c.bollos * c.gramos : c.gramos;
-  const pan = buscar(PANES, d.pan);
   const fermentacion = buscar(FERMENTACIONES, d.fermentacion);
   const p = d.segunda ? d.porcentajeSegunda / 100 : 0;
-  const ajuste = buscar(HARINAS, d.harina).ajuste * (1 - p) + (d.segunda ? buscar(HARINAS, d.segunda).ajuste * p : 0);
-  const sinTope = pan.hidratacion + ajuste;
+  const sinTope = d.hidratacion;
   const hidratacion = Math.min(sinTope, HIDRATACION_MAXIMA);
   const conMasaMadre = d.prefermento === 'masa-madre';
 
@@ -346,106 +407,151 @@ export function calcularPan(d: DatosPan): ResultadoPan | null {
 
 /** Lo que manda el agente por el MCP, con los datos por su nombre. */
 export interface PedidoPan {
+  /** El tipo. Con él, lo que no venga sale de lo que trae el tipo. */
   pan?: string | undefined;
   harina?: string | undefined;
   /** `ninguna` o una harina distinta de la principal. */
   segunda_harina?: string | undefined;
   porcentaje_segunda?: number | undefined;
+  /** En %, sobre la harina total. */
+  hidratacion?: number | undefined;
+  /** `ninguno` o uno de la tabla, la masa madre incluida. */
+  prefermento?: string | undefined;
+  horas_prefermento?: number | undefined;
   levadura?: string | undefined;
   /** `ambiente` o `frío`. */
   fermentacion?: string | undefined;
   horas?: number | undefined;
-  /** La del ambiente, una de las franjas. En frío no va. */
+  /** La del ambiente, una de las franjas. */
   temperatura?: string | undefined;
   harina_total?: number | undefined;
   masa_total?: number | undefined;
   /** En una pizza, la cantidad es bollos y gramos por bollo. */
   bollos?: number | undefined;
   peso_bollo?: number | undefined;
-  /** `ninguno` o uno de la tabla, la masa madre incluida. */
-  prefermento?: string | undefined;
-  horas_prefermento?: number | undefined;
 }
 
 const MODOS = [{ clave: 'ambiente', nombre: 'Ambiente' }, { clave: 'frio', nombre: 'Frío' }] as const;
+const NINGUNA = [{ clave: 'ninguna', nombre: 'Ninguna' }];
+const NINGUNO = [{ clave: 'ninguno', nombre: 'Ninguno' }];
 
 /**
- * Los datos de un pedido del MCP, o lo que falta con sus opciones. No hay
- * valores por defecto: lo que no vino se le pregunta al usuario.
+ * Los datos de un pedido del MCP, o lo que falta con sus opciones.
+ *
+ * **Con el tipo, lo que no viene sale de lo que trae el tipo**, como en la
+ * pantalla, y lo que viene lo pisa. Sin el tipo no hay de dónde completar:
+ * hacen falta todos los datos, y entre lo que falta va el tipo, que es la
+ * forma corta de darlos.
+ *
+ * Nunca salen del tipo la cantidad ni la temperatura del ambiente —sí los
+ * gramos por bollo de una pizza—. Tampoco lo que depende de un dato que se
+ * cambió: el porcentaje de una segunda harina, las horas de otro prefermento
+ * y las horas que no van con el modo o el prefermento pedidos. La hidratación
+ * que no viene es la del tipo, corrida por las harinas pedidas.
  *
  * Un dato cuyas opciones dependen de otro que falta no se pide todavía: la
  * segunda harina espera a la principal; las horas, al prefermento y al modo;
- * y la cantidad al pan, porque una pizza se pide en bollos. Se pide en la
- * vuelta siguiente, con opciones que van seguro.
- *
- * La levadura, la fermentación y la temperatura se piden junto con el
- * prefermento, y dejan de pedirse cuando lo elegido no las usa: la masa madre
- * no lleva levadura, con poolish o biga la masa final no tiene fermentación
- * que elegir, y la temperatura del ambiente no cuenta con la masa en frío
- * —salvo que el prefermento fermente a temperatura ambiente— ni con biga.
+ * y la cantidad al tipo, porque una pizza se pide en bollos. La levadura, la
+ * fermentación y la temperatura dejan de pedirse cuando lo elegido no las
+ * usa: la masa madre no lleva levadura, con poolish o biga la masa final no
+ * tiene fermentación que elegir, y la temperatura del ambiente no cuenta con
+ * la masa en frío —salvo que el prefermento fermente a temperatura
+ * ambiente— ni con biga.
  */
 export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   const faltan: Faltante[] = [];
   const falta = (dato: string, opciones: readonly string[]): void => { faltan.push({ dato, opciones }); };
 
-  const pan = porNombre(PANES, p.pan);
-  if (!pan) falta('pan', PANES.map(x => x.nombre));
-  const harina = porNombre(HARINAS, p.harina);
+  const tipo = porNombre(PANES, p.pan);
+  // Un tipo que no existe se corrige antes que nada: de él sale todo lo demás.
+  if (p.pan !== undefined && !tipo) return { faltan: [{ dato: 'pan', opciones: PANES.map(x => x.nombre) }] };
+
+  const harina = p.harina === undefined ? (tipo ? buscar(HARINAS, tipo.harina) : null) : porNombre(HARINAS, p.harina);
   if (!harina) falta('harina', HARINAS.map(x => x.nombre));
 
   const posiblesSegundas = HARINAS.filter(x => x.clave !== harina?.clave);
-  const ninguna = p.segunda_harina !== undefined && porNombre([{ clave: 'ninguna', nombre: 'Ninguna' }], p.segunda_harina);
-  const segunda = ninguna ? null : porNombre(posiblesSegundas, p.segunda_harina);
-  if (harina && !ninguna && !segunda) falta('segunda_harina', ['Ninguna', ...posiblesSegundas.map(x => x.nombre)]);
+  const sinSegunda = p.segunda_harina === undefined ? !!tipo : !!porNombre(NINGUNA, p.segunda_harina);
+  const segunda = sinSegunda ? null : porNombre(posiblesSegundas, p.segunda_harina);
+  if (harina && !sinSegunda && !segunda) falta('segunda_harina', ['Ninguna', ...posiblesSegundas.map(x => x.nombre)]);
   const porcentaje = PORCENTAJES_SEGUNDA.find(x => x === p.porcentaje_segunda);
   if (segunda && !porcentaje) falta('porcentaje_segunda', PORCENTAJES_SEGUNDA.map(String));
 
-  const ninguno = !!porNombre([{ clave: 'ninguno', nombre: 'Ninguno' }], p.prefermento);
-  const elegido = ninguno ? null : porNombre(PREFERMENTOS, p.prefermento);
-  const sabePrefermento = ninguno || !!elegido;
+  const hidratacion = p.hidratacion !== undefined ? positivo(p.hidratacion)
+    : tipo && harina
+      ? hidratacionAlCambiarHarinas(
+          { hidratacion: tipo.hidratacion, harina: tipo.harina, segunda: null, porcentajeSegunda: PORCENTAJE_SEGUNDA_POR_DEFECTO },
+          { harina: harina.clave, segunda: segunda?.clave ?? null, porcentajeSegunda: porcentaje ?? PORCENTAJE_SEGUNDA_POR_DEFECTO })
+      : null;
+  if (hidratacion === null && (p.hidratacion !== undefined || !tipo)) falta('hidratacion', []);
+
+  const sinPrefermento = p.prefermento === undefined ? tipo?.prefermento === null : !!porNombre(NINGUNO, p.prefermento);
+  const elegido = sinPrefermento ? null
+    : p.prefermento === undefined ? PREFERMENTOS.find(x => x.clave === tipo?.prefermento) ?? null
+    : porNombre(PREFERMENTOS, p.prefermento);
+  const sabePrefermento = sinPrefermento || !!elegido;
   if (!sabePrefermento) falta('prefermento', ['Ninguno', ...PREFERMENTOS.map(x => x.nombre)]);
   const pref = prefermentoConLevadura(elegido?.clave ?? null);
-  const horasPrefermento = pref?.horas.length === 1 ? pref.horas[0] : pref?.horas.find(h => h.horas === p.horas_prefermento);
+  // Las horas del tipo valen sólo para su prefermento.
+  const horasPedidas = p.horas_prefermento ?? (tipo?.prefermento === pref?.clave ? tipo?.horasPrefermento : undefined);
+  const horasPrefermento = pref?.horas.length === 1 ? pref.horas[0] : pref?.horas.find(h => h.horas === horasPedidas);
   if (pref && !horasPrefermento) falta('horas_prefermento', pref.horas.map(h => String(h.horas)));
 
   // La masa madre no lleva levadura.
   const pideLevadura = elegido?.clave !== 'masa-madre';
-  const levadura = porNombre(LEVADURAS, p.levadura);
+  const levadura = p.levadura === undefined ? (tipo ? buscar(LEVADURAS, tipo.levadura) : null) : porNombre(LEVADURAS, p.levadura);
   if (pideLevadura && !levadura) falta('levadura', LEVADURAS.map(x => x.nombre));
 
   // Sin levadura en la masa final, no hay fermentación que elegir.
   const conTabla = !pref || pref.levaduraFinal;
-  const modo = conTabla ? porNombre(MODOS, p.fermentacion) : null;
+  const delTipo = tipo ? buscar(FERMENTACIONES, tipo.fermentacion) : null;
+  const modo = !conTabla ? null
+    : p.fermentacion === undefined ? MODOS.find(m => m.clave === delTipo?.modo) ?? null
+    : porNombre(MODOS, p.fermentacion);
   if (conTabla && !modo) falta('fermentacion', MODOS.map(x => x.nombre));
+  // Las horas esperan al prefermento: con masa madre no van las 2 h. Las del
+  // tipo valen si van con el modo y el prefermento pedidos.
+  const posibles = modo && sabePrefermento ? fermentacionesPara(elegido?.clave ?? null).filter(f => f.modo === modo.clave) : [];
+  const fermentacion = !conTabla ? delTipo ?? buscar(FERMENTACIONES, PAN_POR_DEFECTO.fermentacion)
+    : p.horas !== undefined ? posibles.find(f => f.horas === p.horas)
+    : posibles.find(f => f.clave === delTipo?.clave);
+  if (modo && sabePrefermento && !fermentacion) falta('horas', posibles.map(f => String(f.horas)));
+
+  // Sin el tipo y con datos por completar, el tipo es lo primero que falta:
+  // con él, el resto sale solo.
+  const sinTipoEIncompleto = !tipo && faltan.length > 0;
+  if (sinTipoEIncompleto) faltan.unshift({ dato: 'pan', opciones: PANES.map(x => x.nombre) });
+
   const temperatura = porNombre(TEMPERATURAS, p.temperatura);
   const pideTemperatura = (pref?.ambiente ?? false) || (conTabla && modo?.clave !== 'frio');
   if (pideTemperatura && !temperatura) falta('temperatura', TEMPERATURAS.map(x => x.nombre));
-  // Las horas esperan al prefermento: con masa madre no van las 2 h.
-  const posibles = modo && sabePrefermento ? fermentacionesPara(elegido?.clave ?? null).filter(f => f.modo === modo.clave) : [];
-  const fermentacion = conTabla ? posibles.find(f => f.horas === p.horas) : buscar(FERMENTACIONES, PAN_POR_DEFECTO.fermentacion);
-  if (modo && sabePrefermento && !fermentacion) falta('horas', posibles.map(f => String(f.horas)));
 
-  const bollo = pan ? bolloDe(pan.clave) : null;
+  const bollo = bolloDe(tipo?.clave ?? null);
+  const bollos = positivo(p.bollos);
+  const harinaTotal = positivo(p.harina_total);
+  const masaTotal = positivo(p.masa_total);
   let cantidad: CantidadPan | null = null;
-  if (pan && bollo !== null) {
-    const bollos = positivo(p.bollos);
-    const peso = positivo(p.peso_bollo);
+  if (tipo && bollo !== null) {
+    // Una pizza va en bollos; los gramos por bollo que no vienen son los del tipo.
+    const gramos = p.peso_bollo === undefined ? bollo : positivo(p.peso_bollo);
     if (bollos === null) falta('bollos', []);
-    if (peso === null) falta('peso_bollo', [String(bollo)]);
-    if (bollos !== null && peso !== null) cantidad = { de: 'bollos', bollos, gramos: peso };
-  } else if (pan) {
-    const harinaTotal = positivo(p.harina_total);
-    const masaTotal = positivo(p.masa_total);
-    if (harinaTotal !== null && p.masa_total === undefined) cantidad = { de: 'harina', gramos: harinaTotal };
-    else if (masaTotal !== null && p.harina_total === undefined) cantidad = { de: 'masa', gramos: masaTotal };
-    else falta('cantidad', ['harina_total', 'masa_total']);
+    if (gramos === null) falta('peso_bollo', [String(bollo)]);
+    if (bollos !== null && gramos !== null) cantidad = { de: 'bollos', bollos, gramos };
+  } else if (!tipo && bollos !== null && positivo(p.peso_bollo) !== null && p.harina_total === undefined && p.masa_total === undefined) {
+    cantidad = { de: 'bollos', bollos, gramos: positivo(p.peso_bollo) ?? 0 };
+  } else if (harinaTotal !== null && p.masa_total === undefined) {
+    cantidad = { de: 'harina', gramos: harinaTotal };
+  } else if (masaTotal !== null && p.harina_total === undefined) {
+    cantidad = { de: 'masa', gramos: masaTotal };
+  } else if (tipo || !sinTipoEIncompleto) {
+    falta('cantidad', ['harina_total', 'masa_total']);
   }
 
-  if (faltan.length || !pan || !harina || (!ninguna && !segunda) || !fermentacion || !cantidad) return { faltan };
+  if (faltan.length || !harina || (!sinSegunda && !segunda) || hidratacion === null || !fermentacion || !cantidad) return { faltan };
   return {
     datos: {
-      pan: pan.clave, harina: harina.clave, segunda: segunda?.clave ?? null,
-      porcentajeSegunda: porcentaje ?? PORCENTAJES_SEGUNDA[0] ?? 10,
+      pan: tipo?.clave ?? null, harina: harina.clave, segunda: segunda?.clave ?? null,
+      porcentajeSegunda: porcentaje ?? PORCENTAJE_SEGUNDA_POR_DEFECTO,
+      hidratacion,
       prefermento: elegido?.clave ?? null,
       levadura: levadura?.clave ?? PAN_POR_DEFECTO.levadura,
       fermentacion: fermentacion.clave,
@@ -456,36 +562,37 @@ export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   };
 }
 
-/** Lo que muestra la calculadora la primera vez. */
-export const PAN_POR_DEFECTO: DatosPan = {
-  pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 30,
-  prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8', temperatura: '18-24',
-  cantidad: { de: 'harina', gramos: 1000 }, horasPrefermento: 0
-};
+/** El tipo con que arranca la calculadora. */
+const TIPO_POR_DEFECTO: ClavePan = 'campo';
+
+/** Lo que muestra la calculadora la primera vez: el tipo de por defecto, con 1 kg de harina. */
+export const PAN_POR_DEFECTO: DatosPan = alElegirTipo(
+  { pan: TIPO_POR_DEFECTO, cantidad: { de: 'harina', gramos: 1000 }, temperatura: '18-24' }, TIPO_POR_DEFECTO);
 
 const deLaTabla = <T extends { clave: string }>(tabla: readonly T[], valor: unknown): T['clave'] | undefined =>
   tabla.find(f => f.clave === valor)?.clave;
 
 /**
  * Las últimas elecciones guardadas, dato por dato: lo que no se puede leer o
- * ya no es una opción vuelve al valor por defecto, y el resto se conserva.
- * También corrige las combinaciones que no van: la segunda igual a la
- * principal, las 2 h con masa madre, una cantidad que no es la del pan
+ * ya no es una opción vuelve a lo que trae el tipo guardado, y el resto se
+ * conserva. También corrige las combinaciones que no van: la segunda igual a
+ * la principal, las 2 h con masa madre, una cantidad que no es la del pan
  * —una pizza va en bollos; un pan, en harina o masa— y unas horas que no son
  * de su prefermento.
  */
 export function completarPan(guardado: unknown): DatosPan {
   const g: Record<string, unknown> = typeof guardado === 'object' && guardado !== null && !Array.isArray(guardado)
     ? guardado as Record<string, unknown> : {};
-  const d = PAN_POR_DEFECTO;
+  const pan = deLaTabla(PANES, g['pan']) ?? TIPO_POR_DEFECTO;
+  const d = alElegirTipo({ ...PAN_POR_DEFECTO, pan }, pan);
   const harina = deLaTabla(HARINAS, g['harina']) ?? d.harina;
   const segunda = deLaTabla(HARINAS, g['segunda']);
-  const levadura = deLaTabla(LEVADURAS, g['levadura']) ?? d.levadura;
-  const prefermento = deLaTabla(PREFERMENTOS, g['prefermento']) ?? null;
+  // «Ninguno» se guarda como `null`: no es un dato que falte.
+  const prefermento = g['prefermento'] === null ? null : deLaTabla(PREFERMENTOS, g['prefermento']) ?? d.prefermento;
   const pref = prefermentoConLevadura(prefermento);
-  const fermentacion = deLaTabla(fermentacionesPara(prefermento), g['fermentacion'])
-    ?? (g['fermentacion'] === 'ambiente-2' ? 'ambiente-4' : d.fermentacion);
-  const pan = deLaTabla(PANES, g['pan']) ?? d.pan;
+  const posibles = fermentacionesPara(prefermento);
+  const fermentacion = deLaTabla(posibles, g['fermentacion'])
+    ?? (g['fermentacion'] === 'ambiente-2' ? 'ambiente-4' : deLaTabla(posibles, d.fermentacion) ?? 'ambiente-4');
   const c = typeof g['cantidad'] === 'object' && g['cantidad'] !== null ? g['cantidad'] as Record<string, unknown> : {};
   const numero = (x: unknown): number | null => (typeof x === 'number' && esPositivo(x) ? x : null);
   const gramos = numero(c['gramos']);
@@ -497,20 +604,23 @@ export function completarPan(guardado: unknown): DatosPan {
   const bollo = bolloDe(pan);
   const cantidad: CantidadPan = bollo !== null
     ? (leida?.de === 'bollos' ? leida : { de: 'bollos', bollos: BOLLOS_POR_DEFECTO, gramos: bollo })
-    : leida === null ? d.cantidad
+    : leida === null ? PAN_POR_DEFECTO.cantidad
     : leida.de === 'bollos' ? { de: 'masa', gramos: leida.bollos * leida.gramos }
     : leida;
+  // Las horas del tipo valen sólo para su prefermento.
+  const horas = numero(g['horasPrefermento']) ?? (prefermento === d.prefermento ? d.horasPrefermento : 0);
   return {
     pan,
     harina,
     segunda: segunda && segunda !== harina ? segunda : null,
     porcentajeSegunda: PORCENTAJES_SEGUNDA.find(x => x === g['porcentajeSegunda']) ?? d.porcentajeSegunda,
+    hidratacion: numero(g['hidratacion']) ?? d.hidratacion,
     prefermento,
-    levadura,
+    levadura: deLaTabla(LEVADURAS, g['levadura']) ?? d.levadura,
     fermentacion,
-    temperatura: deLaTabla(TEMPERATURAS, g['temperatura']) ?? d.temperatura,
+    temperatura: deLaTabla(TEMPERATURAS, g['temperatura']) ?? PAN_POR_DEFECTO.temperatura,
     cantidad,
-    horasPrefermento: pref ? horasDe(pref, typeof g['horasPrefermento'] === 'number' ? g['horasPrefermento'] : 0).horas : 0
+    horasPrefermento: pref ? horasDe(pref, horas).horas : 0
   };
 }
 
@@ -562,6 +672,30 @@ export function lineasPrefermento(d: DatosPan): Linea[] {
     { nombre: 'Agua', valor: g(r?.agua) },
     ...(pref.sal ? [{ nombre: 'Sal', valor: g(r?.sal) }] : []),
     { nombre: NOMBRE_LEVADURA[d.levadura], valor: g(r?.levadura) }
+  ];
+}
+
+/**
+ * Los datos con que se hizo la cuenta, dichos como en la pantalla. Es lo que
+ * el agente muestra junto al resultado: con el tipo, parte no la pidió nadie.
+ */
+export function datosUsados(d: DatosPan): Linea[] {
+  const pref = prefermentoDe(d);
+  const fermentacion = buscar(FERMENTACIONES, d.fermentacion);
+  const harinas = buscar(HARINAS, d.harina).nombre +
+    (d.segunda ? ` con ${d.porcentajeSegunda} % de ${buscar(HARINAS, d.segunda).nombre}` : '');
+  const prefermento = d.prefermento
+    ? buscar(PREFERMENTOS, d.prefermento).nombre + (pref && pref.horas.length > 1 ? `, ${horasDe(pref, d.horasPrefermento).horas} h` : '')
+    : 'Ninguno';
+  return [
+    ...(d.pan ? [{ nombre: 'Tipo', valor: buscar(PANES, d.pan).nombre }] : []),
+    { nombre: 'Harina', valor: harinas },
+    { nombre: 'Hidratación', valor: porciento(Math.min(d.hidratacion, HIDRATACION_MAXIMA)) },
+    { nombre: 'Prefermento', valor: prefermento },
+    ...(conLevadura(d) ? [{ nombre: 'Levadura', valor: buscar(LEVADURAS, d.levadura).nombre }] : []),
+    ...(conFermentacion(d)
+      ? [{ nombre: 'Fermentación', valor: `${fermentacion.modo === 'frio' ? 'En frío' : 'Ambiente'}, ${fermentacion.horas} h` }] : []),
+    ...(conTemperatura(d) ? [{ nombre: 'Temperatura ambiente', valor: buscar(TEMPERATURAS, d.temperatura).nombre }] : [])
   ];
 }
 

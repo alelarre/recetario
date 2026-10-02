@@ -15,50 +15,61 @@ cuentas son las de la app: `calcular_pan` y `calcular_sal` del MCP
   no los corrijas con lo que sepas de panadería y no hagas la cuenta a mano.
 - **Lo que vino en el pedido no se repregunta.** «Quiero hacer un pan con
   500 g de 000» ya trae la harina principal y la cantidad.
-- **No asumas ningún otro dato.** Llamá a la herramienta con lo que hay. Si
-  devuelve `faltan`, preguntá **en un solo mensaje** todo lo que devolvió,
-  con sus opciones y en este orden:
-  1. pan;
-  2. harinas: la principal y si hay una segunda (con su porcentaje);
-  3. prefermento: ninguno, masa madre, poolish, biga o pâte fermentée;
-  4. levadura: fresca o seca (con masa madre no va);
-  5. fermentación: ambiente o frío, y cuántas horas (con poolish o biga no
-     va);
-  6. temperatura del ambiente, en una de las cuatro franjas (con biga no
-     va; en frío, sólo con poolish o pâte fermentée);
-  7. cantidad: harina total o masa total, en gramos; en una pizza, cuántos
-     bollos y de cuántos gramos, ofreciendo el peso sugerido que devuelve.
-
-  Preguntá sólo lo que devolvió, aunque sepas que falta algo más: un dato que
-  depende de otro que falta —la segunda harina de la principal; las horas,
-  del prefermento y el modo; la cantidad, del pan— no viene todavía, porque
-  sus opciones cambian según la respuesta. Con las respuestas, volvé a llamar a la herramienta y repetí
-  hasta que calcule. Puede llevar más de una vuelta.
-- **Mostrá el resultado** como una lista, una línea por ingrediente y la
-  hidratación, con la harina total y la masa total. Con poolish, biga o pâte
-  fermentée, dos listas: *Prefermento* y *Masa final*. Debajo, las
+- **Un pan parte de su tipo.** El tipo (`pan`) trae la harina, la
+  hidratación, el prefermento, la levadura, la fermentación y las horas, como
+  en la app. Pasale a `calcular_pan` el tipo y **sólo lo que el usuario
+  dijo**: lo que digas pisa lo del tipo, y lo demás lo completa la
+  herramienta.
+- **Preguntá el tipo, la cantidad y la temperatura del ambiente**, que no
+  salen de ningún lado. No preguntes lo que el tipo ya trae: el usuario lo ve
+  en el resultado y lo cambia si quiere.
+- **No asumas ningún dato por tu cuenta.** Llamá a la herramienta con lo que
+  hay. Si devuelve `faltan`, preguntá **en un solo mensaje** lo que devolvió,
+  con sus opciones. Si entre lo que falta está `pan`, preguntá sólo el tipo
+  —y la cantidad y la temperatura, si faltan—: con el tipo, lo demás sale
+  solo. El resto preguntalo sólo si el usuario no quiere partir de un tipo;
+  sin tipo, la herramienta necesita todos los datos.
+- **Puede llevar más de una vuelta:** un dato que depende de otro que se
+  cambió —el porcentaje de una segunda harina, las horas de otro prefermento
+  o de otro modo de fermentación— se pide recién ahí. Con las respuestas,
+  volvé a llamar a la herramienta y repetí hasta que calcule.
+- **Mostrá con qué se calculó y el resultado.** Primero los datos de `usado`,
+  en una línea o dos, para que el usuario vea qué trajo el tipo y pueda
+  cambiarlo. Después el resultado como una lista, una línea por ingrediente,
+  con la harina total, la masa total y la hidratación. Con poolish, biga o
+  pâte fermentée, dos listas: *Prefermento* y *Masa final*. Debajo, las
   advertencias tal como vienen.
 - **La masa madre es un prefermento, no una levadura:** si el usuario dice
-  «con masa madre», va en `prefermento` y no se pregunta la levadura.
+  «con masa madre», va en `prefermento` y no hace falta la levadura.
+- **Una pizza se pide en bollos.** Los gramos por bollo son los del tipo,
+  salvo que el usuario diga otros.
 
 ## Ejemplos
 
 **«Quiero hacer un pan con 500 g de 000»**
 
-Ya están la harina principal (000) y la cantidad (500 g de harina). Se
-pregunta, en un mensaje:
+Ya están la harina principal (000) y la cantidad (500 g de harina). Falta el
+tipo, y con él la temperatura. Se pregunta, en un mensaje:
 
 > Para calcularlo me faltan:
-> 1. ¿Qué pan? Pan francés, Pan de molde, Pan de miga, Pizza al molde, Pizza a la piedra, Pizza napolitana, Pizza New York, Baguette, Pan de campo, Ciabatta o Focaccia.
-> 2. ¿Le sumás una segunda harina? Ninguna, 0000, 00, Semolín, Integral o Centeno.
-> 3. ¿Con algún prefermento? Ninguno, Masa madre, Poolish, Biga o Pâte fermentée.
-> 4. ¿Qué levadura? Fresca o Seca (con masa madre no hace falta).
-> 5. ¿Fermentación a temperatura ambiente o en frío? (Con poolish o biga no hace falta.)
-> 6. ¿Qué temperatura hay en la cocina? Menos de 13 °C, 13 a 18 °C, 18 a 24 °C o Más de 24 °C. (Con biga no hace falta; en frío, sólo con poolish o pâte fermentée.)
+> 1. ¿Qué tipo de pan? Pan francés, Pan de molde, Pan de miga, Baguette, Pan de campo, Ciabatta, Focaccia, Pizza al molde, Pizza a la piedra, Pizza napolitana o Pizza New York.
+> 2. ¿Qué temperatura hay en la cocina? Menos de 13 °C, 13 a 18 °C, 18 a 24 °C o Más de 24 °C.
 
-Si contesta «pan de campo, sin segunda harina, masa madre, en frío», la
-vuelta siguiente devuelve las horas que van con masa madre en frío (12, 24,
-48 o 72), y se pregunta sólo eso.
+Si contesta «pan de campo, 18 a 24», se llama con `pan`, `harina`,
+`harina_total` y `temperatura`, y la herramienta calcula con lo que trae el
+pan de campo: masa madre, 72 % de hidratación, 8 h a temperatura ambiente.
+Se muestra eso y el resultado.
+
+**«Una baguette con 1 kg de harina, pero con levadura seca y en 18 horas»**
+
+Se pasan el tipo, la cantidad, `levadura: seca` y `horas_prefermento: 18`
+—la baguette viene con poolish—, y se pregunta sólo la temperatura.
+
+**«Hacé la cuenta de un pan francés, pero en frío»**
+
+Se pasan el tipo y `fermentacion: frío`. Las horas del pan francés son para
+temperatura ambiente, así que la herramienta devuelve que faltan las horas
+(12, 24, 48 o 72) y la cantidad; se preguntan las dos.
 
 **«¿Cuánta sal para un frasco de pepinos de 1200 g?»**
 

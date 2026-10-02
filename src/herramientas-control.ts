@@ -8,12 +8,15 @@
  * resultado, para no sacarle el foco al campo.
  */
 import {
-  completarPan, fermentacionesPara, cantidadAlCambiar, segundaAlMezclar, type DatosPan, type ClavePan
+  PANES, completarPan, fermentacionesPara, alElegirTipo, hidratacionAlCambiarHarinas, segundaAlMezclar,
+  type DatosPan
 } from './calculadoras/pan.js';
 import { completarSal, type DatosSal } from './calculadoras/fermentados.js';
 import type { SeccionDeAcciones } from './acciones.js';
 
 export const CLAVE_PAN = 'recetario.herramientas.pan';
+/** Los grupos que cambian las harinas del pan, y con ellas la hidratación. */
+const HARINAS_DEL_PAN: readonly string[] = ['harina', 'mezcla', 'segunda', 'porcentaje'];
 export const CLAVE_SAL = 'recetario.herramientas.sal';
 
 type Almacen = Pick<Storage, 'getItem' | 'setItem'>;
@@ -63,7 +66,11 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
         const primera = fermentacionesPara(pan.prefermento).find(f => f.modo === valor);
         return primera ? { ...pan, fermentacion: primera.clave } : pan;
       }
-      case 'pan': return { ...pan, pan: valor as ClavePan, cantidad: cantidadAlCambiar(pan, valor as ClavePan) };
+      // El tipo carga todo de nuevo.
+      case 'pan': {
+        const tipo = PANES.find(p => p.clave === valor);
+        return tipo ? alElegirTipo(pan, tipo.clave) : pan;
+      }
       case 'prefermento': return { ...pan, prefermento: (valor || null) as DatosPan['prefermento'] };
       case 'horas-prefermento': return { ...pan, horasPrefermento: Number(valor) };
       case 'temperatura-pan': return { ...pan, temperatura: valor as DatosPan['temperatura'] };
@@ -80,11 +87,15 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
       guardar(almacen, CLAVE_SAL, sal);
     } else {
       // `completarPan` descarta lo que no es una opción y corrige la segunda
-      // igual a la principal y las 2 h con masa madre. La cantidad se
-      // conserva aunque esté vacía: es lo que el usuario dejó escrito. Al
-      // cambiar de pan, la que corresponde al pan nuevo (bollos en pizza).
+      // igual a la principal y las 2 h con masa madre. La cantidad y la
+      // hidratación se conservan aunque estén vacías: es lo que el usuario
+      // dejó escrito. Al cambiar de tipo, las que trae el tipo.
       const elegido = conElegido(grupo, valor);
-      pan = { ...completarPan(elegido), cantidad: elegido.cantidad };
+      const completo = { ...completarPan(elegido), cantidad: elegido.cantidad, hidratacion: elegido.hidratacion };
+      // Otra harina, u otra mezcla, corre la hidratación por lo que absorben.
+      pan = HARINAS_DEL_PAN.includes(grupo)
+        ? { ...completo, hidratacion: hidratacionAlCambiarHarinas(pan, completo) }
+        : completo;
       guardar(almacen, CLAVE_PAN, pan);
     }
     redibujar();
@@ -102,6 +113,9 @@ export function crearControlHerramientas({ almacen, redibujar, pintarResultado }
       guardar(almacen, CLAVE_SAL, sal);
     } else if (de === 'harina' || de === 'masa') {
       pan = { ...pan, cantidad: { de, gramos } };
+      guardar(almacen, CLAVE_PAN, pan);
+    } else if (de === 'hidratacion') {
+      pan = { ...pan, hidratacion: gramos };
       guardar(almacen, CLAVE_PAN, pan);
     } else if ((de === 'bollos' || de === 'bollo') && pan.cantidad.de === 'bollos') {
       pan = { ...pan, cantidad: de === 'bollos' ? { ...pan.cantidad, bollos: gramos } : { ...pan.cantidad, gramos } };

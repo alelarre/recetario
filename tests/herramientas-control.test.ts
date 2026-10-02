@@ -36,7 +36,9 @@ describe('el control de Herramientas', () => {
   it('elegir masa madre con 2 h pasa a 4 h, guarda y redibuja', () => {
     const almacen = localStorageFalso();
     const { control, elegir, redibujar } = armar(almacen);
-    elegir('fermentacion', 'ambiente-2');
+    // El pan de miga trae 2 h y sin prefermento.
+    elegir('pan', 'miga');
+    expect(control.pan().fermentacion).toBe('ambiente-2');
     elegir('prefermento', 'masa-madre');
     expect(control.pan().fermentacion).toBe('ambiente-4');
     expect(JSON.parse(almacen.getItem(CLAVE_PAN)!).prefermento).toBe('masa-madre');
@@ -183,5 +185,62 @@ describe('el control de Herramientas — los desplegables', () => {
     expect(control.sal().fermento).toBe('kimchi');
     expect(JSON.parse(almacen.getItem(CLAVE_PAN)!).pan).toBe('focaccia');
     expect(redibujar).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('el control de Herramientas — el tipo y la hidratación', () => {
+  it('elegir un tipo carga todo lo que trae, y pisa lo que se había ajustado', () => {
+    const { control, elegir } = armar();
+    elegir('pan', 'baguette');
+    expect(control.pan()).toMatchObject({ pan: 'baguette', harina: '000', hidratacion: 68, prefermento: 'poolish', horasPrefermento: 12 });
+    elegir('levadura', 'seca');
+    elegir('harina', 'centeno');
+    control.alEscribir(campo('hidratacion', '90'));
+    control.alEscribir(campo('harina', '700'));
+    elegir('pan', 'frances');
+    expect(control.pan()).toEqual({
+      pan: 'frances', harina: '000', segunda: null, porcentajeSegunda: 30, hidratacion: 60, prefermento: null,
+      levadura: 'fresca', fermentacion: 'ambiente-4', temperatura: '18-24', cantidad: { de: 'harina', gramos: 700 }, horasPrefermento: 0
+    });
+    elegir('pan', 'no-existe');
+    expect(control.pan().pan).toBe('frances');
+  });
+
+  it('cambiar la harina o la mezcla corre la hidratación; lo demás no la toca', () => {
+    const { control, elegir } = armar();
+    expect(control.pan().hidratacion).toBe(72);
+    elegir('harina', 'integral');
+    expect(control.pan().hidratacion).toBe(80);
+    elegir('levadura', 'seca');
+    elegir('prefermento', 'biga');
+    expect(control.pan().hidratacion).toBe(80);
+    elegir('mezcla', '1');
+    expect(control.pan()).toMatchObject({ segunda: '0000', hidratacion: 76.4 });
+    elegir('porcentaje', '50');
+    expect(control.pan().hidratacion).toBe(74);
+    elegir('mezcla', '');
+    expect(control.pan().hidratacion).toBe(80);
+  });
+
+  it('escribir la hidratación la guarda y pinta sólo el resultado; lo escrito se conserva al cambiar de harina', () => {
+    const almacen = localStorageFalso();
+    const { control, elegir, redibujar, pintarResultado } = armar(almacen);
+    control.alEscribir(campo('hidratacion', '75,5'));
+    expect(control.pan().hidratacion).toBe(75.5);
+    expect(JSON.parse(almacen.getItem(CLAVE_PAN)!).hidratacion).toBe(75.5);
+    expect(pintarResultado).toHaveBeenCalledTimes(1);
+    expect(redibujar).not.toHaveBeenCalled();
+    elegir('harina', 'integral');
+    expect(control.pan().hidratacion).toBe(83.5);
+  });
+
+  it('una hidratación vacía queda vacía hasta que se escribe o se elige un tipo', () => {
+    const { control, elegir } = armar();
+    control.alEscribir(campo('hidratacion', ''));
+    expect(control.pan().hidratacion).toBeNaN();
+    elegir('levadura', 'seca');
+    expect(control.pan().hidratacion).toBeNaN();
+    elegir('pan', 'focaccia');
+    expect(control.pan().hidratacion).toBe(75);
   });
 });

@@ -1085,8 +1085,8 @@ describe('main.ts: las rutas', () => {
   it('en la calculadora, tocar una opción de un conmutador la aprieta', async () => {
     const { abrir, tocar, app } = await montar();
     await abrir('#/herramientas/pan');
-    await tocar('elegir-opcion', { grupo: 'levadura', valor: 'seca' });
-    expect(app.innerHTML).toContain('data-grupo="levadura" data-valor="seca" aria-pressed="true"');
+    await tocar('elegir-opcion', { grupo: 'modo', valor: 'frio' });
+    expect(app.innerHTML).toContain('data-grupo="modo" data-valor="frio" aria-pressed="true"');
   });
 
   it('en la calculadora, elegir en un desplegable redibuja con lo elegido', async () => {
@@ -1102,9 +1102,10 @@ describe('main.ts: las rutas', () => {
     const { abrir, tipearCantidad, pinturas, resultadosHerramienta } = await montar();
     await abrir('#/herramientas/pan');
     const antes = pinturas.length;
-    await tipearCantidad('masa', '1745');
+    // El pan de campo viene con masa madre: 1740 g de masa son 1000 g de harina.
+    await tipearCantidad('masa', '1740');
     expect(pinturas.length).toBe(antes);
-    expect(resultadosHerramienta.at(-1)).toContain('720 g');
+    expect(resultadosHerramienta.at(-1)).toContain('670 g');
     expect(estado.formulario['cantidad-harina']).toBe('1000');
   });
 

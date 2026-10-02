@@ -59,37 +59,41 @@ Una sola pantalla. **Cada dato es una fila:** su nombre a la izquierda y lo
 elegido a la derecha, como un ingrediente y su cantidad. Un dato con muchas
 opciones es un desplegable, que abre el selector del sistema; uno con dos a
 cuatro opciones cortas es un conmutador, con todas a la vista. Las filas van
-en tres fichas —el pan y sus harinas, cómo leva, y la cantidad— y el
-resultado va al pie. Los componentes están en `design-system.md` §6.28.
+en tres fichas —el pan, sus harinas y su hidratación; cómo leva; y la
+cantidad— y el resultado va al pie. Los componentes están en
+`design-system.md` §6.28.
+
+**El tipo de pan es un punto de partida, no una regla:** al elegirlo carga
+todos los demás datos, y después se cambia lo que haga falta (C07.2.9).
 
 #### C07.2.1 — Los datos, en su orden *(J6)*
 
-- [ ] De arriba abajo, en tres fichas. **El pan y sus harinas:**
-  1. **Pan:** un desplegable con los de la tabla de panes, los panes
+- [ ] De arriba abajo, en tres fichas. **El pan, sus harinas y su
+  hidratación:**
+  1. **Tipo:** un desplegable con los de la tabla de panes, los panes
      primero y las pizzas —al molde, a la piedra, napolitana y New York—
-     aparte. Cada pan pone la hidratación base, pensada para harina 000; las
-     pizzas llevan además un peso de bollo sugerido.
-  2. **Harina:** la principal, un desplegable con la tabla de harinas. Cada
-     harina suma o resta puntos de hidratación.
-  3. **Mezclar con otra harina:** un interruptor, apagado por defecto.
-     Encendido, debajo van **Otra harina** —un desplegable con las de la
-     tabla **sin la principal**— y su **Porcentaje**, un conmutador con las
-     opciones de la tabla.
+     aparte. Elegirlo carga todo lo demás (C07.2.9).
+  2. **Harina:** la principal, un desplegable con la tabla de harinas.
+  3. **Mezclar con otra harina:** un interruptor, apagado en todos los
+     tipos. Encendido, debajo van **Otra harina** —un desplegable con las de
+     la tabla **sin la principal**— y su **Porcentaje**, un conmutador con
+     las opciones de la tabla.
+  4. **Hidratación (%):** un número que se escribe, en su fila (C07.2.2).
 - [ ] **Cómo leva:**
-  4. **Prefermento:** un desplegable con *Ninguno*, *Masa madre*, *Poolish*,
+  5. **Prefermento:** un desplegable con *Ninguno*, *Masa madre*, *Poolish*,
      *Biga* y *Pâte fermentée* (C07.2.8). Con poolish, sus horas, en un
      conmutador.
-  5. **Levadura:** un conmutador, fresca o seca. **Va después del
+  6. **Levadura:** un conmutador, fresca o seca. **Va después del
      prefermento, que dice si hace falta:** con masa madre no está.
-  6. **Fermentación:** un conmutador, *Ambiente* o *En frío*; con poolish o
+  7. **Fermentación:** un conmutador, *Ambiente* o *En frío*; con poolish o
      biga no está, y con pâte fermentée es la de la masa final.
-  7. **Horas:** un conmutador con las del modo elegido.
-  8. **Temperatura ambiente:** un conmutador con las cuatro franjas de los
+  8. **Horas:** un conmutador con las del modo elegido.
+  9. **Temperatura ambiente:** un conmutador con las cuatro franjas de los
      fermentados (C07.3.1), con su nombre corto —*< 13 °C*, *13–18 °C*,
      *18–24 °C*, *> 24 °C*—. Sólo si algo fermenta a la temperatura de la
      cocina: la masa, el poolish o la pâte fermentée (C07.2.3).
 - [ ] **La cantidad:**
-  9. Dos campos en gramos en una misma fila, *Harina total* y *Masa total*;
+  10. Dos campos en gramos en una misma fila, *Harina total* y *Masa total*;
      en una pizza, *Bollos* y *Gramos por bollo* (C07.2.4).
 - [ ] Elegir una opción —en un desplegable, un conmutador o el interruptor—
   redibuja la pantalla.
@@ -98,13 +102,24 @@ resultado va al pie. Los componentes están en `design-system.md` §6.28.
   tabla si la principal es la integral; apagarla la saca. Elegir como
   principal la harina que estaba de segunda apaga la mezcla.
 
-#### C07.2.2 — Las dos harinas *(J6)*
+#### C07.2.2 — La hidratación y las harinas *(J6)*
 
-- [ ] La hidratación es la base del pan más el ajuste de la harina.
+- [ ] **La hidratación es un dato más:** la carga el tipo y se puede
+  escribir. Se aceptan coma o punto como decimal, y escribirla pinta sólo el
+  resultado, sin redibujar (C07.2.4).
+- [ ] **Cambiar la harina o la mezcla corre la hidratación** por lo que
+  absorben: cada harina tiene un ajuste en puntos contra la 000 —0000, −4;
+  00, +2; semolín, +3; integral, +8; centeno, +20—, y la hidratación escrita
+  sube o baja por la diferencia entre las harinas de antes y las de ahora.
+  Lo que se ajustó a mano se conserva.
 - [ ] Con dos harinas, el ajuste se pondera por su proporción: el de la
   principal por lo que queda y el de la segunda por su porcentaje.
 - [ ] El resultado lleva una línea por harina, cada una con sus gramos según
   su proporción.
+
+**Edge case:** hidratación vacía, en cero, negativa o que no es un número →
+no hay resultado, como con la cantidad (C07.2.4); queda así hasta que se
+escribe o se elige un tipo.
 
 #### C07.2.3 — La levadura y la fermentación *(J6)*
 
@@ -184,8 +199,9 @@ queda vacío.
 
 #### C07.2.6 — El tope de hidratación *(J6)*
 
-- [ ] **La hidratación no pasa de 85 %.** Si la base del pan más el ajuste de
-  las harinas da más, se usa 85 %.
+- [ ] **La hidratación no pasa de 85 %.** Si la escrita —o la que resulta de
+  cambiar de harina— es mayor, la cuenta usa 85 % y el resultado muestra
+  85 %; el campo conserva lo escrito.
 - [ ] Cuando se aplicó el tope, las advertencias suman *«La hidratación se
   limitó a 85 %.»*
 
@@ -235,6 +251,36 @@ queda vacío.
   fermenta, y si la masa final lleva levadura—; las de los tiempos de la
   tabla van sólo si la masa final lleva levadura.
 
+#### C07.2.9 — El tipo es un punto de partida *(J6)*
+
+- [ ] **Cada tipo trae** su harina, su hidratación, su prefermento —con sus
+  horas—, su levadura y su fermentación, en la tabla de tipos:
+
+  | Tipo | Harina | Hidratación | Prefermento | Levadura | Fermentación |
+  |---|---|---|---|---|---|
+  | Pan francés | 000 | 60 % | Ninguno | Fresca | Ambiente, 4 h |
+  | Pan de molde | 000 | 62 % | Ninguno | Fresca | Ambiente, 4 h |
+  | Pan de miga | 000 | 56 % | Ninguno | Fresca | Ambiente, 2 h |
+  | Baguette | 000 | 68 % | Poolish, 12 h | Fresca | — |
+  | Pan de campo | 000 | 72 % | Masa madre | — | Ambiente, 8 h |
+  | Ciabatta | 000 | 80 % | Biga | Fresca | — |
+  | Focaccia | 000 | 75 % | Ninguno | Fresca | Ambiente, 4 h |
+  | Pizza al molde | 000 | 61 % | Ninguno | Fresca | Ambiente, 4 h |
+  | Pizza a la piedra | 000 | 57 % | Ninguno | Fresca | Ambiente, 4 h |
+  | Pizza napolitana | 00 | 65 % | Ninguno | Fresca | Ambiente, 8 h |
+  | Pizza New York | 000 | 65 % | Ninguno | Fresca | En frío, 24 h |
+
+- [ ] Ninguno trae mezcla de harinas. La hidratación de cada tipo es la de su
+  harina.
+- [ ] **Elegir un tipo vuelve todo el formulario a lo que trae el tipo**,
+  también lo que se había ajustado a mano, y también si es el mismo tipo.
+- [ ] **No son parte del tipo, y se conservan,** la temperatura del ambiente
+  y la cantidad —que pasa a bollos si el tipo es una pizza, y a gramos si no
+  (C07.2.4)—.
+- [ ] Después de elegir el tipo se cambia cualquier dato, y el tipo sigue
+  mostrando de cuál se partió.
+- [ ] **La cuenta no mira el tipo:** usa sólo los datos del formulario.
+
 ### F07.3 — La calculadora de sal
 
 #### C07.3.1 — Fermentados *(J6)*
@@ -276,17 +322,20 @@ igual.
   con lo último elegido.
 - [ ] **Se completa dato por dato:** un dato que falta, que no se puede leer o
   que nombra una opción que ya no está en la tabla vuelve a su valor por
-  defecto, y los demás se conservan.
+  defecto —en el pan, a lo que trae el tipo guardado—, y los demás se
+  conservan.
 - [ ] La lectura también corrige lo que no va junto: una segunda harina igual
   a la principal pasa a *Ninguna*, y 2 h con masa madre pasan a 4 h.
 - [ ] Los valores por defecto están en el archivo de cada calculadora
-  (`PAN_POR_DEFECTO`, `SAL_POR_DEFECTO`).
+  (`PAN_POR_DEFECTO`, `SAL_POR_DEFECTO`). El pan arranca en *Pan de campo*,
+  como viene, con 1 kg de harina.
 - [ ] Toda lectura y escritura de `localStorage` va con `try/catch`: sin
   almacenamiento —navegación privada, o un error al escribir—, la calculadora
   funciona igual, con los valores por defecto y sin recordar lo elegido.
 
-**Edge case:** se deja la cantidad vacía o inválida y se sale → al volver a
-abrir, la cantidad es la por defecto.
+**Edge case:** se deja la cantidad o la hidratación vacía o inválida y se sale
+→ al volver a abrir, la cantidad es la por defecto y la hidratación, la del
+tipo.
 
 ### F07.5 — El botón *Calcular* de la receta
 
@@ -326,9 +375,21 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 - [ ] Reciben los datos por su nombre en las tablas —«pan de campo», «000»,
   «centeno», «masa madre», «ambiente» o «frío»—, sin mirar mayúsculas ni
   tildes. La segunda harina es «ninguna» o una distinta de la principal.
+- [ ] **En `calcular_pan`, el tipo (`pan`) precarga, como en la pantalla:**
+  con él, lo que no viene sale de lo que trae el tipo (C07.2.9), y lo que
+  viene lo pisa. El agente pasa sólo lo que el usuario dijo.
+- [ ] **Sin tipo, calcula si vienen todos los datos.** Si falta alguno, entre
+  lo que falta va primero el tipo, que es la forma corta de darlos.
+- [ ] **Nunca salen del tipo** la cantidad ni la temperatura del ambiente:
+  se piden. Tampoco lo que depende de un dato que se cambió: el porcentaje
+  de una segunda harina, las horas de otro prefermento y las horas que no
+  van con el modo o el prefermento pedidos.
+- [ ] La `hidratacion` que no viene es la del tipo, corrida por las harinas
+  pedidas (C07.2.2).
 - [ ] La cantidad es `harina_total` o `masa_total`, **una sola de las dos**;
-  en una pizza, `bollos` y `peso_bollo`, con el peso sugerido del estilo como
-  opción si falta.
+  en una pizza, `bollos`, con el `peso_bollo` del tipo si no viene.
+- [ ] Un tipo que no existe se corrige antes que nada: es lo único que
+  falta.
 - [ ] En `calcular_pan`, el `prefermento` es un dato más: «ninguno», «masa
   madre», «poolish», «biga» o «pâte fermentée». Con masa madre no pide la
   levadura; con poolish pide `horas_prefermento`; con poolish o biga no pide
@@ -338,12 +399,12 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 - [ ] En `calcular_sal`, la `temperatura` es **opcional**: sin ella no hay
   tiempo ni su advertencia. Una que no es una de las franjas falta, con las
   franjas como opciones.
-- [ ] **No tienen valores por defecto.** Si falta un dato o no es una opción,
-  no calculan: devuelven la lista de lo que falta y, para cada dato, las
-  opciones válidas.
+- [ ] **Lo que no sale de un tipo no se completa.** Si falta un dato o no es
+  una opción, no calculan: devuelven la lista de lo que falta y, para cada
+  dato, las opciones válidas. `calcular_sal` no tiene tipos: pide sus datos.
 - [ ] **Un dato cuyas opciones dependen de otro que falta no se pide
   todavía:** la segunda harina espera a la principal; las horas, al
-  prefermento y al modo (con masa madre, sin 2 h); y la cantidad al pan,
+  prefermento y al modo (con masa madre, sin 2 h); y la cantidad al tipo,
   porque una pizza va en bollos. Se piden en la vuelta siguiente, así
   ninguna opción ofrecida queda inválida después. Completar un pan puede
   llevar más de una vuelta de preguntas.
@@ -352,7 +413,9 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   la levadura con masa madre, la fermentación con poolish o biga, y la
   temperatura con biga o con la masa en frío sin poolish ni pâte fermentée.
 - [ ] Con todo, devuelven las mismas líneas que la pantalla, las advertencias
-  y, en el pan, la harina total, la masa total y la hidratación.
+  y, en el pan, la harina total, la masa total, la hidratación y **`usado`:
+  los datos con que se calculó**, para que el agente los muestre: con el
+  tipo, parte no la pidió nadie.
 - [ ] La descripción de cada herramienta lista las opciones tomadas de las
   tablas: si una tabla cambia, cambia ahí también.
 
@@ -361,10 +424,13 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 - [ ] Se activa con pedidos de cálculo: las cantidades de un pan o la sal de
   un fermentado.
 - [ ] Los datos que ya vienen en el pedido **no se repreguntan**.
-- [ ] **No asume ningún otro dato:** pregunta los que faltan en un solo
-  mensaje, en el orden de la pantalla —pan, harinas, prefermento, levadura,
-  fermentación, temperatura, cantidad—, con las opciones que devolvió la
-  herramienta.
+- [ ] **En un pan, parte del tipo:** pregunta el tipo, la cantidad y la
+  temperatura del ambiente, y pasa además sólo lo que el usuario dijo. No
+  pregunta lo que el tipo ya trae.
+- [ ] **No asume ningún dato por su cuenta:** lo que la herramienta devuelve
+  como faltante lo pregunta en un solo mensaje, con sus opciones.
+- [ ] Muestra los datos usados junto al resultado, para que el usuario vea
+  qué trajo el tipo y pueda cambiarlo.
 - [ ] **Los números salen siempre de `calcular_pan` o `calcular_sal`**: no
   inventa porcentajes ni hace la cuenta a mano.
 - [ ] Muestra el resultado con las advertencias.

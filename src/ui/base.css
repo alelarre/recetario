@@ -530,6 +530,13 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B3A99B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
                background-repeat: no-repeat; background-size: 16px; background-position: right center; }
 .dato select:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+/* Un número que se escribe en la fila: el campo (§6.9), corto y contra la
+   derecha. Lleva `width` y `min-width`: un campo numérico trae un ancho propio
+   del navegador, y el `flex-basis` solo no lo achica. */
+.dato input { flex: 0 0 88px; width: 88px; min-width: 0; margin-left: auto; min-height: 40px; padding: 0 var(--e-3); text-align: right;
+              background: var(--surface-alta); border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio);
+              color: var(--fg); font: 600 var(--txt-base)/1.3 var(--tipo); font-variant-numeric: tabular-nums; }
+.dato input:focus { outline: none; border: 2px solid var(--acento); }
 /* El selector del sistema dibuja las opciones: que no hereden la alineación. */
 .dato select option, .dato select optgroup { text-align: left; }
 /* §6.28 La explicación de lo elegido: una fila más, cerrada, que se abre al
@@ -572,9 +579,15 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
                          color: var(--fg-2); font-size: var(--txt-lectura); }
 .par-cantidades .entre svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none;
                              stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-/* §6.28 El resultado: la ficha con el borde fuerte, las cifras que mandan
-   arriba, en grande, y el detalle abajo. */
-.resultado { border-color: var(--borde-fuerte); }
+/* §6.28 El resultado: la única ficha con el acento —el fondo suave y un borde
+   de 2 px—, las cifras que mandan arriba, en grande, y el detalle abajo. Las
+   líneas de adentro se dibujan con el acento apagado: el borde de siempre no
+   se ve sobre ese fondo. */
+.resultado { --linea: color-mix(in srgb, var(--acento) 35%, transparent);
+             background: var(--acento-suave); border: 2px solid var(--acento); }
+.resultado > h2 { border-bottom-color: var(--linea); }
+.resultado .ing { border-bottom-color: var(--linea); }
+.resultado .cifra { background: var(--bg); }
 .resultado > h2 { display: flex; align-items: center; gap: var(--e-2); }
 .resultado > h2 svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none;
                       stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }

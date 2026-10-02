@@ -154,15 +154,18 @@ export function crearServidor(recetario: Recetario): McpServer {
 
   servidor.registerTool('calcular_pan', {
     description: 'Las cantidades de un pan: harinas, agua, sal y levadura, masa madre u otro prefermento, con las tablas de la app. ' +
-      'Un pan se pide por la harina o la masa total; una pizza, en bollos y gramos por bollo. ' +
-      'Con poolish, biga o pâte fermentée, devuelve aparte lo del prefermento, y `resultado` es la masa final. ' +
-      'Si falta un dato o no es una opción, no calcula: devuelve qué falta y sus opciones. ' +
-      'No completes datos por tu cuenta: preguntáselos al usuario.',
+      'El tipo (`pan`) es un punto de partida: con él, lo que no pases sale de lo que trae el tipo —harina, hidratación, ' +
+      'prefermento, levadura, fermentación y horas—, y lo que pases lo pisa. Pasá sólo lo que el usuario dijo. ' +
+      'Sin tipo, hacen falta todos los datos. La cantidad y la temperatura del ambiente no salen del tipo: se preguntan. ' +
+      'Un pan se pide por la harina o la masa total; una pizza, en bollos. ' +
+      '`usado` dice con qué se calculó. Con poolish, biga o pâte fermentée, devuelve aparte lo del prefermento, y `resultado` es la masa final. ' +
+      'Si falta un dato o no es una opción, no calcula: devuelve qué falta y sus opciones.',
     inputSchema: {
-      pan: z.string().optional().describe(`Uno de: ${opciones(PANES)}.`),
+      pan: z.string().optional().describe(`El tipo, uno de: ${opciones(PANES)}.`),
       harina: z.string().optional().describe(`La harina principal, una de: ${opciones(HARINAS)}.`),
       segunda_harina: z.string().optional().describe('«ninguna», o una harina distinta de la principal.'),
       porcentaje_segunda: z.number().optional().describe(`Con segunda harina: ${PORCENTAJES_SEGUNDA.join(', ')}.`),
+      hidratacion: z.number().optional().describe('En %, sobre la harina total. Sin ella, la del tipo, corrida por las harinas pedidas.'),
       prefermento: z.string().optional().describe(`«ninguno» o uno de: ${opciones(PREFERMENTOS)}. La masa madre leva sola, sin levadura.`),
       horas_prefermento: z.number().optional().describe(`Las horas del prefermento: ${PREFERMENTOS_CON_LEVADURA.map(p => `${p.nombre} ${p.horas.map(h => h.horas).join(', ')}`).join('; ')}.`),
       levadura: z.string().optional().describe(`Una de: ${opciones(LEVADURAS)}. Con masa madre no va.`),
@@ -172,7 +175,7 @@ export function crearServidor(recetario: Recetario): McpServer {
       harina_total: z.number().optional().describe('En un pan que no es pizza: en gramos. Una sola de las dos cantidades.'),
       masa_total: z.number().optional().describe('En un pan que no es pizza: en gramos. Una sola de las dos cantidades.'),
       bollos: z.number().optional().describe(`En una pizza (${pizzas()}): cuántos bollos.`),
-      peso_bollo: z.number().optional().describe('En una pizza: gramos por bollo. Si falta, se ofrece el sugerido del estilo.')
+      peso_bollo: z.number().optional().describe('En una pizza: gramos por bollo. Sin él, el del tipo.')
     }
   }, (pedido) => responder(() => json(calcularPanParaElAgente(pedido))));
 

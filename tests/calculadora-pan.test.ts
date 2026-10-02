@@ -2,14 +2,14 @@ import { describe, it, expect } from 'vitest';
 import {
   calcularPan, fermentacionesPara, cantidadAlCambiar, bolloDe, conFermentacion, conLevadura, segundaAlMezclar,
   cifrasPan, lineasPan, lineasPrefermento, advertenciasPan,
-  conTemperatura, PANES, PREFERMENTOS, PREFERMENTOS_CON_LEVADURA, LEVADURA_POR_TEMPERATURA, BOLLOS_POR_DEFECTO, HIDRATACION_MAXIMA,
+  conTemperatura, alElegirTipo, hidratacionAlCambiarHarinas, datosUsados, PANES, PREFERMENTOS, PREFERMENTOS_CON_LEVADURA, LEVADURA_POR_TEMPERATURA, BOLLOS_POR_DEFECTO, HIDRATACION_MAXIMA,
   ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE, ADVERTENCIA_MUY_FRIO, ADVERTENCIA_FRIO, type DatosPan
 } from '../src/calculadoras/pan.js';
 import { TEMPERATURAS } from '../src/calculadoras/temperaturas.js';
 import { gramos } from '../src/calculadoras/gramos.js';
 
 const base: DatosPan = {
-  pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 30,
+  pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 30, hidratacion: 72,
   prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8', temperatura: '18-24',
   cantidad: { de: 'harina', gramos: 1000 }, horasPrefermento: 0
 };
@@ -25,9 +25,9 @@ describe('calcularPan', () => {
     expect(r.harinas).toEqual([{ clave: '000', nombre: '000', gramos: 1000 }]);
   });
 
-  it('000 con 30 % de centeno: ajuste +6 y una línea por harina', () => {
-    const r = calcularPan({ ...base, segunda: 'centeno', porcentajeSegunda: 30 })!;
-    expect(r.hidratacion).toBeCloseTo(78);
+  it('con dos harinas, una línea por harina según su proporción', () => {
+    const r = calcularPan({ ...base, segunda: 'centeno', porcentajeSegunda: 30, hidratacion: 78 })!;
+    expect(r.hidratacion).toBe(78);
     expect(r.harinas.map(h => [h.clave, Math.round(h.gramos)])).toEqual([['000', 700], ['centeno', 300]]);
   });
 
@@ -41,12 +41,14 @@ describe('calcularPan', () => {
   });
 
   it('el agua a agregar nunca es negativa: peor caso de la tabla', () => {
-    const r = calcularPan({ ...base, pan: 'miga', harina: '0000', prefermento: 'masa-madre', fermentacion: 'ambiente-4' })!;
+    const r = calcularPan({ ...base, hidratacion: 52, prefermento: 'masa-madre', fermentacion: 'ambiente-4', temperatura: 'menos-13' })!;
     expect(r.agua).toBeGreaterThan(0);
   });
 
-  it('la hidratación se topea en 85 %', () => {
-    const r = calcularPan({ ...base, pan: 'ciabatta', harina: 'centeno' })!;
+  it('la hidratación es la escrita, y se topea en 85 %', () => {
+    expect(calcularPan({ ...base, hidratacion: 64.5 })!.agua).toBeCloseTo(645);
+    const r = calcularPan({ ...base, hidratacion: 100 })!;
+    expect(r.agua).toBeCloseTo(850);
     expect(r.hidratacion).toBe(HIDRATACION_MAXIMA);
     expect(r.topeada).toBe(true);
     expect(calcularPan(base)!.topeada).toBe(false);
@@ -70,6 +72,14 @@ describe('calcularPan', () => {
   it.each([0, -5, Number.NaN, Number.POSITIVE_INFINITY])('cantidad %s: sin resultado', g => {
     expect(calcularPan({ ...base, cantidad: { de: 'harina', gramos: g } })).toBeNull();
   });
+
+  it.each([0, -5, Number.NaN])('hidratación %s: sin resultado', h => {
+    expect(calcularPan({ ...base, hidratacion: h })).toBeNull();
+  });
+
+  it('sin tipo calcula igual: el tipo sólo carga los datos', () => {
+    expect(calcularPan({ ...base, pan: null })).toEqual(calcularPan(base));
+  });
 });
 
 it('con masa madre no se ofrecen 2 h', () => {
@@ -90,6 +100,47 @@ it('gramos: enteros; por debajo de 10, un decimal; por debajo de 1, dos, y nunca
 });
 
 describe('las pizzas', () => {
+  it('cada tipo carga su harina, su hidratación, su prefermento, su levadura y su fermentación', () => {
+    expect(PANES.map(p => [p.nombre, p.harina, p.hidratacion, p.prefermento, p.horasPrefermento ?? null, p.levadura, p.fermentacion])).toEqual([
+      ['Pan francés', '000', 60, null, null, 'fresca', 'ambiente-4'],
+      ['Pan de molde', '000', 62, null, null, 'fresca', 'ambiente-4'],
+      ['Pan de miga', '000', 56, null, null, 'fresca', 'ambiente-2'],
+      ['Pizza al molde', '000', 61, null, null, 'fresca', 'ambiente-4'],
+      ['Pizza a la piedra', '000', 57, null, null, 'fresca', 'ambiente-4'],
+      ['Pizza napolitana', '00', 65, null, null, 'fresca', 'ambiente-8'],
+      ['Pizza New York', '000', 65, null, null, 'fresca', 'frio-24'],
+      ['Baguette', '000', 68, 'poolish', 12, 'fresca', 'ambiente-4'],
+      ['Pan de campo', '000', 72, 'masa-madre', null, 'fresca', 'ambiente-8'],
+      ['Ciabatta', '000', 80, 'biga', 18, 'fresca', 'ambiente-4'],
+      ['Focaccia', '000', 75, null, null, 'fresca', 'ambiente-4']
+    ]);
+  });
+
+  it('elegir un tipo vuelve todo a lo que trae; quedan la temperatura y la cantidad', () => {
+    const tocado: DatosPan = {
+      ...base, harina: 'centeno', segunda: 'integral', porcentajeSegunda: 50, hidratacion: 90, levadura: 'seca',
+      prefermento: 'pate', horasPrefermento: 14, fermentacion: 'frio-72', temperatura: 'mas-24', cantidad: { de: 'masa', gramos: 800 }
+    };
+    expect(alElegirTipo(tocado, 'baguette')).toEqual({
+      pan: 'baguette', harina: '000', segunda: null, porcentajeSegunda: 30, hidratacion: 68,
+      prefermento: 'poolish', horasPrefermento: 12, levadura: 'fresca', fermentacion: 'ambiente-4',
+      temperatura: 'mas-24', cantidad: { de: 'masa', gramos: 800 }
+    });
+    expect(alElegirTipo(tocado, 'napolitana')).toMatchObject({ harina: '00', hidratacion: 65, cantidad: { de: 'bollos', bollos: 4, gramos: 250 } });
+    // Elegir de nuevo el mismo tipo también lo deja como viene.
+    expect(alElegirTipo(tocado, 'campo')).toMatchObject({ harina: '000', hidratacion: 72, prefermento: 'masa-madre' });
+  });
+
+  it('cambiar la harina o la mezcla corre la hidratación por lo que absorben, y conserva lo ajustado a mano', () => {
+    const centeno30 = { harina: '000', segunda: 'centeno', porcentajeSegunda: 30 } as const;
+    expect(hidratacionAlCambiarHarinas(base, centeno30)).toBe(78);
+    expect(hidratacionAlCambiarHarinas(base, { ...base, harina: 'integral' })).toBe(80);
+    expect(hidratacionAlCambiarHarinas({ ...base, hidratacion: 70 }, { ...base, harina: '0000' })).toBe(66);
+    // Ida y vuelta: sacar la mezcla devuelve la hidratación que había.
+    expect(hidratacionAlCambiarHarinas({ ...base, ...centeno30, hidratacion: 78 }, base)).toBe(72);
+    expect(hidratacionAlCambiarHarinas({ ...base, harina: '00', hidratacion: 65 }, { ...base, harina: '000' })).toBe(63);
+  });
+
   it('cuatro estilos, cada uno con su bollo sugerido; los panes no tienen', () => {
     expect(PANES.filter(p => p.bollo !== undefined).map(p => [p.nombre, p.hidratacion, p.bollo])).toEqual([
       ['Pizza al molde', 61, 380], ['Pizza a la piedra', 57, 250], ['Pizza napolitana', 65, 250], ['Pizza New York', 65, 380]
@@ -98,7 +149,7 @@ describe('las pizzas', () => {
   });
 
   it('4 bollos de 250 g dan lo mismo que 1000 g de masa', () => {
-    const napolitana: DatosPan = { ...base, pan: 'napolitana' };
+    const napolitana: DatosPan = { ...base, pan: 'napolitana', hidratacion: 65 };
     const porBollos = calcularPan({ ...napolitana, cantidad: { de: 'bollos', bollos: 4, gramos: 250 } })!;
     const porMasa = calcularPan({ ...napolitana, cantidad: { de: 'masa', gramos: 1000 } })!;
     expect(porBollos).toEqual(porMasa);
@@ -289,5 +340,23 @@ describe('la temperatura del ambiente', () => {
     // Con pâte fermentée y la masa en frío van las dos: la del prefermento y la de la heladera.
     expect(advertenciasPan({ ...base, prefermento: 'pate', horasPrefermento: 14, fermentacion: 'frio-24' }))
       .toEqual([ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE, ADVERTENCIA_FRIO, expect.stringContaining('pâte fermentée')]);
+  });
+});
+
+describe('los datos usados', () => {
+  it('dicen con qué se calculó, como en la pantalla, y sólo lo que cuenta', () => {
+    expect(datosUsados(base)).toEqual([
+      { nombre: 'Tipo', valor: 'Pan de campo' }, { nombre: 'Harina', valor: '000' }, { nombre: 'Hidratación', valor: '72 %' },
+      { nombre: 'Prefermento', valor: 'Ninguno' }, { nombre: 'Levadura', valor: 'Fresca' },
+      { nombre: 'Fermentación', valor: 'Ambiente, 8 h' }, { nombre: 'Temperatura ambiente', valor: '18 a 24 °C' }
+    ]);
+    const baguette: DatosPan = { ...alElegirTipo(base, 'baguette'), segunda: 'integral', porcentajeSegunda: 20, hidratacion: 100 };
+    expect(datosUsados(baguette)).toEqual([
+      { nombre: 'Tipo', valor: 'Baguette' }, { nombre: 'Harina', valor: '000 con 20 % de Integral' },
+      { nombre: 'Hidratación', valor: '85 %' }, { nombre: 'Prefermento', valor: 'Poolish, 12 h' },
+      { nombre: 'Levadura', valor: 'Fresca' }, { nombre: 'Temperatura ambiente', valor: '18 a 24 °C' }
+    ]);
+    const sinTipo: DatosPan = { ...base, pan: null, prefermento: 'masa-madre', fermentacion: 'frio-24' };
+    expect(datosUsados(sinTipo).map(l => l.nombre)).toEqual(['Harina', 'Hidratación', 'Prefermento', 'Fermentación']);
   });
 });

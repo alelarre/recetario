@@ -73,6 +73,11 @@ const fichaDeDatos = (...filas: string[]): string => {
   return contenido ? `<div class="ficha datos">${contenido}</div>` : '';
 };
 
+/** Un número que se escribe en la fila de un dato: el nombre a la izquierda y el campo, corto, a la derecha. */
+const numeroEnFila = (etiqueta: string, cantidad: string, valor: number): string =>
+  `<label class="dato"><span class="n">${escapar(etiqueta)}</span>` +
+  `<input type="number" inputmode="decimal" min="0" data-cantidad="${cantidad}" value="${Number.isFinite(valor) ? valor : ''}"></label>`;
+
 /** Un campo de gramos. */
 const campoGramos = (etiqueta: string, cantidad: string, valor: number | null): string =>
   `<label class="campo"><span>${escapar(etiqueta)}</span>` +
@@ -152,22 +157,24 @@ export function renderPan(d: DatosPan): string {
         ICO.idaYVuelta,
         campoGramos('Masa total (g)', 'masa', c.de === 'masa' ? c.gramos : r ? Math.round(r.masaTotal) : null));
 
-  // Tres fichas, en el orden en que se piensa un pan: qué es y de qué harina,
-  // cómo leva, y cuánto. El resultado va al pie.
+  // Tres fichas, en el orden en que se piensa un pan: qué es, de qué harina y
+  // con cuánta agua; cómo leva; y cuánto. El resultado va al pie.
   return encabezado({ titulo: 'Pan', volver: true }) +
     '<div class="cuerpo"><div class="calculadora">' +
       fichaDeDatos(
-        desplegable('Pan', 'pan', [
+        // El tipo carga todo lo demás; después se cambia lo que haga falta.
+        desplegable('Tipo', 'pan', [
           { nombre: 'Panes', opciones: enTexto(PANES.filter(p => p.bollo === undefined)) },
           { nombre: 'Pizzas', opciones: enTexto(PANES.filter(p => p.bollo !== undefined)) }
-        ], d.pan),
+        ], d.pan ?? ''),
         desplegable('Harina', 'harina', enTexto(HARINAS), d.harina),
         interruptor('Mezclar con otra harina', 'mezcla', d.segunda !== null),
         ...(d.segunda ? [
           desplegable('Otra harina', 'segunda', enTexto(HARINAS.filter(h => h.clave !== d.harina)), d.segunda),
           conmutador('Porcentaje', 'porcentaje',
             PORCENTAJES_SEGUNDA.map(p => ({ valor: String(p), texto: `${p} %` })), String(d.porcentajeSegunda))
-        ] : [])) +
+        ] : []),
+        numeroEnFila('Hidratación (%)', 'hidratacion', d.hidratacion)) +
       fichaDeDatos(
         desplegable('Prefermento', 'prefermento', [{ valor: '', texto: 'Ninguno' }, ...enTexto(PREFERMENTOS)], d.prefermento ?? ''),
         elegido ? explicacion(elegido.titulo, elegido.descripcion) : '',

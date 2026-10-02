@@ -463,7 +463,8 @@ Tres convenciones valen para todos los componentes:
   (§6.18), el conmutador de orden (§6.20) y el sol encendido de cocina (§6.12).
   `--acento` está reservado para las acciones y para lo que está activo como
   filtro o como destino: el chip encendido (§6.10) y el ítem actual del menú
-  (§6.17). Un estado declarado pintado de acento compite con *Guardar*, que está
+  (§6.17). La única excepción es la ficha del resultado de una calculadora
+  (§6.28). Un estado declarado pintado de acento compite con *Guardar*, que está
   a centímetros. Todos llevan `aria-pressed`.
 - **El presionado es lo que vale en el teléfono:** mientras el dedo está apoyado
   (`:active`), el control pasa a `--surface-alta` —el ícono, el botón secundario
@@ -1348,6 +1349,7 @@ agrupa por cercanía, no por rótulo.
 | Muchas, o de nombre largo | **Desplegable** | La fila muestra sólo lo elegido; el selector del sistema muestra el resto. |
 | Dos a cuatro, cortas | **Conmutador** | Todas a la vista y un solo toque. |
 | Encendido o apagado | **Interruptor** | Abre más filas debajo. |
+| Un número | **Campo en la fila** | Se escribe. |
 
 **No hay filas de botones sueltos:** con anchos distintos se acomodan en
 renglones desparejos, y once panes son cuatro renglones de botones con el
@@ -1388,6 +1390,10 @@ triángulo del navegador; el texto, en `--txt-base` `--fg-2`, porque es prosa
 con la etiqueta arriba: un número se tipea, no se elige. Una aclaración del
 campo va debajo, en `--txt-chico` `--fg-2`.
 
+**Un número que es un dato más** —la hidratación— va en su fila, como los
+que se eligen: el nombre a la izquierda y, contra la derecha, el campo
+(§6.9) en corto, de 88 px, con el valor en peso 600 y alineado a la derecha.
+
 **El par de cantidades** (`.par-cantidades`): dos campos numéricos (§6.9) en
 una misma fila, del mismo ancho, con lo que los une en el medio, en `--fg-2`
 y a la altura de los campos. **Las flechas de ida y vuelta** —el ícono de
@@ -1395,18 +1401,22 @@ Lucide `arrow-left-right` (§3.4)— cuando cada campo sale del otro: *Harina
 total* y *Masa total*. **Un ×** cuando se multiplican: *Bollos* y *Gramos por
 bollo*.
 
-**La ficha del resultado** (`.resultado`) es una ficha (§6.6) con el borde en
-`--borde-fuerte` y la balanza de *Herramientas* delante del título. Arriba
-van **las cifras** (`.cifras`): lo que manda en el resultado, en recuadros
-`--surface-alta` de `--r-medio` y del mismo ancho, con el valor en
+**La ficha del resultado** (`.resultado`) es la única con el acento: fondo
+`--acento-suave`, borde de 2 px `--acento`, y la balanza de *Herramientas*
+delante del título. Las líneas de adentro —el separador del título y los de
+los ítems— van en el acento al 35 %, porque `--borde` no se ve sobre ese
+fondo. Arriba van **las cifras** (`.cifras`): lo que manda en el resultado,
+en recuadros `--bg` de `--r-medio` y del mismo ancho, con el valor en
 `--txt-titulo` peso 600 y cifras tabulares, y su nombre debajo en
 `--txt-chico` `--fg-2`. Son dos: la masa total y la hidratación en el pan; la
 sal y su porcentaje en los fermentados. Debajo, el detalle como ítems de
 ingrediente (§6.11), con sus grupos si los hay, y las advertencias como una
 lista en `--txt-chico` `--fg-2`.
 
-**Las cifras no llevan el acento:** el resultado no es una acción (§6.0). Se
-destacan por tamaño y por su recuadro.
+**Es el único lugar donde el acento marca un contenido y no una acción**
+(§6.0): en una calculadora no hay botón primario con el que compita, y el
+resultado es lo que se vino a buscar. Los valores van en `--fg`, no en el
+acento: se leen por tamaño.
 
 ---
 
