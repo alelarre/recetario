@@ -37,7 +37,7 @@ error.
 - [ ] **El encabezado queda fijo arriba** al bajar por el formulario, como el de todas las pantallas (`../../ux/design-system.md` §6.12).
 - [ ] Salir sin guardar con cambios pendientes **pregunta antes**: *"¿Salir sin guardar los cambios?"*, con *Seguir editando* y *Salir*. Vale para el volver del encabezado, para un destino del menú lateral —también *Nueva receta* con otra receta nueva abierta— y para el gesto de atrás de Android. La pregunta se inserta arriba del formulario sin redibujarlo, para no perder lo escrito.
 - [ ] **Con un destino nuevo** —un link del menú—, esa navegación se deshace mientras se pregunta: *Seguir editando* no deja nada en el historial, y *Salir* va al destino.
-- [ ] El formulario va en tres fichas con título, en este orden: **Datos** —Título, Categoría, Tags, Rinde, Duración, Dificultad y Fuente original—, **Fotos** (F04.3d) y **Contenido** —Portada, Descripción, Ingredientes, Preparación, Variaciones y Notas—.
+- [ ] El formulario va en tres fichas con título, en este orden: **Datos** —Título, Categoría, Tags, Fuente original, Rinde, Duración y Dificultad—, **Fotos** (F04.3d) y **Contenido** —Portada, Descripción, Ingredientes, Preparación, Variaciones y Notas—.
 - [ ] **Las acciones van al final, a lo ancho:** **Convertir con Agente** (secundario, sólo mientras la receta tiene `borrador`; `E01-CapturaYBorradores.md` C01.9.1) y debajo **Guardar** (principal). *Guardar* está sólo ahí, no en el encabezado. Al editar una receta existente, *Borrar receta* va debajo (C04.6.1). Entre los tres botones hay un solo aire, `--e-2`.
 - [ ] Agregar, sacar o poner una foto cuenta como cambio sin guardar, igual que escribir en un campo.
 - [ ] Salir sin cambios no pregunta nada.

@@ -387,10 +387,12 @@ export function renderEditor(
         .map(t => `<option value="${escapar(t)}">`).join('')}</datalist>` +
       '<p class="error-tag" hidden>Tag no permitido</p>' +
     '</div>' +
+    // La fuente va antes que Rinde: lo que llega por el menú Compartir la trae
+    // precargada, y así se ve en la primera pantalla del teléfono sin desplazarse.
+    campo('fuente', 'Fuente original', receta.fuente) +
     campo('rinde', 'Rinde', receta.rinde) +
     campoDuracion(receta.tiempo) +
     `<label class="campo"><span>Dificultad</span><select name="dificultad">${opcionesDificultad}</select></label>` +
-    campo('fuente', 'Fuente original', receta.fuente) +
   '</div>';
 
   // Cómo se escribe un ingrediente para que el filtro por ingrediente lo

@@ -263,6 +263,18 @@ describe('renderEditor', () => {
     expect(indices).toEqual([...indices].sort((a, b) => a - b));
   });
 
+  it('en la ficha Datos, la fuente va justo debajo de los tags, al crear y al editar', () => {
+    const campos = [
+      'name="titulo"', 'name="carpeta"', 'data-tags', 'name="fuente"',
+      'name="rinde"', 'name="tiempo"', 'name="dificultad"'
+    ];
+    for (const html of [dibujar(), dibujar({ entrada: entradaFalsa({ carpeta_id: 'c1' }) })]) {
+      const indices = campos.map(m => html.indexOf(m));
+      for (const i of indices) expect(i).toBeGreaterThan(-1);
+      expect(indices).toEqual([...indices].sort((a, b) => a - b));
+    }
+  });
+
   it('borrar receta va suelto al pie, fuera de las fichas', () => {
     const html = renderEditor({ entrada: entradaFalsa(), receta: cargada, categorias });
     expect(html.match(/class="ficha"/g)).toHaveLength(3);
