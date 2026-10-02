@@ -84,8 +84,9 @@ resultado va al pie. Los componentes están en `design-system.md` §6.28.
   6. **Fermentación:** un conmutador, *Ambiente* o *En frío*; con poolish o
      biga no está, y con pâte fermentée es la de la masa final.
   7. **Horas:** un conmutador con las del modo elegido.
-  8. **Temperatura ambiente:** un desplegable con las cuatro franjas de los
-     fermentados (C07.3.1). Sólo si algo fermenta a la temperatura de la
+  8. **Temperatura ambiente:** un conmutador con las cuatro franjas de los
+     fermentados (C07.3.1), con su nombre corto —*< 13 °C*, *13–18 °C*,
+     *18–24 °C*, *> 24 °C*—. Sólo si algo fermenta a la temperatura de la
      cocina: la masa, el poolish o la pâte fermentée (C07.2.3).
 - [ ] **La cantidad:**
   9. Dos campos en gramos en una misma fila, *Harina total* y *Masa total*;
@@ -242,7 +243,7 @@ queda vacío.
 
 - [ ] Tres datos, con las filas de la calculadora de pan (F07.2). En una
   ficha, el **fermento**, un desplegable con los de la tabla de fermentos, y
-  la **temperatura ambiente**, un desplegable con cuatro franjas —menos de
+  la **temperatura ambiente**, un conmutador con cuatro franjas —menos de
   13 °C, 13 a 18, 18 a 24 y más de 24—. En otra, el **peso total** en
   gramos.
 - [ ] El peso total es **todo lo que hay en el frasco**: la verdura y, si va

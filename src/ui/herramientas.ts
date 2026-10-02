@@ -41,12 +41,16 @@ function desplegable(etiqueta: string, grupo: string, xs: readonly Opcion[] | re
     `<select data-opcion="${grupo}">${contenido}</select></label>`;
 }
 
-/** Un dato con dos a cuatro opciones cortas, todas a la vista y una sola apretada. */
-function conmutador(etiqueta: string, grupo: string, xs: readonly Opcion[], elegido: string): string {
+/**
+ * Un dato con dos a cuatro opciones cortas, todas a la vista y una sola
+ * apretada. `ancho`: el conmutador no entra al lado del nombre en un
+ * teléfono, y ahí baja a su propio renglón.
+ */
+function conmutador(etiqueta: string, grupo: string, xs: readonly Opcion[], elegido: string, { ancho = false } = {}): string {
   const botones = xs.map(o =>
     `<button type="button" data-accion="elegir-opcion" data-grupo="${grupo}" ` +
     `data-valor="${escapar(o.valor)}" aria-pressed="${o.valor === elegido}">${escapar(o.texto)}</button>`).join('');
-  return `<div class="dato"><span class="n">${escapar(etiqueta)}</span>` +
+  return `<div class="dato${ancho ? ' ancho' : ''}"><span class="n">${escapar(etiqueta)}</span>` +
     `<div class="seg" role="group" aria-label="${escapar(etiqueta)}">${botones}</div></div>`;
 }
 
@@ -129,6 +133,10 @@ export function resultadoPan(d: DatosPan): string {
 const enTexto = <T extends { clave: string; nombre: string }>(xs: readonly T[]): Opcion[] =>
   xs.map(x => ({ valor: x.clave, texto: x.nombre }));
 
+/** La temperatura del ambiente: las cuatro franjas, con su nombre corto. */
+const temperatura = (grupo: string, elegida: string): string =>
+  conmutador('Temperatura ambiente', grupo, TEMPERATURAS.map(t => ({ valor: t.clave, texto: t.corto })), elegida, { ancho: true });
+
 export function renderPan(d: DatosPan): string {
   const r = calcularPan(d);
   const modo = FERMENTACIONES.find(f => f.clave === d.fermentacion)?.modo ?? 'ambiente';
@@ -174,7 +182,7 @@ export function renderPan(d: DatosPan): string {
           conmutador('Horas', 'fermentacion', horas.map(f => ({ valor: f.clave, texto: `${f.horas} h` })), d.fermentacion)
         ] : []),
         // Sólo si algo fermenta a la temperatura de la cocina: la masa o el prefermento.
-        conTemperatura(d) ? desplegable('Temperatura ambiente', 'temperatura-pan', enTexto(TEMPERATURAS), d.temperatura) : '') +
+        conTemperatura(d) ? temperatura('temperatura-pan', d.temperatura) : '') +
       `<div class="ficha">${cantidad}</div>` +
     '</div>' +
     resultadoPan(d) +
@@ -191,7 +199,7 @@ export function renderSal(d: DatosSal): string {
     '<div class="cuerpo"><div class="calculadora">' +
       fichaDeDatos(
         desplegable('Fermento', 'fermento', enTexto(FERMENTOS), d.fermento),
-        desplegable('Temperatura ambiente', 'temperatura', enTexto(TEMPERATURAS), d.temperatura ?? '')) +
+        temperatura('temperatura', d.temperatura ?? '')) +
       `<div class="ficha">${campoGramos('Peso total (g)', 'peso', d.pesoTotal)}` +
         '<p class="aviso-mudo">Todo lo que va en el frasco: la verdura y, si va en salmuera, el agua.</p></div>' +
     '</div>' +

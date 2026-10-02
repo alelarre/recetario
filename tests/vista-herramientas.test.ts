@@ -53,7 +53,7 @@ describe('la calculadora de pan', () => {
     expect(fichas[0]).toContain('data-opcion="pan"');
     expect(fichas[0]).toContain('data-grupo="mezcla"');
     expect(fichas[1]).toContain('data-opcion="prefermento"');
-    expect(fichas[1]).toContain('data-opcion="temperatura-pan"');
+    expect(fichas[1]).toContain('data-grupo="temperatura-pan"');
     expect(fichas[2]).toContain('data-cantidad="harina"');
     expect(fichas[3]).toContain('data-resultado');
   });
@@ -61,7 +61,6 @@ describe('la calculadora de pan', () => {
   it('los datos con muchas opciones son un desplegable con lo elegido; el pan, con los panes y las pizzas aparte', () => {
     expect(elegidoEn(html, 'pan')).toBe('campo');
     expect(elegidoEn(html, 'harina')).toBe('000');
-    expect(elegidoEn(html, 'temperatura-pan')).toBe('18-24');
     expect(opcionesDe(html, 'pan')).toHaveLength(11);
     const pan = desplegable(html, 'pan');
     expect(pan.indexOf('<optgroup label="Panes">')).toBeLessThan(pan.indexOf('value="focaccia"'));
@@ -160,7 +159,7 @@ describe('la calculadora de sal', () => {
   it('la temperatura va entre el fermento y el peso, y el tiempo con su advertencia en el resultado', () => {
     const html = renderSal(SAL_POR_DEFECTO);
     expect(html).toContain('<span class="tit">Fermentados</span>');
-    expect(elegidoEn(html, 'temperatura')).toBe('18-24');
+    expect(html).toContain('data-grupo="temperatura" data-valor="18-24" aria-pressed="true"');
     expect(pos(html, 'fermento')).toBeLessThan(pos(html, 'temperatura'));
     expect(pos(html, 'temperatura')).toBeLessThan(html.indexOf('data-cantidad="peso"'));
     expect(html).toContain('6 a 16 días');
@@ -169,11 +168,15 @@ describe('la calculadora de sal', () => {
 });
 
 describe('la calculadora de pan — la temperatura del ambiente', () => {
-  it('a temperatura ambiente, la fila va después de las horas, con las franjas de los fermentados', () => {
+  it('a temperatura ambiente, la fila va después de las horas: un conmutador con las cuatro franjas, en corto', () => {
     const html = renderPan(PAN_POR_DEFECTO);
-    expect(elegidoEn(html, 'temperatura-pan')).toBe('18-24');
-    expect(opcionesDe(html, 'temperatura-pan')).toEqual(opcionesDe(renderSal(SAL_POR_DEFECTO), 'temperatura'));
-    expect(html).toContain('>Menos de 13 °C<');
+    expect(html).toContain('data-grupo="temperatura-pan" data-valor="18-24" aria-pressed="true"');
+    const fila = html.slice(html.indexOf('aria-label="Temperatura ambiente"'), html.indexOf('data-cantidad='));
+    expect([...fila.matchAll(/data-valor="([^"]*)" aria-pressed="[a-z]+">([^<]*)</g)].map(m => [m[1], m[2]])).toEqual([
+      ['menos-13', '&lt; 13 °C'], ['13-18', '13–18 °C'], ['18-24', '18–24 °C'], ['mas-24', '&gt; 24 °C']
+    ]);
+    // No entra al lado del nombre en un teléfono: la fila lo deja bajar a su renglón.
+    expect(html).toContain('<div class="dato ancho"><span class="n">Temperatura ambiente</span>');
     expect(pos(html, 'fermentacion')).toBeLessThan(pos(html, 'temperatura-pan'));
     expect(pos(html, 'temperatura-pan')).toBeLessThan(html.indexOf('data-cantidad="harina"'));
   });
@@ -181,7 +184,8 @@ describe('la calculadora de pan — la temperatura del ambiente', () => {
   it('en frío sin prefermento, o con biga, no está; con poolish, sí', () => {
     expect(pos(renderPan({ ...PAN_POR_DEFECTO, fermentacion: 'frio-24' }), 'temperatura-pan')).toBe(-1);
     expect(pos(renderPan({ ...PAN_POR_DEFECTO, prefermento: 'biga', horasPrefermento: 18 }), 'temperatura-pan')).toBe(-1);
-    expect(elegidoEn(renderPan({ ...PAN_POR_DEFECTO, prefermento: 'poolish', horasPrefermento: 12 }), 'temperatura-pan')).toBe('18-24');
+    expect(renderPan({ ...PAN_POR_DEFECTO, prefermento: 'poolish', horasPrefermento: 12 }))
+      .toContain('data-grupo="temperatura-pan" data-valor="18-24" aria-pressed="true"');
   });
 });
 

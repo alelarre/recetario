@@ -546,6 +546,12 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
               font: 600 var(--txt-chico)/1 var(--tipo); cursor: pointer; white-space: nowrap; }
 .seg button + button { border-left: 1px solid var(--borde-fuerte); }
 .seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+/* Un conmutador que no entra al lado de su nombre en un teléfono baja a su
+   propio renglón, a lo ancho. */
+@media (max-width: 559px) {
+  .dato.ancho { flex-wrap: wrap; row-gap: var(--e-2); padding-block: var(--e-3); }
+  .dato.ancho .seg { flex: 1 0 100%; margin-left: 0; display: grid; }
+}
 /* §6.28 El interruptor: la fila entera se toca, con la perilla a la derecha.
    Encendido se dibuja invertido (§6.0). */
 .interruptor { justify-content: space-between; cursor: pointer; }

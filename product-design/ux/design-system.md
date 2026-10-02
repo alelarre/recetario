@@ -1362,7 +1362,9 @@ opciones pueden ir en grupos: los panes y las pizzas.
 hagan falta, todas del mismo ancho: un panel con borde de 1 px
 `--borde-fuerte` y `--r-medio`, botones de 40 px de alto en `--txt-chico`
 peso 600 `--fg-2`, y el elegido invertido (§6.0). Va contra la derecha de la
-fila.
+fila. **El que no entra al lado de su nombre en un teléfono** —las cuatro
+franjas de temperatura— baja a su propio renglón, a lo ancho de la ficha
+(`.dato.ancho`); desde 560 px va en la fila, como los demás.
 
 **El interruptor** (`.interruptor`), para lo que se enciende y abre más
 datos: *Mezclar con otra harina*. Es la fila entera la que se toca, con la
