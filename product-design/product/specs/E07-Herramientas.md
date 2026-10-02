@@ -85,8 +85,8 @@ resultado va al pie. Los componentes están en `design-system.md` §6.28.
      biga no está, y con pâte fermentée es la de la masa final.
   7. **Horas:** un conmutador con las del modo elegido.
   8. **Temperatura ambiente:** un desplegable con las cuatro franjas de los
-     fermentados (C07.3.1). Sólo con la fermentación a temperatura ambiente
-     (C07.2.3).
+     fermentados (C07.3.1). Sólo si algo fermenta a la temperatura de la
+     cocina: la masa, el poolish o la pâte fermentée (C07.2.3).
 - [ ] **La cantidad:**
   9. Dos campos en gramos en una misma fila, *Harina total* y *Masa total*;
      en una pizza, *Bollos* y *Gramos por bollo* (C07.2.4).
@@ -121,9 +121,13 @@ resultado va al pie. Los componentes están en `design-system.md` §6.28.
   multiplica por un factor —menos de 13 °C, × 2; de 13 a 18, × 1,5; de 18 a
   24, × 1; más de 24, × 0,65—, que sale de duplicar la levadura cada 10 °C
   menos.
-- [ ] **En frío no cuenta:** manda la heladera, y la fila no está. Tampoco
-  con poolish o biga, que no usan la tabla; con pâte fermentée ajusta sólo
-  la levadura de la masa final.
+- [ ] **Vale para todo lo que fermenta a temperatura ambiente:** la masa, si
+  no va a la heladera, y el poolish y la pâte fermentée, cuya levadura se
+  multiplica por el mismo factor. Con pâte fermentée y la masa en frío,
+  ajusta sólo la del prefermento.
+- [ ] **No cuenta, y la fila no está,** con la masa en frío y sin esos
+  prefermentos —manda la heladera—, ni con biga, que fermenta en un lugar a
+  18 °C.
 - [ ] La sal es un porcentaje fijo de la harina total.
 - [ ] Todos los porcentajes son de panadero: sobre la harina total, con la de
   la masa madre incluida.
@@ -189,12 +193,12 @@ queda vacío.
 - [ ] Debajo del resultado, como una lista. Con la levadura o la masa madre
   de la tabla:
   - *«Los tiempos son totales: primera fermentación y apresto.»*
-  - A temperatura ambiente: *«La levadura o la masa madre va según la
-    temperatura del ambiente: con más frío, más; con más calor, menos.»* Con
-    menos de 13 °C, además: *«Por debajo de 10 °C esta cuenta deja de valer:
-    la masa casi no fermenta.»*
-  - En frío: *«En frío, se cuentan 1 o 2 horas a temperatura ambiente antes
-    y después de la heladera.»*
+  - Con la masa en frío: *«En frío, se cuentan 1 o 2 horas a temperatura
+    ambiente antes y después de la heladera.»*
+- [ ] Si algo fermenta a temperatura ambiente (C07.2.3): *«La levadura o la
+  masa madre va según la temperatura del ambiente: con más frío, más; con
+  más calor, menos.»* Con menos de 13 °C, además: *«Por debajo de 10 °C esta
+  cuenta deja de valer: la masa casi no fermenta.»*
 - [ ] La del prefermento, si hay uno con levadura (C07.2.8).
 - [ ] Y la del tope, sólo si se aplicó (C07.2.6).
 
@@ -209,7 +213,7 @@ queda vacío.
 
   | Prefermento | Harina | Hidratación | Sal | Levadura fresca | Horas |
   |---|---|---|---|---|---|
-  | Poolish | 30 % | 100 % | — | 0,75 / 0,2 / 0,1 % | 8 / 12 / 18 h, a unos 23 °C |
+  | Poolish | 30 % | 100 % | — | 0,75 / 0,2 / 0,1 % | 8 / 12 / 18 h, a temperatura ambiente |
   | Biga | 40 % | 44 % | — | 1 % | 16 a 20 h, a unos 18 °C |
   | Pâte fermentée | 27 % | 68 % | 1,4 % | 0,3 % | 14 h, a temperatura ambiente |
 
@@ -341,7 +345,7 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 - [ ] La levadura, la fermentación y la `temperatura` del ambiente se piden
   junto con el prefermento, y dejan de pedirse cuando lo elegido no las usa:
   la levadura con masa madre, la fermentación con poolish o biga, y la
-  temperatura en frío.
+  temperatura con biga o con la masa en frío sin poolish ni pâte fermentée.
 - [ ] Con todo, devuelven las mismas líneas que la pantalla, las advertencias
   y, en el pan, la harina total, la masa total y la hidratación.
 - [ ] La descripción de cada herramienta lista las opciones tomadas de las

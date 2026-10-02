@@ -167,7 +167,7 @@ export function renderPan(d: DatosPan): string {
           conmutador('Fermentación', 'modo', [{ valor: 'ambiente', texto: 'Ambiente' }, { valor: 'frio', texto: 'En frío' }], modo),
           conmutador('Horas', 'fermentacion', horas.map(f => ({ valor: f.clave, texto: `${f.horas} h` })), d.fermentacion)
         ] : []),
-        // En frío manda la heladera: la temperatura del ambiente no cuenta.
+        // Sólo si algo fermenta a la temperatura de la cocina: la masa o el prefermento.
         conTemperatura(d) ? desplegable('Temperatura ambiente', 'temperatura-pan', enTexto(TEMPERATURAS), d.temperatura) : '') +
       `<div class="ficha">${cantidad}</div>` +
     '</div>' +

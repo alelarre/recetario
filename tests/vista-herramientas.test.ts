@@ -178,9 +178,10 @@ describe('la calculadora de pan — la temperatura del ambiente', () => {
     expect(pos(html, 'temperatura-pan')).toBeLessThan(html.indexOf('data-cantidad="harina"'));
   });
 
-  it('en frío, o con poolish o biga, no está', () => {
+  it('en frío sin prefermento, o con biga, no está; con poolish, sí', () => {
     expect(pos(renderPan({ ...PAN_POR_DEFECTO, fermentacion: 'frio-24' }), 'temperatura-pan')).toBe(-1);
     expect(pos(renderPan({ ...PAN_POR_DEFECTO, prefermento: 'biga', horasPrefermento: 18 }), 'temperatura-pan')).toBe(-1);
+    expect(elegidoEn(renderPan({ ...PAN_POR_DEFECTO, prefermento: 'poolish', horasPrefermento: 12 }), 'temperatura-pan')).toBe('18-24');
   });
 });
 

@@ -168,7 +168,7 @@ export function crearServidor(recetario: Recetario): McpServer {
       levadura: z.string().optional().describe(`Una de: ${opciones(LEVADURAS)}. Con masa madre no va.`),
       fermentacion: z.string().optional().describe('«ambiente» o «frío». Con poolish o biga no va.'),
       horas: z.number().optional().describe(`Ambiente: ${horas('ambiente')} (con masa madre, sin 2). Frío: ${horas('frio')}.`),
-      temperatura: z.string().optional().describe(`La del ambiente, una de: ${opciones(TEMPERATURAS)}. En frío, o con poolish o biga, no va.`),
+      temperatura: z.string().optional().describe(`La del ambiente, una de: ${opciones(TEMPERATURAS)}. Va si la masa fermenta a temperatura ambiente, o con poolish o pâte fermentée; con biga, o en frío sin prefermento, no va.`),
       harina_total: z.number().optional().describe('En un pan que no es pizza: en gramos. Una sola de las dos cantidades.'),
       masa_total: z.number().optional().describe('En un pan que no es pizza: en gramos. Una sola de las dos cantidades.'),
       bollos: z.number().optional().describe(`En una pizza (${pizzas()}): cuántos bollos.`),

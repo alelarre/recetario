@@ -85,8 +85,9 @@ export const FERMENTACIONES: readonly {
  * Por cuánto se multiplica la levadura —o la masa madre— de la tabla según la
  * temperatura del ambiente, para que las horas se cumplan: cada 10 °C menos,
  * el doble (doughrise). Cada franja se toma por su medio —10, 15, 21 y
- * 27 °C— contra el de la tabla. Vale sólo para la fermentación a temperatura
- * ambiente: en frío manda la heladera.
+ * 27 °C— contra el de la tabla. Vale para lo que fermenta a temperatura
+ * ambiente: la masa, si no va a la heladera, y el poolish o la pâte
+ * fermentée. En frío manda la heladera, y la biga pide su lugar a 18 °C.
  */
 export const LEVADURA_POR_TEMPERATURA: Readonly<Record<ClaveTemperatura, number>> = {
   'menos-13': 2,
@@ -107,24 +108,27 @@ export const SEGUNDA_POR_DEFECTO: ClaveHarina = 'integral';
  *
  * En poolish y biga toda la levadura va en el prefermento, y la masa final no
  * suma más. La pâte fermentée da sabor y no levado: la masa final suma la
- * levadura de la tabla de fermentación. Las fuentes de cada valor están en
+ * levadura de la tabla de fermentación. `ambiente` dice si el prefermento
+ * fermenta a la temperatura de la cocina, y entonces su levadura se ajusta
+ * con ella (`LEVADURA_POR_TEMPERATURA`). Las fuentes de cada valor están en
  * `product-design/research/herramientas/panaderia-pizza-masas.md`.
  */
 export const PREFERMENTOS_CON_LEVADURA: readonly {
   clave: Exclude<ClavePrefermento, 'masa-madre'>; nombre: string; harina: number; hidratacion: number; sal: number;
-  horas: readonly { horas: number; fresca: number }[]; levaduraFinal: boolean; advertencia: string;
+  horas: readonly { horas: number; fresca: number }[]; levaduraFinal: boolean; ambiente: boolean; advertencia: string;
 }[] = [
   // Bianco Lievito: 20 a 40 % de la harina; levadura a 23 °C.
   { clave: 'poolish', nombre: 'Poolish', harina: 30, hidratacion: 100, sal: 0,
-    horas: [{ horas: 8, fresca: 0.75 }, { horas: 12, fresca: 0.2 }, { horas: 18, fresca: 0.1 }], levaduraFinal: false,
-    advertencia: 'El poolish fermenta a unos 23 °C. La masa final no lleva levadura: leva con la del poolish.' },
+    horas: [{ horas: 8, fresca: 0.75 }, { horas: 12, fresca: 0.2 }, { horas: 18, fresca: 0.1 }],
+    levaduraFinal: false, ambiente: true,
+    advertencia: 'El poolish fermenta a temperatura ambiente. La masa final no lleva levadura: leva con la del poolish.' },
   // Bianco Lievito, biga corta: 30 a 50 % de la harina; 16 a 20 h a 18 °C.
   { clave: 'biga', nombre: 'Biga', harina: 40, hidratacion: 44, sal: 0,
-    horas: [{ horas: 18, fresca: 1 }], levaduraFinal: false,
+    horas: [{ horas: 18, fresca: 1 }], levaduraFinal: false, ambiente: false,
     advertencia: 'La biga fermenta de 16 a 20 h a unos 18 °C. La masa final no lleva levadura: leva con la de la biga.' },
   // King Arthur: 0,1 % de instantánea, que es 0,3 % de fresca; 14 h a temperatura ambiente.
   { clave: 'pate', nombre: 'Pâte fermentée', harina: 27, hidratacion: 68, sal: 1.4,
-    horas: [{ horas: 14, fresca: 0.3 }], levaduraFinal: true,
+    horas: [{ horas: 14, fresca: 0.3 }], levaduraFinal: true, ambiente: true,
     advertencia: 'La pâte fermentée fermenta unas 14 h a temperatura ambiente. La masa final lleva su propia levadura.' }
 ];
 
@@ -229,12 +233,15 @@ const horasDe = (pref: ConLevadura, horas: number) =>
  */
 export const conFermentacion = (d: DatosPan): boolean => prefermentoDe(d)?.levaduraFinal ?? true;
 
-/**
- * Si cuenta la temperatura del ambiente: cuando la masa fermenta afuera de la
- * heladera con la levadura o la masa madre de la tabla.
- */
-export const conTemperatura = (d: DatosPan): boolean =>
+/** Si la masa fermenta afuera de la heladera, con la levadura o la masa madre de la tabla. */
+const masaAlAmbiente = (d: DatosPan): boolean =>
   conFermentacion(d) && buscar(FERMENTACIONES, d.fermentacion).modo === 'ambiente';
+
+/**
+ * Si cuenta la temperatura del ambiente: cuando algo fermenta a la
+ * temperatura de la cocina, sea la masa o el prefermento.
+ */
+export const conTemperatura = (d: DatosPan): boolean => masaAlAmbiente(d) || (prefermentoDe(d)?.ambiente ?? false);
 
 /** Si hay que elegir levadura: siempre, salvo con masa madre. */
 export const conLevadura = (d: DatosPan): boolean => d.prefermento !== 'masa-madre';
@@ -278,8 +285,10 @@ export function calcularPan(d: DatosPan): ResultadoPan | null {
   const seca = (fresca: number): number => (d.levadura === 'seca' ? fresca / DIVISOR_SECA : fresca);
   // La levadura de cada parte, en % de la harina total: la del prefermento
   // va sobre su harina; la de la masa final, sobre la total.
-  const pctPrefermento = pref ? seca(horasDe(pref, d.horasPrefermento).fresca) * pref.harina / 100 : 0;
-  const porTemperatura = conTemperatura(d) ? LEVADURA_POR_TEMPERATURA[d.temperatura] : 1;
+  const factor = LEVADURA_POR_TEMPERATURA[d.temperatura];
+  const pctPrefermento = pref
+    ? seca(horasDe(pref, d.horasPrefermento).fresca) * (pref.ambiente ? factor : 1) * pref.harina / 100 : 0;
+  const porTemperatura = masaAlAmbiente(d) ? factor : 1;
   const pctFinal = conMasaMadre || (pref && !pref.levaduraFinal) ? 0 : seca(fermentacion.fresca) * porTemperatura;
   // Con masa madre la levadura no suma a la masa: su harina y su agua ya
   // están contadas en la harina total y en el agua.
@@ -356,7 +365,8 @@ const MODOS = [{ clave: 'ambiente', nombre: 'Ambiente' }, { clave: 'frio', nombr
  * La levadura, la fermentación y la temperatura se piden junto con el
  * prefermento, y dejan de pedirse cuando lo elegido no las usa: la masa madre
  * no lleva levadura, con poolish o biga la masa final no tiene fermentación
- * que elegir, y en frío no cuenta la temperatura del ambiente.
+ * que elegir, y la temperatura del ambiente no cuenta con la masa en frío
+ * —salvo que el prefermento fermente a temperatura ambiente— ni con biga.
  */
 export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   const faltan: Faltante[] = [];
@@ -392,7 +402,8 @@ export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   const modo = conTabla ? porNombre(MODOS, p.fermentacion) : null;
   if (conTabla && !modo) falta('fermentacion', MODOS.map(x => x.nombre));
   const temperatura = porNombre(TEMPERATURAS, p.temperatura);
-  if (conTabla && modo?.clave !== 'frio' && !temperatura) falta('temperatura', TEMPERATURAS.map(x => x.nombre));
+  const pideTemperatura = (pref?.ambiente ?? false) || (conTabla && modo?.clave !== 'frio');
+  if (pideTemperatura && !temperatura) falta('temperatura', TEMPERATURAS.map(x => x.nombre));
   // Las horas esperan al prefermento: con masa madre no van las 2 h.
   const posibles = modo && sabePrefermento ? fermentacionesPara(elegido?.clave ?? null).filter(f => f.modo === modo.clave) : [];
   const fermentacion = conTabla ? posibles.find(f => f.horas === p.horas) : buscar(FERMENTACIONES, PAN_POR_DEFECTO.fermentacion);
@@ -540,16 +551,16 @@ export function lineasPrefermento(d: DatosPan): Linea[] {
 
 /**
  * Las advertencias que acompañan al resultado. Las de los tiempos de la tabla
- * no van si la masa final no lleva levadura: manda el prefermento. A
- * temperatura ambiente, la de la temperatura; en frío, la de la heladera.
+ * no van si la masa final no lleva levadura: manda el prefermento. Si algo
+ * fermenta a temperatura ambiente, la de la temperatura; con la masa en
+ * frío, la de la heladera.
  */
 export const advertenciasPan = (d: DatosPan): string[] => {
   const pref = prefermentoDe(d);
   return [
     ...(conFermentacion(d) ? [ADVERTENCIA_TIEMPOS] : []),
-    ...(conTemperatura(d)
-      ? [ADVERTENCIA_AMBIENTE, ...(d.temperatura === 'menos-13' ? [ADVERTENCIA_MUY_FRIO] : [])]
-      : conFermentacion(d) ? [ADVERTENCIA_FRIO] : []),
+    ...(conTemperatura(d) ? [ADVERTENCIA_AMBIENTE, ...(d.temperatura === 'menos-13' ? [ADVERTENCIA_MUY_FRIO] : [])] : []),
+    ...(conFermentacion(d) && !masaAlAmbiente(d) ? [ADVERTENCIA_FRIO] : []),
     ...(pref ? [pref.advertencia] : []),
     ...(calcularPan(d)?.topeada ? [AVISO_TOPE] : [])
   ];

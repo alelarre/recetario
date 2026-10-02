@@ -130,10 +130,10 @@ describe('los prefermentos', () => {
   });
 
   it('la tabla de los que llevan levadura, con su harina, hidratación, sal y horas', () => {
-    expect(PREFERMENTOS_CON_LEVADURA.map(p => [p.nombre, p.harina, p.hidratacion, p.sal, p.horas.map(h => h.horas), p.levaduraFinal])).toEqual([
-      ['Poolish', 30, 100, 0, [8, 12, 18], false],
-      ['Biga', 40, 44, 0, [18], false],
-      ['Pâte fermentée', 27, 68, 1.4, [14], true]
+    expect(PREFERMENTOS_CON_LEVADURA.map(p => [p.nombre, p.harina, p.hidratacion, p.sal, p.horas.map(h => h.horas), p.levaduraFinal, p.ambiente])).toEqual([
+      ['Poolish', 30, 100, 0, [8, 12, 18], false, true],
+      ['Biga', 40, 44, 0, [18], false, false],
+      ['Pâte fermentée', 27, 68, 1.4, [14], true, true]
     ]);
   });
 
@@ -246,19 +246,44 @@ describe('la temperatura del ambiente', () => {
     expect(calcularPan({ ...d, temperatura: 'menos-13' })).toEqual(calcularPan(d));
   });
 
-  it('con poolish o biga no cuenta; con pâte fermentée, sólo en la levadura de la masa final', () => {
+  it('con biga no cuenta: fermenta en su lugar a 18 °C', () => {
     const biga: DatosPan = { ...base, prefermento: 'biga', horasPrefermento: 18 };
     expect(conTemperatura(biga)).toBe(false);
     expect(calcularPan({ ...biga, temperatura: 'menos-13' })).toEqual(calcularPan(biga));
+  });
+
+  it('el poolish fermenta a temperatura ambiente: su levadura se ajusta, y nada más', () => {
+    const poolish: DatosPan = { ...base, prefermento: 'poolish', horasPrefermento: 12 };
+    expect(conTemperatura(poolish)).toBe(true);
+    const templado = calcularPan(poolish)!;
+    const frio = calcularPan({ ...poolish, temperatura: 'menos-13' })!;
+    expect(frio.prefermento!.levadura).toBeCloseTo(templado.prefermento!.levadura * 2);
+    expect(frio.prefermento!.harina).toBeCloseTo(templado.prefermento!.harina);
+    expect(frio.levadura).toBe(0);
+  });
+
+  it('con pâte fermentée se ajustan las dos levaduras; con la masa en frío, sólo la del prefermento', () => {
     const pate: DatosPan = { ...base, prefermento: 'pate', horasPrefermento: 14 };
     const frio = calcularPan({ ...pate, temperatura: 'menos-13' })!;
     expect(frio.levadura).toBeCloseTo(calcularPan(pate)!.levadura * 2);
-    expect(frio.prefermento!.levadura).toBeCloseTo(calcularPan(pate)!.prefermento!.levadura);
+    expect(frio.prefermento!.levadura).toBeCloseTo(calcularPan(pate)!.prefermento!.levadura * 2);
+
+    const enHeladera: DatosPan = { ...pate, fermentacion: 'frio-24' };
+    expect(conTemperatura(enHeladera)).toBe(true);
+    const heladeraFria = calcularPan({ ...enHeladera, temperatura: 'menos-13' })!;
+    expect(heladeraFria.levadura).toBeCloseTo(calcularPan(enHeladera)!.levadura);
+    expect(heladeraFria.prefermento!.levadura).toBeCloseTo(calcularPan(enHeladera)!.prefermento!.levadura * 2);
   });
 
   it('las advertencias: a temperatura ambiente, la de la temperatura; en frío, la de la heladera', () => {
     expect(advertenciasPan(base)).toEqual([ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE]);
     expect(advertenciasPan({ ...base, temperatura: 'menos-13' })).toEqual([ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE, ADVERTENCIA_MUY_FRIO]);
     expect(advertenciasPan({ ...base, fermentacion: 'frio-24' })).toEqual([ADVERTENCIA_TIEMPOS, ADVERTENCIA_FRIO]);
+    // El poolish fermenta a temperatura ambiente aunque la masa final no tenga fermentación que elegir.
+    expect(advertenciasPan({ ...base, prefermento: 'poolish', horasPrefermento: 12 }))
+      .toEqual([ADVERTENCIA_AMBIENTE, expect.stringContaining('poolish')]);
+    // Con pâte fermentée y la masa en frío van las dos: la del prefermento y la de la heladera.
+    expect(advertenciasPan({ ...base, prefermento: 'pate', horasPrefermento: 14, fermentacion: 'frio-24' }))
+      .toEqual([ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE, ADVERTENCIA_FRIO, expect.stringContaining('pâte fermentée')]);
   });
 });

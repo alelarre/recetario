@@ -129,7 +129,7 @@ it('pan: un prefermento que no es de la tabla falta con sus opciones, y la masa 
     .toEqual({ faltan: [{ dato: 'levadura', opciones: ['Fresca', 'Seca'] }] });
 });
 
-it('pan: la temperatura del ambiente se pide a temperatura ambiente, por su nombre; en frío y con poolish o biga, no', () => {
+it('pan: la temperatura del ambiente se pide si algo fermenta a temperatura ambiente, por su nombre; en frío sin prefermento y con biga, no', () => {
   const { temperatura: _t, ...sinTemperatura } = completo;
   expect(leerPedidoPan(sinTemperatura)).toEqual({ faltan: [{ dato: 'temperatura',
     opciones: ['Menos de 13 °C', '13 a 18 °C', '18 a 24 °C', 'Más de 24 °C'] }] });
@@ -137,4 +137,9 @@ it('pan: la temperatura del ambiente se pide a temperatura ambiente, por su nomb
   expect(leerPedidoPan({ ...sinTemperatura, fermentacion: 'frío', horas: 24 })).toHaveProperty('datos');
   const { fermentacion: _f, horas: _h, ...sinFermentacion } = sinTemperatura;
   expect(leerPedidoPan({ ...sinFermentacion, prefermento: 'biga' })).toHaveProperty('datos');
+  // El poolish y la pâte fermentée fermentan a temperatura ambiente, aunque la masa vaya a la heladera.
+  const poolish = leerPedidoPan({ ...sinFermentacion, prefermento: 'poolish', horas_prefermento: 12 });
+  expect('faltan' in poolish && poolish.faltan.map(f => f.dato)).toEqual(['temperatura']);
+  const pate = leerPedidoPan({ ...sinTemperatura, prefermento: 'pâte fermentée', fermentacion: 'frío', horas: 24 });
+  expect('faltan' in pate && pate.faltan.map(f => f.dato)).toEqual(['temperatura']);
 });
