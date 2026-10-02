@@ -160,3 +160,15 @@ describe('el control de Herramientas — la mezcla de harinas', () => {
     expect(control.pan().segunda).toBe('0000');
   });
 });
+
+describe('el control de Herramientas — la temperatura del pan', () => {
+  it('se elige aparte de la de los fermentados', () => {
+    const { control, elegir } = armar();
+    elegir('temperatura-pan', 'mas-24');
+    expect(control.pan().temperatura).toBe('mas-24');
+    expect(control.sal().temperatura).toBe('18-24');
+    elegir('temperatura', 'menos-13');
+    expect(control.sal().temperatura).toBe('menos-13');
+    expect(control.pan().temperatura).toBe('mas-24');
+  });
+});

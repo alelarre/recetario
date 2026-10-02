@@ -15,7 +15,8 @@ import { calcularPanParaElAgente, calcularSalParaElAgente } from './calculadoras
 import {
   PANES, HARINAS, LEVADURAS, PORCENTAJES_SEGUNDA, FERMENTACIONES, PREFERMENTOS, PREFERMENTOS_CON_LEVADURA
 } from '../src/calculadoras/pan.js';
-import { FERMENTOS, TEMPERATURAS } from '../src/calculadoras/fermentados.js';
+import { FERMENTOS } from '../src/calculadoras/fermentados.js';
+import { TEMPERATURAS } from '../src/calculadoras/temperaturas.js';
 
 // La marca que el test de publicación busca en `dist/`: si aparece ahí, el
 // build de la PWA incluyó código del MCP, que no tiene que salir por Pages.
@@ -167,6 +168,7 @@ export function crearServidor(recetario: Recetario): McpServer {
       levadura: z.string().optional().describe(`Una de: ${opciones(LEVADURAS)}. Con masa madre no va.`),
       fermentacion: z.string().optional().describe('«ambiente» o «frío». Con poolish o biga no va.'),
       horas: z.number().optional().describe(`Ambiente: ${horas('ambiente')} (con masa madre, sin 2). Frío: ${horas('frio')}.`),
+      temperatura: z.string().optional().describe(`La del ambiente, una de: ${opciones(TEMPERATURAS)}. En frío, o con poolish o biga, no va.`),
       harina_total: z.number().optional().describe('En un pan que no es pizza: en gramos. Una sola de las dos cantidades.'),
       masa_total: z.number().optional().describe('En un pan que no es pizza: en gramos. Una sola de las dos cantidades.'),
       bollos: z.number().optional().describe(`En una pizza (${pizzas()}): cuántos bollos.`),

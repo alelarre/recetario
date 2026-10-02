@@ -5,8 +5,8 @@ import { completarSal, SAL_POR_DEFECTO } from '../src/calculadoras/fermentados.j
 it('el defecto del pan: campo, 000, sin segunda, fresca, 8 h, 1 kg de harina', () => {
   expect(PAN_POR_DEFECTO).toEqual({
     pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 30,
-    prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8', cantidad: { de: 'harina', gramos: 1000 },
-    horasPrefermento: 0
+    prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8', temperatura: '18-24',
+    cantidad: { de: 'harina', gramos: 1000 }, horasPrefermento: 0
   });
 });
 
@@ -61,4 +61,9 @@ it('pan: la levadura es fresca o seca; el prefermento, uno de la tabla; y unas h
   expect(completarPan({ prefermento: 'poolish', horasPrefermento: 12 })).toMatchObject({ prefermento: 'poolish', horasPrefermento: 12 });
   expect(completarPan({ prefermento: 'poolish', horasPrefermento: 5 })).toMatchObject({ prefermento: 'poolish', horasPrefermento: 8 });
   expect(completarPan({ prefermento: 'sourdough' })).toMatchObject({ prefermento: null, horasPrefermento: 0 });
+});
+
+it('pan: la temperatura es una de las franjas, o la de por defecto', () => {
+  expect(completarPan({ temperatura: 'mas-24' }).temperatura).toBe('mas-24');
+  expect(completarPan({ temperatura: 'tibio' }).temperatura).toBe('18-24');
 });

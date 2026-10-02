@@ -425,7 +425,7 @@ se reconoce abre el Recetario.
 | **Plan de la semana** | `#/plan` | Siete días desde hoy, dos comidas cada uno, y cada comida una lista de recetas. Al pie, la lista de compras y reiniciar. | Planificar | J9 |
 | **Agregar al plan** | `#/plan/agregar?dia=&momento=` | La búsqueda del Recetario, el bloque *Menú diario* y la grilla de las categorías: tocar una receta la suma a esa comida y vuelve. | Planificar | J9 |
 | **Lista de compras** | `#/plan/compras` | Los ingredientes de todo lo cargado, en dos bloques, y compartir como texto. | Planificar | J9 |
-| **Herramientas** | `#/herramientas` | La lista de las calculadoras: *Pan* y *Sal para fermentados*. Es destino del menú: hamburguesa en vez de volver. Una ruta `#/herramientas/…` que no es una calculadora abre esta lista. | Cocinar | J6 |
+| **Herramientas** | `#/herramientas` | La lista de las calculadoras: *Pan* y *Fermentados*. Es destino del menú: hamburguesa en vez de volver. Una ruta `#/herramientas/…` que no es una calculadora abre esta lista. | Cocinar | J6 |
 | **Calculadora de pan** | `#/herramientas/pan` | Pan, harinas, levadura, fermentación y cantidad —harina total o masa total—, y al pie el resultado con sus advertencias. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
 | **Calculadora de sal** | `#/herramientas/fermentados` | Fermento y peso total del frasco, y al pie los gramos de sal. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
 

@@ -2,14 +2,16 @@ import { describe, it, expect } from 'vitest';
 import {
   calcularPan, fermentacionesPara, cantidadAlCambiar, bolloDe, conFermentacion, conLevadura, segundaAlMezclar,
   cifrasPan, lineasPan, lineasPrefermento, advertenciasPan,
-  PANES, PREFERMENTOS, PREFERMENTOS_CON_LEVADURA, BOLLOS_POR_DEFECTO, HIDRATACION_MAXIMA, ADVERTENCIAS_PAN, type DatosPan
+  conTemperatura, PANES, PREFERMENTOS, PREFERMENTOS_CON_LEVADURA, LEVADURA_POR_TEMPERATURA, BOLLOS_POR_DEFECTO, HIDRATACION_MAXIMA,
+  ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE, ADVERTENCIA_MUY_FRIO, ADVERTENCIA_FRIO, type DatosPan
 } from '../src/calculadoras/pan.js';
+import { TEMPERATURAS } from '../src/calculadoras/temperaturas.js';
 import { gramos } from '../src/calculadoras/gramos.js';
 
 const base: DatosPan = {
   pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 30,
-  prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8', cantidad: { de: 'harina', gramos: 1000 },
-  horasPrefermento: 0
+  prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8', temperatura: '18-24',
+  cantidad: { de: 'harina', gramos: 1000 }, horasPrefermento: 0
 };
 
 describe('calcularPan', () => {
@@ -210,6 +212,53 @@ describe('los prefermentos', () => {
     const biga = advertenciasPan({ ...base, prefermento: 'biga', horasPrefermento: 18 });
     expect(biga).toEqual([expect.stringContaining('biga')]);
     const pate = advertenciasPan({ ...base, prefermento: 'pate', horasPrefermento: 14 });
-    expect(pate).toEqual([...ADVERTENCIAS_PAN, expect.stringContaining('pâte fermentée')]);
+    expect(pate).toEqual([ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE, expect.stringContaining('pâte fermentée')]);
+  });
+});
+
+describe('la temperatura del ambiente', () => {
+  it('un factor por franja, las mismas de los fermentados; entre 18 y 24 °C, la tabla tal cual', () => {
+    expect(TEMPERATURAS.map(t => LEVADURA_POR_TEMPERATURA[t.clave])).toEqual([2, 1.5, 1, 0.65]);
+  });
+
+  it('con más frío va más levadura, y con más calor, menos; el resto del pan no cambia', () => {
+    const templado = calcularPan(base)!;
+    const frio = calcularPan({ ...base, temperatura: 'menos-13' })!;
+    const calor = calcularPan({ ...base, temperatura: 'mas-24' })!;
+    expect(frio.levadura).toBeCloseTo(templado.levadura * 2);
+    expect(calor.levadura).toBeCloseTo(templado.levadura * 0.65);
+    expect([frio.agua, frio.sal, frio.harinaTotal]).toEqual([templado.agua, templado.sal, templado.harinaTotal]);
+    expect(frio.masaTotal).toBeCloseTo(templado.masaTotal + templado.levadura);
+  });
+
+  it('la masa madre se ajusta igual, y trae más harina y más agua', () => {
+    const d: DatosPan = { ...base, prefermento: 'masa-madre', fermentacion: 'ambiente-4' };
+    const frio = calcularPan({ ...d, temperatura: '13-18' })!;
+    expect(frio.levadura).toBeCloseTo(300);
+    expect(frio.harinas[0]!.gramos).toBeCloseTo(850);
+    expect(frio.masaTotal).toBeCloseTo(calcularPan(d)!.masaTotal);
+  });
+
+  it('en frío no cuenta: manda la heladera', () => {
+    const d: DatosPan = { ...base, fermentacion: 'frio-24' };
+    expect(conTemperatura(d)).toBe(false);
+    expect(conTemperatura(base)).toBe(true);
+    expect(calcularPan({ ...d, temperatura: 'menos-13' })).toEqual(calcularPan(d));
+  });
+
+  it('con poolish o biga no cuenta; con pâte fermentée, sólo en la levadura de la masa final', () => {
+    const biga: DatosPan = { ...base, prefermento: 'biga', horasPrefermento: 18 };
+    expect(conTemperatura(biga)).toBe(false);
+    expect(calcularPan({ ...biga, temperatura: 'menos-13' })).toEqual(calcularPan(biga));
+    const pate: DatosPan = { ...base, prefermento: 'pate', horasPrefermento: 14 };
+    const frio = calcularPan({ ...pate, temperatura: 'menos-13' })!;
+    expect(frio.levadura).toBeCloseTo(calcularPan(pate)!.levadura * 2);
+    expect(frio.prefermento!.levadura).toBeCloseTo(calcularPan(pate)!.prefermento!.levadura);
+  });
+
+  it('las advertencias: a temperatura ambiente, la de la temperatura; en frío, la de la heladera', () => {
+    expect(advertenciasPan(base)).toEqual([ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE]);
+    expect(advertenciasPan({ ...base, temperatura: 'menos-13' })).toEqual([ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE, ADVERTENCIA_MUY_FRIO]);
+    expect(advertenciasPan({ ...base, fermentacion: 'frio-24' })).toEqual([ADVERTENCIA_TIEMPOS, ADVERTENCIA_FRIO]);
   });
 });

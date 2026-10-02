@@ -4,12 +4,12 @@
  * nada más: la pantalla, el MCP y los tests usan lo que exporta.
  *
  * Los porcentajes son de panadero: sobre la harina total. Los valores son
- * puntos de partida para una cocina a unos 24 °C, no medidas exactas: la
- * absorción cambia entre marcas de harina y la fermentación, con la
- * temperatura.
+ * puntos de partida, no medidas exactas: la absorción cambia entre marcas de
+ * harina y la fermentación, con la temperatura.
  */
 import { porNombre, positivo, type Faltante, type Pedido } from './pedido.js';
 import { gramos, porciento } from './gramos.js';
+import { TEMPERATURAS, type ClaveTemperatura } from './temperaturas.js';
 
 export type ClavePan =
   | 'frances' | 'molde' | 'miga' | 'pizza-molde' | 'pizza-piedra' | 'napolitana' | 'new-york'
@@ -65,8 +65,9 @@ export const LEVADURAS: readonly { clave: Levadura; nombre: string }[] = [
 
 /**
  * El tiempo total de fermentación —primera fermentación y apresto— y cuánta
- * levadura fresca o masa madre (al 100 % de hidratación) pide. Con masa madre
- * no hay 2 h: no le alcanza el tiempo para levar.
+ * levadura fresca o masa madre (al 100 % de hidratación) pide, con el
+ * ambiente entre 18 y 24 °C. Con masa madre no hay 2 h: no le alcanza el
+ * tiempo para levar.
  */
 export const FERMENTACIONES: readonly {
   clave: ClaveFermentacion; modo: 'ambiente' | 'frio'; horas: number; fresca: number; masaMadre: number | null;
@@ -79,6 +80,20 @@ export const FERMENTACIONES: readonly {
   { clave: 'frio-48', modo: 'frio', horas: 48, fresca: 0.2, masaMadre: 8 },
   { clave: 'frio-72', modo: 'frio', horas: 72, fresca: 0.1, masaMadre: 5 }
 ];
+
+/**
+ * Por cuánto se multiplica la levadura —o la masa madre— de la tabla según la
+ * temperatura del ambiente, para que las horas se cumplan: cada 10 °C menos,
+ * el doble (doughrise). Cada franja se toma por su medio —10, 15, 21 y
+ * 27 °C— contra el de la tabla. Vale sólo para la fermentación a temperatura
+ * ambiente: en frío manda la heladera.
+ */
+export const LEVADURA_POR_TEMPERATURA: Readonly<Record<ClaveTemperatura, number>> = {
+  'menos-13': 2,
+  '13-18': 1.5,
+  '18-24': 1,
+  'mas-24': 0.65
+};
 
 export const PORCENTAJES_SEGUNDA: readonly PorcentajeSegunda[] = [10, 20, 30, 50];
 /** La harina con que arranca la mezcla al encenderla. */
@@ -132,10 +147,11 @@ export const DIVISOR_SECA = 3;
 /** Más agua que esto no se maneja con estas harinas: la cuenta se topea acá. */
 export const HIDRATACION_MAXIMA = 85;
 
-export const ADVERTENCIAS_PAN: readonly string[] = [
-  'Los tiempos son totales (primera fermentación y apresto), a unos 24 °C. Con frío ambiente hay que estirarlos; con calor, acortarlos.',
-  'En frío, se cuentan 1 o 2 horas a temperatura ambiente antes y después de la heladera.'
-];
+export const ADVERTENCIA_TIEMPOS = 'Los tiempos son totales: primera fermentación y apresto.';
+export const ADVERTENCIA_AMBIENTE = 'La levadura o la masa madre va según la temperatura del ambiente: con más frío, más; con más calor, menos.';
+/** La cuenta de la temperatura es de doughrise, que avisa dónde deja de valer. */
+export const ADVERTENCIA_MUY_FRIO = 'Por debajo de 10 °C esta cuenta deja de valer: la masa casi no fermenta.';
+export const ADVERTENCIA_FRIO = 'En frío, se cuentan 1 o 2 horas a temperatura ambiente antes y después de la heladera.';
 export const AVISO_TOPE = 'La hidratación se limitó a 85 %.';
 
 export interface DatosPan {
@@ -149,6 +165,8 @@ export interface DatosPan {
   /** Fresca o seca. Con masa madre no se usa. */
   levadura: Levadura;
   fermentacion: ClaveFermentacion;
+  /** La del ambiente. Cuenta sólo con la fermentación a temperatura ambiente. */
+  temperatura: ClaveTemperatura;
   cantidad: CantidadPan;
   /** Las horas de un prefermento con levadura, una de las de su tabla. */
   horasPrefermento: number;
@@ -211,6 +229,13 @@ const horasDe = (pref: ConLevadura, horas: number) =>
  */
 export const conFermentacion = (d: DatosPan): boolean => prefermentoDe(d)?.levaduraFinal ?? true;
 
+/**
+ * Si cuenta la temperatura del ambiente: cuando la masa fermenta afuera de la
+ * heladera con la levadura o la masa madre de la tabla.
+ */
+export const conTemperatura = (d: DatosPan): boolean =>
+  conFermentacion(d) && buscar(FERMENTACIONES, d.fermentacion).modo === 'ambiente';
+
 /** Si hay que elegir levadura: siempre, salvo con masa madre. */
 export const conLevadura = (d: DatosPan): boolean => d.prefermento !== 'masa-madre';
 
@@ -254,7 +279,8 @@ export function calcularPan(d: DatosPan): ResultadoPan | null {
   // La levadura de cada parte, en % de la harina total: la del prefermento
   // va sobre su harina; la de la masa final, sobre la total.
   const pctPrefermento = pref ? seca(horasDe(pref, d.horasPrefermento).fresca) * pref.harina / 100 : 0;
-  const pctFinal = conMasaMadre || (pref && !pref.levaduraFinal) ? 0 : seca(fermentacion.fresca);
+  const porTemperatura = conTemperatura(d) ? LEVADURA_POR_TEMPERATURA[d.temperatura] : 1;
+  const pctFinal = conMasaMadre || (pref && !pref.levaduraFinal) ? 0 : seca(fermentacion.fresca) * porTemperatura;
   // Con masa madre la levadura no suma a la masa: su harina y su agua ya
   // están contadas en la harina total y en el agua.
   const pctLevadura = pctPrefermento + pctFinal;
@@ -264,7 +290,7 @@ export function calcularPan(d: DatosPan): ResultadoPan | null {
   const agua = H * hidratacion / 100;
   const sal = H * SAL / 100;
   // Si llegara 2 h con masa madre, se toma la de 4 h: es lo mínimo que se ofrece.
-  const pctMasaMadre = fermentacion.masaMadre ?? buscar(FERMENTACIONES, 'ambiente-4').masaMadre ?? 0;
+  const pctMasaMadre = (fermentacion.masaMadre ?? buscar(FERMENTACIONES, 'ambiente-4').masaMadre ?? 0) * porTemperatura;
   const masaMadre = conMasaMadre ? H * pctMasaMadre / 100 : 0;
   const harinaAAgregar = H - masaMadre / 2;
   // El prefermento sale de la harina principal: la segunda va entera a la masa final.
@@ -304,6 +330,8 @@ export interface PedidoPan {
   /** `ambiente` o `frío`. */
   fermentacion?: string | undefined;
   horas?: number | undefined;
+  /** La del ambiente, una de las franjas. En frío no va. */
+  temperatura?: string | undefined;
   harina_total?: number | undefined;
   masa_total?: number | undefined;
   /** En una pizza, la cantidad es bollos y gramos por bollo. */
@@ -325,9 +353,10 @@ const MODOS = [{ clave: 'ambiente', nombre: 'Ambiente' }, { clave: 'frio', nombr
  * y la cantidad al pan, porque una pizza se pide en bollos. Se pide en la
  * vuelta siguiente, con opciones que van seguro.
  *
- * La levadura y la fermentación se piden junto con el prefermento, y dejan de
- * pedirse cuando el elegido no las usa: la masa madre no lleva levadura, y
- * con poolish o biga la masa final no tiene fermentación que elegir.
+ * La levadura, la fermentación y la temperatura se piden junto con el
+ * prefermento, y dejan de pedirse cuando lo elegido no las usa: la masa madre
+ * no lleva levadura, con poolish o biga la masa final no tiene fermentación
+ * que elegir, y en frío no cuenta la temperatura del ambiente.
  */
 export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   const faltan: Faltante[] = [];
@@ -362,6 +391,8 @@ export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
   const conTabla = !pref || pref.levaduraFinal;
   const modo = conTabla ? porNombre(MODOS, p.fermentacion) : null;
   if (conTabla && !modo) falta('fermentacion', MODOS.map(x => x.nombre));
+  const temperatura = porNombre(TEMPERATURAS, p.temperatura);
+  if (conTabla && modo?.clave !== 'frio' && !temperatura) falta('temperatura', TEMPERATURAS.map(x => x.nombre));
   // Las horas esperan al prefermento: con masa madre no van las 2 h.
   const posibles = modo && sabePrefermento ? fermentacionesPara(elegido?.clave ?? null).filter(f => f.modo === modo.clave) : [];
   const fermentacion = conTabla ? posibles.find(f => f.horas === p.horas) : buscar(FERMENTACIONES, PAN_POR_DEFECTO.fermentacion);
@@ -391,6 +422,7 @@ export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
       prefermento: elegido?.clave ?? null,
       levadura: levadura?.clave ?? PAN_POR_DEFECTO.levadura,
       fermentacion: fermentacion.clave,
+      temperatura: temperatura?.clave ?? PAN_POR_DEFECTO.temperatura,
       cantidad,
       horasPrefermento: horasPrefermento?.horas ?? 0
     }
@@ -400,8 +432,8 @@ export function leerPedidoPan(p: PedidoPan): Pedido<DatosPan> {
 /** Lo que muestra la calculadora la primera vez. */
 export const PAN_POR_DEFECTO: DatosPan = {
   pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 30,
-  prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8', cantidad: { de: 'harina', gramos: 1000 },
-  horasPrefermento: 0
+  prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8', temperatura: '18-24',
+  cantidad: { de: 'harina', gramos: 1000 }, horasPrefermento: 0
 };
 
 const deLaTabla = <T extends { clave: string }>(tabla: readonly T[], valor: unknown): T['clave'] | undefined =>
@@ -449,6 +481,7 @@ export function completarPan(guardado: unknown): DatosPan {
     prefermento,
     levadura,
     fermentacion,
+    temperatura: deLaTabla(TEMPERATURAS, g['temperatura']) ?? d.temperatura,
     cantidad,
     horasPrefermento: pref ? horasDe(pref, typeof g['horasPrefermento'] === 'number' ? g['horasPrefermento'] : 0).horas : 0
   };
@@ -507,12 +540,16 @@ export function lineasPrefermento(d: DatosPan): Linea[] {
 
 /**
  * Las advertencias que acompañan al resultado. Las de los tiempos de la tabla
- * no van si la masa final no lleva levadura: manda el prefermento.
+ * no van si la masa final no lleva levadura: manda el prefermento. A
+ * temperatura ambiente, la de la temperatura; en frío, la de la heladera.
  */
 export const advertenciasPan = (d: DatosPan): string[] => {
   const pref = prefermentoDe(d);
   return [
-    ...(conFermentacion(d) ? ADVERTENCIAS_PAN : []),
+    ...(conFermentacion(d) ? [ADVERTENCIA_TIEMPOS] : []),
+    ...(conTemperatura(d)
+      ? [ADVERTENCIA_AMBIENTE, ...(d.temperatura === 'menos-13' ? [ADVERTENCIA_MUY_FRIO] : [])]
+      : conFermentacion(d) ? [ADVERTENCIA_FRIO] : []),
     ...(pref ? [pref.advertencia] : []),
     ...(calcularPan(d)?.topeada ? [AVISO_TOPE] : [])
   ];

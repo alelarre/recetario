@@ -41,8 +41,8 @@ aparece.
 - [ ] `#/herramientas` es destino del menú (`MENU` en `src/ui/router.ts`):
   lleva la hamburguesa en vez del volver, y su entrada queda marcada.
 - [ ] La pantalla es una lista con dos entradas, cada una con una línea que
-  dice qué calcula: **Pan** —*Harinas, agua, sal y levadura*— y **Sal para
-  fermentados** —*La sal de un frasco*—.
+  dice qué calcula: **Pan** —*Harinas, agua, sal y levadura*— y
+  **Fermentados** —*La sal de un frasco y cuándo probarlo*—.
 
 #### C07.1.2 — Las rutas *(J6)*
 
@@ -78,7 +78,9 @@ ficha del resultado— están en `design-system.md` §6.28.
   6. **Fermentación:** *Ambiente* o *En frío*; con poolish o biga no está,
      y con pâte fermentée es la de la masa final.
   7. **Horas:** las del modo elegido.
-  8. **Cantidad:** dos campos en gramos en una misma fila, *Harina total* y
+  8. **Temperatura del ambiente:** las cuatro franjas de los fermentados
+     (C07.3.1). Sólo con la fermentación a temperatura ambiente (C07.2.3).
+  9. **Cantidad:** dos campos en gramos en una misma fila, *Harina total* y
      *Masa total*; en una pizza, *Bollos* y *Gramos por bollo* (C07.2.4).
 - [ ] Tocar una opción la aprieta y redibuja la pantalla.
 - [ ] Cambiar de modo elige las primeras horas de ese modo.
@@ -105,6 +107,14 @@ ficha del resultado— están en `design-system.md` §6.28.
   harina y la mitad en agua, que se descuentan de lo que hay que agregar.
 - [ ] **Con masa madre no hay 2 h:** esa opción no se ofrece, y si estaba
   elegida pasa a 4 h.
+- [ ] **La temperatura del ambiente cambia cuánta levadura —o masa madre—
+  va, no las horas:** la tabla vale entre 18 y 24 °C, y cada franja la
+  multiplica por un factor —menos de 13 °C, × 2; de 13 a 18, × 1,5; de 18 a
+  24, × 1; más de 24, × 0,65—, que sale de duplicar la levadura cada 10 °C
+  menos.
+- [ ] **En frío no cuenta:** manda la heladera, y la fila no está. Tampoco
+  con poolish o biga, que no usan la tabla; con pâte fermentée ajusta sólo
+  la levadura de la masa final.
 - [ ] La sal es un porcentaje fijo de la harina total.
 - [ ] Todos los porcentajes son de panadero: sobre la harina total, con la de
   la masa madre incluida.
@@ -167,11 +177,16 @@ queda vacío.
 
 #### C07.2.7 — Las advertencias *(J6)*
 
-- [ ] Debajo del resultado, siempre, como una lista:
-  - *«Los tiempos son totales (primera fermentación y apresto), a unos 24 °C.
-    Con frío ambiente hay que estirarlos; con calor, acortarlos.»*
-  - *«En frío, se cuentan 1 o 2 horas a temperatura ambiente antes y después
-    de la heladera.»*
+- [ ] Debajo del resultado, como una lista. Con la levadura o la masa madre
+  de la tabla:
+  - *«Los tiempos son totales: primera fermentación y apresto.»*
+  - A temperatura ambiente: *«La levadura o la masa madre va según la
+    temperatura del ambiente: con más frío, más; con más calor, menos.»* Con
+    menos de 13 °C, además: *«Por debajo de 10 °C esta cuenta deja de valer:
+    la masa casi no fermenta.»*
+  - En frío: *«En frío, se cuentan 1 o 2 horas a temperatura ambiente antes
+    y después de la heladera.»*
+- [ ] La del prefermento, si hay uno con levadura (C07.2.8).
 - [ ] Y la del tope, sólo si se aplicó (C07.2.6).
 
 #### C07.2.8 — El prefermento *(J6)*
@@ -204,7 +219,9 @@ queda vacío.
 
 ### F07.3 — La calculadora de sal
 
-#### C07.3.1 — Sal para fermentados *(J6)*
+#### C07.3.1 — Fermentados *(J6)*
+
+- [ ] La pantalla se titula **Fermentados**, como su entrada en la lista.
 
 - [ ] Tres datos, en este orden: el **fermento**, una fila de botones con los
   de la tabla de fermentos; la **temperatura del ambiente**, una fila con
@@ -311,8 +328,10 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   porque una pizza va en bollos. Se piden en la vuelta siguiente, así
   ninguna opción ofrecida queda inválida después. Completar un pan puede
   llevar más de una vuelta de preguntas.
-- [ ] La levadura y la fermentación se piden junto con el prefermento, y
-  dejan de pedirse cuando el elegido no las usa.
+- [ ] La levadura, la fermentación y la `temperatura` del ambiente se piden
+  junto con el prefermento, y dejan de pedirse cuando lo elegido no las usa:
+  la levadura con masa madre, la fermentación con poolish o biga, y la
+  temperatura en frío.
 - [ ] Con todo, devuelven las mismas líneas que la pantalla, las advertencias
   y, en el pan, la harina total, la masa total y la hidratación.
 - [ ] La descripción de cada herramienta lista las opciones tomadas de las
@@ -325,7 +344,8 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 - [ ] Los datos que ya vienen en el pedido **no se repreguntan**.
 - [ ] **No asume ningún otro dato:** pregunta los que faltan en un solo
   mensaje, en el orden de la pantalla —pan, harinas, prefermento, levadura,
-  fermentación, cantidad—, con las opciones que devolvió la herramienta.
+  fermentación, temperatura, cantidad—, con las opciones que devolvió la
+  herramienta.
 - [ ] **Los números salen siempre de `calcular_pan` o `calcular_sal`**: no
   inventa porcentajes ni hace la cuenta a mano.
 - [ ] Muestra el resultado con las advertencias.

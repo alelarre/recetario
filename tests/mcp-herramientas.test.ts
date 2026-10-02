@@ -5,7 +5,7 @@ import { cifrasSal, lineasSal, type DatosSal } from '../src/calculadoras/ferment
 
 const pedido = {
   pan: 'pan de campo', harina: '000', segunda_harina: 'ninguna', prefermento: 'ninguno', levadura: 'fresca',
-  fermentacion: 'ambiente', horas: 8, harina_total: 1000
+  fermentacion: 'ambiente', horas: 8, temperatura: '18 a 24 °C', harina_total: 1000
 };
 
 it('con todos los datos, el mismo resultado que la pantalla', () => {

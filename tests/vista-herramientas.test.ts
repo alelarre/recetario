@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderHerramientas, renderPan, renderSal, resultadoPan } from '../src/ui/herramientas.js';
-import { PAN_POR_DEFECTO, ADVERTENCIAS_PAN, AVISO_TOPE, type DatosPan } from '../src/calculadoras/pan.js';
+import { PAN_POR_DEFECTO, ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE, ADVERTENCIA_FRIO, AVISO_TOPE, type DatosPan } from '../src/calculadoras/pan.js';
 import { SAL_POR_DEFECTO } from '../src/calculadoras/fermentados.js';
 import { escapar } from '../src/ui/markdown.js';
 
@@ -11,6 +11,7 @@ describe('la lista de herramientas', () => {
     const html = renderHerramientas({});
     expect(html).toContain('href="#/herramientas/pan"');
     expect(html).toContain('href="#/herramientas/fermentados"');
+    expect(html).toContain('<span class="tit">Fermentados</span>');
   });
 
   it('con el menú, la hamburguesa y el lateral', () => {
@@ -41,7 +42,8 @@ describe('la calculadora de pan', () => {
     const r = resultadoPan(PAN_POR_DEFECTO);
     expect(r).toContain('data-resultado');
     for (const valor of ['1000 g', '720 g', '20 g', '5,0 g', '72 %']) expect(r).toContain(valor);
-    for (const a of ADVERTENCIAS_PAN) expect(r).toContain(escapar(a));
+    for (const a of [ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE]) expect(r).toContain(escapar(a));
+    expect(r).not.toContain(escapar(ADVERTENCIA_FRIO));
     expect(r).not.toContain(AVISO_TOPE);
     expect(html).toContain(r);
   });
@@ -118,11 +120,27 @@ describe('la calculadora de sal', () => {
 
   it('la temperatura va entre el fermento y el peso, y el tiempo con su advertencia en el resultado', () => {
     const html = renderSal(SAL_POR_DEFECTO);
+    expect(html).toContain('<span class="tit">Fermentados</span>');
     expect(html).toContain('data-grupo="temperatura" data-valor="18-24" aria-pressed="true"');
     expect(pos(html, 'fermento')).toBeLessThan(pos(html, 'temperatura'));
     expect(pos(html, 'temperatura')).toBeLessThan(html.indexOf('data-cantidad="peso"'));
     expect(html).toContain('6 a 16 días');
     expect(html).toContain('empezar a probar');
+  });
+});
+
+describe('la calculadora de pan — la temperatura del ambiente', () => {
+  it('a temperatura ambiente, la fila va después de las horas, con las franjas de los fermentados', () => {
+    const html = renderPan(PAN_POR_DEFECTO);
+    expect(html).toContain('data-grupo="temperatura-pan" data-valor="18-24" aria-pressed="true"');
+    expect(html).toContain('>Menos de 13 °C<');
+    expect(pos(html, 'fermentacion')).toBeLessThan(pos(html, 'temperatura-pan'));
+    expect(pos(html, 'temperatura-pan')).toBeLessThan(html.indexOf('data-cantidad="harina"'));
+  });
+
+  it('en frío, o con poolish o biga, no está', () => {
+    expect(renderPan({ ...PAN_POR_DEFECTO, fermentacion: 'frio-24' })).not.toContain('data-grupo="temperatura-pan"');
+    expect(renderPan({ ...PAN_POR_DEFECTO, prefermento: 'biga', horasPrefermento: 18 })).not.toContain('data-grupo="temperatura-pan"');
   });
 });
 

@@ -1,5 +1,6 @@
 import { it, expect } from 'vitest';
-import { calcularSal, cifrasSal, lineasSal, advertenciasSal, FERMENTOS, TEMPERATURAS } from '../src/calculadoras/fermentados.js';
+import { calcularSal, cifrasSal, lineasSal, advertenciasSal, FERMENTOS } from '../src/calculadoras/fermentados.js';
+import { TEMPERATURAS } from '../src/calculadoras/temperaturas.js';
 
 it('1200 g de pepinos llevan 42 g de sal', () => {
   expect(calcularSal({ fermento: 'pepinos', pesoTotal: 1200, temperatura: null })).toEqual({ sal: 42, porcentaje: 3.5 });

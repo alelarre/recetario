@@ -4,25 +4,25 @@ import { leerPedidoSal } from '../src/calculadoras/fermentados.js';
 
 const completo = {
   pan: 'campo', harina: '000', segunda_harina: 'ninguna', prefermento: 'ninguno', levadura: 'fresca',
-  fermentacion: 'ambiente', horas: 8, harina_total: 500
+  fermentacion: 'ambiente', horas: 8, temperatura: '18 a 24 °C', harina_total: 500
 };
 
 it('con todo, sin mirar mayúsculas ni tildes', () => {
   expect(leerPedidoPan({ ...completo, pan: 'PAN DE CAMPO', fermentacion: 'frio', horas: 24 }))
     .toEqual({ datos: { pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 10, levadura: 'fresca',
-      fermentacion: 'frio-24', cantidad: { de: 'harina', gramos: 500 }, prefermento: null, horasPrefermento: 0 } });
+      fermentacion: 'frio-24', temperatura: '18-24', cantidad: { de: 'harina', gramos: 500 }, prefermento: null, horasPrefermento: 0 } });
 });
 
 it('con segunda harina y la masa total', () => {
   const { harina_total: _, ...sinHarina } = completo;
   expect(leerPedidoPan({ ...sinHarina, segunda_harina: 'Centeno', porcentaje_segunda: 30, masa_total: 900 }))
     .toEqual({ datos: { pan: 'campo', harina: '000', segunda: 'centeno', porcentajeSegunda: 30, levadura: 'fresca',
-      fermentacion: 'ambiente-8', cantidad: { de: 'masa', gramos: 900 }, prefermento: null, horasPrefermento: 0 } });
+      fermentacion: 'ambiente-8', temperatura: '18-24', cantidad: { de: 'masa', gramos: 900 }, prefermento: null, horasPrefermento: 0 } });
 });
 
 it('sólo con la harina y la cantidad: dice qué falta y las opciones; las horas, todavía no', () => {
   const r = leerPedidoPan({ harina: '000', harina_total: 500 });
-  expect('faltan' in r && r.faltan.map(f => f.dato)).toEqual(['pan', 'segunda_harina', 'prefermento', 'levadura', 'fermentacion']);
+  expect('faltan' in r && r.faltan.map(f => f.dato)).toEqual(['pan', 'segunda_harina', 'prefermento', 'levadura', 'fermentacion', 'temperatura']);
   expect('faltan' in r && r.faltan[2]!.opciones).toEqual(['Ninguno', 'Masa madre', 'Poolish', 'Biga', 'Pâte fermentée']);
   expect('faltan' in r && r.faltan[0]!.opciones).toContain('Pan de campo');
   expect('faltan' in r && r.faltan[1]!.opciones).toEqual(['Ninguna', '0000', '000 para pizza', 'Semolín', 'Integral', 'Centeno']);
@@ -127,4 +127,14 @@ it('pan: un prefermento que no es de la tabla falta con sus opciones, y la masa 
     .toEqual({ faltan: [{ dato: 'prefermento', opciones: ['Ninguno', 'Masa madre', 'Poolish', 'Biga', 'Pâte fermentée'] }] });
   expect(leerPedidoPan({ ...completo, prefermento: 'biga', levadura: 'masa madre' }))
     .toEqual({ faltan: [{ dato: 'levadura', opciones: ['Fresca', 'Seca'] }] });
+});
+
+it('pan: la temperatura del ambiente se pide a temperatura ambiente, por su nombre; en frío y con poolish o biga, no', () => {
+  const { temperatura: _t, ...sinTemperatura } = completo;
+  expect(leerPedidoPan(sinTemperatura)).toEqual({ faltan: [{ dato: 'temperatura',
+    opciones: ['Menos de 13 °C', '13 a 18 °C', '18 a 24 °C', 'Más de 24 °C'] }] });
+  expect(leerPedidoPan({ ...sinTemperatura, temperatura: 'más de 24 °c' })).toEqual({ datos: expect.objectContaining({ temperatura: 'mas-24' }) });
+  expect(leerPedidoPan({ ...sinTemperatura, fermentacion: 'frío', horas: 24 })).toHaveProperty('datos');
+  const { fermentacion: _f, horas: _h, ...sinFermentacion } = sinTemperatura;
+  expect(leerPedidoPan({ ...sinFermentacion, prefermento: 'biga' })).toHaveProperty('datos');
 });

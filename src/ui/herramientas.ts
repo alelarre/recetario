@@ -13,11 +13,11 @@ import type { MenuDePantalla } from './componentes.js';
 import { ICO } from './iconos.js';
 import {
   PANES, HARINAS, LEVADURAS, PORCENTAJES_SEGUNDA, PREFERMENTOS, calcularPan, fermentacionesPara, FERMENTACIONES,
-  conFermentacion, conLevadura, prefermentoConLevadura, cifrasPan, lineasPan, lineasPrefermento, advertenciasPan, type DatosPan
+  conFermentacion, conLevadura, conTemperatura, prefermentoConLevadura,
+  cifrasPan, lineasPan, lineasPrefermento, advertenciasPan, type DatosPan
 } from '../calculadoras/pan.js';
-import {
-  FERMENTOS, TEMPERATURAS, cifrasSal, lineasSal, advertenciasSal, type DatosSal
-} from '../calculadoras/fermentados.js';
+import { FERMENTOS, cifrasSal, lineasSal, advertenciasSal, type DatosSal } from '../calculadoras/fermentados.js';
+import { TEMPERATURAS } from '../calculadoras/temperaturas.js';
 
 /** Una fila de opciones: un botón por opción, uno solo apretado. */
 function fila(etiqueta: string, grupo: string, opciones: readonly { valor: string; texto: string }[], elegido: string): string {
@@ -77,7 +77,7 @@ export function renderHerramientas({ menu }: { menu?: MenuDePantalla }): string 
     encabezado({ titulo: 'Herramientas', ...izquierdaDelEncabezado(menu) }) +
     '<div class="cuerpo"><div class="ficha">' +
       entrada('#/herramientas/pan', 'Pan', 'Harinas, agua, sal y levadura') +
-      entrada('#/herramientas/fermentados', 'Sal para fermentados', 'La sal de un frasco y cuándo probarlo') +
+      entrada('#/herramientas/fermentados', 'Fermentados', 'La sal de un frasco y cuándo probarlo') +
     '</div></div>');
 }
 
@@ -132,6 +132,10 @@ export function renderPan(d: DatosPan): string {
             [{ valor: 'ambiente', texto: 'Ambiente' }, { valor: 'frio', texto: 'En frío' }], modo) +
           fila('Horas', 'fermentacion', horas.map(f => ({ valor: f.clave, texto: `${f.horas} h` })), d.fermentacion)
         : '') +
+      // En frío manda la heladera: la temperatura del ambiente no cuenta.
+      (conTemperatura(d)
+        ? fila('Temperatura del ambiente', 'temperatura-pan', TEMPERATURAS.map(t => ({ valor: t.clave, texto: t.nombre })), d.temperatura)
+        : '') +
       cantidad +
     '</div>' +
     resultadoPan(d) +
@@ -144,7 +148,7 @@ export function resultadoSal(d: DatosSal): string {
 }
 
 export function renderSal(d: DatosSal): string {
-  return encabezado({ titulo: 'Sal para fermentados', volver: true }) +
+  return encabezado({ titulo: 'Fermentados', volver: true }) +
     '<div class="cuerpo"><div class="ficha calculadora">' +
       fila('Fermento', 'fermento', FERMENTOS.map(f => ({ valor: f.clave, texto: f.nombre })), d.fermento) +
       fila('Temperatura del ambiente', 'temperatura', TEMPERATURAS.map(t => ({ valor: t.clave, texto: t.nombre })), d.temperatura ?? '') +

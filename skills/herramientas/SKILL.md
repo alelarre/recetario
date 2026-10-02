@@ -24,7 +24,8 @@ cuentas son las de la app: `calcular_pan` y `calcular_sal` del MCP
   4. levadura: fresca o seca (con masa madre no va);
   5. fermentación: ambiente o frío, y cuántas horas (con poolish o biga no
      va);
-  6. cantidad: harina total o masa total, en gramos; en una pizza, cuántos
+  6. temperatura del ambiente, en una de las cuatro franjas (en frío no va);
+  7. cantidad: harina total o masa total, en gramos; en una pizza, cuántos
      bollos y de cuántos gramos, ofreciendo el peso sugerido que devuelve.
 
   Preguntá sólo lo que devolvió, aunque sepas que falta algo más: un dato que
@@ -52,6 +53,7 @@ pregunta, en un mensaje:
 > 3. ¿Con algún prefermento? Ninguno, Masa madre, Poolish, Biga o Pâte fermentée.
 > 4. ¿Qué levadura? Fresca o Seca (con masa madre no hace falta).
 > 5. ¿Fermentación a temperatura ambiente o en frío? (Con poolish o biga no hace falta.)
+> 6. ¿Qué temperatura hay en la cocina? Menos de 13 °C, 13 a 18 °C, 18 a 24 °C o Más de 24 °C. (En frío no hace falta.)
 
 Si contesta «pan de campo, sin segunda harina, masa madre, en frío», la
 vuelta siguiente devuelve las horas que van con masa madre en frío (12, 24,

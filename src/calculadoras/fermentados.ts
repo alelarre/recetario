@@ -12,17 +12,9 @@
  */
 import { porNombre, positivo, type Faltante, type Pedido } from './pedido.js';
 import { gramos, porciento } from './gramos.js';
+import { TEMPERATURAS, type ClaveTemperatura } from './temperaturas.js';
 
 export type ClaveFermento = 'chucrut' | 'kimchi' | 'ajies' | 'salmuera' | 'pepinos';
-export type ClaveTemperatura = 'menos-13' | '13-18' | '18-24' | 'mas-24';
-
-/** Las franjas de temperatura del ambiente. */
-export const TEMPERATURAS: readonly { clave: ClaveTemperatura; nombre: string }[] = [
-  { clave: 'menos-13', nombre: 'Menos de 13 °C' },
-  { clave: '13-18', nombre: '13 a 18 °C' },
-  { clave: '18-24', nombre: '18 a 24 °C' },
-  { clave: 'mas-24', nombre: 'Más de 24 °C' }
-];
 
 /** Días hasta empezar a probar: desde y hasta. `null` es una franja sin dato. */
 type Dias = readonly [number, number] | null;
