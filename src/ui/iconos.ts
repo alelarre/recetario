@@ -46,6 +46,14 @@ export const ICO = {
   idaYVuelta: svg('<path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/>'),
   /** Herramientas, en el menú: una balanza de cocina. */
   balanza: svg('<path d="M5 20h14l-1.5-9h-11z"/><path d="M12 11V7"/><circle cx="12" cy="5" r="2"/>'),
+  /** Cuentas: el reloj de la tira. */
+  reloj: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  /** Pausar y seguir una cuenta. */
+  pausa: svg('<path d="M9 5v14M15 5v14"/>'),
+  play: svg('<path d="M8 5l11 7-11 7z"/>'),
+  /** Las ruedas de la cuenta nueva: un paso arriba, un paso abajo. */
+  arriba: svg('<path d="M6 15l6-6 6 6"/>'),
+  abajo: svg('<path d="M6 9l6 6 6-6"/>'),
   calendario: svg('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
   /** Borrador: un círculo a medio llenar, hecha a medias. Un aro vacío se
    *  leería como viñeta. Sólo en su botón del editor y en el título de Borradores. */

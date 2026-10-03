@@ -70,6 +70,11 @@ import { accionesDeLista } from './lista-control.js';
 import { accionesDelCarrusel } from './carrusel-control.js';
 import { crearControlHerramientas } from './herramientas-control.js';
 import { renderHerramientas, renderPan, renderSal, resultadoPan, resultadoSal } from './ui/herramientas.js';
+import { crearControlCuentas } from './cuentas-control.js';
+import { renderCuentas, renderTira, formaDeTira, tiempoDeTira, ALTO_TIRA } from './ui/cuentas.js';
+import { crearAvisoSonoro } from './aviso-sonoro.js';
+import { crearPantallaEncendida } from './pantalla-encendida.js';
+import { formatear, restante, avance, transcurrido, aMs } from './cuentas.js';
 import { calcularPan } from './calculadoras/pan.js';
 import type { EstadoDePantalla, PedidoAlAgente } from './estado-pantalla.js';
 import { achicar } from './fotos.js';
@@ -447,6 +452,38 @@ const herramientas = crearControlHerramientas({
   redibujar: () => { void render(); },
   pintarResultado: pintarResultadoDeHerramienta
 });
+
+/** La forma de la tira que está en el DOM (`formaDeTira`): con la misma, se escribe sólo el tiempo. */
+let formaPintada = '';
+
+/** El nombre escrito para la cuenta nueva: vive en el DOM hasta Empezar. */
+const nombreDeCuentaEscrito = (): string =>
+  document.querySelector<HTMLInputElement>('#app [name="nombre-cuenta"]')?.value ?? '';
+
+/**
+ * Las cuentas de *Herramientas*. Antes del primer dibujo: lo guardado puede
+ * venir corriendo, y la tira se pinta con cada pantalla.
+ */
+const controlCuentas = crearControlCuentas({
+  almacen: almacenLocal(),
+  reloj: {
+    ahora: () => Date.now(),
+    cadaSegundo: (fn) => { const id = setInterval(fn, 1000); return () => clearInterval(id); }
+  },
+  aviso: crearAvisoSonoro(),
+  pantalla: crearPantallaEncendida(),
+  // Fuera de Cuentas lo único que muestra las cuentas es la tira: redibujar la
+  // pantalla entera borraría lo escrito en el editor.
+  redibujar: () => { if (vistaActual?.vista === 'cuentas') void render(); else pintarCuentasVivas(); },
+  pintarVivo: pintarCuentasVivas,
+  nombreEscrito: nombreDeCuentaEscrito,
+  vaciarNombre: () => {
+    const campo = document.querySelector<HTMLInputElement>('#app [name="nombre-cuenta"]');
+    if (campo) campo.value = '';
+  }
+});
+// Cada pantalla trae o saca la tira de Cuentas según dónde se esté.
+despuesDePintar(pintarCuentasVivas);
 
 /**
  * El visor de fotos. Va aparte del estado de la pantalla porque abrirlo es una
@@ -1013,6 +1050,8 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       return pintar(renderPan(herramientas.pan()));
     case 'calculadora-sal':
       return pintar(renderSal(herramientas.sal()));
+    case 'cuentas':
+      return pintar(renderCuentas({ ...controlCuentas.estado(), nombre: nombreDeCuentaEscrito() }));
 
     case 'plan-compras':
       try {
@@ -2242,6 +2281,47 @@ function almacenLocal(): Pick<Storage, 'getItem' | 'setItem'> | null {
  * cantidad lo que resulta de lo escrito: se escribe en un campo, y redibujar
  * la pantalla le sacaría el foco.
  */
+/**
+ * Lo que cambia cada segundo, sin redibujar: la tira, y en Cuentas los
+ * tiempos, las barras y las ruedas. Redibujar perdería el nombre escrito.
+ * La tira no se dibuja en Cuentas —ya está todo a la vista— ni es parte de
+ * `#app`; se escribe directo porque no lleva fotos y `pintarParte` volvería a
+ * llamar a esto desde `despuesDePintar`.
+ */
+function pintarCuentasVivas(): void {
+  const e = controlCuentas.estado();
+  const enCuentas = vistaActual?.vista === 'cuentas';
+  const forma = enCuentas ? '' : formaDeTira(e);
+  const tira = document.querySelector<HTMLElement>('#tira');
+  if (tira) {
+    // Con la misma forma se escribe sólo el tiempo: rehacer la tira cambiaría
+    // el nodo bajo el dedo, y ese toque no llega como click.
+    const tiempo = document.querySelector<HTMLElement>('#tira [data-tiempo-tira]');
+    if (forma && forma === formaPintada && tiempo) tiempo.textContent = tiempoDeTira(e) ?? '';
+    else if (forma !== formaPintada) {
+      tira.hidden = !forma;
+      tira.innerHTML = forma ? renderTira(e) : '';
+    }
+    formaPintada = forma;
+  }
+  (document.documentElement as HTMLElement | undefined)?.style.setProperty('--tira', forma ? `${ALTO_TIRA}px` : '0px');
+  if (!enCuentas) return;
+  for (const c of e.cuentas) {
+    const t = document.querySelector<HTMLElement>(`#app [data-tiempo="${c.id}"]`);
+    if (t) t.textContent = formatear(restante(c, e.ahora));
+    const b = document.querySelector<HTMLElement>(`#app [data-avance="${c.id}"]`);
+    if (b) b.style.width = `${Math.round(avance(c, e.ahora) * 100)}%`;
+  }
+  const crono = document.querySelector<HTMLElement>('#app [data-tiempo="crono"]');
+  if (crono) crono.textContent = formatear(transcurrido(e.crono, e.ahora));
+  for (const r of ['h', 'm', 's'] as const) {
+    const v = document.querySelector<HTMLElement>(`#app [data-rueda-valor="${r}"]`);
+    if (v) v.textContent = r === 'h' ? String(e.ruedas.h) : String(e.ruedas[r]).padStart(2, '0');
+  }
+  const empezar = document.querySelector<HTMLButtonElement>('#app [data-accion="cuenta-empezar"]');
+  if (empezar) empezar.disabled = aMs(e.ruedas) <= 0;
+}
+
 function pintarResultadoDeHerramienta(): void {
   const bloque = document.querySelector('#app [data-resultado]');
   if (!bloque) return;
@@ -2283,10 +2363,15 @@ const acciones = registrarAcciones({
   editor: accionesDelEditor,
   compartir: accionesDeCompartir,
   ajustes: accionesDeAjustes,
-  herramientas: herramientas.acciones
+  herramientas: herramientas.acciones,
+  cuentas: { ...controlCuentas.acciones, 'ir-cuentas': () => { nav.ir('#/herramientas/cuentas'); } }
 });
 
-app.addEventListener('click', async (e) => {
+/**
+ * Un toque en la app o en la tira de Cuentas, que vive fuera de `#app`: los
+ * dos van al mismo mapa de acciones. Devuelve la promesa de la acción.
+ */
+async function alTocar(e: Event): Promise<unknown> {
   // Con la pantalla tapada no responde nada: el velo ya tapa los controles, y
   // esto cubre lo que llegue igual.
   if (velo.ocupado()) return;
@@ -2307,7 +2392,10 @@ app.addEventListener('click', async (e) => {
   if (estadoDePantalla.compartiendo?.paso === 'generando' && ACCIONES_DE_LA_FICHA.includes(accion ?? '')) return;
   // Una acción que no está registrada no hace nada.
   return accionDe(acciones, accion)?.(boton, e);
-});
+}
+
+app.addEventListener('click', alTocar);
+document.querySelector('#tira')?.addEventListener('click', alTocar);
 
 /**
  * Lo que se escribe vive en el DOM y no en el estado: redibujar en cada tecla

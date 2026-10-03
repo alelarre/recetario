@@ -21,8 +21,8 @@ describe('el CSS del plan de la semana', () => {
     expect(BASE).toContain('.celda .it.ida { color: var(--fg-3); border-left-color: var(--fg-3); }');
   });
 
-  it('el pie queda pegado abajo y sus botones ocupan el ancho', () => {
-    expect(BASE).toContain('.pie-plan { position: sticky; bottom: 0;');
+  it('el pie queda pegado abajo, encima de la tira de Cuentas, y sus botones ocupan el ancho', () => {
+    expect(BASE).toContain('.pie-plan { position: sticky; bottom: var(--tira);');
     expect(BASE).toContain('.pie-plan .btn { width: 100%; }');
   });
 

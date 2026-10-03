@@ -47,6 +47,8 @@
   --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px;
   --e-5: 24px; --e-6: 32px; --e-7: 48px;
   --e-cocina: 20px;          /* §4.1 — solo en modo cocina */
+  /* Lo que la tira de Cuentas ocupa al pie: main lo pone en 56px mientras existe. */
+  --tira: 0px;
 
   /* §3.4 Iconografía */
   --ico: 20px; --ico-cocina: 24px;
@@ -112,6 +114,8 @@ body {
 
 /* ---- El cuerpo de una pantalla ---- */
 .cuerpo { padding: var(--e-4); display: flex; flex-direction: column; gap: var(--e-5);
+          /* Lo último de la pantalla no queda debajo de la tira de Cuentas. */
+          padding-bottom: calc(var(--e-4) + var(--tira));
           /* C05.10.1 — una columna con máximo. */
           max-width: var(--columna); margin: 0 auto; }
 .cuerpo.denso { gap: var(--e-3); }

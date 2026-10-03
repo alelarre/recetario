@@ -63,7 +63,7 @@
 .tramo { font-size: var(--txt-chico); color: var(--fg-2); text-transform: uppercase;
          letter-spacing: .06em; margin: var(--e-4) 0 var(--e-1); }
 .tramo:first-child { margin-top: 0; }
-.pie { position: sticky; bottom: 0; background: var(--bg);
+.pie { position: sticky; bottom: var(--tira); background: var(--bg);
        border-top: 1px solid var(--borde); padding: var(--e-4); }
 /* El pie sigue el ancho del cuerpo: en pantalla ancha no se va a los bordes. */
 .pie .acciones { max-width: var(--columna); margin: 0 auto; }
@@ -159,7 +159,7 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
 .conm button.on { background: var(--surface-alta); color: var(--fg); border-bottom-color: var(--acento); }
 .conm svg { width: var(--ico-cocina); height: var(--ico-cocina); stroke: currentColor; fill: none;
             stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
-.coc { padding: var(--e-4); max-width: var(--columna); margin: 0 auto; }
+.coc { padding: var(--e-4); padding-bottom: calc(var(--e-4) + var(--tira)); max-width: var(--columna); margin: 0 auto; }
 .coc .grupo { font-size: var(--txt-base); margin-top: var(--e-6); margin-bottom: var(--e-2); }
 .coc .grupo:first-child { margin-top: 0; }
 .coc .ing { font-size: var(--txt-cocina); line-height: 1.65; padding: var(--e-cocina) 0; }
@@ -331,7 +331,7 @@ html:has(:where(.hoja-compartir, .hoja-foto)) { overflow: hidden; }
 
 /* Los dos botones del pie quedan a la vista con la grilla scrolleada: el
    degradé los despega de las celdas sin dibujar una barra. */
-.pie-plan { position: sticky; bottom: 0; margin-top: var(--e-4); padding: var(--e-3) 0 var(--e-2);
+.pie-plan { position: sticky; bottom: var(--tira); margin-top: var(--e-4); padding: var(--e-3) 0 var(--e-2);
             background: linear-gradient(to top, var(--bg) 70%, transparent);
             display: flex; flex-direction: column; gap: var(--e-2); }
 .pie-plan .btn { width: 100%; }
@@ -576,6 +576,57 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
    altura de los campos: las flechas si una sale de la otra, × si se multiplican. */
 .par-cantidades { display: flex; align-items: flex-end; gap: var(--e-2); }
 .par-cantidades .campo { flex: 1; min-width: 0; margin-bottom: 0; }
+
+/* ---- Cuentas ---- */
+/* Las fichas van en un contenedor propio: el aire del cuerpo no les llega. */
+.cuentas { display: flex; flex-direction: column; gap: var(--e-5); }
+/* El cronómetro: el tiempo grande, centrado, y dos botones a lo ancho. */
+.crono { text-align: center; }
+.tiempo-grande { font-size: 44px; font-weight: 600; font-variant-numeric: tabular-nums;
+                 margin: var(--e-2) 0 var(--e-4); }
+.acciones-cuenta { display: flex; gap: var(--e-2); }
+.crono .acciones-cuenta .btn { flex: 1; }
+/* Una cuenta: nombre, tiempo y tres botones cuadrados en una fila; la barra debajo. */
+.cuenta-fila { display: flex; align-items: center; gap: var(--e-3); }
+.cuenta-fila .nom { flex: 1; min-width: 0; font-weight: 600;
+                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cuenta-fila .tiempo { font-size: 28px; font-weight: 600; color: var(--acento); font-variant-numeric: tabular-nums; }
+.cuenta-fila .tiempo.pausada { color: var(--fg-2); }
+.cuenta-fila .tiempo.listo { color: var(--fg); }
+.btn.cuadrado { width: 40px; min-height: 40px; padding: 0; }
+.barra { height: 3px; margin-top: var(--e-3); background: var(--surface-alta); border-radius: 2px; overflow: hidden; }
+.barra i { display: block; height: 100%; background: var(--acento); border-radius: 2px; }
+/* Las ruedas: tres columnas, cada una con su flecha arriba, el valor y su flecha abajo. */
+.ruedas { display: flex; gap: var(--e-2); margin-bottom: var(--e-4); }
+.rueda { flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--e-1); }
+.rueda .lbl { font-size: var(--txt-micro); color: var(--fg-3); }
+.rueda .caja { width: 100%; display: flex; flex-direction: column; align-items: center;
+               background: var(--surface-alta); border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio); }
+.rueda .caja button { width: 100%; min-height: 40px; display: flex; align-items: center; justify-content: center;
+                      background: none; border: 0; color: var(--fg-2); cursor: pointer; }
+.rueda .caja button svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none;
+                          stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.rueda .val { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.nueva-cuenta > .btn { width: 100%; }
+
+/* La tira al pie: fuera de #app, fija, debajo del menú lateral y del velo. */
+#tira { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; }
+#tira[hidden] { display: none; }
+/* Con el menú lateral fijo, la tira se centra en lo que queda a su derecha,
+   como la columna. Va después de la regla de arriba, que si no la pisa. */
+@media (min-width: 900px) { #tira { left: 260px; } }
+.tira { display: flex; align-items: center; gap: var(--e-3); width: 100%; max-width: var(--columna); margin: 0 auto;
+        height: 56px; padding: 0 var(--e-4); background: var(--surface-alta); color: var(--fg);
+        border: 0; border-top: 1px solid var(--borde-fuerte); font: 600 var(--txt-base)/1 var(--tipo);
+        text-align: left; cursor: pointer; }
+.tira svg { width: var(--ico); height: var(--ico); flex: none; stroke: var(--acento); fill: none;
+            stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.tira .nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tira .t { color: var(--acento); font-size: var(--txt-lectura); font-variant-numeric: tabular-nums; }
+.tira .mas { color: var(--fg-2); font-size: var(--txt-chico); font-weight: 400; }
+.tira.listo { background: var(--acento-suave); border-top-color: var(--acento); }
+.tira.listo .t { color: var(--fg); }
+.tira.listo .btn svg { stroke: currentColor; }
 .par-cantidades .entre { flex: 0 0 auto; height: 48px; display: grid; place-items: center;
                          color: var(--fg-2); font-size: var(--txt-lectura); }
 .par-cantidades .entre svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none;

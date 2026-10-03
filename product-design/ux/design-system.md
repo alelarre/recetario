@@ -312,6 +312,9 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `link` | *Por URL*, en la fila de fotos (§6.25): agregar una foto pegando su dirección; y el botón que abre la fuente original, al lado de su campo (§6.9). Dos eslabones. |
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `balanza` | *Herramientas*, en el menú lateral, y delante del título de la ficha del resultado de una calculadora (§6.28). |
+| `reloj` | Cuentas: delante del nombre en la tira (§6.29). |
+| `pausa`, `play` | Pausar y seguir una cuenta (§6.29). |
+| `arriba`, `abajo` | Las ruedas de la cuenta nueva (§6.29). |
 | `idaYVuelta` | Entre dos cantidades que salen una de la otra, en las calculadoras (§6.28). Dos flechas, una para cada lado. |
 | `zanahoria`, `listaNumerada` | Las dos posiciones del conmutador de cocina —*Ingredientes* y *Pasos*—, al lado de la palabra. |
 | Los cinco relojitos | Uno por valor de la duración, el mismo mapa en el editor (§6.18), la tarjeta, la receta, la búsqueda, el filtro (§6.19) y el orden (§6.20). |
@@ -1428,6 +1431,35 @@ lista en `--txt-chico` `--fg-2`.
 (§6.0): en una calculadora no hay botón primario con el que compita, y el
 resultado es lo que se vino a buscar. Los valores van en `--fg`, no en el
 acento: se leen por tamaño.
+
+### 6.29 Cuentas
+
+**La ficha del cronómetro:** título «Cronómetro», el tiempo a 44 px peso 600 con
+cifras tabulares, centrado, y dos botones a lo ancho: *Reiniciar* secundario e
+*Iniciar*/*Parar* primario.
+
+**La ficha de una cuenta:** una fila con el nombre (600, recortado en una línea),
+el tiempo a 28 px peso 600 en `--acento` —`--fg-2` pausada, `--fg` y el texto
+«¡Listo!» terminada— y tres botones cuadrados de 40 px, secundarios: *+1'*,
+pausa/seguir y la cruz. Debajo, una barra de 3 px en `--surface-alta` con el
+avance en `--acento`. Terminada no lleva barra: los botones son *+1'* y
+*Parar* primario.
+
+**Las ruedas:** tres columnas iguales —horas, min, seg— con la etiqueta en
+`--txt-micro` `--fg-3`, y una caja `--surface-alta` con borde `--borde-fuerte`
+que lleva el chevron arriba, el valor a 28 px peso 600 y el chevron abajo. Las
+horas van sin cero adelante; minutos y segundos, con dos cifras.
+
+**La tira:** fija al pie, fuera de `#app`, 56 px de alto, `--surface-alta`,
+borde superior 1 px `--borde-fuerte`, sobre la columna; con el menú lateral
+fijo (desde 900 px) se centra en lo que queda a su derecha, como la columna. Reloj en `--acento`,
+nombre (600, recortado), tiempo en `--acento` a `--txt-lectura` con cifras
+tabulares, y el lugar entre las que rotan («2/3») en `--fg-2` `--txt-chico`.
+Toda la tira es un botón.
+Avisando: fondo `--acento-suave`, borde en `--acento`, «¡Listo!» en `--fg` y el
+botón primario compacto *Parar* a la derecha. Queda debajo del menú lateral y
+del velo. Mientras existe, `--tira` vale 56 px: `.cuerpo` suma ese alto a su
+padding de abajo y los pies pegados de la receta y del plan suben.
 
 ---
 

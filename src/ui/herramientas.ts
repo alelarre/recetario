@@ -117,6 +117,7 @@ export function renderHerramientas({ menu }: { menu?: MenuDePantalla }): string 
   return conLateral(menu,
     encabezado({ titulo: 'Herramientas', ...izquierdaDelEncabezado(menu) }) +
     '<div class="cuerpo"><div class="ficha">' +
+      entrada('#/herramientas/cuentas', 'Cuentas', 'Cronómetro y cuentas regresivas') +
       entrada('#/herramientas/pan', 'Pan', 'Harinas, agua, sal y levadura') +
       entrada('#/herramientas/fermentados', 'Fermentados', 'Porcentaje de sal y tiempos') +
     '</div></div>');

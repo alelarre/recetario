@@ -12,6 +12,10 @@
   </head>
   <body>
     <div id="app"></div>
+    <!-- La tira de Cuentas: la cuenta que corre, visible desde toda pantalla.
+         Hermana de #app porque pintar() reemplaza el contenido de #app; la
+         escribe main.ts cada segundo. -->
+    <div id="tira" hidden></div>
     <!-- El velo: la app está ocupada y no se puede tocar. Hermano de #app y no
          hijo: pintar() reemplaza el contenido de #app. Lo maneja velo.ts. El
          SVG es decorativo: el estado ocupado lo dice `aria-busy` en #app. Con

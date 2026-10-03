@@ -4,7 +4,7 @@ export type Vista =
   | 'editar' | 'nueva' | 'borradores' | 'ajustes' | 'carpeta'
   | 'categorias' | 'editar-categoria' | 'tag'
   | 'plan' | 'plan-agregar' | 'plan-compras'
-  | 'herramientas' | 'calculadora-pan' | 'calculadora-sal';
+  | 'herramientas' | 'calculadora-pan' | 'calculadora-sal' | 'cuentas';
 
 export interface Ruta {
   vista: Vista;
@@ -108,6 +108,7 @@ export function parsearHash(hash: unknown): Ruta {
   if (partes[0] === 'herramientas') {
     if (partes[1] === 'pan') return { vista: 'calculadora-pan', params: {} };
     if (partes[1] === 'fermentados') return { vista: 'calculadora-sal', params: {} };
+    if (partes[1] === 'cuentas') return { vista: 'cuentas', params: {} };
     return { vista: 'herramientas', params: {} };
   }
 

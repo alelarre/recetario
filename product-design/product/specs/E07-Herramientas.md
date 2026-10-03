@@ -9,10 +9,11 @@ que se aparta o lo que necesita precisarse.
 
 ## La épica
 
-Calcular las cantidades antes de cocinar: las de un pan —harinas, agua, sal y
-levadura o masa madre— y la sal de un fermentado.
+Calcular las cantidades antes de cocinar —las de un pan: harinas, agua, sal y
+levadura o masa madre; y la sal de un fermentado— y medir el tiempo mientras se
+cocina, con un cronómetro y cuentas regresivas.
 
-Son dos calculadoras, en una sección propia del menú. **No leen ninguna receta
+Son dos calculadoras y las cuentas, en una sección propia del menú. **No leen ninguna receta
 ni usan Drive:** no tocan el índice, ni el `.md`, ni la carpeta base. Una
 receta marcada con `pan` o `fermentado` tiene un botón que abre la que le
 corresponde, y el agente usa las mismas cuentas por el MCP.
@@ -40,14 +41,15 @@ aparece.
   y *Nueva receta* (`ux/information-architecture.md` §4.6).
 - [ ] `#/herramientas` es destino del menú (`MENU` en `src/ui/router.ts`):
   lleva la hamburguesa en vez del volver, y su entrada queda marcada.
-- [ ] La pantalla es una lista con dos entradas, cada una con una línea que
-  dice qué calcula: **Pan** —*Harinas, agua, sal y levadura*— y
-  **Fermentados** —*Porcentaje de sal y tiempos*—.
+- [ ] La pantalla es una lista con tres entradas, cada una con una línea que
+  dice qué hace, en este orden: **Cuentas** —*Cronómetro y cuentas
+  regresivas*—, **Pan** —*Harinas, agua, sal y levadura*— y **Fermentados**
+  —*Porcentaje de sal y tiempos*—.
 
 #### C07.1.2 — Las rutas *(J6)*
 
-- [ ] `#/herramientas/pan` y `#/herramientas/fermentados` son cada
-  calculadora, con el volver.
+- [ ] `#/herramientas/cuentas`, `#/herramientas/pan` y
+  `#/herramientas/fermentados` son Cuentas y cada calculadora, con el volver.
 - [ ] Una calculadora abierta desde una receta vuelve a la receta; abierta
   desde la lista, vuelve a la lista. Por un link directo, el volver pone el
   Recetario en su lugar, como cualquier volver (IA §4.5).
@@ -371,6 +373,24 @@ tipo.
 - [ ] La vista de invitado no lo tiene: el link compartido no lleva tags
   especiales (`E03-LeerYCocinar.md` C03.7.3).
 
+### F07.5b — Cuentas
+
+#### C07.5b.1 — El cronómetro y las cuentas regresivas *(J6)*
+
+- [ ] `#/herramientas/cuentas`, título «Cuentas», con volver. Tres partes, en este orden: **Cronómetro** —el tiempo grande, *Reiniciar* (deshabilitado en cero) e *Iniciar*/*Parar*—; **las cuentas que corren**, una ficha cada una en orden de creación, con nombre, tiempo, barra de avance y tres botones: *+1'*, pausa o seguir, y sacar; **Nueva cuenta**: nombre opcional, tres ruedas —horas 0–23, minutos y segundos 0–59, con tope circular— y *Empezar*, deshabilitado en 0:00:00.
+- [ ] Una cuenta sin nombre se llama por su duración: *10 min*, *1 h 20 min*, *45 s*.
+- [ ] El tiempo se escribe `m:ss` hasta 59:59 y `h:mm:ss` de una hora en adelante, en todos lados.
+- [ ] Pausada, el tiempo no baja y va en `--fg-2`. *+1'* suma un minuto; sobre una terminada, vuelve a correr desde 1:00 contado desde ahora.
+- [ ] Terminada: el tiempo dice «¡Listo!», sin barra, con *+1'* y *Parar*; *Parar* la saca.
+- [ ] Todo se cuenta por fecha contra el reloj del teléfono, nunca por tics: no se atrasa y sobrevive a recargar y a cerrar la app. Se guarda en `localStorage` (`recetario.cuentas`) en cada cambio, con la última duración puesta en las ruedas, que es con la que se abre la próxima vez (10 min la primera). Lo que no se puede leer se toma como sin cuentas.
+- [ ] Mientras corre alguna cuenta o el cronómetro, la pantalla no se apaga (wake lock propio, repedido a cada tic si se perdió). Una pausada o una terminada no cuentan.
+
+#### C07.5b.2 — El aviso y la tira *(J6)*
+
+- [ ] Al llegar a cero, suena un pitido corto (Web Audio, sin archivo) y vibra, cada 2 s hasta *Parar* o un minuto. Si terminan varias, el aviso es uno; *Parar* corta el aviso y saca esa cuenta; las demás terminadas quedan en «¡Listo!», calladas.
+- [ ] **Sólo con la app a la vista.** Con la pantalla apagada, la app cerrada o en segundo plano no hay aviso: al volver, la cuenta aparece terminada y avisa en el primer segundo. Después de recargar, el navegador no deja sonar ni vibrar hasta el primer toque: la tira igual dice «¡Listo!».
+- [ ] **La tira**: con algo corriendo, toda pantalla —salvo Cuentas y la vista de invitado— lleva al pie una tira fija de 56 px que **rota cada 5 s** por todo lo que corre, en el orden de la pantalla —el cronómetro y después cada cuenta en orden de creación—: reloj, nombre («Cronómetro» para el cronómetro), tiempo y, si hay más de una, su lugar entre todas («2/3»). Las pausadas y las terminadas no entran. Tocarla abre Cuentas. Avisando, pasa a «¡Listo!» con *Parar*. Los pies pegados de la receta y del plan suben lo que mide la tira. Sin nada corriendo, no existe.
+
 ### F07.6 — El agente
 
 El agente calcula con las mismas funciones que la pantalla, por el MCP local,
@@ -466,7 +486,7 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 
 | Capacidad | Job |
 |---|---|
-| C07.1.1, C07.1.2, C07.2.1, C07.2.2, C07.2.3, C07.2.4, C07.2.5, C07.2.6, C07.2.7, C07.3.1, C07.4.1, C07.5.1, C07.5.2, C07.6.1, C07.6.2 | J6 |
+| C07.1.1, C07.1.2, C07.2.1, C07.2.2, C07.2.3, C07.2.4, C07.2.5, C07.2.6, C07.2.7, C07.3.1, C07.4.1, C07.5.1, C07.5.2, C07.5b.1, C07.5b.2, C07.6.1, C07.6.2 | J6 |
 | C07.6.3 | J6, J8 |
 
 Ninguna capacidad de esta épica quedó sin job.
