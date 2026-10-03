@@ -425,21 +425,23 @@ se reconoce abre el Recetario.
 | **Plan de la semana** | `#/plan` | Siete días desde hoy, dos comidas cada uno, y cada comida una lista de recetas. Al pie, la lista de compras y reiniciar. | Planificar | J9 |
 | **Agregar al plan** | `#/plan/agregar?dia=&momento=` | La búsqueda del Recetario, el bloque *Menú diario* y la grilla de las categorías: tocar una receta la suma a esa comida y vuelve. | Planificar | J9 |
 | **Lista de compras** | `#/plan/compras` | Los ingredientes de todo lo cargado, en dos bloques, y compartir como texto. | Planificar | J9 |
-| **Herramientas** | `#/herramientas` | La lista de las herramientas: *Cuentas*, *Pan* y *Fermentados*. Es destino del menú: hamburguesa en vez de volver. Una ruta `#/herramientas/…` que no es Cuentas ni una calculadora abre esta lista. | Cocinar | J6 |
-| **Cuentas** | `#/herramientas/cuentas` | El cronómetro, las cuentas regresivas que corren —nombre, tiempo, barra, +1', pausa y sacar— y la cuenta nueva: nombre opcional, ruedas de horas, minutos y segundos y *Empezar*. Lleva volver. Mientras corre algo, la pantalla no se apaga. No lee recetas ni usa Drive. | Cocinar | J6 |
+| **Herramientas** | `#/herramientas` | La lista de las herramientas: *Temporizadores*, *Pan* y *Fermentados*. Es destino del menú: hamburguesa en vez de volver. Una ruta `#/herramientas/…` que no es Temporizadores ni una calculadora abre esta lista. | Cocinar | J6 |
+| **Temporizadores** | `#/herramientas/temporizadores` | El cronómetro, los temporizadores —cuentas regresivas, con nombre, tiempo, barra, +1', pausa y sacar— y el temporizador nuevo: nombre opcional, ruedas de horas, minutos y segundos y *Empezar*. Lleva volver. Mientras corre algo, la pantalla no se apaga. No lee recetas ni usa Drive. | Cocinar | J6 |
 | **Calculadora de pan** | `#/herramientas/pan` | Pan, harinas, levadura, fermentación y cantidad —harina total o masa total—, y al pie el resultado con sus advertencias. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
 | **Calculadora de sal** | `#/herramientas/fermentados` | Fermento y peso total del frasco, y al pie los gramos de sal. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
 
-**La tira de Cuentas.** Mientras corre una cuenta o el cronómetro, toda pantalla
-—salvo Cuentas y la vista de invitado— lleva al pie una tira fija que rota cada
-5 s por todo lo que corre, en el orden de la pantalla: el cronómetro y después
-cada cuenta, con su nombre, su tiempo y «2/3» si hay más de una. Las pausadas no
-entran. Tocarla abre Cuentas. Cuando una cuenta llega a cero, la
-tira pasa a «¡Listo!» con *Parar*, y suena y vibra cada 2 s hasta *Parar* o un
-minuto. **Sólo con la app a la vista:** con la pantalla apagada o la app
-cerrada no hay aviso; al volver, la cuenta aparece terminada y avisa recién ahí.
-Las cuentas se cuentan por fecha, no por tics, así que sobreviven a recargar y
-a cerrar la app, y se guardan en el teléfono (`localStorage`), no en Drive.
+**La tira de Temporizadores.** Mientras corre un temporizador o el cronómetro, o
+queda uno terminado sin sacar, toda pantalla —salvo Temporizadores y la vista de
+invitado— lleva al pie una tira fija que rota cada 5 s por todos, en el orden de
+la pantalla: el cronómetro y después cada temporizador, con su nombre, su tiempo
+y «2/3» si hay más de uno; uno terminado, con «¡Listo!» y *Parar*. Los pausados
+no entran. Con más de uno, una flecha en cada punta pasa de turno a mano, y
+deslizar sobre la tira también; el turno nuevo entra deslizándose. Tocarla abre
+Temporizadores. Cuando uno llega a cero, suena y vibra cada 2 s hasta *Parar* o
+un minuto. **Sólo con la app a la vista:** con la pantalla apagada o la app
+cerrada no hay aviso; al volver, el temporizador aparece terminado y avisa recién
+ahí. Se cuentan por fecha, no por tics, así que sobreviven a recargar y a cerrar
+la app, y se guardan en el teléfono (`localStorage`), no en Drive.
 
 **La ficha de compartir no es una pantalla**: es estado de la Receta, se abre al
 pie y el atrás la cierra (§4.6).

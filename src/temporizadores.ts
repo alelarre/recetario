@@ -1,44 +1,44 @@
 /**
- * Las cuentas de *Herramientas → Cuentas*: las regresivas y el cronómetro.
+ * *Herramientas → Temporizadores*: los temporizadores —cuentas regresivas— y el cronómetro.
  * Puro, sin DOM. Todo tiempo se calcula contra el reloj que se le pasa
- * (`ahora`, en ms), nunca con un contador: una cuenta no se atrasa aunque la
+ * (`ahora`, en ms), nunca con un contador: un temporizador no se atrasa aunque la
  * página se frene, y sobrevive a recargar y a cerrar la app.
  */
 
 export const MINUTO = 60_000;
 
-export interface CuentaCorriendo { id: string; nombre: string; duracion: number; fin: number }
-export interface CuentaPausada { id: string; nombre: string; duracion: number; restante: number }
-export type Cuenta = CuentaCorriendo | CuentaPausada;
+export interface TemporizadorCorriendo { id: string; nombre: string; duracion: number; fin: number }
+export interface TemporizadorPausado { id: string; nombre: string; duracion: number; restante: number }
+export type Temporizador = TemporizadorCorriendo | TemporizadorPausado;
 
-export const corriendo = (c: Cuenta): c is CuentaCorriendo => 'fin' in c;
+export const corriendo = (c: Temporizador): c is TemporizadorCorriendo => 'fin' in c;
 
 /** Lo que falta, nunca negativo. */
-export const restante = (c: Cuenta, ahora: number): number =>
+export const restante = (c: Temporizador, ahora: number): number =>
   Math.max(0, corriendo(c) ? c.fin - ahora : c.restante);
 
-export const terminada = (c: Cuenta, ahora: number): boolean => restante(c, ahora) === 0;
+export const terminado = (c: Temporizador, ahora: number): boolean => restante(c, ahora) === 0;
 
 /** Cuánto va, de 0 a 1: la barra. */
-export const avance = (c: Cuenta, ahora: number): number =>
+export const avance = (c: Temporizador, ahora: number): number =>
   c.duracion > 0 ? 1 - restante(c, ahora) / c.duracion : 1;
 
-export function empezar(id: string, nombre: string, duracion: number, ahora: number): CuentaCorriendo {
+export function empezar(id: string, nombre: string, duracion: number, ahora: number): TemporizadorCorriendo {
   const limpio = nombre.trim();
   return { id, nombre: limpio || nombreDeDuracion(duracion), duracion, fin: ahora + duracion };
 }
 
-export const pausar = (c: Cuenta, ahora: number): CuentaPausada =>
+export const pausar = (c: Temporizador, ahora: number): TemporizadorPausado =>
   ({ id: c.id, nombre: c.nombre, duracion: c.duracion, restante: restante(c, ahora) });
 
-export const seguir = (c: Cuenta, ahora: number): CuentaCorriendo =>
+export const seguir = (c: Temporizador, ahora: number): TemporizadorCorriendo =>
   ({ id: c.id, nombre: c.nombre, duracion: c.duracion, fin: ahora + restante(c, ahora) });
 
 /**
- * Un minuto más. Una terminada vuelve a correr desde 1:00 contado desde
- * ahora: sumárselo al fin viejo la dejaría terminada igual.
+ * Un minuto más. Uno terminado vuelve a correr desde 1:00 contado desde
+ * ahora: sumárselo al fin viejo lo dejaría terminado igual.
  */
-export function sumarMinuto(c: Cuenta, ahora: number): Cuenta {
+export function sumarMinuto(c: Temporizador, ahora: number): Temporizador {
   const duracion = c.duracion + MINUTO;
   return corriendo(c)
     ? { ...c, duracion, fin: Math.max(c.fin, ahora) + MINUTO }
@@ -76,14 +76,14 @@ export function formatear(ms: number): string {
   return h > 0 ? `${h}:${dos(m)}:${dos(s)}` : `${m}:${dos(s)}`;
 }
 
-/** «10 min», «1 h 20 min», «45 s»: el nombre de una cuenta sin nombre. */
+/** «10 min», «1 h 20 min», «45 s»: el nombre de un temporizador sin nombre. */
 export function nombreDeDuracion(ms: number): string {
   const { h, m, s } = partes(ms);
   const texto = [h ? `${h} h` : '', m ? `${m} min` : '', s ? `${s} s` : ''].filter(Boolean).join(' ');
   return texto || '0 s';
 }
 
-/** Las tres ruedas de la cuenta nueva. */
+/** Las tres ruedas del temporizador nuevo. */
 export interface Duracion { h: number; m: number; s: number }
 export type Rueda = keyof Duracion;
 
@@ -97,16 +97,16 @@ export const aMs = ({ h, m, s }: Duracion): number => ((h * 60 + m) * 60 + s) * 
 export const girar = (d: Duracion, rueda: Rueda, paso: 1 | -1): Duracion =>
   ({ ...d, [rueda]: (d[rueda] + paso + TOPE[rueda]) % TOPE[rueda] });
 
-export interface Guardado { cuentas: Cuenta[]; crono: Cronometro; ultimaDuracion: Duracion }
+export interface Guardado { temporizadores: Temporizador[]; crono: Cronometro; ultimaDuracion: Duracion }
 
-export const CLAVE_CUENTAS = 'recetario.cuentas';
+export const CLAVE_TEMPORIZADORES = 'recetario.temporizadores';
 export const DURACION_POR_DEFECTO: Duracion = { h: 0, m: 10, s: 0 };
-export const GUARDADO_POR_DEFECTO: Guardado = { cuentas: [], crono: CRONO_EN_CERO, ultimaDuracion: DURACION_POR_DEFECTO };
+export const GUARDADO_POR_DEFECTO: Guardado = { temporizadores: [], crono: CRONO_EN_CERO, ultimaDuracion: DURACION_POR_DEFECTO };
 
 const esNumero = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);
 const esObjeto = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null;
 
-function esCuenta(x: unknown): x is Cuenta {
+function esTemporizador(x: unknown): x is Temporizador {
   if (!esObjeto(x) || typeof x['id'] !== 'string' || typeof x['nombre'] !== 'string') return false;
   if (!esNumero(x['duracion']) || x['duracion'] < 0) return false;
   const conFin = esNumero(x['fin']);
@@ -130,9 +130,9 @@ function duracionLeida(x: unknown): Duracion {
 /** Lo guardado en el teléfono, o lo de fábrica por cada parte que no se pueda leer. */
 export function leerGuardado(crudo: unknown): Guardado {
   if (!esObjeto(crudo)) return GUARDADO_POR_DEFECTO;
-  const lista = Array.isArray(crudo['cuentas']) ? crudo['cuentas'] : [];
+  const lista = Array.isArray(crudo['temporizadores']) ? crudo['temporizadores'] : [];
   return {
-    cuentas: lista.filter(esCuenta).map(c => (corriendo(c)
+    temporizadores: lista.filter(esTemporizador).map(c => (corriendo(c)
       ? { id: c.id, nombre: c.nombre, duracion: c.duracion, fin: c.fin }
       : { id: c.id, nombre: c.nombre, duracion: c.duracion, restante: c.restante })),
     crono: cronoLeido(crudo['crono']),

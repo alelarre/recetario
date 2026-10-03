@@ -24,11 +24,11 @@ const opcionesDe = (html: string, grupo: string): string[] =>
   [...desplegable(html, grupo).matchAll(/<option value="([^"]*)"/g)].map(m => m[1] ?? '');
 
 describe('la lista de herramientas', () => {
-  it('lleva las cuentas primero y después las dos calculadoras', () => {
+  it('lleva los temporizadores primero y después las dos calculadoras', () => {
     const html = renderHerramientas({});
-    const cuentas = html.indexOf('href="#/herramientas/cuentas"');
-    expect(cuentas).toBeGreaterThan(0);
-    expect(cuentas).toBeLessThan(html.indexOf('href="#/herramientas/pan"'));
+    const temporizadores = html.indexOf('href="#/herramientas/temporizadores"');
+    expect(temporizadores).toBeGreaterThan(0);
+    expect(temporizadores).toBeLessThan(html.indexOf('href="#/herramientas/pan"'));
     expect(html).toContain('Cronómetro y cuentas regresivas');
     expect(html).toContain('href="#/herramientas/pan"');
     expect(html).toContain('href="#/herramientas/fermentados"');

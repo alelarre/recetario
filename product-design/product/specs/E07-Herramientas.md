@@ -11,9 +11,9 @@ que se aparta o lo que necesita precisarse.
 
 Calcular las cantidades antes de cocinar —las de un pan: harinas, agua, sal y
 levadura o masa madre; y la sal de un fermentado— y medir el tiempo mientras se
-cocina, con un cronómetro y cuentas regresivas.
+cocina, con un cronómetro y temporizadores.
 
-Son dos calculadoras y las cuentas, en una sección propia del menú. **No leen ninguna receta
+Son dos calculadoras y los temporizadores, en una sección propia del menú. **No leen ninguna receta
 ni usan Drive:** no tocan el índice, ni el `.md`, ni la carpeta base. Una
 receta marcada con `pan` o `fermentado` tiene un botón que abre la que le
 corresponde, y el agente usa las mismas cuentas por el MCP.
@@ -42,14 +42,15 @@ aparece.
 - [ ] `#/herramientas` es destino del menú (`MENU` en `src/ui/router.ts`):
   lleva la hamburguesa en vez del volver, y su entrada queda marcada.
 - [ ] La pantalla es una lista con tres entradas, cada una con una línea que
-  dice qué hace, en este orden: **Cuentas** —*Cronómetro y cuentas
+  dice qué hace, en este orden: **Temporizadores** —*Cronómetro y cuentas
   regresivas*—, **Pan** —*Harinas, agua, sal y levadura*— y **Fermentados**
   —*Porcentaje de sal y tiempos*—.
 
 #### C07.1.2 — Las rutas *(J6)*
 
-- [ ] `#/herramientas/cuentas`, `#/herramientas/pan` y
-  `#/herramientas/fermentados` son Cuentas y cada calculadora, con el volver.
+- [ ] `#/herramientas/temporizadores`, `#/herramientas/pan` y
+  `#/herramientas/fermentados` son Temporizadores y cada calculadora, con el
+  volver.
 - [ ] Una calculadora abierta desde una receta vuelve a la receta; abierta
   desde la lista, vuelve a la lista. Por un link directo, el volver pone el
   Recetario en su lugar, como cualquier volver (IA §4.5).
@@ -373,23 +374,23 @@ tipo.
 - [ ] La vista de invitado no lo tiene: el link compartido no lleva tags
   especiales (`E03-LeerYCocinar.md` C03.7.3).
 
-### F07.5b — Cuentas
+### F07.5b — Temporizadores
 
-#### C07.5b.1 — El cronómetro y las cuentas regresivas *(J6)*
+#### C07.5b.1 — El cronómetro y los temporizadores *(J6)*
 
-- [ ] `#/herramientas/cuentas`, título «Cuentas», con volver. Tres partes, en este orden: **Cronómetro** —el tiempo grande, *Reiniciar* (deshabilitado en cero) e *Iniciar*/*Parar*—; **las cuentas que corren**, una ficha cada una en orden de creación, con nombre, tiempo, barra de avance y tres botones: *+1'*, pausa o seguir, y sacar; **Nueva cuenta**: nombre opcional, tres ruedas —horas 0–23, minutos y segundos 0–59, con tope circular— y *Empezar*, deshabilitado en 0:00:00.
-- [ ] Una cuenta sin nombre se llama por su duración: *10 min*, *1 h 20 min*, *45 s*.
+- [ ] `#/herramientas/temporizadores`, título «Temporizadores», con volver. Tres partes, en este orden: **Cronómetro** —el tiempo grande, *Reiniciar* (deshabilitado en cero) e *Iniciar*/*Parar*—; **los temporizadores**, una ficha cada uno en orden de creación, con nombre, tiempo, barra de avance y tres botones: *+1'*, pausa o seguir, y sacar; **Nuevo temporizador**: nombre opcional, tres ruedas —horas 0–23, minutos y segundos 0–59, con tope circular— y *Empezar*, deshabilitado en 0:00:00. Un temporizador es una cuenta regresiva: baja hasta cero y avisa.
+- [ ] Un temporizador sin nombre se llama por su duración: *10 min*, *1 h 20 min*, *45 s*.
 - [ ] El tiempo se escribe `m:ss` hasta 59:59 y `h:mm:ss` de una hora en adelante, en todos lados.
-- [ ] Pausada, el tiempo no baja y va en `--fg-2`. *+1'* suma un minuto; sobre una terminada, vuelve a correr desde 1:00 contado desde ahora.
-- [ ] Terminada: el tiempo dice «¡Listo!», sin barra, con *+1'* y *Parar*; *Parar* la saca.
-- [ ] Todo se cuenta por fecha contra el reloj del teléfono, nunca por tics: no se atrasa y sobrevive a recargar y a cerrar la app. Se guarda en `localStorage` (`recetario.cuentas`) en cada cambio, con la última duración puesta en las ruedas, que es con la que se abre la próxima vez (10 min la primera). Lo que no se puede leer se toma como sin cuentas.
-- [ ] Mientras corre alguna cuenta o el cronómetro, la pantalla no se apaga (wake lock propio, repedido a cada tic si se perdió). Una pausada o una terminada no cuentan.
+- [ ] Pausado, el tiempo no baja y va en `--fg-2`. *+1'* suma un minuto; sobre uno terminado, vuelve a correr desde 1:00 contado desde ahora.
+- [ ] Terminado: el tiempo dice «¡Listo!», sin barra, con *+1'* y *Parar*; *Parar* lo saca.
+- [ ] Todo se cuenta por fecha contra el reloj del teléfono, nunca por tics: no se atrasa y sobrevive a recargar y a cerrar la app. Se guarda en `localStorage` (`recetario.temporizadores`) en cada cambio, con la última duración puesta en las ruedas, que es con la que se abre la próxima vez (10 min la primera). Lo que no se puede leer se toma como sin temporizadores.
+- [ ] Mientras corre algún temporizador o el cronómetro, la pantalla no se apaga (wake lock propio, repedido a cada tic si se perdió). Uno pausado o uno terminado no cuentan.
 
 #### C07.5b.2 — El aviso y la tira *(J6)*
 
-- [ ] Al llegar a cero, suena un pitido corto (Web Audio, sin archivo) y vibra, cada 2 s hasta *Parar* o un minuto. Si terminan varias, el aviso es uno; *Parar* corta el aviso y saca esa cuenta; las demás terminadas quedan en «¡Listo!», calladas.
-- [ ] **Sólo con la app a la vista.** Con la pantalla apagada, la app cerrada o en segundo plano no hay aviso: al volver, la cuenta aparece terminada y avisa en el primer segundo. Después de recargar, el navegador no deja sonar ni vibrar hasta el primer toque: la tira igual dice «¡Listo!».
-- [ ] **La tira**: con algo corriendo, toda pantalla —salvo Cuentas y la vista de invitado— lleva al pie una tira fija de 56 px que **rota cada 5 s** por todo lo que corre, en el orden de la pantalla —el cronómetro y después cada cuenta en orden de creación—: reloj, nombre («Cronómetro» para el cronómetro), tiempo y, si hay más de una, su lugar entre todas («2/3»). Las pausadas y las terminadas no entran. Tocarla abre Cuentas. Avisando, pasa a «¡Listo!» con *Parar*. Los pies pegados de la receta y del plan suben lo que mide la tira. Sin nada corriendo, no existe.
+- [ ] Al llegar a cero, suena un pitido corto (Web Audio, sin archivo) y vibra, cada 2 s hasta *Parar* o un minuto. Si terminan varios, el aviso es uno; *Parar* corta el aviso y saca ese temporizador; los demás terminados quedan en «¡Listo!», callados.
+- [ ] **Sólo con la app a la vista.** Con la pantalla apagada, la app cerrada o en segundo plano no hay aviso: al volver, el temporizador aparece terminado y avisa en el primer segundo. Después de recargar, el navegador no deja sonar ni vibrar hasta el primer toque: la tira igual dice «¡Listo!». Uno que ya avisó y no se sacó vuelve a avisar al recargar.
+- [ ] **La tira**: toda pantalla —salvo Temporizadores y la vista de invitado— lleva al pie una tira fija de 56 px mientras haya un temporizador corriendo o terminado sin sacar, o el cronómetro corriendo. **Rota cada 5 s** por todos, en el orden de la pantalla —el cronómetro y después los temporizadores en orden de creación—: reloj, nombre («Cronómetro» para el cronómetro) y tiempo; uno terminado, «¡Listo!» con *Parar*. Los pausados no entran. Con más de uno lleva su lugar entre todos («2/3») y una flecha en cada punta para pasar a mano; **deslizar** sobre la tira a la izquierda pasa al siguiente y a la derecha al anterior, sin abrir el menú lateral. Pasar a mano empieza un turno entero. **El turno nuevo entra deslizándose** desde el lado al que se pasó; sin animación con movimiento reducido. El primer turno dura entero desde que aparece la tira. Tocarla fuera de las flechas y de *Parar* abre Temporizadores. Los pies pegados de la receta y del plan suben lo que mide la tira.
 
 ### F07.6 — El agente
 

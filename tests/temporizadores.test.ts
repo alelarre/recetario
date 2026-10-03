@@ -1,21 +1,21 @@
 import { describe, it, expect } from 'vitest';
 import {
-  empezar, pausar, seguir, sumarMinuto, restante, terminada, avance, corriendo,
+  empezar, pausar, seguir, sumarMinuto, restante, terminado, avance, corriendo,
   CRONO_EN_CERO, iniciarCrono, pararCrono, reiniciarCrono, transcurrido, cronoCorriendo,
   formatear, nombreDeDuracion, aMs, girar, leerGuardado, GUARDADO_POR_DEFECTO, DURACION_POR_DEFECTO, MINUTO
-} from '../src/cuentas.js';
+} from '../src/temporizadores.js';
 
 const T0 = 1_000_000;
 
-describe('una cuenta regresiva', () => {
+describe('un temporizador regresiva', () => {
   it('empieza corriendo y lo que falta baja con el reloj, hasta cero y no más', () => {
     const c = empezar('a', 'Pasta', 10 * MINUTO, T0);
     expect(corriendo(c)).toBe(true);
     expect(restante(c, T0)).toBe(10 * MINUTO);
     expect(restante(c, T0 + 3 * MINUTO)).toBe(7 * MINUTO);
     expect(restante(c, T0 + 11 * MINUTO)).toBe(0);
-    expect(terminada(c, T0 + 10 * MINUTO)).toBe(true);
-    expect(terminada(c, T0 + 10 * MINUTO - 1)).toBe(false);
+    expect(terminado(c, T0 + 10 * MINUTO)).toBe(true);
+    expect(terminado(c, T0 + 10 * MINUTO - 1)).toBe(false);
   });
 
   it('el avance va de 0 a 1', () => {
@@ -40,7 +40,7 @@ describe('una cuenta regresiva', () => {
     expect(s.duracion).toBe(10 * MINUTO);
   });
 
-  it('un minuto más: corriendo suma al fin, pausada a lo que falta, y la duración crece', () => {
+  it('un minuto más: corriendo suma al fin, pausado a lo que falta, y la duración crece', () => {
     const c = empezar('a', 'Pasta', 10 * MINUTO, T0);
     const mas = sumarMinuto(c, T0 + MINUTO);
     expect(restante(mas, T0 + MINUTO)).toBe(10 * MINUTO);
@@ -49,11 +49,11 @@ describe('una cuenta regresiva', () => {
     expect(restante(p, T0 + 5 * MINUTO)).toBe(10 * MINUTO);
   });
 
-  it('un minuto más sobre una terminada hace rato vuelve a correr desde 1:00, contado desde ahora', () => {
+  it('un minuto más sobre uno terminado hace rato vuelve a correr desde 1:00, contado desde ahora', () => {
     const c = empezar('a', 'Pasta', MINUTO, T0);
     const mas = sumarMinuto(c, T0 + 30 * MINUTO);
     expect(restante(mas, T0 + 30 * MINUTO)).toBe(MINUTO);
-    expect(terminada(mas, T0 + 30 * MINUTO)).toBe(false);
+    expect(terminado(mas, T0 + 30 * MINUTO)).toBe(false);
   });
 });
 
@@ -111,14 +111,14 @@ describe('lo guardado', () => {
   it('sin nada, roto o de otra forma: lo de fábrica', () => {
     expect(leerGuardado(null)).toEqual(GUARDADO_POR_DEFECTO);
     expect(leerGuardado('{roto')).toEqual(GUARDADO_POR_DEFECTO);
-    expect(leerGuardado({ cuentas: 'no', crono: 3, ultimaDuracion: [] })).toEqual(GUARDADO_POR_DEFECTO);
+    expect(leerGuardado({ temporizadores: 'no', crono: 3, ultimaDuracion: [] })).toEqual(GUARDADO_POR_DEFECTO);
     expect(GUARDADO_POR_DEFECTO.ultimaDuracion).toEqual(DURACION_POR_DEFECTO);
     expect(DURACION_POR_DEFECTO).toEqual({ h: 0, m: 10, s: 0 });
   });
 
-  it('conserva las cuentas bien formadas y descarta las otras', () => {
+  it('conserva los temporizadores bien formados y descarta los otros', () => {
     const g = leerGuardado({
-      cuentas: [
+      temporizadores: [
         { id: 'a', nombre: 'Pasta', duracion: 1000, fin: 5000 },
         { id: 'b', nombre: 'Horno', duracion: 1000, restante: 400 },
         { id: 'c', nombre: 'Las dos', duracion: 1000, fin: 5000, restante: 400 },
@@ -129,7 +129,7 @@ describe('lo guardado', () => {
       crono: { desde: 100, acumulado: 50 },
       ultimaDuracion: { h: 1, m: 2, s: 3 }
     });
-    expect(g.cuentas).toEqual([
+    expect(g.temporizadores).toEqual([
       { id: 'a', nombre: 'Pasta', duracion: 1000, fin: 5000 },
       { id: 'b', nombre: 'Horno', duracion: 1000, restante: 400 }
     ]);
@@ -138,12 +138,12 @@ describe('lo guardado', () => {
   });
 
   it('el cronómetro corriendo sigue desde donde estaba al recargar', () => {
-    const g = leerGuardado({ cuentas: [], crono: { desde: T0, acumulado: 2000 }, ultimaDuracion: { h: 0, m: 5, s: 0 } });
+    const g = leerGuardado({ temporizadores: [], crono: { desde: T0, acumulado: 2000 }, ultimaDuracion: { h: 0, m: 5, s: 0 } });
     expect(transcurrido(g.crono, T0 + 3000)).toBe(5000);
   });
 
   it('un cronómetro o unas ruedas fuera de forma caen en lo de fábrica, sin tocar lo demás', () => {
-    const g = leerGuardado({ cuentas: [], crono: { acumulado: 'x' }, ultimaDuracion: { h: 0, m: 61, s: 0 } });
+    const g = leerGuardado({ temporizadores: [], crono: { acumulado: 'x' }, ultimaDuracion: { h: 0, m: 61, s: 0 } });
     expect(g.crono).toEqual(CRONO_EN_CERO);
     expect(g.ultimaDuracion).toEqual(DURACION_POR_DEFECTO);
   });

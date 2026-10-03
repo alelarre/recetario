@@ -1,11 +1,11 @@
 /**
- * La pantalla no se apaga mientras corre una cuenta. Es un bloqueo propio,
+ * La pantalla no se apaga mientras corre un temporizador. Es un bloqueo propio,
  * aparte del del modo cocina: cada uno pide y suelta el suyo, y el sistema
  * mantiene la pantalla mientras haya uno. El bloqueo se pierde solo al pasar
  * a segundo plano, así que `mantener` se llama a cada tic y pide de nuevo
  * sólo cuando no hay uno vivo.
  */
-import type { Pantalla } from './cuentas-control.js';
+import type { Pantalla } from './temporizadores-control.js';
 
 export function crearPantallaEncendida(): Pantalla {
   let bloqueo: WakeLockSentinel | null = null;

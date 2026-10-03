@@ -1076,14 +1076,14 @@ describe('main.ts: las rutas', () => {
       ['#/herramientas', 'href="#/herramientas/pan"'],
       ['#/herramientas/pan', 'data-opcion="pan"'],
       ['#/herramientas/fermentados', 'data-opcion="fermento"'],
-      ['#/herramientas/cuentas', 'data-accion="cuenta-empezar"']
+      ['#/herramientas/temporizadores', 'data-accion="temporizador-empezar"']
     ] as const) {
       await abrir(hash);
       expect(app.innerHTML, hash).toContain(marca);
     }
   });
 
-  it('un toque de Cuentas fuera de Cuentas no redibuja la pantalla: en el editor borraría lo escrito', async () => {
+  it('un toque de Temporizadores fuera de Temporizadores no redibuja la pantalla: en el editor borraría lo escrito', async () => {
     const { abrir, tocar, pinturas } = await montar();
     await abrir('#/nueva');
     const antes = pinturas.length;
@@ -1092,9 +1092,9 @@ describe('main.ts: las rutas', () => {
     expect(pinturas.length).toBe(antes);
   });
 
-  it('en Cuentas, un toque sí redibuja la pantalla', async () => {
+  it('en Temporizadores, un toque sí redibuja la pantalla', async () => {
     const { abrir, tocar, pinturas, app } = await montar();
-    await abrir('#/herramientas/cuentas');
+    await abrir('#/herramientas/temporizadores');
     const antes = pinturas.length;
     await tocar('crono-iniciar');
     expect(pinturas.length).toBe(antes + 1);
@@ -1173,7 +1173,7 @@ describe('main.ts: las rutas', () => {
     const HASH_DE: Record<string, string> = {
       recetario: '#/', borradores: '#/borradores', plan: '#/plan', herramientas: '#/herramientas', ajustes: '#/ajustes', nueva: '#/nueva'
     };
-    const SIN_MENU = ['#/c/Carnes', '#/r/f1', '#/r/f1/editar', '#/buscar?q=pan', '#/t/horno', '#/categorias', '#/plan/compras', '#/herramientas/pan', '#/herramientas/cuentas'];
+    const SIN_MENU = ['#/c/Carnes', '#/r/f1', '#/r/f1/editar', '#/buscar?q=pan', '#/t/horno', '#/categorias', '#/plan/compras', '#/herramientas/pan', '#/herramientas/temporizadores'];
 
     it('cada vista de MENU dibuja la hamburguesa, el lateral con su entrada marcada, y el gesto lo abre', async () => {
       const { MENU } = await import('../src/ui/router.js');

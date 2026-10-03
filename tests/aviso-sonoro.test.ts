@@ -25,7 +25,7 @@ function audioFalso() {
 afterEach(() => { delete (globalThis as unknown as Record<string, unknown>)['AudioContext']; });
 
 describe('el aviso sonoro', () => {
-  it('después de recargar, sin haber empezado una cuenta, suena igual: crea el contexto y lo reanuda', () => {
+  it('después de recargar, sin haber empezado un temporizador, suena igual: crea el contexto y lo reanuda', () => {
     const registro = audioFalso();
     const aviso = crearAvisoSonoro();
     aviso.sonar();

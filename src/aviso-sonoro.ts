@@ -1,13 +1,13 @@
 /**
- * El aviso de una cuenta que llegó a cero: un pitido generado con Web Audio
+ * El aviso de un temporizador que llegó a cero: un pitido generado con Web Audio
  * —tres notas cortas— y una vibración. Sin archivo de audio: nada que cachear
- * ni que cargar. El contexto de audio se crea en el toque que empieza la
- * cuenta (`preparar`): el navegador no deja arrancar audio sin un gesto. Una
- * cuenta que ya corría al recargar no pasó por ese toque: `sonar` crea el
+ * ni que cargar. El contexto de audio se crea en el toque que empieza el
+ * temporizador (`preparar`): el navegador no deja arrancar audio sin un gesto. Un
+ * temporizador que ya corría al recargar no pasó por ese toque: `sonar` crea el
  * contexto y lo reanuda, y el navegador lo deja una vez que hubo cualquier
  * toque en la página.
  */
-import type { Aviso } from './cuentas-control.js';
+import type { Aviso } from './temporizadores-control.js';
 
 export function crearAvisoSonoro(): Aviso {
   let ctx: AudioContext | null = null;

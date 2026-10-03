@@ -70,11 +70,14 @@ import { accionesDeLista } from './lista-control.js';
 import { accionesDelCarrusel } from './carrusel-control.js';
 import { crearControlHerramientas } from './herramientas-control.js';
 import { renderHerramientas, renderPan, renderSal, resultadoPan, resultadoSal } from './ui/herramientas.js';
-import { crearControlCuentas } from './cuentas-control.js';
-import { renderCuentas, renderTira, formaDeTira, tiempoDeTira, ALTO_TIRA } from './ui/cuentas.js';
+import { crearControlTemporizadores } from './temporizadores-control.js';
+import {
+  renderTemporizadores, renderTira, formaDeTira, tiempoDeTira, turnosDeTira, rotarTira, pasoDeDeslizar, ALTO_TIRA
+} from './ui/temporizadores.js';
+import type { Rotacion } from './ui/temporizadores.js';
 import { crearAvisoSonoro } from './aviso-sonoro.js';
 import { crearPantallaEncendida } from './pantalla-encendida.js';
-import { formatear, restante, avance, transcurrido, aMs } from './cuentas.js';
+import { formatear, restante, avance, transcurrido, aMs } from './temporizadores.js';
 import { calcularPan } from './calculadoras/pan.js';
 import type { EstadoDePantalla, PedidoAlAgente } from './estado-pantalla.js';
 import { achicar } from './fotos.js';
@@ -455,16 +458,20 @@ const herramientas = crearControlHerramientas({
 
 /** La forma de la tira que está en el DOM (`formaDeTira`): con la misma, se escribe sólo el tiempo. */
 let formaPintada = '';
+/** El turno de la tira: es de la pantalla y no se guarda; al recargar empieza por el primero. */
+let rotacion: Rotacion = { lugar: 0, desde: Date.now() };
+/** Dónde apoyó el dedo sobre la tira, para saber al soltar si deslizó. */
+let toqueEnTira: { x: number; y: number } | null = null;
 
-/** El nombre escrito para la cuenta nueva: vive en el DOM hasta Empezar. */
-const nombreDeCuentaEscrito = (): string =>
-  document.querySelector<HTMLInputElement>('#app [name="nombre-cuenta"]')?.value ?? '';
+/** El nombre escrito para el temporizador nuevo: vive en el DOM hasta Empezar. */
+const nombreDeTemporizadorEscrito = (): string =>
+  document.querySelector<HTMLInputElement>('#app [name="nombre-temporizador"]')?.value ?? '';
 
 /**
- * Las cuentas de *Herramientas*. Antes del primer dibujo: lo guardado puede
+ * Los temporizadores de *Herramientas*. Antes del primer dibujo: lo guardado puede
  * venir corriendo, y la tira se pinta con cada pantalla.
  */
-const controlCuentas = crearControlCuentas({
+const controlTemporizadores = crearControlTemporizadores({
   almacen: almacenLocal(),
   reloj: {
     ahora: () => Date.now(),
@@ -472,18 +479,18 @@ const controlCuentas = crearControlCuentas({
   },
   aviso: crearAvisoSonoro(),
   pantalla: crearPantallaEncendida(),
-  // Fuera de Cuentas lo único que muestra las cuentas es la tira: redibujar la
+  // Fuera de Temporizadores lo único que los muestra es la tira: redibujar la
   // pantalla entera borraría lo escrito en el editor.
-  redibujar: () => { if (vistaActual?.vista === 'cuentas') void render(); else pintarCuentasVivas(); },
-  pintarVivo: pintarCuentasVivas,
-  nombreEscrito: nombreDeCuentaEscrito,
+  redibujar: () => { if (vistaActual?.vista === 'temporizadores') void render(); else pintarTemporizadoresVivos(); },
+  pintarVivo: pintarTemporizadoresVivos,
+  nombreEscrito: nombreDeTemporizadorEscrito,
   vaciarNombre: () => {
-    const campo = document.querySelector<HTMLInputElement>('#app [name="nombre-cuenta"]');
+    const campo = document.querySelector<HTMLInputElement>('#app [name="nombre-temporizador"]');
     if (campo) campo.value = '';
   }
 });
-// Cada pantalla trae o saca la tira de Cuentas según dónde se esté.
-despuesDePintar(pintarCuentasVivas);
+// Cada pantalla trae o saca la tira de Temporizadores según dónde se esté.
+despuesDePintar(pintarTemporizadoresVivos);
 
 /**
  * El visor de fotos. Va aparte del estado de la pantalla porque abrirlo es una
@@ -1050,8 +1057,8 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       return pintar(renderPan(herramientas.pan()));
     case 'calculadora-sal':
       return pintar(renderSal(herramientas.sal()));
-    case 'cuentas':
-      return pintar(renderCuentas({ ...controlCuentas.estado(), nombre: nombreDeCuentaEscrito() }));
+    case 'temporizadores':
+      return pintar(renderTemporizadores({ ...controlTemporizadores.estado(), nombre: nombreDeTemporizadorEscrito() }));
 
     case 'plan-compras':
       try {
@@ -2282,31 +2289,37 @@ function almacenLocal(): Pick<Storage, 'getItem' | 'setItem'> | null {
  * la pantalla le sacaría el foco.
  */
 /**
- * Lo que cambia cada segundo, sin redibujar: la tira, y en Cuentas los
+ * Lo que cambia cada segundo, sin redibujar: la tira, y en Temporizadores los
  * tiempos, las barras y las ruedas. Redibujar perdería el nombre escrito.
- * La tira no se dibuja en Cuentas —ya está todo a la vista— ni es parte de
+ * La tira no se dibuja en Temporizadores —ya está todo a la vista— ni es parte de
  * `#app`; se escribe directo porque no lleva fotos y `pintarParte` volvería a
  * llamar a esto desde `despuesDePintar`.
  */
-function pintarCuentasVivas(): void {
-  const e = controlCuentas.estado();
-  const enCuentas = vistaActual?.vista === 'cuentas';
-  const forma = enCuentas ? '' : formaDeTira(e);
+function pintarTemporizadoresVivos(paso?: 1 | -1): void {
+  const e = controlTemporizadores.estado();
+  const enTemporizadores = vistaActual?.vista === 'temporizadores';
+  // El primer turno dura entero desde que la tira aparece, no desde que cargó la app.
+  if (!formaPintada) rotacion = { ...rotacion, desde: e.ahora };
+  const antes = rotacion.lugar;
+  rotacion = rotarTira(rotacion, turnosDeTira(e).length, e.ahora, paso);
+  const forma = enTemporizadores ? '' : formaDeTira(e, rotacion.lugar);
   const tira = document.querySelector<HTMLElement>('#tira');
   if (tira) {
     // Con la misma forma se escribe sólo el tiempo: rehacer la tira cambiaría
     // el nodo bajo el dedo, y ese toque no llega como click.
     const tiempo = document.querySelector<HTMLElement>('#tira [data-tiempo-tira]');
-    if (forma && forma === formaPintada && tiempo) tiempo.textContent = tiempoDeTira(e) ?? '';
+    if (forma && forma === formaPintada && tiempo) tiempo.textContent = tiempoDeTira(e, rotacion.lugar) ?? '';
     else if (forma !== formaPintada) {
+      // Un turno nuevo entra por el lado al que se pasó; el primero, quieto.
+      const entra = formaPintada && rotacion.lugar !== antes ? (paso === -1 ? 'izq' : 'der') : undefined;
       tira.hidden = !forma;
-      tira.innerHTML = forma ? renderTira(e) : '';
+      tira.innerHTML = forma ? renderTira(e, rotacion.lugar, entra) : '';
     }
     formaPintada = forma;
   }
   (document.documentElement as HTMLElement | undefined)?.style.setProperty('--tira', forma ? `${ALTO_TIRA}px` : '0px');
-  if (!enCuentas) return;
-  for (const c of e.cuentas) {
+  if (!enTemporizadores) return;
+  for (const c of e.temporizadores) {
     const t = document.querySelector<HTMLElement>(`#app [data-tiempo="${c.id}"]`);
     if (t) t.textContent = formatear(restante(c, e.ahora));
     const b = document.querySelector<HTMLElement>(`#app [data-avance="${c.id}"]`);
@@ -2318,7 +2331,7 @@ function pintarCuentasVivas(): void {
     const v = document.querySelector<HTMLElement>(`#app [data-rueda-valor="${r}"]`);
     if (v) v.textContent = r === 'h' ? String(e.ruedas.h) : String(e.ruedas[r]).padStart(2, '0');
   }
-  const empezar = document.querySelector<HTMLButtonElement>('#app [data-accion="cuenta-empezar"]');
+  const empezar = document.querySelector<HTMLButtonElement>('#app [data-accion="temporizador-empezar"]');
   if (empezar) empezar.disabled = aMs(e.ruedas) <= 0;
 }
 
@@ -2364,11 +2377,16 @@ const acciones = registrarAcciones({
   compartir: accionesDeCompartir,
   ajustes: accionesDeAjustes,
   herramientas: herramientas.acciones,
-  cuentas: { ...controlCuentas.acciones, 'ir-cuentas': () => { nav.ir('#/herramientas/cuentas'); } }
+  temporizadores: {
+    ...controlTemporizadores.acciones,
+    'ir-temporizadores': () => { nav.ir('#/herramientas/temporizadores'); },
+    'tira-anterior': () => { pintarTemporizadoresVivos(-1); },
+    'tira-siguiente': () => { pintarTemporizadoresVivos(1); }
+  }
 });
 
 /**
- * Un toque en la app o en la tira de Cuentas, que vive fuera de `#app`: los
+ * Un toque en la app o en la tira de Temporizadores, que vive fuera de `#app`: los
  * dos van al mismo mapa de acciones. Devuelve la promesa de la acción.
  */
 async function alTocar(e: Event): Promise<unknown> {
@@ -2494,6 +2512,9 @@ document.addEventListener('touchstart', (e) => {
   deslizando = null;
   const toques = (e as TouchEvent).touches;
   const toque = toques.length === 1 ? toques[0] : undefined;
+  // Sobre la tira de Temporizadores el dedo pasa de turno y no abre el menú.
+  toqueEnTira = toque && conClosest(e.target)?.closest('#tira') ? { x: toque.clientX, y: toque.clientY } : null;
+  if (toqueEnTira) return;
   // Con el visor abierto, el dedo pasa de una foto a la siguiente y no abre
   // el menú: es lo único que se puede hacer ahí.
   if (visor.empezarToque(toque?.clientX ?? null) || !toque) return;
@@ -2534,6 +2555,13 @@ document.addEventListener('touchcancel', soltarDeslizamiento);
 // acá la foto cambia de una vez, al soltar.
 document.addEventListener('touchend', (e) => {
   if (velo.ocupado()) return;
+  const suelta = (e as TouchEvent).changedTouches[0];
+  if (toqueEnTira && suelta) {
+    const paso = pasoDeDeslizar(suelta.clientX - toqueEnTira.x, suelta.clientY - toqueEnTira.y);
+    toqueEnTira = null;
+    if (paso) pintarTemporizadoresVivos(paso);
+    return;
+  }
   if (visor.terminarToque((e as TouchEvent).changedTouches[0]?.clientX ?? null)) void dibujarVisor();
 });
 

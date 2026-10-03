@@ -175,7 +175,7 @@ describe('crearRouter', () => {
 });
 
 describe('Herramientas', () => {
-  it('la lista, las cuentas y las dos calculadoras', async () => {
+  it('la lista, los temporizadores y las dos calculadoras', async () => {
     const { MENU, esDelMenu } = await import('../src/ui/router.js');
     expect(parsearHash('#/herramientas')).toEqual({ vista: 'herramientas', params: {} });
     expect(parsearHash('#/herramientas/pan')).toEqual({ vista: 'calculadora-pan', params: {} });
@@ -183,7 +183,7 @@ describe('Herramientas', () => {
     expect(parsearHash('#/herramientas/otra')).toEqual({ vista: 'herramientas', params: {} });
     expect(MENU['herramientas']).toBe('herramientas');
     expect(esDelMenu('calculadora-pan')).toBe(false);
-    expect(parsearHash('#/herramientas/cuentas')).toEqual({ vista: 'cuentas', params: {} });
-    expect(esDelMenu('cuentas')).toBe(false);
+    expect(parsearHash('#/herramientas/temporizadores')).toEqual({ vista: 'temporizadores', params: {} });
+    expect(esDelMenu('temporizadores')).toBe(false);
   });
 });
