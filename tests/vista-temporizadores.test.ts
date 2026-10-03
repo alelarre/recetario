@@ -134,10 +134,16 @@ describe('la tira', () => {
     expect(renderTira({ ...base, temporizadores: [pasta] }, 4)).toContain('<span class="nom">Pasta</span>');
   });
 
-  it('al entrar por un cambio de turno lleva la clase de su lado', () => {
-    expect(renderTira(corren, 1, 'der')).toContain('class="tira entra-der"');
-    expect(renderTira(corren, 1, 'izq')).toContain('class="tira entra-izq"');
-    expect(renderTira(corren, 1)).toContain('class="tira"');
+  it('al cambiar de turno se mueve el contenido y no la tira: el fondo y las flechas quedan quietos', () => {
+    const der = renderTira(corren, 1, 'der');
+    expect(der).toContain('<div class="tira" data-accion="ir-temporizadores">');
+    expect(der).toContain('<span class="tira-contenido entra-der">');
+    expect(renderTira(corren, 1, 'izq')).toContain('<span class="tira-contenido entra-izq">');
+    expect(renderTira(corren, 1)).toContain('<span class="tira-contenido">');
+    // Las flechas, afuera de lo que se mueve.
+    const contenido = der.slice(der.indexOf('tira-contenido'), der.indexOf('</span><button class="tira-flecha" type="button" data-accion="tira-siguiente"'));
+    expect(contenido).not.toContain('tira-flecha');
+    expect(contenido).toContain('<span class="nom">Pasta</span>');
   });
 });
 
@@ -202,10 +208,11 @@ describe('el CSS de Temporizadores', () => {
     expect(BASE).toContain('.temporizadores { display: flex; flex-direction: column; gap: var(--e-5); }');
   });
 
-  it('el turno nuevo entra deslizándose, salvo con movimiento reducido', () => {
-    expect(BASE).toContain('.tira.entra-der { animation: tira-entra-der');
-    expect(BASE).toContain('.tira.entra-izq { animation: tira-entra-izq');
-    expect(BASE).toMatch(/prefers-reduced-motion: reduce\) \{ \.tira\.entra-der, \.tira\.entra-izq \{ animation: none; \} \}/);
+  it('el contenido del turno nuevo entra deslizándose 16 px, salvo con movimiento reducido', () => {
+    expect(BASE).toContain('.tira-contenido.entra-der { animation: tira-entra-der');
+    expect(BASE).toContain('.tira-contenido.entra-izq { animation: tira-entra-izq');
+    expect(BASE).toContain('@keyframes tira-entra-der { from { transform: translateX(16px);');
+    expect(BASE).toMatch(/prefers-reduced-motion: reduce\) \{ \.tira-contenido\.entra-der, \.tira-contenido\.entra-izq \{ animation: none; \} \}/);
   });
 
   it('con el menú lateral fijo, la tira arranca donde termina el menú', () => {

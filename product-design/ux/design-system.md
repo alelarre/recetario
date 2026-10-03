@@ -1459,9 +1459,10 @@ rotan («2/3») en `--fg-2` `--txt-chico`. Con más de uno lleva en cada punta u
 flecha —`volver` y `chevron`, en `--fg-2`, 44 px de ancho y todo el alto—, y
 entonces la tira no tiene padding a los costados. Un turno terminado: fondo
 `--acento-suave`, borde en `--acento`, «¡Listo!» en `--fg` y el botón primario
-compacto *Parar*. **El turno nuevo entra deslizándose:** 32 px desde el lado al
-que se pasó y de transparente a opaco, en 240 ms `ease-out`; sin animación con
-movimiento reducido. Queda debajo del menú lateral y del velo. Mientras existe,
+compacto *Parar*. **Al pasar de turno se mueve sólo el contenido** —reloj,
+nombre, tiempo, lugar y *Parar*—: entra 16 px desde el lado al que se pasó y de
+transparente a opaco, en 240 ms `ease-out`. El fondo y las flechas quedan
+quietos: la tira entera moviéndose marea. Sin animación con movimiento reducido. Queda debajo del menú lateral y del velo. Mientras existe,
 `--tira` vale 56 px: `.cuerpo` y el modo cocina suman ese alto a su padding de
 abajo, y los pies pegados de la receta y del plan suben.
 ---

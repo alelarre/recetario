@@ -158,7 +158,8 @@ export function tiempoDeTira(e: EstadoTemporizadores, lugar: number): string | n
 /**
  * La tira al pie, en el turno `lugar`: el cronómetro o un temporizador —uno
  * terminado, con «¡Listo!» y *Parar*—, con «2/3» y las flechas si hay más de
- * uno. `entra` es el lado por el que llega un turno nuevo. Nada que mostrar: ''.
+ * uno. `entra` es el lado por el que llega el contenido de un turno nuevo.
+ * Nada que mostrar: ''.
  */
 export function renderTira(e: EstadoTemporizadores, lugar: number, entra?: 'izq' | 'der'): string {
   const t = turnoEn(e, lugar);
@@ -172,12 +173,15 @@ export function renderTira(e: EstadoTemporizadores, lugar: number, entra?: 'izq'
   const parar = listo && t.turno.tipo === 'temporizador'
     ? `<button class="btn prim compacto" type="button" data-accion="temporizador-sacar" data-id="${escapar(t.turno.temporizador.id)}">Parar</button>`
     : '';
-  const clases = ['tira', ...(listo ? ['listo'] : []), ...(entra ? [`entra-${entra}`] : [])].join(' ');
-  return `<div class="${clases}" data-accion="ir-temporizadores">` +
+  // Lo que cambia de un turno a otro va en un envoltorio propio: al pasar de
+  // turno se mueve sólo eso, y el fondo y las flechas quedan quietos.
+  return `<div class="tira${listo ? ' listo' : ''}" data-accion="ir-temporizadores">` +
     (varios ? `<button class="tira-flecha" type="button" data-accion="tira-anterior" aria-label="Anterior">${ICO.volver}</button>` : '') +
-    `${ICO.reloj}<span class="nom">${escapar(nombre)}</span>${tiempo}` +
-    (varios ? `<span class="mas">${t.lugar + 1}/${t.total}</span>` : '') +
-    parar +
+    `<span class="tira-contenido${entra ? ` entra-${entra}` : ''}">` +
+      `${ICO.reloj}<span class="nom">${escapar(nombre)}</span>${tiempo}` +
+      (varios ? `<span class="mas">${t.lugar + 1}/${t.total}</span>` : '') +
+      parar +
+    '</span>' +
     (varios ? `<button class="tira-flecha" type="button" data-accion="tira-siguiente" aria-label="Siguiente">${ICO.chevron}</button>` : '') +
     '</div>';
 }

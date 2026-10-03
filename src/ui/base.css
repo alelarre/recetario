@@ -633,12 +633,15 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 .tira-flecha { flex: none; width: 44px; height: 100%; display: flex; align-items: center; justify-content: center;
                background: none; border: 0; color: var(--fg-2); cursor: pointer; }
 .tira .tira-flecha svg { stroke: currentColor; }
-/* El turno nuevo entra deslizándose desde el lado al que se pasó. */
-.tira.entra-der { animation: tira-entra-der 240ms ease-out; }
-.tira.entra-izq { animation: tira-entra-izq 240ms ease-out; }
-@keyframes tira-entra-der { from { transform: translateX(32px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes tira-entra-izq { from { transform: translateX(-32px); opacity: 0; } to { transform: none; opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .tira.entra-der, .tira.entra-izq { animation: none; } }
+/* Lo que cambia de un turno a otro. Al pasar de turno entra deslizándose
+   desde el lado al que se pasó; el fondo y las flechas no se mueven, que
+   todo junto marea. */
+.tira-contenido { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; gap: var(--e-3); }
+.tira-contenido.entra-der { animation: tira-entra-der 240ms ease-out; }
+.tira-contenido.entra-izq { animation: tira-entra-izq 240ms ease-out; }
+@keyframes tira-entra-der { from { transform: translateX(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes tira-entra-izq { from { transform: translateX(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tira-contenido.entra-der, .tira-contenido.entra-izq { animation: none; } }
 .par-cantidades .entre { flex: 0 0 auto; height: 48px; display: grid; place-items: center;
                          color: var(--fg-2); font-size: var(--txt-lectura); }
 .par-cantidades .entre svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none;
