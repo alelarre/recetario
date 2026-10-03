@@ -69,7 +69,7 @@ export function bloqueDeAgregar(bloque: OpcionesBloque): string {
 
 export function renderPlanAgregar(opciones: OpcionesPlanAgregar): string {
   const { dia, momento, consulta } = opciones;
-  return encabezado({ titulo: tituloDeComida(dia, momento), volver: true }) +
+  return encabezado({ titulo: tituloDeComida(dia, momento), icono: ICO.mas, volver: true }) +
     '<div class="cuerpo denso">' +
       // La misma caja del Recetario, con su propia acción: acá buscar filtra
       // en esta pantalla y no navega a los resultados.

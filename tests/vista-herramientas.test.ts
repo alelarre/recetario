@@ -3,6 +3,7 @@ import { renderHerramientas, renderPan, renderSal, resultadoPan } from '../src/u
 import { PAN_POR_DEFECTO, ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE, ADVERTENCIA_FRIO, AVISO_TOPE, type DatosPan } from '../src/calculadoras/pan.js';
 import { SAL_POR_DEFECTO } from '../src/calculadoras/fermentados.js';
 import { escapar } from '../src/ui/markdown.js';
+import { ICO } from '../src/ui/iconos.js';
 
 /** Dónde está la fila de un dato: su desplegable, o su conmutador o interruptor. */
 /** El pan de campo sin su masa madre: un pan directo, con levadura, que es donde están todas las filas. */
@@ -30,6 +31,10 @@ describe('la lista de herramientas', () => {
     expect(temporizadores).toBeGreaterThan(0);
     expect(temporizadores).toBeLessThan(html.indexOf('href="#/herramientas/pan"'));
     expect(html).toContain('Cronómetro y cuentas regresivas');
+    // Cada una con su ícono, como las entradas del menú lateral.
+    expect(html).toContain(`href="#/herramientas/temporizadores">${ICO.reloj}`);
+    expect(html).toContain(`href="#/herramientas/pan">${ICO.pan}`);
+    expect(html).toContain(`href="#/herramientas/fermentados">${ICO.frasco}`);
     expect(html).toContain('href="#/herramientas/pan"');
     expect(html).toContain('href="#/herramientas/fermentados"');
     expect(html).toContain('<span class="tit">Fermentados</span>');
@@ -188,7 +193,7 @@ describe('la calculadora de sal', () => {
 
   it('la temperatura va entre el fermento y el peso, y el tiempo con su advertencia en el resultado', () => {
     const html = renderSal(SAL_POR_DEFECTO);
-    expect(html).toContain('<span class="tit">Fermentados</span>');
+    expect(html).toContain(`<span class="tit">${ICO.frasco}Fermentados</span>`);
     expect(html).toContain('data-grupo="temperatura" data-valor="18-24" aria-pressed="true"');
     expect(pos(html, 'fermento')).toBeLessThan(pos(html, 'temperatura'));
     expect(pos(html, 'temperatura')).toBeLessThan(html.indexOf('data-cantidad="peso"'));

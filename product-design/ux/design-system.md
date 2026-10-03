@@ -218,7 +218,8 @@ Base 16 px, razón 1.2, redondeada a valores enteros.
 | *base fuerte* | 16 px | 1.3 | 600 | El nombre de un ítem de lista —tarjeta, fila de categoría—, los botones y el título del encabezado chico. No es un token aparte: es `--txt-base` en 600, y se nombra porque es el estilo más repetido de la app. |
 | `--txt-lectura` | 18 px | 1.6 | 400 | **El cuerpo de la receta abierta.** Descripción, pasos, notas, ingredientes. |
 | *título de sección* | 18 px | 1.3 | 600 | El encabezado de una ficha —«Ingredientes», «Cuenta»— y el nombre de una variación. Es `--txt-lectura` en 600: se separa del cuerpo por peso, divisor y aire, no por tamaño, para no competir con el título de la receta. |
-| `--txt-titulo` | 24 px | 1.25 | 600 | El título de las pantallas de primer nivel —Recetario, Ajustes—, en el encabezado; y el nombre del objeto de una pantalla de detalle —la receta—, en el cuerpo. También el nombre de la app arriba del menú lateral y el de la pantalla de conexión. |
+| `--txt-encabezado` | 20 px | 1 | 600 | El título del encabezado de un destino del menú —Recetario, Borradores, el plan, Herramientas, Nueva receta, Ajustes— (§6.12). |
+| `--txt-titulo` | 24 px | 1.25 | 600 | El nombre del objeto de una pantalla de detalle —la receta—, en el cuerpo. También el nombre de la app arriba del menú lateral y el de la pantalla de conexión. |
 | `--txt-cocina` | 22 px | 1.65 | 400 | El cuerpo en modo cocina. |
 | `--txt-cocina-titulo` | 28 px | 1.3 | 600 | El encabezado de sección en modo cocina (§3.3). **Sin aplicar:** los grupos y los tramos en cocina van en 16, mayúsculas y `--fg-2`. El token se aplica sólo si cocinando a 50 cm reales esos rótulos no alcanzan. |
 
@@ -293,16 +294,18 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `chevron` | La flecha derecha del carrusel. |
 | `buscar` | La caja de búsqueda. |
 | `menu` | La hamburguesa que abre el menú lateral, con el contador de borradores encima. |
-| `casa`, `bandeja`, `mas`, `ajustes` | Los destinos del menú lateral: Inicio, Borradores, Nueva receta y Ajustes. `mas` es además el «+» de la tarjeta que suma al plan (§6.1) y el de una comida del plan (§6.24). |
-| `lapiz` | *Editar*, en el pie de la receta. |
+| `casa`, `bandeja`, `mas`, `ajustes` | Los destinos del menú lateral: Inicio, Borradores, Nueva receta y Ajustes; `casa`, `mas` y `ajustes` también delante del título de su pantalla (§6.12). `mas` es además el «+» de la tarjeta que suma al plan (§6.1) y el de una comida del plan (§6.24). |
+| `lapiz` | *Editar*, en el pie de la receta, y delante del título del editor de una receta que existe. |
 | `compartir` | *Compartir*, en el encabezado de la receta y en el de la lista de compras; y *Convertir con Agente*, al pie del editor. |
 | `estrella` | Favorito: en el encabezado de la receta (§6.22), en la marca de la tarjeta, en el chip y en el botón del editor. |
 | `marcador` | El tag *probar*. |
-| `calendario` | El tag *menú diario*, y Plan de la semana en el menú lateral. |
+| `calendario` | El tag *menú diario*, y Plan de la semana en el menú lateral y en su título. |
 | `borrador` | El tag *borrador*: un círculo a medio llenar, en su botón del editor y en el título de Borradores (§6.5). |
 | `tacho` | La acción destructiva del editor: *Borrar receta*. |
 | `portapapeles` | *Pegar*, en el encabezado del editor. |
-| `carpeta` | Cada carpeta encontrada, en la pantalla de la carpeta base. |
+| `carpeta` | Cada carpeta encontrada, en la pantalla de la carpeta base; y delante del título de una categoría y de la gestión de categorías. |
+| `etiqueta` | Delante del título de la lista de un tag común. |
+| `carrito` | Delante del título de la lista de compras. |
 | `cerrar` | La cruz: la del chip removible del editor, la que limpia la búsqueda y la que saca una receta de una comida del plan. |
 | `camara` | *Cámara*, en la ficha *Fotos* del editor (§6.25), y *Subir foto* al elegir la de una categoría (§6.4). |
 | `imagen` | El botón que pone en una línea una foto que ya está en el depósito (§6.9b). Es una foto sacada y no la cámara: no agrega ninguna. |
@@ -311,8 +314,8 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `galeria` | *Galería*, en la fila de fotos (§6.25): elegir fotos del teléfono. Dos fotos, una detrás de la otra. |
 | `link` | *Por URL*, en la fila de fotos (§6.25): agregar una foto pegando su dirección; y el botón que abre la fuente original, al lado de su campo (§6.9). Dos eslabones. |
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
-| `balanza` | *Herramientas*, en el menú lateral, y delante del título de la ficha del resultado de una calculadora (§6.28). |
-| `reloj` | Temporizadores: delante del nombre en la tira (§6.29). |
+| `balanza` | *Herramientas*, en el menú lateral y en su título, y delante del título de la ficha del resultado de una calculadora (§6.28). |
+| `reloj`, `pan`, `frasco` | Las tres herramientas —Temporizadores, Pan y Fermentados—: en su entrada de la lista de Herramientas y delante del título de su pantalla. `reloj` va también delante del nombre en la tira (§6.29). |
 | `pausa`, `play` | Pausar y seguir un temporizador (§6.29). |
 | `arriba`, `abajo` | Las ruedas del temporizador nuevo (§6.29). |
 | `idaYVuelta` | Entre dos cantidades que salen una de la otra, en las calculadoras (§6.28). Dos flechas, una para cada lado. |
@@ -860,15 +863,26 @@ Volver a la izquierda como control de 48 px —no un chevron chico—, título a
 medio en `--txt-base` peso 600, acciones a la derecha.
 
 **El encabezado abre el menú en las pantallas a las que se llega desde el
-menú** —Recetario, Borradores, el plan de la semana, la receta nueva y
-Ajustes—: ahí la hamburguesa (§6.17) ocupa el lugar del volver, que queda para
-las pantallas a las que se entra desde otra. Editar una receta existente es una
-de esas: se entra desde la receta y se sale volviendo. **Sólo en el Recetario y en
-Ajustes el título va además en `--txt-titulo`**, centrado en la barra y no en el
-hueco que dejan los controles (§3.2); el plan de la semana y Nueva receta lo llevan
-chico, como Borradores. Borradores es la lista por tag de `borrador` dibujada como
-destino del menú: el encabezado de la lista por tag —título chico con el
-ícono de `borrador` adelante (§6.5), y el total—, con la hamburguesa y el título «Borradores». Tocar una
+menú** —Recetario, Borradores, el plan de la semana, Herramientas, la receta
+nueva y Ajustes—: ahí la hamburguesa (§6.17) ocupa el lugar del volver, que queda
+para las pantallas a las que se entra desde otra. Editar una receta existente es
+una de esas: se entra desde la receta y se sale volviendo. **El título de un
+destino del menú va en `--txt-encabezado`** (20 px); el de las pantallas a las
+que se entra desde otra, en `--txt-base`. Los dos tamaños salen de lo mismo que
+la hamburguesa (`izquierdaDelEncabezado`), así que no hay un destino del menú con
+el título chico. Grande y sin nada a la derecha, el título se centra en la barra
+y no en el hueco que dejan los controles (§3.2).
+
+**Todo encabezado con título lleva su ícono adelante**, del trazo y el tamaño de
+los del encabezado. Un destino del menú, el de su entrada del menú lateral
+—Borradores, el de `borrador` (§6.5)—; las demás: la categoría y la gestión de
+categorías, `carpeta`; editar, `lapiz`; la lista de un tag, el de su especial o,
+común, `etiqueta`; la lista de compras, `carrito`; *Agregar al plan*, `mas`; cada
+herramienta, el suyo. La receta no lleva: su encabezado no tiene título.
+
+Borradores es la lista por tag de `borrador` dibujada como destino del menú: el
+encabezado de la lista por tag —título grande con el ícono de `borrador` adelante
+(§6.5), y el total—, con la hamburguesa y el título «Borradores». Tocar una
 tarjeta ahí abre el editor del borrador, no la receta.
 
 El total de una lista —las recetas de una categoría, los borradores— va a la

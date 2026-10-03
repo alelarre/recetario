@@ -6,6 +6,7 @@ import { escapar } from './markdown.js';
 import { encabezado, aviso, conLateral, izquierdaDelEncabezado } from './componentes.js';
 import type { MenuDePantalla } from './componentes.js';
 import type { IndiceDuplicado, InformeArranque } from '../store.js';
+import { ICO } from './iconos.js';
 
 const DIA = 86400000;
 
@@ -109,7 +110,7 @@ export function renderAjustes(
     '<p class="aviso-mudo" style="margin:0">No hay nada para avisar.</p>';
 
   return conLateral(menu,
-      encabezado({ titulo: 'Ajustes', grande: true, ...izquierdaDelEncabezado(menu) }) +
+      encabezado({ titulo: 'Ajustes', icono: ICO.ajustes, ...izquierdaDelEncabezado(menu) }) +
       // Lo de la cuenta y el índice primero, lo raro al final.
       '<div class="cuerpo">' + seccionCuenta + seccionRecetario + seccionIndice +
         FICHA_DATOS_LOCALES +

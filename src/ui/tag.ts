@@ -11,6 +11,7 @@ import { encabezado, vacio, iconoDeTag, conLateral, izquierdaDelEncabezado } fro
 import type { MenuDePantalla } from './componentes.js';
 import { listaPlana } from './lista-recetas.js';
 import type { ListaPlana } from '../lista-control.js';
+import { ICO } from './iconos.js';
 
 export interface OpcionesTag {
   tag: string;
@@ -37,9 +38,10 @@ export function renderTag({ tag, lista, tagsActivos, tags, borradores, menu, tit
     ? 'Ninguna receta con esos filtros. Probá sacando alguno de los filtros de arriba.'
     : borradores && !otroTag ? 'No hay borradores.' : 'Ninguna receta tiene estos tags.');
 
-  const icono = iconoDeTag(tag);
+  // Un especial lleva el suyo; un tag común, la etiqueta.
+  const icono = iconoDeTag(tag) || ICO.etiqueta;
   const pantalla = encabezado({
-    titulo: titulo ?? tag, total: lista.total, ...(icono ? { icono } : {}),
+    titulo: titulo ?? tag, total: lista.total, icono,
     ...izquierdaDelEncabezado(menu)
   }) +
     '<div class="cuerpo denso">' +

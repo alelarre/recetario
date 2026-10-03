@@ -33,7 +33,7 @@ export function renderCompras({ lista, compartir }: OpcionesCompras): string {
     ficha('Sin cantidad', lista.sinCantidad.map(n => fila(n)).join(''));
 
   return encabezado({
-    titulo: 'Lista de compras', volver: true,
+    titulo: 'Lista de compras', icono: ICO.carrito, volver: true,
     derecha: `<button class="ico" data-accion="compartir-compras" aria-label="Compartir">${ICO.compartir}</button>`
   }) +
     '<div class="cuerpo">' +

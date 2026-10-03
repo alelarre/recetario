@@ -8,6 +8,7 @@
 import { encabezado, vacio } from './componentes.js';
 import { listaPlana } from './lista-recetas.js';
 import type { ListaPlana } from '../lista-control.js';
+import { ICO } from './iconos.js';
 
 export interface OpcionesCategoria {
   nombre: string;
@@ -27,6 +28,6 @@ export function renderCategoria({ nombre, lista, tagsActivos, tags }: OpcionesCa
       ? 'Ninguna receta con esos filtros. Probá sacando alguno de los filtros de arriba.'
       : 'Ninguna receta con esos tags. Probá sacando alguno de los filtros de arriba.');
 
-  return encabezado({ titulo: nombre, volver: true, total: lista.total }) +
+  return encabezado({ titulo: nombre, icono: ICO.carpeta, volver: true, total: lista.total }) +
     `<div class="cuerpo denso">${listaPlana({ lista, carrusel: { tags, activos: tagsActivos }, vacio: siVacia })}</div>`;
 }

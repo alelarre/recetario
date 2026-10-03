@@ -9,8 +9,8 @@ const dibujar = ({ borradores = 3, abierto = false, ...o }: Record<string, unkno
   });
 
 describe('Recetario', () => {
-  it('el título de la app va centrado en la barra', () => {
-    expect(dibujar()).toContain('<span class="tit app"');
+  it('el título va grande, como en todo destino del menú, y centrado en la barra', () => {
+    expect(dibujar()).toContain('<span class="tit grande app"');
   });
 
   it('sin ninguna receta, dice por dónde entran; con alguna, no', () => {

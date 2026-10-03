@@ -41,8 +41,9 @@ aparece.
   y *Nueva receta* (`ux/information-architecture.md` §4.6).
 - [ ] `#/herramientas` es destino del menú (`MENU` en `src/ui/router.ts`):
   lleva la hamburguesa en vez del volver, y su entrada queda marcada.
-- [ ] La pantalla es una lista con tres entradas, cada una con una línea que
-  dice qué hace, en este orden: **Temporizadores** —*Cronómetro y cuentas
+- [ ] La pantalla es una lista con tres entradas, cada una con su ícono
+  adelante —como las entradas del menú lateral— y una línea que dice qué
+  hace, en este orden: **Temporizadores** —*Cronómetro y cuentas
   regresivas*—, **Pan** —*Harinas, agua, sal y levadura*— y **Fermentados**
   —*Porcentaje de sal y tiempos*—.
 

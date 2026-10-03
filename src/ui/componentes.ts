@@ -54,7 +54,7 @@ export const SPINNER = '<div class="spin"></div>';
 export interface OpcionesEncabezado {
   titulo: string;
   volver?: boolean;
-  /** El título de la app: grande y centrado en la barra. */
+  /** El título de un destino del menú, en `--txt-encabezado`: lo pone `izquierdaDelEncabezado`. */
   grande?: boolean;
   /** HTML ya armado para el extremo derecho: botones de ícono. */
   derecha?: string;
@@ -66,7 +66,7 @@ export interface OpcionesEncabezado {
   izquierda?: string;
   /** El total de la categoría va acá y no en la lista (mockup 04). */
   total?: number;
-  /** Un ícono antes del título: el del tag especial en su lista. HTML ya armado. */
+  /** El ícono antes del título: el de la entrada del menú, o el propio de la pantalla. HTML ya armado. */
   icono?: string;
 }
 
@@ -76,10 +76,12 @@ export function encabezado(
   const alaIzquierda = izquierda ?? (volver
     ? `<button class="ico" data-accion="volver" aria-label="Volver">${ICO.volver}</button>`
     : '');
-  const clase = grande ? 'tit app' : 'tit';
-  const estilo = grande ? ' style="font-size:var(--txt-titulo)"' : '';
+  // Grande, el título va centrado en la barra —no en el hueco que dejan los
+  // controles— cuando no hay nada a la derecha que lo pueda pisar.
+  const enLaBarra = grande && !derecha && total === undefined;
+  const clase = ['tit', ...(grande ? ['grande'] : []), ...(enLaBarra ? ['app'] : [])].join(' ');
   return `<div class="enc">${alaIzquierda}` +
-    `<span class="${clase}"${estilo}>${icono ?? ''}${escapar(titulo)}</span>` +
+    `<span class="${clase}">${icono ?? ''}${escapar(titulo)}</span>` +
     (total === undefined ? '' : `<span class="tot">${total}</span>`) +
     // Los controles de la derecha van en su propio grupo: con el título
     // centrado en absoluto, nada los empuja hasta el borde.
@@ -394,9 +396,14 @@ export function botonMenu(borradores: number): string {
   return `<button class="ico cuenta menu-lat" data-accion="abrir-menu" aria-label="Menú">${ICO.menu}${cuenta}</button>`;
 }
 
-/** Lo de la izquierda del encabezado: con menú, la hamburguesa; sin él, el volver. */
-export const izquierdaDelEncabezado = (menu: MenuDePantalla | undefined): Pick<OpcionesEncabezado, 'izquierda' | 'volver'> =>
-  menu ? { izquierda: botonMenu(menu.borradores) } : { volver: true };
+/**
+ * Lo de la izquierda del encabezado: con menú, la hamburguesa y el título
+ * grande de los destinos del menú; sin él, el volver y el título chico.
+ */
+export const izquierdaDelEncabezado = (
+  menu: MenuDePantalla | undefined
+): Pick<OpcionesEncabezado, 'izquierda' | 'volver' | 'grande'> =>
+  menu ? { izquierda: botonMenu(menu.borradores), grande: true } : { volver: true };
 
 /**
  * Una pantalla del menú con el lateral al costado y el contenido corrido. Sin

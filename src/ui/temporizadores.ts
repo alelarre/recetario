@@ -75,7 +75,7 @@ function fichaNuevo(ruedas: Duracion, nombre: string): string {
 
 /** La pantalla entera. `nombre` es lo escrito en el campo del temporizador nuevo, para no perderlo al redibujar. */
 export function renderTemporizadores(e: EstadoTemporizadores & { nombre: string }): string {
-  return encabezado({ titulo: 'Temporizadores', volver: true }) +
+  return encabezado({ titulo: 'Temporizadores', icono: ICO.reloj, volver: true }) +
     '<div class="cuerpo"><div class="temporizadores">' +
       fichaCrono(e) +
       e.temporizadores.map(c => fichaTemporizador(c, e.ahora)).join('') +

@@ -53,7 +53,7 @@ export function renderListaCategorias({ categorias }: { categorias: { categoria:
     .join('');
 
   return encabezado({
-    titulo: 'Categorías', volver: true,
+    titulo: 'Categorías', icono: ICO.carpeta, volver: true,
     derecha: '<a class="btn sec compacto" href="#/categorias/nueva">+ Nueva</a>'
   }) +
     `<div class="cuerpo denso"><div class="lista">${filas}</div></div>`;
@@ -126,7 +126,7 @@ export function renderEdicionCategoria(
   const fotos = subirFoto + laPropia + delCatalogo;
 
   return encabezado({
-    titulo: categoria ? categoria.nombre : 'Nueva categoría', volver: true,
+    titulo: categoria ? categoria.nombre : 'Nueva categoría', icono: ICO.carpeta, volver: true,
     derecha: '<button class="btn prim compacto" data-accion="guardar-categoria" disabled>Guardar</button>'
   }) +
     `<form class="cuerpo" data-formulario data-otros="${escapar(JSON.stringify(otros))}" onsubmit="return false">` +

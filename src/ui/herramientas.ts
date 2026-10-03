@@ -111,15 +111,16 @@ const fichaResultado = (contenido: string): string =>
   `<div class="ficha resultado" data-resultado><h2>${ICO.balanza}Resultado</h2>${contenido}</div>`;
 
 export function renderHerramientas({ menu }: { menu?: MenuDePantalla }): string {
-  const entrada = (hash: string, titulo: string, detalle: string): string =>
-    `<a class="fila herramienta" href="${hash}"><span class="tit">${escapar(titulo)}</span>` +
-    `<span class="ctx">${escapar(detalle)}</span></a>`;
+  // Cada una con su ícono adelante, como las entradas del menú lateral.
+  const entrada = (hash: string, icono: string, titulo: string, detalle: string): string =>
+    `<a class="fila herramienta" href="${hash}">${icono}<span class="txt"><span class="tit">${escapar(titulo)}</span>` +
+    `<span class="ctx">${escapar(detalle)}</span></span></a>`;
   return conLateral(menu,
-    encabezado({ titulo: 'Herramientas', ...izquierdaDelEncabezado(menu) }) +
+    encabezado({ titulo: 'Herramientas', icono: ICO.balanza, ...izquierdaDelEncabezado(menu) }) +
     '<div class="cuerpo"><div class="ficha">' +
-      entrada('#/herramientas/temporizadores', 'Temporizadores', 'Cronómetro y cuentas regresivas') +
-      entrada('#/herramientas/pan', 'Pan', 'Harinas, agua, sal y levadura') +
-      entrada('#/herramientas/fermentados', 'Fermentados', 'Porcentaje de sal y tiempos') +
+      entrada('#/herramientas/temporizadores', ICO.reloj, 'Temporizadores', 'Cronómetro y cuentas regresivas') +
+      entrada('#/herramientas/pan', ICO.pan, 'Pan', 'Harinas, agua, sal y levadura') +
+      entrada('#/herramientas/fermentados', ICO.frasco, 'Fermentados', 'Porcentaje de sal y tiempos') +
     '</div></div>');
 }
 
@@ -160,7 +161,7 @@ export function renderPan(d: DatosPan): string {
 
   // Tres fichas, en el orden en que se piensa un pan: qué es, de qué harina y
   // con cuánta agua; cómo leva; y cuánto. El resultado va al pie.
-  return encabezado({ titulo: 'Pan', volver: true }) +
+  return encabezado({ titulo: 'Pan', icono: ICO.pan, volver: true }) +
     '<div class="cuerpo"><div class="calculadora">' +
       fichaDeDatos(
         // El tipo carga todo lo demás; después se cambia lo que haga falta.
@@ -203,7 +204,7 @@ export function resultadoSal(d: DatosSal): string {
 }
 
 export function renderSal(d: DatosSal): string {
-  return encabezado({ titulo: 'Fermentados', volver: true }) +
+  return encabezado({ titulo: 'Fermentados', icono: ICO.frasco, volver: true }) +
     '<div class="cuerpo"><div class="calculadora">' +
       fichaDeDatos(
         // El tipo carga el porcentaje de sal que sugiere; después se cambia.

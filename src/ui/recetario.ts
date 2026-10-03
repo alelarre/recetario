@@ -43,7 +43,7 @@ export function renderRecetario(
   // Los destinos viven en el lateral: el encabezado sólo lleva la
   // hamburguesa, que en pantalla ancha no se dibuja porque el lateral es fijo.
   return conLateral(menu,
-        encabezado({ titulo: 'Recetario', grande: true, ...izquierdaDelEncabezado(menu) }) +
+        encabezado({ titulo: 'Recetario', icono: ICO.casa, ...izquierdaDelEncabezado(menu) }) +
       '<div class="cuerpo">' +
         '<div class="buscar">' + ICO.buscar +
           '<input data-accion="buscar" placeholder="Buscar receta o ingrediente">' +

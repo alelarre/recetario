@@ -1192,6 +1192,30 @@ describe('main.ts: las rutas', () => {
       }
     });
 
+    /** El título del encabezado de la pantalla: su clase y lo que tiene adentro. */
+    const tituloDe = (html: string) => {
+      const m = html.match(/<div class="enc">.*?<span class="(tit[^"]*)"[^>]*>(.*?)<\/span>/);
+      return { clase: m?.[1] ?? '', adentro: m?.[2] ?? '' };
+    };
+
+    it('los destinos del menú llevan el título grande y todos los encabezados con título, su ícono', async () => {
+      const { abrir, app } = await montar();
+      for (const hash of Object.values(HASH_DE)) {
+        await abrir(hash);
+        const { clase, adentro } = tituloDe(app.innerHTML);
+        expect(clase.split(' '), hash).toContain('grande');
+        expect(adentro, hash).toMatch(/^<svg/);
+      }
+      for (const hash of SIN_MENU.filter(h => h !== '#/r/f1' && !h.startsWith('#/buscar'))) {
+        await abrir(hash);
+        const { clase, adentro } = tituloDe(app.innerHTML);
+        expect(clase.split(' '), hash).not.toContain('grande');
+        expect(adentro, hash).toMatch(/^<svg/);
+      }
+      // El tamaño lo pone el CSS, no un estilo en línea.
+      expect(app.innerHTML).not.toContain('font-size:var(--txt-titulo)');
+    });
+
     it('las demás dibujan el volver, y el gesto no abre nada', async () => {
       const { abrir, app, deslizar, menuDesplegado } = await montar();
       for (const hash of SIN_MENU) {
@@ -5282,7 +5306,7 @@ describe('main.ts: las rutas', () => {
         expect(app.innerHTML).toContain('<span class="n">1</span>');
         expect(app.innerHTML).toContain('<a class="act" href="#/borradores">');
         expect(app.innerHTML).not.toContain('pegar-receta');
-        expect(app.innerHTML).toMatch(/<span class="tit">.*Borradores<\/span>/);
+        expect(app.innerHTML).toMatch(/<span class="tit grande">.*Borradores<\/span>/);
       } finally {
         storeFake.buscar = original;
       }

@@ -41,6 +41,8 @@
   --tipo: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --txt-micro: 12px;   --txt-chico: 14px;  --txt-base: 16px;
   --txt-lectura: 18px; --txt-titulo: 24px;
+  /* El título del encabezado de un destino del menú (§6.12). */
+  --txt-encabezado: 20px;
   --txt-cocina: 22px;  --txt-cocina-titulo: 28px;
 
   /* §4.1 Espaciado */
@@ -85,9 +87,9 @@ body {
        position: sticky; top: 0; z-index: 3;
        /* La barra va de lado a lado; sus controles, sobre la columna. */
        padding-inline: max(var(--e-2), calc((100% - var(--columna)) / 2)); }
-/* El título de la app se centra en la barra, no en el hueco que dejan los
-   íconos: con dos a la derecha y ninguno a la izquierda, `text-align: center`
-   lo deja corrido casi 50 px. */
+/* Un título grande sin nada a la derecha se centra en la barra, no en el hueco
+   que dejan los controles: con la hamburguesa a la izquierda y nada a la
+   derecha, `text-align: center` lo deja corrido 24 px. */
 .enc .tit.app { position: absolute; left: 50%; transform: translateX(-50%); }
 .enc .der { margin-left: auto; display: flex; align-items: center; }
 /* El total va al otro extremo: con el título centrado en absoluto, nada lo
@@ -97,7 +99,9 @@ body {
 .enc .tit { flex: 1; font-size: var(--txt-base); font-weight: 600; text-align: center;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .enc .tit.izq { text-align: left; padding-left: var(--e-2); }
-/* El ícono de un tag especial, antes del título de su lista: el trazo y el
+/* Los destinos del menú llevan el título más grande que las pantallas a las que se entra desde otra. */
+.enc .tit.grande { font-size: var(--txt-encabezado); }
+/* El ícono antes del título, en todo encabezado que lo tiene: el trazo y el
    tamaño de los íconos del encabezado, alineado con la línea del texto. */
 .enc .tit svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none;
                 stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;

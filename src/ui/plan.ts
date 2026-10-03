@@ -92,7 +92,7 @@ export function renderPlan(
   // Se llega desde el menú, así que el encabezado lo abre: la hamburguesa y no
   // el volver, igual que en las demás pantallas de `MENU` (`router.ts`).
   return conLateral(menu,
-      encabezado({ titulo: 'Plan de la semana', ...izquierdaDelEncabezado(menu) }) +
+      encabezado({ titulo: 'Plan de la semana', icono: ICO.calendario, ...izquierdaDelEncabezado(menu) }) +
       '<div class="cuerpo denso">' +
         // Sin control de reintento: reintentar es volver a tocar lo que falló (R1).
         (error ? aviso({ texto: error }) : '') +

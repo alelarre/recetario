@@ -19,10 +19,10 @@ describe('la lista por tag', () => {
     expect(enc).toContain(`${ICO.marcador}probar`);
   });
 
-  it('un tag común no lleva ícono en el encabezado', () => {
+  it('un tag común lleva la etiqueta en el encabezado', () => {
     const html = renderTag({ ...base });
     const titulo = html.slice(html.indexOf('<span class="tit">'), html.indexOf('</span>', html.indexOf('<span class="tit">')));
-    expect(titulo).not.toContain('<svg');
+    expect(titulo).toContain(ICO.etiqueta);
   });
 
   it('el chip encendido del carrusel lleva el ícono del especial', () => {

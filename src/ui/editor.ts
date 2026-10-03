@@ -492,6 +492,7 @@ export function renderEditor(
 
   const pantalla = encabezado({
     titulo: entrada ? 'Editando' : 'Nueva receta',
+    icono: entrada ? ICO.lapiz : ICO.mas,
     ...izquierdaDelEncabezado(menu),
     derecha: `<button class="btn prim compacto" data-accion="pegar-receta">${ICO.portapapeles}Pegar</button>`
   }) +
