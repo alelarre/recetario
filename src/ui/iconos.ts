@@ -36,10 +36,8 @@ export const ICO = {
   /** Pegar una receta copiada: el botón del encabezado del editor. */
   portapapeles: svg('<rect x="8" y="3" width="8" height="4" rx="1"/>' +
     '<path d="M16 5h2a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h2"/>'),
-  /** Los dos destinos del menú lateral que no tenían ícono propio. */
+  /** Inicio, en el menú lateral y en el título del Recetario. */
   casa: svg('<path d="M4 11l8-6 8 6v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-8z"/>'),
-  bandeja: svg('<path d="M4 13l2.5-7h11L20 13v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5z"/>' +
-    '<path d="M4 13h5l1 2h4l1-2h5"/>'),
   /** Los dos tags especiales que no son favorito: «probar» y «menú diario». */
   marcador: svg('<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>'),
   /** Entre los dos campos de una cantidad que se calculan uno al otro. De Lucide (arrow-left-right). */
@@ -64,7 +62,8 @@ export const ICO = {
   abajo: svg('<path d="M6 9l6 6 6-6"/>'),
   calendario: svg('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
   /** Borrador: un círculo a medio llenar, hecha a medias. Un aro vacío se
-   *  leería como viñeta. Sólo en su botón del editor y en el título de Borradores. */
+   *  leería como viñeta. Es el símbolo de los borradores en todos lados: su botón
+   *  del editor, la entrada del menú lateral y el título de Borradores. */
   borrador: svg('<circle cx="12" cy="12" r="9"/><path d="M12 3A9 9 0 0 0 12 21Z" fill="currentColor" stroke="none"/>'),
   /** Favorito: la misma estrella en la receta, en la tarjeta y en el carrusel. */
   estrella: svg('<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/>'),

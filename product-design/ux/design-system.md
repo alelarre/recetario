@@ -294,13 +294,13 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `chevron` | La flecha derecha del carrusel. |
 | `buscar` | La caja de búsqueda. |
 | `menu` | La hamburguesa que abre el menú lateral, con el contador de borradores encima. |
-| `casa`, `bandeja`, `mas`, `ajustes` | Los destinos del menú lateral: Inicio, Borradores, Nueva receta y Ajustes; `casa`, `mas` y `ajustes` también delante del título de su pantalla (§6.12). `mas` es además el «+» de la tarjeta que suma al plan (§6.1) y el de una comida del plan (§6.24). |
+| `casa`, `mas`, `ajustes` | Los destinos del menú lateral: Inicio, Nueva receta y Ajustes —Borradores lleva `borrador`—; `casa`, `mas` y `ajustes` también delante del título de su pantalla (§6.12). `mas` es además el «+» de la tarjeta que suma al plan (§6.1) y el de una comida del plan (§6.24). |
 | `lapiz` | *Editar*, en el pie de la receta, y delante del título del editor de una receta que existe. |
 | `compartir` | *Compartir*, en el encabezado de la receta y en el de la lista de compras; y *Convertir con Agente*, al pie del editor. |
 | `estrella` | Favorito: en el encabezado de la receta (§6.22), en la marca de la tarjeta, en el chip y en el botón del editor. |
 | `marcador` | El tag *probar*. |
 | `calendario` | El tag *menú diario*, y Plan de la semana en el menú lateral y en su título. |
-| `borrador` | El tag *borrador*: un círculo a medio llenar, en su botón del editor y en el título de Borradores (§6.5). |
+| `borrador` | Los borradores, en todos lados: un círculo a medio llenar, en el botón del tag del editor, en la entrada Borradores del menú lateral y en su título (§6.5). |
 | `tacho` | La acción destructiva del editor: *Borrar receta*. |
 | `portapapeles` | *Pegar*, en el encabezado del editor. |
 | `carpeta` | Cada carpeta encontrada, en la pantalla de la carpeta base; y delante del título de una categoría y de la gestión de categorías. |
@@ -632,8 +632,9 @@ Al elegirla, *Subir foto* es la primera muestra de la fila: un botón de
 lista, Borradores, donde lo son todas: no lleva marca en la tarjeta (§6.1) y no
 aparece en la fila de tags de la receta abierta. Su ícono es un **círculo a
 medio llenar** —la mitad izquierda rellena; un aro vacío se leería como
-viñeta— y va en dos lugares: su botón del editor (§6.10b) y el encabezado de
-Borradores, delante del título.
+viñeta— y es **el símbolo de los borradores en todos lados**: su botón del
+editor (§6.10b), la entrada Borradores del menú lateral (§6.17) y el encabezado
+de Borradores, delante del título.
 
 ### 6.6 Ficha
 

@@ -455,6 +455,11 @@ describe('el menú lateral', () => {
     expect(html).toContain('href="#/plan"');
   });
 
+  it('Borradores lleva el mismo símbolo que en todos lados: el círculo a medio llenar', () => {
+    const html = lateral({ activo: 'recetario', abierto: false, borradores: 0 });
+    expect(html).toContain(`href="#/borradores">${ICO.borrador}Borradores`);
+  });
+
   it('el fijo de las pantallas que no son del menú va sin velo, sin marca y con su clase, que lo esconde en el teléfono', () => {
     const html = lateralFijo(2, '<p>pantalla</p>');
     expect(html).not.toContain('velo-lat');

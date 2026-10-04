@@ -372,7 +372,7 @@ export function lateral({ activo, borradores, abierto, soloAncho }: OpcionesLate
       '<div class="marca">Recetario</div>' +
       // «Inicio» y no «Recetario»: ese nombre ya es la marca de arriba del menú.
       item('recetario', '#/', ICO.casa, 'Inicio') +
-      item('borradores', '#/borradores', ICO.bandeja, 'Borradores', borradores) +
+      item('borradores', '#/borradores', ICO.borrador, 'Borradores', borradores) +
       // El plan es su única entrada: el Recetario no lo nombra.
       item('plan', '#/plan', ICO.calendario, 'Plan de la semana') +
       item('herramientas', '#/herramientas', ICO.balanza, 'Herramientas') +

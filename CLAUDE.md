@@ -48,8 +48,9 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   `borrador`, en el menú, y **es el único camino a ellos**: el home no tiene
   tile «Sin categoría» y `borrador` no aparece en ninguna lista de tags (su
   definición no va en los chips). **`borrador` no tiene marca ni chip:**
-  ni en la tarjeta ni en la receta; su ícono —el círculo a medio llenar— va
-  sólo en su botón del editor y en el título de Borradores. Tocar un
+  ni en la tarjeta ni en la receta; su ícono —el círculo a medio llenar— es
+  el de los borradores en todos lados: su botón del editor, la entrada del
+  menú lateral y el título de Borradores. Tocar un
   borrador en Borradores abre su editor. La categoría es opcional al crear: lo que no tiene categoría vive
   en `_sin-categoria/` (`carpeta_sin_categoria` en `meta`), que no es una
   categoría, y se muestra como «Sin categoría»; ninguna categoría puede
