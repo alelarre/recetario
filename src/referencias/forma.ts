@@ -8,12 +8,8 @@ import type { Tabla, Fila, Fuente, Constante } from './tipos.js';
 export const filasDe = (t: Tabla): readonly Fila[] => ('filas' in t ? t.filas : t.grupos.flatMap(g => g.filas));
 export const fuentesDe = (t: Tabla): readonly Fuente[] => ('fuente' in t ? [t.fuente] : t.fuentes);
 
-function problemasDeFuente(donde: string, f: Fuente): string[] {
-  const problemas: string[] = [];
-  if (!/^https?:\/\/\S+$/.test(f.url)) problemas.push(`${donde}: la fuente «${f.nombre}» no tiene una URL http o https`);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(f.consultada)) problemas.push(`${donde}: la fuente «${f.nombre}» no tiene la fecha como AAAA-MM-DD`);
-  return problemas;
-}
+const problemasDeFuente = (donde: string, f: Fuente): string[] =>
+  /^https?:\/\/\S+$/.test(f.url) ? [] : [`${donde}: la fuente «${f.nombre}» no tiene una URL http o https`];
 
 /**
  * Las abreviaturas que nombra una celda de fuente, como «ANMAT-F, FK 135, 141»,

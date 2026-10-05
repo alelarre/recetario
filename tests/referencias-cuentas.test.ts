@@ -8,7 +8,7 @@ import {
 import { CONVERSOR } from '../src/referencias/datos/conversor.js';
 import { problemasDeForma } from '../src/referencias/forma.js';
 
-const fuente = { nombre: 'F', url: 'https://f.com', consultada: '2026-10-04' };
+const fuente = { nombre: 'F', url: 'https://f.com' };
 const k = (valor: number, unidad = '') => ({ valor, unidad, fuente });
 const valor = (r: ReturnType<ReturnType<typeof cuentaMolde>['calcular']>, nombre: string) =>
   r?.lineas.find(l => l.nombre === nombre)?.valor;
@@ -51,8 +51,8 @@ describe('el molde', () => {
     expect(valor(molde.calcular({ molde: 'medidas', forma: 'redondo', diametro: 10, alto: 4, llenado: 100 }), 'Masa cruda')).toBe('628 g');
   });
   it('cada atajo cita su fuente, y los que no tienen una propia, la de los atajos', () => {
-    const otra = { nombre: 'Otra', url: 'https://otra.com', consultada: '2026-10-04' };
-    const deAtajos = { nombre: 'Atajos', url: 'https://atajos.com', consultada: '2026-10-04' };
+    const otra = { nombre: 'Otra', url: 'https://otra.com' };
+    const deAtajos = { nombre: 'Atajos', url: 'https://atajos.com' };
     const m = cuentaMolde({
       densidad: k(2), llenado: k(0.5), notas: [], fuenteAtajos: deAtajos,
       atajos: [

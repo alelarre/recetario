@@ -4,7 +4,7 @@ import { HERRAMIENTAS_DE_REFERENCIA } from '../src/referencias/indice.js';
 import { filasDe } from '../src/referencias/forma.js';
 import type { Cuenta } from '../src/referencias/tipos.js';
 
-const fuente = { nombre: 'F', url: 'https://f.com', consultada: '2026-10-04' };
+const fuente = { nombre: 'F', url: 'https://f.com' };
 const cuenta: Cuenta = {
   id: 'merengue', titulo: 'Merengue',
   entradas: [{ id: 'claras', nombre: 'Claras', tipo: 'numero', unidad: 'g', porDefecto: null },

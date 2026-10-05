@@ -2,13 +2,11 @@
  * Referencia rápida: sólo datos. Cada tabla dice de dónde sale.
  *
  * Procedencia: product-design/research/herramientas/verificacion-referencia-rapida.md
- * Para corregir un número, editá su fila y la fecha `consultada` de la fuente.
+ * Para corregir un número, editá su fila.
  * Para sumar una fila, respetá las columnas de su tabla. El orden en que se
  * muestran las tablas está en `src/referencias/indice.ts`.
  */
 import type { Tabla } from '../tipos.js';
-
-const consultada = '2026-10-04';
 
 export const TABLAS_RAPIDA = {
   huevos: {
@@ -28,7 +26,7 @@ export const TABLAS_RAPIDA = {
       'Huevo grande, de 58 g, en agua hirviendo.',
       'Al nivel del mar; el tiempo corre desde que el huevo entra al agua. Al sacarlo, agua fría para cortar la cocción.'
     ],
-    fuente: { nombre: 'Omni Calculator, Ideal Egg Boiling Calculator', url: 'https://www.omnicalculator.com/food/egg-boiling', consultada }
+    fuente: { nombre: 'Omni Calculator, Ideal Egg Boiling Calculator', url: 'https://www.omnicalculator.com/food/egg-boiling' }
   },
 
   'carne-seguridad': {
@@ -54,13 +52,11 @@ export const TABLAS_RAPIDA = {
     fuentes: [
       {
         abreviatura: 'FSIS', nombre: 'USDA FSIS, Safe Minimum Internal Temperature Chart',
-        url: 'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/safe-temperature-chart',
-        consultada
+        url: 'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/safe-temperature-chart'
       },
       {
         abreviatura: 'SENASA', nombre: 'SENASA, Síndrome urémico hemolítico: pautas para la prevención',
-        url: 'https://www.argentina.gob.ar/noticias/sindrome-uremico-hemolitico-pautas-para-la-prevencion-de-esta-enfermedad-transmitida-por',
-        consultada
+        url: 'https://www.argentina.gob.ar/noticias/sindrome-uremico-hemolitico-pautas-para-la-prevencion-de-esta-enfermedad-transmitida-por'
       }
     ]
   },
@@ -82,8 +78,7 @@ export const TABLAS_RAPIDA = {
     notas: ['Cerdo y aves no tienen tabla de puntos: van con su mínima de seguridad (cerdo 63 °C con 3 min de reposo, aves 74 °C).'],
     fuente: {
       nombre: 'Frigorífico Sada, ¿Cuáles son los puntos de cocción de la carne vacuna?',
-      url: 'https://www.frigorificosada.com.ar/blog/punto-de-coccion-de-la-carne/',
-      consultada
+      url: 'https://www.frigorificosada.com.ar/blog/punto-de-coccion-de-la-carne/'
     }
   },
 
@@ -111,8 +106,8 @@ export const TABLAS_RAPIDA = {
     notas: ['Rango general (Taste of Home): 177–191 °C.'],
     columnaFuente: 'fuente',
     fuentes: [
-      { abreviatura: 'ToH', nombre: 'Taste of Home, Deep Frying Temperature Chart', url: 'https://www.tasteofhome.com/article/deep-frying-temperature-chart/', consultada },
-      { abreviatura: 'Breaders', nombre: 'Breaders, Tips de manipulación y de cocción', url: 'https://breaders.com.ar/tips-de-manipulacion-y-de-coccion/', consultada }
+      { abreviatura: 'ToH', nombre: 'Taste of Home, Deep Frying Temperature Chart', url: 'https://www.tasteofhome.com/article/deep-frying-temperature-chart/' },
+      { abreviatura: 'Breaders', nombre: 'Breaders, Tips de manipulación y de cocción', url: 'https://breaders.com.ar/tips-de-manipulacion-y-de-coccion/' }
     ]
   },
 
@@ -130,8 +125,7 @@ export const TABLAS_RAPIDA = {
     ],
     fuente: {
       nombre: 'USDA FSIS, Deep Fat Frying and Food Safety',
-      url: 'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/deep-fat-frying',
-      consultada
+      url: 'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/deep-fat-frying'
     }
   },
 
@@ -147,7 +141,7 @@ export const TABLAS_RAPIDA = {
       { horno: 'Fuerte', temperatura: '190–230' },
       { horno: 'Muy fuerte', temperatura: '230–260' }
     ],
-    fuente: { nombre: 'Soy celíaco, no extraterrestre, Temperatura del horno', url: 'https://www.soyceliaconoextraterrestre.com/temperatura-del-horno/', consultada }
+    fuente: { nombre: 'Soy celíaco, no extraterrestre, Temperatura del horno', url: 'https://www.soyceliaconoextraterrestre.com/temperatura-del-horno/' }
   },
 
   'horno-ventilador': {
@@ -162,8 +156,7 @@ export const TABLAS_RAPIDA = {
     notas: ['Ejemplo: 200 °C en horno convencional son 180 °C con ventilador. El tiempo queda igual.'],
     fuente: {
       nombre: 'Bosch, Trucos para el horno: cómo ser un maestro',
-      url: 'https://innovacionparatuvida.bosch-home.es/electrodomesticos/hornos/trucos-para-el-horno-como-ser-un-maestro/',
-      consultada
+      url: 'https://innovacionparatuvida.bosch-home.es/electrodomesticos/hornos/trucos-para-el-horno-como-ser-un-maestro/'
     }
   },
 
@@ -182,11 +175,11 @@ export const TABLAS_RAPIDA = {
     fuentes: [
       {
         abreviatura: 'INYM', nombre: 'INYM, Claves para preparar un buen mate',
-        url: 'https://inym.org.ar/noticias/yerba-mate-argentina/78425-claves-para-preparar-un-buen-mate.html', consultada
+        url: 'https://inym.org.ar/noticias/yerba-mate-argentina/78425-claves-para-preparar-un-buen-mate.html'
       },
       {
         abreviatura: 'ED', nombre: 'El Día, ¿Cuáles son las temperaturas ideales del agua para tomar café, mate y té?',
-        url: 'https://www.eldia.com/nota/2025-1-12-1-49-45-cuales-son-las-temperaturas-ideales-del-agua-para-tomar-cafe-mate-y-te--temas', consultada
+        url: 'https://www.eldia.com/nota/2025-1-12-1-49-45-cuales-son-las-temperaturas-ideales-del-agua-para-tomar-cafe-mate-y-te--temas'
       }
     ]
   },
@@ -207,7 +200,7 @@ export const TABLAS_RAPIDA = {
       { te: 'Pu-erh', agua: '100', infusion: '5 min', hebras: '2' },
       { te: 'Hierbas', agua: '100', infusion: '6 min', hebras: '1,5' }
     ],
-    fuente: { nombre: 'teatimer.io, Tea Steeping Guide', url: 'https://teatimer.io/tea-steeping-guide', consultada }
+    fuente: { nombre: 'teatimer.io, Tea Steeping Guide', url: 'https://teatimer.io/tea-steeping-guide' }
   },
 
   cafe: {
@@ -225,8 +218,7 @@ export const TABLAS_RAPIDA = {
     notas: ['Proporción: 55 g de café por litro de agua.'],
     fuente: {
       nombre: 'SCAA, Guidelines for Brewing with a Two Cup Pour-Over Brewer',
-      url: 'https://scagermany.coffee/wp-content/uploads/2021/02/best-practices-two-cup-pour-over-brewer.pdf',
-      consultada
+      url: 'https://scagermany.coffee/wp-content/uploads/2021/02/best-practices-two-cup-pour-over-brewer.pdf'
     }
   },
 
@@ -246,8 +238,7 @@ export const TABLAS_RAPIDA = {
     ],
     fuente: {
       nombre: 'La Nación, La temperatura ideal para servir cada tipo de vino y cómo alcanzarla',
-      url: 'https://www.lanacion.com.ar/que-sale/la-temperatura-ideal-para-servir-cada-tipo-de-vino-y-como-alcanzarla-nid08052025/',
-      consultada
+      url: 'https://www.lanacion.com.ar/que-sale/la-temperatura-ideal-para-servir-cada-tipo-de-vino-y-como-alcanzarla-nid08052025/'
     }
   },
 
@@ -278,11 +269,11 @@ export const TABLAS_RAPIDA = {
     fuentes: [
       {
         abreviatura: 'AHA', nombre: 'American Homebrewers Association, Proper Beer Serving Temperatures',
-        url: 'https://homebrewersassociation.org/how-to-brew/proper-beer-serving-temperatures/', consultada
+        url: 'https://homebrewersassociation.org/how-to-brew/proper-beer-serving-temperatures/'
       },
       {
         abreviatura: 'Omni', nombre: 'Omni Calculator, Chilled Drink Calculator',
-        url: 'https://www.omnicalculator.com/food/chilled-drink', consultada
+        url: 'https://www.omnicalculator.com/food/chilled-drink'
       }
     ]
   }

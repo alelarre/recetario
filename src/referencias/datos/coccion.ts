@@ -2,24 +2,22 @@
  * Básicos de cocción: sólo datos. Cada tabla y cada constante dicen de dónde salen.
  *
  * Procedencia: product-design/research/herramientas/verificacion-basicos-de-coccion.md
- * Para corregir un número, editá su fila y la fecha `consultada` de la fuente.
+ * Para corregir un número, editá su fila.
  * Para sumar una fila, respetá las columnas de su tabla. El orden en que se
  * muestran las tablas está en `src/referencias/indice.ts`.
  */
 import type { Constante, Fuente, Tabla } from '../tipos.js';
 
-const consultada = '2026-10-04';
-
-const USA_RICE: Fuente = { nombre: 'USA Rice Federation, How To Cook Rice', url: 'https://www.usarice.com/thinkrice/how-to/how-to-cook-rice', consultada };
+const USA_RICE: Fuente = { nombre: 'USA Rice Federation, How To Cook Rice', url: 'https://www.usarice.com/thinkrice/how-to/how-to-cook-rice' };
 const FAGOR: Fuente = {
   nombre: 'Fagor, Manual olla a presión super-rápida Future',
-  url: 'https://fagorcookware.com/wp-content/uploads/2022/10/IM_OP_FUTURE.pdf', consultada
+  url: 'https://fagorcookware.com/wp-content/uploads/2022/10/IM_OP_FUTURE.pdf'
 };
-const BARILLA_ITALIA: Fuente = { nombre: 'Barilla, Penne Rigate (Italia)', url: 'https://www.barilla.com/it-it/prodotti/pasta/i-classici/penne-rigate', consultada };
-const BARILLA_EEUU: Fuente = { nombre: 'Barilla EE. UU., Dry & Cooked Pasta Serving Size', url: 'https://www.barilla.com/en-us/help-with/pasta-kitchen-tips/pasta-serving-size', consultada };
+const BARILLA_ITALIA: Fuente = { nombre: 'Barilla, Penne Rigate (Italia)', url: 'https://www.barilla.com/it-it/prodotti/pasta/i-classici/penne-rigate' };
+const BARILLA_EEUU: Fuente = { nombre: 'Barilla EE. UU., Dry & Cooked Pasta Serving Size', url: 'https://www.barilla.com/en-us/help-with/pasta-kitchen-tips/pasta-serving-size' };
 const IGI: Fuente = {
   nombre: 'Instituto Gastronómico Internacional (IGI), Fondos de cocina: fondo blanco, oscuro, fumet y glace paso a paso',
-  url: 'https://www.igi-la.com/blog/fondos-de-cocina-guia/', consultada
+  url: 'https://www.igi-la.com/blog/fondos-de-cocina-guia/'
 };
 
 export const TABLAS_COCCION = {
@@ -76,11 +74,11 @@ export const TABLAS_COCCION = {
     ],
     columnaFuente: 'fuente',
     fuentes: [
-      { abreviatura: 'WGC', nombre: 'Whole Grains Council, Cooking Whole Grains', url: 'https://wholegrainscouncil.org/recipes/cooking-whole-grains', consultada },
-      { abreviatura: 'Quaker', nombre: 'Quaker, Old Fashioned Oats', url: 'https://www.quakeroats.com/products/hot-cereals/old-fashioned-oats', consultada },
+      { abreviatura: 'WGC', nombre: 'Whole Grains Council, Cooking Whole Grains', url: 'https://wholegrainscouncil.org/recipes/cooking-whole-grains' },
+      { abreviatura: 'Quaker', nombre: 'Quaker, Old Fashioned Oats', url: 'https://www.quakeroats.com/products/hot-cereals/old-fashioned-oats' },
       {
         abreviatura: 'Bobs', nombre: "Bob's Red Mill, Basic preparation instructions for Golden Couscous",
-        url: 'https://www.bobsredmill.com/recipes/how-to-make/basic-preparation-instructions-for-golden-couscous', consultada
+        url: 'https://www.bobsredmill.com/recipes/how-to-make/basic-preparation-instructions-for-golden-couscous'
       }
     ]
   },
@@ -115,7 +113,7 @@ export const TABLAS_COCCION = {
     ],
     fuente: {
       nombre: 'NDSU Extension, A Pocket Guide to Preparing Pulse Foods (FN2068, noviembre de 2022)',
-      url: 'https://www.ndsu.edu/agriculture/sites/default/files/2024-01/fn2068.pdf', consultada
+      url: 'https://www.ndsu.edu/agriculture/sites/default/files/2024-01/fn2068.pdf'
     }
   },
 
@@ -170,7 +168,7 @@ export const TABLAS_COCCION = {
     ],
     fuente: {
       nombre: 'E. J. Cavanagh, Ahorro de Gas Natural en la Cocción de Pastas, Ciencia y Tecnología 13, Universidad de Palermo (2013), tabla 1',
-      url: 'https://dspace.palermo.edu/ojs/index.php/cyt/article/download/42/35/', consultada
+      url: 'https://dspace.palermo.edu/ojs/index.php/cyt/article/download/42/35/'
     }
   },
 
@@ -210,7 +208,7 @@ export const TABLAS_COCCION = {
     ],
     fuente: {
       nombre: 'Clínica Las Condes (Chile), Centro de Nutrición, Cocción de verduras',
-      url: 'https://www.clinicalascondes.cl/CENTROS-Y-ESPECIALIDADES/Centros/Centro-de-Nutricion/Nutricion/Coccion-de-Verduras', consultada
+      url: 'https://www.clinicalascondes.cl/CENTROS-Y-ESPECIALIDADES/Centros/Centro-de-Nutricion/Nutricion/Coccion-de-Verduras'
     }
   },
 
@@ -264,12 +262,12 @@ export const TABLAS_COCCION = {
       'Agua: 1 galón por libra de verdura preparada, o sea, unos 8,3 l por kg.',
       'Enfriado: en agua a 16 °C (60 °F) o menos, cambiándola seguido o con agua helada corriendo; hace falta más o menos 1 kg de hielo por kg de verdura. El enfriado dura lo mismo que el blanqueado.',
       'Al vapor, el tiempo es 1½ veces el del agua; la canasta va a 7,5 cm (3 pulgadas) o más del fondo, y se cuenta desde que se pone la tapa.',
-      'Agua, enfriado y vapor: NCHFP, Blanching Vegetables, https://nchfp.uga.edu/how/freeze/freeze-general-information/blanching-vegetables/ (consultada el 2026-10-04).',
-      'Altitud: a 5.000 pies (1.524 m) o más, 1 minuto más que el tiempo a nivel del mar. Colorado State University Extension, High Elevation Food Preparation Guide, https://foodsmartcolorado.colostate.edu/recipes/cooking-and-baking/high-elevation-food-preparation-guide (consultada el 2026-10-04).'
+      'Agua, enfriado y vapor: NCHFP, Blanching Vegetables, https://nchfp.uga.edu/how/freeze/freeze-general-information/blanching-vegetables/.',
+      'Altitud: a 5.000 pies (1.524 m) o más, 1 minuto más que el tiempo a nivel del mar. Colorado State University Extension, High Elevation Food Preparation Guide, https://foodsmartcolorado.colostate.edu/recipes/cooking-and-baking/high-elevation-food-preparation-guide.'
     ],
     fuente: {
       nombre: 'National Center for Home Food Preservation (NCHFP, Universidad de Georgia), Blanching Times',
-      url: 'https://nchfp.uga.edu/how/freeze/freeze-general-information/blanching-times/', consultada
+      url: 'https://nchfp.uga.edu/how/freeze/freeze-general-information/blanching-times/'
     }
   }
 } satisfies Record<string, Tabla>;
@@ -293,9 +291,9 @@ export const ARROZ: { variedades: readonly VariedadDeArroz[]; notas: readonly st
   ],
   notas: [
     'Hervir el agua con el arroz, bajar a fuego mínimo, tapar y no revolver. Si después del tiempo el arroz no está tierno o queda líquido, 2 a 4 minutos más.',
-    'El agua en peso es una cuenta hecha con las partes de la tabla y los gramos por taza de arroz crudo de USDA FoodData Central (https://fdc.nal.usda.gov/, consultada el 2026-10-04): largo blanco 185 g (fdcId 168877), mediano blanco 195 g (168879), corto blanco 200 g (168931), integral largo 185 g (169703), integral mediano 190 g (169706), salvaje 160 g (169726). El parboil no tiene densidad ahí.',
-    'El Ministerio de Agroindustria (Alimentos Argentinos, Ficha 37: Arroz, https://alimentosargentinos.magyp.gob.ar/HomeAlimentos/seguridad-alimentaria-y-nutricion/fichaspdf/Ficha_37_Arroz.pdf, consultada el 2026-10-04) da una sola regla para todos: 1 parte de arroz por 3 de líquido, ya sea agua, caldo o salsa.',
-    'En olla a presión, llenar la olla hasta la mitad como máximo (Fagor, manual Future, https://fagorcookware.com/wp-content/uploads/2022/10/IM_OP_FUTURE.pdf, consultado el 2026-10-04).'
+    'El agua en peso es una cuenta hecha con las partes de la tabla y los gramos por taza de arroz crudo de USDA FoodData Central (https://fdc.nal.usda.gov/): largo blanco 185 g (fdcId 168877), mediano blanco 195 g (168879), corto blanco 200 g (168931), integral largo 185 g (169703), integral mediano 190 g (169706), salvaje 160 g (169726). El parboil no tiene densidad ahí.',
+    'El Ministerio de Agroindustria (Alimentos Argentinos, Ficha 37: Arroz, https://alimentosargentinos.magyp.gob.ar/HomeAlimentos/seguridad-alimentaria-y-nutricion/fichaspdf/Ficha_37_Arroz.pdf) da una sola regla para todos: 1 parte de arroz por 3 de líquido, ya sea agua, caldo o salsa.',
+    'En olla a presión, llenar la olla hasta la mitad como máximo (Fagor, manual Future, https://fagorcookware.com/wp-content/uploads/2022/10/IM_OP_FUTURE.pdf).'
   ],
   fuente: USA_RICE
 };

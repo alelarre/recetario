@@ -23,7 +23,7 @@ export function minutosDe(texto: string): number | null {
 }
 
 const lineaDeFuente = (f: Fuente): string =>
-  `<a href="${escapar(f.url)}" target="_blank" rel="noopener">${escapar(f.nombre)}</a>, consultada el ${escapar(f.consultada)}`;
+  `<a href="${escapar(f.url)}" target="_blank" rel="noopener">${escapar(f.nombre)}</a>`;
 
 /** Todas las fuentes que cita, una sola vez por link. */
 function pieDeFuentes(fuentes: readonly Fuente[]): string {

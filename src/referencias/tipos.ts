@@ -4,7 +4,7 @@
  * viven en `datos/`, sin funciones; las cuentas, en `cuentas.ts`.
  */
 
-export interface Fuente { nombre: string; url: string; consultada: string }
+export interface Fuente { nombre: string; url: string }
 export interface FuenteAbreviada extends Fuente { abreviatura: string }
 export interface Columna { id: string; nombre: string; unidad?: string; minutos?: true }
 export type Fila = Readonly<Record<string, string>>;

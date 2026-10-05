@@ -3,54 +3,52 @@
  *
  * Procedencia: product-design/research/herramientas/verificacion-masas-y-dulces.md
  * (y su «Agregado: pastas rellenas, lasaña y ñoquis»).
- * Para corregir un número, editá su fila y la fecha `consultada` de la fuente.
+ * Para corregir un número, editá su fila.
  * Los ingredientes de las recetas son por porción: la cuenta los multiplica.
  * El orden en que se muestran las fichas está en `src/referencias/indice.ts`.
  */
 import type { Constante, Fuente, Tabla } from '../tipos.js';
 
-const consultada = '2026-10-04';
-
-const WILTON: Fuente = { nombre: 'Wilton, Cake Baking & Serving Guide', url: 'https://wilton.com/baking-inspiration/cake-baking-serving-guide/', consultada };
+const WILTON: Fuente = { nombre: 'Wilton, Cake Baking & Serving Guide', url: 'https://wilton.com/baking-inspiration/cake-baking-serving-guide/' };
 const AIB: Fuente = {
   nombre: 'AIB International, Food First, Q&A: Is taking a specific gravity measurement necessary for cake batter during or after mixing',
-  url: 'https://blog.aibinternational.com/en/food-first-blog/postid/948/qa-is-taking-a-specific-gravity-measurement-necessary-for-cake-batter-during-or-after-mixing', consultada
+  url: 'https://blog.aibinternational.com/en/food-first-blog/postid/948/qa-is-taking-a-specific-gravity-measurement-necessary-for-cake-batter-during-or-after-mixing'
 };
-const EMPORIO_ALUMINIO: Fuente = { nombre: 'El Nuevo Emporio, Artículos de aluminio', url: 'https://elnuevoemporio.com.ar/productos-reposteria-aluminio.html', consultada };
+const EMPORIO_ALUMINIO: Fuente = { nombre: 'El Nuevo Emporio, Artículos de aluminio', url: 'https://elnuevoemporio.com.ar/productos-reposteria-aluminio.html' };
 const KUCHEN_BAZAR: Fuente = {
   nombre: 'Kuchen Bazar, Budinera antiadherente 1,5 L',
-  url: 'https://www.kuchenbazar.com.ar/productos/budinera-antiadherente-de-aluminio-molde-para-horno-15-l/', consultada
+  url: 'https://www.kuchenbazar.com.ar/productos/budinera-antiadherente-de-aluminio-molde-para-horno-15-l/'
 };
-const EMPORIO_BUDIN: Fuente = { nombre: 'El Nuevo Emporio, Moldes para budín', url: 'https://elnuevoemporio.com.ar/productos-reposteria-moldes-budin.html', consultada };
-const JOY_OF_BAKING: Fuente = { nombre: 'Joy of Baking, Pan Sizes', url: 'https://www.joyofbaking.com/PanSizes.html', consultada };
+const EMPORIO_BUDIN: Fuente = { nombre: 'El Nuevo Emporio, Moldes para budín', url: 'https://elnuevoemporio.com.ar/productos-reposteria-moldes-budin.html' };
+const JOY_OF_BAKING: Fuente = { nombre: 'Joy of Baking, Pan Sizes', url: 'https://www.joyofbaking.com/PanSizes.html' };
 const INFORMACIBO: Fuente = {
   nombre: "Informacibo, Guida alla pasta all'uovo (Ines Roscio Pavia)",
-  url: 'https://www.informacibo.it/fare-la-pasta-alluovo-tagliatelle-lasagne-pappardelle/', consultada
+  url: 'https://www.informacibo.it/fare-la-pasta-alluovo-tagliatelle-lasagne-pappardelle/'
 };
-const CASA_DI_LANGA: Fuente = { nombre: 'Casa di Langa, Tajarin', url: 'https://www.casadilanga.com/it/tavola-e-calici/tajarin-pasta/', consultada };
+const CASA_DI_LANGA: Fuente = { nombre: 'Casa di Langa, Tajarin', url: 'https://www.casadilanga.com/it/tavola-e-calici/tajarin-pasta/' };
 const GALBANI_ORECCHIETTE: Fuente = {
   nombre: 'Galbani, Come fare le orecchiette pugliesi',
-  url: 'https://www.galbani.it/abcucina/come-fare/trucchi-e-segreti-per-la-pasta-fresca/come-fare-le-orecchiette-pugliesi', consultada
+  url: 'https://www.galbani.it/abcucina/come-fare/trucchi-e-segreti-per-la-pasta-fresca/come-fare-le-orecchiette-pugliesi'
 };
 const CSI_PIEMONTE: Fuente = {
   nombre: "CSI Piemonte, Procedura per l'affidamento del servizio di ristorazione aziendale, anexo 5, Tabella delle grammature e delle porzioni",
-  url: 'https://www.csipiemonte.it/sites/default/files/inline_download/gare/archivio/2017/01_2017/All_5_Tabella_Grammature_e_Porzioni.pdf', consultada
+  url: 'https://www.csipiemonte.it/sites/default/files/inline_download/gare/archivio/2017/01_2017/All_5_Tabella_Grammature_e_Porzioni.pdf'
 };
-const COCINEROS_NOQUIS: Fuente = { nombre: 'Cocineros Argentinos, Ñoquis de papa', url: 'https://cocinerosargentinos.com/recetas/economicas/noquis-de-papa', consultada };
-const LA_JUVENIL: Fuente = { nombre: 'La Juvenil, Catálogo de productos', url: 'https://www.lajuvenilpastas.com.ar/catalogos/catalogo_de_productos.pdf', consultada };
+const COCINEROS_NOQUIS: Fuente = { nombre: 'Cocineros Argentinos, Ñoquis de papa', url: 'https://cocinerosargentinos.com/recetas/economicas/noquis-de-papa' };
+const LA_JUVENIL: Fuente = { nombre: 'La Juvenil, Catálogo de productos', url: 'https://www.lajuvenilpastas.com.ar/catalogos/catalogo_de_productos.pdf' };
 const BOLOGNA_WELCOME: Fuente = {
   nombre: 'Fondazione Bologna Welcome, Lasagne Verdi alla bolognese (receta de la Accademia Italiana della Cucina)',
-  url: 'https://www.bolognawelcome.com/it/altro/ricette-e-prodotti-tipici/lasagne-verdi-alla-bolognese', consultada
+  url: 'https://www.bolognawelcome.com/it/altro/ricette-e-prodotti-tipici/lasagne-verdi-alla-bolognese'
 };
-const AVPN: Fuente = { nombre: 'AVPN, Disciplinare 2024', url: 'https://www.pizzanapoletana.org/public/pdf/Disciplinare-2024-ENG.pdf', consultada };
-const COMEMELAPIZZA: Fuente = { nombre: 'Comemelapizza, Masa de pizza argentina', url: 'https://www.comemelapizza.com/masa-de-pizza-argentina/', consultada };
+const AVPN: Fuente = { nombre: 'AVPN, Disciplinare 2024', url: 'https://www.pizzanapoletana.org/public/pdf/Disciplinare-2024-ENG.pdf' };
+const COMEMELAPIZZA: Fuente = { nombre: 'Comemelapizza, Masa de pizza argentina', url: 'https://www.comemelapizza.com/masa-de-pizza-argentina/' };
 const CSU_CANDY: Fuente = {
   nombre: 'Colorado State University Extension, Candy making at high elevation',
-  url: 'https://foodsmartcolorado.colostate.edu/recipes/cooking-and-baking/candy-making-at-high-elevation', consultada
+  url: 'https://foodsmartcolorado.colostate.edu/recipes/cooking-and-baking/candy-making-at-high-elevation'
 };
-const LAROUSSE_FRANCES: Fuente = { nombre: 'Larousse Cocina, Merengue francés', url: 'https://laroussecocina.mx/receta/merengue-frances/', consultada };
-const LAROUSSE_SUIZO: Fuente = { nombre: 'Larousse Cocina, Merengue suizo', url: 'https://laroussecocina.mx/receta/merengue-suizo/', consultada };
-const LAROUSSE_ITALIANO: Fuente = { nombre: 'Larousse Cocina, Merengue italiano', url: 'https://laroussecocina.mx/receta/merengue-italiano/', consultada };
+const LAROUSSE_FRANCES: Fuente = { nombre: 'Larousse Cocina, Merengue francés', url: 'https://laroussecocina.mx/receta/merengue-frances/' };
+const LAROUSSE_SUIZO: Fuente = { nombre: 'Larousse Cocina, Merengue suizo', url: 'https://laroussecocina.mx/receta/merengue-suizo/' };
+const LAROUSSE_ITALIANO: Fuente = { nombre: 'Larousse Cocina, Merengue italiano', url: 'https://laroussecocina.mx/receta/merengue-italiano/' };
 
 export const TABLAS_MASAS = {
   piezas: {
@@ -81,26 +79,26 @@ export const TABLAS_MASAS = {
     notas: [
       'Peso de la masa cruda al dividir.',
       'Son recetas de panadería: el pan de pancho de 40 g es el industrial chico; el de Viena, de 100 g, es el grande.',
-      'El pan de hamburguesa de papa clásico también se divide en 80 g (https://www.puratos.com.ar/es/recipes/pan-de-hamburguesa-de-papa-clasico, consultada el 2026-10-04). Pan dulce: se cortan piezas de 530 g y rinde piezas de 500 g.'
+      'El pan de hamburguesa de papa clásico también se divide en 80 g (https://www.puratos.com.ar/es/recipes/pan-de-hamburguesa-de-papa-clasico). Pan dulce: se cortan piezas de 530 g y rinde piezas de 500 g.'
     ],
     columnaFuente: 'fuente',
     fuentes: [
-      { abreviatura: 'Hamburguesa', nombre: 'Puratos Argentina, Pan de hamburguesa', url: 'https://www.puratos.com.ar/es/recipes/pan-de-hamburguesa0', consultada },
-      { abreviatura: 'HamburguesaArtesanal', nombre: 'Puratos Argentina, Pan de hamburguesas tipo artesanal', url: 'https://www.puratos.com.ar/es/recipes/pan-de-hamburguesas-tipo-artesanal', consultada },
-      { abreviatura: 'Pancho', nombre: 'Puratos Argentina, Pan de pancho', url: 'https://www.puratos.com.ar/es/recipes/pan-de-pancho', consultada },
-      { abreviatura: 'Viena', nombre: 'Puratos Argentina, Pan de Viena', url: 'https://www.puratos.com.ar/es/recipes/pan-de-viena', consultada },
-      { abreviatura: 'Pebete', nombre: 'Puratos Argentina, Pan de pebete', url: 'https://www.puratos.com.ar/es/recipes/pan-de-pebete', consultada },
-      { abreviatura: 'Flauta', nombre: 'Puratos Argentina, Pan flauta', url: 'https://www.puratos.com.ar/es/recipes/pan-flauta', consultada },
-      { abreviatura: 'Frances', nombre: 'Puratos Argentina, Pan francés', url: 'https://www.puratos.com.ar/es/recipes/pan-frances', consultada },
-      { abreviatura: 'Baguette', nombre: 'Puratos Argentina, Baguette rústica', url: 'https://www.puratos.com.ar/es/recipes/baguette-rustica', consultada },
-      { abreviatura: 'Bagel', nombre: 'Puratos Argentina, Bagel de granos andinos', url: 'https://www.puratos.com.ar/es/recipes/bagel-de-granos-andinos', consultada },
-      { abreviatura: 'Grisin', nombre: 'Puratos Argentina, Grisines de queso y semillas', url: 'https://www.puratos.com.ar/es/recipes/grisines-de-queso-y-semillas', consultada },
-      { abreviatura: 'Medialuna', nombre: 'Puratos Argentina, Medialunas de manteca', url: 'https://www.puratos.com.ar/es/recipes/medialunas-de-manteca', consultada },
-      { abreviatura: 'Factura', nombre: 'Puratos Argentina, Facturas', url: 'https://www.puratos.com.ar/es/recipes/facturas0', consultada },
-      { abreviatura: 'MoldeArtesanal', nombre: 'Puratos Argentina, Pan de molde tipo artesanal', url: 'https://www.puratos.com.ar/es/recipes/pan-de-molde-tipo-artesanal', consultada },
-      { abreviatura: 'MoldeLacteado', nombre: 'Puratos Argentina, Pan de molde lacteado', url: 'https://www.puratos.com.ar/es/recipes/pan-de-molde-lacteado', consultada },
-      { abreviatura: 'Campo', nombre: 'Puratos Argentina, Pan de campo', url: 'https://www.puratos.com.ar/es/recipes/pan-de-campo0', consultada },
-      { abreviatura: 'Panettone', nombre: 'Puratos Argentina, Panettone', url: 'https://www.puratos.com.ar/es/recipes/panettone0', consultada }
+      { abreviatura: 'Hamburguesa', nombre: 'Puratos Argentina, Pan de hamburguesa', url: 'https://www.puratos.com.ar/es/recipes/pan-de-hamburguesa0' },
+      { abreviatura: 'HamburguesaArtesanal', nombre: 'Puratos Argentina, Pan de hamburguesas tipo artesanal', url: 'https://www.puratos.com.ar/es/recipes/pan-de-hamburguesas-tipo-artesanal' },
+      { abreviatura: 'Pancho', nombre: 'Puratos Argentina, Pan de pancho', url: 'https://www.puratos.com.ar/es/recipes/pan-de-pancho' },
+      { abreviatura: 'Viena', nombre: 'Puratos Argentina, Pan de Viena', url: 'https://www.puratos.com.ar/es/recipes/pan-de-viena' },
+      { abreviatura: 'Pebete', nombre: 'Puratos Argentina, Pan de pebete', url: 'https://www.puratos.com.ar/es/recipes/pan-de-pebete' },
+      { abreviatura: 'Flauta', nombre: 'Puratos Argentina, Pan flauta', url: 'https://www.puratos.com.ar/es/recipes/pan-flauta' },
+      { abreviatura: 'Frances', nombre: 'Puratos Argentina, Pan francés', url: 'https://www.puratos.com.ar/es/recipes/pan-frances' },
+      { abreviatura: 'Baguette', nombre: 'Puratos Argentina, Baguette rústica', url: 'https://www.puratos.com.ar/es/recipes/baguette-rustica' },
+      { abreviatura: 'Bagel', nombre: 'Puratos Argentina, Bagel de granos andinos', url: 'https://www.puratos.com.ar/es/recipes/bagel-de-granos-andinos' },
+      { abreviatura: 'Grisin', nombre: 'Puratos Argentina, Grisines de queso y semillas', url: 'https://www.puratos.com.ar/es/recipes/grisines-de-queso-y-semillas' },
+      { abreviatura: 'Medialuna', nombre: 'Puratos Argentina, Medialunas de manteca', url: 'https://www.puratos.com.ar/es/recipes/medialunas-de-manteca' },
+      { abreviatura: 'Factura', nombre: 'Puratos Argentina, Facturas', url: 'https://www.puratos.com.ar/es/recipes/facturas0' },
+      { abreviatura: 'MoldeArtesanal', nombre: 'Puratos Argentina, Pan de molde tipo artesanal', url: 'https://www.puratos.com.ar/es/recipes/pan-de-molde-tipo-artesanal' },
+      { abreviatura: 'MoldeLacteado', nombre: 'Puratos Argentina, Pan de molde lacteado', url: 'https://www.puratos.com.ar/es/recipes/pan-de-molde-lacteado' },
+      { abreviatura: 'Campo', nombre: 'Puratos Argentina, Pan de campo', url: 'https://www.puratos.com.ar/es/recipes/pan-de-campo0' },
+      { abreviatura: 'Panettone', nombre: 'Puratos Argentina, Panettone', url: 'https://www.puratos.com.ar/es/recipes/panettone0' }
     ]
   },
 
@@ -147,15 +145,15 @@ export const TABLAS_MASAS = {
     ],
     columnaFuente: 'fuente',
     fuentes: [
-      { abreviatura: 'Cocineros', nombre: 'Cocineros Argentinos, Tapas de empanadas', url: 'https://cocinerosargentinos.com/masas-saladas/tapas-de-empanadas', consultada },
+      { abreviatura: 'Cocineros', nombre: 'Cocineros Argentinos, Tapas de empanadas', url: 'https://cocinerosargentinos.com/masas-saladas/tapas-de-empanadas' },
       {
         abreviatura: 'Salteña', nombre: 'Casa Segal, Tapa de empanadas horno x 12u La Salteña 330 g',
-        url: 'https://www.casa-segal.com/producto/tapa-de-empanadas-horno-x-12u-la-saltena-330g/', consultada
+        url: 'https://www.casa-segal.com/producto/tapa-de-empanadas-horno-x-12u-la-saltena-330g/'
       },
-      { abreviatura: 'Maseca', nombre: 'Maseca, Tortillas', url: 'https://www.mimaseca.com/es/recetas/tortillas/', consultada },
-      { abreviatura: 'JustOne', nombre: 'Just One Cookbook, Ramen Noodles', url: 'https://www.justonecookbook.com/ramen-noodles/', consultada },
-      { abreviatura: 'CharWok', nombre: 'CharWok, Chinese dumplings, an ultimate how-to guide', url: 'https://charwok.com/dumpling-guide/', consultada },
-      { abreviatura: 'PantryMama', nombre: 'Pantry Mama, Dough weights for common bread shapes', url: 'https://pantrymama.com/dough-weights-for-common-bread-shapes/', consultada }
+      { abreviatura: 'Maseca', nombre: 'Maseca, Tortillas', url: 'https://www.mimaseca.com/es/recetas/tortillas/' },
+      { abreviatura: 'JustOne', nombre: 'Just One Cookbook, Ramen Noodles', url: 'https://www.justonecookbook.com/ramen-noodles/' },
+      { abreviatura: 'CharWok', nombre: 'CharWok, Chinese dumplings, an ultimate how-to guide', url: 'https://charwok.com/dumpling-guide/' },
+      { abreviatura: 'PantryMama', nombre: 'Pantry Mama, Dough weights for common bread shapes', url: 'https://pantrymama.com/dough-weights-for-common-bread-shapes/' }
     ]
   }
 } satisfies Record<string, Tabla>;
@@ -191,9 +189,9 @@ export const MOLDE: {
   fuenteAtajos: EMPORIO_ALUMINIO,
   notas: [
     'Llenado: de la mitad a dos tercios del molde (Wilton). Densidad de la masa de torta: de 0,8 a 0,9 g/ml (AIB International); se usa el punto medio.',
-    'En Argentina el número del molde es el diámetro en cm (Distribuidora Fénix, https://distribuidorafenix.com.ar/producto/molde-torta-n-22-redondo-de-aluminio/, consultada el 2026-10-04). Los altos son los del catálogo de El Nuevo Emporio, que da los números por rango; el número del molde se escribe aparte.',
+    'En Argentina el número del molde es el diámetro en cm (Distribuidora Fénix, https://distribuidorafenix.com.ar/producto/molde-torta-n-22-redondo-de-aluminio/). Los altos son los del catálogo de El Nuevo Emporio, que da los números por rango; el número del molde se escribe aparte.',
     'Las placas son del catálogo de El Nuevo Emporio. Las budineras son ejemplos de fabricante: al elegir una, el pie cita la suya.',
-    'La capacidad real de un molde de paredes inclinadas es menor que la cuenta: el de 20 × 4 cm de Joy of Baking da 1,24 l en la cuenta y declara 948 ml (77 %); la budinera Kuchen da 1,82 l y declara 1,5 l (83 %). El resultado es aproximado; se puede medir con agua (Goizalde, Moldes y capacidades, https://cocinandocongoizalde.com/2013/04/23/moldes-y-capacidades/, consultada el 2026-10-04).',
+    'La capacidad real de un molde de paredes inclinadas es menor que la cuenta: el de 20 × 4 cm de Joy of Baking da 1,24 l en la cuenta y declara 948 ml (77 %); la budinera Kuchen da 1,82 l y declara 1,5 l (83 %). El resultado es aproximado; se puede medir con agua (Goizalde, Moldes y capacidades, https://cocinandocongoizalde.com/2013/04/23/moldes-y-capacidades/).',
     'El savarín lleva tubo: el catálogo no da su diámetro, así que se calcula sólo con las medidas y el diámetro del tubo. Los moldes cuadrados y rectangulares del catálogo no traen el alto.'
   ]
 };
@@ -242,7 +240,7 @@ export const PASTA_FRESCA: readonly RecetaPorPorcion[] = [
     ],
     notas: [
       'Porción de 125 g de pasta rellena cruda, masa y relleno juntos (CSI Piemonte, para ravioles, tortelli y tortellini como plato principal; en caldo son 80 g).',
-      'Masa y relleno 60 : 40: Giovanni Rana lo publica así en sus pastas de carne, 62 : 38 (Sfogliavelo Carne, https://shop.giovannirana.it/prodotto/sfogliavelo-carne-confezione-da-250-g) y 64 : 36 (Sfogliagrezza Casarecci, https://shop.giovannirana.it/prodotto/sfogliagrezza-casarecci-confezione-da-250-g), consultadas el 2026-10-04.',
+      'Masa y relleno 60 : 40: Giovanni Rana lo publica así en sus pastas de carne, 62 : 38 (Sfogliavelo Carne, https://shop.giovannirana.it/prodotto/sfogliavelo-carne-confezione-da-250-g) y 64 : 36 (Sfogliagrezza Casarecci, https://shop.giovannirana.it/prodotto/sfogliagrezza-casarecci-confezione-da-250-g).',
       'Harina y huevo son cuenta propia: la masa al huevo (100 g de harina y un huevo de 50 g sin cáscara) pesa unos 150 g. Una pasta casera queda más gruesa que la industrial, con más masa.'
     ],
     fuente: CSI_PIEMONTE
@@ -256,7 +254,7 @@ export const PASTA_FRESCA: readonly RecetaPorPorcion[] = [
     ],
     notas: [
       'Porción de 125 g de pasta rellena cruda, masa y relleno juntos (CSI Piemonte, para ravioles, tortelli y tortellini como plato principal; en caldo son 80 g).',
-      'Masa y relleno 40 : 60: Giovanni Rana, Sfogliavelo Ricotta e Spinaci (https://shop.giovannirana.it/prodotto/sfogliavelo-ricotta-e-spinaci-confezione-da-250-g, consultada el 2026-10-04).',
+      'Masa y relleno 40 : 60: Giovanni Rana, Sfogliavelo Ricotta e Spinaci (https://shop.giovannirana.it/prodotto/sfogliavelo-ricotta-e-spinaci-confezione-da-250-g).',
       'Harina y huevo son cuenta propia: la masa al huevo (100 g de harina y un huevo de 50 g sin cáscara) pesa unos 150 g. Una pasta casera queda más gruesa que la industrial, con más masa.'
     ],
     fuente: CSI_PIEMONTE
@@ -270,7 +268,7 @@ export const PASTA_FRESCA: readonly RecetaPorPorcion[] = [
     ],
     notas: [
       'Con queso rallado y sal. La receta rinde 4 porciones con 1 kg de puré, 200 g de harina 0000 o 000 y de 1 a 2 huevos; puré y harina en proporción de 5 a 1.',
-      'La fábrica La Juvenil confirma la porción: sus ñoquis de papa, espinaca y calabaza rinden 3 porciones por kilo (Catálogo de productos, https://www.lajuvenilpastas.com.ar/catalogos/catalogo_de_productos.pdf, consultado el 2026-10-04).'
+      'La fábrica La Juvenil confirma la porción: sus ñoquis de papa, espinaca y calabaza rinden 3 porciones por kilo (Catálogo de productos, https://www.lajuvenilpastas.com.ar/catalogos/catalogo_de_productos.pdf).'
     ],
     fuente: COCINEROS_NOQUIS
   }
@@ -365,8 +363,8 @@ export const AZUCAR: { puntos: readonly PuntoDeAzucar[]; metrosPorGrado: Constan
   metrosPorGrado: { valor: 275, unidad: 'm de altitud por °C menos', fuente: CSU_CANDY },
   notas: [
     'Temperaturas a nivel del mar. Bolita blanda a quebrado duro: Colorado State University Extension, Candy making at high elevation.',
-    'Hilo, caramelos y azúcar quemada: Wikipedia, Candy making (https://en.wikipedia.org/wiki/Candy_making, consultada el 2026-10-04). La descripción de la prueba en agua fría: My Country Table, How to test candy in cold water (https://mycountrytable.com/test-candy-cold-water/, consultada el 2026-10-04), porque CSU sólo da el nombre de cada prueba.',
-    'Ajuste por altitud (CSU Extension, High Altitude Food Preparation, https://www.extension.colostate.edu/wp-content/uploads/2021/11/High-Altitude-PDFv3.pdf, consultada el 2026-10-04): hervir agua y leer el termómetro; restarle a la temperatura de la receta la diferencia entre 100 °C y esa lectura. Sin termómetro probado, 1 °C menos cada 275 m (2 °F cada 1.000 pies).',
+    'Hilo, caramelos y azúcar quemada: Wikipedia, Candy making (https://en.wikipedia.org/wiki/Candy_making). La descripción de la prueba en agua fría: My Country Table, How to test candy in cold water (https://mycountrytable.com/test-candy-cold-water/), porque CSU sólo da el nombre de cada prueba.',
+    'Ajuste por altitud (CSU Extension, High Altitude Food Preparation, https://www.extension.colostate.edu/wp-content/uploads/2021/11/High-Altitude-PDFv3.pdf): hervir agua y leer el termómetro; restarle a la temperatura de la receta la diferencia entre 100 °C y esa lectura. Sin termómetro probado, 1 °C menos cada 275 m (2 °F cada 1.000 pies).',
     'Punto de ebullición del agua según CSU: nivel del mar 100 °C; 610 m 97,8 °C; 1.524 m 95,0 °C; 2.286 m 92,2 °C; 3.048 m 89,4 °C.',
     'La prueba en agua fría sirve a cualquier altura.'
   ],
@@ -395,13 +393,13 @@ export const MERENGUE: readonly TipoDeMerengue[] = [
   {
     id: 'suizo', nombre: 'Suizo', azucarPorClara: 1.67, impalpablePorClara: 0,
     aguaPorAzucarAlmibar: 0, azucarAlmibarPorClara: 0, temperatura: 'baño maría hasta 71 °C',
-    nota: 'Larousse lo lleva sólo hasta 45 °C. Los 71 °C (160 °F) son la temperatura de seguridad para el huevo que da la FDA (https://www.fda.gov/food/buy-store-serve-safe-food/what-you-need-know-about-egg-safety, consultada el 2026-10-04), y con el azúcar la clara no se corta (Baker Bettie, https://bakerbettie.com/how-to-make-swiss-meringue/, consultada el 2026-10-04).',
+    nota: 'Larousse lo lleva sólo hasta 45 °C. Los 71 °C (160 °F) son la temperatura de seguridad para el huevo que da la FDA (https://www.fda.gov/food/buy-store-serve-safe-food/what-you-need-know-about-egg-safety), y con el azúcar la clara no se corta (Baker Bettie, https://bakerbettie.com/how-to-make-swiss-meringue/).',
     fuente: LAROUSSE_SUIZO
   },
   {
     id: 'italiano', nombre: 'Italiano', azucarPorClara: 1.33, impalpablePorClara: 0,
     aguaPorAzucarAlmibar: 0.4, azucarAlmibarPorClara: 1, temperatura: 'almíbar a 118–120 °C, punto bolita blanda',
-    nota: 'El resto del azúcar, 0,33 por cada parte de claras, va a las claras. Larousse lleva el almíbar a 120 °C; Cocineros Argentinos, a 118 °C (https://cocinerosargentinos.com/pasteleria/lo-si-y-los-no-del-merengue, consultada el 2026-10-04).',
+    nota: 'El resto del azúcar, 0,33 por cada parte de claras, va a las claras. Larousse lleva el almíbar a 120 °C; Cocineros Argentinos, a 118 °C (https://cocinerosargentinos.com/pasteleria/lo-si-y-los-no-del-merengue).',
     fuente: LAROUSSE_ITALIANO
   }
 ];

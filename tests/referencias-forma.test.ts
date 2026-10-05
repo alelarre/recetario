@@ -6,7 +6,7 @@ import { AGUA_SAL_PASTA, ESPAGUETI, CALDO } from '../src/referencias/datos/cocci
 import { MOLDE, PASTA_FRESCA, LASANA, PIZZA, AZUCAR, MERENGUE } from '../src/referencias/datos/masas-y-dulces.js';
 import { SISTEMAS, UNIDADES, INGREDIENTES, INGREDIENTE_DEL_STICK } from '../src/referencias/datos/conversor.js';
 
-const fuente = { nombre: 'Fuente', url: 'https://ejemplo.com/x', consultada: '2026-10-04' };
+const fuente = { nombre: 'Fuente', url: 'https://ejemplo.com/x' };
 const columnas = [{ id: 'a', nombre: 'A' }, { id: 'b', nombre: 'B', unidad: '°C' }];
 
 describe('la forma de una tabla', () => {
@@ -23,11 +23,10 @@ describe('la forma de una tabla', () => {
     ]);
   });
 
-  it('una fuente sin URL https o con la fecha mal escrita es un problema', () => {
-    const mala = { nombre: 'X', url: 'ejemplo.com', consultada: '4/10/2026' };
+  it('una fuente sin URL http o https es un problema', () => {
+    const mala = { nombre: 'X', url: 'ejemplo.com' };
     expect(problemasDeForma({ id: 't', titulo: 'T', columnas, filas: [], fuente: mala })).toEqual([
-      't: la fuente «X» no tiene una URL http o https',
-      't: la fuente «X» no tiene la fecha como AAAA-MM-DD'
+      't: la fuente «X» no tiene una URL http o https'
     ]);
   });
 

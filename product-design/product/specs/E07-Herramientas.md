@@ -578,9 +578,8 @@ cuentas: son doce tablas. La pantalla es la de toda referencia (C07.7.1).
   (`design-system.md` §6.28), y debajo el resultado: sus líneas, la tabla del
   resultado si la tiene, las advertencias y la fuente; después, las notas de
   la cuenta.
-- [ ] **Al pie de cada ficha, la fuente:** «Fuente: <nombre>», con el link y
-  «consultada el» la fecha de consulta. Una ficha con varias fuentes las lista
-  todas, una vez por link. Una tabla de varias fuentes dice en cada fila
+- [ ] **Al pie de cada ficha, la fuente:** «Fuente: <nombre>», con el link.
+  Una ficha con varias fuentes las lista todas, una vez por link. Una tabla de varias fuentes dice en cada fila
   cuál es la suya.
 - [ ] **Lo que se muestra es lo que se calcula:** cada cuenta aplica sus
   valores por defecto y descarta lo inválido. Un campo vacío que tiene valor

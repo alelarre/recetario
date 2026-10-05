@@ -3,7 +3,7 @@
  *
  * Procedencia: product-design/research/herramientas/verificacion-conservacion.md
  * y, para las filas que se suman, verificacion-conservacion-completa.md.
- * Para corregir un plazo, editá su fila y la fecha `consultada` de la fuente.
+ * Para corregir un plazo, editá su fila.
  * Para sumar una fila, respetá las columnas de su tabla y citá en `fuente` una
  * abreviatura de la lista (con el número de fila de FoodKeeper o el id de
  * StillTasty a continuación); si la fuente es nueva, sumala a `FUENTES`.
@@ -11,63 +11,61 @@
  */
 import type { FuenteAbreviada, Tabla } from '../tipos.js';
 
-const consultada = '2026-10-04';
-
 const FK: FuenteAbreviada = {
   abreviatura: 'FK', nombre: 'FoodKeeper, FSIS/USDA (dataset abierto; el número de fila es el ID del producto)',
-  url: 'https://catalog.data.gov/dataset/fsis-foodkeeper-data', consultada
+  url: 'https://catalog.data.gov/dataset/fsis-foodkeeper-data'
 };
 const FSIS_C: FuenteAbreviada = {
   abreviatura: 'FSIS-C', nombre: 'FSIS, «Freezing and Food Safety»',
-  url: 'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/freezing-and-food-safety', consultada
+  url: 'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/freezing-and-food-safety'
 };
 const FSIS_D: FuenteAbreviada = {
   abreviatura: 'FSIS-D', nombre: 'FSIS, «The Big Thaw — Safe Defrosting Methods»',
-  url: 'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/big-thaw-safe-defrosting-methods', consultada
+  url: 'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/big-thaw-safe-defrosting-methods'
 };
 const FSIS_S: FuenteAbreviada = {
   abreviatura: 'FSIS-S', nombre: 'FSIS, «Leftovers and Food Safety»',
-  url: 'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/leftovers-and-food-safety', consultada
+  url: 'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/leftovers-and-food-safety'
 };
 const FSIS_R: FuenteAbreviada = {
   abreviatura: 'FSIS-R', nombre: 'FSIS, «Refrigeration»',
-  url: 'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/refrigeration', consultada
+  url: 'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/refrigeration'
 };
 const ANMAT_F: FuenteAbreviada = {
   abreviatura: 'ANMAT-F', nombre: 'ANMAT e INAL, folleto «Consejos útiles para comprar, cocinar y conservar los alimentos en forma segura»',
-  url: 'https://www.argentina.gob.ar/sites/default/files/anmat_inal_consejos_utiles_alimentos.pdf', consultada
+  url: 'https://www.argentina.gob.ar/sites/default/files/anmat_inal_consejos_utiles_alimentos.pdf'
 };
 const ANMAT_M: FuenteAbreviada = {
   abreviatura: 'ANMAT-M', nombre: 'ANMAT, «Recomendaciones para la manipulación segura de los alimentos»',
-  url: 'https://www.argentina.gob.ar/anmat/comunidad/recomendaciones-para-la-manipulacion-segura-de-los-alimentos', consultada
+  url: 'https://www.argentina.gob.ar/anmat/comunidad/recomendaciones-para-la-manipulacion-segura-de-los-alimentos'
 };
 const SEN: FuenteAbreviada = {
   abreviatura: 'SEN', nombre: 'SENASA, «Pautas para la prevención de enfermedades a través de la refrigeración de alimentos» (06-03-2023)',
-  url: 'https://www.argentina.gob.ar/noticias/pautas-para-la-prevencion-de-enfermedades-traves-de-la-refrigeracion-de-alimentos', consultada
+  url: 'https://www.argentina.gob.ar/noticias/pautas-para-la-prevencion-de-enfermedades-traves-de-la-refrigeracion-de-alimentos'
 };
 const IA: FuenteAbreviada = {
   abreviatura: 'IA', nombre: 'InfoAlimentos, «Un tesoro argentino, el dulce de leche» (Silvina Medin, bromatóloga)',
-  url: 'https://infoalimentos.org.ar/temas/del-campo-a-la-mesa/545-un-tesoro-argentino-el-dulce-de-leche', consultada
+  url: 'https://infoalimentos.org.ar/temas/del-campo-a-la-mesa/545-un-tesoro-argentino-el-dulce-de-leche'
 };
 const LS: FuenteAbreviada = {
   abreviatura: 'LS', nombre: 'La Serenísima, catálogo de productos',
-  url: 'https://www.laserenisima.com.ar/productos.php', consultada
+  url: 'https://www.laserenisima.com.ar/productos.php'
 };
 const LSA: FuenteAbreviada = {
   abreviatura: 'LSa', nombre: 'La Salteña, fichas de producto',
-  url: 'https://www.lasaltena.com.ar/productos/', consultada
+  url: 'https://www.lasaltena.com.ar/productos/'
 };
 const MK: FuenteAbreviada = {
   abreviatura: 'MK', nombre: 'Milkaut Profesional, dulce de leche heladero',
-  url: 'https://milkautprofesional.com.ar/productos/dulces-de-leche/dulce-de-leche-heladero/', consultada
+  url: 'https://milkautprofesional.com.ar/productos/dulces-de-leche/dulce-de-leche-heladero/'
 };
 const CAN: FuenteAbreviada = {
   abreviatura: 'CAN', nombre: 'Canciani, milanesas congeladas de carne vacuna',
-  url: 'https://www.cancianicarnes.com.ar/carne-vacuna/milanesas-congeladas-carne-vacuna.html', consultada
+  url: 'https://www.cancianicarnes.com.ar/carne-vacuna/milanesas-congeladas-carne-vacuna.html'
 };
 const ST: FuenteAbreviada = {
   abreviatura: 'ST', nombre: 'StillTasty (ficha de cada alimento, por su id en la columna Fuente)',
-  url: 'https://www.stilltasty.com/fooditems/index/', consultada
+  url: 'https://www.stilltasty.com/fooditems/index/'
 };
 
 export const TABLAS_CONSERVACION = {

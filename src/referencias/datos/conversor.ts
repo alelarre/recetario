@@ -2,55 +2,53 @@
  * Conversor: sólo datos. Cada sistema, cada unidad y cada ingrediente dicen de dónde salen.
  *
  * Procedencia: product-design/research/herramientas/verificacion-conversor.md
- * Para corregir un número, editá su línea y la fecha `consultada` de la fuente.
+ * Para corregir un número, editá su línea.
  * Un ingrediente guarda la medida tal como la da su fuente («½ taza de EE. UU.
  * = 113 g»); los gramos por ml los saca la cuenta. Para sumar uno, escribí su
  * medida así, con su grupo y su fuente.
  */
 import type { Constante, FuenteAbreviada, IngredienteConvertible, Sistema } from '../tipos.js';
 
-const consultada = '2026-10-04';
-
 const HC: FuenteAbreviada = {
   abreviatura: 'HC', nombre: 'Health Canada, Measure ingredients like a pro',
-  url: 'https://www.canada.ca/en/health-canada/services/food-guide/eating-support/kitchen/cooking-skills/measure-ingredients-pro.html', consultada
+  url: 'https://www.canada.ca/en/health-canada/services/food-guide/eating-support/kitchen/cooking-skills/measure-ingredients-pro.html'
 };
 const PRH: FuenteAbreviada = {
   abreviatura: 'PRH', nombre: 'Penguin Australia, Bake with Brooki: conversiones',
-  url: 'https://cdn2.penguin.com.au/content/resources/bake-with-brooki-conversions-page.pdf', consultada
+  url: 'https://cdn2.penguin.com.au/content/resources/bake-with-brooki-conversions-page.pdf'
 };
 const DEL: FuenteAbreviada = {
   abreviatura: 'DEL', nombre: 'delicious. magazine, US to UK cups to grams conversion guide',
-  url: 'https://www.deliciousmagazine.co.uk/cups-to-grams-conversion-charts/', consultada
+  url: 'https://www.deliciousmagazine.co.uk/cups-to-grams-conversion-charts/'
 };
 const HCU: FuenteAbreviada = {
   abreviatura: 'HCU', nombre: 'Hacé Cuentas, Conversor de tazas a gramos',
-  url: 'https://hacecuentas.com/conversor-tazas-gramos-cocina-recetas', consultada
+  url: 'https://hacecuentas.com/conversor-tazas-gramos-cocina-recetas'
 };
 const NIST: FuenteAbreviada = {
   abreviatura: 'NIST', nombre: 'NIST Handbook 44 (2026), Apéndice C',
-  url: 'https://www.nist.gov/system/files/documents/2025/12/30/appc-26-HB44-20251222.pdf', consultada
+  url: 'https://www.nist.gov/system/files/documents/2025/12/30/appc-26-HB44-20251222.pdf'
 };
 const WJA: FuenteAbreviada = {
   abreviatura: 'WJA', nombre: 'Wikipedia en japonés, 計量カップ',
-  url: 'https://ja.wikipedia.org/wiki/%E8%A8%88%E9%87%8F%E3%82%AB%E3%83%83%E3%83%97', consultada
+  url: 'https://ja.wikipedia.org/wiki/%E8%A8%88%E9%87%8F%E3%82%AB%E3%83%83%E3%83%97'
 };
 const TOH: FuenteAbreviada = {
   abreviatura: 'TOH', nombre: 'Taste of Home, What\'s the Difference Between a Pinch, a Dash and a Shake?',
-  url: 'https://www.tasteofhome.com/article/whats-the-difference-between-a-pinch-a-dash-and-a-shake/', consultada
+  url: 'https://www.tasteofhome.com/article/whats-the-difference-between-a-pinch-a-dash-and-a-shake/'
 };
 const LOL: FuenteAbreviada = {
   abreviatura: 'LOL', nombre: 'Land O\'Lakes, Butter Conversion',
-  url: 'https://www.landolakes.com/kitchen-reference/measurements-abbreviations/butter-conversion-converter/', consultada
+  url: 'https://www.landolakes.com/kitchen-reference/measurements-abbreviations/butter-conversion-converter/'
 };
 const KA: FuenteAbreviada = {
   abreviatura: 'KA', nombre: 'King Arthur Baking, Ingredient Weight Chart',
-  url: 'https://www.kingarthurbaking.com/learn/ingredient-weight-chart', consultada
+  url: 'https://www.kingarthurbaking.com/learn/ingredient-weight-chart'
 };
 /** USDA FoodData Central, SR Legacy: una ficha por alimento. */
 const usda = (id: number, producto: string): FuenteAbreviada => ({
   abreviatura: 'USDA', nombre: `USDA FoodData Central, ${producto}`,
-  url: `https://fdc.nal.usda.gov/food-details/${id}/portions`, consultada
+  url: `https://fdc.nal.usda.gov/food-details/${id}/portions`
 });
 
 export const SISTEMAS: readonly Sistema[] = [

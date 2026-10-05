@@ -4,7 +4,7 @@ import type { HerramientaDeReferencia, Tabla, Cuenta } from '../src/referencias/
 import { herramientaDeReferencia } from '../src/referencias/indice.js';
 import { ICO } from '../src/ui/iconos.js';
 
-const fuente = { nombre: 'Fuente X', url: 'https://x.com/a', consultada: '2026-10-04' };
+const fuente = { nombre: 'Fuente X', url: 'https://x.com/a' };
 const tabla: Tabla = {
   id: 'blanqueado', titulo: 'Blanqueado',
   columnas: [{ id: 'verdura', nombre: 'Verdura' }, { id: 'minutos', nombre: 'Minutos', minutos: true }],
@@ -37,7 +37,6 @@ describe('la pantalla de una referencia', () => {
     expect(html).toContain('<td>Chauchas</td>');
     expect(html).toContain('Después, el mismo tiempo en hielo.');
     expect(html).toContain('<a href="https://x.com/a" target="_blank" rel="noopener">Fuente X</a>');
-    expect(html).toContain('2026-10-04');
   });
 
   it('una columna de minutos lleva el botón del temporizador, con el primer número', () => {
@@ -79,9 +78,9 @@ describe('la pantalla de una referencia', () => {
       filas: [{ a: '1', f: 'AA, BB 3' }],
       columnaFuente: 'f',
       fuentes: [
-        { abreviatura: 'AA', nombre: 'Una', url: 'https://u.com', consultada: '2026-10-04' },
-        { abreviatura: 'BB', nombre: 'Otra', url: 'https://o.com', consultada: '2026-10-04' },
-        { abreviatura: 'CC', nombre: 'Otra más', url: 'https://o.com', consultada: '2026-10-04' }
+        { abreviatura: 'AA', nombre: 'Una', url: 'https://u.com' },
+        { abreviatura: 'BB', nombre: 'Otra', url: 'https://o.com' },
+        { abreviatura: 'CC', nombre: 'Otra más', url: 'https://o.com' }
       ]
     };
     const html = renderReferencia({ ...h, fichas: [{ tipo: 'tabla', tabla: t }] }, vacio);
@@ -103,8 +102,8 @@ describe('las notas', () => {
     renderReferencia({ ...h, fichas: [{ tipo: 'tabla', tabla: { ...tabla, notas } }] }, vacio);
 
   it('una URL dentro de un paréntesis es un link y el paréntesis queda afuera', () => {
-    const html = conNotas('Lo dice el fabricante (https://ejemplo.com/a?x=1&y=2), consultado hoy.');
-    expect(html).toContain('(<a href="https://ejemplo.com/a?x=1&amp;y=2" target="_blank" rel="noopener">https://ejemplo.com/a?x=1&amp;y=2</a>), consultado hoy.');
+    const html = conNotas('Lo dice el fabricante (https://ejemplo.com/a?x=1&y=2), según su ficha.');
+    expect(html).toContain('(<a href="https://ejemplo.com/a?x=1&amp;y=2" target="_blank" rel="noopener">https://ejemplo.com/a?x=1&amp;y=2</a>), según su ficha.');
   });
 
   it('el punto final de la oración no entra en el link', () => {

@@ -1513,7 +1513,7 @@ la cuenta van al final.
 
 **Las notas** son una lista en `--txt-chico` `--fg-2`, `--e-3` debajo de lo
 anterior. Una URL dentro de una nota es un link en `--fg-2`. **La fuente va al pie de cada ficha:** «Fuente: <nombre>», con el
-nombre como link en `--fg-2`, la fecha de consulta y, si son varias, una
+nombre como link en `--fg-2` y, si son varias, una
 detrás de otra separadas por «·». Todo en `--txt-micro` `--fg-3`.
 
 **El botón de minutos** (`.ico-min`) va pegado al valor de la celda: un
