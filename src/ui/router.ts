@@ -25,11 +25,11 @@ export type DestinoLateral = 'recetario' | 'borradores' | 'plan' | 'herramientas
  */
 export const MENU: Partial<Record<Vista, DestinoLateral | null>> = {
   recetario: 'recetario',
-  borradores: 'borradores',
-  plan: 'plan',
   herramientas: 'herramientas',
-  ajustes: 'ajustes',
-  nueva: null
+  plan: 'plan',
+  nueva: null,
+  borradores: 'borradores',
+  ajustes: 'ajustes'
 };
 
 /** El segundo tramo de la ruta de cada herramienta de referencia, y su id. */

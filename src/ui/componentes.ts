@@ -353,8 +353,8 @@ export interface OpcionesLateral {
 }
 
 /**
- * El menú lateral: Inicio, Borradores, Plan de la semana, Herramientas, Nueva
- * receta y Ajustes, con su nombre.
+ * El menú lateral: Inicio, Herramientas, Plan de la semana, Nueva receta,
+ * Borradores y Ajustes, con su nombre.
  *
  * En el teléfono se despliega desde la hamburguesa o el gesto y se cierra
  * tocando el velo o cualquier destino; en pantalla ancha queda fijo y la
@@ -372,14 +372,14 @@ export function lateral({ activo, borradores, abierto, soloAncho }: OpcionesLate
       '<div class="marca">Recetario</div>' +
       // «Inicio» y no «Recetario»: ese nombre ya es la marca de arriba del menú.
       item('recetario', '#/', ICO.casa, 'Inicio') +
-      item('borradores', '#/borradores', ICO.borrador, 'Borradores', borradores) +
+      item('herramientas', '#/herramientas', ICO.balanza, 'Herramientas') +
       // El plan es su única entrada: el Recetario no lo nombra.
       item('plan', '#/plan', ICO.calendario, 'Plan de la semana') +
-      item('herramientas', '#/herramientas', ICO.balanza, 'Herramientas') +
       // Nueva receta es una acción y no un lugar: nunca queda marcada, ni
       // siquiera en el editor al que lleva. Es la única entrada para crear una
       // receta a mano.
       `<a href="#/nueva">${ICO.mas}Nueva receta</a>` +
+      item('borradores', '#/borradores', ICO.borrador, 'Borradores', borradores) +
       item('ajustes', '#/ajustes', ICO.ajustes, 'Ajustes') +
       // Al pie y tenue: sirve para saber si el teléfono ya tomó el último deploy.
       `<div class="version">${escapar(textoVersion())}</div>` +

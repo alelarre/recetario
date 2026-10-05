@@ -31,7 +31,7 @@ de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 - [ ] La caja de búsqueda está arriba, visible y ocupando lugar. **No detrás de un ícono.** Su texto de ayuda es *"Buscar receta o ingrediente"*.
 - [ ] Debajo de la búsqueda, las filas de tags (C02.6.4).
 - [ ] Las categorías van debajo, en grilla, bajo el rótulo *Categorías*.
-- [ ] Los destinos —Inicio, Borradores, Plan de la semana, Nueva receta y Ajustes— viven en el menú lateral (C02.1.3). El encabezado lleva sólo el título y, a la izquierda, el botón del menú con el contador de borradores encima (C01.5.1).
+- [ ] Los destinos —Inicio, Herramientas, Plan de la semana, Nueva receta, Borradores y Ajustes— viven en el menú lateral (C02.1.3). El encabezado lleva sólo el título y, a la izquierda, el botón del menú con el contador de borradores encima (C01.5.1).
 - [ ] **El Recetario no nombra el plan de la semana:** su única entrada es la del menú (C06.5.1).
 - [ ] No hay barra de navegación inferior.
 
@@ -45,7 +45,7 @@ de entrada de la app, siempre, aunque Borradores tenga borradores esperando.
 
 #### C02.1.3 — El menú lateral *(J1, J5)*
 
-- [ ] Lo dibujan las pantallas a las que se llega desde él: el Recetario, Borradores, el plan de la semana, la receta nueva y Ajustes. Desde 900 px lo dibujan todas, fijo (`E05-Cimientos.md` C05.10.1). Lleva Inicio, Borradores con su contador, Plan de la semana, Nueva receta y Ajustes, y al pie la versión de la app.
+- [ ] Lo dibujan las pantallas a las que se llega desde él: el Recetario, Borradores, el plan de la semana, la receta nueva y Ajustes. Desde 900 px lo dibujan todas, fijo (`E05-Cimientos.md` C05.10.1). Lleva, en este orden, Inicio, Herramientas, Plan de la semana, Nueva receta, Borradores con su contador y Ajustes, y al pie la versión de la app.
 - [ ] **Borradores** es la lista por tag de `borrador` (C02.6.5) dibujada como destino del menú (`E01-CapturaYBorradores.md` C01.4.1), y **es el único camino a los borradores:** el Recetario no tiene un tile para lo que no tiene categoría, y `borrador` no aparece en ninguna lista de tags (C02.6.4). **Nueva receta** abre el editor vacío (`E04-Corregir.md` C04.3b.1) y es la única entrada de la app para crear una receta a mano; como es una acción y no un lugar, no queda marcada.
 - [ ] En el teléfono está cerrado: se abre con el botón del encabezado y se cierra tocando el velo, eligiendo un destino o con el atrás, que lo cierra sin salir de la pantalla. Desde 900 px de ancho queda fijo y el botón no se dibuja.
 - [ ] **Tocar el destino en el que ya se está** cierra el menú y no navega.

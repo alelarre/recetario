@@ -941,8 +941,8 @@ numerada— a `--ico-cocina`, al lado de la palabra. El cambio es instantáneo.
 ### 6.17 Menú lateral
 
 La navegación primaria de la app: Inicio —la pantalla del Recetario, que no
-repite el nombre de la marca—, Borradores, Plan de la semana, Nueva receta y
-Ajustes. Nueva receta es una acción: en el editor al que lleva, que dibuja el
+repite el nombre de la marca—, Herramientas, Plan de la semana, Nueva receta,
+Borradores y Ajustes, en ese orden. Nueva receta es una acción: en el editor al que lleva, que dibuja el
 menú, no queda marcado ningún ítem.
 
 Panel de **260 px** de ancho, pegado a la izquierda y de alto completo.

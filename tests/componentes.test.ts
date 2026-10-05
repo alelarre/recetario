@@ -447,9 +447,9 @@ describe('tile', () => {
 });
 
 describe('el menú lateral', () => {
-  it('lleva las seis entradas, con Herramientas entre el plan y Nueva receta', () => {
+  it('lleva las seis entradas: Inicio, Herramientas, el plan, Nueva receta, Borradores y Ajustes', () => {
     const html = lateral({ activo: 'recetario', abierto: false, borradores: 0 });
-    const orden = ['Inicio', 'Borradores', 'Plan de la semana', 'Herramientas', 'Nueva receta', 'Ajustes']
+    const orden = ['Inicio', 'Herramientas', 'Plan de la semana', 'Nueva receta', 'Borradores', 'Ajustes']
       .map(t => html.indexOf(t));
     expect(orden.every((n, i) => n >= 0 && (i === 0 || n > (orden[i - 1] ?? -1)))).toBe(true);
     expect(html).toContain('href="#/plan"');
