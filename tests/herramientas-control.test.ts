@@ -1,12 +1,23 @@
 import { describe, it, expect, vi } from 'vitest';
 import { crearControlHerramientas, CLAVE_PAN, CLAVE_SAL } from '../src/herramientas-control.js';
-import { PAN_POR_DEFECTO } from '../src/calculadoras/pan.js';
-import { SAL_POR_DEFECTO } from '../src/calculadoras/fermentados.js';
+import {
+  PAN_POR_DEFECTO, PANES, PREFERMENTOS_CON_LEVADURA, BOLLOS_POR_DEFECTO, SEGUNDA_POR_DEFECTO,
+  alElegirTipo, fermentacionesPara, hidratacionAlCambiarHarinas, segundaAlMezclar, type ClavePan, type DatosPan
+} from '../src/calculadoras/pan.js';
+import { SAL_POR_DEFECTO, FERMENTOS } from '../src/calculadoras/fermentados.js';
 import { localStorageFalso } from './dom-falso.js';
 
 /** Un botón o un campo como los que dibuja la pantalla. */
 const boton = (grupo: string, valor: string) => ({ dataset: { grupo, valor } }) as unknown as HTMLElement;
 const campo = (cantidad: string, value: string) => ({ dataset: { cantidad }, value }) as unknown as HTMLInputElement;
+
+// Los valores por defecto y los de las tablas se leen de su archivo: los
+// tests prueban qué hace el control con ellos, no cuánto valen.
+const panDe = (clave: ClavePan) => PANES.find(p => p.clave === clave)!;
+const horasPoolish = PREFERMENTOS_CON_LEVADURA.find(p => p.clave === 'poolish')!.horas.map(h => h.horas);
+const salDe = (clave: string) => FERMENTOS.find(f => f.clave === clave)!.sal;
+/** La hidratación después de cambiar las harinas de `antes` por las de `ahora`. */
+const corrida = (antes: DatosPan, ahora: Partial<DatosPan>) => hidratacionAlCambiarHarinas(antes, { ...antes, ...ahora });
 
 function armar(almacen: Pick<Storage, 'getItem' | 'setItem'> | null = localStorageFalso()) {
   const redibujar = vi.fn();
@@ -29,26 +40,26 @@ describe('el control de Herramientas', () => {
     almacen.setItem(CLAVE_SAL, '{roto');
     const { control } = armar(almacen);
     expect(control.pan().pan).toBe('ciabatta');
-    expect(control.pan().harina).toBe('000');
+    expect(control.pan().harina).toBe(panDe('ciabatta').harina);
     expect(control.sal()).toEqual(SAL_POR_DEFECTO);
   });
 
   it('elegir masa madre con 2 h pasa a 4 h, guarda y redibuja', () => {
     const almacen = localStorageFalso();
     const { control, elegir, redibujar } = armar(almacen);
-    // El pan de miga trae 2 h y sin prefermento.
-    elegir('pan', 'miga');
+    elegir('prefermento', '');
+    elegir('fermentacion', 'ambiente-2');
     expect(control.pan().fermentacion).toBe('ambiente-2');
     elegir('prefermento', 'masa-madre');
     expect(control.pan().fermentacion).toBe('ambiente-4');
     expect(JSON.parse(almacen.getItem(CLAVE_PAN)!).prefermento).toBe('masa-madre');
-    expect(redibujar).toHaveBeenCalledTimes(2);
+    expect(redibujar).toHaveBeenCalledTimes(3);
   });
 
   it('cambiar el modo elige la primera fermentación del modo', () => {
     const { control, elegir } = armar();
     elegir('modo', 'frio');
-    expect(control.pan().fermentacion).toBe('frio-12');
+    expect(control.pan().fermentacion).toBe(fermentacionesPara(PAN_POR_DEFECTO.prefermento).find(f => f.modo === 'frio')!.clave);
   });
 
   it('la segunda: ninguna, una harina, y la principal la descarta', () => {
@@ -90,7 +101,7 @@ describe('el control de Herramientas', () => {
     elegir('temperatura', 'mas-24');
     expect(control.sal().temperatura).toBe('mas-24');
     elegir('temperatura', 'heladera');
-    expect(control.sal().temperatura).toBe('18-24');
+    expect(control.sal().temperatura).toBe(SAL_POR_DEFECTO.temperatura);
   });
 
   it('con un almacén que falla, funciona igual', () => {
@@ -106,15 +117,16 @@ describe('el control de Herramientas — la pizza', () => {
   it('elegir una pizza pasa la cantidad a bollos; escribir los bollos y el peso los guarda', () => {
     const { control, elegir, pintarResultado } = armar();
     elegir('pan', 'napolitana');
-    expect(control.pan().cantidad).toEqual({ de: 'bollos', bollos: 4, gramos: 250 });
+    expect(control.pan().cantidad).toEqual({ de: 'bollos', bollos: BOLLOS_POR_DEFECTO, gramos: panDe('napolitana').bollo });
     control.alEscribir(campo('bollos', '6'));
     control.alEscribir(campo('bollo', '270'));
     expect(control.pan().cantidad).toEqual({ de: 'bollos', bollos: 6, gramos: 270 });
     expect(pintarResultado).toHaveBeenCalledTimes(2);
     elegir('pan', 'new-york');
-    expect(control.pan().cantidad).toEqual({ de: 'bollos', bollos: 6, gramos: 380 });
+    const ny = panDe('new-york').bollo!;
+    expect(control.pan().cantidad).toEqual({ de: 'bollos', bollos: 6, gramos: ny });
     elegir('pan', 'campo');
-    expect(control.pan().cantidad).toEqual({ de: 'masa', gramos: 2280 });
+    expect(control.pan().cantidad).toEqual({ de: 'masa', gramos: 6 * ny });
   });
 
   it('otra elección no cambia los bollos', () => {
@@ -122,7 +134,7 @@ describe('el control de Herramientas — la pizza', () => {
     elegir('pan', 'napolitana');
     control.alEscribir(campo('bollos', '3'));
     elegir('levadura', 'seca');
-    expect(control.pan().cantidad).toEqual({ de: 'bollos', bollos: 3, gramos: 250 });
+    expect(control.pan().cantidad).toEqual({ de: 'bollos', bollos: 3, gramos: panDe('napolitana').bollo });
   });
 });
 
@@ -131,9 +143,9 @@ describe('el control de Herramientas — el prefermento', () => {
     const { control, elegir } = armar();
     elegir('levadura', 'seca');
     elegir('prefermento', 'poolish');
-    expect(control.pan()).toMatchObject({ prefermento: 'poolish', horasPrefermento: 8 });
-    elegir('horas-prefermento', '18');
-    expect(control.pan().horasPrefermento).toBe(18);
+    expect(control.pan()).toMatchObject({ prefermento: 'poolish', horasPrefermento: horasPoolish[0] });
+    elegir('horas-prefermento', String(horasPoolish.at(-1)));
+    expect(control.pan().horasPrefermento).toBe(horasPoolish.at(-1));
     elegir('prefermento', 'masa-madre');
     expect(control.pan()).toMatchObject({ prefermento: 'masa-madre', horasPrefermento: 0, levadura: 'seca' });
     elegir('prefermento', '');
@@ -148,18 +160,19 @@ describe('el control de Herramientas — la mezcla de harinas', () => {
   it('encender la mezcla suma la harina de por defecto; apagarla la saca', () => {
     const { control, elegir } = armar();
     elegir('mezcla', '1');
-    expect(control.pan().segunda).toBe('integral');
+    expect(control.pan().segunda).toBe(segundaAlMezclar(PAN_POR_DEFECTO.harina));
     elegir('segunda', 'centeno');
     expect(control.pan().segunda).toBe('centeno');
     elegir('mezcla', '');
     expect(control.pan().segunda).toBeNull();
   });
 
-  it('con integral de principal, la mezcla arranca en otra harina', () => {
+  it('con la de por defecto de principal, la mezcla arranca en otra harina', () => {
     const { control, elegir } = armar();
-    elegir('harina', 'integral');
+    elegir('harina', SEGUNDA_POR_DEFECTO);
     elegir('mezcla', '1');
-    expect(control.pan().segunda).toBe('0000');
+    expect(control.pan().segunda).toBe(segundaAlMezclar(SEGUNDA_POR_DEFECTO));
+    expect(control.pan().segunda).not.toBe(SEGUNDA_POR_DEFECTO);
   });
 });
 
@@ -192,34 +205,41 @@ describe('el control de Herramientas — el tipo y la hidratación', () => {
   it('elegir un tipo carga todo lo que trae, y pisa lo que se había ajustado', () => {
     const { control, elegir } = armar();
     elegir('pan', 'baguette');
-    expect(control.pan()).toMatchObject({ pan: 'baguette', harina: '000', hidratacion: 68, prefermento: 'poolish', horasPrefermento: 12 });
+    const baguette = panDe('baguette');
+    expect(control.pan()).toMatchObject({
+      pan: 'baguette', harina: baguette.harina, hidratacion: baguette.hidratacion,
+      prefermento: baguette.prefermento, horasPrefermento: baguette.horasPrefermento ?? 0
+    });
     elegir('levadura', 'seca');
     elegir('harina', 'centeno');
     control.alEscribir(campo('hidratacion', '90'));
     control.alEscribir(campo('harina', '700'));
     elegir('pan', 'frances');
-    expect(control.pan()).toEqual({
-      pan: 'frances', harina: '000', segunda: null, porcentajeSegunda: 30, hidratacion: 60, prefermento: null,
-      levadura: 'fresca', fermentacion: 'ambiente-4', temperatura: '18-24', cantidad: { de: 'harina', gramos: 700 }, horasPrefermento: 0
-    });
+    expect(control.pan()).toEqual(
+      alElegirTipo({ pan: 'baguette', cantidad: { de: 'harina', gramos: 700 }, temperatura: PAN_POR_DEFECTO.temperatura }, 'frances'));
     elegir('pan', 'no-existe');
     expect(control.pan().pan).toBe('frances');
   });
 
   it('cambiar la harina o la mezcla corre la hidratación; lo demás no la toca', () => {
     const { control, elegir } = armar();
-    expect(control.pan().hidratacion).toBe(72);
+    let antes = control.pan();
+    expect(antes.hidratacion).toBe(PAN_POR_DEFECTO.hidratacion);
     elegir('harina', 'integral');
-    expect(control.pan().hidratacion).toBe(80);
+    expect(control.pan().hidratacion).toBe(corrida(antes, { harina: 'integral' }));
+    const conIntegral = control.pan().hidratacion;
     elegir('levadura', 'seca');
     elegir('prefermento', 'biga');
-    expect(control.pan().hidratacion).toBe(80);
+    expect(control.pan().hidratacion).toBe(conIntegral);
+    antes = control.pan();
     elegir('mezcla', '1');
-    expect(control.pan()).toMatchObject({ segunda: '0000', hidratacion: 76.4 });
+    const segunda = segundaAlMezclar('integral');
+    expect(control.pan()).toMatchObject({ segunda, hidratacion: corrida(antes, { segunda }) });
+    antes = control.pan();
     elegir('porcentaje', '50');
-    expect(control.pan().hidratacion).toBe(74);
+    expect(control.pan().hidratacion).toBe(corrida(antes, { porcentajeSegunda: 50 }));
     elegir('mezcla', '');
-    expect(control.pan().hidratacion).toBe(80);
+    expect(control.pan().hidratacion).toBe(conIntegral);
   });
 
   it('escribir la hidratación la guarda y pinta sólo el resultado; lo escrito se conserva al cambiar de harina', () => {
@@ -230,8 +250,9 @@ describe('el control de Herramientas — el tipo y la hidratación', () => {
     expect(JSON.parse(almacen.getItem(CLAVE_PAN)!).hidratacion).toBe(75.5);
     expect(pintarResultado).toHaveBeenCalledTimes(1);
     expect(redibujar).not.toHaveBeenCalled();
+    const antes = control.pan();
     elegir('harina', 'integral');
-    expect(control.pan().hidratacion).toBe(83.5);
+    expect(control.pan().hidratacion).toBe(corrida(antes, { harina: 'integral' }));
   });
 
   it('una hidratación vacía queda vacía hasta que se escribe o se elige un tipo', () => {
@@ -241,7 +262,7 @@ describe('el control de Herramientas — el tipo y la hidratación', () => {
     elegir('levadura', 'seca');
     expect(control.pan().hidratacion).toBeNaN();
     elegir('pan', 'focaccia');
-    expect(control.pan().hidratacion).toBe(75);
+    expect(control.pan().hidratacion).toBe(panDe('focaccia').hidratacion);
   });
 });
 
@@ -253,7 +274,7 @@ describe('el control de Herramientas — el tipo de fermento y la sal', () => {
     elegir('temperatura', 'mas-24');
     expect(control.sal()).toEqual({ fermento: 'chucrut', sal: 4.5, pesoTotal: 800, temperatura: 'mas-24' });
     elegir('fermento', 'pepinos');
-    expect(control.sal()).toEqual({ fermento: 'pepinos', sal: 3.5, pesoTotal: 800, temperatura: 'mas-24' });
+    expect(control.sal()).toEqual({ fermento: 'pepinos', sal: salDe('pepinos'), pesoTotal: 800, temperatura: 'mas-24' });
     elegir('fermento', 'no-existe');
     expect(control.sal().fermento).toBe('pepinos');
   });
@@ -269,6 +290,6 @@ describe('el control de Herramientas — el tipo de fermento y la sal', () => {
     elegir('temperatura', '13-18');
     expect(control.sal().sal).toBeNaN();
     elegir('fermento', 'kimchi');
-    expect(control.sal().sal).toBe(2.5);
+    expect(control.sal().sal).toBe(salDe('kimchi'));
   });
 });

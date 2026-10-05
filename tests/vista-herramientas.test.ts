@@ -1,14 +1,27 @@
 import { describe, it, expect } from 'vitest';
 import { renderHerramientas, renderPan, renderSal, resultadoPan } from '../src/ui/herramientas.js';
-import { PAN_POR_DEFECTO, ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE, ADVERTENCIA_FRIO, AVISO_TOPE, type DatosPan } from '../src/calculadoras/pan.js';
-import { SAL_POR_DEFECTO } from '../src/calculadoras/fermentados.js';
+import {
+  PAN_POR_DEFECTO, PANES, HARINAS, HIDRATACION_MAXIMA, calcularPan, cifrasPan, lineasPan,
+  ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE, ADVERTENCIA_FRIO, AVISO_TOPE, type DatosPan
+} from '../src/calculadoras/pan.js';
+import { FERMENTOS, lineasSal, type DatosSal } from '../src/calculadoras/fermentados.js';
+import { gramos, porciento } from '../src/calculadoras/gramos.js';
 import { escapar } from '../src/ui/markdown.js';
 import { ICO } from '../src/ui/iconos.js';
 
-/** Dónde está la fila de un dato: su desplegable, o su conmutador o interruptor. */
-/** El pan de campo sin su masa madre: un pan directo, con levadura, que es donde están todas las filas. */
-const DIRECTO: DatosPan = { ...PAN_POR_DEFECTO, prefermento: null };
+/**
+ * Un pan directo, con levadura, que es donde están todas las filas. Armado
+ * acá y no desde el valor por defecto: los números de las tablas se corrigen
+ * en su archivo, y lo que se calcula se compara con las cuentas de la app.
+ */
+const DIRECTO: DatosPan = {
+  pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 30, hidratacion: 72,
+  prefermento: null, levadura: 'fresca', fermentacion: 'ambiente-8', temperatura: '18-24',
+  cantidad: { de: 'harina', gramos: 1000 }, horasPrefermento: 0
+};
+const CHUCRUT: DatosSal = { fermento: 'chucrut', sal: 2, pesoTotal: 1000, temperatura: '18-24' };
 
+/** Dónde está la fila de un dato: su desplegable, o su conmutador o interruptor. */
 const pos = (html: string, grupo: string): number => {
   const i = html.indexOf(`data-opcion="${grupo}"`);
   return i !== -1 ? i : html.indexOf(`data-grupo="${grupo}"`);
@@ -74,7 +87,7 @@ describe('la calculadora de pan', () => {
   it('los datos con muchas opciones son un desplegable con lo elegido; el pan, con los panes y las pizzas aparte', () => {
     expect(elegidoEn(html, 'pan')).toBe('campo');
     expect(elegidoEn(html, 'harina')).toBe('000');
-    expect(opcionesDe(html, 'pan')).toHaveLength(11);
+    expect(opcionesDe(html, 'pan')).toHaveLength(PANES.length);
     const pan = desplegable(html, 'pan');
     expect(pan.indexOf('<optgroup label="Panes">')).toBeLessThan(pan.indexOf('value="focaccia"'));
     expect(pan.indexOf('value="focaccia"')).toBeLessThan(pan.indexOf('<optgroup label="Pizzas">'));
@@ -83,8 +96,8 @@ describe('la calculadora de pan', () => {
 
   it('el tipo se llama «Tipo», y tal como viene trae su prefermento', () => {
     expect(html).toContain('<span class="n">Tipo</span><select data-opcion="pan">');
-    expect(elegidoEn(renderPan(PAN_POR_DEFECTO), 'pan')).toBe('campo');
-    expect(elegidoEn(renderPan(PAN_POR_DEFECTO), 'prefermento')).toBe('masa-madre');
+    expect(elegidoEn(renderPan(PAN_POR_DEFECTO), 'pan')).toBe(PAN_POR_DEFECTO.pan);
+    expect(elegidoEn(renderPan(PAN_POR_DEFECTO), 'prefermento')).toBe(PAN_POR_DEFECTO.prefermento ?? '');
   });
 
   it('la hidratación es una fila más, con su campo, debajo de la mezcla de harinas', () => {
@@ -106,7 +119,7 @@ describe('la calculadora de pan', () => {
   it('el resultado y las advertencias', () => {
     const r = resultadoPan(DIRECTO);
     expect(r).toContain('data-resultado');
-    for (const valor of ['1000 g', '720 g', '20 g', '5,0 g', '72 %']) expect(r).toContain(valor);
+    for (const l of [...cifrasPan(DIRECTO), ...lineasPan(DIRECTO)]) expect(r).toContain(l.valor);
     for (const a of [ADVERTENCIA_TIEMPOS, ADVERTENCIA_AMBIENTE]) expect(r).toContain(escapar(a));
     expect(r).not.toContain(escapar(ADVERTENCIA_FRIO));
     expect(r).not.toContain(AVISO_TOPE);
@@ -123,7 +136,7 @@ describe('la calculadora de pan', () => {
     const conMezcla = renderPan({ ...DIRECTO, segunda: 'centeno' });
     expect(conMezcla).toContain('role="switch" aria-checked="true" data-accion="elegir-opcion" data-grupo="mezcla" data-valor=""');
     expect(elegidoEn(conMezcla, 'segunda')).toBe('centeno');
-    expect(opcionesDe(conMezcla, 'segunda')).toEqual(['0000', '00', 'semolin', 'integral', 'centeno']);
+    expect(opcionesDe(conMezcla, 'segunda')).toEqual(HARINAS.filter(h => h.clave !== DIRECTO.harina).map(h => h.clave));
     expect(conMezcla).toContain('data-grupo="porcentaje" data-valor="30" aria-pressed="true"');
     expect(pos(conMezcla, 'mezcla')).toBeLessThan(pos(conMezcla, 'segunda'));
   });
@@ -148,7 +161,7 @@ describe('la calculadora de pan', () => {
 
   it('el campo que manda lleva lo escrito; el otro, lo calculado; los dos en una fila, con las flechas en el medio', () => {
     expect(html).toContain('data-cantidad="harina" value="1000"');
-    expect(html).toContain('data-cantidad="masa" value="1745"');
+    expect(html).toContain(`data-cantidad="masa" value="${Math.round(calcularPan(DIRECTO)!.masaTotal)}"`);
     const par = html.slice(html.indexOf('class="par-cantidades"'));
     expect(par.indexOf('data-cantidad="harina"')).toBeLessThan(par.indexOf('class="entre"'));
     expect(par.indexOf('class="entre"')).toBeLessThan(par.indexOf('data-cantidad="masa"'));
@@ -157,14 +170,15 @@ describe('la calculadora de pan', () => {
 
   it('el resultado destaca la masa total y la hidratación, arriba de las líneas', () => {
     const r = resultadoPan(DIRECTO);
-    expect(r).toContain('<span class="v">1745 g</span><span class="n">Masa total</span>');
+    expect(r).toContain(`<span class="v">${gramos(calcularPan(DIRECTO)!.masaTotal)} g</span><span class="n">Masa total</span>`);
     expect(r).toContain('<span class="v">72 %</span><span class="n">Hidratación</span>');
     expect(r.indexOf('class="cifras"')).toBeLessThan(r.indexOf('class="ing"'));
   });
 
   it('topeado, lo avisa', () => {
-    expect(resultadoPan({ ...DIRECTO, hidratacion: 90 })).toContain(AVISO_TOPE);
-    expect(resultadoPan({ ...DIRECTO, hidratacion: 90 })).toContain('<span class="v">85 %</span>');
+    const topeado = resultadoPan({ ...DIRECTO, hidratacion: HIDRATACION_MAXIMA + 5 });
+    expect(topeado).toContain(AVISO_TOPE);
+    expect(topeado).toContain(`<span class="v">${porciento(HIDRATACION_MAXIMA)}</span>`);
   });
 
   it('sin cantidad válida, cada valor es un guion', () => {
@@ -176,15 +190,15 @@ describe('la calculadora de pan', () => {
 
 describe('la calculadora de sal', () => {
   it('el fermento, el peso y el resultado', () => {
-    const html = renderSal(SAL_POR_DEFECTO);
+    const html = renderSal(CHUCRUT);
     expect(html).toContain('<span class="n">Tipo</span><select data-opcion="fermento">');
     expect(elegidoEn(html, 'fermento')).toBe('chucrut');
     // El porcentaje de sal que sugiere el tipo, en su fila, para cambiarlo.
     expect(html).toContain('<span class="n">Sal (%)</span><input type="number" inputmode="decimal" min="0" step="0.1" data-cantidad="sal" value="2">');
     expect(pos(html, 'fermento')).toBeLessThan(html.indexOf('data-cantidad="sal"'));
     expect(html.indexOf('data-cantidad="sal"')).toBeLessThan(pos(html, 'temperatura'));
-    expect(renderSal({ ...SAL_POR_DEFECTO, sal: 3.5 })).toContain('<span class="v">35 g</span>');
-    expect(opcionesDe(html, 'fermento')).toEqual(['chucrut', 'kimchi', 'ajies', 'salmuera', 'pepinos']);
+    expect(renderSal({ ...CHUCRUT, sal: 3.5 })).toContain('<span class="v">35 g</span>');
+    expect(opcionesDe(html, 'fermento')).toEqual(FERMENTOS.map(f => f.clave));
     expect(html).toContain('data-cantidad="peso" value="1000"');
     expect(html).toContain('la verdura y, si va en salmuera, el agua');
     expect(html).toContain('20 g');
@@ -192,12 +206,12 @@ describe('la calculadora de sal', () => {
   });
 
   it('la temperatura va entre el fermento y el peso, y el tiempo con su advertencia en el resultado', () => {
-    const html = renderSal(SAL_POR_DEFECTO);
+    const html = renderSal(CHUCRUT);
     expect(html).toContain(`<span class="tit">${ICO.frasco}Fermentados</span>`);
     expect(html).toContain('data-grupo="temperatura" data-valor="18-24" aria-pressed="true"');
     expect(pos(html, 'fermento')).toBeLessThan(pos(html, 'temperatura'));
     expect(pos(html, 'temperatura')).toBeLessThan(html.indexOf('data-cantidad="peso"'));
-    expect(html).toContain('6 a 16 días');
+    expect(html).toContain(lineasSal(CHUCRUT)[0]!.valor);
     expect(html).toContain('empezar a probar');
   });
 });

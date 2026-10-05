@@ -1,6 +1,16 @@
 import { it, expect } from 'vitest';
-import { leerPedidoPan, type PedidoPan } from '../src/calculadoras/pan.js';
-import { leerPedidoSal } from '../src/calculadoras/fermentados.js';
+import {
+  leerPedidoPan, alElegirTipo, hidratacionAlCambiarHarinas, fermentacionesPara,
+  PANES, PREFERMENTOS_CON_LEVADURA, FERMENTACIONES, PORCENTAJES_SEGUNDA, type PedidoPan, type ClavePan
+} from '../src/calculadoras/pan.js';
+import { leerPedidoSal, FERMENTOS } from '../src/calculadoras/fermentados.js';
+
+// Lo que trae cada tipo y las opciones de cada dato se leen de las tablas:
+// los tests prueban de dónde sale cada dato, no cuánto vale.
+const panDe = (clave: ClavePan) => PANES.find(p => p.clave === clave)!;
+const horasDe = (clave: 'poolish' | 'biga' | 'pate') => PREFERMENTOS_CON_LEVADURA.find(p => p.clave === clave)!.horas.map(h => h.horas);
+const salDe = (clave: string) => FERMENTOS.find(f => f.clave === clave)!.sal;
+const enFrio = FERMENTACIONES.filter(f => f.modo === 'frio');
 
 const T = '18 a 24 °C';
 /** Todos los datos dichos, sin tipo: no hay de dónde completar. */
@@ -18,30 +28,35 @@ const datos = (p: PedidoPan) => {
 };
 
 it('pan: con el tipo, la cantidad y la temperatura alcanza; lo demás es lo que trae el tipo', () => {
-  expect(datos({ pan: 'PAN DE CAMPO', harina_total: 500, temperatura: T })).toEqual({
-    pan: 'campo', harina: '000', segunda: null, porcentajeSegunda: 30, hidratacion: 72, prefermento: 'masa-madre',
-    levadura: 'fresca', fermentacion: 'ambiente-8', temperatura: '18-24', cantidad: { de: 'harina', gramos: 500 }, horasPrefermento: 0
-  });
+  expect(datos({ pan: 'PAN DE CAMPO', harina_total: 500, temperatura: T }))
+    .toEqual(alElegirTipo({ pan: 'campo', cantidad: { de: 'harina', gramos: 500 }, temperatura: '18-24' }, 'campo'));
   expect(datos({ pan: 'baguette', masa_total: 900, temperatura: T }))
-    .toMatchObject({ prefermento: 'poolish', horasPrefermento: 12, hidratacion: 68, cantidad: { de: 'masa', gramos: 900 } });
-  // La biga fermenta a 18 °C y la New York va a la heladera: no hace falta la temperatura.
-  expect(datos({ pan: 'ciabatta', harina_total: 500 })).toMatchObject({ prefermento: 'biga', horasPrefermento: 18, hidratacion: 80 });
-  expect(datos({ pan: 'pizza new york', bollos: 3 }))
-    .toMatchObject({ harina: '000', fermentacion: 'frio-24', cantidad: { de: 'bollos', bollos: 3, gramos: 380 } });
+    .toEqual(alElegirTipo({ pan: 'baguette', cantidad: { de: 'masa', gramos: 900 }, temperatura: '18-24' }, 'baguette'));
+  // Con biga, o con la masa en la heladera, no hace falta la temperatura.
+  const ciabatta = panDe('ciabatta');
+  expect(datos({ pan: 'ciabatta', prefermento: 'biga', harina_total: 500 }))
+    .toMatchObject({ prefermento: 'biga', horasPrefermento: horasDe('biga')[0], hidratacion: ciabatta.hidratacion });
+  const ny = panDe('new-york');
+  expect(datos({ pan: 'pizza new york', fermentacion: 'frío', horas: enFrio[0]!.horas, bollos: 3 }))
+    .toMatchObject({ harina: ny.harina, fermentacion: enFrio[0]!.clave, cantidad: { de: 'bollos', bollos: 3, gramos: ny.bollo } });
 });
 
 it('pan: lo que viene pisa lo que trae el tipo', () => {
   expect(datos({ pan: 'campo', prefermento: 'ninguno', levadura: 'Seca', fermentacion: 'frio', horas: 24, hidratacion: 65, harina_total: 500 }))
     .toMatchObject({ pan: 'campo', prefermento: null, levadura: 'seca', fermentacion: 'frio-24', hidratacion: 65 });
-  expect(datos({ pan: 'frances', horas: 8, harina_total: 500, temperatura: T })).toMatchObject({ fermentacion: 'ambiente-8' });
+  expect(datos({ pan: 'frances', fermentacion: 'ambiente', horas: 8, harina_total: 500, temperatura: T })).toMatchObject({ fermentacion: 'ambiente-8' });
 });
 
 it('pan: la hidratación que no viene es la del tipo, corrida por las harinas pedidas', () => {
   const frances = { pan: 'pan francés', harina_total: 500, temperatura: T };
-  expect(datos(frances)?.hidratacion).toBe(60);
-  expect(datos({ ...frances, harina: 'integral' })?.hidratacion).toBe(68);
-  expect(datos({ ...frances, segunda_harina: 'Centeno', porcentaje_segunda: 30 }))
-    .toMatchObject({ segunda: 'centeno', porcentajeSegunda: 30, hidratacion: 66 });
+  const tipo = { ...panDe('frances'), segunda: null, porcentajeSegunda: 30 as const };
+  expect(datos(frances)?.hidratacion).toBe(tipo.hidratacion);
+  expect(datos({ ...frances, harina: 'integral' })?.hidratacion)
+    .toBe(hidratacionAlCambiarHarinas(tipo, { harina: 'integral', segunda: null, porcentajeSegunda: 30 }));
+  expect(datos({ ...frances, segunda_harina: 'Centeno', porcentaje_segunda: 30 })).toMatchObject({
+    segunda: 'centeno', porcentajeSegunda: 30,
+    hidratacion: hidratacionAlCambiarHarinas(tipo, { harina: tipo.harina, segunda: 'centeno', porcentajeSegunda: 30 })
+  });
   // La que viene manda, sin correr.
   expect(datos({ ...frances, harina: 'integral', hidratacion: 70 })?.hidratacion).toBe(70);
   expect(leerPedidoPan({ ...frances, hidratacion: -3 })).toEqual({ faltan: [{ dato: 'hidratacion', opciones: [] }] });
@@ -50,18 +65,22 @@ it('pan: la hidratación que no viene es la del tipo, corrida por las harinas pe
 it('pan: lo que depende de un dato cambiado no sale del tipo: se pide, con sus opciones', () => {
   const frances = { pan: 'frances', harina_total: 500, temperatura: T };
   expect(leerPedidoPan({ ...frances, segunda_harina: 'integral' }))
-    .toEqual({ faltan: [{ dato: 'porcentaje_segunda', opciones: ['10', '20', '30', '50'] }] });
+    .toEqual({ faltan: [{ dato: 'porcentaje_segunda', opciones: PORCENTAJES_SEGUNDA.map(String) }] });
   expect(leerPedidoPan({ ...frances, prefermento: 'poolish' }))
-    .toEqual({ faltan: [{ dato: 'horas_prefermento', opciones: ['8', '12', '18'] }] });
+    .toEqual({ faltan: [{ dato: 'horas_prefermento', opciones: horasDe('poolish').map(String) }] });
   expect(leerPedidoPan({ ...frances, fermentacion: 'frío' }))
-    .toEqual({ faltan: [{ dato: 'horas', opciones: ['12', '24', '48', '72'] }] });
-  // El pan de miga trae 2 h, que no van con masa madre.
-  expect(leerPedidoPan({ pan: 'pan de miga', prefermento: 'masa madre', harina_total: 500, temperatura: T }))
-    .toEqual({ faltan: [{ dato: 'horas', opciones: ['4', '8'] }] });
-  expect(leerPedidoPan({ ...frances, prefermento: 'masa madre', horas: 2 }))
-    .toEqual({ faltan: [{ dato: 'horas', opciones: ['4', '8'] }] });
-  // Las horas del tipo valen para su prefermento: la baguette trae el poolish de 12 h.
-  expect(datos({ pan: 'baguette', horas_prefermento: 18, harina_total: 500, temperatura: T })?.horasPrefermento).toBe(18);
+    .toEqual({ faltan: [{ dato: 'horas', opciones: enFrio.map(f => String(f.horas)) }] });
+  // Unas horas sin cantidad de masa madre no van con ella.
+  const sinMasaMadre = FERMENTACIONES.find(f => f.modo === 'ambiente' && f.masaMadre === null);
+  if (sinMasaMadre) {
+    expect(leerPedidoPan({ ...frances, prefermento: 'masa madre', fermentacion: 'ambiente', horas: sinMasaMadre.horas })).toEqual({ faltan: [{
+      dato: 'horas', opciones: fermentacionesPara('masa-madre').filter(f => f.modo === 'ambiente').map(f => String(f.horas))
+    }] });
+  }
+  // Las horas que vienen pisan las que trae el tipo para su prefermento.
+  const ultimas = horasDe('poolish').at(-1)!;
+  expect(datos({ pan: 'baguette', prefermento: 'poolish', horas_prefermento: ultimas, harina_total: 500, temperatura: T })?.horasPrefermento)
+    .toBe(ultimas);
 });
 
 it('pan: un tipo que no existe se corrige antes que nada', () => {
@@ -111,32 +130,37 @@ it('pan: las dos cantidades, o ninguna, es un faltante', () => {
 });
 
 it('pan: una pizza se pide en bollos; los gramos por bollo que no vienen son los del tipo', () => {
-  const pizza = { pan: 'Pizza napolitana', temperatura: T };
-  expect(datos({ ...pizza, bollos: 6 })).toMatchObject({ pan: 'napolitana', harina: '00', cantidad: { de: 'bollos', bollos: 6, gramos: 250 } });
+  const pizza = { pan: 'Pizza napolitana', fermentacion: 'ambiente', temperatura: T };
+  const napolitana = panDe('napolitana');
+  expect(datos({ ...pizza, bollos: 6 }))
+    .toMatchObject({ pan: 'napolitana', harina: napolitana.harina, cantidad: { de: 'bollos', bollos: 6, gramos: napolitana.bollo } });
   expect(datos({ ...pizza, bollos: 6, peso_bollo: 270 })?.cantidad).toEqual({ de: 'bollos', bollos: 6, gramos: 270 });
   expect(leerPedidoPan(pizza)).toEqual({ faltan: [{ dato: 'bollos', opciones: [] }] });
   // La harina total no sirve en una pizza.
   expect(leerPedidoPan({ ...pizza, harina_total: 500 })).toEqual({ faltan: [{ dato: 'bollos', opciones: [] }] });
-  expect(leerPedidoPan({ ...pizza, bollos: 6, peso_bollo: -1 })).toEqual({ faltan: [{ dato: 'peso_bollo', opciones: ['250'] }] });
+  expect(leerPedidoPan({ ...pizza, bollos: 6, peso_bollo: -1 })).toEqual({ faltan: [{ dato: 'peso_bollo', opciones: [String(napolitana.bollo)] }] });
 });
 
 it('pan: la pâte fermentée usa la fermentación de la masa final, que sale del tipo', () => {
   expect(datos({ pan: 'frances', prefermento: 'pâte fermentée', harina_total: 500, temperatura: T }))
-    .toMatchObject({ prefermento: 'pate', horasPrefermento: 14, fermentacion: 'ambiente-4' });
+    .toMatchObject({ prefermento: 'pate', horasPrefermento: horasDe('pate')[0], fermentacion: panDe('frances').fermentacion });
   const { fermentacion: _f, horas: _h, ...sinFermentacion } = todo;
   expect(faltantes({ ...sinFermentacion, prefermento: 'pâte fermentée' })).toEqual(['pan', 'fermentacion']);
 });
 
 it('pan: la temperatura del ambiente se pide si algo fermenta a temperatura ambiente, por su nombre', () => {
-  expect(leerPedidoPan({ pan: 'campo', harina_total: 500 })).toEqual({ faltan: [{ dato: 'temperatura',
+  const sinTemperatura = { ...todo, temperatura: undefined };
+  expect(leerPedidoPan(sinTemperatura)).toEqual({ faltan: [{ dato: 'temperatura',
     opciones: ['Menos de 13 °C', '13 a 18 °C', '18 a 24 °C', 'Más de 24 °C'] }] });
-  expect(datos({ pan: 'campo', harina_total: 500, temperatura: 'más de 24 °c' })?.temperatura).toBe('mas-24');
+  expect(datos({ ...todo, temperatura: 'más de 24 °c' })?.temperatura).toBe('mas-24');
   // En frío sin prefermento y con biga, no.
-  expect(datos({ pan: 'campo', fermentacion: 'frío', horas: 24, harina_total: 500 })).not.toBeNull();
-  expect(datos({ pan: 'ciabatta', harina_total: 500 })).not.toBeNull();
+  const frio = enFrio[0]!.horas;
+  expect(datos({ ...sinTemperatura, fermentacion: 'frío', horas: frio })).not.toBeNull();
+  expect(datos({ ...sinTemperatura, prefermento: 'biga', fermentacion: undefined, horas: undefined })).not.toBeNull();
   // El poolish y la pâte fermentée fermentan a temperatura ambiente, aunque la masa vaya a la heladera.
-  expect(faltantes({ pan: 'baguette', harina_total: 500 })).toEqual(['temperatura']);
-  expect(faltantes({ pan: 'frances', prefermento: 'pâte fermentée', fermentacion: 'frío', horas: 24, harina_total: 500 })).toEqual(['temperatura']);
+  expect(faltantes({ ...sinTemperatura, prefermento: 'poolish', horas_prefermento: horasDe('poolish')[0], fermentacion: undefined, horas: undefined }))
+    .toEqual(['temperatura']);
+  expect(faltantes({ pan: 'frances', prefermento: 'pâte fermentée', fermentacion: 'frío', horas: frio, harina_total: 500 })).toEqual(['temperatura']);
 });
 
 it('pan: la 00, la 000 y la 0000 son tres harinas distintas, por su nombre exacto', () => {
@@ -147,9 +171,9 @@ it('pan: la 00, la 000 y la 0000 son tres harinas distintas, por su nombre exact
 
 it('sal: con el tipo, por su nombre, el porcentaje es el que sugiere; el que viene lo pisa', () => {
   expect(leerPedidoSal({ fermento: 'pepinos', peso_total: 1200 }))
-    .toEqual({ datos: { fermento: 'pepinos', sal: 3.5, pesoTotal: 1200, temperatura: null } });
+    .toEqual({ datos: { fermento: 'pepinos', sal: salDe('pepinos'), pesoTotal: 1200, temperatura: null } });
   expect(leerPedidoSal({ fermento: 'AJIES', peso_total: 1200 }))
-    .toEqual({ datos: { fermento: 'ajies', sal: 3, pesoTotal: 1200, temperatura: null } });
+    .toEqual({ datos: { fermento: 'ajies', sal: salDe('ajies'), pesoTotal: 1200, temperatura: null } });
   expect(leerPedidoSal({ fermento: 'chucrut', porcentaje_sal: 2.5, peso_total: 1000 }))
     .toEqual({ datos: { fermento: 'chucrut', sal: 2.5, pesoTotal: 1000, temperatura: null } });
   expect(leerPedidoSal({ fermento: 'chucrut', porcentaje_sal: 0, peso_total: 1000 }))
@@ -169,7 +193,7 @@ it('sal: sin tipo calcula si viene el porcentaje; si no, el tipo es lo primero q
 
 it('sal: la temperatura es opcional, por su nombre, y una que no es franja falta', () => {
   expect(leerPedidoSal({ fermento: 'kimchi', peso_total: 1000, temperatura: '18 a 24 °C' }))
-    .toEqual({ datos: { fermento: 'kimchi', sal: 2.5, pesoTotal: 1000, temperatura: '18-24' } });
+    .toEqual({ datos: { fermento: 'kimchi', sal: salDe('kimchi'), pesoTotal: 1000, temperatura: '18-24' } });
   expect(leerPedidoSal({ fermento: 'kimchi', peso_total: 1000, temperatura: '20 grados' })).toEqual({ faltan: [{ dato: 'temperatura',
     opciones: ['Menos de 13 °C', '13 a 18 °C', '18 a 24 °C', 'Más de 24 °C'] }] });
 });

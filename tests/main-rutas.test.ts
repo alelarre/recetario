@@ -17,6 +17,8 @@ import { linkDeFoto, parsearFotos, serializarFotos } from '../src/fotos-receta.j
 import { ICO } from '../src/ui/iconos.js';
 import { CORTE_DE_LECTURA } from '../src/config.js';
 import { MS_CIERRE, MS_RESPALDO_CIERRE } from '../src/velo.js';
+import { PAN_POR_DEFECTO, calcularPan, lineasPan } from '../src/calculadoras/pan.js';
+import { SAL_POR_DEFECTO, cifrasSal } from '../src/calculadoras/fermentados.js';
 import type { CambiosDeFotos, Coincidencias, Plan, Receta } from '../src/tipos.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
@@ -1122,11 +1124,14 @@ describe('main.ts: las rutas', () => {
     const { abrir, tipearCantidad, pinturas, resultadosHerramienta } = await montar();
     await abrir('#/herramientas/pan');
     const antes = pinturas.length;
-    // El pan de campo viene con masa madre: 1740 g de masa son 1000 g de harina.
-    await tipearCantidad('masa', '1740');
+    // La masa total del pan por defecto vuelve a dar su harina; el resultado,
+    // el de la cuenta de la app, no un número fijo.
+    const masa = Math.round(calcularPan(PAN_POR_DEFECTO)!.masaTotal);
+    const conMasa = { ...PAN_POR_DEFECTO, cantidad: { de: 'masa' as const, gramos: masa } };
+    await tipearCantidad('masa', String(masa));
     expect(pinturas.length).toBe(antes);
-    expect(resultadosHerramienta.at(-1)).toContain('670 g');
-    expect(estado.formulario['cantidad-harina']).toBe('1000');
+    for (const l of lineasPan(conMasa)) expect(resultadosHerramienta.at(-1)).toContain(l.valor);
+    expect(estado.formulario['cantidad-harina']).toBe(String(Math.round(calcularPan(conMasa)!.harinaTotal)));
   });
 
   it('en la de sal, igual', async () => {
@@ -1135,7 +1140,7 @@ describe('main.ts: las rutas', () => {
     const antes = pinturas.length;
     await tipearCantidad('peso', '1200');
     expect(pinturas.length).toBe(antes);
-    expect(resultadosHerramienta.at(-1)).toContain('24 g');
+    expect(resultadosHerramienta.at(-1)).toContain(cifrasSal({ ...SAL_POR_DEFECTO, pesoTotal: 1200 })[0]!.valor);
   });
 
   it('el editor que abre lo compartido marca lo precargado', async () => {
