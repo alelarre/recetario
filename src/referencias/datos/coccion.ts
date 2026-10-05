@@ -70,7 +70,7 @@ export const TABLAS_COCCION = {
       { grano: 'Trigo en grano', liquido: '4', tiempo: 'remojo de una noche, y 45–60 min', rinde: '2½', fuente: 'WGC' }
     ],
     notas: [
-      'Por cada parte de grano, en volumen; sirve con cualquier taza. El tiempo es a fuego bajo, tapado, una vez que rompe el hervor.',
+      'Por cada parte de grano, en volumen; sirve con cualquier taza. Salvo la avena arrollada y el cuscús, el tiempo es a fuego bajo, tapado, una vez que rompe el hervor.',
       'El tiempo varía con la edad del grano, la variedad y la olla.',
       'La polenta instantánea no tiene una proporción verificada: se cocina según el paquete.'
     ],
@@ -109,7 +109,7 @@ export const TABLAS_COCCION = {
     notas: [
       'El tiempo es a fuego suave, después del remojo, con las legumbres cubiertas de agua. Para cocinar: 2 tazas de agua por taza de legumbre remojada (2½ las lentejas, 2 las arvejas partidas), siempre cubiertas, agregando agua fría si hace falta.',
       'Remojo lento: 10 tazas de agua por 1 lb de legumbres (unos 5,3 l por kg), 6–8 h o toda la noche, en la heladera.',
-      'Remojo en caliente (el que recomienda): 10 tazas de agua por 2 tazas de legumbres (5 partes); hervir 2–3 min y dejar tapado fuera del fuego entre 4 y 24 h.',
+      'Remojo en caliente (el que recomienda NDSU): 10 tazas de agua por 2 tazas de legumbres (5 partes); hervir 2–3 min y dejar tapado fuera del fuego entre 4 y 24 h.',
       'Remojo rápido: 6 tazas de agua por 2 tazas de legumbres (3 partes); hervir 2–3 min y dejar tapado fuera del fuego 1 h.',
       'Siempre se descarta el agua del remojo y se enjuaga. Si el remojo pasa de 4 horas, va a la heladera.'
     ],

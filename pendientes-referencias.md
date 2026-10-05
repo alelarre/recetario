@@ -11,8 +11,6 @@ en `mcp/referencias.ts`.
 
 ## Datos y fuentes
 
-4. Notas de la tabla de granos: «fuego bajo tapado» repetido, NDSU citada sin
-   su nombre completo y la polenta instantánea como nota en vez de fila.
 5. La fecha de consulta de la nota del arroz está escrita a mano.
 6. La ricota de la pasta rellena da 33 g por porción: revisar el valor.
 7. Los moldes desmontables no tienen un tipo propio.
