@@ -56,6 +56,8 @@ export const ICO = {
   olla: svg('<path d="M4 11h16v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/><path d="M2 11h20M9 8h6M12 8V6"/>'),
   /** Conservación: una heladera de dos puertas. */
   heladera: svg('<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M6 9h12M9 5v2M9 12v3"/>'),
+  /** Conversor: una taza medidora con sus marcas. */
+  medidor: svg('<path d="M5 4h12v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M17 8h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-2"/><path d="M5 9h4M5 13h4"/>'),
   /** Un tag común, en el título de su lista. De Lucide (tag). */
   etiqueta: svg('<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>'),
   /** La lista de compras, en su título. De Lucide (shopping-cart). */

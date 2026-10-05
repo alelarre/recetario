@@ -198,11 +198,12 @@ export function crearServidor(recetario: Recetario): McpServer {
     description: 'Las tablas de consulta de la app, cada dato con su fuente: minutos de los huevos, temperatura interna y puntos de la carne, ' +
       'aceite para freír y punto de humo, escala del horno y horno con ventilador, agua para mate, té y café, temperatura de servicio de vinos, ' +
       'cervezas y gaseosas, gramos de masa por pieza, pasta comprada por persona, masas por plato, arroz a presión, granos, legumbres, ' +
-      'tiempos de pasta, verduras al vapor y hervidas, blanqueado, y cuánto dura cada alimento en la alacena, la heladera y el freezer. ' +
+      'tiempos de pasta, verduras al vapor y hervidas, blanqueado, cuánto dura cada alimento en la alacena, la heladera y el freezer, ' +
+      'gramos por taza y por cuchara de cada ingrediente, y la taza y las cucharas de cada país, las medidas informales y el stick de manteca de EE. UU. ' +
       'Usala antes de responder cualquiera de estas preguntas con lo que sepas. Sin nada, lista las herramientas, sus tablas y sus cuentas; ' +
       'con `herramienta` y `tabla`, devuelve las filas; con `buscar`, las filas de cualquier tabla que contengan ese texto.',
     inputSchema: {
-      herramienta: z.string().optional().describe('Una de: rapida, masas, coccion, conservacion.'),
+      herramienta: z.string().optional().describe('Una de: rapida, masas, coccion, conservacion, conversor.'),
       tabla: z.string().optional().describe('El id de una tabla, de los que devuelve el listado.'),
       buscar: z.string().optional().describe('Un texto: «pollo», «arroz», «crema».')
     }

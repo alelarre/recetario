@@ -316,7 +316,7 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `balanza` | *Herramientas*, en el menú lateral y en su título, y delante del título de la ficha del resultado de una calculadora (§6.28). |
 | `reloj`, `pan`, `frasco` | Las tres herramientas —Temporizadores, Pan y Fermentados—: en su entrada de la lista de Herramientas y delante del título de su pantalla. `reloj` va también delante del nombre en la tira (§6.29). |
-| `libro`, `rodillo`, `olla`, `heladera` | Las cuatro referencias —Referencia rápida, Masas y dulces, Básicos de cocción y Conservación—: en su entrada de la lista de Herramientas y delante del título de su pantalla (§6.30). Un libro abierto, un palote, una olla con su tapa y una heladera de dos puertas, del trazo de los demás. |
+| `libro`, `rodillo`, `olla`, `heladera`, `medidor` | Las cinco referencias —Referencia rápida, Masas y dulces, Básicos de cocción, Conservación y Conversor—: en su entrada de la lista de Herramientas y delante del título de su pantalla (§6.30). Un libro abierto, un palote, una olla con su tapa, una heladera de dos puertas y una taza medidora con sus marcas, del trazo de los demás. |
 | `pausa`, `play` | Pausar y seguir un temporizador (§6.29). |
 | `arriba`, `abajo` | Las ruedas del temporizador nuevo (§6.29). |
 | `idaYVuelta` | Entre dos cantidades que salen una de la otra, en las calculadoras (§6.28). Dos flechas, una para cada lado. |
@@ -1483,9 +1483,9 @@ quietos: la tira entera moviéndose marea. Sin animación con movimiento reducid
 abajo, y los pies pegados de la receta y del plan suben.
 ### 6.30 Referencias
 
-Las pantallas de *Referencia rápida*, *Masas y dulces*, *Básicos de cocción* y
-*Conservación* (`E07-Herramientas.md` F07.7 a F07.10) son una sola, que dibuja
-cualquiera de las cuatro. Es una pila de fichas (§6.6) bajo el encabezado
+Las pantallas de *Referencia rápida*, *Masas y dulces*, *Básicos de cocción*,
+*Conservación* y *Conversor* (`E07-Herramientas.md` F07.7 a F07.11) son una
+sola, que dibuja cualquiera de las cinco. Es una pila de fichas (§6.6) bajo el encabezado
 (§6.12), con el ícono de la herramienta delante del título.
 
 **El índice** es una fila de chips (§6.10), uno por ficha, con el título de la
@@ -1522,9 +1522,9 @@ fondo, con el ícono `reloj` de 16 px en `--fg-2`. Tiene 48 px de área táctil:
 un `::after` transparente lo extiende 10 px por lado. Su nombre accesible es
 «Temporizador de <fila>» y el ícono va oculto a los lectores de pantalla.
 
-**El buscador** de Conservación es la caja de búsqueda del Recetario (`buscar`,
+**El buscador** de Conservación y del Conversor es la caja de búsqueda del Recetario (`buscar`,
 §3.4) con el texto «Buscar un alimento», arriba de todo. Mientras se escribe
-cambian las filas de la tabla de alimentos y no la caja; las demás fichas no
+cambian las filas de la tabla agrupada —la de alimentos, la de pesos— y no la caja; las demás fichas no
 se filtran. Sin coincidencias, el aviso «Ningún alimento con «…»» en
 `--txt-base` `--fg-2`, como un estado vacío, una sola vez.
 

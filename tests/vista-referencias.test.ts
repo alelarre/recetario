@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { renderReferencia, minutosDe, filasFiltradas, resultadoDeCuenta, valoresDe } from '../src/ui/referencias.js';
 import type { HerramientaDeReferencia, Tabla, Cuenta } from '../src/referencias/tipos.js';
+import { herramientaDeReferencia } from '../src/referencias/indice.js';
+import { ICO } from '../src/ui/iconos.js';
 
 const fuente = { nombre: 'Fuente X', url: 'https://x.com/a', consultada: '2026-10-04' };
 const tabla: Tabla = {
@@ -255,5 +257,29 @@ describe('el nombre del temporizador de una fila', () => {
       [{ id: 'v', nombre: 'Té' }, { id: 'c', nombre: 'Agua', unidad: '°C' }, { id: 'm', nombre: 'Infusión', minutos: true }],
       [{ v: 'Verde', c: '80', m: '3' }]));
     expect(html).toContain('data-nombre="Verde" data-minutos="3"');
+  });
+});
+
+describe('el conversor', () => {
+  const conversor = herramientaDeReferencia('conversor');
+  it('con volver, su ícono, el buscador, la cuenta y las tres tablas', () => {
+    const html = renderReferencia(conversor, { valores: {}, busqueda: '' });
+    expect(html).toContain('data-accion="volver"');
+    expect(html).toContain(ICO.medidor);
+    expect(html).toContain('data-buscar-referencia="conversor"');
+    for (const id of ['conversion', 'pesos', 'sistemas', 'medidas-eeuu']) expect(html).toContain(`id="ficha-${id}"`);
+  });
+
+  it('el buscador filtra los ingredientes de la tabla de pesos', () => {
+    const html = renderReferencia(conversor, { valores: {}, busqueda: 'harina' });
+    expect(html).toContain('<td>Harina 0000');
+    expect(html).not.toContain('<td>Azúcar blanca');
+    // El ingrediente sigue en las opciones de la cuenta: el buscador no las toca.
+    expect(html).toContain('>Azúcar blanca</option>');
+  });
+
+  it('lo elegido se calcula con lo que se ve', () => {
+    const html = renderReferencia(conversor, { valores: { conversion: { cantidad: 1, unidad: 'taza', ingrediente: 'azucar' } }, busqueda: '' });
+    expect(html).toMatch(/<span class="n">g<\/span><span class="c">\d+<\/span>/);
   });
 });

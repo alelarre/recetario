@@ -187,11 +187,12 @@ describe('Herramientas', () => {
     expect(esDelMenu('temporizadores')).toBe(false);
   });
 
-  it('las cuatro de referencia', () => {
+  it('las cinco de referencia', () => {
     expect(parsearHash('#/herramientas/referencia')).toEqual({ vista: 'referencia', params: { herramienta: 'rapida' } });
     expect(parsearHash('#/herramientas/masas')).toEqual({ vista: 'referencia', params: { herramienta: 'masas' } });
     expect(parsearHash('#/herramientas/coccion')).toEqual({ vista: 'referencia', params: { herramienta: 'coccion' } });
     expect(parsearHash('#/herramientas/conservacion')).toEqual({ vista: 'referencia', params: { herramienta: 'conservacion' } });
+    expect(parsearHash('#/herramientas/conversor')).toEqual({ vista: 'referencia', params: { herramienta: 'conversor' } });
   });
 
   it('un nombre de la herencia de los objetos no es una herramienta: cae en la lista', () => {

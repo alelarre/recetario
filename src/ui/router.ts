@@ -34,7 +34,7 @@ export const MENU: Partial<Record<Vista, DestinoLateral | null>> = {
 
 /** El segundo tramo de la ruta de cada herramienta de referencia, y su id. */
 const DE_REFERENCIA: Readonly<Record<string, IdHerramienta>> = {
-  referencia: 'rapida', masas: 'masas', coccion: 'coccion', conservacion: 'conservacion'
+  referencia: 'rapida', masas: 'masas', coccion: 'coccion', conservacion: 'conservacion', conversor: 'conversor'
 };
 
 /** Si la vista es destino del menú. */

@@ -54,11 +54,11 @@ describe('la lista de herramientas', () => {
     expect(html).toContain('<span class="tit">Fermentados</span>');
   });
 
-  it('sigue con las cuatro de referencia, con su ícono y su link, después de Fermentados', () => {
+  it('sigue con las cinco de referencia, con su ícono y su link, después de Fermentados', () => {
     const html = renderHerramientas({});
-    const iconos = { libro: ICO.libro, rodillo: ICO.rodillo, olla: ICO.olla, heladera: ICO.heladera };
+    const iconos = { libro: ICO.libro, rodillo: ICO.rodillo, olla: ICO.olla, heladera: ICO.heladera, medidor: ICO.medidor };
     let desde = html.indexOf('href="#/herramientas/fermentados"');
-    expect(HERRAMIENTAS_DE_REFERENCIA).toHaveLength(4);
+    expect(HERRAMIENTAS_DE_REFERENCIA).toHaveLength(5);
     for (const r of HERRAMIENTAS_DE_REFERENCIA) {
       const donde = html.indexOf(`href="${r.ruta}">${iconos[r.icono]}`);
       expect(donde).toBeGreaterThan(desde);

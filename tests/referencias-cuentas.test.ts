@@ -2,8 +2,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   cuentaMolde, cuentaPastaFresca, cuentaLasana, cuentaBolloPizza, cuentaMerengue, cuentaPuntoAzucar, fraccion,
-  cuentaArroz, cuentaAguaSalPasta, cuentaEspagueti, cuentaCaldo, tablaDeArroz
+  cuentaArroz, cuentaAguaSalPasta, cuentaEspagueti, cuentaCaldo, tablaDeArroz,
+  cuentaConversion, medidaPractica, tablaDePesos, tablaDeSistemas, tablaDeMedidasEeuu
 } from '../src/referencias/cuentas.js';
+import { CONVERSOR } from '../src/referencias/datos/conversor.js';
+import { problemasDeForma } from '../src/referencias/forma.js';
 
 const fuente = { nombre: 'F', url: 'https://f.com', consultada: '2026-10-04' };
 const k = (valor: number, unidad = '') => ({ valor, unidad, fuente });
@@ -229,4 +232,114 @@ it('el caldo: agua y mirepoix por kilo, repartido, y el tiempo del tipo', () => 
     { nombre: 'Cebolla', valor: '100 a 200 g' }, { nombre: 'Zanahoria', valor: '50 a 100 g' }, { nombre: 'Apio', valor: '50 a 100 g' },
     { nombre: 'Tiempo', valor: '3–4 h' }
   ]);
+});
+
+describe('el conversor', () => {
+  const abreviada = { ...fuente, abreviatura: 'F' };
+  const ka = (valor: number, unidad = '') => ({ valor, unidad, fuente: abreviada });
+  // Números inventados, redondos, para que se vea de dónde sale cada uno: la taza de «eeuu» mide 200 ml.
+  const datos = {
+    sistemas: [
+      { id: 'metrica', nombre: 'Métrica', taza: 250, cucharada: 15, cucharadita: 5, fuentes: [abreviada] },
+      { id: 'eeuu', nombre: 'EE. UU.', taza: 200, cucharada: 10, cucharadita: 5, fuentes: [abreviada] }
+    ],
+    unidades: {
+      flOz: ka(30, 'ml'), oz: ka(25, 'g'), lb: ka(400, 'g'),
+      dash: ka(1 / 8), pinch: ka(1 / 16), smidgen: ka(1 / 32), stick: ka(0.5)
+    },
+    ingredienteDelStick: 'manteca',
+    ingredientes: [
+      // 100 g en 250 ml: 0,4 g/ml.
+      { id: 'harina', nombre: 'Harina', grupo: 'Harinas', medida: { cantidad: 1, unidad: 'taza', sistema: 'metrica', gramos: 100 }, fuente: abreviada },
+      // 200 g en 200 ml: 1 g/ml.
+      { id: 'manteca', nombre: 'Manteca', grupo: 'Grasas', medida: { cantidad: 1, unidad: 'taza', sistema: 'eeuu', gramos: 200 }, fuente: abreviada }
+    ],
+    notas: ['Al ras.'], notasMedidas: []
+  } satisfies typeof CONVERSOR;
+  const conversion = cuentaConversion(datos);
+  const convertir = (cantidad: number, unidad: string, ingrediente = '', sistema = 'metrica') =>
+    conversion.calcular({ cantidad, unidad, ingrediente, sistema });
+  const nombres = (r: ReturnType<typeof convertir>) => r?.lineas.map(l => l.nombre);
+
+  it('los gramos salen de la medida del ingrediente, y la taza mide lo de su sistema', () => {
+    const r = convertir(1, 'taza', 'harina');
+    expect(valor(r, 'Tazas (250 ml)')).toBe('1');
+    expect(valor(r, 'g')).toBe('100');
+    expect(valor(r, 'oz')).toBe('4,0');
+    expect(valor(convertir(1, 'taza', 'harina', 'eeuu'), 'g')).toBe('80');
+    expect(valor(convertir(1, 'taza', 'harina', 'eeuu'), 'Tazas (200 ml)')).toBe('1');
+  });
+
+  it('de peso a volumen, con la fracción práctica más cercana', () => {
+    expect(valor(convertir(100, 'g', 'harina'), 'Tazas (250 ml)')).toBe('1');
+    const r = convertir(30, 'g', 'harina');
+    expect(valor(r, 'Tazas (250 ml)')).toBe('≈ ⅓');
+    expect(valor(r, 'Cucharadas (15 ml)')).toBe('5');
+  });
+
+  it('sin ingrediente no cruza entre volumen y peso, y lo dice', () => {
+    const volumen = convertir(1, 'taza');
+    expect(nombres(volumen)).not.toContain('g');
+    expect(valor(volumen, 'Gramos')).toBe('Elegí un ingrediente para pasar a peso');
+    const peso = convertir(100, 'g');
+    expect(valor(peso, 'oz')).toBe('4,0');
+    expect(nombres(peso)).not.toContain('Tazas (250 ml)');
+    expect(valor(peso, 'Tazas y cucharas')).toBe('Elegí un ingrediente para pasar a volumen');
+  });
+
+  it('el stick es de manteca: media taza del sistema de EE. UU.', () => {
+    expect(convertir(1, 'stick', 'harina')?.lineas).toEqual([{ nombre: 'Stick', valor: 'Es una medida de manteca: elegí Manteca' }]);
+    expect(convertir(1, 'stick')?.lineas).toEqual([{ nombre: 'Stick', valor: 'Es una medida de manteca: elegí Manteca' }]);
+    const r = convertir(1, 'stick', 'manteca');
+    expect(valor(r, 'g')).toBe('100');
+    expect(valor(r, 'Sticks')).toBe('1');
+    expect(nombres(convertir(100, 'g', 'harina'))).not.toContain('Sticks');
+  });
+
+  it('una cantidad muy chica no se muestra en cucharas, y una muy grande no se cuenta en cucharas', () => {
+    const pinch = convertir(1, 'pinch');
+    expect(nombres(pinch)).toEqual(['ml', 'Gramos']);
+    expect(valor(pinch, 'ml')).toBe('0,31');
+    expect(nombres(convertir(5000, 'g', 'harina'))).not.toContain('Cucharadas (15 ml)');
+    // 1 g son 0,04 oz: redondea a cero y no se muestra.
+    expect(nombres(convertir(1, 'g'))).not.toContain('oz');
+  });
+
+  it('las unidades fijas salen de sus constantes', () => {
+    expect(valor(convertir(1, 'fl oz'), 'ml')).toBe('30');
+    expect(valor(convertir(1, 'lb'), 'g')).toBe('400');
+    expect(valor(convertir(1, 'kg'), 'g')).toBe('1000');
+    expect(valor(convertir(1, 'l'), 'ml')).toBe('1000');
+  });
+
+  it('sin cantidad, nada; y el resultado trae la advertencia y las fuentes', () => {
+    expect(convertir(0, 'taza')).toBeNull();
+    expect(conversion.calcular({ cantidad: null, unidad: 'taza', ingrediente: '', sistema: 'metrica' })).toBeNull();
+    const r = convertir(1, 'taza', 'harina');
+    expect(r?.advertencias).toEqual(['Al ras.']);
+    expect(r?.fuentes).toContain(abreviada);
+    // El sistema, el ingrediente y las oz citan la misma fuente: va una sola vez.
+    expect(r?.fuentes).toHaveLength(1);
+  });
+
+  it('la fracción práctica: exacta sin «≈», aproximada con él, y cero no se muestra', () => {
+    const taza = [0, 1 / 4, 1 / 3, 1 / 2, 2 / 3, 3 / 4];
+    expect(medidaPractica(0.75, taza)).toBe('¾');
+    expect(medidaPractica(1.5, taza)).toBe('1 ½');
+    expect(medidaPractica(2.3, taza)).toBe('≈ 2 ⅓');
+    expect(medidaPractica(2, taza)).toBe('2');
+    expect(medidaPractica(0.01, [0, 1 / 2])).toBe('');
+  });
+
+  it('la tabla de pesos: agrupada, en la taza y las cucharas métricas', () => {
+    const t = tablaDePesos(datos);
+    expect('grupos' in t && t.grupos.map(g => g.titulo)).toEqual(['Harinas', 'Grasas']);
+    const harina = 'grupos' in t ? t.grupos[0]!.filas[0] : undefined;
+    expect(harina).toMatchObject({ ingrediente: 'Harina', taza: '100', cucharada: '6,0', cucharadita: '2,0', fuente: 'F' });
+    expect(t.columnas.map(c => c.unidad)).toEqual([undefined, 'g, 250 ml', 'g, 15 ml', 'g, 5 ml', undefined]);
+  });
+
+  it('las tres tablas, con los datos de la app, tienen buena forma', () => {
+    for (const t of [tablaDePesos(CONVERSOR), tablaDeSistemas(CONVERSOR), tablaDeMedidasEeuu(CONVERSOR)]) expect(problemasDeForma(t), t.id).toEqual([]);
+  });
 });

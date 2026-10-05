@@ -13,12 +13,12 @@ const cuenta: Cuenta = {
 };
 
 describe('consultar_referencia', () => {
-  it('sin nada, las cuatro herramientas con sus tablas y cuentas', () => {
+  it('sin nada, las cinco herramientas con sus tablas y cuentas', () => {
     const r = consultarReferencia({});
-    expect('herramientas' in r && r.herramientas.map(h => h.id)).toEqual(['rapida', 'masas', 'coccion', 'conservacion']);
+    expect('herramientas' in r && r.herramientas.map(h => h.id)).toEqual(['rapida', 'masas', 'coccion', 'conservacion', 'conversor']);
   });
   it('una herramienta que no existe devuelve las opciones', () => {
-    expect(consultarReferencia({ herramienta: 'otra' })).toEqual({ error: expect.any(String), opciones: ['rapida', 'masas', 'coccion', 'conservacion'] });
+    expect(consultarReferencia({ herramienta: 'otra' })).toEqual({ error: expect.any(String), opciones: ['rapida', 'masas', 'coccion', 'conservacion', 'conversor'] });
   });
   it('buscar encuentra sin tildes ni mayúsculas, con su tabla y su fuente', () => {
     // El texto sale de los datos, sea cual sea: el test no depende de ningún valor.
@@ -95,5 +95,30 @@ describe('el esquema de una cuenta', () => {
 describe('la descripción de cada cuenta', () => {
   it('todas dicen para qué pregunta sirven', () => {
     for (const c of CUENTAS) expect(c.descripcion, c.id).toMatch(/\S{3}/);
+  });
+});
+
+describe('el conversor para el agente', () => {
+  const conversion = CUENTAS.find(c => c.id === 'conversion');
+  if (!conversion) throw new Error('no está la cuenta del conversor');
+
+  it('con cantidad, unidad e ingrediente sin tildes, devuelve los gramos', () => {
+    const r = calcularParaElAgente(conversion, { cantidad: 1, unidad: 'taza', ingrediente: 'azucar blanca' });
+    expect('resultado' in r && (r.resultado as { nombre: string }[]).map(l => l.nombre)).toContain('g');
+  });
+  it('la unidad se pide como se escribe: «fl oz»', () => {
+    expect('resultado' in calcularParaElAgente(conversion, { cantidad: 1, unidad: 'fl oz' })).toBe(true);
+  });
+  it('sin cantidad, la pide', () => {
+    expect(calcularParaElAgente(conversion, { unidad: 'taza' })).toEqual({ faltan: [{ dato: 'cantidad' }] });
+  });
+  it('un ingrediente que no está devuelve la lista', () => {
+    const r = calcularParaElAgente(conversion, { cantidad: 1, ingrediente: 'kriptonita' });
+    expect('faltan' in r && r.faltan[0]?.dato).toBe('ingrediente');
+    expect('faltan' in r && r.faltan[0]?.opciones).toContain('Manteca');
+  });
+  it('buscar «harina» encuentra la tabla de pesos', () => {
+    const r = consultarReferencia({ buscar: 'harina' });
+    expect('coincidencias' in r && r.coincidencias.map(c => c.tabla)).toContain('Pesos por ingrediente');
   });
 });

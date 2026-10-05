@@ -55,21 +55,21 @@ y la pantalla y el MCP salen de esa declaración.
 - `sistema`: uno de los cuatro; dice cuánto miden la taza y las cucharas.
 - `ingrediente`: una opción, «Ninguno» y los 47 en el orden de la tabla.
 
-**Salida:** una línea por unidad de destino, con estas reglas.
+**Salida:** tazas, cucharadas, cucharaditas y ml del sistema elegido; g y oz;
+y, con manteca, sticks. l, kg, lb, fl oz y las informales valen sólo como
+entrada. Con estas reglas:
 
-- **Sin ingrediente:** volumen a volumen y peso a peso. Para cruzar de un tipo
-  al otro, devuelve sólo la línea «Elegí un ingrediente para pasar de peso a
-  volumen» (o al revés).
+- **Sin ingrediente:** volumen a volumen y peso a peso. En lugar del otro
+  tipo, una línea: «Elegí un ingrediente para pasar a peso» (o «a volumen»).
 - **Con ingrediente:** cruza con los gramos por ml que salen de su medida.
 - **El stick** es una unidad sólo con manteca. Con manteca, la salida suma la
   línea de sticks.
-- **pinch, dash y smidgen** valen como entrada. En la salida no aparecen.
 - **Tazas, cucharadas y cucharaditas** salen en la fracción práctica más
   cercana —enteros más ¼, ⅓, ½, ⅔ o ¾ para la taza; enteros más ½ para las
-  cucharas—, con «≈» delante si no es exacta: «≈ ¾ taza», «2 ½ cdas». Si la
-  cantidad es menor que ¼ de taza, no se muestra la taza. Tampoco se muestra la
-  cucharada si es más de 16. **ml y g** salen enteros, o con un decimal debajo
-  de 10. **oz y lb**, con un decimal.
+  cucharas—, con «≈» delante si no es exacta: «≈ ¾ taza», «2 ½ cdas». Una medida
+  que redondea a cero no se muestra, ni una cuchara de más de 16. **ml y g**
+  salen enteros, con un decimal debajo de 10 y con dos debajo de 1. **oz**,
+  con un decimal.
 - Una cantidad vacía o cero da un resultado vacío, nunca un error.
 
 Advertencia fija: «Medidas al ras; la harina, volcada con cuchara en la taza.
@@ -79,8 +79,8 @@ Hundiendo la taza entra hasta un tercio más».
 
 `#/herramientas/conversor`, con volver y el ícono en el título. En la lista de
 Herramientas, después de las de referencia: **Conversor** —*Tazas, cucharas y
-gramos por ingrediente*—, con un ícono nuevo, `balanza`, del trazo de los
-demás.
+gramos por ingrediente*—, con un ícono nuevo, `medidor` (una taza medidora),
+del trazo de los demás: `balanza` ya es el de *Herramientas*.
 
 Es la pantalla genérica de las referencias, con el buscador y el índice de
 chips arriba, y tres fichas:
@@ -171,7 +171,7 @@ Ningún test fija un valor de los datos.
 
 - `E07-Herramientas.md`: la feature, con sus criterios.
 - `information-architecture.md`: la pantalla.
-- `design-system.md`: el ícono `balanza`.
+- `design-system.md`: el ícono `medidor`.
 - `CLAUDE.md`: el conversor junto a las referencias.
 - `skills/herramientas/SKILL.md` y `mcp/LEEME.md`: `calcular_conversion`.
 - `BACKLOG.md`: P120 se borra al terminar.

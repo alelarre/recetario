@@ -4,6 +4,7 @@ import { HERRAMIENTAS_DE_REFERENCIA } from '../src/referencias/indice.js';
 import type { Tabla, Fuente } from '../src/referencias/tipos.js';
 import { AGUA_SAL_PASTA, ESPAGUETI, CALDO } from '../src/referencias/datos/coccion.js';
 import { MOLDE, PASTA_FRESCA, LASANA, PIZZA, AZUCAR, MERENGUE } from '../src/referencias/datos/masas-y-dulces.js';
+import { SISTEMAS, UNIDADES, INGREDIENTES, INGREDIENTE_DEL_STICK } from '../src/referencias/datos/conversor.js';
 
 const fuente = { nombre: 'Fuente', url: 'https://ejemplo.com/x', consultada: '2026-10-04' };
 const columnas = [{ id: 'a', nombre: 'A' }, { id: 'b', nombre: 'B', unidad: '°C' }];
@@ -57,10 +58,11 @@ describe('la forma de una tabla', () => {
 });
 
 describe('el índice', () => {
-  it('las cuatro herramientas, en el orden de la lista, con su ruta', () => {
+  it('las cinco herramientas, en el orden de la lista, con su ruta', () => {
     expect(HERRAMIENTAS_DE_REFERENCIA.map(h => [h.id, h.ruta])).toEqual([
       ['rapida', '#/herramientas/referencia'], ['masas', '#/herramientas/masas'],
-      ['coccion', '#/herramientas/coccion'], ['conservacion', '#/herramientas/conservacion']
+      ['coccion', '#/herramientas/coccion'], ['conservacion', '#/herramientas/conservacion'],
+      ['conversor', '#/herramientas/conversor']
     ]);
   });
 
@@ -99,5 +101,22 @@ describe('el índice', () => {
       ['PIZZA.fuenteMolde', PIZZA.fuenteMolde], ['AZUCAR.fuente', AZUCAR.fuente]
     ];
     for (const [nombre, fuente] of fuentes) expect(problemasDeConstante(nombre, { valor: 0, unidad: '', fuente })).toEqual([]);
+  });
+});
+
+describe('los datos del conversor', () => {
+  it('cada sistema, unidad e ingrediente dice de dónde sale', () => {
+    for (const s of SISTEMAS) for (const f of s.fuentes) expect(problemasDeConstante(`sistema ${s.id}`, { valor: s.taza, unidad: 'ml', fuente: f })).toEqual([]);
+    for (const [nombre, c] of Object.entries(UNIDADES)) expect(problemasDeConstante(nombre, c)).toEqual([]);
+    for (const i of INGREDIENTES) expect(problemasDeConstante(`ingrediente ${i.id}`, { valor: i.medida.gramos, unidad: 'g', fuente: i.fuente })).toEqual([]);
+  });
+
+  it('los id no se repiten, cada medida usa un sistema que existe y el stick es de un ingrediente que está', () => {
+    const ids = INGREDIENTES.map(i => i.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(SISTEMAS.map(s => s.id)).size).toBe(SISTEMAS.length);
+    for (const i of INGREDIENTES) expect(SISTEMAS.map(s => s.id), i.id).toContain(i.medida.sistema);
+    for (const i of INGREDIENTES) expect(i.medida.cantidad > 0 && i.medida.gramos > 0, i.id).toBe(true);
+    expect(ids).toContain(INGREDIENTE_DEL_STICK);
   });
 });

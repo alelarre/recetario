@@ -85,7 +85,7 @@ El servidor `recetario` registra veintitrés herramientas, en tres grupos.
 `calcular_sal`, las mismas cuentas que las pantallas de *Pan* y *Fermentados*.
 
 **Las referencias** (tampoco usan el Drive ni el login), las mismas tablas y
-cuentas que las cuatro pantallas de referencia de la app, cada dato con su
+cuentas que las cinco pantallas de referencia de la app, cada dato con su
 fuente:
 
 - `consultar_referencia`: sin nada, lista las herramientas con sus tablas y
@@ -94,7 +94,8 @@ fuente:
 - Una `calcular_*` por cuenta: `calcular_molde`, `calcular_pasta_fresca`,
   `calcular_lasana`, `calcular_bollo_pizza`, `calcular_merengue`,
   `calcular_punto_azucar`, `calcular_arroz`, `calcular_agua_sal_pasta`,
-  `calcular_medidor_espagueti` y `calcular_caldo`. Responden
+  `calcular_medidor_espagueti`, `calcular_caldo` y `calcular_conversion`
+  (tazas, cucharas y gramos por ingrediente). Responden
   `{ resultado, tabla?, advertencias, notas, fuentes }`; si falta un dato sin
   valor por defecto, `{ faltan: [{ dato, opciones? }] }`, y si con esos
   valores no se puede calcular, `{ error }`.

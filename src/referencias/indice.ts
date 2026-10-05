@@ -1,5 +1,5 @@
 /**
- * Las cuatro herramientas de referencia, en el orden de la lista de
+ * Las cinco herramientas de referencia, en el orden de la lista de
  * Herramientas, y el orden de sus fichas. Los datos salen de `datos/`; las
  * cuentas, de `cuentas.ts`. Una ficha nueva se suma acá.
  */
@@ -8,7 +8,8 @@ import { TABLAS_RAPIDA } from './datos/rapida.js';
 import { TABLAS_COCCION, ARROZ, AGUA_SAL_PASTA, ESPAGUETI, CALDO } from './datos/coccion.js';
 import { TABLAS_CONSERVACION } from './datos/conservacion.js';
 import { TABLAS_MASAS, MOLDE, PASTA_FRESCA, LASANA, PIZZA, AZUCAR, MERENGUE } from './datos/masas-y-dulces.js';
-import { cuentaMolde, cuentaPastaFresca, cuentaLasana, cuentaBolloPizza, cuentaPuntoAzucar, cuentaMerengue, cuentaArroz, tablaDeArroz, cuentaAguaSalPasta, cuentaEspagueti, cuentaCaldo } from './cuentas.js';
+import { CONVERSOR } from './datos/conversor.js';
+import { cuentaMolde, cuentaPastaFresca, cuentaLasana, cuentaBolloPizza, cuentaPuntoAzucar, cuentaMerengue, cuentaArroz, tablaDeArroz, cuentaAguaSalPasta, cuentaEspagueti, cuentaCaldo, cuentaConversion, tablaDePesos, tablaDeSistemas, tablaDeMedidasEeuu } from './cuentas.js';
 
 export const HERRAMIENTAS_DE_REFERENCIA: readonly HerramientaDeReferencia[] = [
   { id: 'rapida', ruta: '#/herramientas/referencia', titulo: 'Referencia rápida', detalle: 'Huevos, carne, aceite, horno y bebidas', icono: 'libro', buscador: false,
@@ -46,7 +47,14 @@ export const HERRAMIENTAS_DE_REFERENCIA: readonly HerramientaDeReferencia[] = [
       { tipo: 'cuenta', cuenta: cuentaCaldo(CALDO) }
     ] },
   { id: 'conservacion', ruta: '#/herramientas/conservacion', titulo: 'Conservación', detalle: 'Cuánto dura cada alimento', icono: 'heladera', buscador: true,
-    fichas: [TABLAS_CONSERVACION['nota-general'], TABLAS_CONSERVACION.conservacion].map(tabla => ({ tipo: 'tabla', tabla }) as const) }
+    fichas: [TABLAS_CONSERVACION['nota-general'], TABLAS_CONSERVACION.conservacion].map(tabla => ({ tipo: 'tabla', tabla }) as const) },
+  { id: 'conversor', ruta: '#/herramientas/conversor', titulo: 'Conversor', detalle: 'Tazas, cucharas y gramos por ingrediente', icono: 'medidor', buscador: true,
+    fichas: [
+      { tipo: 'cuenta', cuenta: cuentaConversion(CONVERSOR) },
+      { tipo: 'tabla', tabla: tablaDePesos(CONVERSOR) },
+      { tipo: 'tabla', tabla: tablaDeSistemas(CONVERSOR) },
+      { tipo: 'tabla', tabla: tablaDeMedidasEeuu(CONVERSOR) }
+    ] }
 ];
 
 export function herramientaDeReferencia(id: IdHerramienta): HerramientaDeReferencia {

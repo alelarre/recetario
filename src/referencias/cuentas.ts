@@ -5,9 +5,10 @@
  * desde esa declaración.
  */
 import { gramos } from '../calculadoras/gramos.js';
-import type { Cuenta, Valores, Linea, Fuente, Resultado, Tabla } from './tipos.js';
+import type { Cuenta, Valores, Linea, Fuente, FuenteAbreviada, Resultado, Tabla, Sistema, IngredienteConvertible } from './tipos.js';
 import type { MOLDE, LASANA, PIZZA, AZUCAR, RecetaPorPorcion, TipoDeMerengue, Ingrediente } from './datos/masas-y-dulces.js';
 import type { ARROZ, AGUA_SAL_PASTA, ESPAGUETI, CALDO } from './datos/coccion.js';
+import type { CONVERSOR } from './datos/conversor.js';
 
 /** Un número positivo y finito, o nada. */
 export function numero(v: Valores, id: string): number | null {
@@ -291,5 +292,219 @@ export function cuentaCaldo(k: typeof CALDO): Cuenta {
         { nombre: 'Tiempo', valor: t.tiempo }
       ], [k.aguaPorKg.fuente, k.fuente]);
     }
+  };
+}
+
+// ── Conversor ──────────────────────────────────────────────────────────────
+
+type DatosConversor = typeof CONVERSOR;
+type Fija = keyof DatosConversor['unidades'];
+
+const SIMBOLOS: readonly (readonly [number, string])[] = [[1 / 4, '¼'], [1 / 3, '⅓'], [1 / 2, '½'], [2 / 3, '⅔'], [3 / 4, '¾']];
+const PASOS_TAZA = [0, 1 / 4, 1 / 3, 1 / 2, 2 / 3, 3 / 4];
+const PASOS_CUCHARA = [0, 1 / 2];
+const PASOS_STICK = [0, 1 / 4, 1 / 2, 3 / 4];
+/** Más cucharadas que esto se miden con taza. */
+const CUCHARAS_MAXIMAS = 16;
+/** Por debajo de esta diferencia, una medida es exacta y no lleva «≈». */
+const TOLERANCIA = 0.01;
+
+/**
+ * Una cantidad de tazas, cucharas o sticks como se mide: el entero más la
+ * fracción de `pasos` más cercana, con «≈» si no es exacta. Si redondea a
+ * cero, vacío: esa medida no se muestra.
+ */
+export function medidaPractica(n: number, pasos: readonly number[]): string {
+  const entero = Math.floor(n);
+  const candidatos = [...pasos.map(p => entero + p), entero + 1];
+  const c = candidatos.reduce((a, b) => (Math.abs(b - n) < Math.abs(a - n) ? b : a));
+  if (c === 0) return '';
+  const e = Math.floor(c + 1e-9);
+  const simbolo = SIMBOLOS.find(([f]) => Math.abs(c - e - f) < 1e-9)?.[1] ?? '';
+  const texto = e && simbolo ? `${e} ${simbolo}` : simbolo || String(e);
+  return Math.abs(c - n) < TOLERANCIA ? texto : `≈ ${texto}`;
+}
+
+/** Los ml de una medida en el nombre de una línea o de una columna: «250», «236,6». */
+const mlDeMedida = (ml: number): string => String(Math.round(ml * 10) / 10).replace('.', ',');
+const unDecimal = (n: number): string => (Math.round(n * 10) / 10).toFixed(1).replace('.', ',');
+/** «1/8», «1/16»: la fracción de cucharadita de una medida informal. */
+const fraccionChica = (n: number): string => `1/${Math.round(1 / n)}`;
+
+const mlDe = (s: Sistema, u: IngredienteConvertible['medida']['unidad']): number => s[u];
+const gramosPorMl = (k: DatosConversor, i: IngredienteConvertible): number | null => {
+  const s = k.sistemas.find(x => x.id === i.medida.sistema);
+  return s ? i.medida.gramos / (i.medida.cantidad * mlDe(s, i.medida.unidad)) : null;
+};
+
+const UNIDADES_CONVERSOR: readonly { valor: string; texto: string }[] = [
+  { valor: 'taza', texto: 'Taza' }, { valor: 'cucharada', texto: 'Cucharada' }, { valor: 'cucharadita', texto: 'Cucharadita' },
+  { valor: 'ml', texto: 'ml' }, { valor: 'l', texto: 'l' }, { valor: 'fl oz', texto: 'fl oz (EE. UU.)' },
+  { valor: 'g', texto: 'g' }, { valor: 'kg', texto: 'kg' }, { valor: 'oz', texto: 'oz' }, { valor: 'lb', texto: 'lb' },
+  { valor: 'pinch', texto: 'pinch' }, { valor: 'dash', texto: 'dash' }, { valor: 'smidgen', texto: 'smidgen' },
+  { valor: 'stick', texto: 'stick (manteca)' }
+];
+
+/** Los ml de una cantidad en una unidad de volumen, o `null` si es de peso. Anota la constante que usó. */
+function mlDeEntrada(k: DatosConversor, s: Sistema, eeuu: Sistema, unidad: string, cantidad: number, usadas: Fija[]): number | null {
+  switch (unidad) {
+    case 'taza': case 'cucharada': case 'cucharadita': return cantidad * s[unidad];
+    case 'ml': return cantidad;
+    case 'l': return cantidad * 1000;
+    case 'fl oz': usadas.push('flOz'); return cantidad * k.unidades.flOz.valor;
+    case 'pinch': case 'dash': case 'smidgen': usadas.push(unidad); return cantidad * k.unidades[unidad].valor * eeuu.cucharadita;
+    case 'stick': usadas.push('stick'); return cantidad * k.unidades.stick.valor * eeuu.taza;
+    default: return null;
+  }
+}
+
+function gramosDeEntrada(k: DatosConversor, unidad: string, cantidad: number, usadas: Fija[]): number | null {
+  switch (unidad) {
+    case 'g': return cantidad;
+    case 'kg': return cantidad * 1000;
+    case 'oz': case 'lb': usadas.push(unidad); return cantidad * k.unidades[unidad].valor;
+    default: return null;
+  }
+}
+
+function lineasDeVolumen(s: Sistema, ml: number): Linea[] {
+  const lineas: Linea[] = [];
+  const casera = (nombre: string, medida: number, pasos: readonly number[], tope: number): void => {
+    const n = ml / medida;
+    const texto = n > tope ? '' : medidaPractica(n, pasos);
+    if (texto) lineas.push({ nombre: `${nombre} (${mlDeMedida(medida)} ml)`, valor: texto });
+  };
+  casera('Tazas', s.taza, PASOS_TAZA, Infinity);
+  casera('Cucharadas', s.cucharada, PASOS_CUCHARA, CUCHARAS_MAXIMAS);
+  casera('Cucharaditas', s.cucharadita, PASOS_CUCHARA, CUCHARAS_MAXIMAS);
+  lineas.push({ nombre: 'ml', valor: gramos(ml) });
+  return lineas;
+}
+
+/** Las oz que redondean a cero no se muestran, como una medida casera. */
+function lineasDePeso(k: DatosConversor, g: number): Linea[] {
+  const oz = unDecimal(g / k.unidades.oz.valor);
+  return [{ nombre: 'g', valor: gramos(g) }, ...(oz === '0,0' ? [] : [{ nombre: 'oz', valor: oz }])];
+}
+
+export function cuentaConversion(k: DatosConversor): Cuenta {
+  return {
+    id: 'conversion', titulo: 'Conversor',
+    descripcion: 'Pasa una cantidad de cocina de una unidad a las demás —tazas, cucharas, ml, gramos, onzas, sticks de manteca— según el sistema de medida y el ingrediente.',
+    entradas: [
+      { id: 'cantidad', nombre: 'Cantidad', tipo: 'numero', porDefecto: null },
+      { id: 'unidad', nombre: 'Unidad', tipo: 'opcion', porDefecto: 'taza', opciones: UNIDADES_CONVERSOR },
+      { id: 'sistema', nombre: 'Sistema', tipo: 'opcion', porDefecto: k.sistemas[0]?.id ?? '', opciones: k.sistemas.map(s => ({ valor: s.id, texto: s.nombre })) },
+      { id: 'ingrediente', nombre: 'Ingrediente', tipo: 'opcion', porDefecto: '',
+        opciones: [{ valor: '', texto: 'Ninguno' }, ...k.ingredientes.map(i => ({ valor: i.id, texto: i.nombre }))] }
+    ],
+    calcular(v) {
+      const cantidad = numero(v, 'cantidad');
+      const s = k.sistemas.find(x => x.id === opcion(v, 'sistema'));
+      const eeuu = k.sistemas.find(x => x.id === 'eeuu');
+      if (!cantidad || !s || !eeuu) return null;
+      const unidad = opcion(v, 'unidad');
+      const i = k.ingredientes.find(x => x.id === opcion(v, 'ingrediente'));
+      if (unidad === 'stick' && i?.id !== k.ingredienteDelStick) {
+        return resultado([{ nombre: 'Stick', valor: 'Es una medida de manteca: elegí Manteca' }], []);
+      }
+      const usadas: Fija[] = [];
+      const densidad = i ? gramosPorMl(k, i) : null;
+      let ml = mlDeEntrada(k, s, eeuu, unidad, cantidad, usadas);
+      let g = ml === null ? gramosDeEntrada(k, unidad, cantidad, usadas) : null;
+      if (ml === null && g === null) return null;
+      if (densidad) {
+        if (ml === null && g !== null) ml = g / densidad;
+        else if (ml !== null) g = ml * densidad;
+      }
+      if (g !== null) usadas.push('oz');
+      const lineas = [
+        ...(ml !== null ? lineasDeVolumen(s, ml) : [{ nombre: 'Tazas y cucharas', valor: 'Elegí un ingrediente para pasar a volumen' }]),
+        ...(g !== null ? lineasDePeso(k, g) : [{ nombre: 'Gramos', valor: 'Elegí un ingrediente para pasar a peso' }])
+      ];
+      if (ml !== null && i?.id === k.ingredienteDelStick) {
+        usadas.push('stick');
+        const sticks = medidaPractica(ml / (k.unidades.stick.valor * eeuu.taza), PASOS_STICK);
+        if (sticks) lineas.push({ nombre: 'Sticks', valor: sticks });
+      }
+      const fuentes = [...s.fuentes, ...(i ? [i.fuente] : []), ...usadas.map(u => k.unidades[u].fuente)];
+      return resultado(lineas, unicas(fuentes), k.notas.slice(0, 1));
+    }
+  };
+}
+
+/** Las fuentes de una tabla, una vez por link. */
+const unicas = (fs: readonly FuenteAbreviada[]): FuenteAbreviada[] => fs.filter((f, n) => fs.findIndex(x => x.url === f.url) === n);
+
+/** Los gramos por taza y por cuchara de cada ingrediente, en el sistema métrico. */
+export function tablaDePesos(k: DatosConversor): Tabla {
+  const m = k.sistemas.find(s => s.id === 'metrica');
+  const grupos = [...new Set(k.ingredientes.map(i => i.grupo))];
+  const celda = (i: IngredienteConvertible, ml: number | undefined): string => {
+    const d = gramosPorMl(k, i);
+    return d && ml ? gramos(d * ml) : '—';
+  };
+  return {
+    id: 'pesos', titulo: 'Pesos por ingrediente',
+    columnas: [
+      { id: 'ingrediente', nombre: 'Ingrediente' },
+      { id: 'taza', nombre: 'Taza', unidad: `g, ${mlDeMedida(m?.taza ?? 0)} ml` },
+      { id: 'cucharada', nombre: 'Cucharada', unidad: `g, ${mlDeMedida(m?.cucharada ?? 0)} ml` },
+      { id: 'cucharadita', nombre: 'Cucharadita', unidad: `g, ${mlDeMedida(m?.cucharadita ?? 0)} ml` },
+      { id: 'fuente', nombre: 'Fuente' }
+    ],
+    grupos: grupos.map(titulo => ({
+      titulo,
+      filas: k.ingredientes.filter(i => i.grupo === titulo).map(i => ({
+        ingrediente: i.nombre, taza: celda(i, m?.taza), cucharada: celda(i, m?.cucharada),
+        cucharadita: celda(i, m?.cucharadita), fuente: i.fuente.abreviatura
+      }))
+    })),
+    notas: k.notas,
+    fuentes: unicas(k.ingredientes.map(i => i.fuente)), columnaFuente: 'fuente'
+  };
+}
+
+export function tablaDeSistemas(k: DatosConversor): Tabla {
+  return {
+    id: 'sistemas', titulo: 'Tazas y cucharas',
+    columnas: [
+      { id: 'sistema', nombre: 'Sistema' }, { id: 'taza', nombre: 'Taza', unidad: 'ml' },
+      { id: 'cucharada', nombre: 'Cucharada', unidad: 'ml' }, { id: 'cucharadita', nombre: 'Cucharadita', unidad: 'ml' },
+      { id: 'fuente', nombre: 'Fuente' }
+    ],
+    filas: k.sistemas.map(s => ({
+      sistema: s.nombre, taza: mlDeMedida(s.taza), cucharada: mlDeMedida(s.cucharada),
+      cucharadita: mlDeMedida(s.cucharadita), fuente: s.fuentes.map(f => f.abreviatura).join(', ')
+    })),
+    notas: k.sistemas.flatMap(s => s.notas ?? []),
+    fuentes: unicas(k.sistemas.flatMap(s => s.fuentes)), columnaFuente: 'fuente'
+  };
+}
+
+export function tablaDeMedidasEeuu(k: DatosConversor): Tabla {
+  const u = k.unidades;
+  const eeuu = k.sistemas.find(s => s.id === 'eeuu');
+  const manteca = k.ingredientes.find(i => i.id === k.ingredienteDelStick);
+  const densidad = manteca ? gramosPorMl(k, manteca) : null;
+  const informal = (nombre: 'dash' | 'pinch' | 'smidgen') => ({
+    medida: nombre, fuente: u[nombre].fuente.abreviatura,
+    equivalencia: `${fraccionChica(u[nombre].valor)} de cucharadita${eeuu ? ` (${gramos(u[nombre].valor * eeuu.cucharadita)} ml)` : ''}`
+  });
+  const stickMl = eeuu ? u.stick.valor * eeuu.taza : null;
+  return {
+    id: 'medidas-eeuu', titulo: 'Medidas de EE. UU.',
+    columnas: [{ id: 'medida', nombre: 'Medida' }, { id: 'equivalencia', nombre: 'Equivale a' }, { id: 'fuente', nombre: 'Fuente' }],
+    filas: [
+      { medida: 'fl oz', equivalencia: `${mlDeMedida(u.flOz.valor)} ml`, fuente: u.flOz.fuente.abreviatura },
+      { medida: 'oz', equivalencia: `${mlDeMedida(u.oz.valor)} g`, fuente: u.oz.fuente.abreviatura },
+      { medida: 'lb', equivalencia: `${mlDeMedida(u.lb.valor)} g`, fuente: u.lb.fuente.abreviatura },
+      informal('dash'), informal('pinch'), informal('smidgen'),
+      { medida: 'stick de manteca', fuente: u.stick.fuente.abreviatura,
+        equivalencia: `${medidaPractica(u.stick.valor, PASOS_TAZA)} taza` +
+          (stickMl && densidad ? ` = ${gramos(stickMl * densidad)} g` : '') }
+    ],
+    notas: k.notasMedidas,
+    fuentes: unicas(Object.values(u).map(x => x.fuente)), columnaFuente: 'fuente'
   };
 }

@@ -23,8 +23,22 @@ export interface Resultado { lineas: readonly Linea[]; tabla?: TablaDeResultado;
 /** `descripcion` es una frase con la pregunta que la cuenta responde: la ve el agente en el MCP. */
 export interface Cuenta { id: string; titulo: string; descripcion?: string; entradas: readonly Entrada[]; notas?: readonly string[]; calcular(v: Valores): Resultado | null }
 export type Ficha = { tipo: 'tabla'; tabla: Tabla } | { tipo: 'cuenta'; cuenta: Cuenta };
-export type IdHerramienta = 'rapida' | 'masas' | 'coccion' | 'conservacion';
+export type IdHerramienta = 'rapida' | 'masas' | 'coccion' | 'conservacion' | 'conversor';
 export interface HerramientaDeReferencia {
   id: IdHerramienta; ruta: string; titulo: string; detalle: string;
-  icono: 'libro' | 'rodillo' | 'olla' | 'heladera'; buscador: boolean; fichas: readonly Ficha[];
+  icono: 'libro' | 'rodillo' | 'olla' | 'heladera' | 'medidor'; buscador: boolean; fichas: readonly Ficha[];
+}
+
+/** Los sistemas de medida del conversor: cuánto miden la taza y las cucharas. */
+export type IdSistema = 'metrica' | 'australia' | 'eeuu' | 'japon';
+export type MedidaCasera = 'taza' | 'cucharada' | 'cucharadita';
+export interface Sistema {
+  id: IdSistema; nombre: string; taza: number; cucharada: number; cucharadita: number;
+  notas?: readonly string[]; fuentes: readonly FuenteAbreviada[];
+}
+export interface IngredienteConvertible {
+  id: string; nombre: string; grupo: string;
+  /** La medida tal como la da la fuente: «½ taza de EE. UU. = 113 g». Los gramos por ml salen de acá. */
+  medida: { cantidad: number; unidad: MedidaCasera; sistema: IdSistema; gramos: number };
+  fuente: FuenteAbreviada;
 }

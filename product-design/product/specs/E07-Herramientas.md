@@ -49,16 +49,17 @@ aparece.
   y *Nueva receta* (`ux/information-architecture.md` §4.6).
 - [ ] `#/herramientas` es destino del menú (`MENU` en `src/ui/router.ts`):
   lleva la hamburguesa en vez del volver, y su entrada queda marcada.
-- [ ] La pantalla es una lista con siete entradas, cada una con su ícono
+- [ ] La pantalla es una lista con ocho entradas, cada una con su ícono
   adelante —como las entradas del menú lateral— y una línea que dice qué
   hace, en este orden: **Temporizadores** —*Cronómetro y cuentas
   regresivas*—, **Pan** —*Harinas, agua, sal y levadura*—, **Fermentados**
   —*Porcentaje de sal y tiempos*—, **Referencia rápida** —*Huevos, carne,
   aceite, horno y bebidas*—, **Masas y dulces** —*Moldes, piezas, pasta,
   pizza, azúcar y merengue*—, **Básicos de cocción** —*Arroz, granos,
-  legumbres, pasta, verduras y caldo*— y **Conservación** —*Cuánto dura cada
-  alimento*—. Los íconos de las cuatro últimas son `libro`, `rodillo`,
-  `olla` y `heladera`.
+  legumbres, pasta, verduras y caldo*—, **Conservación** —*Cuánto dura cada
+  alimento*— y **Conversor** —*Tazas, cucharas y gramos por ingrediente*—.
+  Los íconos de las cinco últimas son `libro`, `rodillo`, `olla`, `heladera`
+  y `medidor`.
 
 #### C07.1.2 — Las rutas *(J6)*
 
@@ -66,8 +67,8 @@ aparece.
   `#/herramientas/fermentados` son Temporizadores y cada calculadora, con el
   volver.
 - [ ] `#/herramientas/referencia`, `#/herramientas/masas`,
-  `#/herramientas/coccion` y `#/herramientas/conservacion` son las cuatro
-  referencias, con el volver y el ícono de la herramienta delante del título.
+  `#/herramientas/coccion`, `#/herramientas/conservacion` y
+  `#/herramientas/conversor` son las cinco referencias, con el volver y el ícono de la herramienta delante del título.
   Vuelven a la lista.
 - [ ] Una calculadora abierta desde una receta vuelve a la receta; abierta
   desde la lista, vuelve a la lista. Por un link directo, el volver pone el
@@ -507,7 +508,8 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 #### C07.6.4 — Las herramientas de referencia del MCP *(J6)*
 
 - [ ] **`consultar_referencia`**, en el servidor `recetario`. Sin nada, lista
-  las cuatro herramientas (`rapida`, `masas`, `coccion`, `conservacion`) con el
+  las cinco herramientas (`rapida`, `masas`, `coccion`, `conservacion`,
+  `conversor`) con el
   `id` y el título de sus tablas y de sus cuentas, y el nombre de la
   herramienta del MCP de cada cuenta. Con `herramienta` y, si quiere, `tabla`,
   devuelve las filas con los nombres de sus columnas, las notas y las fuentes.
@@ -519,8 +521,8 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   registrada desde la declaración de la cuenta, así que su esquema son sus
   entradas: `calcular_molde`, `calcular_pasta_fresca`, `calcular_lasana`,
   `calcular_bollo_pizza`, `calcular_merengue`, `calcular_punto_azucar`,
-  `calcular_arroz`, `calcular_agua_sal_pasta`, `calcular_medidor_espagueti` y
-  `calcular_caldo`. Importan `src/referencias/` y **no usan Drive ni el
+  `calcular_arroz`, `calcular_agua_sal_pasta`, `calcular_medidor_espagueti`,
+  `calcular_caldo` y `calcular_conversion`. Importan `src/referencias/` y **no usan Drive ni el
   login.**
 - [ ] **El esquema de cada número dice su valor por defecto,** y el de cada
   opción, las que acepta y cuál es la de por defecto. Lo que no viene y tiene
@@ -777,13 +779,67 @@ Cuánto dura cada alimento en la alacena, la heladera y el freezer.
   campo. **La búsqueda no se guarda en el teléfono:** al recargar la
   app, el campo está vacío.
 
+### F07.11 — Conversor
+
+Pasar una cantidad de cocina de una unidad a las demás y, con un ingrediente,
+de volumen a peso. Sirve para recetas de afuera y para las caseras de acá.
+Los datos están en `src/referencias/datos/conversor.ts`; de dónde sale cada
+uno, en `verificacion-conversor.md`.
+
+#### C07.11.1 — La cuenta *(J6)*
+
+- [ ] **Entradas:** la cantidad (un número, decimal), la unidad —taza,
+  cucharada, cucharadita, ml, l, fl oz, g, kg, oz, lb, pinch, dash, smidgen y
+  stick—, el sistema de medida y el ingrediente, que puede ser «Ninguno». Por
+  defecto, taza, Métrica y ninguno.
+- [ ] **Sistemas:** Métrica (Argentina, Reino Unido, Canadá y Nueva Zelanda),
+  Australia, EE. UU. y Japón, cada uno con los ml de su taza, su cucharada y
+  su cucharadita. Las informales y la fl oz son de EE. UU. sea cual sea el
+  sistema: pinch, dash y smidgen son una fracción de su cucharadita, y el
+  stick, media taza.
+- [ ] **El resultado** son las tazas, cucharadas, cucharaditas y ml del
+  sistema elegido, y los g y las oz. Cada medida casera lleva en el nombre
+  los ml que mide.
+- [ ] **Cada ingrediente guarda la medida tal como la da su fuente** («½ taza
+  de EE. UU. = 113 g»), y sus gramos por ml salen de ahí.
+- [ ] **Sin ingrediente** convierte volumen a volumen y peso a peso. En lugar
+  del otro tipo, una línea dice *Elegí un ingrediente para pasar a peso* (o
+  *a volumen*).
+- [ ] **El stick es una medida de manteca:** con otro ingrediente o sin
+  ninguno, la única línea dice *Es una medida de manteca: elegí Manteca*. Con
+  manteca, el resultado suma los sticks.
+- [ ] **Tazas, cucharadas y cucharaditas en la fracción práctica más
+  cercana**: el entero más ¼, ⅓, ½, ⅔ o ¾ para la taza y más ½ para las
+  cucharas, con «≈» delante si no es exacta. Una medida que redondea a cero
+  no se muestra, ni una cuchara de más de 16. ml y g con el redondeo de los
+  gramos de la app; oz con un decimal.
+- [ ] La advertencia del método va siempre: medidas al ras, la harina volcada
+  con cuchara. Al pie, las fuentes del sistema, del ingrediente y de las
+  unidades que se usaron.
+- [ ] Una cantidad vacía o cero da un resultado vacío.
+
+#### C07.11.2 — Las tablas *(J6)*
+
+- [ ] **Pesos por ingrediente:** una tabla agrupada —harinas y almidones,
+  azúcares y dulces, grasas y lácteos, otros, leudantes y sal— con los gramos
+  por taza, por cucharada y por cucharadita métricas, con los ml en el
+  encabezado, y la fuente de cada fila. Se arma desde los mismos datos que la
+  cuenta.
+- [ ] **Tazas y cucharas:** los cuatro sistemas con sus ml y sus fuentes, y
+  sus notas (la taza de las etiquetas argentinas, la de EE. UU., el gō).
+- [ ] **Medidas de EE. UU.:** fl oz, oz, lb, dash, pinch, smidgen y el stick
+  de manteca, con su equivalencia, y las notas sobre las fuentes que no
+  coinciden y los panes de manteca de acá.
+- [ ] El buscador de arriba —el de Conservación— filtra la tabla de pesos. Las
+  opciones de la cuenta no se filtran.
+
 ---
 
 ## Trazabilidad
 
 | Capacidad | Job |
 |---|---|
-| C07.1.1, C07.1.2, C07.2.1, C07.2.2, C07.2.3, C07.2.4, C07.2.5, C07.2.6, C07.2.7, C07.3.1, C07.4.1, C07.5.1, C07.5.2, C07.5b.1, C07.5b.2, C07.6.1, C07.6.2, C07.6.4, C07.6.5, C07.7.1, C07.7.2, C07.8.1, C07.8.2, C07.8.3, C07.8.4, C07.9.1, C07.9.2, C07.9.3, C07.10.1, C07.10.2 | J6 |
+| C07.1.1, C07.1.2, C07.2.1, C07.2.2, C07.2.3, C07.2.4, C07.2.5, C07.2.6, C07.2.7, C07.3.1, C07.4.1, C07.5.1, C07.5.2, C07.5b.1, C07.5b.2, C07.6.1, C07.6.2, C07.6.4, C07.6.5, C07.7.1, C07.7.2, C07.8.1, C07.8.2, C07.8.3, C07.8.4, C07.9.1, C07.9.2, C07.9.3, C07.10.1, C07.10.2, C07.11.1, C07.11.2 | J6 |
 | C07.6.3 | J6, J8 |
 
 Ninguna capacidad de esta épica quedó sin job.

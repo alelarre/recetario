@@ -1,6 +1,6 @@
 ---
 name: herramientas
-description: Usar cuando el usuario quiere calcular un pan o una pizza (harina, agua, sal, levadura o prefermento), la sal de un fermentado, o consultar un dato de cocina: minutos de los huevos, temperatura de la carne, del aceite o del horno, agua para mate, té o café, a cuántos grados se sirve un vino o una cerveza, masa para un molde o por pieza, pasta fresca, rellena o lasaña, bollo de pizza, puntos del azúcar, merengue, agua del arroz, granos, legumbres, tiempo de pasta, verduras, blanqueado, caldo, o cuánto dura un alimento en la alacena, la heladera o el freezer. Por ejemplo «¿a qué temperatura frío las milanesas?» o «¿cuánto dura la crema abierta?». Trabaja con las herramientas del MCP `recetario`.
+description: Usar cuando el usuario quiere calcular un pan o una pizza (harina, agua, sal, levadura o prefermento), la sal de un fermentado, o consultar un dato de cocina: minutos de los huevos, temperatura de la carne, del aceite o del horno, agua para mate, té o café, a cuántos grados se sirve un vino o una cerveza, masa para un molde o por pieza, pasta fresca, rellena o lasaña, bollo de pizza, puntos del azúcar, merengue, agua del arroz, granos, legumbres, tiempo de pasta, verduras, blanqueado, caldo, cuánto dura un alimento en la alacena, la heladera o el freezer, o pasar tazas y cucharas a gramos (medidas de otro país, sticks de manteca). Por ejemplo «¿a qué temperatura frío las milanesas?», «¿cuánto dura la crema abierta?» o «¿cuántos gramos es una taza de azúcar?». Trabaja con las herramientas del MCP `recetario`.
 ---
 
 # Herramientas
@@ -10,8 +10,8 @@ agente. Las tablas y las cuentas son las de la app: las herramientas del MCP
 `recetario` que se nombran acá usan el mismo código. Ninguna usa el Drive.
 
 - **Pan y sal:** `calcular_pan` y `calcular_sal`.
-- **Referencias:** `consultar_referencia` y las diez `calcular_*` de masas y
-  cocción (ver *Las referencias*).
+- **Referencias:** `consultar_referencia` y las once `calcular_*` de masas,
+  cocción y el conversor (ver *Las referencias*).
 
 ## Las reglas de pan y sal
 
@@ -125,12 +125,14 @@ trae su fuente.
 Para cualquier pregunta de dato que no pida una cuenta: huevos, carne, aceite
 y punto de humo, horno, mate, té, café, vinos, cervezas, gramos por pieza,
 pasta comprada, masas por plato, granos, legumbres, tiempo de pasta,
-verduras, blanqueado y cuánto dura un alimento.
+verduras, blanqueado, cuánto dura un alimento, cuántos gramos pesa una taza
+o una cuchara de cada ingrediente y cuánto miden la taza y las cucharas en
+cada país.
 
-- **Sin nada** lista las cuatro herramientas con el `id` de sus tablas y de
+- **Sin nada** lista las cinco herramientas con el `id` de sus tablas y de
   sus cuentas. Sirve para ubicar la tabla.
-- **Con `herramienta` y `tabla`** (`rapida`, `masas`, `coccion` o
-  `conservacion`) devuelve las filas con sus columnas, las notas y las
+- **Con `herramienta` y `tabla`** (`rapida`, `masas`, `coccion`,
+  `conservacion` o `conversor`) devuelve las filas con sus columnas, las notas y las
   fuentes.
 - **Con `buscar`** («pollo», «crema») devuelve las filas de cualquier tabla
   que contengan el texto, cada una con su tabla y sus fuentes. Es lo más
@@ -158,6 +160,7 @@ de cada número dice cuál es). Usá cada una para esta pregunta:
 | `calcular_agua_sal_pasta` | Cuánta agua y cuánta sal lleva la cocción de unos gramos de pasta seca. |
 | `calcular_medidor_espagueti` | Cuántos gramos de espagueti hay en un atado de cierto diámetro, o qué diámetro tiene el atado de unos gramos. |
 | `calcular_caldo` | Cuánta agua, cuánto mirepoix y cuánto tiempo lleva un caldo de ave, de vaca o de pescado para unos kilos de huesos. |
+| `calcular_conversion` | Cuánto es una cantidad en las demás unidades —tazas, cucharas, ml, gramos, onzas, sticks de manteca— según el sistema de medida (métrica, Australia, EE. UU., Japón) y el ingrediente. Sin ingrediente no pasa de volumen a peso. |
 
 La respuesta es una de tres:
 
@@ -193,3 +196,9 @@ herramienta, y se muestra el resultado con sus notas y su fuente.
 **«¿Cuánta agua le pongo al arroz?»**: `calcular_arroz` devuelve que faltan
 los gramos (la variedad tiene valor por defecto). Se pregunta cuántos gramos,
 y de qué variedad si el usuario quiere otra que la de por defecto.
+
+**«¿Cuántos gramos es una taza de azúcar?»**: `calcular_conversion` con
+`cantidad: 1`, `unidad: "taza"` e `ingrediente: "azúcar blanca"`. Si la
+receta es de EE. UU., `sistema: "EE. UU."`; si no se sabe, la métrica de
+por defecto, y se dice cuál se usó. Se muestran los gramos con la
+advertencia del método (al ras, la harina con cuchara) y la fuente.
