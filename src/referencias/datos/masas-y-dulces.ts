@@ -192,7 +192,8 @@ export const MOLDE: {
     'En Argentina el número del molde es el diámetro en cm (Distribuidora Fénix, https://distribuidorafenix.com.ar/producto/molde-torta-n-22-redondo-de-aluminio/). Los altos son los del catálogo de El Nuevo Emporio, que da los números por rango; el número del molde se escribe aparte.',
     'Las placas son del catálogo de El Nuevo Emporio. Las budineras son ejemplos de fabricante: al elegir una, el pie cita la suya.',
     'La capacidad real de un molde de paredes inclinadas es menor que la cuenta: el de 20 × 4 cm de Joy of Baking da 1,24 l en la cuenta y declara 948 ml (77 %); la budinera Kuchen da 1,82 l y declara 1,5 l (83 %). El resultado es aproximado; se puede medir con agua (Goizalde, Moldes y capacidades, https://cocinandocongoizalde.com/2013/04/23/moldes-y-capacidades/).',
-    'El savarín lleva tubo: el catálogo no da su diámetro, así que se calcula sólo con las medidas y el diámetro del tubo. Los moldes cuadrados y rectangulares del catálogo no traen el alto.'
+    'El savarín lleva tubo: el catálogo no da su diámetro, así que se calcula sólo con las medidas y el diámetro del tubo. Los moldes cuadrados y rectangulares del catálogo no traen el alto.',
+    'Un molde desmontable se calcula como redondo, con sus medidas.'
   ]
 };
 

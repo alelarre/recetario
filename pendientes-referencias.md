@@ -11,7 +11,6 @@ en `mcp/referencias.ts`.
 
 ## Datos y fuentes
 
-7. Los moldes desmontables no tienen un tipo propio.
 8. FSIS (conservación) no tiene captura en Internet Archive: si la página
    cambia, se pierde la fuente.
 
