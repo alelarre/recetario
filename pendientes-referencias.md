@@ -11,8 +11,6 @@ en `mcp/referencias.ts`.
 
 ## Datos y fuentes
 
-1. `src/referencias/forma.ts` valida que exista la fuente de una abreviatura
-   sólo en la primera de la celda: en «LS, USDA» no revisa «USDA».
 2. La tabla del café tiene dos columnas que se llaman «Agua».
 3. La tabla del aceite no tiene las tiritas de pollo. Falta decidir si van.
 4. Notas de la tabla de granos: «fuego bajo tapado» repetido, NDSU citada sin

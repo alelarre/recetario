@@ -15,6 +15,15 @@ function problemasDeFuente(donde: string, f: Fuente): string[] {
   return problemas;
 }
 
+/**
+ * Las abreviaturas que nombra una celda de fuente, como «ANMAT-F, FK 135, 141»,
+ * «SENASA y FSIS» o «FK 157 (descartada FK 160)»: toda palabra que no sea un
+ * número de página o un rango, salvo las que unen.
+ */
+const PALABRAS_QUE_UNEN = new Set(['y', 'descartada']);
+const fuentesDeCelda = (celda: string): string[] =>
+  celda.split(/[\s,()]+/).filter(p => p !== '' && !/^\d/.test(p) && !PALABRAS_QUE_UNEN.has(p));
+
 export function problemasDeForma(t: Tabla): string[] {
   const problemas = fuentesDe(t).flatMap(f => problemasDeFuente(t.id, f));
   const columnas = new Set(t.columnas.map(c => c.id));
@@ -24,8 +33,9 @@ export function problemasDeForma(t: Tabla): string[] {
     for (const c of columnas) if (!(c in fila)) problemas.push(`${donde}: falta la columna «${c}»`);
     for (const c of Object.keys(fila)) if (!columnas.has(c)) problemas.push(`${donde}: la columna «${c}» no está en la tabla`);
     if (abreviaturas && 'columnaFuente' in t) {
-      const abreviatura = (fila[t.columnaFuente] ?? '').split(/[ ,]/)[0] ?? '';
-      if (!abreviaturas.has(abreviatura)) problemas.push(`${donde}: la fuente «${abreviatura}» no está en la lista de la tabla`);
+      const nombradas = fuentesDeCelda(fila[t.columnaFuente] ?? '');
+      if (nombradas.length === 0) problemas.push(`${donde}: no nombra ninguna fuente`);
+      for (const a of nombradas) if (!abreviaturas.has(a)) problemas.push(`${donde}: la fuente «${a}» no está en la lista de la tabla`);
     }
   });
   return problemas;
