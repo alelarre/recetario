@@ -213,13 +213,13 @@ export const TABLAS_RAPIDA = {
     id: 'cafe', titulo: 'Café',
     columnas: [
       { id: 'metodo', nombre: 'Método' },
-      { id: 'temperatura', nombre: 'Agua', unidad: '°C' },
-      { id: 'cafe', nombre: 'Café' },
-      { id: 'agua', nombre: 'Agua' },
+      { id: 'temperatura', nombre: 'Temperatura', unidad: '°C' },
+      { id: 'cafe', nombre: 'Café', unidad: 'g' },
+      { id: 'agua', nombre: 'Agua', unidad: 'ml' },
       { id: 'tiempo', nombre: 'Tiempo' }
     ],
     filas: [
-      { metodo: 'Filtro de dos tazas (pour-over)', temperatura: '93,5', cafe: '22 g', agua: '400 ml', tiempo: '2 min 30 s a 3 min' }
+      { metodo: 'Filtro de dos tazas (pour-over)', temperatura: '93,5', cafe: '22', agua: '400', tiempo: '2 min 30 s a 3 min' }
     ],
     notas: ['Proporción: 55 g de café por litro de agua.'],
     fuente: {

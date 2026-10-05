@@ -11,7 +11,6 @@ en `mcp/referencias.ts`.
 
 ## Datos y fuentes
 
-2. La tabla del café tiene dos columnas que se llaman «Agua».
 3. La tabla del aceite no tiene las tiritas de pollo. Falta decidir si van.
 4. Notas de la tabla de granos: «fuego bajo tapado» repetido, NDSU citada sin
    su nombre completo y la polenta instantánea como nota en vez de fila.
