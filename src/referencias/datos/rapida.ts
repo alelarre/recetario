@@ -103,6 +103,7 @@ export const TABLAS_RAPIDA = {
       { alimento: 'Pescado rebozado', aceite: '185', tiempo: '3–5 min', interna: '63', fuente: 'ToH' },
       { alimento: 'Pollo frito (presas)', aceite: '191', tiempo: '12–15 min', interna: '74', fuente: 'ToH' },
       { alimento: 'Alitas de pollo', aceite: '191', tiempo: '8–10 min', interna: '74', fuente: 'ToH' },
+      { alimento: 'Tiritas de pollo', aceite: '177', tiempo: '3–5 min', interna: '74', fuente: 'ToH' },
       { alimento: 'Langostinos', aceite: '177', tiempo: '3–4 min', interna: '54', fuente: 'ToH' },
       { alimento: 'Churros', aceite: '191', tiempo: '2–4 min', interna: '—', fuente: 'ToH' },
       { alimento: 'Donas', aceite: '191', tiempo: '2–4 min', interna: '—', fuente: 'ToH' }
