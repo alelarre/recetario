@@ -186,4 +186,16 @@ describe('Herramientas', () => {
     expect(parsearHash('#/herramientas/temporizadores')).toEqual({ vista: 'temporizadores', params: {} });
     expect(esDelMenu('temporizadores')).toBe(false);
   });
+
+  it('las cuatro de referencia', () => {
+    expect(parsearHash('#/herramientas/referencia')).toEqual({ vista: 'referencia', params: { herramienta: 'rapida' } });
+    expect(parsearHash('#/herramientas/masas')).toEqual({ vista: 'referencia', params: { herramienta: 'masas' } });
+    expect(parsearHash('#/herramientas/coccion')).toEqual({ vista: 'referencia', params: { herramienta: 'coccion' } });
+    expect(parsearHash('#/herramientas/conservacion')).toEqual({ vista: 'referencia', params: { herramienta: 'conservacion' } });
+  });
+
+  it('un nombre de la herencia de los objetos no es una herramienta: cae en la lista', () => {
+    expect(parsearHash('#/herramientas/constructor')).toEqual({ vista: 'herramientas', params: {} });
+    expect(parsearHash('#/herramientas/toString')).toEqual({ vista: 'herramientas', params: {} });
+  });
 });

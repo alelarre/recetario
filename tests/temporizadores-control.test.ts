@@ -49,6 +49,26 @@ function armar({ almacen = localStorageFalso(), nombre = '' } = {}) {
   return { control, ...r, aviso, encendida, redibujar, pintarVivo, vaciarNombre, tocar, almacen };
 }
 
+describe('empezar con nombre y duración', () => {
+  it('empezarCon crea uno con ese nombre y esa duración, como Empezar', () => {
+    const { control, aviso, andando, encendida, redibujar } = armar();
+    control.empezarCon('Chauchas', 3 * MINUTO);
+    const [t] = control.estado().temporizadores;
+    expect(t?.nombre).toBe('Chauchas');
+    expect(t && restante(t, control.estado().ahora)).toBe(3 * MINUTO);
+    expect(aviso.preparar).toHaveBeenCalledOnce();
+    expect(andando()).toBe(true);
+    expect(encendida()).toBe(true);
+    expect(redibujar).toHaveBeenCalledOnce();
+  });
+
+  it('una duración que no es positiva no crea nada', () => {
+    const { control } = armar();
+    control.empezarCon('Nada', 0);
+    expect(control.estado().temporizadores).toHaveLength(0);
+  });
+});
+
 describe('empezar un temporizador', () => {
   it('con las ruedas de fábrica arranca uno de 10 minutos, prepara el audio, guarda y redibuja', () => {
     const { control, tocar, aviso, redibujar, almacen, andando, encendida } = armar({ nombre: 'Pasta' });

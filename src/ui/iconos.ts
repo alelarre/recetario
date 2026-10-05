@@ -48,6 +48,14 @@ export const ICO = {
   pan: svg('<path d="M3 13a9 7 0 0 1 18 0v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 9.5l1.5 3M12.5 8.5l1.5 3M17 10l1 2"/>'),
   /** Fermentados: un frasco con su tapa. */
   frasco: svg('<path d="M7 2h10v3H7z"/><path d="M8 5v1.5C6 7.5 5 9 5 11.5V20a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8.5c0-2.5-1-4-3-5V5"/><path d="M5 13h14"/>'),
+  /** Referencia rápida: un libro abierto. */
+  libro: svg('<path d="M2 5h6a4 4 0 0 1 4 4v11a3 3 0 0 0-3-3H2z"/><path d="M22 5h-6a4 4 0 0 0-4 4v11a3 3 0 0 1 3-3h7z"/>'),
+  /** Masas y dulces: un palote. */
+  rodillo: svg('<rect x="6" y="9" width="12" height="6" rx="2"/><path d="M2 12h4M18 12h4"/>'),
+  /** Básicos de cocción: una olla con su tapa. */
+  olla: svg('<path d="M4 11h16v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/><path d="M2 11h20M9 8h6M12 8V6"/>'),
+  /** Conservación: una heladera de dos puertas. */
+  heladera: svg('<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M6 9h12M9 5v2M9 12v3"/>'),
   /** Un tag común, en el título de su lista. De Lucide (tag). */
   etiqueta: svg('<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>'),
   /** La lista de compras, en su título. De Lucide (shopping-cart). */

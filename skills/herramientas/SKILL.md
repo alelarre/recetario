@@ -1,15 +1,19 @@
 ---
 name: herramientas
-description: Usar cuando el usuario quiere calcular las cantidades de un pan o de una masa de pizza (harina, agua, sal, levadura, masa madre u otro prefermento, hidratación, para un peso de harina o de masa, o para una cantidad de bollos) o la sal de un fermentado (chucrut, kimchi, ajíes, pepinos, verduras en salmuera) y cuántos días tarda según la temperatura. Por ejemplo «quiero hacer un pan con 500 g de 000» o «cuánta sal le pongo a un frasco de pepinos de 1200 g». Trabaja con las herramientas `calcular_pan` y `calcular_sal` del MCP `recetario`.
+description: Usar cuando el usuario quiere calcular un pan o una pizza (harina, agua, sal, levadura o prefermento), la sal de un fermentado, o consultar un dato de cocina: minutos de los huevos, temperatura de la carne, del aceite o del horno, agua para mate, té o café, a cuántos grados se sirve un vino o una cerveza, masa para un molde o por pieza, pasta fresca, rellena o lasaña, bollo de pizza, puntos del azúcar, merengue, agua del arroz, granos, legumbres, tiempo de pasta, verduras, blanqueado, caldo, o cuánto dura un alimento en la alacena, la heladera o el freezer. Por ejemplo «¿a qué temperatura frío las milanesas?» o «¿cuánto dura la crema abierta?». Trabaja con las herramientas del MCP `recetario`.
 ---
 
 # Herramientas
 
-Las calculadoras de la app *Recetario*, para el agente. Las tablas y las
-cuentas son las de la app: `calcular_pan` y `calcular_sal` del MCP
-`recetario` usan el mismo código. No usan el Drive.
+Las calculadoras y las tablas de consulta de la app *Recetario*, para el
+agente. Las tablas y las cuentas son las de la app: las herramientas del MCP
+`recetario` que se nombran acá usan el mismo código. Ninguna usa el Drive.
 
-## Las reglas
+- **Pan y sal:** `calcular_pan` y `calcular_sal`.
+- **Referencias:** `consultar_referencia` y las diez `calcular_*` de masas y
+  cocción (ver *Las referencias*).
+
+## Las reglas de pan y sal
 
 - **Los números salen siempre de la herramienta.** No inventes porcentajes,
   no los corrijas con lo que sepas de panadería y no hagas la cuenta a mano.
@@ -94,3 +98,98 @@ se muestra como viene, sin estimarla.
 Si el usuario está mirando o cargando una receta y pide las cantidades, los
 datos de la receta no reemplazan las preguntas: la calculadora no lee
 recetas. Lo que el usuario diga en el pedido sí cuenta como dato.
+
+## Las referencias
+
+Cuatro herramientas de la app con tablas de consulta y algunas cuentas
+chicas: **referencia rápida** (huevos, carne, aceite, horno y bebidas),
+**masas y dulces**, **básicos de cocción** y **conservación**. Cada dato
+trae su fuente.
+
+### Las reglas
+
+- **Los números salen siempre de `consultar_referencia` o de su cuenta
+  `calcular_*`.** Nunca de lo que vos sepas de cocina: ni un tiempo, ni una
+  temperatura, ni una proporción, ni cuántos días dura un alimento.
+- **Consultá antes de contestar.** Una pregunta de las de la `description`
+  se contesta con la herramienta, aunque creas saber la respuesta.
+- **La respuesta cita la fuente con su nombre y su link.** Vienen en
+  `fuentes` (o en la tabla). Si la respuesta junta varias, citá cada una.
+- **Si la tabla no tiene el dato, decilo.** «Esa tabla no trae el chayote»,
+  por ejemplo. No lo estimes ni lo saques de una fila parecida. Sólo si el
+  usuario lo pide, contestá con conocimiento general, aclarando que no sale
+  de las referencias y que no tiene fuente.
+
+### Consultar una tabla: `consultar_referencia`
+
+Para cualquier pregunta de dato que no pida una cuenta: huevos, carne, aceite
+y punto de humo, horno, mate, té, café, vinos, cervezas, gramos por pieza,
+pasta comprada, masas por plato, granos, legumbres, tiempo de pasta,
+verduras, blanqueado y cuánto dura un alimento.
+
+- **Sin nada** lista las cuatro herramientas con el `id` de sus tablas y de
+  sus cuentas. Sirve para ubicar la tabla.
+- **Con `herramienta` y `tabla`** (`rapida`, `masas`, `coccion` o
+  `conservacion`) devuelve las filas con sus columnas, las notas y las
+  fuentes.
+- **Con `buscar`** («pollo», «crema») devuelve las filas de cualquier tabla
+  que contengan el texto, cada una con su tabla y sus fuentes. Es lo más
+  corto para una pregunta de un alimento; si hay varias filas, elegí la que
+  responde a lo que el usuario preguntó y, si dudás entre dos, mostrá las dos.
+- Un `error` trae `opciones`: son los ids que sí existen.
+- **Leé las notas de la tabla** y pasalas cuando cambian la respuesta (por
+  ejemplo, que el tiempo de la pasta es un rango y que manda el paquete).
+
+### Calcular: las `calcular_*`
+
+Cada una es una cuenta de la app. Se llama con lo que el usuario dijo; lo
+que no dijo y tiene valor por defecto lo completa la herramienta (el esquema
+de cada número dice cuál es). Usá cada una para esta pregunta:
+
+| Herramienta | Para |
+|---|---|
+| `calcular_molde` | Cuánta masa lleva un molde de torta, según su forma y sus medidas o su número. |
+| `calcular_pasta_fresca` | Qué ingredientes lleva la masa de pasta fresca, o el relleno o el puré, para unas porciones. |
+| `calcular_lasana` | Cuántas porciones rinde una fuente de lasaña por su largo y su ancho, y qué ingredientes lleva. |
+| `calcular_bollo_pizza` | Cuántos gramos pesa el bollo de una pizza, napolitana o al molde, según su diámetro o su número de molde. |
+| `calcular_merengue` | Cuánta azúcar, cuánto impalpable y cuánta agua de almíbar lleva un merengue francés, suizo o italiano para unos gramos de claras. |
+| `calcular_punto_azucar` | A qué temperatura está cada punto del azúcar, corrido por la altitud o por donde hierve el agua. |
+| `calcular_arroz` | Cuánta agua y cuánto tiempo lleva el arroz en olla, según la variedad y los gramos. |
+| `calcular_agua_sal_pasta` | Cuánta agua y cuánta sal lleva la cocción de unos gramos de pasta seca. |
+| `calcular_medidor_espagueti` | Cuántos gramos de espagueti hay en un atado de cierto diámetro, o qué diámetro tiene el atado de unos gramos. |
+| `calcular_caldo` | Cuánta agua, cuánto mirepoix y cuánto tiempo lleva un caldo de ave, de vaca o de pescado para unos kilos de huesos. |
+
+La respuesta es una de tres:
+
+- **Con todo:** `{ resultado, tabla?, advertencias, notas, fuentes }`.
+  `resultado` es la lista de líneas (nombre y valor); `tabla`, si la cuenta
+  trae una (los puntos del azúcar); `notas`, lo que hay que saber de la
+  cuenta. Mostrá el resultado con sus `advertencias` y sus `notas` tal como
+  vienen, y citá las `fuentes`.
+- **`faltan: [{ dato, opciones }]`:** falta un dato que no tiene valor por
+  defecto. Preguntá **todo lo que faltó en un solo mensaje**, con las
+  `opciones` de cada dato que las traiga, y volvé a llamar con las
+  respuestas.
+- **`error`:** con esos valores la cuenta no se puede hacer (una medida en
+  cero, o incoherente). Decile al usuario que esos valores no se pueden
+  calcular y pedile otros coherentes; no corrijas los números por tu
+  cuenta.
+
+### Ejemplos
+
+**«¿A qué temperatura frío las milanesas?»**: `consultar_referencia` con
+`buscar: "milanesas"`. Se contesta con la fila del aceite para freír, tal
+como está escrita, y la fuente con su nombre y su link.
+
+**«¿Cuánto dura la crema abierta?»**: `buscar: "crema"`. Hay más de una fila
+de crema: se dan las que el usuario pudo querer decir, con lo que cada una
+dice de la crema abierta y su fuente; si ninguna trae el dato, se dice que
+no lo trae.
+
+**«¿Cuánta masa lleva un molde redondo de 24 cm de diámetro y 6 de alto?»**:
+`calcular_molde` con el diámetro y el alto. El llenado lo completa la
+herramienta, y se muestra el resultado con sus notas y su fuente.
+
+**«¿Cuánta agua le pongo al arroz?»**: `calcular_arroz` devuelve que faltan
+los gramos (la variedad tiene valor por defecto). Se pregunta cuántos gramos,
+y de qué variedad si el usuario quiere otra que la de por defecto.

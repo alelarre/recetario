@@ -1,10 +1,12 @@
 // El servidor MCP contra un cliente del SDK en memoria y el recetario sobre los
 // dobles de Drive y Sheets: sin stdio, sin red y sin el Llavero.
+import { readFileSync, readdirSync } from 'node:fs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { crearServidor, respuestaDeError, abrirNavegadorDelServidor } from '../mcp/servidor.js';
 import { ErrorDeLogin } from '../mcp/errores.js';
+import { CUENTAS, nombreMcp } from '../mcp/referencias.js';
 import { crearRecetario } from '../mcp/recetario.js';
 import { ErrorDeDrive } from '../src/drive.js';
 import { ErrorDeSheets } from '../src/sheets.js';
@@ -63,14 +65,25 @@ async function llamar(cliente: Client, name: string, args: Record<string, unknow
 const texto = (r: Respuesta): string => r.content.map(c => c.text).join('\n');
 
 describe('las herramientas', () => {
-  it('lista las doce, cada una con su descripción y su esquema de entrada', async () => {
+  it('lista las de siempre, la consulta de referencia y las diez cuentas, cada una con su descripción y su esquema de entrada', async () => {
     const { tools } = await (await conectar()).listTools();
-    expect(tools.map(t => t.name).sort()).toEqual(
-      ['borrar', 'buscar', 'calcular_pan', 'calcular_sal', 'categorias', 'crear', 'formato', 'guardar', 'leer', 'reindexar', 'tags', 'validar']
-    );
+    expect(tools.map(t => t.name).sort()).toEqual([
+      'borrar', 'buscar', 'calcular_agua_sal_pasta', 'calcular_arroz', 'calcular_bollo_pizza', 'calcular_caldo', 'calcular_lasana',
+      'calcular_medidor_espagueti', 'calcular_merengue', 'calcular_molde', 'calcular_pan', 'calcular_pasta_fresca', 'calcular_punto_azucar',
+      'calcular_sal', 'categorias', 'consultar_referencia', 'crear', 'formato', 'guardar', 'leer', 'reindexar', 'tags', 'validar'
+    ]);
     for (const t of tools) {
       expect(t.description).toBeTruthy();
       expect(t.inputSchema.type).toBe('object');
+    }
+  });
+
+  it('cada calcular_* de referencia dice en su descripción para qué pregunta sirve', async () => {
+    const { tools } = await (await conectar()).listTools();
+    for (const c of CUENTAS) {
+      const herramienta = tools.find(t => t.name === nombreMcp(c));
+      expect(c.descripcion, c.id).toBeTruthy();
+      expect(herramienta?.description, c.id).toContain(c.descripcion ?? '');
     }
   });
 
@@ -90,6 +103,14 @@ describe('las herramientas', () => {
 });
 
 describe('llamar a una herramienta', () => {
+  it('consultar_referencia devuelve una tabla con su fuente', async () => {
+    const r = await llamar(await conectar(), 'consultar_referencia', { herramienta: 'coccion', tabla: 'blanqueado' });
+    expect(r.isError).toBeFalsy();
+    const v = JSON.parse(texto(r));
+    expect(v.tablas).toHaveLength(1);
+    expect(v.tablas[0].fuentes.length).toBeGreaterThan(0);
+  });
+
   it('formato devuelve las reglas como texto', async () => {
     const r = await llamar(await conectar(), 'formato');
     expect(r.isError).toBeFalsy();
@@ -223,5 +244,19 @@ describe('el login dentro del servidor', () => {
     } finally {
       escribir.mockRestore();
     }
+  });
+});
+
+describe('los skills', () => {
+  const skills = readdirSync(new URL('../skills/', import.meta.url)).filter(d => !d.startsWith('.'))
+    .map(d => readFileSync(new URL(`../skills/${d}/SKILL.md`, import.meta.url), 'utf8'));
+
+  it('la descripción de cada skill no pasa de 1024 caracteres', () => {
+    for (const s of skills) expect((s.match(/^description: (.*)$/m)?.[1] ?? '').length).toBeLessThanOrEqual(1024);
+  });
+
+  it('toda herramienta del MCP está nombrada en algún skill', async () => {
+    const { tools } = await (await conectar()).listTools();
+    for (const t of tools) expect(skills.some(s => s.includes(t.name)), t.name).toBe(true);
   });
 });

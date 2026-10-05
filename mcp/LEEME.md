@@ -69,9 +69,39 @@ la app:
 Si Claude Desktop no encuentra `npm`, poner en `command` la ruta completa que
 da `which npm`.
 
-El skill que usa estas herramientas está en `skills/recetario/SKILL.md`. En
-Claude Code llega con el plugin; en Claude Desktop se sube como `.zip` desde
-*Configuración → Capacidades*.
+Los skills que usan estas herramientas están en `skills/recetario/SKILL.md` y
+`skills/herramientas/SKILL.md`. En Claude Code llegan con el plugin; en Claude
+Desktop se suben como `.zip` desde *Configuración → Capacidades*.
+
+## Las herramientas
+
+El servidor `recetario` registra veintitrés herramientas, en tres grupos.
+
+**Las recetas y el recetario:** `formato`,
+`categorias`, `tags`, `buscar`, `leer`, `validar`, `crear`, `guardar`,
+`borrar` y `reindexar`. Son las de `skills/recetario/SKILL.md`.
+
+**Las calculadoras** (no usan el Drive ni el login): `calcular_pan` y
+`calcular_sal`, las mismas cuentas que las pantallas de *Pan* y *Fermentados*.
+
+**Las referencias** (tampoco usan el Drive ni el login), las mismas tablas y
+cuentas que las cuatro pantallas de referencia de la app, cada dato con su
+fuente:
+
+- `consultar_referencia`: sin nada, lista las herramientas con sus tablas y
+  sus cuentas; con `herramienta` y `tabla`, devuelve las filas; con `buscar`,
+  las filas de cualquier tabla que contengan ese texto («pollo», «crema»).
+- Una `calcular_*` por cuenta: `calcular_molde`, `calcular_pasta_fresca`,
+  `calcular_lasana`, `calcular_bollo_pizza`, `calcular_merengue`,
+  `calcular_punto_azucar`, `calcular_arroz`, `calcular_agua_sal_pasta`,
+  `calcular_medidor_espagueti` y `calcular_caldo`. Responden
+  `{ resultado, tabla?, advertencias, notas, fuentes }`; si falta un dato sin
+  valor por defecto, `{ faltan: [{ dato, opciones? }] }`, y si con esos
+  valores no se puede calcular, `{ error }`.
+
+Las calculadoras y las referencias las guía `skills/herramientas/SKILL.md`.
+Para corregir una referencia se edita su archivo en `src/referencias/datos/`;
+no hace falta tocar el MCP.
 
 ## Si algo falla
 

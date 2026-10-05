@@ -687,3 +687,24 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
   to { box-shadow: 0 0 0 2px transparent, 0 0 0 6px transparent; }
 }
 @media (prefers-reduced-motion: reduce) { .llegada input, .llegada .miniatura, .llegada textarea { animation: none; } }
+
+/* ---- Referencias ---- */
+.referencias .indice-ref { flex-wrap: wrap; }
+.ficha.ref { scroll-margin-top: 72px; }
+/* Una tabla ancha se desplaza dentro de su ficha; la página no. */
+.tabla-ref { overflow-x: auto; margin: 0 calc(-1 * var(--e-2)); }
+.tabla-ref table { border-collapse: collapse; width: 100%; font-size: var(--txt-chico); }
+.tabla-ref th, .tabla-ref td { text-align: left; padding: var(--e-2); border-bottom: 1px solid var(--borde); vertical-align: top; }
+.tabla-ref th { color: var(--fg-2); font-weight: 600; white-space: nowrap; }
+.tabla-ref td:first-child { font-weight: 600; }
+.tabla-ref .u { font-weight: 400; color: var(--fg-3); }
+.tabla-ref .grupo-ref th { color: var(--fg); padding-top: var(--e-4); }
+.ico-min { position: relative; display: inline-grid; place-items: center; width: 28px; height: 28px; margin-left: var(--e-1); vertical-align: middle;
+           background: none; border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio); color: var(--fg-2); cursor: pointer; }
+.ico-min::after { content: ''; position: absolute; inset: -10px; }
+.ico-min svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.notas-ref { margin: var(--e-3) 0 0; padding-left: var(--e-4); font-size: var(--txt-chico); color: var(--fg-2); }
+.notas-ref a { color: var(--fg-2); }
+.fuente-ref { margin: var(--e-3) 0 0; font-size: var(--txt-micro); color: var(--fg-3); }
+.fuente-ref a { color: var(--fg-2); }
+.resultado-ref:not(:empty) { margin-top: var(--e-3); }

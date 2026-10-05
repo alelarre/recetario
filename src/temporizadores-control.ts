@@ -47,6 +47,8 @@ export interface EstadoTemporizadores {
 
 export interface ControlTemporizadores {
   estado(): EstadoTemporizadores;
+  /** Empieza un temporizador con ese nombre y esa duración (ms), como *Empezar*: lo llaman las referencias. */
+  empezarCon(nombre: string, duracion: number): void;
   acciones: SeccionDeAcciones;
 }
 
@@ -186,6 +188,11 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, re
 
   return {
     estado: () => ({ temporizadores, crono, ruedas, avisando, ahora: reloj.ahora() }),
+    empezarCon(nombre, duracion) {
+      if (!(duracion > 0)) return;
+      aviso.preparar();
+      cambiar(() => { temporizadores = [...temporizadores, empezar(nuevoId(), nombre, duracion, reloj.ahora())]; });
+    },
     acciones
   };
 }

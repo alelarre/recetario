@@ -12,6 +12,7 @@ import { comoErrorDeLogin, esErrorDeGoogle, ErrorDeLogin, mensajeDeGoogle } from
 import { crearLlaveroMac, SERVICIO_CLIENTE } from './llavero.js';
 import { recetarioDeGoogle, type Recetario } from './recetario.js';
 import { calcularPanParaElAgente, calcularSalParaElAgente } from './calculadoras.js';
+import { CUENTAS, calcularParaElAgente, consultarReferencia, descripcionDe, esquemaDe, nombreMcp } from './referencias.js';
 import {
   PANES, HARINAS, LEVADURAS, PORCENTAJES_SEGUNDA, FERMENTACIONES, PREFERMENTOS, PREFERMENTOS_CON_LEVADURA
 } from '../src/calculadoras/pan.js';
@@ -192,6 +193,27 @@ export function crearServidor(recetario: Recetario): McpServer {
       temperatura: z.string().optional().describe(`Opcional: sin ella no hay tiempo. Una de: ${opciones(TEMPERATURAS)}.`)
     }
   }, (pedido) => responder(() => json(calcularSalParaElAgente(pedido))));
+
+  servidor.registerTool('consultar_referencia', {
+    description: 'Las tablas de consulta de la app, cada dato con su fuente: minutos de los huevos, temperatura interna y puntos de la carne, ' +
+      'aceite para freír y punto de humo, escala del horno y horno con ventilador, agua para mate, té y café, temperatura de servicio de vinos, ' +
+      'cervezas y gaseosas, gramos de masa por pieza, pasta comprada por persona, masas por plato, arroz a presión, granos, legumbres, ' +
+      'tiempos de pasta, verduras al vapor y hervidas, blanqueado, y cuánto dura cada alimento en la alacena, la heladera y el freezer. ' +
+      'Usala antes de responder cualquiera de estas preguntas con lo que sepas. Sin nada, lista las herramientas, sus tablas y sus cuentas; ' +
+      'con `herramienta` y `tabla`, devuelve las filas; con `buscar`, las filas de cualquier tabla que contengan ese texto.',
+    inputSchema: {
+      herramienta: z.string().optional().describe('Una de: rapida, masas, coccion, conservacion.'),
+      tabla: z.string().optional().describe('El id de una tabla, de los que devuelve el listado.'),
+      buscar: z.string().optional().describe('Un texto: «pollo», «arroz», «crema».')
+    }
+  }, (pedido) => responder(() => json(consultarReferencia(pedido))));
+
+  for (const c of CUENTAS) {
+    servidor.registerTool(nombreMcp(c), {
+      description: descripcionDe(c),
+      inputSchema: esquemaDe(c)
+    }, (pedido) => responder(() => json(calcularParaElAgente(c, pedido as Record<string, unknown>))));
+  }
 
   servidor.registerTool('reindexar', {
     description: 'Rehace el índice entero desde las carpetas de Drive, como Reindexar en Ajustes. Informa el avance.',

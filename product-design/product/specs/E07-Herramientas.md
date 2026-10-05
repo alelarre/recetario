@@ -10,13 +10,15 @@ que se aparta o lo que necesita precisarse.
 ## La épica
 
 Calcular las cantidades antes de cocinar —las de un pan: harinas, agua, sal y
-levadura o masa madre; y la sal de un fermentado— y medir el tiempo mientras se
-cocina, con un cronómetro y temporizadores.
+levadura o masa madre; y la sal de un fermentado—, consultar un dato mientras
+se cocina —cuántos minutos, a qué temperatura, cuánto dura— y medir el tiempo,
+con un cronómetro y temporizadores.
 
-Son dos calculadoras y los temporizadores, en una sección propia del menú. **No leen ninguna receta
+Son los temporizadores, dos calculadoras y cuatro herramientas de referencia,
+en una sección propia del menú. **No leen ninguna receta
 ni usan Drive:** no tocan el índice, ni el `.md`, ni la carpeta base. Una
 receta marcada con `pan` o `fermentado` tiene un botón que abre la que le
-corresponde, y el agente usa las mismas cuentas por el MCP.
+corresponde, y el agente usa las mismas cuentas y las mismas tablas por el MCP.
 
 **Toda la fórmula de cada calculadora vive en un solo archivo**, puro y sin
 DOM: `src/calculadoras/pan.ts` y `src/calculadoras/fermentados.ts`. Ahí están
@@ -25,6 +27,12 @@ del pedido del MCP y el texto del resultado. **Los números salen de esos
 archivos y de ningún otro lado:** este documento dice cómo funcionan las
 calculadoras, no cuánto vale cada porcentaje. Cambiar un valor es editar ese
 archivo, y la pantalla, el MCP y los tests lo toman de ahí.
+
+**Los datos de las referencias viven aparte de la lógica,** en
+`src/referencias/datos/`: sólo datos, cada tabla y cada constante con su
+fuente. Las cuentas, en `src/referencias/cuentas.ts`, no tienen ningún número
+escrito adentro. Corregir una referencia es editar su archivo de datos;
+ningún test fija un valor de las tablas.
 
 **Se apartan de R8:** no escriben ni leen nada de Drive, así que el velo no
 aparece.
@@ -41,17 +49,26 @@ aparece.
   y *Nueva receta* (`ux/information-architecture.md` §4.6).
 - [ ] `#/herramientas` es destino del menú (`MENU` en `src/ui/router.ts`):
   lleva la hamburguesa en vez del volver, y su entrada queda marcada.
-- [ ] La pantalla es una lista con tres entradas, cada una con su ícono
+- [ ] La pantalla es una lista con siete entradas, cada una con su ícono
   adelante —como las entradas del menú lateral— y una línea que dice qué
   hace, en este orden: **Temporizadores** —*Cronómetro y cuentas
-  regresivas*—, **Pan** —*Harinas, agua, sal y levadura*— y **Fermentados**
-  —*Porcentaje de sal y tiempos*—.
+  regresivas*—, **Pan** —*Harinas, agua, sal y levadura*—, **Fermentados**
+  —*Porcentaje de sal y tiempos*—, **Referencia rápida** —*Huevos, carne,
+  aceite, horno y bebidas*—, **Masas y dulces** —*Moldes, piezas, pasta,
+  pizza, azúcar y merengue*—, **Básicos de cocción** —*Arroz, granos,
+  legumbres, pasta, verduras y caldo*— y **Conservación** —*Cuánto dura cada
+  alimento*—. Los íconos de las cuatro últimas son `libro`, `rodillo`,
+  `olla` y `heladera`.
 
 #### C07.1.2 — Las rutas *(J6)*
 
 - [ ] `#/herramientas/temporizadores`, `#/herramientas/pan` y
   `#/herramientas/fermentados` son Temporizadores y cada calculadora, con el
   volver.
+- [ ] `#/herramientas/referencia`, `#/herramientas/masas`,
+  `#/herramientas/coccion` y `#/herramientas/conservacion` son las cuatro
+  referencias, con el volver y el ícono de la herramienta delante del título.
+  Vuelven a la lista.
 - [ ] Una calculadora abierta desde una receta vuelve a la receta; abierta
   desde la lista, vuelve a la lista. Por un link directo, el volver pone el
   Recetario en su lugar, como cualquier volver (IA §4.5).
@@ -453,6 +470,8 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   tipo, parte no la pidió nadie.
 - [ ] La descripción de cada herramienta lista las opciones tomadas de las
   tablas: si una tabla cambia, cambia ahí también.
+- [ ] **Las referencias también están en el MCP** (C07.6.4), con las mismas
+  tablas y cuentas que la pantalla.
 
 #### C07.6.2 — El skill `herramientas` *(J6)*
 
@@ -473,6 +492,8 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 - [ ] Muestra el resultado con las advertencias.
 - [ ] Si el pedido viene de una receta, los datos de la receta no reemplazan
   las preguntas.
+- [ ] **El mismo skill cubre las referencias** (C07.6.5): su `description`
+  nombra los temas de las cuatro herramientas y no pasa de 1.024 caracteres.
 
 #### C07.6.3 — El skill `recetario` pone las marcas *(J6, J8)*
 
@@ -481,7 +502,280 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   kimchi, encurtidos en salmuera—.
 - [ ] Las pone al cargar una receta y al ordenar el recetario, sólo cuando
   corresponde.
-- [ ] Un pedido de cálculo lo deriva al skill `herramientas`.
+- [ ] Un pedido de cálculo, o de un dato de cocina, lo deriva al skill `herramientas`.
+
+#### C07.6.4 — Las herramientas de referencia del MCP *(J6)*
+
+- [ ] **`consultar_referencia`**, en el servidor `recetario`. Sin nada, lista
+  las cuatro herramientas (`rapida`, `masas`, `coccion`, `conservacion`) con el
+  `id` y el título de sus tablas y de sus cuentas, y el nombre de la
+  herramienta del MCP de cada cuenta. Con `herramienta` y, si quiere, `tabla`,
+  devuelve las filas con los nombres de sus columnas, las notas y las fuentes.
+  Con `buscar` devuelve las filas de cualquier tabla cuyo texto lo contenga,
+  sin mirar mayúsculas ni tildes, cada una con su tabla y sus fuentes. Una
+  `herramienta` o una `tabla` que no existe devuelve `error` con los ids
+  válidos.
+- [ ] **Una herramienta por cuenta,** `calcular_<id>` con guiones bajos,
+  registrada desde la declaración de la cuenta, así que su esquema son sus
+  entradas: `calcular_molde`, `calcular_pasta_fresca`, `calcular_lasana`,
+  `calcular_bollo_pizza`, `calcular_merengue`, `calcular_punto_azucar`,
+  `calcular_arroz`, `calcular_agua_sal_pasta`, `calcular_medidor_espagueti` y
+  `calcular_caldo`. Importan `src/referencias/` y **no usan Drive ni el
+  login.**
+- [ ] **El esquema de cada número dice su valor por defecto,** y el de cada
+  opción, las que acepta y cuál es la de por defecto. Lo que no viene y tiene
+  valor por defecto se completa; las opciones se reciben por su nombre, sin
+  mirar mayúsculas ni tildes.
+- [ ] **La respuesta de una `calcular_*`:** `{ resultado, tabla?, advertencias,
+  notas, fuentes }` —`resultado` es la lista de líneas con nombre y valor;
+  `tabla`, si la cuenta trae una, como los puntos del azúcar; `notas`, las de
+  la cuenta; `fuentes`, las de las constantes que usó—. Si falta un dato que no
+  tiene valor por defecto, `{ faltan: [{ dato, opciones? }] }`, la misma forma
+  que `calcular_pan`; `opciones` sólo en un dato de opciones. Si con esos
+  valores no se puede calcular, `{ error }`.
+- [ ] La descripción de `consultar_referencia` enumera sus temas y dice que se
+  use antes de responder con lo que el agente sepa; la de cada `calcular_*`
+  dice para qué pregunta sirve. El agente las ve aunque no cargue el skill.
+
+#### C07.6.5 — Las referencias en el skill `herramientas` *(J6)*
+
+- [ ] **Es el mismo skill que las calculadoras:** una sección propia, *Las
+  referencias*, y una `description` que cubre las dos cosas con sus temas y dos
+  ejemplos.
+- [ ] **Los números salen siempre de `consultar_referencia` o de su
+  `calcular_*`,** nunca de lo que el agente sepa.
+- [ ] **La respuesta cita la fuente con su nombre y su link.**
+- [ ] **Si la tabla no tiene el dato, lo dice.** Sólo si el usuario lo pide,
+  contesta con conocimiento general, aclarando que no sale de las referencias.
+- [ ] Con `faltan`, pregunta todo lo que falta **en un solo mensaje**, con sus
+  opciones. Con `error`, dice que esos valores no se pueden calcular y pide
+  otros coherentes.
+- [ ] Nombra cada `calcular_*` y dice para qué pregunta sirve.
+- [ ] Un test verifica que la `description` de cada skill no pasa de 1.024
+  caracteres y que toda herramienta que registra el MCP está nombrada en
+  algún skill.
+
+### F07.7 — Referencia rápida
+
+Huevos, carne, aceite, horno y bebidas, para mirar mientras se cocina. Sin
+cuentas: son doce tablas. La pantalla es la de toda referencia (C07.7.1).
+
+#### C07.7.1 — La pantalla de una referencia *(J6)*
+
+- [ ] **Una sola pantalla dibuja las cuatro** referencias desde su archivo de
+  datos y sus cuentas (`src/referencias/`), con el título de la herramienta,
+  su ícono y el volver (`design-system.md` §6.12 y §6.30). No lee recetas ni
+  usa Drive, así que el velo no aparece.
+- [ ] **Arriba, el índice:** una fila de chips con el título de cada ficha,
+  en el orden de la pantalla; tocar uno lleva a su ficha.
+- [ ] **Una ficha por tabla o por cuenta,** en ese orden.
+- [ ] **Una tabla** lleva el título, el encabezado con las unidades, las
+  filas con la primera columna en peso 600 y, debajo, sus notas. Una tabla
+  ancha se desplaza de costado dentro de su ficha; la página no.
+- [ ] **Una cuenta** lleva sus datos en filas, como las calculadoras
+  (`design-system.md` §6.28), y debajo el resultado: sus líneas, la tabla del
+  resultado si la tiene, las advertencias y la fuente; después, las notas de
+  la cuenta.
+- [ ] **Al pie de cada ficha, la fuente:** «Fuente: <nombre>», con el link y
+  «consultada el» la fecha de consulta. Una ficha con varias fuentes las lista
+  todas, una vez por link. Una tabla de varias fuentes dice en cada fila
+  cuál es la suya.
+- [ ] **Lo que se muestra es lo que se calcula:** cada cuenta aplica sus
+  valores por defecto y descarta lo inválido. Un campo vacío que tiene valor
+  por defecto calcula con ese valor; una opción guardada que ya no existe
+  vuelve a la de por defecto.
+- [ ] Escribir un número pinta sólo el resultado de esa cuenta, sin
+  redibujar; elegir una opción redibuja, porque puede cambiar qué datos se
+  ven.
+- [ ] Lo escrito se guarda en `localStorage` en cada cambio
+  (`recetario.referencias.<herramienta>`), una entrada por herramienta, como
+  las calculadoras (C07.4.1); toda lectura y escritura va con `try/catch`.
+
+**Edge case:** un dato vacío sin valor por defecto, en cero, negativo o que
+no es un número → la cuenta no tiene resultado; el bloque queda vacío, nunca
+un error.
+
+#### C07.7.2 — Las fichas de la referencia rápida *(J6)*
+
+- [ ] En este orden: **Huevos**, **Temperatura interna segura**, **Puntos de
+  la carne vacuna**, **Aceite para freír**, **Punto de humo**, **Horno**,
+  **Horno con ventilador**, **Mate**, **Té**, **Café**, **Vinos y
+  espumantes** y **Cervezas y gaseosas**.
+- [ ] **Huevos:** los minutos en agua hirviendo, para el huevo de heladera y
+  a temperatura ambiente, sólo del grande; en cuatro puntos: pasado por agua,
+  mollet, yema cremosa y duro.
+- [ ] **Temperatura interna segura:** la de seguridad por alimento y su
+  reposo; la carne picada lleva además la pauta de SENASA.
+- [ ] **Puntos de la carne vacuna:** la tabla de un frigorífico argentino con
+  sus nombres.
+- [ ] **Aceite para freír:** la temperatura, el tiempo y la interna por
+  alimento, recortada a lo de uso local y con las milanesas; el punto de
+  humo de cada aceite va en su propia ficha.
+- [ ] **Horno:** la escala de nombres con su rango; con ventilador, cuánto se
+  baja la temperatura de una receta de horno convencional.
+- [ ] **Bebidas:** el agua del mate y del mate cocido; el té por tipo, con el
+  agua, la infusión y las hebras por 100 ml, y su botón de minutos (C07.9.3);
+  el café por método; los vinos y espumantes y las cervezas, con las
+  gaseosas, a la temperatura a la que se sirven.
+
+### F07.8 — Masas y dulces
+
+Moldes, piezas, pasta, pizza, azúcar y merengue: tres tablas de
+consulta y seis cuentas, de la masa para un molde a los puntos del azúcar.
+
+#### C07.8.1 — Las fichas de masas y dulces *(J6)*
+
+- [ ] En este orden: **Masa para un molde**, **Gramos de masa por pieza**,
+  **Pasta fresca**, **Pasta comprada: cuánto por persona**, **Lasaña**,
+  **Masas por plato**, **Bollo de pizza**, **Puntos del azúcar** y
+  **Merengue**.
+- [ ] **Gramos de masa por pieza:** una fuente por receta; el pan de molde va
+  en dos filas, artesanal y lacteado.
+- [ ] **Masas por plato:** las tapas de empanada caseras, la tapa comprada, la
+  tortilla de maíz, el ramen, las tapas de dumplings y la tortilla de harina,
+  cada una con su fuente a la vista.
+- [ ] **Pasta comprada** es una tabla de consulta, no una cuenta: cuánto por
+  persona.
+
+#### C07.8.2 — La masa para un molde *(J6)*
+
+- [ ] **Molde** es el primer dato. *Con sus medidas* pide la forma —redondo,
+  cuadrado o rectangular, o con tubo— y sus medidas en cm; con un atajo, el
+  molde trae su forma y sus medidas.
+- [ ] Los atajos son tipos de molde —tartera, bizcochuelo, tortera de boda,
+  boda alta y pizzera, cada uno con su rango de números del catálogo— más las
+  placas y las budineras, con medidas fijas. Con un tipo que no tiene
+  diámetro, el número del molde se escribe aparte, como *Diámetro*.
+- [ ] El **llenado** es un dato en %, con valor por defecto. El resultado es
+  la capacidad en litros y los gramos de masa cruda, que salen de la
+  capacidad por el llenado por una densidad. Un llenado de menos de 1 % o de
+  más de 100 % no calcula: no hay resultado y la advertencia dice *El llenado
+  va de 1 a 100 %.*
+- [ ] El diámetro del tubo de un molde con tubo tiene que ser menor que el
+  diámetro del molde; si no, no hay resultado.
+- [ ] Las notas de la cuenta, y la fuente de la densidad, el llenado y el
+  molde elegido, se muestran en la ficha. Cada budinera cita su propia fuente;
+  los demás atajos, la del catálogo de El Nuevo Emporio.
+
+#### C07.8.3 — La pasta fresca y la lasaña *(J6)*
+
+- [ ] **Pasta fresca:** *porciones* —con valor por defecto— y *masa*: al
+  huevo, de yemas, de sémola, rellena de carne, rellena de ricota o verdura, y
+  ñoquis. El resultado son los ingredientes de esa masa para esas porciones
+  —harina, huevos, yemas, agua, relleno o puré—, con las notas y la
+  advertencia de la masa. La sal es «una pizca».
+- [ ] Los huevos y las yemas se muestran enteros o con su fracción común
+  (½, ⅓, ⅔…); si no hay una, con un decimal.
+- [ ] **Lasaña:** *largo* y *ancho* de la fuente en cm, y la masa, verde o
+  amarilla. El resultado son las porciones y cada ingrediente, escalados por
+  la superficie exacta de la fuente. **Nunca muestra menos de ½ porción.** La
+  masa amarilla lleva su advertencia: es una cuenta propia, no de la fuente.
+- [ ] El relleno de la lasaña es de ragú, bechamel y queso rallado.
+
+#### C07.8.4 — El bollo de pizza, los puntos del azúcar y el merengue *(J6)*
+
+- [ ] **Bollo de pizza:** el *estilo* —napolitana o al molde—, el *diámetro o
+  número de molde* y cuántas *pizzas*. El resultado es lo que pesa cada bollo
+  y la masa total.
+- [ ] En la **napolitana** manda la tabla de la AVPN: un diámetro entre dos
+  filas usa la fila de menor diámetro; fuera del rango de la tabla no hay resultado y
+  la advertencia dice el rango. Una de sus filas es un punto medio propio, no
+  de la AVPN, y la nota de la ficha lo dice.
+- [ ] **Al molde,** un número de molde de la tabla da su rango de gramos; uno
+  que no está se calcula por superficie.
+- [ ] **Puntos del azúcar:** se ajustan *por la altitud* o por *el hervor
+  medido*. El resultado es una tabla —punto, °C, prueba en agua fría y
+  usos—, con cada temperatura corrida por la diferencia entre 100 °C y donde
+  hierve el agua. La altitud vacía es 0. Un hervor medido de menos de 70 °C o
+  de más de 100 °C no corre la tabla: la advertencia dice *El agua hierve
+  entre 70 y 100 °C; revisá la lectura del termómetro.*
+- [ ] **Merengue:** los gramos de *claras* y el *tipo* —francés, suizo o
+  italiano—. El resultado es el azúcar, el impalpable, el azúcar y el agua del
+  almíbar que el tipo usa, y la temperatura, con la nota del tipo.
+
+### F07.9 — Básicos de cocción
+
+Arroz, granos, legumbres, pasta, verduras y caldo.
+
+#### C07.9.1 — Las fichas de cocción *(J6)*
+
+- [ ] En este orden: **Agua para el arroz**, **Arroz en olla**, **Arroz en
+  olla a presión**, **Granos**, **Legumbres**, **Legumbres en olla a
+  presión**, **Agua y sal para la pasta**, **Tiempo de pasta seca**,
+  **Medidor de espagueti**, **Verduras al vapor y hervidas**, **Blanqueado** y
+  **Caldo**.
+- [ ] **Arroz en olla:** la tabla por variedad, con el agua en partes por
+  volumen y por gramo de arroz y el tiempo; la regla general es una nota.
+- [ ] **Granos y legumbres:** líquido, tiempo y rendimiento por grano o
+  legumbre; las legumbres, además, el remojo. La polenta instantánea dice
+  «según el paquete».
+- [ ] **Tiempo de pasta seca:** el rango entre marcas por formato, con la nota
+  «manda el paquete».
+- [ ] **Verduras al vapor y hervidas:** las verduras de la fuente.
+- [ ] **Blanqueado:** los minutos por verdura, con la nota del enfriado en agua con hielo, y su
+  botón de minutos (C07.9.3).
+
+#### C07.9.2 — Las cuentas de cocción *(J6)*
+
+- [ ] **Agua para el arroz:** los gramos de arroz y la variedad; da el agua y
+  el tiempo. Una variedad sin agua por gramo dice las partes por volumen.
+- [ ] **Agua y sal para la pasta:** los gramos de pasta seca; da los litros de
+  agua y los gramos de sal.
+- [ ] **Medidor de espagueti:** *Tengo* los gramos o el diámetro del atado, y
+  la *cantidad*; da el otro de los dos.
+- [ ] **Caldo:** los kilos de huesos y el tipo —ave, vaca o pescado—; da el
+  agua, el mirepoix y su reparto en cebolla, zanahoria y apio, y el tiempo. El
+  procedimiento es la nota de la ficha.
+
+#### C07.9.3 — El botón de minutos *(J6)*
+
+- [ ] Una columna marcada como de minutos dibuja, en cada fila que tiene un
+  número, un botón chico con el reloj. Tocarlo **crea un temporizador** con el
+  nombre de la fila y esos minutos —el mínimo, si es un rango; «1½» es 1,5—,
+  igual que *Empezar* en Temporizadores (C07.5b.1). El temporizador queda en
+  la tira como cualquier otro.
+- [ ] Lo llevan el **blanqueado** (cada verdura) y el **té** (cada tipo). El
+  nombre es la primera columna más la siguiente columna de texto sin unidad,
+  si la fila la tiene —«Espárragos, finos»—; en el té, sólo el tipo —«Verde»—.
+- [ ] Una fila sin número en esa columna no lleva el botón.
+
+### F07.10 — Conservación
+
+Cuánto dura cada alimento en la alacena, la heladera y el freezer.
+
+#### C07.10.1 — La tabla de conservación *(J6)*
+
+- [ ] **La nota general va primero,** en su propia ficha: las temperaturas, que
+  el freezer conserva por calidad, el tiempo fuera de la heladera, recalentar
+  una vez, descongelar y recongelar.
+- [ ] Después, **una sola tabla** con los alimentos en grupos por categoría
+  —carnes, aves, pescados y mariscos, fiambres y embutidos, huevos, lácteos,
+  frutas, verduras y hortalizas, panificados y masas, secos y de alacena,
+  salsas y condimentos, y comidas cocidas y sobras—. Cada fila lleva el
+  alimento, cuánto dura en la alacena, la heladera y el freezer, las notas y
+  su fuente.
+- [ ] **Cada fila nombra su fuente** con una abreviatura; al pie está la
+  lista de abreviaturas, con el nombre y el link de cada una. La celda puede
+  nombrar varias, separadas por espacio o coma.
+- [ ] La comida cocida y las sobras duran lo que dice ANMAT; recongelar es
+  «nunca», salvo lo crudo descongelado que, una vez cocinado, se congela
+  cocido. La carne cruda sale de SENASA para vaca, cerdo y cordero, y la de
+  pollo y pescado, de FoodKeeper. Una fila que agrupa por analogía lo dice en
+  su nota.
+
+#### C07.10.2 — El buscador *(J6)*
+
+- [ ] Arriba, un campo **Buscar un alimento** que filtra las filas de todas las
+  categorías mientras se escribe, sin mirar tildes ni mayúsculas, como la
+  búsqueda de recetas. Mira todas las columnas de la fila. Una categoría que
+  queda sin filas no se muestra. **Sólo se filtra la tabla de alimentos:** las
+  demás fichas de la herramienta, como la nota general, se dibujan siempre
+  enteras y sin aviso.
+- [ ] Vacío, muestra todo. Sin ninguna fila que coincida dice *Ningún alimento
+  con «<lo escrito>»*, una sola vez, en la tabla de alimentos.
+- [ ] Escribir pinta sólo la tabla, sin redibujar, para no sacarle el foco al
+  campo. **La búsqueda no se guarda en el teléfono:** al recargar la
+  app, el campo está vacío.
 
 ---
 
@@ -489,7 +783,7 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 
 | Capacidad | Job |
 |---|---|
-| C07.1.1, C07.1.2, C07.2.1, C07.2.2, C07.2.3, C07.2.4, C07.2.5, C07.2.6, C07.2.7, C07.3.1, C07.4.1, C07.5.1, C07.5.2, C07.5b.1, C07.5b.2, C07.6.1, C07.6.2 | J6 |
+| C07.1.1, C07.1.2, C07.2.1, C07.2.2, C07.2.3, C07.2.4, C07.2.5, C07.2.6, C07.2.7, C07.3.1, C07.4.1, C07.5.1, C07.5.2, C07.5b.1, C07.5b.2, C07.6.1, C07.6.2, C07.6.4, C07.6.5, C07.7.1, C07.7.2, C07.8.1, C07.8.2, C07.8.3, C07.8.4, C07.9.1, C07.9.2, C07.9.3, C07.10.1, C07.10.2 | J6 |
 | C07.6.3 | J6, J8 |
 
 Ninguna capacidad de esta épica quedó sin job.

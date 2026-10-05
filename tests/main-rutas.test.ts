@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { ErrorDeDrive } from '../src/drive.js';
 import { RecetaQueNoEsta } from '../src/store.js';
-import { comoGlobal, limpiarGlobales, historialFalso } from './dom-falso.js';
+import { comoGlobal, limpiarGlobales, historialFalso, localStorageFalso } from './dom-falso.js';
 import { entradaFalsa } from './dobles.js';
 import { parse } from '../src/recipe.js';
 import { DURACIONES } from '../src/catalogo.js';
@@ -399,6 +399,13 @@ describe('main.ts: las rutas', () => {
     const resultadosPlan: string[] = [];
     /** El resultado de una calculadora pintado solo, sin redibujar la pantalla. */
     const resultadosHerramienta: string[] = [];
+    /** Los resultados de cuentas de referencia pintados solos, con la cuenta a la que pertenecen. */
+    const resultadosDeCuenta: { cuenta: string; html: string }[] = [];
+    /** Los bloques de tabla de referencia repintados solos, con el id de la tabla. */
+    const tablasRepintadas: { tabla: string; html: string }[] = [];
+    /** El `localStorage` de esta montada: lo escrito en las calculadoras y los temporizadores. */
+    const almacen = localStorageFalso();
+    vi.stubGlobal('localStorage', almacen);
     /**
      * El menú lateral y su velo mientras el dedo los arrastra: `main` les
      * escribe `transform` y `opacity` sin redibujar, para que sigan al dedo.
@@ -720,6 +727,17 @@ describe('main.ts: las rutas', () => {
           return app.innerHTML.includes('data-resultado')
             ? { set outerHTML(html: string) { resultadosHerramienta.push(html); } } : null;
         }
+        // El resultado de una cuenta de referencia y el bloque de una tabla: se
+        // pintan solos, sin redibujar, para no sacarle el foco a lo que se escribe.
+        // Siempre hay un bloque: que no se pinte fuera de una referencia lo decide `main`.
+        const deCuenta = sel.match(/^#app \[data-resultado-cuenta="([\w-]+)"\]$/)?.[1];
+        if (deCuenta) {
+          return { set outerHTML(html: string) { resultadosDeCuenta.push({ cuenta: deCuenta, html }); } };
+        }
+        const deTabla = sel.match(/^#app \[data-tabla="([\w-]+)"\]$/)?.[1];
+        if (deTabla) {
+          return { set outerHTML(html: string) { tablasRepintadas.push({ tabla: deTabla, html }); } };
+        }
         const cantidad = sel.match(/^#app \[data-cantidad="(\w+)"\]$/)?.[1];
         if (cantidad) return campo(`cantidad-${cantidad}`);
         // El bloque de la pantalla de agregar al plan: se redibuja solo, para
@@ -913,6 +931,11 @@ describe('main.ts: las rutas', () => {
       soltarAvisos: async () => { historial.soltarAvisos(); await esperar(); },
       resultadosPlan,
       resultadosHerramienta,
+      resultadosDeCuenta,
+      tablasRepintadas,
+      almacen,
+      /** Los oyentes de `input` de `#app`. */
+      tecleos,
       /** Escribir en un campo de cantidad de una calculadora. */
       tipearCantidad: async (cantidad: string, valor: string) => {
         const campo = { dataset: { cantidad }, value: valor, closest: (sel: string) => (sel === '[data-cantidad]' ? campo : null) };
@@ -1078,7 +1101,11 @@ describe('main.ts: las rutas', () => {
       ['#/herramientas', 'href="#/herramientas/pan"'],
       ['#/herramientas/pan', 'data-opcion="pan"'],
       ['#/herramientas/fermentados', 'data-opcion="fermento"'],
-      ['#/herramientas/temporizadores', 'data-accion="temporizador-empezar"']
+      ['#/herramientas/temporizadores', 'data-accion="temporizador-empezar"'],
+      ['#/herramientas/referencia', 'id="ficha-huevos"'],
+      ['#/herramientas/masas', 'id="ficha-molde"'],
+      ['#/herramientas/coccion', 'id="ficha-arroz"'],
+      ['#/herramientas/conservacion', 'data-buscar-referencia="conservacion"']
     ] as const) {
       await abrir(hash);
       expect(app.innerHTML, hash).toContain(marca);
@@ -1134,6 +1161,79 @@ describe('main.ts: las rutas', () => {
     expect(estado.formulario['cantidad-harina']).toBe(String(Math.round(calcularPan(conMasa)!.harinaTotal)));
   });
 
+  describe('herramientas de referencia', () => {
+    /** Un campo de una cuenta: un número, o con `options` un desplegable. */
+    const campoDeCuenta = (cuenta: string, entrada: string, value: string, desplegable = false) => {
+      const campo = {
+        dataset: { entrada, cuenta }, value, ...(desplegable ? { options: [] } : {}),
+        closest: (sel: string) => (sel === '[data-entrada]' ? campo : null)
+      };
+      return campo;
+    };
+    const campoDeBusqueda = (herramienta: string, value: string) => {
+      const campo = {
+        dataset: { buscarReferencia: herramienta }, value,
+        closest: (sel: string) => (sel === '[data-buscar-referencia]' ? campo : null)
+      };
+      return campo;
+    };
+
+    it('escribir en una cuenta pinta sólo su resultado, y lo escrito queda guardado', async () => {
+      const { abrir, tecleos, pinturas, resultadosDeCuenta, almacen } = await montar();
+      await abrir('#/herramientas/coccion');
+      const antes = pinturas.length;
+      for (const fn of tecleos) await fn({ target: campoDeCuenta('agua-sal-pasta', 'gramos', '300') });
+      expect(resultadosDeCuenta).toHaveLength(1);
+      expect(resultadosDeCuenta[0]?.cuenta).toBe('agua-sal-pasta');
+      expect(resultadosDeCuenta[0]?.html).toContain('data-resultado-cuenta="agua-sal-pasta"');
+      expect(resultadosDeCuenta[0]?.html).toContain('class="ing"');
+      expect(pinturas.length).toBe(antes);
+      expect(JSON.parse(almacen.getItem('recetario.referencias.coccion') ?? '{}')).toEqual({ 'agua-sal-pasta': { gramos: 300 } });
+    });
+
+    it('elegir en un desplegable de una cuenta redibuja la pantalla', async () => {
+      const { abrir, tecleos, pinturas, resultadosDeCuenta } = await montar();
+      await abrir('#/herramientas/coccion');
+      const antes = pinturas.length;
+      for (const fn of tecleos) await fn({ target: campoDeCuenta('arroz', 'variedad', 'integral', true) });
+      await esperar();
+      expect(pinturas.length).toBe(antes + 1);
+      expect(resultadosDeCuenta).toHaveLength(0);
+    });
+
+    it('buscar en Conservación repinta el bloque de la tabla y no la pantalla', async () => {
+      const { abrir, tecleos, pinturas, tablasRepintadas } = await montar();
+      await abrir('#/herramientas/conservacion');
+      const antes = pinturas.length;
+      for (const fn of tecleos) await fn({ target: campoDeBusqueda('conservacion', 'limon') });
+      expect(pinturas.length).toBe(antes);
+      const bloque = tablasRepintadas.find(t => t.tabla === 'conservacion');
+      expect(bloque?.html).toContain('data-tabla="conservacion"');
+    });
+
+    it('fuera de una referencia, escribir o buscar no toca esos bloques', async () => {
+      const { abrir, tecleos, pinturas, resultadosDeCuenta, tablasRepintadas } = await montar();
+      await abrir('#/herramientas/pan');
+      const antes = pinturas.length;
+      for (const fn of tecleos) {
+        await fn({ target: campoDeBusqueda('conservacion', 'limon') });
+        await fn({ target: campoDeCuenta('agua-sal-pasta', 'gramos', '300') });
+      }
+      expect(resultadosDeCuenta).toHaveLength(0);
+      expect(tablasRepintadas).toHaveLength(0);
+      expect(pinturas.length).toBe(antes);
+    });
+
+    it('el botón de minutos de una fila empieza un temporizador con ese nombre y esa duración', async () => {
+      const { abrir, tocar, almacen } = await montar();
+      await abrir('#/herramientas/conservacion');
+      await tocar('referencia-temporizador', { nombre: 'Chauchas', minutos: '10' });
+      const guardado = JSON.parse(almacen.getItem('recetario.temporizadores') ?? '{}') as { temporizadores: { nombre: string; duracion: number }[] };
+      expect(guardado.temporizadores).toHaveLength(1);
+      expect(guardado.temporizadores[0]).toMatchObject({ nombre: 'Chauchas', duracion: 600_000 });
+    });
+  });
+
   it('en la de sal, igual', async () => {
     const { abrir, tipearCantidad, pinturas, resultadosHerramienta } = await montar();
     await abrir('#/herramientas/fermentados');
@@ -1178,7 +1278,8 @@ describe('main.ts: las rutas', () => {
     const HASH_DE: Record<string, string> = {
       recetario: '#/', borradores: '#/borradores', plan: '#/plan', herramientas: '#/herramientas', ajustes: '#/ajustes', nueva: '#/nueva'
     };
-    const SIN_MENU = ['#/c/Carnes', '#/r/f1', '#/r/f1/editar', '#/buscar?q=pan', '#/t/horno', '#/categorias', '#/plan/compras', '#/herramientas/pan', '#/herramientas/temporizadores'];
+    const SIN_MENU = ['#/c/Carnes', '#/r/f1', '#/r/f1/editar', '#/buscar?q=pan', '#/t/horno', '#/categorias', '#/plan/compras', '#/herramientas/pan', '#/herramientas/temporizadores',
+      '#/herramientas/referencia', '#/herramientas/masas', '#/herramientas/coccion', '#/herramientas/conservacion'];
 
     it('cada vista de MENU dibuja la hamburguesa, el lateral con su entrada marcada, y el gesto lo abre', async () => {
       const { MENU } = await import('../src/ui/router.js');

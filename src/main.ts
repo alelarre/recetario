@@ -77,7 +77,11 @@ import {
 import type { Rotacion } from './ui/temporizadores.js';
 import { crearAvisoSonoro } from './aviso-sonoro.js';
 import { crearPantallaEncendida } from './pantalla-encendida.js';
-import { formatear, restante, avance, transcurrido, aMs } from './temporizadores.js';
+import { formatear, restante, avance, transcurrido, aMs, MINUTO } from './temporizadores.js';
+import { crearControlReferencias } from './referencias-control.js';
+import { renderReferencia, resultadoDeCuenta, filasFiltradas } from './ui/referencias.js';
+import { herramientaDeReferencia } from './referencias/indice.js';
+import type { IdHerramienta } from './referencias/tipos.js';
 import { calcularPan } from './calculadoras/pan.js';
 import type { EstadoDePantalla, PedidoAlAgente } from './estado-pantalla.js';
 import { achicar } from './fotos.js';
@@ -491,6 +495,28 @@ const controlTemporizadores = crearControlTemporizadores({
 });
 // Cada pantalla trae o saca la tira de Temporizadores según dónde se esté.
 despuesDePintar(pintarTemporizadoresVivos);
+
+/** Lo escrito en las cuentas de las herramientas de referencia, y la búsqueda de Conservación. */
+const controlReferencias = crearControlReferencias({
+  almacen: almacenLocal(),
+  redibujar: () => { void render(); },
+  // Escribir pinta sólo el resultado de la cuenta: redibujar la pantalla sacaría el foco del campo.
+  pintarResultado: (id, cuentaId) => {
+    const bloque = document.querySelector(`#app [data-resultado-cuenta="${cuentaId}"]`);
+    const ficha = herramientaDeReferencia(id).fichas.find(f => f.tipo === 'cuenta' && f.cuenta.id === cuentaId);
+    if (bloque && ficha?.tipo === 'cuenta') {
+      pintarParte(bloque, resultadoDeCuenta(ficha.cuenta, controlReferencias.estado(id).valores[cuentaId] ?? {}), 'reemplazar');
+    }
+  },
+  pintarTabla: (id) => {
+    for (const ficha of herramientaDeReferencia(id).fichas) {
+      if (ficha.tipo !== 'tabla') continue;
+      const bloque = document.querySelector(`#app [data-tabla="${ficha.tabla.id}"]`);
+      if (bloque) pintarParte(bloque, filasFiltradas(ficha.tabla, controlReferencias.estado(id).busqueda), 'reemplazar');
+    }
+  },
+  temporizador: (nombre, minutos) => { controlTemporizadores.empezarCon(nombre, minutos * MINUTO); }
+});
 
 /**
  * El visor de fotos. Va aparte del estado de la pantalla porque abrirlo es una
@@ -1057,6 +1083,10 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       return pintar(renderPan(herramientas.pan()));
     case 'calculadora-sal':
       return pintar(renderSal(herramientas.sal()));
+    case 'referencia': {
+      const h = herramientaDeReferencia(ruta.params['herramienta'] as IdHerramienta);
+      return pintar(renderReferencia(h, controlReferencias.estado(h.id)));
+    }
     case 'temporizadores':
       return pintar(renderTemporizadores({ ...controlTemporizadores.estado(), nombre: nombreDeTemporizadorEscrito() }));
 
@@ -2377,6 +2407,7 @@ const acciones = registrarAcciones({
   compartir: accionesDeCompartir,
   ajustes: accionesDeAjustes,
   herramientas: herramientas.acciones,
+  referencias: controlReferencias.acciones,
   temporizadores: {
     ...controlTemporizadores.acciones,
     'ir-temporizadores': () => { nav.ir('#/herramientas/temporizadores'); },
@@ -2423,6 +2454,18 @@ document.querySelector('#tira')?.addEventListener('click', alTocar);
 app.addEventListener('input', (e) => {
   if (velo.ocupado()) return;
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria(true);
+  const entrada = conClosest(e.target)?.closest<HTMLInputElement | HTMLSelectElement>('[data-entrada]');
+  if (entrada && vistaActual?.vista === 'referencia') {
+    const id = vistaActual.params['herramienta'] as IdHerramienta;
+    const { entrada: nombre = '', cuenta: cuentaId = '' } = entrada.dataset;
+    return 'options' in entrada
+      ? controlReferencias.alElegir(id, cuentaId, nombre, entrada.value)
+      : controlReferencias.alEscribir(id, cuentaId, nombre, entrada.value);
+  }
+  const buscar = conClosest(e.target)?.closest<HTMLInputElement>('[data-buscar-referencia]');
+  if (buscar && vistaActual?.vista === 'referencia') {
+    return controlReferencias.alBuscar(vistaActual.params['herramienta'] as IdHerramienta, buscar.value);
+  }
   const cantidad = conClosest(e.target)?.closest<HTMLInputElement>('[data-cantidad]');
   if (cantidad) return herramientas.alEscribir(cantidad);
   const opcion = conClosest(e.target)?.closest<HTMLSelectElement>('[data-opcion]');

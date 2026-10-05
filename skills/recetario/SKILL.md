@@ -17,8 +17,9 @@ el mismo código que la app: el `.md` y su fila del índice se escriben juntos.
 3. **Corregir o completar** recetas que ya están.
 4. **Ordenar el recetario:** unificar tags, recategorizar, encontrar duplicados.
 
-Calcular las cantidades de un pan o la sal de un fermentado no es de este
-skill: usá el skill `herramientas`.
+Calcular las cantidades de un pan o la sal de un fermentado, o consultar un
+dato de cocina (un tiempo, una temperatura, cuánto dura un alimento), no es
+de este skill: usá el skill `herramientas`.
 
 ## Antes de empezar
 

@@ -425,10 +425,14 @@ se reconoce abre el Recetario.
 | **Plan de la semana** | `#/plan` | Siete días desde hoy, dos comidas cada uno, y cada comida una lista de recetas. Al pie, la lista de compras y reiniciar. | Planificar | J9 |
 | **Agregar al plan** | `#/plan/agregar?dia=&momento=` | La búsqueda del Recetario, el bloque *Menú diario* y la grilla de las categorías: tocar una receta la suma a esa comida y vuelve. | Planificar | J9 |
 | **Lista de compras** | `#/plan/compras` | Los ingredientes de todo lo cargado, en dos bloques, y compartir como texto. | Planificar | J9 |
-| **Herramientas** | `#/herramientas` | La lista de las herramientas: *Temporizadores*, *Pan* y *Fermentados*. Es destino del menú: hamburguesa en vez de volver. Una ruta `#/herramientas/…` que no es Temporizadores ni una calculadora abre esta lista. | Cocinar | J6 |
+| **Herramientas** | `#/herramientas` | La lista de las herramientas: *Temporizadores*, *Pan*, *Fermentados*, *Referencia rápida*, *Masas y dulces*, *Básicos de cocción* y *Conservación*. Es destino del menú: hamburguesa en vez de volver. Una ruta `#/herramientas/…` que no es Temporizadores, una calculadora ni una referencia abre esta lista. | Cocinar | J6 |
 | **Temporizadores** | `#/herramientas/temporizadores` | El cronómetro, los temporizadores —cuentas regresivas, con nombre, tiempo, barra, +1', pausa y sacar— y el temporizador nuevo: nombre opcional, ruedas de horas, minutos y segundos y *Empezar*. Lleva volver. Mientras corre algo, la pantalla no se apaga. No lee recetas ni usa Drive. | Cocinar | J6 |
 | **Calculadora de pan** | `#/herramientas/pan` | Pan, harinas, levadura, fermentación y cantidad —harina total o masa total—, y al pie el resultado con sus advertencias. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
 | **Calculadora de sal** | `#/herramientas/fermentados` | Fermento y peso total del frasco, y al pie los gramos de sal. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
+| **Referencia rápida** | `#/herramientas/referencia` | Doce tablas de consulta: huevos, temperatura interna y puntos de la carne, aceite para freír y punto de humo, horno, mate, té, café, vinos y cervezas. Arriba, el índice de fichas; al pie de cada una, su fuente. El té lleva un botón que crea un temporizador. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
+| **Masas y dulces** | `#/herramientas/masas` | Moldes, piezas, pasta fresca y comprada, lasaña, masas por plato, bollo de pizza, puntos del azúcar y merengue: cuentas con sus datos en filas y tablas de consulta, cada una con su fuente. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
+| **Básicos de cocción** | `#/herramientas/coccion` | Arroz, granos, legumbres, pasta, verduras, blanqueado y caldo: tablas y cuentas con su fuente. El blanqueado lleva un botón que crea un temporizador. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
+| **Conservación** | `#/herramientas/conservacion` | La nota general y la tabla de cuánto dura cada alimento en la alacena, la heladera y el freezer, por categoría, con un buscador arriba. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
 
 **La tira de Temporizadores.** Mientras corre un temporizador o el cronómetro, o
 queda uno terminado sin sacar, toda pantalla —salvo Temporizadores y la vista de
@@ -567,7 +571,7 @@ con su nombre y su ícono:
 | **Inicio** | El punto de entrada: la pantalla del Recetario. Se llama *Inicio* porque «Recetario» ya es la marca de arriba del menú |
 | **Borradores** | La cola: las recetas con `borrador`, con su contador |
 | **Plan de la semana** | La única entrada al plan, con el ícono del calendario |
-| **Herramientas** | Las calculadoras de pan y de sal, con el ícono de la balanza. Las calculadoras llevan volver; desde una receta se llega también por su botón *Calcular* |
+| **Herramientas** | Temporizadores, las calculadoras de pan y de sal y las cuatro referencias, con el ícono de la balanza. Cada una lleva volver; a una calculadora se llega también desde una receta, por su botón *Calcular* |
 | **Nueva receta** | Una acción, no un lugar: nunca queda marcada, ni en el editor al que lleva |
 | **Ajustes** | Secundario, pero alcanzable desde cualquier parte |
 

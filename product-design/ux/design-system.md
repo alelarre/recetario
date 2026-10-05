@@ -285,7 +285,7 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 «+» de agregar de la tarjeta (§6.1).
 
 **Los íconos son funcionales, nunca decorativos.** `iconos.ts` tiene
-**treinta y tres**: veintiocho en `ICO` y los cinco relojitos de
+**cuarenta y seis**: cuarenta y uno en `ICO` y los cinco relojitos de
 `ICONO_DE_DURACION`.
 
 | Ícono | Dónde |
@@ -316,6 +316,7 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `balanza` | *Herramientas*, en el menú lateral y en su título, y delante del título de la ficha del resultado de una calculadora (§6.28). |
 | `reloj`, `pan`, `frasco` | Las tres herramientas —Temporizadores, Pan y Fermentados—: en su entrada de la lista de Herramientas y delante del título de su pantalla. `reloj` va también delante del nombre en la tira (§6.29). |
+| `libro`, `rodillo`, `olla`, `heladera` | Las cuatro referencias —Referencia rápida, Masas y dulces, Básicos de cocción y Conservación—: en su entrada de la lista de Herramientas y delante del título de su pantalla (§6.30). Un libro abierto, un palote, una olla con su tapa y una heladera de dos puertas, del trazo de los demás. |
 | `pausa`, `play` | Pausar y seguir un temporizador (§6.29). |
 | `arriba`, `abajo` | Las ruedas del temporizador nuevo (§6.29). |
 | `idaYVuelta` | Entre dos cantidades que salen una de la otra, en las calculadoras (§6.28). Dos flechas, una para cada lado. |
@@ -1480,6 +1481,53 @@ transparente a opaco, en 240 ms `ease-out`. El fondo y las flechas quedan
 quietos: la tira entera moviéndose marea. Sin animación con movimiento reducido. Queda debajo del menú lateral y del velo. Mientras existe,
 `--tira` vale 56 px: `.cuerpo` y el modo cocina suman ese alto a su padding de
 abajo, y los pies pegados de la receta y del plan suben.
+### 6.30 Referencias
+
+Las pantallas de *Referencia rápida*, *Masas y dulces*, *Básicos de cocción* y
+*Conservación* (`E07-Herramientas.md` F07.7 a F07.10) son una sola, que dibuja
+cualquiera de las cuatro. Es una pila de fichas (§6.6) bajo el encabezado
+(§6.12), con el ícono de la herramienta delante del título.
+
+**El índice** es una fila de chips (§6.10), uno por ficha, con el título de la
+ficha. La fila **se acomoda en renglones** (`flex-wrap`) en vez de
+desplazarse: se ven todos. Tocar uno lleva a su ficha, que queda a 72 px del
+borde de arriba para que el encabezado fijo no la tape (`scroll-margin-top`).
+
+**Una ficha de tabla** (`.ficha.ref`) lleva el título (`h2`), la tabla, las
+notas y la fuente. La tabla (`.tabla-ref`) va en `--txt-chico`, con filas de
+1 px `--borde` abajo y `--e-2` de padding en cada celda. El encabezado va en
+`--fg-2` peso 600, sin cortar renglón, y la unidad de una columna, entre
+paréntesis, en `--fg-3` peso 400. **La primera columna va en peso 600:** es lo
+que se busca. En una tabla agrupada, el título de cada grupo es una fila
+completa en `--fg`, con más aire arriba (`--e-4`).
+
+**Una tabla ancha se desplaza de costado dentro de su ficha;** la página no.
+La tabla sale hasta el borde de la ficha (margen de `--e-2` negativo) para
+darle ancho.
+
+**Una ficha de cuenta** lleva los datos en filas, como las calculadoras
+(§6.28), y el resultado debajo, sin la ficha destacada con el acento: las
+líneas como ítems de ingrediente (§6.11), la tabla del resultado como una
+tabla, las advertencias en `--txt-chico` `--fg-2` y la fuente. Las notas de
+la cuenta van al final.
+
+**Las notas** son una lista en `--txt-chico` `--fg-2`, `--e-3` debajo de lo
+anterior. Una URL dentro de una nota es un link en `--fg-2`. **La fuente va al pie de cada ficha:** «Fuente: <nombre>», con el
+nombre como link en `--fg-2`, la fecha de consulta y, si son varias, una
+detrás de otra separadas por «·». Todo en `--txt-micro` `--fg-3`.
+
+**El botón de minutos** (`.ico-min`) va pegado al valor de la celda: un
+cuadrado de 28 px visibles, `--r-medio`, borde de 1 px `--borde-fuerte`, sin
+fondo, con el ícono `reloj` de 16 px en `--fg-2`. Tiene 48 px de área táctil:
+un `::after` transparente lo extiende 10 px por lado. Su nombre accesible es
+«Temporizador de <fila>» y el ícono va oculto a los lectores de pantalla.
+
+**El buscador** de Conservación es la caja de búsqueda del Recetario (`buscar`,
+§3.4) con el texto «Buscar un alimento», arriba de todo. Mientras se escribe
+cambian las filas de la tabla de alimentos y no la caja; las demás fichas no
+se filtran. Sin coincidencias, el aviso «Ningún alimento con «…»» en
+`--txt-base` `--fg-2`, como un estado vacío, una sola vez.
+
 ---
 
 ## 7. Layout

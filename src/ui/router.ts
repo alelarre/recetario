@@ -1,10 +1,12 @@
+import type { IdHerramienta } from '../referencias/tipos.js';
+
 /** Las vistas que la app sabe dibujar. El hash es el único estado de navegación. */
 export type Vista =
   | 'recetario' | 'categoria' | 'resultados' | 'receta' | 'cocinar'
   | 'editar' | 'nueva' | 'borradores' | 'ajustes' | 'carpeta'
   | 'categorias' | 'editar-categoria' | 'tag'
   | 'plan' | 'plan-agregar' | 'plan-compras'
-  | 'herramientas' | 'calculadora-pan' | 'calculadora-sal' | 'temporizadores';
+  | 'herramientas' | 'calculadora-pan' | 'calculadora-sal' | 'temporizadores' | 'referencia';
 
 export interface Ruta {
   vista: Vista;
@@ -28,6 +30,11 @@ export const MENU: Partial<Record<Vista, DestinoLateral | null>> = {
   herramientas: 'herramientas',
   ajustes: 'ajustes',
   nueva: null
+};
+
+/** El segundo tramo de la ruta de cada herramienta de referencia, y su id. */
+const DE_REFERENCIA: Readonly<Record<string, IdHerramienta>> = {
+  referencia: 'rapida', masas: 'masas', coccion: 'coccion', conservacion: 'conservacion'
 };
 
 /** Si la vista es destino del menú. */
@@ -109,6 +116,8 @@ export function parsearHash(hash: unknown): Ruta {
     if (partes[1] === 'pan') return { vista: 'calculadora-pan', params: {} };
     if (partes[1] === 'fermentados') return { vista: 'calculadora-sal', params: {} };
     if (partes[1] === 'temporizadores') return { vista: 'temporizadores', params: {} };
+    const ref = partes[1] && Object.hasOwn(DE_REFERENCIA, partes[1]) ? DE_REFERENCIA[partes[1]] : undefined;
+    if (ref) return { vista: 'referencia', params: { herramienta: ref } };
     return { vista: 'herramientas', params: {} };
   }
 
