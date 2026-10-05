@@ -294,7 +294,8 @@ queda vacío.
 
 - [ ] Cuatro datos, con las filas de la calculadora de pan (F07.2). En una
   ficha: el **tipo**, un desplegable con los de la tabla de fermentos; la
-  **sal (%)**, un número que se escribe; y la **temperatura ambiente**, un
+  **sal (%)**, un número que se escribe y que las flechas suben y bajan de
+  a 0,1 %; y la **temperatura ambiente**, un
   conmutador con cuatro franjas —menos de 13 °C, 13 a 18, 18 a 24 y más de
   24—. En otra, el **peso total** en gramos.
 - [ ] **El tipo de fermento es un punto de partida, como el de pan

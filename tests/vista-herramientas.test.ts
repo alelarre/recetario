@@ -180,7 +180,7 @@ describe('la calculadora de sal', () => {
     expect(html).toContain('<span class="n">Tipo</span><select data-opcion="fermento">');
     expect(elegidoEn(html, 'fermento')).toBe('chucrut');
     // El porcentaje de sal que sugiere el tipo, en su fila, para cambiarlo.
-    expect(html).toContain('<span class="n">Sal (%)</span><input type="number" inputmode="decimal" min="0" data-cantidad="sal" value="2">');
+    expect(html).toContain('<span class="n">Sal (%)</span><input type="number" inputmode="decimal" min="0" step="0.1" data-cantidad="sal" value="2">');
     expect(pos(html, 'fermento')).toBeLessThan(html.indexOf('data-cantidad="sal"'));
     expect(html.indexOf('data-cantidad="sal"')).toBeLessThan(pos(html, 'temperatura'));
     expect(renderSal({ ...SAL_POR_DEFECTO, sal: 3.5 })).toContain('<span class="v">35 g</span>');

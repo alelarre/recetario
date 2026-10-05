@@ -73,10 +73,14 @@ const fichaDeDatos = (...filas: string[]): string => {
   return contenido ? `<div class="ficha datos">${contenido}</div>` : '';
 };
 
-/** Un número que se escribe en la fila de un dato: el nombre a la izquierda y el campo, corto, a la derecha. */
-const numeroEnFila = (etiqueta: string, cantidad: string, valor: number): string =>
+/**
+ * Un número que se escribe en la fila de un dato: el nombre a la izquierda y el campo, corto, a la derecha.
+ * `paso` es cuánto suben y bajan las flechas; sin él, el navegador usa 1.
+ */
+const numeroEnFila = (etiqueta: string, cantidad: string, valor: number, paso?: number): string =>
   `<label class="dato"><span class="n">${escapar(etiqueta)}</span>` +
-  `<input type="number" inputmode="decimal" min="0" data-cantidad="${cantidad}" value="${Number.isFinite(valor) ? valor : ''}"></label>`;
+  `<input type="number" inputmode="decimal" min="0"${paso === undefined ? '' : ` step="${paso}"`} ` +
+  `data-cantidad="${cantidad}" value="${Number.isFinite(valor) ? valor : ''}"></label>`;
 
 /** Un campo de gramos. */
 const campoGramos = (etiqueta: string, cantidad: string, valor: number | null): string =>
@@ -209,7 +213,7 @@ export function renderSal(d: DatosSal): string {
       fichaDeDatos(
         // El tipo carga el porcentaje de sal que sugiere; después se cambia.
         desplegable('Tipo', 'fermento', enTexto(FERMENTOS), d.fermento ?? ''),
-        numeroEnFila('Sal (%)', 'sal', d.sal),
+        numeroEnFila('Sal (%)', 'sal', d.sal, 0.1),
         temperatura('temperatura', d.temperatura ?? '')) +
       `<div class="ficha">${campoGramos('Peso total (g)', 'peso', d.pesoTotal)}` +
         '<p class="aviso-mudo">Todo lo que va en el frasco: la verdura y, si va en salmuera, el agua.</p></div>' +
