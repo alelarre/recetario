@@ -248,7 +248,7 @@ export const PASTA_FRESCA: readonly RecetaPorPorcion[] = [
   {
     id: 'rellena-ricota', texto: 'Rellena de ricota o verdura',
     ingredientes: [
-      { nombre: 'Harina', cantidad: 33, unidad: 'g' },
+      { nombre: 'Harina', cantidad: 100 / 3, unidad: 'g' },
       { nombre: 'Huevos', cantidad: 1 / 3, unidad: 'u' },
       { nombre: 'Relleno', cantidad: 75, unidad: 'g' }
     ],

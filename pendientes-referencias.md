@@ -11,7 +11,6 @@ en `mcp/referencias.ts`.
 
 ## Datos y fuentes
 
-6. La ricota de la pasta rellena da 33 g por porción: revisar el valor.
 7. Los moldes desmontables no tienen un tipo propio.
 8. FSIS (conservación) no tiene captura en Internet Archive: si la página
    cambia, se pierde la fuente.
