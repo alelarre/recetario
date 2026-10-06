@@ -14,17 +14,19 @@ export const TABLAS_RAPIDA = {
     columnas: [
       { id: 'punto', nombre: 'Punto' },
       { id: 'heladera', nombre: 'Huevo de heladera', unidad: 'min' },
-      { id: 'ambiente', nombre: 'A temperatura ambiente', unidad: 'min' }
+      { id: 'ambiente', nombre: 'A temperatura ambiente', unidad: 'min' },
+      { id: 'fria', nombre: 'Desde agua fría', unidad: 'min' }
     ],
     filas: [
-      { punto: 'Pasado por agua', heladera: '4:01', ambiente: '2:31' },
-      { punto: 'Mollet: clara firme, yema líquida', heladera: '6:49', ambiente: '5:18' },
-      { punto: 'Yema cremosa', heladera: '7:49', ambiente: '6:19' },
-      { punto: 'Duro', heladera: '10:04', ambiente: '8:33' }
+      { punto: 'Pasado por agua', heladera: '4:01', ambiente: '2:31', fria: '3–4' },
+      { punto: 'Mollet: clara firme, yema líquida', heladera: '6:49', ambiente: '5:18', fria: '5' },
+      { punto: 'Yema cremosa', heladera: '7:49', ambiente: '6:19', fria: '7–8' },
+      { punto: 'Duro', heladera: '10:04', ambiente: '8:33', fria: '10–12' }
     ],
     notas: [
       'Huevo grande, de 58 g, en agua hirviendo.',
-      'Al nivel del mar; el tiempo corre desde que el huevo entra al agua. Al sacarlo, agua fría para cortar la cocción.'
+      'Al nivel del mar; el tiempo corre desde que el huevo entra al agua. Al sacarlo, agua fría para cortar la cocción.',
+      'Desde agua fría: Egg Farmers of Canada, https://eggs.ca/eggs101/how-to-soft-boil-eggs/ y https://eggs.ca/eggs101/how-to-make-the-perfect-hard-boiled-egg/.'
     ],
     fuente: { nombre: 'Omni Calculator, Ideal Egg Boiling Calculator', url: 'https://www.omnicalculator.com/food/egg-boiling' }
   },

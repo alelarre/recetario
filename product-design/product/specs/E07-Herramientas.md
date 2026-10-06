@@ -602,10 +602,11 @@ un error.
   la carne vacuna**, **Aceite para freír**, **Punto de humo**, **Horno**,
   **Mate**, **Té**, **Vinos y espumantes** y **Cervezas y gaseosas**.
 - [ ] **Huevos:** los minutos en agua hirviendo, para el huevo de heladera y
-  a temperatura ambiente, sólo del grande; en cuatro puntos: pasado por agua,
-  mollet, yema cremosa y duro.
+  a temperatura ambiente, sólo del grande, y los minutos desde agua fría,
+  con su propia fuente; en cuatro puntos: pasado por agua, mollet, yema
+  cremosa y duro.
 - [ ] **Temperatura interna segura:** la de seguridad por alimento y su
-  reposo; la carne picada lleva además la pauta de SENASA.
+  reposo.
 - [ ] **Puntos de la carne vacuna:** la tabla de un frigorífico argentino con
   sus nombres.
 - [ ] **Aceite para freír:** la temperatura, el tiempo y la interna por
