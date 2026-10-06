@@ -68,7 +68,7 @@ describe('las herramientas', () => {
   it('lista las de siempre, la consulta de referencia y las once cuentas, cada una con su descripción y su esquema de entrada', async () => {
     const { tools } = await (await conectar()).listTools();
     expect(tools.map(t => t.name).sort()).toEqual([
-      'borrar', 'buscar', 'calcular_agua_sal_pasta', 'calcular_arroz', 'calcular_bollo_pizza', 'calcular_caldo', 'calcular_conversion', 'calcular_lasana',
+      'borrar', 'buscar', 'calcular_agua_sal_pasta', 'calcular_arroz', 'calcular_bollo_pizza', 'calcular_caldo', 'calcular_conversion',
       'calcular_medidor_espagueti', 'calcular_merengue', 'calcular_molde', 'calcular_pan', 'calcular_pasta_fresca', 'calcular_punto_azucar',
       'calcular_sal', 'categorias', 'consultar_referencia', 'crear', 'formato', 'guardar', 'leer', 'reindexar', 'tags', 'validar'
     ]);

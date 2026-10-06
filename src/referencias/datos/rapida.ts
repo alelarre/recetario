@@ -39,7 +39,7 @@ export const TABLAS_RAPIDA = {
     ],
     filas: [
       { alimento: 'Vaca, cerdo, ternera y cordero: bifes, costillas y piezas enteras', minima: '63', reposo: '3 min', fuente: 'FSIS' },
-      { alimento: 'Carne picada (vaca, cerdo, ternera, cordero); el SENASA pide evitarla en menores de 5 años', minima: '71', reposo: '—', fuente: 'SENASA y FSIS' },
+      { alimento: 'Carne picada (vaca, cerdo, ternera, cordero)', minima: '71', reposo: '—', fuente: 'SENASA y FSIS' },
       { alimento: 'Aves: pechuga, entera, pata, muslo, alitas, picada, menudos y relleno', minima: '74', reposo: '—', fuente: 'FSIS' },
       { alimento: 'Jamón crudo, fresco o ahumado', minima: '63', reposo: '3 min', fuente: 'FSIS' },
       { alimento: 'Platos con huevo', minima: '71', reposo: '—', fuente: 'FSIS' },
@@ -139,25 +139,13 @@ export const TABLAS_RAPIDA = {
       { horno: 'Suave', temperatura: '140–170' },
       { horno: 'Moderado', temperatura: '170–190' },
       { horno: 'Fuerte', temperatura: '190–230' },
-      { horno: 'Muy fuerte', temperatura: '230–260' }
+      { horno: 'Muy fuerte', temperatura: '230–260' },
+      { horno: 'Con ventilador', temperatura: '20 °C menos' }
+    ],
+    notas: [
+      'Con ventilador: 200 °C de una receta para horno convencional son 180 °C. El tiempo queda igual (Bosch, Trucos para el horno, https://innovacionparatuvida.bosch-home.es/electrodomesticos/hornos/trucos-para-el-horno-como-ser-un-maestro/).'
     ],
     fuente: { nombre: 'Soy celíaco, no extraterrestre, Temperatura del horno', url: 'https://www.soyceliaconoextraterrestre.com/temperatura-del-horno/' }
-  },
-
-  'horno-ventilador': {
-    id: 'horno-ventilador', titulo: 'Horno con ventilador',
-    columnas: [
-      { id: 'convencional', nombre: 'Receta para horno convencional' },
-      { id: 'ventilador', nombre: 'Con ventilador' }
-    ],
-    filas: [
-      { convencional: 'Temperatura de la receta', ventilador: '20 °C menos' }
-    ],
-    notas: ['Ejemplo: 200 °C en horno convencional son 180 °C con ventilador. El tiempo queda igual.'],
-    fuente: {
-      nombre: 'Bosch, Trucos para el horno: cómo ser un maestro',
-      url: 'https://innovacionparatuvida.bosch-home.es/electrodomesticos/hornos/trucos-para-el-horno-como-ser-un-maestro/'
-    }
   },
 
   mate: {
@@ -201,25 +189,6 @@ export const TABLAS_RAPIDA = {
       { te: 'Hierbas', agua: '100', infusion: '6 min', hebras: '1,5' }
     ],
     fuente: { nombre: 'teatimer.io, Tea Steeping Guide', url: 'https://teatimer.io/tea-steeping-guide' }
-  },
-
-  cafe: {
-    id: 'cafe', titulo: 'Café',
-    columnas: [
-      { id: 'metodo', nombre: 'Método' },
-      { id: 'temperatura', nombre: 'Temperatura', unidad: '°C' },
-      { id: 'cafe', nombre: 'Café', unidad: 'g' },
-      { id: 'agua', nombre: 'Agua', unidad: 'ml' },
-      { id: 'tiempo', nombre: 'Tiempo' }
-    ],
-    filas: [
-      { metodo: 'Filtro de dos tazas (pour-over)', temperatura: '93,5', cafe: '22', agua: '400', tiempo: '2 min 30 s a 3 min' }
-    ],
-    notas: ['Proporción: 55 g de café por litro de agua.'],
-    fuente: {
-      nombre: 'SCAA, Guidelines for Brewing with a Two Cup Pour-Over Brewer',
-      url: 'https://scagermany.coffee/wp-content/uploads/2021/02/best-practices-two-cup-pour-over-brewer.pdf'
-    }
   },
 
   vinos: {

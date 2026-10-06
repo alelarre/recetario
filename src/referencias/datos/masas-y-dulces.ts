@@ -2,7 +2,7 @@
  * Masas y dulces: sólo datos. Cada tabla, cada constante y cada receta dicen de dónde salen.
  *
  * Procedencia: product-design/research/herramientas/verificacion-masas-y-dulces.md
- * (y su «Agregado: pastas rellenas, lasaña y ñoquis»).
+ * (y su «Agregado: pastas rellenas y ñoquis»).
  * Para corregir un número, editá su fila.
  * Los ingredientes de las recetas son por porción: la cuenta los multiplica.
  * El orden en que se muestran las fichas está en `src/referencias/indice.ts`.
@@ -36,10 +36,6 @@ const CSI_PIEMONTE: Fuente = {
 };
 const COCINEROS_NOQUIS: Fuente = { nombre: 'Cocineros Argentinos, Ñoquis de papa', url: 'https://cocinerosargentinos.com/recetas/economicas/noquis-de-papa' };
 const LA_JUVENIL: Fuente = { nombre: 'La Juvenil, Catálogo de productos', url: 'https://www.lajuvenilpastas.com.ar/catalogos/catalogo_de_productos.pdf' };
-const BOLOGNA_WELCOME: Fuente = {
-  nombre: 'Fondazione Bologna Welcome, Lasagne Verdi alla bolognese (receta de la Accademia Italiana della Cucina)',
-  url: 'https://www.bolognawelcome.com/it/altro/ricette-e-prodotti-tipici/lasagne-verdi-alla-bolognese'
-};
 const AVPN: Fuente = { nombre: 'AVPN, Disciplinare 2024', url: 'https://www.pizzanapoletana.org/public/pdf/Disciplinare-2024-ENG.pdf' };
 const COMEMELAPIZZA: Fuente = { nombre: 'Comemelapizza, Masa de pizza argentina', url: 'https://www.comemelapizza.com/masa-de-pizza-argentina/' };
 const CSU_CANDY: Fuente = {
@@ -274,52 +270,6 @@ export const PASTA_FRESCA: readonly RecetaPorPorcion[] = [
     fuente: COCINEROS_NOQUIS
   }
 ];
-
-export const LASANA: {
-  cm2PorPorcion: Constante; cm2Base: Constante; masas: readonly RecetaPorPorcion[]; notas: readonly string[]
-} = {
-  cm2PorPorcion: { valor: 109, unidad: 'cm² de fuente por porción', fuente: BOLOGNA_WELCOME },
-  cm2Base: { valor: 875, unidad: 'cm² de la fuente de la receta (25 × 35 cm)', fuente: BOLOGNA_WELCOME },
-  masas: [
-    {
-      id: 'verde', texto: 'Masa verde',
-      ingredientes: [
-        { nombre: 'Harina 00 (masa)', cantidad: 87.5, unidad: 'g' },
-        { nombre: 'Huevos', cantidad: 0.375, unidad: 'u' },
-        { nombre: 'Espinaca hervida, escurrida y picada', cantidad: 44, unidad: 'g' },
-        { nombre: 'Ragú a la boloñesa', cantidad: 125, unidad: 'g' },
-        { nombre: 'Leche entera (bechamel)', cantidad: 125, unidad: 'ml' },
-        { nombre: 'Harina 00 (bechamel)', cantidad: 12.5, unidad: 'g' },
-        { nombre: 'Manteca (bechamel y capas)', cantidad: 25, unidad: 'g' },
-        { nombre: 'Parmesano rallado', cantidad: 50, unidad: 'g' }
-      ],
-      notas: ['La receta de la Accademia Italiana della Cucina es de 8 personas: 700 g de harina 00, 3 huevos y 350 g de espinaca para 1 kg de masa verde.'],
-      fuente: BOLOGNA_WELCOME
-    },
-    {
-      id: 'amarilla', texto: 'Masa amarilla',
-      ingredientes: [
-        { nombre: 'Harina 00 (masa)', cantidad: 87.5, unidad: 'g' },
-        { nombre: 'Huevos', cantidad: 0.875, unidad: 'u' },
-        { nombre: 'Ragú a la boloñesa', cantidad: 125, unidad: 'g' },
-        { nombre: 'Leche entera (bechamel)', cantidad: 125, unidad: 'ml' },
-        { nombre: 'Harina 00 (bechamel)', cantidad: 12.5, unidad: 'g' },
-        { nombre: 'Manteca (bechamel y capas)', cantidad: 25, unidad: 'g' },
-        { nombre: 'Parmesano rallado', cantidad: 50, unidad: 'g' }
-      ],
-      notas: ['Un huevo cada 100 g de harina, como la pasta al huevo; sin espinaca.'],
-      advertencia: 'La masa amarilla es una cuenta propia con la misma harina y un huevo cada 100 g; la receta de la Accademia es la verde.',
-      fuente: BOLOGNA_WELCOME
-    }
-  ],
-  notas: [
-    'Receta de la Accademia Italiana della Cucina, delegación de Bologna San Luca, depositada el 4 de julio de 2003 en la Cámara de Comercio de Bolonia: 8 porciones en una fuente rectangular de unos 25 × 35 cm (875 cm²), de 6 cm de alto como mínimo, con al menos 6 capas.',
-    'La cuenta escala por superficie y supone el mismo alto, 6 capas en 6 cm. Los ingredientes por porción son los de la receta ÷ 8.',
-    'Armado: placas de unos 15 × 10 cm, o un poco más chicas que la fuente, hervidas hasta que suben, pasadas por agua fría y secadas. Fondo con manteca, ragú y bechamel; cada capa con un velo de bechamel, ragú en abundancia, manteca y parmesano; la tapa de masa lleva ragú y bechamel.',
-    'Horno a unos 180 °C, de 25 a 30 minutos, y 5 minutos de reposo.',
-    'La manteca de la receta (un pan de unos 200 g) va en la bechamel, en cada capa y en las esquinas, y no la reparte: los ~25 g por porción son el total ÷ 8. Relleno sólo de ragú, bechamel y queso rallado, como la receta.'
-  ]
-};
 
 export const PIZZA: {
   napolitana: readonly { desde: number; hasta: number; gramos: number }[];

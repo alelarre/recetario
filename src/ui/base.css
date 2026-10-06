@@ -690,7 +690,6 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 
 /* ---- Referencias ---- */
 .referencias .indice-ref { flex-wrap: wrap; }
-.ficha.ref { scroll-margin-top: 72px; }
 /* Una tabla ancha se desplaza dentro de su ficha; la página no. */
 .tabla-ref { overflow-x: auto; margin: 0 calc(-1 * var(--e-2)); }
 .tabla-ref table { border-collapse: collapse; width: 100%; font-size: var(--txt-chico); }

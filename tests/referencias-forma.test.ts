@@ -3,7 +3,7 @@ import { problemasDeForma, problemasDeConstante, filasDe } from '../src/referenc
 import { HERRAMIENTAS_DE_REFERENCIA } from '../src/referencias/indice.js';
 import type { Tabla, Fuente } from '../src/referencias/tipos.js';
 import { AGUA_SAL_PASTA, ESPAGUETI, CALDO } from '../src/referencias/datos/coccion.js';
-import { MOLDE, PASTA_FRESCA, LASANA, PIZZA, AZUCAR, MERENGUE } from '../src/referencias/datos/masas-y-dulces.js';
+import { MOLDE, PASTA_FRESCA, PIZZA, AZUCAR, MERENGUE } from '../src/referencias/datos/masas-y-dulces.js';
 import { SISTEMAS, UNIDADES, INGREDIENTES, INGREDIENTE_DEL_STICK } from '../src/referencias/datos/conversor.js';
 
 const fuente = { nombre: 'Fuente', url: 'https://ejemplo.com/x' };
@@ -84,7 +84,6 @@ describe('el índice', () => {
   it('las constantes de masas y dulces dicen de dónde salen', () => {
     const constantes = {
       'MOLDE.densidad': MOLDE.densidad, 'MOLDE.llenado': MOLDE.llenado,
-      'LASANA.cm2PorPorcion': LASANA.cm2PorPorcion, 'LASANA.cm2Base': LASANA.cm2Base,
       'PIZZA.gramosPorCm2Molde': PIZZA.gramosPorCm2Molde, 'AZUCAR.metrosPorGrado': AZUCAR.metrosPorGrado
     };
     for (const [nombre, c] of Object.entries(constantes)) expect(problemasDeConstante(nombre, c)).toEqual([]);
@@ -93,7 +92,6 @@ describe('el índice', () => {
   it('cada receta y cada tipo de merengue, y las demás fuentes de masas y dulces, tienen URL y fecha', () => {
     const fuentes: (readonly [string, Fuente])[] = [
       ...PASTA_FRESCA.map(r => [`pasta ${r.id}`, r.fuente] as const),
-      ...LASANA.masas.map(r => [`lasaña ${r.id}`, r.fuente] as const),
       ...MERENGUE.map(m => [`merengue ${m.id}`, m.fuente] as const),
       ['MOLDE.fuenteAtajos', MOLDE.fuenteAtajos],
       ...MOLDE.atajos.flatMap(a => (a.fuente ? [[`molde ${a.id}`, a.fuente] as const] : [])), ['PIZZA.fuenteNapolitana', PIZZA.fuenteNapolitana],

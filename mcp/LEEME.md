@@ -92,7 +92,7 @@ fuente:
   sus cuentas; con `herramienta` y `tabla`, devuelve las filas; con `buscar`,
   las filas de cualquier tabla que contengan ese texto («pollo», «crema»).
 - Una `calcular_*` por cuenta: `calcular_molde`, `calcular_pasta_fresca`,
-  `calcular_lasana`, `calcular_bollo_pizza`, `calcular_merengue`,
+  `calcular_bollo_pizza`, `calcular_merengue`,
   `calcular_punto_azucar`, `calcular_arroz`, `calcular_agua_sal_pasta`,
   `calcular_medidor_espagueti`, `calcular_caldo` y `calcular_conversion`
   (tazas, cucharas y gramos por ingrediente). Responden

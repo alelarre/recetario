@@ -519,7 +519,7 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   válidos.
 - [ ] **Una herramienta por cuenta,** `calcular_<id>` con guiones bajos,
   registrada desde la declaración de la cuenta, así que su esquema son sus
-  entradas: `calcular_molde`, `calcular_pasta_fresca`, `calcular_lasana`,
+  entradas: `calcular_molde`, `calcular_pasta_fresca`,
   `calcular_bollo_pizza`, `calcular_merengue`, `calcular_punto_azucar`,
   `calcular_arroz`, `calcular_agua_sal_pasta`, `calcular_medidor_espagueti`,
   `calcular_caldo` y `calcular_conversion`. Importan `src/referencias/` y **no usan Drive ni el
@@ -560,7 +560,7 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 ### F07.7 — Referencia rápida
 
 Huevos, carne, aceite, horno y bebidas, para mirar mientras se cocina. Sin
-cuentas: son doce tablas. La pantalla es la de toda referencia (C07.7.1).
+cuentas: son diez tablas. La pantalla es la de toda referencia (C07.7.1).
 
 #### C07.7.1 — La pantalla de una referencia *(J6)*
 
@@ -600,8 +600,7 @@ un error.
 
 - [ ] En este orden: **Huevos**, **Temperatura interna segura**, **Puntos de
   la carne vacuna**, **Aceite para freír**, **Punto de humo**, **Horno**,
-  **Horno con ventilador**, **Mate**, **Té**, **Café**, **Vinos y
-  espumantes** y **Cervezas y gaseosas**.
+  **Mate**, **Té**, **Vinos y espumantes** y **Cervezas y gaseosas**.
 - [ ] **Huevos:** los minutos en agua hirviendo, para el huevo de heladera y
   a temperatura ambiente, sólo del grande; en cuatro puntos: pasado por agua,
   mollet, yema cremosa y duro.
@@ -612,11 +611,11 @@ un error.
 - [ ] **Aceite para freír:** la temperatura, el tiempo y la interna por
   alimento, recortada a lo de uso local y con las milanesas; el punto de
   humo de cada aceite va en su propia ficha.
-- [ ] **Horno:** la escala de nombres con su rango; con ventilador, cuánto se
-  baja la temperatura de una receta de horno convencional.
+- [ ] **Horno:** la escala de nombres con su rango, y en la misma tabla,
+  cuánto se baja la temperatura con ventilador.
 - [ ] **Bebidas:** el agua del mate y del mate cocido; el té por tipo, con el
   agua, la infusión y las hebras por 100 ml, y su botón de minutos (C07.9.3);
-  el café por método; los vinos y espumantes y las cervezas, con las
+  los vinos y espumantes y las cervezas, con las
   gaseosas, a la temperatura a la que se sirven.
 
 ### F07.8 — Masas y dulces
@@ -627,7 +626,7 @@ consulta y seis cuentas, de la masa para un molde a los puntos del azúcar.
 #### C07.8.1 — Las fichas de masas y dulces *(J6)*
 
 - [ ] En este orden: **Masa para un molde**, **Gramos de masa por pieza**,
-  **Pasta fresca**, **Pasta comprada: cuánto por persona**, **Lasaña**,
+  **Pasta fresca**, **Pasta comprada: cuánto por persona**,
   **Masas por plato**, **Bollo de pizza**, **Puntos del azúcar** y
   **Merengue**.
 - [ ] **Gramos de masa por pieza:** una fuente por receta; el pan de molde va
@@ -658,7 +657,7 @@ consulta y seis cuentas, de la masa para un molde a los puntos del azúcar.
   molde elegido, se muestran en la ficha. Cada budinera cita su propia fuente;
   los demás atajos, la del catálogo de El Nuevo Emporio.
 
-#### C07.8.3 — La pasta fresca y la lasaña *(J6)*
+#### C07.8.3 — La pasta fresca *(J6)*
 
 - [ ] **Pasta fresca:** *porciones* —con valor por defecto— y *masa*: al
   huevo, de yemas, de sémola, rellena de carne, rellena de ricota o verdura, y
@@ -667,11 +666,6 @@ consulta y seis cuentas, de la masa para un molde a los puntos del azúcar.
   advertencia de la masa. La sal es «una pizca».
 - [ ] Los huevos y las yemas se muestran enteros o con su fracción común
   (½, ⅓, ⅔…); si no hay una, con un decimal.
-- [ ] **Lasaña:** *largo* y *ancho* de la fuente en cm, y la masa, verde o
-  amarilla. El resultado son las porciones y cada ingrediente, escalados por
-  la superficie exacta de la fuente. **Nunca muestra menos de ½ porción.** La
-  masa amarilla lleva su advertencia: es una cuenta propia, no de la fuente.
-- [ ] El relleno de la lasaña es de ragú, bechamel y queso rallado.
 
 #### C07.8.4 — El bollo de pizza, los puntos del azúcar y el merengue *(J6)*
 

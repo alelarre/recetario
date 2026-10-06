@@ -1,6 +1,6 @@
 ---
 name: herramientas
-description: Usar cuando el usuario quiere calcular un pan o una pizza (harina, agua, sal, levadura o prefermento), la sal de un fermentado, o consultar un dato de cocina: minutos de los huevos, temperatura de la carne, del aceite o del horno, agua para mate, té o café, a cuántos grados se sirve un vino o una cerveza, masa para un molde o por pieza, pasta fresca, rellena o lasaña, bollo de pizza, puntos del azúcar, merengue, agua del arroz, granos, legumbres, tiempo de pasta, verduras, blanqueado, caldo, cuánto dura un alimento en la alacena, la heladera o el freezer, o pasar tazas y cucharas a gramos (medidas de otro país, sticks de manteca). Por ejemplo «¿a qué temperatura frío las milanesas?», «¿cuánto dura la crema abierta?» o «¿cuántos gramos es una taza de azúcar?». Trabaja con las herramientas del MCP `recetario`.
+description: Usar cuando el usuario quiere calcular un pan o una pizza (harina, agua, sal, levadura o prefermento), la sal de un fermentado, o consultar un dato de cocina: minutos de los huevos, temperatura de la carne, del aceite o del horno, agua para mate o té, a cuántos grados se sirve un vino o una cerveza, masa para un molde o por pieza, pasta fresca o rellena, bollo de pizza, puntos del azúcar, merengue, agua del arroz, granos, legumbres, tiempo de pasta, verduras, blanqueado, caldo, cuánto dura un alimento en la alacena, la heladera o el freezer, o pasar tazas y cucharas a gramos (medidas de otro país, sticks de manteca). Por ejemplo «¿a qué temperatura frío las milanesas?», «¿cuánto dura la crema abierta?» o «¿cuántos gramos es una taza de azúcar?». Trabaja con las herramientas del MCP `recetario`.
 ---
 
 # Herramientas
@@ -10,7 +10,7 @@ agente. Las tablas y las cuentas son las de la app: las herramientas del MCP
 `recetario` que se nombran acá usan el mismo código. Ninguna usa el Drive.
 
 - **Pan y sal:** `calcular_pan` y `calcular_sal`.
-- **Referencias:** `consultar_referencia` y las once `calcular_*` de masas,
+- **Referencias:** `consultar_referencia` y las diez `calcular_*` de masas,
   cocción y el conversor (ver *Las referencias*).
 
 ## Las reglas de pan y sal
@@ -123,7 +123,7 @@ trae su fuente.
 ### Consultar una tabla: `consultar_referencia`
 
 Para cualquier pregunta de dato que no pida una cuenta: huevos, carne, aceite
-y punto de humo, horno, mate, té, café, vinos, cervezas, gramos por pieza,
+y punto de humo, horno, mate, té, vinos, cervezas, gramos por pieza,
 pasta comprada, masas por plato, granos, legumbres, tiempo de pasta,
 verduras, blanqueado, cuánto dura un alimento, cuántos gramos pesa una taza
 o una cuchara de cada ingrediente y cuánto miden la taza y las cucharas en
@@ -152,7 +152,6 @@ de cada número dice cuál es). Usá cada una para esta pregunta:
 |---|---|
 | `calcular_molde` | Cuánta masa lleva un molde de torta, según su forma y sus medidas o su número. |
 | `calcular_pasta_fresca` | Qué ingredientes lleva la masa de pasta fresca, o el relleno o el puré, para unas porciones. |
-| `calcular_lasana` | Cuántas porciones rinde una fuente de lasaña por su largo y su ancho, y qué ingredientes lleva. |
 | `calcular_bollo_pizza` | Cuántos gramos pesa el bollo de una pizza, napolitana o al molde, según su diámetro o su número de molde. |
 | `calcular_merengue` | Cuánta azúcar, cuánto impalpable y cuánta agua de almíbar lleva un merengue francés, suizo o italiano para unos gramos de claras. |
 | `calcular_punto_azucar` | A qué temperatura está cada punto del azúcar, corrido por la altitud o por donde hierve el agua. |

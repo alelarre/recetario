@@ -6,7 +6,7 @@
  */
 import { gramos } from '../calculadoras/gramos.js';
 import type { Cuenta, Valores, Linea, Fuente, FuenteAbreviada, Resultado, Tabla, Sistema, IngredienteConvertible } from './tipos.js';
-import type { MOLDE, LASANA, PIZZA, AZUCAR, RecetaPorPorcion, TipoDeMerengue, Ingrediente } from './datos/masas-y-dulces.js';
+import type { MOLDE, PIZZA, AZUCAR, RecetaPorPorcion, TipoDeMerengue, Ingrediente } from './datos/masas-y-dulces.js';
 import type { ARROZ, AGUA_SAL_PASTA, ESPAGUETI, CALDO } from './datos/coccion.js';
 import type { CONVERSOR } from './datos/conversor.js';
 
@@ -108,27 +108,6 @@ export function cuentaPastaFresca(recetas: readonly RecetaPorPorcion[]): Cuenta 
       const receta = recetas.find(r => r.id === opcion(v, 'masa'));
       if (!porciones || !receta) return null;
       return resultado(lineasDe(receta.ingredientes, porciones), [receta.fuente], [...receta.notas, ...(receta.advertencia ? [receta.advertencia] : [])]);
-    }
-  };
-}
-
-export function cuentaLasana(k: typeof LASANA): Cuenta {
-  return {
-    id: 'lasana', titulo: 'Lasaña', descripcion: 'Cuántas porciones rinde una fuente de lasaña por su largo y su ancho, y qué ingredientes lleva.', notas: k.notas,
-    entradas: [
-      { id: 'largo', nombre: 'Largo de la fuente', tipo: 'numero', unidad: 'cm', porDefecto: null },
-      { id: 'ancho', nombre: 'Ancho de la fuente', tipo: 'numero', unidad: 'cm', porDefecto: null },
-      { id: 'masa', nombre: 'Masa', tipo: 'opcion', porDefecto: k.masas[0]?.id ?? '', opciones: k.masas.map(m => ({ valor: m.id, texto: m.texto })) }
-    ],
-    calcular(v) {
-      const largo = numero(v, 'largo'); const ancho = numero(v, 'ancho');
-      const masa = k.masas.find(m => m.id === opcion(v, 'masa'));
-      if (!largo || !ancho || !masa) return null;
-      const porciones = (largo * ancho) / k.cm2PorPorcion.valor;
-      return resultado(
-        [{ nombre: 'Porciones', valor: fraccion(Math.max(Math.round(porciones * 2) / 2, 0.5)) }, ...lineasDe(masa.ingredientes, porciones)],
-        [k.cm2PorPorcion.fuente, masa.fuente], masa.advertencia ? [masa.advertencia] : []
-      );
     }
   };
 }

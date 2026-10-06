@@ -1490,8 +1490,9 @@ sola, que dibuja cualquiera de las cinco. Es una pila de fichas (§6.6) bajo el 
 
 **El índice** es una fila de chips (§6.10), uno por ficha, con el título de la
 ficha. La fila **se acomoda en renglones** (`flex-wrap`) en vez de
-desplazarse: se ven todos. Tocar uno lleva a su ficha, que queda a 72 px del
-borde de arriba para que el encabezado fijo no la tape (`scroll-margin-top`).
+desplazarse: se ven todos. Tocar uno lleva a su ficha, que queda justo debajo
+del encabezado fijo: el `scroll-padding-top` de toda la página la deja a 64 px
+del borde de arriba.
 
 **Una ficha de tabla** (`.ficha.ref`) lleva el título (`h2`), la tabla, las
 notas y la fuente. La tabla (`.tabla-ref`) va en `--txt-chico`, con filas de

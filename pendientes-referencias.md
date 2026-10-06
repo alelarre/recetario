@@ -9,15 +9,15 @@ Los datos están en `src/referencias/datos/`, las cuentas en
 `src/referencias/cuentas.ts`, la pantalla en `src/ui/referencias.ts` y el MCP
 en `mcp/referencias.ts`.
 
-## Datos y fuentes
+## Criterio general
 
-8. FSIS (conservación) no tiene captura en Internet Archive: si la página
-   cambia, se pierde la fuente.
+30. Revisar todas las referencias con el límite entre herramienta y receta:
+    una herramienta de referencia o un conversor da datos y cuentas
+    generales; lo que es la receta de un plato no va ahí. La lasaña ya salió
+    por eso.
 
 ## Cuentas
 
-9. `rangoNapolitana` no contempla una lista vacía (hoy nunca lo está).
-10. La lasaña no muestra las notas de la masa que sí muestra la pasta fresca.
 11. Con cantidades muy chicas, los litros se muestran como «0 l».
 12. Un valor negativo vuelve al valor por defecto sin avisar.
 13. Los huevos se ven como «4:01 min» en vez de «4 min».
@@ -39,7 +39,6 @@ en `mcp/referencias.ts`.
 21. El `buscar` de `consultar_referencia` no tiene probados los bordes: texto
     vacío, sin resultados, acentos.
 22. A la búsqueda de la pantalla le faltan tests del caso sin resultados.
-23. Falta el test del mínimo de media porción de la lasaña.
 24. Falta el test de que `pintarTabla` repinte sólo la tabla.
 25. Falta el test de que el botón de minutos cree el temporizador con el
     nombre correcto.

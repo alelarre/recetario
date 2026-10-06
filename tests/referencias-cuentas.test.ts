@@ -1,7 +1,7 @@
 // tests/referencias-cuentas.test.ts
 import { describe, it, expect } from 'vitest';
 import {
-  cuentaMolde, cuentaPastaFresca, cuentaLasana, cuentaBolloPizza, cuentaMerengue, cuentaPuntoAzucar, fraccion,
+  cuentaMolde, cuentaPastaFresca, cuentaBolloPizza, cuentaMerengue, cuentaPuntoAzucar, fraccion,
   cuentaArroz, cuentaAguaSalPasta, cuentaEspagueti, cuentaCaldo, tablaDeArroz,
   cuentaConversion, medidaPractica, tablaDePesos, tablaDeSistemas, tablaDeMedidasEeuu
 } from '../src/referencias/cuentas.js';
@@ -88,24 +88,6 @@ describe('la pasta fresca', () => {
   it('sin porciones, o con una masa que no existe: sin resultado', () => {
     expect(pasta.calcular({ porciones: null, masa: 'huevo' })).toBeNull();
     expect(pasta.calcular({ porciones: 2, masa: 'otra' })).toBeNull();
-  });
-});
-
-describe('la lasaña', () => {
-  const lasana = cuentaLasana({
-    cm2PorPorcion: k(100), cm2Base: k(400), notas: [],
-    masas: [{ id: 'verde', texto: 'Verde', ingredientes: [{ nombre: 'Harina', cantidad: 50, unidad: 'g' }], notas: [], fuente },
-            { id: 'amarilla', texto: 'Amarilla', ingredientes: [{ nombre: 'Harina', cantidad: 50, unidad: 'g' }], notas: [], advertencia: 'Cuenta propia.', fuente }]
-  });
-  it('las porciones salen de la superficie, y cada ingrediente escala con ellas', () => {
-    const r = lasana.calcular({ largo: 20, ancho: 15, masa: 'verde' });
-    expect(r?.lineas).toEqual([{ nombre: 'Porciones', valor: '3' }, { nombre: 'Harina', valor: '150 g' }]);
-  });
-  it('una fuente muy chica muestra media porción, no cero', () => {
-    expect(lasana.calcular({ largo: 4, ancho: 4, masa: 'verde' })?.lineas[0]).toEqual({ nombre: 'Porciones', valor: '½' });
-  });
-  it('la amarilla lleva su advertencia', () => {
-    expect(lasana.calcular({ largo: 20, ancho: 15, masa: 'amarilla' })?.advertencias).toEqual(['Cuenta propia.']);
   });
 });
 

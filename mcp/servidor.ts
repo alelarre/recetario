@@ -196,7 +196,7 @@ export function crearServidor(recetario: Recetario): McpServer {
 
   servidor.registerTool('consultar_referencia', {
     description: 'Las tablas de consulta de la app, cada dato con su fuente: minutos de los huevos, temperatura interna y puntos de la carne, ' +
-      'aceite para freír y punto de humo, escala del horno y horno con ventilador, agua para mate, té y café, temperatura de servicio de vinos, ' +
+      'aceite para freír y punto de humo, temperaturas del horno, con y sin ventilador, agua para mate y té, temperatura de servicio de vinos, ' +
       'cervezas y gaseosas, gramos de masa por pieza, pasta comprada por persona, masas por plato, arroz a presión, granos, legumbres, ' +
       'tiempos de pasta, verduras al vapor y hervidas, blanqueado, cuánto dura cada alimento en la alacena, la heladera y el freezer, ' +
       'gramos por taza y por cuchara de cada ingrediente, y la taza y las cucharas de cada país, las medidas informales y el stick de manteca de EE. UU. ' +

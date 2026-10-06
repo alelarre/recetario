@@ -7,16 +7,16 @@ import type { HerramientaDeReferencia, IdHerramienta } from './tipos.js';
 import { TABLAS_RAPIDA } from './datos/rapida.js';
 import { TABLAS_COCCION, ARROZ, AGUA_SAL_PASTA, ESPAGUETI, CALDO } from './datos/coccion.js';
 import { TABLAS_CONSERVACION } from './datos/conservacion.js';
-import { TABLAS_MASAS, MOLDE, PASTA_FRESCA, LASANA, PIZZA, AZUCAR, MERENGUE } from './datos/masas-y-dulces.js';
+import { TABLAS_MASAS, MOLDE, PASTA_FRESCA, PIZZA, AZUCAR, MERENGUE } from './datos/masas-y-dulces.js';
 import { CONVERSOR } from './datos/conversor.js';
-import { cuentaMolde, cuentaPastaFresca, cuentaLasana, cuentaBolloPizza, cuentaPuntoAzucar, cuentaMerengue, cuentaArroz, tablaDeArroz, cuentaAguaSalPasta, cuentaEspagueti, cuentaCaldo, cuentaConversion, tablaDePesos, tablaDeSistemas, tablaDeMedidasEeuu } from './cuentas.js';
+import { cuentaMolde, cuentaPastaFresca, cuentaBolloPizza, cuentaPuntoAzucar, cuentaMerengue, cuentaArroz, tablaDeArroz, cuentaAguaSalPasta, cuentaEspagueti, cuentaCaldo, cuentaConversion, tablaDePesos, tablaDeSistemas, tablaDeMedidasEeuu } from './cuentas.js';
 
 export const HERRAMIENTAS_DE_REFERENCIA: readonly HerramientaDeReferencia[] = [
   { id: 'rapida', ruta: '#/herramientas/referencia', titulo: 'Referencia rápida', detalle: 'Huevos, carne, aceite, horno y bebidas', icono: 'libro', buscador: false,
     fichas: [
       TABLAS_RAPIDA.huevos, TABLAS_RAPIDA['carne-seguridad'], TABLAS_RAPIDA['carne-puntos'],
       TABLAS_RAPIDA.aceite, TABLAS_RAPIDA['punto-humo'], TABLAS_RAPIDA['horno-escala'],
-      TABLAS_RAPIDA['horno-ventilador'], TABLAS_RAPIDA.mate, TABLAS_RAPIDA.te, TABLAS_RAPIDA.cafe,
+      TABLAS_RAPIDA.mate, TABLAS_RAPIDA.te,
       TABLAS_RAPIDA.vinos, TABLAS_RAPIDA.cervezas
     ].map(tabla => ({ tipo: 'tabla', tabla }) as const) },
   { id: 'masas', ruta: '#/herramientas/masas', titulo: 'Masas y dulces', detalle: 'Moldes, piezas, pasta, pizza, azúcar y merengue', icono: 'rodillo', buscador: false,
@@ -25,7 +25,6 @@ export const HERRAMIENTAS_DE_REFERENCIA: readonly HerramientaDeReferencia[] = [
       { tipo: 'tabla', tabla: TABLAS_MASAS.piezas },
       { tipo: 'cuenta', cuenta: cuentaPastaFresca(PASTA_FRESCA) },
       { tipo: 'tabla', tabla: TABLAS_MASAS['pasta-comprada'] },
-      { tipo: 'cuenta', cuenta: cuentaLasana(LASANA) },
       { tipo: 'tabla', tabla: TABLAS_MASAS['masas-por-plato'] },
       { tipo: 'cuenta', cuenta: cuentaBolloPizza(PIZZA) },
       { tipo: 'cuenta', cuenta: cuentaPuntoAzucar(AZUCAR) },
