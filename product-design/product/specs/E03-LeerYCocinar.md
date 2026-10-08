@@ -271,29 +271,36 @@ quiere que rinda—. Cambia lo que se muestra, nunca el `.md`.
 
 #### C03.8.1 — El multiplicador *(J6)*
 
-- [ ] **Arriba de la lista de ingredientes**, una fila de chips: **×½**,
-  **×1**, **×2** y **×3**. Al abrir la receta está marcado ×1.
-- [ ] **Si el rinde empieza con un número** —«4 porciones», «1 molde de 24
-  cm»—, al lado de los chips va un campo con ese número y, a su derecha, el
-  resto del rinde. Escribir otro número pone el multiplicador en la razón
-  entre los dos —6 sobre 4 es ×1,5—, y elegir un chip cambia el número del
-  campo. Vacío, en cero o sin número no cambia nada. Escribir en el campo no
-  redibuja la pantalla: el foco y el teclado quedan en el campo. **Un rinde con
-  rango** —«4 a 6 porciones»— no tiene campo: quedan los chips, y la línea de
-  contexto escala los dos extremos.
-- [ ] Con un multiplicador que no es de los chips, ninguno queda marcado. Una
-  receta sin ingredientes no muestra el multiplicador.
+- [ ] **Sólo si el rinde empieza con un número** —«4 porciones», «1 molde
+  de 24 cm»—, arriba de la lista de ingredientes va una fila con un campo con
+  ese número, el resto del rinde a su derecha y, en el otro extremo, el botón
+  **Más o menos** (±). Un rinde sin número, **con rango** —«4 a 6
+  porciones»— o sin rinde no tiene fila, ni botón, ni chips: esa receta no se
+  escala.
+- [ ] **Escribir otro número** en el campo pone el multiplicador en la razón
+  entre los dos —6 sobre 4 es ×1,5—. Vacío, en cero o sin número no cambia
+  nada. Escribir en el campo no redibuja la pantalla: el foco y el teclado
+  quedan en el campo.
+- [ ] **Más o menos abre y cierra, debajo, la fila de chips** **×½**, **×1**,
+  **×2** y **×3**, alineada a la derecha. Al abrir la receta está cerrada y en
+  ×1. Elegir un chip cambia el número del campo; con un multiplicador que no
+  es de los chips, ninguno queda marcado.
+- [ ] **Cerrada con un multiplicador distinto de ×1**, el botón lo dice al
+  lado del ± —«± ×2», «± ×1,5»—: sin abrir la fila se ve que lo que se lee no
+  es la receta como está escrita.
+- [ ] Una receta sin ingredientes no muestra el multiplicador.
 - [ ] **Con el multiplicador cambian** las cantidades de los ingredientes, el
   rinde de la línea de contexto y el título de la ficha —«Ingredientes ×2»,
-  «Ingredientes ×1,5»—. Con uno distinto de ×1, debajo de los chips: *Los
+  «Ingredientes ×1,5»—. Con uno distinto de ×1, arriba de la lista: *Los
   pasos no cambian: sus cantidades son las de la receta.*
 - [ ] **No cambian** la preparación, las variaciones, las notas, el `.md`, lo
   que se comparte (C03.7), la vista de invitado ni el plan.
 - [ ] **El modo cocina** muestra las cantidades con el mismo multiplicador y lo
   dice en el conmutador —«Ingredientes ×2»—; no tiene chips propios.
 - [ ] El multiplicador vale mientras se va y viene entre la receta y su modo
-  cocina. **Llegar a otra receta, o abrir la misma de nuevo, lo vuelve a ×1.**
-  No se guarda.
+  cocina, y la fila de chips queda abierta o cerrada como estaba. **Llegar a
+  otra receta, o abrir la misma de nuevo, lo vuelve a ×1 y cerrado.** No se
+  guarda.
 
 #### C03.8.2 — Cómo se escala una cantidad *(J6)*
 

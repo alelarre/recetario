@@ -873,12 +873,19 @@ Los grupos —los `###` del `.md`— son `--txt-chico` en `--fg-2`, en mayúscul
 ### 6.11b El multiplicador de la receta
 
 Arriba de la lista de ingredientes, en la misma ficha (`E03-LeerYCocinar.md`
-F03.8): una fila (`.escala`) con los chips ×½, ×1, ×2 y ×3 (§6.10), el elegido
-con `.act`, y —si el rinde empieza con un número— un campo de 72 px de ancho
-y 40 px de alto como los datos de las calculadoras (§6.28), con el resto del
-rinde a su derecha en `--txt-chico` `--fg-2`. Debajo, con un multiplicador
-distinto de ×1, el aviso de los pasos en `--txt-chico` `--fg-2`. El título de
-la ficha dice el multiplicador: «Ingredientes ×2».
+F03.8), y sólo si el rinde empieza con un número: una fila (`.escala`) con un
+campo de 72 px de ancho y 40 px de alto como los datos de las calculadoras
+(§6.28), el resto del rinde a su derecha en `--txt-chico` `--fg-2` y, en el
+otro extremo, el botón **Más o menos** (`.mas-o-menos`): 40 px de alto, el ±
+de 20 px en `--fg-2`, borde 1 px `--borde-fuerte` y radio `--r-medio`.
+Abierto, fondo `--acento-suave`, borde y trazo `--acento`, como un chip
+elegido; cerrado con un multiplicador distinto de ×1, borde y trazo
+`--acento` y el multiplicador al lado del ± en `--txt-chico` peso 600.
+
+Abierto, debajo va la fila de chips ×½, ×1, ×2 y ×3 (§6.10), alineada a la
+derecha, con el elegido en `.act`. Con un multiplicador distinto de ×1, el
+aviso de los pasos en `--txt-chico` `--fg-2`. El título de la ficha dice el
+multiplicador: «Ingredientes ×2».
 
 ### 6.12 Encabezado de pantalla
 

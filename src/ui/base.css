@@ -24,11 +24,21 @@
 .cajaenc .buscar { flex: 1; }
 
 /* ---- Receta en lectura ---- */
-/* El multiplicador, arriba de los ingredientes: los chips y, si el rinde
-   empieza con un número, el campo con ese número y el resto del rinde. */
-.escala { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-3); margin-bottom: var(--e-2); }
-.escala .chips { flex-wrap: nowrap; }
-.escala-rinde { display: flex; align-items: center; gap: var(--e-2); color: var(--fg-2); font-size: var(--txt-chico); }
+/* El multiplicador, arriba de los ingredientes y sólo si el rinde empieza con
+   un número: el campo con ese número y el resto del rinde, el botón «Más o
+   menos» a la derecha y, abierta, la fila de los chips debajo, también a la
+   derecha. */
+.escala { display: flex; align-items: center; gap: var(--e-2); margin-bottom: var(--e-2); }
+.escala-rinde { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--e-2); color: var(--fg-2); font-size: var(--txt-chico); }
+.mas-o-menos { display: inline-flex; align-items: center; justify-content: center; gap: var(--e-1);
+  min-width: 40px; height: 40px; padding: 0 var(--e-2); flex: none; cursor: pointer;
+  background: none; border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio);
+  color: var(--fg-2); font: 600 var(--txt-chico)/1 var(--tipo); font-variant-numeric: tabular-nums; }
+.mas-o-menos svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.5;
+  stroke-linecap: round; stroke-linejoin: round; }
+.mas-o-menos[aria-expanded="true"] { background: var(--acento-suave); border-color: var(--acento); color: var(--acento); }
+.mas-o-menos.puesto { border-color: var(--acento); color: var(--acento); }
+.escala-chips { justify-content: flex-end; margin-bottom: var(--e-2); }
 .escala-rinde input { width: 72px; min-height: 40px; padding: 0 var(--e-3); text-align: right; font: inherit; font-size: var(--txt-base);
   color: var(--fg); background: var(--surface-alta); border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio); }
 .escala-rinde input:focus { outline: none; border: 2px solid var(--acento); }

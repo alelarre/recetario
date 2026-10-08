@@ -33,6 +33,8 @@ export const ICO = {
   compartir: svg('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>' +
     '<path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>'),
   mas: svg('<path d="M12 5v14M5 12h14"/>'),
+  /** «Más o menos»: abre los multiplicadores de la receta. */
+  masMenos: svg('<path d="M12 4v9M7.5 8.5h9M7.5 19h9"/>'),
   /** Pegar una receta copiada: el botón del encabezado del editor. */
   portapapeles: svg('<rect x="8" y="3" width="8" height="4" rx="1"/>' +
     '<path d="M16 5h2a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h2"/>'),

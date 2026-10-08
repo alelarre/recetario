@@ -306,11 +306,12 @@ async function leerReceta(id: string): Promise<Receta> {
 let recetaLeida: { id: string; entrada: Entrada | null; receta: Receta } | null = null;
 
 /**
- * El multiplicador de la receta, con el id de la receta. Sobrevive entre la
- * receta y su modo cocina, que muestra las mismas cantidades; llegar a otra
- * receta, o abrir la misma de nuevo, lo vuelve a ×1. No se guarda.
+ * El multiplicador de la receta, con el id de la receta, y si la fila de los
+ * multiplicadores está abierta. Sobrevive entre la receta y su modo cocina,
+ * que muestra las mismas cantidades; llegar a otra receta, o abrir la misma
+ * de nuevo, lo vuelve a ×1 y cerrado. No se guarda.
  */
-let escala: { id: string; factor: number } | null = null;
+let escala: { id: string; factor: number; abierta: boolean } | null = null;
 
 /** Lo que la app acaba de escribir es la receta leída de ese id, en la sesión y en la pantalla. */
 function dejarLeida(id: string, receta: Receta): void {
@@ -1019,9 +1020,9 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       try {
         const id = ruta.params['id'] ?? '';
         const { entrada, receta } = await recetaDePantalla(id);
-        if (llegada === 'nueva' || escala?.id !== id) escala = { id, factor: 1 };
+        if (llegada === 'nueva' || escala?.id !== id) escala = { id, factor: 1, abierta: false };
         pintar(renderReceta({
-          entrada, receta, factor: escala.factor,
+          entrada, receta, factor: escala.factor, escalaAbierta: escala.abierta,
           ...(visor.estado ? { visor: visor.estado } : {}),
           ...(estadoDePantalla.compartiendo ? { compartir: estadoDePantalla.compartiendo } : {}),
           ...(estadoDePantalla.marcandoFavorito ? { favorito: 'escribiendo' as const } : {}),
@@ -1891,7 +1892,7 @@ function escalarPorRinde(texto: string): void {
   const rinde = receta ? porcionesDe(receta.rinde) : null;
   if (!receta || !escala || rinde === null || !(quiero > 0)) return;
   escala.factor = quiero / rinde;
-  for (const [atributo, html] of bloquesEscala(receta, escala.factor)) {
+  for (const [atributo, html] of bloquesEscala(receta, escala.factor, escala.abierta)) {
     const bloque = document.querySelector(`#app [${atributo}]`);
     if (bloque) pintarParte(bloque, html, 'reemplazar');
   }
@@ -1903,6 +1904,11 @@ const accionesDeLaReceta: SeccionDeAcciones = {
     const factor = Number(boton.dataset['factor']);
     if (!escala || !(factor > 0)) return;
     escala.factor = factor;
+    return render();
+  },
+  'mas-o-menos': () => {
+    if (!escala) return;
+    escala.abierta = !escala.abierta;
     return render();
   },
   favorito: async () => {

@@ -13,7 +13,7 @@ import { escapar } from './markdown.js';
 import { encabezado, chipsSueltos, aviso } from './componentes.js';
 import type { OpcionesAviso } from './componentes.js';
 import { ICO } from './iconos.js';
-import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones, listaIngredientes, tituloIngredientes } from './fichas-receta.js';
+import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones, listaIngredientes, tituloIngredientes, textoFactor } from './fichas-receta.js';
 import { gruposDe } from '../recipe.js';
 import { renderFichaCompartir } from './compartir.js';
 import { renderVisor } from './visor.js';
@@ -44,6 +44,8 @@ export interface OpcionesReceta {
   aviso?: OpcionesAviso;
   /** El multiplicador elegido: escala las cantidades y el rinde que se muestran. Sin él, ×1. */
   factor?: number;
+  /** La fila de los multiplicadores, abierta con el botón «Más o menos». Sin esto, cerrada. */
+  escalaAbierta?: boolean;
   /** El visor de fotos abierto, en su foto actual. Sin esto no se dibuja. */
   visor?: EstadoVisor;
 }
@@ -89,39 +91,57 @@ export const avisoEscala = (factor: number): string =>
   (factor === 1 ? '' : 'Los pasos no cambian: sus cantidades son las de la receta.');
 
 /**
+ * El botón que abre y cierra la fila de los multiplicadores. Cerrado con un
+ * multiplicador distinto de ×1 va en acento y lo dice al lado del ±: sin
+ * abrir la fila se ve que lo que se lee no es la receta como está escrita.
+ */
+export function botonMasOMenos(factor: number, abierta: boolean): string {
+  const puesto = !abierta && factor !== 1;
+  return `<button type="button" class="mas-o-menos${puesto ? ' puesto' : ''}" data-accion="mas-o-menos" data-escala-boton ` +
+    `aria-expanded="${abierta}" aria-label="Más o menos" title="Más o menos">` +
+    `${ICO.masMenos}${puesto ? `<span class="fac">${textoFactor(factor)}</span>` : ''}</button>`;
+}
+
+const filaDeChips = (factor: number): string => `<div class="chips escala-chips" data-escala-chips>${chipsEscala(factor)}</div>`;
+
+/**
  * Lo que cambia con el multiplicador, bloque por bloque y por su atributo:
  * escribir en el campo del rinde los repinta sin redibujar la pantalla.
  */
-export function bloquesEscala(sinResolver: Receta, factor: number): [string, string][] {
+export function bloquesEscala(sinResolver: Receta, factor: number, abierta: boolean): [string, string][] {
   const receta = resolverReceta(sinResolver);
   const grupos = gruposDe(receta.ingredientes).filter(g => g.items.length);
   return [
     ['data-ingredientes', `<div data-ingredientes>${listaIngredientes(grupos, factor)}</div>`],
     ['data-titulo-ingredientes', `<span data-titulo-ingredientes>${escapar(tituloIngredientes(factor))}</span>`],
-    ['data-escala-chips', `<span class="chips" data-escala-chips>${chipsEscala(factor)}</span>`],
+    ['data-escala-boton', botonMasOMenos(factor, abierta)],
+    ['data-escala-chips', filaDeChips(factor)],
     ['data-escala-aviso', `<p class="aviso-escala" data-escala-aviso>${avisoEscala(factor)}</p>`],
     ['data-rinde', `<span data-rinde>${escapar(receta.rinde ? escalarCantidad(receta.rinde, factor) : '')}</span>`]
   ];
 }
 
 /**
- * Arriba de los ingredientes: los chips del multiplicador y, si el rinde
- * empieza con un número, un campo con ese número escalado y el resto del
- * rinde al lado, para elegir el multiplicador por lo que se quiere que rinda.
- * Los chips y el aviso van en sus bloques: escribir en el campo los repinta
- * sin tocarlo.
+ * Arriba de los ingredientes, sólo si el rinde empieza con un número: un
+ * campo con ese número escalado y el resto del rinde al lado, para elegir el
+ * multiplicador por lo que se quiere que rinda, y a la derecha el botón que
+ * abre debajo los chips ×½, ×1, ×2 y ×3. Sin número en el rinde no hay nada
+ * que escalar a la vista y no se ofrece. El botón, los chips y el aviso van en
+ * sus bloques: escribir en el campo los repinta sin tocarlo.
  */
-function controlesEscala(factor: number, rinde: string | null): string {
+function controlesEscala(factor: number, rinde: string | null, abierta: boolean): string {
   const porciones = porcionesDe(rinde);
-  const campo = porciones === null || !rinde ? '' :
+  if (porciones === null || !rinde) return '';
+  const campo =
     `<label class="escala-rinde"><input type="number" inputmode="decimal" min="0" step="any" data-porciones aria-label="Rinde" ` +
     `value="${Math.round(porciones * factor * 100) / 100}"> <span class="resto">${escapar(restoDelRinde(rinde))}</span></label>`;
-  return `<div class="escala"><span class="chips" data-escala-chips>${chipsEscala(factor)}</span>${campo}</div>` +
+  return `<div class="escala">${campo}${botonMasOMenos(factor, abierta)}</div>` +
+    (abierta ? filaDeChips(factor) : '') +
     `<p class="aviso-escala" data-escala-aviso>${avisoEscala(factor)}</p>`;
 }
 
 export function renderReceta(
-  { entrada, receta: sinResolver, compartir, favorito, error, aviso: avisoDeLlegada, visor, factor = 1 }: OpcionesReceta
+  { entrada, receta: sinResolver, compartir, favorito, error, aviso: avisoDeLlegada, visor, factor = 1, escalaAbierta = false }: OpcionesReceta
 ): string {
   // La cabecera y el cuerpo sólo ven la receta resuelta: ni `fichaCabecera`
   // ni `fichasDelCuerpo` saben de `foto:N`, eso es cosa de acá.
@@ -160,7 +180,7 @@ export function renderReceta(
       // Sin control: se reintenta con la estrella, que sigue a la vista (R1).
       (error ? aviso({ texto: error }) : '') +
       fichaCabecera({ receta: { ...receta, rinde: receta.rinde ? escalarCantidad(receta.rinde, factor) : null }, categoria, marcas, carrusel }) +
-      fichasDelCuerpo(receta, { alPieDeIngredientes: botonesCalcular(receta), antesDeIngredientes: controlesEscala(factor, receta.rinde), factor }) +
+      fichasDelCuerpo(receta, { alPieDeIngredientes: botonesCalcular(receta), antesDeIngredientes: controlesEscala(factor, receta.rinde, escalaAbierta), factor }) +
     '</div>' +
     pieDeAcciones(botonCocinar(receta) + `<button class="btn sec" data-accion="editar">${ICO.lapiz}Editar</button>`) +
     (compartir ? renderFichaCompartir(compartir) : '') +

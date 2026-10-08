@@ -746,7 +746,7 @@ describe('main.ts: las rutas', () => {
         if (deFicha) {
           return { set outerHTML(html: string) { fichasRepintadas.push({ ficha: deFicha, html }); } };
         }
-        const deEscala = sel.match(/^#app \[(data-(?:ingredientes|escala-chips|escala-aviso|titulo-ingredientes|rinde))\]$/)?.[1];
+        const deEscala = sel.match(/^#app \[(data-(?:ingredientes|escala-boton|escala-chips|escala-aviso|titulo-ingredientes|rinde))\]$/)?.[1];
         if (deEscala) {
           return { set outerHTML(html: string) { escalaRepintada.push({ bloque: deEscala, html }); } };
         }
@@ -1222,6 +1222,20 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('<span class="c">500 g</span>');
     });
 
+    it('«Más o menos» abre y cierra la fila de los chips; cerrada con ×2, el botón lo dice', async () => {
+      estado.md = MD;
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      expect(app.innerHTML).not.toContain('data-accion="escalar"');
+      await tocar('mas-o-menos');
+      expect(app.innerHTML).toContain('data-accion="escalar"');
+      await tocar('escalar', { factor: '2' });
+      expect(app.innerHTML).toContain('class="chip act" data-accion="escalar" data-factor="2"');
+      await tocar('mas-o-menos');
+      expect(app.innerHTML).not.toContain('data-accion="escalar"');
+      expect(app.innerHTML).toContain('<span class="fac">×2</span>');
+    });
+
     it('volver del modo cocina conserva el multiplicador; llegar a otra receta, o volver a abrir la misma, lo vuelve a ×1', async () => {
       estado.md = MD;
       const { abrir, tocar, app } = await montar();
@@ -1247,7 +1261,7 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('<span class="c">250 g</span>');
     });
 
-    it('escribir en el campo del rinde no redibuja: repinta la lista, los chips, el aviso, el título y el rinde', async () => {
+    it('escribir en el campo del rinde no redibuja: repinta la lista, el botón, los chips, el aviso, el título y el rinde', async () => {
       estado.md = MD;
       const { abrir, tecleos, pinturas, escalaRepintada } = await montar();
       await abrir('#/r/f1');
@@ -1258,6 +1272,7 @@ describe('main.ts: las rutas', () => {
       expect(html('data-ingredientes')).toContain('<span class="c">375 g</span>');
       expect(html('data-titulo-ingredientes')).toContain('Ingredientes ×1,5');
       expect(html('data-rinde')).toContain('6 porciones');
+      expect(html('data-escala-boton')).toContain('<span class="fac">×1,5</span>');
       expect(html('data-escala-chips')).not.toContain('class="chip act"');
       expect(html('data-escala-aviso')).toContain('Los pasos no cambian');
     });

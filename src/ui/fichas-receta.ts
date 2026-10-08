@@ -37,10 +37,14 @@ export const listaIngredientes = (grupos: GrupoIngredientes[], factor = 1): stri
     }).join('')
   ).join('');
 
+/** El multiplicador escrito: «×2», «×½», «×1,5». */
+export const textoFactor = (factor: number): string =>
+  `×${factor === 0.5 ? '½' : String(Math.round(factor * 100) / 100).replace('.', ',')}`;
+
 /** «Ingredientes», o con el multiplicador: «Ingredientes ×2», «×½», «×1,5». */
 export function tituloIngredientes(factor: number): string {
   if (factor === 1) return 'Ingredientes';
-  return `Ingredientes ×${factor === 0.5 ? '½' : String(Math.round(factor * 100) / 100).replace('.', ',')}`;
+  return `Ingredientes ${textoFactor(factor)}`;
 }
 
 const preparacion = (tramos: TramoPreparacion[]): string =>
