@@ -205,11 +205,8 @@ El MCP vive en `mcp/`, importa de `src/` y nunca al revés:
 - En esas features, el código no se commitea hasta que el usuario revisa el diff.
 - Los cambios de UI se prueban en el teléfono sobre GitHub Pages: commitear y
   pushear a `main`.
-- `BACKLOG.md` sólo tiene pendientes abiertos, con su estado. **Al empezar a
-  trabajar una entrada se le pone `Implementando`**, para que otra sesión no la
-  tome; cuando está listo para que el usuario lo pruebe la fila se pone en `Falta probar` y recién cuando el trabajo probado se elimina. Una entrada que quedó a medias vuelve a `Abierto`.
-  Un estado más: `En espera` es lo que se decidió no tocar hasta que se
-  resuelva otra entrada.
+- Para gestionar el backlog o referirse a una entrada, leé `BACKLOG.md`: ahí
+  están sus estados y cómo se usan.
 - **Un comentario no cita lo que se borra.** Ni el número de una entrada del
   backlog ni una sección de un spec de `docs/superpowers/`: las dos cosas
   desaparecen al terminar el trabajo y dejan el comentario apuntando a nada.

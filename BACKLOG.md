@@ -7,8 +7,10 @@ Sólo pendientes. El **estado** dice en qué anda cada uno:
 - `Falta probar` — hecho, esperando la prueba en el teléfono.
 - `En espera` — decidido que no se toca hasta que se resuelva otra entrada.
 
-Una entrada se borra de la tabla recién cuando está terminada y lista para
-probar; una que quedó a medias vuelve a `Abierto`.
+**Al empezar a trabajar una entrada se le pone `Implementando`**, para que
+otra sesión no la tome. Cuando está lista para que el usuario la pruebe pasa a
+`Falta probar`, y la fila se borra recién cuando está probada. Una entrada que
+quedó a medias vuelve a `Abierto`.
 
 Donde el detalle dice «ideas N», el número es el de
 `product-design/research/herramientas/ideas.md`; los archivos de esa carpeta
