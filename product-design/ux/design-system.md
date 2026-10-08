@@ -895,8 +895,9 @@ una de esas: se entra desde la receta y se sale volviendo. **El título de un
 destino del menú va en `--txt-encabezado`** (20 px); el de las pantallas a las
 que se entra desde otra, en `--txt-base`. Los dos tamaños salen de lo mismo que
 la hamburguesa (`izquierdaDelEncabezado`), así que no hay un destino del menú con
-el título chico. Grande y sin nada a la derecha, el título se centra en la barra
-y no en el hueco que dejan los controles (§3.2).
+el título chico. Sin nada a la derecha, grande o no, el título se centra en la
+barra y no en el hueco que dejan los controles (§3.2); lo que no entra entre los
+botones se recorta.
 
 **Todo encabezado con título lleva su ícono adelante**, del trazo y el tamaño de
 los del encabezado. Un destino del menú, el de su entrada del menú lateral

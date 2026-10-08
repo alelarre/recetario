@@ -76,9 +76,9 @@ export function encabezado(
   const alaIzquierda = izquierda ?? (volver
     ? `<button class="ico" data-accion="volver" aria-label="Volver">${ICO.volver}</button>`
     : '');
-  // Grande, el título va centrado en la barra —no en el hueco que dejan los
+  // El título va centrado en la barra —no en el hueco que dejan los
   // controles— cuando no hay nada a la derecha que lo pueda pisar.
-  const enLaBarra = grande && !derecha && total === undefined;
+  const enLaBarra = !derecha && total === undefined;
   const clase = ['tit', ...(grande ? ['grande'] : []), ...(enLaBarra ? ['app'] : [])].join(' ');
   return `<div class="enc">${alaIzquierda}` +
     `<span class="${clase}">${icono ?? ''}${escapar(titulo)}</span>` +

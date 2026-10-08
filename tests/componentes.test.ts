@@ -164,6 +164,15 @@ describe('encabezado', () => {
   it('escapa el título', () => {
     expect(encabezado({ titulo: '<b>x</b>' })).not.toContain('<b>x</b>');
   });
+  it('sin nada a la derecha, el título se centra en la barra, grande o no', () => {
+    expect(encabezado({ titulo: 'Pan', volver: true })).toContain('class="tit app"');
+    expect(encabezado({ titulo: 'Recetario', grande: true })).toContain('class="tit grande app"');
+  });
+
+  it('con algo a la derecha o con total, se centra en el hueco que queda', () => {
+    expect(encabezado({ titulo: 'Pescados', volver: true, total: 20 })).toContain('class="tit"');
+    expect(encabezado({ titulo: 'Editar', volver: true, derecha: '<button>Guardar</button>' })).toContain('class="tit"');
+  });
 });
 
 describe('chipsSueltos', () => {

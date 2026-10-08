@@ -219,7 +219,7 @@ describe('la calculadora de sal', () => {
 
   it('la temperatura va entre el fermento y el peso, y el tiempo con su advertencia en el resultado', () => {
     const html = renderSal(CHUCRUT);
-    expect(html).toContain(`<span class="tit">${ICO.frasco}Fermentados</span>`);
+    expect(html).toContain(`<span class="tit app">${ICO.frasco}Fermentados</span>`);
     expect(html).toContain('data-grupo="temperatura" data-valor="18-24" aria-pressed="true"');
     expect(pos(html, 'fermento')).toBeLessThan(pos(html, 'temperatura'));
     expect(pos(html, 'temperatura')).toBeLessThan(html.indexOf('data-cantidad="peso"'));
