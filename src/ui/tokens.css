@@ -353,7 +353,11 @@ button.chip { cursor: pointer; }
   width: 100%; min-height: 48px; padding: var(--e-3); background: var(--surface-alta);
   border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio);
   color: var(--fg); font: 400 var(--txt-base)/1.5 var(--tipo); resize: vertical; }
-.campo textarea { min-height: calc(1.5em * 3 + var(--e-3) * 2); }
+/* El `textarea` crece con lo escrito, con un mínimo de tres renglones: se lee
+   entero sin scrollear adentro del campo. Estirarlo a mano fijaría un alto
+   que ya no sigue al texto. Donde `field-sizing` no existe, queda el alto de
+   `rows` y scrollea. */
+.campo textarea { min-height: calc(1.5em * 3 + var(--e-3) * 2); field-sizing: content; resize: none; }
 /* El chevron del desplegable es propio: el del navegador ignora el padding y
    quedaba pegado al borde derecho. Es el trazo de los íconos (§3.4), a 16 px
    del borde. El color es `--fg-2` escrito a mano: adentro de un `url()` no
