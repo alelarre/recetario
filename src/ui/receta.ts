@@ -8,11 +8,13 @@
  * Una pila de `.ficha`: la primera con la foto —si la hay—, el título, el
  * contexto, la fuente y los tags; después una por sección, y ninguna vacía.
  */
+import { escalarCantidad, porcionesDe, restoDelRinde, MULTIPLICADORES } from '../escalar.js';
 import { escapar } from './markdown.js';
 import { encabezado, chipsSueltos, aviso } from './componentes.js';
 import type { OpcionesAviso } from './componentes.js';
 import { ICO } from './iconos.js';
-import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones } from './fichas-receta.js';
+import { fichaCabecera, fichasDelCuerpo, botonCocinar, pieDeAcciones, listaIngredientes, tituloIngredientes } from './fichas-receta.js';
+import { gruposDe } from '../recipe.js';
 import { renderFichaCompartir } from './compartir.js';
 import { renderVisor } from './visor.js';
 import { esFavorita, ESPECIALES } from '../catalogo.js';
@@ -40,6 +42,8 @@ export interface OpcionesReceta {
   error?: string;
   /** Un aviso que trae la receta la pantalla de la que se llegó, con su acción si la tiene. Va arriba de la ficha. */
   aviso?: OpcionesAviso;
+  /** El multiplicador elegido: escala las cantidades y el rinde que se muestran. Sin él, ×1. */
+  factor?: number;
   /** El visor de fotos abierto, en su foto actual. Sin esto no se dibuja. */
   visor?: EstadoVisor;
 }
@@ -75,8 +79,49 @@ function botonesCalcular(receta: Receta): string {
   return botones ? `<div class="calcular">${botones}</div>` : '';
 }
 
+/** Los chips del multiplicador, marcados si el elegido es uno de ellos. */
+export const chipsEscala = (factor: number): string =>
+  MULTIPLICADORES.map(m =>
+    `<button type="button" class="chip${m === factor ? ' act' : ''}" data-accion="escalar" data-factor="${m}">×${m === 0.5 ? '½' : m}</button>`).join('');
+
+/** «Los pasos no cambian…», sólo con un multiplicador distinto de ×1. */
+export const avisoEscala = (factor: number): string =>
+  (factor === 1 ? '' : 'Los pasos no cambian: sus cantidades son las de la receta.');
+
+/**
+ * Lo que cambia con el multiplicador, bloque por bloque y por su atributo:
+ * escribir en el campo del rinde los repinta sin redibujar la pantalla.
+ */
+export function bloquesEscala(sinResolver: Receta, factor: number): [string, string][] {
+  const receta = resolverReceta(sinResolver);
+  const grupos = gruposDe(receta.ingredientes).filter(g => g.items.length);
+  return [
+    ['data-ingredientes', `<div data-ingredientes>${listaIngredientes(grupos, factor)}</div>`],
+    ['data-titulo-ingredientes', `<span data-titulo-ingredientes>${escapar(tituloIngredientes(factor))}</span>`],
+    ['data-escala-chips', `<span class="chips" data-escala-chips>${chipsEscala(factor)}</span>`],
+    ['data-escala-aviso', `<p class="aviso-escala" data-escala-aviso>${avisoEscala(factor)}</p>`],
+    ['data-rinde', `<span data-rinde>${escapar(receta.rinde ? escalarCantidad(receta.rinde, factor) : '')}</span>`]
+  ];
+}
+
+/**
+ * Arriba de los ingredientes: los chips del multiplicador y, si el rinde
+ * empieza con un número, un campo con ese número escalado y el resto del
+ * rinde al lado, para elegir el multiplicador por lo que se quiere que rinda.
+ * Los chips y el aviso van en sus bloques: escribir en el campo los repinta
+ * sin tocarlo.
+ */
+function controlesEscala(factor: number, rinde: string | null): string {
+  const porciones = porcionesDe(rinde);
+  const campo = porciones === null || !rinde ? '' :
+    `<label class="escala-rinde"><input type="number" inputmode="decimal" min="0" step="any" data-porciones aria-label="Rinde" ` +
+    `value="${Math.round(porciones * factor * 100) / 100}"> <span class="resto">${escapar(restoDelRinde(rinde))}</span></label>`;
+  return `<div class="escala"><span class="chips" data-escala-chips>${chipsEscala(factor)}</span>${campo}</div>` +
+    `<p class="aviso-escala" data-escala-aviso>${avisoEscala(factor)}</p>`;
+}
+
 export function renderReceta(
-  { entrada, receta: sinResolver, compartir, favorito, error, aviso: avisoDeLlegada, visor }: OpcionesReceta
+  { entrada, receta: sinResolver, compartir, favorito, error, aviso: avisoDeLlegada, visor, factor = 1 }: OpcionesReceta
 ): string {
   // La cabecera y el cuerpo sólo ven la receta resuelta: ni `fichaCabecera`
   // ni `fichasDelCuerpo` saben de `foto:N`, eso es cosa de acá.
@@ -114,8 +159,8 @@ export function renderReceta(
       (avisoDeLlegada ? aviso(avisoDeLlegada) : '') +
       // Sin control: se reintenta con la estrella, que sigue a la vista (R1).
       (error ? aviso({ texto: error }) : '') +
-      fichaCabecera({ receta, categoria, marcas, carrusel }) +
-      fichasDelCuerpo(receta, { alPieDeIngredientes: botonesCalcular(receta) }) +
+      fichaCabecera({ receta: { ...receta, rinde: receta.rinde ? escalarCantidad(receta.rinde, factor) : null }, categoria, marcas, carrusel }) +
+      fichasDelCuerpo(receta, { alPieDeIngredientes: botonesCalcular(receta), antesDeIngredientes: controlesEscala(factor, receta.rinde), factor }) +
     '</div>' +
     pieDeAcciones(botonCocinar(receta) + `<button class="btn sec" data-accion="editar">${ICO.lapiz}Editar</button>`) +
     (compartir ? renderFichaCompartir(compartir) : '') +

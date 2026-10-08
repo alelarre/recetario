@@ -108,7 +108,7 @@ describe('Receta en lectura', () => {
     // Entre el título y la descripción no hay otra ficha: es la misma.
     const entre = html.slice(html.indexOf('rec-tit'), html.indexOf('Una entrada clásica'));
     expect(entre).not.toContain('class="ficha"');
-    expect(html.indexOf('Una entrada clásica')).toBeLessThan(html.indexOf('<h2>Ingredientes'));
+    expect(html.indexOf('Una entrada clásica')).toBeLessThan(html.indexOf('data-titulo-ingredientes'));
   });
 
   it('una fuente que es URL se dibuja clickeable, sin el esquema a la vista', () => {
@@ -334,7 +334,7 @@ titulo: Pan
     // Debajo de la descripción y arriba del divisor de la fuente, en la primera ficha.
     expect(html.indexOf('rec-desc')).toBeLessThan(html.indexOf('carrusel-fotos'));
     expect(html.indexOf('carrusel-fotos')).toBeLessThan(html.indexOf('rec-fuente'));
-    expect(html.indexOf('carrusel-fotos')).toBeLessThan(html.indexOf('<h2>Ingredientes</h2>'));
+    expect(html.indexOf('carrusel-fotos')).toBeLessThan(html.indexOf('data-titulo-ingredientes'));
   });
 
   it('la cabecera y cada foto del carrusel son cuadros de foto: una que no está deja ahí su aviso', () => {
@@ -522,5 +522,56 @@ describe('el botón Calcular', () => {
     const boton = '<a class="btn sec" href="#/herramientas/pan">Calcular pan</a>';
     expect(html).toContain(boton);
     expect(html.indexOf(boton)).toBeLessThan(html.indexOf('Preparación'));
+  });
+});
+
+describe('el multiplicador', () => {
+  const conRinde = (rinde: string) => parse(`---\ntitulo: Torta\n${rinde ? `rinde: ${rinde}\n` : ''}---\n\n## Ingredientes\n\n- Harina — 250 g\n- Sal — a gusto\n\n## Preparación\n\n1. Mezclar 250 g de harina.\n`);
+  const dibujar = (rinde: string, factor?: number) =>
+    renderReceta({ entrada: entradaFalsa(), receta: conRinde(rinde), ...(factor === undefined ? {} : { factor }) });
+
+  it('con ×1, los chips con ×1 marcado, las cantidades como están y sin aviso', () => {
+    const html = dibujar('4 porciones');
+    for (const [f, t] of [['0.5', '×½'], ['1', '×1'], ['2', '×2'], ['3', '×3']]) {
+      expect(html).toContain(`data-accion="escalar" data-factor="${f}">${t}</button>`);
+    }
+    expect(html).toContain('class="chip act" data-accion="escalar" data-factor="1"');
+    expect(html).toContain('<span class="c">250 g</span>');
+    expect(html).toContain('<span data-titulo-ingredientes>Ingredientes</span>');
+    expect(html).not.toContain('Los pasos no cambian');
+  });
+
+  it('con ×2, las cantidades, el rinde y el título escalados, el chip ×2 marcado y el aviso; los pasos y lo que no es número, igual', () => {
+    const html = dibujar('4 porciones', 2);
+    expect(html).toContain('<span class="c">500 g</span>');
+    expect(html).toContain('<span class="c">a gusto</span>');
+    expect(html).toContain('<span data-rinde>8 porciones</span>');
+    expect(html).toContain('<span data-titulo-ingredientes>Ingredientes ×2</span>');
+    expect(html).toContain('class="chip act" data-accion="escalar" data-factor="2"');
+    expect(html).toContain('Los pasos no cambian: sus cantidades son las de la receta.');
+    expect(html).toContain('Mezclar 250 g de harina.');
+  });
+
+  it('el campo del rinde lleva su número escalado y, al lado, el resto del rinde', () => {
+    expect(dibujar('4 porciones')).toMatch(/data-porciones aria-label="Rinde" value="4">\s*<span class="resto">porciones<\/span>/);
+    expect(dibujar('4 porciones', 1.5)).toContain('value="6"');
+    expect(dibujar('1 molde de 24 cm')).toMatch(/value="1">\s*<span class="resto">molde de 24 cm<\/span>/);
+  });
+
+  it('un rinde sin número al principio, con un rango, o sin rinde, no tiene campo', () => {
+    expect(dibujar('para la familia')).not.toContain('data-porciones');
+    expect(dibujar('4 a 6 porciones')).not.toContain('data-porciones');
+    expect(dibujar('4 a 6 porciones', 2)).toContain('<span data-rinde>8 a 12 porciones</span>');
+    expect(dibujar('')).not.toContain('data-porciones');
+  });
+
+  it('un multiplicador que no es de los chips no marca ninguno, y el título lo dice con coma', () => {
+    const html = dibujar('4 porciones', 1.5);
+    expect(html).not.toContain('class="chip act" data-accion="escalar"');
+    expect(html).toContain('Ingredientes ×1,5');
+  });
+
+  it('una receta sin ingredientes no tiene el multiplicador', () => {
+    expect(renderReceta({ entrada: entradaFalsa(), receta: MINIMA, factor: 2 })).not.toContain('data-accion="escalar"');
   });
 });

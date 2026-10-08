@@ -6,11 +6,12 @@ import * as indiceLocal from './indice-local.js';
 import { parse, slugArchivo, sePuedeTerminar } from './recipe.js';
 import { tagReservado, conEspecial, esFavorita, tieneEspecial, tieneAlgoCargado } from './catalogo.js';
 import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado, MENU, esDelMenu, hashDeReferencias } from './ui/router.js';
+import { porcionesDe } from './escalar.js';
 import { renderRecetario } from './ui/recetario.js';
 import { renderCategoria } from './ui/categoria.js';
 import { renderTag } from './ui/tag.js';
 import { renderResultados } from './ui/resultados.js';
-import { renderReceta } from './ui/receta.js';
+import { renderReceta, bloquesEscala } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
 import {
   renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado,
@@ -303,6 +304,13 @@ async function leerReceta(id: string): Promise<Receta> {
  * reutilizan los redibujados: marcar un paso, conmutar, tocar el sol.
  */
 let recetaLeida: { id: string; entrada: Entrada | null; receta: Receta } | null = null;
+
+/**
+ * El multiplicador de la receta, con el id de la receta. Sobrevive entre la
+ * receta y su modo cocina, que muestra las mismas cantidades; llegar a otra
+ * receta, o abrir la misma de nuevo, lo vuelve a ×1. No se guarda.
+ */
+let escala: { id: string; factor: number } | null = null;
 
 /** Lo que la app acaba de escribir es la receta leída de ese id, en la sesión y en la pantalla. */
 function dejarLeida(id: string, receta: Receta): void {
@@ -1005,9 +1013,11 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
 
     case 'receta':
       try {
-        const { entrada, receta } = await recetaDePantalla(ruta.params['id'] ?? '');
+        const id = ruta.params['id'] ?? '';
+        const { entrada, receta } = await recetaDePantalla(id);
+        if (llegada === 'nueva' || escala?.id !== id) escala = { id, factor: 1 };
         pintar(renderReceta({
-          entrada, receta,
+          entrada, receta, factor: escala.factor,
           ...(visor.estado ? { visor: visor.estado } : {}),
           ...(estadoDePantalla.compartiendo ? { compartir: estadoDePantalla.compartiendo } : {}),
           ...(estadoDePantalla.marcandoFavorito ? { favorito: 'escribiendo' as const } : {}),
@@ -1027,8 +1037,10 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
 
     case 'cocinar':
       try {
-        const { receta } = await recetaDePantalla(ruta.params['id'] ?? '');
-        return pintar(renderCocina({ receta, ...cocina.estado(), salidas: 'volver-y-salir' }));
+        const id = ruta.params['id'] ?? '';
+        const { receta } = await recetaDePantalla(id);
+        const factor = escala?.id === id ? escala.factor : 1;
+        return pintar(renderCocina({ receta, ...cocina.estado(), salidas: 'volver-y-salir', factor }));
       } catch (err) {
         console.error(err);
         return recetaSinLeer(err);
@@ -1863,8 +1875,31 @@ const accionesDelPlan: SeccionDeAcciones = {
   'ir-a-compras': () => { nav.ir('#/plan/compras'); }
 };
 
-/** La receta abierta y su modo cocina: la estrella, entrar, conmutar, marcar pasos, la pantalla encendida y las salidas. */
+/**
+ * Escribir en el campo del rinde fija el multiplicador por lo que se quiere
+ * que rinda: 6 sobre 4 es ×1,5. Pinta sólo lo que cambia, para no sacarle el
+ * foco al campo. Vacío, en cero o sin número, no cambia nada.
+ */
+function escalarPorRinde(texto: string): void {
+  const quiero = Number(texto.trim().replace(',', '.'));
+  const receta = recetaLeida?.receta;
+  const rinde = receta ? porcionesDe(receta.rinde) : null;
+  if (!receta || !escala || rinde === null || !(quiero > 0)) return;
+  escala.factor = quiero / rinde;
+  for (const [atributo, html] of bloquesEscala(receta, escala.factor)) {
+    const bloque = document.querySelector(`#app [${atributo}]`);
+    if (bloque) pintarParte(bloque, html, 'reemplazar');
+  }
+}
+
+/** La receta abierta y su modo cocina: la estrella, el multiplicador, entrar, conmutar, marcar pasos, la pantalla encendida y las salidas. */
 const accionesDeLaReceta: SeccionDeAcciones = {
+  escalar: (boton) => {
+    const factor = Number(boton.dataset['factor']);
+    if (!escala || !(factor > 0)) return;
+    escala.factor = factor;
+    return render();
+  },
   favorito: async () => {
     const id = idActual();
     const actual = recetaLeida?.receta;
@@ -2536,6 +2571,8 @@ app.addEventListener('input', (e) => {
       ? controlReferencias.alElegir(id, cuentaId, nombre, entrada.value)
       : controlReferencias.alEscribir(id, cuentaId, nombre, entrada.value);
   }
+  const rinde = conClosest(e.target)?.closest<HTMLInputElement>('[data-porciones]');
+  if (rinde && vistaActual?.vista === 'receta') return escalarPorRinde(rinde.value);
   const buscarEnReferencias = conClosest(e.target)?.closest<HTMLInputElement>('[data-buscar-referencias]');
   if (buscarEnReferencias && vistaActual?.vista === 'referencias') {
     // Lo escrito viaja en la ruta, para que el volver desde una ficha lo

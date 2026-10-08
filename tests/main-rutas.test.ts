@@ -405,6 +405,8 @@ describe('main.ts: las rutas', () => {
     const resultadosDeCuenta: { cuenta: string; html: string }[] = [];
     /** Los bloques de tabla de referencia repintados solos, con el id de la tabla. */
     const tablasRepintadas: { tabla: string; html: string }[] = [];
+    /** Los bloques del multiplicador de la receta repintados solos, con su atributo: escribir en el rinde no redibuja. */
+    const escalaRepintada: { bloque: string; html: string }[] = [];
     /** Lo que la entrada de Referencias repintó sola debajo de los tags, mientras se escribe. */
     const contenidosReferencias: string[] = [];
     /** Las fichas de cuenta de Referencias repintadas solas, con su id: el desplegable abierto queda abierto. */
@@ -744,6 +746,10 @@ describe('main.ts: las rutas', () => {
         if (deFicha) {
           return { set outerHTML(html: string) { fichasRepintadas.push({ ficha: deFicha, html }); } };
         }
+        const deEscala = sel.match(/^#app \[(data-(?:ingredientes|escala-chips|escala-aviso|titulo-ingredientes|rinde))\]$/)?.[1];
+        if (deEscala) {
+          return { set outerHTML(html: string) { escalaRepintada.push({ bloque: deEscala, html }); } };
+        }
         if (sel === '#app [data-contenido-referencias]') {
           return { set outerHTML(html: string) { contenidosReferencias.push(html); } };
         }
@@ -947,6 +953,7 @@ describe('main.ts: las rutas', () => {
       resultadosDeCuenta,
       tablasRepintadas,
       contenidosReferencias,
+      escalaRepintada,
       fichasRepintadas,
       almacen,
       /** Los oyentes de `input` de `#app`. */
@@ -1193,6 +1200,75 @@ describe('main.ts: las rutas', () => {
     expect(pinturas.length).toBe(antes);
     for (const l of lineasPan(conMasa)) expect(resultadosHerramienta.at(-1)).toContain(l.valor);
     expect(estado.formulario['cantidad-harina']).toBe(String(Math.round(calcularPan(conMasa)!.harinaTotal)));
+  });
+
+  describe('el multiplicador de la receta', () => {
+    const MD = '---\ntitulo: Torta\nrinde: 4 porciones\n---\n\n## Ingredientes\n- Harina — 250 g\n\n## Preparación\n1. Mezclar.\n';
+    const campoDelRinde = (value: string) => {
+      const campo = { dataset: {}, value, closest: (sel: string) => (sel === '[data-porciones]' ? campo : null) };
+      return campo;
+    };
+
+    it('tocar un chip escala la receta, y el modo cocina toma el mismo multiplicador', async () => {
+      estado.md = MD;
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      expect(app.innerHTML).toContain('<span class="c">250 g</span>');
+      await tocar('escalar', { factor: '2' });
+      await esperar();
+      expect(app.innerHTML).toContain('<span class="c">500 g</span>');
+      expect(app.innerHTML).toContain('Ingredientes ×2');
+      await abrir('#/r/f1/cocinar');
+      expect(app.innerHTML).toContain('<span class="c">500 g</span>');
+    });
+
+    it('volver del modo cocina conserva el multiplicador; llegar a otra receta, o volver a abrir la misma, lo vuelve a ×1', async () => {
+      estado.md = MD;
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      await tocar('escalar', { factor: '3' });
+      await abrir('#/r/f1/cocinar');
+      global.history.back();
+      await esperar();
+      expect(app.innerHTML).toContain('<span class="c">750 g</span>');
+      await abrir('#/r/f2');
+      expect(app.innerHTML).toContain('<span class="c">250 g</span>');
+      await abrir('#/r/f1');
+      expect(app.innerHTML).toContain('<span class="c">250 g</span>');
+    });
+
+    it('abrir la misma receta de nuevo desde otra pantalla la vuelve a ×1', async () => {
+      estado.md = MD;
+      const { abrir, tocar, app } = await montar();
+      await abrir('#/r/f1');
+      await tocar('escalar', { factor: '2' });
+      await abrir('#/c/Carnes');
+      await abrir('#/r/f1');
+      expect(app.innerHTML).toContain('<span class="c">250 g</span>');
+    });
+
+    it('escribir en el campo del rinde no redibuja: repinta la lista, los chips, el aviso, el título y el rinde', async () => {
+      estado.md = MD;
+      const { abrir, tecleos, pinturas, escalaRepintada } = await montar();
+      await abrir('#/r/f1');
+      const antes = pinturas.length;
+      for (const fn of tecleos) await fn({ target: campoDelRinde('6') });
+      expect(pinturas.length).toBe(antes);
+      const html = (bloque: string) => escalaRepintada.find(e => e.bloque === bloque)?.html ?? '';
+      expect(html('data-ingredientes')).toContain('<span class="c">375 g</span>');
+      expect(html('data-titulo-ingredientes')).toContain('Ingredientes ×1,5');
+      expect(html('data-rinde')).toContain('6 porciones');
+      expect(html('data-escala-chips')).not.toContain('class="chip act"');
+      expect(html('data-escala-aviso')).toContain('Los pasos no cambian');
+    });
+
+    it('un rinde vacío, en cero o que no es número no cambia nada', async () => {
+      estado.md = MD;
+      const { abrir, tecleos, escalaRepintada } = await montar();
+      await abrir('#/r/f1');
+      for (const valor of ['', '0', 'abc']) for (const fn of tecleos) await fn({ target: campoDelRinde(valor) });
+      expect(escalaRepintada).toEqual([]);
+    });
   });
 
   describe('herramientas de referencia', () => {

@@ -870,6 +870,16 @@ renglón, a la derecha, y ahí sí se corta.
 Los grupos —los `###` del `.md`— son `--txt-chico` en `--fg-2`, en mayúsculas con
 `.06em` de espaciado, con `--e-4` arriba.
 
+### 6.11b El multiplicador de la receta
+
+Arriba de la lista de ingredientes, en la misma ficha (`E03-LeerYCocinar.md`
+F03.8): una fila (`.escala`) con los chips ×½, ×1, ×2 y ×3 (§6.10), el elegido
+con `.act`, y —si el rinde empieza con un número— un campo de 72 px de ancho
+y 40 px de alto como los datos de las calculadoras (§6.28), con el resto del
+rinde a su derecha en `--txt-chico` `--fg-2`. Debajo, con un multiplicador
+distinto de ×1, el aviso de los pasos en `--txt-chico` `--fg-2`. El título de
+la ficha dice el multiplicador: «Ingredientes ×2».
+
 ### 6.12 Encabezado de pantalla
 
 Alto 56 px, fondo `--bg`, borde inferior 1 px `--borde`.

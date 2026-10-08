@@ -264,13 +264,61 @@ revocar.
 - [ ] Si la carga no se puede leer —cortada, alterada, de otra versión—, la pantalla dice *"Este link está roto o incompleto."* y nada más.
 - [ ] Es una pantalla con controlador propio y una lista cerrada de acciones, armada con las mismas piezas que la receta: lo que se agregue a la receta no aparece en el invitado salvo que se sume a propósito.
 
+### F03.8 — Escalar la receta
+
+Multiplicar las cantidades para cocinarla esa vez —×½, ×2, o para lo que se
+quiere que rinda—. Cambia lo que se muestra, nunca el `.md`.
+
+#### C03.8.1 — El multiplicador *(J6)*
+
+- [ ] **Arriba de la lista de ingredientes**, una fila de chips: **×½**,
+  **×1**, **×2** y **×3**. Al abrir la receta está marcado ×1.
+- [ ] **Si el rinde empieza con un número** —«4 porciones», «1 molde de 24
+  cm»—, al lado de los chips va un campo con ese número y, a su derecha, el
+  resto del rinde. Escribir otro número pone el multiplicador en la razón
+  entre los dos —6 sobre 4 es ×1,5—, y elegir un chip cambia el número del
+  campo. Vacío, en cero o sin número no cambia nada. Escribir en el campo no
+  redibuja la pantalla: el foco y el teclado quedan en el campo. **Un rinde con
+  rango** —«4 a 6 porciones»— no tiene campo: quedan los chips, y la línea de
+  contexto escala los dos extremos.
+- [ ] Con un multiplicador que no es de los chips, ninguno queda marcado. Una
+  receta sin ingredientes no muestra el multiplicador.
+- [ ] **Con el multiplicador cambian** las cantidades de los ingredientes, el
+  rinde de la línea de contexto y el título de la ficha —«Ingredientes ×2»,
+  «Ingredientes ×1,5»—. Con uno distinto de ×1, debajo de los chips: *Los
+  pasos no cambian: sus cantidades son las de la receta.*
+- [ ] **No cambian** la preparación, las variaciones, las notas, el `.md`, lo
+  que se comparte (C03.7), la vista de invitado ni el plan.
+- [ ] **El modo cocina** muestra las cantidades con el mismo multiplicador y lo
+  dice en el conmutador —«Ingredientes ×2»—; no tiene chips propios.
+- [ ] El multiplicador vale mientras se va y viene entre la receta y su modo
+  cocina. **Llegar a otra receta, o abrir la misma de nuevo, lo vuelve a ×1.**
+  No se guarda.
+
+#### C03.8.2 — Cómo se escala una cantidad *(J6)*
+
+- [ ] Se lee sólo **el número del principio** de la cantidad, sin la nota: un
+  entero o un decimal con coma o punto, una fracción —`½`, `¼`, `¾`, `⅓`, `⅔`,
+  `⅛`, `1/2`—, un entero y una fracción —`1½`, `1 ½`, `1 1/2`, `2 y 1/2`—, un
+  entero con punto de miles —`1.500`, si el punto va seguido de tres cifras—
+  o un rango —`2-3`, `2–3`, `2 a 3`, `2 o 3`—, que escala los dos extremos.
+- [ ] **El resto queda como está escrito:** la unidad, que no se convierte ni
+  pasa a plural o singular —«1½ tazas» ×½ es «¾ tazas»—, y la nota entre
+  paréntesis. Lo que no empieza con un número —«a gusto», «c/n», «una
+  pizca», «media taza»— queda igual.
+- [ ] **El resultado:** de 10 para arriba, entero, sin punto de miles; debajo
+  de 10, entero o con la fracción común (½, ¼, ¾, ⅓, ⅔) más cercana si está a
+  menos de 0,05; si no, con un decimal y coma. Una cantidad menor a 0,05 que
+  no es cero va con dos decimales —`0,02`—, nunca «0». Lo hace
+  `src/escalar.ts`.
+
 ---
 
 ## Trazabilidad
 
 | Capacidad | Job |
 |---|---|
-| C03.1.1, C03.1.2b, C03.1.3, C03.1.4, C03.2.1, C03.2.2, C03.2.3, C03.2.4, C03.3.1, C03.4.1, C03.5.1, C03.5.2, C03.5.3, C03.6.1, C03.7.1, C03.7.2, C03.7.3, C03.7.4, C03.7.5 | J6 |
+| C03.1.1, C03.1.2b, C03.1.3, C03.1.4, C03.2.1, C03.2.2, C03.2.3, C03.2.4, C03.3.1, C03.4.1, C03.5.1, C03.5.2, C03.5.3, C03.6.1, C03.7.1, C03.7.2, C03.7.3, C03.7.4, C03.7.5, C03.8.1, C03.8.2 | J6 |
 | C03.1.2 | J6, J7 |
 
 Ninguna capacidad de esta épica quedó sin job.

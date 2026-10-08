@@ -7,7 +7,7 @@
  */
 import { escapar, aHtml } from './markdown.js';
 import { ICO } from './iconos.js';
-import { listaIngredientes } from './fichas-receta.js';
+import { listaIngredientes, tituloIngredientes } from './fichas-receta.js';
 import { gruposDe, tramosDe } from '../recipe.js';
 import { resolverReceta } from '../fotos-receta.js';
 import type { Receta } from '../tipos.js';
@@ -28,6 +28,8 @@ export interface OpcionesCocina {
    * receta y Salir a la categoría. El invitado no tiene categoría: sólo el chevron.
    */
   salidas: 'volver-y-salir' | 'solo-volver';
+  /** El multiplicador de la receta: escala las cantidades que se muestran. Sin él, ×1. */
+  factor?: number;
 }
 
 /** Sin soporte no se ofrece y no se avisa: no hay nada que el usuario pueda hacer (C03.3.1). */
@@ -35,7 +37,7 @@ const hayWakeLock = (): boolean =>
   typeof navigator !== 'undefined' && 'wakeLock' in navigator;
 
 export function renderCocina(
-  { receta: sinResolver, posicion, aqui, hechos, wakeActivo = false, salidas }: OpcionesCocina
+  { receta: sinResolver, posicion, aqui, hechos, wakeActivo = false, salidas, factor = 1 }: OpcionesCocina
 ): string {
   // Resuelve `foto:N`: el paso dibuja su foto igual que en la lectura, ya
   // convertida en su `<img>`, sólo que acá un toque marca el paso, no
@@ -46,7 +48,7 @@ export function renderCocina(
   const marcados = Array.isArray(hechos) ? hechos : [];
 
   const posiciones = [
-    ...(grupos.length ? [['ingredientes', `${ICO.zanahoria}Ingredientes`] as const] : []),
+    ...(grupos.length ? [['ingredientes', `${ICO.zanahoria}${escapar(tituloIngredientes(factor))}`] as const] : []),
     ...(tramos.length ? [['pasos', `${ICO.listaNumerada}Pasos`] as const] : [])
   ];
   const conmutador = posiciones.length > 1
@@ -67,7 +69,7 @@ export function renderCocina(
     }).join('')}</ol>`
   ).join('');
 
-  const contenido = posicion === 'ingredientes' && grupos.length ? listaIngredientes(grupos) : pasos;
+  const contenido = posicion === 'ingredientes' && grupos.length ? listaIngredientes(grupos, factor) : pasos;
 
   // Un ícono solo en el encabezado, que es donde la palabra no entra.
   // Encendido se invierte, como el estado elegido del editor: el acento sobre

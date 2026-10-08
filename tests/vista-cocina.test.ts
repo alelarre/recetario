@@ -143,3 +143,17 @@ describe('Modo cocina', () => {
     expect(html).not.toContain('data-accion="ver-foto-receta"');
   });
 });
+
+describe('el multiplicador en el modo cocina', () => {
+  const receta = parse('---\ntitulo: T\n---\n\n## Ingredientes\n\n- Harina — 250 g\n\n## Preparación\n\n1. Mezclar.\n');
+  it('las cantidades y el rótulo de los ingredientes, escalados; sin chips', () => {
+    const html = renderCocina({ receta, posicion: 'ingredientes', aqui: null, hechos: [], salidas: 'volver-y-salir', factor: 2 });
+    expect(html).toContain('<span class="c">500 g</span>');
+    expect(html).toContain('Ingredientes ×2');
+    expect(html).not.toContain('data-accion="escalar"');
+  });
+  it('sin multiplicador, como siempre', () => {
+    const html = renderCocina({ receta, posicion: 'ingredientes', aqui: null, hechos: [], salidas: 'volver-y-salir' });
+    expect(html).toContain('<span class="c">250 g</span>');
+  });
+});

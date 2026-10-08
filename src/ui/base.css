@@ -24,6 +24,16 @@
 .cajaenc .buscar { flex: 1; }
 
 /* ---- Receta en lectura ---- */
+/* El multiplicador, arriba de los ingredientes: los chips y, si el rinde
+   empieza con un número, el campo con ese número y el resto del rinde. */
+.escala { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-3); margin-bottom: var(--e-2); }
+.escala .chips { flex-wrap: nowrap; }
+.escala-rinde { display: flex; align-items: center; gap: var(--e-2); color: var(--fg-2); font-size: var(--txt-chico); }
+.escala-rinde input { width: 72px; min-height: 40px; padding: 0 var(--e-3); text-align: right; font: inherit; font-size: var(--txt-base);
+  color: var(--fg); background: var(--surface-alta); border: 1px solid var(--borde-fuerte); border-radius: var(--r-medio); }
+.escala-rinde input:focus { outline: none; border: 2px solid var(--acento); }
+.aviso-escala { margin: 0 0 var(--e-2); font-size: var(--txt-chico); color: var(--fg-2); }
+.aviso-escala:empty { display: none; }
 /* El link al `.md` en Drive: un dato al margen, no un botón. Sin caja, y más
    chico que los controles del encabezado. */
 .archivo { display: inline-flex; align-items: center; gap: var(--e-1);

@@ -3,6 +3,7 @@
  * vista de invitado. Cada pantalla arma su encabezado, sus marcas y sus
  * acciones: lo que se sume a una no aparece en la otra salvo que se pase a propósito.
  */
+import { escalarCantidad } from '../escalar.js';
 import { escapar, aHtml, tramosAHtml, tramosDeFuente, tramosEnLinea, imgDe } from './markdown.js';
 import { colorCategoria } from './categorias.js';
 import { carrusel, cuadroDeFoto, duracionConReloj } from './componentes.js';
@@ -22,12 +23,12 @@ const textoDe = (tramos: TramoEnLinea[]): string => tramosAHtml(tramos.filter(t 
  * línea: pueden traer negrita, un link o la referencia a una foto, que va
  * adentro del ítem y se acomoda sola abajo, al ancho de la ficha.
  */
-export const listaIngredientes = (grupos: GrupoIngredientes[]): string =>
+export const listaIngredientes = (grupos: GrupoIngredientes[], factor = 1): string =>
   grupos.map(g =>
     (g.nombre ? `<div class="grupo">${escapar(g.nombre)}</div>` : '') +
     g.items.map(i => {
       const nombre = tramosEnLinea(i.nombre);
-      const cantidad = i.cantidad ? tramosEnLinea(i.cantidad) : [];
+      const cantidad = i.cantidad ? tramosEnLinea(escalarCantidad(i.cantidad, factor)) : [];
       const c = textoDe(cantidad);
       return `<div class="ing"><span class="n">${textoDe(nombre)}</span>` +
         (c ? `<span class="c">${c}</span>` : '') +
@@ -35,6 +36,12 @@ export const listaIngredientes = (grupos: GrupoIngredientes[]): string =>
         '</div>';
     }).join('')
   ).join('');
+
+/** «Ingredientes», o con el multiplicador: «Ingredientes ×2», «×½», «×1,5». */
+export function tituloIngredientes(factor: number): string {
+  if (factor === 1) return 'Ingredientes';
+  return `Ingredientes ×${factor === 0.5 ? '½' : String(Math.round(factor * 100) / 100).replace('.', ',')}`;
+}
 
 const preparacion = (tramos: TramoPreparacion[]): string =>
   tramos.map(t =>
@@ -97,7 +104,8 @@ function carruselDeFotos(fotos: FotoDeReceta[]): string {
  * URL, nunca `foto:N`, y `receta.fotos` es el depósito para saber su número.
  */
 export function fichaCabecera({ receta, categoria, marcas = '', pin = true, carrusel = [] }: OpcionesCabecera): string {
-  const partes = [escapar(categoria), escapar(receta.rinde ?? ''), duracionConReloj(receta.tiempo), escapar(receta.dificultad ?? '')]
+  // El rinde va en su bloque: el multiplicador de la receta lo repinta solo.
+  const partes = [escapar(categoria), receta.rinde ? `<span data-rinde>${escapar(receta.rinde)}</span>` : '', duracionConReloj(receta.tiempo), escapar(receta.dificultad ?? '')]
     .filter(Boolean);
   const fuente = receta.fuente ? tramosAHtml(tramosDeFuente(receta.fuente)) : '';
   return ficha(
@@ -125,7 +133,10 @@ export function fichaCabecera({ receta, categoria, marcas = '', pin = true, carr
  * ficha propia en su lugar si la receta no tiene: lo que se pone ahí depende
  * de la receta y no de que tenga ingredientes.
  */
-export function fichasDelCuerpo(receta: Receta, { alPieDeIngredientes = '' }: { alPieDeIngredientes?: string } = {}): string {
+export function fichasDelCuerpo(
+  receta: Receta,
+  { alPieDeIngredientes = '', antesDeIngredientes = '', factor = 1 }: { alPieDeIngredientes?: string; antesDeIngredientes?: string; factor?: number } = {}
+): string {
   const grupos = gruposDe(receta.ingredientes).filter(g => g.items.length);
   const tramos = tramosDe(receta.preparacion).filter(t => t.pasos.length);
   const { lista, secciones } = variacionesDe(receta.variaciones);
@@ -136,8 +147,12 @@ export function fichasDelCuerpo(receta: Receta, { alPieDeIngredientes = '' }: { 
         `<p>${aHtml(v.cuerpo)}</p></div>`).join('')
     : lista.map(v => `<div class="var"><p>${aHtml(v)}</p></div>`).join('');
 
-  const ingredientes = grupos.length ? listaIngredientes(grupos) : '';
-  return (ingredientes ? ficha(ingredientes + alPieDeIngredientes, 'Ingredientes') : ficha(alPieDeIngredientes)) +
+  // El título y la lista van en sus bloques: el multiplicador de la receta los repinta solos.
+  const ingredientes = grupos.length
+    ? `<div class="ficha"><h2><span data-titulo-ingredientes>${escapar(tituloIngredientes(factor))}</span></h2>` +
+      `${antesDeIngredientes}<div data-ingredientes>${listaIngredientes(grupos, factor)}</div>${alPieDeIngredientes}</div>`
+    : '';
+  return (ingredientes || ficha(alPieDeIngredientes)) +
     ficha(preparacion(tramos), 'Preparación') +
     ficha(variaciones, 'Variaciones') +
     ficha(receta.notas ? `<div class="lee">${aHtml(receta.notas)}</div>` : '', 'Notas') +

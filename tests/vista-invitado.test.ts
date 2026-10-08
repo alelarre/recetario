@@ -85,7 +85,9 @@ describe('La vista de invitado', () => {
     expect(html).toContain('class="rec-tit">Rabas<');
     expect(html).toContain('Pescados');
     expect(html).toContain('>p.com/rabas<');
-    expect(html).toContain('<h2>Ingredientes</h2>');
+    expect(html).toContain('<span data-titulo-ingredientes>Ingredientes</span>');
+    // El invitado ve la receta como es: sin multiplicador.
+    expect(html).not.toContain('data-accion="escalar"');
     expect(html).toContain('<h2>Notas</h2>');
   });
 
