@@ -141,9 +141,9 @@ antes, que sólo tiene cuentas, se lee igual, sin migrar.
     Temporizadores, y *Poner*, deshabilitado en 0:00:00. Las ruedas arrancan
     en 0:10:00.
   - **Cronómetro:** la etiqueta y *Poner*.
-- **La etiqueta se precarga** con el texto del renglón antes del cursor, sin
-  marcas ni referencias, recortado a sus últimas tres palabras. Se puede
-  cambiar o dejar vacía; vacía, la marca va sin etiqueta.
+- **La etiqueta arranca vacía.** Vacía, la marca va sin etiqueta y el
+  temporizador toma el nombre por defecto (§El formato): «50 min» para una
+  cuenta, «Cronómetro» para un cronómetro.
 - **Qué escribe:** la marca vacía al final de la línea, con un espacio antes,
   como hoy la foto: `[](cuenta:50:00 "cocinar")`. El editor no envuelve
   palabras del renglón: no sabe cuáles son las del tiempo.
