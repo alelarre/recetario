@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   leerDuracion, leerMarca, nombreDeMarca, escribirMarca, quitarMarcas, marcasMalFormadas,
-  agregarAlFinal, sinMarcas, PATRON_MARCA, DURACION_MAXIMA
+  agregarAlFinal, sinMarcas, PATRON_MARCA, DURACION_MAXIMA, duracionDeTexto, envolver
 } from '../src/marcas.js';
 import { parse } from '../src/recipe.js';
 
@@ -99,5 +99,86 @@ describe('quitar y revisar', () => {
     expect(limpia.descripcion).not.toContain('cuenta:');
     expect(limpia.preparacion).toBe('1. Hornear .');
     expect(limpia.otras[0]?.cuerpo).toBe('Otra x');
+  });
+});
+
+describe('duracionDeTexto: la duración que se propone desde lo seleccionado', () => {
+  const d = (s: string) => duracionDeTexto(s);
+  const hms = (h: number, m: number, s = 0) => ((h * 60 + m) * 60 + s) * 1000;
+  it('cada unidad, en castellano y en inglés', () => {
+    for (const s of ['2 horas', '2 hora', '2 h', '2 hs', '2 hs.', '2 hr', '2 hrs', '2 hours', '2 hour', '2h']) expect(d(s)).toBe(hms(2, 0));
+    for (const s of ['50 minutos', '50 minuto', '50 min', '50 min.', '50 mins', '50 minutes', "50'"]) expect(d(s)).toBe(hms(0, 50));
+    for (const s of ['30 segundos', '30 seg', '30 seg.', '30 segs', '30 s', '30 sec', '30 seconds', "30''"]) expect(d(s)).toBe(hms(0, 0, 30));
+  });
+  it('sin distinguir mayúsculas ni acentos, con palabras alrededor', () => {
+    expect(d('durante 50 MINUTOS')).toBe(hms(0, 50));
+    expect(d('Hornear 1 Hora')).toBe(hms(1, 0));
+  });
+  it('decimales con coma o punto', () => {
+    expect(d('1,5 horas')).toBe(hms(1, 30));
+    expect(d('2.5 min')).toBe(hms(0, 2, 30));
+  });
+  it('varios pares se suman', () => {
+    expect(d('1 h 30 min')).toBe(hms(1, 30));
+    expect(d('1 hora y 15 minutos')).toBe(hms(1, 15));
+  });
+  it('un rango toma el mayor', () => {
+    expect(d('20 a 25 minutos')).toBe(hms(0, 25));
+    expect(d('20-25 min')).toBe(hms(0, 25));
+    expect(d('20–25 min')).toBe(hms(0, 25));
+  });
+  it('fracciones y las formas habladas', () => {
+    expect(d('½ hora')).toBe(hms(0, 30));
+    expect(d('1½ h')).toBe(hms(1, 30));
+    expect(d('media hora')).toBe(hms(0, 30));
+    expect(d('hora y media')).toBe(hms(1, 30));
+    expect(d('una hora y media')).toBe(hms(1, 30));
+    expect(d('2 horas y media')).toBe(hms(2, 30));
+    expect(d('un cuarto de hora')).toBe(hms(0, 15));
+  });
+  it('lo que no se entiende no propone nada', () => {
+    for (const s of ['', 'hasta que dore', '50', '3 tazas', '10 min y 3 tazas', 'cocinar 5 min, después 10 min', '0 min', '25 horas', '1h30']) {
+      expect(d(s)).toBeNull();
+    }
+  });
+});
+
+describe('envolver: la selección pasa a ser el texto de la marca', () => {
+  const cuenta = { tipo: 'cuenta' as const, duracion: 50 * MIN, etiqueta: 'cocinar' };
+  it('envuelve en su lugar y deja el cursor después de la marca', () => {
+    const texto = 'Freír.\nCocinar durante 50 minutos.';
+    const desde = texto.indexOf('50');
+    const r = envolver(texto, desde, desde + '50 minutos'.length, cuenta);
+    expect(r?.texto).toBe('Freír.\nCocinar durante [50 minutos](cuenta:50:00 "cocinar").');
+    expect(r?.cursor).toBe(r!.texto.indexOf(').') + 1);
+  });
+  it('los espacios de las puntas quedan afuera', () => {
+    const texto = 'Cocinar durante 50 minutos.';
+    const r = envolver(texto, texto.indexOf(' 50'), texto.indexOf('.') , cuenta);
+    expect(r?.texto).toBe('Cocinar durante [50 minutos](cuenta:50:00 "cocinar").');
+  });
+  it('de varias líneas, sólo lo de la primera', () => {
+    const texto = 'Cocinar 50 minutos.\nServir.';
+    const r = envolver(texto, texto.indexOf('50'), texto.length, cuenta);
+    expect(r?.texto).toBe('Cocinar [50 minutos.](cuenta:50:00 "cocinar")\nServir.');
+  });
+  it('saca corchetes y paréntesis de lo seleccionado y lo usa igual', () => {
+    const texto = 'Cocinar 50 minutos (aprox).';
+    const r = envolver(texto, texto.indexOf('50'), texto.indexOf(').') + 1, cuenta);
+    expect(r?.texto).toBe('Cocinar [50 minutos aprox](cuenta:50:00 "cocinar").');
+  });
+  it('sin texto útil, o adentro de otra marca, link o foto, no envuelve', () => {
+    expect(envolver('a   b', 1, 4, cuenta)).toBeNull();
+    expect(envolver('a () b', 2, 4, cuenta)).toBeNull();
+    const conMarca = 'Hornear [1 h](cuenta:1:00:00).';
+    expect(envolver(conMarca, conMarca.indexOf('1 h'), conMarca.indexOf('1 h') + 3, cuenta)).toBeNull();
+    const conFoto = 'Servir ![plato](foto:2) caliente.';
+    expect(envolver(conFoto, conFoto.indexOf('plato'), conFoto.indexOf('plato') + 5, cuenta)).toBeNull();
+    const conLink = 'Ver [sitio](https://a.com) y servir.';
+    expect(envolver(conLink, conLink.indexOf('sitio'), conLink.indexOf('sitio') + 5, cuenta)).toBeNull();
+  });
+  it('un rango vacío o fuera del texto no envuelve', () => {
+    expect(envolver('abc', 1, 1, cuenta)).toBeNull();
+    expect(envolver('abc', 2, 9, cuenta)).toBeNull();
   });
 });

@@ -761,6 +761,9 @@ depósito, o el nombre (opcional) con las ruedas de §6.29 y **Poner**, del
 ancho de la ficha. Foto no es
 la cámara (§3.4): pone una que ya está en el depósito, no agrega una nueva.
 
+**Mientras la capa está abierta, el campo no tiene el foco:** así el teclado no
+la tapa. Al cerrarla vuelve, con el cursor o la selección donde estaban.
+
 **Sigue al campo por dentro:** desplazar el texto con el dedo lo mueve con su
 renglón, y si el renglón del cursor se fue de la vista el botón no se dibuja.
 **Tocarlo no mueve el foco**, para que el toque no se pierda en el camino.

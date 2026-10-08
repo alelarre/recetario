@@ -1369,6 +1369,43 @@ function acomodarBotonDeLinea(): void {
   pintarParte(marco, botonHerramientas(seccion, lineaDelCursor(texto, posicion), tope), 'al-final');
 }
 
+/**
+ * El botón de herramientas del editor. Va aparte de las acciones porque
+ * cerrar su capa por el velo o por el atrás le devuelve el foco al campo.
+ */
+const herramientasEditor = crearHerramientasEditor({
+  campos: camposDelEditor,
+  fotos: () => fotosEditor.fotos(),
+  pantalla: {
+    abrirFicha: abrirFichaFoto,
+    cerrarFicha: cerrarFichaFoto,
+    etiquetaEscrita: () => document.querySelector<HTMLInputElement>('#app [data-etiqueta-marca]')?.value ?? '',
+    pintarRuedas: (r) => {
+      for (const k of ['h', 'm', 's'] as const) {
+        const v = document.querySelector<HTMLElement>(`#app [data-rueda-marca="${k}"]`);
+        if (v) v.textContent = k === 'h' ? String(r.h) : String(r[k]).padStart(2, '0');
+      }
+      const poner = document.querySelector<HTMLButtonElement>('#app [data-accion="poner-marca"]');
+      if (poner) poner.disabled = aMs(r) <= 0;
+    },
+    // Del campo de la sección y no del foco: tocar el botón puede habérselo
+    // llevado, y la selección de un campo queda aunque pierda el foco.
+    seleccion: (seccion) => {
+      const campo = campoDelEditor(seccion);
+      return campo && campo.selectionStart !== null && campo.selectionEnd !== null
+        ? { desde: campo.selectionStart, hasta: campo.selectionEnd } : null;
+    },
+    soltarFoco: (seccion) => { campoDelEditor(seccion)?.blur?.(); },
+    // Desde un toque, Android vuelve a abrir el teclado; desde el atrás, no:
+    // el foco y el cursor vuelven igual, y el teclado aparece al tocar el campo.
+    devolverFoco: (seccion, desde, hasta) => {
+      const campo = campoDelEditor(seccion);
+      campo?.focus?.({ preventScroll: true });
+      campo?.setSelectionRange?.(desde, hasta);
+    }
+  }
+});
+
 /** Las fichas al pie del editor y el velo con el que se cierran. */
 const FICHAS_DE_FOTO =
   '#app [data-acciones-foto], #app [data-elegir-foto], #app [data-selector-portada], ' +
@@ -1383,6 +1420,7 @@ function quitarFichaFoto(): void {
 function cerrarFichaFoto(): void {
   quitarFichaFoto();
   nav.cerrarCapa('ficha-foto');
+  herramientasEditor.alCerrarCapa();
 }
 
 /**
@@ -1680,7 +1718,7 @@ const CIERRE_DE_CAPA: Record<string, () => unknown> = {
   menu: () => { mostrarMenu(false); },
   visor: () => { visor.olvidar(); return dibujarVisor(); },
   compartir: () => sacarCompartir(),
-  'ficha-foto': () => { quitarFichaFoto(); acomodarBotonDeLinea(); },
+  'ficha-foto': () => { quitarFichaFoto(); herramientasEditor.alCerrarCapa(); acomodarBotonDeLinea(); },
   'categoria-plan': () => { dejarCategoriaDelPlan(); return render(); }
 };
 // Con la pantalla ocupada, el atrás no cierra nada: la capa vuelve a su
@@ -2417,23 +2455,7 @@ const acciones = registrarAcciones({
     esperar: tarea => velo.esperar(tarea),
     avisar: avisarEnElFormulario
   }),
-  herramientasEditor: crearHerramientasEditor({
-    campos: camposDelEditor,
-    fotos: () => fotosEditor.fotos(),
-    pantalla: {
-      abrirFicha: abrirFichaFoto,
-      cerrarFicha: cerrarFichaFoto,
-      etiquetaEscrita: () => document.querySelector<HTMLInputElement>('#app [data-etiqueta-marca]')?.value ?? '',
-      pintarRuedas: (r) => {
-        for (const k of ['h', 'm', 's'] as const) {
-          const v = document.querySelector<HTMLElement>(`#app [data-rueda-marca="${k}"]`);
-          if (v) v.textContent = k === 'h' ? String(r.h) : String(r[k]).padStart(2, '0');
-        }
-        const poner = document.querySelector<HTMLButtonElement>('#app [data-accion="poner-marca"]');
-        if (poner) poner.disabled = aMs(r) <= 0;
-      }
-    }
-  }).acciones,
+  herramientasEditor: herramientasEditor.acciones,
   visor: accionesDelVisor(visor, { fotos: fotosDelVisor, dibujar: dibujarVisor }),
   carrusel: accionesDelCarrusel,
   plan: accionesDelPlan,

@@ -109,3 +109,79 @@ export function sinMarcas(receta: Receta): Receta {
     otras: receta.otras.map(o => ({ ...o, cuerpo: quitarMarcas(o.cuerpo) }))
   };
 }
+
+/**
+ * Envuelve en una marca lo que está seleccionado en el editor: la selección
+ * pasa a ser el `texto` de la marca, en su lugar. Sólo lo que cae en la
+ * primera línea, sin los espacios de las puntas y sin corchetes ni paréntesis,
+ * que romperían la marca. Devuelve el texto nuevo y el cursor justo después de
+ * la marca, o `null` si no queda nada que envolver o si la selección toca un
+ * link, una foto u otra marca: ahí la marca va al final de la línea.
+ */
+export function envolver(
+  texto: string, desde: number, hasta: number, m: { tipo: TipoMarca; duracion: number | null; etiqueta: string }
+): { texto: string; cursor: number } | null {
+  if (!(desde >= 0 && desde < hasta && hasta <= texto.length)) return null;
+  const finDeLinea = texto.indexOf('\n', desde);
+  let a = desde;
+  let b = finDeLinea === -1 ? hasta : Math.min(hasta, finDeLinea);
+  while (a < b && /\s/.test(texto[a] ?? '')) a++;
+  while (b > a && /\s/.test(texto[b - 1] ?? '')) b--;
+  const limpio = texto.slice(a, b).replace(/[()[\]]/g, '').replace(/\s+/g, ' ').trim();
+  if (!limpio) return null;
+  const inicioDeLinea = texto.lastIndexOf('\n', a - 1) + 1;
+  const linea = texto.slice(inicioDeLinea, finDeLinea === -1 ? texto.length : finDeLinea);
+  for (const x of linea.matchAll(/!?\[[^\]]*\]\([^)]*\)/g)) {
+    const inicio = inicioDeLinea + (x.index ?? 0);
+    if (a < inicio + x[0].length && b > inicio) return null;
+  }
+  const marca = escribirMarca(m, limpio);
+  return { texto: texto.slice(0, a) + marca + texto.slice(b), cursor: a + marca.length };
+}
+
+const NUMERO = String.raw`\d+(?:[.,]\d+)?`;
+// Las más largas primero: `min` no puede quedarse con el principio de `minutos`.
+const UNIDAD = String.raw`(''|horas?|hours?|hrs?|hs\.?|h|minutos?|minutes?|mins?\.?|'|segundos?|seconds?|segs?\.?|secs?|s)(?![a-z])`;
+const PAR = new RegExp(String.raw`(${NUMERO})(?:\s*(?:a|-|–|—)\s*(${NUMERO}))?\s*${UNIDAD}`, 'g');
+const SEGUNDOS_POR_UNIDAD = (u: string): number =>
+  u.startsWith('h') ? 3600 : u === "'" || u.startsWith('min') ? 60 : 1;
+const FRACCION: Readonly<Record<string, string>> = { '½': '.5', '¼': '.25', '¾': '.75' };
+
+/**
+ * La duración que dice un texto —«50 minutos», «1,5 horas», «1 h 30 min»,
+ * «20 a 25 min», «media hora»—, para proponerla en las ruedas al envolver una
+ * selección. Es sólo una sugerencia: ante cualquier duda —un número sin
+ * unidad, algo que no se entiende entre dos tiempos, cero o más de
+ * 23:59:59— devuelve `null` y las ruedas quedan como siempre.
+ */
+export function duracionDeTexto(texto: string): number | null {
+  try {
+    const t = texto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/(\d)\s*([½¼¾])/g, (_, d: string, f: string) => d + (FRACCION[f] ?? ''))
+      .replace(/[½¼¾]/g, f => `0${FRACCION[f] ?? ''}`)
+      .replace(new RegExp(String.raw`(${NUMERO})\s*(?:horas?|hs?)\s+y\s+media\b`, 'g'),
+        (_, n: string) => `${Number(n.replace(',', '.')) + 0.5} h`)
+      .replace(/\b(?:una\s+)?hora\s+y\s+media\b/g, '1.5 h')
+      .replace(/\b(?:un\s+)?cuarto\s+de\s+hora\b/g, '0.25 h')
+      .replace(/\bmedia\s+hora\b/g, '0.5 h');
+    const pares = [...t.matchAll(PAR)];
+    if (!pares.length) return null;
+    let segundos = 0;
+    let fin = -1;
+    for (const p of pares) {
+      const inicio = p.index ?? 0;
+      // Entre dos tiempos sólo puede haber espacios, comas, «y» o «+».
+      if (fin >= 0 && t.slice(fin, inicio).replace(/\by\b/g, '').replace(/[\s,+]/g, '') !== '') return null;
+      const a = Number((p[1] ?? '').replace(',', '.'));
+      const b = p[2] === undefined ? a : Number(p[2].replace(',', '.'));
+      segundos += Math.max(a, b) * SEGUNDOS_POR_UNIDAD(p[3] ?? '');
+      fin = inicio + p[0].length;
+    }
+    // Un número que no forma parte de ningún tiempo: no se sabe qué es.
+    if (/\d/.test(t.replace(PAR, ''))) return null;
+    const ms = Math.round(segundos) * 1000;
+    return Number.isFinite(ms) && ms > 0 && ms <= DURACION_MAXIMA ? ms : null;
+  } catch {
+    return null;
+  }
+}
