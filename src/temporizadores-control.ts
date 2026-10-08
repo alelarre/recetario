@@ -1,6 +1,6 @@
 /**
- * El estado de *Temporizadores*: los temporizadores, el cronómetro, las ruedas del
- * temporizador nuevo y el aviso. Tiene el tic de 1 s, pide la pantalla encendida mientras
+ * El estado de *Temporizadores*: la lista —cuentas regresivas y cronómetros—,
+ * lo elegido en el temporizador nuevo y el aviso. Tiene el tic de 1 s, pide la pantalla encendida mientras
  * corra algo y se esté en *Temporizadores*, y registra sus acciones en el mapa. El reloj, el almacén, el
  * aviso y la pantalla se inyectan: los tests le pasan dobles.
  *
@@ -9,10 +9,9 @@
  */
 import type { SeccionDeAcciones } from './acciones.js';
 import {
-  type Temporizador, type Cronometro, type Duracion, type EnLista,
+  type Temporizador, type Duracion, type EnLista, type TipoNuevo,
   esCrono, empezarCrono, pausarCrono, seguirCrono, corriendo, terminado, empezar, pausar, seguir, sumarMinuto,
-  cronoCorriendo, iniciarCrono, pararCrono, reiniciarCrono,
-  aMs, girar, esRueda, leerGuardado, CLAVE_TEMPORIZADORES
+  cronoCorriendo, aMs, girar, esRueda, esTipoNuevo, leerGuardado, CLAVE_TEMPORIZADORES
 } from './temporizadores.js';
 
 export interface Reloj {
@@ -38,7 +37,8 @@ type Almacen = Pick<Storage, 'getItem' | 'setItem'>;
 
 export interface EstadoTemporizadores {
   temporizadores: readonly EnLista[];
-  crono: Cronometro;
+  /** Lo que crea *Empezar* en el temporizador nuevo. */
+  tipo: TipoNuevo;
   ruedas: Duracion;
   /** El id del temporizador cuyo aviso suena, o ninguno. */
   avisando: string | null;
@@ -93,7 +93,7 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, en
 }): ControlTemporizadores {
   const guardado = leerGuardado(leer(almacen));
   let temporizadores: readonly EnLista[] = guardado.temporizadores;
-  let crono: Cronometro = guardado.crono;
+  let tipo: TipoNuevo = 'cuenta';
   let ruedas: Duracion = guardado.ultimaDuracion;
   let avisando: string | null = null;
   let ticsAvisando = 0;
@@ -107,10 +107,10 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, en
   /** Las cuentas regresivas solas: los cronómetros con nombre ni terminan ni avisan. */
   const cuentas = (): Temporizador[] => temporizadores.filter((x): x is Temporizador => !esCrono(x));
 
-  /** Si algún temporizador está corriendo de verdad —no terminado— o el cronómetro anda. */
+  /** Si alguna cuenta está corriendo de verdad —no terminada— o algún cronómetro anda. */
   const enMarcha = (): boolean => {
     const ahora = reloj.ahora();
-    return cuentas().some(c => corriendo(c) && !terminado(c, ahora)) || cronoCorriendo(crono) ||
+    return cuentas().some(c => corriendo(c) && !terminado(c, ahora)) ||
       temporizadores.some(x => esCrono(x) && cronoCorriendo(x));
   };
 
@@ -145,7 +145,7 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, en
     if (avisando !== avisabaAntes || nuevas.length > 0) redibujar(); else pintarVivo();
   }
 
-  const guardarTodo = (): void => guardar(almacen, { temporizadores, crono, ultimaDuracion: ruedas });
+  const guardarTodo = (): void => guardar(almacen, { temporizadores, ultimaDuracion: ruedas });
 
   /** Un cambio por un toque: guarda, acomoda el intervalo y la pantalla, y redibuja. */
   function cambiar(fn: () => void): void {
@@ -180,6 +180,13 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, en
 
   const acciones: SeccionDeAcciones = {
     'temporizador-empezar': () => {
+      if (tipo === 'crono') {
+        cambiar(() => {
+          temporizadores = [...temporizadores, empezarCrono(nuevoId(), nombreEscrito(), reloj.ahora())];
+          vaciarNombre();
+        });
+        return;
+      }
       const duracion = aMs(ruedas);
       if (duracion <= 0) return;
       aviso.preparar();
@@ -188,23 +195,25 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, en
         vaciarNombre();
       });
     },
+    // Redibuja: las ruedas aparecen o se van. El nombre escrito lo conserva `main`.
+    'temporizador-tipo': (boton) => {
+      const valor = boton.dataset['valor'];
+      if (esTipoNuevo(valor) && valor !== tipo) cambiar(() => { tipo = valor; });
+    },
     'temporizador-pausar': sobre((c, ahora) => reemplazar(c, esCrono(c) ? pausarCrono(c, ahora) : pausar(c, ahora))),
     'temporizador-seguir': sobre((c, ahora) => reemplazar(c, esCrono(c) ? seguirCrono(c, ahora) : seguir(c, ahora))),
     // Un cronómetro no tiene minutos que sumar.
     'temporizador-sumar': sobre((c, ahora) => { if (esCrono(c)) return; callar(c); reemplazar(c, sumarMinuto(c, ahora)); }),
     'temporizador-sacar': sobre((c) => { callar(c); temporizadores = temporizadores.filter(x => x !== c); }),
     'rueda-mas': girarRueda(1),
-    'rueda-menos': girarRueda(-1),
-    'crono-iniciar': () => cambiar(() => { crono = iniciarCrono(crono, reloj.ahora()); }),
-    'crono-parar': () => cambiar(() => { crono = pararCrono(crono, reloj.ahora()); }),
-    'crono-reiniciar': () => cambiar(() => { crono = reiniciarCrono(); })
+    'rueda-menos': girarRueda(-1)
   };
 
   // Lo guardado puede venir corriendo, o terminado mientras la app estaba cerrada.
   ajustarMarcha();
 
   return {
-    estado: () => ({ temporizadores, crono, ruedas, avisando, ahora: reloj.ahora() }),
+    estado: () => ({ temporizadores, tipo, ruedas, avisando, ahora: reloj.ahora() }),
     revisarPantalla: ajustarMarcha,
     empezarCon(nombre, duracion) {
       if (!(duracion > 0)) return;

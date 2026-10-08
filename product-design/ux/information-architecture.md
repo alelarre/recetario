@@ -426,16 +426,16 @@ se reconoce abre el Recetario.
 | **Agregar al plan** | `#/plan/agregar?dia=&momento=` | La búsqueda del Recetario, el bloque *Menú diario* y la grilla de las categorías: tocar una receta la suma a esa comida y vuelve. | Planificar | J9 |
 | **Lista de compras** | `#/plan/compras` | Los ingredientes de todo lo cargado, en dos bloques, y compartir como texto. | Planificar | J9 |
 | **Herramientas** | `#/herramientas` | La lista de las herramientas: *Temporizadores*, *Pan*, *Fermentados*, *Referencias* y *Conversor*. Es destino del menú: hamburguesa en vez de volver. Una ruta `#/herramientas/…` que no es Temporizadores, una calculadora, Referencias ni el Conversor abre esta lista. | Cocinar | J6 |
-| **Temporizadores** | `#/herramientas/temporizadores` | El cronómetro, los temporizadores —cuentas regresivas, con nombre, tiempo, barra, +1', pausa y sacar— y el temporizador nuevo: nombre opcional, ruedas de horas, minutos y segundos y *Empezar*. Lleva volver. Mientras corre algo, la pantalla no se apaga. No lee recetas ni usa Drive. | Cocinar | J6 |
+| **Temporizadores** | `#/herramientas/temporizadores` | La lista —cuentas regresivas, con nombre, tiempo, barra, +1', pausa y sacar, y cronómetros, con nombre, tiempo, pausa y sacar— y el temporizador nuevo: cuenta regresiva o cronómetro, nombre opcional, ruedas de horas, minutos y segundos para una cuenta, y *Empezar*. Lleva volver. Mientras corre algo, la pantalla no se apaga. No lee recetas ni usa Drive. | Cocinar | J6 |
 | **Calculadora de pan** | `#/herramientas/pan` | Pan, harinas, levadura, fermentación y cantidad —harina total o masa total—, y al pie el resultado con sus advertencias. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
 | **Calculadora de sal** | `#/herramientas/fermentados` | Fermento y peso total del frasco, y al pie los gramos de sal. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
 | **Referencias** | `#/herramientas/referencias` | Huevos, carne, aceite, horno, bebidas, arroz, legumbres, pasta, verduras, masas, dulces y cuánto dura cada alimento, en una sola pantalla: arriba, el buscador y los tags; debajo, una lista de fichas que se despliegan en el lugar con su tabla o su cuenta y su fuente, o lo que encuentra el buscador, con lo buscado resaltado. Un tag oculta lo que no lo tiene. El tag y el texto van en la ruta (`?tag=`, `?q=`). El blanqueado y el té llevan un botón que crea un temporizador. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
 | **Conversor** | `#/herramientas/conversor` | La cuenta que pasa una cantidad a las demás unidades —tazas, cucharas, ml, g, oz, sticks— según el sistema y el ingrediente; la tabla de pesos por ingrediente, con un buscador arriba; las tazas y cucharas de cada sistema y las medidas de EE. UU. Lleva volver. No lee recetas ni usa Drive. | Cocinar | J6 |
 
-**La tira de Temporizadores.** Mientras corre un temporizador o el cronómetro, o
-queda uno terminado sin sacar, toda pantalla —salvo Temporizadores y la vista de
+**La tira de Temporizadores.** Mientras corre una cuenta o un cronómetro, o
+queda una cuenta terminada sin sacar, toda pantalla —salvo Temporizadores y la vista de
 invitado— lleva al pie una tira fija que rota cada 5 s por todos, en el orden de
-la pantalla: el cronómetro y después cada temporizador, con su nombre, su tiempo
+la pantalla, cada uno con su nombre, su tiempo
 y «2/3» si hay más de uno; uno terminado, con «¡Listo!» y *Parar*. Los pausados
 no entran. Con más de uno, una flecha en cada punta pasa de turno a mano, y
 deslizar sobre la tira también; el turno nuevo entra deslizándose. Tocarla abre

@@ -2458,14 +2458,12 @@ function pintarTemporizadoresVivos(paso?: 1 | -1): void {
     const b = document.querySelector<HTMLElement>(`#app [data-avance="${c.id}"]`);
     if (b) b.style.width = `${Math.round(avance(c, e.ahora) * 100)}%`;
   }
-  const crono = document.querySelector<HTMLElement>('#app [data-tiempo="crono"]');
-  if (crono) crono.textContent = formatear(transcurrido(e.crono, e.ahora));
   for (const r of ['h', 'm', 's'] as const) {
     const v = document.querySelector<HTMLElement>(`#app [data-rueda-valor="${r}"]`);
     if (v) v.textContent = r === 'h' ? String(e.ruedas.h) : String(e.ruedas[r]).padStart(2, '0');
   }
   const empezar = document.querySelector<HTMLButtonElement>('#app [data-accion="temporizador-empezar"]');
-  if (empezar) empezar.disabled = aMs(e.ruedas) <= 0;
+  if (empezar) empezar.disabled = e.tipo === 'cuenta' && aMs(e.ruedas) <= 0;
 }
 
 function pintarResultadoDeHerramienta(): void {

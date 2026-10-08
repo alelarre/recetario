@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   empezarCrono, pausarCrono, seguirCrono, esCrono,
   empezar, pausar, seguir, sumarMinuto, restante, terminado, avance, corriendo,
-  CRONO_EN_CERO, iniciarCrono, pararCrono, reiniciarCrono, transcurrido, cronoCorriendo,
+  transcurrido, cronoCorriendo,
   formatear, nombreDeDuracion, aMs, girar, leerGuardado, GUARDADO_POR_DEFECTO, DURACION_POR_DEFECTO, MINUTO
 } from '../src/temporizadores.js';
 
@@ -59,17 +59,16 @@ describe('un temporizador regresiva', () => {
 });
 
 describe('el cronómetro', () => {
-  it('acumula entre pausas y reiniciar lo deja en cero', () => {
-    expect(transcurrido(CRONO_EN_CERO, T0)).toBe(0);
-    const a = iniciarCrono(CRONO_EN_CERO, T0);
+  it('acumula entre pausas, y seguir uno que corre no lo toca', () => {
+    const a = empezarCrono('c', '', T0);
     expect(cronoCorriendo(a)).toBe(true);
     expect(transcurrido(a, T0 + 5000)).toBe(5000);
-    const b = pararCrono(a, T0 + 5000);
+    const b = pausarCrono(a, T0 + 5000);
+    expect(cronoCorriendo(b)).toBe(false);
     expect(transcurrido(b, T0 + 99_000)).toBe(5000);
-    const c = iniciarCrono(b, T0 + 100_000);
+    const c = seguirCrono(b, T0 + 100_000);
     expect(transcurrido(c, T0 + 101_000)).toBe(6000);
-    expect(iniciarCrono(c, T0 + 200_000)).toBe(c);
-    expect(transcurrido(reiniciarCrono(), T0)).toBe(0);
+    expect(seguirCrono(c, T0 + 200_000)).toBe(c);
   });
 });
 
@@ -127,25 +126,30 @@ describe('lo guardado', () => {
         { id: 7, nombre: 'Sin id', duracion: 1000, fin: 5000 },
         'nada'
       ],
-      crono: { desde: 100, acumulado: 50 },
       ultimaDuracion: { h: 1, m: 2, s: 3 }
     });
     expect(g.temporizadores).toEqual([
       { id: 'a', nombre: 'Pasta', duracion: 1000, fin: 5000 },
       { id: 'b', nombre: 'Horno', duracion: 1000, restante: 400 }
     ]);
-    expect(g.crono).toEqual({ desde: 100, acumulado: 50 });
     expect(g.ultimaDuracion).toEqual({ h: 1, m: 2, s: 3 });
   });
 
-  it('el cronómetro corriendo sigue desde donde estaba al recargar', () => {
-    const g = leerGuardado({ temporizadores: [], crono: { desde: T0, acumulado: 2000 }, ultimaDuracion: { h: 0, m: 5, s: 0 } });
-    expect(transcurrido(g.crono, T0 + 3000)).toBe(5000);
+  it('el cronómetro sin nombre guardado con tiempo entra primero en la lista como «Cronómetro», como estaba', () => {
+    const pasta = { id: 'a', nombre: 'Pasta', duracion: 1000, fin: 5000 };
+    const corriendo = leerGuardado({ temporizadores: [pasta], crono: { desde: T0, acumulado: 2000 } });
+    expect(corriendo.temporizadores).toEqual([{ id: 'crono', nombre: 'Cronómetro', acumulado: 2000, desde: T0 }, pasta]);
+    const parado = leerGuardado({ temporizadores: [], crono: { acumulado: 7000 } });
+    expect(parado.temporizadores).toEqual([{ id: 'crono', nombre: 'Cronómetro', acumulado: 7000 }]);
   });
 
-  it('un cronómetro o unas ruedas fuera de forma caen en lo de fábrica, sin tocar lo demás', () => {
-    const g = leerGuardado({ temporizadores: [], crono: { acumulado: 'x' }, ultimaDuracion: { h: 0, m: 61, s: 0 } });
-    expect(g.crono).toEqual(CRONO_EN_CERO);
+  it('el cronómetro sin nombre en cero o fuera de forma no entra', () => {
+    expect(leerGuardado({ temporizadores: [], crono: { acumulado: 0 } }).temporizadores).toEqual([]);
+    expect(leerGuardado({ temporizadores: [], crono: { acumulado: 'x' } }).temporizadores).toEqual([]);
+  });
+
+  it('unas ruedas fuera de forma caen en lo de fábrica, sin tocar lo demás', () => {
+    const g = leerGuardado({ temporizadores: [], ultimaDuracion: { h: 0, m: 61, s: 0 } });
     expect(g.ultimaDuracion).toEqual(DURACION_POR_DEFECTO);
   });
 });

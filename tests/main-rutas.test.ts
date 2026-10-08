@@ -1157,8 +1157,8 @@ describe('main.ts: las rutas', () => {
     const { abrir, tocar, pinturas } = await montar();
     await abrir('#/nueva');
     const antes = pinturas.length;
-    await tocar('crono-iniciar');
-    await tocar('crono-parar');
+    await tocar('temporizador-tipo', { valor: 'crono' });
+    await tocar('temporizador-empezar');
     expect(pinturas.length).toBe(antes);
   });
 
@@ -1166,10 +1166,12 @@ describe('main.ts: las rutas', () => {
     const { abrir, tocar, pinturas, app } = await montar();
     await abrir('#/herramientas/temporizadores');
     const antes = pinturas.length;
-    await tocar('crono-iniciar');
+    await tocar('temporizador-tipo', { valor: 'crono' });
     expect(pinturas.length).toBe(antes + 1);
-    expect(app.innerHTML).toContain('data-accion="crono-parar"');
-    await tocar('crono-parar');
+    expect(app.innerHTML).not.toContain('class="ruedas"');
+    await tocar('temporizador-empezar');
+    expect(pinturas.length).toBe(antes + 2);
+    expect(app.innerHTML).toContain('data-accion="temporizador-pausar"');
   });
 
   it('en la calculadora, tocar una opción de un conmutador la aprieta', async () => {
@@ -2810,7 +2812,8 @@ describe('main.ts: las rutas', () => {
     } } });
     const { abrir, tocar } = await montar();
     await abrir('#/herramientas/temporizadores');
-    await tocar('crono-iniciar');
+    await tocar('temporizador-tipo', { valor: 'crono' });
+    await tocar('temporizador-empezar');
     await esperar();
     expect(pedidos).toBe(1);
     await abrir('#/r/f1');

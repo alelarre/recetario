@@ -604,12 +604,7 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 /* ---- Temporizadores ---- */
 /* Las fichas van en un contenedor propio: el aire del cuerpo no les llega. */
 .temporizadores { display: flex; flex-direction: column; gap: var(--e-5); }
-/* El cronómetro: el tiempo grande, centrado, y dos botones a lo ancho. */
-.crono { text-align: center; }
-.tiempo-grande { font-size: 44px; font-weight: 600; font-variant-numeric: tabular-nums;
-                 margin: var(--e-2) 0 var(--e-4); }
 .acciones-temporizador { display: flex; gap: var(--e-2); }
-.crono .acciones-temporizador .btn { flex: 1; }
 /* Un temporizador: nombre, tiempo y tres botones cuadrados en una fila; la barra debajo. */
 .temporizador-fila { display: flex; align-items: center; gap: var(--e-3); }
 .temporizador-fila .nom { flex: 1; min-width: 0; font-weight: 600;
@@ -634,6 +629,8 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
                           stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .rueda .val { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .nuevo-temporizador > .btn { width: 100%; }
+/* Cuenta regresiva o cronómetro: el conmutador de un dato (§6.28), a lo ancho. */
+.nuevo-temporizador > .seg { display: grid; margin: 0 0 var(--e-4); }
 
 /* La tira al pie: fuera de #app, fija, debajo del menú lateral y del velo.
    El contenido no se sale de ella mientras un turno entra deslizándose. */

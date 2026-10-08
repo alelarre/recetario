@@ -4,40 +4,45 @@ import {
   renderTemporizadores, renderTira, formaDeTira, turnosDeTira, rotarTira, pasoDeDeslizar, CICLO_TIRA
 } from '../src/ui/temporizadores.js';
 import type { EstadoTemporizadores } from '../src/temporizadores-control.js';
-import { MINUTO, CRONO_EN_CERO } from '../src/temporizadores.js';
+import { MINUTO } from '../src/temporizadores.js';
 import { ICO } from '../src/ui/iconos.js';
 
 const T0 = 1_000_000;
-const base: EstadoTemporizadores = { temporizadores: [], crono: CRONO_EN_CERO, ruedas: { h: 0, m: 10, s: 0 }, avisando: null, ahora: T0 };
+const base: EstadoTemporizadores = { temporizadores: [], tipo: 'cuenta', ruedas: { h: 0, m: 10, s: 0 }, avisando: null, ahora: T0 };
 const pasta = { id: 'p', nombre: 'Pasta', duracion: 10 * MINUTO, fin: T0 + 3 * MINUTO + 12_000 };
 const horno = { id: 'h', nombre: 'Horno', duracion: 30 * MINUTO, fin: T0 + 24 * MINUTO + 40_000 };
 const lista = { id: 'l', nombre: 'Huevos', duracion: 6 * MINUTO, fin: T0 - 2000 };
 const dibujar = (extra: Partial<EstadoTemporizadores> = {}, nombre = '') => renderTemporizadores({ ...base, ...extra, nombre });
 
 describe('la pantalla de Temporizadores', () => {
-  it('va con volver y en orden: cronómetro, los que corren, temporizador nuevo', () => {
+  it('va con volver y en orden: los que corren y el temporizador nuevo', () => {
     const html = dibujar({ temporizadores: [pasta, horno] });
     expect(html).toContain('>Temporizadores<');
     expect(html).toContain('data-accion="volver"');
-    const crono = html.indexOf('Cronómetro');
     const p = html.indexOf('data-temporizador="p"');
     const h = html.indexOf('data-temporizador="h"');
     const nuevo = html.indexOf('Nuevo temporizador');
-    expect(crono).toBeGreaterThan(0);
-    expect(p).toBeGreaterThan(crono);
+    expect(p).toBeGreaterThan(0);
     expect(h).toBeGreaterThan(p);
     expect(nuevo).toBeGreaterThan(h);
   });
 
-  it('el cronómetro en cero: Reiniciar deshabilitado e Iniciar; corriendo: Parar', () => {
-    const enCero = dibujar();
-    expect(enCero).toContain('data-tiempo="crono">0:00<');
-    expect(enCero).toContain('data-accion="crono-reiniciar" disabled>');
-    expect(enCero).toContain('data-accion="crono-iniciar">Iniciar<');
-    const andando = dibujar({ crono: { desde: T0 - 727_000, acumulado: 0 } });
-    expect(andando).toContain('data-tiempo="crono">12:07<');
-    expect(andando).toContain('data-accion="crono-parar">Parar<');
-    expect(andando).not.toContain('disabled');
+  it('sin nada en la lista, sólo el temporizador nuevo', () => {
+    const html = dibujar();
+    expect(html).not.toContain('data-temporizador=');
+    expect(html).toContain('Nuevo temporizador');
+  });
+
+  it('el temporizador nuevo elige entre cuenta regresiva y cronómetro, con el elegido apretado', () => {
+    const cuenta = dibujar();
+    expect(cuenta).toContain('data-accion="temporizador-tipo" data-valor="cuenta" aria-pressed="true">Cuenta regresiva<');
+    expect(cuenta).toContain('data-accion="temporizador-tipo" data-valor="crono" aria-pressed="false">Cronómetro<');
+    expect(cuenta).toContain('class="ruedas"');
+    const crono = dibujar({ tipo: 'crono', ruedas: { h: 0, m: 0, s: 0 } }, 'Amasar');
+    expect(crono).toContain('data-valor="crono" aria-pressed="true"');
+    expect(crono).not.toContain('class="ruedas"');
+    expect(crono).toContain('value="Amasar"');
+    expect(crono).toContain('data-accion="temporizador-empezar">Empezar<');
   });
 
   it('un temporizador corriendo: nombre, tiempo, barra y los tres botones con su id', () => {
@@ -84,17 +89,18 @@ describe('la pantalla de Temporizadores', () => {
 });
 
 describe('la tira', () => {
-  const corren = { ...base, crono: { desde: T0 - 65_000, acumulado: 0 }, temporizadores: [pasta, horno] };
+  const crono = { id: 'c', nombre: 'Cronómetro', acumulado: 0, desde: T0 - 65_000 };
+  const corren = { ...base, temporizadores: [crono, pasta, horno] };
 
   it('sin nada que mostrar no existe; los pausados no cuentan', () => {
     expect(renderTira(base, 0)).toBe('');
     expect(renderTira({ ...base, temporizadores: [{ id: 'q', nombre: 'Masa', duracion: MINUTO, restante: MINUTO }] }, 0)).toBe('');
   });
 
-  it('los turnos van en el orden de la pantalla: el cronómetro y los temporizadores, terminados incluidos', () => {
+  it('los turnos van en el orden de la pantalla, terminados incluidos', () => {
     const pausado = { id: 'q', nombre: 'Masa', duracion: MINUTO, restante: MINUTO };
-    const e = { ...corren, temporizadores: [pasta, pausado, lista, horno] };
-    expect(turnosDeTira(e).map(t => (t.tipo === 'crono' ? 'crono' : t.temporizador.id))).toEqual(['crono', 'p', 'l', 'h']);
+    const e = { ...base, temporizadores: [crono, pasta, pausado, lista, horno] };
+    expect(turnosDeTira(e).map(t => t.id)).toEqual(['c', 'p', 'l', 'h']);
   });
 
   it('dibuja el turno que le toca, con su lugar entre todos', () => {
@@ -252,7 +258,7 @@ describe('los cronómetros con nombre', () => {
   });
   it('la tira rota por los que corren, mezclados, y no por los pausados', () => {
     const turnos = turnosDeTira({ ...base, temporizadores: [pasta, amasar, leudar] });
-    expect(turnos.map(t => (t.tipo === 'temporizador' ? t.temporizador.id : 'crono'))).toEqual(['p', 'a']);
+    expect(turnos.map(t => t.id)).toEqual(['p', 'a']);
   });
   it('en la tira, un cronómetro muestra su nombre y lo que lleva', () => {
     const html = renderTira({ ...base, temporizadores: [amasar] }, 0);

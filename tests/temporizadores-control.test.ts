@@ -3,7 +3,7 @@ import { crearControlTemporizadores, TICS_DE_AVISO } from '../src/temporizadores
 import type { Reloj, Aviso, Pantalla } from '../src/temporizadores-control.js';
 import type { EnLista, Temporizador } from '../src/temporizadores.js';
 import {
-  CLAVE_TEMPORIZADORES, MINUTO, restante as restanteDe, corriendo as corriendoDe, cronoCorriendo, transcurrido
+  CLAVE_TEMPORIZADORES, MINUTO, restante as restanteDe, corriendo as corriendoDe, transcurrido
 } from '../src/temporizadores.js';
 import { localStorageFalso } from './dom-falso.js';
 
@@ -192,7 +192,7 @@ describe('el tic', () => {
     const almacen = localStorageFalso();
     almacen.setItem(CLAVE_TEMPORIZADORES, JSON.stringify({
       temporizadores: [{ id: 'vieja', nombre: 'Horno', duracion: MINUTO, fin: T0 - 5000 }],
-      crono: { acumulado: 0 }, ultimaDuracion: { h: 0, m: 10, s: 0 }
+      ultimaDuracion: { h: 0, m: 10, s: 0 }
     }));
     const { control, tics, aviso, andando, encendida } = armar({ almacen });
     expect(andando()).toBe(true);
@@ -272,29 +272,54 @@ describe('pausar, seguir y sumar', () => {
   });
 });
 
-describe('el cronómetro', () => {
-  it('iniciar arranca el tic y la pantalla; parar los suelta; reiniciar lo deja en cero', () => {
-    const { control, tocar, tics, andando, encendida, almacen } = armar();
-    tocar('crono-iniciar');
-    expect(cronoCorriendo(control.estado().crono)).toBe(true);
+describe('Nuevo temporizador como cronómetro', () => {
+  const tipo = (valor: string) => ({ dataset: { valor } }) as unknown as HTMLElement;
+
+  it('arranca en cuenta regresiva; elegir cronómetro redibuja y no guarda nada en la lista', () => {
+    const { control, tocar, redibujar } = armar();
+    expect(control.estado().tipo).toBe('cuenta');
+    tocar('temporizador-tipo', tipo('crono'));
+    expect(control.estado().tipo).toBe('crono');
+    expect(control.estado().temporizadores).toEqual([]);
+    expect(redibujar).toHaveBeenCalledOnce();
+    tocar('temporizador-tipo', tipo('crono'));
+    tocar('temporizador-tipo', tipo('otro'));
+    expect(redibujar).toHaveBeenCalledOnce();
+  });
+
+  it('Empezar suma un cronómetro con el nombre escrito, corriendo, y vacía el nombre', () => {
+    const { control, tocar, tics, vaciarNombre, andando, encendida, almacen } = armar({ nombre: 'Amasar' });
+    tocar('temporizador-tipo', tipo('crono'));
+    tocar('temporizador-empezar');
+    tocar('temporizador-empezar');
+    const lista = control.estado().temporizadores;
+    expect(lista).toHaveLength(2);
+    expect(lista[0]).toMatchObject({ nombre: 'Amasar', acumulado: 0 });
+    expect(lista[0]!.id).not.toBe(lista[1]!.id);
+    expect(vaciarNombre).toHaveBeenCalled();
     expect(andando()).toBe(true);
     expect(encendida()).toBe(true);
     tics(7);
-    tocar('crono-parar');
-    expect(transcurrido(control.estado().crono, control.estado().ahora)).toBe(7000);
-    expect(andando()).toBe(false);
-    expect(encendida()).toBe(false);
-    expect(JSON.parse(almacen.getItem(CLAVE_TEMPORIZADORES)!).crono).toEqual({ acumulado: 7000 });
-    tocar('crono-reiniciar');
-    expect(transcurrido(control.estado().crono, control.estado().ahora)).toBe(0);
+    expect(transcurrido(control.estado().temporizadores[0] as never, control.estado().ahora)).toBe(7000);
+    expect(JSON.parse(almacen.getItem(CLAVE_TEMPORIZADORES)!).temporizadores).toHaveLength(2);
+  });
+
+  it('con las ruedas en 0:00:00 un cronómetro empieza igual', () => {
+    const { control, tocar } = armar();
+    for (let i = 0; i < 10; i++) tocar('rueda-menos', boton('', 'm'));
+    tocar('temporizador-tipo', tipo('crono'));
+    tocar('temporizador-empezar');
+    expect(control.estado().temporizadores).toHaveLength(1);
   });
 
   it('un cronómetro guardado corriendo arranca el tic al construir', () => {
     const almacen = localStorageFalso();
-    almacen.setItem(CLAVE_TEMPORIZADORES, JSON.stringify({ temporizadores: [], crono: { desde: T0 - 4000, acumulado: 0 }, ultimaDuracion: { h: 0, m: 10, s: 0 } }));
+    almacen.setItem(CLAVE_TEMPORIZADORES, JSON.stringify({
+      temporizadores: [{ id: 'c', nombre: 'Amasar', acumulado: 0, desde: T0 - 4000 }], ultimaDuracion: { h: 0, m: 10, s: 0 }
+    }));
     const { control, andando } = armar({ almacen });
     expect(andando()).toBe(true);
-    expect(transcurrido(control.estado().crono, T0)).toBe(4000);
+    expect(transcurrido(control.estado().temporizadores[0] as never, T0)).toBe(4000);
   });
 });
 

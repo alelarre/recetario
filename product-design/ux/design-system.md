@@ -319,7 +319,7 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `reloj`, `pan`, `frasco` | Las tres herramientas —Temporizadores, Pan y Fermentados—: en su entrada de la lista de Herramientas y delante del título de su pantalla. `reloj` va también delante del nombre en la tira (§6.29). |
 | `libro`, `medidor` | Referencias y el Conversor: en su entrada de la lista de Herramientas y delante del título de sus pantallas —la entrada y cada ficha de Referencias, y el Conversor— (§6.30). Un libro abierto y una taza medidora con sus marcas, del trazo de los demás. |
 | `relojMas` | La marca `cuenta:` de una receta y los botones de minutos de Referencias, y *Cuenta regresiva* en la capa del editor (§6.30). El reloj abierto abajo a la derecha, con un «+» del mismo trazo en ese hueco. |
-| `cronometro`, `cronometroMas` | `cronometro`: un cronómetro con nombre, delante de su nombre en la lista y en la tira (§6.29). `cronometroMas`, con el «+» de `relojMas`: la marca `cronometro:` de una receta y *Cronómetro* en la capa del editor (§6.30). Un círculo, una aguja y el botón arriba. |
+| `cronometro`, `cronometroMas` | `cronometro`: un cronómetro, delante de su nombre en la lista y en la tira (§6.29). `cronometroMas`, con el «+» de `relojMas`: la marca `cronometro:` de una receta y *Cronómetro* en la capa del editor (§6.30). Un círculo, una aguja y el botón arriba. |
 | `tilde` | El botón de §6.30 recién tocado. |
 | `pausa`, `play` | Pausar y seguir un temporizador (§6.29). |
 | `arriba`, `abajo` | Las ruedas del temporizador nuevo (§6.29). |
@@ -1482,20 +1482,20 @@ acento: se leen por tamaño.
 
 ### 6.29 Temporizadores
 
-**La ficha del cronómetro:** título «Cronómetro», el tiempo a 44 px peso 600 con
-cifras tabulares, centrado, y dos botones a lo ancho: *Reiniciar* secundario e
-*Iniciar*/*Parar* primario.
-
-**La ficha de un temporizador:** una fila con el nombre (600, recortado en una
+**La ficha de una cuenta regresiva:** una fila con el nombre (600, recortado en una
 línea), el tiempo a 28 px peso 600 en `--acento` —`--fg-2` pausado, `--fg` y el
 texto «¡Listo!» terminado— y tres botones cuadrados de 40 px, secundarios:
 *+1'*, pausa/seguir y la cruz. Debajo, una barra de 3 px en `--surface-alta`
 con el avance en `--acento`. Terminado no lleva barra: los botones son *+1'* y
 *Parar* primario.
 
-**La ficha de un cronómetro con nombre** es la misma fila: el ícono `cronometro`
-delante del nombre —un temporizador lleva `reloj`—, el tiempo que sube y dos
+**La ficha de un cronómetro** es la misma fila: el ícono `cronometro`
+delante del nombre —una cuenta lleva `reloj`—, el tiempo que sube y dos
 botones, pausa/seguir y la cruz. No lleva barra ni *+1'*.
+
+**Nuevo temporizador:** arriba, el conmutador de un dato (§6.28) a lo ancho,
+*Cuenta regresiva* | *Cronómetro*; debajo, el nombre, las ruedas sólo para una
+cuenta, y *Empezar* primario a lo ancho.
 
 **Las ruedas:** tres columnas iguales —horas, min, seg— con la etiqueta en
 `--txt-micro` `--fg-3`, y una caja `--surface-alta` con borde `--borde-fuerte`
