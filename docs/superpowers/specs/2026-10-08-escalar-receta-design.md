@@ -9,14 +9,15 @@ porciones— para cocinarla esa vez. Escalar cambia lo que se muestra, nunca el
 - **Arriba de la lista de ingredientes**, en la ficha de Ingredientes, una
   fila de chips: **×½**, **×1**, **×2** y **×3**. Al abrir la receta está
   marcado ×1.
-- **Si el rinde empieza con un número** —«4 porciones», «12 empanadas»—, al
-  lado de los chips va un campo **Porciones** con ese número. Escribir otro
-  número pone el multiplicador en la razón entre los dos: 6 sobre 4 es ×1,5.
-  Elegir un chip cambia el número del campo: ×2 sobre 4 da 8. Un campo vacío,
-  en cero o que no es un número no cambia nada. Si el rinde no empieza con un
-  número —«1 molde de 24 cm»—, sólo están los chips.
-- Con un multiplicador que no está entre los chips —el que sale de las
-  porciones—, ningún chip queda marcado.
+- **Si el rinde empieza con un número** —«4 porciones», «12 empanadas», «1
+  molde de 24 cm»—, al lado de los chips va un campo con ese número, seguido
+  del resto del rinde: «[ 4 ] porciones». Escribir otro número pone el
+  multiplicador en la razón entre los dos: 6 sobre 4 es ×1,5. Elegir un chip
+  cambia el número del campo: ×2 sobre 4 da 8. Un campo vacío, en cero o que
+  no es un número no cambia nada. Si el rinde no empieza con un número —«para
+  la familia»— o no hay rinde, sólo están los chips.
+- Con un multiplicador que no está entre los chips —el que sale del campo
+  del rinde—, ningún chip queda marcado.
 - **Una receta sin ingredientes** no muestra el multiplicador.
 
 ## Qué cambia con el multiplicador
@@ -71,7 +72,7 @@ notas; la receta guardada, su fila del índice y el `.md`; lo que se comparte
   reglas de arriba; también el número de porciones de un rinde.
 - **La receta y el modo cocina** reciben el multiplicador y dibujan los
   ingredientes y el rinde escalados. Los chips y el campo de porciones son
-  acciones de la receta; escribir en *Porciones* pinta sólo lo que cambia,
+  acciones de la receta; escribir en el campo del rinde pinta sólo lo que cambia,
   sin sacarle el foco al campo.
 - **`main.ts`** guarda el multiplicador con el id de su receta, como algo que
   sobrevive entre la receta y su modo cocina, y lo vuelve a ×1 al abrir otra.
@@ -81,7 +82,7 @@ notas; la receta guardada, su fila del índice y el `.md`; lo que se comparte
 De lógica, con cantidades armadas en el test: cada forma de número, el rango,
 la nota, lo que no empieza con número, el redondeo a fracción, a decimal y a
 entero, el rinde; la receta y el modo cocina con un multiplicador; el campo
-*Porciones* que fija el multiplicador y el chip que fija las porciones; volver
+del rinde que fija el multiplicador y el chip que fija las porciones; volver
 a ×1 al abrir otra receta.
 
 ## Documentos
@@ -91,5 +92,5 @@ a ×1 al abrir otra receta.
   al `.md`.
 - La capacidad nueva en la épica de la receta que corresponda
   (`product-design/product/specs/`), y `design-system.md` (los chips y el campo
-  *Porciones*), `information-architecture.md` (la receta y el modo cocina) y
+  del rinde), `information-architecture.md` (la receta y el modo cocina) y
   `CLAUDE.md` si hace falta.
