@@ -757,7 +757,8 @@ foto, con una entrada por herramienta —`imagen` y *Foto*, `relojMas` y *Cuenta
 regresiva*, `cronometroMas` y *Cronómetro*—, cada una con su ícono, su nombre y
 el chevron a la derecha. Una deshabilitada lleva debajo su motivo, en `--fg-3`.
 Elegir una cambia el contenido de la misma ficha por su paso: la galería del
-depósito, o el nombre (opcional) con las ruedas de §6.29 y **Poner**. Foto no es
+depósito, o el nombre (opcional) con las ruedas de §6.29 y **Poner**, del
+ancho de la ficha. Foto no es
 la cámara (§3.4): pone una que ya está en el depósito, no agrega una nueva.
 
 **Sigue al campo por dentro:** desplazar el texto con el dedo lo mueve con su

@@ -734,3 +734,5 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 .item-herramienta:disabled { color: var(--fg-3); cursor: default; }
 .item-herramienta svg { width: var(--ico); height: var(--ico); stroke: currentColor; fill: none; stroke-width: 1.5;
                         stroke-linecap: round; stroke-linejoin: round; color: var(--fg-2); }
+/* *Poner*, en el paso de una marca, ocupa el renglón entero: es la única salida de la ficha. */
+[data-herramientas-linea] [data-accion="poner-marca"] { width: 100%; }

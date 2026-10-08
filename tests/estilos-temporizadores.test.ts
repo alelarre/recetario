@@ -24,3 +24,9 @@ describe('el ícono del nombre en Temporizadores', () => {
     expect(r).toContain('fill: none');
   });
 });
+
+describe('Poner, en el paso de una marca del editor', () => {
+  it('ocupa el renglón entero', () => {
+    expect(regla(BASE, '[data-herramientas-linea] [data-accion="poner-marca"]')).toContain('width: 100%');
+  });
+});
