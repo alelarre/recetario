@@ -186,7 +186,7 @@ antes, que sólo tiene cuentas, se lee igual, sin migrar.
 - **La tira:** el orden de rotación con cronómetros con nombre y cuentas
   mezclados, y que los pausados no entran.
 - **`validar`:** los errores de las marcas.
-- **El editor:** la tabla de herramientas, la etiqueta precargada y la marca
+- **El editor:** la tabla de herramientas, la marca
   escrita al final de la línea, junto a los tests del depósito.
 - **La búsqueda:** una marca aporta su `texto` y nada más.
 
