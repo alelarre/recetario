@@ -20,6 +20,8 @@ import { MS_CIERRE, MS_RESPALDO_CIERRE } from '../src/velo.js';
 import { PAN_POR_DEFECTO, calcularPan, lineasPan } from '../src/calculadoras/pan.js';
 import { SAL_POR_DEFECTO, cifrasSal } from '../src/calculadoras/fermentados.js';
 import type { CambiosDeFotos, Coincidencias, Plan, Receta } from '../src/tipos.js';
+import { REFERENCIAS } from '../src/referencias/indice.js';
+import { filasDe } from '../src/referencias/forma.js';
 
 vi.mock('../src/ui/tokens.css', () => ({}));
 vi.mock('../src/ui/base.css', () => ({}));
@@ -403,6 +405,10 @@ describe('main.ts: las rutas', () => {
     const resultadosDeCuenta: { cuenta: string; html: string }[] = [];
     /** Los bloques de tabla de referencia repintados solos, con el id de la tabla. */
     const tablasRepintadas: { tabla: string; html: string }[] = [];
+    /** Lo que la entrada de Referencias repintó sola debajo de los tags, mientras se escribe. */
+    const contenidosReferencias: string[] = [];
+    /** Las fichas de cuenta de Referencias repintadas solas, con su id: el desplegable abierto queda abierto. */
+    const fichasRepintadas: { ficha: string; html: string }[] = [];
     /** El `localStorage` de esta montada: lo escrito en las calculadoras y los temporizadores. */
     const almacen = localStorageFalso();
     vi.stubGlobal('localStorage', almacen);
@@ -734,6 +740,13 @@ describe('main.ts: las rutas', () => {
         if (deCuenta) {
           return { set outerHTML(html: string) { resultadosDeCuenta.push({ cuenta: deCuenta, html }); } };
         }
+        const deFicha = sel.match(/^#app #ficha-([\w-]+)$/)?.[1];
+        if (deFicha) {
+          return { set outerHTML(html: string) { fichasRepintadas.push({ ficha: deFicha, html }); } };
+        }
+        if (sel === '#app [data-contenido-referencias]') {
+          return { set outerHTML(html: string) { contenidosReferencias.push(html); } };
+        }
         const deTabla = sel.match(/^#app \[data-tabla="([\w-]+)"\]$/)?.[1];
         if (deTabla) {
           return { set outerHTML(html: string) { tablasRepintadas.push({ tabla: deTabla, html }); } };
@@ -933,6 +946,8 @@ describe('main.ts: las rutas', () => {
       resultadosHerramienta,
       resultadosDeCuenta,
       tablasRepintadas,
+      contenidosReferencias,
+      fichasRepintadas,
       almacen,
       /** Los oyentes de `input` de `#app`. */
       tecleos,
@@ -1102,10 +1117,8 @@ describe('main.ts: las rutas', () => {
       ['#/herramientas/pan', 'data-opcion="pan"'],
       ['#/herramientas/fermentados', 'data-opcion="fermento"'],
       ['#/herramientas/temporizadores', 'data-accion="temporizador-empezar"'],
-      ['#/herramientas/referencia', 'id="ficha-huevos"'],
-      ['#/herramientas/masas', 'id="ficha-molde"'],
-      ['#/herramientas/coccion', 'id="ficha-arroz"'],
-      ['#/herramientas/conservacion', 'data-buscar-referencia="conservacion"']
+      ['#/herramientas/referencias', 'data-buscar-referencias'],
+      ['#/herramientas/conversor', 'data-buscar-referencia="conversor"']
     ] as const) {
       await abrir(hash);
       expect(app.innerHTML, hash).toContain(marca);
@@ -1178,37 +1191,105 @@ describe('main.ts: las rutas', () => {
       return campo;
     };
 
-    it('escribir en una cuenta pinta sólo su resultado, y lo escrito queda guardado', async () => {
-      const { abrir, tecleos, pinturas, resultadosDeCuenta, almacen } = await montar();
-      await abrir('#/herramientas/coccion');
-      const antes = pinturas.length;
-      for (const fn of tecleos) await fn({ target: campoDeCuenta('agua-sal-pasta', 'gramos', '300') });
-      expect(resultadosDeCuenta).toHaveLength(1);
-      expect(resultadosDeCuenta[0]?.cuenta).toBe('agua-sal-pasta');
-      expect(resultadosDeCuenta[0]?.html).toContain('data-resultado-cuenta="agua-sal-pasta"');
-      expect(resultadosDeCuenta[0]?.html).toContain('class="ing"');
-      expect(pinturas.length).toBe(antes);
-      expect(JSON.parse(almacen.getItem('recetario.referencias.coccion') ?? '{}')).toEqual({ 'agua-sal-pasta': { gramos: 300 } });
+    /**
+     * Una tabla de Referencias con tag y el texto de su primera celda, sacados
+     * de los datos: los tests no dependen de qué dice cada tabla.
+     */
+    const conTag = REFERENCIAS.find(f => f.tipo === 'tabla' && f.tags.length > 0);
+    const tagDePrueba = conTag?.tags[0] ?? '';
+    const textoDePrueba = conTag?.tipo === 'tabla' ? Object.values(filasDe(conTag.tabla)[0] ?? {})[0] ?? '' : '';
+    const queryDePrueba = (q: string) => new URLSearchParams({ tag: tagDePrueba, q }).toString();
+    const campoDeReferencias = (value: string) => {
+      const campo = {
+        dataset: {}, value,
+        closest: (sel: string) => (sel === '[data-buscar-referencias]' ? campo : null)
+      };
+      return campo;
+    };
+
+    it('la entrada dibuja la lista de fichas, cerradas; una ruta con algo después cae en la entrada', async () => {
+      const { abrir, app } = await montar();
+      await abrir('#/herramientas/referencias');
+      expect(app.innerHTML).toContain('<div class="fichas-ref">');
+      expect(app.innerHTML).toContain('id="ficha-punto-humo"');
+      expect(app.innerHTML).not.toContain(' open>');
+      await abrir('#/herramientas/referencias/punto-humo');
+      expect(app.innerHTML).toContain('data-contenido-referencias');
     });
 
-    it('elegir en un desplegable de una cuenta redibuja la pantalla', async () => {
-      const { abrir, tecleos, pinturas, resultadosDeCuenta } = await montar();
-      await abrir('#/herramientas/coccion');
+    it('un tag de la ruta que no existe se saca de la ruta: buscar después no lo usa', async () => {
+      const { abrir, app, tecleos, contenidosReferencias } = await montar();
+      await abrir('#/herramientas/referencias?tag=nada&q=');
+      await esperar();
+      expect(global.location.hash).toBe('#/herramientas/referencias');
+      expect(app.innerHTML).toContain('id="ficha-punto-humo"');
+      expect(app.innerHTML).not.toContain('class="chip act"');
+      for (const fn of tecleos) await fn({ target: campoDeReferencias('Punto de humo') });
+      expect(contenidosReferencias.at(-1)).toContain('<mark>Punto de humo</mark>');
+    });
+
+    it('tocar un tag lo pone en la ruta; tocarlo otra vez lo saca; lo escrito se conserva', async () => {
+      const { abrir, tocar, tecleos } = await montar();
+      await abrir('#/herramientas/referencias');
+      for (const fn of tecleos) await fn({ target: campoDeReferencias('algo') });
+      await tocar('referencias-tag', { tagRef: tagDePrueba });
+      await esperar();
+      expect(global.location.hash).toBe(`#/herramientas/referencias?${queryDePrueba('algo')}`);
+      await tocar('referencias-tag', { tagRef: tagDePrueba });
+      await esperar();
+      expect(global.location.hash).toBe('#/herramientas/referencias?q=algo');
+    });
+
+    it('escribir en el buscador cambia la ruta sin redibujar y pinta sólo el contenido', async () => {
+      const { abrir, tecleos, pinturas, contenidosReferencias } = await montar();
+      await abrir(`#/herramientas/referencias?${new URLSearchParams({ tag: tagDePrueba }).toString()}`);
+      const antes = pinturas.length;
+      for (const fn of tecleos) await fn({ target: campoDeReferencias(textoDePrueba) });
+      await esperar();
+      expect(pinturas.length).toBe(antes);
+      expect(global.location.hash).toBe(`#/herramientas/referencias?${queryDePrueba(textoDePrueba)}`);
+      expect(contenidosReferencias.at(-1)).toContain('data-contenido-referencias');
+      expect(contenidosReferencias.at(-1)).toContain('<mark>');
+    });
+
+    it('en una cuenta de la entrada, escribir pinta sólo su resultado y lo guarda', async () => {
+      const { abrir, tecleos, pinturas, resultadosDeCuenta, almacen } = await montar();
+      await abrir('#/herramientas/referencias');
+      const antes = pinturas.length;
+      for (const fn of tecleos) await fn({ target: campoDeCuenta('agua-sal-pasta', 'gramos', '300') });
+      expect(resultadosDeCuenta.map(r => r.cuenta)).toEqual(['agua-sal-pasta']);
+      expect(pinturas.length).toBe(antes);
+      expect(JSON.parse(almacen.getItem('recetario.referencias') ?? '{}')).toEqual({ 'agua-sal-pasta': { gramos: 300 } });
+    });
+
+    it('en una cuenta de la entrada, elegir una opción repinta sólo su ficha: su desplegable queda abierto', async () => {
+      const { abrir, tecleos, pinturas, fichasRepintadas, almacen } = await montar();
+      await abrir('#/herramientas/referencias');
       const antes = pinturas.length;
       for (const fn of tecleos) await fn({ target: campoDeCuenta('arroz', 'variedad', 'integral', true) });
       await esperar();
-      expect(pinturas.length).toBe(antes + 1);
-      expect(resultadosDeCuenta).toHaveLength(0);
+      expect(pinturas.length).toBe(antes);
+      expect(fichasRepintadas.map(f => f.ficha)).toEqual(['arroz']);
+      expect(fichasRepintadas[0]?.html).toContain('id="ficha-arroz"');
+      expect(JSON.parse(almacen.getItem('recetario.referencias') ?? '{}')).toEqual({ arroz: { variedad: 'integral' } });
     });
 
-    it('buscar en Conservación repinta el bloque de la tabla y no la pantalla', async () => {
-      const { abrir, tecleos, pinturas, tablasRepintadas } = await montar();
-      await abrir('#/herramientas/conservacion');
+    it('en el Conversor, elegir una opción redibuja la pantalla', async () => {
+      const { abrir, tecleos, pinturas } = await montar();
+      await abrir('#/herramientas/conversor');
       const antes = pinturas.length;
-      for (const fn of tecleos) await fn({ target: campoDeBusqueda('conservacion', 'limon') });
+      for (const fn of tecleos) await fn({ target: campoDeCuenta('conversion', 'unidad', 'taza', true) });
+      await esperar();
+      expect(pinturas.length).toBe(antes + 1);
+    });
+
+    it('buscar en el Conversor repinta el bloque de su tabla y no la pantalla', async () => {
+      const { abrir, tecleos, pinturas, tablasRepintadas } = await montar();
+      await abrir('#/herramientas/conversor');
+      const antes = pinturas.length;
+      for (const fn of tecleos) await fn({ target: campoDeBusqueda('conversor', 'harina') });
       expect(pinturas.length).toBe(antes);
-      const bloque = tablasRepintadas.find(t => t.tabla === 'conservacion');
-      expect(bloque?.html).toContain('data-tabla="conservacion"');
+      expect(tablasRepintadas.find(t => t.tabla === 'pesos')?.html).toContain('data-tabla="pesos"');
     });
 
     it('fuera de una referencia, escribir o buscar no toca esos bloques', async () => {
@@ -1226,7 +1307,7 @@ describe('main.ts: las rutas', () => {
 
     it('el botón de minutos de una fila empieza un temporizador con ese nombre y esa duración', async () => {
       const { abrir, tocar, almacen } = await montar();
-      await abrir('#/herramientas/conservacion');
+      await abrir('#/herramientas/referencias');
       await tocar('referencia-temporizador', { nombre: 'Chauchas', minutos: '10' });
       const guardado = JSON.parse(almacen.getItem('recetario.temporizadores') ?? '{}') as { temporizadores: { nombre: string; duracion: number }[] };
       expect(guardado.temporizadores).toHaveLength(1);
@@ -1279,7 +1360,7 @@ describe('main.ts: las rutas', () => {
       recetario: '#/', borradores: '#/borradores', plan: '#/plan', herramientas: '#/herramientas', ajustes: '#/ajustes', nueva: '#/nueva'
     };
     const SIN_MENU = ['#/c/Carnes', '#/r/f1', '#/r/f1/editar', '#/buscar?q=pan', '#/t/horno', '#/categorias', '#/plan/compras', '#/herramientas/pan', '#/herramientas/temporizadores',
-      '#/herramientas/referencia', '#/herramientas/masas', '#/herramientas/coccion', '#/herramientas/conservacion'];
+      '#/herramientas/referencias', '#/herramientas/conversor'];
 
     it('cada vista de MENU dibuja la hamburguesa, el lateral con su entrada marcada, y el gesto lo abre', async () => {
       const { MENU } = await import('../src/ui/router.js');

@@ -316,7 +316,7 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `sol` | Mantener la pantalla encendida, en el encabezado de cocina. |
 | `balanza` | *Herramientas*, en el menú lateral y en su título, y delante del título de la ficha del resultado de una calculadora (§6.28). |
 | `reloj`, `pan`, `frasco` | Las tres herramientas —Temporizadores, Pan y Fermentados—: en su entrada de la lista de Herramientas y delante del título de su pantalla. `reloj` va también delante del nombre en la tira (§6.29). |
-| `libro`, `rodillo`, `olla`, `heladera`, `medidor` | Las cinco referencias —Referencia rápida, Masas y dulces, Básicos de cocción, Conservación y Conversor—: en su entrada de la lista de Herramientas y delante del título de su pantalla (§6.30). Un libro abierto, un palote, una olla con su tapa, una heladera de dos puertas y una taza medidora con sus marcas, del trazo de los demás. |
+| `libro`, `medidor` | Referencias y el Conversor: en su entrada de la lista de Herramientas y delante del título de sus pantallas —la entrada y cada ficha de Referencias, y el Conversor— (§6.30). Un libro abierto y una taza medidora con sus marcas, del trazo de los demás. |
 | `pausa`, `play` | Pausar y seguir un temporizador (§6.29). |
 | `arriba`, `abajo` | Las ruedas del temporizador nuevo (§6.29). |
 | `idaYVuelta` | Entre dos cantidades que salen una de la otra, en las calculadoras (§6.28). Dos flechas, una para cada lado. |
@@ -1483,16 +1483,29 @@ quietos: la tira entera moviéndose marea. Sin animación con movimiento reducid
 abajo, y los pies pegados de la receta y del plan suben.
 ### 6.30 Referencias
 
-Las pantallas de *Referencia rápida*, *Masas y dulces*, *Básicos de cocción*,
-*Conservación* y *Conversor* (`E07-Herramientas.md` F07.7 a F07.11) son una
-sola, que dibuja cualquiera de las cinco. Es una pila de fichas (§6.6) bajo el encabezado
-(§6.12), con el ícono de la herramienta delante del título.
+*Referencias* (`E07-Herramientas.md` F07.7) es una pantalla; el *Conversor*
+(F07.11), otra, con todas sus fichas juntas. Las dos llevan el encabezado
+(§6.12) con su ícono —`libro` o `medidor`— delante del título.
 
-**El índice** es una fila de chips (§6.10), uno por ficha, con el título de la
-ficha. La fila **se acomoda en renglones** (`flex-wrap`) en vez de
-desplazarse: se ven todos. Tocar uno lleva a su ficha, que queda justo debajo
-del encabezado fijo: el `scroll-padding-top` de toda la página la deja a 64 px
-del borde de arriba.
+**La entrada** lleva arriba la caja de búsqueda (`buscar`, §3.4) con el texto
+«Buscar» y, debajo, los tags como chips (§6.10) en renglones; el activo, con
+`.act`. Debajo, **la lista de fichas**, con el desplegable del navegador
+(`<details>`): una sola tarjeta (`.fichas-ref`: `--surface`, borde 1 px
+`--borde`, `--r-ficha`) con una fila por ficha (`.ficha-ref`), de 52 px, en
+`--txt-base` peso 400, separadas por 1 px `--borde`, y a la derecha una
+flecha de 7 px en `--fg-2` que apunta abajo cerrada y arriba abierta. **La
+ficha abierta** pasa a peso 600 en
+`--acento`, y debajo se ve la ficha sin su título ni tarjeta propia. Mientras
+se escribe cambia sólo lo de debajo de los tags, no la caja. **Los
+resultados** van en la misma tarjeta: las tablas abiertas, con sólo las filas
+que coinciden. **Lo buscado se resalta** con
+`<mark>`: fondo de `--acento` al 40 %, texto `--fg`. Sin nada, «Nada con «…»»
+en `--txt-base` `--fg-2`, como un estado vacío.
+
+**El índice del Conversor** es una fila de chips (§6.10), uno por ficha, con
+el título de la ficha, en renglones. Tocar uno lleva a su ficha, que queda
+justo debajo del encabezado fijo: el `scroll-padding-top` de toda la página
+la deja a 64 px del borde de arriba.
 
 **Una ficha de tabla** (`.ficha.ref`) lleva el título (`h2`), la tabla, las
 notas y la fuente. La tabla (`.tabla-ref`) va en `--txt-chico`, con filas de
@@ -1523,9 +1536,9 @@ fondo, con el ícono `reloj` de 16 px en `--fg-2`. Tiene 48 px de área táctil:
 un `::after` transparente lo extiende 10 px por lado. Su nombre accesible es
 «Temporizador de <fila>» y el ícono va oculto a los lectores de pantalla.
 
-**El buscador** de Conservación y del Conversor es la caja de búsqueda del Recetario (`buscar`,
+**El buscador del Conversor** es la caja de búsqueda del Recetario (`buscar`,
 §3.4) con el texto «Buscar un alimento», arriba de todo. Mientras se escribe
-cambian las filas de la tabla agrupada —la de alimentos, la de pesos— y no la caja; las demás fichas no
+cambian las filas de la tabla de pesos y no la caja; las demás fichas no
 se filtran. Sin coincidencias, el aviso «Ningún alimento con «…»» en
 `--txt-base` `--fg-2`, como un estado vacío, una sola vez.
 

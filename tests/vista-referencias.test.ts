@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { renderReferencia, minutosDe, filasFiltradas, resultadoDeCuenta, valoresDe } from '../src/ui/referencias.js';
-import type { HerramientaDeReferencia, Tabla, Cuenta } from '../src/referencias/tipos.js';
-import { herramientaDeReferencia } from '../src/referencias/indice.js';
+import { renderConversor, renderReferencias, contenidoDeReferencias, resaltar, fichaDeCuenta, minutosDe, filasFiltradas, resultadoDeCuenta, valoresDe } from '../src/ui/referencias.js';
+import { REFERENCIAS, FICHAS_DEL_CONVERSOR } from '../src/referencias/indice.js';
+import { tagsDe } from '../src/referencias/busqueda.js';
+import { idDeFicha, filasDe } from '../src/referencias/forma.js';
+import { escapar as escaparHtml } from '../src/ui/markdown.js';
+import type { Ficha, Tabla, Cuenta } from '../src/referencias/tipos.js';
 import { ICO } from '../src/ui/iconos.js';
 
 const fuente = { nombre: 'Fuente X', url: 'https://x.com/a' };
@@ -16,23 +19,20 @@ const cuenta: Cuenta = {
   notas: ['Es el punto medio del proyecto.'],
   calcular: v => (typeof v['gramos'] === 'number' ? { lineas: [{ nombre: 'Agua', valor: '1 l' }], advertencias: [], fuentes: [fuente] } : null)
 };
-const h: HerramientaDeReferencia = {
-  id: 'coccion', ruta: '#/herramientas/coccion', titulo: 'Básicos de cocción', detalle: '', icono: 'olla', buscador: false,
-  fichas: [{ tipo: 'cuenta', cuenta }, { tipo: 'tabla', tabla }]
-};
+const h: { fichas: Ficha[] } = { fichas: [{ tipo: 'cuenta', cuenta }, { tipo: 'tabla', tabla }] };
 const vacio = { valores: {}, busqueda: '' };
 
-describe('la pantalla de una referencia', () => {
+describe('la pantalla del Conversor, con fichas de prueba', () => {
   it('título con su ícono y volver, el índice y una ficha por tabla o cuenta, en orden', () => {
-    const html = renderReferencia(h, vacio);
-    expect(html).toContain('Básicos de cocción');
+    const html = renderConversor(h.fichas, vacio);
+    expect(html).toContain('Conversor');
     expect(html).toContain('data-accion="volver"');
     expect(html).toContain('data-accion="ir-a-ficha" data-id="agua-sal-pasta"');
     expect(html.indexOf('id="ficha-agua-sal-pasta"')).toBeLessThan(html.indexOf('id="ficha-blanqueado"'));
   });
 
   it('la tabla con sus columnas, sus filas, sus notas y la fuente con su link al pie', () => {
-    const html = renderReferencia(h, vacio);
+    const html = renderConversor(h.fichas, vacio);
     expect(html).toContain('<th>Verdura</th>');
     expect(html).toContain('<td>Chauchas</td>');
     expect(html).toContain('Después, el mismo tiempo en hielo.');
@@ -40,36 +40,36 @@ describe('la pantalla de una referencia', () => {
   });
 
   it('una columna de minutos lleva el botón del temporizador, con el primer número', () => {
-    const html = renderReferencia(h, vacio);
+    const html = renderConversor(h.fichas, vacio);
     expect(html).toContain('data-accion="referencia-temporizador" data-nombre="Chauchas" data-minutos="3"');
     expect(html).toContain('data-nombre="Repollitos" data-minutos="3"');
     expect(html).not.toContain('data-nombre="Hojas"');
   });
 
   it('el ícono del botón de minutos no se lee: el botón ya tiene su nombre', () => {
-    expect(renderReferencia(h, vacio)).toMatch(/class="ico-min"[^>]*>\s*<svg aria-hidden="true"/);
+    expect(renderConversor(h.fichas, vacio)).toMatch(/class="ico-min"[^>]*>\s*<svg aria-hidden="true"/);
   });
 
   it('la cuenta con sus entradas y, sin datos, el resultado vacío', () => {
-    const html = renderReferencia(h, vacio);
+    const html = renderConversor(h.fichas, vacio);
     expect(html).toContain('data-entrada="gramos" data-cuenta="agua-sal-pasta"');
     expect(html).toContain('data-resultado-cuenta="agua-sal-pasta"');
     expect(html).not.toContain('NaN');
   });
 
   it('las notas de una cuenta van en su ficha', () => {
-    expect(renderReferencia(h, vacio)).toContain('Es el punto medio del proyecto.');
+    expect(renderConversor(h.fichas, vacio)).toContain('Es el punto medio del proyecto.');
   });
 
   it('un valor guardado que no es número no se dibuja ni da NaN', () => {
-    const html = renderReferencia(h, { valores: { 'agua-sal-pasta': { gramos: 'abc' } }, busqueda: '' });
+    const html = renderConversor(h.fichas, { valores: { 'agua-sal-pasta': { gramos: 'abc' } }, busqueda: '' });
     expect(html).not.toContain('NaN');
     expect(html).not.toContain('value="abc"');
   });
 
   it('una entrada con visibleSi que no se cumple no se dibuja', () => {
     const c: Cuenta = { ...cuenta, entradas: [{ id: 'oculta', nombre: 'Oculta', tipo: 'numero', porDefecto: null, visibleSi: () => false }] };
-    expect(renderReferencia({ ...h, fichas: [{ tipo: 'cuenta', cuenta: c }] }, vacio)).not.toContain('data-entrada="oculta"');
+    expect(renderConversor([{ tipo: 'cuenta', cuenta: c }], vacio)).not.toContain('data-entrada="oculta"');
   });
 
   it('una tabla con varias fuentes las lista todas al pie, sin repetir las del mismo link', () => {
@@ -83,7 +83,7 @@ describe('la pantalla de una referencia', () => {
         { abreviatura: 'CC', nombre: 'Otra más', url: 'https://o.com' }
       ]
     };
-    const html = renderReferencia({ ...h, fichas: [{ tipo: 'tabla', tabla: t }] }, vacio);
+    const html = renderConversor([{ tipo: 'tabla', tabla: t }], vacio);
     expect(html).toContain('>Una</a>');
     expect(html).toContain('>Otra</a>');
     expect(html).not.toContain('Otra más');
@@ -91,15 +91,15 @@ describe('la pantalla de una referencia', () => {
   });
 
   it('con buscador, el campo lleva lo buscado', () => {
-    const html = renderReferencia({ ...h, buscador: true }, { valores: {}, busqueda: 'pollo' });
-    expect(html).toContain('data-buscar-referencia="coccion"');
+    const html = renderConversor(h.fichas, { valores: {}, busqueda: 'pollo' });
+    expect(html).toContain('data-buscar-referencia="conversor"');
     expect(html).toContain('value="pollo"');
   });
 });
 
 describe('las notas', () => {
   const conNotas = (...notas: string[]): string =>
-    renderReferencia({ ...h, fichas: [{ tipo: 'tabla', tabla: { ...tabla, notas } }] }, vacio);
+    renderConversor([{ tipo: 'tabla', tabla: { ...tabla, notas } }], vacio);
 
   it('una URL dentro de un paréntesis es un link y el paréntesis queda afuera', () => {
     const html = conNotas('Lo dice el fabricante (https://ejemplo.com/a?x=1&y=2), según su ficha.');
@@ -147,14 +147,11 @@ describe('el buscador', () => {
 
   describe('en una herramienta con una tabla plana y una agrupada', () => {
     const plana: Tabla = { id: 'general', titulo: 'General', columnas: [{ id: 'dato', nombre: 'Dato' }], fuente, filas: [{ dato: 'Regla uno' }, { dato: 'Regla dos' }] };
-    const herramienta: HerramientaDeReferencia = {
-      id: 'conservacion', ruta: '#/herramientas/conservacion', titulo: 'Conservación', detalle: '', icono: 'heladera', buscador: true,
-      fichas: [{ tipo: 'tabla', tabla: plana }, { tipo: 'tabla', tabla: t }]
-    };
+    const herramienta: Ficha[] = [{ tipo: 'tabla', tabla: plana }, { tipo: 'tabla', tabla: t }];
     const cuantas = (html: string, texto: string): number => html.split(texto).length - 1;
 
     it('la búsqueda filtra sólo la agrupada: la plana se dibuja entera y sin aviso', () => {
-      const html = renderReferencia(herramienta, { valores: {}, busqueda: 'limon' });
+      const html = renderConversor(herramienta, { valores: {}, busqueda: 'limon' });
       expect(html).toContain('<td>Regla uno</td>');
       expect(html).toContain('<td>Regla dos</td>');
       expect(html).toContain('Limón');
@@ -162,7 +159,7 @@ describe('el buscador', () => {
     });
 
     it('sin coincidencias en ninguna, el aviso sale una sola vez y la plana sigue entera', () => {
-      const html = renderReferencia(herramienta, { valores: {}, busqueda: 'zzz' });
+      const html = renderConversor(herramienta, { valores: {}, busqueda: 'zzz' });
       expect(cuantas(html, 'Ningún alimento con «zzz»')).toBe(1);
       expect(html).toContain('<td>Regla uno</td>');
     });
@@ -186,7 +183,7 @@ describe('lo que se ve es lo que se calcula', () => {
     calcular: v => ({ lineas: [{ nombre: 'Recibió', valor: `${String(v['n'])}|${String(v['o'])}` }], advertencias: [], fuentes: [] })
   };
   const conEco = (guardado: Record<string, number | string | null>) =>
-    renderReferencia({ ...h, fichas: [{ tipo: 'cuenta', cuenta: eco }] }, { valores: { eco: guardado }, busqueda: '' });
+    renderConversor([{ tipo: 'cuenta', cuenta: eco }], { valores: { eco: guardado }, busqueda: '' });
 
   it('valoresDe: un número se queda si es finito; si no, el valor por defecto', () => {
     expect(valoresDe(eco, { n: 7 })['n']).toBe(7);
@@ -238,7 +235,7 @@ describe('lo que se ve es lo que se calcula', () => {
 describe('el nombre del temporizador de una fila', () => {
   const tablaCon = (columnas: Tabla['columnas'], filas: readonly Record<string, string>[]): Tabla =>
     ({ id: 't', titulo: 'T', columnas, filas, fuente });
-  const dibujar = (t: Tabla) => renderReferencia({ ...h, fichas: [{ tipo: 'tabla', tabla: t }] }, vacio);
+  const dibujar = (t: Tabla) => renderConversor([{ tipo: 'tabla', tabla: t }], vacio);
 
   it('suma a la primera celda la columna siguiente sin unidad ni minutos, para distinguir filas que la comparten', () => {
     const html = dibujar(tablaCon(
@@ -260,9 +257,9 @@ describe('el nombre del temporizador de una fila', () => {
 });
 
 describe('el conversor', () => {
-  const conversor = herramientaDeReferencia('conversor');
+  const conversor = FICHAS_DEL_CONVERSOR;
   it('con volver, su ícono, el buscador, la cuenta y las tres tablas', () => {
-    const html = renderReferencia(conversor, { valores: {}, busqueda: '' });
+    const html = renderConversor(conversor, { valores: {}, busqueda: '' });
     expect(html).toContain('data-accion="volver"');
     expect(html).toContain(ICO.medidor);
     expect(html).toContain('data-buscar-referencia="conversor"');
@@ -270,7 +267,7 @@ describe('el conversor', () => {
   });
 
   it('el buscador filtra los ingredientes de la tabla de pesos', () => {
-    const html = renderReferencia(conversor, { valores: {}, busqueda: 'harina' });
+    const html = renderConversor(conversor, { valores: {}, busqueda: 'harina' });
     expect(html).toContain('<td>Harina 0000');
     expect(html).not.toContain('<td>Azúcar blanca');
     // El ingrediente sigue en las opciones de la cuenta: el buscador no las toca.
@@ -278,7 +275,102 @@ describe('el conversor', () => {
   });
 
   it('lo elegido se calcula con lo que se ve', () => {
-    const html = renderReferencia(conversor, { valores: { conversion: { cantidad: 1, unidad: 'taza', ingrediente: 'azucar' } }, busqueda: '' });
+    const html = renderConversor(conversor, { valores: { conversion: { cantidad: 1, unidad: 'taza', ingrediente: 'azucar' } }, busqueda: '' });
     expect(html).toMatch(/<span class="n">g<\/span><span class="c">\d+<\/span>/);
+  });
+});
+
+describe('la entrada de Referencias', () => {
+  const todas = REFERENCIAS;
+  const conTabla = todas.find(f => f.tipo === 'tabla');
+  const tablaDe = (f: typeof conTabla) => (f?.tipo === 'tabla' ? f.tabla : null);
+  const abiertas = (html: string): number => (html.match(/<details[^>]* open/g) ?? []).length;
+
+  it('volver, el título, el buscador vacío y un chip por tag', () => {
+    const html = renderReferencias({ tag: '', q: '' });
+    expect(html).toContain('data-accion="volver"');
+    expect(html).toContain('Referencias');
+    expect(html).toContain(ICO.libro);
+    expect(html).toContain('data-buscar-referencias');
+    expect(html).toContain('placeholder="Buscar" value=""');
+    for (const t of tagsDe(REFERENCIAS)) expect(html).toContain(`data-accion="referencias-tag" data-tag-ref="${escaparHtml(t)}"`);
+    expect(html).toContain('data-contenido-referencias');
+  });
+
+  it('los chips no llevan data-tag: con ese atributo, el toque iría a la lista de recetas del tag', () => {
+    expect(renderReferencias({ tag: '', q: '' })).not.toContain(' data-tag="');
+  });
+
+  it('sin nada, una sola lista con todas las fichas en orden, cada una un desplegable cerrado', () => {
+    const html = contenidoDeReferencias({ tag: '', q: '' });
+    expect(html.startsWith('<div class="fichas-ref">')).toBe(true);
+    const ids = [...html.matchAll(/id="ficha-([\w-]+)"/g)].map(m => m[1]);
+    expect(ids).toEqual(todas.map(idDeFicha));
+    expect((html.match(/<details class="ficha-ref"/g) ?? []).length).toBe(todas.length);
+    expect(abiertas(html)).toBe(0);
+  });
+
+  it('las fichas no muestran sus tags ni repiten el título dentro del desplegable', () => {
+    const html = contenidoDeReferencias({ tag: '', q: '' });
+    expect(html).not.toContain('class="chip');
+    const t = tablaDe(conTabla);
+    expect(html).not.toContain(`<h2>${escaparHtml(t?.titulo ?? '')}</h2>`);
+  });
+
+  it('con un tag, sólo sus fichas, todo cerrado', () => {
+    const tag = tagsDe(REFERENCIAS)[0] ?? '';
+    const html = renderReferencias({ tag, q: '' });
+    expect(html).toContain(`class="chip act" data-accion="referencias-tag" data-tag-ref="${escaparHtml(tag)}"`);
+    for (const f of todas) {
+      const ficha = `id="ficha-${idDeFicha(f)}"`;
+      if (f.tags.includes(tag)) expect(html).toContain(ficha);
+      else expect(html).not.toContain(ficha);
+    }
+    expect(abiertas(html)).toBe(0);
+  });
+
+  it('con texto, cada tabla encontrada abierta, con su encabezado, sólo las filas que coinciden y la palabra resaltada', () => {
+    const t = tablaDe(conTabla);
+    const primera = t ? filasDe(t)[0] : undefined;
+    const celda = primera ? Object.values(primera)[0] ?? '' : '';
+    const html = contenidoDeReferencias({ tag: '', q: celda.toUpperCase() });
+    expect(html).toContain(`<details class="ficha-ref" open><summary>`);
+    expect(html).toContain('<thead>');
+    expect(html).toContain(`<mark>${escaparHtml(celda)}</mark>`);
+  });
+
+  it('una cuenta que coincide por su título va cerrada, con el título resaltado', () => {
+    const c = todas.find(f => f.tipo === 'cuenta');
+    const titulo = c?.tipo === 'cuenta' ? c.cuenta.titulo : '';
+    const html = contenidoDeReferencias({ tag: '', q: titulo });
+    expect(html).toContain(`<details class="ficha-ref"><summary><mark>${escaparHtml(titulo)}</mark>`);
+    expect(html).toContain(`id="ficha-${c ? idDeFicha(c) : ''}"`);
+  });
+
+  it('sin nada, lo dice con el texto escapado', () => {
+    expect(contenidoDeReferencias({ tag: '', q: '<zzz>' })).toContain('Nada con «&lt;zzz&gt;».');
+  });
+});
+
+describe('resaltar', () => {
+  it('marca cada aparición sin mirar mayúsculas ni tildes, y respeta el texto original', () => {
+    expect(resaltar('Limón y limon', 'LIMON')).toBe('<mark>Limón</mark> y <mark>limon</mark>');
+  });
+  it('escapa el resto del texto y lo marcado', () => {
+    expect(resaltar('a <b> & c', '<b>')).toBe('a <mark>&lt;b&gt;</mark> &amp; c');
+  });
+  it('sin texto buscado, sólo escapa', () => {
+    expect(resaltar('a & b', '  ')).toBe('a &amp; b');
+  });
+});
+
+describe('las fichas de las cuentas en la entrada', () => {
+  it('fichaDeCuenta dibuja la cuenta sin título, con sus entradas, lo guardado y su resultado', () => {
+    const html = fichaDeCuenta(cuenta, { gramos: 200 });
+    expect(html).toContain('id="ficha-agua-sal-pasta"');
+    expect(html).toContain('data-cuenta="agua-sal-pasta"');
+    expect(html).toContain('value="200"');
+    expect(html).toContain('data-resultado-cuenta="agua-sal-pasta"');
+    expect(html).not.toContain('<h2>');
   });
 });

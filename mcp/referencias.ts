@@ -4,13 +4,14 @@
  */
 import { z } from 'zod';
 import { normalizar } from '../src/normalizar.js';
-import { HERRAMIENTAS_DE_REFERENCIA } from '../src/referencias/indice.js';
+import { REFERENCIAS, FICHAS_DEL_CONVERSOR } from '../src/referencias/indice.js';
 import { filasDe, fuentesDe } from '../src/referencias/forma.js';
-import type { Cuenta, Tabla, Valores, Fuente } from '../src/referencias/tipos.js';
+import type { Cuenta, Tabla, Valores, Fuente, Ficha } from '../src/referencias/tipos.js';
 
-const tablasDe = (fichas: (typeof HERRAMIENTAS_DE_REFERENCIA)[number]['fichas']): Tabla[] =>
-  fichas.flatMap(f => (f.tipo === 'tabla' ? [f.tabla] : []));
-export const CUENTAS: readonly Cuenta[] = HERRAMIENTAS_DE_REFERENCIA.flatMap(h => h.fichas.flatMap(f => (f.tipo === 'cuenta' ? [f.cuenta] : [])));
+/** Las fichas de Referencias y del Conversor: todo lo que consulta el agente. */
+const TODAS: readonly (Ficha & { tags?: readonly string[] })[] = [...REFERENCIAS, ...FICHAS_DEL_CONVERSOR];
+const TABLAS: readonly Tabla[] = TODAS.flatMap(f => (f.tipo === 'tabla' ? [f.tabla] : []));
+export const CUENTAS: readonly Cuenta[] = TODAS.flatMap(f => (f.tipo === 'cuenta' ? [f.cuenta] : []));
 export const nombreMcp = (c: Cuenta): string => `calcular_${c.id.replaceAll('-', '_')}`;
 
 const nombreDeColumna = (c: Tabla['columnas'][number]): string => (c.unidad ? `${c.nombre} (${c.unidad})` : c.nombre);
@@ -21,25 +22,27 @@ const tablaParaElAgente = (t: Tabla) => ({
   filas: filasDe(t).map(f => conNombres(t, f)), notas: t.notas ?? [], fuentes: fuentesDe(t)
 });
 
-export function consultarReferencia(p: { herramienta?: string | undefined; tabla?: string | undefined; buscar?: string | undefined }) {
+/**
+ * Sin nada, todas las tablas y las cuentas, con sus tags; con `tabla`, esa
+ * tabla con sus filas; con `buscar`, las filas de cualquier tabla que contengan el texto.
+ */
+export function consultarReferencia(p: { tabla?: string | undefined; buscar?: string | undefined }) {
   if (p.buscar) {
     const q = normalizar(p.buscar);
-    return { coincidencias: HERRAMIENTAS_DE_REFERENCIA.flatMap(h => tablasDe(h.fichas).flatMap(t =>
+    return { coincidencias: TABLAS.flatMap(t =>
       filasDe(t).filter(f => Object.values(f).some(x => normalizar(x).includes(q)))
-        .map(f => ({ tabla: t.titulo, fila: conNombres(t, f), fuentes: fuentesDe(t) })))) };
+        .map(f => ({ tabla: t.titulo, fila: conNombres(t, f), fuentes: fuentesDe(t) }))) };
   }
-  if (!p.herramienta && !p.tabla) {
-    return { herramientas: HERRAMIENTAS_DE_REFERENCIA.map(h => ({
-      id: h.id, titulo: h.titulo,
-      tablas: tablasDe(h.fichas).map(t => ({ id: t.id, titulo: t.titulo })),
-      cuentas: h.fichas.flatMap(f => (f.tipo === 'cuenta' ? [{ id: f.cuenta.id, titulo: f.cuenta.titulo, herramienta_mcp: nombreMcp(f.cuenta) }] : []))
-    })) };
+  if (!p.tabla) {
+    return {
+      tablas: TODAS.flatMap(f => (f.tipo === 'tabla' ? [{ id: f.tabla.id, titulo: f.tabla.titulo, tags: f.tags ?? [] }] : [])),
+      cuentas: TODAS.flatMap(f => (f.tipo === 'cuenta'
+        ? [{ id: f.cuenta.id, titulo: f.cuenta.titulo, tags: f.tags ?? [], herramienta_mcp: nombreMcp(f.cuenta) }] : []))
+    };
   }
-  const herramientas = p.herramienta ? HERRAMIENTAS_DE_REFERENCIA.filter(h => h.id === p.herramienta) : HERRAMIENTAS_DE_REFERENCIA;
-  if (!herramientas.length) return { error: `No hay herramienta «${p.herramienta}».`, opciones: HERRAMIENTAS_DE_REFERENCIA.map(h => h.id) };
-  const tablas = herramientas.flatMap(h => tablasDe(h.fichas)).filter(t => !p.tabla || t.id === p.tabla);
-  if (!tablas.length) return { error: `No hay tabla «${p.tabla}».`, opciones: herramientas.flatMap(h => tablasDe(h.fichas).map(t => t.id)) };
-  return { tablas: tablas.map(tablaParaElAgente) };
+  const tabla = TABLAS.find(t => t.id === p.tabla);
+  if (!tabla) return { error: `No hay tabla «${p.tabla}».`, opciones: TABLAS.map(t => t.id) };
+  return { tabla: tablaParaElAgente(tabla) };
 }
 
 /** Lo que ve el agente de una `calcular_*`: qué cuenta es, a qué pregunta responde y qué devuelve. */

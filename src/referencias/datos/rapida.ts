@@ -1,5 +1,6 @@
 /**
- * Referencia rápida: sólo datos. Cada tabla dice de dónde sale.
+ * Huevos, carne, aceite, horno y bebidas: sólo datos. Cada tabla dice de dónde
+ * sale.
  *
  * Procedencia: product-design/research/herramientas/verificacion-referencia-rapida.md
  * Para corregir un número, editá su fila.

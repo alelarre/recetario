@@ -1,4 +1,3 @@
-import type { IdHerramienta } from '../referencias/tipos.js';
 
 /** Las vistas que la app sabe dibujar. El hash es el único estado de navegación. */
 export type Vista =
@@ -6,7 +5,8 @@ export type Vista =
   | 'editar' | 'nueva' | 'borradores' | 'ajustes' | 'carpeta'
   | 'categorias' | 'editar-categoria' | 'tag'
   | 'plan' | 'plan-agregar' | 'plan-compras'
-  | 'herramientas' | 'calculadora-pan' | 'calculadora-sal' | 'temporizadores' | 'referencia';
+  | 'herramientas' | 'calculadora-pan' | 'calculadora-sal' | 'temporizadores'
+  | 'referencias' | 'conversor';
 
 export interface Ruta {
   vista: Vista;
@@ -32,10 +32,6 @@ export const MENU: Partial<Record<Vista, DestinoLateral | null>> = {
   ajustes: 'ajustes'
 };
 
-/** El segundo tramo de la ruta de cada herramienta de referencia, y su id. */
-const DE_REFERENCIA: Readonly<Record<string, IdHerramienta>> = {
-  referencia: 'rapida', masas: 'masas', coccion: 'coccion', conservacion: 'conservacion', conversor: 'conversor'
-};
 
 /** Si la vista es destino del menú. */
 export const esDelMenu = (vista: Vista): boolean => Object.hasOwn(MENU, vista);
@@ -43,6 +39,15 @@ export const esDelMenu = (vista: Vista): boolean => Object.hasOwn(MENU, vista);
 /** Los parámetros de la query que están y no vienen vacíos, de esta lista. */
 const presentes = (params: Record<string, string>, claves: readonly string[]): Record<string, string> =>
   Object.fromEntries(claves.flatMap(c => (params[c] ? [[c, params[c]]] : [])));
+
+/**
+ * La entrada de Referencias con un tag y un texto: van en la ruta para que el
+ * volver desde otra pantalla la encuentre como estaba. Lo vacío no se escribe.
+ */
+export function hashDeReferencias({ tag = '', q = '' }: { tag?: string; q?: string }): string {
+  const query = new URLSearchParams(Object.entries({ tag, q }).filter(([, v]) => v)).toString();
+  return `#/herramientas/referencias${query ? `?${query}` : ''}`;
+}
 
 export function parsearHash(hash: unknown): Ruta {
   const limpio = String(hash ?? '').replace(/^#/, '');
@@ -116,8 +121,9 @@ export function parsearHash(hash: unknown): Ruta {
     if (partes[1] === 'pan') return { vista: 'calculadora-pan', params: {} };
     if (partes[1] === 'fermentados') return { vista: 'calculadora-sal', params: {} };
     if (partes[1] === 'temporizadores') return { vista: 'temporizadores', params: {} };
-    const ref = partes[1] && Object.hasOwn(DE_REFERENCIA, partes[1]) ? DE_REFERENCIA[partes[1]] : undefined;
-    if (ref) return { vista: 'referencia', params: { herramienta: ref } };
+    if (partes[1] === 'conversor') return { vista: 'conversor', params: {} };
+    // Las fichas se despliegan en la entrada: lo que siga a `referencias/` la abre.
+    if (partes[1] === 'referencias') return { vista: 'referencias', params: partes[2] ? {} : presentes(params, ['tag', 'q']) };
     return { vista: 'herramientas', params: {} };
   }
 

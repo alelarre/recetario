@@ -101,10 +101,10 @@ recetas. Lo que el usuario diga en el pedido sí cuenta como dato.
 
 ## Las referencias
 
-Cuatro herramientas de la app con tablas de consulta y algunas cuentas
-chicas: **referencia rápida** (huevos, carne, aceite, horno y bebidas),
-**masas y dulces**, **básicos de cocción** y **conservación**. Cada dato
-trae su fuente.
+Tablas de consulta y algunas cuentas chicas, cada dato con su fuente. En la
+app son la sección **Referencias** —huevos, carne, aceite, horno, bebidas,
+arroz, granos, legumbres, pasta, verduras, caldo, masas, dulces y cuánto dura
+cada alimento—, más el **conversor**, aparte.
 
 ### Las reglas
 
@@ -129,11 +129,11 @@ verduras, blanqueado, cuánto dura un alimento, cuántos gramos pesa una taza
 o una cuchara de cada ingrediente y cuánto miden la taza y las cucharas en
 cada país.
 
-- **Sin nada** lista las cinco herramientas con el `id` de sus tablas y de
-  sus cuentas. Sirve para ubicar la tabla.
-- **Con `herramienta` y `tabla`** (`rapida`, `masas`, `coccion`,
-  `conservacion` o `conversor`) devuelve las filas con sus columnas, las notas y las
-  fuentes.
+- **Sin nada** lista todas las tablas y las cuentas con su `id`, su título
+  y sus tags (*pasta*, *pollo*, *horno*…). Sirve para ubicar la tabla: los
+  tags juntan lo de un mismo ingrediente.
+- **Con `tabla`** (el `id` del listado) devuelve esa tabla con sus columnas,
+  sus filas, sus notas y sus fuentes.
 - **Con `buscar`** («pollo», «crema») devuelve las filas de cualquier tabla
   que contengan el texto, cada una con su tabla y sus fuentes. Es lo más
   corto para una pregunta de un alimento; si hay varias filas, elegí la que

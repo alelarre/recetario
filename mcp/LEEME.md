@@ -85,11 +85,11 @@ El servidor `recetario` registra veintitrés herramientas, en tres grupos.
 `calcular_sal`, las mismas cuentas que las pantallas de *Pan* y *Fermentados*.
 
 **Las referencias** (tampoco usan el Drive ni el login), las mismas tablas y
-cuentas que las cinco pantallas de referencia de la app, cada dato con su
+cuentas que *Referencias* y el *Conversor* de la app, cada dato con su
 fuente:
 
-- `consultar_referencia`: sin nada, lista las herramientas con sus tablas y
-  sus cuentas; con `herramienta` y `tabla`, devuelve las filas; con `buscar`,
+- `consultar_referencia`: sin nada, lista todas las tablas y las cuentas,
+  con los tags de cada una; con `tabla`, devuelve esa tabla con sus filas; con `buscar`,
   las filas de cualquier tabla que contengan ese texto («pollo», «crema»).
 - Una `calcular_*` por cuenta: `calcular_molde`, `calcular_pasta_fresca`,
   `calcular_bollo_pizza`, `calcular_merengue`,

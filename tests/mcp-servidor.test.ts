@@ -104,11 +104,11 @@ describe('las herramientas', () => {
 
 describe('llamar a una herramienta', () => {
   it('consultar_referencia devuelve una tabla con su fuente', async () => {
-    const r = await llamar(await conectar(), 'consultar_referencia', { herramienta: 'coccion', tabla: 'blanqueado' });
+    const r = await llamar(await conectar(), 'consultar_referencia', { tabla: 'blanqueado' });
     expect(r.isError).toBeFalsy();
     const v = JSON.parse(texto(r));
-    expect(v.tablas).toHaveLength(1);
-    expect(v.tablas[0].fuentes.length).toBeGreaterThan(0);
+    expect(v.tabla.id).toBe('blanqueado');
+    expect(v.tabla.fuentes.length).toBeGreaterThan(0);
   });
 
   it('formato devuelve las reglas como texto', async () => {

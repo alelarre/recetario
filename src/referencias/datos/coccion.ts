@@ -1,5 +1,6 @@
 /**
- * Básicos de cocción: sólo datos. Cada tabla y cada constante dicen de dónde salen.
+ * Arroz, granos, legumbres, pasta, verduras y caldo: sólo datos. Cada tabla y
+ * cada constante dicen de dónde salen.
  *
  * Procedencia: product-design/research/herramientas/verificacion-basicos-de-coccion.md
  * Para corregir un número, editá su fila.

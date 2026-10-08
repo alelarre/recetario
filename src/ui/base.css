@@ -690,6 +690,25 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 
 /* ---- Referencias ---- */
 .referencias .indice-ref { flex-wrap: wrap; }
+/* La entrada es una sola lista de fichas en una tarjeta: cada una es una fila
+   que se despliega en el lugar. Lo abre y lo cierra el navegador
+   (`<details>`); la flecha gira al abrir. */
+.fichas-ref { background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha); overflow: hidden; }
+.fichas-ref > .ficha-ref + .ficha-ref { border-top: 1px solid var(--borde); }
+.ficha-ref > summary { display: flex; align-items: center; gap: var(--e-3); min-height: 52px; padding: 0 var(--e-4);
+  list-style: none; cursor: pointer; }
+.ficha-ref > summary::-webkit-details-marker { display: none; }
+.ficha-ref > summary::after { content: ''; margin-left: auto; flex: none; width: 7px; height: 7px;
+  border-right: 1.5px solid var(--fg-2); border-bottom: 1.5px solid var(--fg-2); transform: rotate(45deg); transition: transform .15s; }
+.ficha-ref[open] > summary::after { transform: rotate(-135deg); }
+@media (prefers-reduced-motion: reduce) { .ficha-ref > summary::after { transition: none; } }
+/* La ficha abierta se marca: es dónde se está mirando. */
+.ficha-ref[open] > summary { font-weight: 600; color: var(--acento); }
+.ficha-ref > summary:focus-visible { outline: 2px solid var(--acento); outline-offset: -2px; }
+/* Adentro del desplegable, la ficha no es otra tarjeta: el título ya está en la fila que la abre. */
+.ficha-ref > .ficha { margin: 0; border: 0; border-radius: 0; background: none; padding: 0 var(--e-4) var(--e-4); }
+.ficha-ref > .tabla-ref { margin: 0 0 var(--e-2); padding: 0 var(--e-3); }
+.referencias mark { background: color-mix(in srgb, var(--acento) 40%, transparent); color: var(--fg); border-radius: 2px; }
 /* Una tabla ancha se desplaza dentro de su ficha; la página no. */
 .tabla-ref { overflow-x: auto; margin: 0 calc(-1 * var(--e-2)); }
 .tabla-ref table { border-collapse: collapse; width: 100%; font-size: var(--txt-chico); }

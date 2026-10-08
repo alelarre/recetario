@@ -1,18 +1,22 @@
 /**
- * Una herramienta de referencia, sea cual sea: el índice de sus fichas, una
- * ficha por tabla o por cuenta y la fuente al pie de cada una. Dibuja lo que
- * hay en `src/referencias/`; no conoce ningún número.
+ * Las referencias: la entrada de Referencias —el buscador, los tags y la
+ * lista de fichas, que se despliegan en el lugar— y
+ * el Conversor, que dibuja todas sus fichas juntas. Dibuja lo que hay en
+ * `src/referencias/`; no conoce ningún número.
  *
- * El resultado de una cuenta y las filas de la tabla buscada son bloques
- * aparte (`[data-resultado-cuenta]`, `[data-tabla]`) para pintarlos solos
- * mientras se escribe: redibujar le sacaría el foco al campo.
+ * El resultado de una cuenta, las filas de la tabla buscada y lo que muestra
+ * la entrada son bloques aparte (`[data-resultado-cuenta]`, `[data-tabla]`,
+ * `[data-contenido-referencias]`) para pintarlos solos mientras se escribe:
+ * redibujar le sacaría el foco al campo.
  */
 import { escapar } from './markdown.js';
 import { encabezado } from './componentes.js';
 import { ICO } from './iconos.js';
 import { normalizar } from '../normalizar.js';
-import { filasDe, fuentesDe } from '../referencias/forma.js';
-import type { HerramientaDeReferencia, Tabla, Cuenta, Valores, Fila, Fuente, Entrada } from '../referencias/tipos.js';
+import { filasDe, fuentesDe, idDeFicha, tituloDeFicha } from '../referencias/forma.js';
+import { REFERENCIAS } from '../referencias/indice.js';
+import { tagsDe, conTag, buscarEnReferencias } from '../referencias/busqueda.js';
+import type { Tabla, Cuenta, Valores, Fila, Fuente, Entrada, Ficha } from '../referencias/tipos.js';
 import type { EstadoReferencia } from '../referencias-control.js';
 
 /** El primer número de un texto de minutos: «1½» es 1,5; «3–5», 3; sin número, nada. */
@@ -44,33 +48,65 @@ function nombreDeFila(t: Tabla, fila: Fila): string {
   return extra && extra !== '—' ? `${base}, ${extra}` : base;
 }
 
-function celda(t: Tabla, fila: Fila, columna: Tabla['columnas'][number]): string {
+/** Una letra como la compara el buscador: sin tilde y en minúscula. */
+const comparable = (letra: string): string => letra.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+/**
+ * El texto escapado, con cada aparición de lo buscado entre `<mark>`. Compara
+ * como el buscador, sin tildes ni mayúsculas, pero marca el texto como está
+ * escrito: «limon» marca «Limón».
+ */
+export function resaltar(texto: string, buscado: string): string {
+  const q = [...buscado.trim()].map(comparable).join('');
+  if (!q) return escapar(texto);
+  const letras = [...texto];
+  // De cada posición del texto comparable, la letra del original de donde salió.
+  const origen: number[] = [];
+  const plano = letras.map((letra, i) => {
+    const c = comparable(letra);
+    for (let j = 0; j < c.length; j++) origen.push(i);
+    return c;
+  }).join('');
+  let html = '';
+  let hasta = 0;
+  for (let k = plano.indexOf(q); k !== -1; k = plano.indexOf(q, k + q.length)) {
+    const desde = origen[k] ?? 0;
+    const fin = (origen[k + q.length - 1] ?? desde) + 1;
+    html += escapar(letras.slice(hasta, desde).join('')) + `<mark>${escapar(letras.slice(desde, fin).join(''))}</mark>`;
+    hasta = fin;
+  }
+  return html + escapar(letras.slice(hasta).join(''));
+}
+
+function celda(t: Tabla, fila: Fila, columna: Tabla['columnas'][number], marcar: string): string {
   const texto = fila[columna.id] ?? '';
   const minutos = columna.minutos ? minutosDe(texto) : null;
   const nombre = nombreDeFila(t, fila);
   const boton = minutos === null ? '' :
     ` <button type="button" class="ico-min" data-accion="referencia-temporizador" data-nombre="${escapar(nombre)}" ` +
     `data-minutos="${minutos}" aria-label="Temporizador de ${escapar(nombre)}">${ICO.reloj.replace('<svg ', '<svg aria-hidden="true" ')}</button>`;
-  return `<td>${escapar(texto)}${boton}</td>`;
+  return `<td>${resaltar(texto, marcar)}${boton}</td>`;
 }
 
-const filasHtml = (t: Tabla, filas: readonly Fila[]): string =>
-  filas.map(f => `<tr>${t.columnas.map(c => celda(t, f, c)).join('')}</tr>`).join('');
+const filasHtml = (t: Tabla, filas: readonly Fila[], marcar: string): string =>
+  filas.map(f => `<tr>${t.columnas.map(c => celda(t, f, c, marcar)).join('')}</tr>`).join('');
 
 /**
- * El cuerpo de la tabla con las filas que coinciden con la búsqueda; vacía,
- * todas. Sólo una tabla agrupada —la de alimentos— se filtra: las demás
- * fichas de la herramienta se dibujan siempre enteras y sin aviso.
+ * La tabla con las filas que coinciden con la búsqueda; vacía, todas. Sólo se
+ * filtra una tabla agrupada —en el Conversor, la de pesos—: las demás fichas
+ * se dibujan siempre enteras y sin aviso. Los resultados de Referencias la
+ * usan sin búsqueda, con la tabla ya recortada.
  */
-export function filasFiltradas(t: Tabla, busqueda: string): string {
+/** `marcar` es lo que se resalta en las celdas: lo que encontró el buscador de Referencias. */
+export function filasFiltradas(t: Tabla, busqueda: string, marcar = ''): string {
   const q = 'grupos' in t ? normalizar(busqueda.trim()) : '';
   const coincide = (f: Fila): boolean => !q || t.columnas.some(c => normalizar(f[c.id]).includes(q));
   const cuerpo = 'grupos' in t
     ? t.grupos.map(g => {
         const filas = g.filas.filter(coincide);
-        return filas.length ? `<tr class="grupo-ref"><th colspan="${t.columnas.length}">${escapar(g.titulo)}</th></tr>${filasHtml(t, filas)}` : '';
+        return filas.length ? `<tr class="grupo-ref"><th colspan="${t.columnas.length}">${escapar(g.titulo)}</th></tr>${filasHtml(t, filas, marcar)}` : '';
       }).join('')
-    : filasHtml(t, t.filas.filter(coincide));
+    : filasHtml(t, t.filas.filter(coincide), marcar);
   const vacia = q && !filasDe(t).some(coincide) ? `<p class="aviso-mudo">Ningún alimento con «${escapar(busqueda.trim())}».</p>` : '';
   return `<div class="tabla-ref" data-tabla="${escapar(t.id)}"><table>` +
     `<thead><tr>${t.columnas.map(c => `<th>${escapar(c.nombre)}${c.unidad ? ` <span class="u">(${escapar(c.unidad)})</span>` : ''}</th>`).join('')}</tr></thead>` +
@@ -92,8 +128,9 @@ function textoDeNota(texto: string): string {
 const notas = (xs: readonly string[] | undefined): string =>
   (xs?.length ? `<ul class="notas-ref">${xs.map(n => `<li>${textoDeNota(n)}</li>`).join('')}</ul>` : '');
 
-function fichaTabla(t: Tabla, busqueda: string): string {
-  return `<div class="ficha ref" id="ficha-${escapar(t.id)}"><h2>${escapar(t.titulo)}</h2>` +
+/** `conTitulo` en falso es la ficha sola en su pantalla, donde el título ya está en el encabezado. */
+function fichaTabla(t: Tabla, busqueda: string, conTitulo = true): string {
+  return `<div class="ficha ref" id="ficha-${escapar(t.id)}">${conTitulo ? `<h2>${escapar(t.titulo)}</h2>` : ''}` +
     filasFiltradas(t, busqueda) + notas(t.notas) + pieDeFuentes(fuentesDe(t)) + '</div>';
 }
 
@@ -136,25 +173,61 @@ export function resultadoDeCuenta(c: Cuenta, guardado: Valores): string {
   return `<div class="resultado-ref" data-resultado-cuenta="${escapar(c.id)}">${contenido}</div>`;
 }
 
-function fichaCuenta(c: Cuenta, v: Valores): string {
+/** Una cuenta en el desplegable de su ficha, donde el título ya está en la fila que la abre. */
+export const fichaDeCuenta = (c: Cuenta, v: Valores): string => fichaCuenta(c, v, false);
+
+function fichaCuenta(c: Cuenta, v: Valores, conTitulo = true): string {
   const valores = valoresDe(c, v);
   const visibles = c.entradas.filter(e => !e.visibleSi || e.visibleSi(valores));
-  return `<div class="ficha ref" id="ficha-${escapar(c.id)}"><h2>${escapar(c.titulo)}</h2>` +
+  return `<div class="ficha ref" id="ficha-${escapar(c.id)}">${conTitulo ? `<h2>${escapar(c.titulo)}</h2>` : ''}` +
     `<div class="datos">${visibles.map(e => entradaHtml(c, e, valores)).join('')}</div>` +
     resultadoDeCuenta(c, valores) + notas(c.notas) + '</div>';
 }
 
-export function renderReferencia(h: HerramientaDeReferencia, e: EstadoReferencia): string {
-  const idDe = (f: HerramientaDeReferencia['fichas'][number]): { id: string; titulo: string } =>
-    (f.tipo === 'tabla' ? { id: f.tabla.id, titulo: f.tabla.titulo } : { id: f.cuenta.id, titulo: f.cuenta.titulo });
-  const indice = '<div class="chips indice-ref">' + h.fichas.map(f => {
-    const { id, titulo } = idDe(f);
-    return `<button type="button" class="chip" data-accion="ir-a-ficha" data-id="${escapar(id)}">${escapar(titulo)}</button>`;
-  }).join('') + '</div>';
-  const buscador = h.buscador
-    ? `<div class="buscar">${ICO.buscar}<input data-buscar-referencia="${h.id}" placeholder="Buscar un alimento" value="${escapar(e.busqueda)}"></div>`
-    : '';
-  const fichas = h.fichas.map(f => (f.tipo === 'tabla' ? fichaTabla(f.tabla, e.busqueda) : fichaCuenta(f.cuenta, e.valores[f.cuenta.id] ?? {}))).join('');
-  return encabezado({ titulo: h.titulo, icono: ICO[h.icono], volver: true }) +
+/** El Conversor: el índice de sus fichas, su buscador y todas sus fichas juntas. */
+export function renderConversor(lista: readonly Ficha[], e: EstadoReferencia): string {
+  const indice = '<div class="chips indice-ref">' + lista.map(f =>
+    `<button type="button" class="chip" data-accion="ir-a-ficha" data-id="${escapar(idDeFicha(f))}">${escapar(tituloDeFicha(f))}</button>`).join('') + '</div>';
+  const buscador = `<div class="buscar">${ICO.buscar}<input data-buscar-referencia="conversor" placeholder="Buscar un alimento" value="${escapar(e.busqueda)}"></div>`;
+  const fichas = lista.map(f => (f.tipo === 'tabla' ? fichaTabla(f.tabla, e.busqueda) : fichaCuenta(f.cuenta, e.valores[f.cuenta.id] ?? {}))).join('');
+  return encabezado({ titulo: 'Conversor', icono: ICO.medidor, volver: true }) +
     `<div class="cuerpo referencias">${buscador}${indice}${fichas}</div>`;
+}
+
+/** Lo escrito en las cuentas de Referencias, por el id de la cuenta. */
+type ValoresDeCuentas = Readonly<Record<string, Valores>>;
+
+/** Una ficha como desplegable: su título es la fila que la abre o la cierra. */
+function desplegableDeFicha(f: Ficha, valores: ValoresDeCuentas, titulo: string, contenido?: string): string {
+  const adentro = contenido ?? (f.tipo === 'tabla' ? fichaTabla(f.tabla, '', false) : fichaCuenta(f.cuenta, valores[f.cuenta.id] ?? {}, false));
+  return `<details class="ficha-ref"${contenido === undefined ? '' : ' open'}><summary>${titulo}</summary>${adentro}</details>`;
+}
+
+/** La lista de fichas desplegables, en una sola tarjeta. */
+const listaDeFichas = (fichas: readonly string[]): string => `<div class="fichas-ref">${fichas.join('')}</div>`;
+
+/**
+ * Lo que muestra la entrada debajo de los tags, en una sola lista de fichas.
+ * Sin texto, las del tag, todo cerrado. Con texto, lo encontrado, con lo buscado resaltado: las fichas
+ * que coinciden por su título o un tag, cerradas; y cada tabla con filas que
+ * coinciden, abierta, con sólo esas filas bajo su encabezado.
+ */
+export function contenidoDeReferencias({ tag, q }: { tag: string; q: string }, valores: ValoresDeCuentas = {}): string {
+  if (!q.trim()) return listaDeFichas(conTag(REFERENCIAS, tag).map(f => desplegableDeFicha(f, valores, escapar(tituloDeFicha(f)))));
+  const { fichas, tablas } = buscarEnReferencias(REFERENCIAS, tag, q);
+  if (!fichas.length && !tablas.length) return `<p class="aviso-mudo">Nada con «${escapar(q.trim())}».</p>`;
+  return listaDeFichas([
+    ...fichas.map(f => desplegableDeFicha(f, valores, resaltar(tituloDeFicha(f), q))),
+    ...tablas.map(e => desplegableDeFicha(e.ficha, valores, resaltar(e.tabla.titulo, q), filasFiltradas(e.tabla, '', q)))
+  ]);
+}
+
+export function renderReferencias({ tag, q }: { tag: string; q: string }, valores: ValoresDeCuentas = {}): string {
+  const chips = tagsDe(REFERENCIAS).map(t =>
+    `<button type="button" class="chip${t === tag ? ' act' : ''}" data-accion="referencias-tag" data-tag-ref="${escapar(t)}">${escapar(t)}</button>`).join('');
+  return encabezado({ titulo: 'Referencias', icono: ICO.libro, volver: true }) +
+    '<div class="cuerpo referencias">' +
+    `<div class="buscar">${ICO.buscar}<input data-buscar-referencias placeholder="Buscar" value="${escapar(q)}"></div>` +
+    `<div class="chips tags-ref">${chips}</div>` +
+    `<div data-contenido-referencias>${contenidoDeReferencias({ tag, q }, valores)}</div></div>`;
 }

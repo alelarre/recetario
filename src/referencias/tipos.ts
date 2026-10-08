@@ -23,11 +23,10 @@ export interface Resultado { lineas: readonly Linea[]; tabla?: TablaDeResultado;
 /** `descripcion` es una frase con la pregunta que la cuenta responde: la ve el agente en el MCP. */
 export interface Cuenta { id: string; titulo: string; descripcion?: string; entradas: readonly Entrada[]; notas?: readonly string[]; calcular(v: Valores): Resultado | null }
 export type Ficha = { tipo: 'tabla'; tabla: Tabla } | { tipo: 'cuenta'; cuenta: Cuenta };
-export type IdHerramienta = 'rapida' | 'masas' | 'coccion' | 'conservacion' | 'conversor';
-export interface HerramientaDeReferencia {
-  id: IdHerramienta; ruta: string; titulo: string; detalle: string;
-  icono: 'libro' | 'rodillo' | 'olla' | 'heladera' | 'medidor'; buscador: boolean; fichas: readonly Ficha[];
-}
+/** Una ficha de Referencias, con sus tags. */
+export type FichaDeReferencia = Ficha & { tags: readonly string[] };
+/** Las dos herramientas hechas de fichas, cada una con lo escrito en sus cuentas guardado aparte. */
+export type IdHerramienta = 'referencias' | 'conversor';
 
 /** Los sistemas de medida del conversor: cuánto miden la taza y las cucharas. */
 export type IdSistema = 'metrica' | 'australia' | 'eeuu' | 'japon';

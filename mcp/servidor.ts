@@ -200,10 +200,9 @@ export function crearServidor(recetario: Recetario): McpServer {
       'cervezas y gaseosas, gramos de masa por pieza, pasta comprada por persona, masas por plato, arroz a presión, granos, legumbres, ' +
       'tiempos de pasta, verduras al vapor y hervidas, blanqueado, cuánto dura cada alimento en la alacena, la heladera y el freezer, ' +
       'gramos por taza y por cuchara de cada ingrediente, y la taza y las cucharas de cada país, las medidas informales y el stick de manteca de EE. UU. ' +
-      'Usala antes de responder cualquiera de estas preguntas con lo que sepas. Sin nada, lista las herramientas, sus tablas y sus cuentas; ' +
-      'con `herramienta` y `tabla`, devuelve las filas; con `buscar`, las filas de cualquier tabla que contengan ese texto.',
+      'Usala antes de responder cualquiera de estas preguntas con lo que sepas. Sin nada, lista todas las tablas y las cuentas, con sus tags; ' +
+      'con `tabla`, devuelve sus filas; con `buscar`, las filas de cualquier tabla que contengan ese texto.',
     inputSchema: {
-      herramienta: z.string().optional().describe('Una de: rapida, masas, coccion, conservacion, conversor.'),
       tabla: z.string().optional().describe('El id de una tabla, de los que devuelve el listado.'),
       buscar: z.string().optional().describe('Un texto: «pollo», «arroz», «crema».')
     }

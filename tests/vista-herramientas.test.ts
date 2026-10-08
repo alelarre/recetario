@@ -8,7 +8,6 @@ import { FERMENTOS, lineasSal, type DatosSal } from '../src/calculadoras/ferment
 import { gramos, porciento } from '../src/calculadoras/gramos.js';
 import { escapar } from '../src/ui/markdown.js';
 import { ICO } from '../src/ui/iconos.js';
-import { HERRAMIENTAS_DE_REFERENCIA } from '../src/referencias/indice.js';
 
 /**
  * Un pan directo, con levadura, que es donde están todas las filas. Armado
@@ -54,17 +53,16 @@ describe('la lista de herramientas', () => {
     expect(html).toContain('<span class="tit">Fermentados</span>');
   });
 
-  it('sigue con las cinco de referencia, con su ícono y su link, después de Fermentados', () => {
+  it('sigue con Referencias y el Conversor, con su ícono y su link, después de Fermentados', () => {
     const html = renderHerramientas({});
-    const iconos = { libro: ICO.libro, rodillo: ICO.rodillo, olla: ICO.olla, heladera: ICO.heladera, medidor: ICO.medidor };
-    let desde = html.indexOf('href="#/herramientas/fermentados"');
-    expect(HERRAMIENTAS_DE_REFERENCIA).toHaveLength(5);
-    for (const r of HERRAMIENTAS_DE_REFERENCIA) {
-      const donde = html.indexOf(`href="${r.ruta}">${iconos[r.icono]}`);
-      expect(donde).toBeGreaterThan(desde);
-      desde = donde;
-      expect(html).toContain(`<span class="tit">${escapar(r.titulo)}</span>`);
-    }
+    const fermentados = html.indexOf('href="#/herramientas/fermentados"');
+    const referencias = html.indexOf(`href="#/herramientas/referencias">${ICO.libro}`);
+    const conversor = html.indexOf(`href="#/herramientas/conversor">${ICO.medidor}`);
+    expect(referencias).toBeGreaterThan(fermentados);
+    expect(conversor).toBeGreaterThan(referencias);
+    expect(html).toContain('<span class="tit">Referencias</span>');
+    expect(html).toContain('<span class="tit">Conversor</span>');
+    expect(html.match(/class="fila herramienta"/g)).toHaveLength(5);
   });
 
   it('con el menú, la hamburguesa y el lateral', () => {

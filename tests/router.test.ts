@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { parsearHash, hashDeCompartido, rutaDeInvitado, esHashDeInvitado, crearRouter } from '../src/ui/router.js';
+import { parsearHash, hashDeCompartido, rutaDeInvitado, esHashDeInvitado, crearRouter, hashDeReferencias, esDelMenu } from '../src/ui/router.js';
 import type { Ruta } from '../src/ui/router.js';
 import { comoGlobal, limpiarGlobales } from './dom-falso.js';
 
@@ -187,12 +187,28 @@ describe('Herramientas', () => {
     expect(esDelMenu('temporizadores')).toBe(false);
   });
 
-  it('las cinco de referencia', () => {
-    expect(parsearHash('#/herramientas/referencia')).toEqual({ vista: 'referencia', params: { herramienta: 'rapida' } });
-    expect(parsearHash('#/herramientas/masas')).toEqual({ vista: 'referencia', params: { herramienta: 'masas' } });
-    expect(parsearHash('#/herramientas/coccion')).toEqual({ vista: 'referencia', params: { herramienta: 'coccion' } });
-    expect(parsearHash('#/herramientas/conservacion')).toEqual({ vista: 'referencia', params: { herramienta: 'conservacion' } });
-    expect(parsearHash('#/herramientas/conversor')).toEqual({ vista: 'referencia', params: { herramienta: 'conversor' } });
+  it('Referencias: la entrada con su tag y su texto, y el Conversor', () => {
+    expect(parsearHash('#/herramientas/referencias')).toEqual({ vista: 'referencias', params: {} });
+    expect(parsearHash('#/herramientas/referencias?tag=legumbres%20y%20granos&q=lim%C3%B3n'))
+      .toEqual({ vista: 'referencias', params: { tag: 'legumbres y granos', q: 'limón' } });
+    expect(parsearHash('#/herramientas/referencias?tag=&q=')).toEqual({ vista: 'referencias', params: {} });
+    // Las fichas se despliegan en la entrada: no tienen ruta propia.
+    expect(parsearHash('#/herramientas/referencias/punto-humo')).toEqual({ vista: 'referencias', params: {} });
+    expect(parsearHash('#/herramientas/conversor')).toEqual({ vista: 'conversor', params: {} });
+    expect(esDelMenu('referencias')).toBe(false);
+  });
+
+  it('las rutas viejas de cada referencia caen en la lista de Herramientas', () => {
+    for (const r of ['referencia', 'masas', 'coccion', 'conservacion']) {
+      expect(parsearHash(`#/herramientas/${r}`).vista).toBe('herramientas');
+    }
+  });
+
+  it('hashDeReferencias pone en la ruta sólo lo que no está vacío, codificado', () => {
+    expect(hashDeReferencias({})).toBe('#/herramientas/referencias');
+    expect(hashDeReferencias({ tag: 'conservación', q: '' })).toBe('#/herramientas/referencias?tag=conservaci%C3%B3n');
+    expect(parsearHash(hashDeReferencias({ tag: 'legumbres y granos', q: 'a&b=c' })).params)
+      .toEqual({ tag: 'legumbres y granos', q: 'a&b=c' });
   });
 
   it('un nombre de la herencia de los objetos no es una herramienta: cae en la lista', () => {

@@ -3,10 +3,12 @@
  * tabla y cada constante diga de dónde sale y que cada fila tenga las
  * columnas de su tabla. Lo usa el test que custodia `datos/`.
  */
-import type { Tabla, Fila, Fuente, Constante } from './tipos.js';
+import type { Tabla, Fila, Fuente, Constante, Ficha } from './tipos.js';
 
 export const filasDe = (t: Tabla): readonly Fila[] => ('filas' in t ? t.filas : t.grupos.flatMap(g => g.filas));
 export const fuentesDe = (t: Tabla): readonly Fuente[] => ('fuente' in t ? [t.fuente] : t.fuentes);
+export const idDeFicha = (f: Ficha): string => (f.tipo === 'tabla' ? f.tabla.id : f.cuenta.id);
+export const tituloDeFicha = (f: Ficha): string => (f.tipo === 'tabla' ? f.tabla.titulo : f.cuenta.titulo);
 
 const problemasDeFuente = (donde: string, f: Fuente): string[] =>
   /^https?:\/\/\S+$/.test(f.url) ? [] : [`${donde}: la fuente «${f.nombre}» no tiene una URL http o https`];

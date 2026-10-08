@@ -5,7 +5,7 @@ import { crearStore, conConcurrencia, TOPE_LECTURAS, recetasMovidasEn, RecetaQue
 import * as indiceLocal from './indice-local.js';
 import { parse, slugArchivo, sePuedeTerminar } from './recipe.js';
 import { tagReservado, conEspecial, esFavorita, tieneEspecial, tieneAlgoCargado } from './catalogo.js';
-import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado, MENU, esDelMenu } from './ui/router.js';
+import { crearRouter, parsearHash, hashDeCompartido, esHashDeInvitado, MENU, esDelMenu, hashDeReferencias } from './ui/router.js';
 import { renderRecetario } from './ui/recetario.js';
 import { renderCategoria } from './ui/categoria.js';
 import { renderTag } from './ui/tag.js';
@@ -79,8 +79,9 @@ import { crearAvisoSonoro } from './aviso-sonoro.js';
 import { crearPantallaEncendida } from './pantalla-encendida.js';
 import { formatear, restante, avance, transcurrido, aMs, MINUTO } from './temporizadores.js';
 import { crearControlReferencias } from './referencias-control.js';
-import { renderReferencia, resultadoDeCuenta, filasFiltradas } from './ui/referencias.js';
-import { herramientaDeReferencia } from './referencias/indice.js';
+import { renderConversor, renderReferencias, contenidoDeReferencias, fichaDeCuenta, resultadoDeCuenta, filasFiltradas } from './ui/referencias.js';
+import { fichasDe, fichaDeReferencia, REFERENCIAS, FICHAS_DEL_CONVERSOR } from './referencias/indice.js';
+import { tagsDe } from './referencias/busqueda.js';
 import type { IdHerramienta } from './referencias/tipos.js';
 import { calcularPan } from './calculadoras/pan.js';
 import type { EstadoDePantalla, PedidoAlAgente } from './estado-pantalla.js';
@@ -496,20 +497,30 @@ const controlTemporizadores = crearControlTemporizadores({
 // Cada pantalla trae o saca la tira de Temporizadores según dónde se esté.
 despuesDePintar(pintarTemporizadoresVivos);
 
-/** Lo escrito en las cuentas de las herramientas de referencia, y la búsqueda de Conservación. */
+/** Lo escrito en las cuentas de Referencias, por el id de la cuenta. */
+const valoresDeReferencias = () => controlReferencias.estado('referencias').valores;
+
+/** Lo escrito en las cuentas de Referencias y del Conversor, y la búsqueda del Conversor. */
 const controlReferencias = crearControlReferencias({
   almacen: almacenLocal(),
-  redibujar: () => { void render(); },
+  // En Referencias se repinta sólo la ficha de la cuenta: redibujar cerraría
+  // el desplegable que la tiene abierta. El Conversor se redibuja entero.
+  redibujar: (id, cuentaId) => {
+    const ficha = id === 'conversor' ? null : fichaDeReferencia(cuentaId);
+    const bloque = document.querySelector(`#app #ficha-${cuentaId}`);
+    if (ficha?.tipo !== 'cuenta' || !bloque) { void render(); return; }
+    pintarParte(bloque, fichaDeCuenta(ficha.cuenta, controlReferencias.estado(id).valores[cuentaId] ?? {}), 'reemplazar');
+  },
   // Escribir pinta sólo el resultado de la cuenta: redibujar la pantalla sacaría el foco del campo.
   pintarResultado: (id, cuentaId) => {
     const bloque = document.querySelector(`#app [data-resultado-cuenta="${cuentaId}"]`);
-    const ficha = herramientaDeReferencia(id).fichas.find(f => f.tipo === 'cuenta' && f.cuenta.id === cuentaId);
+    const ficha = fichasDe(id).find(f => f.tipo === 'cuenta' && f.cuenta.id === cuentaId);
     if (bloque && ficha?.tipo === 'cuenta') {
       pintarParte(bloque, resultadoDeCuenta(ficha.cuenta, controlReferencias.estado(id).valores[cuentaId] ?? {}), 'reemplazar');
     }
   },
   pintarTabla: (id) => {
-    for (const ficha of herramientaDeReferencia(id).fichas) {
+    for (const ficha of fichasDe(id)) {
       if (ficha.tipo !== 'tabla') continue;
       const bloque = document.querySelector(`#app [data-tabla="${ficha.tabla.id}"]`);
       if (bloque) pintarParte(bloque, filasFiltradas(ficha.tabla, controlReferencias.estado(id).busqueda), 'reemplazar');
@@ -1083,10 +1094,16 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
       return pintar(renderPan(herramientas.pan()));
     case 'calculadora-sal':
       return pintar(renderSal(herramientas.sal()));
-    case 'referencia': {
-      const h = herramientaDeReferencia(ruta.params['herramienta'] as IdHerramienta);
-      return pintar(renderReferencia(h, controlReferencias.estado(h.id)));
+    case 'referencias': {
+      // Un tag que no está entre los de las fichas —un link viejo— sale de la
+      // ruta: si quedara, el buscador lo usaría para filtrar y no encontraría nada.
+      const tag = ruta.params['tag'] ?? '';
+      const q = ruta.params['q'] ?? '';
+      if (tag && !tagsDe(REFERENCIAS).includes(tag)) return nav.reemplazar(hashDeReferencias({ q }));
+      return pintar(renderReferencias({ tag, q }, valoresDeReferencias()));
     }
+    case 'conversor':
+      return pintar(renderConversor(FICHAS_DEL_CONVERSOR, controlReferencias.estado('conversor')));
     case 'temporizadores':
       return pintar(renderTemporizadores({ ...controlTemporizadores.estado(), nombre: nombreDeTemporizadorEscrito() }));
 
@@ -2407,7 +2424,17 @@ const acciones = registrarAcciones({
   compartir: accionesDeCompartir,
   ajustes: accionesDeAjustes,
   herramientas: herramientas.acciones,
-  referencias: controlReferencias.acciones,
+  referencias: {
+    ...controlReferencias.acciones,
+    // Tocar el tag activo lo saca; lo escrito en el buscador se conserva. El
+    // chip lleva `data-tag-ref` y no `data-tag`: con ese, el toque iría a la
+    // lista de recetas del tag.
+    'referencias-tag': (boton) => {
+      const tocado = boton.dataset['tagRef'] ?? '';
+      const actual = vistaActual?.params['tag'] ?? '';
+      nav.reemplazar(hashDeReferencias({ tag: tocado === actual ? '' : tocado, q: vistaActual?.params['q'] ?? '' }));
+    }
+  },
   temporizadores: {
     ...controlTemporizadores.acciones,
     'ir-temporizadores': () => { nav.ir('#/herramientas/temporizadores'); },
@@ -2455,16 +2482,29 @@ app.addEventListener('input', (e) => {
   if (velo.ocupado()) return;
   if (vistaActual?.vista === 'editar-categoria') return revisarCategoria(true);
   const entrada = conClosest(e.target)?.closest<HTMLInputElement | HTMLSelectElement>('[data-entrada]');
-  if (entrada && vistaActual?.vista === 'referencia') {
-    const id = vistaActual.params['herramienta'] as IdHerramienta;
+  const vistaDeCuenta = vistaActual?.vista === 'conversor' || vistaActual?.vista === 'referencias';
+  if (entrada && vistaActual && vistaDeCuenta) {
     const { entrada: nombre = '', cuenta: cuentaId = '' } = entrada.dataset;
+    const id: IdHerramienta = vistaActual.vista === 'conversor' ? 'conversor' : 'referencias';
     return 'options' in entrada
       ? controlReferencias.alElegir(id, cuentaId, nombre, entrada.value)
       : controlReferencias.alEscribir(id, cuentaId, nombre, entrada.value);
   }
+  const buscarEnReferencias = conClosest(e.target)?.closest<HTMLInputElement>('[data-buscar-referencias]');
+  if (buscarEnReferencias && vistaActual?.vista === 'referencias') {
+    // Lo escrito viaja en la ruta, para que el volver desde una ficha lo
+    // encuentre; cambiarla sin dibujar deja el foco y el teclado en la caja.
+    const q = buscarEnReferencias.value;
+    const tag = vistaActual.params['tag'] ?? '';
+    vistaActual.params['q'] = q;
+    nav.cambiarSinDibujar(hashDeReferencias({ tag, q }));
+    const bloque = document.querySelector('#app [data-contenido-referencias]');
+    if (bloque) pintarParte(bloque, `<div data-contenido-referencias>${contenidoDeReferencias({ tag, q }, valoresDeReferencias())}</div>`, 'reemplazar');
+    return;
+  }
   const buscar = conClosest(e.target)?.closest<HTMLInputElement>('[data-buscar-referencia]');
-  if (buscar && vistaActual?.vista === 'referencia') {
-    return controlReferencias.alBuscar(vistaActual.params['herramienta'] as IdHerramienta, buscar.value);
+  if (buscar && vistaActual?.vista === 'conversor') {
+    return controlReferencias.alBuscar('conversor', buscar.value);
   }
   const cantidad = conClosest(e.target)?.closest<HTMLInputElement>('[data-cantidad]');
   if (cantidad) return herramientas.alEscribir(cantidad);

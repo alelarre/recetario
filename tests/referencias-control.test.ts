@@ -12,39 +12,39 @@ const boton = (dataset: Record<string, string>) => ({ dataset }) as unknown as H
 describe('el control de referencias', () => {
   it('escribir un número guarda y pinta sólo el resultado', () => {
     const { c, pintarResultado, redibujar, almacen } = armar();
-    c.alEscribir('coccion', 'agua-sal-pasta', 'gramos', '250');
-    expect(c.estado('coccion').valores['agua-sal-pasta']?.['gramos']).toBe(250);
-    expect(pintarResultado).toHaveBeenCalledWith('coccion', 'agua-sal-pasta');
+    c.alEscribir('referencias', 'agua-sal-pasta', 'gramos', '250');
+    expect(c.estado('referencias').valores['agua-sal-pasta']?.['gramos']).toBe(250);
+    expect(pintarResultado).toHaveBeenCalledWith('referencias', 'agua-sal-pasta');
     expect(redibujar).not.toHaveBeenCalled();
-    expect(JSON.parse(almacen.getItem('recetario.referencias.coccion')!)).toEqual({ 'agua-sal-pasta': { gramos: 250 } });
+    expect(JSON.parse(almacen.getItem('recetario.referencias')!)).toEqual({ 'agua-sal-pasta': { gramos: 250 } });
   });
 
   it('un texto que no es número queda vacío; la coma decimal vale', () => {
     const { c } = armar();
-    c.alEscribir('masas', 'molde', 'alto', 'abc');
-    expect(c.estado('masas').valores['molde']?.['alto']).toBeNull();
-    c.alEscribir('masas', 'molde', 'alto', '4,5');
-    expect(c.estado('masas').valores['molde']?.['alto']).toBe(4.5);
+    c.alEscribir('referencias', 'molde', 'alto', 'abc');
+    expect(c.estado('referencias').valores['molde']?.['alto']).toBeNull();
+    c.alEscribir('referencias', 'molde', 'alto', '4,5');
+    expect(c.estado('referencias').valores['molde']?.['alto']).toBe(4.5);
   });
 
-  it('elegir una opción redibuja: puede cambiar qué entradas se ven', () => {
+  it('elegir una opción redibuja esa cuenta: puede cambiar qué entradas se ven', () => {
     const { c, redibujar } = armar();
-    c.alElegir('masas', 'molde', 'forma', 'tubo');
-    expect(redibujar).toHaveBeenCalledOnce();
+    c.alElegir('referencias', 'molde', 'forma', 'tubo');
+    expect(redibujar).toHaveBeenCalledExactlyOnceWith('referencias', 'molde');
   });
 
   it('lo guardado roto vuelve a vacío', () => {
     const almacen = localStorageFalso();
-    almacen.setItem('recetario.referencias.masas', '{roto');
-    expect(armar(almacen).c.estado('masas').valores).toEqual({});
+    almacen.setItem('recetario.referencias', '{roto');
+    expect(armar(almacen).c.estado('referencias').valores).toEqual({});
   });
 
   it('buscar no guarda y pinta sólo la tabla', () => {
     const { c, pintarTabla, almacen } = armar();
-    c.alBuscar('conservacion', 'pollo');
-    expect(c.estado('conservacion').busqueda).toBe('pollo');
-    expect(pintarTabla).toHaveBeenCalledWith('conservacion');
-    expect(almacen.getItem('recetario.referencias.conservacion')).toBeNull();
+    c.alBuscar('conversor', 'pollo');
+    expect(c.estado('conversor').busqueda).toBe('pollo');
+    expect(pintarTabla).toHaveBeenCalledWith('conversor');
+    expect(almacen.getItem('recetario.conversor')).toBeNull();
   });
 
   it('el botón de minutos crea un temporizador con el nombre de la fila', () => {

@@ -1,8 +1,9 @@
 /**
- * Lo escrito en las cuentas de las herramientas de referencia —una entrada en
- * `localStorage` por herramienta, como las calculadoras— y la búsqueda de
- * Conservación, que no se guarda. Escribir pinta sólo el resultado o la
- * tabla; elegir una opción redibuja, porque puede cambiar qué entradas se ven.
+ * Lo escrito en las cuentas de Referencias y del Conversor —una entrada en
+ * `localStorage` para cada uno, como las calculadoras— y la búsqueda del
+ * Conversor, que no se guarda. Escribir pinta sólo el resultado o la tabla;
+ * elegir una opción redibuja la cuenta, porque puede cambiar qué entradas se
+ * ven.
  */
 import type { SeccionDeAcciones } from './acciones.js';
 import type { IdHerramienta, Valores } from './referencias/tipos.js';
@@ -18,7 +19,7 @@ export interface ControlReferencias {
   acciones: SeccionDeAcciones;
 }
 
-const clave = (id: IdHerramienta): string => `recetario.referencias.${id}`;
+const clave = (id: IdHerramienta): string => `recetario.${id}`;
 
 function leer(almacen: Almacen | null, id: IdHerramienta): ValoresDeHerramienta {
   try {
@@ -30,7 +31,8 @@ function leer(almacen: Almacen | null, id: IdHerramienta): ValoresDeHerramienta 
 
 export function crearControlReferencias({ almacen, redibujar, pintarResultado, pintarTabla, temporizador }: {
   almacen: Almacen | null;
-  redibujar: () => void;
+  /** Elegir una opción puede cambiar qué entradas se ven: se redibuja la cuenta. */
+  redibujar: (id: IdHerramienta, cuenta: string) => void;
   pintarResultado: (id: IdHerramienta, cuenta: string) => void;
   pintarTabla: (id: IdHerramienta) => void;
   temporizador: (nombre: string, minutos: number) => void;
@@ -57,7 +59,7 @@ export function crearControlReferencias({ almacen, redibujar, pintarResultado, p
       poner(id, cuenta, entrada, texto.trim() && Number.isFinite(n) ? n : null);
       pintarResultado(id, cuenta);
     },
-    alElegir(id, cuenta, entrada, valor) { poner(id, cuenta, entrada, valor); redibujar(); },
+    alElegir(id, cuenta, entrada, valor) { poner(id, cuenta, entrada, valor); redibujar(id, cuenta); },
     alBuscar(id, texto) { busquedas.set(id, texto); pintarTabla(id); },
     acciones: {
       'ir-a-ficha': (boton) => {

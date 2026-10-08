@@ -22,7 +22,6 @@ import {
 } from '../calculadoras/pan.js';
 import { FERMENTOS, cifrasSal, lineasSal, advertenciasSal, type DatosSal } from '../calculadoras/fermentados.js';
 import { TEMPERATURAS } from '../calculadoras/temperaturas.js';
-import { HERRAMIENTAS_DE_REFERENCIA } from '../referencias/indice.js';
 
 type Opcion = { valor: string; texto: string };
 
@@ -126,7 +125,8 @@ export function renderHerramientas({ menu }: { menu?: MenuDePantalla }): string 
       entrada('#/herramientas/temporizadores', ICO.reloj, 'Temporizadores', 'Cronómetro y cuentas regresivas') +
       entrada('#/herramientas/pan', ICO.pan, 'Pan', 'Harinas, agua, sal y levadura') +
       entrada('#/herramientas/fermentados', ICO.frasco, 'Fermentados', 'Porcentaje de sal y tiempos') +
-      HERRAMIENTAS_DE_REFERENCIA.map(r => entrada(r.ruta, ICO[r.icono], r.titulo, r.detalle)).join('') +
+      entrada('#/herramientas/referencias', ICO.libro, 'Referencias', 'Huevos, carne, masas, cocción y cuánto dura cada alimento') +
+      entrada('#/herramientas/conversor', ICO.medidor, 'Conversor', 'Tazas, cucharas y gramos por ingrediente') +
     '</div></div>');
 }
 

@@ -44,6 +44,19 @@ describe('la navegación', () => {
     expect(profundidad(history.state)).toBe(0);
   });
 
+  it('cambiarSinDibujar cambia el hash de la entrada actual sin dibujar ni sumar una entrada', async () => {
+    const { nav, location, history, pila, llegadas } = montar();
+    nav.ir('#/herramientas/referencias');
+    await esperar();
+    nav.cambiarSinDibujar('#/herramientas/referencias?q=crema');
+    await esperar();
+    expect(location.hash).toBe('#/herramientas/referencias?q=crema');
+    expect(pila().map(e => profundidad(e.state))).toEqual([0, 1]);
+    expect(profundidad(history.state)).toBe(1);
+    expect(llegadas).toEqual(['nueva']);
+    expect(nav.hayAtras()).toBe(true);
+  });
+
   it('ir agrega una entrada con la profundidad de la anterior más uno', async () => {
     const { nav, location, history, pila, llegadas } = montar();
     nav.ir('#/c/Carnes');

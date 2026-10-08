@@ -14,7 +14,7 @@ levadura o masa madre; y la sal de un fermentado—, consultar un dato mientras
 se cocina —cuántos minutos, a qué temperatura, cuánto dura— y medir el tiempo,
 con un cronómetro y temporizadores.
 
-Son los temporizadores, dos calculadoras y cuatro herramientas de referencia,
+Son los temporizadores, dos calculadoras, las *Referencias* y el Conversor,
 en una sección propia del menú. **No leen ninguna receta
 ni usan Drive:** no tocan el índice, ni el `.md`, ni la carpeta base. Una
 receta marcada con `pan` o `fermentado` tiene un botón que abre la que le
@@ -49,27 +49,25 @@ aparece.
   y *Nueva receta* (`ux/information-architecture.md` §4.6).
 - [ ] `#/herramientas` es destino del menú (`MENU` en `src/ui/router.ts`):
   lleva la hamburguesa en vez del volver, y su entrada queda marcada.
-- [ ] La pantalla es una lista con ocho entradas, cada una con su ícono
+- [ ] La pantalla es una lista con cinco entradas, cada una con su ícono
   adelante —como las entradas del menú lateral— y una línea que dice qué
   hace, en este orden: **Temporizadores** —*Cronómetro y cuentas
   regresivas*—, **Pan** —*Harinas, agua, sal y levadura*—, **Fermentados**
-  —*Porcentaje de sal y tiempos*—, **Referencia rápida** —*Huevos, carne,
-  aceite, horno y bebidas*—, **Masas y dulces** —*Moldes, piezas, pasta,
-  pizza, azúcar y merengue*—, **Básicos de cocción** —*Arroz, granos,
-  legumbres, pasta, verduras y caldo*—, **Conservación** —*Cuánto dura cada
-  alimento*— y **Conversor** —*Tazas, cucharas y gramos por ingrediente*—.
-  Los íconos de las cinco últimas son `libro`, `rodillo`, `olla`, `heladera`
-  y `medidor`.
+  —*Porcentaje de sal y tiempos*—, **Referencias** —*Huevos, carne, masas,
+  cocción y cuánto dura cada alimento*— y **Conversor** —*Tazas, cucharas y
+  gramos por ingrediente*—. Los íconos de las dos últimas son `libro` y
+  `medidor`.
 
 #### C07.1.2 — Las rutas *(J6)*
 
 - [ ] `#/herramientas/temporizadores`, `#/herramientas/pan` y
   `#/herramientas/fermentados` son Temporizadores y cada calculadora, con el
   volver.
-- [ ] `#/herramientas/referencia`, `#/herramientas/masas`,
-  `#/herramientas/coccion`, `#/herramientas/conservacion` y
-  `#/herramientas/conversor` son las cinco referencias, con el volver y el ícono de la herramienta delante del título.
-  Vuelven a la lista.
+- [ ] `#/herramientas/referencias` es la entrada de Referencias (C07.7.1);
+  con `?tag=` y `?q=`, filtrada por un tag o con lo escrito en el buscador.
+  Lo que siga a `referencias/` cae en la entrada: las fichas no tienen ruta
+  propia. `#/herramientas/conversor` es el Conversor (F07.11). Las dos llevan
+  el volver y el ícono delante del título.
 - [ ] Una calculadora abierta desde una receta vuelve a la receta; abierta
   desde la lista, vuelve a la lista. Por un link directo, el volver pone el
   Recetario en su lugar, como cualquier volver (IA §4.5).
@@ -494,7 +492,8 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 - [ ] Si el pedido viene de una receta, los datos de la receta no reemplazan
   las preguntas.
 - [ ] **El mismo skill cubre las referencias** (C07.6.5): su `description`
-  nombra los temas de las cuatro herramientas y no pasa de 1.024 caracteres.
+  nombra los temas de Referencias y del Conversor y no pasa de 1.024
+  caracteres.
 
 #### C07.6.3 — El skill `recetario` pone las marcas *(J6, J8)*
 
@@ -508,15 +507,13 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 #### C07.6.4 — Las herramientas de referencia del MCP *(J6)*
 
 - [ ] **`consultar_referencia`**, en el servidor `recetario`. Sin nada, lista
-  las cinco herramientas (`rapida`, `masas`, `coccion`, `conservacion`,
-  `conversor`) con el
-  `id` y el título de sus tablas y de sus cuentas, y el nombre de la
-  herramienta del MCP de cada cuenta. Con `herramienta` y, si quiere, `tabla`,
-  devuelve las filas con los nombres de sus columnas, las notas y las fuentes.
+  todas las tablas y todas las cuentas de Referencias y del Conversor, con el
+  `id`, el título y los tags de cada una —las del Conversor no llevan—, y el
+  nombre de la herramienta del MCP de cada cuenta. Con `tabla`, devuelve esa
+  tabla con los nombres de sus columnas, sus filas, sus notas y sus fuentes.
   Con `buscar` devuelve las filas de cualquier tabla cuyo texto lo contenga,
   sin mirar mayúsculas ni tildes, cada una con su tabla y sus fuentes. Una
-  `herramienta` o una `tabla` que no existe devuelve `error` con los ids
-  válidos.
+  `tabla` que no existe devuelve `error` con los ids válidos.
 - [ ] **Una herramienta por cuenta,** `calcular_<id>` con guiones bajos,
   registrada desde la declaración de la cuenta, así que su esquema son sus
   entradas: `calcular_molde`, `calcular_pasta_fresca`,
@@ -557,23 +554,66 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   caracteres y que toda herramienta que registra el MCP está nombrada en
   algún skill.
 
-### F07.7 — Referencia rápida
+### F07.7 — Referencias
 
-Huevos, carne, aceite, horno y bebidas, para mirar mientras se cocina. Sin
-cuentas: son diez tablas. La pantalla es la de toda referencia (C07.7.1).
+**Referencias** son datos para mirar mientras se cocina, en tablas y cuentas,
+cada una con su fuente. Es una sola pantalla: una lista de fichas que se
+despliegan en el lugar. Se llega a una ficha por la lista, por un tag o por el
+buscador. Las fichas van, en este orden, en C07.7.5 (huevos, carne, aceite,
+horno y bebidas), F07.9 (arroz, granos, legumbres, pasta, verduras y caldo),
+F07.8 (masas y dulces) y F07.10 (conservación). No leen recetas ni usan
+Drive, así que el velo no aparece. El Conversor es aparte (F07.11).
 
-#### C07.7.1 — La pantalla de una referencia *(J6)*
+#### C07.7.1 — La entrada *(J6)*
 
-- [ ] **Una sola pantalla dibuja las cuatro** referencias desde su archivo de
-  datos y sus cuentas (`src/referencias/`), con el título de la herramienta,
-  su ícono y el volver (`design-system.md` §6.12 y §6.30). No lee recetas ni
-  usa Drive, así que el velo no aparece.
-- [ ] **Arriba, el índice:** una fila de chips con el título de cada ficha,
-  en el orden de la pantalla; tocar uno lleva a su ficha.
-- [ ] **Una ficha por tabla o por cuenta,** en ese orden.
-- [ ] **Una tabla** lleva el título, el encabezado con las unidades, las
-  filas con la primera columna en peso 600 y, debajo, sus notas. Una tabla
-  ancha se desplaza de costado dentro de su ficha; la página no.
+- [ ] **Arriba,** el encabezado con el volver, el ícono `libro` y
+  *Referencias* (`design-system.md` §6.12 y §6.30); debajo, el buscador
+  —*Buscar*— y una fila de chips con los tags, en orden alfabético, en
+  renglones.
+- [ ] **Sin tag ni texto, una sola lista:** cada ficha es una fila con su
+  título, en el orden de C07.7.5, F07.9, F07.8 y F07.10. Tocarla despliega la ficha ahí mismo (C07.7.3), y tocarla de
+  nuevo la cierra. Se pueden abrir varias a la vez. Al entrar, todo está
+  cerrado.
+- [ ] **Un tag a la vez:** tocar uno oculta las fichas que no lo tienen; no
+  abre nada. Tocar el activo lo saca;
+  tocar otro lo reemplaza.
+- [ ] **Con texto,** la lista se reemplaza por los resultados (C07.7.2); con
+  un tag activo, se busca sólo en sus fichas.
+- [ ] **El tag y el texto viajan en la ruta**
+  (`#/herramientas/referencias?tag=pasta&q=crema`): el volver desde otra
+  pantalla encuentra la entrada como estaba. Elegir o sacar un tag reemplaza
+  la ruta y redibuja. Escribir también la cambia, pero sin redibujar: pinta
+  sólo lo de debajo de los tags, y el foco y el teclado quedan en la caja.
+  Entrar desde Herramientas abre la entrada sin tag ni texto. **Lo abierto no
+  se guarda.**
+- [ ] Un `tag` de la ruta que no está entre los de las fichas se saca de la
+  ruta.
+
+#### C07.7.2 — Los resultados del buscador *(J6)*
+
+- [ ] Busca sin mirar mayúsculas ni tildes, como la búsqueda de recetas, en
+  el título y los tags de cada ficha y en todas las celdas de cada tabla,
+  agrupada o no. **Lo buscado se resalta** donde aparece —en las celdas y en
+  los títulos—, tal como está escrito: «limon» resalta «limón».
+- [ ] **Una tabla con filas que coinciden** aparece desplegada: el título de
+  la ficha, el encabezado de la tabla con sus unidades y sólo esas filas; en
+  una tabla agrupada, cada fila bajo el título de su grupo. El botón de
+  minutos se dibuja como en la ficha.
+- [ ] **Una ficha que coincide sólo por su título o un tag** aparece
+  cerrada; al tocarla se despliega entera. Una que coincide también por sus
+  filas aparece una sola vez, desplegada. Una cuenta se encuentra por su
+  título y sus tags, no por lo que calcula.
+- [ ] Primero van las fichas que coinciden por título o tag y después las
+  tablas, las dos en el orden del índice.
+- [ ] Sin nada, *Nada con «<lo escrito>».*
+
+#### C07.7.3 — La ficha *(J6)*
+
+- [ ] **Una ficha se despliega en la entrada,** debajo de la fila con su
+  título; no tiene pantalla ni ruta propias y no muestra sus tags.
+- [ ] **Una tabla** lleva el encabezado con las unidades, las filas con la
+  primera columna en peso 600 y, debajo, sus notas. Una tabla ancha se
+  desplaza de costado dentro de su ficha; la página no.
 - [ ] **Una cuenta** lleva sus datos en filas, como las calculadoras
   (`design-system.md` §6.28), y debajo el resultado: sus líneas, la tabla del
   resultado si la tiene, las advertencias y la fuente; después, las notas de
@@ -585,20 +625,31 @@ cuentas: son diez tablas. La pantalla es la de toda referencia (C07.7.1).
   valores por defecto y descarta lo inválido. Un campo vacío que tiene valor
   por defecto calcula con ese valor; una opción guardada que ya no existe
   vuelve a la de por defecto.
-- [ ] Escribir un número pinta sólo el resultado de esa cuenta, sin
-  redibujar; elegir una opción redibuja, porque puede cambiar qué datos se
-  ven.
+- [ ] Escribir un número pinta sólo el resultado de esa cuenta; elegir una
+  opción pinta la cuenta entera, porque puede cambiar qué datos se ven. Ninguna
+  de las dos redibuja la pantalla: la ficha sigue abierta.
 - [ ] Lo escrito se guarda en `localStorage` en cada cambio
-  (`recetario.referencias.<herramienta>`), una entrada por herramienta, como
+  (`recetario.referencias`), una sola entrada para todas las cuentas, como
   las calculadoras (C07.4.1); toda lectura y escritura va con `try/catch`.
 
 **Edge case:** un dato vacío sin valor por defecto, en cero, negativo o que
 no es un número → la cuenta no tiene resultado; el bloque queda vacío, nunca
 un error.
 
-#### C07.7.2 — Las fichas de la referencia rápida *(J6)*
+#### C07.7.4 — Los tags *(J6)*
 
-- [ ] En este orden: **Huevos**, **Temperatura interna segura**, **Puntos de
+- [ ] Cada ficha de Referencias lleva al menos un tag; se declaran por ficha
+  en `src/referencias/indice.ts`, el mismo lugar que ordena las fichas. Las
+  fichas del Conversor no llevan.
+- [ ] Son catorce: *arroz*, *bebidas*, *carne*, *conservación*, *dulces*,
+  *fritura*, *horno*, *huevo*, *legumbres y granos*, *masas*, *olla a
+  presión*, *pasta*, *pollo* y *verduras*. Un tag junta fichas de temas
+  distintos: *pasta* lleva la pasta fresca y la comprada, el agua y la sal,
+  el tiempo y el medidor de espagueti.
+
+#### C07.7.5 — Las fichas de huevos, carne, aceite, horno y bebidas *(J6)*
+
+- [ ] Son las primeras de la lista; las siguen las de F07.9. En este orden: **Huevos**, **Temperatura interna segura**, **Puntos de
   la carne vacuna**, **Aceite para freír**, **Punto de humo**, **Horno**,
   **Mate**, **Té**, **Vinos y espumantes** y **Cervezas y gaseosas**.
 - [ ] **Huevos:** los minutos en agua hirviendo, para el huevo de heladera y
@@ -619,10 +670,11 @@ un error.
   los vinos y espumantes y las cervezas, con las
   gaseosas, a la temperatura a la que se sirven.
 
-### F07.8 — Masas y dulces
+### F07.8 — Las fichas de masas y dulces
 
-Moldes, piezas, pasta, pizza, azúcar y merengue: tres tablas de
-consulta y seis cuentas, de la masa para un molde a los puntos del azúcar.
+Las fichas de Referencias (F07.7) de moldes, piezas, pasta, pizza, azúcar y
+merengue, después de las de F07.9: tres tablas de consulta y cinco cuentas, de la masa para un molde
+a los puntos del azúcar.
 
 #### C07.8.1 — Las fichas de masas y dulces *(J6)*
 
@@ -689,9 +741,9 @@ consulta y seis cuentas, de la masa para un molde a los puntos del azúcar.
   italiano—. El resultado es el azúcar, el impalpable, el azúcar y el agua del
   almíbar que el tipo usa, y la temperatura, con la nota del tipo.
 
-### F07.9 — Básicos de cocción
+### F07.9 — Las fichas de arroz, granos, legumbres, pasta, verduras y caldo
 
-Arroz, granos, legumbres, pasta, verduras y caldo.
+Las fichas de Referencias (F07.7) que siguen a las de C07.7.5.
 
 #### C07.9.1 — Las fichas de cocción *(J6)*
 
@@ -735,16 +787,15 @@ Arroz, granos, legumbres, pasta, verduras y caldo.
   si la fila la tiene —«Espárragos, finos»—; en el té, sólo el tipo —«Verde»—.
 - [ ] Una fila sin número en esa columna no lleva el botón.
 
-### F07.10 — Conservación
+### F07.10 — La ficha de conservación
 
-Cuánto dura cada alimento en la alacena, la heladera y el freezer.
+La última ficha de Referencias (F07.7): cuánto dura cada alimento en la
+alacena, la heladera y el freezer. Un alimento se encuentra con el buscador
+de Referencias (C07.7.2).
 
 #### C07.10.1 — La tabla de conservación *(J6)*
 
-- [ ] **La nota general va primero,** en su propia ficha: las temperaturas, que
-  el freezer conserva por calidad, el tiempo fuera de la heladera, recalentar
-  una vez, descongelar y recongelar.
-- [ ] Después, **una sola tabla** con los alimentos en grupos por categoría
+- [ ] Es **una sola tabla** con los alimentos en grupos por categoría
   —carnes, aves, pescados y mariscos, fiambres y embutidos, huevos, lácteos,
   frutas, verduras y hortalizas, panificados y masas, secos y de alacena,
   salsas y condimentos, y comidas cocidas y sobras—. Cada fila lleva el
@@ -759,26 +810,18 @@ Cuánto dura cada alimento en la alacena, la heladera y el freezer.
   pollo y pescado, de FoodKeeper. Una fila que agrupa por analogía lo dice en
   su nota.
 
-#### C07.10.2 — El buscador *(J6)*
-
-- [ ] Arriba, un campo **Buscar un alimento** que filtra las filas de todas las
-  categorías mientras se escribe, sin mirar tildes ni mayúsculas, como la
-  búsqueda de recetas. Mira todas las columnas de la fila. Una categoría que
-  queda sin filas no se muestra. **Sólo se filtra la tabla de alimentos:** las
-  demás fichas de la herramienta, como la nota general, se dibujan siempre
-  enteras y sin aviso.
-- [ ] Vacío, muestra todo. Sin ninguna fila que coincida dice *Ningún alimento
-  con «<lo escrito>»*, una sola vez, en la tabla de alimentos.
-- [ ] Escribir pinta sólo la tabla, sin redibujar, para no sacarle el foco al
-  campo. **La búsqueda no se guarda en el teléfono:** al recargar la
-  app, el campo está vacío.
-
 ### F07.11 — Conversor
 
 Pasar una cantidad de cocina de una unidad a las demás y, con un ingrediente,
 de volumen a peso. Sirve para recetas de afuera y para las caseras de acá.
 Los datos están en `src/referencias/datos/conversor.ts`; de dónde sale cada
 uno, en `verificacion-conversor.md`.
+
+Es una herramienta aparte de Referencias, con su pantalla: el encabezado con
+el volver, el ícono `medidor` y *Conversor*; arriba, el buscador y el índice
+de sus fichas como chips —tocar uno lleva a su ficha—; debajo, todas sus
+fichas juntas, que se dibujan y guardan lo escrito como las de Referencias
+(C07.7.3), bajo la clave `recetario.conversor`.
 
 #### C07.11.1 — La cuenta *(J6)*
 
@@ -824,8 +867,11 @@ uno, en `verificacion-conversor.md`.
 - [ ] **Medidas de EE. UU.:** fl oz, oz, lb, dash, pinch, smidgen y el stick
   de manteca, con su equivalencia, y las notas sobre las fuentes que no
   coinciden y los panes de manteca de acá.
-- [ ] El buscador de arriba —el de Conservación— filtra la tabla de pesos. Las
-  opciones de la cuenta no se filtran.
+- [ ] El buscador de arriba —*Buscar un alimento*— filtra la tabla de pesos
+  mientras se escribe, sin mirar tildes ni mayúsculas, y pinta sólo la tabla,
+  para no sacarle el foco al campo. Sin coincidencias dice *Ningún alimento
+  con «<lo escrito>»*. Las demás fichas y las opciones de la cuenta no se
+  filtran, y la búsqueda no se guarda.
 
 ---
 
@@ -833,7 +879,7 @@ uno, en `verificacion-conversor.md`.
 
 | Capacidad | Job |
 |---|---|
-| C07.1.1, C07.1.2, C07.2.1, C07.2.2, C07.2.3, C07.2.4, C07.2.5, C07.2.6, C07.2.7, C07.3.1, C07.4.1, C07.5.1, C07.5.2, C07.5b.1, C07.5b.2, C07.6.1, C07.6.2, C07.6.4, C07.6.5, C07.7.1, C07.7.2, C07.8.1, C07.8.2, C07.8.3, C07.8.4, C07.9.1, C07.9.2, C07.9.3, C07.10.1, C07.10.2, C07.11.1, C07.11.2 | J6 |
+| C07.1.1, C07.1.2, C07.2.1, C07.2.2, C07.2.3, C07.2.4, C07.2.5, C07.2.6, C07.2.7, C07.3.1, C07.4.1, C07.5.1, C07.5.2, C07.5b.1, C07.5b.2, C07.6.1, C07.6.2, C07.6.4, C07.6.5, C07.7.1, C07.7.2, C07.7.3, C07.7.4, C07.7.5, C07.8.1, C07.8.2, C07.8.3, C07.8.4, C07.9.1, C07.9.2, C07.9.3, C07.10.1, C07.11.1, C07.11.2 | J6 |
 | C07.6.3 | J6, J8 |
 
 Ninguna capacidad de esta épica quedó sin job.

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { problemasDeForma, problemasDeConstante, filasDe } from '../src/referencias/forma.js';
-import { HERRAMIENTAS_DE_REFERENCIA } from '../src/referencias/indice.js';
+import { problemasDeForma, problemasDeConstante, filasDe, idDeFicha } from '../src/referencias/forma.js';
+import { REFERENCIAS, FICHAS_DEL_CONVERSOR, fichaDeReferencia, fichasDe } from '../src/referencias/indice.js';
 import type { Tabla, Fuente } from '../src/referencias/tipos.js';
 import { AGUA_SAL_PASTA, ESPAGUETI, CALDO } from '../src/referencias/datos/coccion.js';
 import { MOLDE, PASTA_FRESCA, PIZZA, AZUCAR, MERENGUE } from '../src/referencias/datos/masas-y-dulces.js';
@@ -57,22 +57,15 @@ describe('la forma de una tabla', () => {
 });
 
 describe('el índice', () => {
-  it('las cinco herramientas, en el orden de la lista, con su ruta', () => {
-    expect(HERRAMIENTAS_DE_REFERENCIA.map(h => [h.id, h.ruta])).toEqual([
-      ['rapida', '#/herramientas/referencia'], ['masas', '#/herramientas/masas'],
-      ['coccion', '#/herramientas/coccion'], ['conservacion', '#/herramientas/conservacion'],
-      ['conversor', '#/herramientas/conversor']
-    ]);
+  it('fichasDe da las de Referencias o las del Conversor', () => {
+    expect(fichasDe('referencias')).toBe(REFERENCIAS);
+    expect(fichasDe('conversor')).toBe(FICHAS_DEL_CONVERSOR);
   });
 
-  it('todas las tablas del índice tienen buena forma, y los id de fichas son únicos', () => {
-    const ids: string[] = [];
-    for (const h of HERRAMIENTAS_DE_REFERENCIA) {
-      for (const f of h.fichas) {
-        if (f.tipo === 'tabla') expect(problemasDeForma(f.tabla), f.tabla.id).toEqual([]);
-        ids.push(f.tipo === 'tabla' ? f.tabla.id : f.cuenta.id);
-      }
-    }
+  it('todas las tablas tienen buena forma, y los id de fichas son únicos entre Referencias y el Conversor', () => {
+    const todas = [...REFERENCIAS, ...FICHAS_DEL_CONVERSOR];
+    for (const f of todas) if (f.tipo === 'tabla') expect(problemasDeForma(f.tabla), f.tabla.id).toEqual([]);
+    const ids = todas.map(idDeFicha);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
@@ -115,5 +108,21 @@ describe('los datos del conversor', () => {
     for (const i of INGREDIENTES) expect(SISTEMAS.map(s => s.id), i.id).toContain(i.medida.sistema);
     for (const i of INGREDIENTES) expect(i.medida.cantidad > 0 && i.medida.gramos > 0, i.id).toBe(true);
     expect(ids).toContain(INGREDIENTE_DEL_STICK);
+  });
+});
+
+describe('los tags de Referencias', () => {
+  it('cada ficha tiene al menos un tag, sin repetidos', () => {
+    for (const f of REFERENCIAS) {
+      expect(f.tags.length, idDeFicha(f)).toBeGreaterThan(0);
+      expect(new Set(f.tags).size, idDeFicha(f)).toBe(f.tags.length);
+    }
+  });
+
+  it('fichaDeReferencia encuentra una ficha de Referencias, y no una del Conversor', () => {
+    const primera = REFERENCIAS[0];
+    expect(primera && fichaDeReferencia(idDeFicha(primera))).toBe(primera);
+    expect(fichaDeReferencia(idDeFicha(FICHAS_DEL_CONVERSOR[0]))).toBeNull();
+    expect(fichaDeReferencia('no-existe')).toBeNull();
   });
 });

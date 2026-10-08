@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { consultarReferencia, calcularParaElAgente, nombreMcp, esquemaDe, CUENTAS } from '../mcp/referencias.js';
-import { HERRAMIENTAS_DE_REFERENCIA } from '../src/referencias/indice.js';
-import { filasDe } from '../src/referencias/forma.js';
+import { REFERENCIAS, FICHAS_DEL_CONVERSOR } from '../src/referencias/indice.js';
+import { filasDe, idDeFicha } from '../src/referencias/forma.js';
 import type { Cuenta } from '../src/referencias/tipos.js';
 
 const fuente = { nombre: 'F', url: 'https://f.com' };
@@ -13,16 +13,30 @@ const cuenta: Cuenta = {
 };
 
 describe('consultar_referencia', () => {
-  it('sin nada, las cinco herramientas con sus tablas y cuentas', () => {
+  it('sin nada, todas las tablas y las cuentas de Referencias y del Conversor, con sus tags; las del Conversor, ninguno', () => {
     const r = consultarReferencia({});
-    expect('herramientas' in r && r.herramientas.map(h => h.id)).toEqual(['rapida', 'masas', 'coccion', 'conservacion', 'conversor']);
+    if (!('cuentas' in r) || !('tablas' in r)) throw new Error('no es el listado');
+    const todas = [...REFERENCIAS, ...FICHAS_DEL_CONVERSOR];
+    expect([...r.tablas.map(t => t.id), ...r.cuentas.map(c => c.id)].sort())
+      .toEqual(todas.map(idDeFicha).sort());
+    const tagsDe = (id: string) => REFERENCIAS.find(f => idDeFicha(f) === id)?.tags ?? [];
+    for (const t of r.tablas) expect(t.tags, t.id).toEqual(tagsDe(t.id));
+    for (const c of r.cuentas) expect(c.tags, c.id).toEqual(tagsDe(c.id));
+    for (const c of r.cuentas) expect(c.herramienta_mcp, c.id).toMatch(/^calcular_/);
   });
-  it('una herramienta que no existe devuelve las opciones', () => {
-    expect(consultarReferencia({ herramienta: 'otra' })).toEqual({ error: expect.any(String), opciones: ['rapida', 'masas', 'coccion', 'conservacion', 'conversor'] });
+  it('con una tabla, sus filas con sus columnas, sus notas y sus fuentes', () => {
+    const t = REFERENCIAS.find(f => f.tipo === 'tabla');
+    if (t?.tipo !== 'tabla') throw new Error('no hay tablas');
+    const r = consultarReferencia({ tabla: t.tabla.id });
+    expect('tabla' in r && [r.tabla.id, r.tabla.filas.length]).toEqual([t.tabla.id, filasDe(t.tabla).length]);
+  });
+  it('una tabla que no existe devuelve las opciones', () => {
+    const r = consultarReferencia({ tabla: 'otra' });
+    expect('error' in r && r.opciones).toEqual([...REFERENCIAS, ...FICHAS_DEL_CONVERSOR].flatMap(f => (f.tipo === 'tabla' ? [f.tabla.id] : [])));
   });
   it('buscar encuentra sin tildes ni mayúsculas, con su tabla y su fuente', () => {
     // El texto sale de los datos, sea cual sea: el test no depende de ningún valor.
-    const t = HERRAMIENTAS_DE_REFERENCIA.flatMap(h => h.fichas).find(f => f.tipo === 'tabla');
+    const t = REFERENCIAS.find(f => f.tipo === 'tabla');
     if (t?.tipo !== 'tabla') throw new Error('no hay tablas');
     const texto = filasDe(t.tabla)[0]?.[t.tabla.columnas[0]?.id ?? ''] ?? '';
     const r = consultarReferencia({ buscar: texto.toUpperCase() });

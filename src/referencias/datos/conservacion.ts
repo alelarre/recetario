@@ -69,31 +69,6 @@ const ST: FuenteAbreviada = {
 };
 
 export const TABLAS_CONSERVACION = {
-  'nota-general': {
-    id: 'nota-general', titulo: 'Nota general',
-    columnas: [
-      { id: 'tema', nombre: 'Tema' },
-      { id: 'dice', nombre: 'Qué dice' },
-      { id: 'fuente', nombre: 'Fuente' }
-    ],
-    filas: [
-      { tema: 'Temperatura de la heladera', dice: '5 °C o menos. SENASA recomienda mantenerla entre 4 y 5 °C. FSIS: 40 °F (4 °C) o menos en toda la heladera.', fuente: 'ANMAT-F, SEN, FSIS-R' },
-      { tema: 'Temperatura del freezer', dice: '−18 °C (FSIS: 0 °F, que es −17,8 °C). Un congelador dentro de la heladera que no llega a esa temperatura, o cuya puerta se abre seguido, sirve sólo para guardar poco tiempo.', fuente: 'ANMAT-F, FSIS-C' },
-      { tema: 'El freezer conserva la calidad, no la seguridad', dice: 'A −18 °C constante el alimento es seguro indefinidamente; con el tiempo sólo pierde calidad. Los plazos de freezer de la tabla son de calidad. El frío no mata los microbios: al descongelar vuelven a multiplicarse como en el alimento fresco.', fuente: 'FSIS-C' },
-      { tema: 'La heladera tampoco es por tiempo indefinido', dice: 'Los plazos de SENASA son de «mantenimiento de calidad y cualidades organolépticas». FSIS aclara que la mayoría de las bacterias que pudren el alimento no enferman, pero algunas, como Listeria, crecen en la heladera.', fuente: 'SEN, FSIS-R' },
-      { tema: 'Fuera de la heladera', dice: 'Máximo 2 horas para lo cocido y lo perecedero (ANMAT); 1 hora si hace más de 32 °C (FSIS, 90 °F). Lo que superó los 5 °C por más de 2 horas se tira.', fuente: 'ANMAT-F, FSIS-S' },
-      { tema: 'Cómo descongelar', dice: 'Nunca a temperatura ambiente. Sí: en la heladera; en el microondas sólo si se cocina enseguida; como parte de la cocción; o bajo chorro de agua fría (menos de 21 °C). FSIS: en agua fría, en bolsa cerrada y cambiando el agua cada 30 minutos, y cocinar enseguida.', fuente: 'ANMAT-F, FSIS-D' },
-      { tema: 'Cuánto dura lo descongelado en la heladera', dice: 'Carne picada, carne para guiso, pollo y pescado: 1 a 2 días más antes de cocinarlos. Cortes de vaca, cerdo o cordero: 3 a 5 días. Sobras descongeladas: 3 a 4 días.', fuente: 'FSIS-D, FSIS-S' },
-      { tema: 'Cocinar sin descongelar', dice: 'Es seguro; tarda alrededor de 50 % más que con la carne descongelada o fresca.', fuente: 'FSIS-D' },
-      { tema: 'Recongelar', dice: 'ANMAT: «No vuelvas a congelar un alimento que ya fue descongelado». La excepción es lo crudo que se descongeló y después se cocinó: ya cocido, se puede volver a congelar (FSIS).', fuente: 'ANMAT-M, FSIS-C, FSIS-D' },
-      { tema: 'Recalentar', dice: 'Las sobras no deberían recalentarse más de una vez (ANMAT). FSIS: recalentar hasta 74 °C (165 °F); salsas, sopas y jugos, hasta que hiervan.', fuente: 'ANMAT-F, FSIS-S' },
-      { tema: 'Preparaciones con huevo crudo', dice: 'No más de 24 horas (incluye las mezclas para panqueques).', fuente: 'ANMAT-M' },
-      { tema: 'Lo que no se congela bien', dice: 'Mayonesa, salsas de crema y lechuga se pueden congelar pero quedan mal; los huevos con cáscara no se congelan. La carne y el pollo crudos aguantan más en el freezer que cocidos.', fuente: 'FSIS-C' },
-      { tema: 'Enfriar rápido', dice: 'Lo cocido se guarda dentro de las 2 horas, repartido en recipientes chicos y bajos para que se enfríe rápido.', fuente: 'FSIS-S' }
-    ],
-    fuentes: [ANMAT_F, ANMAT_M, SEN, FSIS_R, FSIS_C, FSIS_S, FSIS_D], columnaFuente: 'fuente'
-  },
-
   conservacion: {
     id: 'conservacion', titulo: 'Cuánto dura cada alimento',
     columnas: [

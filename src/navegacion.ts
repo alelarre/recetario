@@ -241,6 +241,16 @@ export function crearNavegacion({ location, history }: EntornoDeNavegacion) {
     },
 
     /**
+     * Cambia el hash de la entrada actual sin dibujar: `replaceState` no
+     * dispara `hashchange`. Es para lo que se escribe y viaja en la ruta, como
+     * la búsqueda de Referencias: redibujar le sacaría el foco al campo.
+     */
+    cambiarSinDibujar(hash: string): void {
+      history.replaceState({ profundidad }, '', hash);
+      anotar(hash, false);
+    },
+
+    /**
      * Vuelve a poner adelante la pantalla que se estaba dejando, sin dibujar:
      * `pushState` no dispara `hashchange`. Es para cuando la pantalla ya se
      * dejó por el atrás y no se la puede dejar.
