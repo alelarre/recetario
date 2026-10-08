@@ -87,6 +87,18 @@ describe('el controlador del invitado', () => {
     expect(reemplazos).toEqual([`#/ver?r=${carga}`]);
   });
 
+  it('el invitado ve el texto de una marca, sin botón, en la lectura y en la cocina', async () => {
+    const carga = await codificar(parse('---\ntitulo: Pan\n---\n\n## Ingredientes\n- Harina\n\n## Preparación\n1. Hornear [1 h](cuenta:1:00:00 "horno").\n'), 'Panes');
+    const lectura = await montar(`#/ver?r=${carga}`);
+    expect(lectura.app.innerHTML).toContain('Hornear 1 h.');
+    expect(lectura.app.innerHTML).not.toContain('crear-temporizador');
+    limpiarGlobales(); vi.resetModules();
+    const cocina = await montar(`#/ver/cocinar?r=${carga}`);
+    await cocina.tocar('conmutar', { posicion: 'pasos' });
+    expect(cocina.app.innerHTML).toContain('Hornear 1 h.');
+    expect(cocina.app.innerHTML).not.toContain('crear-temporizador');
+  });
+
   it('marcar un paso se dibuja', async () => {
     const carga = await cargaDe();
     const { app, tocar } = await montar(`#/ver/cocinar?r=${carga}`);

@@ -310,13 +310,6 @@ export const accionesDeFotos = (fotos: FotosControl, pantalla: PantallaDeFotos):
     const url = pantalla.urlEscrita().trim();
     if (url) await traerPorUrl(fotos, pantalla, url);
   },
-  'abrir-elegir-foto': (boton) => {
-    // La sección y la línea son las que tenía el botón: las escribió quien lo
-    // acomodó, con el cursor donde estaba.
-    pantalla.abrirFicha(renderElegirFoto(
-      fotos.fotos(), boton.dataset['seccion'] ?? '', Number(boton.dataset['linea'] ?? 0)
-    ));
-  },
   'poner-en': (boton) => {
     // Ahora está en el texto, y su miniatura lo dice.
     fotos.ponerEn(boton.dataset['seccion'] ?? '', Number(boton.dataset['linea'] ?? 0), Number(boton.dataset['n'] ?? 0));

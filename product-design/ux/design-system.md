@@ -81,7 +81,7 @@ identidad prohíbe.
 | `--acento-suave` | `#39291D` | El fondo de un elemento con el acento aplicado. | — |
 | `--error` | `#D95F52` | **Solo para operaciones que fallaron.** | **4.6:1** |
 | `--error-suave` | `#33191A` | El fondo del aviso con acción. | — |
-| `--exito` | `#53DA6E` | **Solo el tilde con el que cierra el velo** (§6.17b). | **9.3:1** |
+| `--exito` | `#53DA6E` | **El tilde con el que cierra el velo** (§6.17b) y el del botón de §6.30 recién tocado. | **9.3:1** |
 
 **`--exito` es el hermano verde del error:** la misma saturación y la misma
 luminosidad, a 126° de matiz. Sobre el velo, que es donde se lo ve, da 10.9:1.
@@ -275,7 +275,7 @@ tamaños de base:
 Adentro de otro componente el ícono se achica a su medida: 16 px en la marca de
 la tarjeta, el botón de tag especial, el conmutador de orden, la flecha del
 carrusel y el `+` de una comida del plan; 15 px pegado a la duración en una línea
-de contexto; 14 px en un chip; 18 px en el botón de poner una foto; 13 px en las
+de contexto; 14 px en un chip; 18 px en el botón de herramientas del editor; 13 px en las
 marcas de uso de una miniatura; 12 px en la cruz de una línea del plan; 24 px en
 el botón de duración.
 
@@ -285,7 +285,7 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 «+» de agregar de la tarjeta (§6.1).
 
 **Los íconos son funcionales, nunca decorativos.** `iconos.ts` tiene
-**cuarenta y seis**: cuarenta y uno en `ICO` y los cinco relojitos de
+**cuarenta y nueve**: cuarenta y cuatro en `ICO` y los cinco relojitos de
 `ICONO_DE_DURACION`.
 
 | Ícono | Dónde |
@@ -308,7 +308,8 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `carrito` | Delante del título de la lista de compras. |
 | `cerrar` | La cruz: la del chip removible del editor, la que limpia la búsqueda y la que saca una receta de una comida del plan. |
 | `camara` | *Cámara*, en la ficha *Fotos* del editor (§6.25), y *Subir foto* al elegir la de una categoría (§6.4). |
-| `imagen` | El botón que pone en una línea una foto que ya está en el depósito (§6.9b). Es una foto sacada y no la cámara: no agrega ninguna. |
+| `imagen` | *Foto*, en la capa «Agregar en esta línea» del editor (§6.9b): pone en una línea una foto que ya está en el depósito. Es una foto sacada y no la cámara: no agrega ninguna. |
+| `herramienta` | El botón del editor que abre la capa «Agregar en esta línea» (§6.9b). Una llave inglesa. |
 | `portada` | La marca de la foto que es la portada, en la fila de fotos del editor (§6.25). Una ficha con un señalador adentro; el señalador va relleno con `currentColor`. **No es una estrella:** en esta app la estrella es favorito. |
 | `enElTexto` | La marca de la foto que está puesta en un paso o un ingrediente (§6.25). Tres renglones de largo distinto. |
 | `galeria` | *Galería*, en la fila de fotos (§6.25): elegir fotos del teléfono. Dos fotos, una detrás de la otra. |
@@ -317,6 +318,9 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `balanza` | *Herramientas*, en el menú lateral y en su título, y delante del título de la ficha del resultado de una calculadora (§6.28). |
 | `reloj`, `pan`, `frasco` | Las tres herramientas —Temporizadores, Pan y Fermentados—: en su entrada de la lista de Herramientas y delante del título de su pantalla. `reloj` va también delante del nombre en la tira (§6.29). |
 | `libro`, `medidor` | Referencias y el Conversor: en su entrada de la lista de Herramientas y delante del título de sus pantallas —la entrada y cada ficha de Referencias, y el Conversor— (§6.30). Un libro abierto y una taza medidora con sus marcas, del trazo de los demás. |
+| `relojMas` | La marca `cuenta:` de una receta y los botones de minutos de Referencias, y *Cuenta regresiva* en la capa del editor (§6.30). El reloj abierto abajo a la derecha, con un «+» del mismo trazo en ese hueco. |
+| `cronometro`, `cronometroMas` | `cronometro`: un cronómetro con nombre, delante de su nombre en la lista y en la tira (§6.29). `cronometroMas`, con el «+» de `relojMas`: la marca `cronometro:` de una receta y *Cronómetro* en la capa del editor (§6.30). Un círculo, una aguja y el botón arriba. |
+| `tilde` | El botón de §6.30 recién tocado. |
 | `pausa`, `play` | Pausar y seguir un temporizador (§6.29). |
 | `arriba`, `abajo` | Las ruedas del temporizador nuevo (§6.29). |
 | `idaYVuelta` | Entre dos cantidades que salen una de la otra, en las calculadoras (§6.28). Dos flechas, una para cada lado. |
@@ -732,24 +736,29 @@ sólo con su ícono y nombrado para el lector de pantalla. Hoy es uno: el que
 abre la fuente original del editor (`E04-Corregir.md` C04.2.1), con el ícono
 `link`, deshabilitado mientras lo escrito no sea un link.
 
-### 6.9b Botón de poner una foto
+### 6.9b Botón de herramientas
 
 Vive **encima de un campo de contenido del editor**, pegado a su borde derecho
 —a `--e-2`— y **a la altura de la línea donde está el cursor**. Se dibuja sólo
-con el campo enfocado y con algo en el depósito.
+con el campo enfocado.
 
-Sin texto: el ícono `imagen` de 18 px en `--fg-2`, en una caja de 36 × 32 px de
+Sin texto: el ícono `herramienta` de 18 px en `--fg-2`, en una caja de 36 × 32 px de
 `--surface` —más oscuro que el campo, que es `--surface-alta`— con borde 1 px
 `--borde-fuerte` y `--r-chico`. Del lado izquierdo lleva un **pico** de 6 px
-que apunta al texto, con el mismo borde y relleno: dice que la foto va en esa
-línea y no en el campo entero. Presionado, caja y pico pasan a `--surface-alta`
+que apunta al texto, con el mismo borde y relleno: dice que lo que se agrega va
+en esa línea y no en el campo entero. Presionado, caja y pico pasan a `--surface-alta`
 (§6.0). Es de
 32 px y no de 24 para poder tocarlo, y se sube 4 px para quedar centrado sobre
 el renglón. Tapa el final de la línea, que es el precio de estar adentro del
 campo: la escritura pasa por debajo y el botón se ve entero.
 
-**No es la cámara** (§3.4): pone una foto que ya está en el depósito, no agrega
-una nueva.
+**Abre la capa «Agregar en esta línea»** (§6.26): una ficha al pie, como las de
+foto, con una entrada por herramienta —`imagen` y *Foto*, `relojMas` y *Cuenta
+regresiva*, `cronometroMas` y *Cronómetro*—, cada una con su ícono, su nombre y
+el chevron a la derecha. Una deshabilitada lleva debajo su motivo, en `--fg-3`.
+Elegir una cambia el contenido de la misma ficha por su paso: la galería del
+depósito, o el nombre (opcional) con las ruedas de §6.29 y **Poner**. Foto no es
+la cámara (§3.4): pone una que ya está en el depósito, no agrega una nueva.
 
 **Sigue al campo por dentro:** desplazar el texto con el dedo lo mueve con su
 renglón, y si el renglón del cursor se fue de la vista el botón no se dibuja.
@@ -1328,12 +1337,13 @@ aparece.
 esquinas de arriba, ancho máximo 680 px, hasta 80 % del alto de la pantalla, y
 el padding de abajo con el área segura. Tocar el velo o el atrás las cierra, y
 por eso ninguna tiene *Cancelar*. Mientras una está abierta, la página de atrás no se
-desplaza. Son cuatro:
+desplaza. Son cinco:
 
 | Ficha | Qué muestra |
 |---|---|
 | **Acciones** | *Foto N* y dos botones, uno al lado del otro: **Ver**, secundario, y **Sacar**, con la variante de peligro (§6.7). **No ofrece Portada**: la portada se elige sólo en su campo. |
-| **Poner una foto** | La galería del depósito, y nada más: es la que abre el botón de §6.9b. **No ofrece agregar**, que es la ficha *Fotos*. |
+| **Agregar en esta línea** | La capa que abre el botón de §6.9b, con una entrada por herramienta. |
+| **Poner una foto** | La galería del depósito, y nada más: es el paso de *Foto* en la capa de arriba. **No ofrece agregar**, que es la ficha *Fotos*. |
 | **Foto de portada** | La galería del depósito con la actual marcada, y **Sin foto**. Sin fotos en el depósito, en lugar de la galería dice *"Subí una foto en la ficha Fotos para poder elegirla de portada."* **No ofrece agregar**: la portada sale de lo que ya está. Es el único lugar donde se elige. |
 | **Foto por URL** | El campo *Dirección de la foto*, con `https://…` de placeholder, y **Traer**. Si algo falla, el aviso (§6.8) va arriba del campo y la ficha queda abierta con lo escrito. |
 
@@ -1461,6 +1471,10 @@ texto «¡Listo!» terminado— y tres botones cuadrados de 40 px, secundarios:
 con el avance en `--acento`. Terminado no lleva barra: los botones son *+1'* y
 *Parar* primario.
 
+**La ficha de un cronómetro con nombre** es la misma fila: el ícono `cronometro`
+delante del nombre —un temporizador lleva `reloj`—, el tiempo que sube y dos
+botones, pausa/seguir y la cruz. No lleva barra ni *+1'*.
+
 **Las ruedas:** tres columnas iguales —horas, min, seg— con la etiqueta en
 `--txt-micro` `--fg-3`, y una caja `--surface-alta` con borde `--borde-fuerte`
 que lleva el chevron arriba, el valor a 28 px peso 600 y el chevron abajo. Las
@@ -1530,11 +1544,17 @@ anterior. Una URL dentro de una nota es un link en `--fg-2`. **La fuente va al p
 nombre como link en `--fg-2` y, si son varias, una
 detrás de otra separadas por «·». Todo en `--txt-micro` `--fg-3`.
 
-**El botón de minutos** (`.ico-min`) va pegado al valor de la celda: un
-cuadrado de 28 px visibles, `--r-medio`, borde de 1 px `--borde-fuerte`, sin
-fondo, con el ícono `reloj` de 16 px en `--fg-2`. Tiene 48 px de área táctil:
-un `::after` transparente lo extiende 10 px por lado. Su nombre accesible es
-«Temporizador de <fila>» y el ícono va oculto a los lectores de pantalla.
+**El botón que crea un temporizador** (`.ico-min`) va pegado a un texto: el
+valor de la celda de una tabla de Referencias o, en una receta, las palabras de
+una marca de temporizador (`E03-LeerYCocinar.md` C03.1.4). Es un cuadrado de
+24 px visibles, `--r-chico`, borde de 1 px `--borde-fuerte`, sin fondo, con el
+ícono de 14 px en `--fg-2`: `relojMas` para una cuenta regresiva y
+`cronometroMas` para un cronómetro. Tiene 44 px de área táctil: un `::after`
+transparente lo extiende 10 px por lado. Su nombre accesible dice qué crea y de
+qué texto («Empezar un temporizador: <nombre>») y el ícono va oculto a los lectores de
+pantalla. **Recién tocado** queda deshabilitado 2 s y muestra `tilde` en
+`--exito`, con el borde también en `--exito`; después vuelve a su ícono. **En
+el modo cocina** pasa a 36 px, con el ícono a `--ico-cocina`.
 
 **El buscador del Conversor** es la caja de búsqueda del Recetario (`buscar`,
 §3.4) con el texto «Buscar un alimento», arriba de todo. Mientras se escribe

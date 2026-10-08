@@ -338,17 +338,18 @@ Editor → ficha Fotos
   ▸ recién ahí van a la papelera las que saqué
 ```
 
-**Una foto se pone en el texto desde el lugar**, que es lo que estoy mirando
-mientras escribo el paso:
+**Una foto, un temporizador o un cronómetro se ponen en el texto desde el
+lugar**, que es lo que estoy mirando mientras escribo el paso:
 
 ```
 Editor → escribo un paso
-  ▸ a la derecha del campo, a la altura de mi línea, el botón de foto
-    ⚑ sólo con el campo enfocado, y sólo si el depósito tiene algo
+  ▸ a la derecha del campo, a la altura de mi línea, el botón de herramientas
+    ⚑ sólo con el campo enfocado; aparece siempre, haya o no fotos
   → lo toco
-  ⚑ la galería del depósito, y nada más: agregar es la ficha Fotos
+  ⚑ la capa «Agregar en esta línea»: Foto, Cuenta regresiva y Cronómetro
+    ⚑ Foto va deshabilitada si el depósito está vacío: agregar es la ficha Fotos
   → elijo una
-  ▸ ![](foto:N) se escribe al final de esa línea
+  ▸ ![](foto:N) o la marca se escribe al final de esa línea
 ```
 
 **El campo «Portada», primero de Contenido, es la foto de la cabecera** y el

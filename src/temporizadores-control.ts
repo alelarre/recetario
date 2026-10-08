@@ -9,8 +9,8 @@
  */
 import type { SeccionDeAcciones } from './acciones.js';
 import {
-  type Temporizador, type Cronometro, type Duracion,
-  corriendo, terminado, empezar, pausar, seguir, sumarMinuto,
+  type Temporizador, type Cronometro, type Duracion, type EnLista,
+  esCrono, empezarCrono, pausarCrono, seguirCrono, corriendo, terminado, empezar, pausar, seguir, sumarMinuto,
   cronoCorriendo, iniciarCrono, pararCrono, reiniciarCrono,
   aMs, girar, esRueda, leerGuardado, CLAVE_TEMPORIZADORES
 } from './temporizadores.js';
@@ -37,7 +37,7 @@ export interface Pantalla {
 type Almacen = Pick<Storage, 'getItem' | 'setItem'>;
 
 export interface EstadoTemporizadores {
-  temporizadores: readonly Temporizador[];
+  temporizadores: readonly EnLista[];
   crono: Cronometro;
   ruedas: Duracion;
   /** El id del temporizador cuyo aviso suena, o ninguno. */
@@ -49,6 +49,8 @@ export interface ControlTemporizadores {
   estado(): EstadoTemporizadores;
   /** Empieza un temporizador con ese nombre y esa duración (ms), como *Empezar*: lo llaman las referencias. */
   empezarCon(nombre: string, duracion: number): void;
+  /** Empieza un cronómetro con nombre: lo llaman las marcas de la receta. */
+  empezarCronoCon(nombre: string): void;
   acciones: SeccionDeAcciones;
 }
 
@@ -81,7 +83,7 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, re
   vaciarNombre: () => void;
 }): ControlTemporizadores {
   const guardado = leerGuardado(leer(almacen));
-  let temporizadores: readonly Temporizador[] = guardado.temporizadores;
+  let temporizadores: readonly EnLista[] = guardado.temporizadores;
   let crono: Cronometro = guardado.crono;
   let ruedas: Duracion = guardado.ultimaDuracion;
   let avisando: string | null = null;
@@ -93,10 +95,14 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, re
 
   const nuevoId = (): string => `${reloj.ahora().toString(36)}-${(contador++).toString(36)}`;
 
+  /** Las cuentas regresivas solas: los cronómetros con nombre ni terminan ni avisan. */
+  const cuentas = (): Temporizador[] => temporizadores.filter((x): x is Temporizador => !esCrono(x));
+
   /** Si algún temporizador está corriendo de verdad —no terminado— o el cronómetro anda. */
   const enMarcha = (): boolean => {
     const ahora = reloj.ahora();
-    return temporizadores.some(c => corriendo(c) && !terminado(c, ahora)) || cronoCorriendo(crono);
+    return cuentas().some(c => corriendo(c) && !terminado(c, ahora)) || cronoCorriendo(crono) ||
+      temporizadores.some(x => esCrono(x) && cronoCorriendo(x));
   };
 
   /**
@@ -108,7 +114,7 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, re
     const marcha = enMarcha();
     if (marcha) pantalla.mantener(); else pantalla.soltar();
     const ahora = reloj.ahora();
-    const necesitaTic = marcha || avisando !== null || temporizadores.some(t => terminado(t, ahora));
+    const necesitaTic = marcha || avisando !== null || cuentas().some(t => terminado(t, ahora));
     if (necesitaTic && !detener) detener = reloj.cadaSegundo(tic);
     if (!necesitaTic && detener) { detener(); detener = null; }
   }
@@ -116,7 +122,7 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, re
   function tic(): void {
     const ahora = reloj.ahora();
     const avisabaAntes = avisando;
-    const nuevas = temporizadores.filter(c => terminado(c, ahora) && !avisadas.has(c.id));
+    const nuevas = cuentas().filter(c => terminado(c, ahora) && !avisadas.has(c.id));
     for (const c of nuevas) avisadas.add(c.id);
     if (avisando === null && nuevas[0]) { avisando = nuevas[0].id; ticsAvisando = 0; }
     if (avisando !== null) {
@@ -139,17 +145,17 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, re
     redibujar();
   }
 
-  const porId = (boton: HTMLElement): Temporizador | undefined => temporizadores.find(c => c.id === boton.dataset['id']);
+  const porId = (boton: HTMLElement): EnLista | undefined => temporizadores.find(c => c.id === boton.dataset['id']);
 
   /** Un temporizador deja de avisar: lo sacan, o le suman un minuto y vuelve a correr. */
-  function callar(c: Temporizador): void {
+  function callar(c: EnLista): void {
     if (avisando === c.id) avisando = null;
     avisadas.delete(c.id);
   }
 
-  const reemplazar = (c: Temporizador, nueva: Temporizador): void => { temporizadores = temporizadores.map(x => (x === c ? nueva : x)); };
+  const reemplazar = (c: EnLista, nueva: EnLista): void => { temporizadores = temporizadores.map(x => (x === c ? nueva : x)); };
 
-  const sobre = (fn: (c: Temporizador, ahora: number) => void) => (boton: HTMLElement): void => {
+  const sobre = (fn: (c: EnLista, ahora: number) => void) => (boton: HTMLElement): void => {
     const c = porId(boton);
     if (c) cambiar(() => fn(c, reloj.ahora()));
   };
@@ -172,9 +178,10 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, re
         vaciarNombre();
       });
     },
-    'temporizador-pausar': sobre((c, ahora) => reemplazar(c, pausar(c, ahora))),
-    'temporizador-seguir': sobre((c, ahora) => reemplazar(c, seguir(c, ahora))),
-    'temporizador-sumar': sobre((c, ahora) => { callar(c); reemplazar(c, sumarMinuto(c, ahora)); }),
+    'temporizador-pausar': sobre((c, ahora) => reemplazar(c, esCrono(c) ? pausarCrono(c, ahora) : pausar(c, ahora))),
+    'temporizador-seguir': sobre((c, ahora) => reemplazar(c, esCrono(c) ? seguirCrono(c, ahora) : seguir(c, ahora))),
+    // Un cronómetro no tiene minutos que sumar.
+    'temporizador-sumar': sobre((c, ahora) => { if (esCrono(c)) return; callar(c); reemplazar(c, sumarMinuto(c, ahora)); }),
     'temporizador-sacar': sobre((c) => { callar(c); temporizadores = temporizadores.filter(x => x !== c); }),
     'rueda-mas': girarRueda(1),
     'rueda-menos': girarRueda(-1),
@@ -192,6 +199,9 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, re
       if (!(duracion > 0)) return;
       aviso.preparar();
       cambiar(() => { temporizadores = [...temporizadores, empezar(nuevoId(), nombre, duracion, reloj.ahora())]; });
+    },
+    empezarCronoCon(nombre) {
+      cambiar(() => { temporizadores = [...temporizadores, empezarCrono(nuevoId(), nombre, reloj.ahora())]; });
     },
     acciones
   };

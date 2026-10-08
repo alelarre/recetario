@@ -11,6 +11,15 @@ describe('la lista de compras', () => {
     expect(lista.conCantidad).toEqual([{ nombre: 'Harina', cantidad: '500 g' }]);
   });
 
+  it('el nombre sin la marca: se suma con el mismo ingrediente sin marca', () => {
+    const lista = listaDeCompras([con('- Masa [madre](cuenta:30:00) - 250 g'), con('- Masa madre - 250 g'), con('- [](cuenta:1:00) - 1 kg')]);
+    expect(lista.conCantidad).toEqual([{ nombre: 'Masa madre', cantidad: '500 g' }]);
+  });
+
+  it('un recordatorio con marca no muestra la sintaxis', () => {
+    expect(listaDeCompras([con('- Sal [fina](cuenta:1:00)')]).sinCantidad).toEqual(['Sal fina']);
+  });
+
   it('no convierte: mismo nombre con otra unidad son dos ítems, uno debajo del otro', () => {
     const lista = listaDeCompras([con('- Harina - 500 g'), con('- Harina - 2 tazas')]);
     expect(lista.conCantidad).toEqual([

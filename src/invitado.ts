@@ -14,6 +14,7 @@ import { decodificar } from './link-receta.js';
 import { resueltaSinFotosDeDrive } from './fotos-receta.js';
 import { crearControlCocina } from './cocina-control.js';
 import { crearNavegacion } from './navegacion.js';
+import { sinMarcas } from './marcas.js';
 import type { Receta } from './tipos.js';
 
 // `ver-foto-receta` y `cerrar-visor` llegan por `fichaCabecera`/`fichasDelCuerpo`
@@ -64,8 +65,11 @@ export function iniciarInvitado(): void {
       const datos = await decodificar(ruta.carga);
       // Sin fotos de Drive desde el arranque: ni la lectura, ni la
       // cocina, ni el visor tienen después nada que pedirle a Drive.
-      leida = datos
-        ? { carga: ruta.carga, ...datos, cruda: datos.receta, receta: resueltaSinFotosDeDrive(datos.receta) }
+      // El invitado no tiene temporizadores (su lista de acciones es cerrada):
+      // las marcas se leen como su texto, sin botón.
+      const sinBotones = datos ? sinMarcas(datos.receta) : null;
+      leida = datos && sinBotones
+        ? { carga: ruta.carga, ...datos, cruda: sinBotones, receta: resueltaSinFotosDeDrive(sinBotones) }
         : null;
       visor.olvidar();
     }

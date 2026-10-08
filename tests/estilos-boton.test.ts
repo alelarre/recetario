@@ -29,3 +29,15 @@ describe('el botón', () => {
     expect(regla).toContain('text-decoration: none');
   });
 });
+
+describe('.ico-min', () => {
+  it('es del sistema: 24 px, ícono de 14 y 10 px más de toque', () => {
+    expect(TOKENS).toMatch(/\.ico-min\s*\{[^}]*width:\s*24px;[^}]*height:\s*24px/);
+    expect(TOKENS).toMatch(/\.ico-min svg\s*\{[^}]*width:\s*14px;[^}]*height:\s*14px/);
+    expect(TOKENS).toMatch(/\.ico-min::after\s*\{[^}]*inset:\s*-10px/);
+    expect(BASE).not.toMatch(/\.ico-min\s*\{/);
+  });
+  it('en el modo cocina crece con el texto', () => {
+    expect(TOKENS).toMatch(/\.coc \.ico-min svg\s*\{[^}]*width:\s*var\(--ico-cocina\)/);
+  });
+});

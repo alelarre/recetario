@@ -14,7 +14,7 @@ import { renderReceta } from './ui/receta.js';
 import { renderCocina } from './ui/cocina.js';
 import {
   renderEditor, recetaDesdeFormulario, pillTag, confirmacionSalida, botonBorrar, confirmacionBorrado,
-  filaDeFotosEditor, muestraDePortada, botonPonerFoto, carpetaDelEditor
+  filaDeFotosEditor, muestraDePortada, botonHerramientas, carpetaDelEditor
 } from './ui/editor.js';
 import type { ArgsEditor } from './ui/editor.js';
 import { renderPlan } from './ui/plan.js';
@@ -47,6 +47,8 @@ import {
   linkDeFoto, idDeDrive, resolverReceta, fotosSinUso, lineaDelCursor
 } from './fotos-receta.js';
 import { crearFotosControl, accionesDeFotos, SECCIONES, NO_SE_LEYO_UNA_FOTO } from './fotos-control.js';
+import type { CamposDelEditor } from './fotos-control.js';
+import { crearHerramientasEditor } from './herramientas-editor-control.js';
 import type { FotoTraida } from './fotos-control.js';
 import { crearControlCocina } from './cocina-control.js';
 import { crearNavegacion } from './navegacion.js';
@@ -70,6 +72,7 @@ import { accionesDeLista } from './lista-control.js';
 import { accionesDelCarrusel } from './carrusel-control.js';
 import { crearControlHerramientas } from './herramientas-control.js';
 import { renderHerramientas, renderPan, renderSal, resultadoPan, resultadoSal } from './ui/herramientas.js';
+import { accionesDeMarcas } from './marca-control.js';
 import { crearControlTemporizadores } from './temporizadores-control.js';
 import {
   renderTemporizadores, renderTira, formaDeTira, tiempoDeTira, turnosDeTira, rotarTira, pasoDeDeslizar, ALTO_TIRA
@@ -77,7 +80,7 @@ import {
 import type { Rotacion } from './ui/temporizadores.js';
 import { crearAvisoSonoro } from './aviso-sonoro.js';
 import { crearPantallaEncendida } from './pantalla-encendida.js';
-import { formatear, restante, avance, transcurrido, aMs, MINUTO } from './temporizadores.js';
+import { formatear, restante, avance, transcurrido, esCrono, aMs } from './temporizadores.js';
 import { crearControlReferencias } from './referencias-control.js';
 import { renderConversor, renderReferencias, contenidoDeReferencias, fichaDeCuenta, resultadoDeCuenta, filasFiltradas } from './ui/referencias.js';
 import { fichasDe, fichaDeReferencia, REFERENCIAS, FICHAS_DEL_CONVERSOR } from './referencias/indice.js';
@@ -129,7 +132,7 @@ despuesDePintar(() => {
  * Dibuja la pantalla entera. El velo que quedó puesto después del tilde se va
  * recién acá, con la pantalla de destino dibujada: si se fuera antes, se vería
  * el repintado por debajo (§6.17b). Una parte dibujada no cuenta —puede ser
- * el botón de la foto que sigue al cursor antes de que llegue el destino—, y
+ * el botón de herramientas que sigue al cursor antes de que llegue el destino—, y
  * la escritura que no navega ni redibuja entera la cubre el respaldo del velo.
  */
 const pintar = (html: string): void => {
@@ -525,8 +528,7 @@ const controlReferencias = crearControlReferencias({
       const bloque = document.querySelector(`#app [data-tabla="${ficha.tabla.id}"]`);
       if (bloque) pintarParte(bloque, filasFiltradas(ficha.tabla, controlReferencias.estado(id).busqueda), 'reemplazar');
     }
-  },
-  temporizador: (nombre, minutos) => { controlTemporizadores.empezarCon(nombre, minutos * MINUTO); }
+  }
 });
 
 /**
@@ -542,17 +544,18 @@ const visor = crearVisorControl(nav);
  * antes de que el editor se dibuje; vive lo que dura el editor y se vacía al
  * salir.
  */
+const camposDelEditor: CamposDelEditor = {
+  leer: nombre => campoDelEditor(nombre)?.value ?? null,
+  escribir: (nombre, valor) => {
+    const campo = campoDelEditor(nombre);
+    if (campo) campo.value = valor;
+  }
+};
 const fotosEditor = crearFotosControl({
   achicar: foto => achicarFoto(foto),
   crearUrl: foto => imagenes.urlDeBlob(foto),
   soltarUrl: url => { imagenes.soltarUrl(url); },
-  campos: {
-    leer: nombre => campoDelEditor(nombre)?.value ?? null,
-    escribir: (nombre, valor) => {
-      const campo = campoDelEditor(nombre);
-      if (campo) campo.value = valor;
-    }
-  },
+  campos: camposDelEditor,
   alCambiar: () => { mostrarDeposito(); }
 });
 /**
@@ -1320,18 +1323,18 @@ const recetaDelEditor = (): Receta => recetaDesdeFormulario(datosDelFormulario()
  *   ahora —la marca aparece al elegir una portada o al poner una foto en una
  *   línea—;
  * - la miniatura de la portada;
- * - el botón de poner foto: sacar la última lo deja sin nada que ofrecer.
+ * - el botón de herramientas: se acomoda de nuevo, que el depósito cambia lo que ofrece.
  */
 function mostrarDeposito(): void {
   const fila = document.querySelector<HTMLElement>('#app .fotos-campo');
   if (fila) pintarParte(fila, filaDeFotosEditor(recetaDelEditor()), 'reemplazar');
   const boton = document.querySelector<HTMLElement>('#app .portada-boton');
   if (boton) pintarParte(boton, muestraDePortada(fotosEditor.portada() || null, fotosEditor.fotos()));
-  acomodarBotonDeFoto();
+  acomodarBotonDeLinea();
 }
 
 /**
- * El botón de poner una foto, a la altura de la línea donde está el cursor.
+ * El botón de herramientas, a la altura de la línea donde está el cursor.
  * Se cuelga del marco del campo con foco y se saca de ahí en cada
  * movimiento: el formulario no se redibuja nunca, que perdería lo escrito.
  *
@@ -1342,14 +1345,12 @@ function mostrarDeposito(): void {
  * alto del espejo se le resta el scroll del campo, que es lo que corre el
  * texto cuando no entra entero.
  */
-function acomodarBotonDeFoto(): void {
-  document.querySelector('#app .poner-foto')?.remove();
+function acomodarBotonDeLinea(): void {
+  document.querySelector('#app .poner-en-linea')?.remove();
   if (!enElEditor()) return;
   const campo = document.activeElement as HTMLTextAreaElement | null;
   const seccion = campo?.name ?? '';
   if (!(SECCIONES as readonly string[]).includes(seccion)) return;
-  // Sin depósito no hay nada que poner, y el botón no se dibuja.
-  if (!fotosEditor.fotos().length) return;
   const marco = document.querySelector(`#app [data-campo-texto="${seccion}"]`);
   const antes = marco?.querySelector('[data-antes]');
   const marca = marco?.querySelector<HTMLElement>('[data-marca]');
@@ -1365,13 +1366,13 @@ function acomodarBotonDeFoto(): void {
   if (altura + ALTO_RENGLON <= 0 || altura >= visible) return;
   // Y el renglón a medio entrar se recorta, para que el botón quede adentro.
   const tope = Math.min(Math.max(altura, 0), Math.max(visible - ALTO_RENGLON, 0));
-  pintarParte(marco, botonPonerFoto(seccion, lineaDelCursor(texto, posicion), tope), 'al-final');
+  pintarParte(marco, botonHerramientas(seccion, lineaDelCursor(texto, posicion), tope), 'al-final');
 }
 
 /** Las fichas al pie del editor y el velo con el que se cierran. */
 const FICHAS_DE_FOTO =
   '#app [data-acciones-foto], #app [data-elegir-foto], #app [data-selector-portada], ' +
-  '#app [data-foto-url], #app .velo[data-accion="cerrar-ficha-foto"]';
+  '#app [data-foto-url], #app [data-herramientas-linea], #app .velo[data-accion="cerrar-ficha-foto"]';
 
 /** Saca del DOM la ficha que esté abierta, sin tocar el formulario ni el historial. */
 function quitarFichaFoto(): void {
@@ -1679,7 +1680,7 @@ const CIERRE_DE_CAPA: Record<string, () => unknown> = {
   menu: () => { mostrarMenu(false); },
   visor: () => { visor.olvidar(); return dibujarVisor(); },
   compartir: () => sacarCompartir(),
-  'ficha-foto': () => { quitarFichaFoto(); acomodarBotonDeFoto(); },
+  'ficha-foto': () => { quitarFichaFoto(); acomodarBotonDeLinea(); },
   'categoria-plan': () => { dejarCategoriaDelPlan(); return render(); }
 };
 // Con la pantalla ocupada, el atrás no cierra nada: la capa vuelve a su
@@ -2368,7 +2369,8 @@ function pintarTemporizadoresVivos(paso?: 1 | -1): void {
   if (!enTemporizadores) return;
   for (const c of e.temporizadores) {
     const t = document.querySelector<HTMLElement>(`#app [data-tiempo="${c.id}"]`);
-    if (t) t.textContent = formatear(restante(c, e.ahora));
+    if (t) t.textContent = formatear(esCrono(c) ? transcurrido(c, e.ahora) : restante(c, e.ahora));
+    if (esCrono(c)) continue;
     const b = document.querySelector<HTMLElement>(`#app [data-avance="${c.id}"]`);
     if (b) b.style.width = `${Math.round(avance(c, e.ahora) * 100)}%`;
   }
@@ -2409,12 +2411,29 @@ const acciones = registrarAcciones({
   fotos: accionesDeFotos(fotosEditor, {
     abrirFicha: abrirFichaFoto,
     cerrarFicha: cerrarFichaFoto,
-    acomodarBoton: acomodarBotonDeFoto,
+    acomodarBoton: acomodarBotonDeLinea,
     urlEscrita: () => document.querySelector<HTMLInputElement>('#app [data-url-foto]')?.value ?? '',
     traer: traerFoto,
     esperar: tarea => velo.esperar(tarea),
     avisar: avisarEnElFormulario
   }),
+  herramientasEditor: crearHerramientasEditor({
+    campos: camposDelEditor,
+    fotos: () => fotosEditor.fotos(),
+    pantalla: {
+      abrirFicha: abrirFichaFoto,
+      cerrarFicha: cerrarFichaFoto,
+      etiquetaEscrita: () => document.querySelector<HTMLInputElement>('#app [data-etiqueta-marca]')?.value ?? '',
+      pintarRuedas: (r) => {
+        for (const k of ['h', 'm', 's'] as const) {
+          const v = document.querySelector<HTMLElement>(`#app [data-rueda-marca="${k}"]`);
+          if (v) v.textContent = k === 'h' ? String(r.h) : String(r[k]).padStart(2, '0');
+        }
+        const poner = document.querySelector<HTMLButtonElement>('#app [data-accion="poner-marca"]');
+        if (poner) poner.disabled = aMs(r) <= 0;
+      }
+    }
+  }).acciones,
   visor: accionesDelVisor(visor, { fotos: fotosDelVisor, dibujar: dibujarVisor }),
   carrusel: accionesDelCarrusel,
   plan: accionesDelPlan,
@@ -2435,6 +2454,11 @@ const acciones = registrarAcciones({
       nav.reemplazar(hashDeReferencias({ tag: tocado === actual ? '' : tocado, q: vistaActual?.params['q'] ?? '' }));
     }
   },
+  marcas: accionesDeMarcas({
+    empezarCuenta: (nombre, ms) => { controlTemporizadores.empezarCon(nombre, ms); },
+    empezarCrono: (nombre) => { controlTemporizadores.empezarCronoCon(nombre); },
+    demorar: (ms, fn) => { setTimeout(fn, ms); }
+  }),
   temporizadores: {
     ...controlTemporizadores.acciones,
     'ir-temporizadores': () => { nav.ir('#/herramientas/temporizadores'); },
@@ -2512,7 +2536,7 @@ app.addEventListener('input', (e) => {
   if (opcion) return herramientas.alElegir(opcion.dataset['opcion'] ?? '', opcion.value);
   // En el editor, cada tecla puede habilitar o bloquear el botón de
   // `borrador`, y mueve el cursor de línea.
-  if (enElEditor()) { revisarBorrador(); revisarFuente(); acomodarBotonDeFoto(); }
+  if (enElEditor()) { revisarBorrador(); revisarFuente(); acomodarBotonDeLinea(); }
 });
 
 /** El deslizamiento en curso: dónde empezó, si ya se sabe que es gesto, y cuánto va abierto. */
@@ -2663,23 +2687,23 @@ app.addEventListener('keydown', (e) => {
 });
 
 /**
- * El cursor se movió: el botón de la foto va a la línea nueva. Es el
+ * El cursor se movió: el botón de herramientas va a la línea nueva. Es el
  * único aviso que da el navegador cuando el cursor cambia de lugar, venga de
  * un toque, de una tecla o de las manijas de la selección.
  */
 document.addEventListener('selectionchange', () => {
   if (velo.ocupado()) return;
-  acomodarBotonDeFoto();
+  acomodarBotonDeLinea();
 });
 
 /**
- * El foco pasó a otro control: si no es una sección, el botón de la foto se
- * va. No todo cambio de foco mueve el cursor, así que no alcanza con
+ * El foco pasó a otro control: si no es una sección, el botón de herramientas
+ * se va. No todo cambio de foco mueve el cursor, así que no alcanza con
  * `selectionchange`.
  */
 app.addEventListener('focusin', () => {
   if (velo.ocupado()) return;
-  acomodarBotonDeFoto();
+  acomodarBotonDeLinea();
 });
 
 /**
@@ -2689,17 +2713,17 @@ app.addEventListener('focusin', () => {
  */
 app.addEventListener('scroll', () => {
   if (velo.ocupado()) return;
-  acomodarBotonDeFoto();
+  acomodarBotonDeLinea();
 }, true);
 
 /**
- * Tocar el botón de la foto **no mueve el foco**: sin esto, el navegador se lo
+ * Tocar el botón de herramientas **no mueve el foco**: sin esto, el navegador se lo
  * saca al campo y el botón desaparece entre el toque y el click —en el Safari
  * de iOS el foco ni siquiera llega al botón—, así que el toque se pierde.
  */
 app.addEventListener('pointerdown', (e) => {
   if (velo.ocupado()) return;
-  if (!conClosest(e.target)?.closest('.poner-foto')) return;
+  if (!conClosest(e.target)?.closest('.poner-en-linea')) return;
   e.preventDefault();
 });
 

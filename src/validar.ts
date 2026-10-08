@@ -16,6 +16,7 @@ import {
 } from './catalogo.js';
 import { especialDeReservada } from './especiales.js';
 import { resolver, referenciasSinFoto } from './fotos-receta.js';
+import { marcasMalFormadas } from './marcas.js';
 import { limpiarRecibido } from './conversion.js';
 import type { Aviso, FotoDeReceta, Receta, ValorIgnorado } from './tipos.js';
 
@@ -138,6 +139,21 @@ function problemasDeFotos(leida: Receta, pendientes: readonly number[]): Problem
   return problemas;
 }
 
+/**
+ * Las marcas de temporizador que la app lee como texto común: se perderían sin
+ * avisar.
+ */
+function problemasDeMarcas(receta: Receta): Problema[] {
+  const cuerpo = [receta.descripcion, receta.ingredientes, receta.preparacion, receta.variaciones, receta.notas,
+    ...receta.otras.map(o => o.cuerpo)].join('\n');
+  return marcasMalFormadas(cuerpo).map(marca => ({
+    campo: 'cuerpo',
+    nivel: 'error',
+    mensaje: `\`${marca}\` no es una marca de temporizador: se escribe \`[texto](cuenta:50:00 "etiqueta")\` ` +
+      '(`m:ss` o `h:mm:ss`, hasta 23:59:59) o `[texto](cronometro: "etiqueta")`, con la etiqueta opcional.'
+  }));
+}
+
 /** Las opciones de la validación. */
 export interface OpcionesValidar {
   /** Los números de las fotos que se suben junto con el `.md`: cuentan como si ya estuvieran en el depósito. */
@@ -178,6 +194,7 @@ export function problemasDe(
   problemas.push(
     ...problemasDeIgnorados(receta.ignorados),
     ...problemasDeIngredientes(receta.ingredientes),
+    ...problemasDeMarcas(receta),
     ...problemasDeFotos(receta, fotosPendientes)
   );
   return problemas;

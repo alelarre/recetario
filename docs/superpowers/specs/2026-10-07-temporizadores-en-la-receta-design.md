@@ -147,7 +147,8 @@ antes, que sólo tiene cuentas, se lee igual, sin migrar.
 - **Qué escribe:** la marca vacía al final de la línea, con un espacio antes,
   como hoy la foto: `[](cuenta:50:00 "cocinar")`. El editor no envuelve
   palabras del renglón: no sabe cuáles son las del tiempo.
-- **Las herramientas son una tabla** (`src/herramientas-editor.ts`), como la
+- **Las herramientas son una tabla** (`src/ui/herramientas-editor.ts`, con las acciones de la capa en
+  `src/herramientas-editor-control.ts`), como la
   de `especiales.ts`: cada entrada declara su ícono, su nombre, cómo dibuja
   su paso y qué escribe en la línea. Una herramienta nueva es una entrada
   más. La foto es una entrada de la tabla y deja de tener botón propio.

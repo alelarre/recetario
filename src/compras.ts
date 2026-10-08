@@ -6,6 +6,7 @@
  * sea probable sin red.
  */
 import { gruposDe } from './recipe.js';
+import { quitarMarcas } from './marcas.js';
 import type { Receta } from './tipos.js';
 
 export interface Item {
@@ -39,7 +40,10 @@ export function listaDeCompras(recetas: Receta[]): ListaDeCompras {
 
   for (const receta of recetas) {
     for (const grupo of gruposDe(receta.ingredientes)) {
-      for (const { nombre, cantidad } of grupo.items) {
+      for (const { nombre: escrito, cantidad } of grupo.items) {
+        // La marca de temporizador no se compra: se lee el nombre sin ella.
+        const nombre = quitarMarcas(escrito).replace(/\s+/g, ' ').trim();
+        if (!nombre) continue;
         if (!cantidad) {
           // Sin cantidad, una vez por nombre: es un recordatorio, no una suma.
           if (!sinCantidad.includes(nombre)) sinCantidad.push(nombre);

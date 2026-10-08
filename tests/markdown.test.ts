@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { aHtml, escapar, aTexto, aPdf, tramosEnLinea, tramosDeFuente, linkDeFuente, imgDe } from '../src/ui/markdown.js';
+import { aHtml, escapar, aTexto, aPdf, tramosEnLinea, tramosDeFuente, linkDeFuente, imgDe, botonTemporizador } from '../src/ui/markdown.js';
+import { ICO } from '../src/ui/iconos.js';
 
 describe('aHtml', () => {
   it('escapa el HTML de entrada', () => {
@@ -273,5 +274,64 @@ describe('aPdf', () => {
       { text: [{ text: 'Sub' }], style: 'subtitulo' },
       { text: [{ text: 'Ver ' }, { text: 'acá', link: 'https://x.com', style: 'link' }, { text: '.' }], style: 'parrafo', unbreakable: true }
     ]);
+  });
+});
+
+describe('las marcas de temporizador', () => {
+  it('una cuenta es un tramo con su texto, su duración y su nombre', () => {
+    expect(tramosEnLinea('durante [50 minutos](cuenta:50:00 "cocinar").')).toEqual([
+      { texto: 'durante ' },
+      { texto: '50 minutos', temporizador: { tipo: 'cuenta', duracion: 3_000_000, nombre: 'cocinar' } },
+      { texto: '.' }
+    ]);
+  });
+  it('en HTML: el texto y el botón al lado', () => {
+    const html = aHtml('durante [50 minutos](cuenta:50:00 "cocinar").');
+    expect(html).toContain('50 minutos<button type="button" class="ico-min" data-accion="crear-temporizador" data-tipo="cuenta" data-duracion="3000000" data-nombre="cocinar"');
+    expect(html).toContain(ICO.relojMas.replace('<svg ', '<svg aria-hidden="true" '));
+  });
+  it('un cronómetro lleva su ícono y no lleva duración', () => {
+    const html = aHtml('[](cronometro: "amasar")');
+    expect(html).toContain('data-tipo="cronometro"');
+    expect(html).not.toContain('data-duracion');
+    expect(html).toContain(ICO.cronometroMas.replace('<svg ', '<svg aria-hidden="true" '));
+  });
+  it('una etiqueta con paréntesis no deja sintaxis a la vista', () => {
+    const md = 'Hornear [5 min](cuenta:5:00 "a (b)") y listo';
+    const html = aHtml(md);
+    expect(html).not.toContain('")');
+    expect(html).toContain('data-nombre="a (b)"');
+    expect(aTexto(md)).toBe('Hornear 5 min y listo');
+  });
+  it('una comilla sin cerrar no se come la marca siguiente', () => {
+    const html = aHtml('[x](cuenta:5:00 "hornear) y [y](cuenta:1:00)');
+    expect(html).toContain('data-nombre="y"');
+    expect(html).not.toContain('cuenta:');
+  });
+  it('el nombre se escapa', () => {
+    expect(aHtml('[](cuenta:1:00 "a<b")')).toContain('data-nombre="a&lt;b"');
+  });
+  it('mal formada: queda su texto, sin botón ni sintaxis', () => {
+    for (const md of ['[5 min](cuenta:5)', '[5 min](cuenta:5:00 "hornear)', '[5 min](cronometro:3:00)', '[5 min](cuenta:5:00 hornear)']) {
+      const html = aHtml(md);
+      expect(html).toContain('5 min');
+      expect(html).not.toContain('crear-temporizador');
+      expect(html).not.toContain('cuenta:');
+      expect(html).not.toContain('cronometro:');
+    }
+  });
+  it('dentro de negrita sigue siendo marca', () => {
+    expect(aHtml('**[5 min](cuenta:5:00)**')).toContain('<strong>5 min<button');
+  });
+  it('en texto y en PDF queda sólo el texto; una vacía no deja nada', () => {
+    expect(aTexto('Hornear [1 h](cuenta:1:00:00 "horno"). [](cuenta:4:00)')).toBe('Hornear 1 h. ');
+    expect(JSON.stringify(aPdf('Hornear [1 h](cuenta:1:00:00). [](cuenta:4:00)'))).not.toContain('cuenta');
+  });
+  it('un link común sigue siendo link', () => {
+    expect(aHtml('[sitio](https://a.com)')).toContain('<a href="https://a.com"');
+  });
+  it('botonTemporizador es el mismo botón para cualquiera que lo dibuje', () => {
+    expect(botonTemporizador({ tipo: 'cuenta', duracion: 600_000, nombre: 'Chauchas' }))
+      .toBe(`<button type="button" class="ico-min" data-accion="crear-temporizador" data-tipo="cuenta" data-duracion="600000" data-nombre="Chauchas" aria-label="Empezar un temporizador: Chauchas">${ICO.relojMas.replace('<svg ', '<svg aria-hidden="true" ')}</button>`);
   });
 });

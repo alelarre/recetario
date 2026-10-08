@@ -9,7 +9,8 @@
  * `[data-contenido-referencias]`) para pintarlos solos mientras se escribe:
  * redibujar le sacaría el foco al campo.
  */
-import { escapar } from './markdown.js';
+import { escapar, botonTemporizador } from './markdown.js';
+import { MINUTO } from '../temporizadores.js';
 import { encabezado } from './componentes.js';
 import { ICO } from './iconos.js';
 import { normalizar } from '../normalizar.js';
@@ -85,9 +86,7 @@ function celda(t: Tabla, fila: Fila, columna: Tabla['columnas'][number], marcar:
   const texto = fila[columna.id] ?? '';
   const minutos = columna.minutos ? minutosDe(texto) : null;
   const nombre = nombreDeFila(t, fila);
-  const boton = minutos === null ? '' :
-    ` <button type="button" class="ico-min" data-accion="referencia-temporizador" data-nombre="${escapar(nombre)}" ` +
-    `data-minutos="${minutos}" aria-label="Temporizador de ${escapar(nombre)}">${ICO.reloj.replace('<svg ', '<svg aria-hidden="true" ')}</button>`;
+  const boton = minutos === null ? '' : ' ' + botonTemporizador({ tipo: 'cuenta', duracion: Math.round(minutos * MINUTO), nombre });
   return `<td>${resaltar(texto, marcar)}${boton}</td>`;
 }
 

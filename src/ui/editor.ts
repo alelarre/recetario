@@ -181,7 +181,7 @@ const AYUDA_DE_FOTOS =
   `${enLinea(ICO.portada)} es la portada<br>` +
   `${enLinea(ICO.enElTexto)} está en un paso o un ingrediente<br>` +
   'Las que no tienen marca solo se ven en el carrusel de la receta: para poner una en un paso, tocá el ' +
-  `${enLinea(ICO.imagen)} que aparece al costado del renglón que estás escribiendo.` +
+  `${enLinea(ICO.herramienta)} que aparece al costado del renglón que estás escribiendo.` +
   '</p>';
 
 function fichaFotos(receta: Receta): string {
@@ -216,16 +216,15 @@ export function renderAccionesFoto(n: number): string {
 }
 
 /**
- * El botón que pone una foto en la línea donde está el cursor: sin
- * texto, del alto de un renglón y colgado del marco del campo, a `altura`
- * píxeles de su borde de arriba. La línea viaja con él porque es la que había
- * cuando se lo dibujó: el cursor puede haberse ido para cuando se elige la
- * foto.
+ * El botón de herramientas, en la línea donde está el cursor: sin texto, del
+ * alto de un renglón y colgado del marco del campo, a `altura` píxeles de su
+ * borde de arriba. La línea viaja con él porque es la que había cuando se lo
+ * dibujó: el cursor puede haberse ido para cuando se elige qué poner.
  */
-export const botonPonerFoto = (seccion: string, linea: number, altura: number): string =>
-  '<button type="button" class="poner-foto" data-accion="abrir-elegir-foto" ' +
+export const botonHerramientas = (seccion: string, linea: number, altura: number): string =>
+  '<button type="button" class="poner-en-linea" data-accion="abrir-herramientas-linea" ' +
   `data-seccion="${escapar(seccion)}" data-linea="${linea}" style="top:${altura}px" ` +
-  `aria-label="Poner una foto en esta línea">${ICO.imagen}</button>`;
+  `aria-label="Agregar en esta línea">${ICO.herramienta}</button>`;
 
 /**
  * Qué foto poner en esa línea: la galería del depósito, y nada más. **Agregar

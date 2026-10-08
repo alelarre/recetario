@@ -1,10 +1,17 @@
 import { describe, it, expect, vi } from 'vitest';
 import { crearControlTemporizadores, TICS_DE_AVISO } from '../src/temporizadores-control.js';
 import type { Reloj, Aviso, Pantalla } from '../src/temporizadores-control.js';
-import { CLAVE_TEMPORIZADORES, MINUTO, restante, corriendo, cronoCorriendo, transcurrido } from '../src/temporizadores.js';
+import type { EnLista, Temporizador } from '../src/temporizadores.js';
+import {
+  CLAVE_TEMPORIZADORES, MINUTO, restante as restanteDe, corriendo as corriendoDe, cronoCorriendo, transcurrido
+} from '../src/temporizadores.js';
 import { localStorageFalso } from './dom-falso.js';
 
 const T0 = 1_000_000;
+
+// En estas pruebas la lista sólo trae cuentas, salvo en «los cronómetros con nombre».
+const restante = (c: EnLista, ahora: number): number => restanteDe(c as Temporizador, ahora);
+const corriendo = (c: EnLista): boolean => corriendoDe(c as Temporizador);
 
 /** Un reloj que avanza a mano y un intervalo que se dispara a mano. */
 function relojFalso() {
@@ -288,5 +295,52 @@ describe('el cronómetro', () => {
     const { control, andando } = armar({ almacen });
     expect(andando()).toBe(true);
     expect(transcurrido(control.estado().crono, T0)).toBe(4000);
+  });
+});
+
+describe('los cronómetros con nombre', () => {
+  it('empezarCronoCon lo suma a la lista, corriendo, y lo guarda', () => {
+    const { control, almacen, redibujar } = armar();
+    control.empezarCronoCon('amasar');
+    const [x] = control.estado().temporizadores;
+    expect(x).toMatchObject({ nombre: 'amasar', acumulado: 0 });
+    expect(JSON.parse(almacen.getItem(CLAVE_TEMPORIZADORES) ?? '{}').temporizadores).toHaveLength(1);
+    expect(redibujar).toHaveBeenCalledOnce();
+  });
+  it('pausar y seguir le paran y le siguen la cuenta', () => {
+    const { control, tics, tocar } = armar();
+    control.empezarCronoCon('amasar');
+    const id = control.estado().temporizadores[0]!.id;
+    const va = () => transcurrido(control.estado().temporizadores[0] as never, control.estado().ahora);
+    tics(5);
+    tocar('temporizador-pausar', boton(id));
+    tics(5);
+    expect(va()).toBe(5000);
+    tocar('temporizador-seguir', boton(id));
+    tics(2);
+    expect(va()).toBe(7000);
+  });
+  it('mientras corre, la pantalla queda encendida; pausado, no', () => {
+    const { control, encendida, tocar } = armar();
+    control.empezarCronoCon('amasar');
+    expect(encendida()).toBe(true);
+    tocar('temporizador-pausar', boton(control.estado().temporizadores[0]!.id));
+    expect(encendida()).toBe(false);
+  });
+  it('no termina ni avisa, y sacar lo saca', () => {
+    const { control, tics, aviso, tocar } = armar();
+    control.empezarCronoCon('amasar');
+    tics(120);
+    expect(aviso.sonar).not.toHaveBeenCalled();
+    expect(control.estado().avisando).toBeNull();
+    tocar('temporizador-sacar', boton(control.estado().temporizadores[0]!.id));
+    expect(control.estado().temporizadores).toHaveLength(0);
+  });
+  it("+1' no le hace nada a un cronómetro", () => {
+    const { control, tocar } = armar();
+    control.empezarCronoCon('amasar');
+    const antes = control.estado().temporizadores[0];
+    tocar('temporizador-sumar', boton(antes!.id));
+    expect(control.estado().temporizadores[0]).toEqual(antes);
   });
 });

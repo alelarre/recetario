@@ -42,7 +42,7 @@ describe('la pantalla de Temporizadores', () => {
 
   it('un temporizador corriendo: nombre, tiempo, barra y los tres botones con su id', () => {
     const html = dibujar({ temporizadores: [pasta] });
-    expect(html).toContain('<span class="nom">Pasta</span>');
+    expect(html).toContain(`<span class="nom">${ICO.reloj}Pasta</span>`);
     expect(html).toContain('data-tiempo="p">3:12<');
     expect(html).toMatch(/data-avance="p" style="width:68%"/);
     expect(html).toContain(`data-accion="temporizador-sumar" data-id="p" aria-label="Un minuto más">+1'<`);
@@ -228,5 +228,36 @@ describe('lo que la tira no tiene que tapar', () => {
 
   it('el modo cocina deja abajo el lugar de la tira: es donde más se usan los temporizadores', () => {
     expect(BASE).toContain('.coc { padding: var(--e-4); padding-bottom: calc(var(--e-4) + var(--tira));');
+  });
+});
+
+const amasar = { id: 'a', nombre: 'amasar', acumulado: 65_000, desde: T0 - 5000 };
+const leudar = { id: 'z', nombre: 'leudar', acumulado: 30_000 };
+
+describe('los cronómetros con nombre', () => {
+  it("van en la lista, en su orden, con el tiempo que sube, pausa y sacar, sin +1' ni barra", () => {
+    const html = dibujar({ temporizadores: [pasta, amasar] });
+    const ficha = html.slice(html.indexOf('data-temporizador="a"'));
+    expect(html.indexOf('data-temporizador="a"')).toBeGreaterThan(html.indexOf('data-temporizador="p"'));
+    expect(ficha).toContain('1:10');
+    expect(ficha).toContain('data-accion="temporizador-pausar"');
+    expect(ficha).toContain('data-accion="temporizador-sacar"');
+    expect(ficha.slice(0, ficha.indexOf('</div></div>'))).not.toContain('temporizador-sumar');
+    expect(ficha.slice(0, ficha.indexOf('</div></div>'))).not.toContain('class="barra"');
+  });
+  it('el ícono al lado del nombre distingue cuenta y cronómetro', () => {
+    const html = dibujar({ temporizadores: [pasta, amasar] });
+    expect(html).toContain(`<span class="nom">${ICO.reloj}Pasta</span>`);
+    expect(html).toContain(`<span class="nom">${ICO.cronometro}amasar</span>`);
+  });
+  it('la tira rota por los que corren, mezclados, y no por los pausados', () => {
+    const turnos = turnosDeTira({ ...base, temporizadores: [pasta, amasar, leudar] });
+    expect(turnos.map(t => (t.tipo === 'temporizador' ? t.temporizador.id : 'crono'))).toEqual(['p', 'a']);
+  });
+  it('en la tira, un cronómetro muestra su nombre y lo que lleva', () => {
+    const html = renderTira({ ...base, temporizadores: [amasar] }, 0);
+    expect(html).toContain('>amasar<');
+    expect(html).toContain('1:10');
+    expect(html).toContain(ICO.cronometro);
   });
 });

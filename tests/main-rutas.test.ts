@@ -520,11 +520,11 @@ describe('main.ts: las rutas', () => {
     });
     /**
      * El marco de un campo de sección del editor: su espejo y el botón de
-     * poner una foto. El espejo falso mide como el de verdad —24 px por
+     * abrir las herramientas de la línea. El espejo falso mide como el de verdad —24 px por
      * renglón— contando los saltos de línea del texto que se le escribió.
      */
     const antesDelEspejo = new Map<string, string>();
-    /** Cada botón de foto que `main` colgó de un campo, con su HTML. */
+    /** Cada botón de herramientas que `main` colgó de un campo, con su HTML. */
     const botonesDeFoto: string[] = [];
     let botonDeFoto: string | null = null;
     const marcoDeCampo = (nombre: string) => ({
@@ -720,7 +720,7 @@ describe('main.ts: las rutas', () => {
             ? { scrollIntoView: (o: { block?: string }) => { avisosALaVista.push(o?.block ?? ''); } }
             : null;
         }
-        if (sel === '#app .poner-foto') {
+        if (sel === '#app .poner-en-linea') {
           return botonDeFoto === null ? null : { remove: () => { botonDeFoto = null; } };
         }
         const conCampo = sel.match(/^#app \[data-campo-texto="(\w+)"\]$/)?.[1];
@@ -883,7 +883,7 @@ describe('main.ts: las rutas', () => {
       /** El toque sobre el botón, antes del click: devuelve si se lo frenó. */
       tocarBotonDeFoto: async () => {
         let frenado = false;
-        const destino = { closest: (sel: string) => (sel === '.poner-foto' ? {} : null) };
+        const destino = { closest: (sel: string) => (sel === '.poner-en-linea' ? {} : null) };
         for (const fn of punteos) {
           await fn({ target: destino, preventDefault: () => { frenado = true; } });
         }
@@ -1074,6 +1074,27 @@ describe('main.ts: las rutas', () => {
           }
         })();
       },
+      /**
+       * Un toque en un control anidado: `closest` devuelve el más cercano, el
+       * hijo, como el DOM real; el ancestro con acción sólo si no hubiera hijo.
+       */
+      tocarDentroDe: async (
+        hijo: { accion: string; datos?: Record<string, string> },
+        ancestro: { accion: string; datos?: Record<string, string> }
+      ) => {
+        const nodo = (n: { accion: string; datos?: Record<string, string> }) => ({
+          dataset: { accion: n.accion, ...(n.datos ?? {}) }, classList: { contains: () => false, add: () => {}, remove: () => {} },
+          closest: () => null, tagName: 'BUTTON', remove: () => {},
+          setAttribute: () => {}, getAttribute: () => null, hasAttribute: () => false
+        });
+        // De más cerca a más lejos, como recorre `closest` el DOM real.
+        const cadena = [nodo(hijo), nodo(ancestro)];
+        await dejarTerminar((async () => {
+          for (const fn of clicks) {
+            await fn({ target: { closest: (sel: string) => (sel.includes('data-accion') ? cadena[0] : null) } });
+          }
+        })());
+      },
       /** Un click en un control con esta acción, como lo entrega la delegación. */
       tocar: async (accion: string, datos: Record<string, string> = {}, atributos: Record<string, string> = {}) => {
         const attrs: Record<string, string> = { ...atributos };
@@ -1083,7 +1104,7 @@ describe('main.ts: las rutas', () => {
         const boton = accion === 'elegir-duracion' && botonesDuracion.has(datos['valor'] ?? '')
           ? botonesDuracion.get(datos['valor']!)!
           : {
-              dataset: { accion, ...datos }, classList: { contains: () => false },
+              dataset: { accion, ...datos }, classList: { contains: () => false, add: () => {}, remove: () => {} },
               // La flecha del carrusel sale de su propio marco.
               closest: (sel: string) => (sel === '.carrusel-marco' ? marcoDeCarrusel : null),
               tagName: 'BUTTON', remove: () => {},
@@ -1308,10 +1329,38 @@ describe('main.ts: las rutas', () => {
     it('el botón de minutos de una fila empieza un temporizador con ese nombre y esa duración', async () => {
       const { abrir, tocar, almacen } = await montar();
       await abrir('#/herramientas/referencias');
-      await tocar('referencia-temporizador', { nombre: 'Chauchas', minutos: '10' });
+      await tocar('crear-temporizador', { tipo: 'cuenta', nombre: 'Chauchas', duracion: '600000' });
       const guardado = JSON.parse(almacen.getItem('recetario.temporizadores') ?? '{}') as { temporizadores: { nombre: string; duracion: number }[] };
       expect(guardado.temporizadores).toHaveLength(1);
       expect(guardado.temporizadores[0]).toMatchObject({ nombre: 'Chauchas', duracion: 600_000 });
+    });
+
+    it('el botón de una marca en la receta empieza el temporizador sin cambiar de pantalla', async () => {
+      estado.md = '---\ntitulo: Bondiola\n---\n\n## Preparación\n1. Cocinar [50 minutos](cuenta:50:00 "cocinar").\n';
+      const { abrir, tocar, almacen, app } = await montar();
+      await abrir('#/r/f1');
+      expect(app.innerHTML).toContain('data-accion="crear-temporizador"');
+      const ruta = global.location.hash;
+      await tocar('crear-temporizador', { tipo: 'cuenta', nombre: 'cocinar', duracion: '3000000' });
+      expect(global.location.hash).toBe(ruta);
+      const guardado = JSON.parse(almacen.getItem('recetario.temporizadores') ?? '{}') as { temporizadores: { nombre: string; duracion: number }[] };
+      expect(guardado.temporizadores[0]).toMatchObject({ nombre: 'cocinar', duracion: 3_000_000 });
+    });
+
+    it('en la cocina, el botón de un paso no marca el paso', async () => {
+      estado.md = '---\ntitulo: Rabas\n---\n\n## Preparación\n1. Lavar [1 min](cuenta:1:00).\n2. Freír.\n';
+      const { abrir, tocarDentroDe, app, almacen } = await montar();
+      await abrir('#/r/f1/cocinar');
+      // El botón está dentro del paso: el toque tiene que resolverse al botón, no al <li>.
+      expect(app.innerHTML).toMatch(/<li[^>]*data-accion="paso"[^>]*>[^]*?data-accion="crear-temporizador"[^]*?<\/li>/);
+      const antes = app.innerHTML;
+      await tocarDentroDe(
+        { accion: 'crear-temporizador', datos: { tipo: 'cuenta', nombre: '1 min', duracion: '60000' } },
+        { accion: 'paso', datos: { paso: '0' } }
+      );
+      expect(app.innerHTML).toBe(antes);
+      const guardado = JSON.parse(almacen.getItem('recetario.temporizadores') ?? '{}') as { temporizadores: { nombre: string; duracion: number }[] };
+      expect(guardado.temporizadores[0]).toMatchObject({ nombre: '1 min', duracion: 60_000 });
     });
   });
 
@@ -3187,7 +3236,7 @@ describe('main.ts: las rutas', () => {
       await guardando;
       expect(velo.hidden).toBe(false);
 
-      // El cursor se mueve antes de que llegue la receta: el botón de la foto
+      // El cursor se mueve antes de que llegue la receta: el botón de herramientas
       // se dibuja como una parte, y el velo sigue tapando.
       const antes = botonesDeFoto.length;
       await posarCursor('preparacion', 0);
@@ -4478,7 +4527,7 @@ describe('main.ts: las rutas', () => {
       expect(preguntas.at(-1)).toContain('no es una foto');
     });
 
-    it('el botón de la foto se cuelga del campo, a la altura de la línea del cursor', async () => {
+    it('el botón de herramientas se cuelga del campo, a la altura de la línea del cursor', async () => {
       estado.md = MD_CON_FOTOS;
       const { abrir, posarCursor, botonesDeFoto } = await montar();
       await abrir('#/r/f1/editar');
@@ -4487,21 +4536,23 @@ describe('main.ts: las rutas', () => {
       // El cursor en la tercera línea: dos renglones de 24 px arriba.
       await posarCursor('preparacion', 'Freír.\nServir.\nCo'.length);
 
-      expect(botonesDeFoto.at(-1)).toContain('data-accion="abrir-elegir-foto"');
+      expect(botonesDeFoto.at(-1)).toContain('data-accion="abrir-herramientas-linea"');
       expect(botonesDeFoto.at(-1)).toContain('data-seccion="preparacion"');
       expect(botonesDeFoto.at(-1)).toContain('data-linea="2"');
       expect(botonesDeFoto.at(-1)).toContain('style="top:48px"');
     });
 
-    it('con el depósito vacío no hay botón: no hay foto que poner', async () => {
+    it('con el depósito vacío el botón está igual, y Foto va deshabilitada', async () => {
       estado.md = '---\ntitulo: Milanesas\n---\n\n## Preparación\n\n1. Freír.\n';
-      const { abrir, posarCursor, hayBotonDeFoto } = await montar();
+      const { abrir, tocar, posarCursor, hayBotonDeFoto, preguntas } = await montar();
       await abrir('#/r/f1/editar');
       estado.formulario = { titulo: 'Milanesas', carpeta: 'c1', preparacion: '1. Freír.', fotos: deposito([]) };
 
       await posarCursor('preparacion', 0);
 
-      expect(hayBotonDeFoto()).toBe(false);
+      expect(hayBotonDeFoto()).toBe(true);
+      await tocar('abrir-herramientas-linea', { seccion: 'preparacion', linea: '0' });
+      expect(preguntas.at(-1)).toMatch(/data-herramienta="foto"[^>]*disabled/);
     });
 
     it('el foco fuera de una sección saca el botón', async () => {
@@ -4564,7 +4615,8 @@ describe('main.ts: las rutas', () => {
       estado.formulario = formularioConFotos();
 
       await posarCursor('preparacion', 0);
-      await tocar('abrir-elegir-foto', { seccion: 'preparacion', linea: '0' });
+      await tocar('abrir-herramientas-linea', { seccion: 'preparacion', linea: '0' });
+      await tocar('elegir-herramienta-linea', { herramienta: 'foto', seccion: 'preparacion', linea: '0' });
       // Tocar el velo le sacó el foco al campo, y eso no avisa por su cuenta.
       sacarElFoco();
 
@@ -4581,7 +4633,8 @@ describe('main.ts: las rutas', () => {
       const antes = app.innerHTML;
 
       await posarCursor('preparacion', 'Freír.\nSer'.length);
-      await tocar('abrir-elegir-foto', { seccion: 'preparacion', linea: '1' });
+      await tocar('abrir-herramientas-linea', { seccion: 'preparacion', linea: '1' });
+      await tocar('elegir-herramienta-linea', { herramienta: 'foto', seccion: 'preparacion', linea: '1' });
 
       // Sólo las fotos del depósito: agregar sigue siendo la ficha Fotos.
       expect(preguntas.at(-1)).toContain('data-elegir-foto');
@@ -4597,6 +4650,22 @@ describe('main.ts: las rutas', () => {
       const minis = (filasDeFotos.at(-1) ?? '').split('<div class="miniatura cuadro-foto">').slice(1);
       expect(minis[1]).toContain(ICO.enElTexto);
       expect(minis[0]).not.toContain(ICO.enElTexto);
+    });
+
+    it('poner una cuenta escribe la marca en la línea sin redibujar el formulario', async () => {
+      estado.md = MD_CON_FOTOS;
+      const { abrir, app, tocar, posarCursor } = await montar();
+      await abrir('#/r/f1/editar');
+      estado.formulario = { ...formularioConFotos(), preparacion: 'Freír.\nCocinar.' };
+      const antes = app.innerHTML;
+
+      await posarCursor('preparacion', 'Freír.\nCoc'.length);
+      await tocar('abrir-herramientas-linea', { seccion: 'preparacion', linea: '1' });
+      await tocar('elegir-herramienta-linea', { herramienta: 'cuenta', seccion: 'preparacion', linea: '1' });
+      await tocar('poner-marca', { tipo: 'cuenta', seccion: 'preparacion', linea: '1' });
+
+      expect(estado.formulario['preparacion']).toBe('Freír.\nCocinar. [](cuenta:10:00)');
+      expect(app.innerHTML).toBe(antes);
     });
 
     it('en el editor, el visor se agrega y se saca del DOM sin redibujar el formulario', async () => {

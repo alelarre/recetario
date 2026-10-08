@@ -50,9 +50,10 @@ export interface CronoParado { acumulado: number }
 export type Cronometro = CronoCorriendo | CronoParado;
 
 export const CRONO_EN_CERO: CronoParado = { acumulado: 0 };
-export const cronoCorriendo = (c: Cronometro): c is CronoCorriendo => 'desde' in c;
+export const cronoCorriendo = (c: Cronometro | CronoConNombre): c is CronoCorriendo | (CronoConNombre & { desde: number }) =>
+  'desde' in c && c.desde !== undefined;
 
-export const transcurrido = (c: Cronometro, ahora: number): number =>
+export const transcurrido = (c: Cronometro | CronoConNombre, ahora: number): number =>
   c.acumulado + (cronoCorriendo(c) ? Math.max(0, ahora - c.desde) : 0);
 
 export const iniciarCrono = (c: Cronometro, ahora: number): CronoCorriendo =>
@@ -61,6 +62,30 @@ export const iniciarCrono = (c: Cronometro, ahora: number): CronoCorriendo =>
 export const pararCrono = (c: Cronometro, ahora: number): CronoParado => ({ acumulado: transcurrido(c, ahora) });
 
 export const reiniciarCrono = (): CronoParado => CRONO_EN_CERO;
+
+/**
+ * Un cronómetro con nombre: lo crea una marca de la receta y va en la lista,
+ * mezclado con las cuentas (C07.5b.1). Cuenta igual que el cronómetro de
+ * arriba —su forma es la de un `Cronometro`— y no termina ni avisa.
+ */
+export interface CronoConNombre { id: string; nombre: string; acumulado: number; desde?: number }
+
+/** Lo que va en la lista de Temporizadores, en orden de creación. */
+export type EnLista = Temporizador | CronoConNombre;
+
+export const esCrono = (x: EnLista): x is CronoConNombre => 'acumulado' in x;
+
+const comoCrono = (c: CronoConNombre): Cronometro =>
+  c.desde === undefined ? { acumulado: c.acumulado } : { desde: c.desde, acumulado: c.acumulado };
+
+export const empezarCrono = (id: string, nombre: string, ahora: number): CronoConNombre =>
+  ({ id, nombre: nombre.trim() || 'Cronómetro', acumulado: 0, desde: ahora });
+
+export const pausarCrono = (c: CronoConNombre, ahora: number): CronoConNombre =>
+  ({ id: c.id, nombre: c.nombre, ...pararCrono(comoCrono(c), ahora) });
+
+export const seguirCrono = (c: CronoConNombre, ahora: number): CronoConNombre =>
+  ({ id: c.id, nombre: c.nombre, ...iniciarCrono(comoCrono(c), ahora) });
 
 /** Horas, minutos y segundos enteros de una cantidad de ms, redondeando hacia abajo. */
 function partes(ms: number): { h: number; m: number; s: number } {
@@ -97,7 +122,7 @@ export const aMs = ({ h, m, s }: Duracion): number => ((h * 60 + m) * 60 + s) * 
 export const girar = (d: Duracion, rueda: Rueda, paso: 1 | -1): Duracion =>
   ({ ...d, [rueda]: (d[rueda] + paso + TOPE[rueda]) % TOPE[rueda] });
 
-export interface Guardado { temporizadores: Temporizador[]; crono: Cronometro; ultimaDuracion: Duracion }
+export interface Guardado { temporizadores: EnLista[]; crono: Cronometro; ultimaDuracion: Duracion }
 
 export const CLAVE_TEMPORIZADORES = 'recetario.temporizadores';
 export const DURACION_POR_DEFECTO: Duracion = { h: 0, m: 10, s: 0 };
@@ -113,6 +138,12 @@ function esTemporizador(x: unknown): x is Temporizador {
   const conRestante = esNumero(x['restante']) && x['restante'] >= 0;
   // Una sola de las dos: con las dos no se sabe si corre.
   return conFin !== conRestante;
+}
+
+function esCronoConNombre(x: unknown): x is CronoConNombre {
+  if (!esObjeto(x) || typeof x['id'] !== 'string' || typeof x['nombre'] !== 'string') return false;
+  if (!esNumero(x['acumulado']) || x['acumulado'] < 0) return false;
+  return x['desde'] === undefined || esNumero(x['desde']);
 }
 
 function cronoLeido(x: unknown): Cronometro {
@@ -132,9 +163,15 @@ export function leerGuardado(crudo: unknown): Guardado {
   if (!esObjeto(crudo)) return GUARDADO_POR_DEFECTO;
   const lista = Array.isArray(crudo['temporizadores']) ? crudo['temporizadores'] : [];
   return {
-    temporizadores: lista.filter(esTemporizador).map(c => (corriendo(c)
-      ? { id: c.id, nombre: c.nombre, duracion: c.duracion, fin: c.fin }
-      : { id: c.id, nombre: c.nombre, duracion: c.duracion, restante: c.restante })),
+    temporizadores: lista.flatMap((x): EnLista[] => {
+      if (esTemporizador(x)) return [corriendo(x)
+        ? { id: x.id, nombre: x.nombre, duracion: x.duracion, fin: x.fin }
+        : { id: x.id, nombre: x.nombre, duracion: x.duracion, restante: x.restante }];
+      if (esCronoConNombre(x)) return [x.desde === undefined
+        ? { id: x.id, nombre: x.nombre, acumulado: x.acumulado }
+        : { id: x.id, nombre: x.nombre, acumulado: x.acumulado, desde: x.desde }];
+      return [];
+    }),
     crono: cronoLeido(crudo['crono']),
     ultimaDuracion: duracionLeida(crudo['ultimaDuracion'])
   };

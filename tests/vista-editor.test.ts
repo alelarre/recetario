@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
   renderEditor, recetaDesdeFormulario, formularioDesde, pillTag,
-  renderAccionesFoto, renderElegirFoto, renderSelectorPortada, renderFotoPorUrl, botonPonerFoto,
+  renderAccionesFoto, renderElegirFoto, renderSelectorPortada, renderFotoPorUrl, botonHerramientas,
   carpetaDelEditor, botonBorrar
 } from '../src/ui/editor.js';
 import { ICO, ICONO_DE_DURACION } from '../src/ui/iconos.js';
@@ -553,7 +553,7 @@ foto: foto:1
     expect(ayuda).toContain(`<span class="ico-linea">${ICO.enElTexto}</span> está en un paso o un ingrediente`);
     expect(ayuda).toContain(
       'Las que no tienen marca solo se ven en el carrusel de la receta: para poner una en un paso, tocá el ' +
-      `<span class="ico-linea">${ICO.imagen}</span> que aparece al costado del renglón que estás escribiendo.`
+      `<span class="ico-linea">${ICO.herramienta}</span> que aparece al costado del renglón que estás escribiendo.`
     );
     // Un párrafo, no una fila de flex: la última línea corta como cualquier texto.
     expect(html).toContain('<p class="fotos-ayuda">');
@@ -629,7 +629,7 @@ foto: foto:1
     expect(dibujarFotos({ ...conFotos, foto: null })).toContain('Sin foto');
   });
 
-  it('cada campo de texto va en un marco con su espejo, donde se cuelga el botón de la foto', () => {
+  it('cada campo de texto va en un marco con su espejo, donde se cuelga el botón de herramientas', () => {
     const html = dibujarFotos();
     for (const seccion of ['descripcion', 'ingredientes', 'preparacion', 'variaciones', 'notas']) {
       expect(html).toContain(`<div class="campo-texto" data-campo-texto="${seccion}">`);
@@ -695,24 +695,25 @@ describe('las fichas de fotos se cierran con el velo', () => {
   });
 });
 
-describe('el botón de poner una foto, sobre el campo de texto', () => {
+describe('el botón de herramientas, sobre el campo de texto', () => {
   it('va donde está el cursor: su sección, su línea y la altura del renglón', () => {
-    const html = botonPonerFoto('preparacion', 2, 48);
-    expect(html).toContain('data-accion="abrir-elegir-foto"');
+    const html = botonHerramientas('preparacion', 2, 48);
+    expect(html).toContain('data-accion="abrir-herramientas-linea"');
     expect(html).toContain('data-seccion="preparacion"');
     expect(html).toContain('data-linea="2"');
     expect(html).toContain('style="top:48px"');
   });
 
-  it('no lleva texto: el ícono de foto y su nombre para el lector de pantalla', () => {
-    const html = botonPonerFoto('notas', 0, 0);
-    expect(html).toContain(ICO.imagen);
-    expect(html).toContain('aria-label="Poner una foto en esta línea"');
+  it('no lleva texto: el ícono de herramientas y su nombre para el lector de pantalla', () => {
+    const html = botonHerramientas('notas', 0, 0);
+    expect(html).toContain(ICO.herramienta);
+    expect(html).toContain('class="poner-en-linea"');
+    expect(html).toContain('aria-label="Agregar en esta línea"');
     expect(html).toMatch(/>(<svg[\s\S]*<\/svg>)<\/button>$/);
   });
 
   it('es de tipo button: adentro del formulario, un botón sin tipo lo manda', () => {
-    expect(botonPonerFoto('notas', 0, 0)).toContain('type="button"');
+    expect(botonHerramientas('notas', 0, 0)).toContain('type="button"');
   });
 });
 

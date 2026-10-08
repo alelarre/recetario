@@ -604,8 +604,9 @@ habría manera de saber que hay algo esperando.
 
 **Lo que se abre en la misma pantalla se cierra con el atrás.** Cuatro cosas se
 abren sin cambiar de ruta: el menú en el teléfono, el visor de fotos, las fichas
-al pie —la de compartir y las de fotos del editor— y la categoría elegida en
-*Agregar al plan*. Al abrirse, cada una suma una entrada al historial con el
+al pie —la de compartir, las de fotos del editor y la capa «Agregar en esta
+línea», con la que se pone en una línea una foto o un temporizador— y la
+categoría elegida en *Agregar al plan*. Al abrirse, cada una suma una entrada al historial con el
 mismo hash, así el atrás de Android o del navegador la cierra en vez de salir de
 la pantalla. Cerrarla de otra forma —el velo, la cruz, el chevron, un destino—
 consume esa entrada, y navegar desde ella la saltea: el historial no queda con

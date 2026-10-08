@@ -41,9 +41,13 @@ describe('la pantalla del Conversor, con fichas de prueba', () => {
 
   it('una columna de minutos lleva el botón del temporizador, con el primer número', () => {
     const html = renderConversor(h.fichas, vacio);
-    expect(html).toContain('data-accion="referencia-temporizador" data-nombre="Chauchas" data-minutos="3"');
-    expect(html).toContain('data-nombre="Repollitos" data-minutos="3"');
+    expect(html).toContain('data-accion="crear-temporizador" data-tipo="cuenta" data-duracion="180000" data-nombre="Chauchas"');
+    expect(html).toContain('data-duracion="180000" data-nombre="Repollitos"');
     expect(html).not.toContain('data-nombre="Hojas"');
+  });
+
+  it('el botón de minutos tiene su nombre en el aria-label', () => {
+    expect(renderConversor(h.fichas, vacio)).toMatch(/class="ico-min"[^>]*aria-label="Empezar un temporizador: Chauchas"/);
   });
 
   it('el ícono del botón de minutos no se lee: el botón ya tiene su nombre', () => {
@@ -244,18 +248,18 @@ describe('el nombre del temporizador de una fila', () => {
     const html = dibujar(tablaCon(
       [{ id: 'v', nombre: 'Verdura' }, { id: 'tam', nombre: 'Tamaño' }, { id: 'm', nombre: 'Minutos', minutos: true }],
       [{ v: 'Espárragos', tam: 'finos', m: '2' }, { v: 'Espárragos', tam: 'gruesos', m: '4' }, { v: 'Chauchas', tam: '—', m: '3' }]));
-    expect(html).toContain('data-nombre="Espárragos, finos" data-minutos="2"');
-    expect(html).toContain('data-nombre="Espárragos, gruesos" data-minutos="4"');
-    expect(html).toContain('aria-label="Temporizador de Espárragos, finos"');
+    expect(html).toContain('data-duracion="120000" data-nombre="Espárragos, finos"');
+    expect(html).toContain('data-duracion="240000" data-nombre="Espárragos, gruesos"');
+    expect(html).toContain('aria-label="Empezar un temporizador: Espárragos, finos"');
     // Sin valor en esa columna, sólo la primera celda.
-    expect(html).toContain('data-nombre="Chauchas" data-minutos="3"');
+    expect(html).toContain('data-duracion="180000" data-nombre="Chauchas"');
   });
 
   it('si las demás columnas tienen unidad o son de minutos, el nombre es la primera celda', () => {
     const html = dibujar(tablaCon(
       [{ id: 'v', nombre: 'Té' }, { id: 'c', nombre: 'Agua', unidad: '°C' }, { id: 'm', nombre: 'Infusión', minutos: true }],
       [{ v: 'Verde', c: '80', m: '3' }]));
-    expect(html).toContain('data-nombre="Verde" data-minutos="3"');
+    expect(html).toContain('data-duracion="180000" data-nombre="Verde"');
   });
 });
 

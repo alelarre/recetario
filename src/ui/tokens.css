@@ -382,24 +382,36 @@ button.chip { cursor: pointer; }
 .espejo { position: absolute; inset: 0; visibility: hidden; pointer-events: none; overflow: hidden;
           padding: calc(var(--e-3) + 2px); white-space: pre-wrap; overflow-wrap: break-word;
           font: 400 var(--txt-base)/1.5 var(--tipo); }
-/* §6.9b — El botón de poner una foto: sin texto, a la altura del renglón del
+/* §6.9b — El botón de herramientas: sin texto, a la altura del renglón del
    cursor y pegado al borde derecho del campo. Se sube 4 px para quedar
    centrado sobre el renglón, que mide 24. */
-.poner-foto { position: absolute; right: var(--e-2); margin-top: -4px;
+.poner-en-linea { position: absolute; right: var(--e-2); margin-top: -4px;
               width: 36px; height: 32px; display: grid; place-items: center; padding: 0;
               background: var(--surface); border: 1px solid var(--borde-fuerte);
               border-radius: var(--r-chico); color: var(--fg-2); cursor: pointer; }
-.poner-foto:active { background: var(--surface-alta); }
+.poner-en-linea:active { background: var(--surface-alta); }
 /* El pico apunta a la izquierda, al texto: la foto va en la línea donde está
    el cursor, no en el campo entero. Dos triángulos: el de afuera es el borde y
    el de adentro, un píxel más chico, el relleno. */
-.poner-foto::before, .poner-foto::after { content: ""; position: absolute; top: 50%;
+.poner-en-linea::before, .poner-en-linea::after { content: ""; position: absolute; top: 50%;
                                           border-style: solid; border-color: transparent; }
-.poner-foto::before { left: -6px; margin-top: -6px; border-width: 6px 6px 6px 0; border-right-color: var(--borde-fuerte); }
-.poner-foto::after { left: -5px; margin-top: -5px; border-width: 5px 5px 5px 0; border-right-color: var(--surface); }
-.poner-foto:active::after { border-right-color: var(--surface-alta); }
-.poner-foto svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5;
+.poner-en-linea::before { left: -6px; margin-top: -6px; border-width: 6px 6px 6px 0; border-right-color: var(--borde-fuerte); }
+.poner-en-linea::after { left: -5px; margin-top: -5px; border-width: 5px 5px 5px 0; border-right-color: var(--surface); }
+.poner-en-linea:active::after { border-right-color: var(--surface-alta); }
+.poner-en-linea svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5;
                   stroke-linecap: round; stroke-linejoin: round; }
+
+/* El botón que crea un temporizador al lado de un texto: una marca
+   de la receta o una fila de Referencias. El ícono lleva su «+»; recién
+   tocado muestra la tilde. El área de toque es 10 px más grande por lado. */
+.ico-min { position: relative; display: inline-grid; place-items: center; width: 24px; height: 24px; padding: 0;
+           margin-left: var(--e-1); vertical-align: middle; background: none;
+           border: 1px solid var(--borde-fuerte); border-radius: var(--r-chico); color: var(--fg-2); cursor: pointer; }
+.ico-min::after { content: ''; position: absolute; inset: -10px; }
+.ico-min svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ico-min.hecho { color: var(--exito); border-color: var(--exito); }
+.coc .ico-min { width: 36px; height: 36px; }
+.coc .ico-min svg { width: var(--ico-cocina); height: var(--ico-cocina); }
 
 /* ---- §6.8 Aviso ---- */
 .aviso { display: flex; gap: var(--e-3); align-items: center; flex-wrap: wrap;

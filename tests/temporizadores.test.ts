@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  empezarCrono, pausarCrono, seguirCrono, esCrono,
   empezar, pausar, seguir, sumarMinuto, restante, terminado, avance, corriendo,
   CRONO_EN_CERO, iniciarCrono, pararCrono, reiniciarCrono, transcurrido, cronoCorriendo,
   formatear, nombreDeDuracion, aMs, girar, leerGuardado, GUARDADO_POR_DEFECTO, DURACION_POR_DEFECTO, MINUTO
@@ -146,5 +147,45 @@ describe('lo guardado', () => {
     const g = leerGuardado({ temporizadores: [], crono: { acumulado: 'x' }, ultimaDuracion: { h: 0, m: 61, s: 0 } });
     expect(g.crono).toEqual(CRONO_EN_CERO);
     expect(g.ultimaDuracion).toEqual(DURACION_POR_DEFECTO);
+  });
+});
+
+describe('un cronómetro con nombre', () => {
+  it('empieza corriendo desde cero, con su nombre o «Cronómetro»', () => {
+    expect(empezarCrono('c', ' amasar ', T0)).toEqual({ id: 'c', nombre: 'amasar', acumulado: 0, desde: T0 });
+    expect(empezarCrono('c', '', T0).nombre).toBe('Cronómetro');
+  });
+  it('se pausa y sigue sin perder lo contado', () => {
+    const c = empezarCrono('c', 'amasar', T0);
+    const p = pausarCrono(c, T0 + 5000);
+    expect(p).toEqual({ id: 'c', nombre: 'amasar', acumulado: 5000 });
+    expect(transcurrido(seguirCrono(p, T0 + 9000), T0 + 10_000)).toBe(6000);
+  });
+  it('esCrono distingue por la forma', () => {
+    expect(esCrono(empezarCrono('c', 'x', T0))).toBe(true);
+    expect(esCrono(empezar('t', 'x', MINUTO, T0))).toBe(false);
+  });
+});
+
+describe('lo guardado, con cronómetros con nombre', () => {
+  it('lee cuentas y cronómetros mezclados, en su orden', () => {
+    const crudo = { temporizadores: [
+      { id: 'a', nombre: 'Pasta', duracion: MINUTO, fin: T0 },
+      { id: 'b', nombre: 'amasar', acumulado: 3000, desde: T0 },
+      { id: 'c', nombre: 'leudar', acumulado: 9000 }
+    ] };
+    expect(leerGuardado(crudo).temporizadores.map(t => t.id)).toEqual(['a', 'b', 'c']);
+  });
+  it('una lista vieja, sólo de cuentas, se lee igual', () => {
+    const crudo = { temporizadores: [{ id: 'a', nombre: 'Pasta', duracion: MINUTO, restante: 5000 }] };
+    expect(leerGuardado(crudo).temporizadores).toEqual(crudo.temporizadores);
+  });
+  it('un elemento roto se descarta y los demás quedan', () => {
+    const crudo = { temporizadores: [
+      { id: 'b', nombre: 'amasar', acumulado: -1 },
+      { id: 'c', nombre: 'leudar', acumulado: 9000, desde: 'x' },
+      { id: 'd', nombre: 'ok', acumulado: 0 }
+    ] };
+    expect(leerGuardado(crudo).temporizadores.map(t => t.id)).toEqual(['d']);
   });
 });

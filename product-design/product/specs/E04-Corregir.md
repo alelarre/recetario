@@ -188,7 +188,7 @@ ya achicadas y con su número asignado.
 
 - [ ] La fila de miniaturas del depósito, en su orden, **cada una con su número** —`#3`—, que es con el que se la nombra en el texto.
 - [ ] **Cada miniatura dice en qué se usa** (`E05-Cimientos.md` C05.1.5), con un ícono por uso arriba a la derecha, sobre el mismo fondo oscuro que el número: la ficha con un señalador si es la portada, los tres renglones si está en un paso o un ingrediente, **los dos si es las dos cosas**. Una foto sin uso no lleva ninguna marca.
-- [ ] **Debajo de la fila, el epígrafe dice qué significa cada marca**, con los íconos dibujados en línea con el texto: *«[portada] es la portada / [en el texto] está en un paso o un ingrediente / Las que no tienen marca solo se ven en el carrusel de la receta: para poner una en un paso, tocá el [imagen] que aparece al costado del renglón que estás escribiendo.»*
+- [ ] **Debajo de la fila, el epígrafe dice qué significa cada marca**, con los íconos dibujados en línea con el texto: *«[portada] es la portada / [en el texto] está en un paso o un ingrediente / Las que no tienen marca solo se ven en el carrusel de la receta: para poner una en un paso, tocá el [herramienta] que aparece al costado del renglón que estás escribiendo.»*
 - [ ] Las marcas se rehacen en el momento: poner una foto de portada o en una línea la marca sin salir del editor.
 - [ ] **Cámara**, **Galería** y **Por URL** en una fila debajo de las miniaturas, sin tope: la primera saca una foto nueva de a una, la segunda abre el selector del sistema y acepta varias a la vez, y la tercera la trae de una dirección (C04.3d.1b). Las fotos que llegan por Compartir entran al mismo depósito (`E01-CapturaYBorradores.md` C01.2.3).
 - [ ] **Cámara no se dibuja con mouse:** en una computadora abriría el mismo selector que *Galería*.
@@ -220,17 +220,22 @@ cuando el sitio la borra.
 - [ ] **Ver** abre el visor (C03.5.3). La portada no se elige acá: se elige en el campo *Portada* (C04.2.1d).
 - [ ] **Sacar** la saca del depósito y **borra sus referencias del texto**. Si era la portada, la cabecera queda vacía.
 
-#### C04.3d.3 — Poner una foto en una línea *(J7)*
+#### C04.3d.3 — Agregar algo en una línea *(J7)*
 
-- [ ] En un campo de contenido con el foco aparece **un botón sin texto, con el ícono de foto, a la altura de la línea donde está el cursor**, pegado al borde derecho del campo (`design-system.md` §6.9b).
-- [ ] **Con el depósito vacío el botón no se dibuja:** no hay foto que poner.
+- [ ] En un campo de contenido con el foco aparece **un botón sin texto, con el ícono de herramienta, a la altura de la línea donde está el cursor**, pegado al borde derecho del campo (`design-system.md` §6.9b). Su nombre accesible es *«Agregar en esta línea»*.
 - [ ] El botón se va cuando el foco pasa a otro control, y se acomoda solo a medida que el cursor cambia de línea y a medida que el campo se desplaza por dentro.
 - [ ] **Si el renglón del cursor quedó fuera de lo que se ve del campo**, el botón no se dibuja; el renglón a medio entrar lo corre para que quede adentro.
 - [ ] **Tocar el botón no le saca el foco al campo:** el toque tiene que llegar al botón, y no perderse en el cambio de foco.
-- [ ] Tocarlo abre una ficha al pie con **la galería del depósito y nada más**: elegir una escribe `![](foto:N)` al final de esa línea y cierra la ficha. **Desde ahí no se agregan fotos**: agregar es la ficha *Fotos* (C04.3d.1).
-- [ ] En una línea vacía la referencia queda sola. Si la línea ya la tiene, no se repite.
+- [ ] Tocarlo abre la capa *«Agregar en esta línea»* (`ux/information-architecture.md` §4.6), una ficha al pie con una entrada por herramienta, con su ícono y su nombre, en este orden: **Foto**, **Cuenta regresiva** y **Cronómetro**. El atrás la cierra.
+- [ ] **Cada entrada lleva a su paso, en la misma capa:**
+  - **Foto:** la galería del depósito y nada más. Elegir una escribe `![](foto:N)` al final de esa línea y cierra la capa. **Desde ahí no se agregan fotos**: agregar es la ficha *Fotos* (C04.3d.1). Con el depósito vacío, la entrada va deshabilitada y dice *«Primero agregá una foto en la ficha Fotos»*.
+  - **Cuenta regresiva:** el nombre (opcional) y las tres ruedas de horas, minutos y segundos de Temporizadores (C07.5b.1), que arrancan en 0:10:00, y **Poner**, deshabilitado en 0:00:00.
+  - **Cronómetro:** el nombre (opcional) y **Poner**.
+- [ ] **Qué escribe:** la marca de temporizador (`E05-Cimientos.md` C05.1.5) **vacía, al final de la línea**, con un espacio antes: `[](cuenta:50:00 "cocinar")` o `[](cronometro: "amasar")`. Sin nombre, la marca va sin etiqueta. El editor no envuelve palabras del renglón: no sabe cuáles son las del tiempo.
+- [ ] En una línea vacía la marca o la referencia queda sola. Una foto que la línea ya tiene no se repite.
 - [ ] La línea es la que tenía el cursor cuando apareció el botón, y el texto es el que está escrito en ese momento en el formulario, no el del `.md` guardado.
-- [ ] El botón y la ficha se agregan y se sacan del DOM **sin redibujar el formulario**: redibujarlo perdería lo escrito (C04.1.1).
+- [ ] El botón y la capa se agregan y se sacan del DOM **sin redibujar el formulario**: redibujarlo perdería lo escrito (C04.1.1).
+- [ ] Escribir una marca o `![](foto:2)` a mano en un campo de texto sigue valiendo: los campos no cambian.
 
 ### F04.4 — Declarar una receta terminada
 

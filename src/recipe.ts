@@ -1,3 +1,4 @@
+import { quitarMarcas } from './marcas.js';
 import type {
   Receta, Ingrediente, ClaveSeccion,
   GrupoIngredientes, TramoPreparacion, Variacion
@@ -433,7 +434,9 @@ export function ingredientesIndexables(receta?: Partial<Receta> | null): string[
   for (const linea of String(receta.ingredientes ?? '').split('\n')) {
     const ing = parseIngrediente(linea);
     if (!ing?.nombre) continue;
-    vistos.add(ing.nombre);
+    // Un nombre sin marca queda tal como está escrito (C05.4b.1).
+    const nombre = quitarMarcas(ing.nombre) === ing.nombre ? ing.nombre : quitarMarcas(ing.nombre).replace(/\s+/g, ' ').trim();
+    if (nombre) vistos.add(nombre);
   }
   return [...vistos];
 }

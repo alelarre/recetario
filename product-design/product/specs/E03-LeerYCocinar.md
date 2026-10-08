@@ -66,6 +66,14 @@ receta entera.
 - [ ] Sin red: no se puede abrir; el aviso *«No se pudo leer la receta.»* con **Reintentar** (C05.8.1).
 - [ ] El `.md` ya no está en Drive —Drive contesta que no existe; la papelera no se mira, lo que está ahí se sigue leyendo—: el aviso dice *«Esta receta ya no está en Drive.»* y ofrece **Volver**, que sale de la receta como después de borrarla, a la pantalla desde donde se la eligió o al Recetario. No ofrece Reintentar. Si tenía fila en el índice, **se saca**, y deja de aparecer en las listas (la excepción de R4). Vale igual para el modo cocina.
 
+#### C03.1.4 — Las marcas de temporizador *(J6)*
+
+- [ ] Una marca `cuenta:` o `cronometro:` del texto (`E05-Cimientos.md` C05.1.5) se dibuja como su `texto`, común, **con un botón pegado a él**: el reloj con «+» para una cuenta regresiva y el cronómetro con «+» para un cronómetro (`design-system.md` §6.30). Una marca sin `texto` dibuja sólo el botón. Una mal formada no lleva botón.
+- [ ] **Tocarlo crea el temporizador y lo arranca, sin cambiar de pantalla**, igual que *Empezar* en Temporizadores (C07.5b.1). La tira aparece al pie, como siempre que algo corre.
+- [ ] **Contra el doble toque**, el botón queda deshabilitado 2 s y muestra una tilde; después vuelve a su ícono. Cada toque fuera de esos 2 s crea uno nuevo.
+- [ ] En el modo cocina el botón es más grande, como el resto de los controles de esa pantalla (C03.2.3).
+- [ ] **El texto, el PDF y la vista de invitado dejan sólo el `texto`**: no llevan botón ni sintaxis, y una marca vacía no deja nada. El invitado no tiene temporizadores.
+
 ### F03.2 — El modo cocina
 
 Los ingredientes se consultan repetidamente durante la preparación y tienen que
@@ -262,7 +270,7 @@ revocar.
 
 | Capacidad | Job |
 |---|---|
-| C03.1.1, C03.1.2b, C03.1.3, C03.2.1, C03.2.2, C03.2.3, C03.2.4, C03.3.1, C03.4.1, C03.5.1, C03.5.2, C03.5.3, C03.6.1, C03.7.1, C03.7.2, C03.7.3, C03.7.4, C03.7.5 | J6 |
+| C03.1.1, C03.1.2b, C03.1.3, C03.1.4, C03.2.1, C03.2.2, C03.2.3, C03.2.4, C03.3.1, C03.4.1, C03.5.1, C03.5.2, C03.5.3, C03.6.1, C03.7.1, C03.7.2, C03.7.3, C03.7.4, C03.7.5 | J6 |
 | C03.1.2 | J6, J7 |
 
 Ninguna capacidad de esta épica quedó sin job.

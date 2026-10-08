@@ -29,13 +29,12 @@ function leer(almacen: Almacen | null, id: IdHerramienta): ValoresDeHerramienta 
   } catch { return {}; }
 }
 
-export function crearControlReferencias({ almacen, redibujar, pintarResultado, pintarTabla, temporizador }: {
+export function crearControlReferencias({ almacen, redibujar, pintarResultado, pintarTabla }: {
   almacen: Almacen | null;
   /** Elegir una opción puede cambiar qué entradas se ven: se redibuja la cuenta. */
   redibujar: (id: IdHerramienta, cuenta: string) => void;
   pintarResultado: (id: IdHerramienta, cuenta: string) => void;
   pintarTabla: (id: IdHerramienta) => void;
-  temporizador: (nombre: string, minutos: number) => void;
 }): ControlReferencias {
   const valores = new Map<IdHerramienta, ValoresDeHerramienta>();
   const busquedas = new Map<IdHerramienta, string>();
@@ -65,10 +64,6 @@ export function crearControlReferencias({ almacen, redibujar, pintarResultado, p
       'ir-a-ficha': (boton) => {
         const ficha = typeof document === 'undefined' ? null : document.querySelector<HTMLElement>(`#app #ficha-${boton.dataset['id'] ?? ''}`);
         ficha?.scrollIntoView({ block: 'start' });
-      },
-      'referencia-temporizador': (boton) => {
-        const minutos = Number(boton.dataset['minutos']);
-        if (Number.isFinite(minutos) && minutos > 0) temporizador(boton.dataset['nombre'] ?? '', minutos);
       }
     }
   };

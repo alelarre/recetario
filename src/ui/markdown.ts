@@ -1,5 +1,7 @@
 import type { Content, ContentText } from 'pdfmake/interfaces';
 import { idDeDrive } from '../fotos-receta.js';
+import { PATRON_MARCA, leerMarca, nombreDeMarca, type TipoMarca } from '../marcas.js';
+import { ICO } from './iconos.js';
 
 export function escapar(texto: unknown): string {
   return String(texto ?? '')
@@ -25,6 +27,8 @@ export interface TramoEnLinea {
   imagen?: string;
   /** El texto entre corchetes de una imagen (`![epígrafe](…)`), si lo trae. */
   epigrafe?: string;
+  /** Una marca de temporizador (`src/marcas.ts`): `texto` es lo que se lee, y el botón va al lado. */
+  temporizador?: { tipo: TipoMarca; duracion: number | null; nombre: string };
 }
 
 export type Bloque =
@@ -33,10 +37,13 @@ export type Bloque =
 
 type BloqueLista = Extract<Bloque, { items: unknown }>;
 
-// Imagen, link, negrita, itálica: en cada posición gana el primero que calza, y
-// adentro de la negrita y la itálica se vuelve a buscar. Nota: URLs con
+// Marca de temporizador, imagen, link, negrita, itálica: en cada posición gana
+// el primero que calza, y adentro de la negrita y la itálica se vuelve a buscar.
+// La marca va primero: tiene forma de link y el link la tomaría. Nota: URLs con
 // paréntesis anidados (ej: alert(1)) se truncan en el primer ), limitación conocida.
-const EN_LINEA = /!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]+)\]\(([^)\s]+)\)|\*\*(.+?)\*\*|\*(.+?)\*/g;
+const EN_LINEA = new RegExp(
+  `${PATRON_MARCA.source}|!\\[([^\\]]*)\\]\\(([^)\\s]+)\\)|\\[([^\\]]+)\\]\\(([^)\\s]+)\\)|\\*\\*(.+?)\\*\\*|\\*(.+?)\\*`, 'g'
+);
 
 function enLinea(fuente: string, formato: Pick<TramoEnLinea, 'negrita' | 'italica'>): TramoEnLinea[] {
   const salida: TramoEnLinea[] = [];
@@ -46,7 +53,17 @@ function enLinea(fuente: string, formato: Pick<TramoEnLinea, 'negrita' | 'italic
     const inicio = m.index ?? 0;
     suelto(fuente.slice(desde, inicio));
     desde = inicio + m[0].length;
-    const [entero, epigrafe, imagen, textoLink, destino, negrita, italica] = m;
+    const [entero, marcaTexto, esquema, valor, resto, epigrafe, imagen, textoLink, destino, negrita, italica] = m;
+    if (esquema !== undefined) {
+      const marca = leerMarca(marcaTexto ?? '', esquema, valor ?? '', resto ?? '');
+      // Mal escrita se lee como texto común: su texto, sin la sintaxis.
+      if (!marca) suelto(marcaTexto ?? '');
+      else salida.push({
+        texto: marca.texto, ...formato,
+        temporizador: { tipo: marca.tipo, duracion: marca.duracion, nombre: nombreDeMarca(marca) }
+      });
+      continue;
+    }
     if (imagen !== undefined) {
       if (esDestinoSeguro(imagen)) salida.push({ texto: '', imagen, ...(epigrafe ? { epigrafe } : {}), ...formato });
       else suelto(entero);
@@ -116,6 +133,18 @@ export function imgDe(url: string, clase?: string): string {
     : `<img src="${escapar(url)}" alt="" loading="lazy"${claseAttr}>`;
 }
 
+/**
+ * El botón que crea un temporizador al lado de un texto: el de una marca de la
+ * receta y el de una fila de Referencias. Lo atiende `crear-temporizador`.
+ */
+export function botonTemporizador(t: { tipo: TipoMarca; duracion: number | null; nombre: string }): string {
+  const duracion = t.tipo === 'cuenta' && t.duracion !== null ? ` data-duracion="${t.duracion}"` : '';
+  // El ícono no se lee: el botón ya tiene su nombre.
+  const icono = (t.tipo === 'cuenta' ? ICO.relojMas : ICO.cronometroMas).replace('<svg ', '<svg aria-hidden="true" ');
+  return `<button type="button" class="ico-min" data-accion="crear-temporizador" data-tipo="${t.tipo}"${duracion} ` +
+    `data-nombre="${escapar(t.nombre)}" aria-label="Empezar un temporizador: ${escapar(t.nombre)}">${icono}</button>`;
+}
+
 export function tramosAHtml(tramos: TramoEnLinea[]): string {
   return tramos.map(t => {
     if (t.imagen) {
@@ -123,6 +152,7 @@ export function tramosAHtml(tramos: TramoEnLinea[]): string {
       return `<span class="foto-linea">${imgDe(t.imagen)}${epigrafe}</span>`;
     }
     let html = escapar(t.texto);
+    if (t.temporizador) html += botonTemporizador(t.temporizador);
     if (t.link) html = `<a href="${escapar(t.link)}" target="_blank" rel="noopener">${html}</a>`;
     if (t.italica) html = `<em>${html}</em>`;
     if (t.negrita) html = `<strong>${html}</strong>`;
@@ -181,7 +211,7 @@ export function aTexto(texto: unknown): string {
  * línea, y sólo si tiene su data URL.
  */
 export function tramosAPdf(tramos: TramoEnLinea[]): ContentText[] {
-  return tramos.filter(t => !t.imagen).map(t => {
+  return tramos.filter(t => !t.imagen && t.texto !== '').map(t => {
     return {
       text: t.texto,
       ...(t.negrita ? { bold: true } : {}),

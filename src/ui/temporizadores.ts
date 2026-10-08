@@ -10,7 +10,7 @@ import { encabezado } from './componentes.js';
 import { ICO } from './iconos.js';
 import type { EstadoTemporizadores } from '../temporizadores-control.js';
 import {
-  type Temporizador, type Duracion, type Rueda,
+  type Temporizador, type Duracion, type Rueda, type EnLista, type CronoConNombre, esCrono,
   corriendo, restante, terminado, avance, transcurrido, cronoCorriendo, formatear, aMs
 } from '../temporizadores.js';
 
@@ -50,18 +50,42 @@ function fichaTemporizador(c: Temporizador, ahora: number): string {
   const barra = lista ? ''
     : `<div class="barra"><i data-avance="${escapar(c.id)}" style="width:${Math.round(avance(c, ahora) * 100)}%"></i></div>`;
   return `<div class="ficha temporizador" data-temporizador="${escapar(c.id)}">` +
-    `<div class="temporizador-fila"><span class="nom">${escapar(c.nombre)}</span>${tiempo}<div class="acciones-temporizador">${botones}</div></div>` +
+    `<div class="temporizador-fila"><span class="nom">${ICO.reloj}${escapar(c.nombre)}</span>${tiempo}<div class="acciones-temporizador">${botones}</div></div>` +
     barra + '</div>';
 }
 
+/** Un cronómetro con nombre: el tiempo que sube, pausa o seguir, y sacar (C07.5b.1). */
+function fichaCronoConNombre(c: CronoConNombre, ahora: number): string {
+  const andando = cronoCorriendo(c);
+  return `<div class="ficha temporizador" data-temporizador="${escapar(c.id)}">` +
+    `<div class="temporizador-fila"><span class="nom">${ICO.cronometro}${escapar(c.nombre)}</span>` +
+    `<span class="tiempo${andando ? '' : ' pausado'}" data-tiempo="${escapar(c.id)}">${formatear(transcurrido(c, ahora))}</span>` +
+    '<div class="acciones-temporizador">' +
+      (andando ? cuadrado('temporizador-pausar', c.id, 'Pausar', ICO.pausa) : cuadrado('temporizador-seguir', c.id, 'Seguir', ICO.play)) +
+      cuadrado('temporizador-sacar', c.id, 'Sacar', ICO.cerrar) +
+    '</div></div></div>';
+}
+
+const fichaDeLista = (x: EnLista, ahora: number): string =>
+  esCrono(x) ? fichaCronoConNombre(x, ahora) : fichaTemporizador(x, ahora);
+
+const terminadoEnLista = (t: EnLista, ahora: number): boolean => !esCrono(t) && terminado(t, ahora);
+
+const tiempoEnLista = (t: EnLista, ahora: number): string =>
+  formatear(esCrono(t) ? transcurrido(t, ahora) : restante(t, ahora));
+
 const ETIQUETA: Record<Rueda, string> = { h: 'horas', m: 'min', s: 'seg' };
 
-function rueda(r: Rueda, ruedas: Duracion): string {
+/** Las acciones y la marca de una rueda: las de Temporizadores, o las de otra pantalla que las use. */
+export interface AccionesDeRueda { mas: string; menos: string; marca: string }
+const RUEDA_DE_TEMPORIZADORES: AccionesDeRueda = { mas: 'rueda-mas', menos: 'rueda-menos', marca: 'data-rueda-valor' };
+
+export function rueda(r: Rueda, ruedas: Duracion, a: AccionesDeRueda = RUEDA_DE_TEMPORIZADORES): string {
   const valor = r === 'h' ? String(ruedas.h) : dos(ruedas[r]);
   return `<div class="rueda"><span class="lbl">${ETIQUETA[r]}</span><div class="caja">` +
-    `<button type="button" data-accion="rueda-mas" data-rueda="${r}" aria-label="Más ${ETIQUETA[r]}">${ICO.arriba}</button>` +
-    `<span class="val" data-rueda-valor="${r}">${valor}</span>` +
-    `<button type="button" data-accion="rueda-menos" data-rueda="${r}" aria-label="Menos ${ETIQUETA[r]}">${ICO.abajo}</button>` +
+    `<button type="button" data-accion="${a.mas}" data-rueda="${r}" aria-label="Más ${ETIQUETA[r]}">${ICO.arriba}</button>` +
+    `<span class="val" ${a.marca}="${r}">${valor}</span>` +
+    `<button type="button" data-accion="${a.menos}" data-rueda="${r}" aria-label="Menos ${ETIQUETA[r]}">${ICO.abajo}</button>` +
     '</div></div>';
 }
 
@@ -78,7 +102,7 @@ export function renderTemporizadores(e: EstadoTemporizadores & { nombre: string 
   return encabezado({ titulo: 'Temporizadores', icono: ICO.reloj, volver: true }) +
     '<div class="cuerpo"><div class="temporizadores">' +
       fichaCrono(e) +
-      e.temporizadores.map(c => fichaTemporizador(c, e.ahora)).join('') +
+      e.temporizadores.map(c => fichaDeLista(c, e.ahora)).join('') +
       fichaNuevo(e.ruedas, e.nombre) +
     '</div></div>';
 }
@@ -87,7 +111,7 @@ export function renderTemporizadores(e: EstadoTemporizadores & { nombre: string 
 export const CICLO_TIRA = 5000;
 
 /** Un turno de la tira: el cronómetro o un temporizador. */
-export type Turno = { tipo: 'crono' } | { tipo: 'temporizador'; temporizador: Temporizador };
+export type Turno = { tipo: 'crono' } | { tipo: 'temporizador'; temporizador: EnLista };
 
 /**
  * Por lo que rota la tira, en el orden de la pantalla: el cronómetro si corre
@@ -97,7 +121,7 @@ export type Turno = { tipo: 'crono' } | { tipo: 'temporizador'; temporizador: Te
 export function turnosDeTira(e: EstadoTemporizadores): Turno[] {
   return [
     ...(cronoCorriendo(e.crono) ? [{ tipo: 'crono' } as const] : []),
-    ...e.temporizadores.filter(t => corriendo(t)).map(temporizador => ({ tipo: 'temporizador', temporizador }) as const)
+    ...e.temporizadores.filter(t => (esCrono(t) ? cronoCorriendo(t) : corriendo(t))).map(temporizador => ({ tipo: 'temporizador', temporizador }) as const)
   ];
 }
 
@@ -143,7 +167,7 @@ export function formaDeTira(e: EstadoTemporizadores, lugar: number): string {
   const cual = `${t.lugar}/${t.total}`;
   if (t.turno.tipo === 'crono') return `crono:${cual}`;
   const { id, nombre } = t.turno.temporizador;
-  return `${terminado(t.turno.temporizador, e.ahora) ? 'listo' : 'corre'}:${id}:${nombre}:${cual}`;
+  return `${terminadoEnLista(t.turno.temporizador, e.ahora) ? 'listo' : 'corre'}:${id}:${nombre}:${cual}`;
 }
 
 /** El tiempo que muestra la tira, o ninguno si el turno es uno terminado. */
@@ -152,7 +176,7 @@ export function tiempoDeTira(e: EstadoTemporizadores, lugar: number): string | n
   if (!t) return null;
   if (t.turno.tipo === 'crono') return formatear(transcurrido(e.crono, e.ahora));
   const temp = t.turno.temporizador;
-  return terminado(temp, e.ahora) ? null : formatear(restante(temp, e.ahora));
+  return terminadoEnLista(temp, e.ahora) ? null : tiempoEnLista(temp, e.ahora);
 }
 
 /**
@@ -165,7 +189,7 @@ export function renderTira(e: EstadoTemporizadores, lugar: number, entra?: 'izq'
   const t = turnoEn(e, lugar);
   if (!t) return '';
   const varios = t.total > 1;
-  const listo = t.turno.tipo === 'temporizador' && terminado(t.turno.temporizador, e.ahora);
+  const listo = t.turno.tipo === 'temporizador' && terminadoEnLista(t.turno.temporizador, e.ahora);
   const nombre = t.turno.tipo === 'crono' ? 'Cronómetro' : t.turno.temporizador.nombre;
   const tiempo = listo
     ? '<span class="t">¡Listo!</span>'
@@ -178,7 +202,7 @@ export function renderTira(e: EstadoTemporizadores, lugar: number, entra?: 'izq'
   return `<div class="tira${listo ? ' listo' : ''}" data-accion="ir-temporizadores">` +
     (varios ? `<button class="tira-flecha" type="button" data-accion="tira-anterior" aria-label="Anterior">${ICO.volver}</button>` : '') +
     `<span class="tira-contenido${entra ? ` entra-${entra}` : ''}">` +
-      `${ICO.reloj}<span class="nom">${escapar(nombre)}</span>${tiempo}` +
+      `${t.turno.tipo === 'temporizador' && esCrono(t.turno.temporizador) ? ICO.cronometro : ICO.reloj}<span class="nom">${escapar(nombre)}</span>${tiempo}` +
       (varios ? `<span class="mas">${t.lugar + 1}/${t.total}</span>` : '') +
       parar +
     '</span>' +

@@ -64,6 +64,10 @@ describe('las reglas del formato', () => {
     expect(texto).toContain('`- nombre — cantidad`');
   });
 
+  it('piden no agregar marcas al corregir una receta que ya existe', () => {
+    expect(reglas.join('\n')).toContain('Al corregir una receta que ya existe, no se agregan marcas salvo que se pidan.');
+  });
+
   it('dicen que la fuente va igual en todas las recetas de un libro, sin la página, y que una propia no la lleva', () => {
     const texto = reglas.join('\n');
     expect(texto).toContain('sin la página');
@@ -95,6 +99,12 @@ describe('las reglas del formato', () => {
 
   it('no dependen de ninguna receta: no piden un id', () => {
     expect(reglas.join('\n')).not.toContain('id:');
+  });
+
+  it('las reglas del cuerpo nombran las dos marcas de temporizador', () => {
+    const texto = reglas.join('\n');
+    expect(texto).toContain('cuenta:');
+    expect(texto).toContain('cronometro:');
   });
 
   it('el pedido las lleva tal cual, en orden, debajo de «Formato:»', () => {

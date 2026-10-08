@@ -58,6 +58,16 @@ export const ICO = {
   carrito: svg('<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>'),
   /** Temporizadores: el reloj de la tira, de la lista de Herramientas y de su título. */
   reloj: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  /** El reloj con un «+» donde se abre el círculo: crea una cuenta regresiva. */
+  relojMas: svg('<path d="M21 12a9 9 0 1 0-9 9"/><path d="M12 7v5l3 2"/><path d="M19 16v6M16 19h6"/>'),
+  /** El cronómetro: una aguja y el botón arriba. */
+  cronometro: svg('<circle cx="12" cy="13" r="8"/><path d="M12 13V9"/><path d="M10 2h4M12 2v3"/>'),
+  /** El cronómetro con el «+»: crea uno. */
+  cronometroMas: svg('<path d="M20 13a8 8 0 1 0-8 8"/><path d="M12 13V9"/><path d="M10 2h4M12 2v3"/><path d="M19 16v6M16 19h6"/>'),
+  /** La llave inglesa del botón de herramientas del editor. */
+  herramienta: svg('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3.5 17.3a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.2-5.4l-2.4 2.4-2.1-.4-.4-2.1z"/>'),
+  /** Hecho: el temporizador se creó. */
+  tilde: svg('<path d="M5 12l5 5 9-10"/>'),
   /** Pausar y seguir una cuenta. */
   pausa: svg('<path d="M9 5v14M15 5v14"/>'),
   play: svg('<path d="M8 5l11 7-11 7z"/>'),

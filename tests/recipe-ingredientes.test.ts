@@ -134,6 +134,21 @@ describe('ingredientesIndexables', () => {
     expect(ingredientesIndexables(receta)).toEqual(['Sal']);
   });
 
+  it('un nombre con marca se indexa sin la sintaxis, con los espacios colapsados', () => {
+    const receta = { ingredientes: '- Masa [reposada](cuenta:30:00)  madre — 1 kg' };
+    expect(ingredientesIndexables(receta)).toEqual(['Masa reposada madre']);
+  });
+
+  it('un nombre que es sólo una marca vacía no se indexa', () => {
+    const receta = { ingredientes: '- [](cuenta:5:00) — 1\n- Sal' };
+    expect(ingredientesIndexables(receta)).toEqual(['Sal']);
+  });
+
+  it('un nombre sin marca queda exactamente como está escrito, con sus espacios', () => {
+    const receta = { ingredientes: '- Aceite   de oliva — 1 cda' };
+    expect(ingredientesIndexables(receta)).toEqual(['Aceite   de oliva']);
+  });
+
   it('no repite un nombre que aparece dos veces', () => {
     const receta = { ingredientes: '- Aceite de oliva — 6 cdas\n- Aceite de oliva | 50 cc' };
     expect(ingredientesIndexables(receta)).toEqual(['Aceite de oliva']);
@@ -144,5 +159,10 @@ describe('ingredientesIndexables', () => {
     expect(ingredientesIndexables(receta)).toEqual([
       '⅓ taza de aceite de oliva, más un poco para decorar ![](https://drive.google.com/file/d/1Zo4OUmWt1g0z5N2k4Ocwn3xLjm-IQBgO/view)'
     ]);
+  });
+
+  it('una marca en un ingrediente aporta su texto y nada más', () => {
+    const receta = { ingredientes: '- garbanzos [en remojo](cuenta:8:00:00 "remojo") — 500 g' };
+    expect(ingredientesIndexables(receta)).toEqual(['garbanzos en remojo']);
   });
 });

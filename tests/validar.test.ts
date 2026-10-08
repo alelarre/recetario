@@ -308,3 +308,16 @@ describe('el nivel de cada problema', () => {
     expect(problemas.every(p => p.nivel === 'aviso')).toBe(true);
   });
 });
+
+describe('las marcas de temporizador', () => {
+  it('una bien escrita no es problema', () => {
+    const { problemas } = validarMd('---\ntitulo: T\n---\n\n## Preparación\n\n1. Hornear [1 h](cuenta:1:00:00 "horno").\n2. Amasar [](cronometro:).\n');
+    expect(problemas).toEqual([]);
+  });
+  it('una mal escrita es error, con la marca y la forma correcta', () => {
+    const { problemas } = validarMd('---\ntitulo: T\n---\n\n## Preparación\n\n1. Hornear [1 h](cuenta:60).\n');
+    expect(problemas).toEqual([expect.objectContaining({ campo: 'cuerpo', nivel: 'error' })]);
+    expect(problemas[0]?.mensaje).toContain('[1 h](cuenta:60)');
+    expect(problemas[0]?.mensaje).toContain('cuenta:50:00');
+  });
+});

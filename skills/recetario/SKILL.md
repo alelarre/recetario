@@ -132,6 +132,36 @@ receta no lleva `borrador` y la foto fuente no se sube. Si algo quedó sin volca
 receta lleva `borrador` en `tags_especiales`, una nota en `## Notas` que dice
 qué falta, y la foto fuente se sube para terminarla mirando el original.
 
+## Temporizadores en los pasos
+
+Un paso con un tiempo concreto de horno, hervor, reposo, leudado o marinada
+lleva una marca de temporizador que envuelve las palabras del tiempo. En la
+app, la marca es un botón que crea el temporizador.
+
+- **`cuenta:`** crea una cuenta regresiva: `[texto](cuenta:<duración> "<etiqueta>")`.
+  La duración es `m:ss` o `h:mm:ss`, de más de cero a 23:59:59.
+- **`cronometro:`** crea un cronómetro con nombre: `[texto](cronometro: "<etiqueta>")`.
+  Va sólo donde el paso pide medir algo que la fuente no fija.
+- **Con un rango** («20 a 25 minutos»), la duración es el mayor.
+- **Sin número** («hasta que dore»), el paso no lleva marca.
+- **La etiqueta** va entre comillas, es opcional y es corta: el verbo del paso
+  («hornear», «reposo», «hervir»).
+
+Ejemplos:
+
+```
+- Cocinar a fuego fuerte durante [50 minutos](cuenta:50:00 "cocinar").
+- Hornear [1 h 30 min](cuenta:1:30:00 "hornear"), tapada.
+- Amasar [hasta que esté liso](cronometro: "amasar").
+- Dorar de los dos lados. [](cuenta:4:00 "dorar")
+```
+
+`validar` marca como error una marca mal escrita, y `crear` y `guardar` no
+escriben si la hay.
+
+**Al corregir una receta que ya existe, no se agregan marcas salvo que se
+pidan.**
+
 ## Mostrar antes de escribir
 
 - **Una receta:** mostrá el `.md` entero, la categoría y las fotos, con su uso.

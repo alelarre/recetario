@@ -19,12 +19,12 @@ describe('el recuadro de una foto de Drive que todavía no llegó', () => {
 
 describe('el botón que pone una foto en la línea del cursor', () => {
   it('tiene un pico hacia la izquierda: señala la línea a la que va la foto', () => {
-    expect(TOKENS).toMatch(/\.poner-foto::before\s*\{[^}]*border-right-color:\s*var\(--borde-fuerte\)/);
-    expect(TOKENS).toMatch(/\.poner-foto::after\s*\{[^}]*border-right-color:\s*var\(--surface\)/);
+    expect(TOKENS).toMatch(/\.poner-en-linea::before\s*\{[^}]*border-right-color:\s*var\(--borde-fuerte\)/);
+    expect(TOKENS).toMatch(/\.poner-en-linea::after\s*\{[^}]*border-right-color:\s*var\(--surface\)/);
   });
 
   it('el relleno del pico acompaña al botón apretado', () => {
-    expect(TOKENS).toMatch(/\.poner-foto:active::after\s*\{[^}]*border-right-color:\s*var\(--surface-alta\)/);
+    expect(TOKENS).toMatch(/\.poner-en-linea:active::after\s*\{[^}]*border-right-color:\s*var\(--surface-alta\)/);
   });
 });
 

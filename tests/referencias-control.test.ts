@@ -3,11 +3,10 @@ import { crearControlReferencias } from '../src/referencias-control.js';
 import { localStorageFalso } from './dom-falso.js';
 
 function armar(almacen = localStorageFalso()) {
-  const redibujar = vi.fn(); const pintarResultado = vi.fn(); const pintarTabla = vi.fn(); const temporizador = vi.fn();
-  const c = crearControlReferencias({ almacen, redibujar, pintarResultado, pintarTabla, temporizador });
-  return { c, redibujar, pintarResultado, pintarTabla, temporizador, almacen };
+  const redibujar = vi.fn(); const pintarResultado = vi.fn(); const pintarTabla = vi.fn();
+  const c = crearControlReferencias({ almacen, redibujar, pintarResultado, pintarTabla });
+  return { c, redibujar, pintarResultado, pintarTabla, almacen };
 }
-const boton = (dataset: Record<string, string>) => ({ dataset }) as unknown as HTMLElement;
 
 describe('el control de referencias', () => {
   it('escribir un número guarda y pinta sólo el resultado', () => {
@@ -47,9 +46,4 @@ describe('el control de referencias', () => {
     expect(almacen.getItem('recetario.conversor')).toBeNull();
   });
 
-  it('el botón de minutos crea un temporizador con el nombre de la fila', () => {
-    const { c, temporizador } = armar();
-    c.acciones['referencia-temporizador']!(boton({ nombre: 'Chauchas', minutos: '1.5' }), new Event('click'));
-    expect(temporizador).toHaveBeenCalledWith('Chauchas', 1.5);
-  });
 });

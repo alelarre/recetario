@@ -397,18 +397,19 @@ tipo.
 #### C07.5b.1 — El cronómetro y los temporizadores *(J6)*
 
 - [ ] `#/herramientas/temporizadores`, título «Temporizadores», con volver. Tres partes, en este orden: **Cronómetro** —el tiempo grande, *Reiniciar* (deshabilitado en cero) e *Iniciar*/*Parar*—; **los temporizadores**, una ficha cada uno en orden de creación, con nombre, tiempo, barra de avance y tres botones: *+1'*, pausa o seguir, y sacar; **Nuevo temporizador**: nombre opcional, tres ruedas —horas 0–23, minutos y segundos 0–59, con tope circular— y *Empezar*, deshabilitado en 0:00:00. Un temporizador es una cuenta regresiva: baja hasta cero y avisa.
-- [ ] Un temporizador sin nombre se llama por su duración: *10 min*, *1 h 20 min*, *45 s*.
+- [ ] **La lista también tiene cronómetros con nombre**, mezclados con los temporizadores en orden de creación. Un cronómetro con nombre sólo se crea desde una marca de una receta (`E03-LeerYCocinar.md` C03.1.4); *Nuevo temporizador* crea sólo cuentas regresivas. Su ficha lleva el ícono del cronómetro, el nombre, el tiempo que sube, pausa o seguir, y sacar; no lleva *+1'* ni barra de avance, y no termina ni avisa. Al lado del nombre de un temporizador va el reloj, para distinguirlos.
+- [ ] Un temporizador sin nombre se llama por su duración: *10 min*, *1 h 20 min*, *45 s*; un cronómetro con nombre creado sin nombre, *Cronómetro*.
 - [ ] El tiempo se escribe `m:ss` hasta 59:59 y `h:mm:ss` de una hora en adelante, en todos lados.
 - [ ] Pausado, el tiempo no baja y va en `--fg-2`. *+1'* suma un minuto; sobre uno terminado, vuelve a correr desde 1:00 contado desde ahora.
 - [ ] Terminado: el tiempo dice «¡Listo!», sin barra, con *+1'* y *Parar*; *Parar* lo saca.
 - [ ] Todo se cuenta por fecha contra el reloj del teléfono, nunca por tics: no se atrasa y sobrevive a recargar y a cerrar la app. Se guarda en `localStorage` (`recetario.temporizadores`) en cada cambio, con la última duración puesta en las ruedas, que es con la que se abre la próxima vez (10 min la primera). Lo que no se puede leer se toma como sin temporizadores.
-- [ ] Mientras corre algún temporizador o el cronómetro, la pantalla no se apaga (wake lock propio, repedido a cada tic si se perdió). Uno pausado o uno terminado no cuentan.
+- [ ] Mientras corre algún temporizador, un cronómetro con nombre o el cronómetro, la pantalla no se apaga (wake lock propio, repedido a cada tic si se perdió). Uno pausado o uno terminado no cuentan.
 
 #### C07.5b.2 — El aviso y la tira *(J6)*
 
 - [ ] Al llegar a cero, suena un pitido corto (Web Audio, sin archivo) y vibra, cada 2 s hasta *Parar* o un minuto. Si terminan varios, el aviso es uno; *Parar* corta el aviso y saca ese temporizador; los demás terminados quedan en «¡Listo!», callados.
 - [ ] **Sólo con la app a la vista.** Con la pantalla apagada, la app cerrada o en segundo plano no hay aviso: al volver, el temporizador aparece terminado y avisa en el primer segundo. Después de recargar, el navegador no deja sonar ni vibrar hasta el primer toque: la tira igual dice «¡Listo!». Uno que ya avisó y no se sacó vuelve a avisar al recargar.
-- [ ] **La tira**: toda pantalla —salvo Temporizadores y la vista de invitado— lleva al pie una tira fija de 56 px mientras haya un temporizador corriendo o terminado sin sacar, o el cronómetro corriendo. **Rota cada 5 s** por todos, en el orden de la pantalla —el cronómetro y después los temporizadores en orden de creación—: reloj, nombre («Cronómetro» para el cronómetro) y tiempo; uno terminado, «¡Listo!» con *Parar*. Los pausados no entran. Con más de uno lleva su lugar entre todos («2/3») y una flecha en cada punta para pasar a mano; **deslizar** sobre la tira a la izquierda pasa al siguiente y a la derecha al anterior, sin abrir el menú lateral. Pasar a mano empieza un turno entero. **El contenido del turno nuevo entra deslizándose** desde el lado al que se pasó, y la tira —su fondo y las flechas— queda quieta; sin animación con movimiento reducido. El primer turno dura entero desde que aparece la tira. Tocarla fuera de las flechas y de *Parar* abre Temporizadores. Los pies pegados de la receta y del plan suben lo que mide la tira.
+- [ ] **La tira**: toda pantalla —salvo Temporizadores y la vista de invitado— lleva al pie una tira fija de 56 px mientras haya un temporizador corriendo o terminado sin sacar, o el cronómetro corriendo. **Rota cada 5 s** por todos, en el orden de la pantalla —el cronómetro y después la lista en orden de creación, temporizadores y cronómetros con nombre—: reloj (o cronómetro, si lo es), nombre («Cronómetro» para el cronómetro) y tiempo; uno terminado, «¡Listo!» con *Parar*. Los pausados no entran. Con más de uno lleva su lugar entre todos («2/3») y una flecha en cada punta para pasar a mano; **deslizar** sobre la tira a la izquierda pasa al siguiente y a la derecha al anterior, sin abrir el menú lateral. Pasar a mano empieza un turno entero. **El contenido del turno nuevo entra deslizándose** desde el lado al que se pasó, y la tira —su fondo y las flechas— queda quieta; sin animación con movimiento reducido. El primer turno dura entero desde que aparece la tira. Tocarla fuera de las flechas y de *Parar* abre Temporizadores. Los pies pegados de la receta y del plan suben lo que mide la tira.
 
 ### F07.6 — El agente
 
@@ -778,7 +779,8 @@ Las fichas de Referencias (F07.7) que siguen a las de C07.7.5.
 #### C07.9.3 — El botón de minutos *(J6)*
 
 - [ ] Una columna marcada como de minutos dibuja, en cada fila que tiene un
-  número, un botón chico con el reloj. Tocarlo **crea un temporizador** con el
+  número, un botón chico con el reloj y un «+». Es el mismo botón que crea un
+  temporizador desde la marca de una receta (`design-system.md` §6.30). Tocarlo **crea un temporizador** con el
   nombre de la fila y esos minutos —el mínimo, si es un rango; «1½» es 1,5—,
   igual que *Empezar* en Temporizadores (C07.5b.1). El temporizador queda en
   la tira como cualquier otro.
