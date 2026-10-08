@@ -4,7 +4,7 @@ import { renderHerramientasDeLinea, HERRAMIENTAS_DE_LINEA } from '../src/ui/herr
 import { crearHerramientasEditor } from '../src/herramientas-editor-control.js';
 import { ICO } from '../src/ui/iconos.js';
 
-const ctx = { seccion: 'preparacion', linea: 1, fotos: [{ n: 1, url: 'https://a.com/1.jpg' }], ruedas: { h: 0, m: 10, s: 0 } };
+const ctx = { seccion: 'preparacion', linea: 1, fotos: [{ n: 1, url: 'https://a.com/1.jpg' }], ruedas: { h: 0, m: 10, s: 0 }, etiqueta: 'Bondiola <braseada>' };
 
 describe('la capa de herramientas', () => {
   it('Foto, Cuenta regresiva y Cronómetro, en ese orden, con su ícono', () => {
@@ -24,9 +24,9 @@ describe('la capa de herramientas', () => {
     expect(html).toMatch(/data-herramienta="foto"[^>]*disabled/);
     expect(html).toContain('Primero agregá una foto en la ficha Fotos');
   });
-  it('el paso de la cuenta: nombre vacío, ruedas y Poner', () => {
+  it('el paso de la cuenta: el nombre con el título de la receta, las ruedas y Poner', () => {
     const paso = HERRAMIENTAS_DE_LINEA.find(h => h.id === 'cuenta')!.paso(ctx);
-    expect(paso).toContain('data-etiqueta-marca value=""');
+    expect(paso).toContain('data-etiqueta-marca value="Bondiola &lt;braseada&gt;"');
     expect(paso).toContain('data-accion="marca-rueda-mas"');
     expect(paso).toContain('data-accion="poner-marca" data-tipo="cuenta" data-seccion="preparacion" data-linea="1"');
   });
@@ -50,7 +50,7 @@ describe('las acciones', () => {
       seleccion: vi.fn(() => seleccion), soltarFoco: vi.fn(), devolverFoco: vi.fn()
     };
     const campos = { leer: (n: string) => (n === 'preparacion' ? valor : null), escribir: (_: string, v: string) => { valor = v; } };
-    const h = crearHerramientasEditor({ campos, fotos: () => [], pantalla });
+    const h = crearHerramientasEditor({ campos, fotos: () => [], titulo: () => 'Bondiola', pantalla });
     const tocar = (accion: string, dataset: Record<string, string>) => h.acciones[accion]!({ dataset } as unknown as HTMLElement, new Event('click'));
     const editar = (v: string) => { valor = v; };
     return { pantalla, tocar, valor: () => valor, editar, alCerrarCapa: h.alCerrarCapa };
@@ -153,5 +153,11 @@ describe('las acciones', () => {
     tocar('poner-marca', { tipo: 'cronometro', seccion: 'preparacion', linea: '0' });
     const fin = valor().indexOf('\n');
     expect(pantalla.devolverFoco).toHaveBeenCalledWith('preparacion', fin, fin);
+  });
+
+  it('el nombre del paso viene cargado con el título de la receta', () => {
+    const { pantalla, tocar } = armar();
+    tocar('elegir-herramienta-linea', { herramienta: 'cronometro', seccion: 'preparacion', linea: '1' });
+    expect(pantalla.abrirFicha.mock.calls.at(-1)?.[0]).toContain('data-etiqueta-marca value="Bondiola"');
   });
 });

@@ -134,7 +134,7 @@ const REGLAS_DEL_CUERPO: readonly string[] = [
   '- La cantidad va después de la raya y empieza con un número o una fracción, o es `a gusto`, `c/n` o `para …` (`para freír`). Un ingrediente sin cantidad va sin raya: `- sal`.',
   '- Lo que va entre paréntesis después de la cantidad es una nota, texto libre: `- tomates perita — 1 kg (800 g si es de lata)`. Un paréntesis que describe el ingrediente va del lado del nombre: `- harina leudante (o harina común y polvo de hornear) — 1 taza`.',
   '- La preparación en pasos numerados.',
-  '- Un paso con un tiempo concreto de horno, hervor, reposo, leudado o marinada lleva una marca de temporizador que envuelve las palabras del tiempo: `durante [50 minutos](cuenta:50:00 "cocinar")`. La duración es `m:ss` o `h:mm:ss`; con un rango («20 a 25 minutos») va el mayor; sin número («hasta que dore») no lleva marca. La etiqueta, entre comillas y opcional, es corta: el verbo del paso. `[texto](cronometro: "etiqueta")` va sólo donde el paso pide medir algo que la fuente no fija. Al corregir una receta que ya existe, no se agregan marcas salvo que se pidan.'
+  '- Un paso con un tiempo concreto de horno, hervor, reposo, leudado o marinada lleva una marca de temporizador que envuelve las palabras del tiempo: `durante [50 minutos](cuenta:50:00 "cocinar")`. La duración es `m:ss` o `h:mm:ss`; con un rango («20 a 25 minutos») va el mayor; sin número («hasta que dore») no lleva marca. La etiqueta, entre comillas, es el nombre del temporizador —el texto entre corchetes no lo nombra—: ponela siempre, corta, con el verbo del paso. `[texto](cronometro: "etiqueta")` va sólo donde el paso pide medir algo que la fuente no fija. Al corregir una receta que ya existe, no se agregan marcas salvo que se pidan.'
 ];
 
 /**

@@ -11,7 +11,11 @@ import { rueda } from './temporizadores.js';
 import { aMs, type Duracion } from '../temporizadores.js';
 import type { FotoDeReceta } from '../tipos.js';
 
-export interface ContextoDeLinea { seccion: string; linea: number; fotos: FotoDeReceta[]; ruedas: Duracion }
+export interface ContextoDeLinea {
+  seccion: string; linea: number; fotos: FotoDeReceta[]; ruedas: Duracion;
+  /** El nombre con que arranca el paso de una marca: el título de la receta. */
+  etiqueta: string;
+}
 
 export interface HerramientaDeLinea {
   id: 'foto' | 'cuenta' | 'cronometro';
@@ -34,7 +38,7 @@ function pasoDeMarca(ctx: ContextoDeLinea, tipo: 'cuenta' | 'cronometro', titulo
   const apagado = tipo === 'cuenta' && aMs(ctx.ruedas) <= 0 ? ' disabled' : '';
   return VELO + '<div class="ficha hoja-foto" data-herramientas-linea>' +
     `<h2>${titulo}</h2>` +
-    '<label class="campo"><span>Nombre (opcional)</span><input data-etiqueta-marca value="" placeholder="Hornear, reposo…"></label>' +
+    `<label class="campo"><span>Nombre (opcional)</span><input data-etiqueta-marca value="${escapar(ctx.etiqueta)}" placeholder="Hornear, reposo…"></label>` +
     ruedas +
     `<button class="btn prim" type="button" data-accion="poner-marca" data-tipo="${tipo}" ${enLinea(ctx)}${apagado}>Poner</button>` +
     '</div>';

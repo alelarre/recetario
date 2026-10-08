@@ -152,7 +152,8 @@ export function tramosAHtml(tramos: TramoEnLinea[]): string {
       return `<span class="foto-linea">${imgDe(t.imagen)}${epigrafe}</span>`;
     }
     let html = escapar(t.texto);
-    if (t.temporizador) html += botonTemporizador(t.temporizador);
+    // El texto de una marca va subrayado, unido a su botón.
+    if (t.temporizador) html = (t.texto ? `<span class="marca-tiempo">${html}</span>` : '') + botonTemporizador(t.temporizador);
     if (t.link) html = `<a href="${escapar(t.link)}" target="_blank" rel="noopener">${html}</a>`;
     if (t.italica) html = `<em>${html}</em>`;
     if (t.negrita) html = `<strong>${html}</strong>`;

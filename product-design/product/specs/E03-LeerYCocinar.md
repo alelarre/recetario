@@ -68,7 +68,7 @@ receta entera.
 
 #### C03.1.4 — Las marcas de temporizador *(J6)*
 
-- [ ] Una marca `cuenta:` o `cronometro:` del texto (`E05-Cimientos.md` C05.1.5) se dibuja como su `texto`, común, **con un botón pegado a él**: el reloj con «+» para una cuenta regresiva y el cronómetro con «+» para un cronómetro (`design-system.md` §6.30). Una marca sin `texto` dibuja sólo el botón. Una mal formada no lleva botón.
+- [ ] Una marca `cuenta:` o `cronometro:` del texto (`E05-Cimientos.md` C05.1.5) se dibuja como su `texto`, **subrayado con puntos y con un botón pegado a él**, para que se lean juntos: el reloj con «+» para una cuenta regresiva y el cronómetro con «+» para un cronómetro (`design-system.md` §6.30). Una marca sin `texto` dibuja sólo el botón. Una mal formada no lleva botón.
 - [ ] **Tocarlo crea el temporizador y lo arranca, sin cambiar de pantalla**, igual que *Empezar* en Temporizadores (C07.5b.1). La tira aparece al pie, como siempre que algo corre.
 - [ ] **Contra el doble toque**, el botón queda deshabilitado 2 s y muestra una tilde; después vuelve a su ícono. Cada toque fuera de esos 2 s crea uno nuevo.
 - [ ] En el modo cocina el botón es más grande, como el resto de los controles de esa pantalla (C03.2.3).

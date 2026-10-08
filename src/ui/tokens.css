@@ -412,6 +412,10 @@ button.chip { cursor: pointer; }
 .ico-min::after { content: ''; position: absolute; inset: -10px; }
 .ico-min svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .ico-min.hecho { color: var(--exito); border-color: var(--exito); }
+/* El texto de una marca de temporizador, subrayado con puntos: se lee unido
+   a su botón, que va pegado a la derecha. */
+.marca-tiempo { text-decoration: underline dotted var(--fg-3); text-decoration-thickness: 1.5px;
+                text-underline-offset: 4px; }
 .coc .ico-min { width: 36px; height: 36px; }
 .coc .ico-min svg { width: var(--ico-cocina); height: var(--ico-cocina); }
 

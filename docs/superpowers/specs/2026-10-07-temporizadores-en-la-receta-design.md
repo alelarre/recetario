@@ -31,10 +31,9 @@ cuerpo (ingredientes, pasos, notas):
   los segundos después del primer número llevan dos cifras.
 - **`"etiqueta"`** es opcional y va entre comillas dobles, separada del
   destino por un espacio.
-- **El nombre del temporizador** es la etiqueta. Sin etiqueta, es el
-  `texto`. Sin ninguno de los dos, es el nombre que hoy toma uno creado a
-  mano sin nombre: `nombreDeDuracion` para una cuenta, «Cronómetro» para un
-  cronómetro.
+- **El nombre del temporizador** es la etiqueta. Sin etiqueta, es el nombre
+  que toma uno creado a mano sin nombre: `nombreDeDuracion` para una cuenta,
+  «Cronómetro» para un cronómetro. El `texto` no cuenta para el nombre.
 - **Una marca mal formada se lee como texto común:** se ve su `texto`, sin
   botón y sin la sintaxis. Mal formada es un esquema que no es ninguno de los
   dos, o una duración que no se lee o que está fuera del rango. Nunca rompe la

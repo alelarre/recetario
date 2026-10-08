@@ -41,9 +41,11 @@ const aDuracion = (ms: number): Duracion => {
 const finDeLinea = (texto: string, linea: number): number =>
   texto.split('\n').slice(0, linea + 1).reduce((n, l) => n + l.length + 1, 0) - 1;
 
-export function crearHerramientasEditor({ campos, fotos, pantalla }: {
+export function crearHerramientasEditor({ campos, fotos, titulo, pantalla }: {
   campos: CamposDelEditor;
   fotos: () => FotoDeReceta[];
+  /** El título escrito en el formulario: con él arranca el nombre de la marca. */
+  titulo: () => string;
   pantalla: PantallaDeHerramientas;
 }): { acciones: SeccionDeAcciones; alCerrarCapa(): void } {
   /** Las ruedas de la cuenta: cada vez que se abre, desde 0:10:00. */
@@ -58,7 +60,8 @@ export function crearHerramientasEditor({ campos, fotos, pantalla }: {
     seccion: boton.dataset['seccion'] ?? '',
     linea: Number(boton.dataset['linea'] ?? 0),
     fotos: fotos(),
-    ruedas
+    ruedas,
+    etiqueta: titulo().trim()
   });
 
   const girarRueda = (paso: 1 | -1) => (boton: HTMLElement): void => {

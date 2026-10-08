@@ -55,9 +55,10 @@ describe('leer una marca', () => {
 });
 
 describe('el nombre', () => {
-  it('la etiqueta, el texto, o el de por defecto', () => {
+  it('la etiqueta, o el de por defecto: el texto entre corchetes no cuenta', () => {
     expect(nombreDeMarca({ tipo: 'cuenta', texto: '50 minutos', etiqueta: 'cocinar', duracion: 50 * MIN })).toBe('cocinar');
-    expect(nombreDeMarca({ tipo: 'cuenta', texto: '50 minutos', etiqueta: '', duracion: 50 * MIN })).toBe('50 minutos');
+    expect(nombreDeMarca({ tipo: 'cuenta', texto: '50 minutos', etiqueta: '', duracion: 50 * MIN })).toBe('50 min');
+    expect(nombreDeMarca({ tipo: 'cronometro', texto: 'hasta que esté liso', etiqueta: '', duracion: null })).toBe('Cronómetro');
     expect(nombreDeMarca({ tipo: 'cuenta', texto: '', etiqueta: '', duracion: 50 * MIN })).toBe('50 min');
     expect(nombreDeMarca({ tipo: 'cronometro', texto: '', etiqueta: '', duracion: null })).toBe('Cronómetro');
   });

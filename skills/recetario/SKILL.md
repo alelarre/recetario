@@ -144,7 +144,8 @@ app, la marca es un botón que crea el temporizador.
   Va sólo donde el paso pide medir algo que la fuente no fija.
 - **Con un rango** («20 a 25 minutos»), la duración es el mayor.
 - **Sin número** («hasta que dore»), el paso no lleva marca.
-- **La etiqueta** va entre comillas, es opcional y es corta: el verbo del paso
+- **La etiqueta** va entre comillas y es el nombre del temporizador: el texto
+  entre corchetes no lo nombra. Ponela siempre, corta, con el verbo del paso
   («hornear», «reposo», «hervir»).
 
 Ejemplos:

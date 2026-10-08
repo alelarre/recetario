@@ -1388,6 +1388,7 @@ function acomodarBotonDeLinea(): void {
 const herramientasEditor = crearHerramientasEditor({
   campos: camposDelEditor,
   fotos: () => fotosEditor.fotos(),
+  titulo: () => campoDelEditor('titulo')?.value ?? '',
   pantalla: {
     abrirFicha: abrirFichaFoto,
     cerrarFicha: cerrarFichaFoto,

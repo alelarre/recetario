@@ -59,9 +59,13 @@ export function leerMarca(texto: string, esquema: string, valor: string, resto: 
   return null;
 }
 
-/** El nombre del temporizador que crea: la etiqueta, el texto, o el de uno creado sin nombre. */
+/**
+ * El nombre del temporizador que crea: la etiqueta, o el de uno creado sin
+ * nombre. El `texto` no cuenta: es la parte de la frase que se ve unida al
+ * botón, y casi siempre es el tiempo mismo.
+ */
 export function nombreDeMarca(m: Marca): string {
-  return m.etiqueta.trim() || m.texto.trim() ||
+  return m.etiqueta.trim() ||
     (m.tipo === 'cuenta' && m.duracion !== null ? nombreDeDuracion(m.duracion) : 'Cronómetro');
 }
 

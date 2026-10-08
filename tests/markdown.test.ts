@@ -287,7 +287,7 @@ describe('las marcas de temporizador', () => {
   });
   it('en HTML: el texto y el botón al lado', () => {
     const html = aHtml('durante [50 minutos](cuenta:50:00 "cocinar").');
-    expect(html).toContain('50 minutos<button type="button" class="ico-min" data-accion="crear-temporizador" data-tipo="cuenta" data-duracion="3000000" data-nombre="cocinar"');
+    expect(html).toContain('<span class="marca-tiempo">50 minutos</span><button type="button" class="ico-min" data-accion="crear-temporizador" data-tipo="cuenta" data-duracion="3000000" data-nombre="cocinar"');
     expect(html).toContain(ICO.relojMas.replace('<svg ', '<svg aria-hidden="true" '));
   });
   it('un cronómetro lleva su ícono y no lleva duración', () => {
@@ -305,7 +305,7 @@ describe('las marcas de temporizador', () => {
   });
   it('una comilla sin cerrar no se come la marca siguiente', () => {
     const html = aHtml('[x](cuenta:5:00 "hornear) y [y](cuenta:1:00)');
-    expect(html).toContain('data-nombre="y"');
+    expect(html).toContain('data-nombre="1 min"');
     expect(html).not.toContain('cuenta:');
   });
   it('el nombre se escapa', () => {
@@ -321,7 +321,14 @@ describe('las marcas de temporizador', () => {
     }
   });
   it('dentro de negrita sigue siendo marca', () => {
-    expect(aHtml('**[5 min](cuenta:5:00)**')).toContain('<strong>5 min<button');
+    expect(aHtml('**[5 min](cuenta:5:00)**')).toContain('<strong><span class="marca-tiempo">5 min</span><button');
+  });
+  it('sin texto entre corchetes, sólo el botón, sin subrayado vacío', () => {
+    expect(aHtml('Dorar. [](cuenta:4:00)')).toContain('Dorar. <button');
+    expect(aHtml('Dorar. [](cuenta:4:00)')).not.toContain('marca-tiempo');
+  });
+  it('sin etiqueta, el nombre no es el texto entre corchetes', () => {
+    expect(aHtml('[50 minutos](cuenta:50:00)')).toContain('data-nombre="50 min"');
   });
   it('en texto y en PDF queda sólo el texto; una vacía no deja nada', () => {
     expect(aTexto('Hornear [1 h](cuenta:1:00:00 "horno"). [](cuenta:4:00)')).toBe('Hornear 1 h. ');

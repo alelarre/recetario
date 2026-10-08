@@ -1571,6 +1571,9 @@ pantalla. **Recién tocado** queda deshabilitado 2 s y muestra `tilde` en
 `--exito`, con el borde también en `--exito`; después vuelve a su ícono. **En
 el modo cocina** pasa a 36 px, con el ícono a `--ico-cocina`.
 
+**Las palabras de una marca** (`.marca-tiempo`) van subrayadas con puntos en
+`--fg-3`, de 1,5 px y 4 px debajo de la línea: así se leen unidas a su botón.
+
 **El buscador del Conversor** es la caja de búsqueda del Recetario (`buscar`,
 §3.4) con el texto «Buscar un alimento», arriba de todo. Mientras se escribe
 cambian las filas de la tabla de pesos y no la caja; las demás fichas no
