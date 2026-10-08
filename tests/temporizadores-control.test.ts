@@ -42,7 +42,7 @@ function pantallaFalsa() {
 
 const boton = (id = '', rueda = '') => ({ dataset: { id, rueda } }) as unknown as HTMLElement;
 
-function armar({ almacen = localStorageFalso(), nombre = '' } = {}) {
+function armar({ almacen = localStorageFalso(), nombre = '', enTemporizadores = (): boolean => true } = {}) {
   const r = relojFalso();
   const aviso = avisoFalso();
   const { pantalla, encendida } = pantallaFalsa();
@@ -50,7 +50,7 @@ function armar({ almacen = localStorageFalso(), nombre = '' } = {}) {
   const pintarVivo = vi.fn();
   const vaciarNombre = vi.fn();
   const control = crearControlTemporizadores({
-    almacen, reloj: r.reloj, aviso, pantalla, redibujar, pintarVivo, nombreEscrito: () => nombre, vaciarNombre
+    almacen, reloj: r.reloj, aviso, pantalla, enTemporizadores, redibujar, pintarVivo, nombreEscrito: () => nombre, vaciarNombre
   });
   const tocar = (accion: string, b: HTMLElement = boton()) => control.acciones[accion]!(b, new Event('click'));
   return { control, ...r, aviso, encendida, redibujar, pintarVivo, vaciarNombre, tocar, almacen };
@@ -319,6 +319,23 @@ describe('los cronómetros con nombre', () => {
     tocar('temporizador-seguir', boton(id));
     tics(2);
     expect(va()).toBe(7000);
+  });
+  it('fuera de Temporizadores, algo corriendo no mantiene la pantalla; al entrar, sí; al salir, la suelta', () => {
+    let alli = false;
+    const { control, encendida } = armar({ enTemporizadores: () => alli });
+    control.empezarCronoCon('amasar');
+    expect(encendida()).toBe(false);
+    alli = true;
+    control.revisarPantalla();
+    expect(encendida()).toBe(true);
+    alli = false;
+    control.revisarPantalla();
+    expect(encendida()).toBe(false);
+  });
+  it('en Temporizadores sin nada corriendo, la pantalla no se mantiene', () => {
+    const { control, encendida } = armar();
+    control.revisarPantalla();
+    expect(encendida()).toBe(false);
   });
   it('mientras corre, la pantalla queda encendida; pausado, no', () => {
     const { control, encendida, tocar } = armar();

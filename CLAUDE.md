@@ -119,7 +119,9 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
   terminado, toda pantalla lleva al pie una tira (`#tira`, hermana de `#app`)
   que rota cada 5 s por el cronómetro y cada temporizador —`CICLO_TIRA` y
   `rotarTira` en `src/ui/temporizadores.ts`—, con flechas y deslizar para
-  pasar a mano; mientras corre algo, la pantalla no se apaga. **Avisan
+  pasar a mano; mientras corre algo y se está en *Temporizadores*, la
+  pantalla no se apaga —en las demás pantallas, la mantiene encendida sólo
+  el sol del modo cocina—. **Avisan
   sólo con la app a la vista:** un pitido de Web Audio y vibración cada 2 s,
   hasta *Parar* o un minuto; con la pantalla apagada no hay aviso.
 - **El input principal no es el editor**, son sesiones con un agente en la Mac

@@ -2786,6 +2786,26 @@ describe('main.ts: las rutas', () => {
     });
   });
 
+  it('con el cronómetro corriendo, la pantalla se mantiene encendida sólo en Temporizadores', async () => {
+    let pedidos = 0;
+    let soltados = 0;
+    vi.stubGlobal('navigator', { wakeLock: { request: async () => {
+      pedidos++;
+      return { addEventListener: () => {}, release: async () => { soltados++; } };
+    } } });
+    const { abrir, tocar } = await montar();
+    await abrir('#/herramientas/temporizadores');
+    await tocar('crono-iniciar');
+    await esperar();
+    expect(pedidos).toBe(1);
+    await abrir('#/r/f1');
+    await esperar();
+    expect(soltados).toBe(1);
+    await abrir('#/herramientas/temporizadores');
+    await esperar();
+    expect(pedidos).toBe(2);
+  });
+
   it('al volver de segundo plano con el sol encendido, se vuelve a pedir la pantalla (C03.3.1)', async () => {
     let pedidos = 0;
     let soltar = () => {};

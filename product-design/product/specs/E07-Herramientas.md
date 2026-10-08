@@ -403,7 +403,7 @@ tipo.
 - [ ] Pausado, el tiempo no baja y va en `--fg-2`. *+1'* suma un minuto; sobre uno terminado, vuelve a correr desde 1:00 contado desde ahora.
 - [ ] Terminado: el tiempo dice «¡Listo!», sin barra, con *+1'* y *Parar*; *Parar* lo saca.
 - [ ] Todo se cuenta por fecha contra el reloj del teléfono, nunca por tics: no se atrasa y sobrevive a recargar y a cerrar la app. Se guarda en `localStorage` (`recetario.temporizadores`) en cada cambio, con la última duración puesta en las ruedas, que es con la que se abre la próxima vez (10 min la primera). Lo que no se puede leer se toma como sin temporizadores.
-- [ ] Mientras corre algún temporizador, un cronómetro con nombre o el cronómetro, la pantalla no se apaga (wake lock propio, repedido a cada tic si se perdió). Uno pausado o uno terminado no cuentan.
+- [ ] Mientras corre algún temporizador, un cronómetro con nombre o el cronómetro, **y se está en la pantalla de Temporizadores**, la pantalla no se apaga (wake lock propio, repedido a cada tic si se perdió). Al ir a otra pantalla se suelta, y al volver se pide de nuevo: en las demás, con algo corriendo en la tira, el teléfono se apaga como siempre —para cocinar con la pantalla prendida está el sol del modo cocina (C03.3.1)—. Uno pausado o uno terminado no cuentan.
 
 #### C07.5b.2 — El aviso y la tira *(J6)*
 

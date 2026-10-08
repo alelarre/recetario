@@ -495,6 +495,7 @@ const controlTemporizadores = crearControlTemporizadores({
   },
   aviso: crearAvisoSonoro(),
   pantalla: crearPantallaEncendida(),
+  enTemporizadores: () => vistaActual?.vista === 'temporizadores',
   // Fuera de Temporizadores lo único que los muestra es la tira: redibujar la
   // pantalla entera borraría lo escrito en el editor.
   redibujar: () => { if (vistaActual?.vista === 'temporizadores') void render(); else pintarTemporizadoresVivos(); },
@@ -507,6 +508,9 @@ const controlTemporizadores = crearControlTemporizadores({
 });
 // Cada pantalla trae o saca la tira de Temporizadores según dónde se esté.
 despuesDePintar(pintarTemporizadoresVivos);
+// La pantalla encendida de los temporizadores vale sólo en Temporizadores:
+// cada pantalla nueva la pide o la suelta.
+despuesDePintar(() => controlTemporizadores.revisarPantalla());
 
 /** Lo escrito en las cuentas de Referencias, por el id de la cuenta. */
 const valoresDeReferencias = () => controlReferencias.estado('referencias').valores;

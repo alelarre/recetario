@@ -1,7 +1,7 @@
 /**
  * El estado de *Temporizadores*: los temporizadores, el cronómetro, las ruedas del
  * temporizador nuevo y el aviso. Tiene el tic de 1 s, pide la pantalla encendida mientras
- * corra algo y registra sus acciones en el mapa. El reloj, el almacén, el
+ * corra algo y se esté en *Temporizadores*, y registra sus acciones en el mapa. El reloj, el almacén, el
  * aviso y la pantalla se inyectan: los tests le pasan dobles.
  *
  * Un toque redibuja la pantalla; el tic y las ruedas pintan sólo los tiempos
@@ -51,6 +51,8 @@ export interface ControlTemporizadores {
   empezarCon(nombre: string, duracion: number): void;
   /** Empieza un cronómetro con nombre: lo llaman las marcas de la receta. */
   empezarCronoCon(nombre: string): void;
+  /** Después de cambiar de pantalla: la pantalla encendida depende de estar en *Temporizadores*. */
+  revisarPantalla(): void;
   acciones: SeccionDeAcciones;
 }
 
@@ -70,11 +72,18 @@ function guardar(almacen: Almacen | null, valor: unknown): void {
   try { almacen?.setItem(CLAVE_TEMPORIZADORES, JSON.stringify(valor)); } catch { /* sin almacenamiento: queda para esta vez */ }
 }
 
-export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, redibujar, pintarVivo, nombreEscrito, vaciarNombre }: {
+export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, enTemporizadores, redibujar, pintarVivo, nombreEscrito, vaciarNombre }: {
   almacen: Almacen | null;
   reloj: Reloj;
   aviso: Aviso;
   pantalla: Pantalla;
+  /**
+   * Si se está en la pantalla de *Temporizadores*. Sólo ahí algo corriendo
+   * mantiene la pantalla encendida: en las demás, una tira con un cronómetro
+   * de horas no deja que el teléfono se apague nunca; para cocinar con la
+   * pantalla prendida está el sol del modo cocina.
+   */
+  enTemporizadores: () => boolean;
   redibujar: () => void;
   pintarVivo: () => void;
   /** El nombre escrito en el campo del temporizador nuevo. */
@@ -106,13 +115,14 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, re
   };
 
   /**
-   * El intervalo y la pantalla siguen al estado: con algo en marcha, los dos;
-   * con un aviso sonando o uno terminado sin sacar, sólo el intervalo —la tira
-   * sigue rotando por él—; sin nada, ninguno.
+   * El intervalo y la pantalla siguen al estado: con algo en marcha, los dos
+   * —la pantalla, sólo en *Temporizadores*—; con un aviso sonando o uno
+   * terminado sin sacar, sólo el intervalo —la tira sigue rotando por él—;
+   * sin nada, ninguno.
    */
   function ajustarMarcha(): void {
     const marcha = enMarcha();
-    if (marcha) pantalla.mantener(); else pantalla.soltar();
+    if (marcha && enTemporizadores()) pantalla.mantener(); else pantalla.soltar();
     const ahora = reloj.ahora();
     const necesitaTic = marcha || avisando !== null || cuentas().some(t => terminado(t, ahora));
     if (necesitaTic && !detener) detener = reloj.cadaSegundo(tic);
@@ -195,6 +205,7 @@ export function crearControlTemporizadores({ almacen, reloj, aviso, pantalla, re
 
   return {
     estado: () => ({ temporizadores, crono, ruedas, avisando, ahora: reloj.ahora() }),
+    revisarPantalla: ajustarMarcha,
     empezarCon(nombre, duracion) {
       if (!(duracion > 0)) return;
       aviso.preparar();
