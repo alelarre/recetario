@@ -17,7 +17,7 @@ tienen las fórmulas, las tablas y las fuentes de cada una.
 | ID | Descripción | Detalle | Estado |
 |---|---|---|---|
 | P105 | Skill: investigar una receta a partir de un título o una idea | Hoy el skill parte de una fuente (PDF, foto, video, sitio, links). Instruirlo para que, con sólo un título o una idea, busque fuentes, compare versiones y escriba la receta. | Abierto |
-| P107 | Escalar una receta | Multiplicar las cantidades de cualquier receta (×2, ×½) desde la receta. | Abierto |
+| P107 | Escalar una receta | Multiplicar las cantidades de cualquier receta (×2, ×½) desde la receta. | Implementando |
 | P111 | Herramientas: referencia rápida | Tablas de consulta en *Herramientas*: minutos de los huevos según el punto, temperatura interna de la carne, temperatura del aceite para freír, temperaturas y tiempos de horno, y temperaturas de las bebidas (agua para el mate, el té y el café; servicio de vinos). Sin cálculo. Ideas 291, 292 y 295. | Falta probar |
 | P115 | Pan: planificador por etapas | De la hora de inicio a la hora de cada etapa del pan, con un aviso en cada una. Usa los temporizadores de *Herramientas*. Idea 41. | Abierto |
 | P117 | Herramientas: referencia de masas y dulces | Masa para un molde de torta según sus medidas, y tabla de capacidades de moldes; gramos de masa por pieza (pan de hamburguesa, pancho, bagel, baguette, grisín); pasta fresca, de porciones a harina, huevos o yemas; masas por plato (tortillas, ñoquis, fideos de ramen, tapas de dumplings, bollo de pizza según el diámetro); puntos del azúcar con ajuste por altitud; merengue por peso de claras y tipo. Ideas 16, 17, 30, 31, 43, 49, 75 y 83; para el molde de torta, también la 52. | Falta probar |
