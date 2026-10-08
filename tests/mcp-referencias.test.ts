@@ -131,6 +131,10 @@ describe('el conversor para el agente', () => {
     expect('faltan' in r && r.faltan[0]?.dato).toBe('ingrediente');
     expect('faltan' in r && r.faltan[0]?.opciones).toContain('Manteca');
   });
+  it('buscar sin coincidencias no encuentra nada; buscar vacío es el listado', () => {
+    expect(consultarReferencia({ buscar: 'zzzqqq' })).toEqual({ coincidencias: [] });
+    expect('cuentas' in consultarReferencia({ buscar: '' })).toBe(true);
+  });
   it('buscar «harina» encuentra la tabla de pesos', () => {
     const r = consultarReferencia({ buscar: 'harina' });
     expect('coincidencias' in r && r.coincidencias.map(c => c.tabla)).toContain('Pesos por ingrediente');

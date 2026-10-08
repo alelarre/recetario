@@ -14,15 +14,15 @@ export const TABLAS_RAPIDA = {
     id: 'huevos', titulo: 'Huevos',
     columnas: [
       { id: 'punto', nombre: 'Punto' },
-      { id: 'heladera', nombre: 'Huevo de heladera', unidad: 'min' },
-      { id: 'ambiente', nombre: 'A temperatura ambiente', unidad: 'min' },
-      { id: 'fria', nombre: 'Desde agua fría', unidad: 'min' }
+      { id: 'heladera', nombre: 'Huevo de heladera' },
+      { id: 'ambiente', nombre: 'A temperatura ambiente' },
+      { id: 'fria', nombre: 'Desde agua fría' }
     ],
     filas: [
-      { punto: 'Pasado por agua', heladera: '4:01', ambiente: '2:31', fria: '3–4' },
-      { punto: 'Mollet: clara firme, yema líquida', heladera: '6:49', ambiente: '5:18', fria: '5' },
-      { punto: 'Yema cremosa', heladera: '7:49', ambiente: '6:19', fria: '7–8' },
-      { punto: 'Duro', heladera: '10:04', ambiente: '8:33', fria: '10–12' }
+      { punto: 'Pasado por agua', heladera: '4 min 1 s', ambiente: '2 min 31 s', fria: '3–4 min' },
+      { punto: 'Mollet: clara firme, yema líquida', heladera: '6 min 49 s', ambiente: '5 min 18 s', fria: '5 min' },
+      { punto: 'Yema cremosa', heladera: '7 min 49 s', ambiente: '6 min 19 s', fria: '7–8 min' },
+      { punto: 'Duro', heladera: '10 min 4 s', ambiente: '8 min 33 s', fria: '10–12 min' }
     ],
     notas: [
       'Huevo grande, de 58 g, en agua hirviendo.',

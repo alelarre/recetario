@@ -127,6 +127,9 @@ describe('los minutos de una fila', () => {
     expect(['3', '1½', '3–5', '2 (5 al vapor)', '4 min', '2:30', '—', 'según el paquete'].map(minutosDe))
       .toEqual([3, 1.5, 3, 2, 4, 2, null, null]);
   });
+  it('los segundos que siguen a los minutos se suman', () => {
+    expect(['3 min 30 s', '2 min 15 s', '1 min 30 s a 2 min'].map(minutosDe)).toEqual([3.5, 2.25, 1.5]);
+  });
 });
 
 describe('el buscador', () => {
@@ -297,6 +300,11 @@ describe('la entrada de Referencias', () => {
     expect(html).toContain('data-contenido-referencias');
   });
 
+  it('el buscador tiene nombre para los lectores de pantalla', () => {
+    expect(renderReferencias({ tag: '', q: '' })).toContain('<input data-buscar-referencias aria-label="Buscar en Referencias"');
+    expect(renderConversor(FICHAS_DEL_CONVERSOR, { valores: {}, busqueda: '' })).toContain('aria-label="Buscar un alimento"');
+  });
+
   it('los chips no llevan data-tag: con ese atributo, el toque iría a la lista de recetas del tag', () => {
     expect(renderReferencias({ tag: '', q: '' })).not.toContain(' data-tag="');
   });
@@ -365,6 +373,10 @@ describe('resaltar', () => {
 });
 
 describe('las fichas de las cuentas en la entrada', () => {
+  it('un dato numérico acepta decimales con las flechas', () => {
+    expect(fichaDeCuenta(cuenta, {})).toContain('step="any"');
+  });
+
   it('fichaDeCuenta dibuja la cuenta sin título, con sus entradas, lo guardado y su resultado', () => {
     const html = fichaDeCuenta(cuenta, { gramos: 200 });
     expect(html).toContain('id="ficha-agua-sal-pasta"');

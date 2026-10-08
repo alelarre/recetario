@@ -198,6 +198,12 @@ it('agua y sal de la pasta', () => {
   expect(c.calcular({ gramos: 0 })).toBeNull();
 });
 
+it('una cantidad que en litros redondearía a cero se muestra en mililitros', () => {
+  const c = cuentaAguaSalPasta({ litrosPor100g: k(1), salPorLitro: k(5) });
+  expect(c.calcular({ gramos: 3 })?.lineas[0]).toEqual({ nombre: 'Agua', valor: '30 ml' });
+  expect(c.calcular({ gramos: 10 })?.lineas[0]).toEqual({ nombre: 'Agua', valor: '0,1 l' });
+});
+
 it('el medidor de espagueti, de gramos a diámetro y al revés', () => {
   const c = cuentaEspagueti({ gramosPorCm2: k(25) });
   expect(c.calcular({ desde: 'gramos', valor: 100 })?.lineas).toEqual([{ nombre: 'Diámetro del atado', valor: '2 cm' }]);

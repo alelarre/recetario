@@ -19,11 +19,14 @@ import { tagsDe, conTag, buscarEnReferencias } from '../referencias/busqueda.js'
 import type { Tabla, Cuenta, Valores, Fila, Fuente, Entrada, Ficha } from '../referencias/tipos.js';
 import type { EstadoReferencia } from '../referencias-control.js';
 
-/** El primer número de un texto de minutos: «1½» es 1,5; «3–5», 3; sin número, nada. */
+/**
+ * El primer número de un texto de minutos: «1½» es 1,5; «3–5», 3; «3 min 30 s»,
+ * 3,5; sin número, nada.
+ */
 export function minutosDe(texto: string): number | null {
-  const m = texto.match(/(\d+(?:[.,]\d+)?)\s*(½)?/);
+  const m = texto.match(/(\d+(?:[.,]\d+)?)\s*(½)?(?:\s*min\s+(\d+)\s*s\b)?/);
   if (!m?.[1]) return null;
-  return Number(m[1].replace(',', '.')) + (m[2] ? 0.5 : 0);
+  return Number(m[1].replace(',', '.')) + (m[2] ? 0.5 : 0) + Number(m[3] ?? 0) / 60;
 }
 
 const lineaDeFuente = (f: Fuente): string =>
@@ -158,7 +161,7 @@ function entradaHtml(c: Cuenta, e: Entrada, v: Valores): string {
   }
   const etiqueta = e.unidad ? `${e.nombre} (${e.unidad})` : e.nombre;
   return `<label class="dato"><span class="n">${escapar(etiqueta)}</span>` +
-    `<input type="number" inputmode="decimal" min="0" ${datos} value="${typeof valor === 'number' ? valor : ''}"></label>`;
+    `<input type="number" inputmode="decimal" min="0" step="any" ${datos} value="${typeof valor === 'number' ? valor : ''}"></label>`;
 }
 
 /** El resultado de una cuenta, en su bloque: líneas, tabla, advertencias y fuentes. Sin datos, vacío. `guardado` es lo escrito: acá se completa con los valores por defecto. */
@@ -186,9 +189,9 @@ function fichaCuenta(c: Cuenta, v: Valores, conTitulo = true): string {
 
 /** El Conversor: el índice de sus fichas, su buscador y todas sus fichas juntas. */
 export function renderConversor(lista: readonly Ficha[], e: EstadoReferencia): string {
-  const indice = '<div class="chips indice-ref">' + lista.map(f =>
+  const indice = '<div class="chips">' + lista.map(f =>
     `<button type="button" class="chip" data-accion="ir-a-ficha" data-id="${escapar(idDeFicha(f))}">${escapar(tituloDeFicha(f))}</button>`).join('') + '</div>';
-  const buscador = `<div class="buscar">${ICO.buscar}<input data-buscar-referencia="conversor" placeholder="Buscar un alimento" value="${escapar(e.busqueda)}"></div>`;
+  const buscador = `<div class="buscar">${ICO.buscar}<input data-buscar-referencia="conversor" aria-label="Buscar un alimento" placeholder="Buscar un alimento" value="${escapar(e.busqueda)}"></div>`;
   const fichas = lista.map(f => (f.tipo === 'tabla' ? fichaTabla(f.tabla, e.busqueda) : fichaCuenta(f.cuenta, e.valores[f.cuenta.id] ?? {}))).join('');
   return encabezado({ titulo: 'Conversor', icono: ICO.medidor, volver: true }) +
     `<div class="cuerpo referencias">${buscador}${indice}${fichas}</div>`;
@@ -227,7 +230,7 @@ export function renderReferencias({ tag, q }: { tag: string; q: string }, valore
     `<button type="button" class="chip${t === tag ? ' act' : ''}" data-accion="referencias-tag" data-tag-ref="${escapar(t)}">${escapar(t)}</button>`).join('');
   return encabezado({ titulo: 'Referencias', icono: ICO.libro, volver: true }) +
     '<div class="cuerpo referencias">' +
-    `<div class="buscar">${ICO.buscar}<input data-buscar-referencias placeholder="Buscar" value="${escapar(q)}"></div>` +
+    `<div class="buscar">${ICO.buscar}<input data-buscar-referencias aria-label="Buscar en Referencias" placeholder="Buscar" value="${escapar(q)}"></div>` +
     `<div class="chips tags-ref">${chips}</div>` +
     `<div data-contenido-referencias>${contenidoDeReferencias({ tag, q }, valores)}</div></div>`;
 }

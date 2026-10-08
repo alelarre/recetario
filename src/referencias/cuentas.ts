@@ -29,7 +29,9 @@ export function fraccion(n: number): string {
   return entero ? `${entero} ${f}` : f;
 }
 
-const litros = (ml: number): string => `${(Math.round(ml / 100) / 10).toString().replace('.', ',')} l`;
+/** En litros, con un decimal; lo que así quedaría en cero, en mililitros. */
+const litros = (ml: number): string =>
+  (Math.round(ml / 100) === 0 ? `${Math.round(ml)} ml` : `${(Math.round(ml / 100) / 10).toString().replace('.', ',')} l`);
 
 function cantidad(i: Ingrediente, por: number): string {
   const una = (x: number): string => (i.unidad === 'u' ? fraccion(x * por) : `${gramos(x * por)} ${i.unidad}`);
