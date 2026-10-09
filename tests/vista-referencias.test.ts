@@ -135,8 +135,12 @@ describe('las notas', () => {
 
 describe('los minutos de una fila', () => {
   it('el primer número, con medios; sin número, nada', () => {
-    expect(['3', '1½', '3–5', '2 (5 al vapor)', '4 min', '2:30', '—', 'según el paquete'].map(minutosDe))
-      .toEqual([3, 1.5, 3, 2, 4, 2, null, null]);
+    expect(['3', '1½', '3–5', '2 (5 al vapor)', '4 min', '—', 'según el paquete'].map(minutosDe))
+      .toEqual([3, 1.5, 3, 2, 4, null, null]);
+  });
+
+  it('como reloj, minutos y segundos', () => {
+    expect(['02:30', '10:00', '00:45', '2:30'].map(minutosDe)).toEqual([2.5, 10, 0.75, 2.5]);
   });
 
   it('con cuartos y tres cuartos', () => {

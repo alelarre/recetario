@@ -1555,6 +1555,11 @@ completa en `--fg`, con más aire arriba (`--e-4`).
 de la tabla el conmutador de un dato (§6.28) a lo ancho, con `--e-3` debajo;
 la tabla muestra sólo las columnas de la variante elegida.
 
+**Todas las tablas reparten el ancho igual:** la primera columna al 40 % —al
+30 % desde cuatro columnas— y el resto en partes iguales, así la segunda
+columna cae en el mismo lugar en cada ficha. Un encabezado corta renglón entre
+palabras; el texto de una celda, con guion; un rango —«90–120»— no se corta.
+
 **Una tabla ancha se desplaza de costado dentro de su ficha;** la página no.
 La tabla sale hasta el borde de la ficha (margen de `--e-2` negativo) para
 darle ancho.

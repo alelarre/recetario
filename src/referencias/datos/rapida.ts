@@ -14,16 +14,16 @@ export const TABLAS_RAPIDA = {
     id: 'huevos', titulo: 'Huevos',
     columnas: [
       { id: 'punto', nombre: 'Punto' },
-      { id: 'heladera', nombre: 'Huevo de heladera' },
-      { id: 'ambiente', nombre: 'A temperatura ambiente' }
+      { id: 'heladera', nombre: 'Huevo de heladera', minutos: true },
+      { id: 'ambiente', nombre: 'A temperatura ambiente', minutos: true }
     ],
     filas: [
-      { punto: 'Pasado por agua', heladera: '4 min', ambiente: '2½ min' },
-      { punto: 'Mollet: clara firme, yema líquida', heladera: '7 min', ambiente: '5½ min' },
-      { punto: 'Yema cremosa', heladera: '8 min', ambiente: '6½ min' },
-      { punto: 'Duro', heladera: '10 min', ambiente: '8½ min' }
+      { punto: 'Pasado por agua', heladera: '04:00', ambiente: '02:30' },
+      { punto: 'Mollet: clara firme, yema líquida', heladera: '07:00', ambiente: '05:30' },
+      { punto: 'Yema cremosa', heladera: '08:00', ambiente: '06:30' },
+      { punto: 'Duro', heladera: '10:00', ambiente: '08:30' }
     ],
-    notas: ['Huevo grande, de 58 g.'],
+    notas: ['Huevo grande, de 58 g, en agua hirviendo.'],
     fuente: { nombre: 'Omni Calculator, Ideal Egg Boiling Calculator', url: 'https://www.omnicalculator.com/food/egg-boiling' }
   },
 

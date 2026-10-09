@@ -657,9 +657,10 @@ un error.
 - [ ] Son las primeras de la lista; las siguen las de F07.9. En este orden: **Huevos**, **Temperatura interna segura**, **Puntos de
   la carne vacuna**, **Aceite para freír**, **Punto de humo**, **Horno**,
   **Infusiones**, **Vinos y espumantes** y **Cervezas y gaseosas**.
-- [ ] **Huevos:** los minutos en agua hirviendo, redondeados al medio
-  minuto, para el huevo grande de heladera y a temperatura ambiente; en
-  cuatro puntos: pasado por agua, mollet, yema cremosa y duro.
+- [ ] **Huevos:** el tiempo en agua hirviendo, redondeado al medio minuto y
+  escrito como reloj —«02:30»—, para el huevo grande de heladera y a
+  temperatura ambiente, con su botón de minutos (C07.9.3); en cuatro puntos:
+  pasado por agua, mollet, yema cremosa y duro.
 - [ ] **Temperatura interna segura:** la mínima de seguridad por alimento.
 - [ ] **Puntos de la carne vacuna:** la temperatura interna de cada punto,
   con sus nombres de acá; sin fuente.
@@ -765,7 +766,7 @@ Las fichas de Referencias (F07.7) que siguen a las de C07.7.5.
 
 #### C07.9.2 — Las cuentas de cocción *(J6)*
 
-- [ ] **Agua para el arroz:** *Tengo* gramos o tazas, el arroz y la
+- [ ] **Agua para el arroz:** *Medida* —gramos o tazas—, el arroz y la
   variedad; da el agua en ml y en tazas —la métrica, de 250 ml— y el tiempo,
   con la nota de cómo se cocina. En tazas, el agua son las partes de la
   variedad; en gramos, el agua por gramo. Una variedad sin agua por gramo
@@ -784,8 +785,9 @@ Las fichas de Referencias (F07.7) que siguen a las de C07.7.5.
   nombre de la fila y esos minutos —el mínimo, si es un rango; «1½» es 1,5—,
   igual que *Empezar* en Temporizadores (C07.5b.1). El temporizador queda en
   la tira como cualquier otro.
-- [ ] Lo llevan el **blanqueado** (cada verdura), las **infusiones** (cada
-  té) y el **tiempo de pasta seca** (cada formato). El nombre es la primera
+- [ ] Lo llevan los **huevos** (cada punto), el **blanqueado** (cada
+  verdura), las **infusiones** (cada té) y el **tiempo de pasta seca** (cada
+  formato). Los minutos se leen también como reloj: «02:30» son 2½. El nombre es la primera
   columna más la siguiente columna de texto sin unidad, si la fila la tiene
   —«Espárragos, finos»—; en las infusiones, sólo la infusión —«Té verde»—.
 - [ ] Una fila sin número en esa columna no lleva el botón.

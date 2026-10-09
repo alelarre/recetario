@@ -732,9 +732,23 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 .referencias mark { background: color-mix(in srgb, var(--acento) 40%, transparent); color: var(--fg); border-radius: 2px; }
 /* Una tabla ancha se desplaza dentro de su ficha; la página no. */
 .tabla-ref { overflow-x: auto; margin: 0 calc(-1 * var(--e-2)); }
-.tabla-ref table { border-collapse: collapse; width: 100%; font-size: var(--txt-chico); }
-.tabla-ref th, .tabla-ref td { text-align: left; padding: var(--e-2); border-bottom: 1px solid var(--borde); vertical-align: top; }
-.tabla-ref th { color: var(--fg-2); font-weight: 600; white-space: nowrap; }
+/* Todas las tablas con el mismo reparto: la primera columna —lo que se
+   busca— al 40 % (al 30 % desde cuatro columnas), y el resto en partes iguales. Así la segunda columna cae en
+   el mismo lugar en cada ficha. Un encabezado o una palabra que no entra
+   corta renglón en vez de ensanchar la tabla. */
+.tabla-ref table { border-collapse: collapse; width: 100%; font-size: var(--txt-chico); table-layout: fixed; }
+.tabla-ref thead th:first-child { width: 40%; }
+/* Con cuatro columnas o más, al 40 % las otras no alcanzan para un
+   encabezado como «Heladera» ni para un rango como «90–120». */
+.tabla-ref table:has(thead th:nth-child(4)) thead th:first-child { width: 30%; }
+.tabla-ref th, .tabla-ref td { text-align: left; padding: var(--e-2) var(--e-1); border-bottom: 1px solid var(--borde); vertical-align: top;
+  overflow-wrap: break-word; }
+.tabla-ref th:first-child, .tabla-ref td:first-child { padding-left: var(--e-2); }
+/* El texto de una celda se parte con guion; un encabezado, entre palabras. */
+.tabla-ref td { hyphens: auto; }
+.tabla-ref th { color: var(--fg-2); font-weight: 600; }
+/* Un rango —«90–120»— no se corta en el guion. */
+.tabla-ref .rango { white-space: nowrap; }
 .tabla-ref td:first-child { font-weight: 600; }
 .tabla-ref .u { font-weight: 400; color: var(--fg-3); }
 .tabla-ref .grupo-ref th { color: var(--fg); padding-top: var(--e-4); }

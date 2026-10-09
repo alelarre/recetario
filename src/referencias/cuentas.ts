@@ -192,7 +192,7 @@ export function cuentaArroz(k: typeof ARROZ): Cuenta {
     id: 'arroz', titulo: 'Agua para el arroz', notas: k.notas,
     descripcion: 'Cuánta agua —en ml y en tazas— y cuánto tiempo lleva el arroz en olla, según la variedad y el arroz en gramos o en tazas.',
     entradas: [
-      { id: 'medida', nombre: 'Tengo', tipo: 'opcion', porDefecto: 'gramos', opciones: [{ valor: 'gramos', texto: 'Gramos' }, { valor: 'tazas', texto: 'Tazas' }] },
+      { id: 'medida', nombre: 'Medida', tipo: 'opcion', porDefecto: 'gramos', opciones: [{ valor: 'gramos', texto: 'Gramos' }, { valor: 'tazas', texto: 'Tazas' }] },
       { id: 'cantidad', nombre: 'Arroz', tipo: 'numero', porDefecto: null },
       { id: 'variedad', nombre: 'Variedad', tipo: 'opcion', porDefecto: k.variedades[0]?.id ?? '', opciones: k.variedades.map(x => ({ valor: x.id, texto: x.nombre })) }
     ],

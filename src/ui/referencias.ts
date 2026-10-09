@@ -22,9 +22,11 @@ import type { EstadoReferencia } from '../referencias-control.js';
 
 /**
  * El primer número de un texto de minutos: «1½» es 1,5; «2¼», 2,25; «3–5», 3;
- * «3 min 30 s», 3,5; sin número, nada.
+ * «3 min 30 s», 3,5; «02:30», 2,5; sin número, nada.
  */
 export function minutosDe(texto: string): number | null {
+  const reloj = texto.match(/^\s*(\d+):([0-5]\d)\b/);
+  if (reloj) return Number(reloj[1]) + Number(reloj[2]) / 60;
   const m = texto.match(/(\d+(?:[.,]\d+)?)\s*([½¼¾])?(?:\s*min\s+(\d+)\s*s\b)?/);
   if (!m?.[1]) return null;
   const fraccion = m[2] === '½' ? 0.5 : m[2] === '¼' ? 0.25 : m[2] === '¾' ? 0.75 : 0;
@@ -83,12 +85,16 @@ export function resaltar(texto: string, buscado: string): string {
   return html + escapar(letras.slice(hasta).join(''));
 }
 
+/** Cada rango de números —«90–120», «2–2½»— en un `.rango`, que no se corta en el guion. */
+const conRangos = (html: string): string =>
+  html.replace(/[\d½¼¾⅓⅔]+(?:[.,]\d+)?–[\d½¼¾⅓⅔]+(?:[.,]\d+)?/g, r => `<span class="rango">${r}</span>`);
+
 function celda(t: Tabla, fila: Fila, columna: Tabla['columnas'][number], marcar: string): string {
   const texto = fila[columna.id] ?? '';
   const minutos = columna.minutos ? minutosDe(texto) : null;
   const nombre = nombreDeFila(t, fila);
   const boton = minutos === null ? '' : ' ' + botonTemporizador({ tipo: 'cuenta', duracion: Math.round(minutos * MINUTO), nombre });
-  return `<td>${resaltar(texto, marcar)}${boton}</td>`;
+  return `<td>${conRangos(resaltar(texto, marcar))}${boton}</td>`;
 }
 
 /** La variante elegida de una tabla, de lo guardado; si no vale, la primera. Sin variantes, ninguna. */
