@@ -365,6 +365,12 @@ function imgFalsa(
   return img;
 }
 
+/** Saca lo que quedó corriendo en Temporizadores: su tic seguiría vivo en el test siguiente. */
+async function sacarTemporizadores(almacen: Pick<Storage, 'getItem'>, tocar: (accion: string, datos?: Record<string, string>) => Promise<unknown>): Promise<void> {
+  const guardado = JSON.parse(almacen.getItem('recetario.temporizadores') ?? '{}') as { temporizadores?: { id: string }[] };
+  for (const { id } of guardado.temporizadores ?? []) await tocar('temporizador-sacar', { id });
+}
+
 describe('main.ts: las rutas', () => {
   afterEach(() => {
     limpiarGlobales();
@@ -1154,16 +1160,17 @@ describe('main.ts: las rutas', () => {
   });
 
   it('un toque de Temporizadores fuera de Temporizadores no redibuja la pantalla: en el editor borraría lo escrito', async () => {
-    const { abrir, tocar, pinturas } = await montar();
+    const { abrir, tocar, pinturas, almacen } = await montar();
     await abrir('#/nueva');
     const antes = pinturas.length;
     await tocar('temporizador-tipo', { valor: 'crono' });
     await tocar('temporizador-empezar');
     expect(pinturas.length).toBe(antes);
+    await sacarTemporizadores(almacen, tocar);
   });
 
   it('en Temporizadores, un toque sí redibuja la pantalla', async () => {
-    const { abrir, tocar, pinturas, app } = await montar();
+    const { abrir, tocar, pinturas, app, almacen } = await montar();
     await abrir('#/herramientas/temporizadores');
     const antes = pinturas.length;
     await tocar('temporizador-tipo', { valor: 'crono' });
@@ -1172,6 +1179,7 @@ describe('main.ts: las rutas', () => {
     await tocar('temporizador-empezar');
     expect(pinturas.length).toBe(antes + 2);
     expect(app.innerHTML).toContain('data-accion="temporizador-pausar"');
+    await sacarTemporizadores(almacen, tocar);
   });
 
   it('en la calculadora, tocar una opción de un conmutador la aprieta', async () => {
@@ -2810,7 +2818,7 @@ describe('main.ts: las rutas', () => {
       pedidos++;
       return { addEventListener: () => {}, release: async () => { soltados++; } };
     } } });
-    const { abrir, tocar } = await montar();
+    const { abrir, tocar, almacen } = await montar();
     await abrir('#/herramientas/temporizadores');
     await tocar('temporizador-tipo', { valor: 'crono' });
     await tocar('temporizador-empezar');
@@ -2822,6 +2830,7 @@ describe('main.ts: las rutas', () => {
     await abrir('#/herramientas/temporizadores');
     await esperar();
     expect(pedidos).toBe(2);
+    await sacarTemporizadores(almacen, tocar);
   });
 
   it('al volver de segundo plano con el sol encendido, se vuelve a pedir la pantalla (C03.3.1)', async () => {
