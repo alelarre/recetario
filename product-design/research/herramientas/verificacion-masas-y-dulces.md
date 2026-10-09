@@ -29,14 +29,15 @@ Entra: forma (redondo, cuadrado o rectangular, con tubo), medidas en cm y alto e
   - con tubo (savarín): `V = π · (R² − r²) · alto` (se resta el tubo)
 - Masa: `gramos = V · llenado · densidad`
   - `llenado` = de 0,5 a 0,67 (de la mitad a dos tercios). Valor por defecto propuesto: 0,6.
-  - `densidad` = 0,85 g/ml (punto medio de 0,8–0,9).
+  - `densidad` = 0,85 g/ml para torta o budín (punto medio de 0,8–0,9) y 0,5 g/ml para bizcochuelo o pionono.
 
-Ejemplo: molde de bizcochuelo n.º 24, alto 6 cm → V = 2714 ml; con llenado 0,6 y densidad 0,85 → 1384 g de masa.
+Ejemplo: molde de bizcochuelo n.º 24, alto 6 cm → V = 2714 ml; con llenado 0,6 → 1384 g de masa de torta (0,85) u 814 g de bizcochuelo (0,5). Un bizcochuelo clásico de 24 cm (6 huevos, 180 g de azúcar, 180 g de harina) pesa unos 720 g: con 0,85 la cuenta daba casi el doble, y por eso el bizcochuelo tiene su densidad.
 
 ### Fuente
 
 - Wilton, *Cake Baking & Serving Guide* — https://wilton.com/baking-inspiration/cake-baking-serving-guide/ (2026-10-04). Leído: «Fill pans 1/2 to 2/3 full» para tortas de 4" de alto; los moldes de 3" se llenan a la mitad. Columna «Cups Batter 1 Layer, 2 in»: redondo 6" 2¼ tazas, 8" 4, 10" 6, 12" 8; cuadrado 6" 3, 8" 6, 10" 9; hoja 9×13" 10, 12×18" 16.
   - Comprobación propia: con taza de 240 ml y 1" = 2,54 cm, esas tazas llenan entre el 52 % (redondo 12") y el 69 % (cuadrado 8") de un molde de 2" de alto. Coincide con «½ a ⅔».
+- BAKERpedia, *Specific Gravity for Cakes* — https://bakerpedia.com/processes/specific-gravity-cakes/ (2026-10-08). Leído: chocolate cake 0.90, cream cake 0.85, pound cake 0.80, white or yellow cake 0.70, devil's food 0.70, sponge cake 0.50, angel food 0.30; «with aeration, specific gravity is usually between 0.40 to 0.80». Es la densidad del bizcochuelo o pionono.
 - AIB International, blog Food First, *Q&A: Is taking a specific gravity measurement necessary for cake batter…* — https://blog.aibinternational.com/en/food-first-blog/postid/948/qa-is-taking-a-specific-gravity-measurement-necessary-for-cake-batter-during-or-after-mixing (2026-10-04). Leído: «most batter cakes should be in the range of 0.8 to 0.9» (gravedad específica, igual a g/ml).
 - Goizalde, *Moldes y capacidades* — https://cocinandocongoizalde.com/2013/04/23/moldes-y-capacidades/ (2026-10-04). Leído: las tres fórmulas de volumen (rectangular, redondo, con agujero restando el agujero) y que se mida la capacidad con agua como alternativa.
 
@@ -343,6 +344,13 @@ A la piedra: **sin datos**, queda afuera.
 
 ---
 
+### Estilos a la piedra y media masa (2026-10-08)
+
+La al molde (Comemelapizza: n.º 32 350–380 g, n.º 34 380–420 g, n.º 36 420–500 g, ~0,45 g/cm²) se sacó: da la mitad de masa por cm² que la media masa, que es más baja, y su propia receta saca tres bollos de ~550 g de 1 kg de harina.
+
+- **A la piedra:** viene de la romana tonda. Rita Gallina, *Pizza tonda romana croccante* — https://www.artebiancaconrita.com/post/pizza-tonda-romana-croccante-ricetta-professionale-e-tecnica-completa (2026-10-08): panetto de «200 g», pizza de «circa 35 centimetri» (0,21 g/cm²). Il Giornale, *Bassa e "scrocchiarella": come piace la pizza romana* — https://www.ilgiornale.it/news/cucina/bassa-e-scrocchiarella-come-piace-la-pizza-romana/ (2026-10-08): Futura Pizzeria Romana, «160 grammi» para «32 cm» (0,20 g/cm²). Se usa 0,2 g/cm². Las recetas argentinas dan el bollo sin diámetro: Cocineros Argentinos 300 g, El Gourmet 250 g; con 0,2 g/cm² son pizzas de 40 a 44 cm.
+- **Media masa:** Cocineros Argentinos, *Pizza a la piedra y media masa* — https://cocinerosargentinos.com/pizzas/pizza-a-la-piedra-y-media-masa (2026-10-08): «bollos de 600 g», «molde de pizza de 30 cm» (0,85 g/cm²). Cuk-it, *Pizza al molde* — https://cuk-it.com/recetas/pizza-al-molde/ (2026-10-08), que la llama media masa: 400 g de harina, 225 ml de agua, 15 ml de aceite, 4 g de levadura y 7 g de sal (~651 g) para una fuente de 30 cm (0,92 g/cm²). Se usa de 0,85 a 0,9 g/cm².
+
 ## 7. Puntos del azúcar
 
 ### Tabla propuesta
@@ -440,6 +448,23 @@ Para la temperatura del suizo:
 - Con 30 g por clara (Larousse: 5 claras = 150 g; 3 = 90 g), la cuenta puede aceptar también «cantidad de claras».
 
 ---
+
+## Pasta: cuánto por persona (2026-10-08)
+
+Reemplaza a la pasta fresca (ítem 4) y a la tabla de pasta comprada: cómo se hace cada masa es receta. La tabla da la porción cruda por persona.
+
+| Pasta | Por persona | Fuente |
+|---|---|---|
+| Seca (de paquete) | 85–100 g; en caldo, 40 g | Garofalo; en caldo, CSI Piemonte |
+| Fresca sin relleno | 200 g | Dicomo |
+| Lasaña y canelones | 200 g de pasta | CSI Piemonte |
+| Ravioles, raviolones, sorrentinos, agnolotis, tortelettis | 48 (una caja), 16, 5 o 6, 5 o 6, 200 g | La Juvenil |
+| Capeletis | 250 g | Dicomo, que desempata entre La Juvenil (200 g de máquina, 250–300 g caseros) y CSI Piemonte (125 g) |
+| Ñoquis | 300 g | Dicomo, que desempata entre CSI Piemonte (200 g) y La Juvenil (~333 g) |
+
+- Garofalo, *¿Cuántos gramos de pasta seca por persona?* — https://www.pasta-garofalo.com/es/news/cuantos-gramos-de-pasta-seca-por-persona/ (2026-10-08). Leído: «85-100 gramos por persona» para pasta larga, corta y formatos especiales; «un adulto necesita entre 70 y 100 gramos de pasta cruda».
+- Dicomo (fábrica de pastas, Montevideo), *Cuánta pasta fresca calcular por persona* — https://www.pastadicomo.com/post/guia-simple-para-no-quedarse-corto-cuanta-pasta-fresca-calcular-por-persona (2026-10-08). Leído, en crudo: ravioles 50 unidades; sorrentinos 6 a 7; capelletis 250 g; agnolotti 250 g; tallarines 200 g; ñoquis 300 g; ñoquis rellenos 250 g; lasaña y canelones 600 g (el plato armado).
+- CSI Piemonte, tabla de gramajes (ver ítem 9): pasta de sémola 80 g, en caldo 40 g; pasta al huevo 100 g; lasaña y canelones 200 g; rellena 125 g, en caldo 80 g; ñoquis 200 g. Es una porción de comedor de empresa, la mitad que las fábricas: se usa sólo donde no hay otra.
 
 ## Lo que no se pudo verificar
 

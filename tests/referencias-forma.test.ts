@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { problemasDeForma, problemasDeConstante, filasDe, idDeFicha } from '../src/referencias/forma.js';
 import { REFERENCIAS, FICHAS_DEL_CONVERSOR, fichaDeReferencia, fichasDe } from '../src/referencias/indice.js';
 import type { Tabla, Fuente } from '../src/referencias/tipos.js';
-import { AGUA_SAL_PASTA, ESPAGUETI, CALDO } from '../src/referencias/datos/coccion.js';
-import { MOLDE, PASTA_FRESCA, PIZZA, AZUCAR, MERENGUE } from '../src/referencias/datos/masas-y-dulces.js';
+import { AGUA_SAL_PASTA, CALDO } from '../src/referencias/datos/coccion.js';
+import { MOLDE, PIZZA, AZUCAR, MERENGUE } from '../src/referencias/datos/masas-y-dulces.js';
 import { SISTEMAS, UNIDADES, INGREDIENTES, INGREDIENTE_DEL_STICK } from '../src/referencias/datos/conversor.js';
 
 const fuente = { nombre: 'Fuente', url: 'https://ejemplo.com/x' };
@@ -21,6 +21,15 @@ describe('la forma de una tabla', () => {
       't, fila 1: falta la columna «b»',
       't, fila 2: la columna «c» no está en la tabla'
     ]);
+  });
+
+  it('una columna de una variante que la tabla no tiene es un problema', () => {
+    const t: Tabla = {
+      id: 't', titulo: 'T', fuente, filas: [{ a: 'x', b: '1' }],
+      variantes: { nombre: 'M', opciones: [{ valor: 'agua', texto: 'Al agua' }] },
+      columnas: [{ id: 'a', nombre: 'A', variante: 'agua' }, { id: 'b', nombre: 'B', variante: 'horno' }]
+    };
+    expect(problemasDeForma(t)).toEqual(['t: la columna «b» es de la variante «horno», que la tabla no tiene']);
   });
 
   it('una fuente sin URL http o https es un problema', () => {
@@ -70,25 +79,25 @@ describe('el índice', () => {
   });
 
   it('las constantes de cocción dicen de dónde salen', () => {
-    const constantes = { ...AGUA_SAL_PASTA, ...ESPAGUETI, aguaPorKg: CALDO.aguaPorKg, mirepoixMinPorKg: CALDO.mirepoixMinPorKg, mirepoixMaxPorKg: CALDO.mirepoixMaxPorKg };
+    const constantes = { ...AGUA_SAL_PASTA, aguaPorKg: CALDO.aguaPorKg, mirepoixMinPorKg: CALDO.mirepoixMinPorKg, mirepoixMaxPorKg: CALDO.mirepoixMaxPorKg };
     for (const [nombre, c] of Object.entries(constantes)) expect(problemasDeConstante(nombre, c)).toEqual([]);
   });
 
   it('las constantes de masas y dulces dicen de dónde salen', () => {
     const constantes = {
-      'MOLDE.densidad': MOLDE.densidad, 'MOLDE.llenado': MOLDE.llenado,
-      'PIZZA.gramosPorCm2Molde': PIZZA.gramosPorCm2Molde, 'AZUCAR.metrosPorGrado': AZUCAR.metrosPorGrado
+      ...Object.fromEntries(MOLDE.masas.map(m => [`MOLDE.masas.${m.id}`, m.densidad])), 'MOLDE.llenado': MOLDE.llenado,
+      'PIZZA.piedraPorCm2': PIZZA.piedraPorCm2, 'PIZZA.mediaMasaMinPorCm2': PIZZA.mediaMasaMinPorCm2,
+      'PIZZA.mediaMasaMaxPorCm2': PIZZA.mediaMasaMaxPorCm2, 'AZUCAR.metrosPorGrado': AZUCAR.metrosPorGrado
     };
     for (const [nombre, c] of Object.entries(constantes)) expect(problemasDeConstante(nombre, c)).toEqual([]);
   });
 
   it('cada receta y cada tipo de merengue, y las demás fuentes de masas y dulces, tienen URL y fecha', () => {
     const fuentes: (readonly [string, Fuente])[] = [
-      ...PASTA_FRESCA.map(r => [`pasta ${r.id}`, r.fuente] as const),
       ...MERENGUE.map(m => [`merengue ${m.id}`, m.fuente] as const),
       ['MOLDE.fuenteAtajos', MOLDE.fuenteAtajos],
       ...MOLDE.atajos.flatMap(a => (a.fuente ? [[`molde ${a.id}`, a.fuente] as const] : [])), ['PIZZA.fuenteNapolitana', PIZZA.fuenteNapolitana],
-      ['PIZZA.fuenteMolde', PIZZA.fuenteMolde], ['AZUCAR.fuente', AZUCAR.fuente]
+      ['AZUCAR.fuente', AZUCAR.fuente]
     ];
     for (const [nombre, fuente] of fuentes) expect(problemasDeConstante(nombre, { valor: 0, unidad: '', fuente })).toEqual([]);
   });

@@ -75,7 +75,7 @@ Desktop se suben como `.zip` desde *Configuración → Capacidades*.
 
 ## Las herramientas
 
-El servidor `recetario` registra veintitrés herramientas, en tres grupos.
+El servidor `recetario` registra veintiuna herramientas, en tres grupos.
 
 **Las recetas y el recetario:** `formato`,
 `categorias`, `tags`, `buscar`, `leer`, `validar`, `crear`, `guardar`,
@@ -91,10 +91,10 @@ fuente:
 - `consultar_referencia`: sin nada, lista todas las tablas y las cuentas,
   con los tags de cada una; con `tabla`, devuelve esa tabla con sus filas; con `buscar`,
   las filas de cualquier tabla que contengan ese texto («pollo», «crema»).
-- Una `calcular_*` por cuenta: `calcular_molde`, `calcular_pasta_fresca`,
+- Una `calcular_*` por cuenta: `calcular_molde`,
   `calcular_bollo_pizza`, `calcular_merengue`,
   `calcular_punto_azucar`, `calcular_arroz`, `calcular_agua_sal_pasta`,
-  `calcular_medidor_espagueti`, `calcular_caldo` y `calcular_conversion`
+  `calcular_caldo` y `calcular_conversion`
   (tazas, cucharas y gramos por ingrediente). Responden
   `{ resultado, tabla?, advertencias, notas, fuentes }`; si falta un dato sin
   valor por defecto, `{ faltan: [{ dato, opciones? }] }`, y si con esos

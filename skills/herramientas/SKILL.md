@@ -10,7 +10,7 @@ agente. Las tablas y las cuentas son las de la app: las herramientas del MCP
 `recetario` que se nombran acá usan el mismo código. Ninguna usa el Drive.
 
 - **Pan y sal:** `calcular_pan` y `calcular_sal`.
-- **Referencias:** `consultar_referencia` y las diez `calcular_*` de masas,
+- **Referencias:** `consultar_referencia` y las ocho `calcular_*` de masas,
   cocción y el conversor (ver *Las referencias*).
 
 ## Las reglas de pan y sal
@@ -101,7 +101,7 @@ recetas. Lo que el usuario diga en el pedido sí cuenta como dato.
 
 ## Las referencias
 
-Tablas de consulta y algunas cuentas chicas, cada dato con su fuente. En la
+Tablas de consulta y algunas cuentas chicas, casi todas con su fuente. En la
 app son la sección **Referencias** —huevos, carne, aceite, horno, bebidas,
 arroz, granos, legumbres, pasta, verduras, caldo, masas, dulces y cuánto dura
 cada alimento—, más el **conversor**, aparte.
@@ -114,7 +114,8 @@ cada alimento—, más el **conversor**, aparte.
 - **Consultá antes de contestar.** Una pregunta de las de la `description`
   se contesta con la herramienta, aunque creas saber la respuesta.
 - **La respuesta cita la fuente con su nombre y su link.** Vienen en
-  `fuentes` (o en la tabla). Si la respuesta junta varias, citá cada una.
+  `fuentes` (o en la tabla). Si la respuesta junta varias, citá cada una. Si
+  `fuentes` viene vacío, la tabla no tiene fuente: no inventes una.
 - **Si la tabla no tiene el dato, decilo.** «Esa tabla no trae el chayote»,
   por ejemplo. No lo estimes ni lo saques de una fila parecida. Sólo si el
   usuario lo pide, contestá con conocimiento general, aclarando que no sale
@@ -123,9 +124,9 @@ cada alimento—, más el **conversor**, aparte.
 ### Consultar una tabla: `consultar_referencia`
 
 Para cualquier pregunta de dato que no pida una cuenta: huevos, carne, aceite
-y punto de humo, horno, mate, té, vinos, cervezas, gramos por pieza,
-pasta comprada, masas por plato, granos, legumbres, tiempo de pasta,
-verduras, blanqueado, cuánto dura un alimento, cuántos gramos pesa una taza
+y punto de humo, horno, mate, té, vinos, cervezas, masa por pieza,
+cuánta pasta por persona, granos, legumbres, tiempo de pasta, verduras,
+blanqueado al agua o al vapor, cuánto dura un alimento, cuántos gramos pesa una taza
 o una cuchara de cada ingrediente y cuánto miden la taza y las cucharas en
 cada país.
 
@@ -151,13 +152,11 @@ de cada número dice cuál es). Usá cada una para esta pregunta:
 | Herramienta | Para |
 |---|---|
 | `calcular_molde` | Cuánta masa lleva un molde de torta, según su forma y sus medidas o su número. |
-| `calcular_pasta_fresca` | Qué ingredientes lleva la masa de pasta fresca, o el relleno o el puré, para unas porciones. |
 | `calcular_bollo_pizza` | Cuántos gramos pesa el bollo de una pizza, napolitana o al molde, según su diámetro o su número de molde. |
 | `calcular_merengue` | Cuánta azúcar, cuánto impalpable y cuánta agua de almíbar lleva un merengue francés, suizo o italiano para unos gramos de claras. |
 | `calcular_punto_azucar` | A qué temperatura está cada punto del azúcar, corrido por la altitud o por donde hierve el agua. |
-| `calcular_arroz` | Cuánta agua y cuánto tiempo lleva el arroz en olla, según la variedad y los gramos. |
+| `calcular_arroz` | Cuánta agua —en ml y en tazas— y cuánto tiempo lleva el arroz en olla, según la variedad y el arroz en gramos o en tazas. |
 | `calcular_agua_sal_pasta` | Cuánta agua y cuánta sal lleva la cocción de unos gramos de pasta seca. |
-| `calcular_medidor_espagueti` | Cuántos gramos de espagueti hay en un atado de cierto diámetro, o qué diámetro tiene el atado de unos gramos. |
 | `calcular_caldo` | Cuánta agua, cuánto mirepoix y cuánto tiempo lleva un caldo de ave, de vaca o de pescado para unos kilos de huesos. |
 | `calcular_conversion` | Cuánto es una cantidad en las demás unidades —tazas, cucharas, ml, gramos, onzas, sticks de manteca— según el sistema de medida (métrica, Australia, EE. UU., Japón) y el ingrediente. Sin ingrediente no pasa de volumen a peso. |
 
@@ -192,9 +191,10 @@ no lo trae.
 `calcular_molde` con el diámetro y el alto. El llenado lo completa la
 herramienta, y se muestra el resultado con sus notas y su fuente.
 
-**«¿Cuánta agua le pongo al arroz?»**: `calcular_arroz` devuelve que faltan
-los gramos (la variedad tiene valor por defecto). Se pregunta cuántos gramos,
-y de qué variedad si el usuario quiere otra que la de por defecto.
+**«¿Cuánta agua le pongo al arroz?»**: `calcular_arroz` devuelve que falta
+la cantidad (la medida —gramos— y la variedad tienen valor por defecto). Se
+pregunta cuánto arroz, en gramos o en tazas, y de qué variedad si el usuario
+quiere otra que la de por defecto.
 
 **«¿Cuántos gramos es una taza de azúcar?»**: `calcular_conversion` con
 `cantidad: 1`, `unidad: "taza"` e `ingrediente: "azúcar blanca"`. Si la

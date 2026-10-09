@@ -32,6 +32,15 @@ describe('el control de referencias', () => {
     expect(redibujar).toHaveBeenCalledExactlyOnceWith('referencias', 'molde');
   });
 
+  it('elegir la variante de una tabla la guarda y redibuja esa tabla', () => {
+    const { c, redibujar, almacen } = armar();
+    const boton = { dataset: { herramienta: 'referencias', tabla: 'blanqueado', valor: 'vapor' } } as unknown as HTMLElement;
+    c.acciones['elegir-variante']!(boton, new Event('click'));
+    expect(c.estado('referencias').valores['blanqueado']?.['variante']).toBe('vapor');
+    expect(redibujar).toHaveBeenCalledExactlyOnceWith('referencias', 'blanqueado');
+    expect(JSON.parse(almacen.getItem('recetario.referencias')!)).toEqual({ blanqueado: { variante: 'vapor' } });
+  });
+
   it('lo guardado roto vuelve a vacío', () => {
     const almacen = localStorageFalso();
     almacen.setItem('recetario.referencias', '{roto');

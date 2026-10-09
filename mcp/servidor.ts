@@ -195,10 +195,10 @@ export function crearServidor(recetario: Recetario): McpServer {
   }, (pedido) => responder(() => json(calcularSalParaElAgente(pedido))));
 
   servidor.registerTool('consultar_referencia', {
-    description: 'Las tablas de consulta de la app, cada dato con su fuente: minutos de los huevos, temperatura interna y puntos de la carne, ' +
+    description: 'Las tablas de consulta de la app, casi todas con su fuente: minutos de los huevos, temperatura interna y puntos de la carne, ' +
       'aceite para freír y punto de humo, temperaturas del horno, con y sin ventilador, agua para mate y té, temperatura de servicio de vinos, ' +
-      'cervezas y gaseosas, gramos de masa por pieza, pasta comprada por persona, masas por plato, arroz a presión, granos, legumbres, ' +
-      'tiempos de pasta, verduras al vapor y hervidas, blanqueado, cuánto dura cada alimento en la alacena, la heladera y el freezer, ' +
+      'cervezas y gaseosas, gramos de masa por pieza, cuánta pasta por persona, arroz a presión, granos, legumbres, ' +
+      'tiempos de pasta, verduras al vapor y hervidas, blanqueado al agua y al vapor, cuánto dura cada alimento en la alacena, la heladera y el freezer, ' +
       'gramos por taza y por cuchara de cada ingrediente, y la taza y las cucharas de cada país, las medidas informales y el stick de manteca de EE. UU. ' +
       'Usala antes de responder cualquiera de estas preguntas con lo que sepas. Sin nada, lista todas las tablas y las cuentas, con sus tags; ' +
       'con `tabla`, devuelve sus filas; con `buscar`, las filas de cualquier tabla que contengan ese texto.',

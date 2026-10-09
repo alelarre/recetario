@@ -29,8 +29,8 @@ calculadoras, no cuánto vale cada porcentaje. Cambiar un valor es editar ese
 archivo, y la pantalla, el MCP y los tests lo toman de ahí.
 
 **Los datos de las referencias viven aparte de la lógica,** en
-`src/referencias/datos/`: sólo datos, cada tabla y cada constante con su
-fuente. Las cuentas, en `src/referencias/cuentas.ts`, no tienen ningún número
+`src/referencias/datos/`: sólo datos, cada constante con su fuente y cada
+tabla con la suya, salvo la que se decidió dejar sin fuente. Las cuentas, en `src/referencias/cuentas.ts`, no tienen ningún número
 escrito adentro. Corregir una referencia es editar su archivo de datos;
 ningún test fija un valor de las tablas.
 
@@ -520,9 +520,9 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
   `tabla` que no existe devuelve `error` con los ids válidos.
 - [ ] **Una herramienta por cuenta,** `calcular_<id>` con guiones bajos,
   registrada desde la declaración de la cuenta, así que su esquema son sus
-  entradas: `calcular_molde`, `calcular_pasta_fresca`,
+  entradas: `calcular_molde`,
   `calcular_bollo_pizza`, `calcular_merengue`, `calcular_punto_azucar`,
-  `calcular_arroz`, `calcular_agua_sal_pasta`, `calcular_medidor_espagueti`,
+  `calcular_arroz`, `calcular_agua_sal_pasta`,
   `calcular_caldo` y `calcular_conversion`. Importan `src/referencias/` y **no usan Drive ni el
   login.**
 - [ ] **El esquema de cada número dice su valor por defecto,** y el de cada
@@ -561,7 +561,7 @@ y lo guía el skill `herramientas` (`skills/herramientas/SKILL.md`).
 ### F07.7 — Referencias
 
 **Referencias** son datos para mirar mientras se cocina, en tablas y cuentas,
-cada una con su fuente. Es una sola pantalla: una lista de fichas que se
+con su fuente; una tabla puede ir sin. Es una sola pantalla: una lista de fichas que se
 despliegan en el lugar. Se llega a una ficha por la lista, por un tag o por el
 buscador. Las fichas van, en este orden, en C07.7.5 (huevos, carne, aceite,
 horno y bebidas), F07.9 (arroz, granos, legumbres, pasta, verduras y caldo),
@@ -623,7 +623,8 @@ Drive, así que el velo no aparece. El Conversor es aparte (F07.11).
   resultado si la tiene, las advertencias y la fuente; después, las notas de
   la cuenta.
 - [ ] **Al pie de cada ficha, la fuente:** «Fuente: <nombre>», con el link.
-  Una ficha con varias fuentes las lista todas, una vez por link. Una tabla de varias fuentes dice en cada fila
+  Una ficha con varias fuentes las lista todas, una vez por link; una tabla
+  sin fuente no lleva pie. Una tabla de varias fuentes dice en cada fila
   cuál es la suya.
 - [ ] **Lo que se muestra es lo que se calcula:** cada cuenta aplica sus
   valores por defecto y descarta lo inválido. Un campo vacío que tiene valor
@@ -648,93 +649,85 @@ un error.
 - [ ] Son catorce: *arroz*, *bebidas*, *carne*, *conservación*, *dulces*,
   *fritura*, *horno*, *huevo*, *legumbres y granos*, *masas*, *olla a
   presión*, *pasta*, *pollo* y *verduras*. Un tag junta fichas de temas
-  distintos: *pasta* lleva la pasta fresca y la comprada, el agua y la sal,
-  el tiempo y el medidor de espagueti.
+  distintos: *pasta* lleva cuánta por persona, el agua y la sal, y el
+  tiempo.
 
 #### C07.7.5 — Las fichas de huevos, carne, aceite, horno y bebidas *(J6)*
 
 - [ ] Son las primeras de la lista; las siguen las de F07.9. En este orden: **Huevos**, **Temperatura interna segura**, **Puntos de
   la carne vacuna**, **Aceite para freír**, **Punto de humo**, **Horno**,
-  **Mate**, **Té**, **Vinos y espumantes** y **Cervezas y gaseosas**.
-- [ ] **Huevos:** los minutos en agua hirviendo, para el huevo de heladera y
-  a temperatura ambiente, sólo del grande, y los minutos desde agua fría,
-  con su propia fuente; en cuatro puntos: pasado por agua, mollet, yema
-  cremosa y duro.
-- [ ] **Temperatura interna segura:** la de seguridad por alimento y su
-  reposo.
-- [ ] **Puntos de la carne vacuna:** la tabla de un frigorífico argentino con
-  sus nombres.
+  **Infusiones**, **Vinos y espumantes** y **Cervezas y gaseosas**.
+- [ ] **Huevos:** los minutos en agua hirviendo, redondeados al medio
+  minuto, para el huevo grande de heladera y a temperatura ambiente; en
+  cuatro puntos: pasado por agua, mollet, yema cremosa y duro.
+- [ ] **Temperatura interna segura:** la mínima de seguridad por alimento.
+- [ ] **Puntos de la carne vacuna:** la temperatura interna de cada punto,
+  con sus nombres de acá; sin fuente.
 - [ ] **Aceite para freír:** la temperatura, el tiempo y la interna por
   alimento, recortada a lo de uso local y con las milanesas; el punto de
   humo de cada aceite va en su propia ficha.
+- [ ] **Punto de humo:** el de cada aceite, de una sola medición de todos
+  con el mismo método, con el oliva extra virgen, virgen y común aparte.
+- [ ] **Las temperaturas** de aceite y punto de humo van redondeadas a 5 °C.
 - [ ] **Horno:** la escala de nombres con su rango, y en la misma tabla,
-  cuánto se baja la temperatura con ventilador.
-- [ ] **Bebidas:** el agua del mate y del mate cocido; el té por tipo, con el
-  agua, la infusión y las hebras por 100 ml, y su botón de minutos (C07.9.3);
-  los vinos y espumantes y las cervezas, con las
-  gaseosas, a la temperatura a la que se sirven.
+  cuánto se baja la temperatura con ventilador; sin fuente.
+- [ ] **Infusiones:** el mate, el mate cocido y el té por tipo, con el agua
+  y, para el té, el tiempo, con su botón de minutos (C07.9.3), y las hebras
+  por 100 ml.
+- [ ] **Vinos y espumantes** y **Cervezas y gaseosas:** la temperatura a la
+  que se sirven.
 
 ### F07.8 — Las fichas de masas y dulces
 
 Las fichas de Referencias (F07.7) de moldes, piezas, pasta, pizza, azúcar y
-merengue, después de las de F07.9: tres tablas de consulta y cinco cuentas, de la masa para un molde
+merengue, después de las de F07.9: dos tablas de consulta y cuatro cuentas, de la masa para un molde
 a los puntos del azúcar.
 
 #### C07.8.1 — Las fichas de masas y dulces *(J6)*
 
-- [ ] En este orden: **Masa para un molde**, **Gramos de masa por pieza**,
-  **Pasta fresca**, **Pasta comprada: cuánto por persona**,
-  **Masas por plato**, **Bollo de pizza**, **Puntos del azúcar** y
-  **Merengue**.
-- [ ] **Gramos de masa por pieza:** una fuente por receta; el pan de molde va
-  en dos filas, artesanal y lacteado.
-- [ ] **Masas por plato:** las tapas de empanada caseras, la tapa comprada, la
-  tortilla de maíz, el ramen, las tapas de dumplings y la tortilla de harina,
-  cada una con su fuente a la vista.
-- [ ] **Pasta comprada** es una tabla de consulta, no una cuenta: cuánto por
-  persona.
+- [ ] En este orden: **Masa para un molde**, **Masa por pieza**,
+  **Pasta: cuánto por persona**, **Bollo de pizza**, **Puntos del azúcar** y **Merengue**.
+- [ ] **Masa por pieza:** los gramos de masa cruda de cada pieza —panes,
+  facturas, tapas de empanada, tortillas y tapas de dumpling—; el pan de molde
+  va en dos filas, artesanal y lacteado. Sin fuente.
+- [ ] **Pasta: cuánto por persona** es una tabla de consulta, no una cuenta:
+  la porción cruda de cada pasta —seca, fresca, lasaña, las rellenas y los
+  ñoquis—, en gramos o en piezas. Cómo se hace cada masa es receta y no está.
 
 #### C07.8.2 — La masa para un molde *(J6)*
 
-- [ ] **Molde** es el primer dato. *Con sus medidas* pide la forma —redondo,
+- [ ] **Masa** es el primer dato: *Torta o budín* (0,85 g/ml) o *Bizcochuelo
+  o pionono* (0,5 g/ml), un batido con más aire; abre en *Torta o budín*.
+- [ ] **Molde** es el segundo. *Con sus medidas* pide la forma —redondo,
   cuadrado o rectangular, o con tubo— y sus medidas en cm; con un atajo, el
   molde trae su forma y sus medidas.
-- [ ] Los atajos son tipos de molde —tartera, bizcochuelo, tortera de boda,
-  boda alta y pizzera, cada uno con su rango de números del catálogo— más las
-  placas y las budineras, con medidas fijas. Con un tipo que no tiene
+- [ ] Los atajos son tipos de molde —bizcochuelo, tortera de boda y boda
+  alta, cada uno con su rango de números del catálogo— más las placas, con
+  medidas fijas. No hay pizzera ni tartera: esas masas se estiran, no se
+  vuelcan; la pizza tiene su ficha (C07.8.4). Con un tipo que no tiene
   diámetro, el número del molde se escribe aparte, como *Diámetro*.
 - [ ] El **llenado** es un dato en %, con valor por defecto. El resultado es
   la capacidad en litros y los gramos de masa cruda, que salen de la
-  capacidad por el llenado por una densidad. Un llenado de menos de 1 % o de
+  capacidad por el llenado por la densidad de la masa. Un llenado de menos de 1 % o de
   más de 100 % no calcula: no hay resultado y la advertencia dice *El llenado
   va de 1 a 100 %.*
 - [ ] El diámetro del tubo de un molde con tubo tiene que ser menor que el
   diámetro del molde; si no, no hay resultado.
-- [ ] Las notas de la cuenta, y la fuente de la densidad, el llenado y el
-  molde elegido, se muestran en la ficha. Cada budinera cita su propia fuente;
-  los demás atajos, la del catálogo de El Nuevo Emporio.
-
-#### C07.8.3 — La pasta fresca *(J6)*
-
-- [ ] **Pasta fresca:** *porciones* —con valor por defecto— y *masa*: al
-  huevo, de yemas, de sémola, rellena de carne, rellena de ricota o verdura, y
-  ñoquis. El resultado son los ingredientes de esa masa para esas porciones
-  —harina, huevos, yemas, agua, relleno o puré—, con las notas y la
-  advertencia de la masa. La sal es «una pizca».
-- [ ] Los huevos y las yemas se muestran enteros o con su fracción común
-  (½, ⅓, ⅔…); si no hay una, con un decimal.
+- [ ] La fuente de la densidad de la masa elegida, la del llenado y, con un
+  atajo, la del catálogo de El Nuevo Emporio, se muestran en la ficha.
 
 #### C07.8.4 — El bollo de pizza, los puntos del azúcar y el merengue *(J6)*
 
-- [ ] **Bollo de pizza:** el *estilo* —napolitana o al molde—, el *diámetro o
-  número de molde* y cuántas *pizzas*. El resultado es lo que pesa cada bollo
-  y la masa total.
+- [ ] **Bollo de pizza:** el *estilo* —napolitana, a la piedra o media
+  masa—, el *diámetro o número de molde* y cuántas *pizzas*. El resultado es
+  lo que pesa cada bollo y la masa total.
 - [ ] En la **napolitana** manda la tabla de la AVPN: un diámetro entre dos
   filas usa la fila de menor diámetro; fuera del rango de la tabla no hay resultado y
-  la advertencia dice el rango. Una de sus filas es un punto medio propio, no
-  de la AVPN, y la nota de la ficha lo dice.
-- [ ] **Al molde,** un número de molde de la tabla da su rango de gramos; uno
-  que no está se calcula por superficie.
+  la advertencia dice el rango. La fila de 25–27 cm es un punto medio propio
+  entre las dos de la AVPN.
+- [ ] **A la piedra,** 0,2 g de masa por cm² de pizza, la de la romana tonda;
+  **media masa,** de 0,85 a 0,9 g por cm² de molde, y el resultado es ese
+  rango.
 - [ ] **Puntos del azúcar:** se ajustan *por la altitud* o por *el hervor
   medido*. El resultado es una tabla —punto, °C, prueba en agua fría y
   usos—, con cada temperatura corrida por la diferencia entre 100 °C y donde
@@ -743,7 +736,7 @@ a los puntos del azúcar.
   entre 70 y 100 °C; revisá la lectura del termómetro.*
 - [ ] **Merengue:** los gramos de *claras* y el *tipo* —francés, suizo o
   italiano—. El resultado es el azúcar, el impalpable, el azúcar y el agua del
-  almíbar que el tipo usa, y la temperatura, con la nota del tipo.
+  almíbar que el tipo usa, y la temperatura.
 
 ### F07.9 — Las fichas de arroz, granos, legumbres, pasta, verduras y caldo
 
@@ -751,30 +744,34 @@ Las fichas de Referencias (F07.7) que siguen a las de C07.7.5.
 
 #### C07.9.1 — Las fichas de cocción *(J6)*
 
-- [ ] En este orden: **Agua para el arroz**, **Arroz en olla**, **Arroz en
+- [ ] En este orden: **Agua para el arroz**, **Arroz en
   olla a presión**, **Granos**, **Legumbres**, **Legumbres en olla a
   presión**, **Agua y sal para la pasta**, **Tiempo de pasta seca**,
-  **Medidor de espagueti**, **Verduras al vapor y hervidas**, **Blanqueado** y
+  **Verduras al vapor y hervidas**, **Blanqueado** y
   **Caldo**.
-- [ ] **Arroz en olla:** la tabla por variedad, con el agua en partes por
-  volumen y por gramo de arroz y el tiempo; la regla general es una nota.
 - [ ] **Granos y legumbres:** líquido, tiempo y rendimiento por grano o
-  legumbre; las legumbres, además, el remojo. La polenta instantánea dice
-  «según el paquete».
+  legumbre; las legumbres, además, el remojo.
 - [ ] **Tiempo de pasta seca:** el rango entre marcas por formato, con la nota
-  «manda el paquete».
-- [ ] **Verduras al vapor y hervidas:** las verduras de la fuente.
+  «manda el paquete» y su botón de minutos (C07.9.3); sin fuente.
+- [ ] **Verduras al vapor y hervidas:** las verduras de la fuente, con el corte en el nombre cuando cambia el tiempo, y la papa de otra fuente.
 - [ ] **Blanqueado:** los minutos por verdura, con la nota del enfriado en agua con hielo, y su
-  botón de minutos (C07.9.3).
+  botón de minutos (C07.9.3). Arriba, el conmutador **Al agua | Al vapor**,
+  que abre en *Al agua* y muestra la columna de ese método. Los minutos al
+  vapor son 1½ veces los del agua, salvo donde la fuente da los suyos —el
+  brócoli—; los hongos se blanquean sólo al vapor y al agua dicen «—».
+- [ ] **Una tabla con variantes** recuerda la elegida en el teléfono, con lo
+  escrito en las cuentas. Lo que encuentra el buscador muestra la columna de
+  la variante elegida; el agente recibe las dos.
 
 #### C07.9.2 — Las cuentas de cocción *(J6)*
 
-- [ ] **Agua para el arroz:** los gramos de arroz y la variedad; da el agua y
-  el tiempo. Una variedad sin agua por gramo dice las partes por volumen.
+- [ ] **Agua para el arroz:** *Tengo* gramos o tazas, el arroz y la
+  variedad; da el agua en ml y en tazas —la métrica, de 250 ml— y el tiempo,
+  con la nota de cómo se cocina. En tazas, el agua son las partes de la
+  variedad; en gramos, el agua por gramo. Una variedad sin agua por gramo
+  —el parboil—, en gramos, da sólo el tiempo y pide medir en tazas.
 - [ ] **Agua y sal para la pasta:** los gramos de pasta seca; da los litros de
   agua y los gramos de sal.
-- [ ] **Medidor de espagueti:** *Tengo* los gramos o el diámetro del atado, y
-  la *cantidad*; da el otro de los dos.
 - [ ] **Caldo:** los kilos de huesos y el tipo —ave, vaca o pescado—; da el
   agua, el mirepoix y su reparto en cebolla, zanahoria y apio, y el tiempo. El
   procedimiento es la nota de la ficha.
@@ -787,9 +784,10 @@ Las fichas de Referencias (F07.7) que siguen a las de C07.7.5.
   nombre de la fila y esos minutos —el mínimo, si es un rango; «1½» es 1,5—,
   igual que *Empezar* en Temporizadores (C07.5b.1). El temporizador queda en
   la tira como cualquier otro.
-- [ ] Lo llevan el **blanqueado** (cada verdura) y el **té** (cada tipo). El
-  nombre es la primera columna más la siguiente columna de texto sin unidad,
-  si la fila la tiene —«Espárragos, finos»—; en el té, sólo el tipo —«Verde»—.
+- [ ] Lo llevan el **blanqueado** (cada verdura), las **infusiones** (cada
+  té) y el **tiempo de pasta seca** (cada formato). El nombre es la primera
+  columna más la siguiente columna de texto sin unidad, si la fila la tiene
+  —«Espárragos, finos»—; en las infusiones, sólo la infusión —«Té verde»—.
 - [ ] Una fila sin número en esa columna no lleva el botón.
 
 ### F07.10 — La ficha de conservación
@@ -800,20 +798,17 @@ de Referencias (C07.7.2).
 
 #### C07.10.1 — La tabla de conservación *(J6)*
 
-- [ ] Es **una sola tabla** con los alimentos en grupos por categoría
-  —carnes, aves, pescados y mariscos, fiambres y embutidos, huevos, lácteos,
-  frutas, verduras y hortalizas, panificados y masas, secos y de alacena,
-  salsas y condimentos, y comidas cocidas y sobras—. Cada fila lleva el
-  alimento, cuánto dura en la alacena, la heladera y el freezer, las notas y
-  su fuente.
-- [ ] **Cada fila nombra su fuente** con una abreviatura; al pie está la
-  lista de abreviaturas, con el nombre y el link de cada una. La celda puede
-  nombrar varias, separadas por espacio o coma.
+- [ ] **Conservación de alimentos** es **una sola tabla** con los alimentos
+  en grupos por categoría —carnes, aves, pescados y mariscos, fiambres y
+  embutidos, huevos, lácteos, frutas, verduras y hortalizas, panificados y
+  masas, secos y de alacena, salsas y condimentos, y comidas cocidas y
+  sobras—. Cada fila lleva el alimento y cuánto dura en la alacena, la
+  heladera y el freezer; cuando el plazo cambia, va en la misma celda
+  («cerrado: …; abierto: …»). Sin notas y sin fuente.
 - [ ] La comida cocida y las sobras duran lo que dice ANMAT; recongelar es
   «nunca», salvo lo crudo descongelado que, una vez cocinado, se congela
   cocido. La carne cruda sale de SENASA para vaca, cerdo y cordero, y la de
-  pollo y pescado, de FoodKeeper. Una fila que agrupa por analogía lo dice en
-  su nota.
+  pollo y pescado, de FoodKeeper.
 
 ### F07.11 — Conversor
 

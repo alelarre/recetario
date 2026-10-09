@@ -17,17 +17,18 @@ import { normalizar } from '../normalizar.js';
 import { filasDe, fuentesDe, idDeFicha, tituloDeFicha } from '../referencias/forma.js';
 import { REFERENCIAS } from '../referencias/indice.js';
 import { tagsDe, conTag, buscarEnReferencias } from '../referencias/busqueda.js';
-import type { Tabla, Cuenta, Valores, Fila, Fuente, Entrada, Ficha } from '../referencias/tipos.js';
+import type { Tabla, Cuenta, Valores, Fila, Fuente, Entrada, Ficha, IdHerramienta } from '../referencias/tipos.js';
 import type { EstadoReferencia } from '../referencias-control.js';
 
 /**
- * El primer número de un texto de minutos: «1½» es 1,5; «3–5», 3; «3 min 30 s»,
- * 3,5; sin número, nada.
+ * El primer número de un texto de minutos: «1½» es 1,5; «2¼», 2,25; «3–5», 3;
+ * «3 min 30 s», 3,5; sin número, nada.
  */
 export function minutosDe(texto: string): number | null {
-  const m = texto.match(/(\d+(?:[.,]\d+)?)\s*(½)?(?:\s*min\s+(\d+)\s*s\b)?/);
+  const m = texto.match(/(\d+(?:[.,]\d+)?)\s*([½¼¾])?(?:\s*min\s+(\d+)\s*s\b)?/);
   if (!m?.[1]) return null;
-  return Number(m[1].replace(',', '.')) + (m[2] ? 0.5 : 0) + Number(m[3] ?? 0) / 60;
+  const fraccion = m[2] === '½' ? 0.5 : m[2] === '¼' ? 0.25 : m[2] === '¾' ? 0.75 : 0;
+  return Number(m[1].replace(',', '.')) + fraccion + Number(m[3] ?? 0) / 60;
 }
 
 const lineaDeFuente = (f: Fuente): string =>
@@ -90,8 +91,19 @@ function celda(t: Tabla, fila: Fila, columna: Tabla['columnas'][number], marcar:
   return `<td>${resaltar(texto, marcar)}${boton}</td>`;
 }
 
-const filasHtml = (t: Tabla, filas: readonly Fila[], marcar: string): string =>
-  filas.map(f => `<tr>${t.columnas.map(c => celda(t, f, c, marcar)).join('')}</tr>`).join('');
+/** La variante elegida de una tabla, de lo guardado; si no vale, la primera. Sin variantes, ninguna. */
+export function varianteDe(t: Tabla, guardado: Valores = {}): string | null {
+  const opciones = t.variantes?.opciones ?? [];
+  const v = guardado['variante'];
+  return opciones.find(o => o.valor === v)?.valor ?? opciones[0]?.valor ?? null;
+}
+
+/** Las columnas que se ven: las de todas las variantes y las de la elegida. */
+const columnasDe = (t: Tabla, variante: string | null): Tabla['columnas'] =>
+  t.columnas.filter(c => c.variante === undefined || c.variante === variante);
+
+const filasHtml = (t: Tabla, columnas: Tabla['columnas'], filas: readonly Fila[], marcar: string): string =>
+  filas.map(f => `<tr>${columnas.map(c => celda(t, f, c, marcar)).join('')}</tr>`).join('');
 
 /**
  * La tabla con las filas que coinciden con la búsqueda; vacía, todas. Sólo se
@@ -99,19 +111,23 @@ const filasHtml = (t: Tabla, filas: readonly Fila[], marcar: string): string =>
  * se dibujan siempre enteras y sin aviso. Los resultados de Referencias la
  * usan sin búsqueda, con la tabla ya recortada.
  */
-/** `marcar` es lo que se resalta en las celdas: lo que encontró el buscador de Referencias. */
-export function filasFiltradas(t: Tabla, busqueda: string, marcar = ''): string {
+/**
+ * `marcar` es lo que se resalta en las celdas: lo que encontró el buscador de
+ * Referencias. `variante` es la elegida, en una tabla que las tiene.
+ */
+export function filasFiltradas(t: Tabla, busqueda: string, marcar = '', variante: string | null = varianteDe(t)): string {
+  const columnas = columnasDe(t, variante);
   const q = 'grupos' in t ? normalizar(busqueda.trim()) : '';
-  const coincide = (f: Fila): boolean => !q || t.columnas.some(c => normalizar(f[c.id]).includes(q));
+  const coincide = (f: Fila): boolean => !q || columnas.some(c => normalizar(f[c.id]).includes(q));
   const cuerpo = 'grupos' in t
     ? t.grupos.map(g => {
         const filas = g.filas.filter(coincide);
-        return filas.length ? `<tr class="grupo-ref"><th colspan="${t.columnas.length}">${escapar(g.titulo)}</th></tr>${filasHtml(t, filas, marcar)}` : '';
+        return filas.length ? `<tr class="grupo-ref"><th colspan="${columnas.length}">${escapar(g.titulo)}</th></tr>${filasHtml(t, columnas, filas, marcar)}` : '';
       }).join('')
-    : filasHtml(t, t.filas.filter(coincide), marcar);
+    : filasHtml(t, columnas, t.filas.filter(coincide), marcar);
   const vacia = q && !filasDe(t).some(coincide) ? `<p class="aviso-mudo">Ningún alimento con «${escapar(busqueda.trim())}».</p>` : '';
   return `<div class="tabla-ref" data-tabla="${escapar(t.id)}"><table>` +
-    `<thead><tr>${t.columnas.map(c => `<th>${escapar(c.nombre)}${c.unidad ? ` <span class="u">(${escapar(c.unidad)})</span>` : ''}</th>`).join('')}</tr></thead>` +
+    `<thead><tr>${columnas.map(c => `<th>${escapar(c.nombre)}${c.unidad ? ` <span class="u">(${escapar(c.unidad)})</span>` : ''}</th>`).join('')}</tr></thead>` +
     `<tbody>${cuerpo}</tbody></table>${vacia}</div>`;
 }
 
@@ -130,11 +146,25 @@ function textoDeNota(texto: string): string {
 const notas = (xs: readonly string[] | undefined): string =>
   (xs?.length ? `<ul class="notas-ref">${xs.map(n => `<li>${textoDeNota(n)}</li>`).join('')}</ul>` : '');
 
-/** `conTitulo` en falso es la ficha sola en su pantalla, donde el título ya está en el encabezado. */
-function fichaTabla(t: Tabla, busqueda: string, conTitulo = true): string {
-  return `<div class="ficha ref" id="ficha-${escapar(t.id)}">${conTitulo ? `<h2>${escapar(t.titulo)}</h2>` : ''}` +
-    filasFiltradas(t, busqueda) + notas(t.notas) + pieDeFuentes(fuentesDe(t)) + '</div>';
+/** El conmutador de las variantes de una tabla, arriba de todo; sin variantes, nada. */
+function conmutadorDeVariantes(t: Tabla, herramienta: IdHerramienta, elegida: string | null): string {
+  if (!t.variantes) return '';
+  const botones = t.variantes.opciones.map(o =>
+    `<button type="button" data-accion="elegir-variante" data-herramienta="${herramienta}" data-tabla="${escapar(t.id)}" ` +
+    `data-valor="${escapar(o.valor)}" aria-pressed="${o.valor === elegida}">${escapar(o.texto)}</button>`).join('');
+  return `<div class="seg variantes-ref" role="group" aria-label="${escapar(t.variantes.nombre)}">${botones}</div>`;
 }
+
+/** `conTitulo` en falso es la ficha sola en su pantalla, donde el título ya está en el encabezado. `guardado`, lo elegido en ella. */
+function fichaTabla(t: Tabla, busqueda: string, herramienta: IdHerramienta, guardado: Valores = {}, conTitulo = true): string {
+  const variante = varianteDe(t, guardado);
+  return `<div class="ficha ref" id="ficha-${escapar(t.id)}">${conTitulo ? `<h2>${escapar(t.titulo)}</h2>` : ''}` +
+    conmutadorDeVariantes(t, herramienta, variante) +
+    filasFiltradas(t, busqueda, '', variante) + notas(t.notas) + (fuentesDe(t).length ? pieDeFuentes(fuentesDe(t)) : '') + '</div>';
+}
+
+/** Una tabla de Referencias en el desplegable de su ficha, con lo elegido en ella. */
+export const fichaDeTabla = (t: Tabla, guardado: Valores): string => fichaTabla(t, '', 'referencias', guardado, false);
 
 /**
  * Los valores con que se dibuja y se calcula una cuenta: lo guardado que sigue
@@ -191,7 +221,9 @@ export function renderConversor(lista: readonly Ficha[], e: EstadoReferencia): s
   const indice = '<div class="chips">' + lista.map(f =>
     `<button type="button" class="chip" data-accion="ir-a-ficha" data-id="${escapar(idDeFicha(f))}">${escapar(tituloDeFicha(f))}</button>`).join('') + '</div>';
   const buscador = `<div class="buscar">${ICO.buscar}<input data-buscar-referencia="conversor" aria-label="Buscar un alimento" placeholder="Buscar un alimento" value="${escapar(e.busqueda)}"></div>`;
-  const fichas = lista.map(f => (f.tipo === 'tabla' ? fichaTabla(f.tabla, e.busqueda) : fichaCuenta(f.cuenta, e.valores[f.cuenta.id] ?? {}))).join('');
+  const fichas = lista.map(f => (f.tipo === 'tabla'
+    ? fichaTabla(f.tabla, e.busqueda, 'conversor', e.valores[f.tabla.id] ?? {})
+    : fichaCuenta(f.cuenta, e.valores[f.cuenta.id] ?? {}))).join('');
   return encabezado({ titulo: 'Conversor', icono: ICO.medidor, volver: true }) +
     `<div class="cuerpo referencias">${buscador}${indice}${fichas}</div>`;
 }
@@ -201,7 +233,7 @@ type ValoresDeCuentas = Readonly<Record<string, Valores>>;
 
 /** Una ficha como desplegable: su título es la fila que la abre o la cierra. */
 function desplegableDeFicha(f: Ficha, valores: ValoresDeCuentas, titulo: string, contenido?: string): string {
-  const adentro = contenido ?? (f.tipo === 'tabla' ? fichaTabla(f.tabla, '', false) : fichaCuenta(f.cuenta, valores[f.cuenta.id] ?? {}, false));
+  const adentro = contenido ?? (f.tipo === 'tabla' ? fichaDeTabla(f.tabla, valores[f.tabla.id] ?? {}) : fichaCuenta(f.cuenta, valores[f.cuenta.id] ?? {}, false));
   return `<details class="ficha-ref"${contenido === undefined ? '' : ' open'}><summary>${titulo}</summary>${adentro}</details>`;
 }
 
@@ -220,7 +252,7 @@ export function contenidoDeReferencias({ tag, q }: { tag: string; q: string }, v
   if (!fichas.length && !tablas.length) return `<p class="aviso-mudo">Nada con «${escapar(q.trim())}».</p>`;
   return listaDeFichas([
     ...fichas.map(f => desplegableDeFicha(f, valores, resaltar(tituloDeFicha(f), q))),
-    ...tablas.map(e => desplegableDeFicha(e.ficha, valores, resaltar(e.tabla.titulo, q), filasFiltradas(e.tabla, '', q)))
+    ...tablas.map(e => desplegableDeFicha(e.ficha, valores, resaltar(e.tabla.titulo, q), filasFiltradas(e.tabla, '', q, varianteDe(e.tabla, valores[e.tabla.id]))))
   ]);
 }
 

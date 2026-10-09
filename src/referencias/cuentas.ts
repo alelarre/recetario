@@ -6,8 +6,8 @@
  */
 import { gramos } from '../calculadoras/gramos.js';
 import type { Cuenta, Valores, Linea, Fuente, FuenteAbreviada, Resultado, Tabla, Sistema, IngredienteConvertible } from './tipos.js';
-import type { MOLDE, PIZZA, AZUCAR, RecetaPorPorcion, TipoDeMerengue, Ingrediente } from './datos/masas-y-dulces.js';
-import type { ARROZ, AGUA_SAL_PASTA, ESPAGUETI, CALDO } from './datos/coccion.js';
+import type { MOLDE, PIZZA, AZUCAR, TipoDeMerengue } from './datos/masas-y-dulces.js';
+import type { ARROZ, AGUA_SAL_PASTA, CALDO } from './datos/coccion.js';
 import type { CONVERSOR } from './datos/conversor.js';
 
 /** Un número positivo y finito, o nada. */
@@ -33,14 +33,6 @@ export function fraccion(n: number): string {
 const litros = (ml: number): string =>
   (Math.round(ml / 100) === 0 ? `${Math.round(ml)} ml` : `${(Math.round(ml / 100) / 10).toString().replace('.', ',')} l`);
 
-function cantidad(i: Ingrediente, por: number): string {
-  const una = (x: number): string => (i.unidad === 'u' ? fraccion(x * por) : `${gramos(x * por)} ${i.unidad}`);
-  return i.cantidadMax === undefined ? una(i.cantidad) : `${una(i.cantidad).replace(/ (g|ml)$/, '')} a ${una(i.cantidadMax)}`;
-}
-
-const lineasDe = (ingredientes: readonly Ingrediente[], por: number): Linea[] =>
-  ingredientes.map(i => ({ nombre: i.nombre, valor: cantidad(i, por) }));
-
 const resultado = (lineas: readonly Linea[], fuentes: readonly Fuente[], advertencias: readonly string[] = []): Resultado =>
   ({ lineas, advertencias, fuentes });
 
@@ -57,9 +49,10 @@ export function cuentaMolde(k: typeof MOLDE): Cuenta {
     return a !== undefined && a.forma === 'redondo' && a.diametro === undefined;
   };
   return {
-    id: 'molde', titulo: 'Masa para un molde', descripcion: 'Cuánta masa lleva un molde de torta, según su forma y sus medidas o su número.',
+    id: 'molde', titulo: 'Masa para un molde', descripcion: 'Cuánta masa lleva un molde de torta, según la masa —torta o budín, o bizcochuelo o pionono— y la forma y las medidas o el número del molde.',
     notas: k.notas,
     entradas: [
+      { id: 'masa', nombre: 'Masa', tipo: 'opcion', porDefecto: k.masas[0]?.id ?? '', opciones: k.masas.map(m => ({ valor: m.id, texto: m.texto })) },
       { id: 'molde', nombre: 'Molde', tipo: 'opcion', porDefecto: 'medidas',
         opciones: [{ valor: 'medidas', texto: 'Con sus medidas' }, ...k.atajos.map(a => ({ valor: a.id, texto: a.texto }))] },
       { id: 'forma', nombre: 'Forma', tipo: 'opcion', porDefecto: 'redondo', visibleSi: medidas,
@@ -73,6 +66,8 @@ export function cuentaMolde(k: typeof MOLDE): Cuenta {
     ],
     calcular(v) {
       const atajo = k.atajos.find(a => a.id === opcion(v, 'molde'));
+      const masa = k.masas.find(m => m.id === opcion(v, 'masa'));
+      if (!masa) return null;
       const forma = atajo ? atajo.forma : opcion(v, 'forma');
       const alto = atajo ? atajo.alto : numero(v, 'alto');
       const d = atajo?.diametro ?? numero(v, 'diametro');
@@ -91,25 +86,9 @@ export function cuentaMolde(k: typeof MOLDE): Cuenta {
         return resultado([], [k.llenado.fuente], [`El llenado va de ${LLENADO_MINIMO} a ${LLENADO_MAXIMO} %.`]);
       }
       return resultado(
-        [{ nombre: 'Capacidad', valor: litros(volumen) }, { nombre: 'Masa cruda', valor: `${gramos(volumen * (porcentaje / 100) * k.densidad.valor)} g` }],
-        [k.densidad.fuente, k.llenado.fuente, ...(atajo ? [atajo.fuente ?? k.fuenteAtajos] : [])]
+        [{ nombre: 'Capacidad', valor: litros(volumen) }, { nombre: 'Masa cruda', valor: `${gramos(volumen * (porcentaje / 100) * masa.densidad.valor)} g` }],
+        [masa.densidad.fuente, k.llenado.fuente, ...(atajo ? [atajo.fuente ?? k.fuenteAtajos] : [])]
       );
-    }
-  };
-}
-
-export function cuentaPastaFresca(recetas: readonly RecetaPorPorcion[]): Cuenta {
-  return {
-    id: 'pasta-fresca', titulo: 'Pasta fresca', descripcion: 'Qué ingredientes lleva la masa de pasta fresca, o el relleno o el puré, para unas porciones.',
-    entradas: [
-      { id: 'porciones', nombre: 'Porciones', tipo: 'numero', porDefecto: 4 },
-      { id: 'masa', nombre: 'Masa', tipo: 'opcion', porDefecto: recetas[0]?.id ?? '', opciones: recetas.map(r => ({ valor: r.id, texto: r.texto })) }
-    ],
-    calcular(v) {
-      const porciones = numero(v, 'porciones');
-      const receta = recetas.find(r => r.id === opcion(v, 'masa'));
-      if (!porciones || !receta) return null;
-      return resultado(lineasDe(receta.ingredientes, porciones), [receta.fuente], [...receta.notas, ...(receta.advertencia ? [receta.advertencia] : [])]);
     }
   };
 }
@@ -117,27 +96,34 @@ export function cuentaPastaFresca(recetas: readonly RecetaPorPorcion[]): Cuenta 
 export function cuentaBolloPizza(k: typeof PIZZA): Cuenta {
   const rangoNapolitana = `${Math.min(...k.napolitana.map(r => r.desde))} a ${Math.max(...k.napolitana.map(r => r.hasta))} cm`;
   return {
-    id: 'bollo-pizza', titulo: 'Bollo de pizza', descripcion: 'Cuántos gramos pesa el bollo de una pizza, napolitana o al molde, según su diámetro o su número de molde.',
-    notas: k.notas ?? [],
+    id: 'bollo-pizza', titulo: 'Bollo de pizza',
+    descripcion: 'Cuántos gramos pesa el bollo de una pizza napolitana, a la piedra o de media masa, según su diámetro o su número de molde.',
     entradas: [
-      { id: 'estilo', nombre: 'Estilo', tipo: 'opcion', porDefecto: 'napolitana', opciones: [{ valor: 'napolitana', texto: 'Napolitana' }, { valor: 'molde', texto: 'Al molde' }] },
+      { id: 'estilo', nombre: 'Estilo', tipo: 'opcion', porDefecto: 'napolitana',
+        opciones: [{ valor: 'napolitana', texto: 'Napolitana' }, { valor: 'piedra', texto: 'A la piedra' }, { valor: 'media-masa', texto: 'Media masa' }] },
       { id: 'diametro', nombre: 'Diámetro o número de molde', tipo: 'numero', unidad: 'cm', porDefecto: null },
       { id: 'cantidad', nombre: 'Pizzas', tipo: 'numero', porDefecto: 1 }
     ],
     calcular(v) {
       const d = numero(v, 'diametro'); const n = numero(v, 'cantidad');
       if (!d || !n) return null;
-      if (opcion(v, 'estilo') === 'napolitana') {
-        // Cada fila cubre desde su `desde` hasta el `desde` de la siguiente: entre dos filas toma la anterior.
-        const dentro = d >= Math.min(...k.napolitana.map(r => r.desde)) && d <= Math.max(...k.napolitana.map(r => r.hasta));
-        const fila = dentro ? k.napolitana.filter(r => r.desde <= d).sort((a, b) => b.desde - a.desde)[0] : undefined;
-        if (!fila) return resultado([], [k.fuenteNapolitana], [`La tabla de la AVPN va de ${rangoNapolitana}.`]);
-        return resultado([{ nombre: 'Cada bollo', valor: `${fila.gramos} g` }, { nombre: 'Masa total', valor: `${gramos(fila.gramos * n)} g` }], [k.fuenteNapolitana]);
+      const superficie = Math.PI * (d / 2) ** 2;
+      const estilo = opcion(v, 'estilo');
+      if (estilo === 'piedra') {
+        const g = k.piedraPorCm2.valor * superficie;
+        return resultado([{ nombre: 'Cada bollo', valor: `${gramos(g)} g` }, { nombre: 'Masa total', valor: `${gramos(g * n)} g` }], [k.piedraPorCm2.fuente]);
       }
-      const fila = k.molde.find(r => r.numero === d);
-      if (fila) return resultado([{ nombre: 'Cada bollo', valor: `${fila.min} a ${fila.max} g` }, { nombre: 'Masa total', valor: `${gramos(fila.min * n)} a ${gramos(fila.max * n)} g` }], [k.fuenteMolde]);
-      const g = k.gramosPorCm2Molde.valor * Math.PI * (d / 2) ** 2;
-      return resultado([{ nombre: 'Cada bollo', valor: `${gramos(g)} g` }, { nombre: 'Masa total', valor: `${gramos(g * n)} g` }], [k.gramosPorCm2Molde.fuente]);
+      if (estilo === 'media-masa') {
+        const min = k.mediaMasaMinPorCm2.valor * superficie; const max = k.mediaMasaMaxPorCm2.valor * superficie;
+        return resultado(
+          [{ nombre: 'Cada bollo', valor: `${gramos(min)} a ${gramos(max)} g` }, { nombre: 'Masa total', valor: `${gramos(min * n)} a ${gramos(max * n)} g` }],
+          [k.mediaMasaMinPorCm2.fuente, k.mediaMasaMaxPorCm2.fuente]);
+      }
+      // Cada fila cubre desde su `desde` hasta el `desde` de la siguiente: entre dos filas toma la anterior.
+      const dentro = d >= Math.min(...k.napolitana.map(r => r.desde)) && d <= Math.max(...k.napolitana.map(r => r.hasta));
+      const fila = dentro ? k.napolitana.filter(r => r.desde <= d).sort((a, b) => b.desde - a.desde)[0] : undefined;
+      if (!fila) return resultado([], [k.fuenteNapolitana], [`La tabla de la AVPN va de ${rangoNapolitana}.`]);
+      return resultado([{ nombre: 'Cada bollo', valor: `${fila.gramos} g` }, { nombre: 'Masa total', valor: `${gramos(fila.gramos * n)} g` }], [k.fuenteNapolitana]);
     }
   };
 }
@@ -196,28 +182,34 @@ export function cuentaPuntoAzucar(k: typeof AZUCAR): Cuenta {
   };
 }
 
-export const tablaDeArroz = (k: typeof ARROZ): Tabla => ({
-  id: 'arroz-variedades', titulo: 'Arroz en olla',
-  columnas: [{ id: 'variedad', nombre: 'Variedad' }, { id: 'partes', nombre: 'Agua (partes en volumen)' },
-             { id: 'peso', nombre: 'Agua por gramo de arroz', unidad: 'g' }, { id: 'tiempo', nombre: 'Tiempo' }],
-  filas: k.variedades.map(x => ({ variedad: x.nombre, partes: x.partesVolumen, peso: x.aguaPorGramo === null ? '—' : String(x.aguaPorGramo).replace('.', ','), tiempo: x.tiempo })),
-  notas: k.notas, fuente: k.fuente
-});
-
+/**
+ * El agua del arroz en ml y en tazas, y el tiempo. El arroz se da en gramos o
+ * en tazas: en tazas el agua son las partes de la variedad; en gramos, el agua
+ * por gramo, que el parboil no tiene.
+ */
 export function cuentaArroz(k: typeof ARROZ): Cuenta {
   return {
-    id: 'arroz', titulo: 'Agua para el arroz', descripcion: 'Cuánta agua y cuánto tiempo lleva el arroz en olla, según la variedad y los gramos.',
+    id: 'arroz', titulo: 'Agua para el arroz', notas: k.notas,
+    descripcion: 'Cuánta agua —en ml y en tazas— y cuánto tiempo lleva el arroz en olla, según la variedad y el arroz en gramos o en tazas.',
     entradas: [
-      { id: 'gramos', nombre: 'Arroz', tipo: 'numero', unidad: 'g', porDefecto: null },
+      { id: 'medida', nombre: 'Tengo', tipo: 'opcion', porDefecto: 'gramos', opciones: [{ valor: 'gramos', texto: 'Gramos' }, { valor: 'tazas', texto: 'Tazas' }] },
+      { id: 'cantidad', nombre: 'Arroz', tipo: 'numero', porDefecto: null },
       { id: 'variedad', nombre: 'Variedad', tipo: 'opcion', porDefecto: k.variedades[0]?.id ?? '', opciones: k.variedades.map(x => ({ valor: x.id, texto: x.nombre })) }
     ],
     calcular(v) {
-      const g = numero(v, 'gramos'); const x = k.variedades.find(y => y.id === opcion(v, 'variedad'));
-      if (!g || !x) return null;
-      const agua = x.aguaPorGramo === null
-        ? `${x.partesVolumen} partes por cada parte de arroz, en volumen`
-        : `${gramos(g * x.aguaPorGramo)} g`;
-      return resultado([{ nombre: 'Agua', valor: agua }, { nombre: 'Tiempo', valor: x.tiempo }], [k.fuente]);
+      const c = numero(v, 'cantidad'); const x = k.variedades.find(y => y.id === opcion(v, 'variedad'));
+      if (!c || !x) return null;
+      const fuentes = [k.fuente, k.taza.fuente];
+      const enTazas = opcion(v, 'medida') === 'tazas';
+      if (!enTazas && x.aguaPorGramo === null) {
+        return resultado([{ nombre: 'Tiempo', valor: x.tiempo }], fuentes, [`${x.nombre} no tiene el agua por gramo: medilo en tazas.`]);
+      }
+      const ml = enTazas ? c * x.partesVolumen * k.taza.valor : c * (x.aguaPorGramo ?? 0);
+      return resultado([
+        { nombre: 'Agua', valor: `${gramos(ml)} ml` },
+        { nombre: 'En tazas', valor: fraccion(ml / k.taza.valor) },
+        { nombre: 'Tiempo', valor: x.tiempo }
+      ], fuentes);
     }
   };
 }
@@ -231,24 +223,6 @@ export function cuentaAguaSalPasta(k: typeof AGUA_SAL_PASTA): Cuenta {
       const l = (g / 100) * k.litrosPor100g.valor;
       return resultado([{ nombre: 'Agua', valor: litros(l * 1000) }, { nombre: 'Sal', valor: `${gramos(l * k.salPorLitro.valor)} g` }],
         [k.litrosPor100g.fuente, k.salPorLitro.fuente]);
-    }
-  };
-}
-
-export function cuentaEspagueti(k: typeof ESPAGUETI): Cuenta {
-  return {
-    id: 'medidor-espagueti', titulo: 'Medidor de espagueti', descripcion: 'Cuántos gramos de espagueti hay en un atado de cierto diámetro, o qué diámetro tiene el atado de unos gramos.',
-    entradas: [
-      { id: 'desde', nombre: 'Tengo', tipo: 'opcion', porDefecto: 'gramos', opciones: [{ valor: 'gramos', texto: 'Los gramos' }, { valor: 'diametro', texto: 'El diámetro del atado' }] },
-      { id: 'valor', nombre: 'Cantidad', tipo: 'numero', porDefecto: null }
-    ],
-    calcular(v) {
-      const x = numero(v, 'valor'); if (!x) return null;
-      const kk = k.gramosPorCm2.valor;
-      const linea = opcion(v, 'desde') === 'diametro'
-        ? { nombre: 'Pasta', valor: `${gramos(kk * x ** 2)} g` }
-        : { nombre: 'Diámetro del atado', valor: `${(Math.round(Math.sqrt(x / kk) * 10) / 10).toString().replace('.', ',')} cm` };
-      return resultado([linea], [k.gramosPorCm2.fuente]);
     }
   };
 }

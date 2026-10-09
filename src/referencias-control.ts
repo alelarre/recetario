@@ -3,7 +3,7 @@
  * `localStorage` para cada uno, como las calculadoras— y la búsqueda del
  * Conversor, que no se guarda. Escribir pinta sólo el resultado o la tabla;
  * elegir una opción redibuja la cuenta, porque puede cambiar qué entradas se
- * ven.
+ * ven; elegir la variante de una tabla redibuja la tabla.
  */
 import type { SeccionDeAcciones } from './acciones.js';
 import type { IdHerramienta, Valores } from './referencias/tipos.js';
@@ -61,6 +61,13 @@ export function crearControlReferencias({ almacen, redibujar, pintarResultado, p
     alElegir(id, cuenta, entrada, valor) { poner(id, cuenta, entrada, valor); redibujar(id, cuenta); },
     alBuscar(id, texto) { busquedas.set(id, texto); pintarTabla(id); },
     acciones: {
+      // La variante de una tabla se guarda como lo elegido en una cuenta, con la tabla por cuenta.
+      'elegir-variante': (boton) => {
+        const { herramienta, tabla = '', valor = '' } = boton.dataset;
+        if (herramienta !== 'referencias' && herramienta !== 'conversor') return;
+        poner(herramienta, tabla, 'variante', valor);
+        redibujar(herramienta, tabla);
+      },
       'ir-a-ficha': (boton) => {
         const ficha = typeof document === 'undefined' ? null : document.querySelector<HTMLElement>(`#app #ficha-${boton.dataset['id'] ?? ''}`);
         ficha?.scrollIntoView({ block: 'start' });

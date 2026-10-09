@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderConversor, renderReferencias, contenidoDeReferencias, resaltar, fichaDeCuenta, minutosDe, filasFiltradas, resultadoDeCuenta, valoresDe } from '../src/ui/referencias.js';
+import { renderConversor, renderReferencias, contenidoDeReferencias, resaltar, fichaDeCuenta, fichaDeTabla, minutosDe, filasFiltradas, resultadoDeCuenta, valoresDe, varianteDe } from '../src/ui/referencias.js';
 import { REFERENCIAS, FICHAS_DEL_CONVERSOR } from '../src/referencias/indice.js';
 import { tagsDe } from '../src/referencias/busqueda.js';
 import { idDeFicha, filasDe } from '../src/referencias/forma.js';
@@ -94,6 +94,13 @@ describe('la pantalla del Conversor, con fichas de prueba', () => {
     expect(html).toContain('<td>AA, BB 3</td>');
   });
 
+  it('una tabla sin fuentes no lleva pie', () => {
+    const t: Tabla = { id: 's', titulo: 'S', columnas: [{ id: 'a', nombre: 'A' }], filas: [{ a: '1' }], fuentes: [] };
+    const html = renderConversor([{ tipo: 'tabla', tabla: t }], vacio);
+    expect(html).toContain('<td>1</td>');
+    expect(html).not.toContain('fuente-ref');
+  });
+
   it('con buscador, el campo lleva lo buscado', () => {
     const html = renderConversor(h.fichas, { valores: {}, busqueda: 'pollo' });
     expect(html).toContain('data-buscar-referencia="conversor"');
@@ -131,8 +138,53 @@ describe('los minutos de una fila', () => {
     expect(['3', '1½', '3–5', '2 (5 al vapor)', '4 min', '2:30', '—', 'según el paquete'].map(minutosDe))
       .toEqual([3, 1.5, 3, 2, 4, 2, null, null]);
   });
+
+  it('con cuartos y tres cuartos', () => {
+    expect(['2¼', '1¾', '10½'].map(minutosDe)).toEqual([2.25, 1.75, 10.5]);
+  });
   it('los segundos que siguen a los minutos se suman', () => {
     expect(['3 min 30 s', '2 min 15 s', '1 min 30 s a 2 min'].map(minutosDe)).toEqual([3.5, 2.25, 1.5]);
+  });
+});
+
+describe('una tabla con variantes', () => {
+  const t: Tabla = {
+    id: 'bl', titulo: 'Bl', fuente,
+    variantes: { nombre: 'Método', opciones: [{ valor: 'agua', texto: 'Al agua' }, { valor: 'vapor', texto: 'Al vapor' }] },
+    columnas: [
+      { id: 'v', nombre: 'Verdura' },
+      { id: 'agua', nombre: 'Al agua', unidad: 'min', minutos: true, variante: 'agua' },
+      { id: 'vapor', nombre: 'Al vapor', unidad: 'min', minutos: true, variante: 'vapor' }
+    ],
+    filas: [{ v: 'Chauchas', agua: '3', vapor: '4½' }, { v: 'Hongos', agua: '—', vapor: '5' }]
+  };
+
+  it('abre en la primera variante, con su botón apretado y sólo su columna', () => {
+    const html = fichaDeTabla(t, {});
+    expect(html).toContain('data-accion="elegir-variante" data-herramienta="referencias" data-tabla="bl" data-valor="agua" aria-pressed="true">Al agua<');
+    expect(html).toContain('data-valor="vapor" aria-pressed="false">Al vapor<');
+    expect(html).toContain('<th>Al agua <span class="u">(min)</span></th>');
+    expect(html).not.toContain('<th>Al vapor');
+    expect(html).toContain('<td>—</td>');
+  });
+
+  it('con la otra elegida, la otra columna, con su botón de minutos', () => {
+    const html = fichaDeTabla(t, { variante: 'vapor' });
+    expect(html).toContain('data-valor="vapor" aria-pressed="true"');
+    expect(html).not.toContain('<th>Al agua');
+    expect(html).toContain('<td>4½ ');
+    expect(html).toContain('data-accion="crear-temporizador"');
+  });
+
+  it('una variante guardada que no existe vale como la primera; sin variantes, ninguna', () => {
+    expect(varianteDe(t, { variante: 'horno' })).toBe('agua');
+    expect(varianteDe(tabla, {})).toBeNull();
+    expect(fichaDeTabla(tabla, {})).not.toContain('elegir-variante');
+  });
+
+  it('las filas buscadas muestran la columna de la variante pedida', () => {
+    expect(filasFiltradas(t, '', 'chau', 'vapor')).toContain('<th>Al vapor');
+    expect(filasFiltradas(t, '', 'chau', 'vapor')).not.toContain('<th>Al agua');
   });
 });
 

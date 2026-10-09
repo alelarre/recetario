@@ -1551,6 +1551,10 @@ paréntesis, en `--fg-3` peso 400. **La primera columna va en peso 600:** es lo
 que se busca. En una tabla agrupada, el título de cada grupo es una fila
 completa en `--fg`, con más aire arriba (`--e-4`).
 
+**Una tabla con variantes** —el blanqueado, al agua o al vapor— lleva arriba
+de la tabla el conmutador de un dato (§6.28) a lo ancho, con `--e-3` debajo;
+la tabla muestra sólo las columnas de la variante elegida.
+
 **Una tabla ancha se desplaza de costado dentro de su ficha;** la página no.
 La tabla sale hasta el borde de la ficha (margen de `--e-2` negativo) para
 darle ancho.

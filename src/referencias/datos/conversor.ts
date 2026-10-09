@@ -51,8 +51,11 @@ const usda = (id: number, producto: string): FuenteAbreviada => ({
   url: `https://fdc.nal.usda.gov/food-details/${id}/portions`
 });
 
+/** La taza de acá, la métrica: la usan el conversor y la cuenta del arroz. */
+export const TAZA_METRICA: Constante = { valor: 250, unidad: 'ml', fuente: HC };
+
 export const SISTEMAS: readonly Sistema[] = [
-  { id: 'metrica', nombre: 'Métrica (Argentina, Reino Unido, Canadá, Nueva Zelanda)', taza: 250, cucharada: 15, cucharadita: 5,
+  { id: 'metrica', nombre: 'Métrica (Argentina, Reino Unido, Canadá, Nueva Zelanda)', taza: TAZA_METRICA.valor, cucharada: 15, cucharadita: 5,
     notas: [
       'Argentina no tiene una norma de cocina: se usa la métrica, que es como vienen marcadas las tazas medidoras que se venden acá.',
       'Las etiquetas argentinas usan otra medida casera (taza de té 200 ml, cuchara de sopa 10 ml): una porción de etiqueta no se lee con esta tabla.'

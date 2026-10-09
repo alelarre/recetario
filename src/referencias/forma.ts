@@ -25,7 +25,11 @@ const fuentesDeCelda = (celda: string): string[] =>
 export function problemasDeForma(t: Tabla): string[] {
   const problemas = fuentesDe(t).flatMap(f => problemasDeFuente(t.id, f));
   const columnas = new Set(t.columnas.map(c => c.id));
-  const abreviaturas = 'fuentes' in t ? new Set(t.fuentes.map(f => f.abreviatura)) : null;
+  const variantes = new Set(t.variantes?.opciones.map(o => o.valor) ?? []);
+  for (const c of t.columnas) {
+    if (c.variante !== undefined && !variantes.has(c.variante)) problemas.push(`${t.id}: la columna «${c.id}» es de la variante «${c.variante}», que la tabla no tiene`);
+  }
+  const abreviaturas = 'columnaFuente' in t ? new Set(t.fuentes.map(f => f.abreviatura)) : null;
   filasDe(t).forEach((fila, i) => {
     const donde = `${t.id}, fila ${i + 1}`;
     for (const c of columnas) if (!(c in fila)) problemas.push(`${donde}: falta la columna «${c}»`);

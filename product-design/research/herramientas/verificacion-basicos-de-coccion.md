@@ -337,6 +337,7 @@ La fuente trae también una columna de microondas (con sólo el agua del lavado)
 
 ### Fuente
 
+- Universidad de Kentucky, Cooperative Extension Service, A. Cason, *Potatoes: Choosing, Storing, Preparing, and Enjoying* (FSHE-12, revisada 04-2025) — https://publications.mgcafe.uky.edu/sites/publications.ca.uky.edu/files/FSHE12.pdf — consultada el 2026-10-08. Tabla 1: hervir papas medianas enteras «approximately 30-40 minutes»; al vapor, papas medianas en cuartos, «approximately 15-20 minutes». Es la fila de la papa, que Clínica Las Condes no trae.
 - Clínica Las Condes (Chile), Centro de Nutrición, *Cocción de verduras* — https://www.clinicalascondes.cl/CENTROS-Y-ESPECIALIDADES/Centros/Centro-de-Nutricion/Nutricion/Coccion-de-Verduras — consultada el 2026-10-04. Se leyeron la tabla «Al vapor / Microonda / Hervir» con los nombres originales, la nota 1 («los tiempos son para ½ kg de verduras») y la indicación de cocinar en agua que apenas cubra, hirviendo y con poca sal. No tiene fecha.
 
 ### Descartado
@@ -421,6 +422,8 @@ Minutos en agua hirviendo, a nivel del mar. Fuente: NCHFP.
 Ninguna.
 
 ### Notas
+
+- La columna «Al vapor» de la app es 1½ veces la del agua, con la regla de NCHFP, salvo el brócoli (5 min, que NCHFP da al vapor) y los hongos (NCHFP los da sólo al vapor; al agua van «—»).
 
 - El umbral de 1.524 m deja afuera a casi todo el país; lo pasan, por ejemplo, la Quebrada de Humahuaca y la Puna.
 - Colorado State da también el punto de ebullición por altitud: 100 °C a nivel del mar, 97,8 °C a 2.000 pies (610 m), 95 °C a 5.000 pies (1.524 m), 92,2 °C a 7.500 pies (2.286 m) y 89,4 °C a 10.000 pies (3.048 m) (convertido desde 212, 208, 203, 198 y 193 °F).

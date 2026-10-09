@@ -1,8 +1,8 @@
 // tests/referencias-cuentas.test.ts
 import { describe, it, expect } from 'vitest';
 import {
-  cuentaMolde, cuentaPastaFresca, cuentaBolloPizza, cuentaMerengue, cuentaPuntoAzucar, fraccion,
-  cuentaArroz, cuentaAguaSalPasta, cuentaEspagueti, cuentaCaldo, tablaDeArroz,
+  cuentaMolde, cuentaBolloPizza, cuentaMerengue, cuentaPuntoAzucar, fraccion,
+  cuentaArroz, cuentaAguaSalPasta, cuentaCaldo,
   cuentaConversion, medidaPractica, tablaDePesos, tablaDeSistemas, tablaDeMedidasEeuu
 } from '../src/referencias/cuentas.js';
 import { CONVERSOR } from '../src/referencias/datos/conversor.js';
@@ -15,101 +15,77 @@ const valor = (r: ReturnType<ReturnType<typeof cuentaMolde>['calcular']>, nombre
 
 describe('el molde', () => {
   const molde = cuentaMolde({
-    densidad: k(2), llenado: k(0.5), notas: [], fuenteAtajos: fuente,
+    masas: [{ id: 'torta', texto: 'Torta', densidad: k(2) }, { id: 'bizcochuelo', texto: 'Bizcochuelo', densidad: k(1) }], llenado: k(0.5), notas: [], fuenteAtajos: fuente,
     atajos: [{ id: 'n10', texto: 'N.º 10', forma: 'redondo', diametro: 10, alto: 4 }]
   });
   it('redondo: volumen por llenado por densidad, con la densidad y el llenado de las constantes', () => {
     // π·5²·4 = 314,16 ml → 0,3 l; masa = 314,16 · 0,5 · 2 = 314 g
-    const r = molde.calcular({ molde: 'medidas', forma: 'redondo', diametro: 10, alto: 4, llenado: null });
+    const r = molde.calcular({ masa: 'torta', molde: 'medidas', forma: 'redondo', diametro: 10, alto: 4, llenado: null });
     expect(valor(r, 'Capacidad')).toBe('0,3 l');
     expect(valor(r, 'Masa cruda')).toBe('314 g');
     expect(r?.fuentes).toContain(fuente);
   });
+  it('el bizcochuelo, con su densidad; una masa que no existe no calcula', () => {
+    // π·5²·4 = 314,16 ml · 0,5 · 1 = 157 g
+    expect(valor(molde.calcular({ masa: 'bizcochuelo', molde: 'medidas', forma: 'redondo', diametro: 10, alto: 4, llenado: null }), 'Masa cruda')).toBe('157 g');
+    expect(molde.calcular({ masa: 'otra', molde: 'medidas', forma: 'redondo', diametro: 10, alto: 4, llenado: null })).toBeNull();
+  });
   it('un atajo usa sus medidas', () => {
-    const r = molde.calcular({ molde: 'n10', llenado: null });
+    const r = molde.calcular({ masa: 'torta', molde: 'n10', llenado: null });
     expect(valor(r, 'Masa cruda')).toBe('314 g');
   });
   it('rectangular y con tubo', () => {
-    expect(valor(molde.calcular({ molde: 'medidas', forma: 'rectangular', largo: 10, ancho: 10, alto: 2, llenado: null }), 'Masa cruda')).toBe('200 g');
+    expect(valor(molde.calcular({ masa: 'torta', molde: 'medidas', forma: 'rectangular', largo: 10, ancho: 10, alto: 2, llenado: null }), 'Masa cruda')).toBe('200 g');
     // anillo: π·(5² − 2²)·4 = 263,9 → 264 g
-    expect(valor(molde.calcular({ molde: 'medidas', forma: 'tubo', diametro: 10, tubo: 4, alto: 4, llenado: null }), 'Masa cruda')).toBe('264 g');
+    expect(valor(molde.calcular({ masa: 'torta', molde: 'medidas', forma: 'tubo', diametro: 10, tubo: 4, alto: 4, llenado: null }), 'Masa cruda')).toBe('264 g');
   });
   it('un tipo de molde sin diámetro lo toma de lo que se escribe', () => {
     const tipo = cuentaMolde({
-      densidad: k(2), llenado: k(0.5), notas: [], fuenteAtajos: fuente,
+      masas: [{ id: 'torta', texto: 'Torta', densidad: k(2) }, { id: 'bizcochuelo', texto: 'Bizcochuelo', densidad: k(1) }], llenado: k(0.5), notas: [], fuenteAtajos: fuente,
       atajos: [{ id: 'bizcochuelo', texto: 'Bizcochuelo', forma: 'redondo', alto: 4 }]
     });
-    expect(valor(tipo.calcular({ molde: 'bizcochuelo', diametro: 10, llenado: null }), 'Masa cruda')).toBe('314 g');
-    expect(tipo.calcular({ molde: 'bizcochuelo', llenado: null })).toBeNull();
+    expect(valor(tipo.calcular({ masa: 'torta', molde: 'bizcochuelo', diametro: 10, llenado: null }), 'Masa cruda')).toBe('314 g');
+    expect(tipo.calcular({ masa: 'torta', molde: 'bizcochuelo', llenado: null })).toBeNull();
   });
   it('un llenado de más de 100 % o de menos de 1 % no calcula: resultado vacío con el aviso', () => {
     for (const llenado of [150, 0.5]) {
-      const r = molde.calcular({ molde: 'medidas', forma: 'redondo', diametro: 10, alto: 4, llenado });
+      const r = molde.calcular({ masa: 'torta', molde: 'medidas', forma: 'redondo', diametro: 10, alto: 4, llenado });
       expect(r?.lineas).toEqual([]);
       expect(r?.advertencias).toEqual(['El llenado va de 1 a 100 %.']);
     }
-    expect(valor(molde.calcular({ molde: 'medidas', forma: 'redondo', diametro: 10, alto: 4, llenado: 100 }), 'Masa cruda')).toBe('628 g');
+    expect(valor(molde.calcular({ masa: 'torta', molde: 'medidas', forma: 'redondo', diametro: 10, alto: 4, llenado: 100 }), 'Masa cruda')).toBe('628 g');
   });
   it('cada atajo cita su fuente, y los que no tienen una propia, la de los atajos', () => {
     const otra = { nombre: 'Otra', url: 'https://otra.com' };
     const deAtajos = { nombre: 'Atajos', url: 'https://atajos.com' };
     const m = cuentaMolde({
-      densidad: k(2), llenado: k(0.5), notas: [], fuenteAtajos: deAtajos,
+      masas: [{ id: 'torta', texto: 'Torta', densidad: k(2) }, { id: 'bizcochuelo', texto: 'Bizcochuelo', densidad: k(1) }], llenado: k(0.5), notas: [], fuenteAtajos: deAtajos,
       atajos: [
         { id: 'a', texto: 'A', forma: 'redondo', diametro: 10, alto: 4 },
         { id: 'b', texto: 'B', forma: 'redondo', diametro: 10, alto: 4, fuente: otra }
       ]
     });
-    expect(m.calcular({ molde: 'a', llenado: null })?.fuentes).toContain(deAtajos);
-    const deB = m.calcular({ molde: 'b', llenado: null })?.fuentes;
+    expect(m.calcular({ masa: 'torta', molde: 'a', llenado: null })?.fuentes).toContain(deAtajos);
+    const deB = m.calcular({ masa: 'torta', molde: 'b', llenado: null })?.fuentes;
     expect(deB).toContain(otra);
     expect(deB).not.toContain(deAtajos);
   });
   it('una medida vacía, en cero o negativa: sin resultado', () => {
-    expect(molde.calcular({ molde: 'medidas', forma: 'redondo', diametro: 0, alto: 4, llenado: null })).toBeNull();
-    expect(molde.calcular({ molde: 'medidas', forma: 'redondo', diametro: -3, alto: 4, llenado: null })).toBeNull();
-    expect(molde.calcular({ molde: 'medidas', forma: 'redondo', diametro: null, alto: 4, llenado: null })).toBeNull();
-  });
-});
-
-describe('la pasta fresca', () => {
-  const pasta = cuentaPastaFresca([
-    { id: 'huevo', texto: 'Al huevo', ingredientes: [{ nombre: 'Harina', cantidad: 100, unidad: 'g' }, { nombre: 'Huevos', cantidad: 1, unidad: 'u' }], notas: ['Sal: una pizca.'], fuente },
-    { id: 'yemas', texto: 'De yemas', ingredientes: [{ nombre: 'Yemas', cantidad: 3, cantidadMax: 4, unidad: 'u' }], notas: [], fuente },
-    { id: 'rellena', texto: 'Rellena', ingredientes: [{ nombre: 'Huevos', cantidad: 0.5, unidad: 'u' }], notas: [], fuente }
-  ]);
-  it('multiplica por las porciones y escribe huevos con fracciones', () => {
-    expect(pasta.calcular({ porciones: 3, masa: 'huevo' })?.lineas).toEqual([{ nombre: 'Harina', valor: '300 g' }, { nombre: 'Huevos', valor: '3' }]);
-    expect(pasta.calcular({ porciones: 3, masa: 'rellena' })?.lineas).toEqual([{ nombre: 'Huevos', valor: '1 ½' }]);
-  });
-  it('un rango queda rango', () => {
-    expect(pasta.calcular({ porciones: 2, masa: 'yemas' })?.lineas).toEqual([{ nombre: 'Yemas', valor: '6 a 8' }]);
-  });
-  it('sin porciones, o con una masa que no existe: sin resultado', () => {
-    expect(pasta.calcular({ porciones: null, masa: 'huevo' })).toBeNull();
-    expect(pasta.calcular({ porciones: 2, masa: 'otra' })).toBeNull();
+    expect(molde.calcular({ masa: 'torta', molde: 'medidas', forma: 'redondo', diametro: 0, alto: 4, llenado: null })).toBeNull();
+    expect(molde.calcular({ masa: 'torta', molde: 'medidas', forma: 'redondo', diametro: -3, alto: 4, llenado: null })).toBeNull();
+    expect(molde.calcular({ masa: 'torta', molde: 'medidas', forma: 'redondo', diametro: null, alto: 4, llenado: null })).toBeNull();
   });
 });
 
 describe('el bollo de pizza', () => {
-  const pizza = cuentaBolloPizza({
-    napolitana: [{ desde: 20, hasta: 25, gramos: 200 }], molde: [{ numero: 30, min: 300, max: 330 }],
-    gramosPorCm2Molde: k(0.5), fuenteNapolitana: fuente, fuenteMolde: fuente
-  });
-  it('lleva las notas de sus constantes, o ninguna', () => {
-    expect(pizza.notas).toEqual([]);
-    const conNotas = cuentaBolloPizza({ napolitana: [], molde: [], gramosPorCm2Molde: k(1), fuenteNapolitana: fuente, fuenteMolde: fuente, notas: ['Una nota.'] });
-    expect(conNotas.notas).toEqual(['Una nota.']);
-  });
+  const datos = { napolitana: [{ desde: 20, hasta: 25, gramos: 200 }], fuenteNapolitana: fuente, piedraPorCm2: k(0.2), mediaMasaMinPorCm2: k(0.8), mediaMasaMaxPorCm2: k(1) };
+  const pizza = cuentaBolloPizza(datos);
   it('napolitana: el peso de su rango, por la cantidad', () => {
     expect(pizza.calcular({ estilo: 'napolitana', diametro: 22, cantidad: 3 })?.lineas)
       .toEqual([{ nombre: 'Cada bollo', valor: '200 g' }, { nombre: 'Masa total', valor: '600 g' }]);
   });
   it('napolitana entre dos filas: toma la que empieza antes', () => {
-    const entre = cuentaBolloPizza({
-      napolitana: [{ desde: 20, hasta: 22, gramos: 200 }, { desde: 23, hasta: 25, gramos: 240 }], molde: [],
-      gramosPorCm2Molde: k(0.5), fuenteNapolitana: fuente, fuenteMolde: fuente
-    });
+    const entre = cuentaBolloPizza({ ...datos, napolitana: [{ desde: 20, hasta: 22, gramos: 200 }, { desde: 23, hasta: 25, gramos: 240 }] });
     expect(entre.calcular({ estilo: 'napolitana', diametro: 22.5, cantidad: 1 })?.lineas[0]).toEqual({ nombre: 'Cada bollo', valor: '200 g' });
     expect(entre.calcular({ estilo: 'napolitana', diametro: 25, cantidad: 1 })?.lineas[0]).toEqual({ nombre: 'Cada bollo', valor: '240 g' });
     expect(entre.calcular({ estilo: 'napolitana', diametro: 25.5, cantidad: 1 })?.lineas).toEqual([]);
@@ -118,10 +94,16 @@ describe('el bollo de pizza', () => {
     expect(pizza.calcular({ estilo: 'napolitana', diametro: 40, cantidad: 1 })?.lineas).toEqual([]);
     expect(pizza.calcular({ estilo: 'napolitana', diametro: 40, cantidad: 1 })?.advertencias[0]).toContain('20 a 25 cm');
   });
-  it('al molde: el rango de su número, o el factor por la superficie', () => {
-    expect(pizza.calcular({ estilo: 'molde', diametro: 30, cantidad: 1 })?.lineas[0]).toEqual({ nombre: 'Cada bollo', valor: '300 a 330 g' });
-    // 0,5 · π · 10² = 157 g
-    expect(pizza.calcular({ estilo: 'molde', diametro: 20, cantidad: 1 })?.lineas[0]).toEqual({ nombre: 'Cada bollo', valor: '157 g' });
+  it('a la piedra: los gramos por cm² por la superficie', () => {
+    // 0,2 · π · 10² = 62,8 → 63 g; dos pizzas, 126 g
+    expect(pizza.calcular({ estilo: 'piedra', diametro: 20, cantidad: 2 })?.lineas)
+      .toEqual([{ nombre: 'Cada bollo', valor: '63 g' }, { nombre: 'Masa total', valor: '126 g' }]);
+  });
+  it('media masa: el rango entre sus dos constantes, y las dos fuentes', () => {
+    // π · 10² = 314,16 → 251 a 314 g
+    const r = pizza.calcular({ estilo: 'media-masa', diametro: 20, cantidad: 1 });
+    expect(r?.lineas[0]).toEqual({ nombre: 'Cada bollo', valor: '251 a 314 g' });
+    expect(r?.fuentes).toHaveLength(2);
   });
 });
 
@@ -174,21 +156,30 @@ it('fraccion escribe medios, tercios y cuartos', () => {
 });
 
 describe('el arroz', () => {
-  const arroz = { fuente, notas: [], variedades: [
-    { id: 'largo', nombre: 'Largo fino', partesVolumen: '2', aguaPorGramo: 2, tiempo: '15–18 min' },
-    { id: 'parboil', nombre: 'Parboil', partesVolumen: '2¼', aguaPorGramo: null, tiempo: '20–30 min' }
+  const taza = { valor: 250, unidad: 'ml', fuente: { nombre: 'Taza', url: 'https://taza.com' } };
+  const arroz = { fuente, taza, notas: ['Tapar.'], variedades: [
+    { id: 'largo', nombre: 'Largo fino', partesVolumen: 2, aguaPorGramo: 2, tiempo: '15–18 min' },
+    { id: 'parboil', nombre: 'Parboil', partesVolumen: 2.25, aguaPorGramo: null, tiempo: '20–30 min' }
   ] };
-  it('agua en gramos por los gramos de arroz, y el tiempo', () => {
-    expect(cuentaArroz(arroz).calcular({ gramos: 200, variedad: 'largo' })?.lineas)
-      .toEqual([{ nombre: 'Agua', valor: '400 g' }, { nombre: 'Tiempo', valor: '15–18 min' }]);
+  const cuenta = cuentaArroz(arroz);
+  it('en gramos: el agua por gramo, en ml y en tazas, y el tiempo', () => {
+    expect(cuenta.calcular({ medida: 'gramos', cantidad: 200, variedad: 'largo' })?.lineas).toEqual([
+      { nombre: 'Agua', valor: '400 ml' }, { nombre: 'En tazas', valor: '1,6' }, { nombre: 'Tiempo', valor: '15–18 min' }
+    ]);
   });
-  it('sin dato en peso, las partes en volumen', () => {
-    expect(cuentaArroz(arroz).calcular({ gramos: 200, variedad: 'parboil' })?.lineas[0])
-      .toEqual({ nombre: 'Agua', valor: '2¼ partes por cada parte de arroz, en volumen' });
+  it('en tazas: las partes de la variedad', () => {
+    expect(cuenta.calcular({ medida: 'tazas', cantidad: 2, variedad: 'parboil' })?.lineas).toEqual([
+      { nombre: 'Agua', valor: '1125 ml' }, { nombre: 'En tazas', valor: '4 ½' }, { nombre: 'Tiempo', valor: '20–30 min' }
+    ]);
   });
-  it('la tabla de variedades sale de la misma lista', () => {
-    const tabla = tablaDeArroz(arroz);
-    expect('filas' in tabla && tabla.filas.length).toBe(2);
+  it('en gramos, una variedad sin agua por gramo pide medir en tazas', () => {
+    const r = cuenta.calcular({ medida: 'gramos', cantidad: 200, variedad: 'parboil' });
+    expect(r?.lineas).toEqual([{ nombre: 'Tiempo', valor: '20–30 min' }]);
+    expect(r?.advertencias).toEqual(['Parboil no tiene el agua por gramo: medilo en tazas.']);
+  });
+  it('cita la fuente del arroz y la de la taza, y lleva las notas', () => {
+    expect(cuenta.calcular({ medida: 'tazas', cantidad: 1, variedad: 'largo' })?.fuentes).toEqual([fuente, taza.fuente]);
+    expect(cuenta.notas).toEqual(['Tapar.']);
   });
 });
 
@@ -202,12 +193,6 @@ it('una cantidad que en litros redondearía a cero se muestra en mililitros', ()
   const c = cuentaAguaSalPasta({ litrosPor100g: k(1), salPorLitro: k(5) });
   expect(c.calcular({ gramos: 3 })?.lineas[0]).toEqual({ nombre: 'Agua', valor: '30 ml' });
   expect(c.calcular({ gramos: 10 })?.lineas[0]).toEqual({ nombre: 'Agua', valor: '0,1 l' });
-});
-
-it('el medidor de espagueti, de gramos a diámetro y al revés', () => {
-  const c = cuentaEspagueti({ gramosPorCm2: k(25) });
-  expect(c.calcular({ desde: 'gramos', valor: 100 })?.lineas).toEqual([{ nombre: 'Diámetro del atado', valor: '2 cm' }]);
-  expect(c.calcular({ desde: 'diametro', valor: 2 })?.lineas).toEqual([{ nombre: 'Pasta', valor: '100 g' }]);
 });
 
 it('el caldo: agua y mirepoix por kilo, repartido, y el tiempo del tipo', () => {

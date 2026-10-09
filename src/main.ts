@@ -83,7 +83,7 @@ import { crearAvisoSonoro } from './aviso-sonoro.js';
 import { crearPantallaEncendida } from './pantalla-encendida.js';
 import { formatear, restante, avance, transcurrido, esCrono, aMs } from './temporizadores.js';
 import { crearControlReferencias } from './referencias-control.js';
-import { renderConversor, renderReferencias, contenidoDeReferencias, fichaDeCuenta, resultadoDeCuenta, filasFiltradas } from './ui/referencias.js';
+import { renderConversor, renderReferencias, contenidoDeReferencias, fichaDeCuenta, fichaDeTabla, resultadoDeCuenta, filasFiltradas, varianteDe } from './ui/referencias.js';
 import { fichasDe, fichaDeReferencia, REFERENCIAS, FICHAS_DEL_CONVERSOR } from './referencias/indice.js';
 import { tagsDe } from './referencias/busqueda.js';
 import type { IdHerramienta } from './referencias/tipos.js';
@@ -519,13 +519,15 @@ const valoresDeReferencias = () => controlReferencias.estado('referencias').valo
 /** Lo escrito en las cuentas de Referencias y del Conversor, y la búsqueda del Conversor. */
 const controlReferencias = crearControlReferencias({
   almacen: almacenLocal(),
-  // En Referencias se repinta sólo la ficha de la cuenta: redibujar cerraría
-  // el desplegable que la tiene abierta. El Conversor se redibuja entero.
-  redibujar: (id, cuentaId) => {
-    const ficha = id === 'conversor' ? null : fichaDeReferencia(cuentaId);
-    const bloque = document.querySelector(`#app #ficha-${cuentaId}`);
-    if (ficha?.tipo !== 'cuenta' || !bloque) { void render(); return; }
-    pintarParte(bloque, fichaDeCuenta(ficha.cuenta, controlReferencias.estado(id).valores[cuentaId] ?? {}), 'reemplazar');
+  // En Referencias se repinta sólo la ficha de la cuenta o de la tabla:
+  // redibujar cerraría el desplegable que la tiene abierta. El Conversor se
+  // redibuja entero.
+  redibujar: (id, fichaId) => {
+    const ficha = id === 'conversor' ? null : fichaDeReferencia(fichaId);
+    const bloque = document.querySelector(`#app #ficha-${fichaId}`);
+    if (!ficha || !bloque) { void render(); return; }
+    const guardado = controlReferencias.estado(id).valores[fichaId] ?? {};
+    pintarParte(bloque, ficha.tipo === 'cuenta' ? fichaDeCuenta(ficha.cuenta, guardado) : fichaDeTabla(ficha.tabla, guardado), 'reemplazar');
   },
   // Escribir pinta sólo el resultado de la cuenta: redibujar la pantalla sacaría el foco del campo.
   pintarResultado: (id, cuentaId) => {
@@ -539,7 +541,8 @@ const controlReferencias = crearControlReferencias({
     for (const ficha of fichasDe(id)) {
       if (ficha.tipo !== 'tabla') continue;
       const bloque = document.querySelector(`#app [data-tabla="${ficha.tabla.id}"]`);
-      if (bloque) pintarParte(bloque, filasFiltradas(ficha.tabla, controlReferencias.estado(id).busqueda), 'reemplazar');
+      const { busqueda, valores } = controlReferencias.estado(id);
+      if (bloque) pintarParte(bloque, filasFiltradas(ficha.tabla, busqueda, '', varianteDe(ficha.tabla, valores[ficha.tabla.id])), 'reemplazar');
     }
   }
 });

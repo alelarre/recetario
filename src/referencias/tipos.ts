@@ -6,12 +6,28 @@
 
 export interface Fuente { nombre: string; url: string }
 export interface FuenteAbreviada extends Fuente { abreviatura: string }
-export interface Columna { id: string; nombre: string; unidad?: string; minutos?: true }
+/** `variante`: la columna se ve sólo con esa variante de la tabla elegida. */
+export interface Columna { id: string; nombre: string; unidad?: string; minutos?: true; variante?: string }
 export type Fila = Readonly<Record<string, string>>;
 export interface Grupo { titulo: string; filas: readonly Fila[] }
 export type Contenido = { filas: readonly Fila[] } | { grupos: readonly Grupo[] };
-export type Procedencia = { fuente: Fuente } | { fuentes: readonly FuenteAbreviada[]; columnaFuente: string };
-export type Tabla = { id: string; titulo: string; columnas: readonly Columna[]; notas?: readonly string[] } & Contenido & Procedencia;
+/**
+ * De dónde sale una tabla: una fuente; varias, todas al pie —ninguna, si la
+ * tabla va sin fuente—; o varias con una columna que dice, fila por fila, de
+ * cuál sale cada una por su abreviatura.
+ */
+export type Procedencia =
+  | { fuente: Fuente }
+  | { fuentes: readonly Fuente[] }
+  | { fuentes: readonly FuenteAbreviada[]; columnaFuente: string };
+/**
+ * Las variantes de una tabla: un conmutador arriba que elige qué columnas se
+ * ven —«Al agua» o «Al vapor»—. Abre en la primera.
+ */
+export interface Variantes { nombre: string; opciones: readonly { valor: string; texto: string }[] }
+export type Tabla = {
+  id: string; titulo: string; columnas: readonly Columna[]; notas?: readonly string[]; variantes?: Variantes
+} & Contenido & Procedencia;
 export interface Constante { valor: number; unidad: string; fuente: Fuente }
 export type Entrada =
   | { id: string; nombre: string; tipo: 'numero'; unidad?: string; porDefecto: number | null; visibleSi?: (v: Valores) => boolean }

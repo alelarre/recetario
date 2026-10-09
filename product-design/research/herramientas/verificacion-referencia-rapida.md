@@ -10,7 +10,7 @@ Verificación de las fuentes del inventario para la referencia rápida, contra p
 | 2a. Temperatura interna de seguridad | con decisión | USDA FSIS, *Safe Minimum Internal Temperature Chart* (SENASA dice otra cosa para los cortes enteros) |
 | 2b. Puntos de la carne vacuna | con decisión | Frigorífico Sada, *¿Cuáles son los puntos de cocción de la carne vacuna?* |
 | 3a. Aceite por alimento | con decisión | Taste of Home, *Deep Frying Temperature Chart*; las milanesas, de Breaders |
-| 3b. Punto de humo | listo | USDA FSIS, *Deep Fat Frying and Food Safety* |
+| 3b. Punto de humo | listo | De Alzaa, Guillaume y Ravetti, *Evaluation of Chemical and Physical Changes in Different Commercial Oils during Heating* (2018) |
 | 4a. Escala del horno | con decisión | Soy celíaco, no extraterrestre (blog argentino), con eltrece/Cucinare y Naldo de respaldo |
 | 4b. Horno con ventilador | listo | Bosch (fabricante) |
 | 4c. Tiempos de horno | con decisión (carnes) / sin datos (tortas y panes) | roast-time.com, sin autor ni fuentes |
@@ -169,23 +169,30 @@ Rango general (Taste of Home): 177–191 °C.
 
 ### 3b. Punto de humo — Tabla propuesta
 
-| Aceite | Punto de humo aproximado (°C) |
+| Aceite | Punto de humo (°C), redondeado a 5 |
 |---|---|
-| Maní, cártamo, soja | 232 |
-| Uva | 229 |
-| Canola | 224 |
-| Maíz, oliva, sésamo, girasol | 210 |
+| Uva | 270 |
+| Canola | 255 |
+| Girasol | 255 |
+| Arroz | 235 |
+| Maní alto oleico | 225 |
+| Oliva | 210 |
+| Oliva extra virgen | 205 |
+| Palta | 195 |
+| Coco | 190 |
+| Oliva virgen | 175 |
 
 ### 3b. Fuente
 
-- **USDA FSIS, Deep Fat Frying and Food Safety** — https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/deep-fat-frying — 2026-10-04 (actualizada el 9 de agosto de 2024). Con WebFetch dio 403; se leyó en un navegador. «Oil Smoking Point»: peanut, safflower, soybean 450 °F; grapeseed 445; canola 435; «Enova» brand 420; corn, olive, sesame seed, sunflower 410. Recomienda para freír oliva, maní, canola, maíz, uva, cártamo, girasol y «vegetable».
+- **De Alzaa F, Guillaume C y Ravetti L, *Evaluation of Chemical and Physical Changes in Different Commercial Oils during Heating*, Acta Scientific Nutritional Health 2.6 (2018): 2–11** — https://actascientific.com/ASNH/pdf/ASNH-02-0083.pdf — 2026-10-08. Modern Olives Laboratory Services (Australia), laboratorio acreditado ISO 17025. Diez aceites de supermercado; punto de humo con el método AOCS Cc 9a-48, por duplicado. Tabla 1, media ± desvío: EVOO 206,67; VOO 175,33; OO 208,00; uva 268,00; palta 196,67; coco 191,00; girasol 254,67; arroz 237,00; canola 255,67; maní alto oleico 226,33 °C. La tabla nombra «CO» a dos columnas: la de 7,87 % de oleico es coco y la de 65,09 %, canola. El laboratorio es de la industria del olivo, y el artículo concluye que el punto de humo no predice la estabilidad del aceite al calentarlo.
 
 ### Descartado
 
 - **FSIS, la tabla de tiempos de la misma página:** presas de pollo 13–20 min a 375 °F (191 °C); tiritas de pollo 6–8 min a 350 (177); pavo 3–5 min por libra a 375; filetes de pescado 3–5 min a 320 °F (160 °C); camarones 4–6 min a 320. Es oficial, pero son cinco filas, sin empanadas ni papas, y en el pescado contradice a Taste of Home (160 contra 185 °C). Se eligió una sola fuente para la tabla (ver Decisiones).
 - **FAO, *Selección de usos de las grasas y de los aceites en la alimentación*, cap. 6** (https://www.fao.org/4/v4700s/v4700s0a.htm): «En general, en la fritura el aceite debe mantenerse a una temperatura máxima de 180 °C». Es la única cifra; no da temperaturas por alimento.
 - **Oriva, *La fritura perfecta*** (https://www.lafrituraperfecta.com/consejos-de-uso/), fabricante de aceite de orujo: «La temperatura ideal del aceite al comenzar a freír es de 180 ºC». Una sola cifra.
-- **ThermoWorks y Wikipedia** (puntos de humo del inventario): no coinciden entre sí y FSIS es oficial.
+- **USDA FSIS, Deep Fat Frying and Food Safety** — https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/deep-fat-frying — 2026-10-04. «Oil Smoking Point»: peanut, safflower, soybean 450 °F; grapeseed 445; canola 435; corn, olive, sesame seed, sunflower 410. Pone oliva y girasol en la misma fila sin decir refinado o virgen; se reemplazó por una sola medición de todos los aceites.
+- **ThermoWorks y Wikipedia** (puntos de humo del inventario): no coinciden entre sí, y Wikipedia junta valores de fuentes de distinta calidad.
 - **Joteo** (el aceite baja 5–15 °C al cargar; congelado, 1,5 a 2 veces el tiempo): no se abrió en esta tarea; queda afuera.
 - **Pavo frito:** 3–5 min por libra son 7–11 min por kilo; se sacó de la tabla porque no se fríe en casa.
 
@@ -199,7 +206,6 @@ Rango general (Taste of Home): 177–191 °C.
 ### Notas
 
 - Conversión de °F, redondeada al grado: 325 °F = 162,8 → 163 °C; 350 = 176,7 → 177; 360 = 182,2 → 182; 365 = 185; 375 = 190,6 → 191; 400 = 204,4 → 204; internas 130 °F = 54,4 → 54; 145 → 63; 165 → 74. El inventario ponía 190 °C para 375 °F; da 191.
-- Puntos de humo: 450 °F = 232,2 → 232; 445 = 229,4 → 229; 435 = 223,9 → 224; 410 = 210. Se sacó la marca «Enova», que no se vende acá.
 
 ---
 
