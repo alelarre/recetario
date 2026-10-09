@@ -1547,8 +1547,9 @@ la deja a 64 px del borde de arriba.
 **Una ficha de tabla** (`.ficha.ref`) lleva el título (`h2`), la tabla, las
 notas y la fuente. La tabla (`.tabla-ref`) va en `--txt-chico`, con filas de
 1 px `--borde` abajo y `--e-2` de padding en cada celda. El encabezado va en
-`--fg-2` peso 600, sin cortar renglón, y la unidad de una columna, entre
-paréntesis, en `--fg-3` peso 400. **La primera columna va en peso 600:** es lo
+`--txt-micro` `--fg-2` peso 600, para que una palabra entre entera en una
+columna angosta, y la unidad de una columna, entre paréntesis, en `--fg-3`
+peso 400. **La primera columna va en peso 600:** es lo
 que se busca. En una tabla agrupada, el título de cada grupo es una fila
 completa en `--fg`, con más aire arriba (`--e-4`).
 
@@ -1556,9 +1557,10 @@ completa en `--fg`, con más aire arriba (`--e-4`).
 de la tabla el conmutador de un dato (§6.28) a lo ancho, con `--e-3` debajo;
 la tabla muestra sólo las columnas de la variante elegida.
 
-**Todas las tablas reparten el ancho igual:** la primera columna al 40 % —al
-30 % desde cuatro columnas— y el resto en partes iguales, así la segunda
-columna cae en el mismo lugar en cada ficha. Un encabezado corta renglón entre
+**Las columnas de una tabla tienen el mismo ancho hasta tres:** dos van 50 y
+50; tres, un tercio cada una. Desde cuatro, la primera —los nombres, que son
+largos— vale el doble que las demás: 40/20/20/20 con cuatro, y un tercio y
+cuatro sextos con cinco. Un encabezado corta renglón entre
 palabras; el texto de una celda, con guion; un rango —«90–120»— no se corta.
 
 **Una tabla ancha se desplaza de costado dentro de su ficha;** la página no.

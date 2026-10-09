@@ -735,26 +735,26 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 .referencias mark { background: color-mix(in srgb, var(--acento) 40%, transparent); color: var(--fg); border-radius: 2px; }
 /* Una tabla ancha se desplaza dentro de su ficha; la página no. */
 .tabla-ref { overflow-x: auto; margin: 0 calc(-1 * var(--e-2)); }
-/* Todas las tablas con el mismo reparto: la primera columna —lo que se
-   busca— al 40 % (al 30 % desde cuatro columnas), y el resto en partes iguales. Así la segunda columna cae en
-   el mismo lugar en cada ficha. Un encabezado o una palabra que no entra
-   corta renglón en vez de ensanchar la tabla. */
+/* Columnas del mismo ancho hasta tres: dos son 50 y 50, tres son un tercio
+   cada una. Desde cuatro, la primera —los nombres, que son largos— vale el
+   doble que las demás: con cuatro, 40 y 20; con cinco, un tercio y un sexto.
+   Un encabezado o una palabra que no entra corta renglón en vez de ensanchar
+   la tabla. */
 .tabla-ref table { border-collapse: collapse; width: 100%; font-size: var(--txt-chico); table-layout: fixed; }
-.tabla-ref thead th:first-child { width: 40%; }
-/* Con cuatro columnas o más, al 40 % las otras no alcanzan para un
-   encabezado como «Heladera» ni para un rango como «90–120». */
-.tabla-ref table:has(thead th:nth-child(4)) thead th:first-child { width: 30%; }
+.tabla-ref table:has(thead th:nth-child(4)) thead th:first-child { width: 40%; }
+.tabla-ref table:has(thead th:nth-child(5)) thead th:first-child { width: 33.33%; }
 .tabla-ref th, .tabla-ref td { text-align: left; padding: var(--e-2) var(--e-1); border-bottom: 1px solid var(--borde); vertical-align: top;
   overflow-wrap: break-word; }
 .tabla-ref th:first-child, .tabla-ref td:first-child { padding-left: var(--e-2); }
 /* El texto de una celda se parte con guion; un encabezado, entre palabras. */
 .tabla-ref td { hyphens: auto; }
-.tabla-ref th { color: var(--fg-2); font-weight: 600; }
+/* Los encabezados son rótulos: en micro, para que una palabra entre entera en una columna angosta. */
+.tabla-ref th { color: var(--fg-2); font-weight: 600; font-size: var(--txt-micro); }
 /* Un rango —«90–120»— no se corta en el guion. */
 .tabla-ref .rango { white-space: nowrap; }
 .tabla-ref td:first-child { font-weight: 600; }
 .tabla-ref .u { font-weight: 400; color: var(--fg-3); }
-.tabla-ref .grupo-ref th { color: var(--fg); padding-top: var(--e-4); }
+.tabla-ref .grupo-ref th { color: var(--fg); padding-top: var(--e-4); font-size: var(--txt-chico); }
 .notas-ref { margin: var(--e-3) 0 0; padding-left: var(--e-4); font-size: var(--txt-chico); color: var(--fg-2); }
 .notas-ref a { color: var(--fg-2); }
 .fuente-ref { margin: var(--e-3) 0 0; font-size: var(--txt-micro); color: var(--fg-3); }
