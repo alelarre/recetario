@@ -144,7 +144,8 @@ export const PIZZA: {
 export interface PuntoDeAzucar { nombre: string; min: number; max: number | null; prueba: string; usos: string }
 
 /** Puntos del azúcar a nivel del mar, en °C; `max: null` es un solo valor. */
-export const AZUCAR: { puntos: readonly PuntoDeAzucar[]; metrosPorGrado: Constante; notas: readonly string[]; fuente: Fuente } = {
+/** Los puntos del azúcar, sin fuente a la vista; `metrosPorGrado` guarda la suya. */
+export const AZUCAR: { puntos: readonly PuntoDeAzucar[]; metrosPorGrado: Constante; notas: readonly string[] } = {
   puntos: [
     { nombre: 'Hilo', min: 110, max: 112, prueba: 'forma un hilo líquido que no se hace bolita', usos: 'almíbar' },
     { nombre: 'Bolita blanda', min: 112, max: 116, prueba: 'bolita blanda que se aplasta al sacarla', usos: 'cremas, rellenos, fudge' },
@@ -157,8 +158,7 @@ export const AZUCAR: { puntos: readonly PuntoDeAzucar[]; metrosPorGrado: Constan
     { nombre: 'Azúcar quemada', min: 177, max: null, prueba: '—', usos: '—' }
   ],
   metrosPorGrado: { valor: 275, unidad: 'm de altitud por °C menos', fuente: CSU_CANDY },
-  notas: [],
-  fuente: CSU_CANDY
+  notas: []
 };
 
 /** Por cada clara: los coeficientes se multiplican por el peso de las claras (1 = el mismo peso). */
@@ -182,7 +182,7 @@ export const MERENGUE: readonly TipoDeMerengue[] = [
   },
   {
     id: 'suizo', nombre: 'Suizo', azucarPorClara: 1.67, impalpablePorClara: 0,
-    aguaPorAzucarAlmibar: 0, azucarAlmibarPorClara: 0, temperatura: 'baño maría hasta 45 °C',
+    aguaPorAzucarAlmibar: 0, azucarAlmibarPorClara: 0, temperatura: 'baño maría hasta 71 °C',
     fuente: LAROUSSE_SUIZO
   },
   {

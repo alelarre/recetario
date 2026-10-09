@@ -96,8 +96,7 @@ describe('el índice', () => {
     const fuentes: (readonly [string, Fuente])[] = [
       ...MERENGUE.map(m => [`merengue ${m.id}`, m.fuente] as const),
       ['MOLDE.fuenteAtajos', MOLDE.fuenteAtajos],
-      ...MOLDE.atajos.flatMap(a => (a.fuente ? [[`molde ${a.id}`, a.fuente] as const] : [])), ['PIZZA.fuenteNapolitana', PIZZA.fuenteNapolitana],
-      ['AZUCAR.fuente', AZUCAR.fuente]
+      ...MOLDE.atajos.flatMap(a => (a.fuente ? [[`molde ${a.id}`, a.fuente] as const] : [])), ['PIZZA.fuenteNapolitana', PIZZA.fuenteNapolitana]
     ];
     for (const [nombre, fuente] of fuentes) expect(problemasDeConstante(nombre, { valor: 0, unidad: '', fuente })).toEqual([]);
   });

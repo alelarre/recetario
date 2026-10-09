@@ -166,13 +166,13 @@ export function cuentaPuntoAzucar(k: typeof AZUCAR): Cuenta {
       const altitud = typeof v['altitud'] === 'number' && Number.isFinite(v['altitud']) && v['altitud'] >= 0 ? v['altitud'] : 0;
       const porHervor = opcion(v, 'referencia') === 'hervor';
       if (porHervor && hervor && (hervor < HERVOR_MINIMO || hervor > HERVOR_AL_NIVEL_DEL_MAR)) {
-        return resultado([], [k.fuente], [`El agua hierve entre ${HERVOR_MINIMO} y ${HERVOR_AL_NIVEL_DEL_MAR} °C; revisá la lectura del termómetro.`]);
+        return resultado([], [], [`El agua hierve entre ${HERVOR_MINIMO} y ${HERVOR_AL_NIVEL_DEL_MAR} °C; revisá la lectura del termómetro.`]);
       }
       const resta = porHervor ? (hervor ? HERVOR_AL_NIVEL_DEL_MAR - hervor : null) : altitud / k.metrosPorGrado.valor;
       if (resta === null) return null;
       const t = (x: number): string => String(Math.round(x - resta));
       return {
-        lineas: [], advertencias: [], fuentes: [k.fuente, k.metrosPorGrado.fuente],
+        lineas: [], advertencias: [], fuentes: [],
         tabla: {
           columnas: ['Punto', '°C', 'Prueba en agua fría', 'Usos'],
           filas: k.puntos.map(p => [p.nombre, p.max === null ? t(p.min) : `${t(p.min)}–${t(p.max)}`, p.prueba, p.usos])

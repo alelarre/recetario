@@ -125,11 +125,13 @@ describe('el merengue', () => {
 
 describe('los puntos del azúcar', () => {
   const azucar = cuentaPuntoAzucar({
-    metrosPorGrado: k(100), notas: [], fuente,
+    metrosPorGrado: k(100), notas: [],
     puntos: [{ nombre: 'Hilo', min: 110, max: 112, prueba: 'hilo', usos: 'almíbar' }, { nombre: 'Caramelo', min: 160, max: null, prueba: '—', usos: '—' }]
   });
-  it('a nivel del mar, la tabla tal cual', () => {
-    expect(azucar.calcular({ referencia: 'altitud', altitud: 0, hervor: null })?.tabla?.filas[0]).toEqual(['Hilo', '110–112', 'hilo', 'almíbar']);
+  it('a nivel del mar, la tabla tal cual, sin fuentes', () => {
+    const r = azucar.calcular({ referencia: 'altitud', altitud: 0, hervor: null });
+    expect(r?.tabla?.filas[0]).toEqual(['Hilo', '110–112', 'hilo', 'almíbar']);
+    expect(r?.fuentes).toEqual([]);
   });
   it('con la altitud, resta un grado cada tantos metros', () => {
     expect(azucar.calcular({ referencia: 'altitud', altitud: 300, hervor: null })?.tabla?.filas.map(f => f[1])).toEqual(['107–109', '157']);
