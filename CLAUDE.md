@@ -128,8 +128,9 @@ Todo en español rioplatense: documentos, comentarios, UI y nombres de carpetas.
 - **El input principal no es el editor**, son sesiones con un agente en la Mac
   (Claude Code o Claude Desktop) que usa el MCP local (`mcp/`), el skill
   `skills/recetario/SKILL.md` y sus herramientas: recibe una fuente (PDF, foto,
-  video, sitio web, una lista de links) y escribe las recetas, corrige las que
-  están u ordena el recetario. El editor existe para corregir. En un borrador,
+  video, sitio web, una lista de links) o sólo un título o una idea, que
+  investiga en la web, y escribe las recetas, corrige las que están u ordena el
+  recetario. El editor existe para corregir. En un borrador,
   «Convertir con Agente» guarda la receta y manda el pedido por el menú
   Compartir del sistema, donde se elige el agente; sin menú Compartir (Chrome
   en la Mac), abre claude.ai con el pedido. El pedido pide `id: <id>` en el

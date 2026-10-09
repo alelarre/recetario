@@ -18,7 +18,7 @@ tienen las fórmulas, las tablas y las fuentes de cada una.
 
 | ID | Descripción | Detalle | Estado |
 |---|---|---|---|
-| P105 | Skill: investigar una receta a partir de un título o una idea | Hoy el skill parte de una fuente (PDF, foto, video, sitio, links). Instruirlo para que, con sólo un título o una idea, busque fuentes, compare versiones y escriba la receta. | Abierto |
+| P105 | Skill: investigar una receta a partir de un título o una idea | Hoy el skill parte de una fuente (PDF, foto, video, sitio, links). Instruirlo para que, con sólo un título o una idea, busque fuentes, compare versiones y escriba la receta. | Falta probar |
 | P115 | Pan: planificador por etapas | De la hora de inicio a la hora de cada etapa del pan, con un aviso en cada una. Usa los temporizadores de *Herramientas*. Idea 41. | Abierto |
 | P118 | Herramientas: asado | Carne por persona con corrección por hueso; carbón o leña según la carne o las horas; tiempo de parrilla por corte; tiempo de horno por peso, corte y punto; método de la mano para medir el calor. Los tiempos por corte no coinciden entre las fuentes relevadas: hay que elegir una. Ideas 169, 182, 184, 185 y 187. | Abierto |
 | P119 | Herramientas: orquestador de los pasos de una comida | Planificar los pasos de una comida: cada uno con su hora o su duración, y el orden en que van. Al ejecutarlo crea temporizadores que se comportan como los de *Temporizadores* —la tira, el aviso, *Parar*—, con alguna diferencia: tocar uno lleva al orquestador y no a *Temporizadores*. Otras pantallas lo pueden abrir con los pasos ya cargados. La línea de tiempo del asado (idea 186) y el planificador del pan (P115) son dos usos de esta herramienta. | Abierto |
