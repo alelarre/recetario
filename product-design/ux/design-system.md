@@ -1526,15 +1526,16 @@ abajo, y los pies pegados de la receta y del plan suben.
 **La entrada** lleva arriba la caja de búsqueda (`buscar`, §3.4) con el texto
 «Buscar» y, debajo, los tags como chips (§6.10) en renglones; el activo, con
 `.act`. Debajo, **la lista de fichas**, con el desplegable del navegador
-(`<details>`): una sola tarjeta (`.fichas-ref`: `--surface`, borde 1 px
-`--borde`, `--r-ficha`) con una fila por ficha (`.ficha-ref`), de 52 px, en
-`--txt-base` peso 400, separadas por 1 px `--borde`, y a la derecha una
-flecha de 7 px en `--fg-2` que apunta abajo cerrada y arriba abierta. **La
-ficha abierta** pasa a peso 600 en
-`--acento`, y debajo se ve la ficha sin su título ni tarjeta propia. Mientras
-se escribe cambia sólo lo de debajo de los tags, no la caja. **Los
-resultados** van en la misma tarjeta: las tablas abiertas, con sólo las filas
-que coinciden. **Lo buscado se resalta** con
+(`<details>`): **cada ficha es su tarjeta** (`.ficha-ref`: `--surface`,
+borde 1 px `--borde`, `--r-ficha`), separadas por `--e-3`. Cerrada es una fila
+de 52 px en `--txt-base` peso 400, con una flecha de 7 px en `--fg-2` a la
+derecha, que apunta abajo cerrada y arriba abierta. **La ficha abierta** pasa
+a peso 600 en `--acento`, con una línea de 1 px `--borde` debajo del título, y
+su contenido —la ficha sin su título ni tarjeta propia— va **hundido**: sobre
+`--bg`, el fondo de la página, más oscuro que la tarjeta, para despegarse del
+resto. Mientras se escribe cambia sólo lo de debajo de los tags, no la caja.
+**Los resultados** son tarjetas iguales: las tablas abiertas, con sólo las
+filas que coinciden. **Lo buscado se resalta** con
 `<mark>`: fondo de `--acento` al 40 %, texto `--fg`. Sin nada, «Nada con «…»»
 en `--txt-base` `--fg-2`, como un estado vacío.
 

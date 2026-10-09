@@ -708,11 +708,11 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .llegada input, .llegada .miniatura, .llegada textarea { animation: none; } }
 
 /* ---- Referencias ---- */
-/* La entrada es una sola lista de fichas en una tarjeta: cada una es una fila
-   que se despliega en el lugar. Lo abre y lo cierra el navegador
-   (`<details>`); la flecha gira al abrir. */
-.fichas-ref { background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha); overflow: hidden; }
-.fichas-ref > .ficha-ref + .ficha-ref { border-top: 1px solid var(--borde); }
+/* La entrada es una lista de fichas, cada una su tarjeta, que se despliega en
+   el lugar. Lo abre y lo cierra el navegador (`<details>`); la flecha gira al
+   abrir. */
+.fichas-ref { display: flex; flex-direction: column; gap: var(--e-3); }
+.ficha-ref { background: var(--surface); border: 1px solid var(--borde); border-radius: var(--r-ficha); overflow: hidden; }
 .ficha-ref > summary { display: flex; align-items: center; gap: var(--e-3); min-height: 52px; padding: 0 var(--e-4);
   list-style: none; cursor: pointer; }
 .ficha-ref > summary::-webkit-details-marker { display: none; }
@@ -723,9 +723,12 @@ html:has(:where(#velo-escritura:not([hidden]))) { overflow: hidden; }
 /* La ficha abierta se marca: es dónde se está mirando. */
 .ficha-ref[open] > summary { font-weight: 600; color: var(--acento); }
 .ficha-ref > summary:focus-visible { outline: 2px solid var(--acento); outline-offset: -2px; }
+/* Abierta, el contenido va hundido: el fondo de la página, más oscuro que la
+   tarjeta, debajo de una línea. Así se despega del resto. */
+.ficha-ref[open] > summary { border-bottom: 1px solid var(--borde); }
 /* Adentro del desplegable, la ficha no es otra tarjeta: el título ya está en la fila que la abre. */
-.ficha-ref > .ficha { margin: 0; border: 0; border-radius: 0; background: none; padding: 0 var(--e-4) var(--e-4); }
-.ficha-ref > .tabla-ref { margin: 0 0 var(--e-2); padding: 0 var(--e-3); }
+.ficha-ref > .ficha { margin: 0; border: 0; border-radius: 0; background: var(--bg); padding: var(--e-3) var(--e-4) var(--e-4); }
+.ficha-ref > .tabla-ref { margin: 0; padding: var(--e-2) var(--e-3); background: var(--bg); }
 /* Las variantes de una tabla —«Al agua» o «Al vapor»—: el conmutador de un
    dato (§6.28) a lo ancho, arriba de la tabla. */
 .ficha.ref > .variantes-ref { display: grid; margin: 0 0 var(--e-3); }
