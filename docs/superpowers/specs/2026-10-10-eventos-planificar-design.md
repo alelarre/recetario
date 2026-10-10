@@ -25,22 +25,27 @@ Un archivo por tipo —`merienda.ts`, `asado.ts`, `comida.ts`, `picada.ts`,
 `coctel.ts`—, cada uno con:
 
 - **`id`, `nombre`.**
-- **Sus datos:** las entradas propias del tipo, con la forma de `Entrada` de
-  `src/referencias/tipos.ts` (número u opción, con valor por defecto y
-  `visibleSi`). Adultos, chicos y margen son comunes a todos los tipos y no
-  se declaran en cada uno.
+- **Sus datos:** los propios del tipo, cada uno un número, una opción o un
+  sí o no, con su valor por defecto. **Adultos, chicos, horas, si hace calor
+  y el margen son comunes** a todos los tipos y no se declaran en cada uno:
+  las horas son la duración de la merienda y del cóctel, y las de las
+  bebidas.
 - **Sus grupos:** «Para comer», «Para picar antes», «Acompañamiento»,
   «Postre», «Carne», «Bocados», «Aparte»… Cada grupo dice si **se reparte**
   o no.
 - **Sus cosas**, cada una en un grupo, con:
   - `id`, `nombre`;
   - si viene prendida;
-  - sus opciones propias (por ejemplo, el tamaño de la empanada);
   - **la porción por persona si es lo único de su grupo**, en su unidad
-    (unidades, porciones, gramos), que sale de los datos (§3);
+    (unidades, porciones, gramos, mililitros), que sale de los datos (§3) y
+    puede depender de los datos del evento (las horas, si la picada es lo
+    que se come);
   - la unidad de compra en que se muestra (§1.4).
-  Una cosa que puede ir en dos grupos —las empanadas, para picar antes o
-  para comer— lleva el grupo como opción.
+  Una cosa no tiene opciones propias: lo que cambia la porción es otra cosa
+  —pasta seca y pasta fresca son dos—. La que puede ir en dos grupos —las
+  empanadas, para picar antes o para comer— está en los dos, como dos cosas.
+  **Una cosa puede tener partes**, cada una con su porción en gramos: la
+  picada que va antes de un asado sale en fiambres, quesos y pan.
 - **Lo que se suma después:** bebidas, hielo, infusiones, carbón o leña
   (§1.5), cada uno prendido o no según el tipo.
 
@@ -98,23 +103,24 @@ cuenta.
 
 Se calcula con las cosas ya resueltas y con sus propios datos.
 
-- **Bebidas.** Datos: horas, si hace calor, cuántos adultos toman alcohol, y
+- **Bebidas.** Datos: cuántos adultos toman alcohol —vacío, todos—, y
   cuáles hay —cerveza, vino, fernet, espumante para el brindis, gaseosa,
-  agua, jugo—. El consumo por persona sale de las horas y el calor. **El
+  agua, jugo—. El consumo por persona sale de las horas y el calor del
+  evento: las primeras horas a pleno y después menos. **El
   alcohol se reparte** entre las bebidas con alcohol prendidas, como las
   cosas de un grupo; lo mismo las sin alcohol. Los chicos toman sólo sin
   alcohol, con su propio consumo. El espumante para el brindis va aparte,
   una copa por persona. El fernet suma su gaseosa cola. Sale en litros y en
   envases de acá: lata de 473 ml, botella de 750 ml, gaseosa de 2,25 l.
-- **Hielo.** Datos: para los vasos o también para enfriar las bebidas, y el
-  calor. Para enfriar, suma kilos por litro de bebida fría. Sale en kilos y
+- **Hielo.** Datos: para los vasos o también para enfriar las bebidas. El
+  calor del evento lo sube. Para enfriar, suma kilos por litro de bebida fría. Sale en kilos y
   en bolsas.
 - **Infusiones** (merienda). Datos: cuáles hay —café, té, mate cocido,
   leche—. Tazas por persona y cuánto café, cuántos saquitos o cuánta leche
   por taza; sale en gramos, saquitos y litros.
 - **Carbón o leña** (asado). Datos: carbón o leña, y si hay viento o frío.
-  Sale de los kilos de carne cruda —carne, embutidos y achuras— y va en
-  bolsas de carbón o en kilos de leña.
+  Sale de los kilos de carne cruda que van en gramos —los cortes y las
+  achuras— y va en bolsas de carbón o en kilos de leña.
 
 ## 2. Los cinco tipos
 
@@ -122,11 +128,11 @@ Los nombres de las cosas son los de esta sección; los números, de §3.
 
 ### Merienda
 
-- **Datos:** duración (hasta 2 h, de 2 a 4 h, más de 4 h) y si es
-  cumpleaños infantil.
+- **Datos:** si es cumpleaños infantil.
 - **Bocados**, se reparte: facturas y medialunas, sándwiches de miga,
-  salados (chipá, pizzetas), dulces (masas secas, alfajores). La duración y
-  el cumpleaños infantil multiplican el grupo.
+  salados (chipá, pizzetas), dulces (masas secas, alfajores). Las horas, por
+  tramos (hasta 2 h, de 2 a 4 h, más de 4 h), y el cumpleaños infantil
+  multiplican el grupo.
 - **Aparte:** la torta, en kg; el chico cuenta entero.
 - **Después:** infusiones y bebidas (sólo sin alcohol, prendidas gaseosa y
   jugo).
@@ -140,7 +146,7 @@ Los nombres de las cosas son los de esta sección; los números, de §3.
 - **Carne**, se reparte: tira, vacío, matambre, entraña, pollo, cerdo,
   cordero. **Cada corte trae su porción**: los de hueso, más gramos. La
   ocasión multiplica el grupo.
-- **Aparte:** chorizo, morcilla, chinchulines, mollejas, provoleta, papas,
+- **Aparte:** chorizo, morcilla, chinchulines, mollejas, provoleta, verduras a la parrilla, papas,
   ensalada, pan.
 - **Para picar antes:** la picada (la de §2 Picada, entera y como antes de
   comer), apagada.
@@ -152,8 +158,8 @@ Los nombres de las cosas son los de esta sección; los números, de §3.
   «Para comer».
 - **Para picar antes**, se reparte: picada, empanadas, vitel toné,
   bocaditos.
-- **Para comer**, se reparte: empanadas, pizzas, pasta, carne, pollo,
-  pescado. La ocasión multiplica el grupo.
+- **Para comer**, se reparte: empanadas, pizzas, pasta seca, pasta fresca,
+  carne, pollo, pescado. La ocasión multiplica el grupo.
 - **Acompañamiento**, se reparte: puré, papas, ensalada, arroz.
 - **Postre**, se reparte: torta, helado, postre en porciones, fruta.
 - **Aparte:** el pan.
@@ -169,9 +175,10 @@ Los nombres de las cosas son los de esta sección; los números, de §3.
 
 ### Cóctel o lunch
 
-- **Datos:** duración.
+- **Datos:** ninguno propio.
 - **Bocados**, se reparte: sándwiches de miga, bocaditos fríos, bocaditos
-  calientes, empanaditas, pizzetas, dulces. La duración multiplica el grupo.
+  calientes, empanaditas, pizzetas, dulces. Las horas, por tramos,
+  multiplican el grupo.
 - **Después:** bebidas, hielo.
 
 ## 3. Los números: `src/eventos/datos/`
@@ -198,25 +205,28 @@ empanadas para comer, el helado y el vino por persona.
 **En la lista de Herramientas**, la última: **Evento** —*Cuánto comprar para
 una reunión*—, con un ícono nuevo, `invitados` (dos personas, el `users` de
 Lucide), del trazo de los demás. Con el volver y el ícono delante del
-título, como las calculadoras.
+título, como las calculadoras. **A la derecha del encabezado, Compartir**,
+como en la lista de compras: abre la ficha de compartir con *Texto* como
+única opción, que manda el texto de §1.2 al menú Compartir del sistema o, sin
+él, al portapapeles (`compartir.ts`).
 
 Con los componentes de las calculadoras (`design-system.md` §6.28):
 
 1. **Los datos:** el tipo de evento en un desplegable; adultos y chicos en
-   el par de cantidades; el margen en un conmutador (*Sin margen · 10 % ·
-   20 %*); y los datos del tipo.
+   el par de cantidades; las horas; *Hace calor*, un interruptor; el margen
+   en un conmutador (*Sin margen · 10 % · 20 %*); y los datos del tipo.
 2. **Las cosas, por grupo:** una ficha por grupo, con su nombre arriba y una
-   fila con interruptor por cosa. Prendida, abre sus opciones debajo. Estas
-   fichas llevan título, a diferencia de las demás de §6.28: la misma cosa
-   —las empanadas— puede estar en dos grupos, y el nombre dice en cuál.
+   fila con interruptor por cosa. Estas fichas llevan título, a diferencia
+   de las demás de §6.28: la misma cosa —las empanadas— puede estar en dos
+   grupos, y el nombre dice en cuál.
 3. **Lo que se suma después:** una ficha con un interruptor por cada uno —
    *Bebidas*, *Hielo*, *Infusiones*, *Carbón o leña*—; prendido, abre sus
    datos.
 4. **El resultado**, al pie, en la ficha del resultado: arriba las cifras
    —las personas y, en el asado, la carne en kg—; debajo, los ítems por grupo, como
    ítems de ingrediente con sus grupos; después, las advertencias y las
-   fuentes. Al pie, **Copiar**, que deja el texto de §1.2 en el portapapeles
-   con el respaldo de `compartir.ts`.
+   fuentes. Sin resultado (§1.3), una línea: *Escribí cuántos son y prendé
+   lo que va a haber.*
 5. **Empezar de nuevo**, al final de la pantalla: vuelve todo a los valores
    por defecto, en todos los tipos.
 
@@ -225,7 +235,7 @@ una opción, pinta la pantalla entera sin cambiar de ruta, porque cambia qué
 filas se ven.
 
 **Lo elegido se guarda** en `localStorage`, `recetario.evento`, en cada
-cambio, con `try/catch`: el tipo, adultos, chicos y margen, y lo de cada tipo
+cambio, con `try/catch`: el tipo, adultos, chicos, horas, calor y margen, y lo de cada tipo
 por separado, así cambiar de tipo y volver no pierde nada. Una opción
 guardada que ya no existe vuelve a la de por defecto; una cosa guardada que
 ya no existe se ignora.
@@ -233,11 +243,13 @@ ya no existe se ignora.
 ## 5. El agente
 
 - **`calcular_evento`** en el MCP (`mcp/eventos.ts`, registrada en
-  `servidor.ts`). Recibe el tipo, adultos, chicos, margen, los datos del tipo,
-  qué cosas van —por `id` o por nombre, sin tildes ni mayúsculas— con sus
-  opciones, y lo que se suma después con sus datos. Lo que falta lo completa
-  con los valores por defecto; las cosas que no se nombran quedan como las
-  trae el tipo. Devuelve el resultado agrupado, las advertencias, las
+  `servidor.ts`). Recibe el tipo, adultos, chicos, horas, calor, margen, los
+  datos del tipo, qué cosas prender y cuáles apagar —por `id` o por nombre,
+  sin tildes ni mayúsculas—, y lo que se suma después, apagado o con sus
+  datos. Lo que falta lo completa con los valores por defecto; las cosas que
+  no se nombran quedan como las trae el tipo, después de su atajo si se le
+  pasa el tipo de asado. Un nombre que no se encuentra, o que nombra a dos
+  cosas, devuelve un error con las opciones. Devuelve el resultado agrupado, las advertencias, las
   fuentes y el texto para copiar. Sin tipo, o con uno que no existe, devuelve
   la lista de tipos con sus cosas y sus datos. No usa el Drive ni el login.
 - **El skill `herramientas`** suma cuándo usarla («armame las cantidades para
