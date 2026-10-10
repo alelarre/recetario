@@ -27,6 +27,7 @@ de esta misma carpeta, cada uno con su propia numeración:
 | Carnes, aves, pescados, huevos y técnicas de cocción | `carnes-cocciones.md` |
 | Conversiones, equivalencias, sustituciones y escalado | `conversiones-sustituciones.md` |
 | Cantidades por persona, básicos, bebidas, conservación y costos | `cantidades-bebidas-conservacion.md` |
+| Eventos: tipos, parámetros, cantidades por rol, derivadas y cronograma | `eventos.md` |
 | Pastelería, chocolate, dulces, helados y técnica modernista | `pasteleria-dulces-helados.md` |
 | Inventario por sitio y por app, e índices de catálogos | `catalogos-y-apps.md` |
 
