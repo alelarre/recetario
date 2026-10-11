@@ -92,15 +92,26 @@ export interface Calculado {
   carneG: number;
   /** Mililitros de bebida fría, con el margen: los enfría el hielo. */
   mlFrios: number;
+  /** El reparto guardado del tipo: lo de los sliders de lo que se suma va con sus claves (`bebidas.cerveza`). */
+  reparto: Readonly<Record<string, number>>;
 }
 /** Lo que devuelve lo que se suma: sus ítems, los números que usó y lo que tiene que avisar. */
-export interface Parcial { items: readonly Item[]; usados: readonly Dato[]; mlFrios?: number; advertencias?: readonly string[] }
+export interface Parcial {
+  items: readonly Item[];
+  usados: readonly Dato[];
+  mlFrios?: number;
+  advertencias?: readonly string[];
+  /** El porcentaje de cada cosa que se reparte, por su clave, para los sliders. */
+  reparto?: Readonly<Record<string, number>>;
+}
 export interface Ademas {
   id: IdAdemas;
   nombre: string;
   /** Dónde va, en la pantalla y en el resultado: «Además», o «Para el fuego» lo de la cocción. */
   grupo: string;
   datos: readonly DatoPedido[];
+  /** Lo que se reparte con sliders: grupos de claves de lo prendido, cada uno suma 100. */
+  reparte?: (v: Valores) => readonly (readonly string[])[];
   calcular(c: Calculado, v: Valores): Parcial;
 }
 

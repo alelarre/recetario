@@ -2512,7 +2512,8 @@ function pintarTemporizadoresVivos(paso?: 1 | -1): void {
  */
 function pintarRepartoDelEvento(grupo: string): void {
   const r = calcularEvento(controlEvento.estado(), TIPOS_DE_EVENTO, COMUNES_DE_EVENTO);
-  const g = r?.grupos.find(x => x.id === grupo);
+  // El grupo puede ser de lo que se come o de lo que se suma: las bebidas también se reparten.
+  const g = r ? [...r.grupos, ...r.ademas].find(x => x.id === grupo) : undefined;
   if (!g) return;
   for (const i of g.items) {
     const lugar = document.querySelector(`#app [data-cantidad-item="${grupo}:${i.id}"]`);

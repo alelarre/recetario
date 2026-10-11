@@ -31,7 +31,7 @@ const COMB: DatosCombustible = { carbonPorKgCarne: d(1), lenaPorKgCarne: d(2.5),
 
 const calc = (c: Partial<Contexto> = {}, extra: Partial<Calculado> = {}): Calculado => ({
   contexto: { adultos: 10, chicos: 0, personas: 10, horas: 4, calor: false, tipo: {}, ...c },
-  margen: 1, carneG: 0, mlFrios: 0, ...extra
+  margen: 1, carneG: 0, mlFrios: 0, reparto: {}, ...extra
 });
 const cantidades = (r: { items: readonly { id: string; cantidad: string }[] }) => Object.fromEntries(r.items.map(i => [i.id, i.cantidad]));
 const solo = (...ids: string[]): Valores => Object.fromEntries(['cerveza', 'vino', 'fernet', 'gaseosa', 'agua', 'brindis'].map(id => [id, ids.includes(id)]));
@@ -39,8 +39,8 @@ const solo = (...ids: string[]): Valores => Object.fromEntries(['cerveza', 'vino
 describe('las bebidas', () => {
   const b = bebidas(BEB, ['cerveza']);
 
-  it('van en Además; el carbón o la leña, en Para el fuego', () => {
-    expect([b.grupo, hielo(HIELO).grupo, infusiones(INF).grupo, combustible(COMB).grupo]).toEqual(['Además', 'Además', 'Además', 'Para el fuego']);
+  it('las bebidas y las infusiones van en Bebidas; el hielo en Además; el carbón o la leña, en Para el fuego', () => {
+    expect([b.grupo, hielo(HIELO).grupo, infusiones(INF).grupo, combustible(COMB).grupo]).toEqual(['Bebidas', 'Además', 'Bebidas', 'Para el fuego']);
   });
 
   it('piden los adultos que toman y un sí o no por bebida, prendidas las del tipo', () => {
@@ -84,7 +84,24 @@ describe('las bebidas', () => {
   });
 
   it('sin ninguna prendida, nada', () => {
-    expect(b.calcular(calc(), solo())).toEqual({ items: [], usados: [], mlFrios: 0 });
+    expect(b.calcular(calc(), solo())).toEqual({ items: [], usados: [], mlFrios: 0, reparto: {} });
+  });
+
+  it('se reparten en dos: las con alcohol y las sin alcohol, cada una con las prendidas', () => {
+    expect(b.reparte?.(solo('cerveza', 'vino', 'gaseosa'))).toEqual([['bebidas.cerveza', 'bebidas.vino'], ['bebidas.gaseosa']]);
+  });
+
+  it('el reparto divide a los que toman: la gente queda fija y los litros siguen el ritmo de cada bebida', () => {
+    const r = b.calcular(calc({}, { reparto: { 'bebidas.cerveza': 0.7, 'bebidas.vino': 0.3 } }), solo('cerveza', 'vino', 'gaseosa', 'agua'));
+    expect(cantidades(r)).toEqual({ cerveza: '8,4 l', vino: '1,8 l', gaseosa: '4 l', agua: '2 l' });
+    expect(r.reparto).toEqual({ 'bebidas.cerveza': 70, 'bebidas.vino': 30, 'bebidas.gaseosa': 50, 'bebidas.agua': 50 });
+    expect(r.items.map(i => i.cosa)).toEqual(['bebidas.cerveza', 'bebidas.vino', 'bebidas.gaseosa', 'bebidas.agua']);
+  });
+
+  it('con una sola de las suyas no hay reparto; la cola y el brindis no llevan', () => {
+    const r = b.calcular(calc(), solo('fernet', 'gaseosa', 'brindis'));
+    expect(r.reparto).toEqual({});
+    expect(r.items.find(i => i.id === 'cola')?.cosa).toBeUndefined();
   });
 });
 
@@ -142,7 +159,8 @@ describe('en el evento', () => {
     };
     const r = calcularEvento(e, [TIPO], COMUNES);
     expect(r?.ademas.map(g => [g.titulo, Object.fromEntries(g.items.map(i => [i.id, i.cantidad]))])).toEqual([
-      ['Además', { cerveza: '12 l', hielo: '11 kg · 4 bolsas de 3 kg' }],
+      ['Bebidas', { cerveza: '12 l' }],
+      ['Además', { hielo: '11 kg · 4 bolsas de 3 kg' }],
       ['Para el fuego', { carbon: '4,5 kg · 2 bolsas de 3 kg' }]
     ]);
   });

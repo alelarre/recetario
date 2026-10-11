@@ -84,6 +84,12 @@ describe('calcular_evento', () => {
     expect('grupos' in conPollo && conPollo.grupos.find(g => g.id === 'carne')?.reparto).toEqual({ tira: 60, pollo: 40 });
   });
 
+  it('el reparto también vale para las bebidas, por nombre', () => {
+    const r = calcularEventoParaElAgente({ tipo: 'asado', adultos: 10, reparto: { Cerveza: 70 } });
+    expect('ademas' in r && r.ademas.find(g => g.id === 'Bebidas')?.reparto)
+      .toMatchObject({ 'bebidas.cerveza': 70, 'bebidas.vino': 30 });
+  });
+
   it('sin personas, dice que no hay lista', () => {
     expect(calcularEventoParaElAgente({ tipo: 'asado' }, TIPOS, COMUNES)).toEqual({ vacio: 'Sin personas, o con todo apagado, no hay lista.' });
   });

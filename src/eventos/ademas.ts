@@ -4,8 +4,9 @@
  * referencias, y los tests le pasan otros. El margen ya viene en lo
  * calculado; lo que lee de las cosas —la carne, la bebida fría— ya lo trae.
  */
-import type { Ademas, Dato, Item, NombreDeEnvase } from './tipos.js';
+import type { Ademas, Dato, Item, NombreDeEnvase, Valores } from './tipos.js';
 import { envases, peso, unidades, volumen } from './formato.js';
+import { partes } from './reparto.js';
 
 export interface Bebida {
   id: string;
@@ -32,46 +33,55 @@ export interface Infusion { id: string; nombre: string; prendida: boolean; porTa
 export interface DatosInfusiones { tazasPorPersona: Dato; infusiones: readonly Infusion[] }
 export interface DatosCombustible { carbonPorKgCarne: Dato; lenaPorKgCarne: Dato; vientoOFrio: Dato; bolsaCarbon: { kg: Dato; nombre: NombreDeEnvase } }
 
+/** La clave de una bebida en el reparto del tipo: no se cruza con las de las cosas. */
+const clave = (id: string): string => `bebidas.${id}`;
+
 /** `prendidas`: las que van al empezar, por `id`; `brindis`, el espumante del brindis. Cambian con el tipo. */
 export function bebidas(d: DatosBebidas, prendidas: readonly string[]): Ademas {
+  const deTipo = (alcohol: boolean, v: Valores): Bebida[] => d.bebidas.filter(b => b.alcohol === alcohol && v[b.id] === true);
   return {
-    id: 'bebidas', nombre: 'Bebidas', grupo: 'Además',
+    id: 'bebidas', nombre: 'Bebidas', grupo: 'Bebidas',
+    // Dos repartos: el de las con alcohol divide a los que toman; el de las sin alcohol, a todos.
+    reparte: v => [deTipo(true, v).map(b => clave(b.id)), deTipo(false, v).map(b => clave(b.id))],
     datos: [
       { id: 'toman', nombre: 'Adultos que toman alcohol', tipo: 'numero', porDefecto: null },
       ...d.bebidas.map(b => ({ id: b.id, nombre: b.nombre, tipo: 'si-no' as const, porDefecto: prendidas.includes(b.id) })),
       { id: 'brindis', nombre: 'Espumante para el brindis', tipo: 'si-no', porDefecto: prendidas.includes('brindis') }
     ],
-    calcular({ contexto: c, margen }, v) {
+    calcular({ contexto: c, margen, reparto }, v) {
       const horas = Math.min(c.horas, d.horasPlenas.valor) + Math.max(0, c.horas - d.horasPlenas.valor) * d.despues.valor;
       const calor = c.calor ? d.calor.valor : 1;
       // Vacío, toman todos los adultos; nunca más que ellos.
       const toman = typeof v['toman'] === 'number' ? Math.min(v['toman'], c.adultos) : c.adultos;
-      const prendidas = d.bebidas.filter(b => v[b.id] === true);
       const items: Item[] = [];
       const usados: Dato[] = [];
+      const porcentajes: Record<string, number> = {};
       let mlFrios = 0;
       // Sólo los litros: el envase lo elige el que compra.
-      const sumar = (id: string, nombre: string, ml: number, ...datos: Dato[]): void => {
-        items.push({ id, nombre, cantidad: volumen(ml) });
+      const sumar = (id: string, nombre: string, ml: number, cosa: string | undefined, ...datos: Dato[]): void => {
+        items.push({ id, nombre, cantidad: volumen(ml), ...(cosa ? { cosa } : {}) });
         usados.push(...datos);
         mlFrios += ml;
       };
       for (const alcohol of [true, false]) {
-        const grupo = prendidas.filter(b => b.alcohol === alcohol);
+        const grupo = deTipo(alcohol, v);
+        // El reparto divide a la gente, no los litros: cada uno toma a su ritmo.
+        const parte = partes(grupo.map(b => clave(b.id)), reparto);
+        if (grupo.length > 1) for (const b of grupo) porcentajes[clave(b.id)] = Math.round((parte[clave(b.id)] ?? 0) * 100);
         // Los chicos toman sólo lo sin alcohol, por su factor.
         const personas = alcohol ? toman : c.adultos + c.chicos * d.chico.valor;
         for (const b of grupo) {
-          const ml = b.mlPorHora.valor * horas * personas * calor * margen / grupo.length;
+          const ml = b.mlPorHora.valor * horas * personas * calor * margen * (parte[clave(b.id)] ?? 0);
           if (ml <= 0) continue;
-          sumar(b.id, b.nombre, ml, b.mlPorHora, d.horasPlenas, d.despues,
+          sumar(b.id, b.nombre, ml, clave(b.id), b.mlPorHora, d.horasPlenas, d.despues,
             ...(c.calor ? [d.calor] : []), ...(!alcohol && c.chicos > 0 ? [d.chico] : []));
-          if (b.con) sumar(b.con.id, b.con.nombre, ml * b.con.mlPorMl.valor, b.con.mlPorMl);
+          if (b.con) sumar(b.con.id, b.con.nombre, ml * b.con.mlPorMl.valor, undefined, b.con.mlPorMl);
         }
       }
       if (v['brindis'] === true && c.adultos > 0) {
-        sumar('brindis', 'Espumante para el brindis', d.brindis.mlPorAdulto.valor * c.adultos * margen, d.brindis.mlPorAdulto);
+        sumar('brindis', 'Espumante para el brindis', d.brindis.mlPorAdulto.valor * c.adultos * margen, undefined, d.brindis.mlPorAdulto);
       }
-      return { items, usados, mlFrios };
+      return { items, usados, mlFrios, reparto: porcentajes };
     }
   };
 }
@@ -96,7 +106,7 @@ export function hielo(d: DatosHielo): Ademas {
 
 export function infusiones(d: DatosInfusiones): Ademas {
   return {
-    id: 'infusiones', nombre: 'Infusiones', grupo: 'Además',
+    id: 'infusiones', nombre: 'Infusiones', grupo: 'Bebidas',
     datos: d.infusiones.map(i => ({ id: i.id, nombre: i.nombre, tipo: 'si-no' as const, porDefecto: i.prendida })),
     calcular({ contexto: c, margen }, v) {
       const prendidas = d.infusiones.filter(i => v[i.id] === true);

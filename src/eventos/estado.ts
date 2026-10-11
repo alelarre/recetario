@@ -58,9 +58,13 @@ function completarTipo(t: TipoDeEvento, crudo: unknown): EstadoDeTipo {
       const v = cosas[c.id];
       return [c.id, typeof v === 'boolean' ? v : inicial.cosas[c.id] ?? c.prendida];
     })),
-    reparto: Object.fromEntries(t.cosas.flatMap(c => {
-      const v = numeroOVacio(reparto[c.id]);
-      return v === null ? [] : [[c.id, v]];
+    // Las claves que valen: las de las cosas y las de lo que se suma que se reparte (`bebidas.cerveza`).
+    reparto: Object.fromEntries([
+      ...t.cosas.map(c => c.id),
+      ...t.ademas.flatMap(({ ademas: a }) => (a.reparte ? a.datos.map(d => `${a.id}.${d.id}`) : []))
+    ].flatMap(k => {
+      const v = numeroOVacio(reparto[k]);
+      return v === null ? [] : [[k, v]];
     })),
     ademas: Object.fromEntries(t.ademas.map(a => {
       const g = ademas[a.ademas.id];
@@ -141,13 +145,23 @@ export const conCosa = (e: EstadoEvento, tipos: readonly TipoDeEvento[], id: str
 const prendidasDe = (t: TipoDeEvento, et: EstadoDeTipo, grupo: string): string[] =>
   t.cosas.filter(c => c.grupo === grupo && (et.cosas[c.id] ?? c.prendida)).map(c => c.id);
 
+/** Los repartos de lo que se suma después: cada uno, las claves de lo prendido (`bebidas.cerveza`). */
+const repartosDeAdemas = (t: TipoDeEvento, et: EstadoDeTipo): string[][] =>
+  t.ademas.flatMap(({ ademas: a }) => (a.reparte ? a.reparte(valoresDe(a.datos, et.ademas[a.id]?.datos ?? {})).map(ids => [...ids]) : []));
+
+/** Con quiénes se reparte una cosa: las prendidas de su grupo o, si es de lo que se suma, las de su reparto. */
+function compañerasDe(t: TipoDeEvento, et: EstadoDeTipo, grupo: string, id: string): string[] {
+  if (t.grupos.some(g => g.id === grupo)) return prendidasDe(t, et, grupo);
+  return repartosDeAdemas(t, et).find(ids => ids.includes(id)) ?? [];
+}
+
 /**
  * Un slider: la cosa pasa a llevar ese porcentaje de su grupo, y las demás
  * prendidas se reparten el resto en la proporción que ya tenían entre ellas.
  */
 export const conReparto = (e: EstadoEvento, tipos: readonly TipoDeEvento[], grupo: string, id: string, porcentaje: number): EstadoEvento =>
   cambiarTipo(e, tipos, (t, et) => {
-    const ids = prendidasDe(t, et, grupo);
+    const ids = compañerasDe(t, et, grupo, id);
     if (!ids.includes(id)) return et;
     const actuales = partes(ids, et.reparto);
     const p = Math.min(1, Math.max(0, porcentaje / 100));
@@ -165,8 +179,7 @@ export const conReparto = (e: EstadoEvento, tipos: readonly TipoDeEvento[], grup
 export const conRepartoDe = (e: EstadoEvento, tipos: readonly TipoDeEvento[], porcentajes: Readonly<Record<string, number>>): EstadoEvento =>
   cambiarTipo(e, tipos, (t, et) => {
     const reparto: Record<string, number> = { ...et.reparto };
-    for (const g of t.grupos) {
-      const ids = prendidasDe(t, et, g.id);
+    for (const ids of [...t.grupos.map(g => prendidasDe(t, et, g.id)), ...repartosDeAdemas(t, et)]) {
       const fijas = ids.filter(id => typeof porcentajes[id] === 'number');
       if (!fijas.length) continue;
       const pedidas = Object.fromEntries(fijas.map(id => [id, Math.max(0, (porcentajes[id] ?? 0) / 100)]));
@@ -191,7 +204,9 @@ export const conDatoDeAdemas = (e: EstadoEvento, tipos: readonly TipoDeEvento[],
   cambiarTipo(e, tipos, (t, et) => {
     const a = et.ademas[ademas];
     const declarado = t.ademas.find(x => x.ademas.id === ademas)?.ademas;
-    return a && declarado
-      ? { ...et, ademas: { ...et.ademas, [ademas]: { ...a, datos: valoresDe(declarado.datos, { ...a.datos, [dato]: valor }) } } }
-      : et;
+    if (!a || !declarado) return et;
+    // Una bebida que se prende entra con la parte de un reparto parejo, como una cosa.
+    const prende = valor === true && a.datos[dato] !== true;
+    const reparto = prende ? Object.fromEntries(Object.entries(et.reparto).filter(([k]) => k !== `${ademas}.${dato}`)) : et.reparto;
+    return { ...et, reparto, ademas: { ...et.ademas, [ademas]: { ...a, datos: valoresDe(declarado.datos, { ...a.datos, [dato]: valor }) } } };
   });

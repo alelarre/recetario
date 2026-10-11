@@ -1492,7 +1492,7 @@ par de cantidades y, debajo, un número por restricción alimentaria en su
 fila. **Las fichas de las cosas de *Evento* llevan título** (`.ficha.datos.con-titulo`):
 la misma cosa —las empanadas— puede estar en dos grupos, y el título dice en
 cuál. Cada cosa es un interruptor; lo que se suma después, también, en sus
-fichas *Además* y *Para el fuego*, y prendido abre sus datos debajo.
+fichas *Bebidas*, *Además* y *Para el fuego*, y prendido abre sus datos debajo.
 
 ### 6.29 Temporizadores
 

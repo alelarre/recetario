@@ -216,7 +216,8 @@ advertencia del método (al ras, la harina con cuchara) y la fuente.
 - **Si el usuario dice cómo repartir** —«más tira que pollo», «mitad
   empanadas, mitad pizza»—, pasalo en `reparto`, en porcentajes por cosa:
   `{ "tira": 60, "pollo": 40 }`. Los kilos de la carne no cambian; cambia
-  cuánto es de cada corte.
+  cuánto es de cada corte. Vale también para las bebidas: `{ "cerveza": 70,
+  "vino": 30 }` reparte a los que toman.
 - **Preguntá si hay vegetarianos, veganos, celíacos o personas sin lactosa**
   y pasalos en `restricciones`. La herramienta avisa por cada grupo sin nada
   apto: mostrá los avisos, sin cambiar las cantidades.

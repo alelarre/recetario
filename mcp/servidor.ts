@@ -238,7 +238,7 @@ export function crearServidor(recetario: Recetario): McpServer {
       prender: z.array(z.string()).optional().describe('Cosas que van, por id o por nombre.'),
       apagar: z.array(z.string()).optional().describe('Cosas que no van, por id o por nombre.'),
       reparto: z.record(z.string(), z.number()).optional()
-        .describe('Qué porcentaje de su grupo lleva cada cosa, por id o por nombre: { "tira": 60, "pollo": 20 }. Lo que no se nombra del grupo se reparte el resto. En un grupo de una sola unidad, el total no cambia.'),
+        .describe('Qué porcentaje de su grupo lleva cada cosa o bebida, por id o por nombre: { "tira": 60, "pollo": 20 } o { "cerveza": 70 }; en las bebidas reparte a los que toman. Lo que no se nombra del grupo se reparte el resto. En un grupo de una sola unidad, el total no cambia.'),
       ademas: z.record(z.string(), z.union([z.literal(false), z.record(z.string(), valorLibre)])).optional()
         .describe('Lo que se suma después, por id: false lo apaga; un objeto lo prende con sus datos: { "bebidas": { "toman": 6, "fernet": true }, "hielo": false }.')
     }

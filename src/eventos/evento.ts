@@ -138,8 +138,8 @@ export function calcularEvento(e: EstadoEvento, tipos: readonly TipoDeEvento[], 
     });
   }
 
-  let calculado: Calculado = { contexto, margen, carneG, mlFrios: 0 };
-  const ademas: { id: string; titulo: string; items: Item[] }[] = [];
+  let calculado: Calculado = { contexto, margen, carneG, mlFrios: 0, reparto: et.reparto };
+  const ademas: { id: string; titulo: string; items: Item[]; reparto?: Record<string, number> }[] = [];
   const avisos: string[] = [];
   for (const id of ORDEN) {
     const declarado = t.ademas.find(x => x.ademas.id === id);
@@ -148,8 +148,13 @@ export function calcularEvento(e: EstadoEvento, tipos: readonly TipoDeEvento[], 
     const r = declarado.ademas.calcular(calculado, valoresDe(declarado.ademas.datos, estado?.datos ?? {}));
     // Cada uno en su grupo, en el orden en que aparecen: «Además» y «Para el fuego».
     if (r.items.length) {
-      const grupo = ademas.find(g => g.titulo === declarado.ademas.grupo);
-      if (grupo) grupo.items.push(...r.items); else ademas.push({ id: declarado.ademas.grupo, titulo: declarado.ademas.grupo, items: [...r.items] });
+      let grupo = ademas.find(g => g.titulo === declarado.ademas.grupo);
+      if (!grupo) {
+        grupo = { id: declarado.ademas.grupo, titulo: declarado.ademas.grupo, items: [] };
+        ademas.push(grupo);
+      }
+      grupo.items.push(...r.items);
+      if (r.reparto && Object.keys(r.reparto).length) grupo.reparto = { ...grupo.reparto, ...r.reparto };
     }
     usados.push(...r.usados);
     avisos.push(...(r.advertencias ?? []));

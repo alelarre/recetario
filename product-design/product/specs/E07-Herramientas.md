@@ -917,15 +917,17 @@ número está en `research/herramientas/verificacion-eventos.md`.
   volumen, en ml debajo de 1 l y en litros con un decimal. Las bebidas van
   sólo en litros, sin envases: la lata o la botella las elige el que compra.
   Las pizzas, las bolsas de hielo y las de carbón, enteras.
-- [ ] **Lo que se suma después:** las bebidas —el alcohol repartido entre las
-  que hay, para los adultos que toman; lo sin alcohol para todos, los chicos
-  por su factor; las primeras horas a pleno y después menos; con calor,
+- [ ] **Lo que se suma después:** las bebidas —dos repartos que dividen a la
+  gente, no los litros: el de las con alcohol, a los adultos que toman; el
+  de las sin alcohol, a todos, los chicos por su factor; cada bebida lleva
+  su porcentaje de la gente, parejo o el de sus sliders, a su ritmo por
+  hora; las primeras horas a pleno y después menos; con calor,
   más; el fernet con su cola; el espumante del brindis aparte, por adulto—;
   el hielo, por persona y, si se pide, por litro de bebida fría; las
   infusiones, tazas repartidas entre las que hay; el carbón o la leña, por
-  kilo de carne cruda, con más si hay viento o frío. Las bebidas, el hielo y
-  las infusiones van en **Además**; el carbón o la leña, en **Para el
-  fuego**.
+  kilo de carne cruda, con más si hay viento o frío. Las bebidas y las
+  infusiones van en **Bebidas**; el hielo, en **Además**; el carbón o la
+  leña, en **Para el fuego**.
 - [ ] Un número sin fuente lleva su nota, que sale como advertencia.
 - [ ] **Restricciones alimentarias:** cuántos de los invitados son
   vegetarianos, veganos, celíacos o sin lactosa —son parte de los invitados,
@@ -971,13 +973,15 @@ con un decimal y coma.
   lactosa*—; las horas, *Hace calor*, el margen en un
   conmutador y los datos del tipo.
 - [ ] Una ficha por grupo, **con su título**, y un interruptor por cosa; las
-  fichas *Además* y *Para el fuego*, con un interruptor por lo que se suma,
+  fichas *Bebidas*, *Además* y *Para el fuego*, con un interruptor por lo que se suma,
   que prendido abre sus datos.
 - [ ] El resultado al pie: las personas y, en el asado, la carne en kg; los
-  ítems por grupo; lo que se suma, en *Además* y *Para el fuego*; las
+  ítems por grupo; lo que se suma, en *Bebidas*, *Además* y *Para el fuego*; las
   advertencias y las fuentes.
 - [ ] **El reparto, en el resultado:** en un grupo con dos o más cosas que se
   reparten, debajo de las líneas de cada una, un slider con su porcentaje.
+  En *Bebidas*, dos juegos: las con alcohol y las sin alcohol; la cola del
+  fernet y el brindis no llevan.
   Están vinculados: subir uno baja los demás en la proporción que tenían
   entre ellos, y siempre suman 100. Mover uno repinta sólo las cantidades y
   los porcentajes de su grupo, no la pantalla: el arrastre sigue. El título

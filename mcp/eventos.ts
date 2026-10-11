@@ -95,15 +95,23 @@ export function calcularEventoParaElAgente(p: PedidoEvento, tipos: readonly Tipo
     }
     return null;
   };
-  const errorAlPrender = alternar(p.prender ?? [], true) ?? alternar(p.apagar ?? [], false) ?? alternar(Object.keys(p.reparto ?? {}), true);
+  const errorAlPrender = alternar(p.prender ?? [], true) ?? alternar(p.apagar ?? [], false);
   if (errorAlPrender) return errorAlPrender;
   if (p.reparto) {
-    const porId: Record<string, number> = {};
+    // Cada nombre es una cosa o una bebida; lo nombrado se prende.
+    const conReparte = tipo.ademas.map(x => x.ademas).filter(a => a.reparte);
+    const repartibles = [
+      ...tipo.cosas.map(c => ({ id: c.id, nombre: c.nombre, clave: c.id, ademas: null as string | null })),
+      ...conReparte.flatMap(a => a.datos.filter(d => d.tipo === 'si-no').map(d => ({ id: d.id, nombre: d.nombre, clave: `${a.id}.${d.id}`, ademas: a.id as string | null })))
+    ];
+    const porClave: Record<string, number> = {};
     for (const [nombre, pct] of Object.entries(p.reparto)) {
-      const c = encontrar(tipo.cosas, nombre);
-      if (!esError(c)) porId[c.id] = pct;
+      const x = encontrar(repartibles, nombre);
+      if (esError(x)) return x;
+      e = x.ademas ? conDatoDeAdemas(conAdemas(e, tipos, x.ademas, true), tipos, x.ademas, x.id, true) : conCosa(e, tipos, x.id, true);
+      porClave[x.clave] = pct;
     }
-    e = conRepartoDe(e, tipos, porId);
+    e = conRepartoDe(e, tipos, porClave);
   }
   for (const [id, x] of Object.entries(p.ademas ?? {})) {
     const a = encontrar(tipo.ademas.map(y => y.ademas), id);

@@ -28,8 +28,16 @@ const CON_ATAJO: TipoDeEvento = {
   ademas: [{ ademas: ADEMAS, prendido: true }],
   atajo: { dato: 'menu', cosas: { a: ['x'], b: ['y'] } }
 };
+const BEBIDAS_DE_PRUEBA: Ademas = {
+  id: 'bebidas', nombre: 'Bebidas', grupo: 'Bebidas',
+  datos: [{ id: 'a', nombre: 'A', tipo: 'si-no', porDefecto: true }, { id: 'b', nombre: 'B', tipo: 'si-no', porDefecto: true },
+          { id: 'c', nombre: 'C', tipo: 'si-no', porDefecto: false }],
+  reparte: v => [['a', 'b', 'c'].filter(x => v[x] === true).map(x => `bebidas.${x}`)],
+  calcular: () => ({ items: [], usados: [] })
+};
+const CON_BEBIDAS: TipoDeEvento = { ...CON_ATAJO, id: 'tres', nombre: 'Tres', ademas: [{ ademas: BEBIDAS_DE_PRUEBA, prendido: true }] };
 const SIN_ATAJO: TipoDeEvento = { id: 'dos', nombre: 'Dos', datos: CON_ATAJO.datos, grupos: CON_ATAJO.grupos, cosas: CON_ATAJO.cosas, ademas: CON_ATAJO.ademas };
-const TIPOS = [CON_ATAJO, SIN_ATAJO];
+const TIPOS = [CON_ATAJO, SIN_ATAJO, CON_BEBIDAS];
 
 describe('los datos de un tipo', () => {
   it('lo guardado que sigue valiendo se queda; lo demás vuelve a su valor por defecto', () => {
@@ -72,6 +80,11 @@ describe('lo leído del teléfono', () => {
   it('el reparto guardado de cosas que existen, con números válidos', () => {
     expect(completarEvento({ porTipo: { uno: { reparto: { x: 0.5, y: -1, vieja: 0.3, z: 'mucho' } } } }, TIPOS, COMUNES).porTipo['uno']?.reparto)
       .toEqual({ x: 0.5 });
+  });
+
+  it('el reparto guardado de las bebidas se conserva; el de una bebida que no existe, no', () => {
+    expect(completarEvento({ porTipo: { tres: { reparto: { 'bebidas.a': 0.6, 'bebidas.z': 0.4, 'otra.a': 1 } } } }, TIPOS, COMUNES).porTipo['tres']?.reparto)
+      .toEqual({ 'bebidas.a': 0.6 });
   });
 
   it('las restricciones guardadas que valen se quedan; las demás, vacías', () => {
@@ -150,6 +163,20 @@ describe('los cambios', () => {
   it('un reparto fijo por porcentajes: lo que no se nombra se reparte lo que queda', () => {
     const e = conRepartoDe(conCosa(inicial, TIPOS, 'y', true), TIPOS, { x: 50 });
     expect(estadoDeTipo(e, CON_ATAJO).reparto).toEqual({ x: 0.5, y: 0.25, z: 0.25 });
+  });
+
+  it('el slider de una bebida reparte entre las de su grupo; prender una le borra la parte', () => {
+    let e = conTipo(inicial, TIPOS, 'tres');
+    e = conReparto(e, TIPOS, 'Bebidas', 'bebidas.a', 70);
+    expect(estadoDeTipo(e, CON_BEBIDAS).reparto['bebidas.a']).toBe(0.7);
+    expect(estadoDeTipo(e, CON_BEBIDAS).reparto['bebidas.b']).toBeCloseTo(0.3);
+    e = conDatoDeAdemas(conDatoDeAdemas(e, TIPOS, 'bebidas', 'a', false), TIPOS, 'bebidas', 'a', true);
+    expect(estadoDeTipo(e, CON_BEBIDAS).reparto['bebidas.a']).toBeUndefined();
+  });
+
+  it('un reparto fijo también vale para las bebidas', () => {
+    const e = conRepartoDe(conTipo(inicial, TIPOS, 'tres'), TIPOS, { 'bebidas.a': 80 });
+    expect(estadoDeTipo(e, CON_BEBIDAS).reparto).toEqual({ 'bebidas.a': 0.8, 'bebidas.b': 0.19999999999999996 });
   });
 
   it('lo que se suma después se apaga y se le cambian los datos', () => {
