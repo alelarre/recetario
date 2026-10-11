@@ -37,7 +37,7 @@ const lineaDeFuente = (f: Fuente): string =>
   `<a href="${escapar(f.url)}" target="_blank" rel="noopener">${escapar(f.nombre)}</a>`;
 
 /** Todas las fuentes que cita, una sola vez por link. */
-function pieDeFuentes(fuentes: readonly Fuente[]): string {
+export function pieDeFuentes(fuentes: readonly Fuente[]): string {
   const unicas = fuentes.filter((f, i) => fuentes.findIndex(g => g.url === f.url) === i);
   return `<p class="fuente-ref">Fuente: ${unicas.map(lineaDeFuente).join(' · ')}</p>`;
 }

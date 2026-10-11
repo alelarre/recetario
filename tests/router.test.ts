@@ -195,6 +195,7 @@ describe('Herramientas', () => {
     // Las fichas se despliegan en la entrada: no tienen ruta propia.
     expect(parsearHash('#/herramientas/referencias/punto-humo')).toEqual({ vista: 'referencias', params: {} });
     expect(parsearHash('#/herramientas/conversor')).toEqual({ vista: 'conversor', params: {} });
+    expect(parsearHash('#/herramientas/evento')).toEqual({ vista: 'evento', params: {} });
     expect(esDelMenu('referencias')).toBe(false);
   });
 

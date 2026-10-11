@@ -6,7 +6,7 @@ export type Vista =
   | 'categorias' | 'editar-categoria' | 'tag'
   | 'plan' | 'plan-agregar' | 'plan-compras'
   | 'herramientas' | 'calculadora-pan' | 'calculadora-sal' | 'temporizadores'
-  | 'referencias' | 'conversor';
+  | 'referencias' | 'conversor' | 'evento';
 
 export interface Ruta {
   vista: Vista;
@@ -122,6 +122,7 @@ export function parsearHash(hash: unknown): Ruta {
     if (partes[1] === 'fermentados') return { vista: 'calculadora-sal', params: {} };
     if (partes[1] === 'temporizadores') return { vista: 'temporizadores', params: {} };
     if (partes[1] === 'conversor') return { vista: 'conversor', params: {} };
+    if (partes[1] === 'evento') return { vista: 'evento', params: {} };
     // Las fichas se despliegan en la entrada: lo que siga a `referencias/` la abre.
     if (partes[1] === 'referencias') return { vista: 'referencias', params: partes[2] ? {} : presentes(params, ['tag', 'q']) };
     return { vista: 'herramientas', params: {} };

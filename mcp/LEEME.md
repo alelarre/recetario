@@ -75,7 +75,7 @@ Desktop se suben como `.zip` desde *Configuración → Capacidades*.
 
 ## Las herramientas
 
-El servidor `recetario` registra veintiuna herramientas, en tres grupos.
+El servidor `recetario` registra veintidós herramientas, en cuatro grupos.
 
 **Las recetas y el recetario:** `formato`,
 `categorias`, `tags`, `buscar`, `leer`, `validar`, `crear`, `guardar`,
@@ -83,6 +83,10 @@ El servidor `recetario` registra veintiuna herramientas, en tres grupos.
 
 **Las calculadoras** (no usan el Drive ni el login): `calcular_pan` y
 `calcular_sal`, las mismas cuentas que las pantallas de *Pan* y *Fermentados*.
+
+**El evento** (tampoco usa el Drive ni el login): `calcular_evento`, la misma
+cuenta que *Evento*: cuánto comprar para una merienda, un asado, una comida,
+una picada o un cóctel. Sin `tipo`, devuelve los tipos con sus cosas.
 
 **Las referencias** (tampoco usan el Drive ni el login), las mismas tablas y
 cuentas que *Referencias* y el *Conversor* de la app, cada dato con su

@@ -94,24 +94,24 @@ const parDeCantidades = (una: string, entre: string, otra: string): string =>
 type Linea = { nombre: string; valor: string };
 
 /** Las líneas del resultado, como las de la ficha de ingredientes. */
-const lineas = (xs: readonly Linea[]): string =>
+export const lineas = (xs: readonly Linea[]): string =>
   xs.map(l => `<div class="ing"><span class="n">${escapar(l.nombre)}</span><span class="c">${escapar(l.valor)}</span></div>`).join('');
 
 /** Lo que manda en el resultado, en grande: el valor arriba y su nombre abajo. */
-const cifras = (xs: readonly Linea[]): string =>
+export const cifras = (xs: readonly Linea[]): string =>
   `<div class="cifras">${xs.map(x =>
     `<div class="cifra"><span class="v">${escapar(x.valor)}</span><span class="n">${escapar(x.nombre)}</span></div>`).join('')}</div>`;
 
-const grupo = (titulo: string): string => `<div class="grupo">${escapar(titulo)}</div>`;
+export const grupo = (titulo: string): string => `<div class="grupo">${escapar(titulo)}</div>`;
 
-const advertencias = (textos: readonly string[]): string =>
+export const advertencias = (textos: readonly string[]): string =>
   (textos.length ? `<ul class="advertencias">${textos.map(t => `<li>${escapar(t)}</li>`).join('')}</ul>` : '');
 
 /**
  * La ficha del resultado de una calculadora. Es un solo bloque para pintarlo
  * entero mientras se escribe una cantidad.
  */
-const fichaResultado = (contenido: string): string =>
+export const fichaResultado = (contenido: string): string =>
   `<div class="ficha resultado" data-resultado><h2>${ICO.balanza}Resultado</h2>${contenido}</div>`;
 
 export function renderHerramientas({ menu }: { menu?: MenuDePantalla }): string {
@@ -127,6 +127,7 @@ export function renderHerramientas({ menu }: { menu?: MenuDePantalla }): string 
       entrada('#/herramientas/fermentados', ICO.frasco, 'Fermentados', 'Porcentaje de sal y tiempos') +
       entrada('#/herramientas/referencias', ICO.libro, 'Referencias', 'Huevos, carne, masas, cocción y cuánto dura cada alimento') +
       entrada('#/herramientas/conversor', ICO.medidor, 'Conversor', 'Tazas, cucharas y gramos por ingrediente') +
+      entrada('#/herramientas/evento', ICO.invitados, 'Evento', 'Cuánto comprar para una reunión') +
     '</div></div>');
 }
 

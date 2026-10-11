@@ -10,12 +10,13 @@ que se aparta o lo que necesita precisarse.
 ## La épica
 
 Calcular las cantidades antes de cocinar —las de un pan: harinas, agua, sal y
-levadura o masa madre; y la sal de un fermentado—, consultar un dato mientras
+levadura o masa madre; la sal de un fermentado; y cuánto comprar para una
+reunión—, consultar un dato mientras
 se cocina —cuántos minutos, a qué temperatura, cuánto dura— y medir el tiempo,
 con un cronómetro y temporizadores.
 
-Son los temporizadores, dos calculadoras, las *Referencias* y el Conversor,
-en una sección propia del menú. **No leen ninguna receta
+Son los temporizadores, dos calculadoras, las *Referencias*, el Conversor y
+*Evento*, en una sección propia del menú. **No leen ninguna receta
 ni usan Drive:** no tocan el índice, ni el `.md`, ni la carpeta base. Una
 receta marcada con `pan` o `fermentado` tiene un botón que abre la que le
 corresponde, y el agente usa las mismas cuentas y las mismas tablas por el MCP.
@@ -49,14 +50,15 @@ aparece.
   y *Nueva receta* (`ux/information-architecture.md` §4.6).
 - [ ] `#/herramientas` es destino del menú (`MENU` en `src/ui/router.ts`):
   lleva la hamburguesa en vez del volver, y su entrada queda marcada.
-- [ ] La pantalla es una lista con cinco entradas, cada una con su ícono
+- [ ] La pantalla es una lista con seis entradas, cada una con su ícono
   adelante —como las entradas del menú lateral— y una línea que dice qué
   hace, en este orden: **Temporizadores** —*Cronómetro y cuentas
   regresivas*—, **Pan** —*Harinas, agua, sal y levadura*—, **Fermentados**
   —*Porcentaje de sal y tiempos*—, **Referencias** —*Huevos, carne, masas,
-  cocción y cuánto dura cada alimento*— y **Conversor** —*Tazas, cucharas y
-  gramos por ingrediente*—. Los íconos de las dos últimas son `libro` y
-  `medidor`.
+  cocción y cuánto dura cada alimento*—, **Conversor** —*Tazas, cucharas y
+  gramos por ingrediente*— y **Evento** —*Cuánto comprar para una
+  reunión*—. Los íconos de las tres últimas son `libro`, `medidor` e
+  `invitados`.
 
 #### C07.1.2 — Las rutas *(J6)*
 
@@ -66,8 +68,9 @@ aparece.
 - [ ] `#/herramientas/referencias` es la entrada de Referencias (C07.7.1);
   con `?tag=` y `?q=`, filtrada por un tag o con lo escrito en el buscador.
   Lo que siga a `referencias/` cae en la entrada: las fichas no tienen ruta
-  propia. `#/herramientas/conversor` es el Conversor (F07.11). Las dos llevan
-  el volver y el ícono delante del título.
+  propia. `#/herramientas/conversor` es el Conversor (F07.11) y
+  `#/herramientas/evento`, *Evento* (F07.12). Las tres llevan el volver y el
+  ícono delante del título.
 - [ ] Una calculadora abierta desde una receta vuelve a la receta; abierta
   desde la lista, vuelve a la lista. Por un link directo, el volver pone el
   Recetario en su lugar, como cualquier volver (IA §4.5).
@@ -877,11 +880,107 @@ fichas juntas, que se dibujan y guardan lo escrito como las de Referencias
 
 ---
 
+### F07.12 — Evento
+
+**Evento** dice cuánto comprar o hacer para una reunión. Hay cinco tipos
+—merienda, asado, comida, picada y cóctel o lunch—, cada uno con sus datos,
+sus cosas por grupo y lo que se suma después: bebidas, hielo, infusiones,
+carbón o leña. Un evento a la vez, guardado en el teléfono. No lee recetas
+ni usa Drive, así que el velo no aparece. **La cuenta vive en `src/eventos/`
+y los números en `src/eventos/datos/`**, cada uno con su fuente o con la
+nota de por qué no la tiene; ningún test fija un valor. De dónde salió cada
+número está en `research/herramientas/verificacion-eventos.md`.
+
+#### C07.12.1 — La cuenta *(J6)*
+
+- [ ] Para cada cosa prendida: su porción por persona —la de si fuera lo
+  único de su grupo— por las personas, donde un chico cuenta por un factor
+  y, en la torta, entero.
+- [ ] **Las cosas de un grupo que se reparte llevan cada una 1/n de su
+  porción**: con empanadas y pizza para comer, la mitad de cada una. Las de
+  un grupo que no se reparte, la entera.
+- [ ] Las horas, la ocasión y *con sobras* multiplican los grupos que dice
+  cada tipo; el margen —ninguno, 10 % o 20 %— va sobre todo.
+- [ ] Lo que se compra por unidad va entero y para arriba; las facturas, los
+  sándwiches de miga y las empanadas, a la media docena, con las docenas
+  dichas. El peso, en gramos debajo de 1 kg y en kg con un decimal; el
+  volumen, en ml debajo de 1 l y en litros con un decimal; los envases,
+  enteros.
+- [ ] **Lo que se suma después:** las bebidas —el alcohol repartido entre las
+  que hay, para los adultos que toman; lo sin alcohol para todos, los chicos
+  por su factor; las primeras horas a pleno y después menos; con calor,
+  más; el fernet con su cola; el espumante del brindis aparte, por adulto—;
+  el hielo, por persona y, si se pide, por litro de bebida fría; las
+  infusiones, tazas repartidas entre las que hay; el carbón o la leña, por
+  kilo de carne cruda, con más si hay viento o frío.
+- [ ] Un número sin fuente lleva su nota, que sale como advertencia.
+
+**Edge case:** sin personas, o con todo apagado, no hay lista: una línea lo
+dice. Horas vacías o en cero calculan con las de por defecto. Sin carne en
+gramos —un asado veggie, o sólo de chorizos—, el carbón o la leña no se
+calcula, y una advertencia lo dice. Las personas con decimales se muestran
+con un decimal y coma.
+
+#### C07.12.2 — Los tipos *(J6)*
+
+- [ ] **Merienda:** bocados que se reparten —facturas y medialunas,
+  sándwiches de miga, salados, dulces—, por las horas y si es cumpleaños
+  infantil; la torta aparte; infusiones y bebidas sin alcohol.
+- [ ] **Asado:** el tipo de asado —clásico, completo, de cerdo, mixto,
+  cordero o veggie— prende sus cosas y apaga las demás que nombra, como el
+  tipo de pan; la carne se reparte, cada corte con sus gramos; la ocasión la
+  multiplica; embutidos, achuras, provoleta, verduras, papas, ensalada y pan
+  aparte; la picada antes, opcional, en fiambres, quesos y pan; carbón o
+  leña.
+- [ ] **Comida:** para picar antes, para comer, acompañamiento y postre, cada
+  uno se reparte entre lo suyo; el pan aparte; la ocasión y *con sobras*
+  multiplican lo de comer. Las empanadas están en dos grupos, como dos
+  cosas.
+- [ ] **Picada:** fiambres, quesos, pan, vegetales, snacks y dips, según sea
+  lo que se come o vaya antes de comer.
+- [ ] **Cóctel o lunch:** bocados que se reparten, por las horas.
+
+#### C07.12.3 — La pantalla *(J6)*
+
+- [ ] El encabezado con el volver, el ícono `invitados`, *Evento* y, a la
+  derecha, Compartir: la ficha de compartir con *Texto* como única opción,
+  como la lista de compras.
+- [ ] Los datos (design-system §6.28): el tipo en un desplegable, adultos y
+  chicos en el par de cantidades, las horas, *Hace calor*, el margen en un
+  conmutador y los datos del tipo.
+- [ ] Una ficha por grupo, **con su título**, y un interruptor por cosa; una
+  ficha *Además* con un interruptor por lo que se suma, que prendido abre sus
+  datos.
+- [ ] El resultado al pie: las personas y, en el asado, la carne en kg; los
+  ítems por grupo; lo que se suma; las advertencias y las fuentes.
+- [ ] **Empezar de nuevo**, al final, vuelve todo a los valores por defecto.
+- [ ] Escribir un número pinta sólo el resultado; un toque o un desplegable
+  redibujan sin cambiar de ruta.
+- [ ] Lo elegido se guarda en `localStorage` (`recetario.evento`) en cada
+  cambio, con `try/catch`: el tipo, las personas, las horas, el calor, el
+  margen y lo de cada tipo por separado. Lo que ya no existe se ignora o
+  vuelve a su valor por defecto.
+
+#### C07.12.4 — El agente *(J6)*
+
+- [ ] `calcular_evento`, en el servidor `recetario`, usa `src/eventos/` y
+  **no usa Drive ni el login**. Recibe el tipo, adultos, chicos, horas,
+  calor, margen, los datos del tipo, qué cosas prender y apagar —por id o
+  por nombre, sin mirar mayúsculas ni tildes— y lo que se suma después,
+  apagado o con sus datos.
+- [ ] Lo que no viene sale del tipo; el tipo de asado prende lo suyo antes de
+  que prender y apagar lo corrijan.
+- [ ] Sin tipo, devuelve los tipos con sus datos, sus cosas y lo que se suma
+  después. Un nombre que no está, o que nombra a dos cosas, devuelve un
+  error con las opciones. Sin personas, dice que no hay lista.
+- [ ] Devuelve lo mismo que la pantalla y el texto de la lista. El skill
+  `herramientas` tiene su sección, *Los eventos*.
+
 ## Trazabilidad
 
 | Capacidad | Job |
 |---|---|
-| C07.1.1, C07.1.2, C07.2.1, C07.2.2, C07.2.3, C07.2.4, C07.2.5, C07.2.6, C07.2.7, C07.3.1, C07.4.1, C07.5.1, C07.5.2, C07.5b.1, C07.5b.2, C07.6.1, C07.6.2, C07.6.4, C07.6.5, C07.7.1, C07.7.2, C07.7.3, C07.7.4, C07.7.5, C07.8.1, C07.8.2, C07.8.3, C07.8.4, C07.9.1, C07.9.2, C07.9.3, C07.10.1, C07.11.1, C07.11.2 | J6 |
+| C07.1.1, C07.1.2, C07.2.1, C07.2.2, C07.2.3, C07.2.4, C07.2.5, C07.2.6, C07.2.7, C07.3.1, C07.4.1, C07.5.1, C07.5.2, C07.5b.1, C07.5b.2, C07.6.1, C07.6.2, C07.6.4, C07.6.5, C07.7.1, C07.7.2, C07.7.3, C07.7.4, C07.7.5, C07.8.1, C07.8.2, C07.8.3, C07.8.4, C07.9.1, C07.9.2, C07.9.3, C07.10.1, C07.11.1, C07.11.2, C07.12.1, C07.12.2, C07.12.3, C07.12.4 | J6 |
 | C07.6.3 | J6, J8 |
 
 Ninguna capacidad de esta épica quedó sin job.

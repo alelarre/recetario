@@ -318,6 +318,7 @@ de *Fotos* y en *Subir foto* al elegir la de una categoría (§6.4); a 2,5 px en
 | `balanza` | *Herramientas*, en el menú lateral y en su título, y delante del título de la ficha del resultado de una calculadora (§6.28). |
 | `reloj`, `pan`, `frasco` | Las tres herramientas —Temporizadores, Pan y Fermentados—: en su entrada de la lista de Herramientas y delante del título de su pantalla. `reloj` va también delante del nombre en la tira (§6.29). |
 | `libro`, `medidor` | Referencias y el Conversor: en su entrada de la lista de Herramientas y delante del título de sus pantallas —la entrada y cada ficha de Referencias, y el Conversor— (§6.30). Un libro abierto y una taza medidora con sus marcas, del trazo de los demás. |
+| `invitados` | *Evento*: en su entrada de la lista de Herramientas y delante del título de su pantalla. Dos personas, el `users` de Lucide, del trazo de los demás. |
 | `relojMas` | La marca `cuenta:` de una receta y los botones de minutos de Referencias, y *Cuenta regresiva* en la capa del editor (§6.30). El reloj abierto abajo a la derecha, con un «+» del mismo trazo en ese hueco. |
 | `cronometro`, `cronometroMas` | `cronometro`: un cronómetro, delante de su nombre en la lista y en la tira (§6.29). `cronometroMas`, con el «+» de `relojMas`: la marca `cronometro:` de una receta y *Cronómetro* en la capa del editor (§6.30). Un círculo, una aguja y el botón arriba. |
 | `tilde` | El botón de §6.30 recién tocado. |
@@ -1479,6 +1480,11 @@ lista en `--txt-chico` `--fg-2`.
 (§6.0): en una calculadora no hay botón primario con el que compita, y el
 resultado es lo que se vino a buscar. Los valores van en `--fg`, no en el
 acento: se leen por tamaño.
+
+**Las fichas de las cosas de *Evento* llevan título** (`.ficha.datos.con-titulo`):
+la misma cosa —las empanadas— puede estar en dos grupos, y el título dice en
+cuál. Cada cosa es un interruptor; lo que se suma después, también, y
+prendido abre sus datos debajo.
 
 ### 6.29 Temporizadores
 

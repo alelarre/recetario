@@ -970,6 +970,12 @@ describe('main.ts: las rutas', () => {
         for (const fn of tecleos) await fn({ target: campo });
         await esperar();
       },
+      /** Escribir o elegir en un campo de *Evento*. */
+      cambiarEnEvento: async (datos: Record<string, string>, valor: string, desplegable = false) => {
+        const campo = { dataset: datos, value: valor, ...(desplegable ? { options: [] } : {}), closest: (sel: string) => (sel === '[data-evento]' ? campo : null) };
+        for (const fn of tecleos) await fn({ target: campo });
+        await esperar();
+      },
       /** Elegir una opción en un desplegable de una calculadora. */
       elegirOpcion: async (opcion: string, valor: string) => {
         const campo = { dataset: { opcion }, value: valor, closest: (sel: string) => (sel === '[data-opcion]' ? campo : null) };
@@ -1152,7 +1158,8 @@ describe('main.ts: las rutas', () => {
       ['#/herramientas/fermentados', 'data-opcion="fermento"'],
       ['#/herramientas/temporizadores', 'data-accion="temporizador-empezar"'],
       ['#/herramientas/referencias', 'data-buscar-referencias'],
-      ['#/herramientas/conversor', 'data-buscar-referencia="conversor"']
+      ['#/herramientas/conversor', 'data-buscar-referencia="conversor"'],
+      ['#/herramientas/evento', 'data-evento="tipo"']
     ] as const) {
       await abrir(hash);
       expect(app.innerHTML, hash).toContain(marca);
@@ -1196,6 +1203,48 @@ describe('main.ts: las rutas', () => {
     await elegirOpcion('pan', 'focaccia');
     expect(pinturas.length).toBe(antes + 1);
     expect(app.innerHTML).toContain('<option value="focaccia" selected>');
+  });
+
+  describe('Evento', () => {
+    it('escribir los adultos pinta sólo el resultado y lo guarda', async () => {
+      const { abrir, cambiarEnEvento, pinturas, resultadosHerramienta, almacen } = await montar();
+      await abrir('#/herramientas/evento');
+      const antes = pinturas.length;
+      await cambiarEnEvento({ evento: 'adultos' }, '10');
+      expect(pinturas.length).toBe(antes);
+      expect(resultadosHerramienta.at(-1)).toContain('data-resultado');
+      expect(JSON.parse(almacen.getItem('recetario.evento') ?? '{}').adultos).toBe(10);
+    });
+
+    it('elegir el tipo redibuja con el elegido', async () => {
+      const { abrir, cambiarEnEvento, pinturas, app } = await montar();
+      await abrir('#/herramientas/evento');
+      const antes = pinturas.length;
+      await cambiarEnEvento({ evento: 'tipo' }, 'asado', true);
+      expect(pinturas.length).toBe(antes + 1);
+      expect(app.innerHTML).toContain('<option value="asado" selected>');
+    });
+
+    it('prender una cosa redibuja', async () => {
+      const { abrir, tocar, pinturas } = await montar();
+      await abrir('#/herramientas/evento');
+      const antes = pinturas.length;
+      await tocar('evento-alternar', { evento: 'cosa', id: 'salados', valor: '1' });
+      expect(pinturas.length).toBe(antes + 1);
+    });
+
+    it('compartir ofrece Texto solamente, y manda la lista del evento', async () => {
+      const compartidos: ShareData[] = [];
+      vi.stubGlobal('navigator', { share: async (d: ShareData) => { compartidos.push(d); } });
+      const { abrir, tocar, cambiarEnEvento, app } = await montar();
+      await abrir('#/herramientas/evento');
+      await cambiarEnEvento({ evento: 'adultos' }, '10');
+      await tocar('compartir-evento');
+      expect(app.innerHTML).toContain('hoja-compartir');
+      expect(app.innerHTML).not.toContain('data-accion="compartir-pdf"');
+      await tocar('compartir-texto');
+      expect(compartidos[0]?.text).toMatch(/^Merienda para 10\n\nBocados\n- Facturas y medialunas: /);
+    });
   });
 
   it('escribir una cantidad pinta sólo el resultado y el otro campo', async () => {
@@ -1510,7 +1559,7 @@ describe('main.ts: las rutas', () => {
       recetario: '#/', borradores: '#/borradores', plan: '#/plan', herramientas: '#/herramientas', ajustes: '#/ajustes', nueva: '#/nueva'
     };
     const SIN_MENU = ['#/c/Carnes', '#/r/f1', '#/r/f1/editar', '#/buscar?q=pan', '#/t/horno', '#/categorias', '#/plan/compras', '#/herramientas/pan', '#/herramientas/temporizadores',
-      '#/herramientas/referencias', '#/herramientas/conversor'];
+      '#/herramientas/referencias', '#/herramientas/conversor', '#/herramientas/evento'];
 
     it('cada vista de MENU dibuja la hamburguesa, el lateral con su entrada marcada, y el gesto lo abre', async () => {
       const { MENU } = await import('../src/ui/router.js');

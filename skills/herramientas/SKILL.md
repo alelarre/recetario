@@ -1,6 +1,6 @@
 ---
 name: herramientas
-description: Usar cuando el usuario quiere calcular un pan o una pizza (harina, agua, sal, levadura o prefermento), la sal de un fermentado, o consultar un dato de cocina: minutos de los huevos, temperatura de la carne, del aceite o del horno, agua para mate o té, a cuántos grados se sirve un vino o una cerveza, masa para un molde o por pieza, pasta fresca o rellena, bollo de pizza, puntos del azúcar, merengue, agua del arroz, granos, legumbres, tiempo de pasta, verduras, blanqueado, caldo, cuánto dura un alimento en la alacena, la heladera o el freezer, o pasar tazas y cucharas a gramos (medidas de otro país, sticks de manteca). Por ejemplo «¿a qué temperatura frío las milanesas?», «¿cuánto dura la crema abierta?» o «¿cuántos gramos es una taza de azúcar?». Trabaja con las herramientas del MCP `recetario`.
+description: Usar cuando el usuario quiere calcular un pan o una pizza (harina, agua, sal, levadura o prefermento), la sal de un fermentado, o consultar un dato de cocina: minutos de los huevos, temperatura de la carne, del aceite o del horno, agua para mate o té, a cuántos grados se sirve un vino o una cerveza, masa para un molde o por pieza, pasta fresca o rellena, bollo de pizza, puntos del azúcar, merengue, agua del arroz, granos, legumbres, tiempo de pasta, verduras, blanqueado, caldo, cuánto dura un alimento en la alacena, la heladera o el freezer, o pasar tazas y cucharas a gramos (medidas de otro país, sticks de manteca), o cuánto comprar para una reunión (merienda, asado, comida, picada o cóctel). Por ejemplo «¿a qué temperatura frío las milanesas?», «¿cuánto dura la crema abierta?», «¿cuántos gramos es una taza de azúcar?» o «¿cuánta carne compro para un asado de 15?». Trabaja con las herramientas del MCP `recetario`.
 ---
 
 # Herramientas
@@ -12,6 +12,7 @@ agente. Las tablas y las cuentas son las de la app: las herramientas del MCP
 - **Pan y sal:** `calcular_pan` y `calcular_sal`.
 - **Referencias:** `consultar_referencia` y las ocho `calcular_*` de masas,
   cocción y el conversor (ver *Las referencias*).
+- **Eventos:** `calcular_evento` (ver *Los eventos*).
 
 ## Las reglas de pan y sal
 
@@ -201,3 +202,17 @@ quiere otra que la de por defecto.
 receta es de EE. UU., `sistema: "EE. UU."`; si no se sabe, la métrica de
 por defecto, y se dice cuál se usó. Se muestran los gramos con la
 advertencia del método (al ras, la harina con cuchara) y la fuente.
+
+## Los eventos
+
+- **Los números salen de `calcular_evento`.** No sumes porciones por tu
+  cuenta ni corrijas lo que devuelve con lo que sepas.
+- **Preguntá sólo el tipo y cuántos son** —adultos y chicos— si no vinieron
+  en el pedido. Lo demás sale del tipo; el usuario lo ve en la lista y pide
+  cambiarlo.
+- **Pasá sólo lo que dijo el usuario.** «Un asado completo para 15, a la
+  noche» es `tipo: asado`, `adultos: 15`, `datos: { "tipo-asado": "completo",
+  "ocasion": "cena" }`. «Sin morcilla» es `apagar: ["morcilla"]`.
+- **Si devuelve `error` con `opciones`**, preguntá cuál, con las opciones. Si
+  devuelve `vacio`, falta cuántos son.
+- **Mostrá `texto`** tal como viene, y debajo las advertencias y las fuentes.

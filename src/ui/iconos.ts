@@ -54,6 +54,8 @@ export const ICO = {
   libro: svg('<path d="M2 5h6a4 4 0 0 1 4 4v11a3 3 0 0 0-3-3H2z"/><path d="M22 5h-6a4 4 0 0 0-4 4v11a3 3 0 0 1 3-3h7z"/>'),
   /** Conversor: una taza medidora con sus marcas. */
   medidor: svg('<path d="M5 4h12v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M17 8h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-2"/><path d="M5 9h4M5 13h4"/>'),
+  /** Evento: dos personas, el `users` de Lucide. */
+  invitados: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
   /** Un tag común, en el título de su lista. De Lucide (tag). */
   etiqueta: svg('<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>'),
   /** La lista de compras, en su título. De Lucide (shopping-cart). */

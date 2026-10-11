@@ -62,7 +62,16 @@ describe('la lista de herramientas', () => {
     expect(conversor).toBeGreaterThan(referencias);
     expect(html).toContain('<span class="tit">Referencias</span>');
     expect(html).toContain('<span class="tit">Conversor</span>');
-    expect(html.match(/class="fila herramienta"/g)).toHaveLength(5);
+    expect(html.match(/class="fila herramienta"/g)).toHaveLength(6);
+  });
+
+  it('termina con Evento, con su ícono y su línea', () => {
+    const html = renderHerramientas({});
+    const conversor = html.indexOf('href="#/herramientas/conversor"');
+    const evento = html.indexOf(`href="#/herramientas/evento">${ICO.invitados}`);
+    expect(evento).toBeGreaterThan(conversor);
+    expect(html).toContain('<span class="tit">Evento</span>');
+    expect(html).toContain('Cuánto comprar para una reunión');
   });
 
   it('con el menú, la hamburguesa y el lateral', () => {

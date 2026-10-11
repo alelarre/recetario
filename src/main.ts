@@ -73,6 +73,11 @@ import { accionesDeLista } from './lista-control.js';
 import { accionesDelCarrusel } from './carrusel-control.js';
 import { crearControlHerramientas } from './herramientas-control.js';
 import { renderHerramientas, renderPan, renderSal, resultadoPan, resultadoSal } from './ui/herramientas.js';
+import { crearControlEvento } from './eventos-control.js';
+import { renderEvento, resultadoEvento } from './ui/evento.js';
+import { calcularEvento, textoEvento } from './eventos/evento.js';
+import { TIPOS_DE_EVENTO } from './eventos/indice.js';
+import { COMUNES as COMUNES_DE_EVENTO } from './eventos/datos/comunes.js';
 import { accionesDeMarcas } from './marca-control.js';
 import { crearControlTemporizadores } from './temporizadores-control.js';
 import {
@@ -471,6 +476,15 @@ const herramientas = crearControlHerramientas({
   almacen: almacenLocal(),
   redibujar: () => { void render(); },
   pintarResultado: pintarResultadoDeHerramienta
+});
+
+/** Lo elegido en *Evento*. Antes del primer dibujo: `render` lo usa. */
+const controlEvento = crearControlEvento({
+  almacen: almacenLocal(),
+  tipos: TIPOS_DE_EVENTO,
+  comunes: COMUNES_DE_EVENTO,
+  redibujar: () => { void render(); },
+  pintarResultado: pintarResultadoDelEvento
 });
 
 /** La forma de la tira que está en el DOM (`formaDeTira`): con la misma, se escribe sólo el tiempo. */
@@ -1127,6 +1141,8 @@ async function render(ruta: Ruta = parsearHash(location.hash), llegada: Llegada 
     }
     case 'conversor':
       return pintar(renderConversor(FICHAS_DEL_CONVERSOR, controlReferencias.estado('conversor')));
+    case 'evento':
+      return pintar(renderEvento(controlEvento.estado(), TIPOS_DE_EVENTO, COMUNES_DE_EVENTO, estadoDePantalla.compartiendo ?? undefined));
     case 'temporizadores':
       return pintar(renderTemporizadores({ ...controlTemporizadores.estado(), nombre: nombreDeTemporizadorEscrito() }));
 
@@ -2259,9 +2275,8 @@ async function compartirLaReceta(que: 'link' | 'texto'): Promise<void> {
   }
 }
 
-/** La lista de compras, que se comparte sólo como texto. */
-async function compartirLasCompras(): Promise<void> {
-  const contenido = textoCompras(comprasLeidas?.lista ?? { conCantidad: [], sinCantidad: [] });
+/** Un texto que se comparte solo, sin link ni PDF: la lista de compras y la del evento. */
+async function compartirSoloTexto(contenido: string): Promise<void> {
   const apertura = aperturaDeCompartir;
   try {
     const r = await compartirTexto(plataformaDelNavegador(), contenido);
@@ -2272,6 +2287,16 @@ async function compartirLasCompras(): Promise<void> {
     console.error(err);
     return seguirCompartiendo(apertura, { paso: 'mostrar', que: 'texto', contenido });
   }
+}
+
+/** La lista de compras, que se comparte sólo como texto. */
+const compartirLasCompras = (): Promise<void> =>
+  compartirSoloTexto(textoCompras(comprasLeidas?.lista ?? { conCantidad: [], sinCantidad: [] }));
+
+/** La lista del evento; sin resultado no hay nada que mandar, y la ficha se cierra. */
+function compartirElEvento(): Promise<void> | undefined {
+  const r = calcularEvento(controlEvento.estado(), TIPOS_DE_EVENTO, COMUNES_DE_EVENTO);
+  return r ? compartirSoloTexto(textoEvento(r)) : seguirCompartiendo(aperturaDeCompartir, null);
 }
 
 /**
@@ -2320,8 +2345,17 @@ const accionesDeCompartir: SeccionDeAcciones = {
     nav.abrirCapa('compartir');
     return render();
   },
+  'compartir-evento': () => {
+    // La lista del evento se comparte sólo como texto, como la de compras.
+    aperturaDeCompartir++;
+    estadoDePantalla.compartiendo = { paso: 'opciones', solo: 'texto' };
+    nav.abrirCapa('compartir');
+    return render();
+  },
   'compartir-texto': () =>
-    vistaActual?.vista === 'plan-compras' ? compartirLasCompras() : compartirLaReceta('texto'),
+    vistaActual?.vista === 'plan-compras' ? compartirLasCompras()
+      : vistaActual?.vista === 'evento' ? compartirElEvento()
+      : compartirLaReceta('texto'),
   'compartir-link': () => compartirLaReceta('link')
 };
 
@@ -2469,6 +2503,12 @@ function pintarTemporizadoresVivos(paso?: 1 | -1): void {
   if (empezar) empezar.disabled = e.tipo === 'cuenta' && aMs(e.ruedas) <= 0;
 }
 
+/** Escribir un número en *Evento* pinta sólo el resultado: redibujar le sacaría el foco al campo. */
+function pintarResultadoDelEvento(): void {
+  const bloque = document.querySelector('#app [data-resultado]');
+  if (bloque) pintarParte(bloque, resultadoEvento(calcularEvento(controlEvento.estado(), TIPOS_DE_EVENTO, COMUNES_DE_EVENTO)), 'reemplazar');
+}
+
 function pintarResultadoDeHerramienta(): void {
   const bloque = document.querySelector('#app [data-resultado]');
   if (!bloque) return;
@@ -2512,6 +2552,7 @@ const acciones = registrarAcciones({
   compartir: accionesDeCompartir,
   ajustes: accionesDeAjustes,
   herramientas: herramientas.acciones,
+  evento: controlEvento.acciones,
   referencias: {
     ...controlReferencias.acciones,
     // Tocar el tag activo lo saca; lo escrito en el buscador se conserva. El
@@ -2601,6 +2642,8 @@ app.addEventListener('input', (e) => {
   if (buscar && vistaActual?.vista === 'conversor') {
     return controlReferencias.alBuscar('conversor', buscar.value);
   }
+  const deEvento = conClosest(e.target)?.closest<HTMLInputElement | HTMLSelectElement>('[data-evento]');
+  if (deEvento && vistaActual?.vista === 'evento') return controlEvento.alCambiar(deEvento, 'options' in deEvento);
   const cantidad = conClosest(e.target)?.closest<HTMLInputElement>('[data-cantidad]');
   if (cantidad) return herramientas.alEscribir(cantidad);
   const opcion = conClosest(e.target)?.closest<HTMLSelectElement>('[data-opcion]');

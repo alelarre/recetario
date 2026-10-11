@@ -13,6 +13,9 @@ import { crearLlaveroMac, SERVICIO_CLIENTE } from './llavero.js';
 import { recetarioDeGoogle, type Recetario } from './recetario.js';
 import { calcularPanParaElAgente, calcularSalParaElAgente } from './calculadoras.js';
 import { CUENTAS, calcularParaElAgente, consultarReferencia, descripcionDe, esquemaDe, nombreMcp } from './referencias.js';
+import { calcularEventoParaElAgente } from './eventos.js';
+import { TIPOS_DE_EVENTO } from '../src/eventos/indice.js';
+import { COMUNES as COMUNES_DE_EVENTO } from '../src/eventos/datos/comunes.js';
 import {
   PANES, HARINAS, LEVADURAS, PORCENTAJES_SEGUNDA, FERMENTACIONES, PREFERMENTOS, PREFERMENTOS_CON_LEVADURA
 } from '../src/calculadoras/pan.js';
@@ -214,6 +217,28 @@ export function crearServidor(recetario: Recetario): McpServer {
       inputSchema: esquemaDe(c)
     }, (pedido) => responder(() => json(calcularParaElAgente(c, pedido as Record<string, unknown>))));
   }
+
+  const valorLibre = z.union([z.string(), z.number(), z.boolean()]);
+  servidor.registerTool('calcular_evento', {
+    description: 'Cuánto comprar o hacer para una reunión —merienda, asado, comida, picada o cóctel—, con los tipos y los números de *Evento* de la app y sus fuentes. ' +
+      'El tipo trae prendidas unas cosas y lo que se suma después (bebidas, hielo, infusiones, carbón o leña): pasá sólo lo que dijo el usuario, lo demás sale del tipo. ' +
+      'Las cosas del mismo grupo se reparten la porción: con empanadas y pizza para comer, la mitad de cada una. ' +
+      'Sin `tipo`, devuelve los tipos con sus datos, sus cosas y lo que se suma después, con sus id. ' +
+      'Un nombre que no se encuentra, o que nombra a dos cosas, devuelve un error con las opciones. Devuelve también `texto`, la lista lista para mandar.',
+    inputSchema: {
+      tipo: z.string().optional().describe(`Uno de: ${TIPOS_DE_EVENTO.map(t => t.nombre).join(', ')}.`),
+      adultos: z.number().optional().describe('Cuántos adultos.'),
+      chicos: z.number().optional().describe('Cuántos chicos.'),
+      horas: z.number().optional().describe(`Cuánto dura. Sin él, ${COMUNES_DE_EVENTO.horas}.`),
+      calor: z.boolean().optional().describe('Si hace calor: sube las bebidas y el hielo.'),
+      margen: z.number().optional().describe('0, 10 o 20 (%). Sin él, 0.'),
+      datos: z.record(z.string(), valorLibre).optional().describe('Los datos propios del tipo, por id: { "ocasion": "cena", "tipo-asado": "completo" }.'),
+      prender: z.array(z.string()).optional().describe('Cosas que van, por id o por nombre.'),
+      apagar: z.array(z.string()).optional().describe('Cosas que no van, por id o por nombre.'),
+      ademas: z.record(z.string(), z.union([z.literal(false), z.record(z.string(), valorLibre)])).optional()
+        .describe('Lo que se suma después, por id: false lo apaga; un objeto lo prende con sus datos: { "bebidas": { "toman": 6, "fernet": true }, "hielo": false }.')
+    }
+  }, (pedido) => responder(() => json(calcularEventoParaElAgente(pedido))));
 
   servidor.registerTool('reindexar', {
     description: 'Rehace el índice entero desde las carpetas de Drive, como Reindexar en Ajustes. Informa el avance.',
