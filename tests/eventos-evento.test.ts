@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calcularEvento, textoEvento, porTramo, deOpcion, soloDatos } from '../src/eventos/evento.js';
+import { calcularEvento, textoEvento, porTramo, soloDatos } from '../src/eventos/evento.js';
 import type { Comunes, Dato, EstadoEvento, TipoDeEvento, Valores } from '../src/eventos/tipos.js';
 
 const F = { nombre: 'F', url: 'https://f.com' };
@@ -12,14 +12,17 @@ const PRUEBA: TipoDeEvento = {
   datos: [{ id: 'fiesta', nombre: 'Fiesta', tipo: 'si-no', porDefecto: false }],
   grupos: [
     { id: 'comer', titulo: 'Para comer', seReparte: true, factores: c => (c.tipo['fiesta'] === true ? [d(2)] : []) },
+    { id: 'parrilla', titulo: 'Parrilla', seReparte: true },
     { id: 'aparte', titulo: 'Aparte', seReparte: false }
   ],
   cosas: [
-    { id: 'empanadas', nombre: 'Empanadas', grupo: 'comer', prendida: true, porcion: () => d(6), unidad: 'unidad', docenas: true },
-    { id: 'pizza', nombre: 'Pizza', grupo: 'comer', prendida: false, porcion: () => d(4), unidad: 'unidad', nombreUnidad: 'porciones',
+    { id: 'empanadas', nombre: 'Empanadas', grupo: 'comer', prendida: true, porcion: () => d(6), unidad: 'unidad', docenas: true, aptaPara: [] },
+    { id: 'pizza', nombre: 'Pizza', grupo: 'comer', prendida: false, porcion: () => d(4), unidad: 'unidad', nombreUnidad: 'porciones', aptaPara: ['vegetariano'],
       envase: { cantidad: d(8), nombre: { uno: 'pizza', varios: 'pizzas' } } },
     { id: 'carne', nombre: 'Carne', grupo: 'comer', prendida: false, porcion: () => d(300), unidad: 'g', carne: true },
-    { id: 'torta', nombre: 'Torta', grupo: 'aparte', prendida: false, porcion: () => d(100), unidad: 'g', chicoEntero: true },
+    { id: 'tira', nombre: 'Tira', grupo: 'parrilla', prendida: false, porcion: () => d(600), unidad: 'g', carne: true },
+    { id: 'pollo', nombre: 'Pollo', grupo: 'parrilla', prendida: false, porcion: () => d(300), unidad: 'g', carne: true },
+    { id: 'torta', nombre: 'Torta', grupo: 'aparte', prendida: false, porcion: () => d(100), unidad: 'g', chicoEntero: true, aptaPara: ['vegetariano', 'celiaco'] },
     { id: 'helado', nombre: 'Helado', grupo: 'aparte', prendida: false, porcion: () => ({ valor: 250, fuente: null, nota: 'El helado es un supuesto.' }), unidad: 'ml' },
     { id: 'bocados', nombre: 'Bocados', grupo: 'aparte', prendida: false, porcion: c => d(c.horas), unidad: 'unidad' },
     { id: 'picada', nombre: 'Picada', grupo: 'aparte', prendida: false,
@@ -31,8 +34,8 @@ const PRUEBA: TipoDeEvento = {
 const TIPOS = [PRUEBA];
 
 const evento = (cambios: Partial<EstadoEvento> = {}, cosas: Record<string, boolean> = {}, datos: Valores = {}): EstadoEvento => ({
-  tipo: 'prueba', adultos: 10, chicos: 0, horas: 4, calor: false, margen: 0,
-  porTipo: { prueba: { datos, cosas, ademas: {} } }, ...cambios
+  tipo: 'prueba', adultos: 10, chicos: 0, horas: 4, calor: false, margen: 0, restricciones: { vegetariano: null, vegano: null, celiaco: null, 'sin-lactosa': null }, 
+  porTipo: { prueba: { datos, cosas, reparto: {}, ademas: {} } }, ...cambios
 });
 const cantidades = (e: EstadoEvento): Record<string, string> =>
   Object.fromEntries((calcularEvento(e, TIPOS, COMUNES)?.grupos ?? []).flatMap(g => g.items.map(i => [i.id, i.cantidad])));
@@ -112,6 +115,39 @@ describe('la cuenta común', () => {
     expect(calcularEvento(evento(), TIPOS, COMUNES)?.fuentes).toEqual([F]);
   });
 
+  it('avisa por cada grupo sin nada apto para cada restricción con invitados; no toca las cantidades', () => {
+    const con = (cosas: Record<string, boolean>) => evento({ restricciones: { vegetariano: 2, vegano: null, celiaco: 1, 'sin-lactosa': 0 } }, cosas);
+    expect(calcularEvento(con({ torta: true }), TIPOS, COMUNES)?.advertencias).toEqual([
+      'Para comer: nada apto para 2 vegetarianos.',
+      'Para comer: nada apto para 1 celíaco.'
+    ]);
+    expect(calcularEvento(con({ torta: true, pizza: true }), TIPOS, COMUNES)?.advertencias).toEqual(['Para comer: nada apto para 1 celíaco.']);
+    expect(cantidades(con({ torta: true }))).toEqual(cantidades(evento({}, { torta: true })));
+    expect(calcularEvento(evento({}, { torta: true }), TIPOS, COMUNES)?.advertencias).toEqual([]);
+  });
+
+  it('en un grupo de una sola unidad hay un total, y el reparto lo divide sin cambiarlo', () => {
+    const parrilla = { empanadas: false, tira: true, pollo: true };
+    const parejo = calcularEvento(evento({}, parrilla), TIPOS, COMUNES)?.grupos[0];
+    expect(parejo).toMatchObject({ id: 'parrilla', titulo: 'Parrilla', total: '4,5 kg', reparto: { tira: 50, pollo: 50 } });
+    expect(cantidades(evento({}, parrilla))).toEqual({ tira: '2,3 kg', pollo: '2,3 kg' });
+    const e = evento({ porTipo: { prueba: { datos: {}, cosas: parrilla, reparto: { tira: 0.8, pollo: 0.2 }, ademas: {} } } });
+    expect(calcularEvento(e, TIPOS, COMUNES)?.grupos[0]).toMatchObject({ total: '4,5 kg', reparto: { tira: 80, pollo: 20 } });
+    expect(cantidades(e)).toEqual({ tira: '3,6 kg', pollo: '900 g' });
+  });
+
+  it('en un grupo que mezcla unidades, el reparto es un porcentaje de la porción de cada cosa, sin total', () => {
+    const e = evento({ porTipo: { prueba: { datos: {}, cosas: { pizza: true }, reparto: { empanadas: 0.6, pizza: 0.4 }, ademas: {} } } });
+    const g = calcularEvento(e, TIPOS, COMUNES)?.grupos[0];
+    expect(g?.total).toBeUndefined();
+    expect(g?.reparto).toEqual({ empanadas: 60, pizza: 40 });
+    expect(cantidades(e)).toEqual({ empanadas: '36 (3 docenas)', pizza: '2 pizzas (16 porciones)' });
+  });
+
+  it('con una sola cosa en el grupo no hay reparto', () => {
+    expect(calcularEvento(evento(), TIPOS, COMUNES)?.grupos[0]?.reparto).toBeUndefined();
+  });
+
   it('el texto para mandar', () => {
     const r = calcularEvento(evento({}, { torta: true }), TIPOS, COMUNES);
     expect(r && textoEvento(r)).toBe('Prueba para 10\n\nPara comer\n- Empanadas: 60 (5 docenas)\n\nAparte\n- Torta: 1 kg');
@@ -125,14 +161,6 @@ describe('las ayudas de los tipos', () => {
     expect(porTramo(tramos, 2)?.valor).toBe(0.75);
     expect(porTramo(tramos, 3)).toBeNull();
     expect(porTramo(tramos, 9)?.valor).toBe(1.25);
-  });
-
-  it('el dato de una opción; la que no está, ninguno', () => {
-    const tabla = { almuerzo: null, festejo: d(1.2) };
-    expect(deOpcion(tabla, 'festejo')?.valor).toBe(1.2);
-    expect(deOpcion(tabla, 'almuerzo')).toBeNull();
-    expect(deOpcion(tabla, 'otra')).toBeNull();
-    expect(deOpcion(tabla, true)).toBeNull();
   });
 
   it('soloDatos saca los nulos', () => {

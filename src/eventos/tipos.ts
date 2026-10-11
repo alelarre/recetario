@@ -40,13 +40,15 @@ export interface Grupo {
   titulo: string;
   /** Con n cosas prendidas, cada una lleva 1/n de su porción. */
   seReparte: boolean;
-  /** Lo que multiplica al grupo: las horas, la ocasión, con sobras. */
+  /** Lo que multiplica al grupo: las horas, el cumpleaños infantil, con sobras. */
   factores?: (c: Contexto) => readonly Dato[];
 }
 
 export interface NombreDeEnvase { uno: string; varios: string }
 /** Un envase de compra: cuántas unidades de la cosa trae —ocho porciones por pizza—. */
 export interface Envase { cantidad: Dato; nombre: NombreDeEnvase }
+
+export type Restriccion = 'vegetariano' | 'vegano' | 'celiaco' | 'sin-lactosa';
 
 interface CosaBase {
   id: string;
@@ -58,6 +60,8 @@ interface CosaBase {
   chicoEntero?: true;
   /** Carne cruda en gramos: cuenta para el carbón o la leña. */
   carne?: true;
+  /** Para qué restricciones alimentarias es apta, como se hace en general; sin declarar, para ninguna. */
+  aptaPara?: readonly Restriccion[];
 }
 export interface CosaSimple extends CosaBase {
   /** Cuánto come una persona si es lo único de su grupo, en `unidad`. */
@@ -75,7 +79,8 @@ export interface CosaConPartes extends CosaBase {
 }
 export type Cosa = CosaSimple | CosaConPartes;
 
-export interface Item { id: string; nombre: string; cantidad: string }
+/** Una línea del resultado. `cosa`: de qué cosa es —las partes de la picada son de la picada—. */
+export interface Item { id: string; nombre: string; cantidad: string; cosa?: string }
 
 export type IdAdemas = 'bebidas' | 'infusiones' | 'hielo' | 'combustible';
 /** Lo ya calculado que leen las que se suman después. */
@@ -93,6 +98,8 @@ export interface Parcial { items: readonly Item[]; usados: readonly Dato[]; mlFr
 export interface Ademas {
   id: IdAdemas;
   nombre: string;
+  /** Dónde va, en la pantalla y en el resultado: «Además», o «Para el fuego» lo de la cocción. */
+  grupo: string;
   datos: readonly DatoPedido[];
   calcular(c: Calculado, v: Valores): Parcial;
 }
@@ -117,6 +124,8 @@ export type Margen = 0 | 10 | 20;
 export interface EstadoDeTipo {
   datos: Valores;
   cosas: Readonly<Record<string, boolean>>;
+  /** La proporción de cada cosa en su grupo, que mueven los sliders; sin guardar, un reparto parejo. */
+  reparto: Readonly<Record<string, number>>;
   ademas: Readonly<Record<string, { prendido: boolean; datos: Valores }>>;
 }
 /** Lo que se guarda: un evento a la vez, con lo de cada tipo por separado. */
@@ -127,17 +136,28 @@ export interface EstadoEvento {
   horas: number | null;
   calor: boolean;
   margen: Margen;
+  /** Cuántos de los invitados tienen cada restricción; vacío, ninguno. */
+  restricciones: Readonly<Record<Restriccion, number | null>>;
   porTipo: Readonly<Record<string, EstadoDeTipo>>;
 }
 
 export interface Linea { nombre: string; valor: string }
-export interface GrupoDeResultado { titulo: string; items: readonly Item[] }
+export interface GrupoDeResultado {
+  id: string;
+  titulo: string;
+  items: readonly Item[];
+  /** En un grupo de una sola unidad que se reparte: el total, que el reparto divide sin cambiar. */
+  total?: string;
+  /** Con dos o más cosas que se reparten: el porcentaje de cada una, por su `id`. */
+  reparto?: Readonly<Record<string, number>>;
+}
 export interface ResultadoEvento {
   /** «Asado para 12 (10 adultos, 2 chicos)». */
   titulo: string;
   cifras: readonly Linea[];
   grupos: readonly GrupoDeResultado[];
-  ademas: readonly Item[];
+  /** Lo que se suma después, en sus grupos: «Además» y «Para el fuego». */
+  ademas: readonly GrupoDeResultado[];
   advertencias: readonly string[];
   fuentes: readonly Fuente[];
 }

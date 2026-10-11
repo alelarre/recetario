@@ -74,7 +74,7 @@ import { accionesDelCarrusel } from './carrusel-control.js';
 import { crearControlHerramientas } from './herramientas-control.js';
 import { renderHerramientas, renderPan, renderSal, resultadoPan, resultadoSal } from './ui/herramientas.js';
 import { crearControlEvento } from './eventos-control.js';
-import { renderEvento, resultadoEvento } from './ui/evento.js';
+import { renderEvento, resultadoEvento, cantidadDeItem, porcentajeDeCosa } from './ui/evento.js';
 import { calcularEvento, textoEvento } from './eventos/evento.js';
 import { TIPOS_DE_EVENTO } from './eventos/indice.js';
 import { COMUNES as COMUNES_DE_EVENTO } from './eventos/datos/comunes.js';
@@ -484,7 +484,8 @@ const controlEvento = crearControlEvento({
   tipos: TIPOS_DE_EVENTO,
   comunes: COMUNES_DE_EVENTO,
   redibujar: () => { void render(); },
-  pintarResultado: pintarResultadoDelEvento
+  pintarResultado: pintarResultadoDelEvento,
+  pintarReparto: pintarRepartoDelEvento
 });
 
 /** La forma de la tira que está en el DOM (`formaDeTira`): con la misma, se escribe sólo el tiempo. */
@@ -2504,6 +2505,27 @@ function pintarTemporizadoresVivos(paso?: 1 | -1): void {
 }
 
 /** Escribir un número en *Evento* pinta sólo el resultado: redibujar le sacaría el foco al campo. */
+/**
+ * Mover un slider de *Evento* pinta sólo los números de su grupo —las
+ * cantidades y los porcentajes— y corre los otros sliders del grupo: redibujar
+ * cortaría el arrastre. El total del grupo no cambia, ni lo demás.
+ */
+function pintarRepartoDelEvento(grupo: string): void {
+  const r = calcularEvento(controlEvento.estado(), TIPOS_DE_EVENTO, COMUNES_DE_EVENTO);
+  const g = r?.grupos.find(x => x.id === grupo);
+  if (!g) return;
+  for (const i of g.items) {
+    const lugar = document.querySelector(`#app [data-cantidad-item="${grupo}:${i.id}"]`);
+    if (lugar) pintarParte(lugar, cantidadDeItem(grupo, i), 'reemplazar');
+  }
+  for (const [cosa, pct] of Object.entries(g.reparto ?? {})) {
+    const lugar = document.querySelector(`#app [data-porcentaje="${grupo}:${cosa}"]`);
+    if (lugar) pintarParte(lugar, porcentajeDeCosa(grupo, cosa, pct), 'reemplazar');
+    const slider = document.querySelector<HTMLInputElement>(`#app [data-evento="reparto"][data-grupo="${grupo}"][data-id="${cosa}"]`);
+    if (slider && slider !== document.activeElement) slider.value = String(pct);
+  }
+}
+
 function pintarResultadoDelEvento(): void {
   const bloque = document.querySelector('#app [data-resultado]');
   if (bloque) pintarParte(bloque, resultadoEvento(calcularEvento(controlEvento.estado(), TIPOS_DE_EVENTO, COMUNES_DE_EVENTO)), 'reemplazar');

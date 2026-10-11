@@ -8,7 +8,8 @@
  * al campo.
  */
 import type { SeccionDeAcciones } from './acciones.js';
-import { MARGENES, completarEvento, conAdemas, conCosa, conDato, conDatoDeAdemas, conTipo, estadoInicial } from './eventos/estado.js';
+import { RESTRICCIONES } from './eventos/restricciones.js';
+import { MARGENES, completarEvento, conAdemas, conCosa, conDato, conDatoDeAdemas, conReparto, conTipo, estadoInicial } from './eventos/estado.js';
 import type { Comunes, EstadoEvento, TipoDeEvento } from './eventos/tipos.js';
 
 export const CLAVE_EVENTO = 'recetario.evento';
@@ -28,12 +29,14 @@ function numeroEscrito(texto: string): number | null {
   return texto.trim() && Number.isFinite(n) && n >= 0 ? n : null;
 }
 
-export function crearControlEvento({ almacen, tipos, comunes, redibujar, pintarResultado }: {
+export function crearControlEvento({ almacen, tipos, comunes, redibujar, pintarResultado, pintarReparto }: {
   almacen: Almacen | null;
   tipos: readonly TipoDeEvento[];
   comunes: Comunes;
   redibujar: () => void;
   pintarResultado: () => void;
+  /** Mover un slider pinta sólo los números de su grupo: redibujar cortaría el arrastre. */
+  pintarReparto: (grupo: string) => void;
 }): ControlEvento {
   let e = leer();
 
@@ -56,6 +59,15 @@ export function crearControlEvento({ almacen, tipos, comunes, redibujar, pintarR
     const { evento: que = '', id = '', ademas = '' } = campo.dataset;
     if (que === 'tipo') return cambiar(conTipo(e, tipos, campo.value), redibujar);
     if (que === 'adultos' || que === 'chicos' || que === 'horas') return cambiar({ ...e, [que]: numeroEscrito(campo.value) }, pintarResultado);
+    if (que === 'reparto') {
+      const grupo = campo.dataset['grupo'] ?? '';
+      return cambiar(conReparto(e, tipos, grupo, id, numeroEscrito(campo.value) ?? 0), () => pintarReparto(grupo));
+    }
+    if (que === 'restriccion') {
+      const r = RESTRICCIONES.find(x => x.id === id);
+      if (r) cambiar({ ...e, restricciones: { ...e.restricciones, [r.id]: numeroEscrito(campo.value) } }, pintarResultado);
+      return;
+    }
     const valor = esDesplegable ? campo.value : numeroEscrito(campo.value);
     const pintar = esDesplegable ? redibujar : pintarResultado;
     if (que === 'dato') return cambiar(conDato(e, tipos, id, valor), pintar);

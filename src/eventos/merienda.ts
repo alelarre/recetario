@@ -14,11 +14,11 @@ export const MERIENDA_EVENTO: TipoDeEvento = {
     { id: 'aparte', titulo: 'Aparte', seReparte: false }
   ],
   cosas: [
-    { id: 'facturas', nombre: 'Facturas y medialunas', grupo: 'bocados', prendida: true, porcion: fija(MERIENDA.facturas), unidad: 'unidad', docenas: true },
-    { id: 'miga', nombre: 'Sándwiches de miga', grupo: 'bocados', prendida: true, porcion: fija(MERIENDA.miga), unidad: 'unidad', docenas: true },
-    { id: 'salados', nombre: 'Salados (chipá, pizzetas)', grupo: 'bocados', prendida: false, porcion: fija(MERIENDA.salados), unidad: 'unidad' },
-    { id: 'dulces', nombre: 'Dulces (masas secas, alfajores)', grupo: 'bocados', prendida: false, porcion: fija(MERIENDA.dulces), unidad: 'unidad' },
-    { id: 'torta', nombre: 'Torta o budín', grupo: 'aparte', prendida: true, porcion: fija(MERIENDA.torta), unidad: 'g', chicoEntero: true }
+    { id: 'facturas', nombre: 'Facturas y medialunas', grupo: 'bocados', prendida: true, aptaPara: ['vegetariano'], porcion: fija(MERIENDA.facturas), unidad: 'unidad', docenas: true },
+    { id: 'miga', nombre: 'Sándwiches de miga', grupo: 'bocados', prendida: true, aptaPara: [], porcion: fija(MERIENDA.miga), unidad: 'unidad', docenas: true },
+    { id: 'salados', nombre: 'Salados (chipá, pizzetas)', grupo: 'bocados', prendida: false, aptaPara: ['vegetariano'], porcion: fija(MERIENDA.salados), unidad: 'unidad' },
+    { id: 'dulces', nombre: 'Dulces (masas secas, alfajores)', grupo: 'bocados', prendida: false, aptaPara: ['vegetariano'], porcion: fija(MERIENDA.dulces), unidad: 'unidad' },
+    { id: 'torta', nombre: 'Torta o budín', grupo: 'aparte', prendida: true, aptaPara: ['vegetariano'], porcion: fija(MERIENDA.torta), unidad: 'g', chicoEntero: true }
   ],
   ademas: [
     { ademas: infusiones(INFUSIONES), prendido: true },

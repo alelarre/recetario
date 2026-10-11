@@ -1,12 +1,12 @@
 /**
  * Los números de la comida: lo que se pica antes, lo que se come, el
  * acompañamiento, el postre y el pan, cada uno si fuera lo único de su
- * grupo; la ocasión y las sobras. Salen de
+ * grupo; y las sobras. Salen de
  * `product-design/research/herramientas/verificacion-eventos.md`, sección
  * Decisiones; corregir uno es editar su línea, y ningún test fija un valor.
  * Sólo datos.
  */
-import { ELGOURMET, FABRICA_DE_EMPANADAS, FEED_MY_GUESTS, LA_NACION, REINA_DE_VAINILLA, SERVIDOS } from './fuentes.js';
+import { ELGOURMET, FABRICA_DE_EMPANADAS, FEED_MY_GUESTS, LA_NACION, REINA_DE_VAINILLA } from './fuentes.js';
 
 export const COMIDA = {
   antes: {
@@ -41,7 +41,5 @@ export const COMIDA = {
   },
   // Dos pancitos.
   pan: { valor: 100, fuente: LA_NACION },
-  // `null`: la ocasión no cambia lo que se come.
-  ocasion: { almuerzo: null, cena: null, festejo: { valor: 1.2, fuente: SERVIDOS } },
   sobras: { valor: 1.3, fuente: { nombre: 'Omni Calculator', url: 'https://www.omnicalculator.com/food/thanksgiving' } }
 };

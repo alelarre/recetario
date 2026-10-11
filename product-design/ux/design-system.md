@@ -1481,10 +1481,18 @@ lista en `--txt-chico` `--fg-2`.
 resultado es lo que se vino a buscar. Los valores van en `--fg`, no en el
 acento: se leen por tamaño.
 
-**Las fichas de las cosas de *Evento* llevan título** (`.ficha.datos.con-titulo`):
+**El reparto de *Evento*** (`.reparto`, dentro de la ficha del resultado):
+debajo de las líneas de cada cosa de un grupo que se reparte, un slider
+(`input type="range"`, en el acento) a lo ancho, con su porcentaje a la
+derecha en cifras tabulares `--fg-2`. Los sliders de un grupo están
+vinculados y suman 100.
+
+**La ficha *Invitados* de *Evento*** lleva título: adultos y chicos en el
+par de cantidades y, debajo, un número por restricción alimentaria en su
+fila. **Las fichas de las cosas de *Evento* llevan título** (`.ficha.datos.con-titulo`):
 la misma cosa —las empanadas— puede estar en dos grupos, y el título dice en
-cuál. Cada cosa es un interruptor; lo que se suma después, también, y
-prendido abre sus datos debajo.
+cuál. Cada cosa es un interruptor; lo que se suma después, también, en sus
+fichas *Además* y *Para el fuego*, y prendido abre sus datos debajo.
 
 ### 6.29 Temporizadores
 

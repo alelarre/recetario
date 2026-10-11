@@ -6,7 +6,7 @@ import type { Ademas, Comunes, Dato, EstadoEvento, TipoDeEvento } from '../src/e
 const d = (valor: number): Dato => ({ valor, fuente: { nombre: 'F', url: 'https://f.com' } });
 const COMUNES: Comunes = { factorChico: d(0.5), horas: 4 };
 const HIELO: Ademas = {
-  id: 'hielo', nombre: 'Hielo', datos: [{ id: 'enfriar', nombre: 'Enfriar', tipo: 'si-no', porDefecto: false }],
+  id: 'hielo', nombre: 'Hielo', grupo: 'Además', datos: [{ id: 'enfriar', nombre: 'Enfriar', tipo: 'si-no', porDefecto: false }],
   calcular: (_c, v) => ({ items: [{ id: 'hielo', nombre: 'Hielo', cantidad: v['enfriar'] === true ? 'mucho' : 'poco' }], usados: [] })
 };
 const ASADO: TipoDeEvento = {
@@ -41,7 +41,7 @@ describe('calcular_evento', () => {
 
   it('con lo mínimo calcula igual que la app, por nombre y sin tildes', () => {
     const r = calcularEventoParaElAgente({ tipo: 'ASADO', adultos: 10 }, TIPOS, COMUNES);
-    const e: EstadoEvento = { tipo: 'asado', adultos: 10, chicos: null, horas: 4, calor: false, margen: 0, porTipo: {} };
+    const e: EstadoEvento = { tipo: 'asado', adultos: 10, chicos: null, horas: 4, calor: false, margen: 0, restricciones: { vegetariano: null, vegano: null, celiaco: null, 'sin-lactosa': null }, porTipo: {} };
     const app = calcularEvento(e, TIPOS, COMUNES);
     expect(r).toEqual({ ...app, texto: textoEvento(app!) });
   });
@@ -66,9 +66,22 @@ describe('calcular_evento', () => {
 
   it('lo que se suma: false lo apaga; un objeto lo prende con sus datos', () => {
     const con = calcularEventoParaElAgente({ tipo: 'asado', adultos: 10, ademas: { hielo: { enfriar: true } } }, TIPOS, COMUNES);
-    expect('ademas' in con && con.ademas).toEqual([{ id: 'hielo', nombre: 'Hielo', cantidad: 'mucho' }]);
+    expect('ademas' in con && con.ademas).toEqual([{ id: 'Además', titulo: 'Además', items: [{ id: 'hielo', nombre: 'Hielo', cantidad: 'mucho' }] }]);
     const sin = calcularEventoParaElAgente({ tipo: 'asado', adultos: 10, ademas: { hielo: false } }, TIPOS, COMUNES);
     expect('ademas' in sin && sin.ademas).toEqual([]);
+  });
+
+  it('las restricciones, por id o por nombre, dan los avisos; una que no existe es un error', () => {
+    const r = calcularEventoParaElAgente({ tipo: 'asado', adultos: 10, restricciones: { Vegetarianos: 2 } }, TIPOS, COMUNES);
+    expect('advertencias' in r && r.advertencias).toEqual(['Carne: nada apto para 2 vegetarianos.']);
+    expect(calcularEventoParaElAgente({ tipo: 'asado', adultos: 10, restricciones: { keto: 1 } }, TIPOS, COMUNES)).toMatchObject({ error: 'No hay «keto».' });
+  });
+
+  it('el reparto en porcentajes: lo que nombra queda fijo, lo demás se reparte el resto, y lo nombrado se prende', () => {
+    const r = calcularEventoParaElAgente({ tipo: 'asado', adultos: 10, datos: { 'tipo-asado': 'mixto' }, reparto: { tira: 75 } }, TIPOS, COMUNES);
+    expect('grupos' in r && r.grupos.find(g => g.id === 'carne')?.reparto).toEqual({ tira: 75, pollo: 25 });
+    const conPollo = calcularEventoParaElAgente({ tipo: 'asado', adultos: 10, reparto: { pollo: 40 } }, TIPOS, COMUNES);
+    expect('grupos' in conPollo && conPollo.grupos.find(g => g.id === 'carne')?.reparto).toEqual({ tira: 60, pollo: 40 });
   });
 
   it('sin personas, dice que no hay lista', () => {

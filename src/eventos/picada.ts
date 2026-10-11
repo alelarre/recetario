@@ -20,12 +20,12 @@ export const PICADA_EVENTO: TipoDeEvento = {
     opciones: [{ valor: 'antes', texto: 'Antes de comer' }, { valor: 'comida', texto: 'Es lo que se come' }] }],
   grupos: [{ id: 'picada', titulo: 'Picada', seReparte: false }],
   cosas: [
-    { id: 'fiambres', nombre: 'Fiambres', grupo: 'picada', prendida: true, porcion: parte('fiambres'), unidad: 'g' },
-    { id: 'quesos', nombre: 'Quesos', grupo: 'picada', prendida: true, porcion: parte('quesos'), unidad: 'g' },
-    { id: 'pan', nombre: 'Pan', grupo: 'picada', prendida: true, porcion: parte('pan'), unidad: 'g' },
-    { id: 'vegetales', nombre: 'Vegetales', grupo: 'picada', prendida: true, porcion: parte('vegetales'), unidad: 'g' },
-    { id: 'snacks', nombre: 'Snacks', grupo: 'picada', prendida: true, porcion: parte('snacks'), unidad: 'g' },
-    { id: 'dips', nombre: 'Dips', grupo: 'picada', prendida: true, porcion: parte('dips'), unidad: 'g' }
+    { id: 'fiambres', nombre: 'Fiambres', grupo: 'picada', prendida: true, aptaPara: ['sin-lactosa'], porcion: parte('fiambres'), unidad: 'g' },
+    { id: 'quesos', nombre: 'Quesos', grupo: 'picada', prendida: true, aptaPara: ['vegetariano', 'celiaco'], porcion: parte('quesos'), unidad: 'g' },
+    { id: 'pan', nombre: 'Pan', grupo: 'picada', prendida: true, aptaPara: ['vegetariano', 'vegano', 'sin-lactosa'], porcion: parte('pan'), unidad: 'g' },
+    { id: 'vegetales', nombre: 'Vegetales', grupo: 'picada', prendida: true, aptaPara: ['vegetariano', 'vegano', 'celiaco', 'sin-lactosa'], porcion: parte('vegetales'), unidad: 'g' },
+    { id: 'snacks', nombre: 'Snacks', grupo: 'picada', prendida: true, aptaPara: ['vegetariano', 'vegano', 'sin-lactosa'], porcion: parte('snacks'), unidad: 'g' },
+    { id: 'dips', nombre: 'Dips', grupo: 'picada', prendida: true, aptaPara: ['vegetariano'], porcion: parte('dips'), unidad: 'g' }
   ],
   ademas: [
     { ademas: bebidas(BEBIDAS, ['cerveza', 'vino', 'gaseosa', 'agua']), prendido: true },

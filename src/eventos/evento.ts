@@ -7,11 +7,13 @@
  */
 import type { Fuente } from '../referencias/tipos.js';
 import type {
-  Calculado, Comunes, Contexto, CosaSimple, Dato, EstadoEvento, GrupoDeResultado, IdAdemas, Item, Linea,
-  ResultadoEvento, TipoDeEvento, Tramo, ValorDeDato
+  Calculado, Comunes, Contexto, Cosa, CosaSimple, Dato, EstadoEvento, GrupoDeResultado, IdAdemas, Item, Linea,
+  ResultadoEvento, TipoDeEvento, Tramo
 } from './tipos.js';
 import { estadoDeTipo, tipoDe, valoresDe } from './estado.js';
 import { envases, personas, peso, unidades, volumen } from './formato.js';
+import { avisosDeRestricciones } from './restricciones.js';
+import { partes } from './reparto.js';
 
 /** Las que se suman después, en el orden en que se calculan: el hielo enfría lo que calcularon las bebidas. */
 const ORDEN: readonly IdAdemas[] = ['bebidas', 'infusiones', 'hielo', 'combustible'];
@@ -25,11 +27,6 @@ export function porTramo(tramos: readonly Tramo[], horas: number): Dato | null {
   return t?.factor ?? null;
 }
 
-/** El dato de la opción elegida —la ocasión—; `null` si la opción no lo cambia o no está. */
-export function deOpcion(tabla: Readonly<Record<string, Dato | null>>, valor: ValorDeDato | undefined): Dato | null {
-  return typeof valor === 'string' && Object.hasOwn(tabla, valor) ? tabla[valor] ?? null : null;
-}
-
 export const soloDatos = (...xs: readonly (Dato | null)[]): Dato[] => xs.filter((x): x is Dato => x !== null);
 
 /** La cantidad de una cosa simple, en su unidad de compra. */
@@ -39,6 +36,14 @@ function enCompra(c: CosaSimple, total: number): string {
     : unidades(total, { nombre: c.nombreUnidad, porDocena: c.docenas === true });
   return c.envase ? `${envases(total, c.envase.cantidad.valor, c.envase.nombre)} (${base})` : base;
 }
+
+/** Un total en la unidad de la cosa, sin docenas ni envases: «5,9 kg», «88». */
+function totalEn(c: CosaSimple, total: number): string {
+  return c.unidad === 'g' ? peso(total) : c.unidad === 'ml' ? volumen(total) : unidades(total, { nombre: c.nombreUnidad });
+}
+
+/** En qué se mide una cosa: dos cosas con la misma medida se suman en un total. */
+const medida = (c: Cosa): string => ('partes' in c ? 'partes' : `${c.unidad}|${c.nombreUnidad ?? ''}|${c.envase?.nombre.varios ?? ''}`);
 
 const cuantos = (n: number, uno: string, varios: string): string => `${personas(n)} ${n === 1 ? uno : varios}`;
 
@@ -77,49 +82,75 @@ export function calcularEvento(e: EstadoEvento, tipos: readonly TipoDeEvento[], 
   const margen = 1 + e.margen / 100;
   const usados: Dato[] = chicos > 0 ? [comunes.factorChico] : [];
   const grupos: GrupoDeResultado[] = [];
+  /** Lo prendido de cada grupo, para el aviso de las restricciones. */
+  const prendidas: { titulo: string; cosas: readonly Cosa[] }[] = [];
   let carneG = 0;
   let cifraG = 0;
 
   for (const g of t.grupos) {
     const cosas = t.cosas.filter(c => c.grupo === g.id && (et.cosas[c.id] ?? c.prendida));
     if (!cosas.length) continue;
+    prendidas.push({ titulo: g.titulo, cosas });
     const factores = g.factores?.(contexto) ?? [];
     usados.push(...factores);
-    const multiplica = factores.reduce((p, x) => p * x.valor, 1) * margen * (g.seReparte ? 1 / cosas.length : 1);
+    const multiplica = factores.reduce((p, x) => p * x.valor, 1) * margen;
+    // La parte de cada cosa en su grupo: la de los sliders, o pareja; en un grupo que no se reparte, entera.
+    const parte = g.seReparte ? partes(cosas.map(c => c.id), et.reparto) : null;
+    const parteDe = (c: Cosa): number => (parte ? parte[c.id] ?? 0 : 1);
+    const personasDe = (c: Cosa): number => (c.chicoEntero ? adultos + chicos : contexto.personas);
+    // Las cosas de una misma medida se suman en un total que el reparto divide sin cambiarlo: los
+    // kilos de carne. Es lo que dan todas en partes iguales; moverlas no cambia los kilos.
+    const primera = cosas[0];
+    const unaMedida = g.seReparte && primera !== undefined && !('partes' in primera) && cosas.every(c => medida(c) === medida(primera));
+    let totalDelGrupo = 0;
+    if (unaMedida) {
+      for (const c of cosas) {
+        if ('partes' in c) continue;
+        const porcion = c.porcion(contexto);
+        totalDelGrupo += porcion.valor * personasDe(c) * multiplica / cosas.length;
+      }
+    }
     const enCifra = t.cifra?.grupo === g.id;
     const items: Item[] = [];
     for (const c of cosas) {
-      const personas = c.chicoEntero ? adultos + chicos : contexto.personas;
       if ('partes' in c) {
         for (const p of c.partes) {
           const porcion = p.porcion(contexto);
           usados.push(porcion);
-          const total = porcion.valor * personas * multiplica;
+          const total = porcion.valor * personasDe(c) * parteDe(c) * multiplica;
           if (c.carne) carneG += total;
           if (enCifra) cifraG += total;
-          items.push({ id: `${c.id}-${p.id}`, nombre: p.nombre, cantidad: peso(total) });
+          items.push({ id: `${c.id}-${p.id}`, nombre: p.nombre, cantidad: peso(total), cosa: c.id });
         }
         continue;
       }
       const porcion = c.porcion(contexto);
       usados.push(porcion, ...(c.envase ? [c.envase.cantidad] : []));
-      const total = porcion.valor * personas * multiplica;
+      const total = unaMedida ? totalDelGrupo * parteDe(c) : porcion.valor * personasDe(c) * parteDe(c) * multiplica;
       if (c.carne && c.unidad === 'g') carneG += total;
       if (enCifra && c.unidad === 'g') cifraG += total;
-      items.push({ id: c.id, nombre: c.nombre, cantidad: enCompra(c, total) });
+      items.push({ id: c.id, nombre: c.nombre, cantidad: enCompra(c, total), cosa: c.id });
     }
-    grupos.push({ titulo: g.titulo, items });
+    grupos.push({
+      id: g.id, titulo: g.titulo, items,
+      ...(unaMedida && cosas.length > 1 && primera && !('partes' in primera) ? { total: totalEn(primera, totalDelGrupo) } : {}),
+      ...(parte && cosas.length > 1 ? { reparto: Object.fromEntries(cosas.map(c => [c.id, Math.round(parteDe(c) * 100)])) } : {})
+    });
   }
 
   let calculado: Calculado = { contexto, margen, carneG, mlFrios: 0 };
-  const ademas: Item[] = [];
+  const ademas: { id: string; titulo: string; items: Item[] }[] = [];
   const avisos: string[] = [];
   for (const id of ORDEN) {
     const declarado = t.ademas.find(x => x.ademas.id === id);
     const estado = et.ademas[id];
     if (!declarado || !(estado?.prendido ?? declarado.prendido)) continue;
     const r = declarado.ademas.calcular(calculado, valoresDe(declarado.ademas.datos, estado?.datos ?? {}));
-    ademas.push(...r.items);
+    // Cada uno en su grupo, en el orden en que aparecen: «Además» y «Para el fuego».
+    if (r.items.length) {
+      const grupo = ademas.find(g => g.titulo === declarado.ademas.grupo);
+      if (grupo) grupo.items.push(...r.items); else ademas.push({ id: declarado.ademas.grupo, titulo: declarado.ademas.grupo, items: [...r.items] });
+    }
     usados.push(...r.usados);
     avisos.push(...(r.advertencias ?? []));
     if (r.mlFrios !== undefined) calculado = { ...calculado, mlFrios: r.mlFrios };
@@ -129,12 +160,20 @@ export function calcularEvento(e: EstadoEvento, tipos: readonly TipoDeEvento[], 
   const cifras: Linea[] = [{ nombre: 'Personas', valor: personas(adultos + chicos) }];
   if (t.cifra && cifraG > 0) cifras.push({ nombre: t.cifra.nombre, valor: peso(cifraG) });
   const { fuentes, advertencias } = procedencia(usados);
-  return { titulo: tituloDe(t, adultos, chicos), cifras, grupos, ademas, fuentes, advertencias: [...avisos, ...advertencias] };
+  return {
+    titulo: tituloDe(t, adultos, chicos), cifras, grupos, ademas, fuentes,
+    advertencias: [...avisosDeRestricciones(prendidas, e.restricciones), ...avisos, ...advertencias]
+  };
 }
 
-/** La lista como texto, para mandar: el título, cada grupo con sus ítems y lo que se suma después. */
+/** La lista como texto, para mandar: el título, y cada grupo —también los de lo que se suma— con sus ítems. */
 export function textoEvento(r: ResultadoEvento): string {
-  const bloque = (titulo: string, items: readonly Item[]): string =>
-    [titulo, ...items.map(i => `- ${i.nombre}: ${i.cantidad}`)].join('\n');
-  return [r.titulo, ...r.grupos.map(g => bloque(g.titulo, g.items)), ...(r.ademas.length ? [bloque('Además', r.ademas)] : [])].join('\n\n');
+  const bloque = (g: GrupoDeResultado): string =>
+    [tituloDeGrupo(g), ...g.items.map(i => `- ${i.nombre}: ${i.cantidad}`)].join('\n');
+  return [r.titulo, ...[...r.grupos, ...r.ademas].map(bloque)].join('\n\n');
+}
+
+/** El título de un grupo, con su total si lo tiene: «Carne · 5,9 kg». */
+export function tituloDeGrupo(g: GrupoDeResultado): string {
+  return g.total ? `${g.titulo} · ${g.total}` : g.titulo;
 }

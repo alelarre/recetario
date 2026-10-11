@@ -13,11 +13,12 @@ import { encabezado } from './componentes.js';
 import { ICO } from './iconos.js';
 import { renderFichaCompartir } from './compartir.js';
 import type { EstadoCompartir } from './compartir.js';
-import { advertencias, cifras, fichaResultado, grupo, lineas } from './herramientas.js';
+import { advertencias, cifras, fichaResultado, grupo } from './herramientas.js';
 import { pieDeFuentes } from './referencias.js';
-import { calcularEvento } from '../eventos/evento.js';
+import { calcularEvento, tituloDeGrupo } from '../eventos/evento.js';
 import { MARGENES, estadoDeTipo, tipoDe, valoresDe } from '../eventos/estado.js';
-import type { Comunes, DatoPedido, EstadoEvento, Item, ResultadoEvento, TipoDeEvento, Valores } from '../eventos/tipos.js';
+import { RESTRICCIONES } from '../eventos/restricciones.js';
+import type { Comunes, DatoPedido, EstadoEvento, GrupoDeResultado, Item, ResultadoEvento, TipoDeEvento, Valores } from '../eventos/tipos.js';
 
 /** Una fila que se toca entera, apagada o prendida. Manda el estado al que pasa: `'1'` prende. */
 const interruptor = (nombre: string, prendido: boolean, datos: string): string =>
@@ -37,15 +38,38 @@ function filaDeDato(d: DatoPedido, v: Valores, donde: string): string {
     `<input type="number" inputmode="decimal" min="0" step="any" ${atributos} value="${typeof valor === 'number' ? valor : ''}"></label>`;
 }
 
-const comoLineas = (items: readonly Item[]): string => lineas(items.map(i => ({ nombre: i.nombre, valor: i.cantidad })));
+/** Una línea del resultado; la cantidad lleva su lugar para que un slider la repinte sola. */
+export const lineaDeItem = (grupo: string, i: Item): string =>
+  `<div class="ing"><span class="n">${escapar(i.nombre)}</span>${cantidadDeItem(grupo, i)}</div>`;
+export const cantidadDeItem = (grupo: string, i: Item): string =>
+  `<span class="c" data-cantidad-item="${escapar(grupo)}:${escapar(i.id)}">${escapar(i.cantidad)}</span>`;
+export const porcentajeDeCosa = (grupo: string, cosa: string, porcentaje: number): string =>
+  `<span class="pct" data-porcentaje="${escapar(grupo)}:${escapar(cosa)}">${porcentaje} %</span>`;
+
+/**
+ * Un grupo del resultado: su título, con el total si lo tiene, y sus líneas.
+ * Con reparto, debajo de las líneas de cada cosa, su slider: suben y bajan
+ * vinculados, siempre sumando 100.
+ */
+function grupoDelResultado(g: GrupoDeResultado): string {
+  const reparto = g.reparto;
+  return grupo(tituloDeGrupo(g)) + g.items.map((i, n) => {
+    const ultimaDeSuCosa = i.cosa !== undefined && g.items[n + 1]?.cosa !== i.cosa;
+    const pct = reparto && i.cosa !== undefined ? reparto[i.cosa] : undefined;
+    const slider = ultimaDeSuCosa && pct !== undefined && i.cosa !== undefined
+      ? `<div class="reparto"><input type="range" min="0" max="100" step="1" value="${pct}" data-evento="reparto" ` +
+        `data-grupo="${escapar(g.id)}" data-id="${escapar(i.cosa)}" aria-label="${escapar(i.nombre)}">${porcentajeDeCosa(g.id, i.cosa, pct)}</div>`
+      : '';
+    return lineaDeItem(g.id, i) + slider;
+  }).join('');
+}
 
 /** El resultado, en la ficha del resultado; sin resultado, la línea que dice qué falta. */
 export function resultadoEvento(r: ResultadoEvento | null): string {
   if (!r) return fichaResultado('<p class="aviso-mudo">Escribí cuántos son y prendé lo que va a haber.</p>');
   return fichaResultado(
     cifras(r.cifras) +
-    r.grupos.map(g => grupo(g.titulo) + comoLineas(g.items)).join('') +
-    (r.ademas.length ? grupo('Además') + comoLineas(r.ademas) : '') +
+    [...r.grupos, ...r.ademas].map(grupoDelResultado).join('') +
     advertencias(r.advertencias) +
     (r.fuentes.length ? pieDeFuentes(r.fuentes) : ''));
 }
@@ -58,8 +82,12 @@ export function renderEvento(e: EstadoEvento, tipos: readonly TipoDeEvento[], co
   const et = t ? estadoDeTipo(e, t) : null;
   const tipo = `<label class="dato"><span class="n">Evento</span><select data-evento="tipo">` +
     tipos.map(x => `<option value="${escapar(x.id)}"${x.id === e.tipo ? ' selected' : ''}>${escapar(x.nombre)}</option>`).join('') + '</select></label>';
-  const personas = `<div class="ficha"><div class="par-cantidades">${campo('Adultos', 'adultos', e.adultos)}` +
-    `<span class="entre" aria-hidden="true">+</span>${campo('Chicos', 'chicos', e.chicos)}</div></div>`;
+  // Cuántos de los invitados tienen cada restricción: son parte de ellos, no se suman.
+  const restricciones = RESTRICCIONES.map(r =>
+    `<label class="dato"><span class="n">${escapar(r.nombre)}</span><input type="number" inputmode="numeric" min="0" step="1" ` +
+    `data-evento="restriccion" data-id="${r.id}" value="${e.restricciones[r.id] ?? ''}"></label>`).join('');
+  const personas = `<div class="ficha con-titulo"><h2>Invitados</h2><div class="par-cantidades">${campo('Adultos', 'adultos', e.adultos)}` +
+    `<span class="entre" aria-hidden="true">+</span>${campo('Chicos', 'chicos', e.chicos)}</div>${restricciones}</div>`;
   const horas = `<label class="dato"><span class="n">Horas</span><input type="number" inputmode="decimal" min="0" step="any" data-evento="horas" value="${e.horas ?? ''}"></label>`;
   const margen = '<div class="dato"><span class="n">Margen</span><div class="seg" role="group" aria-label="Margen">' +
     MARGENES.map(m => `<button type="button" data-accion="evento-margen" data-valor="${m}" aria-pressed="${m === e.margen}">${m ? `${m} %` : 'Sin margen'}</button>`).join('') +
@@ -72,15 +100,17 @@ export function renderEvento(e: EstadoEvento, tipos: readonly TipoDeEvento[], co
       cosas.map(c => interruptor(c.nombre, et.cosas[c.id] ?? c.prendida, `data-evento="cosa" data-id="${escapar(c.id)}"`)).join('') + '</div>';
   }).join('') : '';
 
-  const ademas = t && et && t.ademas.length ? '<div class="ficha datos con-titulo"><h2>Además</h2>' +
-    t.ademas.map(({ ademas: a, prendido }) => {
+  // Una ficha por grupo de lo que se suma —«Además», «Para el fuego»—, en el orden en que aparecen.
+  const titulosDeAdemas = t ? [...new Set(t.ademas.map(x => x.ademas.grupo))] : [];
+  const ademas = t && et ? titulosDeAdemas.map(titulo => `<div class="ficha datos con-titulo"><h2>${escapar(titulo)}</h2>` +
+    t.ademas.filter(x => x.ademas.grupo === titulo).map(({ ademas: a, prendido }) => {
       const estado = et.ademas[a.id];
       const prendida = estado?.prendido ?? prendido;
       const filas = prendida
         ? a.datos.map(d => filaDeDato(d, valoresDe(a.datos, estado?.datos ?? {}), `data-evento="dato-ademas" data-ademas="${a.id}"`)).join('')
         : '';
       return interruptor(a.nombre, prendida, `data-evento="ademas" data-id="${a.id}"`) + filas;
-    }).join('') + '</div>' : '';
+    }).join('') + '</div>').join('') : '';
 
   return encabezado({
     titulo: 'Evento', icono: ICO.invitados, volver: true,

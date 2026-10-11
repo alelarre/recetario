@@ -8,7 +8,7 @@ import type { Ademas, Comunes, Dato, EstadoEvento, TipoDeEvento } from '../src/e
 const d = (valor: number): Dato => ({ valor, fuente: { nombre: 'La fuente', url: 'https://f.com' } });
 const COMUNES: Comunes = { factorChico: d(0.5), horas: 4 };
 const HIELO: Ademas = {
-  id: 'hielo', nombre: 'Hielo', datos: [{ id: 'enfriar', nombre: 'También para enfriar', tipo: 'si-no', porDefecto: false }],
+  id: 'hielo', nombre: 'Hielo', grupo: 'Además', datos: [{ id: 'enfriar', nombre: 'También para enfriar', tipo: 'si-no', porDefecto: false }],
   calcular: () => ({ items: [{ id: 'hielo', nombre: 'Hielo', cantidad: '5 kg' }], usados: [] })
 };
 const PRUEBA: TipoDeEvento = {
@@ -19,7 +19,7 @@ const PRUEBA: TipoDeEvento = {
     { id: 'empanadas-antes', nombre: 'Empanadas', grupo: 'antes', prendida: false, porcion: () => d(3), unidad: 'unidad' },
     { id: 'empanadas', nombre: 'Empanadas', grupo: 'comer', prendida: true, porcion: () => d(6), unidad: 'unidad' }
   ],
-  ademas: [{ ademas: HIELO, prendido: false }]
+  ademas: [{ ademas: HIELO, prendido: false }, { ademas: { ...HIELO, id: 'combustible', nombre: 'Carbón o leña', grupo: 'Para el fuego', datos: [] }, prendido: true }]
 };
 const OTRO: TipoDeEvento = { ...PRUEBA, id: 'otro', nombre: 'Otro' };
 const TIPOS = [PRUEBA, OTRO];
@@ -44,6 +44,15 @@ describe('la pantalla de Evento', () => {
     expect(html).toContain('data-evento="adultos" value="12"');
     expect(html).toContain('data-evento="chicos" value=""');
     expect(html).toContain('data-evento="horas" value="4"');
+  });
+
+  it('adultos y chicos van bajo Invitados, con un número por restricción alimentaria', () => {
+    const html = renderEvento(con({ restricciones: { vegetariano: 2, vegano: null, celiaco: null, 'sin-lactosa': null } }), TIPOS, COMUNES);
+    const invitados = html.indexOf('<h2>Invitados</h2>');
+    expect(invitados).toBeGreaterThan(0);
+    expect(html.indexOf('data-evento="adultos"')).toBeGreaterThan(invitados);
+    expect(html).toContain('<span class="n">Vegetarianos</span><input type="number" inputmode="numeric" min="0" step="1" data-evento="restriccion" data-id="vegetariano" value="2">');
+    for (const r of ['vegano', 'celiaco', 'sin-lactosa']) expect(html).toContain(`data-evento="restriccion" data-id="${r}" value=""`);
   });
 
   it('el calor es un interruptor y el margen un conmutador con el elegido apretado', () => {
@@ -72,7 +81,7 @@ describe('la pantalla de Evento', () => {
     expect(apagado).toContain('<h2>Además</h2>');
     expect(apagado).toContain('data-evento="ademas" data-id="hielo" data-valor="1"');
     expect(apagado).not.toContain('data-ademas="hielo"');
-    const prendido = renderEvento(con({ porTipo: { prueba: { datos: {}, cosas: {}, ademas: { hielo: { prendido: true, datos: {} } } } } }), TIPOS, COMUNES);
+    const prendido = renderEvento(con({ porTipo: { prueba: { datos: {}, cosas: {}, reparto: {}, ademas: { hielo: { prendido: true, datos: {} } } } } }), TIPOS, COMUNES);
     expect(prendido).toContain('data-evento="dato-ademas" data-ademas="hielo" data-id="enfriar"');
   });
 
@@ -87,16 +96,48 @@ describe('la pantalla de Evento', () => {
   it('el resultado: cifras, grupos con sus ítems, lo que se suma, advertencias y fuentes', () => {
     const html = resultadoEvento({
       titulo: 'Prueba para 10', cifras: [{ nombre: 'Personas', valor: '10' }],
-      grupos: [{ titulo: 'Para comer', items: [{ id: 'e', nombre: 'Empanadas', cantidad: '60' }] }],
-      ademas: [{ id: 'hielo', nombre: 'Hielo', cantidad: '5 kg' }],
+      grupos: [{ id: 'comer', titulo: 'Para comer', items: [{ id: 'e', nombre: 'Empanadas', cantidad: '60' }] }],
+      ademas: [{ id: 'Además', titulo: 'Además', items: [{ id: 'hielo', nombre: 'Hielo', cantidad: '5 kg' }] }],
       advertencias: ['Un supuesto.'], fuentes: [{ nombre: 'La fuente', url: 'https://f.com' }]
     });
     expect(html).toContain('<span class="v">10</span><span class="n">Personas</span>');
     expect(html).toContain('<div class="grupo">Para comer</div>');
-    expect(html).toContain('<span class="n">Empanadas</span><span class="c">60</span>');
+    expect(html).toContain('<span class="n">Empanadas</span><span class="c" data-cantidad-item="comer:e">60</span>');
     expect(html).toContain('<div class="grupo">Además</div>');
     expect(html).toContain('<li>Un supuesto.</li>');
     expect(html).toContain('href="https://f.com"');
+  });
+
+  it('lo que se suma después va en una ficha por grupo: Además y Para el fuego', () => {
+    const html = renderEvento(con({}), TIPOS, COMUNES);
+    const ademas = html.indexOf('<h2>Además</h2>');
+    const fuego = html.indexOf('<h2>Para el fuego</h2>');
+    expect(ademas).toBeGreaterThan(0);
+    expect(fuego).toBeGreaterThan(ademas);
+    expect(html.indexOf('data-evento="ademas" data-id="combustible"')).toBeGreaterThan(fuego);
+  });
+
+  it('un grupo con reparto lleva un slider por cosa, con su porcentaje, y su total en el título', () => {
+    const html = resultadoEvento({
+      titulo: 'Asado para 10', cifras: [],
+      grupos: [{ id: 'carne', titulo: 'Carne', total: '4,5 kg', reparto: { tira: 80, pollo: 20 }, items: [
+        { id: 'tira', cosa: 'tira', nombre: 'Tira', cantidad: '3,6 kg' }, { id: 'pollo', cosa: 'pollo', nombre: 'Pollo', cantidad: '900 g' }
+      ] }],
+      ademas: [], advertencias: [], fuentes: []
+    });
+    expect(html).toContain('<div class="grupo">Carne · 4,5 kg</div>');
+    expect(html).toContain('<input type="range" min="0" max="100" step="1" value="80" data-evento="reparto" data-grupo="carne" data-id="tira" aria-label="Tira">');
+    expect(html).toContain('<span class="pct" data-porcentaje="carne:tira">80 %</span>');
+    expect(html).toContain('<span class="c" data-cantidad-item="carne:tira">3,6 kg</span>');
+    expect(html.indexOf('data-id="pollo"')).toBeGreaterThan(html.indexOf('data-cantidad-item="carne:tira"'));
+  });
+
+  it('un grupo sin reparto no lleva sliders', () => {
+    const html = resultadoEvento({
+      titulo: 'T', cifras: [], grupos: [{ id: 'g', titulo: 'G', items: [{ id: 'x', cosa: 'x', nombre: 'X', cantidad: '1' }] }],
+      ademas: [], advertencias: [], fuentes: []
+    });
+    expect(html).not.toContain('type="range"');
   });
 
   it('Empezar de nuevo, al final', () => {

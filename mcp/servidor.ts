@@ -222,7 +222,7 @@ export function crearServidor(recetario: Recetario): McpServer {
   servidor.registerTool('calcular_evento', {
     description: 'Cuánto comprar o hacer para una reunión —merienda, asado, comida, picada o cóctel—, con los tipos y los números de *Evento* de la app y sus fuentes. ' +
       'El tipo trae prendidas unas cosas y lo que se suma después (bebidas, hielo, infusiones, carbón o leña): pasá sólo lo que dijo el usuario, lo demás sale del tipo. ' +
-      'Las cosas del mismo grupo se reparten la porción: con empanadas y pizza para comer, la mitad de cada una. ' +
+      'Las cosas del mismo grupo se reparten: parejo, o con `reparto` en porcentajes. En un grupo de una sola medida (la carne) el total en kg no cambia; en uno que mezcla medidas, el porcentaje va sobre la porción de cada cosa. ' +
       'Sin `tipo`, devuelve los tipos con sus datos, sus cosas y lo que se suma después, con sus id. ' +
       'Un nombre que no se encuentra, o que nombra a dos cosas, devuelve un error con las opciones. Devuelve también `texto`, la lista lista para mandar.',
     inputSchema: {
@@ -231,10 +231,14 @@ export function crearServidor(recetario: Recetario): McpServer {
       chicos: z.number().optional().describe('Cuántos chicos.'),
       horas: z.number().optional().describe(`Cuánto dura. Sin él, ${COMUNES_DE_EVENTO.horas}.`),
       calor: z.boolean().optional().describe('Si hace calor: sube las bebidas y el hielo.'),
-      margen: z.number().optional().describe('0, 10 o 20 (%). Sin él, 0.'),
-      datos: z.record(z.string(), valorLibre).optional().describe('Los datos propios del tipo, por id: { "ocasion": "cena", "tipo-asado": "completo" }.'),
+      margen: z.number().optional().describe('0, 10 o 20 (%). Sin él, 0. Un festejo, o una ocasión en la que se come más, va acá.'),
+      restricciones: z.record(z.string(), z.number()).optional()
+        .describe('Cuántos de los invitados tienen cada restricción: vegetariano, vegano, celiaco o sin-lactosa. Avisa por cada grupo sin nada apto.'),
+      datos: z.record(z.string(), valorLibre).optional().describe('Los datos propios del tipo, por id: { "tipo-asado": "completo" }.'),
       prender: z.array(z.string()).optional().describe('Cosas que van, por id o por nombre.'),
       apagar: z.array(z.string()).optional().describe('Cosas que no van, por id o por nombre.'),
+      reparto: z.record(z.string(), z.number()).optional()
+        .describe('Qué porcentaje de su grupo lleva cada cosa, por id o por nombre: { "tira": 60, "pollo": 20 }. Lo que no se nombra del grupo se reparte el resto. En un grupo de una sola unidad, el total no cambia.'),
       ademas: z.record(z.string(), z.union([z.literal(false), z.record(z.string(), valorLibre)])).optional()
         .describe('Lo que se suma después, por id: false lo apaga; un objeto lo prende con sus datos: { "bebidas": { "toman": 6, "fernet": true }, "hielo": false }.')
     }

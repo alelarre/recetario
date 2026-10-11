@@ -896,24 +896,45 @@ número está en `research/herramientas/verificacion-eventos.md`.
 - [ ] Para cada cosa prendida: su porción por persona —la de si fuera lo
   único de su grupo— por las personas, donde un chico cuenta por un factor
   y, en la torta, entero.
-- [ ] **Las cosas de un grupo que se reparte llevan cada una 1/n de su
-  porción**: con empanadas y pizza para comer, la mitad de cada una. Las de
-  un grupo que no se reparte, la entera.
-- [ ] Las horas, la ocasión y *con sobras* multiplican los grupos que dice
+- [ ] **Un grupo que se reparte tiene un reparto**: el porcentaje de cada
+  cosa prendida, que suma 100 y arranca parejo. Las de un grupo que no se
+  reparte llevan su porción entera.
+  - **En un grupo de una sola medida** —*Carne*, *Acompañamiento*,
+    *Bocados*—, el grupo tiene un **total**: lo que dan todas en partes
+    iguales (para 11 con tira, pollo y cerdo, 5,9 kg). El reparto lo divide
+    sin cambiarlo: 3 kg de tira, 1,5 de pollo, 1,4 de cerdo. El total cambia
+    con las personas o al prender o apagar una cosa.
+  - **En un grupo que mezcla medidas** —*Para comer*, *Para picar antes*,
+    *Postre*—, el porcentaje se aplica a la porción de cada cosa: 60 % de
+    empanadas y 40 % de pizza son 36 empanadas y 2 pizzas para 11.
+  - Una cosa que se prende entra con la parte de un reparto parejo, y las
+    demás le hacen lugar en su proporción.
+- [ ] Las horas, el cumpleaños infantil y *con sobras* multiplican los grupos que dice
   cada tipo; el margen —ninguno, 10 % o 20 %— va sobre todo.
 - [ ] Lo que se compra por unidad va entero y para arriba; las facturas, los
   sándwiches de miga y las empanadas, a la media docena, con las docenas
   dichas. El peso, en gramos debajo de 1 kg y en kg con un decimal; el
-  volumen, en ml debajo de 1 l y en litros con un decimal; los envases,
-  enteros.
+  volumen, en ml debajo de 1 l y en litros con un decimal. Las bebidas van
+  sólo en litros, sin envases: la lata o la botella las elige el que compra.
+  Las pizzas, las bolsas de hielo y las de carbón, enteras.
 - [ ] **Lo que se suma después:** las bebidas —el alcohol repartido entre las
   que hay, para los adultos que toman; lo sin alcohol para todos, los chicos
   por su factor; las primeras horas a pleno y después menos; con calor,
   más; el fernet con su cola; el espumante del brindis aparte, por adulto—;
   el hielo, por persona y, si se pide, por litro de bebida fría; las
   infusiones, tazas repartidas entre las que hay; el carbón o la leña, por
-  kilo de carne cruda, con más si hay viento o frío.
+  kilo de carne cruda, con más si hay viento o frío. Las bebidas, el hielo y
+  las infusiones van en **Además**; el carbón o la leña, en **Para el
+  fuego**.
 - [ ] Un número sin fuente lleva su nota, que sale como advertencia.
+- [ ] **Restricciones alimentarias:** cuántos de los invitados son
+  vegetarianos, veganos, celíacos o sin lactosa —son parte de los invitados,
+  no se suman—. Cada cosa declara para cuáles es apta, como se hace en
+  general (`aptaPara`, junto a la cosa en su tipo; sin fuente). Por cada
+  grupo con algo prendido y cada restricción con invitados, si en el grupo no
+  hay nada apto, una advertencia: «Carne: nada apto para 2 vegetarianos.».
+  Sólo avisa: no cambia ninguna cantidad ni prende nada. Lo que se suma
+  después no cuenta.
 
 **Edge case:** sin personas, o con todo apagado, no hay lista: una línea lo
 dice. Horas vacías o en cero calculan con las de por defecto. Sin carne en
@@ -928,13 +949,12 @@ con un decimal y coma.
   infantil; la torta aparte; infusiones y bebidas sin alcohol.
 - [ ] **Asado:** el tipo de asado —clásico, completo, de cerdo, mixto,
   cordero o veggie— prende sus cosas y apaga las demás que nombra, como el
-  tipo de pan; la carne se reparte, cada corte con sus gramos; la ocasión la
-  multiplica; embutidos, achuras, provoleta, verduras, papas, ensalada y pan
+  tipo de pan; la carne se reparte, cada corte con sus gramos; embutidos, achuras, provoleta, verduras, papas, ensalada y pan
   aparte; la picada antes, opcional, en fiambres, quesos y pan; carbón o
   leña.
 - [ ] **Comida:** para picar antes, para comer, acompañamiento y postre, cada
-  uno se reparte entre lo suyo; el pan aparte; la ocasión y *con sobras*
-  multiplican lo de comer. Las empanadas están en dos grupos, como dos
+  uno se reparte entre lo suyo; el pan aparte; *con sobras* multiplica lo de
+  comer. Las empanadas están en dos grupos, como dos
   cosas.
 - [ ] **Picada:** fiambres, quesos, pan, vegetales, snacks y dips, según sea
   lo que se come o vaya antes de comer.
@@ -945,27 +965,37 @@ con un decimal y coma.
 - [ ] El encabezado con el volver, el ícono `invitados`, *Evento* y, a la
   derecha, Compartir: la ficha de compartir con *Texto* como única opción,
   como la lista de compras.
-- [ ] Los datos (design-system §6.28): el tipo en un desplegable, adultos y
-  chicos en el par de cantidades, las horas, *Hace calor*, el margen en un
+- [ ] Los datos (design-system §6.28): el tipo en un desplegable; la ficha
+  *Invitados*, con adultos y chicos en el par de cantidades y debajo un
+  número por restricción —*Vegetarianos*, *Veganos*, *Celíacos*, *Sin
+  lactosa*—; las horas, *Hace calor*, el margen en un
   conmutador y los datos del tipo.
-- [ ] Una ficha por grupo, **con su título**, y un interruptor por cosa; una
-  ficha *Además* con un interruptor por lo que se suma, que prendido abre sus
-  datos.
+- [ ] Una ficha por grupo, **con su título**, y un interruptor por cosa; las
+  fichas *Además* y *Para el fuego*, con un interruptor por lo que se suma,
+  que prendido abre sus datos.
 - [ ] El resultado al pie: las personas y, en el asado, la carne en kg; los
-  ítems por grupo; lo que se suma; las advertencias y las fuentes.
+  ítems por grupo; lo que se suma, en *Además* y *Para el fuego*; las
+  advertencias y las fuentes.
+- [ ] **El reparto, en el resultado:** en un grupo con dos o más cosas que se
+  reparten, debajo de las líneas de cada una, un slider con su porcentaje.
+  Están vinculados: subir uno baja los demás en la proporción que tenían
+  entre ellos, y siempre suman 100. Mover uno repinta sólo las cantidades y
+  los porcentajes de su grupo, no la pantalla: el arrastre sigue. El título
+  de un grupo de una sola medida lleva su total: «Carne · 5,9 kg».
 - [ ] **Empezar de nuevo**, al final, vuelve todo a los valores por defecto.
 - [ ] Escribir un número pinta sólo el resultado; un toque o un desplegable
   redibujan sin cambiar de ruta.
 - [ ] Lo elegido se guarda en `localStorage` (`recetario.evento`) en cada
-  cambio, con `try/catch`: el tipo, las personas, las horas, el calor, el
-  margen y lo de cada tipo por separado. Lo que ya no existe se ignora o
+  cambio, con `try/catch`: el tipo, las personas, las restricciones, las
+  horas, el calor, el margen y lo de cada tipo por separado, con su reparto. Un festejo, o una ocasión en la que
+  se come más, se cubre con el margen: no hay un dato de ocasión. Lo que ya no existe se ignora o
   vuelve a su valor por defecto.
 
 #### C07.12.4 — El agente *(J6)*
 
 - [ ] `calcular_evento`, en el servidor `recetario`, usa `src/eventos/` y
-  **no usa Drive ni el login**. Recibe el tipo, adultos, chicos, horas,
-  calor, margen, los datos del tipo, qué cosas prender y apagar —por id o
+  **no usa Drive ni el login**. Recibe el tipo, adultos, chicos, cuántos de
+  cada restricción, horas, calor, margen, el reparto en porcentajes, los datos del tipo, qué cosas prender y apagar —por id o
   por nombre, sin mirar mayúsculas ni tildes— y lo que se suma después,
   apagado o con sus datos.
 - [ ] Lo que no viene sale del tipo; el tipo de asado prende lo suyo antes de

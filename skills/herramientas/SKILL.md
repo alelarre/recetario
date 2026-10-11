@@ -210,9 +210,16 @@ advertencia del método (al ras, la harina con cuchara) y la fuente.
 - **Preguntá sólo el tipo y cuántos son** —adultos y chicos— si no vinieron
   en el pedido. Lo demás sale del tipo; el usuario lo ve en la lista y pide
   cambiarlo.
-- **Pasá sólo lo que dijo el usuario.** «Un asado completo para 15, a la
-  noche» es `tipo: asado`, `adultos: 15`, `datos: { "tipo-asado": "completo",
-  "ocasion": "cena" }`. «Sin morcilla» es `apagar: ["morcilla"]`.
+- **Pasá sólo lo que dijo el usuario.** «Un asado completo para 15» es
+  `tipo: asado`, `adultos: 15`, `datos: { "tipo-asado": "completo" }`. «Sin
+  morcilla» es `apagar: ["morcilla"]`. Para un festejo, el margen.
+- **Si el usuario dice cómo repartir** —«más tira que pollo», «mitad
+  empanadas, mitad pizza»—, pasalo en `reparto`, en porcentajes por cosa:
+  `{ "tira": 60, "pollo": 40 }`. Los kilos de la carne no cambian; cambia
+  cuánto es de cada corte.
+- **Preguntá si hay vegetarianos, veganos, celíacos o personas sin lactosa**
+  y pasalos en `restricciones`. La herramienta avisa por cada grupo sin nada
+  apto: mostrá los avisos, sin cambiar las cantidades.
 - **Si devuelve `error` con `opciones`**, preguntá cuál, con las opciones. Si
   devuelve `vacio`, falta cuántos son.
 - **Mostrá `texto`** tal como viene, y debajo las advertencias y las fuentes.

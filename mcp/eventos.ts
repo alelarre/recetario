@@ -10,7 +10,8 @@ import { normalizar } from '../src/normalizar.js';
 import { TIPOS_DE_EVENTO } from '../src/eventos/indice.js';
 import { COMUNES } from '../src/eventos/datos/comunes.js';
 import { calcularEvento, textoEvento } from '../src/eventos/evento.js';
-import { MARGENES, conAdemas, conCosa, conDato, conDatoDeAdemas, conTipo, estadoInicial } from '../src/eventos/estado.js';
+import { RESTRICCIONES } from '../src/eventos/restricciones.js';
+import { MARGENES, conAdemas, conCosa, conDato, conDatoDeAdemas, conRepartoDe, conTipo, estadoInicial } from '../src/eventos/estado.js';
 import type { Comunes, DatoPedido, EstadoEvento, TipoDeEvento, ValorDeDato } from '../src/eventos/tipos.js';
 
 type ValorLibre = string | number | boolean;
@@ -21,8 +22,12 @@ export interface PedidoEvento {
   horas?: number | undefined;
   calor?: boolean | undefined;
   margen?: number | undefined;
+  /** Cuántos invitados tienen cada restricción, por id o por nombre: { "vegetariano": 2 }. */
+  restricciones?: Record<string, number> | undefined;
   datos?: Record<string, ValorLibre> | undefined;
   prender?: string[] | undefined;
+  /** El porcentaje de cosas en su grupo, por id o por nombre: { "tira": 60 }. Lo nombrado se prende. */
+  reparto?: Record<string, number> | undefined;
   apagar?: string[] | undefined;
   ademas?: Record<string, false | Record<string, ValorLibre>> | undefined;
 }
@@ -69,6 +74,11 @@ export function calcularEventoParaElAgente(p: PedidoEvento, tipos: readonly Tipo
     adultos: p.adultos ?? null, chicos: p.chicos ?? null, horas: p.horas ?? comunes.horas,
     calor: p.calor ?? false, margen: MARGENES.find(m => m === p.margen) ?? 0
   };
+  for (const [nombre, n] of Object.entries(p.restricciones ?? {})) {
+    const r = encontrar(RESTRICCIONES, nombre);
+    if (esError(r)) return r;
+    e = { ...e, restricciones: { ...e.restricciones, [r.id]: Number.isFinite(n) && n >= 0 ? n : null } };
+  }
   for (const [id, x] of Object.entries(p.datos ?? {})) {
     const d = encontrar(tipo.datos, id);
     if (esError(d)) return d;
@@ -85,8 +95,16 @@ export function calcularEventoParaElAgente(p: PedidoEvento, tipos: readonly Tipo
     }
     return null;
   };
-  const errorAlPrender = alternar(p.prender ?? [], true) ?? alternar(p.apagar ?? [], false);
+  const errorAlPrender = alternar(p.prender ?? [], true) ?? alternar(p.apagar ?? [], false) ?? alternar(Object.keys(p.reparto ?? {}), true);
   if (errorAlPrender) return errorAlPrender;
+  if (p.reparto) {
+    const porId: Record<string, number> = {};
+    for (const [nombre, pct] of Object.entries(p.reparto)) {
+      const c = encontrar(tipo.cosas, nombre);
+      if (!esError(c)) porId[c.id] = pct;
+    }
+    e = conRepartoDe(e, tipos, porId);
+  }
   for (const [id, x] of Object.entries(p.ademas ?? {})) {
     const a = encontrar(tipo.ademas.map(y => y.ademas), id);
     if (esError(a)) return a;

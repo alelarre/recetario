@@ -1,7 +1,7 @@
 /**
  * Los números del asado: los gramos crudos de cada corte si fuera la única
- * carne —los de hueso, más—, los embutidos, las achuras y lo demás, la
- * ocasión, y el carbón o la leña por kilo de carne. Salen de
+ * carne —los de hueso, más—, los embutidos, las achuras y lo demás, y el
+ * carbón o la leña por kilo de carne. Salen de
  * `product-design/research/herramientas/verificacion-eventos.md`, sección
  * Decisiones; corregir uno es editar su línea, y ningún test fija un valor.
  * Sólo datos.
@@ -26,9 +26,7 @@ export const ASADO = {
   verduras: { valor: 300, fuente: SERVIDOS },
   papas: { valor: 200, fuente: SERVIDOS },
   ensalada: { valor: 200, fuente: HACERASADO },
-  pan: { valor: 100, fuente: SADA },
-  // `null`: la ocasión no cambia la carne.
-  ocasion: { almuerzo: null, cena: null, festejo: { valor: 1.2, fuente: SERVIDOS } }
+  pan: { valor: 100, fuente: SADA }
 };
 
 export const COMBUSTIBLE = {

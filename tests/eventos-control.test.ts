@@ -13,8 +13,11 @@ const PRUEBA: TipoDeEvento = {
     { id: 'sobras', nombre: 'Sobras', tipo: 'si-no', porDefecto: false }
   ],
   grupos: [{ id: 'g', titulo: 'G', seReparte: true }],
-  cosas: [{ id: 'x', nombre: 'X', grupo: 'g', prendida: true, porcion: () => d(1), unidad: 'unidad' }],
-  ademas: [{ ademas: { id: 'hielo', nombre: 'Hielo', datos: [{ id: 'kg', nombre: 'Kg', tipo: 'numero', porDefecto: null }], calcular: () => ({ items: [], usados: [] }) }, prendido: true }]
+  cosas: [
+    { id: 'x', nombre: 'X', grupo: 'g', prendida: true, porcion: () => d(1), unidad: 'unidad' },
+    { id: 'w', nombre: 'W', grupo: 'g', prendida: true, porcion: () => d(1), unidad: 'unidad' }
+  ],
+  ademas: [{ ademas: { id: 'hielo', nombre: 'Hielo', grupo: 'Además', datos: [{ id: 'kg', nombre: 'Kg', tipo: 'numero', porDefecto: null }], calcular: () => ({ items: [], usados: [] }) }, prendido: true }]
 };
 const OTRO: TipoDeEvento = { ...PRUEBA, id: 'otro', nombre: 'Otro' };
 const TIPOS = [PRUEBA, OTRO];
@@ -25,9 +28,10 @@ const campo = (datos: Record<string, string>, value: string) => ({ dataset: dato
 function armar(almacen: Pick<Storage, 'getItem' | 'setItem'> | null = localStorageFalso()) {
   const redibujar = vi.fn();
   const pintarResultado = vi.fn();
-  const control = crearControlEvento({ almacen, tipos: TIPOS, comunes: COMUNES, redibujar, pintarResultado });
+  const pintarReparto = vi.fn();
+  const control = crearControlEvento({ almacen, tipos: TIPOS, comunes: COMUNES, redibujar, pintarResultado, pintarReparto });
   const tocar = (accion: string, datos: Record<string, string> = {}) => control.acciones[accion]!(boton(accion, datos), new Event('click'));
-  return { control, redibujar, pintarResultado, tocar, almacen };
+  return { control, redibujar, pintarResultado, pintarReparto, tocar, almacen };
 }
 
 describe('el control de Evento', () => {
@@ -64,6 +68,26 @@ describe('el control de Evento', () => {
     tocar('evento-alternar', { evento: 'dato', id: 'sobras', valor: '1' });
     expect(control.estado().porTipo['prueba']?.datos).toEqual({ ocasion: 'c', sobras: true });
     expect(redibujar).toHaveBeenCalledTimes(2);
+  });
+
+  it('una restricción pinta sólo el resultado y se guarda; una que no existe no cambia nada', () => {
+    const { control, pintarResultado, almacen } = armar();
+    control.alCambiar(campo({ evento: 'restriccion', id: 'celiaco' }, '2'), false);
+    control.alCambiar(campo({ evento: 'restriccion', id: 'otra' }, '5'), false);
+    expect(control.estado().restricciones).toEqual({ vegetariano: null, vegano: null, celiaco: 2, 'sin-lactosa': null });
+    expect(pintarResultado).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(almacen!.getItem(CLAVE_EVENTO) ?? '{}').restricciones.celiaco).toBe(2);
+  });
+
+  it('mover un slider guarda el reparto y pinta sólo los números de su grupo', () => {
+    const { control, redibujar, pintarResultado, pintarReparto } = armar();
+    control.alCambiar(campo({ evento: 'reparto', grupo: 'g', id: 'x' }, '70'), false);
+    const reparto = control.estado().porTipo['prueba']?.reparto;
+    expect(reparto?.['x']).toBe(0.7);
+    expect(reparto?.['w']).toBeCloseTo(0.3);
+    expect(pintarReparto).toHaveBeenCalledWith('g');
+    expect(redibujar).not.toHaveBeenCalled();
+    expect(pintarResultado).not.toHaveBeenCalled();
   });
 
   it('un número de lo que se suma pinta sólo el resultado', () => {

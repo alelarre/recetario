@@ -35,6 +35,7 @@ export function problemasDeTipo(t: TipoDeEvento): string[] {
     if (cosas.has(c.id)) p.push(`${t.id}: la cosa «${c.id}» está dos veces`);
     cosas.add(c.id);
     if (!grupos.has(c.grupo)) p.push(`${t.id}: la cosa «${c.id}» es de un grupo que no está, «${c.grupo}»`);
+    if (!c.aptaPara) p.push(`${t.id}: la cosa «${c.id}» no dice para qué restricciones es apta`);
   }
   for (const g of t.grupos) if (!t.cosas.some(c => c.grupo === g.id)) p.push(`${t.id}: el grupo «${g.id}» no tiene cosas`);
   const atajo = t.atajo;

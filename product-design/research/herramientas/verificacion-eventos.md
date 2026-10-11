@@ -268,6 +268,10 @@ coherentes entre sí (hacerasado para la carne, hacecuentas para las
 bebidas, Circuito Gastronómico para la picada); de un rango, el medio. Lo
 que va sin fuente lleva una nota, que la app muestra como advertencia.
 
+Los envases de las bebidas (latas, botellas, bidones, tetras) y la ocasión
+quedaron verificados pero la app no los usa: las bebidas van sólo en litros, y
+un festejo se cubre con el margen.
+
 | Constante | Valor | Fuente |
 |---|---|---|
 | `COMUNES.factorChico` | 0,5 | servidos.ar |

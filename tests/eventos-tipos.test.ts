@@ -46,6 +46,7 @@ describe('los cinco tipos', () => {
     };
     expect(problemasDeTipo(malo)).toEqual([
       'malo: la cosa «x» es de un grupo que no está, «otro»',
+      'malo: la cosa «x» no dice para qué restricciones es apta',
       'malo: el grupo «g» no tiene cosas',
       'malo: el grupo «vacio» no tiene cosas',
       'malo: el atajo es de «nada», que no es una opción del tipo',
@@ -62,6 +63,7 @@ describe('los cinco tipos', () => {
       porTipo: { [t.id]: {
         datos: {},
         cosas: Object.fromEntries(t.cosas.map(c => [c.id, true])),
+        reparto: {},
         ademas: Object.fromEntries(t.ademas.map(a => [a.ademas.id, {
           prendido: true, datos: Object.fromEntries(a.ademas.datos.flatMap(x => (x.tipo === 'si-no' ? [[x.id, true]] : [])))
         }]))

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   valoresDe, estadoInicial, estadoInicialDeTipo, completarEvento, estadoDeTipo,
-  conTipo, conDato, conCosa, conAdemas, conDatoDeAdemas
+  conTipo, conDato, conCosa, conAdemas, conDatoDeAdemas, conReparto, conRepartoDe
 } from '../src/eventos/estado.js';
 import type { Ademas, Comunes, Dato, DatoPedido, EstadoEvento, TipoDeEvento } from '../src/eventos/tipos.js';
 
@@ -9,7 +9,7 @@ const d = (valor: number): Dato => ({ valor, fuente: { nombre: 'F', url: 'https:
 const COMUNES: Comunes = { factorChico: d(0.5), horas: 4 };
 const nada = () => d(1);
 const ADEMAS: Ademas = {
-  id: 'hielo', nombre: 'Hielo',
+  id: 'hielo', nombre: 'Hielo', grupo: 'Además',
   datos: [{ id: 'enfriar', nombre: 'Enfriar', tipo: 'si-no', porDefecto: false }],
   calcular: () => ({ items: [], usados: [] })
 };
@@ -46,7 +46,10 @@ describe('los datos de un tipo', () => {
 
 describe('el estado inicial', () => {
   it('arranca en el primer tipo, sin personas y con las horas por defecto', () => {
-    expect(estadoInicial(TIPOS, COMUNES)).toEqual({ tipo: 'uno', adultos: null, chicos: null, horas: 4, calor: false, margen: 0, porTipo: {} });
+    expect(estadoInicial(TIPOS, COMUNES)).toEqual({
+      tipo: 'uno', adultos: null, chicos: null, horas: 4, calor: false, margen: 0,
+      restricciones: { vegetariano: null, vegano: null, celiaco: null, 'sin-lactosa': null }, porTipo: {}
+    });
   });
 
   it('lo inicial de un tipo aplica su atajo: prende las de la opción y apaga las demás que nombra', () => {
@@ -66,6 +69,16 @@ describe('lo leído del teléfono', () => {
     expect([e.tipo, e.margen, e.adultos, e.chicos]).toEqual(['uno', 0, null, 2.5]);
   });
 
+  it('el reparto guardado de cosas que existen, con números válidos', () => {
+    expect(completarEvento({ porTipo: { uno: { reparto: { x: 0.5, y: -1, vieja: 0.3, z: 'mucho' } } } }, TIPOS, COMUNES).porTipo['uno']?.reparto)
+      .toEqual({ x: 0.5 });
+  });
+
+  it('las restricciones guardadas que valen se quedan; las demás, vacías', () => {
+    expect(completarEvento({ restricciones: { vegetariano: 2, vegano: -1, celiaco: 'uno', otra: 3 } }, TIPOS, COMUNES).restricciones)
+      .toEqual({ vegetariano: 2, vegano: null, celiaco: null, 'sin-lactosa': null });
+  });
+
   it('sin horas guardadas, las de por defecto; vacías, quedan vacías', () => {
     expect(completarEvento({}, TIPOS, COMUNES).horas).toBe(4);
     expect(completarEvento({ horas: null }, TIPOS, COMUNES).horas).toBeNull();
@@ -78,6 +91,7 @@ describe('lo leído del teléfono', () => {
     expect(e.porTipo['uno']).toEqual({
       datos: { menu: 'a', fiesta: false },
       cosas: { x: true, y: true, z: true },
+      reparto: {},
       ademas: { hielo: { prendido: false, datos: { enfriar: true } } }
     });
   });
@@ -113,6 +127,29 @@ describe('los cambios', () => {
 
   it('una cosa que no existe no cambia nada', () => {
     expect(estadoDeTipo(conCosa(inicial, TIPOS, 'nada', true), CON_ATAJO)).toEqual(estadoInicialDeTipo(CON_ATAJO));
+  });
+
+  it('un slider sube una cosa y las demás bajan en su proporción, sumando 100', () => {
+    // x, y, z prendidas (el atajo de «a» prende x; y se prende a mano).
+    const base = conCosa(inicial, TIPOS, 'y', true);
+    let e = conReparto(base, TIPOS, 'g', 'x', 60);
+    const r1 = estadoDeTipo(e, CON_ATAJO).reparto;
+    expect([r1['x'], r1['y'], r1['z']].map(v => Math.round((v ?? 0) * 1000) / 1000)).toEqual([0.6, 0.2, 0.2]);
+    e = conReparto(e, TIPOS, 'g', 'y', 30);
+    const r2 = estadoDeTipo(e, CON_ATAJO).reparto;
+    expect([r2['x'], r2['y'], r2['z']].map(v => Math.round((v ?? 0) * 1000) / 1000)).toEqual([0.525, 0.3, 0.175]);
+    const r3 = estadoDeTipo(conReparto(e, TIPOS, 'g', 'x', 150), CON_ATAJO).reparto;
+    expect([r3['x'], r3['y'], r3['z']]).toEqual([1, 0, 0]);
+  });
+
+  it('prender una cosa le borra la parte guardada: entra con la de un reparto parejo', () => {
+    const e = conCosa(conReparto(conCosa(inicial, TIPOS, 'y', true), TIPOS, 'g', 'y', 80), TIPOS, 'y', false);
+    expect(estadoDeTipo(conCosa(e, TIPOS, 'y', true), CON_ATAJO).reparto['y']).toBeUndefined();
+  });
+
+  it('un reparto fijo por porcentajes: lo que no se nombra se reparte lo que queda', () => {
+    const e = conRepartoDe(conCosa(inicial, TIPOS, 'y', true), TIPOS, { x: 50 });
+    expect(estadoDeTipo(e, CON_ATAJO).reparto).toEqual({ x: 0.5, y: 0.25, z: 0.25 });
   });
 
   it('lo que se suma después se apaga y se le cambian los datos', () => {

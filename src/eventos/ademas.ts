@@ -7,16 +7,14 @@
 import type { Ademas, Dato, Item, NombreDeEnvase } from './tipos.js';
 import { envases, peso, unidades, volumen } from './formato.js';
 
-export interface EnvaseDeBebida { ml: Dato; nombre: NombreDeEnvase }
 export interface Bebida {
   id: string;
   nombre: string;
   alcohol: boolean;
   /** Mililitros por persona por hora si es la única de las suyas, con alcohol o sin. */
   mlPorHora: Dato;
-  envase: EnvaseDeBebida;
   /** Lo que se sirve con ella: la cola del fernet, en ml por ml. */
-  con?: { id: string; nombre: string; mlPorMl: Dato; envase: EnvaseDeBebida };
+  con?: { id: string; nombre: string; mlPorMl: Dato };
 }
 export interface DatosBebidas {
   bebidas: readonly Bebida[];
@@ -27,20 +25,17 @@ export interface DatosBebidas {
   /** Lo que toma un chico de lo sin alcohol, sobre lo que toma un adulto. */
   chico: Dato;
   /** El espumante del brindis, por adulto. */
-  brindis: { mlPorAdulto: Dato; envase: EnvaseDeBebida };
+  brindis: { mlPorAdulto: Dato };
 }
 export interface DatosHielo { kgPorPersona: Dato; kgPorLitroFrio: Dato; calor: Dato; bolsa: { kg: Dato; nombre: NombreDeEnvase } }
 export interface Infusion { id: string; nombre: string; prendida: boolean; porTaza: Dato; unidad: 'g' | 'saquitos' | 'ml' }
 export interface DatosInfusiones { tazasPorPersona: Dato; infusiones: readonly Infusion[] }
 export interface DatosCombustible { carbonPorKgCarne: Dato; lenaPorKgCarne: Dato; vientoOFrio: Dato; bolsaCarbon: { kg: Dato; nombre: NombreDeEnvase } }
 
-/** Los litros y los envases: «12 l · 24 latas». */
-const enEnvases = (ml: number, e: EnvaseDeBebida): string => `${volumen(ml)} · ${envases(ml, e.ml.valor, e.nombre)}`;
-
 /** `prendidas`: las que van al empezar, por `id`; `brindis`, el espumante del brindis. Cambian con el tipo. */
 export function bebidas(d: DatosBebidas, prendidas: readonly string[]): Ademas {
   return {
-    id: 'bebidas', nombre: 'Bebidas',
+    id: 'bebidas', nombre: 'Bebidas', grupo: 'Además',
     datos: [
       { id: 'toman', nombre: 'Adultos que toman alcohol', tipo: 'numero', porDefecto: null },
       ...d.bebidas.map(b => ({ id: b.id, nombre: b.nombre, tipo: 'si-no' as const, porDefecto: prendidas.includes(b.id) })),
@@ -55,9 +50,10 @@ export function bebidas(d: DatosBebidas, prendidas: readonly string[]): Ademas {
       const items: Item[] = [];
       const usados: Dato[] = [];
       let mlFrios = 0;
-      const sumar = (id: string, nombre: string, ml: number, envase: EnvaseDeBebida, ...datos: Dato[]): void => {
-        items.push({ id, nombre, cantidad: enEnvases(ml, envase) });
-        usados.push(envase.ml, ...datos);
+      // Sólo los litros: el envase lo elige el que compra.
+      const sumar = (id: string, nombre: string, ml: number, ...datos: Dato[]): void => {
+        items.push({ id, nombre, cantidad: volumen(ml) });
+        usados.push(...datos);
         mlFrios += ml;
       };
       for (const alcohol of [true, false]) {
@@ -67,13 +63,13 @@ export function bebidas(d: DatosBebidas, prendidas: readonly string[]): Ademas {
         for (const b of grupo) {
           const ml = b.mlPorHora.valor * horas * personas * calor * margen / grupo.length;
           if (ml <= 0) continue;
-          sumar(b.id, b.nombre, ml, b.envase, b.mlPorHora, d.horasPlenas, d.despues,
+          sumar(b.id, b.nombre, ml, b.mlPorHora, d.horasPlenas, d.despues,
             ...(c.calor ? [d.calor] : []), ...(!alcohol && c.chicos > 0 ? [d.chico] : []));
-          if (b.con) sumar(b.con.id, b.con.nombre, ml * b.con.mlPorMl.valor, b.con.envase, b.con.mlPorMl);
+          if (b.con) sumar(b.con.id, b.con.nombre, ml * b.con.mlPorMl.valor, b.con.mlPorMl);
         }
       }
       if (v['brindis'] === true && c.adultos > 0) {
-        sumar('brindis', 'Espumante para el brindis', d.brindis.mlPorAdulto.valor * c.adultos * margen, d.brindis.envase, d.brindis.mlPorAdulto);
+        sumar('brindis', 'Espumante para el brindis', d.brindis.mlPorAdulto.valor * c.adultos * margen, d.brindis.mlPorAdulto);
       }
       return { items, usados, mlFrios };
     }
@@ -82,7 +78,7 @@ export function bebidas(d: DatosBebidas, prendidas: readonly string[]): Ademas {
 
 export function hielo(d: DatosHielo): Ademas {
   return {
-    id: 'hielo', nombre: 'Hielo',
+    id: 'hielo', nombre: 'Hielo', grupo: 'Además',
     datos: [{ id: 'enfriar', nombre: 'También para enfriar las bebidas', tipo: 'si-no', porDefecto: false }],
     calcular({ contexto: c, margen, mlFrios }, v) {
       const enfriar = v['enfriar'] === true;
@@ -100,7 +96,7 @@ export function hielo(d: DatosHielo): Ademas {
 
 export function infusiones(d: DatosInfusiones): Ademas {
   return {
-    id: 'infusiones', nombre: 'Infusiones',
+    id: 'infusiones', nombre: 'Infusiones', grupo: 'Además',
     datos: d.infusiones.map(i => ({ id: i.id, nombre: i.nombre, tipo: 'si-no' as const, porDefecto: i.prendida })),
     calcular({ contexto: c, margen }, v) {
       const prendidas = d.infusiones.filter(i => v[i.id] === true);
@@ -120,7 +116,7 @@ export function infusiones(d: DatosInfusiones): Ademas {
 
 export function combustible(d: DatosCombustible): Ademas {
   return {
-    id: 'combustible', nombre: 'Carbón o leña',
+    id: 'combustible', nombre: 'Carbón o leña', grupo: 'Para el fuego',
     datos: [
       { id: 'que', nombre: 'Fuego', tipo: 'opcion', porDefecto: 'carbon', opciones: [{ valor: 'carbon', texto: 'Carbón' }, { valor: 'lena', texto: 'Leña' }] },
       { id: 'viento', nombre: 'Viento o frío', tipo: 'si-no', porDefecto: false }

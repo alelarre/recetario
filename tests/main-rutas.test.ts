@@ -1225,6 +1225,16 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('<option value="asado" selected>');
     });
 
+    it('mover un slider no redibuja la pantalla y guarda el reparto', async () => {
+      const { abrir, cambiarEnEvento, pinturas, almacen } = await montar();
+      await abrir('#/herramientas/evento');
+      await cambiarEnEvento({ evento: 'adultos' }, '10');
+      const antes = pinturas.length;
+      await cambiarEnEvento({ evento: 'reparto', grupo: 'bocados', id: 'facturas' }, '70');
+      expect(pinturas.length).toBe(antes);
+      expect(JSON.parse(almacen.getItem('recetario.evento') ?? '{}').porTipo.merienda.reparto.facturas).toBe(0.7);
+    });
+
     it('prender una cosa redibuja', async () => {
       const { abrir, tocar, pinturas } = await montar();
       await abrir('#/herramientas/evento');
@@ -1243,7 +1253,7 @@ describe('main.ts: las rutas', () => {
       expect(app.innerHTML).toContain('hoja-compartir');
       expect(app.innerHTML).not.toContain('data-accion="compartir-pdf"');
       await tocar('compartir-texto');
-      expect(compartidos[0]?.text).toMatch(/^Merienda para 10\n\nBocados\n- Facturas y medialunas: /);
+      expect(compartidos[0]?.text).toMatch(/^Merienda para 10\n\nBocados · \d+\n- Facturas y medialunas: /);
     });
   });
 
